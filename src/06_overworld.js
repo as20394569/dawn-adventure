@@ -58,7 +58,7 @@ class Overworld {
     if (this.p !== except && ((this.p.x === x && this.p.y === y) || (this.p.moving && this.p.tx === x && this.p.ty === y))) return this.p;
     return null;
   }
-  solidAt(x, y) { const c = this.tileAt(x, y); if (SOLID.has(c) || (c === 't' && !this.st.flags.golem)) return true; if (x >= 0 && y >= 0 && x < this.map.w && y < this.map.h && this.map.block.has(x + ',' + y)) return true; return false; }
+  solidAt(x, y) { const c = this.tileAt(x, y); if (SOLID.has(c) || (c === 't' && !this.st.flags.golem) || (c === 'Z' && this.st.flags.golem)) return true; if (x >= 0 && y >= 0 && x < this.map.w && y < this.map.h && this.map.block.has(x + ',' + y)) return true; return false; }
   /* ---------- update ---------- */
   update() {
     this.t++; this.st.time = (this.st.time || 0) + 1;
@@ -133,6 +133,7 @@ class Overworld {
     if ((c === '#' || (this.map.d.encAll && c === 's')) && !Game.noEnc) {
       const enc = (this.map.d.encounters || []).find(e => p.y >= e.y0 && p.y <= e.y1);
       if (enc && chance(enc.rate) && (st.steps - (st.lastBattleStep || 0)) > 2) {
+        const rr = this.map.d.rare; if (rr && chance(0.03)) { this.run(this.battleScript({ sp: rr[0], lv: rnd(rr[1], rr[2]), kind: 'wild' })); return; }
         if (st.lv >= 8 && chance(0.12)) { this.run(this.packScript(enc)); return; }
         const row = rollEnc(enc); this.run(this.battleScript({ sp: row[0], lv: rnd(row[1], row[2]), kind: 'wild' }));
       }
@@ -179,7 +180,8 @@ class Overworld {
     if (c === 't') { this.run(say(this.st.flags.golem ? '樹輕輕搖晃，枝葉讓出了一條路。' : '一棵古老的大樹。樹幹上有奇妙的紋路……好像在沉睡。')); return true; }
     if (c === 'U') { this.run(Events.well(this)); return true; }
     if (c === 'N') { this.run(Events.board(this)); return true; }
-    const flavor = { k: '書架上擺滿了關於魔物與冒險的書。', w: '窗外是萌芽鎮悠閒的風景。', c: '燭火靜靜地搖曳著。', h: '架子上整齊地擺滿了商品。', K: '書架上有一本《魔物屬性入門》。\n「火剋草、草剋水、水剋火。岩石怕水也怕草。」', V: '木箱裡裝滿了蘋果和藥瓶。', Q: '桌上放著熱騰騰的早餐。', o: '一塊大石頭。', b: '修剪整齊的灌木叢。' };
+    if (c === 'Z' && this.st.flags.golem) { const ow = this; this.run((function* () { if (yield* yesNo('石板下出現了往地底延伸的樓梯。要走下去嗎？')) yield* ow.warp('catacomb', 9, 20, 'up'); })()); return true; }
+    const flavor = { k: '書架上擺滿了關於魔物與冒險的書。', w: '窗外是萌芽鎮悠閒的風景。', c: '燭火靜靜地搖曳著。', h: '架子上整齊地擺滿了商品。', K: '書架上有一本《魔物種族圖說》。\n「獸、蟲、植物怕火；飛禽、軟泥怕雷；石像怕水和草；亡者怕火。」', V: '木箱裡裝滿了蘋果和藥瓶。', Q: '桌上放著熱騰騰的早餐。', o: '一塊大石頭。', b: '修剪整齊的灌木叢。' };
     if (c === 'B' && this.map.id === 'home') { this.run(Events.bed(this)); return true; }
     if (flavor[c]) { this.run(say(flavor[c])); return true; }
     if (c === 'W' && this.map.outdoor !== undefined) { this.run(say('水面倒映著藍天。')); return true; }
@@ -316,6 +318,7 @@ class Overworld {
       case 'b': x.drawImage(Tiles.bush, sx, sy); break;
       case 'S': x.drawImage(Tiles.sign, sx, sy); break;
       case 'N': x.drawImage(Tiles.board, sx, sy); break;
+      case 'Z': x.drawImage(this.st.flags.golem ? Tiles.stairs : Tiles.stone(h % 2), sx, sy); break;
       case 'F': { let m = 0; if (this.tileAt(tx + 1, ty) === 'F') m |= 2; if (this.tileAt(tx - 1, ty) === 'F') m |= 8; x.drawImage(Tiles.fence(m), sx, sy); break; }
       case 's': case 'P': x.drawImage(Tiles.stone(h % 2), sx, sy); break;
       case 'm': x.drawImage(Tiles.stone(2), sx, sy); break;

@@ -137,6 +137,7 @@ function heroStats(st = Game.st) {
   s.vs = []; s.resist = {}; s.drain = 0; s.elem = 0; s.counter = 0; // equipment affixes & talents
   for (const T of TALENTS) { const r = (st.tal || {})[T.id] || 0; if (r) for (const k in T.st) s[k] = (s[k] || 0) + T.st[k] * r; }
   const CL = CLASSES[st.cls]; if (CL) for (const k in CL.st) s[k] = (s[k] || 0) + CL.st[k];
+  { const wg = gearBy(st.equip && st.equip.weapon, st); s.welem = wg && GEAR[wg.b].elem || null; }
   s.fx = {}; for (const g of equippedGear(st)) for (const f of GEAR[g.b].fx || []) s.fx[f] = 1;
   for (const g of equippedGear(st)) { const p = gearStats(g).sp; s.crit += p.crit || 0; s.hit += p.hit || 0; s.eva += p.eva || 0; s.drain += p.drain || 0; s.elem += p.elem || 0; s.vs.push(...p.vs); for (const t in p.resist) s.resist[t] = (s.resist[t] || 0) + p.resist[t]; }
   return s;
@@ -579,9 +580,9 @@ function* dexScreen() {
     if (top > 0) x.drawImage(UPARROW, 86, 26); if (top + VIS < list.length) x.drawImage(DOWNARROW, 86, 24 + VIS * 18 + 3);
     drawWin(x, 4, 164, 168, 88, 'menu'); const k = list[idx], e = dex[k];
     if (e && e.seen) { const im = battleSprite(k); x.drawImage(im, 0, 0, im.width, im.height, 8, 172, 72, 72); const sp = SPECIES[k];
-      typeBadge(x, sp.t, 86, 170, 28); Font.draw(x, sp.elite ? '精英' : sp.boss ? '頭目' : '野生', 120, 168, sp.boss ? UIC.bad : sp.elite ? UIC.warm : UIC.muted, UIC.textSh);
+      famBadge(x, sp.fam, 86, 170, 38); Font.draw(x, sp.rare ? '稀有' : sp.elite ? '精英' : sp.boss ? '頭目' : '野生', 128, 168, sp.rare ? '#ffd84a' : sp.boss ? UIC.bad : sp.elite ? UIC.warm : UIC.muted, UIC.textSh);
       if (view) { const P = MON_PANEL[k]; Font.draw(x, 'Lv' + P.lv + ' 能力', 86, 184, UIC.muted, UIC.textSh, 10); [['HP', P.hp], ['物攻', P.atk], ['物防', P.def], ['魔攻', P.spa], ['魔防', P.spd], ['速度', P.spe]].forEach(([a, b], i) => { Font.draw(x, a, 86, 197 + i * 9, UIC.muted, UIC.textSh, 9); Font.drawR(x, String(b), 164, 197 + i * 9, UIC.text, UIC.textSh, 9); }); }
-      else Font.wrap(sp.dex || '', 80).slice(0, 4).forEach((l, i) => Font.draw(x, l, 86, 186 + i * 15, UIC.text, UIC.textSh)); Font.drawR(x, 'A：' + (view ? '介紹' : '能力'), 166, 238, UIC.accent, UIC.textSh, 9); }
+      else { Font.draw(x, famLine(sp.fam), 86, 184, UIC.warm, UIC.textSh, 10); Font.wrap(sp.dex || '', 80, 11).slice(0, 3).forEach((l, i) => Font.draw(x, l, 86, 198 + i * 13, UIC.text, UIC.textSh, 11)); } Font.drawR(x, 'A：' + (view ? '介紹' : '能力'), 166, 238, UIC.accent, UIC.textSh, 9); }
     else Font.draw(x, '還沒有遇見過這種魔物。', 14, 170, UIC.muted, UIC.textSh);
   } };
   UI.push(scr);

@@ -58,7 +58,7 @@ function rollAffixes(n, slot = 'acc', tier = 1) {
     const tot = pool.reduce((a, k) => a + (used.has(k) ? 0 : AFFIX_TABLE[k].w), 0); let r = Math.random() * tot, id = pool[0];
     for (const k of pool) { if (used.has(k)) continue; r -= AFFIX_TABLE[k].w; if (r <= 0) { id = k; break; } }
     if (used.has(id)) continue; used.add(id); const A = AFFIX_TABLE[id], v = Math.max(1, Math.round(rnd(A.min, A.max) * sc));
-    out.push(A.typed ? [id, pick(AFF_T), v] : [id, v]);
+    out.push(A.typed ? [id, A.fam ? pick(Object.keys(FAMILIES)) : pick(AFF_T), v] : [id, v]);
   }
   return out;
 }
@@ -82,7 +82,7 @@ function gearLines(g) { // [base stats text, special text]
   const o = gearStats(g), p = [], s = [];
   for (const k of STATK) if (o.st[k]) p.push(STAT_NAMES[k] + '+' + o.st[k]);
   for (const k in SP_NAMES) if (o.sp[k]) s.push(SP_NAMES[k] + '+' + o.sp[k] + '%');
-  for (const [t, v] of o.sp.vs) s.push('對' + t + '系+' + v + '%'); for (const t in o.sp.resist) s.push(t + '系傷害-' + o.sp.resist[t] + '%');
+  if (GEAR[g.b].elem) s.unshift(GEAR[g.b].elem + '屬性武器'); for (const [t, v] of o.sp.vs) s.push('對' + (FAMILIES[t] ? FAMILIES[t].n : t + '系') + '+' + v + '%'); for (const t in o.sp.resist) s.push(t + '系傷害-' + o.sp.resist[t] + '%');
   for (const f of o.fx) s.push('★' + SPECIALS[f].n);
   return [p.join(' '), s.join(' ')];
 }

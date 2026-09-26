@@ -1293,6 +1293,7 @@ Tiles.fence = mask => tileCanvas('fence' + mask, x => {
   const rail = (a, b) => { x.fillStyle = '#3a2414'; x.fillRect(a, 4, b - a, 1); x.fillRect(a, 7, b - a, 1); x.fillRect(a, 8, b - a, 1); x.fillRect(a, 11, b - a, 1); x.fillStyle = '#a8703c'; x.fillRect(a, 5, b - a, 2); x.fillRect(a, 9, b - a, 2); x.fillStyle = '#c08a50'; x.fillRect(a, 5, b - a, 1); x.fillRect(a, 9, b - a, 1); };
   if (mask & 8) rail(0, 6); if (mask & 2) rail(11, 16);
 });
+Tiles.stairs = (() => { const c = mkCanvas(16, 16), x = c.getContext('2d'); x.fillStyle = '#6a6474'; x.fillRect(0, 0, 16, 16); x.fillStyle = '#0c0a12'; x.fillRect(1, 1, 14, 14); for (let i = 0; i < 5; i++) { x.fillStyle = ['#8a8494', '#6a6474', '#4c4858', '#34303e', '#221e2a'][i]; x.fillRect(2 + i, 2 + i * 3, 12 - i * 2, 2); } x.fillStyle = '#a8a2b4'; x.fillRect(0, 0, 16, 1); return c; })();
 Tiles.stone = v => tileCanvas('stone' + v, x => {
   x.fillStyle = '#c8bca4'; x.fillRect(0, 0, 16, 16);
   x.fillStyle = '#a89c84'; x.fillRect(0, 7, 16, 1); x.fillRect(0, 15, 16, 1); x.fillRect(v % 2 ? 4 : 10, 0, 1, 7); x.fillRect(v % 2 ? 12 : 3, 8, 1, 7);
@@ -2083,7 +2084,7 @@ function rollAffixes(n, slot = 'acc', tier = 1) {
     const tot = pool.reduce((a, k) => a + (used.has(k) ? 0 : AFFIX_TABLE[k].w), 0); let r = Math.random() * tot, id = pool[0];
     for (const k of pool) { if (used.has(k)) continue; r -= AFFIX_TABLE[k].w; if (r <= 0) { id = k; break; } }
     if (used.has(id)) continue; used.add(id); const A = AFFIX_TABLE[id], v = Math.max(1, Math.round(rnd(A.min, A.max) * sc));
-    out.push(A.typed ? [id, pick(AFF_T), v] : [id, v]);
+    out.push(A.typed ? [id, A.fam ? pick(Object.keys(FAMILIES)) : pick(AFF_T), v] : [id, v]);
   }
   return out;
 }
@@ -2107,7 +2108,7 @@ function gearLines(g) { // [base stats text, special text]
   const o = gearStats(g), p = [], s = [];
   for (const k of STATK) if (o.st[k]) p.push(STAT_NAMES[k] + '+' + o.st[k]);
   for (const k in SP_NAMES) if (o.sp[k]) s.push(SP_NAMES[k] + '+' + o.sp[k] + '%');
-  for (const [t, v] of o.sp.vs) s.push('對' + t + '系+' + v + '%'); for (const t in o.sp.resist) s.push(t + '系傷害-' + o.sp.resist[t] + '%');
+  if (GEAR[g.b].elem) s.unshift(GEAR[g.b].elem + '屬性武器'); for (const [t, v] of o.sp.vs) s.push('對' + (FAMILIES[t] ? FAMILIES[t].n : t + '系') + '+' + v + '%'); for (const t in o.sp.resist) s.push(t + '系傷害-' + o.sp.resist[t] + '%');
   for (const f of o.fx) s.push('★' + SPECIALS[f].n);
   return [p.join(' '), s.join(' ')];
 }
@@ -2300,6 +2301,7 @@ function questMarks(st = Game.st) {
   if (f.q3 === 1) M.push(st.bag.crystal >= 3 ? ['town', 13, 16] : ['sewer', 4, 6]);
   if (f.caravanMet && !f.caravan) M.push(['route', 12, 22]);
   if (f.mineOpen && !f.bandit) M.push(['mine', 9, 2]);
+  if (f.golem && !f.boneKnight) M.push(st.map === 'catacomb' ? ['catacomb', 9, 3] : ['ruins', 13, 10]);
   const c4 = comState('c4', st); if (c4 && c4.s === 'on' && !st.bag.pocketWatch) M.push(['forest', 19, 9]);
   if (Object.keys(COMMISSIONS).some(k => { const s = comState(k, st); return s && s.s === 'on' && comProgress(k, st).ready; })) M.push(['town', 12, 8]);
   return M;
@@ -2310,6 +2312,7 @@ function extraQuests(st, L) {
   const f = st.flags;
   if (f.q2) L.push({ n: '見習獵人提姆', t: !f.q2res ? '守衛的弟弟提姆一個人跑去迷霧森林，想討伐苔石巨人。' : f.q2done ? (f.q2res === 'home' ? '完成：把提姆帶回了哥哥身邊。' : '完成：和提姆並肩打倒了苔石巨人。') : f.q2res === 'home' ? '回晨霧道路北邊，告訴守衛提姆平安回家了。' : f.mossGiant ? '苔石巨人倒下了。回去找提姆吧。' : '和提姆一起打倒苔石巨人！（提姆會用弓箭支援）', done: !!f.q2done });
   if (f.q3) L.push({ n: '師父的遺作', t: f.q3 === 1 ? '鐵匠想完成師父的遺作。帶水晶碎片×3給他。（有' + (st.bag.crystal || 0) + '）' : f.q3res === 'take' ? '完成：收下了「名匠遺作」。' : '完成：讓鐵匠留著遺作，強化費用永久半價。', done: f.q3 === 2 });
+  if (f.golem) L.push({ n: '古王的墓穴', t: f.boneKnight ? '完成：打倒了守護墓室的骸骨騎士。' : '古岩遺跡的石板下出現了樓梯。地下墓穴裡有強大的亡者。（建議Lv17以上）', done: !!f.boneKnight });
   if (f.mineOpen || f.bandit) L.push({ n: '失落的貨物', t: f.bandit ? '完成：打倒盜賊頭目「鐵斧」格倫，奪回了商隊的貨物。' : '商隊的貨物被盜賊搶走，藏進了晨霧道路東邊的廢棄礦坑。', done: !!f.bandit });
   for (const k in COMMISSIONS) { const s = comState(k, st); if (!s || s.s === 'done') continue; const p = comProgress(k, st); L.push({ n: '委託：' + COMMISSIONS[k].n, t: COMMISSIONS[k].d + '（' + p.cur + '/' + p.max + '）' + (p.ready ? '→ 回告示板交付' : ''), done: false }); }
   const dn = Object.keys(COMMISSIONS).filter(k => (comState(k, st) || {}).s === 'done').length; if (dn) L.push({ n: '委託告示板', t: '已完成 ' + dn + '/' + Object.keys(COMMISSIONS).length + ' 件委託。', done: dn === Object.keys(COMMISSIONS).length });
@@ -2553,6 +2556,411 @@ const MINE_EVENTS = {
   },
 };
 
+/* ===================== BESTIARY v16: families (no monster elements), monster-only skills, new monsters, rares, catacomb ===================== */
+// Monsters no longer have an element. Elements live on skills (player & monster) and on special weapons.
+// Weakness / resistance / status immunity come from the monster's FAMILY (種族). Add a row to extend.
+const FAMILIES = {
+  beast: { n: '獸族', c: '#c88a4a', weak: ['火'], resist: [], immune: [] },
+  insect: { n: '蟲族', c: '#9ab83a', weak: ['火'], resist: ['草'], immune: [] },
+  plant: { n: '植物', c: '#4caf50', weak: ['火'], resist: ['水'], immune: [] },
+  bird: { n: '飛禽', c: '#6aa8e8', weak: ['雷'], resist: ['草'], immune: [] },
+  ooze: { n: '軟泥', c: '#4a9ad8', weak: ['雷'], resist: ['水'], immune: [] },
+  aquatic: { n: '水棲', c: '#3a8aa0', weak: ['雷', '草'], resist: ['火', '水'], immune: [] },
+  construct: { n: '構造體', c: '#9a8e7a', weak: ['水', '草'], resist: ['雷'], immune: ['psn'] },
+  human: { n: '人類', c: '#c8a878', weak: [], resist: [], immune: [] },
+  undead: { n: '不死', c: '#9a88c8', weak: ['火'], resist: ['水'], immune: ['psn', 'slp'] },
+  spirit: { n: '精靈', c: '#f08a3a', weak: ['水'], resist: ['火'], immune: ['brn'] },
+};
+const FAM_WEAK = 1.5, FAM_RESIST = 0.6, FOE_POWER = 1.15;
+const famOf = b => FAMILIES[b.fam] || null;
+function famMult(el, b) { const f = famOf(b); if (!f || !el || el === '一般') return 1; return f.weak.includes(el) ? FAM_WEAK : f.resist.includes(el) ? FAM_RESIST : 1; }
+function famBadge(x, fam, X, Y, w = 34) { const f = FAMILIES[fam]; if (!f) return X; x.fillStyle = shade(f.c, -0.45); x.fillRect(X, Y, w, 12); x.fillStyle = f.c; x.fillRect(X, Y, 2, 12); Font.drawC(x, f.n, X + w / 2 + 1, Y - 2, '#ffffff', null, 10); return X + w; }
+function famLine(fam) { const f = FAMILIES[fam]; if (!f) return ''; return (f.weak.length ? '弱：' + f.weak.join('') : '弱：—') + '　' + (f.resist.length ? '抗：' + f.resist.join('') : ''); }
+
+/* ---------- Monster-only skills (never learnable by the hero; own names, own VFX in MFX) ---------- */
+const MON_MOVES = {
+  m_capBonk: { n: '蕈傘頭槌', t: '一般', cat: '物', pow: 35, acc: 95, pp: 30, d: '用硬硬的蕈傘撞過來。' },
+  m_poisonSpore: { n: '毒孢子', t: '毒', cat: '變', acc: 75, pp: 20, st: 'psn', d: '噴出一團毒孢子。' },
+  m_rootLeech: { n: '吸根', t: '草', cat: '特', pow: 30, acc: 100, pp: 20, drain: 0.5, d: '從地底伸出細根吸取養分。' },
+  m_sleepPollen: { n: '睡眠花粉', t: '草', cat: '變', acc: 70, pp: 15, st: 'slp', d: '撒下讓人昏昏欲睡的花粉。' },
+  m_toxicCloud: { n: '毒霧', t: '毒', cat: '特', pow: 50, acc: 95, pp: 15, eff: { st: 'psn', p: 20 }, d: '吐出紫色的毒霧。' },
+  m_thornVine: { n: '棘藤', t: '草', cat: '物', pow: 45, acc: 100, pp: 25, d: '長滿尖刺的藤蔓抽打過來。' },
+  m_thornRain: { n: '荊棘雨', t: '草', cat: '物', pow: 75, acc: 90, pp: 10, d: '從天上灑下無數荊棘。' },
+  m_mossArmor: { n: '苔甲', t: '草', cat: '變', pp: 10, stat: { who: 'self', def: 2 }, d: '讓青苔長成厚厚的護甲。' },
+  m_rootCrush: { n: '樹根粉碎', t: '草', cat: '物', pow: 70, acc: 95, pp: 10, eff: { flinch: 1, p: 20 }, d: '巨大的樹根從地底竄出。' },
+  m_peck: { n: '啄擊', t: '飛', cat: '物', pow: 35, acc: 100, pp: 35, d: '用尖嘴連續啄擊。' },
+  m_featherGust: { n: '羽風', t: '飛', cat: '特', pow: 40, acc: 100, pp: 30, d: '拍翅捲起夾著羽毛的風。' },
+  m_chirp: { n: '吵鬧啼叫', t: '一般', cat: '變', acc: 100, pp: 30, stat: { who: 'foe', atk: -1 }, d: '尖銳的叫聲讓人心煩意亂。' },
+  m_dive: { n: '俯衝', t: '飛', cat: '物', pow: 60, acc: 95, pp: 15, d: '從高空急速俯衝。' },
+  m_lullaby: { n: '夜曲', t: '一般', cat: '變', acc: 55, pp: 15, st: 'slp', d: '低沉的夜之歌，讓人睡著。' },
+  m_screech: { n: '尖嘯', t: '一般', cat: '變', acc: 100, pp: 20, stat: { who: 'foe', def: -1 }, d: '刺耳的尖嘯讓防禦鬆懈。' },
+  m_sonic: { n: '超音波', t: '一般', cat: '特', pow: 50, acc: 95, pp: 15, d: '人耳聽不見的音波衝擊。' },
+  m_roll: { n: '滾撞', t: '一般', cat: '物', pow: 35, acc: 95, pp: 30, d: '把身體縮成一團滾過來。' },
+  m_harden: { n: '硬化', t: '一般', cat: '變', pp: 30, stat: { who: 'self', def: 1 }, d: '讓身體變得像石頭一樣硬。' },
+  m_pebbleToss: { n: '投石', t: '岩', cat: '物', pow: 45, acc: 90, pp: 20, d: '丟出一塊碎石。' },
+  m_quake: { n: '震地', t: '岩', cat: '物', pow: 60, acc: 100, pp: 15, eff: { flinch: 1, p: 30 }, d: '重重踏地，讓地面震動。' },
+  m_boulder: { n: '巨岩投擲', t: '岩', cat: '物', pow: 60, acc: 90, pp: 15, d: '舉起巨岩丟過來。' },
+  m_stoneWall: { n: '石壁', t: '岩', cat: '變', pp: 10, stat: { who: 'self', def: 2 }, d: '在身前築起石壁。' },
+  m_rumble: { n: '遠古轟鳴', t: '岩', cat: '變', acc: 100, pp: 10, stat: { who: 'foe', atk: -1, spa: -1 }, d: '來自遠古的轟鳴，讓人喪失鬥志。' },
+  m_rockfall: { n: '落岩崩', t: '岩', cat: '物', pow: 75, acc: 90, pp: 10, eff: { flinch: 1, p: 30 }, d: '讓頭頂的岩石崩落。' },
+  m_golemFist: { n: '岩石粉碎拳', t: '岩', cat: '物', pow: 100, acc: 100, pp: 5, charge: 1, d: '凝聚大地之力，下一回合全力揮拳。' },
+  m_crystalShard: { n: '晶片', t: '岩', cat: '物', pow: 60, acc: 95, pp: 15, d: '射出鋒利的水晶碎片。' },
+  m_crystalSpark: { n: '晶雷', t: '雷', cat: '特', pow: 70, acc: 95, pp: 10, eff: { st: 'par', p: 20 }, d: '水晶放出的電流。' },
+  m_prismRay: { n: '稜光射線', t: '岩', cat: '特', pow: 80, acc: 90, pp: 10, d: '把光折射成七彩射線。' },
+  m_bounce: { n: '彈跳', t: '一般', cat: '物', pow: 35, acc: 95, pp: 30, d: '彈起來壓到對手身上。' },
+  m_bubbleSpit: { n: '泡泡吐息', t: '水', cat: '特', pow: 30, acc: 100, pp: 30, eff: { stat: { spe: -1 }, p: 40 }, d: '吐出黏黏的泡泡。有時會降低速度。' },
+  m_goo: { n: '黏液', t: '一般', cat: '變', acc: 95, pp: 20, stat: { who: 'foe', spe: -1 }, d: '噴出黏液，讓對手動作變慢。' },
+  m_waterBomb: { n: '水彈', t: '水', cat: '特', pow: 50, acc: 95, pp: 15, d: '把身體的水凝成水彈射出。' },
+  m_engulf: { n: '吞噬', t: '一般', cat: '物', pow: 50, acc: 90, pp: 15, drain: 0.5, d: '把對手包進身體裡吸收。' },
+  m_oreShell: { n: '礦殼', t: '岩', cat: '變', pp: 15, stat: { who: 'self', def: 1, spd: 1 }, d: '讓吞下的礦石浮到表面。' },
+  m_acidSpit: { n: '酸液', t: '毒', cat: '特', pow: 40, acc: 100, pp: 25, eff: { stat: { spd: -1 }, p: 40 }, d: '吐出會溶解東西的酸液。' },
+  m_claw: { n: '利爪', t: '一般', cat: '物', pow: 40, acc: 100, pp: 35, d: '用利爪抓傷對手。' },
+  m_foxfire: { n: '狐火', t: '火', cat: '特', pow: 45, acc: 100, pp: 25, eff: { st: 'brn', p: 10 }, d: '放出搖曳的狐火。' },
+  m_pounce: { n: '飛撲', t: '一般', cat: '物', pow: 40, acc: 100, pp: 25, prio: 1, d: '搶先撲向對手。必定先出手。' },
+  m_blazeTail: { n: '焰尾', t: '火', cat: '物', pow: 65, acc: 95, pp: 15, eff: { st: 'brn', p: 10 }, d: '用燃燒的尾巴甩打。' },
+  m_leafDart: { n: '葉鏢', t: '草', cat: '特', pow: 50, acc: 100, pp: 20, d: '甩出尾巴上鋒利的葉片。' },
+  m_bite: { n: '撕咬', t: '一般', cat: '物', pow: 60, acc: 100, pp: 20, eff: { flinch: 1, p: 30 }, d: '用利牙狠狠咬住。' },
+  m_howl: { n: '狼嚎', t: '一般', cat: '變', pp: 20, stat: { who: 'self', atk: 1 }, d: '仰天長嚎，提升物攻。' },
+  m_rend: { n: '撕裂', t: '一般', cat: '物', pow: 75, acc: 95, pp: 10, d: '用爪牙把對手撕開。' },
+  m_sting: { n: '毒刺', t: '毒', cat: '物', pow: 20, acc: 100, pp: 35, eff: { st: 'psn', p: 30 }, d: '用尾針刺擊。有時會讓對手中毒。' },
+  m_buzzShock: { n: '振翅電流', t: '雷', cat: '特', pow: 40, acc: 100, pp: 30, eff: { st: 'par', p: 10 }, d: '高速振翅產生電流。' },
+  m_static: { n: '靜電', t: '雷', cat: '變', acc: 90, pp: 20, st: 'par', d: '放出靜電讓對手麻痺。' },
+  m_swarm: { n: '高速振翅', t: '一般', cat: '變', pp: 20, stat: { who: 'self', spe: 2 }, d: '翅膀振得看不見，速度大幅提升。' },
+  m_hornCharge: { n: '甲角衝撞', t: '一般', cat: '物', pow: 55, acc: 95, pp: 20, d: '低下頭用角衝撞。' },
+  m_carapace: { n: '甲殼', t: '一般', cat: '變', pp: 20, stat: { who: 'self', def: 1 }, d: '縮進堅硬的甲殼裡。' },
+  m_voltHorn: { n: '雷角', t: '雷', cat: '物', pow: 65, acc: 90, pp: 10, eff: { st: 'par', p: 20 }, d: '讓角帶電後刺擊。' },
+  m_venomFang: { n: '毒牙', t: '毒', cat: '物', pow: 50, acc: 100, pp: 20, eff: { st: 'psn', p: 30 }, d: '帶毒的獠牙。' },
+  m_web: { n: '蛛網', t: '一般', cat: '變', acc: 95, pp: 20, stat: { who: 'foe', spe: -2 }, d: '噴出黏黏的蛛網。' },
+  m_silkShot: { n: '吐絲', t: '一般', cat: '特', pow: 40, acc: 100, pp: 25, eff: { stat: { spe: -1 }, p: 50 }, d: '射出堅韌的蛛絲。' },
+  m_tongue: { n: '長舌', t: '一般', cat: '物', pow: 30, acc: 100, pp: 30, eff: { st: 'par', p: 30 }, d: '伸出黏黏的長舌頭。' },
+  m_mudShot: { n: '泥漿彈', t: '水', cat: '特', pow: 45, acc: 95, pp: 20, eff: { stat: { spe: -1 }, p: 50 }, d: '吐出濕黏的泥漿。' },
+  m_jaw: { n: '巨顎', t: '一般', cat: '物', pow: 70, acc: 95, pp: 10, eff: { flinch: 1, p: 30 }, d: '張開巨顎咬下。' },
+  m_tailSlam: { n: '甩尾', t: '水', cat: '物', pow: 65, acc: 95, pp: 15, d: '甩動濕淋淋的粗尾巴。' },
+  m_scaleGuard: { n: '鱗甲', t: '一般', cat: '變', pp: 15, stat: { who: 'self', def: 1 }, d: '豎起全身的鱗片。' },
+  m_knife: { n: '匪刃', t: '一般', cat: '物', pow: 45, acc: 100, pp: 30, d: '揮舞生鏽的短刀。' },
+  m_dirtyKick: { n: '陰險踢', t: '一般', cat: '物', pow: 40, acc: 100, pp: 20, prio: 1, d: '趁人不備踢過來。必定先出手。' },
+  m_taunt: { n: '挑釁', t: '一般', cat: '變', acc: 100, pp: 20, stat: { who: 'foe', def: -1 }, d: '惡毒的嘲笑讓人失去冷靜。' },
+  m_throwDagger: { n: '飛刀', t: '一般', cat: '物', pow: 50, acc: 95, pp: 15, d: '甩出藏在袖子裡的飛刀。' },
+  m_gutSlash: { n: '斷骨砍', t: '一般', cat: '物', pow: 70, acc: 95, pp: 10, eff: { stat: { def: -1 }, p: 100 }, d: '連骨頭一起砍斷的一斧。必定降低物防。' },
+  m_warCry: { n: '戰吼', t: '一般', cat: '變', pp: 10, stat: { who: 'self', atk: 1 }, d: '野蠻的吼聲，提升物攻。' },
+  m_axeSpin: { n: '旋風斧', t: '一般', cat: '物', pow: 120, acc: 100, pp: 5, charge: 1, chargeMsg: '高高舉起了戰斧，開始旋轉！', warn: '（下一擊非常危險……選擇「防禦」！）', d: '蓄力後揮出的旋轉巨斧。' },
+  m_emberSpit: { n: '火唾', t: '火', cat: '特', pow: 40, acc: 100, pp: 25, eff: { st: 'brn', p: 10 }, d: '吐出一團火星。' },
+  m_flare: { n: '爆燃', t: '火', cat: '特', pow: 60, acc: 95, pp: 15, eff: { st: 'brn', p: 10 }, d: '全身猛烈燃燒爆開。' },
+  m_heatHaze: { n: '熱浪', t: '火', cat: '變', acc: 100, pp: 15, stat: { who: 'foe', spa: -1, spd: -1 }, d: '扭曲空氣的熱浪讓人頭暈。' },
+  m_flicker: { n: '閃爍', t: '一般', cat: '變', pp: 20, stat: { who: 'self', spe: 1, spa: 1 }, d: '火光忽明忽暗，越燒越旺。' },
+  m_boneClub: { n: '骨棒', t: '一般', cat: '物', pow: 55, acc: 95, pp: 20, d: '揮舞粗大的骨頭。' },
+  m_rattle: { n: '骨鳴', t: '一般', cat: '變', acc: 100, pp: 20, stat: { who: 'foe', def: -1 }, d: '全身骨頭喀啦作響，讓人發毛。' },
+  m_boneThrow: { n: '投骨', t: '一般', cat: '物', pow: 45, acc: 95, pp: 20, d: '把骨頭像迴力鏢一樣丟出。' },
+  m_ghostFire: { n: '鬼火', t: '火', cat: '特', pow: 50, acc: 95, pp: 15, eff: { st: 'brn', p: 20 }, d: '青白色的鬼火纏上身來。' },
+  m_soulSip: { n: '吸魂', t: '一般', cat: '特', pow: 40, acc: 100, pp: 15, drain: 0.5, d: '吸走對手的一部分靈魂。' },
+  m_wail: { n: '哀嚎', t: '一般', cat: '變', acc: 100, pp: 15, stat: { who: 'foe', spe: -2 }, d: '悲慘的哀嚎讓人雙腿發軟。' },
+  m_hex: { n: '咒縛', t: '一般', cat: '變', acc: 95, pp: 15, stat: { who: 'foe', atk: -1, spd: -1 }, d: '以詛咒纏住對手。' },
+  m_drownHand: { n: '溺水之手', t: '水', cat: '特', pow: 60, acc: 95, pp: 15, d: '從水中伸出無數隻手。' },
+  m_chillMist: { n: '寒霧', t: '水', cat: '特', pow: 45, acc: 100, pp: 20, eff: { stat: { spe: -1 }, p: 40 }, d: '冰冷刺骨的水霧。' },
+  m_darkPulse: { n: '冥波', t: '一般', cat: '特', pow: 70, acc: 95, pp: 10, eff: { flinch: 1, p: 20 }, d: '從冥界湧出的黑色波動。' },
+  m_boneRush: { n: '骨牙連擊', t: '一般', cat: '物', pow: 70, acc: 95, pp: 10, d: '用骨頭獠牙連續咬擊。' },
+  m_runeBeam: { n: '符文光', t: '雷', cat: '特', pow: 70, acc: 95, pp: 10, eff: { st: 'par', p: 10 }, d: '身上的符文放出雷光。' },
+  m_darkSlash: { n: '冥刃', t: '一般', cat: '物', pow: 85, acc: 95, pp: 10, d: '纏著黑霧的斬擊。' },
+  m_boneShield: { n: '骸骨盾擊', t: '一般', cat: '物', pow: 60, acc: 100, pp: 15, eff: { flinch: 1, p: 30 }, d: '用骨盾狠狠撞過來。' },
+  m_deathCry: { n: '亡者戰吼', t: '一般', cat: '變', pp: 10, stat: { who: 'self', atk: 1, def: 1 }, d: '亡者的戰吼，提升物攻和物防。' },
+};
+// internal class for every monster skill (for VFX/management); fx id = move id → MFX[id]
+const MON_CLASS = {
+  claw: ['m_claw', 'm_rend'], bite: ['m_bite', 'm_venomFang', 'm_jaw', 'm_boneRush'], strike: ['m_capBonk', 'm_roll', 'm_bounce', 'm_hornCharge', 'm_tongue', 'm_boneClub', 'm_boneShield', 'm_tailSlam', 'm_dirtyKick', 'm_pounce'],
+  slash: ['m_knife', 'm_gutSlash', 'm_darkSlash', 'm_axeSpin'], pierce: ['m_peck', 'm_dive', 'm_sting', 'm_voltHorn'], proj: ['m_pebbleToss', 'm_boulder', 'm_crystalShard', 'm_throwDagger', 'm_boneThrow', 'm_leafDart', 'm_silkShot', 'm_mudShot', 'm_acidSpit', 'm_emberSpit'],
+  bolt: ['m_waterBomb', 'm_bubbleSpit', 'm_foxfire', 'm_ghostFire', 'm_buzzShock', 'm_crystalSpark', 'm_runeBeam', 'm_sonic'], area: ['m_quake', 'm_rockfall', 'm_thornRain', 'm_toxicCloud', 'm_featherGust', 'm_flare', 'm_prismRay', 'm_drownHand', 'm_chillMist', 'm_darkPulse', 'm_rootCrush', 'm_thornVine', 'm_blazeTail'],
+  drain: ['m_rootLeech', 'm_engulf', 'm_soulSip'], powder: ['m_poisonSpore', 'm_sleepPollen'], sound: ['m_chirp', 'm_lullaby', 'm_screech', 'm_rattle', 'm_wail'],
+  buff: ['m_mossArmor', 'm_harden', 'm_stoneWall', 'm_oreShell', 'm_howl', 'm_swarm', 'm_carapace', 'm_scaleGuard', 'm_warCry', 'm_flicker', 'm_deathCry'], debuff: ['m_rumble', 'm_goo', 'm_static', 'm_web', 'm_taunt', 'm_heatHaze', 'm_hex'], charge: ['m_golemFist'],
+};
+// retire the old shared monster moves; the hero never had them
+for (const k of ['tackle', 'growl', 'tailWhip', 'scratch', 'peck', 'gust', 'absorb', 'megaDrain', 'poisonPowder', 'sleepPowder', 'vineWhip', 'bubble', 'waterGun', 'ember', 'shock', 'thunderWave', 'poisonSting', 'acid', 'harden', 'ironWall', 'rockThrow', 'rockSlide', 'bite', 'howl', 'quickAttack', 'sing', 'lick', 'agility', 'stomp', 'ancientRoar', 'golemFist', 'crystalSpark', 'prismRay', 'axeSpin']) delete MOVES[k];
+Object.assign(MOVES, MON_MOVES);
+for (const c in MON_CLASS) for (const k of MON_CLASS[c]) { MOVES[k].cls = c; MOVES[k].fx = k; MOVES[k].foe = 1; }
+
+/* ---------- Existing species → family + monster-only learnsets ---------- */
+const FAM_SET = {
+  mush: ['plant', [[1, 'm_capBonk'], [1, 'm_poisonSpore'], [6, 'm_rootLeech'], [10, 'm_sleepPollen']]],
+  bird: ['bird', [[1, 'm_peck'], [1, 'm_chirp'], [5, 'm_featherGust'], [9, 'm_dive']]],
+  pebble: ['construct', [[1, 'm_roll'], [1, 'm_harden'], [4, 'm_pebbleToss'], [9, 'm_quake']]],
+  slime: ['ooze', [[1, 'm_bounce'], [1, 'm_goo'], [4, 'm_bubbleSpit'], [9, 'm_waterBomb']]],
+  fox: ['beast', [[1, 'm_claw'], [1, 'm_foxfire'], [6, 'm_pounce'], [10, 'm_blazeTail']]],
+  bee: ['insect', [[1, 'm_sting'], [1, 'm_buzzShock'], [7, 'm_static'], [10, 'm_swarm']]],
+  frog: ['aquatic', [[1, 'm_tongue'], [1, 'm_acidSpit'], [6, 'm_mudShot'], [10, 'm_scaleGuard']]],
+  wolf: ['beast', [[1, 'm_bite'], [1, 'm_howl'], [1, 'm_pounce'], [1, 'm_rend']]],
+  flower: ['plant', [[1, 'm_thornVine'], [1, 'm_rootLeech'], [1, 'm_sleepPollen'], [1, 'm_thornRain']]],
+  croc: ['aquatic', [[1, 'm_jaw'], [1, 'm_tailSlam'], [1, 'm_mudShot'], [1, 'm_scaleGuard']]],
+  thornMush: ['plant', [[1, 'm_capBonk'], [1, 'm_poisonSpore'], [1, 'm_rootLeech'], [10, 'm_toxicCloud']]],
+  nightBird: ['bird', [[1, 'm_peck'], [1, 'm_featherGust'], [1, 'm_lullaby'], [11, 'm_dive']]],
+  leafFox: ['beast', [[1, 'm_claw'], [1, 'm_leafDart'], [1, 'm_pounce'], [12, 'm_rend']]],
+  mossGiant: ['plant', [[1, 'm_rootCrush'], [1, 'm_quake'], [1, 'm_mossArmor'], [1, 'm_rootLeech']]],
+  caveBat: ['bird', [[1, 'm_dive'], [1, 'm_screech'], [1, 'm_sonic'], [10, 'm_lullaby']]],
+  mudSlime: ['ooze', [[1, 'm_bounce'], [1, 'm_waterBomb'], [1, 'm_engulf'], [1, 'm_goo']]],
+  crystalPebble: ['construct', [[1, 'm_crystalShard'], [1, 'm_harden'], [1, 'm_quake'], [1, 'm_crystalSpark']]],
+  crystalGolem: ['construct', [[1, 'm_crystalShard'], [1, 'm_quake'], [1, 'm_prismRay'], [1, 'm_rumble']]],
+  golem: ['construct', [[1, 'm_boulder'], [1, 'm_quake'], [1, 'm_stoneWall'], [1, 'm_rumble']]],
+  mineBat: ['bird', [[1, 'm_peck'], [1, 'm_screech'], [1, 'm_sonic'], [1, 'm_featherGust']]],
+  oreSlime: ['ooze', [[1, 'm_bounce'], [1, 'm_oreShell'], [1, 'm_pebbleToss'], [1, 'm_acidSpit']]],
+  bandit: ['human', [[1, 'm_knife'], [1, 'm_dirtyKick'], [1, 'm_taunt'], [12, 'm_throwDagger']]],
+  banditBoss: ['human', [[1, 'm_gutSlash'], [1, 'm_warCry'], [1, 'm_dirtyKick'], [1, 'm_knife']]],
+};
+for (const k in FAM_SET) { const s = SPECIES[k]; s.fam = FAM_SET[k][0]; s.learn = FAM_SET[k][1]; delete s.t; }
+
+/* ---------- New monster art (front-facing, 64×64 design space) ---------- */
+ART.thunderBeetle = { parts: sym([
+  { s: 'e', x: 13, y: 52, rx: 7, ry: 2.2, rot: 0.5, c: '#23233a', m: 1 },
+  { s: 'e', x: 12, y: 40, rx: 7, ry: 2.2, rot: -0.35, c: '#23233a', m: 1 },
+  { s: 'e', x: 32, y: 45, rx: 19, ry: 15, c: '#3a4aa8', id: 'shell' },
+  { s: 'e', x: 24, y: 42, rx: 4, ry: 9, c: '#7a90f0', line: false, clip: 'shell', m: 1 },
+  { s: 'e', x: 32, y: 29, rx: 11, ry: 7.5, c: '#262e6a' },
+  { s: 'p', pts: [[27, 30], [21, 36], [25, 36]], c: '#e8e0c8', m: 1 },
+  { s: 'p', pts: [[29, 26], [35, 26], [37, 12], [33, 2], [31, 10], [28, 14]], c: '#f4d23a' },
+]), details: symD([
+  { s: 'eye', x: 26.5, y: 28, w: 1.6, h: 2, c: '#fff4a0', m: 1 },
+  { s: 'line', pts: [[32, 32], [32, 59]], c: '#18183a' },
+  { s: 'line', pts: [[23, 46], [27, 42], [25, 50], [29, 47]], c: '#fff080', m: 1 },
+]) };
+ART.emberSpirit = { parts: sym([
+  { s: 'e', x: 12, y: 14, rx: 2.5, ry: 3, c: '#ffb040', m: 1 },
+  { s: 'p', pts: [[32, 3], [40, 16], [50, 22], [49, 42], [41, 56], [23, 56], [15, 42], [14, 22], [24, 16]], c: '#e0461a', id: 'f' },
+  { s: 'p', pts: [[32, 14], [38, 24], [43, 34], [40, 50], [24, 50], [21, 34], [26, 24]], c: '#ff9a2a', line: false, clip: 'f' },
+  { s: 'e', x: 32, y: 41, rx: 10, ry: 10, c: '#fff0a0', line: false, clip: 'f', glow: 1 },
+]), details: symD([
+  { s: 'eye', x: 28, y: 39, w: 1.8, h: 3, c: '#6a1400', m: 1 },
+  { s: 'line', pts: [[29, 46], [32, 48], [35, 46]], c: '#6a1400' },
+]) };
+function skeletonDef(o) {
+  const bone = o.bone || '#e8e0c8', dark = o.dark || '#2e2820';
+  return { parts: sym([
+    { s: 'e', x: 26, y: 56, rx: 3, ry: 7, c: bone, m: 1 },
+    { s: 'e', x: 32, y: 47, rx: 8, ry: 3, c: shade(bone, -0.08) },
+    { s: 'e', x: 18, y: 39, rx: 2.8, ry: 9, rot: 0.3, c: bone, m: 1 },
+    { s: 'e', x: 32, y: 37, rx: 10, ry: 8.5, c: bone, id: 'rib' },
+    { s: 'e', x: 32, y: 38, rx: 7, ry: 5.5, c: dark, line: false, clip: 'rib' },
+    ...(o.armor ? [{ s: 'e', x: 32, y: 38, rx: 12, ry: 10, c: o.armor, id: 'plate' }, { s: 'e', x: 32, y: 35, rx: 5, ry: 4, c: shade(o.armor, 0.3), line: false, clip: 'plate' }] : []),
+    { s: 'e', x: 32, y: 20, rx: 10, ry: 10, c: shade(bone, 0.06), id: 'sk' },
+    { s: 'e', x: 32, y: 29, rx: 6, ry: 3, c: bone },
+    ...(o.helm ? [{ s: 'p', pts: [[21, 18], [22, 9], [32, 5], [42, 9], [43, 18], [39, 14], [25, 14]], c: o.helm }, { s: 'p', pts: [[30, 6], [34, 6], [36, -2], [30, 0]], c: o.plume || '#a02030' }] : []),
+    ...(o.shield ? [{ s: 'p', pts: [[4, 32], [18, 30], [18, 50], [11, 58], [4, 50]], c: o.shield }] : []),
+    { s: 'p', pts: o.sword ? [[49, 52], [52, 52], [55, 18], [53, 14], [51, 18]] : [[48, 50], [51, 50], [56, 28], [53, 26]], c: o.sword || bone },
+    ...(o.sword ? [{ s: 'p', pts: [[45, 50], [56, 50], [56, 53], [45, 53]], c: '#4a3a30' }] : [{ s: 'e', x: 55, y: 25, rx: 4, ry: 4, c: bone }]),
+  ]), details: symD([
+    { s: 'ell', x: 28, y: 20, rx: 2.8, ry: 3.2, c: '#140e0a', m: 1 },
+    { s: 'dot', x: 28, y: 20, c: o.eye || '#60f0ff', m: 1 },
+    { s: 'poly', pts: [[31, 24], [33, 24], [32, 26]], c: '#140e0a' },
+    { s: 'line', pts: [[28, 29], [36, 29]], c: '#5a5040' },
+    ...(o.armor ? [] : [{ s: 'line', pts: [[25, 34], [39, 34]], c: '#8a806a' }, { s: 'line', pts: [[25, 38], [39, 38]], c: '#8a806a' }, { s: 'line', pts: [[26, 42], [38, 42]], c: '#8a806a' }]),
+  ]) };
+}
+ART.skeleton = skeletonDef({});
+ART.boneKnight = skeletonDef({ bone: '#d8d0bc', armor: '#4a5068', helm: '#3a4058', shield: '#5a4a6a', sword: '#b8c4d8', eye: '#ff4060', plume: '#8a2030' });
+ART.goldSkeleton = skeletonDef({ bone: '#f4cc48', dark: '#5a3a08', eye: '#ffffff' });
+ART.ghostLamp = { parts: sym([
+  { s: 'e', x: 32, y: 7, rx: 5, ry: 4, c: '#5a4a3a' },
+  { s: 'p', pts: [[20, 17], [44, 17], [40, 10], [24, 10]], c: '#4a3a30' },
+  { s: 'e', x: 32, y: 33, rx: 13, ry: 16, c: '#34525e', id: 'glass' },
+  { s: 'p', pts: [[32, 19], [39, 31], [37, 44], [27, 44], [25, 31]], c: '#7af0cc', line: false, clip: 'glass', glow: 1 },
+  { s: 'p', pts: [[21, 48], [43, 48], [39, 54], [25, 54]], c: '#4a3a30' },
+  { s: 'p', pts: [[26, 54], [38, 54], [37, 61], [33, 57], [30, 63], [27, 58]], c: '#9ae8d8', noShade: 1 },
+]), details: symD([
+  { s: 'line', pts: [[26, 20], [24, 46]], c: '#2a2018', m: 1 },
+  { s: 'ell', x: 29, y: 34, rx: 1.6, ry: 2.4, c: '#0a3a30', m: 1 },
+  { s: 'line', pts: [[30, 39], [32, 40], [34, 39]], c: '#0a3a30' },
+]) };
+ART.caveSpider = { parts: sym([
+  { s: 'p', pts: [[24, 36], [12, 18], [15, 16], [27, 33]], c: '#2e1e30', m: 1 },
+  { s: 'p', pts: [[22, 40], [5, 30], [3, 34], [20, 44]], c: '#2e1e30', m: 1 },
+  { s: 'p', pts: [[22, 46], [4, 48], [4, 52], [22, 50]], c: '#2e1e30', m: 1 },
+  { s: 'p', pts: [[24, 50], [10, 62], [14, 62], [26, 53]], c: '#2e1e30', m: 1 },
+  { s: 'e', x: 32, y: 45, rx: 16, ry: 13, c: '#4a2a4c', id: 'ab' },
+  { s: 'e', x: 32, y: 47, rx: 5, ry: 6.5, c: '#d03040', line: false, clip: 'ab' },
+  { s: 'e', x: 32, y: 31, rx: 10, ry: 8, c: '#3a2038' },
+  { s: 'p', pts: [[28, 36], [30, 36], [29, 43]], c: '#ece4d4', m: 1 },
+]), details: symD([
+  { s: 'ell', x: 28.5, y: 29, rx: 1.6, ry: 1.6, c: '#ff3040', m: 1 },
+  { s: 'dot', x: 30.5, y: 26, c: '#ff6070', m: 1 },
+  { s: 'dot', x: 26, y: 26.5, c: '#ff6070', m: 1 },
+]) };
+ART.wraith = { parts: sym([
+  { s: 'p', pts: [[12, 32], [2, 44], [8, 47], [17, 40]], c: '#4a3e66', m: 1 },
+  { s: 'e', x: 5, y: 46, rx: 3, ry: 2.5, c: '#c8c0e0', m: 1 },
+  { s: 'p', pts: [[32, 5], [46, 13], [52, 32], [54, 50], [48, 58], [43, 51], [38, 60], [32, 52], [26, 60], [21, 51], [16, 58], [10, 50], [12, 32], [18, 13]], c: '#5e4e84', id: 'g' },
+  { s: 'e', x: 32, y: 24, rx: 11, ry: 12, c: '#150f22', line: false, clip: 'g' },
+]), details: symD([
+  { s: 'ell', x: 28, y: 24, rx: 2.2, ry: 1.5, c: '#ff4060', m: 1 },
+  { s: 'dot', x: 28, y: 24, c: '#ffd0d8', m: 1 },
+]) };
+ART.drownedSoul = recolorDef(ART.wraith, hueShift(-80, 0.9, 1.1));
+ART.paleWraith = recolorDef(ART.wraith, hueShift(0, 0.15, 1.7));
+ART.boneHound = { parts: sym([
+  { s: 'e', x: 22, y: 56, rx: 3, ry: 7, c: '#d8d0b8', m: 1 },
+  { s: 'e', x: 32, y: 45, rx: 16, ry: 10, c: '#e0d8c0', id: 'b' },
+  { s: 'e', x: 32, y: 46, rx: 12, ry: 7, c: '#221c1a', line: false, clip: 'b' },
+  { s: 'p', pts: [[15, 32], [19, 14], [25, 21], [32, 9], [39, 21], [45, 14], [49, 32]], c: '#8a3ac8', glow: 1 },
+  { s: 'p', pts: [[21, 22], [15, 5], [27, 16]], c: '#d8d0b8', m: 1 },
+  { u: [{ s: 'e', x: 32, y: 26, rx: 12, ry: 9 }, { s: 'e', x: 32, y: 35, rx: 7, ry: 6 }], c: '#ece4d0', id: 'h' },
+]), details: symD([
+  { s: 'ell', x: 27, y: 26, rx: 2.6, ry: 2.2, c: '#140e0a', m: 1 },
+  { s: 'dot', x: 27, y: 26, c: '#d070ff', m: 1 },
+  { s: 'line', pts: [[27, 37], [37, 37]], c: '#5a5040' },
+  { s: 'line', pts: [[24, 44], [40, 44]], c: '#9a907a' }, { s: 'line', pts: [[25, 48], [39, 48]], c: '#9a907a' },
+]) };
+ART.runeGolem = recolorDef(ART.golem, hueShift(170, 0.35, 0.72));
+ART.runeGolem.details = (ART.runeGolem.details || []).concat([{ s: 'line', pts: [[26, 34], [30, 30], [34, 34], [38, 30]], c: '#60e8ff' }, { s: 'line', pts: [[28, 42], [36, 42]], c: '#60e8ff' }, { s: 'line', pts: [[32, 38], [32, 46]], c: '#60e8ff' }]);
+ART.goldSlime = recolorDef(ART.slime, hueShift(-165, 1.3, 1.1));
+ART.gemSlime = recolorDef(ART.oreSlime || ART.slime, hueShift(95, 2.2, 1.1));
+ART.moonFox = recolorDef(ART.fox, hueShift(185, 0.35, 1.2));
+ART.crystalBat = recolorDef(ART.bird, hueShift(-28, 1.4, 1.3));
+
+/* ---------- New species ---------- */
+Object.assign(SPECIES, {
+  thunderBeetle: { n: '雷角甲蟲', fam: 'insect', base: [55, 58, 62, 45, 45, 40], exp: 66, gold: 12, mat: 'beetleShell', learn: [[1, 'm_hornCharge'], [1, 'm_buzzShock'], [8, 'm_carapace'], [10, 'm_voltHorn']], dex: '角會累積雷電的甲蟲。雷雨過後特別多。' },
+  emberSpirit: { n: '火燼精', fam: 'spirit', base: [45, 35, 40, 68, 55, 64], exp: 64, gold: 12, mat: 'emberCore', trait: 'swift', learn: [[1, 'm_emberSpit'], [1, 'm_flicker'], [8, 'm_heatHaze'], [10, 'm_flare']], dex: '營火的餘燼化成的小精靈。碰到水就會發出嘶嘶聲。' },
+  skeleton: { n: '骷髏兵', fam: 'undead', base: [60, 72, 58, 35, 50, 52], exp: 88, gold: 20, mat: 'boneShard', learn: [[1, 'm_boneClub'], [1, 'm_rattle'], [1, 'm_boneThrow'], [16, 'm_darkSlash']], dex: '遺跡守衛的遺骨。千年後仍在巡邏。' },
+  ghostLamp: { n: '幽靈燈', fam: 'undead', base: [52, 38, 50, 72, 68, 58], exp: 86, gold: 18, mat: 'ectoplasm', trait: 'healer', learn: [[1, 'm_ghostFire'], [1, 'm_soulSip'], [1, 'm_wail'], [1, 'm_hex']], dex: '被亡魂附身的油燈。在遺跡的黑暗中飄來飄去。' },
+  caveSpider: { n: '礦坑毒蛛', fam: 'insect', base: [52, 62, 48, 44, 48, 70], exp: 80, gold: 16, mat: 'silk', trait: 'swift', learn: [[1, 'm_venomFang'], [1, 'm_web'], [1, 'm_silkShot'], [13, 'm_claw']], dex: '在廢棄坑道結網的大蜘蛛。蛛絲可以織成布料。' },
+  drownedSoul: { n: '溺魂', fam: 'undead', base: [66, 45, 60, 78, 74, 58], exp: 95, gold: 20, mat: 'ectoplasm', learn: [[1, 'm_drownHand'], [1, 'm_chillMist'], [1, 'm_soulSip'], [1, 'm_wail']], dex: '沉在水道深處的亡魂。會把人拖進水裡。' },
+  wraith: { n: '怨靈', fam: 'undead', base: [70, 55, 66, 92, 84, 80], exp: 120, gold: 26, mat: 'ectoplasm', trait: 'swift', learn: [[1, 'm_ghostFire'], [1, 'm_hex'], [1, 'm_soulSip'], [1, 'm_darkPulse']], dex: '墓穴深處徘徊的怨念。眼中燃著紅光。' },
+  boneHound: { n: '骨犬', fam: 'undead', base: [72, 92, 64, 40, 58, 88], exp: 120, gold: 26, mat: 'boneShard', trait: 'berserk', learn: [[1, 'm_bite'], [1, 'm_boneRush'], [1, 'm_howl'], [1, 'm_rattle']], dex: '守墓人養的獵犬，死後依然守著墓穴。' },
+  runeGolem: { n: '符文石像', fam: 'construct', base: [85, 80, 100, 80, 80, 45], exp: 130, gold: 30, mat: 'stone', learn: [[1, 'm_runeBeam'], [1, 'm_quake'], [1, 'm_stoneWall'], [1, 'm_boulder']], dex: '刻滿古代符文的石像。和古岩魔像是同一個時代的造物。' },
+  boneKnight: { n: '骸骨騎士', fam: 'undead', base: [100, 105, 98, 55, 80, 70], exp: 200, gold: 60, elite: 1, drop: 'boneKnightMail', learn: [[1, 'm_darkSlash'], [1, 'm_boneShield'], [1, 'm_deathCry'], [1, 'm_rattle']], dex: '守護古王墓室的騎士。盔甲上刻著王都騎士團的紋章。' },
+  goldSlime: { n: '金泡泡姆', fam: 'ooze', rare: 1, base: [40, 20, 90, 20, 90, 90], exp: 150, gold: 150, learn: [[1, 'm_bounce'], [1, 'm_goo']], dex: '【稀有】吞了金幣的泡泡姆。一不注意就會逃走。' },
+  moonFox: { n: '月光狐', fam: 'beast', rare: 1, base: [55, 50, 70, 60, 70, 95], exp: 200, gold: 80, learn: [[1, 'm_claw'], [1, 'm_foxfire'], [1, 'm_pounce']], dex: '【稀有】只在滿月的森林現身的銀狐。' },
+  gemSlime: { n: '寶石礦泥怪', fam: 'ooze', rare: 1, base: [50, 35, 110, 35, 110, 80], exp: 220, gold: 120, learn: [[1, 'm_bounce'], [1, 'm_oreShell']], dex: '【稀有】吞下寶石的礦泥怪。身體閃閃發光。' },
+  crystalBat: { n: '水晶蝠', fam: 'bird', rare: 1, base: [55, 60, 80, 60, 80, 120], exp: 260, gold: 100, learn: [[1, 'm_dive'], [1, 'm_sonic']], dex: '【稀有】翅膀長著水晶的蝙蝠。飛得極快。' },
+  goldSkeleton: { n: '黃金骷髏', fam: 'undead', rare: 1, base: [55, 55, 100, 30, 100, 80], exp: 240, gold: 150, learn: [[1, 'm_boneClub'], [1, 'm_rattle']], dex: '【稀有】戴滿陪葬金飾的骷髏。' },
+  paleWraith: { n: '幽光怨靈', fam: 'undead', rare: 1, base: [60, 50, 110, 80, 110, 110], exp: 320, gold: 120, learn: [[1, 'm_soulSip'], [1, 'm_wail'], [1, 'm_hex']], dex: '【稀有】散發蒼白光芒的怨靈。據說看見它會帶來好運。' },
+});
+Object.assign(MON_PANEL, {
+  thunderBeetle: { lv: 9, hp: 30, atk: 16, def: 17, spa: 13, spd: 13, spe: 12 },
+  emberSpirit: { lv: 9, hp: 25, atk: 10, def: 11, spa: 18, spd: 15, spe: 17, eva: 5 },
+  skeleton: { lv: 13, hp: 40, atk: 23, def: 18, spa: 12, spd: 16, spe: 17 },
+  ghostLamp: { lv: 13, hp: 34, atk: 12, def: 16, spa: 23, spd: 22, spe: 19, eva: 6 },
+  caveSpider: { lv: 12, hp: 33, atk: 19, def: 15, spa: 14, spd: 15, spe: 22 },
+  drownedSoul: { lv: 15, hp: 44, atk: 16, def: 20, spa: 26, spd: 25, spe: 20 },
+  wraith: { lv: 19, hp: 55, atk: 20, def: 24, spa: 33, spd: 30, spe: 28, eva: 6 },
+  boneHound: { lv: 19, hp: 58, atk: 33, def: 24, spa: 16, spd: 22, spe: 32, crit: 10 },
+  runeGolem: { lv: 20, hp: 68, atk: 30, def: 38, spa: 32, spd: 30, spe: 18 },
+  boneKnight: { lv: 21, hp: 110, atk: 38, def: 36, spa: 20, spd: 30, spe: 26, crit: 10 },
+  goldSlime: { lv: 4, hp: 20, atk: 6, def: 25, spa: 6, spd: 25, spe: 30, eva: 10 },
+  moonFox: { lv: 11, hp: 30, atk: 16, def: 20, spa: 20, spd: 20, spe: 30, eva: 10 },
+  gemSlime: { lv: 12, hp: 30, atk: 12, def: 40, spa: 12, spd: 40, spe: 26, eva: 8 },
+  crystalBat: { lv: 15, hp: 36, atk: 20, def: 28, spa: 20, spd: 28, spe: 40, eva: 12 },
+  goldSkeleton: { lv: 13, hp: 36, atk: 18, def: 35, spa: 10, spd: 35, spe: 26, eva: 8 },
+  paleWraith: { lv: 19, hp: 44, atk: 18, def: 40, spa: 30, spd: 40, spe: 36, eva: 12 },
+});
+Object.assign(ELITE_TEXT, { boneKnight: ['……喀啦……喀啦……', '「……擅闖王墓者……斬……」', '骸骨騎士舉起了劍！'] });
+
+/* ---------- New materials, gear (regional, no set bonuses), special ---------- */
+Object.assign(ITEMS, {
+  beetleShell: { n: '甲殼片', mat: 1, price: 0, sell: 30, d: '雷角甲蟲的甲殼。還帶著一點靜電。' },
+  emberCore: { n: '燼核', mat: 1, price: 0, sell: 35, d: '火燼精留下的小火核。摸起來暖暖的。' },
+  boneShard: { n: '骨片', mat: 1, price: 0, sell: 40, d: '古老的骨頭碎片。' },
+  ectoplasm: { n: '靈質', mat: 1, price: 0, sell: 50, d: '亡魂殘留的半透明物質。' },
+  silk: { n: '蛛絲', mat: 1, price: 0, sell: 40, d: '礦坑毒蛛的蛛絲。又細又韌。' },
+});
+SPECIALS.deathWard = { n: '亡者守護', d: '每場戰鬥一次：回合結束時HP低於30%，獲得3回合護盾。' };
+Object.assign(GEAR, {
+  // weapons (elemental weapons turn the hero's 一般 physical skills into their element)
+  emberKnife: { n: '燼火短刀', slot: 'weapon', t: 2, st: { atk: 6 }, elem: '火', d: '把燼核熔進刀身的短刀。刀刃一直是溫熱的。' },
+  voltSword: { n: '雷角劍', slot: 'weapon', t: 2, st: { atk: 6 }, sp: { hit: 5 }, elem: '雷', d: '用雷角甲蟲的甲殼打造的劍。揮動時會劈啪作響。' },
+  thornStaff: { n: '荊棘法杖', slot: 'weapon', t: 2, st: { spa: 7 }, sp: { elem: 4 }, elem: '草', spr: 'woodSword', d: '森林獵人用荊棘枝做的法杖。' },
+  tideStaff: { n: '潮汐法杖', slot: 'weapon', t: 3, st: { spa: 10 }, sp: { elem: 6 }, elem: '水', spr: 'woodSword', d: '王都水道工程師的法杖。杖頭的寶珠會自己滲水。' },
+  boneSaber: { n: '骸骨軍刀', slot: 'weapon', t: 3, st: { atk: 9 }, sp: { crit: 4, vs: ['undead', 20] }, d: '古代守衛的軍刀。對亡者特別有效。' },
+  stormStaff: { n: '雷鳴權杖', slot: 'weapon', t: 4, st: { spa: 13 }, sp: { elem: 8 }, elem: '雷', spr: 'woodSword', d: '古王的權杖。符文裡封著雷光。' },
+  kingsBlade: { n: '古王之劍', slot: 'weapon', t: 4, st: { atk: 12 }, sp: { crit: 4 }, elem: '火', d: '古王墓室中的陪葬劍。劍身燃著不滅的火。' },
+  // head
+  hunterCap: { n: '獵人羽帽', slot: 'head', t: 2, st: { def: 2, spd: 2, spe: 1 }, sp: { eva: 3 }, d: '插著夜梟羽毛的獵人帽。' },
+  boneHelm: { n: '骸骨頭盔', slot: 'head', t: 3, st: { def: 5, spd: 4 }, sp: { resist: ['一般', 8] }, d: '用古代守衛的骨片加固的頭盔。' },
+  // body
+  mistCloak: { n: '晨霧斗篷', slot: 'body', t: 2, st: { def: 3, spd: 4 }, sp: { eva: 3 }, d: '晨霧道路的旅人愛穿的輕薄斗篷。' },
+  silkRobe: { n: '蛛絲法袍', slot: 'body', t: 3, st: { def: 5, spd: 8 }, sp: { resist: ['毒', 15] }, d: '用礦坑毒蛛的絲織成的法袍。' },
+  runeMantle: { n: '符文披風', slot: 'body', t: 4, st: { def: 8, spd: 11 }, sp: { elem: 6 }, d: '繡著古代符文的披風。魔力在布料裡流動。' },
+  boneKnightMail: { n: '骸骨騎士鎧', slot: 'body', t: 4, st: { def: 11, spd: 6, hp: 6 }, fx: ['deathWard'], d: '骸骨騎士的鎧甲。刻著王都騎士團的紋章。' },
+  // feet
+  hunterBoots: { n: '獵人軟靴', slot: 'feet', t: 2, st: { spe: 4, def: 2 }, sp: { eva: 3 }, d: '走在落葉上也不會發出聲音的軟靴。' },
+  minerBoots: { n: '鐵趾工靴', slot: 'feet', t: 3, st: { spe: 3, def: 5 }, d: '礦工的鐵頭工作靴。又重又耐踢。' },
+  shadowBoots: { n: '影行靴', slot: 'feet', t: 3, st: { spe: 6, def: 2 }, sp: { eva: 5 }, d: '王都密探穿過的靴子。在水道裡被找到。' },
+  ancientGreaves: { n: '古代戰靴', slot: 'feet', t: 4, st: { spe: 6, def: 6 }, sp: { resist: ['岩', 12] }, d: '古王近衛的戰靴。' },
+  // accessories
+  beetleCharm: { n: '甲殼護符', slot: 'acc', t: 2, st: { def: 1, hp: 3 }, sp: { resist: ['雷', 15] }, d: '用甲殼片做的護符。能擋住靜電。' },
+  ectoLantern: { n: '靈光提燈', slot: 'acc', t: 3, st: { spa: 3 }, sp: { drain: 6 }, d: '裝著馴服過的幽靈火的小提燈。' },
+});
+// retarget the old "vs element" bonuses to families
+GEAR.fangDagger.sp.vs = ['beast', 15]; GEAR.foxBlade.sp.vs = ['plant', 20]; GEAR.crystalBlade.sp.vs = ['aquatic', 20]; GEAR.dawnSword.sp.vs = ['construct', 20];
+GEAR.foxBlade.elem = '火'; GEAR.crystalBlade.elem = '水'; GEAR.oakStaff.elem = '草'; GEAR.dawnSword.elem = '火';
+AFFIX_TABLE.vs.n = '對{t}傷害'; AFFIX_TABLE.vs.fam = 1;
+const OLD_VS = { 一般: 'human', 火: 'plant', 水: 'aquatic', 草: 'plant', 雷: 'bird', 岩: 'construct', 毒: 'insect', 飛: 'bird' };
+function migrateVs(st) { for (const g of st.gear || []) for (const a of g.a || []) if (a[0] === 'vs' && !FAMILIES[a[1]]) a[1] = OLD_VS[a[1]] || 'beast'; }
+RECIPES.push(
+  { out: 'emberKnife', mats: { emberCore: 3, stone: 2 }, gold: 500 }, { out: 'voltSword', mats: { beetleShell: 4, stone: 2 }, gold: 600 },
+  { out: 'beetleCharm', mats: { beetleShell: 3 }, gold: 400 }, { out: 'silkRobe', mats: { silk: 4, gel: 2 }, gold: 900 },
+  { out: 'boneHelm', mats: { boneShard: 5 }, gold: 1000 }, { out: 'ectoLantern', mats: { ectoplasm: 4, boneShard: 2 }, gold: 1200 },
+);
+SALVAGE.acc.push('silk'); SALVAGE.weapon.push('boneShard');
+
+/* ---------- Regional loot pools (each region has its own look; no overlap) ---------- */
+Object.assign(MAPS.route, { gearPool: ['ironSword', 'apprenticeStaff', 'mistDagger', 'clothCap', 'leather', 'mistCloak', 'travelBoots', 'mistBoots', 'swiftFeather', 'wolfNecklace'] });
+Object.assign(MAPS.forest, { gearPool: ['oakStaff', 'thornStaff', 'hunterCap', 'hunterLeather', 'hunterBoots', 'featherBoots', 'herbPouch'] });
+Object.assign(MAPS.mine, { gearPool: ['minerHelm', 'guardHelm', 'stoneMail', 'frogCloak', 'minerBoots', 'charm'] });
+Object.assign(MAPS.sewer, { gearPool: ['knightSword', 'tideStaff', 'knightHelm', 'chainMail', 'knightGreaves', 'shadowBoots', 'thornRing'] });
+
+/* ---------- Encounter tables & rare monsters (3%, may flee) ---------- */
+MAPS.route.encounters = [
+  { y0: 26, y1: 99, rate: 0.11, table: [['mush', 3, 5, 30], ['bird', 3, 5, 30], ['pebble', 3, 5, 15], ['slime', 4, 5, 25]] },
+  { y0: 11, y1: 25, rate: 0.11, table: [['fox', 6, 8, 22], ['bee', 6, 8, 22], ['frog', 6, 8, 22], ['mush', 6, 8, 8], ['bird', 6, 8, 8], ['pebble', 6, 8, 8], ['slime', 7, 8, 10]] },
+  { y0: 0, y1: 10, rate: 0.12, table: [['thunderBeetle', 8, 10, 24], ['emberSpirit', 8, 10, 22], ['fox', 8, 10, 16], ['bee', 8, 10, 14], ['frog', 8, 10, 14], ['pebble', 8, 10, 10]] },
+];
+MAPS.route.rare = ['goldSlime', 4, 8];
+MAPS.forest.encounters[0].table = [['thornMush', 9, 11, 22], ['nightBird', 9, 11, 22], ['leafFox', 10, 12, 22], ['thunderBeetle', 9, 11, 14], ['frog', 9, 11, 10], ['bee', 9, 11, 10]];
+MAPS.forest.rare = ['moonFox', 10, 12];
+MAPS.mine.encounters[0].table = [['mineBat', 11, 13, 26], ['oreSlime', 11, 13, 26], ['bandit', 11, 13, 24], ['caveSpider', 11, 13, 24]];
+MAPS.mine.rare = ['gemSlime', 11, 13];
+MAPS.sewer.encounters[0].table = [['caveBat', 14, 16, 26], ['mudSlime', 14, 16, 24], ['crystalPebble', 15, 17, 22], ['drownedSoul', 14, 16, 28]];
+MAPS.sewer.rare = ['crystalBat', 15, 17];
+Object.assign(MAPS.ruins, { encAll: 1, rare: ['goldSkeleton', 12, 14], gearPool: ['boneSaber', 'ruinStaff', 'boneHelm', 'stoneMail', 'ectoLantern'], encounters: [{ y0: 0, y1: 99, rate: 0.07, table: [['skeleton', 12, 14, 52], ['ghostLamp', 12, 14, 48]] }] });
+{ const R = MAPS.ruins.rows; R[10] = 'RRmssssssssssZRR'; }
+
+/* ---------- Catacomb under the ruins (Lv17–21, opens after the golem) ---------- */
+MAPS.catacomb = {
+  name: '遺跡地下墓穴', music: 'ruins', border: 'R', battleBg: 'ruins', encAll: 1, popup: 1,
+  rows: [
+    'RRRRRRRRRRRRRRRRRRRR',
+    'RRRRRRRsssssRRRRRRRR',
+    'RRRRRRsPsssPsRRRRRRR',
+    'RRRRRRsssssssRRRRRRR',
+    'RRRRRRRRRssRRRRRRRRR',
+    'RsssssRRRssRRRsssssR',
+    'RsPssssssssssssssPsR',
+    'RssssRRRRssRRRRssssR',
+    'RRsRRRRRRssRRRRRRsRR',
+    'RsssssRsssssssRssssR',
+    'RsmmssRssPsPssRssmsR',
+    'RssssssssssssssssssR',
+    'RRRsRRRRRssRRRRRRsRR',
+    'RsssssRsssssssRssssR',
+    'RssPssRssmmssRRsPssR',
+    'RssssssssssssssssssR',
+    'RRRRRRRRRssRRRRRRRRR',
+    'RssssssssssssssssssR',
+    'RsssRRRRRssRRRRRsssR',
+    'RsssRRRRRssRRRRRsssR',
+    'RRRRRRRRRssRRRRRRRRR',
+    'RRRRRRRRRsRRRRRRRRRR',
+  ],
+  exit: { x: 9, y: 21, to: ['ruins', 13, 9] },
+  elites: [{ id: 'boneKnight', sp: 'boneKnight', lv: 21, x: 9, y: 3, dir: 'down', sight: 2 }],
+  items: [{ id: 'k1', x: 11, y: 1, item: 'elixir' }, { id: 'k2', x: 1, y: 5, item: 'superPotion', n: 3 }, { id: 'k3', x: 18, y: 9, gold: 1500 }, { id: 'k4', x: 1, y: 13, item: 'ether', n: 3 }, { id: 'k5', x: 18, y: 18, item: 'powerFruit' }, { id: 'k6', x: 1, y: 18, item: 'stormStaff', q: 2 }, { id: 'k7', x: 7, y: 1, item: 'kingsBlade', q: 3 }],
+  gathers: [{ id: 'gk1', x: 17, y: 13, mat: 'boneShard' }, { id: 'gk2', x: 2, y: 10, mat: 'ectoplasm' }, { id: 'gk3', x: 16, y: 5, mat: 'crystal' }],
+  gearPool: ['stormStaff', 'kingsBlade', 'runeMantle', 'ancientGreaves', 'boneHelm', 'boneSaber'],
+  rare: ['paleWraith', 18, 20],
+  encounters: [{ y0: 0, y1: 99, rate: 0.08, table: [['wraith', 17, 20, 30], ['boneHound', 17, 20, 30], ['runeGolem', 18, 21, 22], ['skeleton', 18, 20, 18]] }],
+};
+EXPLORE.catacomb = '遺跡地下墓穴';
+ACHIEVEMENTS.push(
+  { id: 'knight', n: '冥府的騎士', d: '打倒墓穴深處的骸骨騎士。', ok: st => st.flags.boneKnight },
+  { id: 'rare3', n: '稀有獵人', d: '打倒3種稀有魔物。', ok: st => Object.keys(SPECIES).filter(k => SPECIES[k].rare && st.dex && st.dex[k] && st.dex[k].won).length >= 3 },
+);
+
 /* ===================== UI: text boxes, menus, screens ===================== */
 const UI = {
   stack: [], push(w) { this.stack.push(w); return w; }, remove(w) { const i = this.stack.indexOf(w); if (i >= 0) this.stack.splice(i, 1); },
@@ -2692,6 +3100,7 @@ function heroStats(st = Game.st) {
   s.vs = []; s.resist = {}; s.drain = 0; s.elem = 0; s.counter = 0; // equipment affixes & talents
   for (const T of TALENTS) { const r = (st.tal || {})[T.id] || 0; if (r) for (const k in T.st) s[k] = (s[k] || 0) + T.st[k] * r; }
   const CL = CLASSES[st.cls]; if (CL) for (const k in CL.st) s[k] = (s[k] || 0) + CL.st[k];
+  { const wg = gearBy(st.equip && st.equip.weapon, st); s.welem = wg && GEAR[wg.b].elem || null; }
   s.fx = {}; for (const g of equippedGear(st)) for (const f of GEAR[g.b].fx || []) s.fx[f] = 1;
   for (const g of equippedGear(st)) { const p = gearStats(g).sp; s.crit += p.crit || 0; s.hit += p.hit || 0; s.eva += p.eva || 0; s.drain += p.drain || 0; s.elem += p.elem || 0; s.vs.push(...p.vs); for (const t in p.resist) s.resist[t] = (s.resist[t] || 0) + p.resist[t]; }
   return s;
@@ -3134,9 +3543,9 @@ function* dexScreen() {
     if (top > 0) x.drawImage(UPARROW, 86, 26); if (top + VIS < list.length) x.drawImage(DOWNARROW, 86, 24 + VIS * 18 + 3);
     drawWin(x, 4, 164, 168, 88, 'menu'); const k = list[idx], e = dex[k];
     if (e && e.seen) { const im = battleSprite(k); x.drawImage(im, 0, 0, im.width, im.height, 8, 172, 72, 72); const sp = SPECIES[k];
-      typeBadge(x, sp.t, 86, 170, 28); Font.draw(x, sp.elite ? '精英' : sp.boss ? '頭目' : '野生', 120, 168, sp.boss ? UIC.bad : sp.elite ? UIC.warm : UIC.muted, UIC.textSh);
+      famBadge(x, sp.fam, 86, 170, 38); Font.draw(x, sp.rare ? '稀有' : sp.elite ? '精英' : sp.boss ? '頭目' : '野生', 128, 168, sp.rare ? '#ffd84a' : sp.boss ? UIC.bad : sp.elite ? UIC.warm : UIC.muted, UIC.textSh);
       if (view) { const P = MON_PANEL[k]; Font.draw(x, 'Lv' + P.lv + ' 能力', 86, 184, UIC.muted, UIC.textSh, 10); [['HP', P.hp], ['物攻', P.atk], ['物防', P.def], ['魔攻', P.spa], ['魔防', P.spd], ['速度', P.spe]].forEach(([a, b], i) => { Font.draw(x, a, 86, 197 + i * 9, UIC.muted, UIC.textSh, 9); Font.drawR(x, String(b), 164, 197 + i * 9, UIC.text, UIC.textSh, 9); }); }
-      else Font.wrap(sp.dex || '', 80).slice(0, 4).forEach((l, i) => Font.draw(x, l, 86, 186 + i * 15, UIC.text, UIC.textSh)); Font.drawR(x, 'A：' + (view ? '介紹' : '能力'), 166, 238, UIC.accent, UIC.textSh, 9); }
+      else { Font.draw(x, famLine(sp.fam), 86, 184, UIC.warm, UIC.textSh, 10); Font.wrap(sp.dex || '', 80, 11).slice(0, 3).forEach((l, i) => Font.draw(x, l, 86, 198 + i * 13, UIC.text, UIC.textSh, 11)); } Font.drawR(x, 'A：' + (view ? '介紹' : '能力'), 166, 238, UIC.accent, UIC.textSh, 9); }
     else Font.draw(x, '還沒有遇見過這種魔物。', 14, 170, UIC.muted, UIC.textSh);
   } };
   UI.push(scr);
@@ -3226,7 +3635,7 @@ class Overworld {
     if (this.p !== except && ((this.p.x === x && this.p.y === y) || (this.p.moving && this.p.tx === x && this.p.ty === y))) return this.p;
     return null;
   }
-  solidAt(x, y) { const c = this.tileAt(x, y); if (SOLID.has(c) || (c === 't' && !this.st.flags.golem)) return true; if (x >= 0 && y >= 0 && x < this.map.w && y < this.map.h && this.map.block.has(x + ',' + y)) return true; return false; }
+  solidAt(x, y) { const c = this.tileAt(x, y); if (SOLID.has(c) || (c === 't' && !this.st.flags.golem) || (c === 'Z' && this.st.flags.golem)) return true; if (x >= 0 && y >= 0 && x < this.map.w && y < this.map.h && this.map.block.has(x + ',' + y)) return true; return false; }
   /* ---------- update ---------- */
   update() {
     this.t++; this.st.time = (this.st.time || 0) + 1;
@@ -3301,6 +3710,7 @@ class Overworld {
     if ((c === '#' || (this.map.d.encAll && c === 's')) && !Game.noEnc) {
       const enc = (this.map.d.encounters || []).find(e => p.y >= e.y0 && p.y <= e.y1);
       if (enc && chance(enc.rate) && (st.steps - (st.lastBattleStep || 0)) > 2) {
+        const rr = this.map.d.rare; if (rr && chance(0.03)) { this.run(this.battleScript({ sp: rr[0], lv: rnd(rr[1], rr[2]), kind: 'wild' })); return; }
         if (st.lv >= 8 && chance(0.12)) { this.run(this.packScript(enc)); return; }
         const row = rollEnc(enc); this.run(this.battleScript({ sp: row[0], lv: rnd(row[1], row[2]), kind: 'wild' }));
       }
@@ -3347,7 +3757,8 @@ class Overworld {
     if (c === 't') { this.run(say(this.st.flags.golem ? '樹輕輕搖晃，枝葉讓出了一條路。' : '一棵古老的大樹。樹幹上有奇妙的紋路……好像在沉睡。')); return true; }
     if (c === 'U') { this.run(Events.well(this)); return true; }
     if (c === 'N') { this.run(Events.board(this)); return true; }
-    const flavor = { k: '書架上擺滿了關於魔物與冒險的書。', w: '窗外是萌芽鎮悠閒的風景。', c: '燭火靜靜地搖曳著。', h: '架子上整齊地擺滿了商品。', K: '書架上有一本《魔物屬性入門》。\n「火剋草、草剋水、水剋火。岩石怕水也怕草。」', V: '木箱裡裝滿了蘋果和藥瓶。', Q: '桌上放著熱騰騰的早餐。', o: '一塊大石頭。', b: '修剪整齊的灌木叢。' };
+    if (c === 'Z' && this.st.flags.golem) { const ow = this; this.run((function* () { if (yield* yesNo('石板下出現了往地底延伸的樓梯。要走下去嗎？')) yield* ow.warp('catacomb', 9, 20, 'up'); })()); return true; }
+    const flavor = { k: '書架上擺滿了關於魔物與冒險的書。', w: '窗外是萌芽鎮悠閒的風景。', c: '燭火靜靜地搖曳著。', h: '架子上整齊地擺滿了商品。', K: '書架上有一本《魔物種族圖說》。\n「獸、蟲、植物怕火；飛禽、軟泥怕雷；石像怕水和草；亡者怕火。」', V: '木箱裡裝滿了蘋果和藥瓶。', Q: '桌上放著熱騰騰的早餐。', o: '一塊大石頭。', b: '修剪整齊的灌木叢。' };
     if (c === 'B' && this.map.id === 'home') { this.run(Events.bed(this)); return true; }
     if (flavor[c]) { this.run(say(flavor[c])); return true; }
     if (c === 'W' && this.map.outdoor !== undefined) { this.run(say('水面倒映著藍天。')); return true; }
@@ -3484,6 +3895,7 @@ class Overworld {
       case 'b': x.drawImage(Tiles.bush, sx, sy); break;
       case 'S': x.drawImage(Tiles.sign, sx, sy); break;
       case 'N': x.drawImage(Tiles.board, sx, sy); break;
+      case 'Z': x.drawImage(this.st.flags.golem ? Tiles.stairs : Tiles.stone(h % 2), sx, sy); break;
       case 'F': { let m = 0; if (this.tileAt(tx + 1, ty) === 'F') m |= 2; if (this.tileAt(tx - 1, ty) === 'F') m |= 8; x.drawImage(Tiles.fence(m), sx, sy); break; }
       case 's': case 'P': x.drawImage(Tiles.stone(h % 2), sx, sy); break;
       case 'm': x.drawImage(Tiles.stone(2), sx, sy); break;
@@ -3555,7 +3967,7 @@ const STATUS_NAME = { psn: '中毒', par: '麻痺', slp: '睡眠', brn: '灼傷'
 const IMMUNE = { psn: '毒', brn: '火', par: '雷' };
 const battleImgCache = {};
 // battle sprites: rendered at a low native size, then scaled 3x (same chunky pixel look as the hero)
-const FOE_NATIVE = { golem: 28, mossGiant: 28, crystalGolem: 28, banditBoss: 28 }, FOE_SCALE = 3, FOE_FOOT = 106;
+const FOE_NATIVE = { golem: 28, mossGiant: 28, crystalGolem: 28, banditBoss: 28, boneKnight: 28, runeGolem: 28 }, FOE_SCALE = 3, FOE_FOOT = 106;
 function battleSprite(key) {
   if (battleImgCache[key]) return battleImgCache[key];
   const n = FOE_NATIVE[key] || 24, S = FOE_SCALE, sm = buildShaded(ART[key], n, n / 64);
@@ -3571,7 +3983,7 @@ function makeFoe(sp, lv, kind) {
   const s = {}; for (const k of ['hp', 'atk', 'def', 'spa', 'spd', 'spe']) s[k] = Math.max(1, Math.round(P[k] * f * (kind === 'wild' ? 0.92 + Math.random() * 0.16 : 1)));
   s.crit = P.crit ?? 6; s.hit = P.hit || 0; s.eva = P.eva || 0;
   const known = d.learn.filter(([l]) => l <= lv).map(([, m]) => m); const moves = [...new Set(known)].slice(-4).map(id => ({ id }));
-  return { sp, n: d.n, t: d.t, lv, stats: s, hp: s.hp, maxhp: s.hp, status: null, moves, stages: { atk: 0, def: 0, spa: 0, spd: 0, spe: 0 }, wet: 0, trait: d.trait, kind, boss: kind === 'boss', elite: kind === 'elite', sleepT: 0 };
+  return { sp, n: d.n, fam: d.fam, rare: d.rare, lv, stats: s, hp: s.hp, maxhp: s.hp, status: null, moves, stages: { atk: 0, def: 0, spa: 0, spd: 0, spe: 0 }, wet: 0, trait: d.trait, kind, boss: kind === 'boss', elite: kind === 'elite', sleepT: 0 };
 }
 function buildBattleBG(kind) {
   const c = mkCanvas(W, BH), x = c.getContext('2d'), r = srand(kind === 'ruins' ? 9 : 5);
@@ -3645,7 +4057,8 @@ class Battle {
   }
   enter() { UI.clear(); }
   update() {
-    this.t++; if (this.shake > 0) this.shake--; if (this.blinkF > 0) this.blinkF--; if (this.blinkH > 0) this.blinkH--;
+    this.t++; if (this.F.rare && this.F.hp > 0 && this.t % 14 === 0 && this.foeX < W) this.spawn({ k: 'star', x: this.foeX + 32 + rnd(-22, 22), y: FOE_FOOT - rnd(8, 60), c: pick(['#fff4a0', '#ffffff', '#ffd84a']), life: 12 });
+    if (this.shake > 0) this.shake--; if (this.blinkF > 0) this.blinkF--; if (this.blinkH > 0) this.blinkH--;
     for (const p of this.fx) { p.t++; if (p.upd) p.upd(p); else { p.x += p.vx || 0; p.y += p.vy || 0; p.vy = (p.vy || 0) + (p.g || 0); } }
     this.fx = this.fx.filter(p => p.t < p.life);
     if (this.script) { const r = this.script.next(); if (r.done) this.script = null; }
@@ -3689,7 +4102,7 @@ class Battle {
     let cx = Font.draw(x, F.n, X + 6, Y + 1, UIC.text, UIC.textSh);
     cx = Font.draw(x, 'Lv' + F.lv, cx + 4, Y + 1, UIC.muted, UIC.textSh);
     badgeRow(x, [F.status, F.wet && 'wet', F.tangle && 'tangle', F.shield && 'shield'], cx + 4, Y + 3);
-    if (F.boss || F.elite) Font.drawR(x, F.boss ? '頭目' : '精英', X + w - 6, Y + 1, F.boss ? UIC.bad : UIC.warm, UIC.textSh);
+    const tag = F.rare ? '稀有' : F.boss ? '頭目' : F.elite ? '精英' : ''; let rx = X + w - 6; if (tag) { Font.drawR(x, tag, rx, Y + 1, F.rare ? '#ffd84a' : F.boss ? UIC.bad : UIC.warm, UIC.textSh); rx -= Font.width(tag) + 4; } if (FAMILIES[F.fam]) Font.drawR(x, FAMILIES[F.fam].n, rx, Y + 2, FAMILIES[F.fam].c, UIC.textSh, 10);
     drawHPBar(x, X + 6, Y + 18, w - 12, this.disp.F / F.maxhp, 3);
   }
   drawBoxH(x) {
@@ -3723,7 +4136,7 @@ class Battle {
   sparks(X, Y, n, cols, spd = 2, life = 18, g = 0) { for (let i = 0; i < n; i++) { const a = Math.random() * Math.PI * 2, v = spd * (0.5 + Math.random()); this.spawn({ k: 'dot', x: X, y: Y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, g, c: pick(cols), s: rnd(1, 2), life: life + rnd(-4, 4) }); } }
   star(X, Y, c = '#ffffff', life = 10) { this.spawn({ k: 'star', x: X, y: Y, c, life }); }
   projectile(U, T, n, mk, spacing = 3, frames = 18) { for (let i = 0; i < n; i++) { const p = mk(i); p.x = U.x; p.y = U.y; p.tx = T.x + rnd(-6, 6); p.ty = T.y + rnd(-6, 6); p.delay = i * spacing; p.fr = frames; p.upd = q => { const t = clamp((q.t - q.delay) / q.fr, 0, 1); q.x = lerp(U.x, q.tx, t) + (q.wob ? Math.sin(q.t / 3 + i) * q.wob : 0); q.y = lerp(U.y, q.ty, t) - (q.arc ? Math.sin(t * Math.PI) * q.arc : 0); q.hidden = q.t < q.delay; }; p.life = p.delay + frames + (p.linger || 0); this.spawn(p); } }
-  *playFx(name, u, t) { const U = this.center(u), T = this.center(t); const f = FX[name] || FX.hit; yield* f.call(this, U, T, u, t); }
+  *playFx(name, u, t) { const U = this.center(u), T = this.center(t); if (!u.hero && MFX[name]) { yield* MFX.tell.call(this, U, T, u); yield* MFX[name].call(this, U, T, u, t); return; } const f = FX[name] || FX.hit; yield* f.call(this, U, T, u, t); }
   /* ---------------- main flow ---------------- */
   *main() {
     Game.trans = null; yield* this.intro();
@@ -3740,8 +4153,9 @@ class Battle {
         else if (a.type === 'defend') { yield* this.msg(u.n + '擺出了防禦的架勢！'); yield* FX.guard.call(this, this.center(u)); if (u.stats.fx.guardHeal && u.hp < u.maxhp) { u.hp = Math.min(u.maxhp, u.hp + Math.ceil(u.maxhp * 0.15)); yield* this.animHP(u); yield* this.msg('守護之心回復了HP！', { hold: 20 }); } }
         else if (a.type === 'item') { const r = yield* this.useItemAct(a.id); if (r === 'escaped') return yield* this.end('run'); }
         else if (a.type === 'mirror') { this.cg.mirror = 2; Sound.sfx('charge'); this.tintF = { c: '#c8f4ff', a: 0.6 }; yield* wait(14); this.tintF = null; yield* this.msg(u.n + '的表面變得像鏡子一樣！'); yield* this.msg('（這段期間，魔法攻擊會被反射回來！）'); }
-        else if (a.type === 'steal') { const st = Game.st, g = Math.min(st.money, Math.max(50, Math.floor(st.money * 0.1))); this.bb.steals++; yield* FX.steal.call(this, this.center(u), this.center(this.H), u); st.money -= g; this.bb.stolen += g; yield* this.msg(u.n + '搶走了' + g + ' G！'); if (this.bb.steals === 1) yield* this.msg('（打倒他就能把錢搶回來！）'); }
-        else if (a.type === 'foeHeal') { u.heals = (u.heals || 0) + 1; yield* this.msg(u.n + '吸收了周圍的養分！'); yield* FX.heal.call(this, this.center(u)); u.hp = Math.min(u.maxhp, u.hp + Math.floor(u.maxhp * 0.3)); yield* this.animHP(u); }
+        else if (a.type === 'steal') { const st = Game.st, g = Math.min(st.money, Math.max(50, Math.floor(st.money * 0.1))); this.bb.steals++; yield* MFX.steal.call(this, this.center(u), this.center(this.H), u); st.money -= g; this.bb.stolen += g; yield* this.msg(u.n + '搶走了' + g + ' G！'); if (this.bb.steals === 1) yield* this.msg('（打倒他就能把錢搶回來！）'); }
+        else if (a.type === 'foeHeal') { u.heals = (u.heals || 0) + 1; yield* this.msg(u.n + '吸收了周圍的養分！'); yield* MFX.regrow.call(this, this.center(u)); u.hp = Math.min(u.maxhp, u.hp + Math.floor(u.maxhp * 0.3)); yield* this.animHP(u); }
+        else if (a.type === 'flee') { Sound.sfx('run'); yield* tween(16, t => this.alphaF = 1 - t); yield* this.msg(u.n + '逃走了！'); return yield* this.end('run'); }
         else if (a.type === 'run') { if (yield* this.tryRun()) return yield* this.end('run'); }
         if (this.F.hp <= 0) { yield* this.foeFaint(); yield* this.victory(); return yield* this.end('win'); }
         if (this.H.hp <= 0) { yield* this.heroFaint(); return yield* this.end('lose'); }
@@ -3758,7 +4172,7 @@ class Battle {
     this.cover = 0; Sound.cry(Object.keys(SPECIES).indexOf(this.cfg.sp) + 1, this.F.boss ? 0.7 : 1, this.F.boss ? 1.6 : 1);
     if (this.F.boss) { this.shake = 30; Sound.sfx('quake'); }
     yield* parallel(tween(12, t => this.boxF = lerp(-30, 4, 1 - Math.pow(1 - t, 2))), wait(4));
-    const intro = this.F.boss ? this.F.n + '擋住了去路！' : this.F.elite ? '精英魔物' + this.F.n + '發動了攻擊！' : '野生的' + this.F.n + '跳出來了！';
+    const intro = this.F.rare ? '稀有的' + this.F.n + '出現了！' : this.F.boss ? this.F.n + '擋住了去路！' : this.F.elite ? '精英魔物' + this.F.n + '發動了攻擊！' : '野生的' + this.F.n + '跳出來了！';
     yield* this.msg(intro, { hold: 44 });
     yield* tween(12, t => this.boxH = lerp(BH + 4, HBAR_Y, 1 - Math.pow(1 - t, 2)));
   }
@@ -3797,17 +4211,18 @@ class Battle {
   foeChoose() {
     const F = this.F, H = this.H;
     if (F.charging) return { type: 'move', id: F.charging };
-    if (this.bb) { const b = this.bb; if (--b.cd <= 0) { b.cd = 3; return { type: 'move', id: 'axeSpin' }; } if (Game.st.money > 0 && b.steals < 2 && chance(0.25)) return { type: 'steal' }; return { type: 'move', id: pick(['powerSlash', 'armorBreak', 'quickAttack', F.stages.atk < 2 ? 'howl' : 'powerSlash']) }; }
-    if (this.cg) { const c = this.cg; if (this.turn % 4 === 0 && !c.mirror) return { type: 'mirror' }; const pl = c.flood ? ['crystalSpark', 'crystalSpark', 'prismRay', 'stomp'] : ['prismRay', 'rockThrow', 'stomp', 'ancientRoar']; return { type: 'move', id: pick(pl) }; }
+    if (F.rare && this.turn >= 3 && chance(0.45)) return { type: 'flee' };
+    if (this.bb) { const b = this.bb; if (--b.cd <= 0) { b.cd = 3; return { type: 'move', id: 'm_axeSpin' }; } if (Game.st.money > 0 && b.steals < 2 && chance(0.25)) return { type: 'steal' }; return { type: 'move', id: pick(['m_gutSlash', 'm_knife', 'm_dirtyKick', F.stages.atk < 2 ? 'm_warCry' : 'm_gutSlash']) }; }
+    if (this.cg) { const c = this.cg; if (this.turn % 4 === 0 && !c.mirror) return { type: 'mirror' }; const pl = c.flood ? ['m_crystalSpark', 'm_crystalSpark', 'm_prismRay', 'm_quake'] : ['m_prismRay', 'm_crystalShard', 'm_quake', 'm_rumble']; return { type: 'move', id: pick(pl) }; }
     if (F.trait === 'healer' && F.hp < F.maxhp * 0.5 && (F.heals || 0) < 2 && chance(0.6)) return { type: 'foeHeal' };
     let pool = F.moves.map(m => m.id);
-    if (F.boss && this.phase2 && !this.cg) { pool = ['rockSlide', 'stomp', 'rockThrow']; if (this.fistCD <= 0) { this.fistCD = 3; return { type: 'move', id: 'golemFist' }; } this.fistCD--; }
+    if (F.boss && this.phase2 && !this.cg) { pool = ['m_rockfall', 'm_quake', 'm_boulder']; if (this.fistCD <= 0) { this.fistCD = 3; return { type: 'move', id: 'm_golemFist' }; } this.fistCD--; }
     const w = pool.map(id => {
       const mv = MOVES[id]; let v = 10;
       if (mv.st) v = H.status ? 0 : 6;
       if (mv.stat && mv.stat.who === 'self') { const k = Object.keys(mv.stat).find(q => q !== 'who'); v = F.stages[k] >= 2 ? 1 : 5; }
       if (mv.stat && mv.stat.who === 'foe') { const k = Object.keys(mv.stat).find(q => q !== 'who'); v = H.stages[k] <= -2 ? 1 : 5; }
-      if (mv.pow && (F.elite || F.boss)) { const m = typeMult(mv.t, H.t); v *= m > 1 ? 2 : m < 1 ? 0.5 : 1; v *= 1 + mv.pow / 60; }
+      if (mv.pow && (F.elite || F.boss)) { const rs = (H.stats.resist || {})[mv.t] || 0; v *= (1 - rs / 100) * (1 + mv.pow / 60); }
       if (mv.drain && F.hp > F.maxhp * 0.8) v *= 0.6;
       return Math.max(0, v);
     });
@@ -3821,12 +4236,12 @@ class Battle {
     let D = (phys ? t.stats.def : t.stats.spd) * stageMul(crit ? Math.min(0, ds) : ds); if (u.hero && phys && u.stats.fx.pierce) D *= 0.7;
     if (phys && u.status === 'brn') A *= 0.5;
     const base = Math.floor(Math.floor(Math.floor(2 * u.lv / 5 + 2) * mv.pow * A / D) / 50) + 2;
-    const mult = typeMult(mv.t, t.t); let m = mult * (rnd(85, 100) / 100); if (crit) m *= 1.5; if (u.t && u.t === mv.t) m *= 1.5; if (u.hero) { m *= HERO_POWER; const S = u.stats; if (S.elem && mv.t !== '一般') m *= 1 + S.elem / 100; if (S.fireUp && mv.t === '火') m *= 1 + S.fireUp / 100; if (S.boltUp && mv.t === '雷') m *= 1 + S.boltUp / 100; if (S.rage && u.hp < u.maxhp / 2) m *= 1.3; if (S.fx.lastStand) m *= 1 + 0.5 * (1 - u.hp / u.maxhp); for (const [ty, p] of u.stats.vs || []) if (t.t === ty) m *= 1 + p / 100; }
+    const mult = t.hero ? 1 : famMult(mv.t, t); let m = mult * (rnd(85, 100) / 100); if (crit) m *= 1.5; if (!u.hero) m *= FOE_POWER; if (u.hero) { m *= HERO_POWER; const S = u.stats; if (S.elem && mv.t !== '一般') m *= 1 + S.elem / 100; if (S.fireUp && mv.t === '火') m *= 1 + S.fireUp / 100; if (S.boltUp && mv.t === '雷') m *= 1 + S.boltUp / 100; if (S.rage && u.hp < u.maxhp / 2) m *= 1.3; if (S.fx.lastStand) m *= 1 + 0.5 * (1 - u.hp / u.maxhp); for (const [ty, p] of u.stats.vs || []) if (t.fam === ty) m *= 1 + p / 100; }
     if (t.hero && t.stats.resist && t.stats.resist[mv.t]) m *= 1 - t.stats.resist[mv.t] / 100;
     return { dmg: Math.max(1, Math.floor(base * m)), mult, crit };
   }
   *useMove(u, t, id) {
-    const mv = MOVES[id];
+    let mv = MOVES[id]; if (u.hero && u.stats.welem && mv.t === '一般' && mv.cat === '物' && mv.pow) mv = { ...mv, t: u.stats.welem };
     // can the user act?
     if (u.status === 'slp') {
       if (u.sleepT <= 0) { u.status = null; yield* this.msg(u.n + '醒過來了！'); }
@@ -3835,7 +4250,7 @@ class Battle {
     if (u.flinched) { yield* this.msg(u.n + '退縮了，無法行動！'); return; }
     if (u.status === 'par' && chance(0.25)) { yield* FX.spark.call(this, null, this.center(u)); yield* this.msg(u.n + '身體麻痺，無法行動！'); return; }
     if (mv.charge && u.charging !== id) {
-      u.charging = id; yield* this.msg(u.n + '使用了' + mv.n + '！'); yield* FX.charge.call(this, this.center(u));
+      u.charging = id; yield* this.msg(u.n + '使用了' + mv.n + '！'); yield* (u.hero ? FX.charge : MFX.mcharge).call(this, this.center(u));
       yield* this.msg(u.n + (mv.chargeMsg || '正在凝聚大地之力！')); if (!this.warned) { this.warned = true; yield* this.msg(mv.warn || '（它的拳頭發出了危險的光芒……）'); } return;
     }
     if (u.charging === id) u.charging = null;
@@ -3896,7 +4311,7 @@ class Battle {
     }
     if (mv.stat) {
       const who = mv.stat.who === 'self' ? u : t; const ch = { ...mv.stat }; delete ch.who;
-      if (who === t) yield* this.playFx(mv.fx, u, t); else yield* (FX[mv.fx] || FX.buff).call(this, this.center(u));
+      if (who === t) yield* this.playFx(mv.fx, u, t); else if (!u.hero) yield* (MFX[mv.fx] || MFX.mbuff).call(this, this.center(u), this.center(t), u, t); else yield* (FX[mv.fx] || FX.buff).call(this, this.center(u));
       yield* this.statChange(who, ch, true); return;
     }
     if (mv.st) { yield* this.playFx(mv.fx, u, t); yield* this.inflict(t, mv.st, false); }
@@ -3911,7 +4326,7 @@ class Battle {
     }
   }
   *inflict(b, s, secondary) {
-    if (b.status || (b.t && IMMUNE[s] === b.t)) { if (!secondary) yield* this.msg(b.status === s ? b.n + '已經' + STATUS_NAME[s] + '了！' : '但是對' + b.n + '沒有效果……'); return; }
+    if (b.status || (!b.hero && famOf(b) && famOf(b).immune.includes(s))) { if (!secondary) yield* this.msg(b.status === s ? b.n + '已經' + STATUS_NAME[s] + '了！' : '但是對' + b.n + '沒有效果……'); return; }
     b.status = s; if (s === 'slp') b.sleepT = rnd(1, 3);
     const fxn = { psn: 'psnFx', par: 'spark', slp: 'zzz', brn: 'burnFx' }[s]; yield* FX[fxn].call(this, null, this.center(b));
     yield* this.msg(b.n + { psn: '中毒了！', par: '麻痺了！可能會無法行動！', slp: '睡著了！', brn: '灼傷了！' }[s]);
@@ -3919,8 +4334,9 @@ class Battle {
   *endTurn() {
     if (this.cg && this.F.hp > 0) { const c = this.cg; if (c.mirror) c.mirror--; if (c.shards > 0 && this.F.hp < this.F.maxhp) { this.F.hp = Math.min(this.F.maxhp, this.F.hp + Math.ceil(this.F.maxhp * 0.04)); yield* this.animHP(this.F); yield* this.msg('水晶碎片讓' + this.F.n + '回復了！', { hold: 20 }); } if (c.flood && this.H.hp > 0) { this.H.wet = 2; Sound.sfx('water'); yield* this.msg(this.H.n + '被大水淋得全身濕透！', { hold: 20 }); } }
     if (this.cfg.id === 'mossGiant' && Game.st.flags.q2res === 'stay' && !Game.st.flags.q2done && this.F.hp > 0 && this.H.hp > 0) { yield* FX.sting.call(this, this.center(this.H), this.center(this.F)); const d = Math.ceil(this.F.maxhp * 0.06); this.F.hp = Math.max(0, this.F.hp - d); this.blinkF = 12; yield* this.animHP(this.F); yield* this.msg('提姆射出了箭！造成' + d + '點傷害！', { hold: 24 }); }
+    if (this.H.stats.fx.deathWard && !this.dwUsed && this.H.hp > 0 && this.H.hp < this.H.maxhp * 0.3) { this.dwUsed = true; this.H.shield = 3; yield* FX.barrier.call(this, this.center(this.H)); yield* this.msg('亡者守護發動了！獲得了護盾！', { hold: 24 }); }
     if (this.H.stats.fx.regen && this.H.hp > 0 && this.H.hp < this.H.maxhp) { this.H.hp = Math.min(this.H.maxhp, this.H.hp + Math.ceil(this.H.maxhp * 0.06)); yield* this.animHP(this.H); }
-    if (this.bb && this.bb.gang > 0 && this.H.hp > 0 && this.F.hp > 0) { this.bb.gang--; yield* FX.knives.call(this, null, this.center(this.H)); if (this.H.defending) yield* this.msg(this.H.n + '擋開了手下的飛刀！', { hold: 20 }); else { const d = Math.max(1, Math.floor(this.H.maxhp * 0.06)); this.H.hp = Math.max(0, this.H.hp - d); this.blinkH = 12; yield* this.animHP(this.H); yield* this.msg('手下丟出了飛刀！受到' + d + '點傷害！', { hold: 20 }); if (this.H.hp <= 0) return; } if (!this.bb.gang) yield* this.msg('手下們見苗頭不對，逃走了。', { hold: 20 }); }
+    if (this.bb && this.bb.gang > 0 && this.H.hp > 0 && this.F.hp > 0) { this.bb.gang--; yield* MFX.knives.call(this, this.center(this.F), this.center(this.H)); if (this.H.defending) yield* this.msg(this.H.n + '擋開了手下的飛刀！', { hold: 20 }); else { const d = Math.max(1, Math.floor(this.H.maxhp * 0.06)); this.H.hp = Math.max(0, this.H.hp - d); this.blinkH = 12; yield* this.animHP(this.H); yield* this.msg('手下丟出了飛刀！受到' + d + '點傷害！', { hold: 20 }); if (this.H.hp <= 0) return; } if (!this.bb.gang) yield* this.msg('手下們見苗頭不對，逃走了。', { hold: 20 }); }
     for (const b of [this.H, this.F]) { if (b.tangle > 0) b.tangle--; if (b.wet > 0) b.wet--; if (b.shield > 0 && !--b.shield) yield* this.msg(b.n + '的魔法護盾消失了。', { hold: 24 }); }
     if (this.collapse && this.H.hp > 0 && this.F.hp > 0) { yield* FX.rock.call(this, null, this.center(this.H)); if (this.H.defending) yield* this.msg(this.H.n + '擋住了落石！'); else { const d = Math.max(1, Math.floor(this.H.maxhp / 10)); this.H.hp = Math.max(0, this.H.hp - d); this.blinkH = 12; yield* this.animHP(this.H); yield* this.msg(this.H.n + '被落石砸中了！'); if (this.H.hp <= 0) return; } }
     for (const b of [this.H, this.F]) {
@@ -3975,6 +4391,7 @@ class Battle {
     const gold = Math.floor((F.boss ? 1000 : sp.gold * F.lv) * (this.H.stats.fx.fortune ? 1.5 : 1));
     if (gold) { st.money += gold; yield* this.msg(st.name + '得到了' + gold + ' G！'); }
     if (sp.mat && !F.elite && !F.boss && chance(0.5)) { st.bag[sp.mat] = (st.bag[sp.mat] || 0) + 1; yield* this.msg('得到了素材「' + ITEMS[sp.mat].n + '」！', { hold: 30 }); }
+    const rpool = Game.ow && Game.ow.map && Game.ow.map.d.gearPool; if (F.rare && rpool) { const g = makeGear(pick(rpool), 3); Sound.jingle('item'); yield* this.msg(F.n + '掉落了' + gearName(g) + '！', { wait: true }); }
     const dropId = this.cfg.drop || sp.drop; if (dropId) { const g = makeGear(dropId, 4); Sound.jingle('item'); yield* this.msg(F.n + '掉落了' + gearName(g) + '！', { wait: true }); yield* this.msg(gearText(g) + '\n（可以在裝備畫面裝備）', { wait: true }); }
     const pool = Game.ow && Game.ow.map && Game.ow.map.d.gearPool; if (pool && !F.elite && !F.boss && chance(this.H.stats.fx.fortune ? 0.16 : 0.08)) { const g = makeGear(pick(pool), rollQuality()); Sound.jingle('item'); yield* this.msg(F.n + '掉落了' + gearName(g) + '！', { wait: true }); }
   }
@@ -4056,6 +4473,7 @@ function drawParticle(x, p) {
     case 'glow': { const r = p.r * (0.6 + 0.4 * a); const gr = x.createRadialGradient(p.x, p.y, 0, p.x, p.y, r); const [cr, cg, cb] = hex2rgb(p.c); gr.addColorStop(0, `rgba(${cr},${cg},${cb},0.85)`); gr.addColorStop(1, `rgba(${cr},${cg},${cb},0)`); x.globalAlpha = a; x.fillStyle = gr; x.fillRect(p.x - r, p.y - r, r * 2, r * 2); x.globalAlpha = 1; break; }
     case 'beam': { x.globalAlpha = a * 0.85; const g = x.createLinearGradient(p.x - p.w, 0, p.x + p.w, 0); g.addColorStop(0, 'rgba(255,255,255,0)'); g.addColorStop(0.5, p.c); g.addColorStop(1, 'rgba(255,255,255,0)'); x.fillStyle = g; x.fillRect(p.x - p.w, p.y1 - p.h, p.w * 2, p.h); x.globalAlpha = 1; break; }
     case 'hex': { const r = lerp(p.r0, p.r1, p.t / p.life); x.globalAlpha = a; x.strokeStyle = p.c; x.lineWidth = 2; x.beginPath(); for (let i = 0; i <= 6; i++) { const an = i * Math.PI / 3 + Math.PI / 6, px = p.x + Math.cos(an) * r, py = p.y + Math.sin(an) * r * 0.9; if (i) x.lineTo(px, py); else x.moveTo(px, py); } x.stroke(); x.globalAlpha = 1; break; }
+    default: { const f = MON_PK[p.k]; if (f) { x.save(); f(x, p, a); x.restore(); } break; }
     case 'flash': x.globalAlpha = a * (p.a || 0.6); x.fillStyle = p.c; x.fillRect(0, 0, W, BH); x.globalAlpha = 1; break;
   }
 }
@@ -4149,6 +4567,159 @@ Object.assign(FX, {
   *steam(U, T) { Sound.sfx('water'); for (let i = 0; i < 22; i++) this.spawn({ k: 'dot', x: T.x + rnd(-18, 18), y: T.y + rnd(-6, 18), vx: rnd(-3, 3) / 10, vy: -0.8 - Math.random(), c: pick(['#ffffff', '#dfe8f0', '#c0d0e0']), s: rnd(2, 3), life: 22 }); this.spawn({ k: 'ring', x: T.x, y: T.y, r0: 4, r1: 34, c: '#e8f0ff', w: 3, life: 14 }); yield* wait(16); },
 });
 
+/* ===================== MONSTER VFX: own particle materials + one recipe per monster skill ===================== */
+// Monster effects never use the hero's materials (clean light lines, crescents, beams, hex shields).
+// Their look: every shape has a dark outline, murky/sinister palette, organic forms (gouges, fangs, globs, shards, spores).
+const MOL = '#12070e';
+const MC = { red: '#c02838', blood: '#8a1020', bone: '#e8e0cc', rock: '#8a6a4a', dirt: '#6a4a2a', fire: '#e0481a', fire2: '#ffb040', ghost: '#60d8e0', water: '#2f7f9a', water2: '#8ad0d8', leaf: '#3a7a2a', leaf2: '#8ac040', poison: '#8a3aa0', poison2: '#b8e040', volt: '#b040f0', volt2: '#f4b0ff', dark: '#3a1a5a', dark2: '#b890ff', feather: '#9aa4bc', silk: '#e8e8f0', crystal: '#80e0ff' };
+function mTaper(x, p, pts, w, col) { // filled tapered stroke along pts
+  const L = [], R = []; for (let i = 0; i < pts.length; i++) { const a = pts[Math.max(0, i - 1)], b = pts[Math.min(pts.length - 1, i + 1)], dx = b[0] - a[0], dy = b[1] - a[1], l = Math.hypot(dx, dy) || 1, hw = w * Math.sin(Math.PI * i / (pts.length - 1)) / 2 + 0.3; L.push([pts[i][0] - dy / l * hw, pts[i][1] + dx / l * hw]); R.push([pts[i][0] + dy / l * hw, pts[i][1] - dx / l * hw]); }
+  x.beginPath(); L.forEach(([a, b], i) => i ? x.lineTo(a, b) : x.moveTo(a, b)); for (let i = R.length - 1; i >= 0; i--) x.lineTo(R[i][0], R[i][1]); x.closePath();
+  x.lineWidth = 2; x.strokeStyle = MOL; x.stroke(); x.fillStyle = col; x.fill();
+}
+function mPoly(x, pts, col, ol = true) { x.beginPath(); pts.forEach(([a, b], i) => i ? x.lineTo(a, b) : x.moveTo(a, b)); x.closePath(); if (ol) { x.lineWidth = 2; x.strokeStyle = MOL; x.stroke(); } x.fillStyle = col; x.fill(); }
+function mCirc(x, X, Y, r, col, ol = true) { x.beginPath(); x.arc(X, Y, Math.max(0.5, r), 0, 7); if (ol) { x.lineWidth = 2; x.strokeStyle = MOL; x.stroke(); } x.fillStyle = col; x.fill(); }
+const MON_PK = {
+  mgouge(x, p, a) { const g = clamp(p.t / (p.grow || 4), 0, 1), dx = Math.cos(p.ang), dy = Math.sin(p.ang), nx = -dy, ny = dx, pts = []; for (let i = 0; i <= 8; i++) { const u = i / 8 * g, b = Math.sin(Math.PI * u) * (p.bend || 4); pts.push([p.x + dx * p.len * (u - 0.5) + nx * b, p.y + dy * p.len * (u - 0.5) + ny * b]); } x.globalAlpha = Math.min(1, a * 1.6); mTaper(x, p, pts, p.w || 5, p.c); if (p.c2) { x.globalAlpha = a; x.strokeStyle = p.c2; x.lineWidth = 1; x.beginPath(); pts.forEach(([u, v], i) => i ? x.lineTo(u, v) : x.moveTo(u, v)); x.stroke(); } },
+  mfang(x, p, a) { const g = clamp(p.t / (p.life * 0.4), 0, 1), w = p.w || 30, gap = 14 * (1 - g) + 1, n = 5, tw = w / n; x.globalAlpha = Math.min(1, a * 2); for (const s of [-1, 1]) { const by = p.y + s * (gap + 5); mPoly(x, [[p.x - w / 2 - 2, by], [p.x + w / 2 + 2, by], [p.x + w / 2 + 2, by + s * 4], [p.x - w / 2 - 2, by + s * 4]], p.gum || '#5a1020'); for (let i = 0; i < n; i++) { const tx = p.x - w / 2 + i * tw; mPoly(x, [[tx, by], [tx + tw, by], [tx + tw / 2, by - s * (i % 2 ? 6 : 9)]], p.c || MC.bone); } } },
+  mglob(x, p, a) { x.globalAlpha = Math.min(1, a * 2); const r = p.r || 4; mCirc(x, p.x, p.y, r, p.c); mCirc(x, p.x - r * 0.35, p.y - r * 0.35, r * 0.3, shade(p.c, 0.5), false); mCirc(x, p.x + r * 0.2, p.y + r + 1, r * 0.35, p.c, false); },
+  mdrop(x, p, a) { x.globalAlpha = a; const r = p.r || 2; mPoly(x, [[p.x, p.y - r * 2.4], [p.x + r, p.y], [p.x, p.y + r], [p.x - r, p.y]], p.c); },
+  mbubble(x, p, a) { x.globalAlpha = a; const r = p.r || 4; x.beginPath(); x.arc(p.x, p.y, r, 0, 7); x.lineWidth = 3; x.strokeStyle = MOL; x.stroke(); x.lineWidth = 1.5; x.strokeStyle = p.c; x.stroke(); x.globalAlpha = a * 0.35; x.fillStyle = p.c; x.fill(); x.globalAlpha = a; x.fillStyle = '#ffffff'; x.fillRect(Math.round(p.x - r / 2), Math.round(p.y - r / 2), 1, 1); },
+  mshard(x, p, a) { const r = p.r || 4, rot = (p.rot || 0) + p.t * (p.vr ?? 0.3), pts = []; for (let i = 0; i < 5; i++) { const an = rot + i * 1.2566, rr = r * (i % 2 ? 0.55 : 1) * (1 + ((p.seed || 1) * (i + 3) % 5) / 12); pts.push([p.x + Math.cos(an) * rr, p.y + Math.sin(an) * rr]); } x.globalAlpha = Math.min(1, a * 1.8); mPoly(x, pts, p.c); x.fillStyle = shade(p.c, 0.35); x.fillRect(Math.round(pts[0][0]), Math.round(pts[0][1]), 1, 1); },
+  mrock(x, p, a) { const r = p.r || 6, rot = (p.rot || 0) + p.t * (p.vr ?? 0.1), pts = []; for (let i = 0; i < 8; i++) { const an = rot + i * 0.785, rr = r * (0.8 + ((i * 7) % 5) / 12); pts.push([p.x + Math.cos(an) * rr, p.y + Math.sin(an) * rr * 0.9]); } x.globalAlpha = Math.min(1, a * 2); mPoly(x, pts, p.c || MC.rock); mCirc(x, p.x - r * 0.3, p.y - r * 0.3, r * 0.3, shade(p.c || MC.rock, 0.3), false); mCirc(x, p.x + r * 0.25, p.y + r * 0.2, r * 0.22, shade(p.c || MC.rock, -0.35), false); },
+  mpuff(x, p, a) { const k = p.t / p.life, r = (p.r || 5) * (0.6 + 0.7 * k); x.globalAlpha = a * (p.op || 0.85); for (const [dx, dy, s] of [[-0.6, 0.2, 0.75], [0.6, 0.25, 0.7], [0, -0.3, 1]]) mCirc(x, p.x + dx * r, p.y + dy * r, r * s, shade(p.c, -0.35), false); for (const [dx, dy, s] of [[-0.6, 0.1, 0.55], [0.6, 0.15, 0.5], [0, -0.4, 0.8]]) mCirc(x, p.x + dx * r, p.y + dy * r, r * s, p.c, false); },
+  mjag(x, p, a) { const r = lerp(p.r0, p.r1, p.t / p.life), n = p.n || 14; x.globalAlpha = a; x.beginPath(); for (let i = 0; i <= n; i++) { const an = i / n * Math.PI * 2 + (p.rot || 0), rr = r * (i % 2 ? 0.72 : 1); x.lineTo(p.x + Math.cos(an) * rr, p.y + Math.sin(an) * rr * (p.fl || 1)); } x.lineWidth = 4; x.strokeStyle = MOL; x.stroke(); x.lineWidth = 2; x.strokeStyle = p.c; x.stroke(); },
+  mzap(x, p, a) { const pts = [], n = 6, x1 = p.x1 ?? p.x - 10, y1 = p.y1 ?? p.y - 10, x2 = p.x2 ?? p.x + 10, y2 = p.y2 ?? p.y + 10; for (let i = 0; i <= n; i++) pts.push([lerp(x1, x2, i / n) + (i % n ? rnd(-5, 5) : 0), lerp(y1, y2, i / n) + (i % n ? rnd(-5, 5) : 0)]); x.globalAlpha = a; x.beginPath(); pts.forEach(([u, v], i) => i ? x.lineTo(u, v) : x.moveTo(u, v)); x.lineWidth = 4; x.strokeStyle = MOL; x.stroke(); x.lineWidth = 2; x.strokeStyle = p.c || MC.volt; x.stroke(); x.lineWidth = 0.7; x.strokeStyle = p.c2 || MC.volt2; x.stroke(); },
+  mflame(x, p, a) { const s = (p.s || 5) * (0.4 + 0.6 * a), X = p.x, Y = p.y; x.globalAlpha = Math.min(1, a * 1.5); x.beginPath(); x.moveTo(X, Y - s * 2.2); x.quadraticCurveTo(X + s * 1.2, Y - s * 0.4, X + s * 0.8, Y + s * 0.5); x.quadraticCurveTo(X, Y + s * 1.2, X - s * 0.8, Y + s * 0.5); x.quadraticCurveTo(X - s * 1.2, Y - s * 0.4, X, Y - s * 2.2); x.lineWidth = 2; x.strokeStyle = MOL; x.stroke(); x.fillStyle = p.c || MC.fire; x.fill(); mCirc(x, X, Y + s * 0.2, s * 0.45, p.c2 || MC.fire2, false); },
+  mthorn(x, p, a) { const g = clamp(p.t / (p.grow || 6), 0, 1), X2 = lerp(p.x1, p.x2, g), Y2 = lerp(p.y1, p.y2, g), L = Math.hypot(X2 - p.x1, Y2 - p.y1) || 1, nx = -(Y2 - p.y1) / L, ny = (X2 - p.x1) / L; x.globalAlpha = Math.min(1, a * 1.8); x.lineCap = 'round'; x.beginPath(); x.moveTo(p.x1, p.y1); x.lineTo(X2, Y2); x.lineWidth = (p.w || 2) + 2; x.strokeStyle = MOL; x.stroke(); x.lineWidth = p.w || 2; x.strokeStyle = p.c; x.stroke(); for (let d = 5, s = 1; d < L; d += 5, s = -s) { const bx = lerp(p.x1, X2, d / L), by = lerp(p.y1, Y2, d / L); mPoly(x, [[bx, by], [bx + nx * 3.5 * s + (X2 - p.x1) / L * 2, by + ny * 3.5 * s + (Y2 - p.y1) / L * 2], [bx + (X2 - p.x1) / L * 2.5, by + (Y2 - p.y1) / L * 2.5]], p.c2 || p.c, false); } x.lineCap = 'butt'; },
+  mfeather(x, p, a) { const rot = (p.rot || 0) + p.t * 0.2; x.globalAlpha = a; x.save(); x.translate(p.x, p.y); x.rotate(rot); x.beginPath(); x.ellipse(0, 0, 5, 1.8, 0, 0, 7); x.lineWidth = 2; x.strokeStyle = MOL; x.stroke(); x.fillStyle = p.c || MC.feather; x.fill(); x.fillStyle = shade(p.c || MC.feather, -0.4); x.fillRect(-5, 0, 10, 0.6); x.restore(); },
+  mnote(x, p, a) { x.globalAlpha = a; const X = p.x, Y = p.y; mCirc(x, X, Y, 2.3, p.c); x.fillStyle = MOL; x.fillRect(X + 1.5, Y - 8, 2, 8); x.fillStyle = p.c; x.fillRect(X + 2, Y - 8, 1, 8); mPoly(x, [[X + 2, Y - 8], [X + 6, Y - 6], [X + 6, Y - 4], [X + 2, Y - 6]], p.c); },
+  mweb(x, p, a) { const r = (p.r || 22) * clamp(p.t / 8, 0.2, 1); x.globalAlpha = a; x.lineWidth = 2.5; x.strokeStyle = MOL; const draw = () => { x.beginPath(); for (let i = 0; i < 8; i++) { const an = i * 0.785; x.moveTo(p.x, p.y); x.lineTo(p.x + Math.cos(an) * r, p.y + Math.sin(an) * r); } for (const k of [0.35, 0.65, 1]) for (let i = 0; i <= 8; i++) { const an = i * 0.785; const X = p.x + Math.cos(an) * r * k, Y = p.y + Math.sin(an) * r * k; i ? x.lineTo(X, Y) : x.moveTo(X, Y); } x.stroke(); }; draw(); x.lineWidth = 1; x.strokeStyle = p.c || MC.silk; draw(); },
+  mskull(x, p, a) { x.globalAlpha = a; const X = p.x, Y = p.y, s = p.s || 1; mCirc(x, X, Y, 4 * s, p.c || MC.bone); mPoly(x, [[X - 2.5 * s, Y + 2 * s], [X + 2.5 * s, Y + 2 * s], [X + 2 * s, Y + 5 * s], [X - 2 * s, Y + 5 * s]], p.c || MC.bone); x.fillStyle = MOL; x.fillRect(Math.round(X - 2.5 * s), Math.round(Y - 1 * s), Math.ceil(1.6 * s), Math.ceil(2 * s)); x.fillRect(Math.round(X + 1 * s), Math.round(Y - 1 * s), Math.ceil(1.6 * s), Math.ceil(2 * s)); if (p.tail) { x.globalAlpha = a * 0.5; mPoly(x, [[X - 3 * s, Y + 3 * s], [X + 3 * s, Y + 3 * s], [X, Y + 12 * s]], p.c || MC.bone, false); } },
+  mrune(x, p, a) { const rot = (p.rot || 0) + p.t * 0.08, s = p.s || 5; x.globalAlpha = a; x.save(); x.translate(p.x, p.y); x.rotate(rot); for (const [lw, c] of [[3.5, MOL], [1.5, p.c || '#60e8ff']]) { x.lineWidth = lw; x.strokeStyle = c; x.beginPath(); x.rect(-s, -s, s * 2, s * 2); x.moveTo(-s, 0); x.lineTo(0, -s * 0.5); x.lineTo(s, 0); x.moveTo(0, -s * 0.5); x.lineTo(0, s); x.stroke(); } x.restore(); },
+  mbone(x, p, a) { const rot = (p.rot || 0) + p.t * (p.vr ?? 0.4), L = p.L || 7; x.globalAlpha = Math.min(1, a * 2); x.save(); x.translate(p.x, p.y); x.rotate(rot); x.lineWidth = 5; x.strokeStyle = MOL; x.beginPath(); x.moveTo(-L, 0); x.lineTo(L, 0); x.stroke(); x.lineWidth = 3; x.strokeStyle = p.c || MC.bone; x.stroke(); for (const e of [-L, L]) for (const o of [-1.6, 1.6]) mCirc(x, e, o, 2, p.c || MC.bone); x.restore(); },
+  mknife(x, p, a) { const rot = p.rot ?? Math.atan2((p.ty ?? p.y) - p.y + 0.01, (p.tx ?? p.x) - p.x + 0.01) + p.t * (p.vr || 0); x.globalAlpha = Math.min(1, a * 2); x.save(); x.translate(p.x, p.y); x.rotate(rot); mPoly(x, [[-2, -1.6], [7, 0], [-2, 1.6]], p.c || '#c8d0dc'); mPoly(x, [[-6, -1.2], [-2, -1.2], [-2, 1.2], [-6, 1.2]], '#5a3a20'); x.restore(); },
+  mcoin(x, p, a) { x.globalAlpha = a; const rx = Math.max(0.6, Math.abs(Math.cos(p.t / 3)) * 3); x.beginPath(); x.ellipse(p.x, p.y, rx, 3, 0, 0, 7); x.lineWidth = 2; x.strokeStyle = MOL; x.stroke(); x.fillStyle = '#ffd040'; x.fill(); },
+  maura(x, p, a) { const r = lerp(p.r0 || 10, p.r1 || 36, p.t / p.life), [cr, cg, cb] = hex2rgb(p.c || '#a01030'), g = x.createRadialGradient(p.x, p.y, r * 0.2, p.x, p.y, r); g.addColorStop(0, `rgba(${cr},${cg},${cb},0)`); g.addColorStop(0.7, `rgba(${cr},${cg},${cb},${0.55 * a})`); g.addColorStop(1, `rgba(${cr},${cg},${cb},0)`); x.fillStyle = g; x.fillRect(p.x - r, p.y - r, r * 2, r * 2); },
+  mglint(x, p, a) { x.globalAlpha = a; const s = 2 + 4 * Math.sin(Math.PI * p.t / p.life); mPoly(x, [[p.x, p.y - s], [p.x + 1, p.y - 1], [p.x + s, p.y], [p.x + 1, p.y + 1], [p.x, p.y + s], [p.x - 1, p.y + 1], [p.x - s, p.y], [p.x - 1, p.y - 1]], p.c || '#ff3040'); },
+  mcrack(x, p, a) { const g = clamp(p.t / 6, 0, 1); x.globalAlpha = a; if (!p.br) { p.br = []; for (let i = 0; i < (p.n || 5); i++) { const an = Math.PI + i / ((p.n || 5) - 1) * Math.PI + rnd(-2, 2) / 10, pts = [[p.x, p.y]]; let X = p.x, Y = p.y; for (let k = 0; k < 4; k++) { X += Math.cos(an) * 6 + rnd(-2, 2); Y += Math.sin(an) * 2.2 + rnd(-1, 1); pts.push([X, Y]); } p.br.push(pts); } p.br.push(p.br[0].map(([u, v]) => [2 * p.x - u, v])); } for (const pts of p.br) { const m = Math.max(1, Math.round(pts.length * g)); for (const [lw, c] of [[3, MOL], [1.4, p.c || '#3a2a1a']]) { x.lineWidth = lw; x.strokeStyle = c; x.beginPath(); pts.slice(0, m).forEach(([u, v], i) => i ? x.lineTo(u, v) : x.moveTo(u, v)); x.stroke(); } } },
+  mhand(x, p, a) { x.globalAlpha = a * 0.9; const X = p.x, Y = p.y, c = p.c || MC.ghost; mPoly(x, [[X - 4, Y + 10], [X - 4, Y], [X + 4, Y], [X + 4, Y + 10]], c); mCirc(x, X, Y, 4.5, c); for (let i = 0; i < 4; i++) { const fx = X - 3.5 + i * 2.3; mPoly(x, [[fx - 0.8, Y - 2], [fx + 0.8, Y - 2], [fx + 0.4, Y - 8 - (i % 2) * 2], [fx - 0.4, Y - 8 - (i % 2) * 2]], c); } },
+  mcurse(x, p, a) { const r = lerp(p.r0 || 26, p.r1 || 6, p.t / p.life), rot = p.t * 0.25; x.globalAlpha = a; for (let k = 0; k < 3; k++) { const a0 = rot + k * 2.094; for (const [lw, c] of [[4.5, MOL], [2.5, p.c || MC.dark], [0.8, p.c2 || MC.dark2]]) { x.lineWidth = lw; x.strokeStyle = c; x.beginPath(); x.arc(p.x, p.y, r, a0, a0 + 1.4); x.stroke(); } } },
+  mleaf(x, p, a) { const rot = p.t * 0.5; x.globalAlpha = Math.min(1, a * 2); x.save(); x.translate(p.x, p.y); x.rotate(rot); mPoly(x, [[-6, 0], [0, -2.5], [6, 0], [0, 2.5]], p.c || MC.leaf2); x.fillStyle = MC.leaf; x.fillRect(-5, -0.3, 10, 0.6); x.restore(); },
+  mbeam(x, p, a) { const g = clamp(p.t / (p.grow || 5), 0, 1), X2 = lerp(p.x1, p.x2, g), Y2 = lerp(p.y1, p.y2, g), L = Math.hypot(X2 - p.x1, Y2 - p.y1) || 1, nx = -(Y2 - p.y1) / L, ny = (X2 - p.x1) / L, w = (p.w || 3) * (p.pulse ? 0.7 + 0.3 * Math.sin(p.t) : 1), pts = []; for (let i = 0; i <= 10; i++) { const u = i / 10, wob = p.wob ? Math.sin(u * 12 + p.t) * p.wob : 0; pts.push([lerp(p.x1, X2, u) + nx * wob, lerp(p.y1, Y2, u) + ny * wob]); } x.globalAlpha = a; for (const [lw, c] of [[w + 3, MOL], [w, p.c], [Math.max(0.6, w / 3), p.c2 || shade(p.c, 0.5)]]) { x.lineWidth = lw; x.strokeStyle = c; x.lineCap = 'round'; x.beginPath(); pts.forEach(([u, v], i) => i ? x.lineTo(u, v) : x.moveTo(u, v)); x.stroke(); } x.lineCap = 'butt'; },
+  manger(x, p, a) { x.globalAlpha = a; const s = 3 + Math.sin(p.t / 2); for (let i = 0; i < 4; i++) { const an = i * 1.5708 + 0.785; const cx = p.x + Math.cos(an) * s, cy = p.y + Math.sin(an) * s; for (const [lw, c] of [[3.5, MOL], [1.8, p.c || '#ff3040']]) { x.lineWidth = lw; x.strokeStyle = c; x.beginPath(); x.arc(cx, cy, 2.4, an + 2.2, an + 4.1); x.stroke(); } } },
+  mflash(x, p, a) { const [cr, cg, cb] = hex2rgb(p.c || '#400010'), g = x.createRadialGradient(W / 2, BH / 2, 20, W / 2, BH / 2, 140); g.addColorStop(0, `rgba(${cr},${cg},${cb},${0.15 * a * (p.a || 1)})`); g.addColorStop(1, `rgba(${cr},${cg},${cb},${0.7 * a * (p.a || 1)})`); x.fillStyle = g; x.fillRect(0, 0, W, BH); },
+};
+/* ---- helpers for recipes (called with this = Battle) ---- */
+function mSpawn(B, k, o) { return B.spawn({ k, ...o }); }
+function mProj(B, U, T, mk, n = 1, spacing = 3, frames = 16) { B.projectile(U, T, n, mk, spacing, frames); }
+function mDebris(B, X, Y, n, c, k = 'mshard', spd = 2.2, r = 2.5) { for (let i = 0; i < n; i++) { const an = -Math.PI / 2 + rnd(-12, 12) / 10, v = spd * (0.6 + Math.random()); mSpawn(B, k, { x: X, y: Y, vx: Math.cos(an) * v, vy: Math.sin(an) * v, g: 0.18, r, c, vr: 0.4, life: 22 + rnd(0, 8) }); } }
+function mImpact(B, T, c, r1 = 22) { mSpawn(B, 'mjag', { x: T.x, y: T.y, r0: 4, r1, c, life: 12 }); }
+function mRise(B, X, Y, n, mk, spread = 18) { for (let i = 0; i < n; i++) { const p = mk(i); mSpawn(B, p.k, { x: X + rnd(-spread, spread), y: Y + rnd(-6, 10), vy: -0.6 - Math.random() * 0.6, vx: rnd(-3, 3) / 10, life: 24 + rnd(0, 10), ...p }); } }
+function mClaw(B, T, c, dir = 1, n = 3, len = 30, w = 5) { for (let i = 0; i < n; i++) mSpawn(B, 'mgouge', { x: T.x + (i - (n - 1) / 2) * 7, y: T.y, ang: dir > 0 ? 1.1 : 2.04, len, w, c, c2: shade(c, 0.45), bend: 3 * dir, grow: 4, life: 16 }); }
+const MFX = {
+  *tell(U, T, u) { mSpawn(this, 'maura', { x: U.x, y: U.y, r0: 12, r1: 38, c: '#a01030', life: 14 }); for (const d of [-6, 6]) mSpawn(this, 'mglint', { x: U.x + d, y: U.y - 8, c: '#ff3050', life: 10 }); yield* wait(8); },
+  *mbuff(U) { mSpawn(this, 'maura', { x: U.x, y: U.y, r0: 40, r1: 10, c: '#c02030', life: 18 }); mSpawn(this, 'mjag', { x: U.x, y: U.y, r0: 34, r1: 8, c: '#ff5060', life: 16 }); Sound.sfx('statUp'); yield* wait(18); },
+  *mcharge(U) { Sound.sfx('charge'); for (let i = 0; i < 3; i++) { mSpawn(this, 'mjag', { x: U.x, y: U.y, r0: 40, r1: 6, c: '#ff7a20', life: 14, rot: i }); mSpawn(this, 'maura', { x: U.x, y: U.y, r0: 44, r1: 10, c: '#ff5010', life: 14 }); yield* wait(6); } yield* wait(10); },
+  *regrow(U) { Sound.sfx('heal'); for (let i = 0; i < 5; i++) mSpawn(this, 'mthorn', { x1: U.x + (i - 2) * 9, y1: U.y + 26, x2: U.x + (i - 2) * 7, y2: U.y - 4, c: MC.leaf, c2: MC.leaf2, grow: 10, life: 26 }); mRise(this, U.x, U.y + 10, 8, () => ({ k: 'mglob', r: 2, c: MC.leaf2 })); yield* wait(26); },
+  *steal(U, T, u) { yield* this.lunge(u, 22, 2); Sound.sfx('item'); for (let i = 0; i < 6; i++) { const p = mSpawn(this, 'mcoin', { x: T.x + rnd(-8, 8), y: T.y + rnd(-6, 6), life: 22 }); const sx = p.x, sy = p.y; p.upd = q => { const t = clamp(q.t / 18, 0, 1); q.x = lerp(sx, U.x, t); q.y = lerp(sy, U.y, t) - Math.sin(t * Math.PI) * 20; }; } yield* wait(22); },
+  *knives(U, T) { Sound.sfx('slash'); for (let i = 0; i < 3; i++) { mProj(this, { x: i % 2 ? W + 6 : -6, y: T.y - 24 + i * 10 }, T, () => ({ k: 'mknife', vr: 0.6 }), 1, 0, 10); yield* wait(4); } yield* wait(10); mImpact(this, T, '#c8d0dc', 12); yield* wait(6); },
+  // ---- plant ----
+  *m_capBonk(U, T, u) { yield* this.lunge(u, 16, 3); Sound.sfx('hit'); mImpact(this, T, '#c8a060'); mRise(this, T.x, T.y, 4, () => ({ k: 'mpuff', r: 3, c: '#d8c8a0' })); yield* wait(14); },
+  *m_poisonSpore(U, T) { Sound.sfx('wind'); mProj(this, U, T, () => ({ k: 'mpuff', r: 4, c: MC.poison, arc: 14, wob: 4, linger: 10 }), 8, 2, 16); yield* wait(30); mRise(this, T.x, T.y, 8, () => ({ k: 'mglob', r: 1.5, c: MC.poison2 })); yield* wait(12); },
+  *m_rootLeech(U, T) { Sound.sfx('leaf'); for (let i = 0; i < 4; i++) mSpawn(this, 'mthorn', { x1: T.x + (i - 1.5) * 10, y1: T.y + 30, x2: T.x + (i - 1.5) * 4, y2: T.y, c: '#6a4a24', c2: '#8a6a3a', grow: 8, life: 22 }); yield* wait(14); mProj(this, T, U, () => ({ k: 'mglob', r: 2.5, c: MC.leaf2, wob: 5 }), 5, 3, 16); yield* wait(26); },
+  *m_sleepPollen(U, T) { Sound.sfx('wind'); for (let i = 0; i < 14; i++) mSpawn(this, 'mpuff', { x: T.x + rnd(-24, 24), y: T.y - 50 - rnd(0, 20), vy: 1.4 + Math.random(), vx: rnd(-3, 3) / 10, r: 2.5, c: '#e8a0d0', life: 40 }); yield* wait(36); },
+  *m_toxicCloud(U, T) { Sound.sfx('poison'); for (let i = 0; i < 7; i++) { mSpawn(this, 'mpuff', { x: T.x + rnd(-20, 20), y: T.y + rnd(-14, 14), r: 8 + rnd(0, 5), c: i % 2 ? MC.poison : '#6a8a30', op: 0.7, life: 30 }); yield* wait(3); } mRise(this, T.x, T.y + 10, 6, () => ({ k: 'mbubble', r: 2, c: MC.poison2 })); yield* wait(20); },
+  *m_thornVine(U, T) { Sound.sfx('leaf'); for (const o of [-8, 8]) mSpawn(this, 'mthorn', { x1: U.x + o, y1: U.y + 10, x2: T.x - o, y2: T.y, c: MC.leaf, c2: MC.leaf2, grow: 8, life: 18 }); yield* wait(10); mClaw(this, T, MC.leaf2, 1, 2, 26, 4); Sound.sfx('slash'); yield* wait(12); },
+  *m_thornRain(U, T) { Sound.sfx('leaf'); for (let i = 0; i < 12; i++) { const X = T.x + rnd(-26, 26); mSpawn(this, 'mthorn', { x1: X, y1: -8, x2: X + rnd(-3, 3), y2: T.y + rnd(-10, 14), c: MC.leaf, c2: MC.leaf2, grow: 6, life: 12 }); if (i % 3 === 0) yield* wait(3); } mImpact(this, T, MC.leaf2, 26); this.shake = 8; yield* wait(14); },
+  *m_mossArmor(U) { Sound.sfx('statUp'); for (let i = 0; i < 6; i++) { const an = i * 1.047; mSpawn(this, 'mshard', { x: U.x + Math.cos(an) * 30, y: U.y + Math.sin(an) * 24, vx: -Math.cos(an) * 1.6, vy: -Math.sin(an) * 1.3, r: 4, c: '#6a9a40', life: 18 }); } mSpawn(this, 'mjag', { x: U.x, y: U.y, r0: 36, r1: 10, c: '#8ac040', life: 18 }); yield* wait(20); },
+  *m_rootCrush(U, T) { Sound.sfx('quake'); this.shake = 14; mSpawn(this, 'mcrack', { x: T.x, y: T.y + 28, c: '#3a2a1a', life: 30 }); for (let i = 0; i < 4; i++) mSpawn(this, 'mthorn', { x1: T.x + (i - 1.5) * 9, y1: T.y + 30, x2: T.x + (i - 1.5) * 12, y2: T.y - 22, w: 4, c: '#5a3a1a', c2: '#8a6a3a', grow: 5, life: 20 }); yield* wait(8); mDebris(this, T.x, T.y + 24, 6, MC.dirt); yield* wait(16); },
+  // ---- bird ----
+  *m_peck(U, T, u) { yield* this.lunge(u, 10, 2); for (let i = 0; i < 3; i++) { Sound.sfx('hit'); mSpawn(this, 'mgouge', { x: T.x + rnd(-8, 8), y: T.y + rnd(-8, 6), ang: 1.4 + rnd(-3, 3) / 10, len: 10, w: 3, c: '#e0c080', life: 8 }); mSpawn(this, 'mjag', { x: T.x + rnd(-6, 6), y: T.y + rnd(-6, 6), r0: 2, r1: 8, c: '#f0e0a0', n: 8, life: 8 }); yield* wait(4); } yield* wait(6); },
+  *m_featherGust(U, T) { Sound.sfx('wind'); mProj(this, U, T, i => ({ k: 'mfeather', wob: 10, rot: i, c: MC.feather }), 10, 2, 18); yield* wait(30); mImpact(this, T, '#c8d0e0'); yield* wait(8); },
+  *m_chirp(U) { Sound.sfx('buzz'); for (let i = 0; i < 3; i++) { mSpawn(this, 'mjag', { x: U.x, y: U.y - 6, r0: 6, r1: 30, c: '#f0d060', n: 12, life: 14, rot: i }); yield* wait(5); } yield* wait(10); },
+  *m_dive(U, T, u) { Sound.sfx('wind'); yield* this.lunge(u, 34, 4); Sound.sfx('slash'); mSpawn(this, 'mgouge', { x: T.x, y: T.y, ang: 1.0, len: 46, w: 7, c: '#3a4a8a', c2: '#8aa0e0', grow: 3, life: 16 }); mDebris(this, T.x, T.y, 6, MC.feather, 'mfeather', 1.8); this.shake = 6; yield* wait(16); },
+  *m_lullaby(U, T) { Sound.sfx('buzz'); mProj(this, U, T, () => ({ k: 'mnote', c: '#9a70d0', wob: 8, linger: 8 }), 5, 5, 26); yield* wait(46); },
+  *m_screech(U) { Sound.sfx('buzz'); this.shake = 6; for (let i = 0; i < 4; i++) { mSpawn(this, 'mjag', { x: U.x, y: U.y, r0: 8, r1: 56, c: '#e04050', n: 18, life: 16, rot: i * 0.3 }); yield* wait(4); } yield* wait(12); },
+  *m_sonic(U, T) { Sound.sfx('buzz'); mProj(this, U, T, () => ({ k: 'mjag', r0: 3, r1: 16, c: '#a0c0e0', n: 10 }), 6, 2, 14); yield* wait(26); mImpact(this, T, '#d0e0ff', 18); yield* wait(8); },
+  // ---- construct ----
+  *m_roll(U, T, u) { yield* this.lunge(u, 22, 4); Sound.sfx('hit'); mImpact(this, T, '#a88a6a'); mRise(this, T.x, T.y + 18, 5, () => ({ k: 'mpuff', r: 3, c: '#9a8a7a' })); yield* wait(14); },
+  *m_harden(U) { Sound.sfx('statUp'); for (let i = 0; i < 4; i++) { const an = i * 1.57 + 0.78; mSpawn(this, 'mshard', { x: U.x + Math.cos(an) * 28, y: U.y + Math.sin(an) * 24, vx: -Math.cos(an) * 1.5, vy: -Math.sin(an) * 1.3, r: 5, c: '#8a8a94', vr: 0, life: 18 }); } mSpawn(this, 'mjag', { x: U.x, y: U.y, r0: 30, r1: 12, c: '#b0b0bc', n: 6, life: 18 }); yield* wait(20); },
+  *m_pebbleToss(U, T) { Sound.sfx('rock'); mProj(this, U, T, () => ({ k: 'mrock', r: 4, arc: 22, c: MC.rock }), 1, 0, 16); yield* wait(16); mDebris(this, T.x, T.y, 5, MC.rock); mImpact(this, T, '#c0a080', 16); yield* wait(12); },
+  *m_quake(U, T) { Sound.sfx('quake'); this.shake = 20; mSpawn(this, 'mcrack', { x: T.x, y: T.y + 28, life: 32 }); for (let i = 0; i < 3; i++) { mDebris(this, T.x + rnd(-20, 20), T.y + 26, 3, MC.rock); mRise(this, T.x, T.y + 24, 2, () => ({ k: 'mpuff', r: 4, c: '#8a7a6a' }), 24); yield* wait(6); } yield* wait(14); },
+  *m_boulder(U, T) { Sound.sfx('rock'); mProj(this, U, T, () => ({ k: 'mrock', r: 10, arc: 34, c: '#7a6a58', vr: 0.15 }), 1, 0, 22); yield* wait(22); this.shake = 14; mImpact(this, T, '#c0a080', 30); mDebris(this, T.x, T.y, 8, MC.rock, 'mshard', 2.8, 3.5); yield* wait(16); },
+  *m_stoneWall(U) { Sound.sfx('rock'); for (let i = 0; i < 3; i++) { mSpawn(this, 'mrock', { x: U.x + (i - 1) * 14, y: U.y + 40, vy: -2.2, g: 0.08, r: 7, vr: 0, c: '#8a7a64', life: 22 }); yield* wait(4); } mSpawn(this, 'mjag', { x: U.x, y: U.y, r0: 38, r1: 14, c: '#a8987c', n: 8, life: 18 }); yield* wait(18); },
+  *m_rumble(U) { Sound.sfx('quake'); this.shake = 12; mSpawn(this, 'mcrack', { x: U.x, y: U.y + 30, n: 4, c: '#2a1a10', life: 30 }); for (let i = 0; i < 3; i++) { mSpawn(this, 'mjag', { x: U.x, y: U.y, r0: 10, r1: 70, c: '#6a5040', n: 10, life: 24, fl: 0.6 }); yield* wait(7); } yield* wait(12); },
+  *m_rockfall(U, T) { Sound.sfx('quake'); for (let i = 0; i < 6; i++) { const X = T.x + rnd(-28, 28), p = mSpawn(this, 'mrock', { x: X, y: -12, r: 5 + rnd(0, 4), c: '#7a6a58', life: 18 }); const ty = T.y + rnd(-6, 16); p.upd = q => { q.y = lerp(-12, ty, clamp(q.t / 10, 0, 1)); }; yield* wait(3); } this.shake = 16; yield* wait(8); mRise(this, T.x, T.y + 12, 6, () => ({ k: 'mpuff', r: 5, c: '#8a7a6a' }), 26); yield* wait(14); },
+  *m_golemFist(U, T, u) { mSpawn(this, 'maura', { x: U.x, y: U.y, r0: 10, r1: 50, c: '#ff5010', life: 16 }); yield* wait(8); yield* this.lunge(u, 28, 4); Sound.sfx('quake'); this.shake = 26; mSpawn(this, 'mflash', { c: '#601000', life: 14 }); mSpawn(this, 'mjag', { x: T.x, y: T.y, r0: 8, r1: 48, c: '#ff8030', n: 18, life: 16 }); mSpawn(this, 'mcrack', { x: T.x, y: T.y + 28, n: 7, life: 34 }); mDebris(this, T.x, T.y + 10, 10, '#a09884', 'mshard', 3.2, 3.5); yield* wait(22); },
+  *m_crystalShard(U, T) { Sound.sfx('rock'); mProj(this, U, T, i => ({ k: 'mshard', r: 4, c: MC.crystal, vr: 0.5, seed: i + 1 }), 5, 2, 12); yield* wait(22); mImpact(this, T, MC.crystal, 20); yield* wait(8); },
+  *m_crystalSpark(U, T) { Sound.sfx('thunder'); for (let i = 0; i < 3; i++) { mSpawn(this, 'mzap', { x1: U.x + rnd(-8, 8), y1: U.y, x2: T.x + rnd(-8, 8), y2: T.y, c: '#8a60ff', c2: MC.crystal, life: 8 }); yield* wait(4); } mImpact(this, T, '#a080ff', 18); yield* wait(10); },
+  *m_prismRay(U, T) { Sound.sfx('charge'); mSpawn(this, 'maura', { x: U.x, y: U.y, r0: 30, r1: 6, c: '#c0a0ff', life: 14 }); yield* wait(12); Sound.sfx('hitSuper'); ['#ff6080', '#80ff90', '#80a0ff'].forEach((c, i) => mSpawn(this, 'mbeam', { x1: U.x + (i - 1) * 4, y1: U.y, x2: T.x + (i - 1) * 6, y2: T.y, w: 3, c, grow: 5, life: 20 })); yield* wait(14); mImpact(this, T, '#ffffff', 26); yield* wait(10); },
+  // ---- ooze ----
+  *m_bounce(U, T, u) { yield* this.lunge(u, 18, 4); Sound.sfx('water'); for (let i = 0; i < 6; i++) { const an = -Math.PI / 2 + (i - 2.5) * 0.5; mSpawn(this, 'mdrop', { x: T.x, y: T.y + 4, vx: Math.cos(an) * 2, vy: Math.sin(an) * 2, g: 0.2, r: 2, c: '#5aa0e0', life: 20 }); } yield* wait(16); },
+  *m_bubbleSpit(U, T) { Sound.sfx('water'); mProj(this, U, T, () => ({ k: 'mbubble', r: 3.5, c: '#4a90b0', wob: 6 }), 6, 3, 20); yield* wait(34); for (let i = 0; i < 3; i++) mImpact(this, { x: T.x + rnd(-8, 8), y: T.y + rnd(-8, 8) }, '#8ad0e8', 8); yield* wait(10); },
+  *m_goo(U, T) { Sound.sfx('water'); mProj(this, U, T, () => ({ k: 'mglob', r: 3.5, c: '#7a9a60', arc: 18 }), 3, 4, 16); yield* wait(26); for (let i = 0; i < 6; i++) mSpawn(this, 'mdrop', { x: T.x + rnd(-12, 12), y: T.y + rnd(-6, 6), vy: 0.8, r: 1.8, c: '#7a9a60', life: 22 }); yield* wait(16); },
+  *m_waterBomb(U, T) { Sound.sfx('water'); mProj(this, U, T, () => ({ k: 'mglob', r: 7, c: '#3a8ac0', arc: 26 }), 1, 0, 18); yield* wait(18); mImpact(this, T, MC.water2, 26); for (let i = 0; i < 10; i++) { const an = i / 10 * Math.PI * 2; mSpawn(this, 'mdrop', { x: T.x, y: T.y, vx: Math.cos(an) * 2.2, vy: Math.sin(an) * 2.2 - 1, g: 0.15, r: 2, c: '#3a8ac0', life: 22 }); } yield* wait(16); },
+  *m_engulf(U, T, u) { yield* this.lunge(u, 20, 4); Sound.sfx('water'); const p = mSpawn(this, 'mbubble', { x: T.x, y: T.y, r: 6, c: '#5aa0e0', life: 26 }); p.upd = q => { q.r = 6 + Math.sin(Math.PI * q.t / q.life) * 18; }; yield* wait(20); mProj(this, T, U, () => ({ k: 'mglob', r: 2, c: '#8ad0f0', wob: 4 }), 4, 3, 14); yield* wait(22); },
+  *m_oreShell(U) { Sound.sfx('statUp'); for (let i = 0; i < 6; i++) { const an = i * 1.047; mSpawn(this, 'mshard', { x: U.x + Math.cos(an) * 30, y: U.y + Math.sin(an) * 26, vx: -Math.cos(an) * 1.6, vy: -Math.sin(an) * 1.4, r: 3.5, c: i % 2 ? '#d8b040' : '#8a8a94', life: 18 }); } mSpawn(this, 'mjag', { x: U.x, y: U.y, r0: 32, r1: 10, c: '#d8b040', n: 10, life: 18 }); yield* wait(20); },
+  *m_acidSpit(U, T) { Sound.sfx('poison'); mProj(this, U, T, () => ({ k: 'mglob', r: 3, c: '#b0d030', arc: 16 }), 4, 3, 16); yield* wait(26); mRise(this, T.x, T.y, 5, () => ({ k: 'mpuff', r: 4, c: '#8aa030', op: 0.6 })); for (let i = 0; i < 4; i++) mSpawn(this, 'mdrop', { x: T.x + rnd(-10, 10), y: T.y, vy: 0.9, r: 1.8, c: '#b0d030', life: 18 }); yield* wait(14); },
+  // ---- beast ----
+  *m_claw(U, T, u) { yield* this.lunge(u, 12, 3); Sound.sfx('slash'); mClaw(this, T, MC.red); yield* wait(16); },
+  *m_foxfire(U, T) { Sound.sfx('fire'); mProj(this, U, T, () => ({ k: 'mflame', s: 5, c: '#ff5a20', c2: '#ffd070', wob: 7 }), 3, 5, 22); yield* wait(34); for (let i = 0; i < 6; i++) mSpawn(this, 'mflame', { x: T.x + rnd(-12, 12), y: T.y + rnd(-4, 10), vy: -0.8, s: 3, c: '#ff5a20', c2: '#ffd070', life: 16 }); yield* wait(12); },
+  *m_pounce(U, T, u) { yield* this.lunge(u, 28, 3); Sound.sfx('slash'); for (const d of [1, -1]) mSpawn(this, 'mgouge', { x: T.x, y: T.y, ang: d > 0 ? 0.8 : 2.34, len: 24, w: 4, c: MC.red, c2: '#ff8090', life: 12 }); mImpact(this, T, '#ff8090', 14); yield* wait(12); },
+  *m_blazeTail(U, T, u) { yield* this.lunge(u, 16, 3); Sound.sfx('fire'); for (let i = 0; i < 10; i++) { const an = Math.PI * (0.15 + i / 12); mSpawn(this, 'mflame', { x: T.x + Math.cos(an) * 24, y: T.y - 6 + Math.sin(an) * 12, vy: -0.5, s: 4, c: MC.fire, life: 18 }); } mSpawn(this, 'mgouge', { x: T.x, y: T.y + 4, ang: 0.1, len: 44, w: 6, c: '#ff7a20', c2: MC.fire2, bend: 8, life: 14 }); yield* wait(18); },
+  *m_leafDart(U, T) { Sound.sfx('leaf'); mProj(this, U, T, () => ({ k: 'mleaf' }), 4, 3, 12); yield* wait(24); mClaw(this, T, MC.leaf2, -1, 2, 20, 3); yield* wait(10); },
+  *m_bite(U, T, u) { yield* this.lunge(u, 14, 3); Sound.sfx('hit'); mSpawn(this, 'mfang', { x: T.x, y: T.y, w: 30, life: 18 }); yield* wait(10); mImpact(this, T, MC.red, 16); yield* wait(10); },
+  *m_howl(U) { Sound.cry(3, 0.6, 1.2); for (let i = 0; i < 4; i++) { mSpawn(this, 'mjag', { x: U.x, y: U.y - 8, r0: 8, r1: 46, c: '#a02030', n: 16, life: 20, fl: 0.7 }); yield* wait(6); } mSpawn(this, 'maura', { x: U.x, y: U.y, r0: 20, r1: 40, c: '#c02030', life: 20 }); yield* wait(14); },
+  *m_rend(U, T, u) { yield* this.lunge(u, 16, 3); Sound.sfx('slash'); mClaw(this, T, MC.red, 1, 3, 34, 6); yield* wait(8); Sound.sfx('slash'); mClaw(this, T, MC.blood, -1, 3, 34, 6); this.shake = 10; yield* wait(16); },
+  // ---- insect ----
+  *m_sting(U, T) { Sound.sfx('slash'); mProj(this, U, T, () => ({ k: 'mknife', c: '#e8d040' }), 1, 0, 10); yield* wait(10); mRise(this, T.x, T.y, 3, () => ({ k: 'mpuff', r: 3, c: MC.poison })); mImpact(this, T, MC.poison, 12); yield* wait(14); },
+  *m_buzzShock(U, T, u) { Sound.sfx('buzz'); yield* this.shakeB(u, 10, 2); Sound.sfx('thunder'); for (let i = 0; i < 4; i++) { mSpawn(this, 'mzap', { x1: U.x + rnd(-10, 10), y1: U.y + rnd(-6, 6), x2: T.x + rnd(-10, 10), y2: T.y + rnd(-6, 6), life: 8 }); yield* wait(3); } mImpact(this, T, MC.volt, 18); yield* wait(8); },
+  *m_static(U, T) { Sound.sfx('buzz'); for (let i = 0; i < 8; i++) { mSpawn(this, 'mzap', { x: T.x + rnd(-16, 16), y: T.y + rnd(-16, 16), life: 6 }); yield* wait(3); } mSpawn(this, 'mjag', { x: T.x, y: T.y, r0: 26, r1: 10, c: MC.volt2, n: 12, life: 12 }); yield* wait(10); },
+  *m_swarm(U) { Sound.sfx('buzz'); for (let i = 0; i < 10; i++) mSpawn(this, 'mpuff', { x: U.x + rnd(-24, 24), y: U.y + rnd(-18, 10), r: 3, c: '#d0e8c0', op: 0.45, life: 16 }); mSpawn(this, 'mjag', { x: U.x, y: U.y, r0: 34, r1: 10, c: '#d0e8a0', n: 10, life: 14 }); yield* wait(18); },
+  *m_hornCharge(U, T, u) { Sound.sfx('charge'); yield* this.lunge(u, 26, 4); Sound.sfx('hitSuper'); mSpawn(this, 'mgouge', { x: T.x, y: T.y - 4, ang: -1.57, len: 36, w: 7, c: '#c8a040', c2: '#fff0a0', bend: 2, life: 14 }); mImpact(this, T, '#f0d060', 22); this.shake = 8; yield* wait(14); },
+  *m_carapace(U) { Sound.sfx('statUp'); for (let i = 0; i < 4; i++) { const an = i * 1.57; mSpawn(this, 'mshard', { x: U.x + Math.cos(an) * 28, y: U.y + Math.sin(an) * 24, vx: -Math.cos(an) * 1.5, vy: -Math.sin(an) * 1.3, r: 6, c: '#3a4aa8', vr: 0, life: 18 }); } mSpawn(this, 'mjag', { x: U.x, y: U.y, r0: 30, r1: 12, c: '#7a90f0', n: 8, life: 18 }); yield* wait(20); },
+  *m_voltHorn(U, T, u) { for (let i = 0; i < 3; i++) mSpawn(this, 'mzap', { x: U.x + rnd(-6, 6), y: U.y - 14, life: 6 }); Sound.sfx('buzz'); yield* wait(8); yield* this.lunge(u, 24, 3); Sound.sfx('thunder'); mSpawn(this, 'mgouge', { x: T.x, y: T.y, ang: -1.4, len: 32, w: 6, c: MC.volt, c2: MC.volt2, life: 12 }); mSpawn(this, 'mzap', { x1: T.x, y1: T.y - 20, x2: T.x, y2: T.y + 20, life: 10 }); yield* wait(14); },
+  *m_venomFang(U, T, u) { yield* this.lunge(u, 14, 3); Sound.sfx('poison'); mSpawn(this, 'mfang', { x: T.x, y: T.y, w: 22, c: '#d8b0f0', gum: '#3a1040', life: 18 }); yield* wait(10); mRise(this, T.x, T.y, 4, () => ({ k: 'mpuff', r: 3, c: MC.poison })); yield* wait(12); },
+  *m_web(U, T) { Sound.sfx('wind'); mProj(this, U, T, () => ({ k: 'mglob', r: 3, c: MC.silk, arc: 10 }), 1, 0, 12); yield* wait(12); mSpawn(this, 'mweb', { x: T.x, y: T.y, r: 26, life: 30 }); yield* wait(24); },
+  *m_silkShot(U, T) { Sound.sfx('wind'); mSpawn(this, 'mbeam', { x1: U.x, y1: U.y + 6, x2: T.x, y2: T.y, w: 1.5, c: MC.silk, wob: 2, grow: 6, life: 22 }); yield* wait(10); mSpawn(this, 'mweb', { x: T.x, y: T.y, r: 14, life: 18 }); yield* wait(14); },
+  // ---- aquatic ----
+  *m_tongue(U, T) { Sound.sfx('water'); const p = mSpawn(this, 'mbeam', { x1: U.x, y1: U.y + 6, x2: T.x, y2: T.y, w: 4, c: '#e87aa0', c2: '#ffc0d8', grow: 6, life: 16 }); yield* wait(8); mImpact(this, T, '#ffb0c8', 12); yield* wait(10); },
+  *m_mudShot(U, T) { Sound.sfx('water'); mProj(this, U, T, () => ({ k: 'mglob', r: 3.5, c: MC.dirt, arc: 14 }), 3, 3, 14); yield* wait(22); for (let i = 0; i < 8; i++) { const an = -Math.PI / 2 + rnd(-14, 14) / 10; mSpawn(this, 'mdrop', { x: T.x, y: T.y, vx: Math.cos(an) * 2, vy: Math.sin(an) * 2, g: 0.2, r: 2, c: MC.dirt, life: 18 }); } yield* wait(12); },
+  *m_jaw(U, T, u) { yield* this.lunge(u, 18, 4); Sound.sfx('hitSuper'); mSpawn(this, 'mfang', { x: T.x, y: T.y, w: 46, c: '#f0e8c8', gum: '#6a2020', life: 20 }); this.shake = 14; yield* wait(12); mImpact(this, T, MC.red, 24); yield* wait(10); },
+  *m_tailSlam(U, T, u) { yield* this.lunge(u, 18, 3); Sound.sfx('water'); mSpawn(this, 'mgouge', { x: T.x, y: T.y + 2, ang: 0.05, len: 50, w: 8, c: '#2f7f9a', c2: MC.water2, bend: 10, life: 14 }); for (let i = 0; i < 8; i++) mSpawn(this, 'mdrop', { x: T.x + rnd(-20, 20), y: T.y, vx: rnd(-15, 15) / 10, vy: -1.5 - Math.random(), g: 0.18, r: 2, c: MC.water2, life: 20 }); yield* wait(16); },
+  *m_scaleGuard(U) { Sound.sfx('statUp'); for (let i = 0; i < 8; i++) { const an = i * 0.785; mSpawn(this, 'mshard', { x: U.x + Math.cos(an) * 26, y: U.y + Math.sin(an) * 22, vx: -Math.cos(an), vy: -Math.sin(an), r: 3, c: '#3a8aa0', vr: 0.1, life: 16 }); } mSpawn(this, 'mjag', { x: U.x, y: U.y, r0: 28, r1: 10, c: '#6ac0d0', n: 12, life: 16 }); yield* wait(18); },
+  // ---- human ----
+  *m_knife(U, T, u) { yield* this.lunge(u, 14, 3); Sound.sfx('slash'); mSpawn(this, 'mgouge', { x: T.x, y: T.y, ang: 2.3, len: 30, w: 4, c: '#b8c0cc', c2: '#ff6070', life: 12 }); mImpact(this, T, '#d0d8e0', 12); yield* wait(12); },
+  *m_dirtyKick(U, T, u) { yield* this.lunge(u, 24, 3); Sound.sfx('hit'); mImpact(this, T, '#a07a50', 16); mRise(this, T.x, T.y + 20, 4, () => ({ k: 'mpuff', r: 3, c: '#9a8a70' })); yield* wait(12); },
+  *m_taunt(U, T) { Sound.sfx('buzz'); for (let i = 0; i < 3; i++) { mSpawn(this, 'manger', { x: T.x + rnd(-14, 14), y: T.y - 16 + rnd(-6, 6), life: 22 }); yield* wait(5); } yield* wait(14); },
+  *m_throwDagger(U, T) { Sound.sfx('slash'); mProj(this, U, T, () => ({ k: 'mknife', vr: 0.7, rot: 0 }), 2, 4, 10); yield* wait(16); mSpawn(this, 'mgouge', { x: T.x, y: T.y, ang: 0.6, len: 18, w: 3, c: '#c8d0dc', life: 10 }); yield* wait(8); },
+  *m_gutSlash(U, T, u) { yield* this.lunge(u, 20, 3); Sound.sfx('slash'); mSpawn(this, 'mgouge', { x: T.x, y: T.y, ang: 0.9, len: 52, w: 9, c: '#5a0a14', c2: '#ff4050', bend: 6, grow: 3, life: 18 }); mDebris(this, T.x, T.y, 6, '#9aa0ac'); this.shake = 12; yield* wait(18); },
+  *m_warCry(U) { Sound.cry(9, 0.5, 1.2); for (let i = 0; i < 3; i++) { mSpawn(this, 'mjag', { x: U.x, y: U.y, r0: 10, r1: 44, c: '#e03020', n: 14, life: 18 }); mSpawn(this, 'manger', { x: U.x + rnd(-16, 16), y: U.y - 26 + rnd(-4, 4), life: 22 }); yield* wait(6); } yield* wait(10); },
+  *m_axeSpin(U, T, u) { Sound.sfx('wind'); for (let i = 0; i < 6; i++) { mSpawn(this, 'mgouge', { x: U.x + Math.cos(i * 1.05) * 12, y: U.y + Math.sin(i * 1.05) * 8, ang: i * 1.05 + 1.57, len: 26, w: 5, c: '#9aa0ac', bend: 6, life: 10 }); yield* wait(3); } yield* this.lunge(u, 20, 3); Sound.sfx('hitSuper'); this.shake = 16; for (const d of [0.7, 2.44]) mSpawn(this, 'mgouge', { x: T.x, y: T.y, ang: d, len: 56, w: 9, c: '#6a0a10', c2: '#ff5030', life: 16 }); mSpawn(this, 'mflash', { c: '#500008', life: 10 }); yield* wait(16); },
+  // ---- spirit ----
+  *m_emberSpit(U, T) { Sound.sfx('fire'); mProj(this, U, T, () => ({ k: 'mflame', s: 4, c: '#ff4010', c2: '#ffc040', arc: 16 }), 3, 3, 14); yield* wait(22); mRise(this, T.x, T.y, 4, () => ({ k: 'mpuff', r: 3, c: '#3a2a2a', op: 0.7 })); yield* wait(12); },
+  *m_flare(U, T) { Sound.sfx('fire'); mSpawn(this, 'mflash', { c: '#802000', life: 20, a: 0.8 }); for (let i = 0; i < 16; i++) { const an = i / 16 * Math.PI * 2; mSpawn(this, 'mflame', { x: U.x, y: U.y, vx: Math.cos(an) * 2.2 + (T.x - U.x) / 30, vy: Math.sin(an) * 1.6 + (T.y - U.y) / 24, s: 5, c: MC.fire, life: 24 }); } yield* wait(20); mImpact(this, T, '#ff7a20', 26); yield* wait(12); },
+  *m_heatHaze(U, T) { Sound.sfx('fire'); for (let i = 0; i < 5; i++) { mSpawn(this, 'mjag', { x: T.x, y: T.y + 10 - i * 6, r0: 30, r1: 34, c: '#ff9a40', n: 20, life: 20, fl: 0.25 }); mSpawn(this, 'mpuff', { x: T.x + rnd(-16, 16), y: T.y + rnd(-10, 10), r: 6, c: '#ffb070', op: 0.35, life: 24 }); yield* wait(4); } yield* wait(16); },
+  *m_flicker(U) { Sound.sfx('fire'); for (let i = 0; i < 8; i++) { const an = i * 0.785; mSpawn(this, 'mflame', { x: U.x + Math.cos(an) * 20, y: U.y + Math.sin(an) * 16, vx: -Math.cos(an) * 0.8, vy: -Math.sin(an) * 0.6, s: 3, c: '#ff6a20', life: 18 }); } mSpawn(this, 'maura', { x: U.x, y: U.y, r0: 34, r1: 12, c: '#ff5010', life: 18 }); yield* wait(18); },
+  // ---- undead ----
+  *m_boneClub(U, T, u) { yield* this.lunge(u, 16, 3); Sound.sfx('hit'); mSpawn(this, 'mbone', { x: T.x, y: T.y - 4, rot: -0.8, vr: 0.25, L: 9, life: 10 }); mImpact(this, T, MC.bone, 18); yield* wait(14); },
+  *m_rattle(U, T, u) { Sound.sfx('rock'); yield* this.shakeB(u, 12, 2); for (let i = 0; i < 6; i++) mSpawn(this, 'mbone', { x: U.x + rnd(-18, 18), y: U.y + rnd(-18, 14), vy: rnd(-5, 5) / 10, L: 3, vr: 0.6, life: 14 }); mSpawn(this, 'mjag', { x: T.x, y: T.y, r0: 6, r1: 26, c: '#b0a890', n: 10, life: 14 }); yield* wait(14); },
+  *m_boneThrow(U, T) { Sound.sfx('wind'); mProj(this, U, T, () => ({ k: 'mbone', vr: 0.5, arc: 18 }), 1, 0, 14); yield* wait(14); mImpact(this, T, MC.bone, 16); mProj(this, T, U, () => ({ k: 'mbone', vr: 0.5, arc: -18 }), 1, 0, 14); yield* wait(16); },
+  *m_ghostFire(U, T) { Sound.sfx('fire'); mProj(this, U, T, () => ({ k: 'mflame', s: 5, c: '#3aa0c0', c2: '#e0ffff', wob: 9 }), 3, 5, 24); yield* wait(36); mRise(this, T.x, T.y, 3, () => ({ k: 'mskull', c: '#a0f0f0', tail: 1 })); yield* wait(16); },
+  *m_soulSip(U, T) { Sound.sfx('charge'); mSpawn(this, 'mcurse', { x: T.x, y: T.y, r0: 24, r1: 6, life: 22 }); yield* wait(14); mProj(this, T, U, () => ({ k: 'mskull', s: 0.7, c: '#d0c0ff', tail: 1, wob: 6 }), 5, 3, 18); yield* wait(28); },
+  *m_wail(U) { Sound.cry(13, 0.5, 1.4); for (let i = 0; i < 3; i++) { mSpawn(this, 'mjag', { x: U.x, y: U.y, r0: 8, r1: 60, c: '#8a78b0', n: 20, life: 22 }); yield* wait(6); } mRise(this, U.x, U.y, 4, () => ({ k: 'mskull', c: '#c8c0e0', tail: 1 }), 30); yield* wait(16); },
+  *m_hex(U, T) { Sound.sfx('statDown'); mSpawn(this, 'mcurse', { x: T.x, y: T.y, r0: 30, r1: 8, life: 26 }); for (let i = 0; i < 3; i++) { const an = i * 2.09, p = mSpawn(this, 'mrune', { x: T.x, y: T.y, s: 3.5, c: '#c080ff', life: 26 }); p.upd = q => { const aa = an + q.t * 0.2, r = 22 - q.t * 0.5; q.x = T.x + Math.cos(aa) * r; q.y = T.y + Math.sin(aa) * r * 0.8; }; } yield* wait(26); },
+  *m_drownHand(U, T) { Sound.sfx('water'); for (let i = 0; i < 4; i++) { const X = T.x + (i - 1.5) * 12, p = mSpawn(this, 'mhand', { x: X, y: T.y + 34, c: i % 2 ? MC.ghost : '#3a9ab0', life: 26 }); p.upd = q => { q.y = T.y + 34 - Math.sin(Math.PI * clamp(q.t / 20, 0, 1)) * 30; }; yield* wait(4); } for (let i = 0; i < 6; i++) mSpawn(this, 'mdrop', { x: T.x + rnd(-20, 20), y: T.y + 20, vy: -1.2, g: 0.08, r: 2, c: MC.water2, life: 20 }); yield* wait(22); },
+  *m_chillMist(U, T) { Sound.sfx('wind'); mProj(this, U, T, () => ({ k: 'mpuff', r: 5, c: '#a8d8e0', op: 0.55, wob: 8, linger: 8 }), 8, 2, 18); yield* wait(30); mDebris(this, T.x, T.y, 4, '#e0f8ff', 'mshard', 1.5, 2); yield* wait(10); },
+  *m_darkPulse(U, T) { Sound.sfx('charge'); mSpawn(this, 'mflash', { c: '#200030', life: 26, a: 0.9 }); for (let i = 0; i < 3; i++) { mSpawn(this, 'mjag', { x: U.x, y: U.y, r0: 8, r1: 110, c: '#6a3aa0', n: 22, life: 22 }); yield* wait(6); } mImpact(this, T, MC.dark2, 22); yield* wait(12); },
+  *m_boneRush(U, T, u) { for (let k = 0; k < 2; k++) { yield* this.lunge(u, 14, 2); Sound.sfx('hit'); mSpawn(this, 'mfang', { x: T.x + (k ? 6 : -6), y: T.y + (k ? 4 : -4), w: 24, c: MC.bone, gum: '#2a1a2a', life: 12 }); yield* wait(6); } mDebris(this, T.x, T.y, 5, MC.bone, 'mbone', 2, 2); yield* wait(12); },
+  *m_runeBeam(U, T) { for (let i = 0; i < 3; i++) { const an = i * 2.09, p = mSpawn(this, 'mrune', { x: U.x, y: U.y, s: 4, life: 16 }); p.upd = q => { const aa = an + q.t * 0.3; q.x = U.x + Math.cos(aa) * 18; q.y = U.y + Math.sin(aa) * 14; }; } Sound.sfx('charge'); yield* wait(14); Sound.sfx('thunder'); mSpawn(this, 'mbeam', { x1: U.x, y1: U.y, x2: T.x, y2: T.y, w: 5, c: '#40c8e8', c2: '#e0ffff', grow: 4, pulse: 1, life: 18 }); for (let i = 0; i < 3; i++) mSpawn(this, 'mzap', { x: T.x + rnd(-12, 12), y: T.y + rnd(-12, 12), life: 8 }); yield* wait(18); },
+  *m_darkSlash(U, T, u) { mSpawn(this, 'maura', { x: U.x, y: U.y, r0: 10, r1: 40, c: '#40105a', life: 14 }); yield* wait(6); yield* this.lunge(u, 18, 3); Sound.sfx('slash'); mSpawn(this, 'mgouge', { x: T.x, y: T.y, ang: 2.2, len: 52, w: 9, c: MC.dark, c2: MC.dark2, bend: 7, life: 18 }); mSpawn(this, 'mcurse', { x: T.x, y: T.y, r0: 14, r1: 4, life: 16 }); this.shake = 10; yield* wait(18); },
+  *m_boneShield(U, T, u) { yield* this.lunge(u, 20, 3); Sound.sfx('hitSuper'); mImpact(this, T, MC.bone, 28); mDebris(this, T.x, T.y, 6, MC.bone, 'mbone', 2.2, 2); this.shake = 10; yield* wait(16); },
+  *m_deathCry(U) { Sound.cry(15, 0.45, 1.5); mSpawn(this, 'mjag', { x: U.x, y: U.y, r0: 10, r1: 50, c: '#8a50c0', n: 16, life: 22 }); mRise(this, U.x, U.y, 6, () => ({ k: 'mskull', c: '#e0d0ff', tail: 1 }), 24); yield* wait(22); },
+};
+
 /* ===================== EVENTS (異世界篇) ===================== */
 function* healRitual(text) {
   yield* fadeOut(10); healHero(); const fr = Sound.jingle('heal'); yield* wait(Math.max(40, fr)); yield* fadeIn(10);
@@ -4198,11 +4769,11 @@ const Events = {
       st.flags.license = 1; st.bag.license = 1; st.equip.weapon = makeGear('woodSword', 1, 1).u; st.equip.acc1 = makeGear('guardBadge', 1, 1).u;
       yield* itemGet('得到了木劍和冒險者證！'); yield* say(st.name + '把木劍拿在手上。……有點重。');
       yield* say('還有這些傷藥，帶在身上吧。'); st.bag.potion = (st.bag.potion || 0) + 5; yield* itemGet('得到了傷藥×5！');
-      yield* sayAll(['走在高高的草叢裡，會遇到野生的魔物。', '打倒魔物能累積經驗，你會越來越強。', '道路上還有更強大的「精英魔物」，被盯上可要小心。', '古岩魔像是岩石屬性，最怕水和草。記住了。', '按START可以打開選單，查看狀態和背包，也能記錄進度。', '去吧，異世界的旅人。願曙光指引你回家的路。']);
+      yield* sayAll(['走在高高的草叢裡，會遇到野生的魔物。', '打倒魔物能累積經驗，你會越來越強。', '道路上還有更強大的「精英魔物」，被盯上可要小心。', '古岩魔像是「構造體」魔物，最怕水和草的攻擊。記住了。', '按START可以打開選單，查看狀態和背包，也能記錄進度。', '去吧，異世界的旅人。願曙光指引你回家的路。']);
       return;
     }
-    if (st.flags.golem) { yield* sayAll(['門的另一邊，是你的故鄉？', '門只開了一瞬間……看來還缺少某種力量。', '別灰心。線索一定就在這個世界的某處。']); return; }
-    yield* sayAll(['古岩魔像是岩石屬性，最怕水和草的攻擊。', '累了就去旅店休息，別太勉強自己。']);
+    if (st.flags.golem) { yield* sayAll(['門的另一邊，是你的故鄉？', '門只開了一瞬間……看來還缺少某種力量。', '別灰心。線索一定就在這個世界的某處。'].concat(st.flags.boneKnight ? [] : ['……對了，聽說魔像倒下後，遺跡的石板下面出現了往地底的樓梯。', '那裡是古王的墓穴。亡者怕火，別忘了帶上火系的武器或技能。'])); return; }
+    yield* sayAll(['古岩魔像是「構造體」魔物，最怕水和草的攻擊。', '累了就去旅店休息，別太勉強自己。']);
   },
   *apprentice() { yield* say(Game.st.flags.golem ? '你真的打倒魔像了！我以後也要變得和你一樣強！' : '村長爺爺說，異世界來的人都很強！是真的嗎？'); },
   *gatekeeper() { yield* say(Game.st.flags.license ? '你就是那個從異世界來的人？好厲害！路上小心喔！' : '前面就是晨霧道路，外面有魔物喔！沒有冒險者證的人不能出鎮。'); },
@@ -4252,7 +4823,7 @@ const Events = {
   *florist() {
     const f = Game.st.flags, st = Game.st;
     if (!f.q1) {
-      yield* sayAll(['魔物都有自己的屬性喔。火怕水、水怕草、草怕火。', '……對了，你有看到我弟弟小麥嗎？', '他說要去晨霧道路採藥草，到現在都還沒回來……']);
+      yield* sayAll(['魔物分成好幾個種族喔。獸、蟲和植物怕火，會飛的和軟軟的怕雷，石像怕水和草。', '……對了，你有看到我弟弟小麥嗎？', '他說要去晨霧道路採藥草，到現在都還沒回來……']);
       if (yield* yesNo('要幫忙找小麥嗎？')) { f.q1 = 1; yield* say('謝謝你！他穿著黃色的衣服，應該就在道路的某處……拜託你了！'); } else yield* say('……這樣啊。要是看到他，請叫他回家。');
       return;
     }
@@ -4283,7 +4854,7 @@ const Events = {
   *clerk() { yield* shopFlow(); },
   *customer() { if (Game.st.flags.croc) { yield* say('騎士長劍是王都騎士團在用的劍！好想要喔……'); return; } yield* sayAll(['鐵劍好貴啊……不過攻擊會提升很多呢。', '魔法護符能提高魔攻，水流刃和落雷也會變強喔！']); },
   *hiker() { const hf = Game.st.flags; if (hf.mineOpen && !hf.bandit) { yield* sayAll(['東邊的廢棄礦坑被盜賊佔據了。商隊被搶的貨物應該就藏在裡面。', '入口在道路東側的小路盡頭。盜賊頭目「鐵斧」格倫會蓄力揮斧，那時候記得防禦！']); return; } if (Game.st.flags.wolf) { yield* sayAll(['狂牙狼被你打倒了？難怪最近路上安靜多了！', '精英魔物身上常常會掉出好東西喔。']); return; } yield* sayAll(['嘿！這條路上的草叢很深，常有魔物跳出來。', '受傷了就回萌芽鎮的旅店休息吧。', '過了河之後，還有一座能恢復體力的泉水喔！']); },
-  *girl2() { yield* sayAll(Game.st.flags.croc ? ['你打倒了沼澤鱷？太好了，終於可以過橋了！'] : ['橋頭那隻沼澤鱷好兇……', '聽說牠是水屬性，最怕雷和草的攻擊。']); },
+  *girl2() { yield* sayAll(Game.st.flags.croc ? ['你打倒了沼澤鱷？太好了，終於可以過橋了！'] : ['橋頭那隻沼澤鱷好兇……', '聽說水棲的魔物最怕雷和草的攻擊。']); },
   *spring() {
     const ok = yield* yesNo('清澈的泉水閃閃發亮……要喝一口嗎？');
     if (ok) { Game.st.respawn = { map: 'route', x: 7, y: 4, dir: 'left' }; yield* healRitual('好甜的泉水！體力完全恢復了！'); }
@@ -4352,7 +4923,7 @@ function newGameState(name) {
   const st = { name, lv: 5, exp: expForLevel(5), hp: 1, status: null, moves: [{ id: 'slash', pp: 35 }, { id: 'glare', pp: 30 }, { id: 'flameSlash', pp: 25 }], boost: {}, equip: { weapon: null, head: null, body: null, feet: null, acc1: null, acc2: null }, gear: [], gid: 0, bag: { phone: 1 }, money: 1000, flags: {}, map: 'home', x: 1, y: 3, dir: 'right', respawn: { map: 'home', x: 1, y: 4, dir: 'up' }, time: 0, steps: 0, wins: 0 };
   Game.st = st; st.equip.body = makeGear('uniform', 1, 1).u; st.equip.feet = makeGear('schoolShoes', 1, 1).u; st.hp = heroStats(st).hp; return st;
 }
-function startOverworld() { const st = Game.st; migrateGear(st); if (!st.tal) { st.tal = {}; st.tp = Math.max(0, st.lv - 5); } const ow = Game.ow = new Overworld(); Game.setScene(ow); ow.load(st.map, st.x, st.y, st.dir); return ow; }
+function startOverworld() { const st = Game.st; migrateGear(st); migrateVs(st); if (!st.tal) { st.tal = {}; st.tp = Math.max(0, st.lv - 5); } const ow = Game.ow = new Overworld(); Game.setScene(ow); ow.load(st.map, st.x, st.y, st.dir); return ow; }
 
 /* ===================== SHARED ART: logo, title, modern street ===================== */
 function makeLogo(text, sc) {
@@ -4458,7 +5029,7 @@ class TitleScene {
     x.drawImage(this.logo, Math.round(W / 2 - this.logo.width / 2), 6 + bob);
     Font.drawC(x, '～異世界冒險RPG～', W / 2, 52 + bob, '#ffe0a0', '#3a1428');
     if (this.stage === 'press' && Math.floor(this.t / 30) % 2 === 0) Font.drawC(x, '按 A 鍵開始', W / 2, 232, '#ffffff', '#1a1024');
-    Font.draw(x, 'v4.0', W - 26, H - 13, '#b890b0', null);
+    Font.draw(x, 'v4.1', W - 26, H - 13, '#b890b0', null);
   }
 }
 

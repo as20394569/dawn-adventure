@@ -669,6 +669,7 @@ Tiles.fence = mask => tileCanvas('fence' + mask, x => {
   const rail = (a, b) => { x.fillStyle = '#3a2414'; x.fillRect(a, 4, b - a, 1); x.fillRect(a, 7, b - a, 1); x.fillRect(a, 8, b - a, 1); x.fillRect(a, 11, b - a, 1); x.fillStyle = '#a8703c'; x.fillRect(a, 5, b - a, 2); x.fillRect(a, 9, b - a, 2); x.fillStyle = '#c08a50'; x.fillRect(a, 5, b - a, 1); x.fillRect(a, 9, b - a, 1); };
   if (mask & 8) rail(0, 6); if (mask & 2) rail(11, 16);
 });
+Tiles.stairs = (() => { const c = mkCanvas(16, 16), x = c.getContext('2d'); x.fillStyle = '#6a6474'; x.fillRect(0, 0, 16, 16); x.fillStyle = '#0c0a12'; x.fillRect(1, 1, 14, 14); for (let i = 0; i < 5; i++) { x.fillStyle = ['#8a8494', '#6a6474', '#4c4858', '#34303e', '#221e2a'][i]; x.fillRect(2 + i, 2 + i * 3, 12 - i * 2, 2); } x.fillStyle = '#a8a2b4'; x.fillRect(0, 0, 16, 1); return c; })();
 Tiles.stone = v => tileCanvas('stone' + v, x => {
   x.fillStyle = '#c8bca4'; x.fillRect(0, 0, 16, 16);
   x.fillStyle = '#a89c84'; x.fillRect(0, 7, 16, 1); x.fillRect(0, 15, 16, 1); x.fillRect(v % 2 ? 4 : 10, 0, 1, 7); x.fillRect(v % 2 ? 12 : 3, 8, 1, 7);

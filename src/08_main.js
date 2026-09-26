@@ -47,11 +47,11 @@ const Events = {
       st.flags.license = 1; st.bag.license = 1; st.equip.weapon = makeGear('woodSword', 1, 1).u; st.equip.acc1 = makeGear('guardBadge', 1, 1).u;
       yield* itemGet('得到了木劍和冒險者證！'); yield* say(st.name + '把木劍拿在手上。……有點重。');
       yield* say('還有這些傷藥，帶在身上吧。'); st.bag.potion = (st.bag.potion || 0) + 5; yield* itemGet('得到了傷藥×5！');
-      yield* sayAll(['走在高高的草叢裡，會遇到野生的魔物。', '打倒魔物能累積經驗，你會越來越強。', '道路上還有更強大的「精英魔物」，被盯上可要小心。', '古岩魔像是岩石屬性，最怕水和草。記住了。', '按START可以打開選單，查看狀態和背包，也能記錄進度。', '去吧，異世界的旅人。願曙光指引你回家的路。']);
+      yield* sayAll(['走在高高的草叢裡，會遇到野生的魔物。', '打倒魔物能累積經驗，你會越來越強。', '道路上還有更強大的「精英魔物」，被盯上可要小心。', '古岩魔像是「構造體」魔物，最怕水和草的攻擊。記住了。', '按START可以打開選單，查看狀態和背包，也能記錄進度。', '去吧，異世界的旅人。願曙光指引你回家的路。']);
       return;
     }
-    if (st.flags.golem) { yield* sayAll(['門的另一邊，是你的故鄉？', '門只開了一瞬間……看來還缺少某種力量。', '別灰心。線索一定就在這個世界的某處。']); return; }
-    yield* sayAll(['古岩魔像是岩石屬性，最怕水和草的攻擊。', '累了就去旅店休息，別太勉強自己。']);
+    if (st.flags.golem) { yield* sayAll(['門的另一邊，是你的故鄉？', '門只開了一瞬間……看來還缺少某種力量。', '別灰心。線索一定就在這個世界的某處。'].concat(st.flags.boneKnight ? [] : ['……對了，聽說魔像倒下後，遺跡的石板下面出現了往地底的樓梯。', '那裡是古王的墓穴。亡者怕火，別忘了帶上火系的武器或技能。'])); return; }
+    yield* sayAll(['古岩魔像是「構造體」魔物，最怕水和草的攻擊。', '累了就去旅店休息，別太勉強自己。']);
   },
   *apprentice() { yield* say(Game.st.flags.golem ? '你真的打倒魔像了！我以後也要變得和你一樣強！' : '村長爺爺說，異世界來的人都很強！是真的嗎？'); },
   *gatekeeper() { yield* say(Game.st.flags.license ? '你就是那個從異世界來的人？好厲害！路上小心喔！' : '前面就是晨霧道路，外面有魔物喔！沒有冒險者證的人不能出鎮。'); },
@@ -101,7 +101,7 @@ const Events = {
   *florist() {
     const f = Game.st.flags, st = Game.st;
     if (!f.q1) {
-      yield* sayAll(['魔物都有自己的屬性喔。火怕水、水怕草、草怕火。', '……對了，你有看到我弟弟小麥嗎？', '他說要去晨霧道路採藥草，到現在都還沒回來……']);
+      yield* sayAll(['魔物分成好幾個種族喔。獸、蟲和植物怕火，會飛的和軟軟的怕雷，石像怕水和草。', '……對了，你有看到我弟弟小麥嗎？', '他說要去晨霧道路採藥草，到現在都還沒回來……']);
       if (yield* yesNo('要幫忙找小麥嗎？')) { f.q1 = 1; yield* say('謝謝你！他穿著黃色的衣服，應該就在道路的某處……拜託你了！'); } else yield* say('……這樣啊。要是看到他，請叫他回家。');
       return;
     }
@@ -132,7 +132,7 @@ const Events = {
   *clerk() { yield* shopFlow(); },
   *customer() { if (Game.st.flags.croc) { yield* say('騎士長劍是王都騎士團在用的劍！好想要喔……'); return; } yield* sayAll(['鐵劍好貴啊……不過攻擊會提升很多呢。', '魔法護符能提高魔攻，水流刃和落雷也會變強喔！']); },
   *hiker() { const hf = Game.st.flags; if (hf.mineOpen && !hf.bandit) { yield* sayAll(['東邊的廢棄礦坑被盜賊佔據了。商隊被搶的貨物應該就藏在裡面。', '入口在道路東側的小路盡頭。盜賊頭目「鐵斧」格倫會蓄力揮斧，那時候記得防禦！']); return; } if (Game.st.flags.wolf) { yield* sayAll(['狂牙狼被你打倒了？難怪最近路上安靜多了！', '精英魔物身上常常會掉出好東西喔。']); return; } yield* sayAll(['嘿！這條路上的草叢很深，常有魔物跳出來。', '受傷了就回萌芽鎮的旅店休息吧。', '過了河之後，還有一座能恢復體力的泉水喔！']); },
-  *girl2() { yield* sayAll(Game.st.flags.croc ? ['你打倒了沼澤鱷？太好了，終於可以過橋了！'] : ['橋頭那隻沼澤鱷好兇……', '聽說牠是水屬性，最怕雷和草的攻擊。']); },
+  *girl2() { yield* sayAll(Game.st.flags.croc ? ['你打倒了沼澤鱷？太好了，終於可以過橋了！'] : ['橋頭那隻沼澤鱷好兇……', '聽說水棲的魔物最怕雷和草的攻擊。']); },
   *spring() {
     const ok = yield* yesNo('清澈的泉水閃閃發亮……要喝一口嗎？');
     if (ok) { Game.st.respawn = { map: 'route', x: 7, y: 4, dir: 'left' }; yield* healRitual('好甜的泉水！體力完全恢復了！'); }
@@ -201,7 +201,7 @@ function newGameState(name) {
   const st = { name, lv: 5, exp: expForLevel(5), hp: 1, status: null, moves: [{ id: 'slash', pp: 35 }, { id: 'glare', pp: 30 }, { id: 'flameSlash', pp: 25 }], boost: {}, equip: { weapon: null, head: null, body: null, feet: null, acc1: null, acc2: null }, gear: [], gid: 0, bag: { phone: 1 }, money: 1000, flags: {}, map: 'home', x: 1, y: 3, dir: 'right', respawn: { map: 'home', x: 1, y: 4, dir: 'up' }, time: 0, steps: 0, wins: 0 };
   Game.st = st; st.equip.body = makeGear('uniform', 1, 1).u; st.equip.feet = makeGear('schoolShoes', 1, 1).u; st.hp = heroStats(st).hp; return st;
 }
-function startOverworld() { const st = Game.st; migrateGear(st); if (!st.tal) { st.tal = {}; st.tp = Math.max(0, st.lv - 5); } const ow = Game.ow = new Overworld(); Game.setScene(ow); ow.load(st.map, st.x, st.y, st.dir); return ow; }
+function startOverworld() { const st = Game.st; migrateGear(st); migrateVs(st); if (!st.tal) { st.tal = {}; st.tp = Math.max(0, st.lv - 5); } const ow = Game.ow = new Overworld(); Game.setScene(ow); ow.load(st.map, st.x, st.y, st.dir); return ow; }
 
 /* ===================== SHARED ART: logo, title, modern street ===================== */
 function makeLogo(text, sc) {
@@ -307,7 +307,7 @@ class TitleScene {
     x.drawImage(this.logo, Math.round(W / 2 - this.logo.width / 2), 6 + bob);
     Font.drawC(x, '～異世界冒險RPG～', W / 2, 52 + bob, '#ffe0a0', '#3a1428');
     if (this.stage === 'press' && Math.floor(this.t / 30) % 2 === 0) Font.drawC(x, '按 A 鍵開始', W / 2, 232, '#ffffff', '#1a1024');
-    Font.draw(x, 'v4.0', W - 26, H - 13, '#b890b0', null);
+    Font.draw(x, 'v4.1', W - 26, H - 13, '#b890b0', null);
   }
 }
 
