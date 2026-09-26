@@ -93,7 +93,7 @@ const Events = {
     yield* sayAll(['得救了！真是太感謝你了！', '這是謝禮。我會在萌芽鎮擺攤，也給你算便宜一點！']); yield* itemGet(Game.st.name + '得到了800 G！');
     f.mineOpen = 1; yield* sayAll(['……不過，最前面那輛貨車被盜賊搶走了。', '他們躲在道路東邊的廢棄礦坑。封住入口的木板，好像被他們拆掉了……', '如果你有餘力，能幫忙把貨物搶回來嗎？'])
   },
-  *hiddenBoss(ow) {
+  hiddenBoss(ow) {
     const st = Game.st; if (st.flags.crystalBoss || !ow.boss) return null;
     return (function* () {
       yield* sayAll(['水晶石像散發著異界之門同樣的光芒……', '「……異界之人……證明……你的力量……」']);
