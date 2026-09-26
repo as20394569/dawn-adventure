@@ -190,13 +190,13 @@ function* recordScreen() {
     if (!tab) {
       const id = maps[mi]; drawWin(x, 4, 24, 168, 200, 'menu');
       if (!id) { Font.draw(x, '還沒有探索過任何地方。', 14, 30, UIC.muted, UIC.textSh); return; }
-      Font.draw(x, EXPLORE[id], 12, 26, UIC.accent, UIC.textSh); if (maps.length > 1) Font.drawR(x, '↑↓ 切換地區', 166, 27, UIC.muted, UIC.textSh, 10);
+      Font.draw(x, EXPLORE[id] + (MAPS[id].type ? '・' + MAPS[id].type : ''), 12, 26, UIC.accent, UIC.textSh); if (maps.length > 1) Font.drawR(x, '↑↓ 切換地區', 166, 27, UIC.muted, UIC.textSh, 10);
       drawMiniMap(x, id, 8, 44, 160, 176, st);
       drawWin(x, 4, 226, 168, 26, 'menu'); Font.draw(x, '探索度 ' + Math.round(mapPct(id) * 100) + '%', 12, 230, UIC.text, UIC.textSh); Font.drawR(x, '總探索度 ' + Math.round(totalPct() * 100) + '%', 166, 230, UIC.warm, UIC.textSh);
     } else {
       const A = ACHIEVEMENTS, got = A.filter(a => (st.ach || {})[a.id]).length; drawWin(x, 4, 24, 168, 228, 'menu'); Font.draw(x, '已解鎖 ' + got + '/' + A.length, 12, 26, UIC.warm, UIC.textSh); Font.drawR(x, '每個成就 +200 G', 166, 27, UIC.muted, UIC.textSh, 10);
       A.slice(top, top + VIS).forEach((a, i) => { const Y = 44 + i * 23, on = (st.ach || {})[a.id]; x.fillStyle = on ? 'rgba(255,196,77,0.10)' : 'rgba(255,255,255,0.03)'; x.fillRect(8, Y, 160, 21);
-        Font.draw(x, on ? '★' : '☆', 12, Y, on ? UIC.warm : UIC.dis, UIC.textSh); Font.draw(x, a.n, 26, Y - 1, on ? UIC.text : UIC.muted, UIC.textSh, 11); Font.draw(x, a.d, 26, Y + 10, on ? UIC.muted : UIC.dis, UIC.textSh, 9); });
+        Font.draw(x, on ? '★' : '☆', 12, Y, on ? UIC.warm : UIC.dis, UIC.textSh); Font.draw(x, a.n, 26, Y - 1, on ? UIC.text : UIC.muted, UIC.textSh, 11); Font.drawR(x, a.cat || '', 164, Y - 1, on ? UIC.warm : UIC.dis, UIC.textSh, 9); Font.draw(x, a.d, 26, Y + 10, on ? UIC.muted : UIC.dis, UIC.textSh, 9); });
       if (top > 0) x.drawImage(UPARROW, 86, 40); if (top + VIS < A.length) x.drawImage(DOWNARROW, 86, 244);
     }
   } };

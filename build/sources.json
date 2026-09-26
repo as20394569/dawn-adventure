@@ -1,0 +1,437 @@
+{
+ "gear": {
+  "ironSword": [
+   "route掉落池",
+   "道具店"
+  ],
+  "apprenticeStaff": [
+   "route掉落池",
+   "道具店"
+  ],
+  "mistDagger": [
+   "route掉落池"
+  ],
+  "clothCap": [
+   "route掉落池",
+   "道具店"
+  ],
+  "leather": [
+   "route掉落池",
+   "道具店"
+  ],
+  "mistCloak": [
+   "route掉落池"
+  ],
+  "travelBoots": [
+   "route掉落池",
+   "道具店"
+  ],
+  "mistBoots": [
+   "route掉落池"
+  ],
+  "swiftFeather": [
+   "route掉落池",
+   "道具店"
+  ],
+  "wolfNecklace": [
+   "route掉落池"
+  ],
+  "oakStaff": [
+   "forest掉落池"
+  ],
+  "thornStaff": [
+   "forest掉落池"
+  ],
+  "hunterCap": [
+   "forest掉落池"
+  ],
+  "hunterLeather": [
+   "forest掉落池",
+   "forest寶箱"
+  ],
+  "hunterBoots": [
+   "forest掉落池"
+  ],
+  "featherBoots": [
+   "forest掉落池",
+   "鐵匠配方"
+  ],
+  "herbPouch": [
+   "forest掉落池"
+  ],
+  "dawnSword": [
+   "forest寶箱"
+  ],
+  "knightSword": [
+   "sewer掉落池",
+   "道具店(沼澤鱷後)"
+  ],
+  "tideStaff": [
+   "sewer掉落池"
+  ],
+  "knightHelm": [
+   "sewer掉落池",
+   "行商"
+  ],
+  "chainMail": [
+   "sewer掉落池",
+   "道具店(沼澤鱷後)"
+  ],
+  "knightGreaves": [
+   "sewer掉落池",
+   "行商"
+  ],
+  "shadowBoots": [
+   "sewer掉落池"
+  ],
+  "thornRing": [
+   "sewer掉落池",
+   "荊棘魔花掉落"
+  ],
+  "boneSaber": [
+   "ruins掉落池"
+  ],
+  "ruinStaff": [
+   "ruins掉落池"
+  ],
+  "boneHelm": [
+   "ruins掉落池",
+   "鐵匠配方"
+  ],
+  "ruinMail": [
+   "ruins掉落池"
+  ],
+  "ectoLantern": [
+   "ruins掉落池",
+   "鐵匠配方"
+  ],
+  "banditHood": [
+   "mine精英掉落"
+  ],
+  "minerHelm": [
+   "mine掉落池",
+   "mine寶箱"
+  ],
+  "guardHelm": [
+   "mine掉落池",
+   "道具店(沼澤鱷後)"
+  ],
+  "stoneMail": [
+   "mine掉落池",
+   "鐵匠配方"
+  ],
+  "frogCloak": [
+   "mine掉落池",
+   "鐵匠配方"
+  ],
+  "minerBoots": [
+   "mine掉落池"
+  ],
+  "charm": [
+   "mine掉落池",
+   "道具店"
+  ],
+  "stormStaff": [
+   "catacomb掉落池",
+   "catacomb寶箱"
+  ],
+  "kingsBlade": [
+   "catacomb掉落池",
+   "catacomb寶箱"
+  ],
+  "runeMantle": [
+   "catacomb掉落池"
+  ],
+  "ancientGreaves": [
+   "catacomb掉落池"
+  ],
+  "kingsSeal": [
+   "catacomb掉落池"
+  ],
+  "foxBlade": [
+   "鐵匠配方"
+  ],
+  "sporeCharm": [
+   "鐵匠配方"
+  ],
+  "crystalBlade": [
+   "鐵匠配方"
+  ],
+  "emberKnife": [
+   "鐵匠配方"
+  ],
+  "voltSword": [
+   "鐵匠配方"
+  ],
+  "beetleCharm": [
+   "鐵匠配方"
+  ],
+  "silkRobe": [
+   "鐵匠配方"
+  ],
+  "fangDagger": [
+   "狂牙狼掉落"
+  ],
+  "scaleArmor": [
+   "沼澤鱷掉落"
+  ],
+  "mossBracer": [
+   "苔石巨人掉落"
+  ],
+  "crystalHeart": [
+   "水晶魔像掉落"
+  ],
+  "golemVisor": [
+   "古岩魔像掉落"
+  ],
+  "grenAxe": [
+   "鐵斧格倫掉落"
+  ],
+  "boneKnightMail": [
+   "骸骨騎士掉落"
+  ],
+  "woodSword": [
+   "劇情/任務"
+  ],
+  "uniform": [
+   "劇情/任務"
+  ],
+  "schoolShoes": [
+   "劇情/任務"
+  ],
+  "guardBadge": [
+   "劇情/任務"
+  ],
+  "moonCharm": [
+   "劇情/任務"
+  ],
+  "hunterOath": [
+   "劇情/任務"
+  ],
+  "masterBlade": [
+   "劇情/任務"
+  ]
+ },
+ "item": {
+  "superPotion": [
+   "route寶箱",
+   "forest寶箱",
+   "sewer寶箱",
+   "mine寶箱",
+   "catacomb寶箱",
+   "道具店",
+   "行商",
+   "鐵匠配方",
+   "委託獎勵"
+  ],
+  "powerFruit": [
+   "route寶箱",
+   "sewer寶箱",
+   "mine寶箱",
+   "catacomb寶箱",
+   "行商"
+  ],
+  "potion": [
+   "route寶箱",
+   "道具店",
+   "鐵匠配方"
+  ],
+  "parlyzHeal": [
+   "route寶箱",
+   "道具店"
+  ],
+  "ether": [
+   "route寶箱",
+   "sewer寶箱",
+   "mine寶箱",
+   "catacomb寶箱",
+   "道具店",
+   "行商"
+  ],
+  "awakening": [
+   "route寶箱",
+   "道具店"
+  ],
+  "herb": [
+   "route採集",
+   "route採集",
+   "forest採集",
+   "forest採集"
+  ],
+  "wisdomFruit": [
+   "forest寶箱"
+  ],
+  "luckClover": [
+   "forest寶箱",
+   "委託獎勵"
+  ],
+  "pocketWatch": [
+   "forest寶箱"
+  ],
+  "crystal": [
+   "sewer採集",
+   "sewer採集",
+   "catacomb採集",
+   "魔物:晶石丸"
+  ],
+  "elixir": [
+   "mine寶箱",
+   "catacomb寶箱",
+   "行商",
+   "道具店(魔像後)"
+  ],
+  "stone": [
+   "mine採集",
+   "mine採集",
+   "魔物:石丸",
+   "魔物:礦泥怪",
+   "魔物:符文石像",
+   "分解",
+   "分解",
+   "分解"
+  ],
+  "gel": [
+   "mine採集",
+   "魔物:泡泡姆",
+   "魔物:泥沼姆",
+   "分解",
+   "分解",
+   "分解"
+  ],
+  "boneShard": [
+   "catacomb採集",
+   "魔物:骷髏兵",
+   "魔物:骨犬",
+   "分解"
+  ],
+  "ectoplasm": [
+   "catacomb採集",
+   "魔物:幽靈燈",
+   "魔物:溺魂",
+   "魔物:怨靈"
+  ],
+  "antidote": [
+   "道具店"
+  ],
+  "burnHeal": [
+   "道具店"
+  ],
+  "smoke": [
+   "道具店"
+  ],
+  "rope": [
+   "行商",
+   "道具店(魔像後)"
+  ],
+  "tpBook": [
+   "行商",
+   "道具店(魔像後)",
+   "委託獎勵"
+  ],
+  "shroomCap": [
+   "魔物:嘟嘟菇"
+  ],
+  "feather": [
+   "魔物:啾啾鳥",
+   "魔物:夜梟",
+   "魔物:洞窟飛影",
+   "魔物:坑道蝠",
+   "分解",
+   "分解"
+  ],
+  "foxfire": [
+   "魔物:焰狐"
+  ],
+  "stinger": [
+   "魔物:電電蜂"
+  ],
+  "frogSkin": [
+   "魔物:紫斑蛙",
+   "分解"
+  ],
+  "spore": [
+   "魔物:毒孢菇",
+   "分解"
+  ],
+  "leaf": [
+   "魔物:翠狐",
+   "分解"
+  ],
+  "beetleShell": [
+   "魔物:雷角甲蟲"
+  ],
+  "emberCore": [
+   "魔物:火燼精"
+  ],
+  "silk": [
+   "魔物:礦坑毒蛛",
+   "分解"
+  ],
+  "license": [
+   "劇情/任務"
+  ]
+ },
+ "matUse": {
+  "herb": [
+   "配方:potion",
+   "配方:superPotion",
+   "委託c1"
+  ],
+  "gel": [
+   "配方:superPotion",
+   "配方:frogCloak",
+   "配方:silkRobe",
+   "強化"
+  ],
+  "feather": [
+   "配方:featherBoots"
+  ],
+  "stone": [
+   "配方:stoneMail",
+   "配方:emberKnife",
+   "配方:voltSword",
+   "強化"
+  ],
+  "foxfire": [
+   "配方:foxBlade"
+  ],
+  "stinger": [
+   "配方:foxBlade"
+  ],
+  "frogSkin": [
+   "配方:frogCloak"
+  ],
+  "spore": [
+   "配方:sporeCharm"
+  ],
+  "shroomCap": [
+   "配方:sporeCharm"
+  ],
+  "crystal": [
+   "配方:crystalBlade",
+   "強化",
+   "委託c3",
+   "支線:師父的遺作"
+  ],
+  "leaf": [
+   "配方:crystalBlade"
+  ],
+  "emberCore": [
+   "配方:emberKnife"
+  ],
+  "beetleShell": [
+   "配方:voltSword",
+   "配方:beetleCharm"
+  ],
+  "silk": [
+   "配方:silkRobe"
+  ],
+  "boneShard": [
+   "配方:boneHelm",
+   "配方:ectoLantern"
+  ],
+  "ectoplasm": [
+   "配方:ectoLantern"
+  ]
+ }
+}

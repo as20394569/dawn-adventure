@@ -173,6 +173,7 @@ function questList(st = Game.st) {
   if (f.herb) L.push({ n: '會讓路的樹', t: f.f6 ? '完成：在迷霧森林深處找到了晨曦之劍。' : '藥草師說，迷霧森林西北角有一棵「會讓路的樹」。', done: !!f.f6 });
   if (f.wellCharm) L.push({ n: '井底的月光', t: '完成：從老井撈起了月光護符。', done: true });
   extraQuests(st, L);
+  for (const q of L) q.cat = questCatOf(q) || (q.main ? '主線' : '支線');
   return L.filter(q => !q.done).concat(L.filter(q => q.done));
 }
 
@@ -198,7 +199,7 @@ function* summaryScreen() {
     if (page === 2) {
       drawWin(x, 4, 98, 168, 154, 'menu'); let Y = 102;
       const QL = questList(st); if (qTop > 0) x.drawImage(UPARROW, 86, 99); if (qTop < QL.length - 1) Font.drawR(x, (qTop + 1) + '/' + QL.length + ' ↑↓', 166, 238, UIC.muted, UIC.textSh, 9);
-      for (const q of QL.slice(qTop)) { Font.draw(x, (q.main ? '主線　' : '支線　') + q.n, 12, Y, q.done ? UIC.muted : q.main ? UIC.accent : UIC.warm, UIC.textSh); Y += 16; for (const l of Font.wrap(q.t, 150).slice(0, 3)) { Font.draw(x, l, 14, Y, q.done ? UIC.dis : UIC.text, UIC.textSh, 11); Y += 14; } Y += 6; if (Y > 236) break; }
+      for (const q of QL.slice(qTop)) { Font.draw(x, q.cat + '　' + q.n, 12, Y, q.done ? UIC.muted : QUEST_CAT_COL[q.cat] || UIC.warm, UIC.textSh); Y += 16; for (const l of Font.wrap(q.t, 150).slice(0, 3)) { if (Y > 222) break; Font.draw(x, l, 14, Y, q.done ? UIC.dis : UIC.text, UIC.textSh, 11); Y += 14; } Y += 6; if (Y > 206) break; }
     } else if (page === 0) {
       const a = heroAttr(st), eqB = eqBonus(st);
       drawWin(x, 4, 98, 168, 62, 'menu');
@@ -250,12 +251,12 @@ function* pickMoveToForget(newId) {
 
 /* ---------- Bag ---------- */
 const ITEM_ORDER = Object.keys(ITEMS);
-function bagList(filter) { const st = Game.st; return Object.keys(st.bag).filter(k => st.bag[k] > 0 && ITEMS[k] && (!filter || filter(ITEMS[k], k))).sort((a, b) => ITEM_ORDER.indexOf(a) - ITEM_ORDER.indexOf(b)); }
+function bagList(filter) { const st = Game.st; return Object.keys(st.bag).filter(k => st.bag[k] > 0 && ITEMS[k] && (!filter || filter(ITEMS[k], k))).sort((a, b) => (ITEM_CATS.indexOf(ITEMS[a].cat) - ITEM_CATS.indexOf(ITEMS[b].cat)) || (ITEM_ORDER.indexOf(a) - ITEM_ORDER.indexOf(b))); }
 function gearSort(st = Game.st) { const order = ['weapon', 'head', 'body', 'feet', 'acc']; return (st.gear || []).slice().sort((x, y) => (isEquipped(y) - isEquipped(x)) || order.indexOf(GEAR[x.b].slot) - order.indexOf(GEAR[y.b].slot) || y.q - x.q); }
 function drawGearDetail(x, g, Y, h, cmp) { // quality, roll, stats, specials, story text
   const B = GEAR[g.b], [a, b] = gearLines(g);
   Font.draw(x, gearName(g), 10, Y, gCol(g), UIC.textSh); Font.drawR(x, '品相' + Math.round(g.r * 100) + '%', 166, Y + 1, UIC.muted, UIC.textSh, 10);
-  let y = Y + 17; Font.draw(x, EQUIP_SLOTS[B.slot === 'acc' ? 'acc1' : B.slot] + '｜' + a, 12, y, UIC.text, UIC.textSh, 11); y += 14;
+  let y = Y + 17; Font.draw(x, EQUIP_SLOTS[B.slot === 'acc' ? 'acc1' : B.slot] + (B.kind && B.kind !== '飾品' ? '・' + B.kind : '') + '｜' + a, 12, y, UIC.text, UIC.textSh, 11); y += 14;
   if (b) for (const l of Font.wrap(b, 150, 11).slice(0, 2)) { Font.draw(x, l, 12, y, UIC.accent, UIC.textSh, 11); y += 13; }
   if (cmp) { Font.draw(x, cmp, 12, y, UIC.warm, UIC.textSh, 11); y += 13; }
   for (const f of B.fx || []) if (y + 12 < Y + h) for (const l of Font.wrap(SPECIALS[f].n + '：' + SPECIALS[f].d, 150, 10).slice(0, 2)) { if (y + 11 > Y + h) break; Font.draw(x, l, 12, y, UIC.warm, UIC.textSh, 10); y += 12; }
@@ -282,7 +283,7 @@ function* bagScreen(mode = 'field') { // returns item id used (battle) or null
       Font.draw(x, ITEMS[k].n, 14, Y, UIC.text, UIC.textSh); if (!ITEMS[k].key) Font.drawR(x, '×' + Game.st.bag[k], 164, Y, UIC.muted, UIC.textSh); });
     if (top > 0) x.drawImage(UPARROW, 85, 41); if (top + VIS < list.length) x.drawImage(DOWNARROW, 85, 40 + VIS * 18 + 4);
     drawWin(x, 4, 180, 168, 72, 'menu');
-    if (list[idx]) { if (gear) drawGearDetail(x, list[idx], 182, 68); else Font.wrap(ITEMS[list[idx]].d, 152).slice(0, 4).forEach((l, i) => Font.draw(x, l, 12, 184 + i * 16, UIC.text, UIC.textSh)); }
+    if (list[idx]) { if (gear) drawGearDetail(x, list[idx], 182, 68); else { const it = ITEMS[list[idx]]; Font.draw(x, '【' + it.cat + '】', 10, 182, ITEM_CAT_COL[it.cat] || UIC.muted, UIC.textSh, 10); Font.wrap(it.d, 152).slice(0, 3).forEach((l, i) => Font.draw(x, l, 12, 197 + i * 16, UIC.text, UIC.textSh)); } }
   } };
   UI.push(scr); let result = null;
   while (true) {

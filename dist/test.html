@@ -1698,7 +1698,7 @@ const ITEMS = {
   burnHeal: { n: '燙傷膏', price: 120, d: '治療灼傷狀態。', use: 'cure', v: 'brn' },
   ether: { n: '活力茶', price: 300, d: '所有技能的PP各恢復10點。', use: 'pp', v: 10 },
   smoke: { n: '煙霧彈', price: 150, d: '在戰鬥中使用，必定能從野生魔物身邊逃走。', use: 'escape' },
-  powerFruit: { n: '力量果實', price: 0, sell: 500, d: '神奇的果實。吃下後力量永久+2。', use: 'boost', v: { str: 2 } },
+  powerFruit: { n: '力量果實', price: 2500, sell: 500, d: '神奇的果實。吃下後力量永久+2。', use: 'boost', v: { str: 2 } },
   luckClover: { n: '幸運草', price: 0, sell: 300, d: '四片葉子的幸運草。使用後幸運永久+2。', use: 'boost', v: { luk: 2 } },
   wisdomFruit: { n: '智慧果實', price: 0, sell: 500, d: '神奇的果實。吃下後智力永久+2。', use: 'boost', v: { int: 2 } },
   elixir: { n: '萬靈藥', price: 800, d: 'HP完全恢復，並治好所有異常狀態。', use: 'full' },
@@ -1944,7 +1944,7 @@ const MAPS = {
       'TTT...,,####.........T',
       'TT....,,......##.....T',
       'TT##..TTTT...####....T',
-      'T####.TTTT...####......',
+      'T####.TTTT...####.....',
       'T####...........##...T',
       'TT##....f....TTT.....T',
       'TT......TT...TTT..#..T',
@@ -2410,13 +2410,13 @@ function* recordScreen() {
     if (!tab) {
       const id = maps[mi]; drawWin(x, 4, 24, 168, 200, 'menu');
       if (!id) { Font.draw(x, '還沒有探索過任何地方。', 14, 30, UIC.muted, UIC.textSh); return; }
-      Font.draw(x, EXPLORE[id], 12, 26, UIC.accent, UIC.textSh); if (maps.length > 1) Font.drawR(x, '↑↓ 切換地區', 166, 27, UIC.muted, UIC.textSh, 10);
+      Font.draw(x, EXPLORE[id] + (MAPS[id].type ? '・' + MAPS[id].type : ''), 12, 26, UIC.accent, UIC.textSh); if (maps.length > 1) Font.drawR(x, '↑↓ 切換地區', 166, 27, UIC.muted, UIC.textSh, 10);
       drawMiniMap(x, id, 8, 44, 160, 176, st);
       drawWin(x, 4, 226, 168, 26, 'menu'); Font.draw(x, '探索度 ' + Math.round(mapPct(id) * 100) + '%', 12, 230, UIC.text, UIC.textSh); Font.drawR(x, '總探索度 ' + Math.round(totalPct() * 100) + '%', 166, 230, UIC.warm, UIC.textSh);
     } else {
       const A = ACHIEVEMENTS, got = A.filter(a => (st.ach || {})[a.id]).length; drawWin(x, 4, 24, 168, 228, 'menu'); Font.draw(x, '已解鎖 ' + got + '/' + A.length, 12, 26, UIC.warm, UIC.textSh); Font.drawR(x, '每個成就 +200 G', 166, 27, UIC.muted, UIC.textSh, 10);
       A.slice(top, top + VIS).forEach((a, i) => { const Y = 44 + i * 23, on = (st.ach || {})[a.id]; x.fillStyle = on ? 'rgba(255,196,77,0.10)' : 'rgba(255,255,255,0.03)'; x.fillRect(8, Y, 160, 21);
-        Font.draw(x, on ? '★' : '☆', 12, Y, on ? UIC.warm : UIC.dis, UIC.textSh); Font.draw(x, a.n, 26, Y - 1, on ? UIC.text : UIC.muted, UIC.textSh, 11); Font.draw(x, a.d, 26, Y + 10, on ? UIC.muted : UIC.dis, UIC.textSh, 9); });
+        Font.draw(x, on ? '★' : '☆', 12, Y, on ? UIC.warm : UIC.dis, UIC.textSh); Font.draw(x, a.n, 26, Y - 1, on ? UIC.text : UIC.muted, UIC.textSh, 11); Font.drawR(x, a.cat || '', 164, Y - 1, on ? UIC.warm : UIC.dis, UIC.textSh, 9); Font.draw(x, a.d, 26, Y + 10, on ? UIC.muted : UIC.dis, UIC.textSh, 9); });
       if (top > 0) x.drawImage(UPARROW, 86, 40); if (top + VIS < A.length) x.drawImage(DOWNARROW, 86, 244);
     }
   } };
@@ -2961,6 +2961,66 @@ ACHIEVEMENTS.push(
   { id: 'rare3', n: '稀有獵人', d: '打倒3種稀有魔物。', ok: st => Object.keys(SPECIES).filter(k => SPECIES[k].rare && st.dex && st.dex[k] && st.dex[k].won).length >= 3 },
 );
 
+/* ===================== CATALOG: categories for every system (checked by tools/audit2.js) ===================== */
+// ---- 道具分類 ----
+const ITEM_CATS = ['回復', '狀態治療', '戰鬥道具', '永久強化', '魔物素材', '採集素材', '重要物品'];
+const ITEM_CAT_OVERRIDE = { smoke: '戰鬥道具', herb: '採集素材' };
+function itemCatOf(k) {
+  const it = ITEMS[k]; if (ITEM_CAT_OVERRIDE[k]) return ITEM_CAT_OVERRIDE[k]; if (it.key) return '重要物品';
+  if (it.mat) return Object.values(SPECIES).some(s => s.mat === k) ? '魔物素材' : '採集素材';
+  return { heal: '回復', pp: '回復', full: '回復', cure: '狀態治療', escape: '戰鬥道具', boost: '永久強化', tp: '永久強化' }[it.use] || null;
+}
+for (const k in ITEMS) ITEMS[k].cat = itemCatOf(k);
+const ITEM_CAT_COL = { 回復: '#62e08c', 狀態治療: '#8ad0ff', 戰鬥道具: '#ffcf5a', 永久強化: '#ff9ad0', 魔物素材: '#c8a878', 採集素材: '#9ac860', 重要物品: '#ffc44d' };
+
+// ---- 地圖分類 ----
+const MAP_TYPES = { town: '城鎮', home: '室內', elder: '室內', inn: '室內', shop: '室內', route: '野外', forest: '野外', ruins: '迷宮', mine: '迷宮', catacomb: '迷宮', sewer: '隱藏迷宮' };
+for (const k in MAPS) MAPS[k].type = MAP_TYPES[k] || null;
+
+// ---- 裝備分類：武器種類 ----
+const WEAPON_KINDS = {
+  劍: ['woodSword', 'ironSword', 'knightSword', 'foxBlade', 'crystalBlade', 'dawnSword', 'masterBlade', 'kingsBlade', 'voltSword', 'boneSaber'],
+  短刀: ['mistDagger', 'fangDagger', 'emberKnife'],
+  法杖: ['apprenticeStaff', 'oakStaff', 'ruinStaff', 'thornStaff', 'tideStaff', 'stormStaff'],
+  斧: ['grenAxe'],
+};
+for (const kind in WEAPON_KINDS) for (const k of WEAPON_KINDS[kind]) if (GEAR[k]) GEAR[k].kind = kind;
+// armor weight class (輕裝 favours speed/evasion, 重裝 favours defence) — derived from the stat profile
+for (const k in GEAR) { const e = GEAR[k]; if (e.slot === 'head' || e.slot === 'body' || e.slot === 'feet') { const s = e.st || {}; e.kind = (s.def || 0) >= (s.spd || 0) + (s.spe || 0) ? '重裝' : '輕裝'; } if (e.slot === 'acc') e.kind = '飾品'; }
+
+// ---- 特殊效果分類 ----
+const SPECIAL_CATS = { 攻擊: ['double', 'pierce', 'lastStand', 'fervor', 'stormMark', 'cleave', 'first'], 防禦: ['thorns', 'endure', 'deathWard'], 回復: ['guardHeal', 'regen'], 資源: ['freeCast', 'wisdom', 'fortune'] };
+for (const c in SPECIAL_CATS) for (const k of SPECIAL_CATS[c]) if (SPECIALS[k]) SPECIALS[k].cat = c;
+
+// ---- 詞綴分類 ----
+const AFFIX_CATS = { 基礎能力: ['atk', 'spa', 'def', 'spd', 'spe', 'hp'], 戰鬥: ['crit', 'hit', 'eva', 'drain'], 屬性與種族: ['elem', 'vs', 'resist'] };
+for (const c in AFFIX_CATS) for (const k of AFFIX_CATS[c]) if (AFFIX_TABLE[k]) AFFIX_TABLE[k].cat = c;
+
+// ---- 成就分類 ----
+const ACH_CATS = { 戰鬥: ['win1', 'win100', 'elite', 'golem', 'crystal', 'bandit', 'knight', 'rare3'], 探索: ['explore'], 收集: ['dex', 'gold', 'rich'], 成長: ['enh5', 'cls2', 'lv20'], 故事: ['com', 'story'] };
+for (const c in ACH_CATS) for (const id of ACH_CATS[c]) { const a = ACHIEVEMENTS.find(x => x.id === id); if (a) a.cat = c; }
+
+// ---- 任務分類 ----
+const QUEST_CATS = { '回家的路': '主線', '失蹤的弟弟': '支線', '見習獵人提姆': '支線', '師父的遺作': '支線', '商隊的危機': '支線', '失落的貨物': '支線', '力量的覺醒': '成長', '更高的道路': '成長', '會讓路的樹': '隱藏', '井底的月光': '隱藏', '井底更深處': '隱藏', '古王的墓穴': '隱藏', '委託告示板': '委託' };
+const QUEST_CAT_COL = { 主線: '#6ee7d2', 支線: '#ffcf5a', 成長: '#c58cff', 隱藏: '#ff9ad0', 委託: '#8ad0ff' };
+const questCatOf = q => q.n.startsWith('委託：') ? '委託' : QUEST_CATS[q.n] || null;
+
+// ---- NPC 分類 ----
+const NPC_ROLES = { 商店: ['smith', 'peddler', 'clerk'], 回復: ['mom', 'healer'], 任務: ['elder', 'florist', 'guard', 'lostBoy', 'tim', 'caravan'], 情報: ['gatekeeper', 'grandpa', 'traveler', 'customer', 'hiker', 'girl2', 'herbalist', 'apprentice', 'kid'] };
+const npcRoleOf = id => Object.keys(NPC_ROLES).find(r => NPC_ROLES[r].includes(id)) || null;
+
+// ---- 魔物階級 ----
+const monRankOf = s => s.boss ? '頭目' : s.elite ? '精英' : s.rare ? '稀有' : '野生';
+
+// ---- regional loot fixes (no overlaps) ----
+Object.assign(GEAR, {
+  ruinMail: { n: '古岩護甲', slot: 'body', t: 3, st: { def: 8, spd: 4 }, sp: { resist: ['岩', 12] }, d: '用古岩遺跡的石板打磨成的護甲。' },
+  kingsSeal: { n: '古王印戒', slot: 'acc', t: 4, st: { atk: 2, spa: 2, hp: 4 }, sp: { crit: 4 }, d: '刻著古王紋章的印戒。戴上後會聽見遠古的號令。' },
+});
+GEAR.ruinMail.kind = '重裝'; GEAR.kingsSeal.kind = '飾品';
+MAPS.ruins.gearPool = ['boneSaber', 'ruinStaff', 'boneHelm', 'ruinMail', 'ectoLantern'];
+MAPS.catacomb.gearPool = ['stormStaff', 'kingsBlade', 'runeMantle', 'ancientGreaves', 'kingsSeal'];
+
 /* ===================== UI: text boxes, menus, screens ===================== */
 const UI = {
   stack: [], push(w) { this.stack.push(w); return w; }, remove(w) { const i = this.stack.indexOf(w); if (i >= 0) this.stack.splice(i, 1); },
@@ -3136,6 +3196,7 @@ function questList(st = Game.st) {
   if (f.herb) L.push({ n: '會讓路的樹', t: f.f6 ? '完成：在迷霧森林深處找到了晨曦之劍。' : '藥草師說，迷霧森林西北角有一棵「會讓路的樹」。', done: !!f.f6 });
   if (f.wellCharm) L.push({ n: '井底的月光', t: '完成：從老井撈起了月光護符。', done: true });
   extraQuests(st, L);
+  for (const q of L) q.cat = questCatOf(q) || (q.main ? '主線' : '支線');
   return L.filter(q => !q.done).concat(L.filter(q => q.done));
 }
 
@@ -3161,7 +3222,7 @@ function* summaryScreen() {
     if (page === 2) {
       drawWin(x, 4, 98, 168, 154, 'menu'); let Y = 102;
       const QL = questList(st); if (qTop > 0) x.drawImage(UPARROW, 86, 99); if (qTop < QL.length - 1) Font.drawR(x, (qTop + 1) + '/' + QL.length + ' ↑↓', 166, 238, UIC.muted, UIC.textSh, 9);
-      for (const q of QL.slice(qTop)) { Font.draw(x, (q.main ? '主線　' : '支線　') + q.n, 12, Y, q.done ? UIC.muted : q.main ? UIC.accent : UIC.warm, UIC.textSh); Y += 16; for (const l of Font.wrap(q.t, 150).slice(0, 3)) { Font.draw(x, l, 14, Y, q.done ? UIC.dis : UIC.text, UIC.textSh, 11); Y += 14; } Y += 6; if (Y > 236) break; }
+      for (const q of QL.slice(qTop)) { Font.draw(x, q.cat + '　' + q.n, 12, Y, q.done ? UIC.muted : QUEST_CAT_COL[q.cat] || UIC.warm, UIC.textSh); Y += 16; for (const l of Font.wrap(q.t, 150).slice(0, 3)) { if (Y > 222) break; Font.draw(x, l, 14, Y, q.done ? UIC.dis : UIC.text, UIC.textSh, 11); Y += 14; } Y += 6; if (Y > 206) break; }
     } else if (page === 0) {
       const a = heroAttr(st), eqB = eqBonus(st);
       drawWin(x, 4, 98, 168, 62, 'menu');
@@ -3213,12 +3274,12 @@ function* pickMoveToForget(newId) {
 
 /* ---------- Bag ---------- */
 const ITEM_ORDER = Object.keys(ITEMS);
-function bagList(filter) { const st = Game.st; return Object.keys(st.bag).filter(k => st.bag[k] > 0 && ITEMS[k] && (!filter || filter(ITEMS[k], k))).sort((a, b) => ITEM_ORDER.indexOf(a) - ITEM_ORDER.indexOf(b)); }
+function bagList(filter) { const st = Game.st; return Object.keys(st.bag).filter(k => st.bag[k] > 0 && ITEMS[k] && (!filter || filter(ITEMS[k], k))).sort((a, b) => (ITEM_CATS.indexOf(ITEMS[a].cat) - ITEM_CATS.indexOf(ITEMS[b].cat)) || (ITEM_ORDER.indexOf(a) - ITEM_ORDER.indexOf(b))); }
 function gearSort(st = Game.st) { const order = ['weapon', 'head', 'body', 'feet', 'acc']; return (st.gear || []).slice().sort((x, y) => (isEquipped(y) - isEquipped(x)) || order.indexOf(GEAR[x.b].slot) - order.indexOf(GEAR[y.b].slot) || y.q - x.q); }
 function drawGearDetail(x, g, Y, h, cmp) { // quality, roll, stats, specials, story text
   const B = GEAR[g.b], [a, b] = gearLines(g);
   Font.draw(x, gearName(g), 10, Y, gCol(g), UIC.textSh); Font.drawR(x, '品相' + Math.round(g.r * 100) + '%', 166, Y + 1, UIC.muted, UIC.textSh, 10);
-  let y = Y + 17; Font.draw(x, EQUIP_SLOTS[B.slot === 'acc' ? 'acc1' : B.slot] + '｜' + a, 12, y, UIC.text, UIC.textSh, 11); y += 14;
+  let y = Y + 17; Font.draw(x, EQUIP_SLOTS[B.slot === 'acc' ? 'acc1' : B.slot] + (B.kind && B.kind !== '飾品' ? '・' + B.kind : '') + '｜' + a, 12, y, UIC.text, UIC.textSh, 11); y += 14;
   if (b) for (const l of Font.wrap(b, 150, 11).slice(0, 2)) { Font.draw(x, l, 12, y, UIC.accent, UIC.textSh, 11); y += 13; }
   if (cmp) { Font.draw(x, cmp, 12, y, UIC.warm, UIC.textSh, 11); y += 13; }
   for (const f of B.fx || []) if (y + 12 < Y + h) for (const l of Font.wrap(SPECIALS[f].n + '：' + SPECIALS[f].d, 150, 10).slice(0, 2)) { if (y + 11 > Y + h) break; Font.draw(x, l, 12, y, UIC.warm, UIC.textSh, 10); y += 12; }
@@ -3245,7 +3306,7 @@ function* bagScreen(mode = 'field') { // returns item id used (battle) or null
       Font.draw(x, ITEMS[k].n, 14, Y, UIC.text, UIC.textSh); if (!ITEMS[k].key) Font.drawR(x, '×' + Game.st.bag[k], 164, Y, UIC.muted, UIC.textSh); });
     if (top > 0) x.drawImage(UPARROW, 85, 41); if (top + VIS < list.length) x.drawImage(DOWNARROW, 85, 40 + VIS * 18 + 4);
     drawWin(x, 4, 180, 168, 72, 'menu');
-    if (list[idx]) { if (gear) drawGearDetail(x, list[idx], 182, 68); else Font.wrap(ITEMS[list[idx]].d, 152).slice(0, 4).forEach((l, i) => Font.draw(x, l, 12, 184 + i * 16, UIC.text, UIC.textSh)); }
+    if (list[idx]) { if (gear) drawGearDetail(x, list[idx], 182, 68); else { const it = ITEMS[list[idx]]; Font.draw(x, '【' + it.cat + '】', 10, 182, ITEM_CAT_COL[it.cat] || UIC.muted, UIC.textSh, 10); Font.wrap(it.d, 152).slice(0, 3).forEach((l, i) => Font.draw(x, l, 12, 197 + i * 16, UIC.text, UIC.textSh)); } }
   } };
   UI.push(scr); let result = null;
   while (true) {
