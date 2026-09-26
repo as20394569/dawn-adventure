@@ -1712,7 +1712,7 @@ const ITEMS = {
   phone: { n: '手機', key: 1, use: 'phone', d: '從原本的世界帶來的手機。' },
   license: { n: '冒險者證', key: 1, d: '村長交給你的冒險者證明。持有它就能走出萌芽鎮。' },
 };
-const shopList = () => { const f = Game.st.flags; return SHOP_LIST.filter(k => !(k === 'superPotion' && f.caravan === 'lost')).concat(f.croc ? ['knightSword', 'guardHelm', 'chainMail'] : [], f.golem ? ['elixir', 'tpBook'] : [], f.caravan === 'lost' && f.golem ? ['rope'] : []); };
+const shopList = () => { const f = Game.st.flags; return SHOP_LIST.filter(k => !(k === 'superPotion' && f.caravan === 'lost' && !f.bandit)).concat(f.croc ? ['knightSword', 'guardHelm', 'chainMail'] : [], f.golem ? ['elixir', 'tpBook'] : [], f.caravan === 'lost' && f.golem ? ['rope'] : []); };
 const PEDDLER_LIST = ['rope', 'superPotion', 'elixir', 'ether', 'powerFruit', 'tpBook', 'knightHelm', 'knightGreaves'];
 const priceOf = k => Math.round(((ITEMS[k] || GEAR[k]).price + (k === 'tpBook' ? 1500 * (Game.st.tpBought || 0) : 0)) * (Game.st.flags.caravan === 'saved' ? 0.9 : Game.st.flags.caravan === 'lost' && k === 'rope' ? 3 : 1));
 const RECIPES = [
@@ -2428,6 +2428,131 @@ function* recordScreen() {
   UI.remove(scr);
 }
 
+/* ===================== CONTENT PACK: class skills · combos · abandoned mine & bandits ===================== */
+// ---- class skills (2nd skill per class, learned at class level lv2) ----
+Object.assign(MOVES, {
+  crossSlash: { n: '十字斬', t: '一般', cat: '物', pow: 80, acc: 95, pp: 10, crit: 1, d: '交叉兩道斬擊。容易擊中要害。' },
+  chainBolt: { n: '連鎖雷', t: '雷', cat: '特', pow: 75, acc: 95, pp: 10, eff: { st: 'par', p: 20 }, d: '在對手身上來回跳躍的雷電。有時會讓對手麻痺。' },
+  shieldBash: { n: '盾擊', t: '一般', cat: '物', pow: 65, acc: 100, pp: 10, eff: { flinch: 1, p: 30 }, d: '用盾牌猛撞對手。有時會讓對手退縮。' },
+  iaiSlash: { n: '居合一閃', t: '一般', cat: '物', pow: 90, acc: 100, pp: 5, prio: 1, crit: 1, d: '收刀、拔刀，一瞬之間。必定先出手，容易擊中要害。' },
+  bloodRage: { n: '血怒', t: '一般', cat: '變', pp: 5, hpCost: 0.15, stat: { who: 'self', atk: 2, spe: 1 }, d: '燃燒自己的血。消耗15%HP，物攻大幅提升、速度提升。' },
+  meteor: { n: '隕火', t: '火', cat: '特', pow: 120, acc: 85, pp: 5, eff: { st: 'brn', p: 20 }, d: '召喚燃燒的隕石砸向對手。有時會造成灼傷。' },
+  skyJudge: { n: '天罰', t: '雷', cat: '特', pow: 110, acc: 90, pp: 5, eff: { st: 'par', p: 30 }, d: '從天而降的審判之雷。有時會讓對手麻痺。' },
+  sanctuary: { n: '聖域', t: '一般', cat: '變', pp: 5, heal: 0.35, shield: 3, d: '展開神聖領域。恢復35%HP，並獲得3回合護盾。' },
+  riftBlade: { n: '裂界斬', t: '一般', cat: '物', pow: 110, acc: 100, pp: 5, crit: 1, d: '連同空間一起斬開的一擊。' },
+  axeSpin: { n: '旋風斧', t: '一般', cat: '物', pow: 120, acc: 100, pp: 5, charge: 1, chargeMsg: '高高舉起了戰斧，開始旋轉！', warn: '（下一擊非常危險……選擇「防禦」！）', d: '蓄力後揮出的旋轉巨斧。' },
+});
+const NEW_META = { crossSlash: ['slash', 'crossSlash'], chainBolt: ['bolt', 'chainBolt'], shieldBash: ['strike', 'shieldBash'], iaiSlash: ['slash', 'iai'], bloodRage: ['buff', 'bloodRage'], meteor: ['area', 'meteor'], skyJudge: ['area', 'skyJudge'], sanctuary: ['heal', 'sanctuary'], riftBlade: ['slash', 'riftBlade'], axeSpin: ['charge', 'axeSpin'] };
+for (const k in NEW_META) { MOVES[k].cls = NEW_META[k][0]; MOVES[k].fx = NEW_META[k][1]; }
+const CLASS_SKILL2 = { swordsman: ['crossSlash', 12], mage: ['chainBolt', 12], guardian: ['shieldBash', 12], swordmaster: ['iaiSlash', 18], berserker: ['bloodRage', 18], pyromancer: ['meteor', 18], stormcaller: ['skyJudge', 18], paladin: ['sanctuary', 18], otherworlder: ['riftBlade', 20] };
+for (const k in CLASS_SKILL2) Object.assign(CLASSES[k], { move2: CLASS_SKILL2[k][0], lv2: CLASS_SKILL2[k][1] });
+
+// ---- elemental combos (for the design doc & tips) ----
+// 濕+雷=感電(×1.5+麻痺) · 纏+火=燎原(×1.5+灼傷) · 燒+水=蒸氣爆發(×1.3，解除灼傷)
+const COMBOS = [['濕', '雷', '感電'], ['纏', '火', '燎原'], ['燒', '水', '蒸氣爆發']];
+STATUS_INFO.tangle = ['纏', '#3f9a4a'];
+
+// ---- new gear & special ----
+SPECIALS.cleave = { n: '劈裂', d: '物理攻擊有30%機率讓對手物防下降1階。' };
+Object.assign(GEAR, {
+  minerHelm: { n: '礦工頭燈盔', slot: 'head', t: 2, st: { def: 3, spd: 2 }, sp: { hit: 5 }, d: '廢棄礦坑的礦工留下的頭盔。頭燈早就不亮了。' },
+  banditHood: { n: '盜賊兜帽', slot: 'head', t: 3, st: { def: 3, spd: 3, spe: 2 }, sp: { eva: 5 }, fx: ['double'], d: '盜賊團幹部的兜帽。戴上後手腳特別靈活。' },
+  grenAxe: { n: '鐵斧格倫的戰斧', slot: 'weapon', t: 3, st: { atk: 11 }, sp: { crit: 5 }, fx: ['cleave'], spr: 'ironSword', d: '盜賊頭目格倫的巨斧。據說原本是王都騎士團的制式戰斧。' },
+});
+
+// ---- bandits & mine monsters ----
+function banditDef(o) {
+  return { parts: sym([
+    { s: 'e', x: 25, y: 57, rx: 5, ry: 6, c: o.boot, m: 1 },
+    { s: 'p', pts: [[15, 60], [19, 32], [45, 32], [49, 60]], c: o.cloak, id: 'body' },
+    { s: 'e', x: 32, y: 47, rx: 16, ry: 2.2, c: '#3a2614', clip: 'body', line: false },
+    { s: 'e', x: 32, y: 47, rx: 2.5, ry: 2.2, c: '#d8b040', clip: 'body', line: false },
+    { s: 'e', x: 14, y: 42, rx: 5, ry: 9, c: o.sleeve, m: 1 },
+    { s: 'e', x: 13, y: 51, rx: 3.5, ry: 3, c: o.skin, m: 1 },
+    ...(o.horns ? [{ s: 'p', pts: [[21, 18], [9, 4], [17, 20]], c: '#e8dcc0', m: 1 }] : []),
+    { u: [{ s: 'e', x: 32, y: 25, rx: 13, ry: 13 }, { s: 'p', pts: [[25, 14], [32, 3], [39, 14]] }], c: o.hood, id: 'hood' },
+    { s: 'e', x: 32, y: 29, rx: 8.5, ry: 7.5, c: o.skin, clip: 'hood', line: false },
+    { s: 'e', x: 32, y: 35, rx: 9, ry: 3.2, c: o.mask, clip: 'hood', line: false },
+    ...(o.beard ? [{ s: 'p', pts: [[24, 32], [40, 32], [37, 44], [32, 47], [27, 44]], c: o.beard }] : []),
+    { s: 'p', pts: [[50, 58], [52, 58], [54, 18], [51, 18]], c: '#6a4424' },
+    { s: 'p', pts: o.big ? [[44, 12], [60, 6], [63, 24], [58, 30], [50, 26]] : [[47, 14], [58, 10], [61, 22], [52, 26]], c: '#b8c0cc' },
+  ]), details: symD([
+    { s: 'eye', x: 28.5, y: 28, w: 1.4, h: 1.8, c: o.eye || '#202028', m: 1 },
+    { s: 'line', pts: [[25, 24.5], [30, 26.5]], c: '#2a1a14', m: 1 },
+    { s: 'line', pts: [[52, 14], [59, 12]], c: '#ffffff' },
+  ]) };
+}
+ART.bandit = banditDef({ boot: '#3a2a1c', cloak: '#5a4a36', sleeve: '#6a5840', skin: '#e2b48c', hood: '#4a5a36', mask: '#8a2a2a' });
+ART.banditBoss = banditDef({ boot: '#2a1a14', cloak: '#6a2a24', sleeve: '#7a3a2a', skin: '#d8a07a', hood: '#3a3440', mask: '#2a2a30', beard: '#8a4a22', horns: 1, big: 1, eye: '#e04030' });
+ART.mineBat = recolorDef(ART.bird, hueShift(20, 0.5, 0.5));
+ART.oreSlime = recolorDef(ART.slime, hueShift(-150, 0.35, 0.75));
+Object.assign(SPECIES, {
+  mineBat: { n: '坑道蝠', t: '飛', base: [50, 56, 44, 44, 44, 76], exp: 70, gold: 14, mat: 'feather', trait: 'swift', learn: [[1, 'peck'], [1, 'gust'], [1, 'quickAttack'], [12, 'sing']], dex: '倒掛在廢棄礦坑深處的蝙蝠。聽到腳步聲就會成群飛出。' },
+  oreSlime: { n: '礦泥怪', t: '岩', base: [66, 48, 70, 50, 55, 30], exp: 76, gold: 16, mat: 'stone', trait: 'healer', learn: [[1, 'tackle'], [1, 'harden'], [1, 'rockThrow'], [1, 'acid']], dex: '吞下礦石的史萊姆。身體硬得像石頭，會吸收礦脈的養分回復。' },
+  bandit: { n: '盜賊', t: '一般', base: [58, 62, 46, 36, 42, 64], exp: 90, gold: 30, trait: 'swift', learn: [[1, 'quickAttack'], [1, 'glare'], [1, 'scratch'], [12, 'armorBreak']], dex: '盤據在廢棄礦坑的盜賊。專挑落單的旅人和商隊下手。' },
+  banditBoss: { n: '鐵斧格倫', t: '一般', base: [88, 80, 64, 40, 55, 58], exp: 260, gold: 0, boss: 1, drop: 'grenAxe', learn: [[1, 'powerSlash'], [1, 'armorBreak'], [1, 'howl'], [1, 'quickAttack']], dex: '盜賊團的頭目。揮舞巨大的戰斧，據說曾是王都的騎士。' },
+});
+Object.assign(MON_PANEL, {
+  mineBat: { lv: 12, hp: 32, atk: 18, def: 15, spa: 15, spd: 15, spe: 24, eva: 6 },
+  oreSlime: { lv: 12, hp: 38, atk: 16, def: 22, spa: 18, spd: 18, spe: 10 },
+  bandit: { lv: 12, hp: 36, atk: 20, def: 16, spa: 12, spd: 15, spe: 20, crit: 10 },
+  banditBoss: { lv: 15, hp: 150, atk: 26, def: 22, spa: 15, spd: 20, spe: 22, crit: 12, hit: 5 },
+});
+Object.assign(ELITE_TEXT, { thug1: ['喂！站住！', '看門的盜賊拔出了短刀！'], thug2: ['這條路不准過！', '盜賊擋住了去路！'] });
+
+// ---- the abandoned mine ----
+MAPS.mine = {
+  name: '廢棄礦坑', music: 'ruins', border: 'R', popup: 1, battleBg: 'ruins', encAll: 1,
+  rows: [
+    'RRRRRRRRRRRRRRRRRR',
+    'RRRRRRRsssssRRRRRR',
+    'RRRRRRsssssssRRRRR',
+    'RRRRRRsssssssRRRRR',
+    'RRRRRRRRssRRRRRRRR',
+    'RsssRRRRssRRRRsssR',
+    'RsssssssssssssssoR',
+    'RssoRRRRssRRRRsssR',
+    'RRsRRRRRssRRRRRsRR',
+    'RsssssRsssssRssssR',
+    'RsmmssRssossRssmsR',
+    'RssssRRRssRRRssssR',
+    'RRRsRRsssssssRRsRR',
+    'RsssssssoRsssssssR',
+    'RssRRRRRRRRRRRRssR',
+    'RssssssssssssssssR',
+    'RRRRRRRRssRRRRRRRR',
+    'sssssssssssRRRRRRR',
+    'RRRRRRRRRRRRRRRRRR',
+  ],
+  edgeWarps: [{ dir: 'left', at: [17], to: ['route', 21, 29, 'left'] }],
+  boss: { sp: 'banditBoss', lv: 15, x: 8, y: 2, flag: 'bandit', ev: 'banditBoss' },
+  elites: [{ id: 'thug1', sp: 'bandit', lv: 13, x: 9, y: 8, dir: 'down', sight: 4, drop: 'banditHood' }, { id: 'thug2', sp: 'bandit', lv: 12, x: 3, y: 12, dir: 'down', sight: 1 }],
+  items: [{ id: 'm1', x: 1, y: 5, item: 'superPotion', n: 2 }, { id: 'm2', x: 16, y: 5, gold: 600 }, { id: 'm3', x: 1, y: 10, item: 'minerHelm', q: 2 }, { id: 'm4', x: 16, y: 10, item: 'elixir' }, { id: 'm5', x: 1, y: 13, item: 'ether', n: 2 }, { id: 'm6', x: 16, y: 15, item: 'powerFruit' }],
+  gathers: [{ id: 'gm1', x: 5, y: 10, mat: 'stone' }, { id: 'gm2', x: 14, y: 13, mat: 'stone' }, { id: 'gm3', x: 11, y: 3, mat: 'gel' }],
+  gearPool: ['knightSword', 'guardHelm', 'minerHelm', 'chainMail', 'stoneMail', 'featherBoots', 'wolfNecklace'],
+  encounters: [{ y0: 0, y1: 99, rate: 0.08, table: [['mineBat', 11, 13, 35], ['oreSlime', 11, 13, 35], ['bandit', 11, 13, 30]] }],
+};
+{ // route: open the east pocket toward the mine
+  const R = MAPS.route.rows; R[28] = 'TT####....::...T...STT'; R[29] = 'TT####....::..........';
+  MAPS.route.edgeWarps.push({ dir: 'right', at: [29], to: ['mine', 0, 17, 'right'], need: 'mineOpen', msg: '通往東邊的小路被倒下的木頭和木板封住了。' });
+  MAPS.route.signs['19,28'] = '「→ 廢棄礦坑」\n礦脈枯竭後就沒人進去了。最近常有可疑人物出入。';
+}
+const MINE_EVENTS = {
+  banditBoss(ow) {
+    const st = Game.st; if (st.flags.bandit || !ow.boss) return null;
+    return (function* () {
+      yield* sayAll(['「哈！又來一個不怕死的。」', '「我是『鐵斧』格倫。商隊的貨？早就是我的了！」', '「想要的話——就用命來換吧！」']);
+      const res = yield* ow.battleScript({ sp: 'banditBoss', lv: 15, kind: 'boss' });
+      if (res !== 'win') return;
+      st.flags.bandit = 1; ow.boss = null;
+      yield* sayAll(['「……可惡……你這傢伙……到底是什麼人……」', '格倫丟下一張破舊的地圖，逃進了坑道深處。']);
+      st.money += 1500; st.bag.superPotion = (st.bag.superPotion || 0) + 3; yield* itemGet('奪回了商隊的貨物！得到1500 G和好傷藥×3！');
+      yield* sayAll(['地圖上畫著王都的城牆……還有一個奇怪的記號：', '「異界之門・第二把鑰匙」。', st.flags.caravan === 'lost' ? '（把貨物的消息帶回萌芽鎮，道具店就能恢復進貨了。）' : '（回萌芽鎮告訴行商吧。）']);
+      saveGame();
+    })();
+  },
+};
+
 /* ===================== UI: text boxes, menus, screens ===================== */
 const UI = {
   stack: [], push(w) { this.stack.push(w); return w; }, remove(w) { const i = this.stack.indexOf(w); if (i >= 0) this.stack.splice(i, 1); },
@@ -3077,12 +3202,12 @@ class Overworld {
     this.elites = (this.map.d.elites || []).filter(e => !st.flags[e.id]).map(e => new Entity({ ...e, img: monsterMini(e.sp, 24) }));
     this.items = (this.map.d.items || []).filter(i => !st.flags[i.id] && (!i.show || i.show(st))).map(i => new Entity({ ...i }));
     st.gath = st.gath || {}; for (const g of this.map.d.gathers || []) if (st.gath[g.id] === undefined || (st.steps || 0) - st.gath[g.id] > 150) this.items.push(new Entity({ ...g, gather: 1 }));
-    if (st.flags.caravanMet && !st.flags.caravan && id !== 'route') st.flags.caravan = 'lost';
+    if (st.flags.caravanMet && !st.flags.caravan && id !== 'route') { st.flags.caravan = 'lost'; st.flags.mineOpen = 1; }
     const bd = this.map.d.boss; this.boss = bd && !st.flags[bd.flag || 'golem'] ? new Entity({ ...bd, img: monsterMini(bd.sp, 36), w2: 1 }) : null;
     // neighbors for seamless connections
     this.conn = {}; const c = this.map.d.connect || {}; for (const k in c) this.conn[k] = { m: getMap(c[k].map), dx: c[k].dx };
     if (this.map.d.music) Sound.play(this.map.d.music);
-    if (!silent && this.map.d.name !== prev && (this.map.d.outdoor || id === 'ruins')) this.popup = { name: this.map.d.name, t: 0 };
+    if (!silent && this.map.d.name !== prev && (this.map.d.outdoor || this.map.d.popup || id === 'ruins')) this.popup = { name: this.map.d.name, t: 0 };
     markVis(this.map, x, y); this.checkSight();
   }
   tileAt(x, y) {
@@ -3130,7 +3255,7 @@ class Overworld {
     // interior exit mat
     if (m.d.exit && p.x === m.d.exit.x && p.y === m.d.exit.y && d === 'down') { const t = m.d.exit.to; this.run(this.warp(t[0], t[1], t[2], 'down', true)); return; }
     if (m.d.southWarp && d === 'down' && ny >= m.h) { const t = m.d.southWarp.to; this.run(this.warp(t[0], t[1], t[2], t[3])); return; }
-    for (const w of m.d.edgeWarps || []) if (w.dir === d && (d === 'left' ? nx < 0 : d === 'right' ? nx >= m.w : d === 'up' ? ny < 0 : ny >= m.h) && w.at.includes(d === 'left' || d === 'right' ? ny : nx)) { const t = w.to; this.run(this.warp(t[0], t[1], t[2], t[3])); return; }
+    for (const w of m.d.edgeWarps || []) if (w.dir === d && (d === 'left' ? nx < 0 : d === 'right' ? nx >= m.w : d === 'up' ? ny < 0 : ny >= m.h) && w.at.includes(d === 'left' || d === 'right' ? ny : nx)) { if (w.need && !this.st.flags[w.need]) { Sound.sfx('bump'); this.run(say(w.msg)); return; } const t = w.to; this.run(this.warp(t[0], t[1], t[2], t[3])); return; }
     if (m.d.northWarp && d === 'up' && ny < 0 && m.d.northWarp.x.includes(nx)) { const t = m.d.northWarp.to; this.run(this.warp(t[0], t[1], t[2], t[3])); return; }
     const tc = this.tileAt(nx, ny);
     if (tc === 'L' && d === 'down' && !this.entityAt(nx, ny + 1) && !this.solidAt(nx, ny + 1)) { this.startJump(p, nx, ny + 1); return; }
@@ -3176,9 +3301,8 @@ class Overworld {
     if ((c === '#' || (this.map.d.encAll && c === 's')) && !Game.noEnc) {
       const enc = (this.map.d.encounters || []).find(e => p.y >= e.y0 && p.y <= e.y1);
       if (enc && chance(enc.rate) && (st.steps - (st.lastBattleStep || 0)) > 2) {
-        const tot = enc.table.reduce((a, r) => a + r[3], 0); let r = Math.random() * tot; let row = enc.table[0];
-        for (const e of enc.table) { r -= e[3]; if (r <= 0) { row = e; break; } }
-        this.run(this.battleScript({ sp: row[0], lv: rnd(row[1], row[2]), kind: 'wild' }));
+        if (st.lv >= 8 && chance(0.12)) { this.run(this.packScript(enc)); return; }
+        const row = rollEnc(enc); this.run(this.battleScript({ sp: row[0], lv: rnd(row[1], row[2]), kind: 'wild' }));
       }
     }
   }
@@ -3249,6 +3373,18 @@ class Overworld {
     yield* fadeOut(12); this.doorAnim = null; this.load(b.to[0], b.to[1], b.to[2], 'up'); yield* wait(4); yield* fadeIn(12);
   }
   *walkEntity(e, dir, n = 1) { for (let i = 0; i < n; i++) { e.dir = dir; const [dx, dy] = DIRS[dir]; this.startMove(e, e.x + dx, e.y + dy, 1); while (e.moving) { if (e !== this.p) this.updateMove(e); yield; } } }
+  *packScript(enc) {
+    const st = this.st, n = rnd(2, 3); Sound.sfx('exclaim'); this.p.excl = 30; yield* wait(30);
+    yield* say('是魔物群！（連續' + n + '場戰鬥，經驗值+25%）');
+    for (let i = 0; i < n; i++) {
+      const row = rollEnc(enc), res = yield* this.battleScript({ sp: row[0], lv: rnd(row[1], row[2]) + (i === n - 1 ? 1 : 0), kind: 'wild', pack: [i + 1, n] });
+      if (res !== 'win') return;
+      if (i < n - 1) { Sound.sfx('exclaim'); this.p.excl = 24; yield* wait(24); yield* say('又有魔物衝過來了！（' + (i + 2) + '/' + n + '）'); }
+    }
+    const g = 60 * n * Math.ceil(st.lv / 4), mats = Object.keys(ITEMS).filter(k => ITEMS[k].mat && k !== 'crystal'), mt = pick(mats);
+    st.money += g; st.bag[mt] = (st.bag[mt] || 0) + 2; st.packs = (st.packs || 0) + 1; Sound.jingle('item');
+    yield* say('擊退了魔物群！額外獲得' + g + ' G和' + ITEMS[mt].n + '×2！');
+  }
   *eliteSpot(e) {
     const p = this.p; p.dir = OPP[e.dir];
     Sound.sfx('exclaim'); e.excl = 40; yield* wait(40);
@@ -3260,7 +3396,7 @@ class Overworld {
     const p = this.p; p.dir = e.x < p.x ? 'left' : e.x > p.x ? 'right' : e.y < p.y ? 'up' : 'down'; e.dir = OPP[p.dir];
     Sound.cry(Object.keys(SPECIES).indexOf(e.sp) + 1);
     yield* sayAll(ELITE_TEXT[e.id] || ['……！']);
-    const res = yield* this.battleScript({ sp: e.sp, lv: e.lv, kind: 'elite', id: e.id }, true);
+    const res = yield* this.battleScript({ sp: e.sp, lv: e.lv, kind: 'elite', id: e.id, drop: e.drop }, true);
     if (res === 'win') { this.st.flags[e.id] = 1; this.elites = this.elites.filter(x => x !== e); }
   }
   *battleScript(cfg, noResume) {
@@ -3387,6 +3523,7 @@ class Overworld {
     if (this.bossGlow) { x.globalAlpha = this.bossGlow; x.fillStyle = '#ffd040'; x.fillRect(sx + 12, sy + 10, 12, 3); x.globalAlpha = 1; }
   }
 }
+function rollEnc(enc) { const tot = enc.table.reduce((a, r) => a + r[3], 0); let r = Math.random() * tot; for (const e of enc.table) { r -= e[3]; if (r <= 0) return e; } return enc.table[0]; }
 const miniCache = {};
 function monsterMini(sp, size) { const k = sp + size; if (miniCache[k]) return miniCache[k]; const c = buildShaded(ART[sp], size, size / 64); miniCache[k] = { c, flip: flipCanvas(c) }; return miniCache[k]; }
 function healHero() { const st = Game.st; st.hp = heroStats().hp; st.status = null; st.moves.forEach(m => m.pp = MOVES[m.id].pp); }
@@ -3418,7 +3555,7 @@ const STATUS_NAME = { psn: '中毒', par: '麻痺', slp: '睡眠', brn: '灼傷'
 const IMMUNE = { psn: '毒', brn: '火', par: '雷' };
 const battleImgCache = {};
 // battle sprites: rendered at a low native size, then scaled 3x (same chunky pixel look as the hero)
-const FOE_NATIVE = { golem: 28, mossGiant: 28, crystalGolem: 28 }, FOE_SCALE = 3, FOE_FOOT = 106;
+const FOE_NATIVE = { golem: 28, mossGiant: 28, crystalGolem: 28, banditBoss: 28 }, FOE_SCALE = 3, FOE_FOOT = 106;
 function battleSprite(key) {
   if (battleImgCache[key]) return battleImgCache[key];
   const n = FOE_NATIVE[key] || 24, S = FOE_SCALE, sm = buildShaded(ART[key], n, n / 64);
@@ -3428,6 +3565,7 @@ function battleSprite(key) {
   c.bb = { cx: Math.round((x0 + x1 + 1) * S / 2), top: y0 * S, bot: (y1 + 1) * S, w: (x1 - x0 + 1) * S, h: (y1 - y0 + 1) * S };
   return battleImgCache[key] = c;
 }
+function badgeRow(x, list, X, Y) { for (const b of list) if (b) { statusBadge(x, b, X, Y); X += 18; } }
 function makeFoe(sp, lv, kind) {
   const d = SPECIES[sp], P = MON_PANEL[sp], f = (lv + 10) / (P.lv + 10);
   const s = {}; for (const k of ['hp', 'atk', 'def', 'spa', 'spd', 'spe']) s[k] = Math.max(1, Math.round(P[k] * f * (kind === 'wild' ? 0.92 + Math.random() * 0.16 : 1)));
@@ -3501,6 +3639,7 @@ class Battle {
     this.offF = { x: 0, y: 0 }; this.offH = { x: 0, y: 0 }; this.sinkF = 0; this.sinkH = 0; this.blinkF = 0; this.blinkH = 0; this.alphaF = 1;
     this.fx = []; this.shake = 0; this.t = 0; this.idle = false; this.cmdIdx = 0; this.moveIdx = 0; this.runTries = 0; this.turn = 0; this.phase2 = false; this.fistCD = 2;
     this.tint = null; this.squishF = 0;
+    if (cfg.sp === 'banditBoss') this.bb = { cd: 2, stolen: 0, steals: 0, gang: 0, called: false };
     if (cfg.sp === 'crystalGolem') this.cg = { shards: 0, mirror: 0, flood: false, stage: 0 };
     this.script = this.main();
   }
@@ -3549,7 +3688,7 @@ class Battle {
     const X = 8, w = W - 16; drawPanel(x, X, Y, w, 26, F.boss ? UIC.bad : F.elite ? UIC.warm : UIC.accent);
     let cx = Font.draw(x, F.n, X + 6, Y + 1, UIC.text, UIC.textSh);
     cx = Font.draw(x, 'Lv' + F.lv, cx + 4, Y + 1, UIC.muted, UIC.textSh);
-    if (F.status) statusBadge(x, F.status, cx + 4, Y + 3); if (F.wet) statusBadge(x, 'wet', cx + (F.status ? 22 : 4), Y + 3);
+    badgeRow(x, [F.status, F.wet && 'wet', F.tangle && 'tangle', F.shield && 'shield'], cx + 4, Y + 3);
     if (F.boss || F.elite) Font.drawR(x, F.boss ? '頭目' : '精英', X + w - 6, Y + 1, F.boss ? UIC.bad : UIC.warm, UIC.textSh);
     drawHPBar(x, X + 6, Y + 18, w - 12, this.disp.F / F.maxhp, 3);
   }
@@ -3558,7 +3697,7 @@ class Battle {
     const X = 8, w = W - 16, r = this.disp.H / this.H.maxhp; drawPanel(x, X, Y, w, 24, UIC.accent, 'rgba(11,13,24,0.92)');
     let cx = Font.draw(x, st.name, X + 6, Y + 1, UIC.text, UIC.textSh);
     cx = Font.draw(x, 'Lv' + st.lv, cx + 4, Y + 1, UIC.muted, UIC.textSh);
-    if (st.status) statusBadge(x, st.status, cx + 4, Y + 3); if (this.H.wet) statusBadge(x, 'wet', cx + (st.status ? 22 : 4), Y + 3); if (this.H.shield) statusBadge(x, 'shield', cx + 4 + (st.status ? 18 : 0) + (this.H.wet ? 18 : 0), Y + 3);
+    badgeRow(x, [st.status, this.H.wet && 'wet', this.H.tangle && 'tangle', this.H.shield && 'shield'], cx + 4, Y + 3);
     const hs = Math.ceil(this.disp.H) + '/' + this.H.maxhp; Font.drawR(x, hs, X + w - 6, Y + 1, r <= 0.2 ? UIC.bad : UIC.text, UIC.textSh); Font.drawR(x, 'HP', X + w - 9 - Font.width(hs), Y + 1, UIC.muted, UIC.textSh);
     drawHPBar(x, X + 6, Y + 16, w - 12, r, 3);
     const lo = expForLevel(st.lv), hi = expForLevel(st.lv + 1); drawExpBar(x, X + 6, Y + 21, w - 12, (this.disp.exp - lo) / (hi - lo), 1);
@@ -3601,6 +3740,7 @@ class Battle {
         else if (a.type === 'defend') { yield* this.msg(u.n + '擺出了防禦的架勢！'); yield* FX.guard.call(this, this.center(u)); if (u.stats.fx.guardHeal && u.hp < u.maxhp) { u.hp = Math.min(u.maxhp, u.hp + Math.ceil(u.maxhp * 0.15)); yield* this.animHP(u); yield* this.msg('守護之心回復了HP！', { hold: 20 }); } }
         else if (a.type === 'item') { const r = yield* this.useItemAct(a.id); if (r === 'escaped') return yield* this.end('run'); }
         else if (a.type === 'mirror') { this.cg.mirror = 2; Sound.sfx('charge'); this.tintF = { c: '#c8f4ff', a: 0.6 }; yield* wait(14); this.tintF = null; yield* this.msg(u.n + '的表面變得像鏡子一樣！'); yield* this.msg('（這段期間，魔法攻擊會被反射回來！）'); }
+        else if (a.type === 'steal') { const st = Game.st, g = Math.min(st.money, Math.max(50, Math.floor(st.money * 0.1))); this.bb.steals++; yield* FX.steal.call(this, this.center(u), this.center(this.H), u); st.money -= g; this.bb.stolen += g; yield* this.msg(u.n + '搶走了' + g + ' G！'); if (this.bb.steals === 1) yield* this.msg('（打倒他就能把錢搶回來！）'); }
         else if (a.type === 'foeHeal') { u.heals = (u.heals || 0) + 1; yield* this.msg(u.n + '吸收了周圍的養分！'); yield* FX.heal.call(this, this.center(u)); u.hp = Math.min(u.maxhp, u.hp + Math.floor(u.maxhp * 0.3)); yield* this.animHP(u); }
         else if (a.type === 'run') { if (yield* this.tryRun()) return yield* this.end('run'); }
         if (this.F.hp <= 0) { yield* this.foeFaint(); yield* this.victory(); return yield* this.end('win'); }
@@ -3657,6 +3797,7 @@ class Battle {
   foeChoose() {
     const F = this.F, H = this.H;
     if (F.charging) return { type: 'move', id: F.charging };
+    if (this.bb) { const b = this.bb; if (--b.cd <= 0) { b.cd = 3; return { type: 'move', id: 'axeSpin' }; } if (Game.st.money > 0 && b.steals < 2 && chance(0.25)) return { type: 'steal' }; return { type: 'move', id: pick(['powerSlash', 'armorBreak', 'quickAttack', F.stages.atk < 2 ? 'howl' : 'powerSlash']) }; }
     if (this.cg) { const c = this.cg; if (this.turn % 4 === 0 && !c.mirror) return { type: 'mirror' }; const pl = c.flood ? ['crystalSpark', 'crystalSpark', 'prismRay', 'stomp'] : ['prismRay', 'rockThrow', 'stomp', 'ancientRoar']; return { type: 'move', id: pick(pl) }; }
     if (F.trait === 'healer' && F.hp < F.maxhp * 0.5 && (F.heals || 0) < 2 && chance(0.6)) return { type: 'foeHeal' };
     let pool = F.moves.map(m => m.id);
@@ -3695,7 +3836,7 @@ class Battle {
     if (u.status === 'par' && chance(0.25)) { yield* FX.spark.call(this, null, this.center(u)); yield* this.msg(u.n + '身體麻痺，無法行動！'); return; }
     if (mv.charge && u.charging !== id) {
       u.charging = id; yield* this.msg(u.n + '使用了' + mv.n + '！'); yield* FX.charge.call(this, this.center(u));
-      yield* this.msg(u.n + '正在凝聚大地之力！'); if (!this.warned) { this.warned = true; yield* this.msg('（它的拳頭發出了危險的光芒……）'); } return;
+      yield* this.msg(u.n + (mv.chargeMsg || '正在凝聚大地之力！')); if (!this.warned) { this.warned = true; yield* this.msg(mv.warn || '（它的拳頭發出了危險的光芒……）'); } return;
     }
     if (u.charging === id) u.charging = null;
     if (u.hero && id !== 'struggle' && !(u.stats.fx.freeCast && chance(0.3))) { const m = u.moves.find(q => q.id === id); if (m) m.pp = Math.max(0, m.pp - 1); }
@@ -3704,9 +3845,9 @@ class Battle {
     const selfTarget = !mv.pow && mv.stat && mv.stat.who === 'self' || mv.heal;
     if (!selfTarget && mv.acc && !chance(hitChance(u, t, mv))) { yield* wait(10); UI.remove(utb); yield* this.msg(mv.pow ? u.n + '的攻擊沒有打中！' : '但是失敗了！'); return; }
     if (mv.pow) {
-      const U0 = this.center(u), T0 = this.center(t); const r = this.calcDamage(u, t, mv); const shock = mv.t === '雷' && t.wet > 0;
+      const U0 = this.center(u), T0 = this.center(t); const r = this.calcDamage(u, t, mv); const shock = mv.t === '雷' && t.wet > 0, ignite = mv.t === '火' && t.tangle > 0, steam = mv.t === '水' && t.status === 'brn';
       yield* this.playFx(mv.fx, u, t); UI.remove(utb);
-      let dmg = r.dmg; if (shock) dmg = Math.floor(dmg * 1.5); if (this.cg && !t.hero && this.cg.shards > 0) dmg = Math.max(1, Math.floor(dmg * 0.6)); const mirrored = this.cg && !t.hero && this.cg.mirror && mv.cat === '特'; if (mirrored) dmg = Math.max(1, Math.floor(dmg * 0.5)); if (t.shield > 0) dmg = Math.max(1, Math.floor(dmg * 0.6)); if (t.defending) dmg = Math.max(1, Math.floor(dmg / 2));
+      let dmg = r.dmg; if (shock || ignite) dmg = Math.floor(dmg * 1.5); if (steam) dmg = Math.floor(dmg * 1.3); if (ignite || steam) yield* FX[ignite ? 'ignite' : 'steam'].call(this, U0, T0); if (this.cg && !t.hero && this.cg.shards > 0) dmg = Math.max(1, Math.floor(dmg * 0.6)); const mirrored = this.cg && !t.hero && this.cg.mirror && mv.cat === '特'; if (mirrored) dmg = Math.max(1, Math.floor(dmg * 0.5)); if (t.shield > 0) dmg = Math.max(1, Math.floor(dmg * 0.6)); if (t.defending) dmg = Math.max(1, Math.floor(dmg / 2));
       dmg = Math.min(dmg, t.hp); let endured = false; if (t.hero && t.stats.fx.endure && !this.endured && dmg >= t.hp && t.hp > 1) { dmg = t.hp - 1; this.endured = endured = true; } t.hp -= dmg;
       Sound.sfx(r.mult > 1 ? 'hitSuper' : r.mult < 1 ? 'hitWeak' : 'hit'); if (r.crit) Sound.sfx('crit');
       yield* this.impact(t, r.mult > 1 || r.crit ? 2 : r.mult < 1 ? 0 : 1);
@@ -3720,12 +3861,16 @@ class Battle {
       if (this.cg && !t.hero && t.hp > 0) { const c = this.cg; if (c.stage < 1 && t.hp < t.maxhp * 0.7) { c.stage = 1; c.shards = 3; Sound.sfx('charge'); yield* this.msg('水晶碎片浮了起來，環繞著' + t.n + '！'); yield* this.msg('（碎片還在時，傷害會被減弱，而且它會回復。用物理攻擊擊碎碎片！）'); } if (c.stage < 2 && t.hp < t.maxhp * 0.35) { c.stage = 2; c.flood = true; Sound.sfx('water'); this.shake = 30; yield* this.msg('水道的牆壁裂開，大水湧了進來！'); yield* this.msg('（每回合都會全身濕透……小心雷擊！）'); } }
       if (u.hero && t.hp > 0 && u.stats.fx.double && mv.cat === '物' && chance(0.25)) { const d2 = Math.min(t.hp, Math.max(1, Math.floor(dmg * 0.5))); yield* this.lunge(u, 8, 2); t.hp -= d2; Sound.sfx('hit'); yield* this.impact(t, 0); yield* this.animHP(t); yield* this.msg('連擊！追加了' + d2 + '點傷害！', { hold: 24 }); }
       if (t.hero && !u.hero && t.stats.fx.thorns && u.hp > 0 && dmg > 0) { const d3 = Math.min(u.hp, Math.max(1, Math.floor(dmg * 0.25))); u.hp -= d3; this.blinkF = 12; yield* this.animHP(u); yield* this.msg('荊棘反彈了' + d3 + '點傷害！', { hold: 24 }); }
+      if (u.hero && u.stats.fx.cleave && mv.cat === '物' && t.hp > 0 && chance(0.3)) { yield* this.msg('劈裂！', { hold: 16 }); yield* this.statChange(t, { def: -1 }); }
       if (u.hero && u.stats.fx.fervor && (this.fervor || 0) < 3) { this.fervor = (this.fervor || 0) + 1; u.stages.atk = Math.min(6, u.stages.atk + 1); yield* this.msg('狂熱！物攻提升了！', { hold: 20 }); }
       if (u.hero && u.stats.fx.stormMark && t.hp > 0 && chance(0.15)) yield* this.inflict(t, 'par', true);
       if (t.hero && t.defending && t.stats.counter && t.hp > 0 && u.hp > 0) { const c2 = this.calcDamage(t, u, MOVES.slash), cd = Math.min(u.hp, Math.max(1, Math.floor(c2.dmg * 0.7))); yield* this.lunge(t, 10, 3); u.hp -= cd; Sound.sfx('hit'); yield* this.impact(u, 1); yield* this.animHP(u); yield* this.msg(t.n + '趁勢反擊！'); }
       if (shock) { t.wet = 0; Sound.sfx('thunder'); yield* this.msg('潮濕的身體導電了！' + t.n + '感電了！'); if (t.hp > 0) yield* this.inflict(t, 'par', true); }
       else if (mv.t === '水' && t.hp > 0) { const was = t.wet > 0; t.wet = 3; if (!was) yield* this.msg(t.n + '全身濕透了！'); }
       else if (mv.t === '火' && t.wet > 0) { t.wet = 0; yield* this.msg('熱氣蒸乾了' + t.n + '身上的水。'); }
+      if (ignite) { t.tangle = 0; Sound.sfx('fire'); yield* this.msg('纏繞的藤蔓燒了起來！燎原！'); if (t.hp > 0) yield* this.inflict(t, 'brn', true); }
+      else if (mv.t === '草' && t.hp > 0 && !t.tangle) { t.tangle = 3; yield* this.msg(t.n + '被藤蔓纏住了！（怕火）', { hold: 24 }); }
+      if (steam) { if (t.status === 'brn') t.status = null; yield* this.msg('水碰到火焰，蒸氣爆發了！'); }
       if (u.hero && u.stats.drain && dmg > 0 && u.hp > 0 && u.hp < u.maxhp) { const hv = Math.max(1, Math.floor(dmg * u.stats.drain / 100)); u.hp = Math.min(u.maxhp, u.hp + hv); yield* this.animHP(u); yield* this.msg('荊棘吸取了' + hv + '點HP！', { hold: 24 }); }
       if (mv.drain && dmg > 0 && u.hp < u.maxhp) { u.hp = Math.min(u.maxhp, u.hp + Math.max(1, Math.floor(dmg * mv.drain))); yield* FX.drainBack.call(this, this.center(t), this.center(u)); yield* this.animHP(u); yield* this.msg('從' + t.n + '身上吸取了養分！'); }
       if (mv.recoil) { u.hp = Math.max(0, u.hp - Math.max(1, Math.floor(dmg * mv.recoil))); yield* this.animHP(u); yield* this.msg(u.n + '受到了反作用力的傷害！'); }
@@ -3735,12 +3880,15 @@ class Battle {
         if (mv.eff.flinch) t.flinched = true;
       }
       if (!t.hero && t.trait === 'berserk' && !t.raged && t.hp > 0 && t.hp < t.maxhp * 0.4) { t.raged = 1; this.tintF = { c: '#ff3020', a: 0.5 }; yield* wait(12); this.tintF = null; yield* this.msg(t.n + '被激怒了！'); yield* this.statChange(t, { atk: 2 }); }
-      if (!t.hero && t.boss && !this.phase2 && t.hp > 0 && t.hp < t.maxhp * 0.5) yield* this.bossPhase2();
-      if (!t.hero && t.boss && this.phase2 && !this.collapse && t.hp > 0 && t.hp < t.maxhp * 0.25) { this.collapse = true; Sound.sfx('quake'); this.shake = 40; yield* this.msg(t.n + '猛力撞擊地面！'); yield* this.msg('遺跡開始崩塌了！每回合都會有落石掉下來！'); yield* this.msg('（選擇「防禦」就能擋住落石。）'); }
+      if (!t.hero && this.bb && !this.bb.called && t.hp > 0 && t.hp < t.maxhp * 0.5) { this.bb.called = true; this.bb.gang = 4; Sound.sfx('exclaim'); yield* this.msg(t.n + '吹響了口哨！'); yield* this.msg('手下們從暗處衝了出來！'); yield* this.msg('（手下每回合會丟飛刀。選擇「防禦」可以擋下。）'); }
+      if (!t.hero && t.boss && !this.bb && !this.phase2 && t.hp > 0 && t.hp < t.maxhp * 0.5) yield* this.bossPhase2();
+      if (!t.hero && t.boss && !this.bb && this.phase2 && !this.collapse && t.hp > 0 && t.hp < t.maxhp * 0.25) { this.collapse = true; Sound.sfx('quake'); this.shake = 40; yield* this.msg(t.n + '猛力撞擊地面！'); yield* this.msg('遺跡開始崩塌了！每回合都會有落石掉下來！'); yield* this.msg('（選擇「防禦」就能擋住落石。）'); }
       return;
     }
     // status moves
     UI.remove(utb);
+    if (mv.shield && mv.heal) { yield* (FX[mv.fx] || FX.heal).call(this, this.center(u)); u.shield = mv.shield; u.hp = Math.min(u.maxhp, u.hp + Math.floor(u.maxhp * mv.heal)); yield* this.animHP(u); yield* this.msg(u.n + '被神聖的領域包圍了！HP恢復，並獲得了護盾！'); return; }
+    if (mv.hpCost) { const c = Math.max(1, Math.floor(u.maxhp * mv.hpCost)); if (u.hp <= c) { yield* this.msg('但是' + u.n + '的HP不夠了！'); return; } u.hp -= c; yield* this.animHP(u); }
     if (mv.shield) { u.shield = mv.shield; yield* (FX[mv.fx] || FX.guard).call(this, this.center(u)); yield* this.msg(u.n + '展開了魔法護盾！'); return; }
     if (mv.heal) {
       if (u.hp >= u.maxhp) { yield* this.msg('但是' + u.n + '的HP已經全滿了！'); return; }
@@ -3772,7 +3920,8 @@ class Battle {
     if (this.cg && this.F.hp > 0) { const c = this.cg; if (c.mirror) c.mirror--; if (c.shards > 0 && this.F.hp < this.F.maxhp) { this.F.hp = Math.min(this.F.maxhp, this.F.hp + Math.ceil(this.F.maxhp * 0.04)); yield* this.animHP(this.F); yield* this.msg('水晶碎片讓' + this.F.n + '回復了！', { hold: 20 }); } if (c.flood && this.H.hp > 0) { this.H.wet = 2; Sound.sfx('water'); yield* this.msg(this.H.n + '被大水淋得全身濕透！', { hold: 20 }); } }
     if (this.cfg.id === 'mossGiant' && Game.st.flags.q2res === 'stay' && !Game.st.flags.q2done && this.F.hp > 0 && this.H.hp > 0) { yield* FX.sting.call(this, this.center(this.H), this.center(this.F)); const d = Math.ceil(this.F.maxhp * 0.06); this.F.hp = Math.max(0, this.F.hp - d); this.blinkF = 12; yield* this.animHP(this.F); yield* this.msg('提姆射出了箭！造成' + d + '點傷害！', { hold: 24 }); }
     if (this.H.stats.fx.regen && this.H.hp > 0 && this.H.hp < this.H.maxhp) { this.H.hp = Math.min(this.H.maxhp, this.H.hp + Math.ceil(this.H.maxhp * 0.06)); yield* this.animHP(this.H); }
-    for (const b of [this.H, this.F]) { if (b.wet > 0) b.wet--; if (b.shield > 0 && !--b.shield) yield* this.msg(b.n + '的魔法護盾消失了。', { hold: 24 }); }
+    if (this.bb && this.bb.gang > 0 && this.H.hp > 0 && this.F.hp > 0) { this.bb.gang--; yield* FX.knives.call(this, null, this.center(this.H)); if (this.H.defending) yield* this.msg(this.H.n + '擋開了手下的飛刀！', { hold: 20 }); else { const d = Math.max(1, Math.floor(this.H.maxhp * 0.06)); this.H.hp = Math.max(0, this.H.hp - d); this.blinkH = 12; yield* this.animHP(this.H); yield* this.msg('手下丟出了飛刀！受到' + d + '點傷害！', { hold: 20 }); if (this.H.hp <= 0) return; } if (!this.bb.gang) yield* this.msg('手下們見苗頭不對，逃走了。', { hold: 20 }); }
+    for (const b of [this.H, this.F]) { if (b.tangle > 0) b.tangle--; if (b.wet > 0) b.wet--; if (b.shield > 0 && !--b.shield) yield* this.msg(b.n + '的魔法護盾消失了。', { hold: 24 }); }
     if (this.collapse && this.H.hp > 0 && this.F.hp > 0) { yield* FX.rock.call(this, null, this.center(this.H)); if (this.H.defending) yield* this.msg(this.H.n + '擋住了落石！'); else { const d = Math.max(1, Math.floor(this.H.maxhp / 10)); this.H.hp = Math.max(0, this.H.hp - d); this.blinkH = 12; yield* this.animHP(this.H); yield* this.msg(this.H.n + '被落石砸中了！'); if (this.H.hp <= 0) return; } }
     for (const b of [this.H, this.F]) {
       if (b.hp <= 0 || !(b.status === 'psn' || b.status === 'brn')) continue;
@@ -3820,12 +3969,13 @@ class Battle {
   *victory() {
     const st = Game.st, F = this.F, sp = SPECIES[F.sp]; Game.st.wins = (st.wins || 0) + 1; const de = (st.dex || (st.dex = {}))[F.sp] || (st.dex[F.sp] = { seen: 1, won: 0 }); de.won++;
     Sound.play('victory');
-    const exp = Math.floor(sp.exp * F.lv / 5 * (F.elite || F.boss ? 1.5 : 1) * (this.H.stats.fx.wisdom ? 1.5 : 1));
+    if (this.bb && this.bb.stolen) { st.money += this.bb.stolen; yield* this.msg('奪回了被搶走的' + this.bb.stolen + ' G！'); }
+    const exp = Math.floor(sp.exp * F.lv / 5 * (F.elite || F.boss ? 1.5 : 1) * (this.H.stats.fx.wisdom ? 1.5 : 1) * (this.cfg.pack ? 1.25 : 1));
     yield* this.gainExp(exp);
     const gold = Math.floor((F.boss ? 1000 : sp.gold * F.lv) * (this.H.stats.fx.fortune ? 1.5 : 1));
     if (gold) { st.money += gold; yield* this.msg(st.name + '得到了' + gold + ' G！'); }
     if (sp.mat && !F.elite && !F.boss && chance(0.5)) { st.bag[sp.mat] = (st.bag[sp.mat] || 0) + 1; yield* this.msg('得到了素材「' + ITEMS[sp.mat].n + '」！', { hold: 30 }); }
-    if (sp.drop) { const g = makeGear(sp.drop, 4); Sound.jingle('item'); yield* this.msg(F.n + '掉落了' + gearName(g) + '！', { wait: true }); yield* this.msg(gearText(g) + '\n（可以在裝備畫面裝備）', { wait: true }); }
+    const dropId = this.cfg.drop || sp.drop; if (dropId) { const g = makeGear(dropId, 4); Sound.jingle('item'); yield* this.msg(F.n + '掉落了' + gearName(g) + '！', { wait: true }); yield* this.msg(gearText(g) + '\n（可以在裝備畫面裝備）', { wait: true }); }
     const pool = Game.ow && Game.ow.map && Game.ow.map.d.gearPool; if (pool && !F.elite && !F.boss && chance(this.H.stats.fx.fortune ? 0.16 : 0.08)) { const g = makeGear(pick(pool), rollQuality()); Sound.jingle('item'); yield* this.msg(F.n + '掉落了' + gearName(g) + '！', { wait: true }); }
   }
   *gainExp(amount) {
@@ -3852,6 +4002,7 @@ class Battle {
     UI.push(win); yield* waitA(); showTotal = true; Sound.sfx('cursor'); yield* waitA(); UI.remove(win); UI.remove(tb);
     st.tp = (st.tp || 0) + 1; yield* this.msg('獲得了1點天賦點！（在選單的「天賦」中分配）', { hold: 44 });
     for (const id of heroLearnAt(st.lv)) yield* this.learnMove(id);
+    const C = CLASSES[st.cls]; if (C && C.move2 && st.lv === C.lv2) yield* this.learnMove(C.move2);
     if (Sound.current !== 'victory' && this.F.hp <= 0) Sound.play('victory');
   }
   *learnMove(id) {
@@ -3980,6 +4131,24 @@ const FX = {
   *smoke() { Sound.sfx('wind'); for (let i = 0; i < 30; i++) this.spawn({ k: 'circ', x: rnd(10, W - 10), y: rnd(20, BH - 20), r: rnd(6, 14), c: pick(['#d8d8d8', '#b8b8c0', '#f0f0f0']), life: 30 + rnd(0, 20), vy: -0.3 }); yield* wait(40); },
 };
 
+/* ===================== FX pack 2: class skills, combos, bandit boss ===================== */
+Object.assign(FX, {
+  *crossSlash(U, T, u) { yield* this.lunge(u, 12, 3); Sound.sfx('slash'); for (const d of [1, -1]) { this.spawn({ k: 'line', x1: T.x - 22 * d, y1: T.y - 22, x2: T.x + 22 * d, y2: T.y + 22, c: '#9ad8ff', w: 5, grow: 3, life: 14 }); this.spawn({ k: 'line', x1: T.x - 22 * d, y1: T.y - 22, x2: T.x + 22 * d, y2: T.y + 22, c: '#ffffff', w: 1, grow: 3, life: 16 }); Sound.sfx('slash'); yield* wait(6); } this.star(T.x, T.y, '#ffffff', 14); this.sparks(T.x, T.y, 10, ['#ffffff', '#9ad8ff'], 2.2); yield* wait(12); },
+  *chainBolt(U, T) { Sound.sfx('thunder'); const P = [[U.x, U.y], [T.x - 22, T.y - 14], [T.x + 20, T.y - 4], [T.x - 12, T.y + 12], [T.x + 6, T.y]]; for (let i = 0; i + 1 < P.length; i++) { const [a, b] = [P[i], P[i + 1]], pts = []; for (let k = 0; k <= 5; k++) pts.push([lerp(a[0], b[0], k / 5) + (k % 5 ? rnd(-4, 4) : 0), lerp(a[1], b[1], k / 5) + (k % 5 ? rnd(-4, 4) : 0)]); this.spawn({ k: 'bolt', pts, life: 10 }); this.sparks(b[0], b[1], 5, ['#fff6a0', '#ffd030'], 1.6, 12); yield* wait(4); } this.spawn({ k: 'ring', x: T.x, y: T.y, r0: 4, r1: 24, c: '#ffe060', w: 2, life: 12 }); yield* wait(12); },
+  *shieldBash(U, T, u) { this.spawn({ k: 'hex', x: U.x, y: U.y, r0: 20, r1: 16, c: '#c8d8ff', life: 16 }); yield* wait(6); yield* this.lunge(u, 18, 2); Sound.sfx('hitSuper'); this.shake = 10; this.spawn({ k: 'ring', x: T.x, y: T.y, r0: 6, r1: 30, c: '#dfe8ff', w: 4, life: 12 }); for (let i = 0; i < 3; i++) this.star(T.x + rnd(-10, 10), T.y - 16 + rnd(-4, 4), '#ffe070', 7); yield* wait(14); },
+  *iai(U, T, u) { this.spawn({ k: 'flash', c: '#05060c', a: 0.55, life: 22 }); Sound.sfx('charge'); yield* wait(16); Sound.sfx('slash'); this.spawn({ k: 'line', x1: -10, y1: T.y + 2, x2: W + 10, y2: T.y - 2, c: '#ffffff', w: 2, grow: 1, life: 14 }); this.spawn({ k: 'line', x1: -10, y1: T.y + 2, x2: W + 10, y2: T.y - 2, c: '#a8e8ff', w: 5, grow: 1, life: 8 }); yield* wait(10); this.spawn({ k: 'flash', c: '#ffffff', a: 0.6, life: 6 }); this.sparks(T.x, T.y, 14, ['#ffffff', '#a8e8ff'], 3); yield* wait(12); },
+  *bloodRage(U) { this.tintH = { c: '#d01020', a: 0.6 }; Sound.cry(7, 0.5, 0.7); for (let i = 0; i < 3; i++) { this.spawn({ k: 'ring', x: U.x, y: U.y, r0: 34 - i * 6, r1: 8, c: '#ff3030', w: 2, life: 14 }); yield* wait(5); } for (let i = 0; i < 16; i++) this.spawn({ k: 'dot', x: U.x + rnd(-14, 14), y: U.y + rnd(-10, 16), vy: -0.9, c: pick(['#ff3030', '#a01020', '#ff8080']), s: 2, life: 22 }); yield* wait(16); this.tintH = null; },
+  *meteor(U, T) { Sound.sfx('fire'); this.spawn({ k: 'flash', c: '#401000', a: 0.4, life: 34 }); const S = { x: T.x - 60, y: -30 }; this.projectile(S, T, 1, () => ({ k: 'circ', r: 8, c: '#ff6a20', hl: '#fff0a0' }), 0, 22); for (let i = 0; i < 20; i++) { const t = i / 20; this.spawn({ k: 'flame', x: lerp(S.x, T.x, t) + rnd(-3, 3), y: lerp(S.y, T.y, t), vy: -0.3, s: rnd(3, 6), life: 14 }); } yield* wait(22); Sound.sfx('quake'); this.shake = 16; this.spawn({ k: 'flash', c: '#ffb040', a: 0.7, life: 8 }); this.spawn({ k: 'ring', x: T.x, y: T.y + 12, r0: 6, r1: 50, c: '#ff8030', w: 4, life: 18, fl: 0.4 }); for (let i = 0; i < 24; i++) { const an = i / 24 * Math.PI * 2; this.spawn({ k: 'flame', x: T.x + Math.cos(an) * 14, y: T.y + 14 + Math.sin(an) * 5, vy: -1 - Math.random(), s: rnd(3, 7), life: 20 }); } yield* wait(20); },
+  *skyJudge(U, T) { Sound.sfx('charge'); this.spawn({ k: 'flash', c: '#0a0c20', a: 0.6, life: 36 }); this.spawn({ k: 'ring', x: T.x, y: 10, r0: 30, r1: 4, c: '#fff6a0', w: 2, life: 16 }); yield* wait(16); Sound.sfx('thunder'); this.spawn({ k: 'beam', x: T.x, w: 18, y1: T.y + 24, h: 240, c: '#fff6c0', life: 16 }); const pts = []; let x0 = T.x; for (let y = -4; y < T.y; y += 8) { pts.push([x0, y]); x0 += rnd(-5, 5); } pts.push([T.x, T.y]); this.spawn({ k: 'bolt', pts, life: 14 }); this.spawn({ k: 'flash', c: '#ffffff', a: 0.8, life: 8 }); this.shake = 14; this.sparks(T.x, T.y + 10, 16, ['#ffffff', '#fff080', '#ffd030'], 3); yield* wait(20); },
+  *sanctuary(U) { Sound.sfx('heal'); for (let i = 0; i < 3; i++) { this.spawn({ k: 'hex', x: U.x, y: U.y, r0: 40 - i * 5, r1: 34 - i * 5, c: ['#fff0a0', '#ffe070', '#fffbe0'][i], life: 30 - i * 4 }); yield* wait(4); } this.spawn({ k: 'beam', x: U.x, w: 22, y1: U.y + 26, h: 200, c: '#fff4c0', life: 26 }); for (let i = 0; i < 18; i++) this.spawn({ k: 'dot', x: U.x + rnd(-20, 20), y: U.y + rnd(-10, 24), vy: -0.7, c: pick(['#ffffff', '#fff0a0']), s: 2, life: 26 }); yield* wait(24); },
+  *riftBlade(U, T, u) { this.spawn({ k: 'flash', c: '#200830', a: 0.5, life: 26 }); Sound.sfx('charge'); this.spawn({ k: 'ring', x: T.x, y: T.y, r0: 40, r1: 2, c: '#c080ff', w: 2, life: 16 }); yield* wait(12); yield* this.lunge(u, 16, 3); Sound.sfx('slash'); this.spawn({ k: 'line', x1: T.x - 34, y1: T.y + 26, x2: T.x + 34, y2: T.y - 26, c: '#1a0628', w: 9, grow: 2, life: 22 }); this.spawn({ k: 'line', x1: T.x - 34, y1: T.y + 26, x2: T.x + 34, y2: T.y - 26, c: '#e0b0ff', w: 2, grow: 2, life: 22 }); this.sparks(T.x, T.y, 18, ['#c080ff', '#80f0ff', '#ffffff'], 3); this.shake = 10; yield* wait(20); },
+  *axeSpin(U, T, u) { Sound.sfx('wind'); for (let i = 0; i < 6; i++) { this.spawn({ k: 'arc', x: U.x, y: U.y, r: 22, a0: i * 1.05, c: '#dfe4ec', life: 10 }); yield* wait(3); } yield* this.lunge(u, 18, 3); Sound.sfx('hitSuper'); this.shake = 16; for (const d of [1, -1]) this.spawn({ k: 'line', x1: T.x - 28 * d, y1: T.y - 8, x2: T.x + 28 * d, y2: T.y + 12, c: '#ff5030', w: 6, grow: 2, life: 14 }); this.spawn({ k: 'flash', c: '#ff2010', a: 0.35, life: 8 }); yield* wait(14); },
+  *steal(U, T, u) { yield* this.lunge(u, 22, 2); Sound.sfx('wind'); for (let i = 0; i < 6; i++) this.spawn({ k: 'dot', x: T.x + rnd(-8, 8), y: T.y + rnd(-6, 6), vx: (U.x - T.x) / 18, vy: (U.y - T.y) / 18 - 0.5, c: pick(['#ffd040', '#fff0a0']), s: 2, life: 18 }); yield* wait(18); },
+  *knives(U, T) { Sound.sfx('slash'); for (let i = 0; i < 3; i++) { const S = { x: i % 2 ? W + 6 : -6, y: T.y - 20 + i * 10 }; this.projectile(S, T, 1, () => ({ k: 'circ', r: 1.5, c: '#c8d0dc', hl: '#ffffff' }), 2, 10); yield* wait(4); } yield* wait(10); this.star(T.x, T.y, '#ffffff', 6); yield* wait(6); },
+  *ignite(U, T) { Sound.sfx('fire'); this.spawn({ k: 'flash', c: '#ff8020', a: 0.3, life: 10 }); for (let i = 0; i < 20; i++) this.spawn({ k: 'flame', x: T.x + rnd(-18, 18), y: T.y + rnd(-4, 20), vy: -1.3 - Math.random(), s: rnd(3, 7), life: 18 + rnd(0, 10) }); for (let i = 0; i < 6; i++) this.spawn({ k: 'dot', x: T.x + rnd(-16, 16), y: T.y + rnd(0, 16), vy: -0.5, c: '#3f9a4a', s: 2, life: 14 }); yield* wait(16); },
+  *steam(U, T) { Sound.sfx('water'); for (let i = 0; i < 22; i++) this.spawn({ k: 'dot', x: T.x + rnd(-18, 18), y: T.y + rnd(-6, 18), vx: rnd(-3, 3) / 10, vy: -0.8 - Math.random(), c: pick(['#ffffff', '#dfe8f0', '#c0d0e0']), s: rnd(2, 3), life: 22 }); this.spawn({ k: 'ring', x: T.x, y: T.y, r0: 4, r1: 34, c: '#e8f0ff', w: 3, life: 14 }); yield* wait(16); },
+});
+
 /* ===================== EVENTS (異世界篇) ===================== */
 function* healRitual(text) {
   yield* fadeOut(10); healHero(); const fr = Sound.jingle('heal'); yield* wait(Math.max(40, fr)); yield* fadeIn(10);
@@ -4056,7 +4225,7 @@ const Events = {
     st.flags.wellCharm = 1; yield* itemGet(st.name + '撈起了' + gearName(makeGear('moonCharm', 4)) + '！');
     yield* say('古老的護符……說不定和異界之門有關。可以在背包裡裝備。');
   },
-  *peddler() { yield* say('多虧了你，商隊才平安抵達！算你便宜一點。'); yield* shopFlow(PEDDLER_LIST); },
+  *peddler() { const f = Game.st.flags; if (f.bandit && !f.peddlerThx) { f.peddlerThx = 1; Game.st.bag.luckClover = (Game.st.bag.luckClover || 0) + 1; yield* sayAll(['你從格倫手上把貨搶回來了！？', '這是我珍藏的幸運草，請收下！']); yield* itemGet(Game.st.name + '得到了幸運草！'); } yield* say(f.bandit ? '貨都回來了！今天的商品特別齊全喔。' : '多虧了你，商隊才平安抵達！算你便宜一點。'); yield* shopFlow(PEDDLER_LIST); },
   *caravan(ow) {
     const f = Game.st.flags;
     yield* sayAll(['救、救命！商隊的貨車被魔物包圍了！', '這樣下去，貨物就送不到萌芽鎮了……']); f.caravanMet = 1;
@@ -4064,6 +4233,7 @@ const Events = {
     for (const [sp, lv] of [['fox', 10], ['bee', 10], ['wolf', 9]]) { const res = yield* ow.battleScript({ sp, lv, kind: 'wild' }); if (res !== 'win') { yield* say('……還有魔物！小心啊！'); return; } }
     f.caravan = 'saved'; Game.st.money += 800; ow.npcs = ow.npcs.filter(n => n.id !== 'caravan');
     yield* sayAll(['得救了！真是太感謝你了！', '這是謝禮。我會在萌芽鎮擺攤，也給你算便宜一點！']); yield* itemGet(Game.st.name + '得到了800 G！');
+    f.mineOpen = 1; yield* sayAll(['……不過，最前面那輛貨車被盜賊搶走了。', '他們躲在道路東邊的廢棄礦坑。封住入口的木板，好像被他們拆掉了……', '如果你有餘力，能幫忙把貨物搶回來嗎？'])
   },
   *hiddenBoss(ow) {
     const st = Game.st; if (st.flags.crystalBoss || !ow.boss) return null;
@@ -4112,7 +4282,7 @@ const Events = {
   *traveler() { if (Game.st.flags.golem) { yield* sayAll(['你真的打倒魔像了？……', '我得把這件事告訴王都的朋友。說不定他們知道異界之門的事。']); return; } yield* sayAll(['我在古岩遺跡附近見過那隻魔像……', '它的拳頭開始發光、凝聚力量時，下一擊非常可怕。', '那時候就選「防禦」，能擋下一半的傷害！']); },
   *clerk() { yield* shopFlow(); },
   *customer() { if (Game.st.flags.croc) { yield* say('騎士長劍是王都騎士團在用的劍！好想要喔……'); return; } yield* sayAll(['鐵劍好貴啊……不過攻擊會提升很多呢。', '魔法護符能提高魔攻，水流刃和落雷也會變強喔！']); },
-  *hiker() { if (Game.st.flags.wolf) { yield* sayAll(['狂牙狼被你打倒了？難怪最近路上安靜多了！', '精英魔物身上常常會掉出好東西喔。']); return; } yield* sayAll(['嘿！這條路上的草叢很深，常有魔物跳出來。', '受傷了就回萌芽鎮的旅店休息吧。', '過了河之後，還有一座能恢復體力的泉水喔！']); },
+  *hiker() { const hf = Game.st.flags; if (hf.mineOpen && !hf.bandit) { yield* sayAll(['東邊的廢棄礦坑被盜賊佔據了。商隊被搶的貨物應該就藏在裡面。', '入口在道路東側的小路盡頭。盜賊頭目「鐵斧」格倫會蓄力揮斧，那時候記得防禦！']); return; } if (Game.st.flags.wolf) { yield* sayAll(['狂牙狼被你打倒了？難怪最近路上安靜多了！', '精英魔物身上常常會掉出好東西喔。']); return; } yield* sayAll(['嘿！這條路上的草叢很深，常有魔物跳出來。', '受傷了就回萌芽鎮的旅店休息吧。', '過了河之後，還有一座能恢復體力的泉水喔！']); },
   *girl2() { yield* sayAll(Game.st.flags.croc ? ['你打倒了沼澤鱷？太好了，終於可以過橋了！'] : ['橋頭那隻沼澤鱷好兇……', '聽說牠是水屬性，最怕雷和草的攻擊。']); },
   *spring() {
     const ok = yield* yesNo('清澈的泉水閃閃發亮……要喝一口嗎？');
@@ -4142,7 +4312,7 @@ const Events = {
     })();
   },
 };
-Object.assign(Events, QUEST_EVENTS);
+Object.assign(Events, QUEST_EVENTS, MINE_EVENTS);
 function* itemGet(text) { const fr = Sound.jingle('item'); const t = new TextBox(text); UI.push(t); let i = 0; while (!t.done || i < fr) { if (i > 20 || t.state === 'type') t.update(); i++; yield; if (t.done && i >= fr) break; } UI.remove(t); }
 function* visionScene() {
   yield* fadeOut(24, '#ffffff'); let t = 0;
@@ -4164,10 +4334,10 @@ function* classTalk() {
   while (true) {
     const r = yield* ask('要選擇哪個職業？', opts.map(k => C[k].n).concat(['再想想']));
     if (r < 0 || r >= opts.length) { yield* say('想好了再來找我吧。'); return true; }
-    const k = opts[r]; yield* say(C[k].n + '：' + C[k].d + '\n職業技能「' + MOVES[C[k].move].n + '」');
+    const k = opts[r]; yield* say(C[k].n + '：' + C[k].d + '\n職業技能「' + MOVES[C[k].move].n + '」' + (C[k].move2 ? '、Lv' + C[k].lv2 + '「' + MOVES[C[k].move2].n + '」' : ''));
     if (!(yield* yesNo('確定要成為' + C[k].n + '嗎？'))) continue;
     st.cls = k; clampHP(); yield* itemGet(st.name + '成為了' + C[k].n + '！');
-    const mv = C[k].move; if (!st.moves.some(m => m.id === mv)) { if (st.moves.length < 4) st.moves.push({ id: mv, pp: MOVES[mv].pp }); else { const i = yield* pickMoveToForget(mv); if (i < 4) st.moves[i] = { id: mv, pp: MOVES[mv].pp }; } }
+    for (const mv of [C[k].move].concat(C[k].move2 && st.lv >= C[k].lv2 ? [C[k].move2] : [])) if (!st.moves.some(m => m.id === mv)) { yield* say('學會職業技能「' + MOVES[mv].n + '」的機會來了！'); if (st.moves.length < 4) st.moves.push({ id: mv, pp: MOVES[mv].pp }); else { const i = yield* pickMoveToForget(mv); if (i < 4) st.moves[i] = { id: mv, pp: MOVES[mv].pp }; } }
     return true;
   }
 }
@@ -4288,7 +4458,7 @@ class TitleScene {
     x.drawImage(this.logo, Math.round(W / 2 - this.logo.width / 2), 6 + bob);
     Font.drawC(x, '～異世界冒險RPG～', W / 2, 52 + bob, '#ffe0a0', '#3a1428');
     if (this.stage === 'press' && Math.floor(this.t / 30) % 2 === 0) Font.drawC(x, '按 A 鍵開始', W / 2, 232, '#ffffff', '#1a1024');
-    Font.draw(x, 'v3.0', W - 26, H - 13, '#b890b0', null);
+    Font.draw(x, 'v4.0', W - 26, H - 13, '#b890b0', null);
   }
 }
 

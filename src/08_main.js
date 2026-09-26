@@ -74,7 +74,7 @@ const Events = {
     st.flags.wellCharm = 1; yield* itemGet(st.name + '撈起了' + gearName(makeGear('moonCharm', 4)) + '！');
     yield* say('古老的護符……說不定和異界之門有關。可以在背包裡裝備。');
   },
-  *peddler() { yield* say('多虧了你，商隊才平安抵達！算你便宜一點。'); yield* shopFlow(PEDDLER_LIST); },
+  *peddler() { const f = Game.st.flags; if (f.bandit && !f.peddlerThx) { f.peddlerThx = 1; Game.st.bag.luckClover = (Game.st.bag.luckClover || 0) + 1; yield* sayAll(['你從格倫手上把貨搶回來了！？', '這是我珍藏的幸運草，請收下！']); yield* itemGet(Game.st.name + '得到了幸運草！'); } yield* say(f.bandit ? '貨都回來了！今天的商品特別齊全喔。' : '多虧了你，商隊才平安抵達！算你便宜一點。'); yield* shopFlow(PEDDLER_LIST); },
   *caravan(ow) {
     const f = Game.st.flags;
     yield* sayAll(['救、救命！商隊的貨車被魔物包圍了！', '這樣下去，貨物就送不到萌芽鎮了……']); f.caravanMet = 1;
@@ -82,6 +82,7 @@ const Events = {
     for (const [sp, lv] of [['fox', 10], ['bee', 10], ['wolf', 9]]) { const res = yield* ow.battleScript({ sp, lv, kind: 'wild' }); if (res !== 'win') { yield* say('……還有魔物！小心啊！'); return; } }
     f.caravan = 'saved'; Game.st.money += 800; ow.npcs = ow.npcs.filter(n => n.id !== 'caravan');
     yield* sayAll(['得救了！真是太感謝你了！', '這是謝禮。我會在萌芽鎮擺攤，也給你算便宜一點！']); yield* itemGet(Game.st.name + '得到了800 G！');
+    f.mineOpen = 1; yield* sayAll(['……不過，最前面那輛貨車被盜賊搶走了。', '他們躲在道路東邊的廢棄礦坑。封住入口的木板，好像被他們拆掉了……', '如果你有餘力，能幫忙把貨物搶回來嗎？'])
   },
   *hiddenBoss(ow) {
     const st = Game.st; if (st.flags.crystalBoss || !ow.boss) return null;
@@ -130,7 +131,7 @@ const Events = {
   *traveler() { if (Game.st.flags.golem) { yield* sayAll(['你真的打倒魔像了？……', '我得把這件事告訴王都的朋友。說不定他們知道異界之門的事。']); return; } yield* sayAll(['我在古岩遺跡附近見過那隻魔像……', '它的拳頭開始發光、凝聚力量時，下一擊非常可怕。', '那時候就選「防禦」，能擋下一半的傷害！']); },
   *clerk() { yield* shopFlow(); },
   *customer() { if (Game.st.flags.croc) { yield* say('騎士長劍是王都騎士團在用的劍！好想要喔……'); return; } yield* sayAll(['鐵劍好貴啊……不過攻擊會提升很多呢。', '魔法護符能提高魔攻，水流刃和落雷也會變強喔！']); },
-  *hiker() { if (Game.st.flags.wolf) { yield* sayAll(['狂牙狼被你打倒了？難怪最近路上安靜多了！', '精英魔物身上常常會掉出好東西喔。']); return; } yield* sayAll(['嘿！這條路上的草叢很深，常有魔物跳出來。', '受傷了就回萌芽鎮的旅店休息吧。', '過了河之後，還有一座能恢復體力的泉水喔！']); },
+  *hiker() { const hf = Game.st.flags; if (hf.mineOpen && !hf.bandit) { yield* sayAll(['東邊的廢棄礦坑被盜賊佔據了。商隊被搶的貨物應該就藏在裡面。', '入口在道路東側的小路盡頭。盜賊頭目「鐵斧」格倫會蓄力揮斧，那時候記得防禦！']); return; } if (Game.st.flags.wolf) { yield* sayAll(['狂牙狼被你打倒了？難怪最近路上安靜多了！', '精英魔物身上常常會掉出好東西喔。']); return; } yield* sayAll(['嘿！這條路上的草叢很深，常有魔物跳出來。', '受傷了就回萌芽鎮的旅店休息吧。', '過了河之後，還有一座能恢復體力的泉水喔！']); },
   *girl2() { yield* sayAll(Game.st.flags.croc ? ['你打倒了沼澤鱷？太好了，終於可以過橋了！'] : ['橋頭那隻沼澤鱷好兇……', '聽說牠是水屬性，最怕雷和草的攻擊。']); },
   *spring() {
     const ok = yield* yesNo('清澈的泉水閃閃發亮……要喝一口嗎？');
@@ -160,7 +161,7 @@ const Events = {
     })();
   },
 };
-Object.assign(Events, QUEST_EVENTS);
+Object.assign(Events, QUEST_EVENTS, MINE_EVENTS);
 function* itemGet(text) { const fr = Sound.jingle('item'); const t = new TextBox(text); UI.push(t); let i = 0; while (!t.done || i < fr) { if (i > 20 || t.state === 'type') t.update(); i++; yield; if (t.done && i >= fr) break; } UI.remove(t); }
 function* visionScene() {
   yield* fadeOut(24, '#ffffff'); let t = 0;
@@ -182,10 +183,10 @@ function* classTalk() {
   while (true) {
     const r = yield* ask('要選擇哪個職業？', opts.map(k => C[k].n).concat(['再想想']));
     if (r < 0 || r >= opts.length) { yield* say('想好了再來找我吧。'); return true; }
-    const k = opts[r]; yield* say(C[k].n + '：' + C[k].d + '\n職業技能「' + MOVES[C[k].move].n + '」');
+    const k = opts[r]; yield* say(C[k].n + '：' + C[k].d + '\n職業技能「' + MOVES[C[k].move].n + '」' + (C[k].move2 ? '、Lv' + C[k].lv2 + '「' + MOVES[C[k].move2].n + '」' : ''));
     if (!(yield* yesNo('確定要成為' + C[k].n + '嗎？'))) continue;
     st.cls = k; clampHP(); yield* itemGet(st.name + '成為了' + C[k].n + '！');
-    const mv = C[k].move; if (!st.moves.some(m => m.id === mv)) { if (st.moves.length < 4) st.moves.push({ id: mv, pp: MOVES[mv].pp }); else { const i = yield* pickMoveToForget(mv); if (i < 4) st.moves[i] = { id: mv, pp: MOVES[mv].pp }; } }
+    for (const mv of [C[k].move].concat(C[k].move2 && st.lv >= C[k].lv2 ? [C[k].move2] : [])) if (!st.moves.some(m => m.id === mv)) { yield* say('學會職業技能「' + MOVES[mv].n + '」的機會來了！'); if (st.moves.length < 4) st.moves.push({ id: mv, pp: MOVES[mv].pp }); else { const i = yield* pickMoveToForget(mv); if (i < 4) st.moves[i] = { id: mv, pp: MOVES[mv].pp }; } }
     return true;
   }
 }
@@ -306,7 +307,7 @@ class TitleScene {
     x.drawImage(this.logo, Math.round(W / 2 - this.logo.width / 2), 6 + bob);
     Font.drawC(x, '～異世界冒險RPG～', W / 2, 52 + bob, '#ffe0a0', '#3a1428');
     if (this.stage === 'press' && Math.floor(this.t / 30) % 2 === 0) Font.drawC(x, '按 A 鍵開始', W / 2, 232, '#ffffff', '#1a1024');
-    Font.draw(x, 'v3.0', W - 26, H - 13, '#b890b0', null);
+    Font.draw(x, 'v4.0', W - 26, H - 13, '#b890b0', null);
   }
 }
 

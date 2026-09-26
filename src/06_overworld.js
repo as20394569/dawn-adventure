@@ -34,12 +34,12 @@ class Overworld {
     this.elites = (this.map.d.elites || []).filter(e => !st.flags[e.id]).map(e => new Entity({ ...e, img: monsterMini(e.sp, 24) }));
     this.items = (this.map.d.items || []).filter(i => !st.flags[i.id] && (!i.show || i.show(st))).map(i => new Entity({ ...i }));
     st.gath = st.gath || {}; for (const g of this.map.d.gathers || []) if (st.gath[g.id] === undefined || (st.steps || 0) - st.gath[g.id] > 150) this.items.push(new Entity({ ...g, gather: 1 }));
-    if (st.flags.caravanMet && !st.flags.caravan && id !== 'route') st.flags.caravan = 'lost';
+    if (st.flags.caravanMet && !st.flags.caravan && id !== 'route') { st.flags.caravan = 'lost'; st.flags.mineOpen = 1; }
     const bd = this.map.d.boss; this.boss = bd && !st.flags[bd.flag || 'golem'] ? new Entity({ ...bd, img: monsterMini(bd.sp, 36), w2: 1 }) : null;
     // neighbors for seamless connections
     this.conn = {}; const c = this.map.d.connect || {}; for (const k in c) this.conn[k] = { m: getMap(c[k].map), dx: c[k].dx };
     if (this.map.d.music) Sound.play(this.map.d.music);
-    if (!silent && this.map.d.name !== prev && (this.map.d.outdoor || id === 'ruins')) this.popup = { name: this.map.d.name, t: 0 };
+    if (!silent && this.map.d.name !== prev && (this.map.d.outdoor || this.map.d.popup || id === 'ruins')) this.popup = { name: this.map.d.name, t: 0 };
     markVis(this.map, x, y); this.checkSight();
   }
   tileAt(x, y) {
@@ -87,7 +87,7 @@ class Overworld {
     // interior exit mat
     if (m.d.exit && p.x === m.d.exit.x && p.y === m.d.exit.y && d === 'down') { const t = m.d.exit.to; this.run(this.warp(t[0], t[1], t[2], 'down', true)); return; }
     if (m.d.southWarp && d === 'down' && ny >= m.h) { const t = m.d.southWarp.to; this.run(this.warp(t[0], t[1], t[2], t[3])); return; }
-    for (const w of m.d.edgeWarps || []) if (w.dir === d && (d === 'left' ? nx < 0 : d === 'right' ? nx >= m.w : d === 'up' ? ny < 0 : ny >= m.h) && w.at.includes(d === 'left' || d === 'right' ? ny : nx)) { const t = w.to; this.run(this.warp(t[0], t[1], t[2], t[3])); return; }
+    for (const w of m.d.edgeWarps || []) if (w.dir === d && (d === 'left' ? nx < 0 : d === 'right' ? nx >= m.w : d === 'up' ? ny < 0 : ny >= m.h) && w.at.includes(d === 'left' || d === 'right' ? ny : nx)) { if (w.need && !this.st.flags[w.need]) { Sound.sfx('bump'); this.run(say(w.msg)); return; } const t = w.to; this.run(this.warp(t[0], t[1], t[2], t[3])); return; }
     if (m.d.northWarp && d === 'up' && ny < 0 && m.d.northWarp.x.includes(nx)) { const t = m.d.northWarp.to; this.run(this.warp(t[0], t[1], t[2], t[3])); return; }
     const tc = this.tileAt(nx, ny);
     if (tc === 'L' && d === 'down' && !this.entityAt(nx, ny + 1) && !this.solidAt(nx, ny + 1)) { this.startJump(p, nx, ny + 1); return; }
@@ -133,9 +133,8 @@ class Overworld {
     if ((c === '#' || (this.map.d.encAll && c === 's')) && !Game.noEnc) {
       const enc = (this.map.d.encounters || []).find(e => p.y >= e.y0 && p.y <= e.y1);
       if (enc && chance(enc.rate) && (st.steps - (st.lastBattleStep || 0)) > 2) {
-        const tot = enc.table.reduce((a, r) => a + r[3], 0); let r = Math.random() * tot; let row = enc.table[0];
-        for (const e of enc.table) { r -= e[3]; if (r <= 0) { row = e; break; } }
-        this.run(this.battleScript({ sp: row[0], lv: rnd(row[1], row[2]), kind: 'wild' }));
+        if (st.lv >= 8 && chance(0.12)) { this.run(this.packScript(enc)); return; }
+        const row = rollEnc(enc); this.run(this.battleScript({ sp: row[0], lv: rnd(row[1], row[2]), kind: 'wild' }));
       }
     }
   }
@@ -206,6 +205,18 @@ class Overworld {
     yield* fadeOut(12); this.doorAnim = null; this.load(b.to[0], b.to[1], b.to[2], 'up'); yield* wait(4); yield* fadeIn(12);
   }
   *walkEntity(e, dir, n = 1) { for (let i = 0; i < n; i++) { e.dir = dir; const [dx, dy] = DIRS[dir]; this.startMove(e, e.x + dx, e.y + dy, 1); while (e.moving) { if (e !== this.p) this.updateMove(e); yield; } } }
+  *packScript(enc) {
+    const st = this.st, n = rnd(2, 3); Sound.sfx('exclaim'); this.p.excl = 30; yield* wait(30);
+    yield* say('是魔物群！（連續' + n + '場戰鬥，經驗值+25%）');
+    for (let i = 0; i < n; i++) {
+      const row = rollEnc(enc), res = yield* this.battleScript({ sp: row[0], lv: rnd(row[1], row[2]) + (i === n - 1 ? 1 : 0), kind: 'wild', pack: [i + 1, n] });
+      if (res !== 'win') return;
+      if (i < n - 1) { Sound.sfx('exclaim'); this.p.excl = 24; yield* wait(24); yield* say('又有魔物衝過來了！（' + (i + 2) + '/' + n + '）'); }
+    }
+    const g = 60 * n * Math.ceil(st.lv / 4), mats = Object.keys(ITEMS).filter(k => ITEMS[k].mat && k !== 'crystal'), mt = pick(mats);
+    st.money += g; st.bag[mt] = (st.bag[mt] || 0) + 2; st.packs = (st.packs || 0) + 1; Sound.jingle('item');
+    yield* say('擊退了魔物群！額外獲得' + g + ' G和' + ITEMS[mt].n + '×2！');
+  }
   *eliteSpot(e) {
     const p = this.p; p.dir = OPP[e.dir];
     Sound.sfx('exclaim'); e.excl = 40; yield* wait(40);
@@ -217,7 +228,7 @@ class Overworld {
     const p = this.p; p.dir = e.x < p.x ? 'left' : e.x > p.x ? 'right' : e.y < p.y ? 'up' : 'down'; e.dir = OPP[p.dir];
     Sound.cry(Object.keys(SPECIES).indexOf(e.sp) + 1);
     yield* sayAll(ELITE_TEXT[e.id] || ['……！']);
-    const res = yield* this.battleScript({ sp: e.sp, lv: e.lv, kind: 'elite', id: e.id }, true);
+    const res = yield* this.battleScript({ sp: e.sp, lv: e.lv, kind: 'elite', id: e.id, drop: e.drop }, true);
     if (res === 'win') { this.st.flags[e.id] = 1; this.elites = this.elites.filter(x => x !== e); }
   }
   *battleScript(cfg, noResume) {
@@ -344,6 +355,7 @@ class Overworld {
     if (this.bossGlow) { x.globalAlpha = this.bossGlow; x.fillStyle = '#ffd040'; x.fillRect(sx + 12, sy + 10, 12, 3); x.globalAlpha = 1; }
   }
 }
+function rollEnc(enc) { const tot = enc.table.reduce((a, r) => a + r[3], 0); let r = Math.random() * tot; for (const e of enc.table) { r -= e[3]; if (r <= 0) return e; } return enc.table[0]; }
 const miniCache = {};
 function monsterMini(sp, size) { const k = sp + size; if (miniCache[k]) return miniCache[k]; const c = buildShaded(ART[sp], size, size / 64); miniCache[k] = { c, flip: flipCanvas(c) }; return miniCache[k]; }
 function healHero() { const st = Game.st; st.hp = heroStats().hp; st.status = null; st.moves.forEach(m => m.pp = MOVES[m.id].pp); }
