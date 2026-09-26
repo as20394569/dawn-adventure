@@ -397,16 +397,44 @@ function* shopSell() {
 }
 const sellPrice = k => ITEMS[k].sell ?? Math.floor(ITEMS[k].price / 2);
 
+/* ---------- Bestiary ---------- */
+function* dexScreen() {
+  const list = Object.keys(SPECIES), VIS = 7; let idx = 0;
+  const scr = { draw(x) {
+    const dex = Game.st.dex || {}, seenN = list.filter(k => dex[k] && dex[k].seen).length;
+    screenBG(x); headerBar(x, '魔物圖鑑'); Font.drawR(x, '收集率 ' + Math.round(seenN / list.length * 100) + '%', W - 6, 2, UIC.accent, UIC.textSh);
+    drawWin(x, 4, 24, 168, VIS * 18 + 8, 'menu'); const top = Math.max(0, Math.min(idx - 3, list.length - VIS));
+    list.slice(top, top + VIS).forEach((k, i) => { const Y = 28 + i * 18, e = dex[k], seen = e && e.seen; if (top + i === idx) selBar(x, 6, Y - 1, 164, 17);
+      const m = monsterMini(k, 16); x.drawImage(seen ? m.c : tinted(m.c, '#2a3150'), 10, Y);
+      Font.draw(x, 'No.' + String(list.indexOf(k) + 1).padStart(2, '0'), 30, Y, UIC.muted, UIC.textSh); Font.draw(x, seen ? SPECIES[k].n : '？？？', 70, Y, seen ? UIC.text : UIC.dis, UIC.textSh);
+      if (seen) Font.drawR(x, '擊敗 ' + (e.won || 0), 164, Y, e.won ? UIC.text : UIC.muted, UIC.textSh); });
+    if (top > 0) x.drawImage(UPARROW, 86, 26); if (top + VIS < list.length) x.drawImage(DOWNARROW, 86, 24 + VIS * 18 + 3);
+    drawWin(x, 4, 164, 168, 88, 'menu'); const k = list[idx], e = dex[k];
+    if (e && e.seen) { const im = battleSprite(k); x.drawImage(im, 0, 0, im.width, im.height, 8, 172, 72, 72); const sp = SPECIES[k];
+      typeBadge(x, sp.t, 86, 170, 28); Font.draw(x, sp.elite ? '精英' : sp.boss ? '頭目' : '野生', 120, 168, sp.boss ? UIC.bad : sp.elite ? UIC.warm : UIC.muted, UIC.textSh);
+      Font.wrap(sp.dex || '', 80).slice(0, 4).forEach((l, i) => Font.draw(x, l, 86, 186 + i * 15, UIC.text, UIC.textSh)); }
+    else Font.draw(x, '還沒有遇見過這種魔物。', 14, 170, UIC.muted, UIC.textSh);
+  } };
+  UI.push(scr);
+  while (true) {
+    if (Input.repeat('up')) { idx = (idx + list.length - 1) % list.length; Sound.sfx('cursor'); } if (Input.repeat('down')) { idx = (idx + 1) % list.length; Sound.sfx('cursor'); }
+    if (Input.pressed('b') || Input.pressed('a')) { Input.consume('a', 'b'); Sound.sfx('cancel'); break; }
+    yield;
+  }
+  UI.remove(scr);
+}
+
 /* ---------- Start menu ---------- */
 function* startMenu() {
   Sound.sfx('menu'); let idx = Game.menuIdx || 0;
   while (true) {
-    const r = yield* choose(['狀態', '背包', '裝備', '存檔', '設定', '關閉'], { x: W - 70, y: 4, w: 66, index: idx });
-    if (r < 0 || r === 5) break; idx = r; Game.menuIdx = r;
+    const r = yield* choose(['狀態', '背包', '裝備', '圖鑑', '存檔', '設定', '關閉'], { x: W - 70, y: 4, w: 66, index: idx });
+    if (r < 0 || r === 6) break; idx = r; Game.menuIdx = r;
     if (r === 0) yield* summaryScreen();
     if (r === 1) yield* bagScreen('field');
     if (r === 2) yield* equipScreen();
-    if (r === 3) { const ok = yield* yesNo('要記錄目前的冒險進度嗎？'); if (ok) { const good = saveGame(); if (good) { Sound.sfx('save'); yield* say(Game.st.name + '把冒險記錄了下來！'); } else yield* say('無法存檔……這個瀏覽器可能不允許儲存資料。'); } break; }
-    if (r === 4) yield* optionsScreen();
+    if (r === 3) yield* dexScreen();
+    if (r === 4) { const ok = yield* yesNo('要記錄目前的冒險進度嗎？'); if (ok) { const good = saveGame(); if (good) { Sound.sfx('save'); yield* say(Game.st.name + '把冒險記錄了下來！'); } else yield* say('無法存檔……這個瀏覽器可能不允許儲存資料。'); } break; }
+    if (r === 5) yield* optionsScreen();
   }
 }

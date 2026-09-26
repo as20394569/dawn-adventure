@@ -64,7 +64,16 @@ const Events = {
     })();
   },
   *kid() { yield* say('你的衣服好奇怪喔！那是異世界的盔甲嗎？'); },
-  *grandpa() { yield* sayAll(['年輕人，按住B鍵就可以跑步喔。', '你說你們那邊有不用馬就能跑的鐵箱子？……真是難以想像啊。']); },
+  *well() {
+    const st = Game.st;
+    if (st.flags.wellCharm) { yield* say('一口很深的井。井底靜悄悄的。'); return; }
+    if (!st.flags.golem) { yield* say('一口很深的井。往下看，只有一片漆黑。'); return; }
+    yield* say('……井底好像有什麼東西，正發出淡淡的月光。');
+    if (!(yield* yesNo('要把水桶放下去撈撈看嗎？'))) return;
+    st.flags.wellCharm = 1; st.bag.moonCharm = 1; yield* itemGet(st.name + '撈起了「月光護符」！');
+    yield* say('古老的護符……說不定和異界之門有關。可以在背包裡裝備。');
+  },
+  *grandpa() { yield* sayAll(['年輕人，按住B鍵就可以跑步喔。', '你說你們那邊有不用馬就能跑的鐵箱子？……真是難以想像啊。', Game.st.flags.golem ? '聽說魔像倒下的那晚，鎮上那口老井發出了光。' : '鎮上那口老井，據說跟遺跡是連在一起的。']); },
   *florist() { yield* sayAll(['魔物都有自己的屬性喔。', '火怕水、水怕草、草怕火。雷電對水和飛行的魔物特別有效。', '岩石屬性的魔物，最討厭水和草了！']); },
   *healer() {
     const st = Game.st; const ok = yield* yesNo('歡迎來到旅店！要讓我為你治療嗎？');
@@ -362,5 +371,5 @@ function boot(data) {
   requestAnimationFrame(loop);
   try { if (window.claude && window.claude.hot && window.claude.hot.snapshot) window.claude.hot.snapshot(() => ({ st: (Game.scene instanceof Overworld && !Game.scene.script) ? Game.st : null })); } catch (e) { }
 }
-window.__game = { setScale: S => { Game.fixedScale = 1; setScale(S); render(); }, Game, Input, Events, MAPS, SPECIES, Battle, Overworld, heroStats, newGameState, startOverworld, UI, say, yesNo, startMenu, summaryScreen, bagScreen, equipScreen, optionsScreen, shopFlow, pickMoveToForget, blackText, step(n = 1) { for (let i = 0; i < n; i++) tick(); render(); }, press(k, hold = 2, after = 6) { Input.set(k, true); for (let i = 0; i < hold; i++) tick(); Input.set(k, false); for (let i = 0; i < after; i++) tick(); render(); } };
+window.__game = { setScale: S => { Game.fixedScale = 1; setScale(S); render(); }, Game, Input, Events, MAPS, SPECIES, Battle, Overworld, heroStats, newGameState, startOverworld, UI, say, yesNo, startMenu, summaryScreen, bagScreen, equipScreen, optionsScreen, shopFlow, pickMoveToForget, blackText, dexScreen, Events, step(n = 1) { for (let i = 0; i < n; i++) tick(); render(); }, press(k, hold = 2, after = 6) { Input.set(k, true); for (let i = 0; i < hold; i++) tick(); Input.set(k, false); for (let i = 0; i < after; i++) tick(); render(); } };
 try { if (window.claude && window.claude.hot && window.claude.hot.ready) window.claude.hot.ready(boot); else boot((window.claude && window.claude.hot && window.claude.hot.data) || {}); } catch (e) { boot({}); }

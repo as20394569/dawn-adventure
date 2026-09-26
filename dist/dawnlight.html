@@ -1485,7 +1485,7 @@ const DOWNARROW = spriteFrom(['kkkkk', '.kkk.', '..k..'], { k: '#6ee7d2' });
 const UPARROW = spriteFrom(['..k..', '.kkk.', 'kkkkk'], { k: '#6ee7d2' });
 const TYPE_COL = { '一般': '#9a9aa8', '火': '#f0783a', '水': '#4f8ff0', '草': '#5cbf55', '雷': '#e6bb2a', '岩': '#b0925a', '毒': '#a55ad0', '飛': '#8c8cf0' };
 function typeBadge(x, t, X, Y, w = 30) { const c = TYPE_COL[t]; x.fillStyle = shade(c, -0.25); x.fillRect(X + 1, Y, w - 2, 12); x.fillRect(X, Y + 1, w, 10); x.fillStyle = c; x.fillRect(X + 1, Y + 1, w - 2, 10); Font.drawC(x, t, X + w / 2, Y - 1, '#ffffff', shade(c, -0.5)); }
-const STATUS_INFO = { psn: ['毒', '#a55ad0'], par: ['麻', '#d6a91e'], slp: ['眠', '#7f86a8'], brn: ['燒', '#f0603a'] };
+const STATUS_INFO = { wet: ['濕', '#3f86d8'], psn: ['毒', '#a55ad0'], par: ['麻', '#d6a91e'], slp: ['眠', '#7f86a8'], brn: ['燒', '#f0603a'] };
 function statusBadge(x, s, X, Y) { const [n, c] = STATUS_INFO[s]; x.fillStyle = c; x.fillRect(X + 1, Y, 14, 11); x.fillRect(X, Y + 1, 16, 9); Font.draw(x, n, X + 2, Y - 2, '#ffffff', shade(c, -0.5)); }
 function hpColor(r) { return r > 0.5 ? ['#62e08c', '#a8f5c4'] : r > 0.2 ? ['#ffcf5a', '#ffe7a8'] : ['#ff5d6c', '#ffb0b8']; }
 // slim bar: dark track, colored fill with a light top line
@@ -1595,8 +1595,8 @@ const MOVES = {
   glare: { n: '瞪眼', t: '一般', cat: '變', acc: 100, pp: 30, stat: { who: 'foe', def: -1 }, fx: 'glare', d: '用銳利的眼神瞪視對手，降低對手的物防。' },
   flameSlash: { n: '火焰斬', t: '火', cat: '物', pow: 45, acc: 100, pp: 25, eff: { st: 'brn', p: 10 }, fx: 'fireSlash', d: '以燃燒的劍刃砍擊。有時會讓對手灼傷。' },
   focus: { n: '集氣', t: '一般', cat: '變', pp: 20, stat: { who: 'self', atk: 1, spa: 1 }, fx: 'buff', d: '集中精神，提高自己的物攻和魔攻。' },
-  aquaBlade: { n: '水流刃', t: '水', cat: '特', pow: 50, acc: 100, pp: 25, fx: 'water', d: '揮出激流般的水刃。' },
-  thunder: { n: '落雷', t: '雷', cat: '特', pow: 55, acc: 95, pp: 20, eff: { st: 'par', p: 10 }, fx: 'thunder', d: '召喚雷電打向對手。有時會讓對手麻痺。' },
+  aquaBlade: { n: '水流刃', t: '水', cat: '特', pow: 50, acc: 100, pp: 25, fx: 'water', d: '揮出激流般的水刃。會讓對手潮濕，再用雷系攻擊就能引發感電。' },
+  thunder: { n: '落雷', t: '雷', cat: '特', pow: 55, acc: 95, pp: 20, eff: { st: 'par', p: 10 }, fx: 'thunder', d: '召喚雷電打向對手。對潮濕的對手會感電：傷害1.5倍並麻痺。' },
   gale: { n: '疾風刺', t: '一般', cat: '物', pow: 40, acc: 100, pp: 30, prio: 1, fx: 'quick', d: '以疾風般的速度突刺。必定能先出手。' },
   leafBlade: { n: '翠葉斬', t: '草', cat: '物', pow: 65, acc: 95, pp: 20, crit: 1, fx: 'leaf', d: '以葉片之力斬擊。容易擊中要害。' },
   heal: { n: '治癒光', t: '一般', cat: '變', pp: 10, heal: 0.5, fx: 'heal', d: '溫暖的光芒，恢復自己最大HP的一半。' },
@@ -1666,6 +1666,7 @@ const ITEMS = {
   woodSword: { n: '木劍', price: 0, sell: 50, equip: 'weapon', bonus: { atk: 1 }, d: '練習用的木劍。物攻+1' },
   clothes: { n: '旅行布衣', price: 0, sell: 50, equip: 'armor', bonus: { def: 1 }, d: '輕便的旅行服裝。物防+1' },
   leather: { n: '皮甲', price: 900, equip: 'armor', bonus: { def: 3, spd: 2 }, d: '結實的皮甲。物防+3 魔防+2' },
+  moonCharm: { n: '月光護符', price: 0, sell: 0, equip: 'acc', bonus: { spa: 3, spe: 3 }, d: '從井底撈起的古老護符，散發著淡淡月光。魔攻+3 速度+3' },
   charm: { n: '魔法護符', price: 1000, equip: 'acc', bonus: { spa: 4 }, d: '注入魔力的護符。魔攻+4' },
   boots: { n: '疾風靴', price: 800, equip: 'acc', bonus: { spe: 4 }, d: '穿上後腳步變得輕快。速度+4' },
   uniform: { n: '學生制服', price: 0, equip: 'armor', bonus: { def: 1 }, d: '原本世界學校的制服。在這裡好像很少見。物防+1' },
@@ -2281,17 +2282,45 @@ function* shopSell() {
 }
 const sellPrice = k => ITEMS[k].sell ?? Math.floor(ITEMS[k].price / 2);
 
+/* ---------- Bestiary ---------- */
+function* dexScreen() {
+  const list = Object.keys(SPECIES), VIS = 7; let idx = 0;
+  const scr = { draw(x) {
+    const dex = Game.st.dex || {}, seenN = list.filter(k => dex[k] && dex[k].seen).length;
+    screenBG(x); headerBar(x, '魔物圖鑑'); Font.drawR(x, '收集率 ' + Math.round(seenN / list.length * 100) + '%', W - 6, 2, UIC.accent, UIC.textSh);
+    drawWin(x, 4, 24, 168, VIS * 18 + 8, 'menu'); const top = Math.max(0, Math.min(idx - 3, list.length - VIS));
+    list.slice(top, top + VIS).forEach((k, i) => { const Y = 28 + i * 18, e = dex[k], seen = e && e.seen; if (top + i === idx) selBar(x, 6, Y - 1, 164, 17);
+      const m = monsterMini(k, 16); x.drawImage(seen ? m.c : tinted(m.c, '#2a3150'), 10, Y);
+      Font.draw(x, 'No.' + String(list.indexOf(k) + 1).padStart(2, '0'), 30, Y, UIC.muted, UIC.textSh); Font.draw(x, seen ? SPECIES[k].n : '？？？', 70, Y, seen ? UIC.text : UIC.dis, UIC.textSh);
+      if (seen) Font.drawR(x, '擊敗 ' + (e.won || 0), 164, Y, e.won ? UIC.text : UIC.muted, UIC.textSh); });
+    if (top > 0) x.drawImage(UPARROW, 86, 26); if (top + VIS < list.length) x.drawImage(DOWNARROW, 86, 24 + VIS * 18 + 3);
+    drawWin(x, 4, 164, 168, 88, 'menu'); const k = list[idx], e = dex[k];
+    if (e && e.seen) { const im = battleSprite(k); x.drawImage(im, 0, 0, im.width, im.height, 8, 172, 72, 72); const sp = SPECIES[k];
+      typeBadge(x, sp.t, 86, 170, 28); Font.draw(x, sp.elite ? '精英' : sp.boss ? '頭目' : '野生', 120, 168, sp.boss ? UIC.bad : sp.elite ? UIC.warm : UIC.muted, UIC.textSh);
+      Font.wrap(sp.dex || '', 80).slice(0, 4).forEach((l, i) => Font.draw(x, l, 86, 186 + i * 15, UIC.text, UIC.textSh)); }
+    else Font.draw(x, '還沒有遇見過這種魔物。', 14, 170, UIC.muted, UIC.textSh);
+  } };
+  UI.push(scr);
+  while (true) {
+    if (Input.repeat('up')) { idx = (idx + list.length - 1) % list.length; Sound.sfx('cursor'); } if (Input.repeat('down')) { idx = (idx + 1) % list.length; Sound.sfx('cursor'); }
+    if (Input.pressed('b') || Input.pressed('a')) { Input.consume('a', 'b'); Sound.sfx('cancel'); break; }
+    yield;
+  }
+  UI.remove(scr);
+}
+
 /* ---------- Start menu ---------- */
 function* startMenu() {
   Sound.sfx('menu'); let idx = Game.menuIdx || 0;
   while (true) {
-    const r = yield* choose(['狀態', '背包', '裝備', '存檔', '設定', '關閉'], { x: W - 70, y: 4, w: 66, index: idx });
-    if (r < 0 || r === 5) break; idx = r; Game.menuIdx = r;
+    const r = yield* choose(['狀態', '背包', '裝備', '圖鑑', '存檔', '設定', '關閉'], { x: W - 70, y: 4, w: 66, index: idx });
+    if (r < 0 || r === 6) break; idx = r; Game.menuIdx = r;
     if (r === 0) yield* summaryScreen();
     if (r === 1) yield* bagScreen('field');
     if (r === 2) yield* equipScreen();
-    if (r === 3) { const ok = yield* yesNo('要記錄目前的冒險進度嗎？'); if (ok) { const good = saveGame(); if (good) { Sound.sfx('save'); yield* say(Game.st.name + '把冒險記錄了下來！'); } else yield* say('無法存檔……這個瀏覽器可能不允許儲存資料。'); } break; }
-    if (r === 4) yield* optionsScreen();
+    if (r === 3) yield* dexScreen();
+    if (r === 4) { const ok = yield* yesNo('要記錄目前的冒險進度嗎？'); if (ok) { const good = saveGame(); if (good) { Sound.sfx('save'); yield* say(Game.st.name + '把冒險記錄了下來！'); } else yield* say('無法存檔……這個瀏覽器可能不允許儲存資料。'); } break; }
+    if (r === 5) yield* optionsScreen();
   }
 }
 
@@ -2470,7 +2499,8 @@ class Overworld {
     const sign = (this.map.d.signs || {})[x + ',' + y];
     if (c === 'S' && sign) { this.run(say(sign, { style: 'sign' })); return true; }
     if (c === 'Y') { this.run(Events.spring(this)); return true; }
-    const flavor = { k: '書架上擺滿了關於魔物與冒險的書。', w: '窗外是萌芽鎮悠閒的風景。', c: '時鐘滴答滴答地走著。', h: '架子上整齊地擺滿了商品。', K: '書架上有一本《魔物屬性入門》。\n「火剋草、草剋水、水剋火。岩石怕水也怕草。」', V: '玻璃櫃裡擺著閃閃發亮的道具。', Q: '桌上放著熱騰騰的早餐。', o: '一塊大石頭。', b: '修剪整齊的灌木叢。' };
+    if (c === 'U') { this.run(Events.well(this)); return true; }
+    const flavor = { k: '書架上擺滿了關於魔物與冒險的書。', w: '窗外是萌芽鎮悠閒的風景。', c: '燭火靜靜地搖曳著。', h: '架子上整齊地擺滿了商品。', K: '書架上有一本《魔物屬性入門》。\n「火剋草、草剋水、水剋火。岩石怕水也怕草。」', V: '木箱裡裝滿了蘋果和藥瓶。', Q: '桌上放著熱騰騰的早餐。', o: '一塊大石頭。', b: '修剪整齊的灌木叢。' };
     if (c === 'B' && this.map.id === 'home') { this.run(Events.bed(this)); return true; }
     if (flavor[c]) { this.run(say(flavor[c])); return true; }
     if (c === 'W' && this.map.outdoor !== undefined) { this.run(say('水面倒映著藍天。')); return true; }
@@ -2677,7 +2707,7 @@ function makeFoe(sp, lv, kind) {
   const s = {}; STAT_KEYS.forEach((k, i) => s[k] = statCalc(d.base[i], lv, iv, k === 'hp'));
   const hpMul = kind === 'boss' ? BOSS_HP : kind === 'elite' ? ELITE_HP : 1; s.hp = Math.floor(s.hp * hpMul);
   const known = d.learn.filter(([l]) => l <= lv).map(([, m]) => m); const moves = [...new Set(known)].slice(-4).map(id => ({ id }));
-  return { sp, n: d.n, t: d.t, lv, stats: s, hp: s.hp, maxhp: s.hp, status: null, moves, stages: { atk: 0, def: 0, spa: 0, spd: 0, spe: 0 }, kind, boss: kind === 'boss', elite: kind === 'elite', sleepT: 0 };
+  return { sp, n: d.n, t: d.t, lv, stats: s, hp: s.hp, maxhp: s.hp, status: null, moves, stages: { atk: 0, def: 0, spa: 0, spd: 0, spe: 0 }, wet: 0, kind, boss: kind === 'boss', elite: kind === 'elite', sleepT: 0 };
 }
 function buildBattleBG(kind) {
   const c = mkCanvas(W, BH), x = c.getContext('2d'), r = srand(kind === 'ruins' ? 9 : 5);
@@ -2727,7 +2757,8 @@ class Battle {
     this.cfg = cfg; this.kind = cfg.kind; this.result = null;
     const st = Game.st; const s = heroStats();
     this.F = makeFoe(cfg.sp, cfg.lv, cfg.kind);
-    const H = this.H = { hero: true, n: st.name, lv: st.lv, t: null, stats: s, maxhp: s.hp, moves: st.moves, stages: { atk: 0, def: 0, spa: 0, spd: 0, spe: 0 }, sleepT: st.sleepT ?? rnd(1, 3) };
+    const H = this.H = { hero: true, n: st.name, lv: st.lv, t: null, stats: s, maxhp: s.hp, moves: st.moves, stages: { atk: 0, def: 0, spa: 0, spd: 0, spe: 0 }, wet: 0, sleepT: st.sleepT ?? rnd(1, 3) };
+    const dx = st.dex || (st.dex = {}); (dx[cfg.sp] || (dx[cfg.sp] = { won: 0 })).seen = 1;
     Object.defineProperty(H, 'hp', { get: () => st.hp, set: v => st.hp = v }); Object.defineProperty(H, 'status', { get: () => st.status, set: v => st.status = v });
     this.bg = buildBattleBG(cfg.bg);
     this.imgF = battleSprite(cfg.sp); this.foeTX = FOE_X; this.shadowF = buildShadow(Math.round(this.imgF.bb.w * 0.38), 4); this.imgH = heroBattleImg(0, st.equip.weapon); this.imgH2 = heroBattleImg(1, st.equip.weapon);
@@ -2781,7 +2812,7 @@ class Battle {
     const X = 8, w = W - 16; drawPanel(x, X, Y, w, 26, F.boss ? UIC.bad : F.elite ? UIC.warm : UIC.accent);
     let cx = Font.draw(x, F.n, X + 6, Y + 1, UIC.text, UIC.textSh);
     cx = Font.draw(x, 'Lv' + F.lv, cx + 4, Y + 1, UIC.muted, UIC.textSh);
-    if (F.status) statusBadge(x, F.status, cx + 4, Y + 3);
+    if (F.status) statusBadge(x, F.status, cx + 4, Y + 3); if (F.wet) statusBadge(x, 'wet', cx + (F.status ? 22 : 4), Y + 3);
     if (F.boss || F.elite) Font.drawR(x, F.boss ? '頭目' : '精英', X + w - 6, Y + 1, F.boss ? UIC.bad : UIC.warm, UIC.textSh);
     drawHPBar(x, X + 6, Y + 18, w - 12, this.disp.F / F.maxhp, 3);
   }
@@ -2790,7 +2821,7 @@ class Battle {
     const X = 8, w = W - 16, r = this.disp.H / this.H.maxhp; drawPanel(x, X, Y, w, 24, UIC.accent, 'rgba(11,13,24,0.92)');
     let cx = Font.draw(x, st.name, X + 6, Y + 1, UIC.text, UIC.textSh);
     cx = Font.draw(x, 'Lv' + st.lv, cx + 4, Y + 1, UIC.muted, UIC.textSh);
-    if (st.status) statusBadge(x, st.status, cx + 4, Y + 3);
+    if (st.status) statusBadge(x, st.status, cx + 4, Y + 3); if (this.H.wet) statusBadge(x, 'wet', cx + (st.status ? 22 : 4), Y + 3);
     const hs = Math.ceil(this.disp.H) + '/' + this.H.maxhp; Font.drawR(x, hs, X + w - 6, Y + 1, r <= 0.2 ? UIC.bad : UIC.text, UIC.textSh); Font.drawR(x, 'HP', X + w - 9 - Font.width(hs), Y + 1, UIC.muted, UIC.textSh);
     drawHPBar(x, X + 6, Y + 16, w - 12, r, 3);
     const lo = expForLevel(st.lv), hi = expForLevel(st.lv + 1); drawExpBar(x, X + 6, Y + 21, w - 12, (this.disp.exp - lo) / (hi - lo), 1);
@@ -2930,9 +2961,9 @@ class Battle {
     const selfTarget = !mv.pow && mv.stat && mv.stat.who === 'self' || mv.heal;
     if (!selfTarget && mv.acc && !chance(hitChance(u, t, mv))) { yield* wait(10); UI.remove(utb); yield* this.msg(mv.pow ? u.n + '的攻擊沒有打中！' : '但是失敗了！'); return; }
     if (mv.pow) {
-      const r = this.calcDamage(u, t, mv);
+      const r = this.calcDamage(u, t, mv); const shock = mv.t === '雷' && t.wet > 0;
       yield* this.playFx(mv.fx, u, t); UI.remove(utb);
-      let dmg = r.dmg; if (t.defending) dmg = Math.max(1, Math.floor(dmg / 2));
+      let dmg = r.dmg; if (shock) dmg = Math.floor(dmg * 1.5); if (t.defending) dmg = Math.max(1, Math.floor(dmg / 2));
       dmg = Math.min(dmg, t.hp); t.hp -= dmg;
       Sound.sfx(r.mult > 1 ? 'hitSuper' : r.mult < 1 ? 'hitWeak' : 'hit'); if (r.crit) Sound.sfx('crit');
       yield* this.impact(t, r.mult > 1 || r.crit ? 2 : r.mult < 1 ? 0 : 1);
@@ -2940,6 +2971,9 @@ class Battle {
       if (r.crit) yield* this.msg('擊中要害！');
       if (r.mult > 1) yield* this.msg('效果絕佳！'); else if (r.mult < 1) yield* this.msg('效果不太好……');
       if (t.defending) yield* this.msg(t.n + '的防禦擋下了一半的傷害！');
+      if (shock) { t.wet = 0; Sound.sfx('thunder'); yield* this.msg('潮濕的身體導電了！' + t.n + '感電了！'); if (t.hp > 0) yield* this.inflict(t, 'par', true); }
+      else if (mv.t === '水' && t.hp > 0) { const was = t.wet > 0; t.wet = 3; if (!was) yield* this.msg(t.n + '全身濕透了！'); }
+      else if (mv.t === '火' && t.wet > 0) { t.wet = 0; yield* this.msg('熱氣蒸乾了' + t.n + '身上的水。'); }
       if (mv.drain && dmg > 0 && u.hp < u.maxhp) { u.hp = Math.min(u.maxhp, u.hp + Math.max(1, Math.floor(dmg * mv.drain))); yield* FX.drainBack.call(this, this.center(t), this.center(u)); yield* this.animHP(u); yield* this.msg('從' + t.n + '身上吸取了養分！'); }
       if (mv.recoil) { u.hp = Math.max(0, u.hp - Math.max(1, Math.floor(dmg * mv.recoil))); yield* this.animHP(u); yield* this.msg(u.n + '受到了反作用力的傷害！'); }
       if (t.hp > 0 && mv.eff && chance(mv.eff.p / 100)) {
@@ -2979,6 +3013,7 @@ class Battle {
     yield* this.msg(b.n + { psn: '中毒了！', par: '麻痺了！可能會無法行動！', slp: '睡著了！', brn: '灼傷了！' }[s]);
   }
   *endTurn() {
+    for (const b of [this.H, this.F]) if (b.wet > 0) b.wet--;
     for (const b of [this.H, this.F]) {
       if (b.hp <= 0 || !(b.status === 'psn' || b.status === 'brn')) continue;
       const d = Math.max(1, Math.floor(b.maxhp / (b.boss ? 16 : 8)));
@@ -3023,7 +3058,7 @@ class Battle {
     yield* this.msg(Game.st.name + '倒下了……', { wait: true });
   }
   *victory() {
-    const st = Game.st, F = this.F, sp = SPECIES[F.sp]; Game.st.wins = (st.wins || 0) + 1;
+    const st = Game.st, F = this.F, sp = SPECIES[F.sp]; Game.st.wins = (st.wins || 0) + 1; const de = (st.dex || (st.dex = {}))[F.sp] || (st.dex[F.sp] = { seen: 1, won: 0 }); de.won++;
     Sound.play('victory');
     const exp = Math.floor(sp.exp * F.lv / 5 * (F.elite || F.boss ? 1.5 : 1));
     yield* this.gainExp(exp);
@@ -3219,7 +3254,16 @@ const Events = {
     })();
   },
   *kid() { yield* say('你的衣服好奇怪喔！那是異世界的盔甲嗎？'); },
-  *grandpa() { yield* sayAll(['年輕人，按住B鍵就可以跑步喔。', '你說你們那邊有不用馬就能跑的鐵箱子？……真是難以想像啊。']); },
+  *well() {
+    const st = Game.st;
+    if (st.flags.wellCharm) { yield* say('一口很深的井。井底靜悄悄的。'); return; }
+    if (!st.flags.golem) { yield* say('一口很深的井。往下看，只有一片漆黑。'); return; }
+    yield* say('……井底好像有什麼東西，正發出淡淡的月光。');
+    if (!(yield* yesNo('要把水桶放下去撈撈看嗎？'))) return;
+    st.flags.wellCharm = 1; st.bag.moonCharm = 1; yield* itemGet(st.name + '撈起了「月光護符」！');
+    yield* say('古老的護符……說不定和異界之門有關。可以在背包裡裝備。');
+  },
+  *grandpa() { yield* sayAll(['年輕人，按住B鍵就可以跑步喔。', '你說你們那邊有不用馬就能跑的鐵箱子？……真是難以想像啊。', Game.st.flags.golem ? '聽說魔像倒下的那晚，鎮上那口老井發出了光。' : '鎮上那口老井，據說跟遺跡是連在一起的。']); },
   *florist() { yield* sayAll(['魔物都有自己的屬性喔。', '火怕水、水怕草、草怕火。雷電對水和飛行的魔物特別有效。', '岩石屬性的魔物，最討厭水和草了！']); },
   *healer() {
     const st = Game.st; const ok = yield* yesNo('歡迎來到旅店！要讓我為你治療嗎？');
@@ -3517,7 +3561,7 @@ function boot(data) {
   requestAnimationFrame(loop);
   try { if (window.claude && window.claude.hot && window.claude.hot.snapshot) window.claude.hot.snapshot(() => ({ st: (Game.scene instanceof Overworld && !Game.scene.script) ? Game.st : null })); } catch (e) { }
 }
-window.__game = { setScale: S => { Game.fixedScale = 1; setScale(S); render(); }, Game, Input, Events, MAPS, SPECIES, Battle, Overworld, heroStats, newGameState, startOverworld, UI, say, yesNo, startMenu, summaryScreen, bagScreen, equipScreen, optionsScreen, shopFlow, pickMoveToForget, blackText, step(n = 1) { for (let i = 0; i < n; i++) tick(); render(); }, press(k, hold = 2, after = 6) { Input.set(k, true); for (let i = 0; i < hold; i++) tick(); Input.set(k, false); for (let i = 0; i < after; i++) tick(); render(); } };
+window.__game = { setScale: S => { Game.fixedScale = 1; setScale(S); render(); }, Game, Input, Events, MAPS, SPECIES, Battle, Overworld, heroStats, newGameState, startOverworld, UI, say, yesNo, startMenu, summaryScreen, bagScreen, equipScreen, optionsScreen, shopFlow, pickMoveToForget, blackText, dexScreen, Events, step(n = 1) { for (let i = 0; i < n; i++) tick(); render(); }, press(k, hold = 2, after = 6) { Input.set(k, true); for (let i = 0; i < hold; i++) tick(); Input.set(k, false); for (let i = 0; i < after; i++) tick(); render(); } };
 try { if (window.claude && window.claude.hot && window.claude.hot.ready) window.claude.hot.ready(boot); else boot((window.claude && window.claude.hot && window.claude.hot.data) || {}); } catch (e) { boot({}); }
 
 </script>
