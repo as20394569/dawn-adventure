@@ -1,7 +1,7 @@
 /* ===================== BATTLE ===================== */
 let HERO_POWER = 1.45, BOSS_HP = 2.1, ELITE_HP = 1.1;
 const BTN_MENU = { x: 4, y: TB_Y + 1, w: W - 8, h: TB_H - 2, cols: 2, colW: 82, rowH: 20, ox: 3, oy: 17, buttons: true, style: 'cmd' };
-const BH = TB_Y, FOE_X = W / 2 - 32, HERO_X = 36, HERO_Y = 108, HBAR_Y = 170;
+const BH = TB_Y, FOE_X = W / 2 - 32, HERO_X = W / 2 - 24, HERO_Y = 112, HBAR_Y = 170;
 function critRate(u, mv) { const base = u.hero ? (u.stats.crit || 5) / 100 : 1 / 16; return mv.crit ? base * 2 : base; }
 function hitChance(u, t, mv) { let a = mv.acc; if (!a) return 1; if (u.hero) a += u.stats.hit || 0; if (t.hero) a -= t.stats.eva || 0; return clamp(a, 5, 100) / 100; }
 const stageMul = s => s >= 0 ? (2 + s) / 2 : 2 / (2 - s);
@@ -9,7 +9,7 @@ const STATUS_NAME = { psn: '中毒', par: '麻痺', slp: '睡眠', brn: '灼傷'
 const IMMUNE = { psn: '毒', brn: '火', par: '雷' };
 const battleImgCache = {};
 // battle sprites: rendered at a low native size, then scaled 3x (same chunky pixel look as the hero)
-const FOE_NATIVE = { golem: 28 }, FOE_SCALE = 3, FOE_FOOT = 110;
+const FOE_NATIVE = { golem: 28 }, FOE_SCALE = 3, FOE_FOOT = 106;
 function battleSprite(key) {
   if (battleImgCache[key]) return battleImgCache[key];
   const n = FOE_NATIVE[key] || 24, S = FOE_SCALE, sm = buildShaded(ART[key], n, n / 64);
@@ -27,24 +27,41 @@ function makeFoe(sp, lv, kind) {
   return { sp, n: d.n, t: d.t, lv, stats: s, hp: s.hp, maxhp: s.hp, status: null, moves, stages: { atk: 0, def: 0, spa: 0, spd: 0, spe: 0 }, kind, boss: kind === 'boss', elite: kind === 'elite', sleepT: 0 };
 }
 function buildBattleBG(kind) {
-  const c = mkCanvas(W, BH), x = c.getContext('2d');
-  if (kind === 'ruins') {
-    const bands = ['#3e3252', '#463a5c', '#4e4266', '#564a70', '#5e527a', '#665a84'];
-    bands.forEach((col, i) => { x.fillStyle = col; x.fillRect(0, i * 12, W, 12); });
-    for (let i = 4; i < W; i += 44) { x.fillStyle = '#342a44'; x.fillRect(i, 6, 18, 70); x.fillStyle = '#433756'; x.fillRect(i + 3, 6, 5, 70); x.fillStyle = '#2a2238'; x.fillRect(i - 2, 4, 22, 5); }
-    x.fillStyle = '#8a7e6a'; x.fillRect(0, 72, W, BH - 72); x.fillStyle = '#7c7060';
-    for (let y = 76; y < BH; y += 8) for (let i = ((y / 8) % 2) * 12; i < W; i += 24) x.fillRect(i, y, 22, 1);
-    x.fillStyle = '#9a8e78'; for (let y = 80; y < BH; y += 16) x.fillRect(0, y, W, 1);
-    x.fillStyle = '#6aa048'; for (const [a1, b1] of [[12, 150], [140, 120], [70, 176], [150, 180]]) { x.fillRect(a1, b1, 6, 2); x.fillRect(a1 + 2, b1 - 1, 2, 1); }
-  } else {
-    const sky = ['#78c0f0', '#88c8f0', '#98d0f0', '#a8d8f0', '#b8e0f0', '#c8e8f0'];
-    sky.forEach((col, i) => { x.fillStyle = col; x.fillRect(0, i * 9, W, 9); });
-    x.fillStyle = '#eef8fc'; for (const [a1, b1, w] of [[12, 12, 30], [100, 22, 40], [150, 8, 22]]) { x.fillRect(a1, b1, w, 4); x.fillRect(a1 + 4, b1 - 2, w - 8, 2); }
-    x.fillStyle = '#5aa868'; for (let i = 0; i < W; i += 12) { const h = 6 + ((i * 7) % 5); x.fillRect(i, 56 - h, 12, h + 4); }
-    x.fillStyle = '#4a9a58'; for (let i = 6; i < W; i += 12) { const h = 4 + ((i * 3) % 4); x.fillRect(i, 58 - h, 10, h + 2); }
-    const field = ['#9ad880', '#94d47a', '#8ecc74', '#88c870', '#82c26a', '#7cbc64', '#76b660', '#70b05a', '#6aaa56', '#66a452', '#62a050', '#5e9c4e'];
-    field.forEach((col, i) => { x.fillStyle = col; x.fillRect(0, 60 + i * 12, W, 12); });
-    x.fillStyle = '#a8e090'; for (let y = 64; y < BH; y += 6) for (let i = (y * 13) % 29; i < W; i += 29) x.fillRect(i, y, 6, 1);
+  const c = mkCanvas(W, BH), x = c.getContext('2d'), r = srand(kind === 'ruins' ? 9 : 5);
+  const poly = (col, pts) => pxPoly(x, pts, col);
+  if (kind === 'ruins') { // torch-lit stone hall
+    x.fillStyle = '#2a2434'; x.fillRect(0, 0, W, BH);
+    for (let y = 0, row = 0; y < 96; y += 8, row++) for (let i = (row % 2) * 8 - 8; i < W; i += 16) { x.fillStyle = r() < 0.5 ? '#3a3246' : '#40384c'; x.fillRect(i + 1, y + 1, 14, 6); x.fillStyle = '#4a4258'; x.fillRect(i + 1, y + 1, 14, 1); }
+    x.fillStyle = '#120e18'; x.fillRect(64, 36, 48, 60); pxEllipse(x, 88, 38, 24, 16, '#120e18'); // archway
+    x.fillStyle = '#5a5068'; for (let a = 0; a < Math.PI; a += 0.12) x.fillRect(Math.round(88 + Math.cos(Math.PI + a) * 26), Math.round(38 - Math.sin(a) * 18), 3, 3);
+    for (const X of [10, 142]) { x.fillStyle = '#4c4458'; x.fillRect(X, 6, 24, 92); x.fillStyle = '#5e5670'; x.fillRect(X + 2, 6, 5, 92); x.fillStyle = '#3a3246'; x.fillRect(X + 19, 6, 5, 92); x.fillStyle = '#6a6280'; x.fillRect(X - 2, 4, 28, 5); x.fillRect(X - 2, 94, 28, 5);
+      x.fillStyle = '#7a2a30'; x.fillRect(X + 6, 16, 12, 30); x.fillStyle = '#9a3a40'; x.fillRect(X + 6, 16, 12, 2); poly('#7a2a30', [[X + 6, 46], [X + 12, 52], [X + 18, 46]]); x.fillStyle = '#d8b050'; x.fillRect(X + 10, 24, 4, 8); x.fillRect(X + 8, 26, 8, 2); }
+    for (const X of [44, 132]) { x.fillStyle = '#2e2e36'; x.fillRect(X - 1, 50, 3, 8); x.fillRect(X - 3, 48, 7, 2); const g = x.createRadialGradient(X, 42, 0, X, 42, 20); g.addColorStop(0, 'rgba(255,170,70,0.55)'); g.addColorStop(1, 'rgba(255,170,70,0)'); x.fillStyle = g; x.fillRect(X - 20, 22, 40, 40); x.fillStyle = '#ff9030'; x.fillRect(X - 2, 42, 5, 6); x.fillStyle = '#ffe070'; x.fillRect(X - 1, 43, 3, 4); x.fillStyle = '#fff4c0'; x.fillRect(X, 44, 1, 2); }
+    x.fillStyle = '#4a4254'; x.fillRect(0, 96, W, BH - 96); // flagstone floor in perspective
+    for (let k = 0, y = 96; y < BH; k++, y += 6 + k * 2) { x.fillStyle = '#3a3444'; x.fillRect(0, y, W, 1); x.fillStyle = '#5a5266'; x.fillRect(0, y + 1, W, 1); }
+    x.fillStyle = '#3a3444'; for (let i = -6; i <= 6; i++) pxLine(x, 88 + i * 10, 96, 88 + i * 34, BH, '#3a3444');
+    x.fillStyle = '#6aa048'; for (const [a1, b1] of [[18, 150], [150, 128], [70, 184]]) { x.fillRect(a1, b1, 6, 2); x.fillRect(a1 + 2, b1 - 1, 2, 1); }
+  } else { // meadow with a distant castle
+    ['#86bde8', '#94c6ec', '#a3cfef', '#b3d8f1', '#c3e0f3', '#d3e8f5'].forEach((col, i) => { x.fillStyle = col; x.fillRect(0, i * 11, W, 11); });
+    x.fillStyle = '#f2f8fc'; for (const [a1, b1, w] of [[10, 12, 30], [98, 22, 40], [150, 8, 22]]) { x.fillRect(a1, b1, w, 4); x.fillRect(a1 + 4, b1 - 2, w - 8, 2); }
+    poly('#a9bdd2', [[0, 64], [0, 44], [22, 36], [40, 46], [62, 32], [84, 48], [110, 40], [130, 50], [176, 38], [176, 64]]);
+    poly('#8fa9a8', [[104, 66], [118, 56], [148, 52], [176, 56], [176, 66]]);
+    // castle on the hill
+    const CC = '#6f7f9a', CD = '#5a6884', CR = '#4a5270';
+    x.fillStyle = CC; x.fillRect(128, 44, 30, 18); x.fillRect(122, 36, 8, 26); x.fillRect(156, 38, 8, 24); x.fillRect(138, 30, 10, 16);
+    for (let i = 128; i < 158; i += 4) x.fillRect(i, 42, 2, 2);
+    poly(CR, [[121, 36], [126, 27], [131, 36]]); poly(CR, [[155, 38], [160, 29], [165, 38]]); poly(CR, [[137, 30], [143, 19], [149, 30]]);
+    x.fillStyle = '#c84a40'; x.fillRect(143, 15, 1, 5); x.fillRect(144, 15, 4, 2);
+    x.fillStyle = CD; x.fillRect(128, 54, 30, 8); x.fillStyle = '#343c56'; x.fillRect(140, 52, 6, 10); x.fillRect(125, 42, 2, 3); x.fillRect(159, 44, 2, 3); x.fillRect(142, 35, 2, 3);
+    // forest line
+    for (let i = -4; i < W; i += 7) { const h = 8 + Math.floor(r() * 7); pxEllipse(x, i + 4, 66 - h / 2, 5, h / 2 + 2, r() < 0.5 ? '#3f7d4d' : '#467f52'); }
+    x.fillStyle = '#3a7448'; x.fillRect(0, 64, W, 6);
+    ['#8ccc74', '#86c66e', '#80c06a', '#7aba66', '#74b462', '#6eae5e', '#68a85a', '#62a256', '#5e9c52', '#5a9850', '#56944e', '#52904c'].forEach((col, i) => { x.fillStyle = col; x.fillRect(0, 70 + i * 11, W, 11); });
+    // dirt road narrowing to the horizon
+    for (let y = 70; y < BH; y++) { const t = (y - 70) / (BH - 70), hw = 3 + t * 30, cx = 88 + Math.sin(t * 3) * 8 * (1 - t); x.fillStyle = y % 3 ? '#c8a870' : '#bf9e66'; x.fillRect(Math.round(cx - hw), y, Math.round(hw * 2), 1); x.fillStyle = '#a88a58'; x.fillRect(Math.round(cx - hw), y, 1, 1); x.fillRect(Math.round(cx + hw), y, 1, 1); }
+    x.fillStyle = '#a8e090'; for (let y = 74; y < BH; y += 6) for (let i = (y * 13) % 29; i < W; i += 29) if (Math.abs(i - 88) > 12 + (y - 70) * 0.3) x.fillRect(i, y, 5, 1);
+    // tumbled stone wall on the left
+    for (const [X, Y, w] of [[4, 88, 30], [10, 84, 18]]) { x.fillStyle = '#6c665b'; x.fillRect(X, Y, w, 6); for (let i = X; i < X + w; i += 5) { x.fillStyle = '#9a9384'; x.fillRect(i, Y, 4, 2); x.fillStyle = '#b4ad9c'; x.fillRect(i, Y, 4, 1); } }
   }
   const g = x.createLinearGradient(0, 120, 0, BH); g.addColorStop(0, 'rgba(8,10,20,0)'); g.addColorStop(1, 'rgba(8,10,20,0.55)'); x.fillStyle = g; x.fillRect(0, 120, W, BH - 120);
   const g2 = x.createLinearGradient(0, 0, 0, 34); g2.addColorStop(0, 'rgba(8,10,20,0.35)'); g2.addColorStop(1, 'rgba(8,10,20,0)'); x.fillStyle = g2; x.fillRect(0, 0, W, 34);

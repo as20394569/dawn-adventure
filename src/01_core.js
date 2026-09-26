@@ -54,23 +54,38 @@ const Font = (() => {
     }
     cache.set(key, c); return c;
   }
-  function width(str) { let w = 0; for (const ch of String(str)) w += glyph(ch.codePointAt(0)).adv; return w; }
-  function draw(ctx, str, x, y, col = '#404040', sh = '#d0d0c8') {
+  // pixel (bitmap) text — used only for the title logo
+  function widthPx(str) { let w = 0; for (const ch of String(str)) w += glyph(ch.codePointAt(0)).adv; return w; }
+  function drawPx(ctx, str, x, y, col = '#404040', sh = '#d0d0c8') {
     let cx = Math.round(x); y = Math.round(y);
     for (const ch of String(str)) { const cp = ch.codePointAt(0), g = glyph(cp); if (g.w) ctx.drawImage(gcanvas(cp, col, sh), cx + g.x0, y + g.y0); cx += g.adv; }
     return cx;
   }
-  function drawR(ctx, str, xr, y, col, sh) { return draw(ctx, str, xr - width(str), y, col, sh); }
-  function drawC(ctx, str, xc, y, col, sh) { return draw(ctx, str, xc - Math.floor(width(str) / 2), y, col, sh); }
+  // clear vector text for everything else (dialogue, menus, numbers)
+  const FAMILY = '"Noto Sans TC","PingFang TC","Hiragino Sans","Microsoft JhengHei","Heiti TC","Noto Sans CJK TC",sans-serif';
+  const SIZE = 12; const mctx = document.createElement('canvas').getContext('2d'); let wcache = new Map();
+  const fontStr = size => '500 ' + size + 'px ' + FAMILY;
+  if (document.fonts) { const clear = () => { wcache = new Map(); }; document.fonts.addEventListener && document.fonts.addEventListener('loadingdone', clear); document.fonts.ready && document.fonts.ready.then(clear); }
+  function width(str, size = SIZE) { str = String(str); const k = size + '|' + str; let w = wcache.get(k); if (w === undefined) { mctx.font = fontStr(size); w = mctx.measureText(str).width; wcache.set(k, w); } return w; }
+  function draw(ctx, str, x, y, col = '#404040', sh = null, size = SIZE) {
+    str = String(str); if (!str) return x;
+    const f = fontStr(size); if (ctx.font !== f) ctx.font = f; ctx.textBaseline = 'middle'; ctx.textAlign = 'left';
+    const yy = y + 8;
+    if (sh) { ctx.fillStyle = sh; ctx.fillText(str, x + 0.6, yy + 0.7); }
+    ctx.fillStyle = col; ctx.fillText(str, x, yy);
+    return x + width(str, size);
+  }
+  function drawR(ctx, str, xr, y, col, sh, size) { return draw(ctx, str, xr - width(str, size), y, col, sh, size); }
+  function drawC(ctx, str, xc, y, col, sh, size) { return draw(ctx, str, xc - width(str, size) / 2, y, col, sh, size); }
   // big text: render to temp then scale
   function drawBig(ctx, str, x, y, scale, col, outline, sh) {
-    const w = width(str) + 3, c = mkCanvas(w, 16), cx = c.getContext('2d');
-    draw(cx, str, 1, 1, col, null);
+    const w = widthPx(str) + 3, c = mkCanvas(w, 16), cx = c.getContext('2d');
+    drawPx(cx, str, 1, 1, col, null);
     const out = mkCanvas(w * scale + 4, 16 * scale + 4), o = out.getContext('2d');
     if (outline) {
-      const oc = mkCanvas(w, 16), ox = oc.getContext('2d'); draw(ox, str, 1, 1, outline, null);
+      const oc = mkCanvas(w, 16), ox = oc.getContext('2d'); drawPx(ox, str, 1, 1, outline, null);
       for (const [dx, dy] of [[-1, 0], [1, 0], [0, -1], [0, 1], [-1, -1], [1, 1], [1, -1], [-1, 1]]) o.drawImage(oc, 0, 0, w, 16, 2 + dx * 2, 2 + dy * 2, w * scale, 16 * scale);
-      if (sh) { const sc = mkCanvas(w, 16), sx = sc.getContext('2d'); draw(sx, str, 1, 1, sh, null); o.drawImage(sc, 0, 0, w, 16, 2, 2 + scale * 2, w * scale, 16 * scale); o.drawImage(oc, 0, 0, w, 16, 2, 2 + scale * 2 + 2, w * scale, 16 * scale); }
+      if (sh) { const sc = mkCanvas(w, 16), sx = sc.getContext('2d'); drawPx(sx, str, 1, 1, sh, null); o.drawImage(sc, 0, 0, w, 16, 2, 2 + scale * 2, w * scale, 16 * scale); o.drawImage(oc, 0, 0, w, 16, 2, 2 + scale * 2 + 2, w * scale, 16 * scale); }
     }
     o.drawImage(c, 0, 0, w, 16, 2, 2, w * scale, 16 * scale);
     ctx.drawImage(out, Math.round(x - 2), Math.round(y - 2));
@@ -82,9 +97,9 @@ const Font = (() => {
     for (const para of String(str).split('\n')) {
       let line = '', w = 0; const chars = [...para];
       for (let i = 0; i < chars.length; i++) {
-        const ch = chars[i], cw = glyph(ch.codePointAt(0)).adv;
+        const ch = chars[i], cw = width(ch);
         if (w + cw > maxW && line) {
-          if (NOSTART.includes(ch)) { const lc = [...line]; const last = lc.pop(); lines.push(lc.join('')); line = last; w = glyph(last.codePointAt(0)).adv; }
+          if (NOSTART.includes(ch)) { const lc = [...line]; const last = lc.pop(); lines.push(lc.join('')); line = last; w = width(last); }
           else { lines.push(line); line = ''; w = 0; if (ch === ' ') continue; }
         }
         line += ch; w += cw;
@@ -93,7 +108,7 @@ const Font = (() => {
     }
     return lines;
   }
-  return { width, draw, drawR, drawC, drawBig, wrap, glyph };
+  return { width, draw, drawR, drawC, drawBig, wrap, glyph, widthPx, drawPx };
 })();
 
 /* ---------------- Input ---------------- */

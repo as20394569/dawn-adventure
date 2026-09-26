@@ -1,10 +1,10 @@
 module.exports = async (g) => {
-  for (const id of ['route', 'town']) {
+  for (const id of (process.env.MAPS || 'route,town').split(',')) {
     const data = await g.ev((id) => {
       const G = __game; G.newGameState('x'); G.Game.st.map = id; G.Game.st.x = 10; G.Game.st.y = 5; const ow = G.startOverworld();
       const m = ow.map; const c = document.createElement('canvas'); c.width = m.w * 16; c.height = m.h * 16; const x = c.getContext('2d');
       const objs = [];
-      for (let ty = 0; ty < m.h; ty++) for (let tx = 0; tx < m.w; tx++) { const ch = ow.tileAt(tx, ty); ow.drawTile(x, ch, tx, ty, tx * 16, ty * 16, 0, 0); if (ch === 'T') objs.push([ty, () => x.drawImage(Tiles.tree, tx * 16, ty * 16 - 5)]); }
+      for (let ty = 0; ty < m.h; ty++) for (let tx = 0; tx < m.w; tx++) { const ch = ow.tileAt(tx, ty); ow.drawTile(x, ch, tx, ty, tx * 16, ty * 16, 0, 0); if (ch === 'T') objs.push([ty, () => x.drawImage(Tiles.tree, tx * 16, ty * 16 - 5)]); if (ch === 'U') objs.push([ty, () => x.drawImage(Tiles.well, tx * 16, ty * 16 - 3)]); }
       for (const { b, img } of m.bimgs) x.drawImage(img, b.x * 16, b.y * 16);
       objs.sort((a, b) => a[0] - b[0]).forEach(o => o[1]());
       for (const n of ow.npcs) x.drawImage(n.frames.down[0], n.x * 16, n.y * 16 - 6);

@@ -130,7 +130,7 @@ function startOverworld() { const st = Game.st; const ow = Game.ow = new Overwor
 
 /* ===================== SHARED ART: logo, title, modern street ===================== */
 function makeLogo(text, sc) {
-  const w = Font.width(text) + 2, base = mkCanvas(w, 14), bx = base.getContext('2d'); Font.draw(bx, text, 0, 0, '#ffffff', null);
+  const w = Font.widthPx(text) + 2, base = mkCanvas(w, 14), bx = base.getContext('2d'); Font.drawPx(bx, text, 0, 0, '#ffffff', null);
   const big = mkCanvas(w * sc, 14 * sc), gx = big.getContext('2d'); gx.imageSmoothingEnabled = false; gx.drawImage(base, 0, 0, w * sc, 14 * sc);
   const col = mkCanvas(big.width, big.height), cx = col.getContext('2d'); cx.drawImage(big, 0, 0); cx.globalCompositeOperation = 'source-in';
   const g = cx.createLinearGradient(0, 0, 0, big.height); g.addColorStop(0, '#fffbe8'); g.addColorStop(0.45, '#ffe38a'); g.addColorStop(0.75, '#ffb454'); g.addColorStop(1, '#f08a3c'); cx.fillStyle = g; cx.fillRect(0, 0, col.width, col.height);
@@ -191,6 +191,9 @@ function buildTitleBG() {
   // mountains
   const mtn = (col, pts) => { x.fillStyle = col; x.beginPath(); x.moveTo(0, H); pts.forEach(([a, b]) => x.lineTo(a, b)); x.lineTo(W, H); x.fill(); };
   mtn('#7a426a', [[0, 170], [24, 150], [50, 162], [80, 146], [110, 160], [140, 138], [176, 156]]);
+  { const C = '#5a3462'; x.fillStyle = C; x.fillRect(8, 142, 40, 24); x.fillRect(4, 132, 9, 34); x.fillRect(43, 134, 9, 32); x.fillRect(22, 124, 12, 22);
+    for (let i = 8; i < 48; i += 4) x.fillRect(i, 140, 2, 2); pxPoly(x, [[3, 132], [8.5, 121], [14, 132]], C); pxPoly(x, [[42, 134], [47.5, 123], [53, 134]], C); pxPoly(x, [[21, 124], [28, 110], [35, 124]], C);
+    x.fillStyle = '#ffd070'; for (const [a, b] of [[7, 138], [26, 130], [46, 140], [16, 150], [36, 152]]) x.fillRect(a, b, 2, 3); x.fillStyle = C; x.fillRect(28, 104, 1, 7); x.fillStyle = '#c84a50'; x.fillRect(29, 104, 4, 2); }
   mtn('#50305a', [[0, 186], [30, 170], [70, 182], [110, 168], [150, 180], [176, 172]]);
   const gs = tinted(buildShaded(ART.golem, 36, 36 / 64), '#2a1a36'); x.drawImage(gs, 132, 142); x.fillStyle = '#ffe040'; x.fillRect(144, 152, 2, 1); x.fillRect(149, 152, 2, 1);
   mtn('#2a1c3c', [[0, 204], [40, 194], [90, 202], [140, 192], [176, 198]]);
@@ -307,9 +310,12 @@ class EndingScene {
 }
 
 /* ===================== BOOT & LOOP ===================== */
-const cv = document.getElementById('screen'); cv.width = W; cv.height = H; const ctx = cv.getContext('2d'); ctx.imageSmoothingEnabled = false;
+const cv = document.getElementById('screen'); const ctx = cv.getContext('2d'); let SCALE = 0;
+// backing store = logical 176×256 × integer SCALE; pixel art is scaled with nearest-neighbour, text is drawn at full resolution
+function setScale(S) { S = clamp(S | 0, 1, 6); if (S === SCALE) return; SCALE = S; cv.width = W * S; cv.height = H * S; }
+setScale(3);
 function render() {
-  ctx.imageSmoothingEnabled = false; ctx.save();
+  ctx.setTransform(SCALE, 0, 0, SCALE, 0, 0); ctx.imageSmoothingEnabled = false; ctx.save();
   if (Game.shake > 0) { ctx.translate(rnd(-2, 2), rnd(-2, 2)); Game.shake--; }
   Game.scene.draw(ctx); UI.draw(ctx); drawTransition(ctx); ctx.restore();
   if (Game.flash > 0) { ctx.globalAlpha = clamp(Game.flash, 0, 1); ctx.fillStyle = Game.flashColor; ctx.fillRect(0, 0, W, H); ctx.globalAlpha = 1; if (!Game.flashTween) Game.flash = Math.max(0, Game.flash - 0.04); }
@@ -345,8 +351,10 @@ function fitScreen() {
   const wrap = document.getElementById('screenWrap'); if (!wrap) return; const r = wrap.getBoundingClientRect();
   const s = Math.min(r.width / W, r.height / H);
   cv.style.width = Math.floor(W * s) + 'px'; cv.style.height = Math.floor(H * s) + 'px';
+  if (!Game.fixedScale) setScale(Math.ceil(s * (window.devicePixelRatio || 1)));
 }
 function boot(data) {
+  try { document.fonts && document.fonts.load('500 12px "Noto Sans TC"'); } catch (e) { }
   loadSettings(); bindButtons(); fitScreen(); window.addEventListener('resize', fitScreen); if (window.visualViewport) window.visualViewport.addEventListener('resize', fitScreen);
   setTimeout(fitScreen, 100);
   if (data && data.st && data.st.map) { Game.st = data.st; startOverworld(); }
@@ -354,5 +362,5 @@ function boot(data) {
   requestAnimationFrame(loop);
   try { if (window.claude && window.claude.hot && window.claude.hot.snapshot) window.claude.hot.snapshot(() => ({ st: (Game.scene instanceof Overworld && !Game.scene.script) ? Game.st : null })); } catch (e) { }
 }
-window.__game = { Game, Input, Events, MAPS, SPECIES, Battle, Overworld, heroStats, newGameState, startOverworld, UI, say, yesNo, startMenu, summaryScreen, bagScreen, equipScreen, optionsScreen, shopFlow, pickMoveToForget, blackText, step(n = 1) { for (let i = 0; i < n; i++) tick(); render(); }, press(k, hold = 2, after = 6) { Input.set(k, true); for (let i = 0; i < hold; i++) tick(); Input.set(k, false); for (let i = 0; i < after; i++) tick(); render(); } };
+window.__game = { setScale: S => { Game.fixedScale = 1; setScale(S); render(); }, Game, Input, Events, MAPS, SPECIES, Battle, Overworld, heroStats, newGameState, startOverworld, UI, say, yesNo, startMenu, summaryScreen, bagScreen, equipScreen, optionsScreen, shopFlow, pickMoveToForget, blackText, step(n = 1) { for (let i = 0; i < n; i++) tick(); render(); }, press(k, hold = 2, after = 6) { Input.set(k, true); for (let i = 0; i < hold; i++) tick(); Input.set(k, false); for (let i = 0; i < after; i++) tick(); render(); } };
 try { if (window.claude && window.claude.hot && window.claude.hot.ready) window.claude.hot.ready(boot); else boot((window.claude && window.claude.hot && window.claude.hot.data) || {}); } catch (e) { boot({}); }

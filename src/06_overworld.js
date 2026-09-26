@@ -2,7 +2,7 @@
 const CAM_X = Math.floor(W / 2) - 8, CAM_Y = 100;
 const DIRS = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] };
 const OPP = { up: 'down', down: 'up', left: 'right', right: 'left' };
-const SOLID = new Set('TWobSFPRXYxwckhaBQKCpV'.split(''));
+const SOLID = new Set('TWobSFPRXYUxwckhaBQKCpV'.split(''));
 const hash2 = (x, y) => ((x * 73856093) ^ (y * 19349663)) >>> 0;
 
 class GameMap {
@@ -250,11 +250,12 @@ class Overworld {
       this.drawTile(x, c, tx, ty, sx, sy, f, f2);
       if (c === 'T') objs.push({ k: ty * 16 + 15, d: () => x.drawImage(Tiles.tree, sx, sy - 5) });
       if (c === 'P') objs.push({ k: ty * 16 + 15, d: () => x.drawImage(Tiles.pillar, sx, sy - 7) });
+      if (c === 'U') objs.push({ k: ty * 16 + 15, d: () => x.drawImage(Tiles.well, sx, sy - 3) });
     }
     // buildings
     for (const { b, img } of this.map.bimgs) {
       const sx = b.x * 16 - camX, sy = b.y * 16 - camY; x.drawImage(img, sx, sy);
-      if (this.doorAnim && this.doorAnim.x === b.x + b.door) { x.fillStyle = '#18101a'; x.fillRect(sx + b.door * 16 + 2, sy + b.h * 16 - 22, 12, 20); }
+      if (this.doorAnim && this.doorAnim.x === b.x + b.door) archDoorShape(x, sx + b.door * 16 + 2, sy + b.h * 16 - 22, '#18101a');
     }
     // gates
     const g = this.map.d.gate;
@@ -285,12 +286,13 @@ class Overworld {
       case 'f': x.drawImage(Tiles.flower(f2, 'r'), sx, sy); break;
       case 'y': x.drawImage(Tiles.flower(f2, 'y'), sx, sy); break;
       case '#': x.drawImage(Tiles.tall(this.anim['g' + tx + ',' + ty] ? 1 : 0), sx, sy); break;
-      case ':': { const isP = cc => cc === ':' || cc === '='; let m = 0; if (!isP(this.tileAt(tx, ty - 1))) m |= 1; if (!isP(this.tileAt(tx + 1, ty))) m |= 2; if (!isP(this.tileAt(tx, ty + 1))) m |= 4; if (!isP(this.tileAt(tx - 1, ty))) m |= 8; if (this.map.doors[tx + ',' + (ty - 1)]) m &= ~1; x.drawImage(Tiles.path(m), sx, sy); break; }
+      case ':': { const isP = cc => cc === ':' || cc === '='; let m = 0; if (!isP(this.tileAt(tx, ty - 1))) m |= 1; if (!isP(this.tileAt(tx + 1, ty))) m |= 2; if (!isP(this.tileAt(tx, ty + 1))) m |= 4; if (!isP(this.tileAt(tx - 1, ty))) m |= 8; if (this.map.doors[tx + ',' + (ty - 1)]) m &= ~1; x.drawImage(this.map.d.road === 'cobble' ? Tiles.cobble(m, h % 2) : Tiles.path(m), sx, sy); break; }
       case 'W': { const isW = cc => cc === 'W' || cc === '='; let m = 0; if (!isW(this.tileAt(tx, ty - 1))) m |= 1; if (!isW(this.tileAt(tx + 1, ty))) m |= 2; if (!isW(this.tileAt(tx, ty + 1))) m |= 4; if (!isW(this.tileAt(tx - 1, ty))) m |= 8; x.drawImage(Tiles.water(f, m), sx, sy); break; }
       case 'Y': { x.drawImage(Tiles.spring(f), sx, sy); x.fillStyle = '#c8bca4'; const n = this.tileAt(tx, ty - 1) !== 'Y', s = this.tileAt(tx, ty + 1) !== 'Y', w = this.tileAt(tx - 1, ty) !== 'Y', e = this.tileAt(tx + 1, ty) !== 'Y'; if (n) x.fillRect(sx, sy, 16, 3); if (s) x.fillRect(sx, sy + 13, 16, 3); if (w) x.fillRect(sx, sy, 3, 16); if (e) x.fillRect(sx + 13, sy, 3, 16); x.fillStyle = '#8a7e68'; if (n) x.fillRect(sx, sy + 2, 16, 1); if (w) x.fillRect(sx + 2, sy, 1, 16); if (s) x.fillRect(sx, sy + 15, 16, 1); if (e) x.fillRect(sx + 15, sy, 1, 16); break; }
       case '=': x.drawImage(Tiles.bridge, sx, sy); break;
       case 'L': x.drawImage(Tiles.ledge, sx, sy); break;
       case 'o': x.drawImage(Tiles.rock, sx, sy); break;
+      case 'U': base(); break;
       case 'b': x.drawImage(Tiles.bush, sx, sy); break;
       case 'S': x.drawImage(Tiles.sign, sx, sy); break;
       case 'F': { let m = 0; if (this.tileAt(tx + 1, ty) === 'F') m |= 2; if (this.tileAt(tx - 1, ty) === 'F') m |= 8; x.drawImage(Tiles.fence(m), sx, sy); break; }

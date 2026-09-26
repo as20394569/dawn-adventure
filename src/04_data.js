@@ -113,7 +113,7 @@ const EQUIP_SLOTS = { weapon: '武器', armor: '防具', acc: '飾品' };
            B bed  Q table  K shelf  C counter  p plant  r rug  D door mat  V display case */
 const MAPS = {
   town: {
-    name: '萌芽鎮', music: 'town', outdoor: 1, border: 'T',
+    name: '萌芽鎮', music: 'town', outdoor: 1, border: 'T', road: 'cobble',
     rows: [
       'TTTTTTTTTT::TTTTTTTTTT',
       'TTTTTTTT..::..TTTTTTTT',
@@ -133,7 +133,7 @@ const MAPS = {
       'TT.f......::.....y..TT',
       'TTWWWW.,..,,..f,....TT',
       'TTWWWW..y.....FFFFF.TT',
-      'TTWWW..S.......f.o..TT',
+      'TTWWW..S.......f.U..TT',
       'TTTTTTTTTTTTTTTTTTTTTT',
     ],
     buildings: [
