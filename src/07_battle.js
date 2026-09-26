@@ -223,7 +223,7 @@ class Battle {
     if (Game.autoPlay) { for (let i = 0; i < 4; i++) yield; return Game.autoPlay(this); }
     while (true) {
       this.idle = true;
-      const pr = { draw(x) { drawWin(x, 4, TB_Y + 1, 76, TB_H - 2, 'ow'); Font.draw(x, st.name, 12, TB_Y + 8, UIC.accent, UIC.textSh); Font.draw(x, '要做什麼？', 12, TB_Y + 26, UIC.text, UIC.textSh); } }; UI.push(pr);
+      const pr = { draw(x) { drawWin(x, 4, TB_Y + 1, 76, TB_H - 2, 'ow'); Font.draw(x, st.name, 12, TB_Y + 8, UIC.accent, UIC.textSh); Font.draw(x, '要做什麼？', 12, TB_Y + 24, UIC.text, UIC.textSh); Font.draw(x, '點選右邊的指令', 12, TB_Y + 42, UIC.muted, UIC.textSh, 9); } }; UI.push(pr);
       const r = yield* choose(['攻擊', '技能', '道具', '防禦', '逃跑'], { ...BTN_MENU, x: 82, w: W - 86, cols: 2, colW: 44, rowH: 18, ox: 2, oy: 3, cancel: false, index: this.cmdIdx }); UI.remove(pr);
       this.idle = false; this.cmdIdx = r;
       if (r === 0) return { type: 'move', id: 'attack' };

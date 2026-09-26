@@ -281,7 +281,7 @@ function* bagScreen(mode = 'field') { // returns item id used (battle) or null
   let tab = 0, idx = 0; const tabs = mode === 'battle' ? ['道具'] : ['道具', '裝備', '素材', '重要'];
   const listFor = t => tabs[t] === '裝備' ? gearSort() : bagList(it => tabs[t] === '道具' ? (!it.key && !it.mat && (mode !== 'battle' || (it.use !== 'boost' && it.use !== 'tp'))) : tabs[t] === '素材' ? !!it.mat : !!it.key);
   const VIS = 7;
-  const scr = { draw(x) {
+  const scr = { touchBack: true, draw(x) {
     screenBG(x); headerBar(x, '背包'); Font.drawR(x, Game.st.money + ' G', W - 6, 2, UIC.warm, UIC.textSh);
     const tw = Math.floor(171 / tabs.length); tabs.forEach((t, i) => { const X = 4 + i * tw; drawBtn(x, X, 23, tw - 3, 15, i === tab); Font.drawC(x, t, X + (tw - 3) / 2, 22, i === tab ? UIC.text : UIC.muted, UIC.textSh); });
     const list = listFor(tab), gear = tabs[tab] === '裝備'; drawWin(x, 4, 40, 168, VIS * 18 + 10, 'menu');
@@ -291,6 +291,7 @@ function* bagScreen(mode = 'field') { // returns item id used (battle) or null
       if (gear) { const e = Font.draw(x, GEAR[k.b].n, 14, Y, gCol(k), UIC.textSh); if (isEquipped(k)) Font.draw(x, 'E', e + 2, Y, UIC.accent, UIC.textSh); Font.drawR(x, EQUIP_SLOTS[GEAR[k.b].slot === 'acc' ? 'acc1' : GEAR[k.b].slot], 164, Y, UIC.muted, UIC.textSh, 11); return; }
       Font.draw(x, ITEMS[k].n, 14, Y, UIC.text, UIC.textSh); if (!ITEMS[k].key) Font.drawR(x, '×' + Game.st.bag[k], 164, Y, UIC.muted, UIC.textSh); });
     if (top > 0) x.drawImage(UPARROW, 85, 41); if (top + VIS < list.length) x.drawImage(DOWNARROW, 85, 40 + VIS * 18 + 4);
+    if (typeof touchRegion === 'function') { list.slice(top, top + VIS).forEach((k, i) => touchRegion(6, 43 + i * 18, 164, 17, () => { idx = top + i; tapKey('a'); })); tabs.forEach((t, i) => touchRegion(4 + i * tw, 23, tw - 3, 15, () => { tab = i; idx = 0; })); }
     drawWin(x, 4, 180, 168, 72, 'menu');
     if (list[idx]) { if (gear) drawGearDetail(x, list[idx], 182, 68); else { const k0 = list[idx], it = ITEMS[k0]; Font.draw(x, '【' + it.cat + '】', 10, 182, ITEM_CAT_COL[it.cat] || UIC.muted, UIC.textSh, 10); if (it.mat) Font.drawR(x, '採集熟練度 Lv' + gatherLv(), 166, 182, UIC.accent, UIC.textSh, 10); const src = it.mat ? matSourceText(k0) : ''; Font.wrap(it.d, 152).slice(0, src ? 2 : 3).forEach((l, i) => Font.draw(x, l, 12, 197 + i * 16, UIC.text, UIC.textSh)); if (src) Font.draw(x, Font.wrap('取得：' + src, 156, 10)[0], 10, 234, UIC.warm, UIC.textSh, 10); } }
   } };
@@ -303,7 +304,7 @@ function* bagScreen(mode = 'field') { // returns item id used (battle) or null
     if (Input.pressed('b')) { Input.consume('b'); Sound.sfx('cancel'); break; }
     if (Input.pressed('a') && list[idx]) {
       Input.consume('a'); Sound.sfx('select');
-      if (tabs[tab] === '裝備') { const g = list[idx]; if (isEquipped(g)) { yield* say('已經裝備著了。'); continue; } const r = yield* ask('要裝備' + GEAR[g.b].n + '嗎？', ['裝備', '取消']); if (r === 0 && (yield* equipGearFlow(g))) yield* say(Game.st.name + '裝備了' + GEAR[g.b].n + '！'); continue; }
+      if (tabs[tab] === '裝備') { const g = list[idx], eq = isEquipped(g), opts = eq ? ['查看詳情', '取消'] : ['裝備', '查看詳情', '取消']; const r = yield* ask(GEAR[g.b].n + (eq ? '（裝備中）' : ''), opts); const pick = opts[r]; if (pick === '查看詳情') { UI.remove(scr); yield* gearInfoScreen(g); UI.push(scr); } else if (pick === '裝備' && (yield* equipGearFlow(g))) yield* say(Game.st.name + '裝備了' + GEAR[g.b].n + '！'); continue; }
       const k = list[idx], it = ITEMS[k];
       if (it.key || it.mat) { yield* say(it.use === 'phone' ? phoneText() : it.d); continue; }
       const r = yield* ask('要使用' + it.n + '嗎？', ['使用', '取消']);
@@ -419,6 +420,7 @@ function* shopBuy(stock) {
   while (true) {
     if (Input.repeat('up')) { idx = (idx + list.length - 1) % list.length; Sound.sfx('cursor'); } if (Input.repeat('down')) { idx = (idx + 1) % list.length; Sound.sfx('cursor'); }
     if (Input.pressed('b')) { Input.consume('b'); Sound.sfx('cancel'); break; }
+    if (Input.pressed('right') && GEAR[list[idx]]) { UI.remove(scr); yield* gearInfoScreen({ b: list[idx], q: 1, r: 1, a: [] }, '商品詳情'); UI.push(scr); }
     if (Input.pressed('a')) {
       Input.consume('a'); Sound.sfx('select'); const k = list[idx], it = ITEMS[k] || GEAR[k], isG = !!GEAR[k];
       let qty = 1; const pr = priceOf(k); const maxQ = Math.min(isG || it.once ? 1 : 99, Math.floor(Game.st.money / pr));

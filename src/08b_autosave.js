@@ -18,4 +18,4 @@ const pageLeaveSave = () => { if (canAutoSave()) saveGame(); };
 window.addEventListener('pagehide', pageLeaveSave);
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') pageLeaveSave(); });
 // small indicator in the corner
-{ const _dt = drawToast; drawToast = function (x) { _dt(x); if (Game.autoSaveT > 0) { Game.autoSaveT--; const a = Math.min(1, Game.autoSaveT / 20); x.globalAlpha = a; drawWin(x, W - 66, 4, 62, 16, 'menu'); x.fillStyle = UIC.accent; x.fillRect(W - 60, 9, 5, 6); x.fillStyle = '#0e1120'; x.fillRect(W - 59, 10, 3, 2); Font.draw(x, '自動存檔', W - 52, 5, UIC.text, UIC.textSh, 10); x.globalAlpha = 1; } }; }
+{ const _dt = drawToast; drawToast = function (x) { _dt(x); if (Game.autoSaveT > 0 && UI.stack.length) Game.autoSaveT = 0; if (Game.autoSaveT > 0) { Game.autoSaveT--; const a = Math.min(1, Game.autoSaveT / 20); x.globalAlpha = a; drawWin(x, W - 66, 4, 62, 16, 'menu'); x.fillStyle = UIC.accent; x.fillRect(W - 60, 9, 5, 6); x.fillStyle = '#0e1120'; x.fillRect(W - 59, 10, 3, 2); Font.draw(x, '自動存檔', W - 52, 5, UIC.text, UIC.textSh, 10); x.globalAlpha = 1; } }; }
