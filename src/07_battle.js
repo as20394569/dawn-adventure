@@ -7,7 +7,17 @@ const stageMul = s => s >= 0 ? (2 + s) / 2 : 2 / (2 - s);
 const STATUS_NAME = { psn: '中毒', par: '麻痺', slp: '睡眠', brn: '灼傷' };
 const IMMUNE = { psn: '毒', brn: '火', par: '雷' };
 const battleImgCache = {};
-function battleSprite(key) { if (!battleImgCache[key]) battleImgCache[key] = buildShaded(ART[key], 64, 1); return battleImgCache[key]; }
+// battle sprites: rendered at a low native size, then scaled 3x (same chunky pixel look as the hero)
+const FOE_NATIVE = { golem: 28 }, FOE_SCALE = 3, FOE_FOOT = 104;
+function battleSprite(key) {
+  if (battleImgCache[key]) return battleImgCache[key];
+  const n = FOE_NATIVE[key] || 24, S = FOE_SCALE, sm = buildShaded(ART[key], n, n / 64);
+  const c = mkCanvas(n * S, n * S); c.getContext('2d').drawImage(sm, 0, 0, n * S, n * S);
+  const d = sm.getContext('2d').getImageData(0, 0, n, n).data; let x0 = n, x1 = -1, y0 = n, y1 = -1;
+  for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) if (d[(y * n + x) * 4 + 3]) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+  c.bb = { cx: Math.round((x0 + x1 + 1) * S / 2), top: y0 * S, bot: (y1 + 1) * S, w: (x1 - x0 + 1) * S, h: (y1 - y0 + 1) * S };
+  return battleImgCache[key] = c;
+}
 function makeFoe(sp, lv, kind) {
   const d = SPECIES[sp]; const iv = kind === 'wild' ? rnd(4, 15) : kind === 'boss' ? 22 : 18;
   const s = {}; STAT_KEYS.forEach((k, i) => s[k] = statCalc(d.base[i], lv, iv, k === 'hp'));
@@ -52,9 +62,9 @@ class Battle {
     const H = this.H = { hero: true, n: st.name, lv: st.lv, t: null, stats: s, maxhp: s.hp, moves: st.moves, stages: { atk: 0, def: 0, spa: 0, spd: 0, spe: 0 }, sleepT: st.sleepT ?? rnd(1, 3) };
     Object.defineProperty(H, 'hp', { get: () => st.hp, set: v => st.hp = v }); Object.defineProperty(H, 'status', { get: () => st.status, set: v => st.status = v });
     this.bg = buildBattleBG(cfg.bg); this.platF = buildPlatform(42, 9, cfg.bg); this.platH = buildPlatform(52, 11, cfg.bg);
-    this.imgF = battleSprite(cfg.sp); this.imgH = heroBattleImg(0, st.equip.weapon); this.imgH2 = heroBattleImg(1, st.equip.weapon);
+    this.imgF = battleSprite(cfg.sp); this.foeTX = FOE_X + Math.min(0, W - 3 - (FOE_X + 32 + Math.ceil(this.imgF.bb.w / 2))); this.imgH = heroBattleImg(0, st.equip.weapon); this.imgH2 = heroBattleImg(1, st.equip.weapon);
     this.disp = { F: this.F.hp, H: st.hp, exp: st.exp };
-    this.foeX = -70; this.heroX = W + 10; this.boxF = -120; this.boxH = W + 10; this.cover = 1;
+    this.foeX = -80; this.heroX = W + 10; this.boxF = -120; this.boxH = W + 10; this.cover = 1;
     this.offF = { x: 0, y: 0 }; this.offH = { x: 0, y: 0 }; this.sinkF = 0; this.sinkH = 0; this.blinkF = 0; this.blinkH = 0; this.alphaF = 1;
     this.fx = []; this.shake = 0; this.t = 0; this.idle = false; this.cmdIdx = 0; this.moveIdx = 0; this.runTries = 0; this.turn = 0; this.phase2 = false; this.fistCD = 2;
     this.tint = null; this.squishF = 0;
@@ -67,7 +77,7 @@ class Battle {
     this.fx = this.fx.filter(p => p.t < p.life);
     if (this.script) { const r = this.script.next(); if (r.done) this.script = null; }
   }
-  center(b) { return b.hero ? { x: this.heroX + 26, y: HERO_Y + 34 } : { x: this.foeX + 32, y: FOE_Y + 30 }; }
+  center(b) { return b.hero ? { x: this.heroX + 26, y: HERO_Y + 34 } : { x: this.foeX + 32, y: FOE_FOOT - Math.round(this.imgF.bb.h * 0.5) }; }
   /* ---------------- drawing ---------------- */
   draw(x) {
     const sx = this.shake > 0 ? rnd(-3, 3) : 0, sy = this.shake > 0 ? rnd(-2, 2) : 0;
@@ -78,8 +88,9 @@ class Battle {
     const bob = this.idle && Math.floor(this.t / 16) % 2 ? 1 : 0;
     if (this.alphaF > 0 && !(this.blinkF > 0 && Math.floor(this.blinkF / 3) % 2)) {
       x.save(); x.beginPath(); x.rect(0, 0, W, FOE_Y + 66); x.clip(); x.globalAlpha = this.alphaF;
-      const sq = this.squishF; const fx0 = this.foeX + this.offF.x, fy0 = FOE_Y + this.offF.y + this.sinkF;
-      if (sq) x.drawImage(this.imgF, fx0 - sq, fy0 + sq * 2, 64 + sq * 2, 64 - sq * 2); else x.drawImage(this.imgF, fx0, fy0);
+      const sq = this.squishF, im = this.imgF, fw = im.width, fh = im.height;
+      const fx0 = Math.round(this.foeX + 32 - im.bb.cx + this.offF.x), fy0 = Math.round(FOE_FOOT - im.bb.bot + this.offF.y + this.sinkF);
+      if (sq) x.drawImage(im, fx0 - sq, fy0 + sq * 2, fw + sq * 2, fh - sq * 2); else x.drawImage(im, fx0, fy0);
       if (this.tintF && this.tintF.a > 0) { x.globalAlpha = this.tintF.a * this.alphaF; x.drawImage(tinted(this.imgF, this.tintF.c), fx0, fy0); }
       x.restore();
     }
@@ -163,7 +174,7 @@ class Battle {
   }
   *intro() {
     Sound.sfx('encounter');
-    yield* parallel(tween(14, t => this.cover = 1 - t), tween(44, t => { const e = 1 - Math.pow(1 - t, 2); this.foeX = lerp(-70, FOE_X, e); this.heroX = lerp(W + 10, HERO_X, e); }));
+    yield* parallel(tween(14, t => this.cover = 1 - t), tween(44, t => { const e = 1 - Math.pow(1 - t, 2); this.foeX = lerp(-80, this.foeTX, e); this.heroX = lerp(W + 10, HERO_X, e); }));
     this.cover = 0; Sound.cry(Object.keys(SPECIES).indexOf(this.cfg.sp) + 1, this.F.boss ? 0.7 : 1, this.F.boss ? 1.6 : 1);
     if (this.F.boss) { this.shake = 30; Sound.sfx('quake'); }
     yield* parallel(tween(14, t => this.boxF = lerp(-120, 4, t)), wait(4));
@@ -332,8 +343,8 @@ class Battle {
   }
   *foeFaint() {
     Sound.cry(Object.keys(SPECIES).indexOf(this.cfg.sp) + 1, 0.6, 1.2); yield* wait(20);
-    if (this.F.boss) { Sound.sfx('quake'); this.shake = 50; for (let i = 0; i < 30; i++) { if (i % 3 === 0) this.sparks(FOE_X + 32 + rnd(-24, 24), FOE_Y + 30 + rnd(-24, 24), 3, ['#8a8272', '#a09884', '#ff8040'], 2.5, 26, 0.15); yield; } }
-    Sound.sfx('faint'); yield* tween(this.F.boss ? 40 : 22, t => { this.sinkF = t * 64; this.alphaF = 1 - t * 0.3; }); this.alphaF = 0;
+    if (this.F.boss) { Sound.sfx('quake'); this.shake = 50; for (let i = 0; i < 30; i++) { if (i % 3 === 0) this.sparks(this.foeTX + 32 + rnd(-26, 26), FOE_FOOT - 34 + rnd(-26, 26), 3, ['#8a8272', '#a09884', '#ff8040'], 2.5, 26, 0.15); yield; } }
+    Sound.sfx('faint'); yield* tween(this.F.boss ? 40 : 22, t => { this.sinkF = t * this.imgF.bb.h; this.alphaF = 1 - t * 0.3; }); this.alphaF = 0;
     yield* tween(10, t => this.boxF = lerp(4, -120, t));
     yield* this.msg((this.F.boss ? '' : this.F.elite ? '精英魔物' : '野生的') + this.F.n + '倒下了！', { hold: 40 });
   }
