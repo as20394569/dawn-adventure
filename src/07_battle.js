@@ -1,6 +1,8 @@
 /* ===================== BATTLE ===================== */
-let HERO_POWER = 1.4, BOSS_HP = 2.1, ELITE_HP = 1.1;
+let HERO_POWER = 1.45, BOSS_HP = 2.1, ELITE_HP = 1.1;
 const BH = TB_Y, FOE_X = 104, FOE_Y = 42, HERO_X = 4, HERO_Y = 126;
+function critRate(u, mv) { const base = u.hero ? (u.stats.crit || 5) / 100 : 1 / 16; return mv.crit ? base * 2 : base; }
+function hitChance(u, t, mv) { let a = mv.acc; if (!a) return 1; if (u.hero) a += u.stats.hit || 0; if (t.hero) a -= t.stats.eva || 0; return clamp(a, 5, 100) / 100; }
 const stageMul = s => s >= 0 ? (2 + s) / 2 : 2 / (2 - s);
 const STATUS_NAME = { psn: '中毒', par: '麻痺', slp: '睡眠', brn: '灼傷' };
 const IMMUNE = { psn: '毒', brn: '火', par: '雷' };
@@ -218,7 +220,7 @@ class Battle {
     return { type: 'move', id: pool[0] };
   }
   calcDamage(u, t, mv) {
-    const phys = mv.cat === '物'; const crit = chance(mv.crit ? 1 / 8 : 1 / 16);
+    const phys = mv.cat === '物'; const crit = chance(critRate(u, mv));
     const as = phys ? u.stages.atk : u.stages.spa, ds = phys ? t.stages.def : t.stages.spd;
     let A = (phys ? u.stats.atk : u.stats.spa) * stageMul(crit ? Math.max(0, as) : as);
     let D = (phys ? t.stats.def : t.stats.spd) * stageMul(crit ? Math.min(0, ds) : ds);
@@ -245,7 +247,7 @@ class Battle {
     const utb = new TextBox(u.n + '使用了' + mv.n + '！', { style: 'battle', keep: true }); UI.push(utb); while (!utb.done) { utb.update(); yield; } yield* wait(10);
     // accuracy
     const selfTarget = !mv.pow && mv.stat && mv.stat.who === 'self' || mv.heal;
-    if (!selfTarget && mv.acc && !chance(mv.acc / 100)) { yield* wait(10); UI.remove(utb); yield* this.msg(mv.pow ? u.n + '的攻擊沒有打中！' : '但是失敗了！'); return; }
+    if (!selfTarget && mv.acc && !chance(hitChance(u, t, mv))) { yield* wait(10); UI.remove(utb); yield* this.msg(mv.pow ? u.n + '的攻擊沒有打中！' : '但是失敗了！'); return; }
     if (mv.pow) {
       const r = this.calcDamage(u, t, mv);
       yield* this.playFx(mv.fx, u, t); UI.remove(utb);
@@ -360,14 +362,14 @@ class Battle {
     Sound.expStop(); yield* wait(10);
   }
   *levelUp() {
-    const st = Game.st, before = heroStats(); st.lv++; const after = heroStats(); st.hp = Math.min(after.hp, st.hp + (after.hp - before.hp));
+    const st = Game.st, before = heroStats(), bA = heroAttr(); st.lv++; const after = heroStats(), aA = heroAttr(); st.hp = Math.min(after.hp, st.hp + (after.hp - before.hp));
     this.H.maxhp = after.hp; this.H.stats = after; this.H.lv = st.lv; this.disp.H = st.hp;
     const fr = Sound.jingle('levelup'); this.tintH = { c: '#ffffff', a: 0 };
     const tb = new TextBox(st.name + '升到了Lv.' + st.lv + '！', { style: 'battle' }); UI.push(tb);
     for (let i = 0; i < 24; i++) { this.tintH.a = Math.sin(i / 24 * Math.PI) * 0.8; tb.update(); yield; } this.tintH = null;
     while (!tb.done) { tb.update(); yield; }
-    let showTotal = false; const keys = ['hp', 'atk', 'def', 'spa', 'spd', 'spe'], names = ['HP', '攻擊', '防禦', '特攻', '特防', '速度'];
-    const win = { draw: x => { drawWin(x, 84, 40, 90, 106, 'menu'); keys.forEach((k, i) => { const Y = 43 + i * 16; Font.draw(x, names[i], 94, Y, UIC.text, UIC.textSh); Font.drawR(x, showTotal ? String(after[k]) : '+' + (after[k] - before[k]), 166, Y, showTotal ? UIC.text : '#e05050', UIC.textSh); }); } };
+    let showTotal = false; const rowsL = [['HP', before.hp, after.hp]].concat(ATTRS.map(k => [ATTR_NAMES[k], bA[k], aA[k]]));
+    const win = { draw: x => { drawWin(x, 84, 26, 90, 122, 'menu'); rowsL.forEach(([n, b, a], i) => { const Y = 30 + i * 16; Font.draw(x, n, 94, Y, UIC.text, UIC.textSh); const d = a - b; Font.drawR(x, showTotal ? String(a) : d > 0 ? '+' + d : '—', 166, Y, showTotal ? UIC.text : d > 0 ? '#e05050' : '#a0a0a8', UIC.textSh); }); } };
     UI.push(win); yield* waitA(); showTotal = true; Sound.sfx('cursor'); yield* waitA(); UI.remove(win); UI.remove(tb);
     for (const id of heroLearnAt(st.lv)) yield* this.learnMove(id);
     if (Sound.current !== 'victory' && this.F.hp <= 0) Sound.play('victory');

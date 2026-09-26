@@ -11,15 +11,21 @@ const EFF = {
   '飛': { '草': 2, '雷': 0.5, '岩': 0.5 },
 };
 const typeMult = (atk, def) => def ? ((EFF[atk] || {})[def] ?? 1) : 1;
-const STAT_NAMES = { atk: '攻擊', def: '防禦', spa: '特攻', spd: '特防', spe: '速度' };
+const STAT_NAMES = { atk: '物攻', def: '物防', spa: '魔攻', spd: '魔防', spe: '速度' };
+// classic six attributes for the hero
+const ATTRS = ['str', 'agi', 'vit', 'int', 'dex', 'luk'];
+const ATTR_NAMES = { str: '力量', agi: '敏捷', vit: '體力', int: '智力', dex: '靈巧', luk: '幸運' };
+const HERO_ATTR_INIT = { str: 6, agi: 5, vit: 6, int: 5, dex: 5, luk: 4 };   // at Lv5
+const HERO_GROWTH = { str: 0.45, agi: 0.40, vit: 0.50, int: 0.40, dex: 0.35, luk: 0.25 }; // points per level (low growth)
+const HERO_GROWTH_OFS = { str: 0.05, agi: 0.95, vit: 0.45, int: 0.35, dex: 0.9, luk: 0.85 }; // staggered so each level raises 2–3 attributes
 const STAT_KEYS = ['hp', 'atk', 'def', 'spa', 'spd', 'spe'];
 
 // cat: 物=physical 特=special 變=status
 const MOVES = {
   slash: { n: '揮砍', t: '一般', cat: '物', pow: 40, acc: 100, pp: 35, fx: 'slash', d: '揮劍砍向對手。' },
-  glare: { n: '瞪眼', t: '一般', cat: '變', acc: 100, pp: 30, stat: { who: 'foe', def: -1 }, fx: 'glare', d: '用銳利的眼神瞪視對手，降低對手的防禦。' },
+  glare: { n: '瞪眼', t: '一般', cat: '變', acc: 100, pp: 30, stat: { who: 'foe', def: -1 }, fx: 'glare', d: '用銳利的眼神瞪視對手，降低對手的物防。' },
   flameSlash: { n: '火焰斬', t: '火', cat: '物', pow: 45, acc: 100, pp: 25, eff: { st: 'brn', p: 10 }, fx: 'fireSlash', d: '以燃燒的劍刃砍擊。有時會讓對手灼傷。' },
-  focus: { n: '集氣', t: '一般', cat: '變', pp: 20, stat: { who: 'self', atk: 1, spa: 1 }, fx: 'buff', d: '集中精神，提高自己的攻擊和特攻。' },
+  focus: { n: '集氣', t: '一般', cat: '變', pp: 20, stat: { who: 'self', atk: 1, spa: 1 }, fx: 'buff', d: '集中精神，提高自己的物攻和魔攻。' },
   aquaBlade: { n: '水流刃', t: '水', cat: '特', pow: 50, acc: 100, pp: 25, fx: 'water', d: '揮出激流般的水刃。' },
   thunder: { n: '落雷', t: '雷', cat: '特', pow: 55, acc: 95, pp: 20, eff: { st: 'par', p: 10 }, fx: 'thunder', d: '召喚雷電打向對手。有時會讓對手麻痺。' },
   gale: { n: '疾風刺', t: '一般', cat: '物', pow: 40, acc: 100, pp: 30, prio: 1, fx: 'quick', d: '以疾風般的速度突刺。必定能先出手。' },
@@ -28,8 +34,8 @@ const MOVES = {
   blaze: { n: '烈焰斬', t: '火', cat: '物', pow: 80, acc: 95, pp: 15, eff: { st: 'brn', p: 10 }, fx: 'fireSlash', d: '全力揮出熊熊燃燒的一擊。有時會讓對手灼傷。' },
   // monster moves
   tackle: { n: '撞擊', t: '一般', cat: '物', pow: 35, acc: 95, pp: 35, fx: 'hit', d: '用整個身體撞向對手。' },
-  growl: { n: '叫聲', t: '一般', cat: '變', acc: 100, pp: 40, stat: { who: 'foe', atk: -1 }, fx: 'sound', d: '可愛地叫，降低對手的攻擊。' },
-  tailWhip: { n: '搖尾巴', t: '一般', cat: '變', acc: 100, pp: 30, stat: { who: 'foe', def: -1 }, fx: 'glare', d: '可愛地搖尾巴，降低對手的防禦。' },
+  growl: { n: '叫聲', t: '一般', cat: '變', acc: 100, pp: 40, stat: { who: 'foe', atk: -1 }, fx: 'sound', d: '可愛地叫，降低對手的物攻。' },
+  tailWhip: { n: '搖尾巴', t: '一般', cat: '變', acc: 100, pp: 30, stat: { who: 'foe', def: -1 }, fx: 'glare', d: '可愛地搖尾巴，降低對手的物防。' },
   scratch: { n: '抓', t: '一般', cat: '物', pow: 40, acc: 100, pp: 35, fx: 'scratch', d: '用爪子抓對手。' },
   peck: { n: '啄', t: '飛', cat: '物', pow: 35, acc: 100, pp: 35, fx: 'hit', d: '用尖嘴啄對手。' },
   gust: { n: '起風', t: '飛', cat: '特', pow: 40, acc: 100, pp: 35, fx: 'wind', d: '拍動翅膀颳起強風。' },
@@ -44,19 +50,19 @@ const MOVES = {
   shock: { n: '電擊', t: '雷', cat: '特', pow: 40, acc: 100, pp: 30, eff: { st: 'par', p: 10 }, fx: 'spark', d: '放出電流。有時會讓對手麻痺。' },
   thunderWave: { n: '電磁波', t: '雷', cat: '變', acc: 90, pp: 20, st: 'par', fx: 'spark', d: '放出微弱的電磁波，讓對手麻痺。' },
   poisonSting: { n: '毒針', t: '毒', cat: '物', pow: 15, acc: 100, pp: 35, eff: { st: 'psn', p: 30 }, fx: 'sting', d: '用毒針刺對手。有時會讓對手中毒。' },
-  acid: { n: '溶解液', t: '毒', cat: '特', pow: 40, acc: 100, pp: 30, eff: { stat: { spd: -1 }, p: 10 }, fx: 'acid', d: '潑出強酸。有時會降低對手的特防。' },
-  harden: { n: '變硬', t: '一般', cat: '變', pp: 30, stat: { who: 'self', def: 1 }, fx: 'buff', d: '全身用力變硬，提高自己的防禦。' },
-  ironWall: { n: '岩壁', t: '岩', cat: '變', pp: 15, stat: { who: 'self', def: 2 }, fx: 'buff', d: '全身化為岩壁，大幅提高自己的防禦。' },
+  acid: { n: '溶解液', t: '毒', cat: '特', pow: 40, acc: 100, pp: 30, eff: { stat: { spd: -1 }, p: 10 }, fx: 'acid', d: '潑出強酸。有時會降低對手的魔防。' },
+  harden: { n: '變硬', t: '一般', cat: '變', pp: 30, stat: { who: 'self', def: 1 }, fx: 'buff', d: '全身用力變硬，提高自己的物防。' },
+  ironWall: { n: '岩壁', t: '岩', cat: '變', pp: 15, stat: { who: 'self', def: 2 }, fx: 'buff', d: '全身化為岩壁，大幅提高自己的物防。' },
   rockThrow: { n: '落石', t: '岩', cat: '物', pow: 50, acc: 90, pp: 15, fx: 'rock', d: '拋出小石頭攻擊。' },
   rockSlide: { n: '岩崩', t: '岩', cat: '物', pow: 75, acc: 90, pp: 10, eff: { flinch: 1, p: 30 }, fx: 'rock', d: '砸下大岩石。有時會讓對手退縮。' },
   bite: { n: '咬住', t: '一般', cat: '物', pow: 60, acc: 100, pp: 25, eff: { flinch: 1, p: 30 }, fx: 'bite', d: '用利牙咬住。有時會讓對手退縮。' },
-  howl: { n: '嚎叫', t: '一般', cat: '變', pp: 40, stat: { who: 'self', atk: 1 }, fx: 'buff', d: '長嚎鼓舞自己，提高攻擊。' },
+  howl: { n: '嚎叫', t: '一般', cat: '變', pp: 40, stat: { who: 'self', atk: 1 }, fx: 'buff', d: '長嚎鼓舞自己，提高物攻。' },
   quickAttack: { n: '電光一閃', t: '一般', cat: '物', pow: 40, acc: 100, pp: 30, prio: 1, fx: 'quick', d: '以極快的速度撞向對手。必定能先出手。' },
   sing: { n: '催眠曲', t: '一般', cat: '變', acc: 55, pp: 15, st: 'slp', fx: 'sing', d: '唱出溫柔的歌，讓對手睡著。' },
   lick: { n: '舌舔', t: '一般', cat: '物', pow: 30, acc: 100, pp: 30, eff: { st: 'par', p: 30 }, fx: 'hit', d: '用長舌頭舔對手。有時會讓對手麻痺。' },
   agility: { n: '高速移動', t: '雷', cat: '變', pp: 30, stat: { who: 'self', spe: 2 }, fx: 'buff', d: '放鬆身體，大幅提高自己的速度。' },
   stomp: { n: '重踏', t: '一般', cat: '物', pow: 65, acc: 100, pp: 20, eff: { flinch: 1, p: 30 }, fx: 'stomp', d: '用巨大的腳踩踏。有時會讓對手退縮。' },
-  ancientRoar: { n: '遠古咆哮', t: '岩', cat: '變', acc: 100, pp: 10, stat: { who: 'foe', atk: -1, spa: -1 }, fx: 'roar', d: '發出震撼大地的咆哮，降低對手的攻擊和特攻。' },
+  ancientRoar: { n: '遠古咆哮', t: '岩', cat: '變', acc: 100, pp: 10, stat: { who: 'foe', atk: -1, spa: -1 }, fx: 'roar', d: '發出震撼大地的咆哮，降低對手的物攻和魔攻。' },
   golemFist: { n: '岩石粉碎拳', t: '岩', cat: '物', pow: 100, acc: 100, pp: 5, charge: 1, fx: 'bigRock', d: '凝聚大地之力，下一回合全力揮拳。' },
   struggle: { n: '掙扎', t: '一般', cat: '物', pow: 50, acc: 100, pp: 1, recoil: 0.25, fx: 'hit', d: '沒有PP時拼命掙扎。自己也會受傷。' },
 };
@@ -75,7 +81,6 @@ const SPECIES = {
   golem: { n: '古岩魔像', t: '岩', base: [82, 48, 80, 45, 55, 35], exp: 200, gold: 0, boss: 1, learn: [[1, 'rockThrow'], [1, 'stomp'], [1, 'ironWall'], [1, 'ancientRoar']], dex: '守護古代遺跡的石像。沉睡了千年後甦醒。' },
 };
 
-const HERO_BASE = [64, 62, 56, 56, 54, 60];
 const HERO_LEARN = [[1, 'slash'], [1, 'glare'], [4, 'flameSlash'], [6, 'focus'], [8, 'aquaBlade'], [10, 'thunder'], [11, 'gale'], [13, 'leafBlade'], [15, 'heal'], [18, 'blaze']];
 
 const ITEMS = {
@@ -87,14 +92,14 @@ const ITEMS = {
   burnHeal: { n: '燙傷膏', price: 120, d: '治療灼傷狀態。', use: 'cure', v: 'brn' },
   ether: { n: '活力茶', price: 300, d: '所有技能的PP各恢復10點。', use: 'pp', v: 10 },
   smoke: { n: '煙霧彈', price: 150, d: '在戰鬥中使用，必定能從野生魔物身邊逃走。', use: 'escape' },
-  powerFruit: { n: '力量果實', price: 0, sell: 500, d: '神奇的果實。吃下後攻擊永久提升2點。', use: 'boost', v: { atk: 2 } },
-  ironSword: { n: '鐵劍', price: 1200, equip: 'weapon', bonus: { atk: 4 }, d: '堅固的鐵劍。攻擊+4' },
-  woodSword: { n: '木劍', price: 0, sell: 50, equip: 'weapon', bonus: { atk: 1 }, d: '練習用的木劍。攻擊+1' },
-  clothes: { n: '旅行布衣', price: 0, sell: 50, equip: 'armor', bonus: { def: 1 }, d: '輕便的旅行服裝。防禦+1' },
-  leather: { n: '皮甲', price: 900, equip: 'armor', bonus: { def: 3, spd: 2 }, d: '結實的皮甲。防禦+3 特防+2' },
-  charm: { n: '魔法護符', price: 1000, equip: 'acc', bonus: { spa: 4 }, d: '注入魔力的護符。特攻+4' },
+  powerFruit: { n: '力量果實', price: 0, sell: 500, d: '神奇的果實。吃下後力量永久+2。', use: 'boost', v: { str: 2 } },
+  ironSword: { n: '鐵劍', price: 1200, equip: 'weapon', bonus: { atk: 4 }, d: '堅固的鐵劍。物攻+4' },
+  woodSword: { n: '木劍', price: 0, sell: 50, equip: 'weapon', bonus: { atk: 1 }, d: '練習用的木劍。物攻+1' },
+  clothes: { n: '旅行布衣', price: 0, sell: 50, equip: 'armor', bonus: { def: 1 }, d: '輕便的旅行服裝。物防+1' },
+  leather: { n: '皮甲', price: 900, equip: 'armor', bonus: { def: 3, spd: 2 }, d: '結實的皮甲。物防+3 魔防+2' },
+  charm: { n: '魔法護符', price: 1000, equip: 'acc', bonus: { spa: 4 }, d: '注入魔力的護符。魔攻+4' },
   boots: { n: '疾風靴', price: 800, equip: 'acc', bonus: { spe: 4 }, d: '穿上後腳步變得輕快。速度+4' },
-  uniform: { n: '學生制服', price: 0, equip: 'armor', bonus: { def: 1 }, d: '原本世界學校的制服。在這裡好像很少見。防禦+1' },
+  uniform: { n: '學生制服', price: 0, equip: 'armor', bonus: { def: 1 }, d: '原本世界學校的制服。在這裡好像很少見。物防+1' },
   phone: { n: '手機', key: 1, use: 'phone', d: '從原本的世界帶來的手機。' },
   license: { n: '冒險者證', key: 1, d: '村長交給你的冒險者證明。持有它就能走出萌芽鎮。' },
 };

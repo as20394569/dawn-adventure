@@ -109,10 +109,24 @@ function* yesNo(text, o = {}) { const r = yield* ask(text, ['是', '否'], o); r
 
 /* ---------- Hero stats helpers ---------- */
 function statCalc(base, lv, iv = 15, isHP = false) { return isHP ? Math.floor((2 * base + iv) * lv / 100) + lv + 10 : Math.floor((2 * base + iv) * lv / 100) + 5; }
+// Six attributes grow slowly and deterministically: init + floor(offset + rate × (Lv − 5)) + permanent boosts
+function heroAttr(st = Game.st) { const a = {}; for (const k of ATTRS) a[k] = HERO_ATTR_INIT[k] + Math.floor(HERO_GROWTH_OFS[k] + HERO_GROWTH[k] * (st.lv - 5)) + ((st.boost || {})[k] || 0); return a; }
 function heroStats(st = Game.st) {
-  const s = {}; STAT_KEYS.forEach((k, i) => s[k] = statCalc(HERO_BASE[i], st.lv, 15, k === 'hp'));
-  for (const k in st.boost || {}) s[k] += st.boost[k];
+  const a = heroAttr(st), L = st.lv;
+  const s = {
+    hp: 8 + L * 2 + a.vit,                          // 最大HP = 8 + 等級×2 + 體力
+    atk: a.str + a.dex / 2 + L * 0.6,               // 物攻 = 力量 + 靈巧÷2 + 等級×0.6
+    def: a.vit + a.agi / 3 + L * 0.6,               // 物防 = 體力 + 敏捷÷3 + 等級×0.6
+    spa: a.int * 1.2 + a.dex / 3 + L * 0.6,         // 魔攻 = 智力×1.2 + 靈巧÷3 + 等級×0.6
+    spd: a.int * 0.6 + a.vit * 0.6 + L * 0.6,       // 魔防 = 智力×0.6 + 體力×0.6 + 等級×0.6
+    spe: a.agi * 1.5 + L * 0.6,                     // 速度 = 敏捷×1.5 + 等級×0.6
+  };
+  for (const k in s) s[k] = Math.floor(s[k]);
+  for (const k in st.boost || {}) if (s[k] !== undefined) s[k] += st.boost[k]; // legacy saves
   for (const slot in st.equip) { const it = st.equip[slot] && ITEMS[st.equip[slot]]; if (it && it.bonus) for (const k in it.bonus) s[k] += it.bonus[k]; }
+  s.crit = 3 + a.luk * 0.5;   // 會心率% = 3 + 幸運×0.5
+  s.hit = a.dex * 0.5;        // 命中加成% = 靈巧×0.5
+  s.eva = a.agi * 0.4;        // 迴避率% = 敏捷×0.4
   return s;
 }
 const expForLevel = lv => Math.floor(0.8 * lv * lv * lv);
@@ -132,11 +146,14 @@ function headerBar(x, title, col = '#e86868') {
 function eqBonus(st) { const eqB = {}; for (const slot in st.equip) { const it = st.equip[slot] && ITEMS[st.equip[slot]]; if (it && it.bonus) for (const k in it.bonus) eqB[k] = (eqB[k] || 0) + it.bonus[k]; } for (const k in st.boost || {}) eqB[k] = (eqB[k] || 0) + st.boost[k]; return eqB; }
 function heroCard(x, st) {
   drawWin(x, 4, 24, 168, 70, 'menu');
-  x.fillStyle = '#b8e0a8'; x.fillRect(8, 28, 56, 62); x.fillStyle = '#a0d090'; x.fillRect(8, 76, 56, 14);
-  x.drawImage(Hero.frames.down[Math.floor(Game.frame / 20) % 4], 0, 0, 16, 22, 20, 30, 32, 44);
-  Font.draw(x, st.name, 72, 28, UIC.text, UIC.textSh); Font.draw(x, 'Lv.' + st.lv, 72, 44, UIC.text, UIC.textSh);
-  if (st.status) statusBadge(x, st.status, 72, 64); else Font.draw(x, '狀態良好', 72, 60, '#58a058', UIC.textSh);
-  Font.drawR(x, st.money + ' G', 166, 44, '#4878c8', UIC.textSh);
+  x.fillStyle = '#b8e0a8'; x.fillRect(8, 28, 50, 62); x.fillStyle = '#a0d090'; x.fillRect(8, 76, 50, 14);
+  x.drawImage(Hero.frames.down[Math.floor(Game.frame / 20) % 4], 0, 0, 16, 22, 17, 30, 32, 44);
+  Font.draw(x, st.name, 64, 27, UIC.text, UIC.textSh); Font.drawR(x, 'Lv.' + st.lv, 166, 27, UIC.text, UIC.textSh);
+  if (st.status) statusBadge(x, st.status, 64, 45); else Font.draw(x, '狀態良好', 64, 42, '#58a058', UIC.textSh);
+  Font.drawR(x, st.money + 'G', 166, 42, '#4878c8', UIC.textSh);
+  const cur = st.exp - expForLevel(st.lv), need = expForLevel(st.lv + 1) - expForLevel(st.lv);
+  Font.draw(x, '下一級', 64, 58, UIC.text, UIC.textSh); Font.drawR(x, (need - cur) + '', 166, 58, UIC.text, UIC.textSh);
+  drawExpBar(x, 64, 84, 100, cur / need);
 }
 function* summaryScreen() {
   let page = 0, mi = 0; const scr = { draw(x) {
@@ -145,19 +162,17 @@ function* summaryScreen() {
     Font.drawR(x, (page + 1) + '/2 ←→', W - 6, 2, '#ffffff', page === 0 ? '#8a3a28' : '#284878');
     heroCard(x, st);
     if (page === 0) {
-      drawWin(x, 4, 98, 168, 104, 'menu'); const eqB = eqBonus(st);
-      const rowsS = [['HP', st.hp + '/' + s.hp], ['攻擊', s.atk, 'atk'], ['防禦', s.def, 'def'], ['特攻', s.spa, 'spa'], ['特防', s.spd, 'spd'], ['速度', s.spe, 'spe']];
-      rowsS.forEach(([a, b, k], i) => { const Y = 102 + i * 16; Font.draw(x, a, 16, Y, UIC.text, UIC.textSh); Font.drawR(x, String(b), 112, Y, UIC.text, UIC.textSh); if (k && eqB[k]) Font.draw(x, '(+' + eqB[k] + ')', 118, Y, '#4878c8', UIC.textSh); });
-      drawWin(x, 4, 204, 168, 48, 'menu');
-      drawHPBar(x, 14, 210, 60, st.hp / s.hp);
-      const cur = st.exp - expForLevel(st.lv), need = expForLevel(st.lv + 1) - expForLevel(st.lv);
-      Font.draw(x, '下一級還差', 14, 220, UIC.text, UIC.textSh); Font.drawR(x, (need - cur) + '', 164, 220, UIC.text, UIC.textSh);
-      drawExpBar(x, 14, 240, 148, cur / need);
+      const a = heroAttr(st), eqB = eqBonus(st);
+      drawWin(x, 4, 98, 168, 62, 'menu');
+      ATTRS.forEach((k, i) => { const X = 12 + (i % 2) * 80, Y = 103 + Math.floor(i / 2) * 17; Font.draw(x, ATTR_NAMES[k], X, Y, UIC.text, UIC.textSh); Font.drawR(x, String(a[k]), X + 70, Y, (st.boost || {})[k] ? '#4878c8' : UIC.text, UIC.textSh); });
+      drawWin(x, 4, 162, 168, 90, 'menu');
+      const rowsD = [['HP', st.hp + '/' + s.hp], ['物攻', s.atk, 'atk'], ['物防', s.def, 'def'], ['魔攻', s.spa, 'spa'], ['魔防', s.spd, 'spd'], ['速度', s.spe, 'spe'], ['會心', s.crit.toFixed(1) + '%'], ['迴避', s.eva.toFixed(1) + '%']];
+      rowsD.forEach(([n, v, k], i) => { const X = 12 + (i % 2) * 80, Y = 166 + Math.floor(i / 2) * 20; Font.draw(x, n, X, Y, UIC.text, UIC.textSh); Font.drawR(x, String(v), X + 70, Y, k && eqB[k] ? '#4878c8' : UIC.text, UIC.textSh); });
     } else {
       drawWin(x, 4, 98, 168, 84, 'menu');
       st.moves.forEach((m, i) => { const mv = MOVES[m.id]; const Y = 102 + i * 19; typeBadge(x, mv.t, 18, Y + 2, 28); Font.draw(x, mv.n, 52, Y, UIC.text, UIC.textSh); Font.drawR(x, m.pp + '/' + mv.pp, 164, Y, m.pp === 0 ? '#e04848' : UIC.text, UIC.textSh); if (i === mi) x.drawImage(CURSOR, 9, Y + 5); });
       const mv = MOVES[st.moves[mi].id]; drawWin(x, 4, 184, 168, 68, 'menu');
-      Font.draw(x, (mv.cat === '變' ? '變化' : mv.cat === '物' ? '物理' : '特殊') + ' 威力' + (mv.pow || '—') + ' 命中' + (mv.acc || '—'), 12, 186, '#4878c8', UIC.textSh);
+      Font.draw(x, (mv.cat === '變' ? '變化' : mv.cat === '物' ? '物理' : '魔法') + ' 威力' + (mv.pow || '—') + ' 命中' + (mv.acc || '—'), 12, 186, '#4878c8', UIC.textSh);
       Font.wrap(mv.d, 152).slice(0, 3).forEach((l, i) => Font.draw(x, l, 12, 202 + i * 15, UIC.text, UIC.textSh));
     }
   } };
@@ -180,7 +195,7 @@ function* pickMoveToForget(newId) {
     drawWin(x, 4, 24, 168, 104, 'menu');
     list.forEach((id, i) => { const mv = MOVES[id]; const Y = 28 + i * 19; typeBadge(x, mv.t, 18, Y + 2, 28); Font.draw(x, mv.n, 52, Y, i === 4 ? '#4878c8' : UIC.text, UIC.textSh); Font.drawR(x, i === 4 ? '新技能' : 'PP ' + Game.st.moves[i].pp, 164, Y, i === 4 ? '#4878c8' : UIC.text, UIC.textSh); if (i === mi) x.drawImage(CURSOR, 9, Y + 5); });
     const mv = MOVES[list[mi]]; drawWin(x, 4, 132, 168, 80, 'menu');
-    Font.draw(x, (mv.cat === '變' ? '變化' : mv.cat === '物' ? '物理' : '特殊') + ' 威力' + (mv.pow || '—') + ' PP' + mv.pp, 12, 134, '#4878c8', UIC.textSh);
+    Font.draw(x, (mv.cat === '變' ? '變化' : mv.cat === '物' ? '物理' : '魔法') + ' 威力' + (mv.pow || '—') + ' PP' + mv.pp, 12, 134, '#4878c8', UIC.textSh);
     Font.wrap(mv.d, 152).slice(0, 4).forEach((l, i) => Font.draw(x, l, 12, 150 + i * 15, UIC.text, UIC.textSh));
     drawWin(x, 4, 216, 168, 36, 'menu'); Font.draw(x, 'A：忘記這招', 14, 218, UIC.text, UIC.textSh); Font.draw(x, 'B：不學新技能', 14, 234, '#8890a0', UIC.textSh);
   } };
@@ -249,7 +264,7 @@ function useItem(k) { // returns message or null; applies to Game.st
   if (it.use === 'heal') { const b = st.hp; st.hp = Math.min(s.hp, st.hp + it.v); return st.name + '的HP恢復了' + (st.hp - b) + '點！'; }
   if (it.use === 'cure') { st.status = null; return st.name + '的' + { psn: '中毒', par: '麻痺', slp: '睡眠', brn: '灼傷' }[it.v] + '治好了！'; }
   if (it.use === 'pp') { st.moves.forEach(m => m.pp = Math.min(MOVES[m.id].pp, m.pp + it.v)); return st.name + '的技能PP恢復了！'; }
-  if (it.use === 'boost') { st.boost = st.boost || {}; for (const q in it.v) st.boost[q] = (st.boost[q] || 0) + it.v[q]; return st.name + '的' + Object.keys(it.v).map(q => STAT_NAMES[q]).join('、') + '永久提升了！'; }
+  if (it.use === 'boost') { st.boost = st.boost || {}; for (const q in it.v) st.boost[q] = (st.boost[q] || 0) + it.v[q]; return st.name + '的' + Object.keys(it.v).map(q => ATTR_NAMES[q] || STAT_NAMES[q]).join('、') + '永久提升了！'; }
   return null;
 }
 
@@ -261,7 +276,7 @@ function* equipScreen() {
     drawWin(x, 4, 24, 168, 116, 'menu');
     slots.forEach((sl, i) => { const Y = 28 + i * 36; Font.draw(x, EQUIP_SLOTS[sl], 20, Y, '#58a068', UIC.textSh); const it = Game.st.equip[sl] && ITEMS[Game.st.equip[sl]]; Font.draw(x, it ? it.n : '——', 60, Y, UIC.text, UIC.textSh); if (it) Font.drawR(x, Object.entries(it.bonus).map(([k, v]) => STAT_NAMES[k] + '+' + v).join(' '), 164, Y + 16, '#4878c8', UIC.textSh); if (i === idx) x.drawImage(CURSOR, 11, Y + 3); });
     const s = heroStats(); drawWin(x, 4, 144, 168, 108, 'menu');
-    [['HP', Game.st.hp + '/' + s.hp], ['攻擊', s.atk], ['防禦', s.def], ['特攻', s.spa], ['特防', s.spd], ['速度', s.spe]].forEach(([a, b], i) => { const Y = 148 + i * 16; Font.draw(x, a, 20, Y, UIC.text, UIC.textSh); Font.drawR(x, String(b), 150, Y, UIC.text, UIC.textSh); });
+    [['HP', Game.st.hp + '/' + s.hp], ['物攻', s.atk], ['物防', s.def], ['魔攻', s.spa], ['魔防', s.spd], ['速度', s.spe]].forEach(([a, b], i) => { const Y = 148 + i * 16; Font.draw(x, a, 20, Y, UIC.text, UIC.textSh); Font.drawR(x, String(b), 150, Y, UIC.text, UIC.textSh); });
   } };
   UI.push(scr);
   while (true) {

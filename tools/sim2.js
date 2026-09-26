@@ -3,7 +3,7 @@ module.exports = async (g) => {
   const res = await g.ev((cfg) => {
     const G = __game; const B = G.Battle.prototype; const out = [];
     if (cfg.patch) eval(cfg.patch);
-    const heroAt = (lv, eq, moves) => { G.newGameState('x'); const st = G.Game.st; st.lv = lv; Object.assign(st.equip, eq || {}); const s = G.heroStats(st); return { hero: 1, n: 'H', lv, t: null, stats: s, maxhp: s.hp, hp: s.hp, stages: { atk: 0, def: 0, spa: 0, spd: 0, spe: 0 }, status: null, moves }; };
+    const heroAt = (lv, eq, moves) => { G.newGameState('x'); const st = G.Game.st; st.lv = lv; st.equip.weapon = 'woodSword'; Object.assign(st.equip, eq || {}); const s = G.heroStats(st); return { hero: 1, n: 'H', lv, t: null, stats: s, maxhp: s.hp, hp: s.hp, stages: { atk: 0, def: 0, spa: 0, spd: 0, spe: 0 }, status: null, moves }; };
     function fight(hl, eq, hm, sp, fl, kind, pots, supers) {
       const H = heroAt(hl, eq, hm), F = makeFoe(sp, fl, kind); const ctx = { F, H, phase2: false, fistCD: 2 };
       let p = pots, s = supers, turns = 0, used = 0;
@@ -14,7 +14,7 @@ module.exports = async (g) => {
         if (u.status === 'slp') { if (u.sleepT <= 0) u.status = null; else { u.sleepT--; return; } }
         if (u.flinched) return; if (u.status === 'par' && Math.random() < 0.25) return;
         if (mv.charge && u.charging !== id) { u.charging = id; return; } if (u.charging === id) u.charging = null;
-        const self = !mv.pow && mv.stat && mv.stat.who === 'self' || mv.heal; if (!self && mv.acc && Math.random() * 100 >= mv.acc) return;
+        const self = !mv.pow && mv.stat && mv.stat.who === 'self' || mv.heal; if (!self && mv.acc && Math.random() >= hitChance(u, t, mv)) return;
         if (mv.pow) { let d = B.calcDamage.call(ctx, u, t, mv).dmg; if (t.defending) d = Math.max(1, Math.floor(d / 2)); d = Math.min(d, t.hp); t.hp -= d; if (mv.drain) u.hp = Math.min(u.maxhp, u.hp + Math.floor(d * mv.drain)); if (t.hp > 0 && mv.eff && Math.random() * 100 < mv.eff.p) { if (mv.eff.st && !t.status && !(t.t && IMMUNE[mv.eff.st] === t.t)) { t.status = mv.eff.st; if (t.status === 'slp') t.sleepT = 1 + Math.floor(Math.random() * 3); } if (mv.eff.flinch) t.flinched = true; if (mv.eff.stat) for (const k in mv.eff.stat) t.stages[k] = Math.max(-6, t.stages[k] + mv.eff.stat[k]); } if (t.boss && !ctx.phase2 && t.hp > 0 && t.hp < t.maxhp * 0.5) { ctx.phase2 = true; ctx.fistCD = 1; t.stages.atk += 1; } return; }
         if (mv.heal) { u.hp = Math.min(u.maxhp, u.hp + Math.floor(u.maxhp * mv.heal)); return; }
         if (mv.stat) { const who = mv.stat.who === 'self' ? u : t; for (const k in mv.stat) if (k !== 'who') who.stages[k] = Math.max(-6, Math.min(6, who.stages[k] + mv.stat[k])); return; }
