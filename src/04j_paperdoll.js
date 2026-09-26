@@ -40,6 +40,10 @@ function weaponPath(type, dir) {
   if (type === 'staff') {
     const x = dir === 'down' ? 15 : dir === 'up' ? 11 : 13; line(x, 4, x, 20, 'T'); P.push([x, 2, 'V'], [x, 3, 'V'], [x - 1, 3, 'V'], [x - 1, 2, 'W'], [x - 1, 4, 'k'], [x - 1, 1, 'k'], [x, 1, 'k']);
   }
+  if (type === 'tome') { // a book held at the hip: cover T, clasp U, pages V
+    const [bx, by] = dir === 'down' ? [12, 15] : dir === 'up' ? [1, 15] : [10, 15];
+    P.push([bx, by, 'T'], [bx + 1, by, 'U'], [bx + 2, by, 'T'], [bx, by + 1, 'T'], [bx + 1, by + 1, 'V'], [bx + 2, by + 1, 'T'], [bx, by + 2, 'T'], [bx + 1, by + 2, 'T'], [bx + 2, by + 2, 'T']);
+  }
   if (type === 'dagger') {
     if (dir === 'down') { P.push([13, 16, 'T'], [13, 17, 'U'], [14, 17, 'I'], [14, 18, 'i']); }
     if (dir === 'up') { P.push([3, 16, 'T'], [3, 17, 'U'], [2, 17, 'I'], [2, 18, 'i']); }
@@ -157,7 +161,7 @@ function heroFramesLook(L) {
     for (let i = 0; i < Lg.length; i++) if (18 + off + i < 22) out[18 + off + i] = Lg[i];
     if (shape && shape.cape && shape.cape[sdir]) shape.cape[sdir].forEach((r, i) => dollApply(out, { [18 + off + i]: r }, sdir === 'left'));
     const shift = ov => { const o = {}; for (const r in ov) o[+r + off] = ov[r]; return o; };
-    const wt = L.weapon && L.weapon[0], front = wt && (wt === 'dagger' || (dir === 'up' && WEAPON_FRONT_UP.has(wt)));
+    const wt = L.weapon && L.weapon[0], front = wt && (wt === 'dagger' || wt === 'tome' || (dir === 'up' && WEAPON_FRONT_UP.has(wt)));
     if (wt && !front) outlineW(out, weaponPath(wt, sdir), off, true);
     if (L.head) { dollApply(out, shift(DOLL_HEAD[L.head[0]][sdir])); if (L.head[2]) dollApply(out, shift(DOLL_DECO[L.head[2]][sdir] || {})); }
     if (wt && front) outlineW(out, weaponPath(wt, sdir), off, false);
@@ -180,6 +184,13 @@ function heroBattleImgLook(frame, L) {
     if (W0[0] === 'sword') { pts.push([14, 18, P.T], [15, 17, P.T], [16, 17, P.U], [15, 16, P.U], [17, 18, P.U], [14, 15, P.U]); ln(17, 16, 25, 8, P.I); ln(16, 15, 24, 7, P.i); ln(18, 16, 25, 9, P.i); pts.push([26, 7, P.I]); }
     if (W0[0] === 'dagger') { pts.push([14, 18, P.T], [15, 17, P.U], [14, 16, P.U], [16, 18, P.U]); ln(16, 16, 20, 12, P.I); ln(15, 15, 19, 11, P.i); }
     if (W0[0] === 'staff') { ln(14, 22, 21, 5, P.T); pts.push([21, 3, P.V], [22, 3, P.V], [21, 4, P.V], [22, 4, P.V], [20, 3, P.V], [23, 4, P.V], [21, 2, '#ffffff'], [22, 5, P.V]); }
+    if (W0[0] === 'tome') { // open book floating above the right hand: cover, two pages, spine, text lines, sparkles
+      for (let xx = 16; xx <= 26; xx++) pts.push([xx, 14, P.T]); pts.push([16, 13, P.T], [26, 13, P.T]);
+      for (let xx = 17; xx <= 25; xx++) if (xx !== 21) for (let yy = (xx === 17 || xx === 25 ? 11 : 10); yy <= 13; yy++) pts.push([xx, yy, P.V]);
+      for (let yy = 10; yy <= 14; yy++) pts.push([21, yy, P.T]);
+      for (const [a, b] of [[18, 11], [19, 11], [18, 12], [23, 11], [24, 11], [23, 12], [24, 12]]) pts.push([a, b, '#9a92aa']);
+      pts.push([21, 7, P.U], [19, 6, '#ffffff'], [24, 8, P.U], [15, 17, P.T]);
+    }
     if (W0[0] === 'axe') { ln(14, 21, 21, 4, P.T); for (const [a, b, c] of [[22, 3, 'i'], [22, 4, 'I'], [23, 4, 'I'], [22, 5, 'I'], [23, 5, 'I'], [24, 5, 'I'], [22, 6, 'I'], [23, 6, 'I'], [24, 6, 'i'], [22, 7, 'I'], [23, 7, 'i'], [22, 8, 'i'], [20, 5, 'i'], [19, 5, 'i']]) pts.push([a, b, P[c]]); }
     const id = x.getImageData(0, 0, CW, CH), d = id.data, set = new Set(pts.map(([a, b]) => a + ',' + b));
     const put = (px, py, c) => { if (px < 0 || py < 0 || px >= CW || py >= CH) return; const [r, g, bb] = hex2rgb(c), k = (py * CW + px) * 4; d[k] = r; d[k + 1] = g; d[k + 2] = bb; d[k + 3] = 255; };

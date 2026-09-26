@@ -282,13 +282,13 @@ class Battle {
     let D = (phys ? t.stats.def : t.stats.spd) * stageMul(crit ? Math.min(0, ds) : ds); if (u.hero && phys && u.stats.fx.pierce) D *= 0.7;
     if (phys && u.status === 'brn') A *= 0.5;
     const base = Math.floor(Math.floor(Math.floor(2 * u.lv / 5 + 2) * mv.pow * A / D) / 50) + 2;
-    const mult = t.hero ? 1 : famMult(mv.t, t); let m = mult * (rnd(85, 100) / 100); if (crit) m *= 1.5; if (!u.hero) m *= FOE_POWER; if (u.hero) { m *= HERO_POWER; const S = u.stats; if (S.elem && mv.t !== '一般') m *= 1 + S.elem / 100; if (S.fireUp && mv.t === '火') m *= 1 + S.fireUp / 100; if (S.boltUp && mv.t === '雷') m *= 1 + S.boltUp / 100; if (S.rage && u.hp < u.maxhp / 2) m *= 1.3; if (S.fx.lastStand) m *= 1 + 0.5 * (1 - u.hp / u.maxhp); for (const [ty, p] of u.stats.vs || []) if (t.fam === ty) m *= 1 + p / 100; }
+    const mult = t.hero ? 1 : famMult(mv.t, t); let m = mult * (rnd(85, 100) / 100); if (crit) m *= 1.5; if (!u.hero) m *= FOE_POWER; if (u.hero) { m *= HERO_POWER; const S = u.stats; if (S.elem && mv.t !== '一般') m *= 1 + S.elem / 100; if (S.fireUp && mv.t === '火') m *= 1 + S.fireUp / 100; if (S.boltUp && mv.t === '雷') m *= 1 + S.boltUp / 100; if (S.rage && u.hp < u.maxhp / 2) m *= 1.3; if (S.fx && S.fx.arcaneSurge && !phys && u.mp >= u.maxmp / 2) m *= 1.15; if (S.fx.lastStand) m *= 1 + 0.5 * (1 - u.hp / u.maxhp); for (const [ty, p] of u.stats.vs || []) if (t.fam === ty) m *= 1 + p / 100; }
     if (t.hero && t.stats.resist && t.stats.resist[mv.t]) m *= 1 - t.stats.resist[mv.t] / 100;
     return { dmg: Math.max(1, Math.floor(base * m)), mult, crit };
   }
   *useMove(u, t, id) {
-    let mv = u.hero ? skillMove(id) : MOVES[id]; if (u.hero && id === 'attack' && u.stats.wkind === '法杖') mv = { ...mv, cat: '特', fx: 'magicBolt' };
-    if (u.hero && u.stats.welem && mv.t === '一般' && mv.pow && mv.cat === (u.stats.wkind === '法杖' ? '特' : '物')) mv = { ...mv, t: u.stats.welem };
+    let mv = u.hero ? skillMove(id) : MOVES[id]; if (u.hero && id === 'attack' && isMagicKind(u.stats.wkind)) mv = { ...mv, cat: '特', fx: 'magicBolt' };
+    if (u.hero && u.stats.welem && mv.t === '一般' && mv.pow && mv.cat === (isMagicKind(u.stats.wkind) ? '特' : '物')) mv = { ...mv, t: u.stats.welem };
     // can the user act?
     if (u.status === 'slp') {
       if (u.sleepT <= 0) { u.status = null; yield* this.msg(u.n + '醒過來了！'); }
@@ -324,7 +324,8 @@ class Battle {
       if (u.hero && t.hp > 0 && u.stats.fx.double && mv.cat === '物' && chance(0.25)) { const d2 = Math.min(t.hp, Math.max(1, Math.floor(dmg * 0.5))); yield* this.lunge(u, 8, 2); t.hp -= d2; Sound.sfx('hit'); yield* this.impact(t, 0); yield* this.animHP(t); yield* this.msg('連擊！追加了' + d2 + '點傷害！', { hold: 24 }); }
       if (t.hero && !u.hero && t.stats.fx.thorns && u.hp > 0 && dmg > 0) { const d3 = Math.min(u.hp, Math.max(1, Math.floor(dmg * 0.25))); u.hp -= d3; this.blinkF = 12; yield* this.animHP(u); yield* this.msg('荊棘反彈了' + d3 + '點傷害！', { hold: 24 }); }
       if (u.hero && u.stats.fx.cleave && mv.cat === '物' && t.hp > 0 && chance(0.3)) { yield* this.msg('劈裂！', { hold: 16 }); yield* this.statChange(t, { def: -1 }); }
-      if (u.hero && u.stats.fx.fervor && (this.fervor || 0) < 3) { this.fervor = (this.fervor || 0) + 1; u.stages.atk = Math.min(6, u.stages.atk + 1); yield* this.msg('狂熱！物攻提升了！', { hold: 20 }); }
+      if (u.hero && u.stats.fx.fervor && (this.fervor || 0) < 3) { this.fervor = (this.fervor || 0) + 1; const fk = mv.cat === '物' ? 'atk' : 'spa'; u.stages[fk] = Math.min(3, u.stages[fk] + 1); yield* this.msg('狂熱！' + (fk === 'atk' ? '物攻' : '魔攻') + '提升了！', { hold: 20 }); }
+      if (u.hero && id === 'attack' && u.stats.fx.manaSiphon && u.mp < u.maxmp) { u.mp = Math.min(u.maxmp, u.mp + 4); yield* this.msg('吸魔！回復了4點MP。', { hold: 16 }); }
       if (u.hero && u.stats.fx.stormMark && t.hp > 0 && chance(0.15)) yield* this.inflict(t, 'par', true);
       if (t.hero && t.defending && t.stats.counter && t.hp > 0 && u.hp > 0) { const c2 = this.calcDamage(t, u, t.stats.welem ? { ...MOVES.slash, t: t.stats.welem } : MOVES.slash), cd = Math.min(u.hp, Math.max(1, Math.floor(c2.dmg * 0.7))); yield* this.lunge(t, 10, 3); u.hp -= cd; Sound.sfx('hit'); yield* this.impact(u, 1); yield* this.animHP(u); yield* this.msg(t.n + '趁勢反擊！'); }
       if (shock) { t.wet = 0; Sound.sfx('thunder'); yield* this.msg('潮濕的身體導電了！' + t.n + '感電了！'); if (t.hp > 0) yield* this.inflict(t, 'par', true); }
@@ -442,7 +443,7 @@ class Battle {
     if (gold) { st.money += gold; yield* this.msg(st.name + '得到了' + gold + ' G！'); }
     if (sp.mat && !F.elite && !F.boss && chance(0.5)) { st.bag[sp.mat] = (st.bag[sp.mat] || 0) + 1; yield* this.msg('得到了素材「' + ITEMS[sp.mat].n + '」！', { hold: 30 }); }
     const rpool = Game.ow && Game.ow.map && Game.ow.map.d.gearPool; if (F.rare && rpool) { const g = makeGear(pick(rpool), 3); Sound.jingle('item'); yield* this.msg(F.n + '掉落了' + gearName(g) + '！', { wait: true }); }
-    const dropId = this.cfg.drop || sp.drop; if (dropId) { const g = makeGear(dropId, 4); Sound.jingle('item'); yield* this.msg(F.n + '掉落了' + gearName(g) + '！', { wait: true }); yield* this.msg(gearText(g) + '\n（可以在裝備畫面裝備）', { wait: true }); }
+    const dropId = this.cfg.drop || sp.drop; if (dropId) { const g = makeGear(classGear(dropId), 4); Sound.jingle('item'); yield* this.msg(F.n + '掉落了' + gearName(g) + '！', { wait: true }); yield* this.msg(gearText(g) + '\n（可以在裝備畫面裝備）', { wait: true }); }
     const pool = Game.ow && Game.ow.map && Game.ow.map.d.gearPool; if (pool && !F.elite && !F.boss && chance(this.H.stats.fx.fortune ? 0.16 : 0.08)) { const g = makeGear(pick(pool), rollQuality()); Sound.jingle('item'); yield* this.msg(F.n + '掉落了' + gearName(g) + '！', { wait: true }); }
   }
   *gainExp(amount) {

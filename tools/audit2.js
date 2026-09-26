@@ -18,7 +18,7 @@ module.exports = async (g) => {
       for (const ga of d.gathers || []) addI(ga.mat, id + '採集');
     }
     for (const k of SHOP_LIST) (GEAR[k] ? addG : addI)(k, '道具店'); for (const k of PEDDLER_LIST) (GEAR[k] ? addG : addI)(k, '行商');
-    for (const k of ['knightSword', 'guardHelm', 'chainMail']) addG(k, '道具店(沼澤鱷後)'); for (const k of ['elixir', 'tpBook', 'rope']) addI(k, '道具店(魔像後)');
+    for (const k of ['knightSword', 'magusStaff', 'guardHelm', 'chainMail']) addG(k, '道具店(沼澤鱷後)'); for (const k of ['elixir', 'tpBook', 'rope']) addI(k, '道具店(魔像後)');
     for (const r of RECIPES) { (GEAR[r.out] ? addG : addI)(r.out, '鐵匠配方'); for (const m in r.mats) useM(m, '配方:' + r.out); }
     for (const sp in SPECIES) { const s = SPECIES[sp]; if (s.mat) addI(s.mat, '魔物:' + s.n); if (s.drop) addG(s.drop, s.n + '掉落'); }
     for (const k in SALVAGE) for (const m of SALVAGE[k]) addI(m, '分解');
@@ -26,7 +26,8 @@ module.exports = async (g) => {
     for (const c in COMMISSIONS) { const C = COMMISSIONS[c]; for (const m in C.need || {}) useM(m, '委託' + c); for (const m in (C.reward.items || {})) addI(m, '委託獎勵'); }
     useM('crystal', '支線:師父的遺作');
     // text-searched sources (quest rewards written in events)
-    for (const k in GEAR) if (!gearSrc[k] && new RegExp("makeGear\\('" + k + "'").test(SRC)) addG(k, '劇情/任務');
+    for (const k in GEAR) if (!gearSrc[k] && new RegExp("makeGear\\((classGear\\()?'" + k + "'").test(SRC)) addG(k, '劇情/任務');
+    for (const a in MAGE_SWAP) for (const s of gearSrc[a] || []) addG(MAGE_SWAP[a], s + '(魔導士)');
     for (const k in ITEMS) if (!itemSrc[k] && new RegExp("bag\\." + k + "\\b|bag\\['" + k + "'\\]|item: '" + k + "'").test(SRC)) addI(k, '劇情/任務');
     // ---------- SPECIES ----------
     for (const k in SPECIES) { const s = SPECIES[k];
@@ -50,7 +51,7 @@ module.exports = async (g) => {
     // ---------- GEAR ----------
     for (const k in GEAR) { const e = GEAR[k];
       if (!['weapon', 'head', 'body', 'feet', 'acc'].includes(e.slot)) bad('裝備', k, '部位無效'); if (!(e.t >= 1 && e.t <= 4)) bad('裝備', k, '階級無效');
-      for (const s in e.st || {}) if (!STATS.includes(s)) bad('裝備', k, '數值欄位無效', s);
+      for (const s in e.st || {}) if (!STATS.includes(s) && !(s === 'mp' && e.kind === '魔導書')) bad('裝備', k, '數值欄位無效', s);
       for (const s in e.sp || {}) { if (!SPK.includes(s)) bad('裝備', k, '特殊欄位無效', s); }
       if (e.sp && e.sp.vs && !FAMILIES[e.sp.vs[0]]) bad('裝備', k, '對種族無效', e.sp.vs[0]); if (e.sp && e.sp.resist && !ELEM.includes(e.sp.resist[0])) bad('裝備', k, '抗性屬性無效');
       for (const f of e.fx || []) if (!SPECIALS[f]) bad('裝備', k, '特效不存在', f);
@@ -118,7 +119,7 @@ module.exports = async (g) => {
     miss('主角技能分類', Object.keys(MOVES).filter(k => !MOVES[k].foe && !SKILL_CLASS[MOVES[k].cls]));
     miss('怪物技能分類', Object.keys(MOVES).filter(k => MOVES[k].foe && !MON_CLASS[MOVES[k].cls]));
     miss('紙娃娃外觀', Object.keys(GEAR).filter(k => GEAR[k].slot !== 'acc' && !GEAR[k].look));
-    for (const k in GEAR) { const L = GEAR[k].look; if (!L) continue; if (GEAR[k].slot === 'head' && !(DOLL_HEAD[L[0]] && HEAD_PAL[L[1]] && (!L[2] || DOLL_DECO[L[2]]))) bad('紙娃娃', k, '頭部外觀無效'); if (GEAR[k].slot === 'body' && L !== 'uniform' && !BODY_LOOKS[L]) bad('紙娃娃', k, '身體外觀無效'); if (GEAR[k].slot === 'feet' && !FEET_PAL[L]) bad('紙娃娃', k, '腳部外觀無效'); if (GEAR[k].slot === 'weapon' && !(['sword', 'dagger', 'staff', 'axe'].includes(L[0]) && WPN_PAL[L[1]])) bad('紙娃娃', k, '武器外觀無效'); }
+    for (const k in GEAR) { const L = GEAR[k].look; if (!L) continue; if (GEAR[k].slot === 'head' && !(DOLL_HEAD[L[0]] && HEAD_PAL[L[1]] && (!L[2] || DOLL_DECO[L[2]]))) bad('紙娃娃', k, '頭部外觀無效'); if (GEAR[k].slot === 'body' && L !== 'uniform' && !BODY_LOOKS[L]) bad('紙娃娃', k, '身體外觀無效'); if (GEAR[k].slot === 'feet' && !FEET_PAL[L]) bad('紙娃娃', k, '腳部外觀無效'); if (GEAR[k].slot === 'weapon' && !(['sword', 'dagger', 'staff', 'axe', 'tome'].includes(L[0]) && WPN_PAL[L[1]])) bad('紙娃娃', k, '武器外觀無效'); }
     miss('魔物種族', Object.keys(SPECIES).filter(k => !FAMILIES[SPECIES[k].fam]));
     // ---------- summary ----------
     const counts = { 魔物: Object.keys(SPECIES).length, 技能: Object.keys(MOVES).length, 裝備: Object.keys(GEAR).length, 道具: Object.keys(ITEMS).length, 地圖: Object.keys(MAPS).length, 配方: RECIPES.length, 特效: SPECIALS_KEYS.length, 成就: ACHIEVEMENTS.length, 委託: Object.keys(COMMISSIONS).length };

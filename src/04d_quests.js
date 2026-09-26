@@ -156,9 +156,10 @@ const QUEST_EVENTS = {
     } else if (f.q3 === 1 && (st.bag.crystal || 0) >= 3 && (yield* yesNo('要把水晶碎片×3交給鐵匠嗎？'))) {
       st.bag.crystal -= 3; f.q3 = 2; yield* sayAll(['……就是這個光芒！', '等我一下！']);
       yield* fadeOut(16); for (let i = 0; i < 3; i++) { Sound.sfx('rock'); yield* wait(24); } yield* fadeIn(16);
-      yield* sayAll(['……完成了。師父的遺作「名匠遺作」。', '說實話……我很想把它留在鋪子裡，當作師父的紀念。', '但這把劍是為了真正的戰士打造的。你來決定吧。']);
-      const r = yield* ask('要怎麼做？', ['收下名匠遺作', '讓鐵匠留著'], { cancel: false });
-      if (r === 0) { f.q3res = 'take'; const g = makeGear('masterBlade', 4); yield* itemGet(st.name + '得到了' + gearName(g) + '！'); yield* say('師父一定也會很高興。好好使用它！'); }
+      const mg = classGear('masterBlade') !== 'masterBlade', wn = GEAR[classGear('masterBlade')].n;
+      yield* sayAll(mg ? ['……完成了。不過你是魔導士吧？', '師父的箱子底下還壓著一根沒完成的法杖，我用同樣的水晶把它也完成了。', '師父的另一件遺作「' + wn + '」。你來決定吧。'] : ['……完成了。師父的遺作「名匠遺作」。', '說實話……我很想把它留在鋪子裡，當作師父的紀念。', '但這把劍是為了真正的戰士打造的。你來決定吧。']);
+      const r = yield* ask('要怎麼做？', ['收下' + wn, '讓鐵匠留著'], { cancel: false });
+      if (r === 0) { f.q3res = 'take'; const g = makeGear(classGear('masterBlade'), 4); yield* itemGet(st.name + '得到了' + gearName(g) + '！'); yield* say('師父一定也會很高興。好好使用它！'); }
       else { f.q3res = 'keep'; f.smithDisc = 1; st.bag.tpBook = (st.bag.tpBook || 0) + 1; yield* sayAll(['……謝謝你。', '這是師父留下的修練書，送給你吧。以後強化的費用，我只收一半！']); yield* itemGet(st.name + '得到了天賦之書！強化費用永久半價！'); }
     } else yield* say(f.q3 === 1 ? '水晶碎片的事就拜託了。聽說在老井的地底下。' : f.smith ? '有素材就拿來吧！' : '我是鎮上的鐵匠。把魔物身上的素材帶來，我就幫你打造好東西！');
     f.smith = 1;

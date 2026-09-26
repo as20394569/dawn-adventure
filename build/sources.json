@@ -36,6 +36,10 @@
   "wolfNecklace": [
    "route掉落池"
   ],
+  "primerTome": [
+   "route掉落池",
+   "道具店"
+  ],
   "oakStaff": [
    "forest掉落池"
   ],
@@ -57,6 +61,9 @@
    "鐵匠配方"
   ],
   "herbPouch": [
+   "forest掉落池"
+  ],
+  "herbalTome": [
    "forest掉落池"
   ],
   "dawnSword": [
@@ -105,6 +112,9 @@
    "ruins掉落池",
    "鐵匠配方"
   ],
+  "ancientTome": [
+   "ruins掉落池"
+  ],
   "banditHood": [
    "mine精英掉落"
   ],
@@ -131,6 +141,9 @@
    "mine掉落池",
    "道具店"
   ],
+  "quartzWand": [
+   "mine掉落池"
+  ],
   "stormStaff": [
    "catacomb掉落池",
    "catacomb寶箱"
@@ -147,6 +160,12 @@
   ],
   "kingsSeal": [
    "catacomb掉落池"
+  ],
+  "deathTome": [
+   "catacomb掉落池"
+  ],
+  "magusStaff": [
+   "道具店(沼澤鱷後)"
   ],
   "foxBlade": [
    "鐵匠配方"
@@ -167,6 +186,18 @@
    "鐵匠配方"
   ],
   "silkRobe": [
+   "鐵匠配方"
+  ],
+  "emberRod": [
+   "鐵匠配方"
+  ],
+  "voltRod": [
+   "鐵匠配方"
+  ],
+  "foxfireStaff": [
+   "鐵匠配方"
+  ],
+  "crystalStaff": [
    "鐵匠配方"
   ],
   "fangDagger": [
@@ -204,6 +235,18 @@
   ],
   "masterBlade": [
    "劇情/任務"
+  ],
+  "dawnStaff": [
+   "forest寶箱(魔導士)"
+  ],
+  "masterStaff": [
+   "劇情/任務(魔導士)"
+  ],
+  "fangWand": [
+   "狂牙狼掉落(魔導士)"
+  ],
+  "stolenTome": [
+   "鐵斧格倫掉落(魔導士)"
   ]
  },
  "item": {
@@ -378,7 +421,8 @@
    "強化"
   ],
   "feather": [
-   "配方:featherBoots"
+   "配方:featherBoots",
+   "配方:voltRod"
   ],
   "stone": [
    "配方:stoneMail",
@@ -387,7 +431,8 @@
    "強化"
   ],
   "foxfire": [
-   "配方:foxBlade"
+   "配方:foxBlade",
+   "配方:foxfireStaff"
   ],
   "stinger": [
    "配方:foxBlade"
@@ -396,29 +441,35 @@
    "配方:frogCloak"
   ],
   "spore": [
-   "配方:sporeCharm"
+   "配方:sporeCharm",
+   "配方:foxfireStaff"
   ],
   "shroomCap": [
    "配方:sporeCharm"
   ],
   "crystal": [
    "配方:crystalBlade",
+   "配方:crystalStaff",
    "強化",
    "委託c3",
    "支線:師父的遺作"
   ],
   "leaf": [
-   "配方:crystalBlade"
+   "配方:crystalBlade",
+   "配方:emberRod"
   ],
   "emberCore": [
-   "配方:emberKnife"
+   "配方:emberKnife",
+   "配方:emberRod"
   ],
   "beetleShell": [
    "配方:voltSword",
-   "配方:beetleCharm"
+   "配方:beetleCharm",
+   "配方:voltRod"
   ],
   "silk": [
-   "配方:silkRobe"
+   "配方:silkRobe",
+   "配方:crystalStaff"
   ],
   "boneShard": [
    "配方:boneHelm",

@@ -80,7 +80,7 @@ function gearStats(g) {
 }
 function gearLines(g) { // [base stats text, special text]
   const o = gearStats(g), p = [], s = [];
-  for (const k of STATK) if (o.st[k]) p.push(STAT_NAMES[k] + '+' + o.st[k]);
+  for (const k of STATK) if (o.st[k]) p.push(STAT_NAMES[k] + '+' + o.st[k]); if (o.st.mp) p.push('MP+' + o.st.mp);
   for (const k in SP_NAMES) if (o.sp[k]) s.push(SP_NAMES[k] + '+' + o.sp[k] + '%');
   if (GEAR[g.b].elem) s.unshift(GEAR[g.b].elem + '屬性武器'); for (const [t, v] of o.sp.vs) s.push('對' + (FAMILIES[t] ? FAMILIES[t].n : t + '系') + '+' + v + '%'); for (const t in o.sp.resist) s.push(t + '系傷害-' + o.sp.resist[t] + '%');
   for (const f of o.fx) s.push('★' + SPECIALS[f].n);

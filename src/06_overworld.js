@@ -192,7 +192,7 @@ class Overworld {
     if (it.gather) { st.gath[it.id] = st.steps || 0; const n = rnd(1, 2); st.bag[it.mat] = (st.bag[it.mat] || 0) + n; Sound.sfx('item'); yield* say('採集到了' + ITEMS[it.mat].n + '×' + n + '！'); return; }
     st.flags[it.id] = 1;
     if (it.gold) { st.money += it.gold; Sound.jingle('item'); yield* say(st.name + '撿到了' + it.gold + ' G！'); return; }
-    const n = it.n || 1; let nm; if (GEAR[it.item]) nm = gearName(makeGear(it.item, it.q || 1)); else { st.bag[it.item] = (st.bag[it.item] || 0) + n; nm = ITEMS[it.item].n + (n > 1 ? '×' + n : ''); } const fr = Sound.jingle('item');
+    const n = it.n || 1; let nm; if (GEAR[it.item]) nm = gearName(makeGear(classGear(it.item), it.q || 1)); else { st.bag[it.item] = (st.bag[it.item] || 0) + n; nm = ITEMS[it.item].n + (n > 1 ? '×' + n : ''); } const fr = Sound.jingle('item');
     const tb = new TextBox(st.name + '撿到了' + nm + '！'); UI.push(tb);
     for (let i = 0; i < fr || !tb.done; i++) { if (i >= 30 || tb.state !== 'end') tb.update(); yield; if (tb.done && i >= fr) break; }
     UI.remove(tb);
