@@ -43,7 +43,7 @@ const path = require('path');
         const sc = await p.evaluate(() => __game.Game.scene.constructor.name); if (sc !== 'Battle') return i;
         const u = await p.evaluate(() => __game.UI.stack.map(w => w.constructor.name + (w.items ? '[' + w.items.map(i => i.t).join('/') + ']' : '') + (w.lines ? '"' + w.lines.join('|') + '"' + w.state : '')).join(' ; '));
         if (hook && (await hook(u)) === 'handled') continue;
-        if (u.includes('[戰鬥/背包/防禦/逃跑]')) { await p.evaluate(() => __game.press('a', 2, 4)); await p.evaluate(mi => { const G = __game; const m = G.UI.stack.find(w => w.items && w.items.length <= 4 && !w.items.some(i => i.t === '戰鬥')); if (m) { m.i = Math.min(mi, m.items.length - 1); } G.press('a', 2, 4); }, moveIdx); continue; }
+        if (u.includes('[技能/道具/防禦/逃跑]')) { await p.evaluate(() => __game.press('a', 2, 4)); await p.evaluate(mi => { const G = __game; const m = G.UI.stack.find(w => w.items && w.items.length <= 4 && !w.items.some(i => i.t === '技能')); if (m) { m.i = Math.min(mi, m.items.length - 1); } G.press('a', 2, 4); }, moveIdx); continue; }
         if (u.includes('[是/否]')) { await p.evaluate(() => __game.press('a', 2, 6)); continue; }
         if (u.includes('Menu')) { await p.evaluate(() => __game.press('a', 2, 6)); continue; }
         if (u.includes('TextBox')) { await p.evaluate(() => __game.press('a', 2, 4)); continue; }

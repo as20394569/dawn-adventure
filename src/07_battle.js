@@ -1,6 +1,7 @@
 /* ===================== BATTLE ===================== */
 let HERO_POWER = 1.45, BOSS_HP = 2.1, ELITE_HP = 1.1;
-const BH = TB_Y, FOE_X = 104, FOE_Y = 42, HERO_X = 4, HERO_Y = 126;
+const BTN_MENU = { x: 4, y: TB_Y + 1, w: W - 8, h: TB_H - 2, cols: 2, colW: 82, rowH: 20, ox: 3, oy: 17, buttons: true, style: 'cmd' };
+const BH = TB_Y, FOE_X = W / 2 - 32, HERO_X = 36, HERO_Y = 108, HBAR_Y = 170;
 function critRate(u, mv) { const base = u.hero ? (u.stats.crit || 5) / 100 : 1 / 16; return mv.crit ? base * 2 : base; }
 function hitChance(u, t, mv) { let a = mv.acc; if (!a) return 1; if (u.hero) a += u.stats.hit || 0; if (t.hero) a -= t.stats.eva || 0; return clamp(a, 5, 100) / 100; }
 const stageMul = s => s >= 0 ? (2 + s) / 2 : 2 / (2 - s);
@@ -8,7 +9,7 @@ const STATUS_NAME = { psn: '中毒', par: '麻痺', slp: '睡眠', brn: '灼傷'
 const IMMUNE = { psn: '毒', brn: '火', par: '雷' };
 const battleImgCache = {};
 // battle sprites: rendered at a low native size, then scaled 3x (same chunky pixel look as the hero)
-const FOE_NATIVE = { golem: 28 }, FOE_SCALE = 3, FOE_FOOT = 104;
+const FOE_NATIVE = { golem: 28 }, FOE_SCALE = 3, FOE_FOOT = 110;
 function battleSprite(key) {
   if (battleImgCache[key]) return battleImgCache[key];
   const n = FOE_NATIVE[key] || 24, S = FOE_SCALE, sm = buildShaded(ART[key], n, n / 64);
@@ -45,14 +46,11 @@ function buildBattleBG(kind) {
     field.forEach((col, i) => { x.fillStyle = col; x.fillRect(0, 60 + i * 12, W, 12); });
     x.fillStyle = '#a8e090'; for (let y = 64; y < BH; y += 6) for (let i = (y * 13) % 29; i < W; i += 29) x.fillRect(i, y, 6, 1);
   }
+  const g = x.createLinearGradient(0, 120, 0, BH); g.addColorStop(0, 'rgba(8,10,20,0)'); g.addColorStop(1, 'rgba(8,10,20,0.55)'); x.fillStyle = g; x.fillRect(0, 120, W, BH - 120);
+  const g2 = x.createLinearGradient(0, 0, 0, 34); g2.addColorStop(0, 'rgba(8,10,20,0.35)'); g2.addColorStop(1, 'rgba(8,10,20,0)'); x.fillStyle = g2; x.fillRect(0, 0, W, 34);
   return c;
 }
-function buildPlatform(rx, ry, kind) {
-  const c = mkCanvas(rx * 2 + 2, ry * 2 + 4), x = c.getContext('2d');
-  const cols = kind === 'ruins' ? ['#5a5044', '#b0a488', '#9a8e74', '#c8bca0'] : ['#4a8a40', '#a8d888', '#88c070', '#c0e8a0'];
-  pxEllipse(x, rx + 1, ry + 2, rx, ry, cols[0]); pxEllipse(x, rx + 1, ry + 1, rx - 1, ry - 1, cols[1]); pxEllipse(x, rx + 1, ry + 2, rx - 6, ry - 3, cols[2]); pxEllipse(x, rx - 8, ry - 1, rx * 0.5, ry * 0.35, cols[3]);
-  return c;
-}
+function buildShadow(rx, ry) { const c = mkCanvas(rx * 2 + 2, ry * 2 + 2), x = c.getContext('2d'); pxEllipse(x, rx + 1, ry + 1, rx, ry, '#000000'); return c; }
 
 class Battle {
   constructor(cfg) {
@@ -61,10 +59,10 @@ class Battle {
     this.F = makeFoe(cfg.sp, cfg.lv, cfg.kind);
     const H = this.H = { hero: true, n: st.name, lv: st.lv, t: null, stats: s, maxhp: s.hp, moves: st.moves, stages: { atk: 0, def: 0, spa: 0, spd: 0, spe: 0 }, sleepT: st.sleepT ?? rnd(1, 3) };
     Object.defineProperty(H, 'hp', { get: () => st.hp, set: v => st.hp = v }); Object.defineProperty(H, 'status', { get: () => st.status, set: v => st.status = v });
-    this.bg = buildBattleBG(cfg.bg); this.platF = buildPlatform(42, 9, cfg.bg); this.platH = buildPlatform(52, 11, cfg.bg);
-    this.imgF = battleSprite(cfg.sp); this.foeTX = FOE_X + Math.min(0, W - 3 - (FOE_X + 32 + Math.ceil(this.imgF.bb.w / 2))); this.imgH = heroBattleImg(0, st.equip.weapon); this.imgH2 = heroBattleImg(1, st.equip.weapon);
+    this.bg = buildBattleBG(cfg.bg);
+    this.imgF = battleSprite(cfg.sp); this.foeTX = FOE_X; this.shadowF = buildShadow(Math.round(this.imgF.bb.w * 0.38), 4); this.imgH = heroBattleImg(0, st.equip.weapon); this.imgH2 = heroBattleImg(1, st.equip.weapon);
     this.disp = { F: this.F.hp, H: st.hp, exp: st.exp };
-    this.foeX = -80; this.heroX = W + 10; this.boxF = -120; this.boxH = W + 10; this.cover = 1;
+    this.foeX = W + 40; this.heroX = -80; this.boxF = -30; this.boxH = BH + 4; this.cover = 1;
     this.offF = { x: 0, y: 0 }; this.offH = { x: 0, y: 0 }; this.sinkF = 0; this.sinkH = 0; this.blinkF = 0; this.blinkH = 0; this.alphaF = 1;
     this.fx = []; this.shake = 0; this.t = 0; this.idle = false; this.cmdIdx = 0; this.moveIdx = 0; this.runTries = 0; this.turn = 0; this.phase2 = false; this.fistCD = 2;
     this.tint = null; this.squishF = 0;
@@ -77,53 +75,55 @@ class Battle {
     this.fx = this.fx.filter(p => p.t < p.life);
     if (this.script) { const r = this.script.next(); if (r.done) this.script = null; }
   }
-  center(b) { return b.hero ? { x: this.heroX + 26, y: HERO_Y + 34 } : { x: this.foeX + 32, y: FOE_FOOT - Math.round(this.imgF.bb.h * 0.5) }; }
+  center(b) { return b.hero ? { x: this.heroX + 24, y: HERO_Y + 32 } : { x: this.foeX + 32, y: FOE_FOOT - Math.round(this.imgF.bb.h * 0.5) }; }
   /* ---------------- drawing ---------------- */
   draw(x) {
     const sx = this.shake > 0 ? rnd(-3, 3) : 0, sy = this.shake > 0 ? rnd(-2, 2) : 0;
     x.save(); x.translate(sx, sy);
     x.drawImage(this.bg, 0, 0);
-    x.drawImage(this.platF, this.foeX + 32 - 43, FOE_Y + 50); x.drawImage(this.platH, this.heroX + 24 - 53, HERO_Y + 49);
-    // foe
-    const bob = this.idle && Math.floor(this.t / 16) % 2 ? 1 : 0;
+    const bobH = this.idle && Math.floor(this.t / 18) % 2 ? 1 : 0, bobF = this.idle && Math.floor((this.t + 9) / 22) % 2 ? 1 : 0;
+    // foe (shadow + sprite)
+    if (this.alphaF > 0) { x.globalAlpha = 0.22 * this.alphaF; x.drawImage(this.shadowF, Math.round(this.foeX + 32 + this.offF.x - this.shadowF.width / 2), FOE_FOOT - 5); x.globalAlpha = 1; }
     if (this.alphaF > 0 && !(this.blinkF > 0 && Math.floor(this.blinkF / 3) % 2)) {
-      x.save(); x.beginPath(); x.rect(0, 0, W, FOE_Y + 66); x.clip(); x.globalAlpha = this.alphaF;
+      x.save(); x.beginPath(); x.rect(0, 0, W, FOE_FOOT + 3); x.clip(); x.globalAlpha = this.alphaF;
       const sq = this.squishF, im = this.imgF, fw = im.width, fh = im.height;
-      const fx0 = Math.round(this.foeX + 32 - im.bb.cx + this.offF.x), fy0 = Math.round(FOE_FOOT - im.bb.bot + this.offF.y + this.sinkF);
+      const fx0 = Math.round(this.foeX + 32 - im.bb.cx + this.offF.x), fy0 = Math.round(FOE_FOOT - im.bb.bot + this.offF.y + this.sinkF - bobF);
       if (sq) x.drawImage(im, fx0 - sq, fy0 + sq * 2, fw + sq * 2, fh - sq * 2); else x.drawImage(im, fx0, fy0);
       if (this.tintF && this.tintF.a > 0) { x.globalAlpha = this.tintF.a * this.alphaF; x.drawImage(tinted(this.imgF, this.tintF.c), fx0, fy0); }
       x.restore();
     }
+    // hero (foreground, lower body hidden behind the status bar)
     if (!(this.blinkH > 0 && Math.floor(this.blinkH / 3) % 2)) {
-      x.save(); x.beginPath(); x.rect(0, 0, W, BH); x.clip();
-      const hi = (this.offH.x || this.offH.y) ? this.imgH2 : this.imgH;
-      x.drawImage(hi, this.heroX + this.offH.x, HERO_Y + this.offH.y + this.sinkH + bob);
-      if (this.tintH) { x.globalAlpha = this.tintH.a; x.drawImage(tinted(hi, this.tintH.c), this.heroX + this.offH.x, HERO_Y + this.offH.y + this.sinkH + bob); }
+      x.save(); x.beginPath(); x.rect(0, 0, W, HBAR_Y + 20); x.clip();
+      const hi = (this.offH.x || this.offH.y) ? this.imgH2 : this.imgH; const hx = Math.round(this.heroX + this.offH.x), hy = Math.round(HERO_Y + this.offH.y + this.sinkH + bobH);
+      x.drawImage(hi, hx, hy);
+      if (this.tintH) { x.globalAlpha = this.tintH.a; x.drawImage(tinted(hi, this.tintH.c), hx, hy); }
       x.restore();
     }
     for (const p of this.fx) drawParticle(x, p);
-    this.drawBoxF(x); this.drawBoxH(x, bob);
+    this.drawBoxF(x); this.drawBoxH(x);
     x.restore();
-    drawWin(x, 0, BH, W, H - BH, 'battle');
+    x.fillStyle = '#0b0d18'; x.fillRect(0, BH, W, H - BH); x.fillStyle = PANEL.edge; x.fillRect(0, BH, W, 1);
     if (this.cover > 0) { x.fillStyle = '#000'; const h = Math.round(this.cover * (H / 2 + 1)); x.fillRect(0, 0, W, h); x.fillRect(0, H - h, W, h); }
   }
   drawBoxF(x) {
-    const X = Math.round(this.boxF), Y = 6, F = this.F; if (X < -110) return;
-    x.fillStyle = '#383840'; x.fillRect(X + 2, Y + 2, 106, 30); roundRect(x, X, Y, 106, 30, '#484858'); roundRect(x, X + 1, Y + 1, 104, 28, '#f8f8e8'); x.fillStyle = '#e0e0c8'; x.fillRect(X + 2, Y + 24, 102, 4);
-    Font.draw(x, F.n + (F.elite ? '★' : ''), X + 6, Y - 1, UIC.text, UIC.textSh);
-    Font.drawR(x, 'Lv' + F.lv, X + 102, Y - 1, UIC.text, UIC.textSh);
-    if (F.status) statusBadge(x, F.status, X + 6, Y + 15);
-    drawHPBar(x, X + 32, Y + 17, 48, this.disp.F / F.maxhp);
+    const Y = Math.round(this.boxF), F = this.F; if (Y < -27) return;
+    const X = 8, w = W - 16; drawPanel(x, X, Y, w, 26, F.boss ? UIC.bad : F.elite ? UIC.warm : UIC.accent);
+    let cx = Font.draw(x, F.n, X + 6, Y + 1, UIC.text, UIC.textSh);
+    cx = Font.draw(x, 'Lv' + F.lv, cx + 4, Y + 1, UIC.muted, UIC.textSh);
+    if (F.status) statusBadge(x, F.status, cx + 4, Y + 3);
+    if (F.boss || F.elite) Font.drawR(x, F.boss ? '頭目' : '精英', X + w - 6, Y + 1, F.boss ? UIC.bad : UIC.warm, UIC.textSh);
+    drawHPBar(x, X + 6, Y + 18, w - 12, this.disp.F / F.maxhp, 3);
   }
-  drawBoxH(x, bob) {
-    const X = Math.round(this.boxH), Y = 142 + bob, st = Game.st; if (X > W) return;
-    x.fillStyle = '#383840'; x.fillRect(X + 2, Y + 2, 100, 40); roundRect(x, X, Y, 100, 40, '#484858'); roundRect(x, X + 1, Y + 1, 98, 38, '#f8f8e8'); x.fillStyle = '#e0e0c8'; x.fillRect(X + 2, Y + 34, 96, 4);
-    Font.draw(x, st.name, X + 6, Y - 1, UIC.text, UIC.textSh); Font.drawR(x, 'Lv' + st.lv, X + 96, Y - 1, UIC.text, UIC.textSh);
-    if (st.status) statusBadge(x, st.status, X + 6, Y + 16);
-    drawHPBar(x, X + 28, Y + 15, 48, this.disp.H / this.H.maxhp);
-    Font.drawR(x, Math.ceil(this.disp.H) + '/' + this.H.maxhp, X + 96, Y + 21, UIC.text, UIC.textSh);
-    const lo = expForLevel(st.lv), hi = expForLevel(st.lv + 1); drawExpBar(x, X + 26, Y + 35, 68, (this.disp.exp - lo) / (hi - lo));
-    Font.draw(x, 'EXP', X + 5, Y + 28, '#4878c8', null);
+  drawBoxH(x) {
+    const Y = Math.round(this.boxH), st = Game.st; if (Y >= BH) return;
+    const X = 8, w = W - 16, r = this.disp.H / this.H.maxhp; drawPanel(x, X, Y, w, 24, UIC.accent, 'rgba(11,13,24,0.92)');
+    let cx = Font.draw(x, st.name, X + 6, Y + 1, UIC.text, UIC.textSh);
+    cx = Font.draw(x, 'Lv' + st.lv, cx + 4, Y + 1, UIC.muted, UIC.textSh);
+    if (st.status) statusBadge(x, st.status, cx + 4, Y + 3);
+    const hs = Math.ceil(this.disp.H) + '/' + this.H.maxhp; Font.drawR(x, hs, X + w - 6, Y + 1, r <= 0.2 ? UIC.bad : UIC.text, UIC.textSh); Font.drawR(x, 'HP', X + w - 9 - Font.width(hs), Y + 1, UIC.muted, UIC.textSh);
+    drawHPBar(x, X + 6, Y + 16, w - 12, r, 3);
+    const lo = expForLevel(st.lv), hi = expForLevel(st.lv + 1); drawExpBar(x, X + 6, Y + 21, w - 12, (this.disp.exp - lo) / (hi - lo), 1);
   }
   /* ---------------- helpers ---------------- */
   *msg(text, o = {}) { const t = new TextBox(text, { style: 'battle', auto: o.wait ? false : (o.hold || 38) }); UI.push(t); while (!t.done) { t.update(); yield; } UI.remove(t); }
@@ -141,7 +141,7 @@ class Battle {
     if (b.hero) this.blinkH = 24; else this.blinkF = 24;
   }
   spawn(p) { p.t = 0; p.life = p.life || 30; this.fx.push(p); return p; }
-  *lunge(b, dist = 10, frames = 5) { const o = b.hero ? this.offH : this.offF; const dx = b.hero ? dist : -dist, dy = b.hero ? -dist / 3 : dist / 3; yield* tween(frames, t => { o.x = dx * t; o.y = dy * t; }); yield* tween(frames, t => { o.x = dx * (1 - t); o.y = dy * (1 - t); }); o.x = 0; o.y = 0; }
+  *lunge(b, dist = 10, frames = 5) { const o = b.hero ? this.offH : this.offF; const A = this.center(b), B = this.center(b.hero ? this.F : this.H), L = Math.hypot(B.x - A.x, B.y - A.y) || 1; const dx = (B.x - A.x) / L * dist, dy = (B.y - A.y) / L * dist; yield* tween(frames, t => { o.x = dx * t; o.y = dy * t; }); yield* tween(frames, t => { o.x = dx * (1 - t); o.y = dy * (1 - t); }); o.x = 0; o.y = 0; }
   *shakeB(b, frames = 12, amp = 3) { const o = b.hero ? this.offH : this.offF; for (let i = 0; i < frames; i++) { o.x = (i % 4 < 2 ? amp : -amp); yield; } o.x = 0; }
   sparks(X, Y, n, cols, spd = 2, life = 18, g = 0) { for (let i = 0; i < n; i++) { const a = Math.random() * Math.PI * 2, v = spd * (0.5 + Math.random()); this.spawn({ k: 'dot', x: X, y: Y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, g, c: pick(cols), s: rnd(1, 2), life: life + rnd(-4, 4) }); } }
   star(X, Y, c = '#ffffff', life = 10) { this.spawn({ k: 'star', x: X, y: Y, c, life }); }
@@ -174,19 +174,19 @@ class Battle {
   }
   *intro() {
     Sound.sfx('encounter');
-    yield* parallel(tween(14, t => this.cover = 1 - t), tween(44, t => { const e = 1 - Math.pow(1 - t, 2); this.foeX = lerp(-80, this.foeTX, e); this.heroX = lerp(W + 10, HERO_X, e); }));
+    yield* parallel(tween(14, t => this.cover = 1 - t), tween(40, t => { const e = 1 - Math.pow(1 - t, 3); this.foeX = lerp(W + 40, this.foeTX, e); this.heroX = lerp(-80, HERO_X, e); }));
     this.cover = 0; Sound.cry(Object.keys(SPECIES).indexOf(this.cfg.sp) + 1, this.F.boss ? 0.7 : 1, this.F.boss ? 1.6 : 1);
     if (this.F.boss) { this.shake = 30; Sound.sfx('quake'); }
-    yield* parallel(tween(14, t => this.boxF = lerp(-120, 4, t)), wait(4));
+    yield* parallel(tween(12, t => this.boxF = lerp(-30, 4, 1 - Math.pow(1 - t, 2))), wait(4));
     const intro = this.F.boss ? this.F.n + '擋住了去路！' : this.F.elite ? '精英魔物' + this.F.n + '發動了攻擊！' : '野生的' + this.F.n + '跳出來了！';
     yield* this.msg(intro, { hold: 44 });
-    yield* tween(14, t => this.boxH = lerp(W + 10, 74, t));
+    yield* tween(12, t => this.boxH = lerp(BH + 4, HBAR_Y, 1 - Math.pow(1 - t, 2)));
   }
   *chooseAction() {
     const st = Game.st;
     while (true) {
       this.idle = true;
-      const r = yield* choose(['戰鬥', '背包', '防禦', '逃跑'], { x: 0, y: TB_Y, w: W, h: TB_H, cols: 2, colW: 80, rowH: 16, ox: 22, oy: 24, style: 'cmd', cancel: false, index: this.cmdIdx, title: '要讓' + st.name + '做什麼？' });
+      const r = yield* choose(['技能', '道具', '防禦', '逃跑'], { ...BTN_MENU, cancel: false, index: this.cmdIdx, title: '要讓' + st.name + '做什麼？' });
       this.idle = false; this.cmdIdx = r;
       if (r === 0) { const m = yield* this.chooseMove(); if (m) return { type: 'move', id: m }; }
       else if (r === 1) { const it = yield* bagScreen('battle'); if (it) return { type: 'item', id: it }; }
@@ -197,14 +197,13 @@ class Battle {
   *chooseMove() {
     const st = Game.st;
     if (st.moves.every(m => m.pp <= 0)) { yield* this.msg(st.name + '已經沒有可以使用的技能了！'); return 'struggle'; }
-    let cur = Math.min(this.moveIdx, st.moves.length - 1);
-    const info = { draw: x => { drawWin(x, 116, TB_Y, W - 116, TB_H, 'cmd'); const m = st.moves[cur], mv = MOVES[m.id]; Font.draw(x, 'PP', 124, TB_Y + 5, UIC.text, UIC.textSh); Font.drawR(x, m.pp + '/' + mv.pp, W - 8, TB_Y + 20, m.pp === 0 ? '#e04848' : m.pp <= mv.pp / 4 ? '#e08830' : UIC.text, UIC.textSh); typeBadge(x, mv.t, 129, TB_Y + 40, 34); } };
-    UI.push(info); this.idle = true;
+    let cur = Math.min(this.moveIdx, st.moves.length - 1); this.idle = true;
+    const info = (x, m) => { const mm = st.moves[m.i], mv = MOVES[mm.id]; typeBadge(x, mv.t, 10, TB_Y + 4, 24); Font.draw(x, (mv.cat === '變' ? '變化' : mv.cat === '物' ? '物理' : '魔法') + (mv.pow ? '·' + mv.pow : ''), 38, TB_Y + 2, UIC.muted, UIC.textSh); Font.drawR(x, 'PP ' + mm.pp + '/' + mv.pp, W - 12, TB_Y + 2, mm.pp === 0 ? UIC.bad : mm.pp <= mv.pp / 4 ? UIC.warm : UIC.text, UIC.textSh); };
     while (true) {
-      const r = yield* choose(st.moves.map(m => ({ t: MOVES[m.id].n, col: m.pp === 0 ? '#b0b0b8' : undefined })), { x: 0, y: TB_Y, w: 116, h: TB_H, cols: 2, colW: 50, rowH: 22, ox: 16, oy: 11, style: 'cmd', index: cur, onMove: i => cur = i });
-      if (r < 0) { UI.remove(info); this.idle = false; return null; }
-      if (st.moves[r].pp <= 0) { UI.remove(info); yield* this.msg('這個技能的PP已經用完了！'); UI.push(info); continue; }
-      UI.remove(info); this.idle = false; this.moveIdx = r; return st.moves[r].id;
+      const r = yield* choose(st.moves.map(m => ({ t: MOVES[m.id].n, strip: TYPE_COL[MOVES[m.id].t], col: m.pp === 0 ? UIC.dis : undefined })), { ...BTN_MENU, index: cur, onMove: i => cur = i, drawExtra: info });
+      if (r < 0) { this.idle = false; return null; }
+      if (st.moves[r].pp <= 0) { yield* this.msg('這個技能的PP已經用完了！'); continue; }
+      this.idle = false; this.moveIdx = r; return st.moves[r].id;
     }
   }
   effSpe(b) { return b.stats.spe * stageMul(b.stages.spe) * (b.status === 'par' ? 0.25 : 1); }
@@ -345,12 +344,12 @@ class Battle {
     Sound.cry(Object.keys(SPECIES).indexOf(this.cfg.sp) + 1, 0.6, 1.2); yield* wait(20);
     if (this.F.boss) { Sound.sfx('quake'); this.shake = 50; for (let i = 0; i < 30; i++) { if (i % 3 === 0) this.sparks(this.foeTX + 32 + rnd(-26, 26), FOE_FOOT - 34 + rnd(-26, 26), 3, ['#8a8272', '#a09884', '#ff8040'], 2.5, 26, 0.15); yield; } }
     Sound.sfx('faint'); yield* tween(this.F.boss ? 40 : 22, t => { this.sinkF = t * this.imgF.bb.h; this.alphaF = 1 - t * 0.3; }); this.alphaF = 0;
-    yield* tween(10, t => this.boxF = lerp(4, -120, t));
+    yield* tween(10, t => this.boxF = lerp(4, -30, t));
     yield* this.msg((this.F.boss ? '' : this.F.elite ? '精英魔物' : '野生的') + this.F.n + '倒下了！', { hold: 40 });
   }
   *heroFaint() {
-    Sound.stop(); Sound.sfx('faint'); yield* tween(24, t => this.sinkH = t * 64);
-    yield* tween(10, t => this.boxH = lerp(74, W + 10, t));
+    Sound.stop(); Sound.sfx('faint'); yield* tween(24, t => this.sinkH = t * 70);
+    yield* tween(10, t => this.boxH = lerp(HBAR_Y, BH + 4, t));
     yield* this.msg(Game.st.name + '倒下了……', { wait: true });
   }
   *victory() {
@@ -381,7 +380,7 @@ class Battle {
     for (let i = 0; i < 24; i++) { this.tintH.a = Math.sin(i / 24 * Math.PI) * 0.8; tb.update(); yield; } this.tintH = null;
     while (!tb.done) { tb.update(); yield; }
     let showTotal = false; const rowsL = [['HP', before.hp, after.hp]].concat(ATTRS.map(k => [ATTR_NAMES[k], bA[k], aA[k]]));
-    const win = { draw: x => { drawWin(x, 84, 26, 90, 122, 'menu'); rowsL.forEach(([n, b, a], i) => { const Y = 30 + i * 16; Font.draw(x, n, 94, Y, UIC.text, UIC.textSh); const d = a - b; Font.drawR(x, showTotal ? String(a) : d > 0 ? '+' + d : '—', 166, Y, showTotal ? UIC.text : d > 0 ? '#e05050' : '#a0a0a8', UIC.textSh); }); } };
+    const win = { draw: x => { drawWin(x, 80, 34, 90, 122, 'menu'); rowsL.forEach(([n, b, a], i) => { const Y = 38 + i * 16; Font.draw(x, n, 90, Y, UIC.muted, UIC.textSh); const d = a - b; Font.drawR(x, showTotal ? String(a) : d > 0 ? '+' + d : '—', 162, Y, showTotal ? UIC.text : d > 0 ? UIC.accent : UIC.dis, UIC.textSh); }); } };
     UI.push(win); yield* waitA(); showTotal = true; Sound.sfx('cursor'); yield* waitA(); UI.remove(win); UI.remove(tb);
     for (const id of heroLearnAt(st.lv)) yield* this.learnMove(id);
     if (Sound.current !== 'victory' && this.F.hp <= 0) Sound.play('victory');

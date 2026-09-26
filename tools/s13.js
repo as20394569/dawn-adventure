@@ -14,7 +14,7 @@ module.exports = async (g) => {
   g.log('south', JSON.stringify((await g.state()).st.map), await g.ev(() => { const ow = __game.Game.scene; return ow.p.x + ',' + ow.p.y; }));
   await g.ev(() => { __game.Game.noEnc = false; const ow = __game.Game.scene; ow.run(ow.battleScript({ sp: 'bee', lv: 8, kind: 'wild' })); });
   const until = async (pred, maxF = 800) => { for (let i = 0; i < maxF / 4; i++) { if (await g.ev(pred)) return true; const u = await g.ui(); if (u.includes('TextBox') && !u.includes('Menu')) await g.press('a', 2); else await g.step(4); } return false; };
-  await until(() => __game.UI.stack.some(w => w.items && w.items.some(i => i.t === '戰鬥')));
+  await until(() => __game.UI.stack.some(w => w.items && w.items.some(i => i.t === '技能')));
   await g.press('right', 4); await g.press('a', 10); await g.shot('x_bag');
   g.log('bagui', await g.ui());
 };

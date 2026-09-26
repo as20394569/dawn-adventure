@@ -274,7 +274,7 @@ class Overworld {
     for (const e of this.elites) if (e.excl > 0) { x.drawImage(EXCLAIM, e.px - camX + 5, e.py - camY - 18 - (e.excl > 34 ? (40 - e.excl) : 6)); }
     if (this.p.excl > 0) { x.drawImage(EXCLAIM, p.px - camX + 5, p.py - camY - 20); }
     // map name popup
-    if (this.popup) { const t = this.popup.t; const y = t < 12 ? -26 + t * 2.3 : t > 150 ? 2 - (t - 150) * 1.4 : 2; const w = Font.width(this.popup.name) + 28; drawWin(x, 2, Math.round(y), w, 24, 'sign'); Font.draw(x, this.popup.name, 16, Math.round(y) + 5, '#4a2c18', '#e8d0a0'); }
+    if (this.popup) { const t = this.popup.t; const px = t < 12 ? -90 + t * 7.8 : t > 150 ? 4 - (t - 150) * 3 : 4; const w = Font.width(this.popup.name) + 22; const X = Math.round(px); drawPanel(x, X, 4, w, 20, null); x.fillStyle = UIC.accent; x.fillRect(X + 5, 9, 2, 10); Font.draw(x, this.popup.name, X + 11, 5, UIC.text, UIC.textSh); }
   }
   drawTile(x, c, tx, ty, sx, sy, f, f2) {
     const h = hash2(tx, ty);

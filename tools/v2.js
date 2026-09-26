@@ -6,7 +6,7 @@ module.exports = async (g) => {
   const until = async (pred, maxF = 800) => { for (let i = 0; i < maxF / 4; i++) { if (await g.ev(pred)) return true; const u = await g.ui(); if (u.includes('TextBox') && !u.includes('Menu')) await g.press('a', 2); else await g.step(4); } return false; };
   for (let w = 0; w < 80; w++) { if (await g.ev(() => __game.Game.scene.constructor.name) === 'Battle') break; await g.step(5); }
   await g.step(60); await g.shot('b2_intro');
-  await until(() => __game.UI.stack.some(w => w.items && w.items.some(i => i.t === '戰鬥')));
+  await until(() => __game.UI.stack.some(w => w.items && w.items.some(i => i.t === '技能')));
   await g.shot('b3_cmd'); await g.press('a', 6); await g.press('right', 4); await g.shot('b4_moves');
   await g.press('a', 2); for (let i = 0; i < 5; i++) await g.step(5); await g.shot('b5_anim');
   await g.step(20); await g.shot('b6_hit');

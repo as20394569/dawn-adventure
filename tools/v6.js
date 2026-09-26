@@ -6,7 +6,7 @@ module.exports = async (g) => {
   for (const sp of sps) {
     await g.ev(sp => { const ow = __game.Game.scene; ow.run(ow.battleScript({ sp, lv: 8, kind: sp === 'golem' ? 'boss' : sp === 'wolf' || sp === 'flower' || sp === 'croc' ? 'elite' : 'wild', bg: sp === 'golem' ? 'ruins' : undefined })); }, sp);
     for (let w = 0; w < 80; w++) { if (await g.ev(() => __game.Game.scene.constructor.name) === 'Battle') break; await g.step(5); }
-    for (let i = 0; i < 200; i++) { const u = await g.ui(); if (u.includes('戰鬥')) break; if (u.includes('TextBox')) await g.press('a', 4); else await g.step(4); }
+    for (let i = 0; i < 200; i++) { const u = await g.ui(); if (u.includes('技能/道具')) break; if (u.includes('TextBox')) await g.press('a', 4); else await g.step(4); }
     await g.step(20); await g.shot('m_' + sp);
     // run away / end battle directly
     await g.ev(() => { const b = __game.Game.scene; b.result = 'run'; });

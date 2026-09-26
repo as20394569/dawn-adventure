@@ -737,47 +737,51 @@ function buildBuilding(b) {
   return c;
 }
 
-/* ---------------- UI pieces ---------------- */
-const UIC = { text: '#404048', textSh: '#d4d4cc', white: '#f8f8f8', whiteSh: '#686878', red: '#e04848' };
+/* ---------------- UI pieces (dark modern pixel style) ---------------- */
+const UIC = { text: '#eef1f8', textSh: '#0a0c16', muted: '#8a93b3', accent: '#6ee7d2', warm: '#ffc46b', blue: '#86b4ff', good: '#72e39a', bad: '#ff6b7a', dis: '#5a6180', white: '#eef1f8', whiteSh: '#0a0c16', red: '#ff6b7a' };
+const PANEL = { bg: 'rgba(11,13,24,0.88)', solid: '#0e1120', edge: '#3a4262', hi: 'rgba(255,255,255,0.06)', sel: 'rgba(110,231,210,0.15)', btn: 'rgba(28,32,52,0.9)', btnEdge: '#30375a' };
 function roundRect(x, X, Y, w, h, col) { x.fillStyle = col; x.fillRect(X + 1, Y, w - 2, h); x.fillRect(X, Y + 1, w, h - 2); }
+// thin-line panel with chamfered corners and a short accent tick
+function drawPanel(x, X, Y, w, h, acc = UIC.accent, fill = PANEL.bg, edge = PANEL.edge) {
+  x.fillStyle = fill; x.fillRect(X + 1, Y + 1, w - 2, h - 2);
+  x.fillStyle = edge; x.fillRect(X + 2, Y, w - 4, 1); x.fillRect(X + 2, Y + h - 1, w - 4, 1); x.fillRect(X, Y + 2, 1, h - 4); x.fillRect(X + w - 1, Y + 2, 1, h - 4);
+  x.fillRect(X + 1, Y + 1, 1, 1); x.fillRect(X + w - 2, Y + 1, 1, 1); x.fillRect(X + 1, Y + h - 2, 1, 1); x.fillRect(X + w - 2, Y + h - 2, 1, 1);
+  x.fillStyle = PANEL.hi; x.fillRect(X + 2, Y + 1, w - 4, 1);
+  if (acc) { x.fillStyle = acc; x.fillRect(X + 4, Y, Math.min(14, w - 8), 1); x.fillRect(X + w - 3 - Math.min(6, w - 8), Y + h - 1, Math.min(6, w - 8), 1); }
+}
 function drawWin(x, X, Y, w, h, style = 'ow') {
-  if (style === 'ow') { // white box with double blue frame
-    roundRect(x, X, Y, w, h, '#384868'); roundRect(x, X + 1, Y + 1, w - 2, h - 2, '#88b8e8'); roundRect(x, X + 2, Y + 2, w - 4, h - 4, '#5888c8'); roundRect(x, X + 3, Y + 3, w - 6, h - 6, '#fcfcf8');
-  } else if (style === 'menu') {
-    roundRect(x, X, Y, w, h, '#484858'); roundRect(x, X + 1, Y + 1, w - 2, h - 2, '#a8a8b8'); roundRect(x, X + 2, Y + 2, w - 4, h - 4, '#fcfcf8');
-  } else if (style === 'battle') {
-    x.fillStyle = '#18242c'; x.fillRect(X, Y, w, h); x.fillStyle = '#c8b870'; x.fillRect(X + 1, Y + 1, w - 2, h - 2); x.fillStyle = '#e8d890'; x.fillRect(X + 1, Y + 1, w - 2, 1); x.fillStyle = '#2a4858'; x.fillRect(X + 3, Y + 3, w - 6, h - 6); x.fillStyle = '#34586a'; x.fillRect(X + 3, Y + 3, w - 6, 1);
-  } else if (style === 'cmd') {
-    roundRect(x, X, Y, w, h, '#484858'); roundRect(x, X + 1, Y + 1, w - 2, h - 2, '#b0a060'); roundRect(x, X + 3, Y + 3, w - 6, h - 6, '#fcfcf8');
-  } else if (style === 'sign') {
-    roundRect(x, X, Y, w, h, '#4a2c18'); roundRect(x, X + 1, Y + 1, w - 2, h - 2, '#c89858'); roundRect(x, X + 3, Y + 3, w - 6, h - 6, '#f8ecd0');
-  } else if (style === 'dark') {
-    roundRect(x, X, Y, w, h, '#101820'); roundRect(x, X + 1, Y + 1, w - 2, h - 2, '#5a7088'); roundRect(x, X + 2, Y + 2, w - 4, h - 4, '#223040');
-  }
+  if (style === 'sign') drawPanel(x, X, Y, w, h, UIC.warm);
+  else if (style === 'dark') drawPanel(x, X, Y, w, h, UIC.blue);
+  else if (style === 'plain') drawPanel(x, X, Y, w, h, null);
+  else drawPanel(x, X, Y, w, h, UIC.accent);
 }
-const CURSOR = spriteFrom(['k....', 'kk...', 'kRk..', 'kRRk.', 'kRk..', 'kk...', 'k....'], { k: '#383840', R: '#e05050' });
-const CURSOR_W = spriteFrom(['k....', 'kk...', 'kWk..', 'kWWk.', 'kWk..', 'kk...', 'k....'], { k: '#101418', W: '#f8f8f8' });
-const DOWNARROW = spriteFrom(['kkkkkkk', 'kRRRRRk', '.kRRRk.', '..kRk..', '...k...'], { k: '#704040', R: '#f06060' });
-const UPARROW = spriteFrom(['...k...', '..kRk..', '.kRRRk.', 'kRRRRRk', 'kkkkkkk'], { k: '#704040', R: '#f06060' });
-const TYPE_COL = { '一般': '#a8a47a', '火': '#f08030', '水': '#5888e8', '草': '#6cc048', '雷': '#e8c020', '岩': '#b09838', '毒': '#a048a8', '飛': '#9888e8' };
-function typeBadge(x, t, X, Y, w = 30) { roundRect(x, X, Y, w, 12, shade(TYPE_COL[t], -0.45)); roundRect(x, X + 1, Y + 1, w - 2, 10, TYPE_COL[t]); x.fillStyle = shade(TYPE_COL[t], 0.3); x.fillRect(X + 2, Y + 1, w - 4, 1); Font.drawC(x, t, X + w / 2, Y - 1, '#ffffff', shade(TYPE_COL[t], -0.4)); }
-const STATUS_INFO = { psn: ['毒', '#a048a8'], par: ['麻', '#d0a818'], slp: ['眠', '#8888a0'], brn: ['燒', '#e05838'] };
-function statusBadge(x, s, X, Y) { const [n, c] = STATUS_INFO[s]; roundRect(x, X, Y, 16, 11, shade(c, -0.45)); roundRect(x, X + 1, Y + 1, 14, 9, c); Font.draw(x, n, X + 2, Y - 2, '#ffffff', shade(c, -0.45)); }
-function hpColor(r) { return r > 0.5 ? ['#58d880', '#98f8b0', '#30a060'] : r > 0.2 ? ['#f0c828', '#f8e878', '#b08810'] : ['#f05050', '#f8a0a0', '#b02828']; }
-function drawHPBar(x, X, Y, w, ratio) {
-  roundRect(x, X, Y, w + 18, 7, '#383840');
-  x.fillStyle = '#f8b028'; x.fillRect(X + 1, Y + 1, 15, 5); x.fillStyle = '#383840';
-  // "HP" tiny letters
-  const HP = ['k.k.kk.', 'k.k.k.k', 'kkk.kk.', 'k.k.k..', 'k.k.k..'];
-  for (let r = 0; r < 5; r++) for (let i = 0; i < 7; i++) if (HP[r][i] === 'k') x.fillRect(X + 4 + i, Y + 1 + r, 1, 1);
-  x.fillStyle = '#505060'; x.fillRect(X + 16, Y + 1, w + 1, 5); x.fillStyle = '#ffffff'; x.fillRect(X + 17, Y + 2, w - 1, 3);
-  const fw = Math.max(0, Math.round((w - 1) * clamp(ratio, 0, 1))); if (fw > 0) { const [c, l, d] = hpColor(ratio); x.fillStyle = c; x.fillRect(X + 17, Y + 2, fw, 3); x.fillStyle = l; x.fillRect(X + 17, Y + 2, fw, 1); x.fillStyle = d; x.fillRect(X + 17, Y + 4, fw, 1); }
+// selection highlight for list rows
+function selBar(x, X, Y, w, h = 15) { x.fillStyle = PANEL.sel; x.fillRect(X, Y, w, h); x.fillStyle = UIC.accent; x.fillRect(X, Y, 2, h); }
+// button cell (grid menus)
+function drawBtn(x, X, Y, w, h, on, strip) {
+  x.fillStyle = on ? 'rgba(110,231,210,0.2)' : PANEL.btn; x.fillRect(X + 1, Y + 1, w - 2, h - 2);
+  x.fillStyle = on ? UIC.accent : PANEL.btnEdge; x.fillRect(X + 1, Y, w - 2, 1); x.fillRect(X + 1, Y + h - 1, w - 2, 1); x.fillRect(X, Y + 1, 1, h - 2); x.fillRect(X + w - 1, Y + 1, 1, h - 2);
+  if (strip) { x.fillStyle = strip; x.fillRect(X + 2, Y + 3, 2, h - 6); }
 }
-function drawExpBar(x, X, Y, w, ratio) {
-  x.fillStyle = '#383840'; x.fillRect(X, Y, w + 2, 4); x.fillStyle = '#d0d0c0'; x.fillRect(X + 1, Y + 1, w, 2);
-  const fw = Math.round(w * clamp(ratio, 0, 1)); x.fillStyle = '#48a8f8'; x.fillRect(X + 1, Y + 1, fw, 2); x.fillStyle = '#98d8ff'; x.fillRect(X + 1, Y + 1, fw, 1);
+const CURSOR = spriteFrom(['k...', 'kk..', 'kkk.', 'kk..', 'k...'], { k: '#6ee7d2' });
+const CURSOR_W = CURSOR;
+const DOWNARROW = spriteFrom(['kkkkk', '.kkk.', '..k..'], { k: '#6ee7d2' });
+const UPARROW = spriteFrom(['..k..', '.kkk.', 'kkkkk'], { k: '#6ee7d2' });
+const TYPE_COL = { '一般': '#9a9aa8', '火': '#f0783a', '水': '#4f8ff0', '草': '#5cbf55', '雷': '#e6bb2a', '岩': '#b0925a', '毒': '#a55ad0', '飛': '#8c8cf0' };
+function typeBadge(x, t, X, Y, w = 30) { const c = TYPE_COL[t]; x.fillStyle = shade(c, -0.25); x.fillRect(X + 1, Y, w - 2, 12); x.fillRect(X, Y + 1, w, 10); x.fillStyle = c; x.fillRect(X + 1, Y + 1, w - 2, 10); Font.drawC(x, t, X + w / 2, Y - 1, '#ffffff', shade(c, -0.5)); }
+const STATUS_INFO = { psn: ['毒', '#a55ad0'], par: ['麻', '#d6a91e'], slp: ['眠', '#7f86a8'], brn: ['燒', '#f0603a'] };
+function statusBadge(x, s, X, Y) { const [n, c] = STATUS_INFO[s]; x.fillStyle = c; x.fillRect(X + 1, Y, 14, 11); x.fillRect(X, Y + 1, 16, 9); Font.draw(x, n, X + 2, Y - 2, '#ffffff', shade(c, -0.5)); }
+function hpColor(r) { return r > 0.5 ? ['#62e08c', '#a8f5c4'] : r > 0.2 ? ['#ffcf5a', '#ffe7a8'] : ['#ff5d6c', '#ffb0b8']; }
+// slim bar: dark track, colored fill with a light top line
+function drawHPBar(x, X, Y, w, ratio, h = 4) {
+  x.fillStyle = '#05060c'; x.fillRect(X - 1, Y - 1, w + 2, h + 2); x.fillStyle = '#262b42'; x.fillRect(X, Y, w, h);
+  const fw = Math.max(0, Math.round(w * clamp(ratio, 0, 1))); if (fw > 0) { const [c, l] = hpColor(ratio); x.fillStyle = c; x.fillRect(X, Y, fw, h); x.fillStyle = l; x.fillRect(X, Y, fw, 1); }
 }
-const EXCLAIM = spriteFrom(['.kkkkk.', 'kWWWWWk', 'kWWRWWk', 'kWWRWWk', 'kWWRWWk', 'kWWWWWk', 'kWWRWWk', 'kWWWWWk', '.kkkkk.', '...k...'], { k: '#383840', W: '#ffffff', R: '#e04040' });
+function drawExpBar(x, X, Y, w, ratio, h = 2) {
+  x.fillStyle = '#262b42'; x.fillRect(X, Y, w, h);
+  const fw = Math.round(w * clamp(ratio, 0, 1)); x.fillStyle = UIC.blue; x.fillRect(X, Y, fw, h);
+}
+const EXCLAIM = spriteFrom(['.kkkkk.', 'kWWWWWk', 'kWWRWWk', 'kWWRWWk', 'kWWRWWk', 'kWWWWWk', 'kWWRWWk', 'kWWWWWk', '.kkkkk.', '...k...'], { k: '#1a1206', W: '#ffc46b', R: '#1a1206' });
 const ITEM_BALL = spriteFrom(['................', '................', '................', '......kkk.......', '.....kYYYk......', '....kkkkkkk.....', '...kBBbBBBBk....', '..kBbbbBBBBBk...', '..kBbbbBBBBBk...', '..kBBBBBBBBdk...', '..kBBBBBBBddk...', '...kBBBBBddk....', '....kkkkkkk.....', '....ssssssss....', '................', '................'], { k: '#3a2418', Y: '#f8d048', B: '#c88848', b: '#e8b070', d: '#9a6030', s: 'rgba(0,0,0,0)' });
 const MINI_ICONS = {
   potion: spriteFrom(['...kk...', '..kWWk..', '...kk...', '..kRRk..', '.kRrRRk.', '.kRRRRk.', '.kRRRRk.', '..kkkk..'], { k: '#383840', W: '#e0e0e8', R: '#f06868', r: '#ffffff' }),

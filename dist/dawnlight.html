@@ -1,17 +1,16 @@
 <title>曙光冒險</title>
-<meta name="description" content="手機直式遊玩的 GBA 風格異世界冒險 RPG。">
-<meta name="theme-color" content="#101a17">
+<meta name="description" content="手機直式遊玩的像素風異世界冒險 RPG。">
+<meta name="theme-color" content="#0b0d16">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&display=swap" rel="stylesheet">
 <style>
 :root{
   color-scheme: dark;
-  --bg:#101a17; --bg-dot:#16241f;
-  --shell:#1f5a47; --shell-hi:#2f7c62; --shell-lo:#143b2f; --shell-edge:#0d2921;
-  --bezel:#1a1d26; --bezel-hi:#2a2f3c;
-  --ink:#e6efe9; --muted:#8fb3a4; --led:#ff5a4a;
-  --btn:#e0b65c; --btn-hi:#f4d487; --btn-lo:#a47c2c; --btn-ink:#3b2a0c;
-  --dpad:#232830; --dpad-hi:#3a414d; --pill:#1a3a30;
+  --bg:#0b0d16; --bg-dot:#141830;
+  --shell:#161a2a; --shell-hi:#1d2236; --shell-lo:#121524; --shell-edge:#0a0c14;
+  --bezel:#07080f; --bezel-hi:#262d4a;
+  --ink:#eef1f8; --muted:#8a93b3; --led:#6ee7d2; --accent:#6ee7d2;
+  --dpad:#222840; --dpad-hi:#323a5a; --pill:#1f2438;
   --pix:"Silkscreen", ui-monospace, "Courier New", monospace;
 }
 html,body{height:100%}
@@ -19,47 +18,49 @@ body{margin:0;background:var(--bg);background-image:radial-gradient(var(--bg-dot
   font-family:var(--pix);overflow:hidden;overscroll-behavior:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
 #app{height:100%;box-sizing:border-box;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding-inline:16px;padding-block:6px}
 #shell{--padh:178px;width:min(100%,440px,calc((100dvh - var(--padh) - 44px) * 0.6875 + 32px));display:flex;flex-direction:column;align-items:stretch;gap:10px;box-sizing:border-box;
-  background:linear-gradient(170deg,var(--shell-hi),var(--shell) 30%,var(--shell-lo));border-radius:22px 22px 40px 40px;padding:10px 10px 14px;
-  box-shadow:inset 0 2px 0 rgba(255,255,255,.14),inset 0 -4px 0 var(--shell-edge),0 10px 30px rgba(0,0,0,.45)}
-#bezel{background:var(--bezel);border-radius:10px 10px 18px 18px;padding:5px 6px 8px;box-shadow:inset 0 0 0 2px var(--bezel-hi)}
-#bezelTop{display:flex;align-items:center;gap:8px;font-size:9px;letter-spacing:.14em;color:#7a8296;padding:0 2px 4px}
+  background:linear-gradient(180deg,var(--shell-hi),var(--shell) 40%,var(--shell-lo));border-radius:20px;padding:10px 10px 14px;
+  border:1px solid #262c46;box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 10px 30px rgba(0,0,0,.5)}
+#bezel{background:var(--bezel);border-radius:10px;padding:5px 6px 7px;box-shadow:inset 0 0 0 1px var(--bezel-hi)}
+#bezelTop{display:flex;align-items:center;gap:8px;font-size:9px;letter-spacing:.14em;color:#5f6789;padding:0 2px 4px}
 .led{width:6px;height:6px;border-radius:50%;background:var(--led);box-shadow:0 0 6px var(--led)}
 .brand{margin-left:auto}
 #screenWrap{width:100%;aspect-ratio:11/16;display:flex;align-items:center;justify-content:center;background:#000;border-radius:3px;overflow:hidden}
 #screen{display:block;image-rendering:pixelated;image-rendering:crisp-edges;touch-action:none;background:#000}
 #pad{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:4px;touch-action:none;--s:min(33vw,132px);--b:min(15vw,60px);min-height:calc(var(--s) + 4px)}
 #dpad{position:relative;width:var(--s);height:var(--s);justify-self:start;touch-action:none;cursor:pointer}
-#dpad::before,#dpad::after{content:"";position:absolute;background:var(--dpad);border-radius:8px;box-shadow:inset 0 2px 0 var(--dpad-hi),0 3px 0 #0b0d10}
+#dpad::before,#dpad::after{content:"";position:absolute;background:var(--dpad);border-radius:8px;box-shadow:inset 0 1px 0 var(--dpad-hi),0 3px 0 #06070c}
 #dpad::before{left:33%;top:2%;width:34%;height:96%}
 #dpad::after{top:33%;left:2%;width:96%;height:34%}
 #dpad .arr{position:absolute;z-index:2;width:0;height:0;border:7px solid transparent;opacity:.55;pointer-events:none;transform:translate(-50%,-50%)}
-#dpad .u{left:50%;top:14%;border-bottom:9px solid #9aa3b5;border-top:0}
-#dpad .d{left:50%;top:86%;border-top:9px solid #9aa3b5;border-bottom:0}
-#dpad .l{top:50%;left:14%;border-right:9px solid #9aa3b5;border-left:0}
-#dpad .r{top:50%;left:86%;border-left:9px solid #9aa3b5;border-right:0}
-#dpad[data-dir=up] .u,#dpad[data-dir=down] .d,#dpad[data-dir=left] .l,#dpad[data-dir=right] .r{opacity:1;filter:drop-shadow(0 0 3px #fff)}
-#dpad .hub{position:absolute;z-index:1;left:50%;top:50%;width:22%;height:22%;transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(circle at 40% 35%,#2e343e,#1a1e24)}
+#dpad .u{left:50%;top:14%;border-bottom:9px solid #8a93b3;border-top:0}
+#dpad .d{left:50%;top:86%;border-top:9px solid #8a93b3;border-bottom:0}
+#dpad .l{top:50%;left:14%;border-right:9px solid #8a93b3;border-left:0}
+#dpad .r{top:50%;left:86%;border-left:9px solid #8a93b3;border-right:0}
+#dpad[data-dir=up] .u,#dpad[data-dir=down] .d,#dpad[data-dir=left] .l,#dpad[data-dir=right] .r{opacity:1;filter:drop-shadow(0 0 4px var(--accent))}
+#dpad[data-dir=up] .u{border-bottom-color:var(--accent)}#dpad[data-dir=down] .d{border-top-color:var(--accent)}#dpad[data-dir=left] .l{border-right-color:var(--accent)}#dpad[data-dir=right] .r{border-left-color:var(--accent)}
+#dpad .hub{position:absolute;z-index:1;left:50%;top:50%;width:22%;height:22%;transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(circle at 40% 35%,#2c3350,#1a1f33)}
 #mid{display:flex;flex-direction:column;gap:12px;align-items:center;justify-self:center;align-self:end;padding-bottom:2px}
-#mid button{font-family:var(--pix);font-size:10px;letter-spacing:.06em;color:var(--muted);background:var(--pill);border:0;border-radius:20px;padding:6px 10px;box-shadow:inset 0 -2px 0 rgba(0,0,0,.35),0 1px 0 rgba(255,255,255,.08);touch-action:none;cursor:pointer}
-#mid button.on{transform:translateY(1px);color:var(--ink)}
+#mid button{font-family:var(--pix);font-size:10px;letter-spacing:.06em;color:var(--muted);background:var(--pill);border:1px solid #2c3352;border-radius:6px;padding:6px 10px;touch-action:none;cursor:pointer}
+#mid button.on{transform:translateY(1px);color:var(--accent);border-color:var(--accent)}
 #ab{position:relative;width:calc(var(--b) * 2.2);height:calc(var(--b) * 1.9);justify-self:end}
-#ab .round{position:absolute;width:var(--b);height:var(--b);border-radius:50%;border:0;font-family:var(--pix);font-weight:700;font-size:calc(var(--b) * .32);color:var(--btn-ink);
-  background:radial-gradient(circle at 38% 32%,var(--btn-hi),var(--btn) 55%,var(--btn-lo));box-shadow:0 4px 0 #6f5218,0 6px 12px rgba(0,0,0,.35);touch-action:none;cursor:pointer}
-#ab .round.on{transform:translateY(3px);box-shadow:0 1px 0 #6f5218}
+#ab .round{position:absolute;width:var(--b);height:var(--b);border-radius:50%;font-family:var(--pix);font-weight:700;font-size:calc(var(--b) * .32);color:var(--muted);
+  background:radial-gradient(circle at 40% 30%,#283050,#1a1f33 70%);border:2px solid #343c5e;box-shadow:0 3px 0 #06070c,0 6px 12px rgba(0,0,0,.35);touch-action:none;cursor:pointer}
+#ab [data-k=a]{color:var(--accent);border-color:var(--accent);box-shadow:0 3px 0 #06070c,0 0 10px rgba(110,231,210,.18)}
+#ab .round.on{transform:translateY(2px);box-shadow:0 1px 0 #06070c;background:#2a3456}
 #ab [data-k=a]{right:0;top:0}
 #ab [data-k=b]{left:0;bottom:4px}
 #keys{margin:0;font-family:system-ui,sans-serif;font-size:12px;color:var(--muted);text-align:center;line-height:1.6;max-width:440px}
-#keys b{font-family:var(--pix);color:var(--ink);font-weight:400;background:#1c2b26;border-radius:4px;padding:0 5px}
-#nameBox{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(6,10,12,.6);z-index:10;padding-inline:16px}
+#keys b{font-family:var(--pix);color:var(--ink);font-weight:400;background:#1c2136;border-radius:4px;padding:0 5px}
+#nameBox{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(5,6,12,.7);z-index:10;padding-inline:16px}
 #nameBox[hidden]{display:none}
-#nameForm{background:#fcfcf8;color:#303038;border:4px solid #5888c8;outline:2px solid #384868;border-radius:6px;padding:16px;display:flex;flex-direction:column;gap:10px;width:min(320px,100%);box-sizing:border-box;font-family:system-ui,sans-serif}
+#nameForm{background:#0e1120;color:var(--ink);border:1px solid #3a4262;border-top:2px solid var(--accent);border-radius:6px;padding:16px;display:flex;flex-direction:column;gap:10px;width:min(320px,100%);box-sizing:border-box;font-family:system-ui,sans-serif;box-shadow:0 10px 30px rgba(0,0,0,.5)}
 #nameForm label{font-size:15px;font-weight:600}
-#nameField{font-size:20px;padding:8px 10px;border:2px solid #384868;border-radius:4px;background:#fff;color:#222;-webkit-user-select:text;user-select:text}
-#nameField:focus-visible{outline:3px solid #f0b030}
+#nameField{font-size:20px;padding:8px 10px;border:1px solid #3a4262;border-radius:4px;background:#161a2e;color:var(--ink);-webkit-user-select:text;user-select:text}
+#nameField:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
 #nameForm .row{display:flex;gap:8px;justify-content:flex-end}
-#nameForm button{font-size:15px;padding:8px 16px;border-radius:4px;border:2px solid #384868;background:#e8eef8;color:#223;cursor:pointer}
-#nameForm button[type=submit]{background:#5888c8;color:#fff}
-button:focus-visible{outline:3px solid #f0b030;outline-offset:2px}
+#nameForm button{font-size:15px;padding:8px 16px;border-radius:4px;border:1px solid #3a4262;background:#1a1f33;color:var(--ink);cursor:pointer}
+#nameForm button[type=submit]{background:var(--accent);border-color:var(--accent);color:#0b0d16;font-weight:600}
+button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 @media (hover:none),(pointer:coarse){ #keys{display:none} }
 @media (hover:hover) and (pointer:fine){ #shell{--padh:196px} }
 /* short screens: tighten controls */
@@ -1345,47 +1346,51 @@ function buildBuilding(b) {
   return c;
 }
 
-/* ---------------- UI pieces ---------------- */
-const UIC = { text: '#404048', textSh: '#d4d4cc', white: '#f8f8f8', whiteSh: '#686878', red: '#e04848' };
+/* ---------------- UI pieces (dark modern pixel style) ---------------- */
+const UIC = { text: '#eef1f8', textSh: '#0a0c16', muted: '#8a93b3', accent: '#6ee7d2', warm: '#ffc46b', blue: '#86b4ff', good: '#72e39a', bad: '#ff6b7a', dis: '#5a6180', white: '#eef1f8', whiteSh: '#0a0c16', red: '#ff6b7a' };
+const PANEL = { bg: 'rgba(11,13,24,0.88)', solid: '#0e1120', edge: '#3a4262', hi: 'rgba(255,255,255,0.06)', sel: 'rgba(110,231,210,0.15)', btn: 'rgba(28,32,52,0.9)', btnEdge: '#30375a' };
 function roundRect(x, X, Y, w, h, col) { x.fillStyle = col; x.fillRect(X + 1, Y, w - 2, h); x.fillRect(X, Y + 1, w, h - 2); }
+// thin-line panel with chamfered corners and a short accent tick
+function drawPanel(x, X, Y, w, h, acc = UIC.accent, fill = PANEL.bg, edge = PANEL.edge) {
+  x.fillStyle = fill; x.fillRect(X + 1, Y + 1, w - 2, h - 2);
+  x.fillStyle = edge; x.fillRect(X + 2, Y, w - 4, 1); x.fillRect(X + 2, Y + h - 1, w - 4, 1); x.fillRect(X, Y + 2, 1, h - 4); x.fillRect(X + w - 1, Y + 2, 1, h - 4);
+  x.fillRect(X + 1, Y + 1, 1, 1); x.fillRect(X + w - 2, Y + 1, 1, 1); x.fillRect(X + 1, Y + h - 2, 1, 1); x.fillRect(X + w - 2, Y + h - 2, 1, 1);
+  x.fillStyle = PANEL.hi; x.fillRect(X + 2, Y + 1, w - 4, 1);
+  if (acc) { x.fillStyle = acc; x.fillRect(X + 4, Y, Math.min(14, w - 8), 1); x.fillRect(X + w - 3 - Math.min(6, w - 8), Y + h - 1, Math.min(6, w - 8), 1); }
+}
 function drawWin(x, X, Y, w, h, style = 'ow') {
-  if (style === 'ow') { // white box with double blue frame
-    roundRect(x, X, Y, w, h, '#384868'); roundRect(x, X + 1, Y + 1, w - 2, h - 2, '#88b8e8'); roundRect(x, X + 2, Y + 2, w - 4, h - 4, '#5888c8'); roundRect(x, X + 3, Y + 3, w - 6, h - 6, '#fcfcf8');
-  } else if (style === 'menu') {
-    roundRect(x, X, Y, w, h, '#484858'); roundRect(x, X + 1, Y + 1, w - 2, h - 2, '#a8a8b8'); roundRect(x, X + 2, Y + 2, w - 4, h - 4, '#fcfcf8');
-  } else if (style === 'battle') {
-    x.fillStyle = '#18242c'; x.fillRect(X, Y, w, h); x.fillStyle = '#c8b870'; x.fillRect(X + 1, Y + 1, w - 2, h - 2); x.fillStyle = '#e8d890'; x.fillRect(X + 1, Y + 1, w - 2, 1); x.fillStyle = '#2a4858'; x.fillRect(X + 3, Y + 3, w - 6, h - 6); x.fillStyle = '#34586a'; x.fillRect(X + 3, Y + 3, w - 6, 1);
-  } else if (style === 'cmd') {
-    roundRect(x, X, Y, w, h, '#484858'); roundRect(x, X + 1, Y + 1, w - 2, h - 2, '#b0a060'); roundRect(x, X + 3, Y + 3, w - 6, h - 6, '#fcfcf8');
-  } else if (style === 'sign') {
-    roundRect(x, X, Y, w, h, '#4a2c18'); roundRect(x, X + 1, Y + 1, w - 2, h - 2, '#c89858'); roundRect(x, X + 3, Y + 3, w - 6, h - 6, '#f8ecd0');
-  } else if (style === 'dark') {
-    roundRect(x, X, Y, w, h, '#101820'); roundRect(x, X + 1, Y + 1, w - 2, h - 2, '#5a7088'); roundRect(x, X + 2, Y + 2, w - 4, h - 4, '#223040');
-  }
+  if (style === 'sign') drawPanel(x, X, Y, w, h, UIC.warm);
+  else if (style === 'dark') drawPanel(x, X, Y, w, h, UIC.blue);
+  else if (style === 'plain') drawPanel(x, X, Y, w, h, null);
+  else drawPanel(x, X, Y, w, h, UIC.accent);
 }
-const CURSOR = spriteFrom(['k....', 'kk...', 'kRk..', 'kRRk.', 'kRk..', 'kk...', 'k....'], { k: '#383840', R: '#e05050' });
-const CURSOR_W = spriteFrom(['k....', 'kk...', 'kWk..', 'kWWk.', 'kWk..', 'kk...', 'k....'], { k: '#101418', W: '#f8f8f8' });
-const DOWNARROW = spriteFrom(['kkkkkkk', 'kRRRRRk', '.kRRRk.', '..kRk..', '...k...'], { k: '#704040', R: '#f06060' });
-const UPARROW = spriteFrom(['...k...', '..kRk..', '.kRRRk.', 'kRRRRRk', 'kkkkkkk'], { k: '#704040', R: '#f06060' });
-const TYPE_COL = { '一般': '#a8a47a', '火': '#f08030', '水': '#5888e8', '草': '#6cc048', '雷': '#e8c020', '岩': '#b09838', '毒': '#a048a8', '飛': '#9888e8' };
-function typeBadge(x, t, X, Y, w = 30) { roundRect(x, X, Y, w, 12, shade(TYPE_COL[t], -0.45)); roundRect(x, X + 1, Y + 1, w - 2, 10, TYPE_COL[t]); x.fillStyle = shade(TYPE_COL[t], 0.3); x.fillRect(X + 2, Y + 1, w - 4, 1); Font.drawC(x, t, X + w / 2, Y - 1, '#ffffff', shade(TYPE_COL[t], -0.4)); }
-const STATUS_INFO = { psn: ['毒', '#a048a8'], par: ['麻', '#d0a818'], slp: ['眠', '#8888a0'], brn: ['燒', '#e05838'] };
-function statusBadge(x, s, X, Y) { const [n, c] = STATUS_INFO[s]; roundRect(x, X, Y, 16, 11, shade(c, -0.45)); roundRect(x, X + 1, Y + 1, 14, 9, c); Font.draw(x, n, X + 2, Y - 2, '#ffffff', shade(c, -0.45)); }
-function hpColor(r) { return r > 0.5 ? ['#58d880', '#98f8b0', '#30a060'] : r > 0.2 ? ['#f0c828', '#f8e878', '#b08810'] : ['#f05050', '#f8a0a0', '#b02828']; }
-function drawHPBar(x, X, Y, w, ratio) {
-  roundRect(x, X, Y, w + 18, 7, '#383840');
-  x.fillStyle = '#f8b028'; x.fillRect(X + 1, Y + 1, 15, 5); x.fillStyle = '#383840';
-  // "HP" tiny letters
-  const HP = ['k.k.kk.', 'k.k.k.k', 'kkk.kk.', 'k.k.k..', 'k.k.k..'];
-  for (let r = 0; r < 5; r++) for (let i = 0; i < 7; i++) if (HP[r][i] === 'k') x.fillRect(X + 4 + i, Y + 1 + r, 1, 1);
-  x.fillStyle = '#505060'; x.fillRect(X + 16, Y + 1, w + 1, 5); x.fillStyle = '#ffffff'; x.fillRect(X + 17, Y + 2, w - 1, 3);
-  const fw = Math.max(0, Math.round((w - 1) * clamp(ratio, 0, 1))); if (fw > 0) { const [c, l, d] = hpColor(ratio); x.fillStyle = c; x.fillRect(X + 17, Y + 2, fw, 3); x.fillStyle = l; x.fillRect(X + 17, Y + 2, fw, 1); x.fillStyle = d; x.fillRect(X + 17, Y + 4, fw, 1); }
+// selection highlight for list rows
+function selBar(x, X, Y, w, h = 15) { x.fillStyle = PANEL.sel; x.fillRect(X, Y, w, h); x.fillStyle = UIC.accent; x.fillRect(X, Y, 2, h); }
+// button cell (grid menus)
+function drawBtn(x, X, Y, w, h, on, strip) {
+  x.fillStyle = on ? 'rgba(110,231,210,0.2)' : PANEL.btn; x.fillRect(X + 1, Y + 1, w - 2, h - 2);
+  x.fillStyle = on ? UIC.accent : PANEL.btnEdge; x.fillRect(X + 1, Y, w - 2, 1); x.fillRect(X + 1, Y + h - 1, w - 2, 1); x.fillRect(X, Y + 1, 1, h - 2); x.fillRect(X + w - 1, Y + 1, 1, h - 2);
+  if (strip) { x.fillStyle = strip; x.fillRect(X + 2, Y + 3, 2, h - 6); }
 }
-function drawExpBar(x, X, Y, w, ratio) {
-  x.fillStyle = '#383840'; x.fillRect(X, Y, w + 2, 4); x.fillStyle = '#d0d0c0'; x.fillRect(X + 1, Y + 1, w, 2);
-  const fw = Math.round(w * clamp(ratio, 0, 1)); x.fillStyle = '#48a8f8'; x.fillRect(X + 1, Y + 1, fw, 2); x.fillStyle = '#98d8ff'; x.fillRect(X + 1, Y + 1, fw, 1);
+const CURSOR = spriteFrom(['k...', 'kk..', 'kkk.', 'kk..', 'k...'], { k: '#6ee7d2' });
+const CURSOR_W = CURSOR;
+const DOWNARROW = spriteFrom(['kkkkk', '.kkk.', '..k..'], { k: '#6ee7d2' });
+const UPARROW = spriteFrom(['..k..', '.kkk.', 'kkkkk'], { k: '#6ee7d2' });
+const TYPE_COL = { '一般': '#9a9aa8', '火': '#f0783a', '水': '#4f8ff0', '草': '#5cbf55', '雷': '#e6bb2a', '岩': '#b0925a', '毒': '#a55ad0', '飛': '#8c8cf0' };
+function typeBadge(x, t, X, Y, w = 30) { const c = TYPE_COL[t]; x.fillStyle = shade(c, -0.25); x.fillRect(X + 1, Y, w - 2, 12); x.fillRect(X, Y + 1, w, 10); x.fillStyle = c; x.fillRect(X + 1, Y + 1, w - 2, 10); Font.drawC(x, t, X + w / 2, Y - 1, '#ffffff', shade(c, -0.5)); }
+const STATUS_INFO = { psn: ['毒', '#a55ad0'], par: ['麻', '#d6a91e'], slp: ['眠', '#7f86a8'], brn: ['燒', '#f0603a'] };
+function statusBadge(x, s, X, Y) { const [n, c] = STATUS_INFO[s]; x.fillStyle = c; x.fillRect(X + 1, Y, 14, 11); x.fillRect(X, Y + 1, 16, 9); Font.draw(x, n, X + 2, Y - 2, '#ffffff', shade(c, -0.5)); }
+function hpColor(r) { return r > 0.5 ? ['#62e08c', '#a8f5c4'] : r > 0.2 ? ['#ffcf5a', '#ffe7a8'] : ['#ff5d6c', '#ffb0b8']; }
+// slim bar: dark track, colored fill with a light top line
+function drawHPBar(x, X, Y, w, ratio, h = 4) {
+  x.fillStyle = '#05060c'; x.fillRect(X - 1, Y - 1, w + 2, h + 2); x.fillStyle = '#262b42'; x.fillRect(X, Y, w, h);
+  const fw = Math.max(0, Math.round(w * clamp(ratio, 0, 1))); if (fw > 0) { const [c, l] = hpColor(ratio); x.fillStyle = c; x.fillRect(X, Y, fw, h); x.fillStyle = l; x.fillRect(X, Y, fw, 1); }
 }
-const EXCLAIM = spriteFrom(['.kkkkk.', 'kWWWWWk', 'kWWRWWk', 'kWWRWWk', 'kWWRWWk', 'kWWWWWk', 'kWWRWWk', 'kWWWWWk', '.kkkkk.', '...k...'], { k: '#383840', W: '#ffffff', R: '#e04040' });
+function drawExpBar(x, X, Y, w, ratio, h = 2) {
+  x.fillStyle = '#262b42'; x.fillRect(X, Y, w, h);
+  const fw = Math.round(w * clamp(ratio, 0, 1)); x.fillStyle = UIC.blue; x.fillRect(X, Y, fw, h);
+}
+const EXCLAIM = spriteFrom(['.kkkkk.', 'kWWWWWk', 'kWWRWWk', 'kWWRWWk', 'kWWRWWk', 'kWWWWWk', 'kWWRWWk', 'kWWWWWk', '.kkkkk.', '...k...'], { k: '#1a1206', W: '#ffc46b', R: '#1a1206' });
 const ITEM_BALL = spriteFrom(['................', '................', '................', '......kkk.......', '.....kYYYk......', '....kkkkkkk.....', '...kBBbBBBBk....', '..kBbbbBBBBBk...', '..kBbbbBBBBBk...', '..kBBBBBBBBdk...', '..kBBBBBBBddk...', '...kBBBBBddk....', '....kkkkkkk.....', '....ssssssss....', '................', '................'], { k: '#3a2418', Y: '#f8d048', B: '#c88848', b: '#e8b070', d: '#9a6030', s: 'rgba(0,0,0,0)' });
 const MINI_ICONS = {
   potion: spriteFrom(['...kk...', '..kWWk..', '...kk...', '..kRRk..', '.kRrRRk.', '.kRRRRk.', '.kRRRRk.', '..kkkk..'], { k: '#383840', W: '#e0e0e8', R: '#f06868', r: '#ffffff' }),
@@ -1778,12 +1783,12 @@ const UI = {
 
 class TextBox {
   constructor(text, o = {}) {
-    this.style = o.style || 'ow'; this.x = o.x ?? 0; this.y = o.y ?? TB_Y; this.w = o.w ?? W; this.h = o.h ?? TB_H;
-    this.pad = o.pad ?? 9; this.rows = Math.max(1, Math.floor((this.h - 10) / 16));
+    this.style = o.style || 'ow'; this.x = o.x ?? 4; this.y = o.y ?? TB_Y + 1; this.w = o.w ?? W - 8; this.h = o.h ?? TB_H - 2;
+    this.pad = o.pad ?? 8; this.rows = Math.max(1, Math.floor((this.h - 10) / 16));
     this.lines = Font.wrap(text, this.w - this.pad * 2 - 2);
     this.li = 0; this.ci = 0; this.top = 0; this.scroll = 0; this.state = 'type'; this.t = 0; this.hold = 0;
     this.auto = o.auto; this.keep = o.keep; this.done = false; this.instant = o.instant;
-    this.col = this.style === 'battle' || this.style === 'dark' ? UIC.white : UIC.text; this.sh = this.style === 'battle' || this.style === 'dark' ? UIC.whiteSh : UIC.textSh;
+    this.col = UIC.text; this.sh = UIC.textSh;
     if (this.instant) { this.li = Math.min(this.rows - 1, this.lines.length - 1); this.ci = [...this.lines[this.li]].length; this.state = this.lines.length > this.rows ? 'wait' : 'end'; if (this.lines.length <= this.rows) this.finishLine(); }
   }
   speed() { const base = [0.5, 1, 2][Game.settings.text] || 1; return (Input.held('a') || Input.held('b')) ? Math.max(4, base) : base; }
@@ -1830,9 +1835,9 @@ class Menu {
     this.items = items.map(it => typeof it === 'string' ? { t: it } : it); this.i = o.index || 0; this.cols = o.cols || 1;
     this.rowH = o.rowH || 16; this.style = o.style || 'menu'; this.cancel = o.cancel !== false; this.onMove = o.onMove; this.done = false; this.result = -1;
     const maxW = Math.max(...this.items.map(it => Font.width(it.t) + (it.r ? Font.width(it.r) + 12 : 0)));
-    this.colW = o.colW || maxW + 18; this.w = o.w || this.colW * this.cols + 14; const rowsN = Math.ceil(this.items.length / this.cols);
-    this.h = o.h || Math.min(rowsN, o.visible || rowsN) * this.rowH + 12; this.x = o.x ?? (W - this.w - 2); this.y = o.y ?? (TB_Y - this.h - 2); this.ox = o.ox ?? 14; this.oy = o.oy ?? 5; this.title = o.title;
-    this.scrollMax = o.visible || rowsN; this.scrollTop = 0; this.drawExtra = o.drawExtra; this.noFrame = o.noFrame; this.textCol = o.textCol || UIC.text; this.textSh = o.textSh || UIC.textSh;
+    this.colW = o.colW || maxW + 20; this.w = o.w || this.colW * this.cols + 16; const rowsN = Math.ceil(this.items.length / this.cols);
+    this.h = o.h || Math.min(rowsN, o.visible || rowsN) * this.rowH + 10; this.x = o.x ?? (W - this.w - 4); this.y = o.y ?? (TB_Y - this.h - 1); this.buttons = o.buttons; this.ox = o.ox ?? 14; this.oy = o.oy ?? 5; this.title = o.title;
+    this.scrollMax = o.visible || rowsN; this.scrollTop = 0; this.drawExtra = o.drawExtra; this.noFrame = o.noFrame; this.textCol = o.textCol || '#c9cfe4'; this.textSh = o.textSh || UIC.textSh;
     if (this.onMove) this.onMove(this.i);
   }
   move(d) { const n = this.items.length; let i = this.i; if (this.cols === 1) i = (i + d + n) % n; else { if (d === -1 || d === 1) i = (i + d + n) % n; else i = (i + d * 1 + n * 4) % n; } return i; }
@@ -1851,17 +1856,24 @@ class Menu {
   }
   draw(x) {
     if (!this.noFrame) drawWin(x, this.x, this.y, this.w, this.h, this.style);
-    if (this.title) Font.draw(x, this.title, this.x + 10, this.y + 5, this.style === 'dark' || this.style === 'battle' ? UIC.white : UIC.text, this.style === 'dark' || this.style === 'battle' ? UIC.whiteSh : UIC.textSh);
+    if (this.title) Font.draw(x, this.title, this.x + 8, this.y + 2, UIC.muted, UIC.textSh);
     const n = this.items.length;
     for (let k = 0; k < n; k++) {
       const r = Math.floor(k / this.cols) - this.scrollTop, c = k % this.cols; if (r < 0 || r >= this.scrollMax) continue;
-      const X = this.x + this.ox + c * this.colW, Y = this.y + this.oy + r * this.rowH; const it = this.items[k];
-      Font.draw(x, it.t, X, Y, it.dis ? '#a0a0a8' : (it.col || this.textCol), this.textSh);
-      if (it.r) Font.drawR(x, it.r, this.x + this.w - 10, Y, it.dis ? '#a0a0a8' : this.textCol, this.textSh);
-      if (k === this.i) x.drawImage(this.style === 'dark' ? CURSOR_W : CURSOR, X - 9, Y + 3);
+      const X = this.x + this.ox + c * this.colW, Y = this.y + this.oy + r * this.rowH; const it = this.items[k], on = k === this.i;
+      const tc = it.dis ? UIC.dis : on ? UIC.text : (it.col || this.textCol);
+      if (this.buttons) {
+        const bw = this.colW - 3, bh = this.rowH - 2; drawBtn(x, X, Y, bw, bh, on, it.strip);
+        const ty = Y + Math.round(bh / 2) - 8;
+        if (it.strip) Font.draw(x, it.t, X + 8, ty, tc, this.textSh); else Font.drawC(x, it.t, X + Math.floor(bw / 2), ty, tc, this.textSh);
+        continue;
+      }
+      if (on) selBar(x, this.cols === 1 ? this.x + 2 : X - 7, Y + 7 - Math.floor((this.rowH - 1) / 2), this.cols === 1 ? this.w - 4 : this.colW - 4, this.rowH - 1);
+      Font.draw(x, it.t, X, Y, tc, this.textSh);
+      if (it.r) Font.drawR(x, it.r, this.x + this.w - 8, Y, it.dis ? UIC.dis : UIC.muted, this.textSh);
     }
-    if (this.scrollTop > 0) x.drawImage(UPARROW, this.x + this.w / 2 - 3, this.y + 1);
-    if (this.scrollTop + this.scrollMax < Math.ceil(n / this.cols)) x.drawImage(DOWNARROW, this.x + this.w / 2 - 3, this.y + this.h - 6);
+    if (this.scrollTop > 0) x.drawImage(UPARROW, this.x + this.w / 2 - 2, this.y + 2);
+    if (this.scrollTop + this.scrollMax < Math.ceil(n / this.cols)) x.drawImage(DOWNARROW, this.x + this.w / 2 - 2, this.y + this.h - 5);
     if (this.drawExtra) this.drawExtra(x, this);
   }
 }
@@ -1905,46 +1917,49 @@ const expForLevel = lv => Math.floor(0.8 * lv * lv * lv);
 function heroLearnAt(lv) { return HERO_LEARN.filter(([l]) => l === lv).map(([, m]) => m); }
 
 /* ---------- Screen: background pattern ---------- */
-function screenBG(x, c1 = '#a8d0e8', c2 = '#98c0d8') {
-  x.fillStyle = c1; x.fillRect(0, 0, W, H); x.fillStyle = c2;
-  for (let y = 0; y < H; y += 8) for (let i = (y / 8) % 2 ? 4 : 0; i < W; i += 8) x.fillRect(i, y, 4, 4);
+function screenBG(x) {
+  x.fillStyle = '#0d1020'; x.fillRect(0, 0, W, H);
+  x.fillStyle = '#121632'; for (let y = 12; y < H; y += 16) x.fillRect(0, y, W, 1); for (let i = 8; i < W; i += 16) x.fillRect(i, 0, 1, H);
+  const g = x.createLinearGradient(0, 0, 0, 90); g.addColorStop(0, 'rgba(110,231,210,0.10)'); g.addColorStop(1, 'rgba(110,231,210,0)'); x.fillStyle = g; x.fillRect(0, 0, W, 90);
 }
-function headerBar(x, title, col = '#e86868') {
-  x.fillStyle = shade(col, -0.35); x.fillRect(0, 0, W, 20); x.fillStyle = col; x.fillRect(0, 0, W, 18); x.fillStyle = shade(col, 0.3); x.fillRect(0, 0, W, 2);
-  Font.draw(x, title, 8, 2, '#ffffff', shade(col, -0.45));
+function headerBar(x, title) {
+  x.fillStyle = 'rgba(5,6,12,0.7)'; x.fillRect(0, 0, W, 20);
+  x.fillStyle = UIC.accent; x.fillRect(6, 5, 2, 10);
+  Font.draw(x, title, 12, 2, UIC.text, UIC.textSh);
+  x.fillStyle = PANEL.edge; x.fillRect(0, 20, W, 1); x.fillStyle = UIC.accent; x.fillRect(0, 20, 32, 1);
 }
 
 /* ---------- Status (summary) screen ---------- */
 function eqBonus(st) { const eqB = {}; for (const slot in st.equip) { const it = st.equip[slot] && ITEMS[st.equip[slot]]; if (it && it.bonus) for (const k in it.bonus) eqB[k] = (eqB[k] || 0) + it.bonus[k]; } for (const k in st.boost || {}) eqB[k] = (eqB[k] || 0) + st.boost[k]; return eqB; }
 function heroCard(x, st) {
   drawWin(x, 4, 24, 168, 70, 'menu');
-  x.fillStyle = '#b8e0a8'; x.fillRect(8, 28, 50, 62); x.fillStyle = '#a0d090'; x.fillRect(8, 76, 50, 14);
+  x.fillStyle = '#141a30'; x.fillRect(8, 28, 50, 62); x.fillStyle = '#1b2344'; x.fillRect(8, 76, 50, 14); x.fillStyle = 'rgba(110,231,210,0.25)'; x.fillRect(8, 76, 50, 1);
   x.drawImage(Hero.frames.down[Math.floor(Game.frame / 20) % 4], 0, 0, 16, 22, 17, 30, 32, 44);
-  Font.draw(x, st.name, 64, 27, UIC.text, UIC.textSh); Font.drawR(x, 'Lv.' + st.lv, 166, 27, UIC.text, UIC.textSh);
-  if (st.status) statusBadge(x, st.status, 64, 45); else Font.draw(x, '狀態良好', 64, 42, '#58a058', UIC.textSh);
-  Font.drawR(x, st.money + 'G', 166, 42, '#4878c8', UIC.textSh);
+  Font.draw(x, st.name, 64, 27, UIC.text, UIC.textSh); Font.drawR(x, 'Lv.' + st.lv, 166, 27, UIC.accent, UIC.textSh);
+  if (st.status) statusBadge(x, st.status, 64, 45); else Font.draw(x, '狀態良好', 64, 42, UIC.good, UIC.textSh);
+  Font.drawR(x, st.money + 'G', 166, 42, UIC.warm, UIC.textSh);
   const cur = st.exp - expForLevel(st.lv), need = expForLevel(st.lv + 1) - expForLevel(st.lv);
-  Font.draw(x, '下一級', 64, 58, UIC.text, UIC.textSh); Font.drawR(x, (need - cur) + '', 166, 58, UIC.text, UIC.textSh);
+  Font.draw(x, '下一級', 64, 58, UIC.muted, UIC.textSh); Font.drawR(x, (need - cur) + '', 166, 58, UIC.text, UIC.textSh);
   drawExpBar(x, 64, 84, 100, cur / need);
 }
 function* summaryScreen() {
   let page = 0, mi = 0; const scr = { draw(x) {
-    const st = Game.st, s = heroStats(); screenBG(x, '#f0d8a0', '#e8cc90');
-    headerBar(x, page === 0 ? '冒險者資料' : '技能一覽', page === 0 ? '#d86848' : '#4878c8');
-    Font.drawR(x, (page + 1) + '/2 ←→', W - 6, 2, '#ffffff', page === 0 ? '#8a3a28' : '#284878');
+    const st = Game.st, s = heroStats(); screenBG(x);
+    headerBar(x, page === 0 ? '冒險者資料' : '技能一覽');
+    Font.drawR(x, '← ' + (page + 1) + '/2 →', W - 6, 2, UIC.muted, UIC.textSh);
     heroCard(x, st);
     if (page === 0) {
       const a = heroAttr(st), eqB = eqBonus(st);
       drawWin(x, 4, 98, 168, 62, 'menu');
-      ATTRS.forEach((k, i) => { const X = 12 + (i % 2) * 80, Y = 103 + Math.floor(i / 2) * 17; Font.draw(x, ATTR_NAMES[k], X, Y, UIC.text, UIC.textSh); Font.drawR(x, String(a[k]), X + 70, Y, (st.boost || {})[k] ? '#4878c8' : UIC.text, UIC.textSh); });
+      ATTRS.forEach((k, i) => { const X = 12 + (i % 2) * 80, Y = 103 + Math.floor(i / 2) * 17; Font.draw(x, ATTR_NAMES[k], X, Y, UIC.muted, UIC.textSh); Font.drawR(x, String(a[k]), X + 70, Y, (st.boost || {})[k] ? UIC.accent : UIC.text, UIC.textSh); });
       drawWin(x, 4, 162, 168, 90, 'menu');
       const rowsD = [['HP', st.hp + '/' + s.hp], ['物攻', s.atk, 'atk'], ['物防', s.def, 'def'], ['魔攻', s.spa, 'spa'], ['魔防', s.spd, 'spd'], ['速度', s.spe, 'spe'], ['會心', s.crit.toFixed(1) + '%'], ['迴避', s.eva.toFixed(1) + '%']];
-      rowsD.forEach(([n, v, k], i) => { const X = 12 + (i % 2) * 80, Y = 166 + Math.floor(i / 2) * 20; Font.draw(x, n, X, Y, UIC.text, UIC.textSh); Font.drawR(x, String(v), X + 70, Y, k && eqB[k] ? '#4878c8' : UIC.text, UIC.textSh); });
+      rowsD.forEach(([n, v, k], i) => { const X = 12 + (i % 2) * 80, Y = 166 + Math.floor(i / 2) * 20; Font.draw(x, n, X, Y, UIC.muted, UIC.textSh); Font.drawR(x, String(v), X + 70, Y, k && eqB[k] ? UIC.accent : UIC.text, UIC.textSh); });
     } else {
       drawWin(x, 4, 98, 168, 84, 'menu');
-      st.moves.forEach((m, i) => { const mv = MOVES[m.id]; const Y = 102 + i * 19; typeBadge(x, mv.t, 18, Y + 2, 28); Font.draw(x, mv.n, 52, Y, UIC.text, UIC.textSh); Font.drawR(x, m.pp + '/' + mv.pp, 164, Y, m.pp === 0 ? '#e04848' : UIC.text, UIC.textSh); if (i === mi) x.drawImage(CURSOR, 9, Y + 5); });
+      st.moves.forEach((m, i) => { const mv = MOVES[m.id]; const Y = 102 + i * 19; if (i === mi) selBar(x, 6, Y, 164, 17); typeBadge(x, mv.t, 14, Y + 2, 30); Font.draw(x, mv.n, 52, Y, UIC.text, UIC.textSh); Font.drawR(x, m.pp + '/' + mv.pp, 164, Y, m.pp === 0 ? UIC.bad : UIC.text, UIC.textSh); });
       const mv = MOVES[st.moves[mi].id]; drawWin(x, 4, 184, 168, 68, 'menu');
-      Font.draw(x, (mv.cat === '變' ? '變化' : mv.cat === '物' ? '物理' : '魔法') + ' 威力' + (mv.pow || '—') + ' 命中' + (mv.acc || '—'), 12, 186, '#4878c8', UIC.textSh);
+      Font.draw(x, (mv.cat === '變' ? '變化' : mv.cat === '物' ? '物理' : '魔法') + ' 威力' + (mv.pow || '—') + ' 命中' + (mv.acc || '—'), 12, 186, UIC.accent, UIC.textSh);
       Font.wrap(mv.d, 152).slice(0, 3).forEach((l, i) => Font.draw(x, l, 12, 202 + i * 15, UIC.text, UIC.textSh));
     }
   } };
@@ -1963,13 +1978,13 @@ function* summaryScreen() {
 function* pickMoveToForget(newId) {
   let mi = 0; const list = [...Game.st.moves.map(m => m.id), newId];
   const scr = { draw(x) {
-    screenBG(x, '#c8d8f0', '#b8c8e8'); headerBar(x, '要忘記哪個技能？', '#4878c8');
+    screenBG(x); headerBar(x, '要忘記哪個技能？');
     drawWin(x, 4, 24, 168, 104, 'menu');
-    list.forEach((id, i) => { const mv = MOVES[id]; const Y = 28 + i * 19; typeBadge(x, mv.t, 18, Y + 2, 28); Font.draw(x, mv.n, 52, Y, i === 4 ? '#4878c8' : UIC.text, UIC.textSh); Font.drawR(x, i === 4 ? '新技能' : 'PP ' + Game.st.moves[i].pp, 164, Y, i === 4 ? '#4878c8' : UIC.text, UIC.textSh); if (i === mi) x.drawImage(CURSOR, 9, Y + 5); });
+    list.forEach((id, i) => { const mv = MOVES[id]; const Y = 28 + i * 19; if (i === mi) selBar(x, 6, Y, 164, 17); typeBadge(x, mv.t, 14, Y + 2, 30); Font.draw(x, mv.n, 52, Y, i === 4 ? UIC.accent : UIC.text, UIC.textSh); Font.drawR(x, i === 4 ? '新技能' : 'PP ' + Game.st.moves[i].pp, 164, Y, i === 4 ? UIC.accent : UIC.muted, UIC.textSh); });
     const mv = MOVES[list[mi]]; drawWin(x, 4, 132, 168, 80, 'menu');
-    Font.draw(x, (mv.cat === '變' ? '變化' : mv.cat === '物' ? '物理' : '魔法') + ' 威力' + (mv.pow || '—') + ' PP' + mv.pp, 12, 134, '#4878c8', UIC.textSh);
+    Font.draw(x, (mv.cat === '變' ? '變化' : mv.cat === '物' ? '物理' : '魔法') + ' 威力' + (mv.pow || '—') + ' PP' + mv.pp, 12, 134, UIC.accent, UIC.textSh);
     Font.wrap(mv.d, 152).slice(0, 4).forEach((l, i) => Font.draw(x, l, 12, 150 + i * 15, UIC.text, UIC.textSh));
-    drawWin(x, 4, 216, 168, 36, 'menu'); Font.draw(x, 'A：忘記這招', 14, 218, UIC.text, UIC.textSh); Font.draw(x, 'B：不學新技能', 14, 234, '#8890a0', UIC.textSh);
+    drawWin(x, 4, 216, 168, 36, 'menu'); Font.draw(x, 'A：忘記這招', 14, 218, UIC.text, UIC.textSh); Font.draw(x, 'B：不學新技能', 14, 234, UIC.muted, UIC.textSh);
   } };
   UI.push(scr); let res = -1;
   while (true) {
@@ -1989,12 +2004,12 @@ function* bagScreen(mode = 'field') { // returns item id used (battle) or null
   const listFor = t => bagList(it => tabs[t] === '道具' ? (!it.key && !it.equip && (mode !== 'battle' || it.use !== 'boost')) : tabs[t] === '裝備' ? !!it.equip : !!it.key);
   const VIS = 7;
   const scr = { draw(x) {
-    screenBG(x, '#f0c890', '#e8bc80'); headerBar(x, '背包', '#c87838'); Font.drawR(x, Game.st.money + ' G', W - 6, 2, '#ffffff', '#6a3818');
-    tabs.forEach((t, i) => { const X = 4 + i * 57; roundRect(x, X, 22, 54, 15, i === tab ? '#fff4d8' : '#a86028'); Font.drawC(x, t, X + 27, 22, i === tab ? UIC.text : '#f8e0c0', i === tab ? UIC.textSh : '#6a3818'); });
+    screenBG(x); headerBar(x, '背包'); Font.drawR(x, Game.st.money + ' G', W - 6, 2, UIC.warm, UIC.textSh);
+    tabs.forEach((t, i) => { const X = 4 + i * 57; drawBtn(x, X, 23, 54, 15, i === tab); Font.drawC(x, t, X + 27, 22, i === tab ? UIC.text : UIC.muted, UIC.textSh); });
     const list = listFor(tab); drawWin(x, 4, 40, 168, VIS * 18 + 10, 'menu');
-    if (!list.length) Font.draw(x, '（空空如也）', 20, 46, '#909098', UIC.textSh);
+    if (!list.length) Font.draw(x, '（空空如也）', 20, 46, UIC.muted, UIC.textSh);
     const top = Math.max(0, Math.min(idx - 3, list.length - VIS));
-    list.slice(top, top + VIS).forEach((k, i) => { const Y = 44 + i * 18; const eq = Object.values(Game.st.equip).includes(k); Font.draw(x, ITEMS[k].n + (eq ? '[E]' : ''), 20, Y, UIC.text, UIC.textSh); if (!ITEMS[k].key) Font.drawR(x, '×' + Game.st.bag[k], 164, Y, UIC.text, UIC.textSh); if (top + i === idx) x.drawImage(CURSOR, 11, Y + 3); });
+    list.slice(top, top + VIS).forEach((k, i) => { const Y = 44 + i * 18; const eq = Object.values(Game.st.equip).includes(k); if (top + i === idx) selBar(x, 6, Y - 1, 164, 17); Font.draw(x, ITEMS[k].n, 14, Y, UIC.text, UIC.textSh); if (eq) Font.draw(x, 'E', 16 + Font.width(ITEMS[k].n), Y, UIC.accent, UIC.textSh); if (!ITEMS[k].key) Font.drawR(x, '×' + Game.st.bag[k], 164, Y, UIC.muted, UIC.textSh); });
     if (top > 0) x.drawImage(UPARROW, 85, 41); if (top + VIS < list.length) x.drawImage(DOWNARROW, 85, 40 + VIS * 18 + 4);
     drawWin(x, 4, 180, 168, 72, 'menu');
     if (list[idx]) Font.wrap(ITEMS[list[idx]].d, 152).slice(0, 4).forEach((l, i) => Font.draw(x, l, 12, 184 + i * 16, UIC.text, UIC.textSh));
@@ -2044,11 +2059,11 @@ function useItem(k) { // returns message or null; applies to Game.st
 function* equipScreen() {
   let idx = 0; const slots = Object.keys(EQUIP_SLOTS);
   const scr = { draw(x) {
-    screenBG(x, '#c8e0c0', '#b8d4b0'); headerBar(x, '裝備', '#58a068');
+    screenBG(x); headerBar(x, '裝備');
     drawWin(x, 4, 24, 168, 116, 'menu');
-    slots.forEach((sl, i) => { const Y = 28 + i * 36; Font.draw(x, EQUIP_SLOTS[sl], 20, Y, '#58a068', UIC.textSh); const it = Game.st.equip[sl] && ITEMS[Game.st.equip[sl]]; Font.draw(x, it ? it.n : '——', 60, Y, UIC.text, UIC.textSh); if (it) Font.drawR(x, Object.entries(it.bonus).map(([k, v]) => STAT_NAMES[k] + '+' + v).join(' '), 164, Y + 16, '#4878c8', UIC.textSh); if (i === idx) x.drawImage(CURSOR, 11, Y + 3); });
+    slots.forEach((sl, i) => { const Y = 28 + i * 36; if (i === idx) selBar(x, 6, Y, 164, 34); Font.draw(x, EQUIP_SLOTS[sl], 14, Y, UIC.accent, UIC.textSh); const it = Game.st.equip[sl] && ITEMS[Game.st.equip[sl]]; Font.draw(x, it ? it.n : '——', 60, Y, UIC.text, UIC.textSh); if (it) Font.drawR(x, Object.entries(it.bonus).map(([k, v]) => STAT_NAMES[k] + '+' + v).join(' '), 164, Y + 16, UIC.muted, UIC.textSh); });
     const s = heroStats(); drawWin(x, 4, 144, 168, 108, 'menu');
-    [['HP', Game.st.hp + '/' + s.hp], ['物攻', s.atk], ['物防', s.def], ['魔攻', s.spa], ['魔防', s.spd], ['速度', s.spe]].forEach(([a, b], i) => { const Y = 148 + i * 16; Font.draw(x, a, 20, Y, UIC.text, UIC.textSh); Font.drawR(x, String(b), 150, Y, UIC.text, UIC.textSh); });
+    [['HP', Game.st.hp + '/' + s.hp], ['物攻', s.atk], ['物防', s.def], ['魔攻', s.spa], ['魔防', s.spd], ['速度', s.spe]].forEach(([a, b], i) => { const Y = 148 + i * 16; Font.draw(x, a, 14, Y, UIC.muted, UIC.textSh); Font.drawR(x, String(b), 150, Y, UIC.text, UIC.textSh); });
   } };
   UI.push(scr);
   while (true) {
@@ -2071,10 +2086,10 @@ function* optionsScreen() {
   let idx = 0; const labels = ['文字速度', '背景音樂', '音效', '關閉'];
   const val = i => i === 0 ? ['慢', '普通', '快'][Game.settings.text] : i === 1 ? (Game.settings.music ? '開' : '關') : i === 2 ? (Game.settings.sfx ? '開' : '關') : '';
   const scr = { draw(x) {
-    screenBG(x, '#d8d0f0', '#ccc4e8'); headerBar(x, '設定', '#7868b8');
+    screenBG(x); headerBar(x, '設定');
     drawWin(x, 4, 30, 168, 84, 'menu');
-    labels.forEach((l, i) => { const Y = 36 + i * 18; Font.draw(x, l, 20, Y, UIC.text, UIC.textSh); if (i < 3) Font.drawR(x, '← ' + val(i) + ' →', 164, Y, '#e05050', UIC.textSh); if (i === idx) x.drawImage(CURSOR, 11, Y + 3); });
-    drawWin(x, 4, 118, 168, 52, 'menu'); Font.draw(x, '← → 切換設定', 14, 124, UIC.text, UIC.textSh); Font.draw(x, 'B 鍵返回', 14, 140, UIC.text, UIC.textSh);
+    labels.forEach((l, i) => { const Y = 36 + i * 18; if (i === idx) selBar(x, 6, Y - 1, 164, 17); Font.draw(x, l, 14, Y, UIC.text, UIC.textSh); if (i < 3) Font.drawR(x, '← ' + val(i) + ' →', 164, Y, UIC.accent, UIC.textSh); });
+    drawWin(x, 4, 118, 168, 52, 'menu'); Font.draw(x, '← → 切換設定', 14, 124, UIC.muted, UIC.textSh); Font.draw(x, 'B 鍵返回', 14, 140, UIC.muted, UIC.textSh);
   } };
   UI.push(scr);
   while (true) {
@@ -2089,7 +2104,7 @@ function* optionsScreen() {
 }
 
 /* ---------- Shop ---------- */
-function moneyWin(x) { drawWin(x, 2, 2, 86, 30, 'menu'); Font.draw(x, '金錢', 10, 3, '#4878c8', UIC.textSh); Font.drawR(x, Game.st.money + ' G', 80, 15, UIC.text, UIC.textSh); }
+function moneyWin(x) { drawWin(x, 2, 2, 86, 30, 'menu'); Font.draw(x, '金錢', 10, 3, UIC.muted, UIC.textSh); Font.drawR(x, Game.st.money + ' G', 80, 15, UIC.warm, UIC.textSh); }
 function* shopFlow() {
   const mw = { draw: moneyWin }; UI.push(mw);
   while (true) {
@@ -2103,10 +2118,10 @@ function* shopBuy() {
   const scr = { draw(x) {
     drawWin(x, 4, 36, 168, VIS * 18 + 10, 'menu');
     const top = Math.max(0, Math.min(idx - 3, list.length - VIS));
-    list.slice(top, top + VIS).forEach((k, i) => { const Y = 40 + i * 18; const it = ITEMS[k]; Font.draw(x, it.n, 20, Y, UIC.text, UIC.textSh); Font.drawR(x, it.price + 'G', 164, Y, UIC.text, UIC.textSh); if (top + i === idx) x.drawImage(CURSOR, 11, Y + 3); });
+    list.slice(top, top + VIS).forEach((k, i) => { const Y = 40 + i * 18; const it = ITEMS[k]; if (top + i === idx) selBar(x, 6, Y - 1, 164, 17); Font.draw(x, it.n, 14, Y, UIC.text, UIC.textSh); Font.drawR(x, it.price + 'G', 164, Y, UIC.warm, UIC.textSh); });
     if (top > 0) x.drawImage(UPARROW, 85, 37); if (top + VIS < list.length) x.drawImage(DOWNARROW, 85, 36 + VIS * 18 + 4);
-    drawWin(x, 0, TB_Y, W, TB_H, 'ow'); const it = ITEMS[list[idx]];
-    Font.wrap(it.d + (it.equip ? '' : '（持有' + (Game.st.bag[list[idx]] || 0) + '）'), 156).slice(0, 3).forEach((l, i) => Font.draw(x, l, 9, TB_Y + 6 + i * 16, UIC.text, UIC.textSh));
+    drawWin(x, 4, TB_Y + 1, W - 8, TB_H - 2, 'ow'); const it = ITEMS[list[idx]];
+    Font.wrap(it.d + (it.equip ? '' : '（持有' + (Game.st.bag[list[idx]] || 0) + '）'), 150).slice(0, 3).forEach((l, i) => Font.draw(x, l, 12, TB_Y + 7 + i * 16, UIC.text, UIC.textSh));
   } };
   UI.push(scr);
   while (true) {
@@ -2118,7 +2133,7 @@ function* shopBuy() {
       if (it.equip && (Game.st.bag[k] || Object.values(Game.st.equip).includes(k))) { UI.remove(scr); yield* say('你已經有' + it.n + '了。'); UI.push(scr); continue; }
       if (maxQ < 1) { UI.remove(scr); yield* say('錢不夠喔。'); UI.push(scr); continue; }
       if (!it.equip) {
-        const q = { draw(x) { drawWin(x, 80, TB_Y - 32, 94, 30, 'menu'); Font.draw(x, '×' + String(qty).padStart(2, '0'), 90, TB_Y - 25, UIC.text, UIC.textSh); Font.drawR(x, (qty * it.price) + 'G', 166, TB_Y - 25, UIC.text, UIC.textSh); } };
+        const q = { draw(x) { drawWin(x, 80, TB_Y - 32, 94, 30, 'menu'); Font.draw(x, '×' + String(qty).padStart(2, '0'), 90, TB_Y - 25, UIC.text, UIC.textSh); Font.drawR(x, (qty * it.price) + 'G', 166, TB_Y - 25, UIC.warm, UIC.textSh); } };
         UI.push(q); let ok = false;
         while (true) { if (Input.repeat('up')) { qty = qty >= maxQ ? 1 : qty + 1; Sound.sfx('cursor'); } if (Input.repeat('down')) { qty = qty <= 1 ? maxQ : qty - 1; Sound.sfx('cursor'); } if (Input.repeat('right')) { qty = Math.min(maxQ, qty + 10); Sound.sfx('cursor'); } if (Input.repeat('left')) { qty = Math.max(1, qty - 10); Sound.sfx('cursor'); } if (Input.pressed('a')) { Input.consume('a'); ok = true; break; } if (Input.pressed('b')) { Input.consume('b'); break; } yield; }
         UI.remove(q); if (!ok) continue;
@@ -2137,10 +2152,10 @@ function* shopSell() {
   const listNow = () => bagList(it => !it.key && !(it.price === 0 && !it.sell)).filter(k => !Object.values(Game.st.equip).includes(k) || Game.st.bag[k] > 1);
   const scr = { draw(x) {
     const list = listNow(); drawWin(x, 4, 36, 168, VIS * 18 + 10, 'menu');
-    if (!list.length) Font.draw(x, '沒有可以賣的東西', 20, 42, '#909098', UIC.textSh);
+    if (!list.length) Font.draw(x, '沒有可以賣的東西', 14, 42, UIC.muted, UIC.textSh);
     const top = Math.max(0, Math.min(idx - 3, list.length - VIS));
-    list.slice(top, top + VIS).forEach((k, i) => { const Y = 40 + i * 18; const it = ITEMS[k]; Font.draw(x, it.n + '×' + Game.st.bag[k], 20, Y, UIC.text, UIC.textSh); Font.drawR(x, sellPrice(k) + 'G', 164, Y, UIC.text, UIC.textSh); if (top + i === idx) x.drawImage(CURSOR, 11, Y + 3); });
-    drawWin(x, 0, TB_Y, W, TB_H, 'ow'); Font.draw(x, list.length ? '要賣哪一樣東西呢？' : '目前沒有可以賣的東西。', 9, TB_Y + 6, UIC.text, UIC.textSh); Font.draw(x, '（裝備中的物品不能賣）', 9, TB_Y + 22, '#8890a0', UIC.textSh);
+    list.slice(top, top + VIS).forEach((k, i) => { const Y = 40 + i * 18; const it = ITEMS[k]; if (top + i === idx) selBar(x, 6, Y - 1, 164, 17); Font.draw(x, it.n + '×' + Game.st.bag[k], 14, Y, UIC.text, UIC.textSh); Font.drawR(x, sellPrice(k) + 'G', 164, Y, UIC.warm, UIC.textSh); });
+    drawWin(x, 4, TB_Y + 1, W - 8, TB_H - 2, 'ow'); Font.draw(x, list.length ? '要賣哪一樣東西呢？' : '目前沒有可以賣的東西。', 12, TB_Y + 7, UIC.text, UIC.textSh); Font.draw(x, '（裝備中的物品不能賣）', 12, TB_Y + 23, UIC.muted, UIC.textSh);
   } };
   UI.push(scr);
   while (true) {
@@ -2449,7 +2464,7 @@ class Overworld {
     for (const e of this.elites) if (e.excl > 0) { x.drawImage(EXCLAIM, e.px - camX + 5, e.py - camY - 18 - (e.excl > 34 ? (40 - e.excl) : 6)); }
     if (this.p.excl > 0) { x.drawImage(EXCLAIM, p.px - camX + 5, p.py - camY - 20); }
     // map name popup
-    if (this.popup) { const t = this.popup.t; const y = t < 12 ? -26 + t * 2.3 : t > 150 ? 2 - (t - 150) * 1.4 : 2; const w = Font.width(this.popup.name) + 28; drawWin(x, 2, Math.round(y), w, 24, 'sign'); Font.draw(x, this.popup.name, 16, Math.round(y) + 5, '#4a2c18', '#e8d0a0'); }
+    if (this.popup) { const t = this.popup.t; const px = t < 12 ? -90 + t * 7.8 : t > 150 ? 4 - (t - 150) * 3 : 4; const w = Font.width(this.popup.name) + 22; const X = Math.round(px); drawPanel(x, X, 4, w, 20, null); x.fillStyle = UIC.accent; x.fillRect(X + 5, 9, 2, 10); Font.draw(x, this.popup.name, X + 11, 5, UIC.text, UIC.textSh); }
   }
   drawTile(x, c, tx, ty, sx, sy, f, f2) {
     const h = hash2(tx, ty);
@@ -2529,7 +2544,8 @@ function drawTransition(x) {
 
 /* ===================== BATTLE ===================== */
 let HERO_POWER = 1.45, BOSS_HP = 2.1, ELITE_HP = 1.1;
-const BH = TB_Y, FOE_X = 104, FOE_Y = 42, HERO_X = 4, HERO_Y = 126;
+const BTN_MENU = { x: 4, y: TB_Y + 1, w: W - 8, h: TB_H - 2, cols: 2, colW: 82, rowH: 20, ox: 3, oy: 17, buttons: true, style: 'cmd' };
+const BH = TB_Y, FOE_X = W / 2 - 32, HERO_X = 36, HERO_Y = 108, HBAR_Y = 170;
 function critRate(u, mv) { const base = u.hero ? (u.stats.crit || 5) / 100 : 1 / 16; return mv.crit ? base * 2 : base; }
 function hitChance(u, t, mv) { let a = mv.acc; if (!a) return 1; if (u.hero) a += u.stats.hit || 0; if (t.hero) a -= t.stats.eva || 0; return clamp(a, 5, 100) / 100; }
 const stageMul = s => s >= 0 ? (2 + s) / 2 : 2 / (2 - s);
@@ -2537,7 +2553,7 @@ const STATUS_NAME = { psn: '中毒', par: '麻痺', slp: '睡眠', brn: '灼傷'
 const IMMUNE = { psn: '毒', brn: '火', par: '雷' };
 const battleImgCache = {};
 // battle sprites: rendered at a low native size, then scaled 3x (same chunky pixel look as the hero)
-const FOE_NATIVE = { golem: 28 }, FOE_SCALE = 3, FOE_FOOT = 104;
+const FOE_NATIVE = { golem: 28 }, FOE_SCALE = 3, FOE_FOOT = 110;
 function battleSprite(key) {
   if (battleImgCache[key]) return battleImgCache[key];
   const n = FOE_NATIVE[key] || 24, S = FOE_SCALE, sm = buildShaded(ART[key], n, n / 64);
@@ -2574,14 +2590,11 @@ function buildBattleBG(kind) {
     field.forEach((col, i) => { x.fillStyle = col; x.fillRect(0, 60 + i * 12, W, 12); });
     x.fillStyle = '#a8e090'; for (let y = 64; y < BH; y += 6) for (let i = (y * 13) % 29; i < W; i += 29) x.fillRect(i, y, 6, 1);
   }
+  const g = x.createLinearGradient(0, 120, 0, BH); g.addColorStop(0, 'rgba(8,10,20,0)'); g.addColorStop(1, 'rgba(8,10,20,0.55)'); x.fillStyle = g; x.fillRect(0, 120, W, BH - 120);
+  const g2 = x.createLinearGradient(0, 0, 0, 34); g2.addColorStop(0, 'rgba(8,10,20,0.35)'); g2.addColorStop(1, 'rgba(8,10,20,0)'); x.fillStyle = g2; x.fillRect(0, 0, W, 34);
   return c;
 }
-function buildPlatform(rx, ry, kind) {
-  const c = mkCanvas(rx * 2 + 2, ry * 2 + 4), x = c.getContext('2d');
-  const cols = kind === 'ruins' ? ['#5a5044', '#b0a488', '#9a8e74', '#c8bca0'] : ['#4a8a40', '#a8d888', '#88c070', '#c0e8a0'];
-  pxEllipse(x, rx + 1, ry + 2, rx, ry, cols[0]); pxEllipse(x, rx + 1, ry + 1, rx - 1, ry - 1, cols[1]); pxEllipse(x, rx + 1, ry + 2, rx - 6, ry - 3, cols[2]); pxEllipse(x, rx - 8, ry - 1, rx * 0.5, ry * 0.35, cols[3]);
-  return c;
-}
+function buildShadow(rx, ry) { const c = mkCanvas(rx * 2 + 2, ry * 2 + 2), x = c.getContext('2d'); pxEllipse(x, rx + 1, ry + 1, rx, ry, '#000000'); return c; }
 
 class Battle {
   constructor(cfg) {
@@ -2590,10 +2603,10 @@ class Battle {
     this.F = makeFoe(cfg.sp, cfg.lv, cfg.kind);
     const H = this.H = { hero: true, n: st.name, lv: st.lv, t: null, stats: s, maxhp: s.hp, moves: st.moves, stages: { atk: 0, def: 0, spa: 0, spd: 0, spe: 0 }, sleepT: st.sleepT ?? rnd(1, 3) };
     Object.defineProperty(H, 'hp', { get: () => st.hp, set: v => st.hp = v }); Object.defineProperty(H, 'status', { get: () => st.status, set: v => st.status = v });
-    this.bg = buildBattleBG(cfg.bg); this.platF = buildPlatform(42, 9, cfg.bg); this.platH = buildPlatform(52, 11, cfg.bg);
-    this.imgF = battleSprite(cfg.sp); this.foeTX = FOE_X + Math.min(0, W - 3 - (FOE_X + 32 + Math.ceil(this.imgF.bb.w / 2))); this.imgH = heroBattleImg(0, st.equip.weapon); this.imgH2 = heroBattleImg(1, st.equip.weapon);
+    this.bg = buildBattleBG(cfg.bg);
+    this.imgF = battleSprite(cfg.sp); this.foeTX = FOE_X; this.shadowF = buildShadow(Math.round(this.imgF.bb.w * 0.38), 4); this.imgH = heroBattleImg(0, st.equip.weapon); this.imgH2 = heroBattleImg(1, st.equip.weapon);
     this.disp = { F: this.F.hp, H: st.hp, exp: st.exp };
-    this.foeX = -80; this.heroX = W + 10; this.boxF = -120; this.boxH = W + 10; this.cover = 1;
+    this.foeX = W + 40; this.heroX = -80; this.boxF = -30; this.boxH = BH + 4; this.cover = 1;
     this.offF = { x: 0, y: 0 }; this.offH = { x: 0, y: 0 }; this.sinkF = 0; this.sinkH = 0; this.blinkF = 0; this.blinkH = 0; this.alphaF = 1;
     this.fx = []; this.shake = 0; this.t = 0; this.idle = false; this.cmdIdx = 0; this.moveIdx = 0; this.runTries = 0; this.turn = 0; this.phase2 = false; this.fistCD = 2;
     this.tint = null; this.squishF = 0;
@@ -2606,53 +2619,55 @@ class Battle {
     this.fx = this.fx.filter(p => p.t < p.life);
     if (this.script) { const r = this.script.next(); if (r.done) this.script = null; }
   }
-  center(b) { return b.hero ? { x: this.heroX + 26, y: HERO_Y + 34 } : { x: this.foeX + 32, y: FOE_FOOT - Math.round(this.imgF.bb.h * 0.5) }; }
+  center(b) { return b.hero ? { x: this.heroX + 24, y: HERO_Y + 32 } : { x: this.foeX + 32, y: FOE_FOOT - Math.round(this.imgF.bb.h * 0.5) }; }
   /* ---------------- drawing ---------------- */
   draw(x) {
     const sx = this.shake > 0 ? rnd(-3, 3) : 0, sy = this.shake > 0 ? rnd(-2, 2) : 0;
     x.save(); x.translate(sx, sy);
     x.drawImage(this.bg, 0, 0);
-    x.drawImage(this.platF, this.foeX + 32 - 43, FOE_Y + 50); x.drawImage(this.platH, this.heroX + 24 - 53, HERO_Y + 49);
-    // foe
-    const bob = this.idle && Math.floor(this.t / 16) % 2 ? 1 : 0;
+    const bobH = this.idle && Math.floor(this.t / 18) % 2 ? 1 : 0, bobF = this.idle && Math.floor((this.t + 9) / 22) % 2 ? 1 : 0;
+    // foe (shadow + sprite)
+    if (this.alphaF > 0) { x.globalAlpha = 0.22 * this.alphaF; x.drawImage(this.shadowF, Math.round(this.foeX + 32 + this.offF.x - this.shadowF.width / 2), FOE_FOOT - 5); x.globalAlpha = 1; }
     if (this.alphaF > 0 && !(this.blinkF > 0 && Math.floor(this.blinkF / 3) % 2)) {
-      x.save(); x.beginPath(); x.rect(0, 0, W, FOE_Y + 66); x.clip(); x.globalAlpha = this.alphaF;
+      x.save(); x.beginPath(); x.rect(0, 0, W, FOE_FOOT + 3); x.clip(); x.globalAlpha = this.alphaF;
       const sq = this.squishF, im = this.imgF, fw = im.width, fh = im.height;
-      const fx0 = Math.round(this.foeX + 32 - im.bb.cx + this.offF.x), fy0 = Math.round(FOE_FOOT - im.bb.bot + this.offF.y + this.sinkF);
+      const fx0 = Math.round(this.foeX + 32 - im.bb.cx + this.offF.x), fy0 = Math.round(FOE_FOOT - im.bb.bot + this.offF.y + this.sinkF - bobF);
       if (sq) x.drawImage(im, fx0 - sq, fy0 + sq * 2, fw + sq * 2, fh - sq * 2); else x.drawImage(im, fx0, fy0);
       if (this.tintF && this.tintF.a > 0) { x.globalAlpha = this.tintF.a * this.alphaF; x.drawImage(tinted(this.imgF, this.tintF.c), fx0, fy0); }
       x.restore();
     }
+    // hero (foreground, lower body hidden behind the status bar)
     if (!(this.blinkH > 0 && Math.floor(this.blinkH / 3) % 2)) {
-      x.save(); x.beginPath(); x.rect(0, 0, W, BH); x.clip();
-      const hi = (this.offH.x || this.offH.y) ? this.imgH2 : this.imgH;
-      x.drawImage(hi, this.heroX + this.offH.x, HERO_Y + this.offH.y + this.sinkH + bob);
-      if (this.tintH) { x.globalAlpha = this.tintH.a; x.drawImage(tinted(hi, this.tintH.c), this.heroX + this.offH.x, HERO_Y + this.offH.y + this.sinkH + bob); }
+      x.save(); x.beginPath(); x.rect(0, 0, W, HBAR_Y + 20); x.clip();
+      const hi = (this.offH.x || this.offH.y) ? this.imgH2 : this.imgH; const hx = Math.round(this.heroX + this.offH.x), hy = Math.round(HERO_Y + this.offH.y + this.sinkH + bobH);
+      x.drawImage(hi, hx, hy);
+      if (this.tintH) { x.globalAlpha = this.tintH.a; x.drawImage(tinted(hi, this.tintH.c), hx, hy); }
       x.restore();
     }
     for (const p of this.fx) drawParticle(x, p);
-    this.drawBoxF(x); this.drawBoxH(x, bob);
+    this.drawBoxF(x); this.drawBoxH(x);
     x.restore();
-    drawWin(x, 0, BH, W, H - BH, 'battle');
+    x.fillStyle = '#0b0d18'; x.fillRect(0, BH, W, H - BH); x.fillStyle = PANEL.edge; x.fillRect(0, BH, W, 1);
     if (this.cover > 0) { x.fillStyle = '#000'; const h = Math.round(this.cover * (H / 2 + 1)); x.fillRect(0, 0, W, h); x.fillRect(0, H - h, W, h); }
   }
   drawBoxF(x) {
-    const X = Math.round(this.boxF), Y = 6, F = this.F; if (X < -110) return;
-    x.fillStyle = '#383840'; x.fillRect(X + 2, Y + 2, 106, 30); roundRect(x, X, Y, 106, 30, '#484858'); roundRect(x, X + 1, Y + 1, 104, 28, '#f8f8e8'); x.fillStyle = '#e0e0c8'; x.fillRect(X + 2, Y + 24, 102, 4);
-    Font.draw(x, F.n + (F.elite ? '★' : ''), X + 6, Y - 1, UIC.text, UIC.textSh);
-    Font.drawR(x, 'Lv' + F.lv, X + 102, Y - 1, UIC.text, UIC.textSh);
-    if (F.status) statusBadge(x, F.status, X + 6, Y + 15);
-    drawHPBar(x, X + 32, Y + 17, 48, this.disp.F / F.maxhp);
+    const Y = Math.round(this.boxF), F = this.F; if (Y < -27) return;
+    const X = 8, w = W - 16; drawPanel(x, X, Y, w, 26, F.boss ? UIC.bad : F.elite ? UIC.warm : UIC.accent);
+    let cx = Font.draw(x, F.n, X + 6, Y + 1, UIC.text, UIC.textSh);
+    cx = Font.draw(x, 'Lv' + F.lv, cx + 4, Y + 1, UIC.muted, UIC.textSh);
+    if (F.status) statusBadge(x, F.status, cx + 4, Y + 3);
+    if (F.boss || F.elite) Font.drawR(x, F.boss ? '頭目' : '精英', X + w - 6, Y + 1, F.boss ? UIC.bad : UIC.warm, UIC.textSh);
+    drawHPBar(x, X + 6, Y + 18, w - 12, this.disp.F / F.maxhp, 3);
   }
-  drawBoxH(x, bob) {
-    const X = Math.round(this.boxH), Y = 142 + bob, st = Game.st; if (X > W) return;
-    x.fillStyle = '#383840'; x.fillRect(X + 2, Y + 2, 100, 40); roundRect(x, X, Y, 100, 40, '#484858'); roundRect(x, X + 1, Y + 1, 98, 38, '#f8f8e8'); x.fillStyle = '#e0e0c8'; x.fillRect(X + 2, Y + 34, 96, 4);
-    Font.draw(x, st.name, X + 6, Y - 1, UIC.text, UIC.textSh); Font.drawR(x, 'Lv' + st.lv, X + 96, Y - 1, UIC.text, UIC.textSh);
-    if (st.status) statusBadge(x, st.status, X + 6, Y + 16);
-    drawHPBar(x, X + 28, Y + 15, 48, this.disp.H / this.H.maxhp);
-    Font.drawR(x, Math.ceil(this.disp.H) + '/' + this.H.maxhp, X + 96, Y + 21, UIC.text, UIC.textSh);
-    const lo = expForLevel(st.lv), hi = expForLevel(st.lv + 1); drawExpBar(x, X + 26, Y + 35, 68, (this.disp.exp - lo) / (hi - lo));
-    Font.draw(x, 'EXP', X + 5, Y + 28, '#4878c8', null);
+  drawBoxH(x) {
+    const Y = Math.round(this.boxH), st = Game.st; if (Y >= BH) return;
+    const X = 8, w = W - 16, r = this.disp.H / this.H.maxhp; drawPanel(x, X, Y, w, 24, UIC.accent, 'rgba(11,13,24,0.92)');
+    let cx = Font.draw(x, st.name, X + 6, Y + 1, UIC.text, UIC.textSh);
+    cx = Font.draw(x, 'Lv' + st.lv, cx + 4, Y + 1, UIC.muted, UIC.textSh);
+    if (st.status) statusBadge(x, st.status, cx + 4, Y + 3);
+    const hs = Math.ceil(this.disp.H) + '/' + this.H.maxhp; Font.drawR(x, hs, X + w - 6, Y + 1, r <= 0.2 ? UIC.bad : UIC.text, UIC.textSh); Font.drawR(x, 'HP', X + w - 9 - Font.width(hs), Y + 1, UIC.muted, UIC.textSh);
+    drawHPBar(x, X + 6, Y + 16, w - 12, r, 3);
+    const lo = expForLevel(st.lv), hi = expForLevel(st.lv + 1); drawExpBar(x, X + 6, Y + 21, w - 12, (this.disp.exp - lo) / (hi - lo), 1);
   }
   /* ---------------- helpers ---------------- */
   *msg(text, o = {}) { const t = new TextBox(text, { style: 'battle', auto: o.wait ? false : (o.hold || 38) }); UI.push(t); while (!t.done) { t.update(); yield; } UI.remove(t); }
@@ -2670,7 +2685,7 @@ class Battle {
     if (b.hero) this.blinkH = 24; else this.blinkF = 24;
   }
   spawn(p) { p.t = 0; p.life = p.life || 30; this.fx.push(p); return p; }
-  *lunge(b, dist = 10, frames = 5) { const o = b.hero ? this.offH : this.offF; const dx = b.hero ? dist : -dist, dy = b.hero ? -dist / 3 : dist / 3; yield* tween(frames, t => { o.x = dx * t; o.y = dy * t; }); yield* tween(frames, t => { o.x = dx * (1 - t); o.y = dy * (1 - t); }); o.x = 0; o.y = 0; }
+  *lunge(b, dist = 10, frames = 5) { const o = b.hero ? this.offH : this.offF; const A = this.center(b), B = this.center(b.hero ? this.F : this.H), L = Math.hypot(B.x - A.x, B.y - A.y) || 1; const dx = (B.x - A.x) / L * dist, dy = (B.y - A.y) / L * dist; yield* tween(frames, t => { o.x = dx * t; o.y = dy * t; }); yield* tween(frames, t => { o.x = dx * (1 - t); o.y = dy * (1 - t); }); o.x = 0; o.y = 0; }
   *shakeB(b, frames = 12, amp = 3) { const o = b.hero ? this.offH : this.offF; for (let i = 0; i < frames; i++) { o.x = (i % 4 < 2 ? amp : -amp); yield; } o.x = 0; }
   sparks(X, Y, n, cols, spd = 2, life = 18, g = 0) { for (let i = 0; i < n; i++) { const a = Math.random() * Math.PI * 2, v = spd * (0.5 + Math.random()); this.spawn({ k: 'dot', x: X, y: Y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, g, c: pick(cols), s: rnd(1, 2), life: life + rnd(-4, 4) }); } }
   star(X, Y, c = '#ffffff', life = 10) { this.spawn({ k: 'star', x: X, y: Y, c, life }); }
@@ -2703,19 +2718,19 @@ class Battle {
   }
   *intro() {
     Sound.sfx('encounter');
-    yield* parallel(tween(14, t => this.cover = 1 - t), tween(44, t => { const e = 1 - Math.pow(1 - t, 2); this.foeX = lerp(-80, this.foeTX, e); this.heroX = lerp(W + 10, HERO_X, e); }));
+    yield* parallel(tween(14, t => this.cover = 1 - t), tween(40, t => { const e = 1 - Math.pow(1 - t, 3); this.foeX = lerp(W + 40, this.foeTX, e); this.heroX = lerp(-80, HERO_X, e); }));
     this.cover = 0; Sound.cry(Object.keys(SPECIES).indexOf(this.cfg.sp) + 1, this.F.boss ? 0.7 : 1, this.F.boss ? 1.6 : 1);
     if (this.F.boss) { this.shake = 30; Sound.sfx('quake'); }
-    yield* parallel(tween(14, t => this.boxF = lerp(-120, 4, t)), wait(4));
+    yield* parallel(tween(12, t => this.boxF = lerp(-30, 4, 1 - Math.pow(1 - t, 2))), wait(4));
     const intro = this.F.boss ? this.F.n + '擋住了去路！' : this.F.elite ? '精英魔物' + this.F.n + '發動了攻擊！' : '野生的' + this.F.n + '跳出來了！';
     yield* this.msg(intro, { hold: 44 });
-    yield* tween(14, t => this.boxH = lerp(W + 10, 74, t));
+    yield* tween(12, t => this.boxH = lerp(BH + 4, HBAR_Y, 1 - Math.pow(1 - t, 2)));
   }
   *chooseAction() {
     const st = Game.st;
     while (true) {
       this.idle = true;
-      const r = yield* choose(['戰鬥', '背包', '防禦', '逃跑'], { x: 0, y: TB_Y, w: W, h: TB_H, cols: 2, colW: 80, rowH: 16, ox: 22, oy: 24, style: 'cmd', cancel: false, index: this.cmdIdx, title: '要讓' + st.name + '做什麼？' });
+      const r = yield* choose(['技能', '道具', '防禦', '逃跑'], { ...BTN_MENU, cancel: false, index: this.cmdIdx, title: '要讓' + st.name + '做什麼？' });
       this.idle = false; this.cmdIdx = r;
       if (r === 0) { const m = yield* this.chooseMove(); if (m) return { type: 'move', id: m }; }
       else if (r === 1) { const it = yield* bagScreen('battle'); if (it) return { type: 'item', id: it }; }
@@ -2726,14 +2741,13 @@ class Battle {
   *chooseMove() {
     const st = Game.st;
     if (st.moves.every(m => m.pp <= 0)) { yield* this.msg(st.name + '已經沒有可以使用的技能了！'); return 'struggle'; }
-    let cur = Math.min(this.moveIdx, st.moves.length - 1);
-    const info = { draw: x => { drawWin(x, 116, TB_Y, W - 116, TB_H, 'cmd'); const m = st.moves[cur], mv = MOVES[m.id]; Font.draw(x, 'PP', 124, TB_Y + 5, UIC.text, UIC.textSh); Font.drawR(x, m.pp + '/' + mv.pp, W - 8, TB_Y + 20, m.pp === 0 ? '#e04848' : m.pp <= mv.pp / 4 ? '#e08830' : UIC.text, UIC.textSh); typeBadge(x, mv.t, 129, TB_Y + 40, 34); } };
-    UI.push(info); this.idle = true;
+    let cur = Math.min(this.moveIdx, st.moves.length - 1); this.idle = true;
+    const info = (x, m) => { const mm = st.moves[m.i], mv = MOVES[mm.id]; typeBadge(x, mv.t, 10, TB_Y + 4, 24); Font.draw(x, (mv.cat === '變' ? '變化' : mv.cat === '物' ? '物理' : '魔法') + (mv.pow ? '·' + mv.pow : ''), 38, TB_Y + 2, UIC.muted, UIC.textSh); Font.drawR(x, 'PP ' + mm.pp + '/' + mv.pp, W - 12, TB_Y + 2, mm.pp === 0 ? UIC.bad : mm.pp <= mv.pp / 4 ? UIC.warm : UIC.text, UIC.textSh); };
     while (true) {
-      const r = yield* choose(st.moves.map(m => ({ t: MOVES[m.id].n, col: m.pp === 0 ? '#b0b0b8' : undefined })), { x: 0, y: TB_Y, w: 116, h: TB_H, cols: 2, colW: 50, rowH: 22, ox: 16, oy: 11, style: 'cmd', index: cur, onMove: i => cur = i });
-      if (r < 0) { UI.remove(info); this.idle = false; return null; }
-      if (st.moves[r].pp <= 0) { UI.remove(info); yield* this.msg('這個技能的PP已經用完了！'); UI.push(info); continue; }
-      UI.remove(info); this.idle = false; this.moveIdx = r; return st.moves[r].id;
+      const r = yield* choose(st.moves.map(m => ({ t: MOVES[m.id].n, strip: TYPE_COL[MOVES[m.id].t], col: m.pp === 0 ? UIC.dis : undefined })), { ...BTN_MENU, index: cur, onMove: i => cur = i, drawExtra: info });
+      if (r < 0) { this.idle = false; return null; }
+      if (st.moves[r].pp <= 0) { yield* this.msg('這個技能的PP已經用完了！'); continue; }
+      this.idle = false; this.moveIdx = r; return st.moves[r].id;
     }
   }
   effSpe(b) { return b.stats.spe * stageMul(b.stages.spe) * (b.status === 'par' ? 0.25 : 1); }
@@ -2874,12 +2888,12 @@ class Battle {
     Sound.cry(Object.keys(SPECIES).indexOf(this.cfg.sp) + 1, 0.6, 1.2); yield* wait(20);
     if (this.F.boss) { Sound.sfx('quake'); this.shake = 50; for (let i = 0; i < 30; i++) { if (i % 3 === 0) this.sparks(this.foeTX + 32 + rnd(-26, 26), FOE_FOOT - 34 + rnd(-26, 26), 3, ['#8a8272', '#a09884', '#ff8040'], 2.5, 26, 0.15); yield; } }
     Sound.sfx('faint'); yield* tween(this.F.boss ? 40 : 22, t => { this.sinkF = t * this.imgF.bb.h; this.alphaF = 1 - t * 0.3; }); this.alphaF = 0;
-    yield* tween(10, t => this.boxF = lerp(4, -120, t));
+    yield* tween(10, t => this.boxF = lerp(4, -30, t));
     yield* this.msg((this.F.boss ? '' : this.F.elite ? '精英魔物' : '野生的') + this.F.n + '倒下了！', { hold: 40 });
   }
   *heroFaint() {
-    Sound.stop(); Sound.sfx('faint'); yield* tween(24, t => this.sinkH = t * 64);
-    yield* tween(10, t => this.boxH = lerp(74, W + 10, t));
+    Sound.stop(); Sound.sfx('faint'); yield* tween(24, t => this.sinkH = t * 70);
+    yield* tween(10, t => this.boxH = lerp(HBAR_Y, BH + 4, t));
     yield* this.msg(Game.st.name + '倒下了……', { wait: true });
   }
   *victory() {
@@ -2910,7 +2924,7 @@ class Battle {
     for (let i = 0; i < 24; i++) { this.tintH.a = Math.sin(i / 24 * Math.PI) * 0.8; tb.update(); yield; } this.tintH = null;
     while (!tb.done) { tb.update(); yield; }
     let showTotal = false; const rowsL = [['HP', before.hp, after.hp]].concat(ATTRS.map(k => [ATTR_NAMES[k], bA[k], aA[k]]));
-    const win = { draw: x => { drawWin(x, 84, 26, 90, 122, 'menu'); rowsL.forEach(([n, b, a], i) => { const Y = 30 + i * 16; Font.draw(x, n, 94, Y, UIC.text, UIC.textSh); const d = a - b; Font.drawR(x, showTotal ? String(a) : d > 0 ? '+' + d : '—', 166, Y, showTotal ? UIC.text : d > 0 ? '#e05050' : '#a0a0a8', UIC.textSh); }); } };
+    const win = { draw: x => { drawWin(x, 80, 34, 90, 122, 'menu'); rowsL.forEach(([n, b, a], i) => { const Y = 38 + i * 16; Font.draw(x, n, 90, Y, UIC.muted, UIC.textSh); const d = a - b; Font.drawR(x, showTotal ? String(a) : d > 0 ? '+' + d : '—', 162, Y, showTotal ? UIC.text : d > 0 ? UIC.accent : UIC.dis, UIC.textSh); }); } };
     UI.push(win); yield* waitA(); showTotal = true; Sound.sfx('cursor'); yield* waitA(); UI.remove(win); UI.remove(tb);
     for (const id of heroLearnAt(st.lv)) yield* this.learnMove(id);
     if (Sound.current !== 'victory' && this.F.hp <= 0) Sound.play('victory');
@@ -3244,7 +3258,7 @@ class TitleScene {
     x.drawImage(this.logo, Math.round(W / 2 - this.logo.width / 2), 6 + bob);
     Font.drawC(x, '～異世界冒險RPG～', W / 2, 52 + bob, '#ffe0a0', '#3a1428');
     if (this.stage === 'press' && Math.floor(this.t / 30) % 2 === 0) Font.drawC(x, '按 A 鍵開始', W / 2, 232, '#ffffff', '#1a1024');
-    Font.draw(x, 'v2.0', W - 26, H - 13, '#b890b0', null);
+    Font.draw(x, 'v3.0', W - 26, H - 13, '#b890b0', null);
   }
 }
 
@@ -3369,7 +3383,7 @@ function boot(data) {
   requestAnimationFrame(loop);
   try { if (window.claude && window.claude.hot && window.claude.hot.snapshot) window.claude.hot.snapshot(() => ({ st: (Game.scene instanceof Overworld && !Game.scene.script) ? Game.st : null })); } catch (e) { }
 }
-window.__game = { Game, Input, Events, MAPS, SPECIES, Battle, Overworld, heroStats, newGameState, startOverworld, UI, step(n = 1) { for (let i = 0; i < n; i++) tick(); render(); }, press(k, hold = 2, after = 6) { Input.set(k, true); for (let i = 0; i < hold; i++) tick(); Input.set(k, false); for (let i = 0; i < after; i++) tick(); render(); } };
+window.__game = { Game, Input, Events, MAPS, SPECIES, Battle, Overworld, heroStats, newGameState, startOverworld, UI, say, yesNo, startMenu, summaryScreen, bagScreen, equipScreen, optionsScreen, shopFlow, pickMoveToForget, blackText, step(n = 1) { for (let i = 0; i < n; i++) tick(); render(); }, press(k, hold = 2, after = 6) { Input.set(k, true); for (let i = 0; i < hold; i++) tick(); Input.set(k, false); for (let i = 0; i < after; i++) tick(); render(); } };
 try { if (window.claude && window.claude.hot && window.claude.hot.ready) window.claude.hot.ready(boot); else boot((window.claude && window.claude.hot && window.claude.hot.data) || {}); } catch (e) { boot({}); }
 
 </script>

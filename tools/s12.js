@@ -3,7 +3,7 @@ module.exports = async (g) => {
   await g.step(10);
   await g.ev(() => { const ow = __game.Game.scene; ow.run(ow.battleScript({ sp: 'fox', lv: 7, kind: 'wild' })); });
   const until = async (pred, maxF = 600) => { for (let i = 0; i < maxF / 4; i++) { if (await g.ev(pred)) return true; const u = await g.ui(); if (u.includes('TextBox') && !u.includes('Menu')) await g.press('a', 2); else await g.step(4); } return false; };
-  await until(() => __game.UI.stack.some(w => w.items && w.items.some(i => i.t === '戰鬥')));
+  await until(() => __game.UI.stack.some(w => w.items && w.items.some(i => i.t === '技能')));
   await g.press('a', 4);
   await until(() => __game.UI.stack.some(w => w.items && w.items.some(i => i.t === '水流刃')));
   await g.ev(() => { const m = __game.UI.stack.find(w => w.items); m.i = 1; });
