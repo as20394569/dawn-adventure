@@ -3577,7 +3577,7 @@ const UI = {
 
 class TextBox {
   constructor(text, o = {}) {
-    this.style = o.style || 'ow'; this.x = o.x ?? 4; this.y = o.y ?? TB_Y + 1; this.w = o.w ?? W - 8; this.h = o.h ?? TB_H - 2;
+    this.style = o.style || 'ow'; const bb = this.style === 'battle' && typeof BB_Y !== 'undefined'; this.x = o.x ?? 4; this.y = o.y ?? (bb ? BB_Y + 1 : TB_Y + 1); this.w = o.w ?? W - 8; this.h = o.h ?? (bb ? BB_H - 2 : TB_H - 2);
     this.pad = o.pad ?? 8; this.rows = Math.max(1, Math.floor((this.h - 10) / 16));
     this.lines = Font.wrap(text, this.w - this.pad * 2 - 2);
     this.li = 0; this.ci = 0; this.top = 0; this.scroll = 0; this.state = 'type'; this.t = 0; this.hold = 0;
@@ -4724,7 +4724,7 @@ function drawTransition(x) {
 /* ===================== BATTLE ===================== */
 let HERO_POWER = 1.45, BOSS_HP = 2.1, ELITE_HP = 1.1;
 const BTN_MENU = { x: 4, y: TB_Y + 1, w: W - 8, h: TB_H - 2, cols: 2, colW: 82, rowH: 20, ox: 3, oy: 17, buttons: true, style: 'cmd' };
-const BH = TB_Y, FOE_X = 56, HERO_X = 0, HERO_Y = 114, HBAR_Y = 170; // facing the foe: foe far (upper right), hero's back near (lower left); panels on the opposite corners
+const BB_Y = 212, BB_H = H - 212, BH = BB_Y, FOE_X = 56, HERO_X = 0, HERO_Y = 128, HBAR_Y = 196; // compact battle HUD: bigger stage, 2-line messages // facing the foe: foe far (upper right), hero's back near (lower left); panels on the opposite corners
 function critRate(u, mv) { const base = (u.stats.crit ?? 6) / 100; return mv.crit ? base * 2 : base; }
 function hitChance(u, t, mv) { let a = mv.acc; if (!a) return 1; a += u.stats.hit || 0; a -= t.stats.eva || 0; return clamp(a, 5, 100) / 100; }
 const stageMul = s => s >= 0 ? 1 + 0.25 * s : 1 / (1 + 0.25 * -s); // buffs/debuffs: ±25% per step, max ±3, timed
@@ -4732,7 +4732,7 @@ const STATUS_NAME = { psn: '中毒', par: '麻痺', slp: '睡眠', brn: '灼傷'
 const IMMUNE = { psn: '毒', brn: '火', par: '雷' };
 const battleImgCache = {};
 // battle sprites: rendered at a low native size, then scaled 3x (same chunky pixel look as the hero)
-const FOE_NATIVE = { golem: 28, mossGiant: 28, crystalGolem: 28, banditBoss: 28, boneKnight: 28, runeGolem: 28 }, FOE_SCALE = 3, FOE_FOOT = 128;
+const FOE_NATIVE = { golem: 28, mossGiant: 28, crystalGolem: 28, banditBoss: 28, boneKnight: 28, runeGolem: 28 }, FOE_SCALE = 3, FOE_FOOT = 140;
 function battleSprite(key) {
   if (battleImgCache[key]) return battleImgCache[key];
   const n = FOE_NATIVE[key] || 24, S = FOE_SCALE, sm = buildShaded(ART[key], n, n / 64);
@@ -5650,30 +5650,26 @@ const CMD_ICONS = {
   逃跑: spriteFrom(['......kk....', '.....kSSk...', '.....kSSk...', '...kkkSk....', '..kSSSSSkk..', '.k..kSSk.Sk.', '....kSSk....', '...kSkkSk...', '..kSk..kSk..', '.kSk....kSk.', 'kkk......kk.', '............'], { k: '#1a1420', S: '#9ae0c0' }),
 };
 Object.assign(Battle.prototype, {
-  drawBoxF(x) { // nameplate floating above the foe
+  drawBoxF(x) { // small nameplate floating above the foe
     const F = this.F; if (this.boxF < -20 || this.alphaF <= 0) return;
-    const a = clamp((this.boxF + 30) / 34, 0, 1), C = this.center(F), top = FOE_FOOT - this.imgF.bb.h, py = clamp(top - 24, 2, 80) + Math.round(this.offF.y * 0.3);
-    const nm = F.n + ' Lv' + F.lv, w = Math.max(84, Font.width(nm, 11) + 16), X = Math.round(clamp(C.x - w / 2, 2, W - w - 2));
-    x.globalAlpha = a; const rim = F.boss ? '#ff6b7a' : F.elite ? '#ffc46b' : F.rare ? '#ffd84a' : '#8a93b3';
-    x.fillStyle = 'rgba(10,8,20,0.72)'; x.fillRect(X, py, w, 21); x.fillStyle = rim; x.fillRect(X, py, w, 1); x.fillRect(X, py + 20, w, 1); x.fillRect(X - 1, py + 1, 1, 19); x.fillRect(X + w, py + 1, 1, 19);
-    x.fillRect(X + 3, py - 1, 3, 1); x.fillRect(X + w - 6, py - 1, 3, 1);
-    Font.drawC(x, F.n, X + w / 2 - (F.boss || F.elite || F.rare ? 8 : 0) - Font.width('Lv' + F.lv, 9) / 2 - 2, py, UIC.text, UIC.textSh, 11); Font.draw(x, 'Lv' + F.lv, X + w / 2 + Font.width(F.n, 11) / 2 - (F.boss || F.elite || F.rare ? 8 : 0) - Font.width('Lv' + F.lv, 9) / 2 + 1, py + 2, UIC.muted, UIC.textSh, 9);
-    const tag = F.rare ? '稀' : F.boss ? '王' : F.elite ? '菁' : ''; if (tag) { x.fillStyle = rim; x.fillRect(X + w - 14, py + 2, 11, 11); Font.drawC(x, tag, X + w - 8, py + 1, '#10121e', null, 9); }
-    const r = this.disp.F / F.maxhp; x.fillStyle = '#1a1024'; x.fillRect(X + 4, py + 15, w - 8, 3); x.fillStyle = r > 0.5 ? '#e0504a' : r > 0.2 ? '#ff8a3a' : '#ffd040'; x.fillRect(X + 4, py + 15, Math.round((w - 8) * clamp(r, 0, 1)), 3);
-    { const bs = [F.status, F.wet && 'wet', F.tangle && 'tangle', F.shield && 'shield'].filter(Boolean); badgeRow(x, bs.slice(0, 4), X, py + 23); }
-    if (FAMILIES[F.fam]) Font.drawR(x, FAMILIES[F.fam].n, X + w, py + 22, FAMILIES[F.fam].c, UIC.textSh, 9);
+    const a = clamp((this.boxF + 30) / 34, 0, 1), C = this.center(F), top = FOE_FOOT - this.imgF.bb.h, py = clamp(top - 20, 2, 96) + Math.round(this.offF.y * 0.3);
+    const tag = F.rare ? '稀有' : F.boss ? '頭目' : F.elite ? '菁英' : '', nw = Font.width(F.n, 10), lw = Font.width('Lv' + F.lv, 8), tw = tag ? Font.width(tag, 8) + 4 : 0, w = Math.max(64, nw + lw + tw + 14), X = Math.round(clamp(C.x - w / 2, 2, W - w - 2));
+    const rim = F.boss ? '#ff6b7a' : F.elite ? '#ffc46b' : F.rare ? '#ffd84a' : '#6a7090'; x.globalAlpha = a;
+    x.fillStyle = 'rgba(10,8,20,0.72)'; x.fillRect(X, py, w, 18); x.fillStyle = rim; x.fillRect(X, py, w, 1); x.fillRect(X, py + 17, w, 1);
+    const cx = Font.draw(x, F.n, X + 5, py, UIC.text, UIC.textSh, 10); Font.draw(x, 'Lv' + F.lv, cx + 2, py + 2, UIC.muted, UIC.textSh, 8); if (tag) Font.drawR(x, tag, X + w - 4, py + 2, rim, UIC.textSh, 8);
+    const r = this.disp.F / F.maxhp; x.fillStyle = '#1a1024'; x.fillRect(X + 4, py + 13, w - 8, 2); x.fillStyle = r > 0.5 ? '#e0504a' : r > 0.2 ? '#ff8a3a' : '#ffd040'; x.fillRect(X + 4, py + 13, Math.round((w - 8) * clamp(r, 0, 1)), 2);
+    const bs = [F.status, F.wet && 'wet', F.tangle && 'tangle', F.shield && 'shield'].filter(Boolean); if (bs.length) badgeRow(x, bs.slice(0, 3), X, py + 19);
+    if (FAMILIES[F.fam]) Font.drawR(x, FAMILIES[F.fam].n, X + w, py + 18, FAMILIES[F.fam].c, UIC.textSh, 8);
     x.globalAlpha = 1;
   },
-  drawBoxH(x) { // full-width status bar at the bottom of the stage (gold trim)
+  drawBoxH(x) { // one slim row: name · Lv │ HP ▬▬ 49 │ MP ▬▬ 45
     const Y = Math.round(this.boxH), st = Game.st; if (Y >= BH) return;
-    const r = clamp(this.disp.H / this.H.maxhp, 0, 1), mr = clamp(st.mp / (this.H.maxmp || 1), 0, 1);
-    x.fillStyle = 'rgba(12,10,22,0.9)'; x.fillRect(0, Y, W, BH - Y); x.fillStyle = '#c8a050'; x.fillRect(0, Y, W, 1); x.fillStyle = '#6a5428'; x.fillRect(0, Y + 1, W, 1);
-    Font.draw(x, st.name, 5, Y + 2, UIC.text, UIC.textSh, 11); Font.draw(x, 'Lv' + st.lv, 5, Y + 14, '#c8a050', UIC.textSh, 9);
-    Font.draw(x, 'HP', 50, Y + 2, '#ff9a8a', UIC.textSh, 9); Font.drawR(x, Math.ceil(this.disp.H) + '/' + this.H.maxhp, 112, Y + 2, r <= 0.2 ? UIC.bad : UIC.text, UIC.textSh, 9);
-    x.fillStyle = '#241018'; x.fillRect(50, Y + 17, 62, 5); x.fillStyle = r > 0.5 ? '#5ad07a' : r > 0.2 ? '#ffc040' : '#ff5a5a'; x.fillRect(50, Y + 17, Math.round(62 * r), 5);
-    Font.draw(x, 'MP', 118, Y + 2, '#8ab8ff', UIC.textSh, 9); Font.drawR(x, st.mp + '/' + this.H.maxmp, 171, Y + 2, '#b8d4ff', UIC.textSh, 9);
-    x.fillStyle = '#101a30'; x.fillRect(118, Y + 17, 53, 5); x.fillStyle = '#5aa8ff'; x.fillRect(118, Y + 17, Math.round(53 * mr), 5);
-    const bs = [st.status, this.H.wet && 'wet', this.H.tangle && 'tangle', this.H.shield && 'shield'].filter(Boolean); if (bs.length) badgeRow(x, bs.slice(0, 1), 28, Y + 14);
+    const r = clamp(this.disp.H / this.H.maxhp, 0, 1), mr = clamp(st.mp / (this.H.maxmp || 1), 0, 1), my = Y + 7;
+    x.fillStyle = 'rgba(12,10,22,0.9)'; x.fillRect(0, Y, W, BH - Y); x.fillStyle = '#c8a050'; x.fillRect(0, Y, W, 1);
+    const cx = Font.draw(x, st.name, 4, Y + 1, UIC.text, UIC.textSh, 10); Font.draw(x, 'Lv' + st.lv, cx + 2, Y + 3, '#c8a050', UIC.textSh, 8);
+    Font.draw(x, 'HP', 60, Y + 3, '#ff9a8a', UIC.textSh, 8); x.fillStyle = '#241018'; x.fillRect(73, my, 30, 3); x.fillStyle = r > 0.5 ? '#5ad07a' : r > 0.2 ? '#ffc040' : '#ff5a5a'; x.fillRect(73, my, Math.round(30 * r), 3); Font.drawR(x, Math.ceil(this.disp.H) + '', 122, Y + 2, r <= 0.2 ? UIC.bad : UIC.text, UIC.textSh, 9);
+    Font.draw(x, 'MP', 126, Y + 3, '#8ab8ff', UIC.textSh, 8); x.fillStyle = '#101a30'; x.fillRect(139, my, 20, 3); x.fillStyle = '#5aa8ff'; x.fillRect(139, my, Math.round(20 * mr), 3); Font.drawR(x, st.mp + '', 174, Y + 2, '#b8d4ff', UIC.textSh, 9);
+    const bs = [st.status, this.H.wet && 'wet', this.H.tangle && 'tangle', this.H.shield && 'shield'].filter(Boolean); if (bs.length) badgeRow(x, bs.slice(0, 1), 4, Y - 13);
   },
   *intro() { // flash in: the foe materialises, the hero steps up from below
     Sound.sfx('encounter'); this.foeX = this.foeTX; this.heroX = HERO_X; this.alphaF = 0; this.offH.y = 60;
@@ -5689,8 +5685,8 @@ Object.assign(Battle.prototype, {
     const names = ['攻擊', '技能', '道具', '防禦', '逃跑'];
     while (true) {
       this.idle = true;
-      const r = yield* choose(names.map(() => ({ t: '' })), { x: 4, y: TB_Y + 2, w: W - 8, h: TB_H - 4, cols: 5, colW: 34, rowH: 54, ox: 0, oy: 1, buttons: true, noFrame: true, cancel: false, index: this.cmdIdx,
-        drawExtra: (x, m) => { names.forEach((n, k) => { const X = m.x + k * 34, on = k === m.i; if (on) { x.fillStyle = '#c8a050'; x.fillRect(X, m.y + 1, 31, 1); x.fillRect(X, m.y + 52, 31, 1); } x.drawImage(CMD_ICONS[n], 0, 0, 12, 12, X + 4, m.y + 7, 24, 24); Font.drawC(x, n, X + 15, m.y + 34, on ? '#ffe8b0' : UIC.muted, UIC.textSh, 10); }); } });
+      const r = yield* choose(names.map(() => ({ t: '' })), { x: 4, y: BB_Y + 3, w: W - 8, h: BB_H - 5, cols: 5, colW: 34, rowH: BB_H - 6, ox: 0, oy: 0, buttons: true, noFrame: true, cancel: false, index: this.cmdIdx,
+        drawExtra: (x, m) => { names.forEach((n, k) => { const X = m.x + k * 34, on = k === m.i; if (on) { x.fillStyle = '#c8a050'; x.fillRect(X + 1, m.y, 29, 1); x.fillRect(X + 1, m.y + m.rowH - 3, 29, 1); } x.drawImage(CMD_ICONS[n], 0, 0, 12, 12, X + 8, m.y + 3, 15, 15); Font.drawC(x, n, X + 15, m.y + 19, on ? '#ffe8b0' : UIC.muted, UIC.textSh, 9); }); } });
       this.idle = false; this.cmdIdx = r;
       if (r === 0) return { type: 'move', id: 'attack' };
       if (r === 1) { const m = yield* this.chooseMove(); if (m) return { type: 'move', id: m }; }
@@ -5700,6 +5696,20 @@ Object.assign(Battle.prototype, {
     }
   },
 });
+
+Battle.prototype.chooseMove = function* () {
+  const st = Game.st, list = learnedSkills(st);
+  if (!list.length) { yield* this.msg('還沒有學會技能！（在選單的「技能」學習）'); return null; }
+  let cur = Math.min(this.moveIdx || 0, list.length - 1); this.idle = true;
+  const info = (x, m) => { const id = list[m.i], mv = skillMove(id); drawWin(x, 4, BB_Y + 1, W - 8, BB_H - 2, 'ow'); typeBadge(x, mv.t, 10, BB_Y + 6, 24); Font.draw(x, (mv.cat === '變' ? '輔助' : mv.cat === '物' ? '物理' : '魔法') + (mv.pow ? '・威力' + mv.pow : '') + '・Lv' + skillLv(id), 38, BB_Y + 4, UIC.muted, UIC.textSh, 10); Font.drawR(x, 'MP ' + skillMP(id) + '／' + st.mp, W - 10, BB_Y + 4, skillMP(id) > st.mp ? UIC.bad : UIC.accent, UIC.textSh, 10); Font.draw(x, Font.wrap(MOVES[id].d, 156, 9)[0] || '', 10, BB_Y + 22, UIC.text, UIC.textSh, 9); };
+  while (true) {
+    const vis = Math.min(list.length, 7), h = vis * 16 + 10;
+    const r = yield* choose(list.map(id => ({ t: MOVES[id].n, r: String(skillMP(id)), col: skillMP(id) > st.mp ? UIC.dis : undefined })), { x: W - 100, y: BH - 22 - h, w: 96, rowH: 16, visible: vis, index: cur, onMove: i => cur = i, drawExtra: info });
+    if (r < 0) { this.idle = false; return null; }
+    if (skillMP(list[r]) > st.mp) { yield* this.msg('MP不夠！'); continue; }
+    this.idle = false; this.moveIdx = r; return list[r];
+  }
+};
 
 /* ===================== EVENTS (異世界篇) ===================== */
 function* healRitual(text) {
