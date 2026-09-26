@@ -61,7 +61,7 @@ function* classSelectScreen() {
 }
 function applyStartClass(k) {
   const st = Game.st, S = CLASS_START[k]; st.cls = k; st.skills = {}; for (const id of CLASS_FREE[k]) grantSkill(id, st);
-  st.tp = (st.tp || 0) + 2; st.moves = [];
+  st.skp = (st.skp || 0) + 2; st.moves = [];
   const acc = ['acc1', 'acc2']; for (const b of S.gear) { const g = makeGear(b, 1, 1), sl = GEAR[b].slot === 'acc' ? acc.shift() : GEAR[b].slot; st.equip[sl] = g.u; }
   const s = heroStats(st); st.hp = s.hp; st.mp = s.mp;
 }

@@ -259,6 +259,7 @@
    "道具店",
    "行商",
    "鐵匠配方",
+   "委託獎勵",
    "委託獎勵"
   ],
   "powerFruit": [
@@ -271,7 +272,8 @@
   "potion": [
    "route寶箱",
    "道具店",
-   "鐵匠配方"
+   "鐵匠配方",
+   "委託獎勵"
   ],
   "parlyzHeal": [
    "route寶箱",
@@ -283,7 +285,9 @@
    "mine寶箱",
    "catacomb寶箱",
    "道具店",
-   "行商"
+   "行商",
+   "委託獎勵",
+   "委託獎勵"
   ],
   "awakening": [
    "route寶箱",
@@ -292,8 +296,17 @@
   "herb": [
    "route採集",
    "route採集",
+   "route採集",
+   "route採集",
+   "route採集",
    "forest採集",
    "forest採集"
+  ],
+  "manaHerb": [
+   "route採集",
+   "forest採集",
+   "sewer採集",
+   "ruins採集"
   ],
   "wisdomFruit": [
    "forest寶箱"
@@ -308,16 +321,25 @@
   "crystal": [
    "sewer採集",
    "sewer採集",
+   "mine採集",
+   "catacomb採集",
    "catacomb採集",
    "魔物:晶石丸"
   ],
-  "elixir": [
-   "mine寶箱",
-   "catacomb寶箱",
-   "行商",
-   "道具店(魔像後)"
+  "gel": [
+   "sewer採集",
+   "mine採集",
+   "魔物:泡泡姆",
+   "魔物:泥沼姆",
+   "分解",
+   "分解",
+   "分解"
   ],
   "stone": [
+   "ruins採集",
+   "ruins採集",
+   "mine採集",
+   "mine採集",
    "mine採集",
    "mine採集",
    "魔物:石丸",
@@ -327,21 +349,23 @@
    "分解",
    "分解"
   ],
-  "gel": [
-   "mine採集",
-   "魔物:泡泡姆",
-   "魔物:泥沼姆",
-   "分解",
-   "分解",
-   "分解"
-  ],
   "boneShard": [
+   "ruins採集",
+   "catacomb採集",
    "catacomb採集",
    "魔物:骷髏兵",
    "魔物:骨犬",
    "分解"
   ],
+  "elixir": [
+   "mine寶箱",
+   "catacomb寶箱",
+   "行商",
+   "道具店(魔像後)",
+   "委託獎勵"
+  ],
   "ectoplasm": [
+   "catacomb採集",
    "catacomb採集",
    "魔物:幽靈燈",
    "魔物:溺魂",
@@ -355,24 +379,29 @@
   ],
   "manaPotion": [
    "道具店",
-   "鐵匠配方"
+   "鐵匠配方",
+   "委託獎勵"
   ],
   "smoke": [
    "道具店"
   ],
   "returnWing": [
-   "道具店"
+   "道具店",
+   "鐵匠配方"
   ],
   "rope": [
    "行商",
    "道具店(魔像後)"
   ],
   "hiEther": [
-   "行商"
+   "行商",
+   "鐵匠配方",
+   "委託獎勵"
   ],
   "tpBook": [
    "行商",
    "道具店(魔像後)",
+   "委託獎勵",
    "委託獎勵"
   ],
   "shroomCap": [
@@ -433,13 +462,15 @@
   ],
   "feather": [
    "配方:featherBoots",
-   "配方:voltRod"
+   "配方:voltRod",
+   "配方:returnWing"
   ],
   "stone": [
    "配方:stoneMail",
    "配方:emberKnife",
    "配方:voltSword",
-   "強化"
+   "強化",
+   "委託c9"
   ],
   "foxfire": [
    "配方:foxBlade",
@@ -453,15 +484,17 @@
   ],
   "spore": [
    "配方:sporeCharm",
-   "配方:manaPotion",
-   "配方:foxfireStaff"
+   "配方:foxfireStaff",
+   "委託c8"
   ],
   "shroomCap": [
-   "配方:sporeCharm"
+   "配方:sporeCharm",
+   "委託c8"
   ],
   "crystal": [
    "配方:crystalBlade",
    "配方:crystalStaff",
+   "配方:hiEther",
    "強化",
    "委託c3",
    "支線:師父的遺作"
@@ -485,10 +518,17 @@
   ],
   "boneShard": [
    "配方:boneHelm",
-   "配方:ectoLantern"
+   "配方:ectoLantern",
+   "委託c11"
   ],
   "ectoplasm": [
    "配方:ectoLantern"
+  ],
+  "manaHerb": [
+   "配方:manaPotion",
+   "配方:hiEther",
+   "配方:returnWing",
+   "委託c6"
   ]
  }
 }

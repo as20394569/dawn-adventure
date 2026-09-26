@@ -153,17 +153,17 @@ const CLASSES = {
   paladin: { n: '聖騎士', tier: 2, from: 'guardian', st: { hp: 20, def: 5, spd: 5, atk: 2 }, move: 'holyLight', d: '神聖的守護者。能用聖光治療自己。' },
   otherworlder: { n: '異界勇者', tier: 3, st: { hp: 10, atk: 5, def: 3, spa: 5, spd: 3, spe: 4, crit: 5 }, move: 'dawnBreak', d: '只屬於異界來客的隱藏職業。全能力提升。' },
 };
-const TALENT_LINES = ['劍術', '魔法', '生存'];
+const TALENT_LINES = ['攻擊', '魔法', '生存'];
 const TALENTS = [
-  { id: 'blade', n: '劍術精通', line: 0, max: 3, d: '物攻+2／級', st: { atk: 2 } },
-  { id: 'vital', n: '要害打擊', line: 0, max: 3, d: '會心+3%／級', st: { crit: 3 } },
-  { id: 'breaker', n: '破甲斬', line: 0, max: 1, d: '習得技能「破甲斬」：造成傷害並必定降低對手物防。', move: 'armorBreak', req: 'blade' },
-  { id: 'mana', n: '魔力親和', line: 1, max: 3, d: '魔攻+2／級', st: { spa: 2 } },
-  { id: 'elem', n: '元素掌握', line: 1, max: 3, d: '火、水、雷等屬性技能的傷害+8%／級', st: { elem: 8 } },
-  { id: 'barrier', n: '魔法護盾', line: 1, max: 1, d: '習得技能「魔法護盾」：3回合內受到的傷害減少40%。', move: 'barrier', req: 'mana' },
-  { id: 'body', n: '強健體魄', line: 2, max: 3, d: '最大HP+5／級', st: { hp: 5 } },
-  { id: 'agile', n: '身手矯健', line: 2, max: 3, d: '迴避+3%／級', st: { eva: 3 } },
-  { id: 'counter', n: '反擊架勢', line: 2, max: 1, d: '選擇「防禦」時被攻擊，會立刻反擊對手。', st: { counter: 1 }, req: 'body' },
+  { id: 'blade', n: '武器精通', line: 0, max: 3, d: '物理攻擊變強。', st: { atk: 2 } },
+  { id: 'vital', n: '要害打擊', line: 0, max: 3, d: '更容易打出會心一擊（傷害×1.5）。', st: { crit: 3 } },
+  { id: 'breaker', n: '破甲之心', line: 0, max: 1, d: '物理攻擊無視對手15%的物防。', st: { pierceT: 15 }, req: 'blade' },
+  { id: 'mana', n: '魔力親和', line: 1, max: 3, d: '魔法攻擊和治癒變強。', st: { spa: 2 } },
+  { id: 'elem', n: '元素掌握', line: 1, max: 3, d: '火、水、草、雷屬性的傷害提高。', st: { elem: 8 } },
+  { id: 'barrier', n: '魔力泉湧', line: 1, max: 1, d: '戰鬥中每回合結束時回復4%最大MP。', st: { mpRegen: 4 }, req: 'mana' },
+  { id: 'body', n: '強健體魄', line: 2, max: 3, d: '最大HP提高，更耐打。', st: { hp: 5 } },
+  { id: 'agile', n: '身手矯健', line: 2, max: 3, d: '更容易閃開對手的攻擊。', st: { eva: 3 } },
+  { id: 'counter', n: '反擊架勢', line: 2, max: 1, d: '選擇「防禦」時被攻擊，會立刻反擊對手（70%傷害）。', st: { counter: 1 }, req: 'body' },
 ];
 
 /* ---------------- Maps ----------------
@@ -328,7 +328,7 @@ const MAPS = {
       { id: 'lostBoy', x: 3, y: 31, dir: 'right', look: 'kid', name: '小麥', show: st => st.flags.q1 && st.flags.q1res !== 'home' },
     ],
     elites: [
-      { id: 'wolf', sp: 'wolf', lv: 8, x: 16, y: 29, dir: 'left', sight: 5 },
+      { id: 'wolf', sp: 'wolf', lv: 8, x: 16, y: 29, dir: 'left', sight: 3 },
       { id: 'flower', sp: 'flower', lv: 11, x: 3, y: 18, dir: 'down', sight: 2 },
       { id: 'croc', sp: 'croc', lv: 12, x: 10, y: 13, dir: 'down', sight: 3 },
     ],

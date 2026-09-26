@@ -13,11 +13,19 @@ const COMMISSIONS = {
   c2: { n: '趕走電電蜂', from: '果園農夫', d: '電電蜂在道路北邊螫傷了好多人。接下委託後，擊敗電電蜂×4。', kill: ['bee', 4], reward: { gold: 400, items: { luckClover: 1 } }, open: st => st.flags.license },
   c3: { n: '晶石研究', from: '村長', d: '想研究地下水道的水晶和異界之門的關係。請帶來水晶碎片×3。', need: { crystal: 3 }, reward: { items: { tpBook: 1 } }, open: st => st.flags.golem },
   c4: { n: '遺失的懷錶', from: '旅行者', d: '在迷霧森林東側弄丟了一只銀懷錶。找到的話，請放進委託箱。', key: 'pocketWatch', reward: { gold: 800 }, open: st => st.flags.wolf },
+  c5: { n: '驅除嘟嘟菇', from: '菜園大嬸', d: '嘟嘟菇把菜園啃得亂七八糟。接下委託後，擊敗嘟嘟菇×5。', kill: ['mush', 5], reward: { gold: 250, items: { potion: 3 } }, open: st => st.flags.license },
+  c6: { n: '魔力草研究', from: '魔法學徒', d: '想研究會發光的草。請帶來魔力草×3。（晨霧道路北邊、迷霧森林、地下水道都採得到）', need: { manaHerb: 3 }, reward: { gold: 400, items: { manaPotion: 3 } }, open: st => st.flags.license },
+  c7: { n: '森林的毒菇', from: '藥草師', d: '毒孢菇的孢子讓森林的藥草都枯了。接下委託後，擊敗毒孢菇×4。', kill: ['thornMush', 4], reward: { gold: 600, items: { superPotion: 2 } }, open: st => st.flags.wolf },
+  c8: { n: '菇菇燉湯', from: '旅店老闆娘', d: '想做招牌燉湯。請帶來毒孢子×3和蕈傘×2。', need: { spore: 3, shroomCap: 2 }, reward: { gold: 500, items: { ether: 2 } }, open: st => st.flags.wolf },
+  c9: { n: '鐵匠的礦石', from: '鐵匠', d: '打鐵用的硬石不夠了。請帶來硬石×6。（廢棄礦坑的礦脈最多）', need: { stone: 6 }, reward: { gold: 700, items: { hiEther: 1 } }, open: st => st.flags.wolf },
+  c10: { n: '坑道蝠騷動', from: '老礦工', d: '礦坑蝙蝠吵得礦工沒辦法回去工作。接下委託後，擊敗坑道蝠×5。', kill: ['mineBat', 5], reward: { gold: 800, items: { ether: 3 } }, open: st => st.flags.mineOpen || st.flags.bandit },
+  c11: { n: '骨董收藏家', from: '古董商', d: '在收集古代的骨頭飾品。請帶來骨片×5。', need: { boneShard: 5 }, reward: { gold: 1500, items: { tpBook: 1 } }, open: st => st.flags.golem },
+  c12: { n: '墓穴的亡魂', from: '村長', d: '地下墓穴的怨靈越來越多了。接下委託後，擊敗怨靈×4。', kill: ['wraith', 4], reward: { gold: 2500, items: { elixir: 2 } }, open: st => st.flags.golem },
 };
 const comState = (id, st = Game.st) => (st.com || {})[id];
 function comProgress(id, st = Game.st) {
   const c = COMMISSIONS[id], s = comState(id, st) || {};
-  if (c.need) { const k = Object.keys(c.need)[0], n = c.need[k]; return { cur: Math.min(n, st.bag[k] || 0), max: n, ready: (st.bag[k] || 0) >= n }; }
+  if (c.need) { let cur = 0, max = 0; for (const k in c.need) { cur += Math.min(c.need[k], st.bag[k] || 0); max += c.need[k]; } return { cur, max, ready: cur >= max }; }
   if (c.kill) { const won = ((st.dex || {})[c.kill[0]] || {}).won || 0, cur = Math.min(c.kill[1], won - (s.k || 0)); return { cur, max: c.kill[1], ready: cur >= c.kill[1] }; }
   return { cur: st.bag[c.key] ? 1 : 0, max: 1, ready: !!st.bag[c.key] };
 }
@@ -90,12 +98,12 @@ function questMarks(st = Game.st) {
 /* ---------- Quest-log entries for the new stories ---------- */
 function extraQuests(st, L) {
   const f = st.flags;
-  if (f.q2) L.push({ n: '見習獵人提姆', t: !f.q2res ? '守衛的弟弟提姆一個人跑去迷霧森林，想討伐苔石巨人。' : f.q2done ? (f.q2res === 'home' ? '完成：把提姆帶回了哥哥身邊。' : '完成：和提姆並肩打倒了苔石巨人。') : f.q2res === 'home' ? '回晨霧道路北邊，告訴守衛提姆平安回家了。' : f.mossGiant ? '苔石巨人倒下了。回去找提姆吧。' : '和提姆一起打倒苔石巨人！（提姆會用弓箭支援）', done: !!f.q2done });
-  if (f.q3) L.push({ n: '師父的遺作', t: f.q3 === 1 ? '鐵匠想完成師父的遺作。帶水晶碎片×3給他。（有' + (st.bag.crystal || 0) + '）' : f.q3res === 'take' ? '完成：收下了「名匠遺作」。' : '完成：讓鐵匠留著遺作，強化費用永久半價。', done: f.q3 === 2 });
-  if (f.golem) L.push({ n: '古王的墓穴', t: f.boneKnight ? '完成：打倒了守護墓室的骸骨騎士。' : '古岩遺跡的石板下出現了樓梯。地下墓穴裡有強大的亡者。（建議Lv' + MAPS.catacomb.encounters[0].table[0][1] + '以上）', done: !!f.boneKnight });
-  if (f.mineOpen || f.bandit) L.push({ n: '失落的貨物', t: f.bandit ? '完成：打倒盜賊頭目「鐵斧」格倫，奪回了商隊的貨物。' : '商隊的貨物被盜賊搶走，藏進了晨霧道路東邊的廢棄礦坑。', done: !!f.bandit });
-  for (const k in COMMISSIONS) { const s = comState(k, st); if (!s || s.s === 'done') continue; const p = comProgress(k, st); L.push({ n: '委託：' + COMMISSIONS[k].n, t: COMMISSIONS[k].d + '（' + p.cur + '/' + p.max + '）' + (p.ready ? '→ 回告示板交付' : ''), done: false }); }
-  const dn = Object.keys(COMMISSIONS).filter(k => (comState(k, st) || {}).s === 'done').length; if (dn) L.push({ n: '委託告示板', t: '已完成 ' + dn + '/' + Object.keys(COMMISSIONS).length + ' 件委託。', done: dn === Object.keys(COMMISSIONS).length });
+  if (f.q2) L.push({ n: '見習獵人提姆', t: !f.q2res ? '守衛的弟弟提姆一個人跑去迷霧森林，想討伐苔石巨人。' : f.q2done ? (f.q2res === 'home' ? '完成：把提姆帶回了哥哥身邊。' : '完成：和提姆並肩打倒了苔石巨人。') : f.q2res === 'home' ? '回晨霧道路北邊，告訴守衛提姆平安回家了。' : f.mossGiant ? '苔石巨人倒下了。回去找提姆吧。' : '和提姆一起打倒苔石巨人！（提姆會用弓箭支援）', done: !!f.q2done, rw: '帶他回家：1000 G＋衛兵盔／一起討伐：獵人的誓約' });
+  if (f.q3) L.push({ n: '師父的遺作', t: f.q3 === 1 ? '鐵匠想完成師父的遺作。帶水晶碎片×3給他。（有' + (st.bag.crystal || 0) + '）' : f.q3res === 'take' ? '完成：收下了「名匠遺作」。' : '完成：讓鐵匠留著遺作，強化費用永久半價。', done: f.q3 === 2, rw: '名匠遺作（魔導士：名匠遺杖）或 強化費用永久半價' });
+  if (f.golem) L.push({ n: '古王的墓穴', t: f.boneKnight ? '完成：打倒了守護墓室的骸骨騎士。' : '古岩遺跡的石板下出現了樓梯。地下墓穴裡有強大的亡者。（建議Lv' + MAPS.catacomb.encounters[0].table[0][1] + '以上）', done: !!f.boneKnight, rw: '骸骨騎士鎧、古王的寶藏（2000 G＋力量果實）' });
+  if (f.mineOpen || f.bandit) L.push({ n: '失落的貨物', t: f.bandit ? '完成：打倒盜賊頭目「鐵斧」格倫，奪回了商隊的貨物。' : '商隊的貨物被盜賊搶走，藏進了晨霧道路東邊的廢棄礦坑。', done: !!f.bandit, rw: '格倫的戰斧（魔導士：被搶走的魔導書）、行商的謝禮' });
+  for (const k in COMMISSIONS) { const s = comState(k, st); if (!s || s.s === 'done') continue; const p = comProgress(k, st); L.push({ n: '委託：' + COMMISSIONS[k].n, t: COMMISSIONS[k].d + '（' + p.cur + '/' + p.max + '）' + (p.ready ? '→ 回告示板交付' : ''), done: false, rw: rewardText(COMMISSIONS[k].reward) }); }
+  const dn = Object.keys(COMMISSIONS).filter(k => (comState(k, st) || {}).s === 'done').length; if (dn) L.push({ n: '委託告示板', t: '已完成 ' + dn + '/' + Object.keys(COMMISSIONS).length + ' 件委託。', done: dn === Object.keys(COMMISSIONS).length, rw: '每件委託各有報酬（萌芽鎮告示板）' });
 }
 
 /* ---------- Events for the new stories (merged into Events) ---------- */

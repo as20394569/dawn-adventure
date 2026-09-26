@@ -59,8 +59,9 @@ class Menu {
     this.rowH = o.rowH || 16; this.style = o.style || 'menu'; this.cancel = o.cancel !== false; this.onMove = o.onMove; this.done = false; this.result = -1;
     const maxW = Math.max(...this.items.map(it => Font.width(it.t) + (it.r ? Font.width(it.r) + 12 : 0)));
     this.colW = o.colW || maxW + 20; this.w = o.w || this.colW * this.cols + 16; const rowsN = Math.ceil(this.items.length / this.cols);
+    const fitRows = Math.max(1, Math.floor(((o.y !== undefined ? H - o.y : TB_Y - 5) - 10) / this.rowH)); if (!o.visible && !o.h && rowsN > fitRows) o = { ...o, visible: fitRows }; // long menus scroll instead of running off screen
     this.h = o.h || Math.min(rowsN, o.visible || rowsN) * this.rowH + 10; this.x = o.x ?? (W - this.w - 4); this.y = o.y ?? (TB_Y - this.h - 1); this.buttons = o.buttons; this.ox = o.ox ?? 14; this.oy = o.oy ?? 5; this.title = o.title;
-    this.scrollMax = o.visible || rowsN; this.scrollTop = 0; this.drawExtra = o.drawExtra; this.noFrame = o.noFrame; this.textCol = o.textCol || '#c9cfe4'; this.textSh = o.textSh || UIC.textSh;
+    this.scrollMax = o.visible || rowsN; this.scrollTop = Math.max(0, Math.floor(this.i / this.cols) - this.scrollMax + 1); this.drawExtra = o.drawExtra; this.noFrame = o.noFrame; this.textCol = o.textCol || '#c9cfe4'; this.textSh = o.textSh || UIC.textSh;
     if (this.onMove) this.onMove(this.i);
   }
   move(d) { const n = this.items.length; let i = this.i; if (this.cols === 1) i = (i + d + n) % n; else { if (d === -1 || d === 1) i = (i + d + n) % n; else i = (i + d * 1 + n * 4) % n; } return i; }
@@ -166,14 +167,14 @@ const qCol = it => UIC.text;
 /* ---------- Quests ---------- */
 function questList(st = Game.st) {
   const f = st.flags, L = [];
-  L.push({ main: 1, n: '回家的路', t: !f.license ? '去村長家問問看回家的方法。' : !f.golem ? '前往北方的古岩遺跡，尋找異界之門。' : '門的力量還不夠……繼續尋找線索。（第一章完）', done: !!f.golem });
-  if (f.q1) L.push({ n: '失蹤的弟弟', t: !f.q1res ? '花店姊姊的弟弟「小麥」去晨霧道路後沒回來。' : !f.q1done ? '回萌芽鎮告訴花店的姊姊。' : f.q1res === 'home' ? '完成：勸小麥回家了。' : '完成：替小麥保守了秘密。', done: !!f.q1done });
-  if (st.lv >= 8 && !st.cls) L.push({ n: '力量的覺醒', t: '村長好像有話要跟你說。（選擇職業）', done: false });
-  else if (st.cls && CLASSES[st.cls].tier === 1 && st.lv >= 14) L.push({ n: '更高的道路', t: '已經可以進階職業了。去找村長吧。', done: false });
-  if (f.caravanMet || f.caravan) L.push({ n: '商隊的危機', t: !f.caravan ? '晨霧道路上的商隊被魔物包圍了！' : f.caravan === 'saved' ? '完成：擊退了魔物，行商在萌芽鎮擺攤。' : '失敗：商隊沒能抵達萌芽鎮。', done: !!f.caravan });
-  if (f.wellCharm) L.push({ n: '井底更深處', t: f.crystalBoss ? '完成：擊敗了水晶魔像，覺醒了隱藏職業。' : (st.bag.rope ? '帶著繩索，從鎮上的井往下探索。' : '井底似乎還有更深的通道……需要繩索。'), done: !!f.crystalBoss });
-  if (f.herb) L.push({ n: '會讓路的樹', t: f.f6 ? '完成：在迷霧森林深處找到了晨曦之劍。' : '藥草師說，迷霧森林西北角有一棵「會讓路的樹」。', done: !!f.f6 });
-  if (f.wellCharm) L.push({ n: '井底的月光', t: '完成：從老井撈起了月光護符。', done: true });
+  L.push({ main: 1, n: '回家的路', t: !f.license ? '去村長家問問看回家的方法。' : !f.golem ? '前往北方的古岩遺跡，尋找異界之門。' : '門的力量還不夠……繼續尋找線索。（第一章完）', done: !!f.golem, rw: '故事推進（第一章）' });
+  if (f.q1) L.push({ n: '失蹤的弟弟', t: !f.q1res ? '花店姊姊的弟弟「小麥」去晨霧道路後沒回來。' : !f.q1done ? '回萌芽鎮告訴花店的姊姊。' : f.q1res === 'home' ? '完成：勸小麥回家了。' : '完成：替小麥保守了秘密。', done: !!f.q1done, rw: '勸他回家：好傷藥×2、300 G／保守秘密：好傷藥×1、200 G' });
+  if (st.lv >= 8 && !st.cls) L.push({ n: '力量的覺醒', t: '村長好像有話要跟你說。（選擇職業）', done: false, rw: '職業與起始技能' });
+  else if (st.cls && CLASSES[st.cls].tier === 1 && st.lv >= 14) L.push({ n: '更高的道路', t: '已經可以進階職業了。去找村長吧。', done: false, rw: '進階職業與專屬技能' });
+  if (f.caravanMet || f.caravan) L.push({ n: '商隊的危機', t: !f.caravan ? '晨霧道路上的商隊被魔物包圍了！' : f.caravan === 'saved' ? '完成：擊退了魔物，行商在萌芽鎮擺攤。' : '失敗：商隊沒能抵達萌芽鎮。', done: !!f.caravan, rw: '行商在萌芽鎮開店（商品9折）' });
+  if (f.wellCharm) L.push({ n: '井底更深處', t: f.crystalBoss ? '完成：擊敗了水晶魔像，覺醒了隱藏職業。' : (st.bag.rope ? '帶著繩索，從鎮上的井往下探索。' : '井底似乎還有更深的通道……需要繩索。'), done: !!f.crystalBoss, rw: '水晶之心、隱藏職業' });
+  if (f.herb) L.push({ n: '會讓路的樹', t: f.f6 ? '完成：在迷霧森林深處找到了晨曦之劍。' : '藥草師說，迷霧森林西北角有一棵「會讓路的樹」。', done: !!f.f6, rw: '晨曦之劍（魔導士：晨曦之杖）' });
+  if (f.wellCharm) L.push({ n: '井底的月光', t: '完成：從老井撈起了月光護符。', done: true, rw: '月光護符' });
   extraQuests(st, L);
   for (const q of L) q.cat = questCatOf(q) || (q.main ? '主線' : '支線');
   return L.filter(q => !q.done).concat(L.filter(q => q.done));
@@ -195,13 +196,17 @@ function heroCard(x, st) {
 function* summaryScreen() {
   let page = 0, mi = 0, qTop = 0; const scr = { draw(x) {
     const st = Game.st, s = heroStats(); screenBG(x);
-    headerBar(x, ['冒險者資料', '技能一覽', '任務'][page]);
+    headerBar(x, ['冒險者資料', '技能一覽', '任務'][page]); if (page === 1) Font.draw(x, 'MP ' + (st.mp ?? s.mp) + '/' + s.mp, 76, 3, UIC.blue || UIC.accent, UIC.textSh, 10);
     Font.drawR(x, '← ' + (page + 1) + '/3 →', W - 6, 2, UIC.muted, UIC.textSh);
-    heroCard(x, st);
+    if (page === 0) heroCard(x, st);
     if (page === 2) {
-      drawWin(x, 4, 98, 168, 154, 'menu'); let Y = 102;
-      const QL = questList(st); if (qTop > 0) x.drawImage(UPARROW, 86, 99); if (qTop < QL.length - 1) Font.drawR(x, (qTop + 1) + '/' + QL.length + ' ↑↓', 166, 238, UIC.muted, UIC.textSh, 9);
-      for (const q of QL.slice(qTop)) { Font.draw(x, q.cat + '　' + q.n, 12, Y, q.done ? UIC.muted : QUEST_CAT_COL[q.cat] || UIC.warm, UIC.textSh); Y += 16; for (const l of Font.wrap(q.t, 150).slice(0, 3)) { if (Y > 222) break; Font.draw(x, l, 14, Y, q.done ? UIC.dis : UIC.text, UIC.textSh, 11); Y += 14; } Y += 6; if (Y > 206) break; }
+      const QL = questList(st), VIS = 7, sel = Math.min(qTop, Math.max(0, QL.length - 1)), t0 = clamp(sel - 3, 0, Math.max(0, QL.length - VIS));
+      drawWin(x, 4, 24, 168, VIS * 17 + 8, 'menu'); if (!QL.length) Font.draw(x, '目前沒有任務。', 14, 30, UIC.muted, UIC.textSh);
+      QL.slice(t0, t0 + VIS).forEach((q, k) => { const i = t0 + k, Y = 28 + k * 17; if (i === sel) selBar(x, 6, Y - 1, 164, 16); const cc = q.done ? UIC.dis : QUEST_CAT_COL[q.cat] || UIC.warm; Font.draw(x, q.cat, 12, Y + 1, cc, UIC.textSh, 10); Font.draw(x, q.n, 40, Y, q.done ? UIC.muted : UIC.text, UIC.textSh, 11); Font.drawR(x, q.done ? '完成' : '進行中', 164, Y + 1, q.done ? UIC.dis : UIC.accent, UIC.textSh, 9); });
+      if (t0 > 0) x.drawImage(UPARROW, 86, 25); if (t0 + VIS < QL.length) x.drawImage(DOWNARROW, 86, 24 + VIS * 17 + 3);
+      const q = QL[sel]; drawWin(x, 4, 155, 168, 97, 'menu');
+      if (q) { Font.draw(x, q.n, 12, 158, QUEST_CAT_COL[q.cat] || UIC.warm, UIC.textSh); const rwL = q.rw ? Font.wrap('報酬：' + q.rw, 156, 10).slice(0, 2) : []; Font.wrap(q.t, 152, 11).slice(0, 5 - rwL.length).forEach((l, i) => Font.draw(x, l, 12, 175 + i * 14, q.done ? UIC.muted : UIC.text, UIC.textSh, 11));
+        rwL.forEach((l, i) => Font.draw(x, l, 10, 250 - rwL.length * 12 + i * 12 - 2, q.done ? UIC.dis : UIC.warm, UIC.textSh, 10)); }
     } else if (page === 0) {
       const a = heroAttr(st), eqB = eqBonus(st);
       drawWin(x, 4, 98, 168, 62, 'menu');
@@ -210,12 +215,13 @@ function* summaryScreen() {
       const rowsD = [['HP', st.hp + '/' + s.hp], ['MP', (st.mp ?? s.mp) + '/' + s.mp], ['物攻', s.atk, 'atk'], ['物防', s.def, 'def'], ['魔攻', s.spa, 'spa'], ['魔防', s.spd, 'spd'], ['速度', s.spe, 'spe'], ['會心', s.crit.toFixed(1) + '%']];
       rowsD.forEach(([n, v, k], i) => { const X = 12 + (i % 2) * 80, Y = 166 + Math.floor(i / 2) * 20; Font.draw(x, n, X, Y, UIC.muted, UIC.textSh); Font.drawR(x, String(v), X + 70, Y, k && eqB[k] ? UIC.accent : UIC.text, UIC.textSh); });
     } else {
-      const SK = learnedSkills(st); drawWin(x, 4, 98, 168, 84, 'menu'); const t0 = Math.max(0, Math.min(mi - 1, SK.length - 4));
-      if (!SK.length) Font.draw(x, '還沒有學會技能。（選單→技能）', 12, 104, UIC.muted, UIC.textSh, 11);
-      SK.slice(t0, t0 + 4).forEach((id, k) => { const i = t0 + k, mv = MOVES[id], Y = 102 + k * 19; if (i === mi) selBar(x, 6, Y, 164, 17); typeBadge(x, mv.t, 14, Y + 2, 30); Font.draw(x, mv.n + ' Lv' + skillLv(id), 52, Y, UIC.text, UIC.textSh); Font.drawR(x, 'MP ' + skillMP(id), 164, Y, UIC.accent, UIC.textSh); });
-      if (SK.length) { const id = SK[Math.min(mi, SK.length - 1)], mv = MOVES[id], m2 = skillMove(id); drawWin(x, 4, 184, 168, 68, 'menu');
-        Font.draw(x, (mv.cat === '變' ? '輔助' : mv.cat === '物' ? '物理' : '魔法') + (m2.pow ? ' 威力' + m2.pow : '') + ' MP' + skillMP(id) + '　' + (st.mp ?? s.mp) + '/' + s.mp, 12, 186, UIC.accent, UIC.textSh, 11);
-        Font.wrap(mv.d, 152).slice(0, 3).forEach((l, i) => Font.draw(x, l, 12, 202 + i * 15, UIC.text, UIC.textSh)); }
+      const SK = learnedSkills(st), VIS = 7; drawWin(x, 4, 24, 168, VIS * 19 + 8, 'menu'); const t0 = clamp(mi - 3, 0, Math.max(0, SK.length - VIS));
+      if (!SK.length) Font.draw(x, '還沒有學會技能。（選單→技能）', 12, 30, UIC.muted, UIC.textSh, 11);
+      SK.slice(t0, t0 + VIS).forEach((id, k) => { const i = t0 + k, mv = MOVES[id], Y = 28 + k * 19; if (i === mi) selBar(x, 6, Y, 164, 17); typeBadge(x, mv.t, 14, Y + 2, 30); Font.draw(x, mv.n + ' Lv' + skillLv(id), 52, Y, UIC.text, UIC.textSh); Font.drawR(x, 'MP ' + skillMP(id), 164, Y, UIC.accent, UIC.textSh); });
+      if (t0 > 0) x.drawImage(UPARROW, 86, 25); if (t0 + VIS < SK.length) x.drawImage(DOWNARROW, 86, 24 + VIS * 19 + 3);
+      if (SK.length) { const id = SK[Math.min(mi, SK.length - 1)], mv = MOVES[id], m2 = skillMove(id); drawWin(x, 4, 168, 168, 84, 'menu');
+        Font.draw(x, (mv.cat === '變' ? '輔助' : mv.cat === '物' ? '物理' : '魔法') + (m2.pow ? '　威力' + m2.pow : '') + '　消耗MP ' + skillMP(id), 12, 171, UIC.accent, UIC.textSh, 11);
+        Font.wrap(mv.d, 152, 11).slice(0, 4).forEach((l, i) => Font.draw(x, l, 12, 188 + i * 15, UIC.text, UIC.textSh, 11)); }
     }
   } };
   UI.push(scr);
@@ -286,7 +292,7 @@ function* bagScreen(mode = 'field') { // returns item id used (battle) or null
       Font.draw(x, ITEMS[k].n, 14, Y, UIC.text, UIC.textSh); if (!ITEMS[k].key) Font.drawR(x, '×' + Game.st.bag[k], 164, Y, UIC.muted, UIC.textSh); });
     if (top > 0) x.drawImage(UPARROW, 85, 41); if (top + VIS < list.length) x.drawImage(DOWNARROW, 85, 40 + VIS * 18 + 4);
     drawWin(x, 4, 180, 168, 72, 'menu');
-    if (list[idx]) { if (gear) drawGearDetail(x, list[idx], 182, 68); else { const it = ITEMS[list[idx]]; Font.draw(x, '【' + it.cat + '】', 10, 182, ITEM_CAT_COL[it.cat] || UIC.muted, UIC.textSh, 10); Font.wrap(it.d, 152).slice(0, 3).forEach((l, i) => Font.draw(x, l, 12, 197 + i * 16, UIC.text, UIC.textSh)); } }
+    if (list[idx]) { if (gear) drawGearDetail(x, list[idx], 182, 68); else { const k0 = list[idx], it = ITEMS[k0]; Font.draw(x, '【' + it.cat + '】', 10, 182, ITEM_CAT_COL[it.cat] || UIC.muted, UIC.textSh, 10); if (it.mat) Font.drawR(x, '採集熟練度 Lv' + gatherLv(), 166, 182, UIC.accent, UIC.textSh, 10); const src = it.mat ? matSourceText(k0) : ''; Font.wrap(it.d, 152).slice(0, src ? 2 : 3).forEach((l, i) => Font.draw(x, l, 12, 197 + i * 16, UIC.text, UIC.textSh)); if (src) Font.draw(x, Font.wrap('取得：' + src, 156, 10)[0], 10, 234, UIC.warm, UIC.textSh, 10); } }
   } };
   UI.push(scr); let result = null;
   while (true) {
@@ -511,7 +517,7 @@ function* salvageFlow() {
 /* ---------- Crafting ---------- */
 function* craftScreen() {
   const st = Game.st; let idx = 0; const have = k => st.bag[k] || 0;
-  const can = R => Object.entries(R.mats).every(([k, n]) => have(k) >= n) && st.money >= (R.gold || 0);
+  const can = R => Object.entries(R.mats).every(([k, n]) => have(k) >= n) && st.money >= (R.gold || 0) && !(ITEMS[R.out] && ITEMS[R.out].once && have(R.out));
   const VIS = 7, top = () => clamp(idx - 3, 0, Math.max(0, RECIPES.length - VIS));
   const scr = { draw(x) {
     screenBG(x); headerBar(x, '鐵匠工房'); Font.drawR(x, st.money + ' G', W - 6, 2, UIC.warm, UIC.textSh);
@@ -542,19 +548,24 @@ function* talentScreen() {
   const st = Game.st; st.tal = st.tal || {}; let c = 0, r = 0;
   const T = () => TALENTS.filter(t => t.line === c)[r];
   const locked = t => t.req && (st.tal[t.req] || 0) < 2;
+  const LBL = { atk: ['物攻', ''], crit: ['會心率', '%'], pierceT: ['無視物防', '%'], spa: ['魔攻', ''], elem: ['屬性傷害', '%'], mpRegen: ['每回合回MP', '%'], hp: ['最大HP', ''], eva: ['迴避率', '%'], counter: ['防禦反擊', ''] };
+  const val = (t, n) => { const k = Object.keys(t.st)[0], L = LBL[k] || [k, '']; return n <= 0 ? '—' : k === 'counter' ? '啟用' : L[0] + '+' + t.st[k] * n + L[1]; };
   const scr = { draw(x) {
     screenBG(x); headerBar(x, '天賦'); Font.drawR(x, '天賦點 ' + (st.tp || 0), W - 6, 2, st.tp ? UIC.warm : UIC.muted, UIC.textSh);
+    Font.drawC(x, '永久的被動加成・每升1級獲得1點', W / 2, 21, UIC.muted, UIC.textSh, 10);
     TALENT_LINES.forEach((ln, ci) => {
-      const X = 4 + ci * 57; Font.drawC(x, ln, X + 27, 24, UIC.accent, UIC.textSh);
-      TALENTS.filter(t => t.line === ci).forEach((t, ri) => { const Y = 42 + ri * 40, rk = st.tal[t.id] || 0, on = ci === c && ri === r, lk = locked(t);
-        drawBtn(x, X, Y, 54, 36, on); Font.drawC(x, t.n, X + 27, Y + 2, lk ? UIC.dis : rk ? UIC.text : '#c9cfe4', UIC.textSh, 11);
-        for (let k = 0; k < t.max; k++) { x.fillStyle = k < rk ? UIC.warm : '#30375a'; x.fillRect(X + 27 - t.max * 4 + k * 8 + 1, Y + 24, 6, 5); } });
-      if (ci < 2) { x.fillStyle = '#30375a'; for (let ri = 0; ri < 2; ri++) x.fillRect(X + 26, 78 + ri * 40, 2, 4); }
+      const X = 4 + ci * 57; Font.drawC(x, ln, X + 27, 34, UIC.accent, UIC.textSh);
+      TALENTS.filter(t => t.line === ci).forEach((t, ri) => { const Y = 50 + ri * 38, rk = st.tal[t.id] || 0, on = ci === c && ri === r, lk = locked(t);
+        drawBtn(x, X, Y, 54, 34, on); Font.drawC(x, t.n, X + 27, Y + 1, lk ? UIC.dis : rk ? UIC.text : '#c9cfe4', UIC.textSh, 11);
+        Font.drawC(x, rk ? val(t, rk) : (lk ? '未解鎖' : '未學習'), X + 27, Y + 14, rk ? UIC.good : UIC.dis, UIC.textSh, 9);
+        for (let k = 0; k < t.max; k++) { x.fillStyle = k < rk ? UIC.warm : '#30375a'; x.fillRect(X + 27 - t.max * 4 + k * 8 + 1, Y + 27, 6, 4); } });
+      if (ci < 3) { x.fillStyle = '#30375a'; for (let ri = 0; ri < 2; ri++) x.fillRect(X + 26, 84 + ri * 38, 2, 4); }
     });
-    const t = T(), rk = st.tal[t.id] || 0; drawWin(x, 4, 164, 168, 88, 'menu');
-    Font.draw(x, t.n + '　' + rk + '/' + t.max, 12, 168, UIC.text, UIC.textSh);
-    Font.wrap(t.d, 152, 11).slice(0, 3).forEach((l, i) => Font.draw(x, l, 12, 186 + i * 14, UIC.accent, UIC.textSh, 11));
-    Font.draw(x, locked(t) ? '需要「' + TALENTS.find(q => q.id === t.req).n + '」2級' : rk >= t.max ? '已達最高等級' : st.tp ? 'A：投入1點天賦點' : '升級時可以獲得天賦點', 12, 232, locked(t) ? UIC.bad : UIC.muted, UIC.textSh, 11);
+    const t = T(), rk = st.tal[t.id] || 0; drawWin(x, 4, 166, 168, 86, 'menu');
+    Font.draw(x, t.n, 12, 169, UIC.text, UIC.textSh); Font.drawR(x, '等級 ' + rk + '/' + t.max, 164, 170, UIC.muted, UIC.textSh, 10);
+    Font.wrap(t.d, 152, 11).slice(0, 2).forEach((l, i) => Font.draw(x, l, 12, 185 + i * 13, UIC.text, UIC.textSh, 11));
+    Font.draw(x, '目前：' + val(t, rk), 12, 211, UIC.accent, UIC.textSh, 10); if (rk < t.max) Font.draw(x, '下一級：' + val(t, rk + 1), 90, 211, UIC.warm, UIC.textSh, 10);
+    Font.draw(x, locked(t) ? '需要先把「' + TALENTS.find(q => q.id === t.req).n + '」點到2級' : rk >= t.max ? '已達最高等級' : st.tp ? 'A：投入1點天賦點' : '天賦點不足（升級時獲得）', 12, 232, locked(t) ? UIC.bad : st.tp && rk < t.max ? UIC.warm : UIC.muted, UIC.textSh, 11);
   } };
   UI.push(scr);
   while (true) {
@@ -564,7 +575,6 @@ function* talentScreen() {
     if (Input.pressed('a')) {
       Input.consume('a'); const t = T(), rk = st.tal[t.id] || 0;
       if (!st.tp || rk >= t.max || locked(t)) { Sound.sfx('bump'); continue; }
-      if (t.move) grantSkill(t.move, st);
       st.tp--; st.tal[t.id] = rk + 1; clampHP(); Sound.sfx('statUp');
     }
     yield;
@@ -605,7 +615,7 @@ function* dexScreen() {
 function* startMenu() {
   Sound.sfx('menu'); let idx = Game.menuIdx || 0;
   while (true) {
-    const r = yield* choose(['狀態', '技能', '天賦', '背包', '裝備', '圖鑑', '紀錄', '存檔', '設定', '關閉'].map(t => (t === '天賦' || t === '技能') && Game.st.tp ? { t, r: '●', col: UIC.warm } : t), { x: W - 74, y: 4, w: 70, index: idx });
+    const r = yield* choose(['狀態', '技能', '天賦', '背包', '裝備', '圖鑑', '紀錄', '存檔', '設定', '關閉'].map(t => (t === '天賦' && Game.st.tp || t === '技能' && Game.st.skp) ? { t, r: '●', col: UIC.warm } : t), { x: W - 74, y: 4, w: 70, index: idx });
     if (r < 0 || r === 9) break; idx = r; Game.menuIdx = r;
     if (r === 0) yield* summaryScreen();
     if (r === 1) yield* skillTreeScreen();

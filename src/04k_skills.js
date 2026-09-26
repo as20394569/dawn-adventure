@@ -41,14 +41,14 @@ function migrateSkills(st) {
   if (st.skills) return; st.skills = {}; for (const m of st.moves || []) if (MOVES[m.id] && SKILL_MP[m.id] !== undefined) st.skills[m.id] = 1;
   if (st.cls) for (const id of CLASS_FREE[baseClassOf(st.cls)] || []) grantSkill(id, st);
   // old saves earned 1 point/level (talents only); the new system gives 2/level + 2 at the start → make up the difference
-  const comp = 2 + Math.max(0, st.lv - 5); st.tp = (st.tp || 0) + comp; st.skillNote = comp;
+  const comp = 2 + Math.max(0, st.lv - 5); st.skp = (st.skp || 0) + comp; st.skillNote = comp;
   st.mp = heroStats(st).mp;
 }
 function* skillUpdateNote(st) {
   const n = st.skillNote; delete st.skillNote; yield* wait(30);
   yield* say('【系統更新】技能系統改版了！\n不再有4招上限和PP，技能改用MP施放。');
   yield* say('原本學會的招式都保留成Lv1技能。\n另外補發了' + n + '點技能點作為補償。');
-  yield* say('打開選單的「技能」就能學新技能或升級。\n技能點和天賦點是同一個點數池。');
+  yield* say('打開選單的「技能」就能學新技能或升級。\n技能點用來學技能，天賦點用來點被動加成。');
 }
 
 /* ---------- Skill tree screen ---------- */
@@ -56,7 +56,7 @@ function* skillTreeScreen() {
   const st = Game.st; st.skills = st.skills || {}; let idx = 0, top = 0; const COLS = 3, VIS = 4;
   const nodes = () => skillTreeOf(st.cls);
   const scr = { draw(x) {
-    const N = nodes(); screenBG(x); headerBar(x, '技能'); Font.drawR(x, '技能點 ' + (st.tp || 0), W - 6, 2, st.tp ? UIC.warm : UIC.muted, UIC.textSh);
+    const N = nodes(); screenBG(x); headerBar(x, '技能'); Font.drawR(x, '技能點 ' + (st.skp || 0), W - 6, 2, st.skp ? UIC.warm : UIC.muted, UIC.textSh);
     if (!N.length) { Font.draw(x, '還沒有選擇職業。', 12, 30, UIC.muted, UIC.textSh); return; }
     const rows = Math.ceil(N.length / COLS);
     for (let k = 0; k < N.length; k++) {
@@ -64,7 +64,7 @@ function* skillTreeScreen() {
       drawBtn(x, X, Y, 54, 31, on, TYPE_COL[mv.t]); if (n.adv) { x.fillStyle = UIC.warm; x.fillRect(X + 49, Y + 2, 3, 3); }
       Font.drawC(x, mv.n, X + 28, Y + 1, s.startsWith('locked') ? UIC.dis : lv ? UIC.text : '#c9cfe4', UIC.textSh, 11);
       for (let q = 0; q < SKILL_MAX; q++) { x.fillStyle = q < lv ? UIC.warm : '#30375a'; x.fillRect(X + 16 + q * 8, Y + 21, 6, 5); }
-      if (s === 'learn' && st.tp) { x.fillStyle = UIC.accent; x.fillRect(X + 3, Y + 22, 3, 3); }
+      if (s === 'learn' && st.skp) { x.fillStyle = UIC.accent; x.fillRect(X + 3, Y + 22, 3, 3); }
     }
     if (top > 0) x.drawImage(UPARROW, 86, 21); if (top + VIS < rows) x.drawImage(DOWNARROW, 86, 24 + VIS * 34 - 2);
     const n = N[idx], mv = MOVES[n.id], lv = skillLv(n.id), s = nodeState(n), cur = skillMove(n.id), nx = { ...Game.st, skills: { ...st.skills, [n.id]: Math.min(SKILL_MAX, lv + 1) } }, nxt = skillMove(n.id, nx);
@@ -74,7 +74,7 @@ function* skillTreeScreen() {
     Font.draw(x, (mv.cat === '變' ? '輔助' : mv.cat === '物' ? '物理' : '魔法') + '　' + (lv ? stat(cur) : stat(nxt)), 10, 180, UIC.accent, UIC.textSh, 10);
     if (lv && lv < SKILL_MAX) Font.draw(x, '下一級：' + stat(nxt), 10, 193, UIC.warm, UIC.textSh, 10);
     Font.wrap(mv.d, 152, 10).slice(0, 2).forEach((l, i) => Font.draw(x, l, 10, (lv && lv < SKILL_MAX ? 206 : 196) + i * 12, UIC.text, UIC.textSh, 10));
-    Font.draw(x, s === 'max' ? '已達最高等級' : s.startsWith('locked') ? s.slice(7) : st.tp ? 'A：' + (lv ? '升級' : '學習') + '（消耗1點）' : '升級時可以獲得技能點', 10, 236, s.startsWith('locked') ? UIC.bad : UIC.muted, UIC.textSh, 10);
+    Font.draw(x, s === 'max' ? '已達最高等級' : s.startsWith('locked') ? s.slice(7) : st.skp ? 'A：' + (lv ? '升級' : '學習') + '（消耗1點）' : '升級時可以獲得技能點', 10, 236, s.startsWith('locked') ? UIC.bad : UIC.muted, UIC.textSh, 10);
   } };
   UI.push(scr);
   while (true) {
@@ -82,7 +82,7 @@ function* skillTreeScreen() {
     let ni = idx; if (Input.repeat('left') && idx % COLS > 0) ni--; if (Input.repeat('right') && idx % COLS < COLS - 1 && idx + 1 < n) ni++; if (Input.repeat('up') && idx >= COLS) ni -= COLS; if (Input.repeat('down') && idx + COLS < n) ni += COLS;
     if (ni !== idx) { idx = ni; Sound.sfx('cursor'); const r = Math.floor(idx / COLS); if (r < top) top = r; if (r >= top + VIS) top = r - VIS + 1; }
     if (Input.pressed('b')) { Input.consume('b'); Sound.sfx('cancel'); break; }
-    if (Input.pressed('a')) { Input.consume('a'); const node = N[idx], s = nodeState(node); if (!st.tp || s === 'max' || s.startsWith('locked')) { Sound.sfx('bump'); } else { st.tp--; st.skills[node.id] = skillLv(node.id) + 1; Sound.sfx('statUp'); } }
+    if (Input.pressed('a')) { Input.consume('a'); const node = N[idx], s = nodeState(node); if (!st.skp || s === 'max' || s.startsWith('locked')) { Sound.sfx('bump'); } else { st.skp--; st.skills[node.id] = skillLv(node.id) + 1; Sound.sfx('statUp'); } }
     yield;
   }
   UI.remove(scr);
@@ -90,3 +90,15 @@ function* skillTreeScreen() {
 
 for (const [k, v] of Object.entries({ swordsman: 4, mage: 12, guardian: 4, swordmaster: 8, berserker: 4, pyromancer: 22, stormcaller: 22, paladin: 12, otherworlder: 14 })) if (CLASSES[k]) CLASSES[k].st.mp = v;
 SPECIALS.freeCast.d = '使用技能時有30%機率不消耗MP。';
+// v4.7: skill points (st.skp) and talent points (st.tp) are separate pools again
+function splitPoints(st) {
+  if (st.skp !== undefined) return;
+  const spent = Object.values(st.tal || {}).reduce((a, b) => a + b, 0), entitled = Math.max(0, st.lv - 5) + (st.tpBought || 0);
+  st.skp = st.tp || 0; st.tp = Math.max(0, entitled - spent);
+  if (st.lv > 5 && st.cls && !st.skillNote) st.pointNote = 1;
+}
+function* pointUpdateNote(st) {
+  delete st.pointNote; yield* wait(30);
+  yield* say('【系統更新】技能點和天賦點分開了！\n每次升級：技能點+2、天賦點+1。');
+  yield* say('原本剩下的點數都變成技能點，\n天賦點則依照等級重新補發。（目前' + (st.tp || 0) + '點）');
+}

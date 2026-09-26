@@ -31,9 +31,9 @@ class Overworld {
     const prev = this.map && this.map.d.name; this.map = getMap(id); const st = this.st; st.map = id; st.x = x; st.y = y; st.dir = dir || st.dir || 'down';
     this.p = new Entity({ x, y, dir: st.dir }); this.p.isPlayer = true;
     this.npcs = (this.map.d.npcs || []).filter(n => !n.show || n.show(st)).map(n => new Entity({ ...n, frames: npcFrames(n.look) }));
-    this.elites = (this.map.d.elites || []).filter(e => !st.flags[e.id]).map(e => new Entity({ ...e, img: monsterMini(e.sp, 24) }));
+    this.elites = (this.map.d.elites || []).filter(e => !st.flags[e.id]).map(e => new Entity({ ...e, home: [e.x, e.y, e.dir], img: monsterMini(e.sp, 24) }));
     this.items = (this.map.d.items || []).filter(i => !st.flags[i.id] && (!i.show || i.show(st))).map(i => new Entity({ ...i }));
-    st.gath = st.gath || {}; for (const g of this.map.d.gathers || []) if (st.gath[g.id] === undefined || (st.steps || 0) - st.gath[g.id] > 150) this.items.push(new Entity({ ...g, gather: 1 }));
+    st.gath = st.gath || {}; for (const g of this.map.d.gathers || []) if (st.gath[g.id] === undefined || (st.steps || 0) - st.gath[g.id] > GATHER_RESPAWN) this.items.push(new Entity({ ...g, gather: 1 }));
     if (st.flags.caravanMet && !st.flags.caravan && id !== 'route') { st.flags.caravan = 'lost'; st.flags.mineOpen = 1; }
     const bd = this.map.d.boss; this.boss = bd && !st.flags[bd.flag || 'golem'] ? new Entity({ ...bd, img: monsterMini(bd.sp, 36), w2: 1 }) : null;
     // neighbors for seamless connections
@@ -142,6 +142,7 @@ class Overworld {
   checkSight() {
     const p = this.p; if (this.script) return false;
     for (const e of this.elites) {
+      if ((this.st.steps || 0) < (e.calmUntil || 0)) continue; // just escaped from it: it doesn't chase
       const [dx, dy] = DIRS[e.dir];
       for (let i = 1; i <= e.sight; i++) {
         const x = e.x + dx * i, y = e.y + dy * i;
@@ -189,7 +190,7 @@ class Overworld {
   }
   *pickItem(it) {
     const st = this.st; this.items = this.items.filter(i => i !== it);
-    if (it.gather) { st.gath[it.id] = st.steps || 0; const n = rnd(1, 2); st.bag[it.mat] = (st.bag[it.mat] || 0) + n; Sound.sfx('item'); yield* say('採集到了' + ITEMS[it.mat].n + '×' + n + '！'); return; }
+    if (it.gather) { st.gath[it.id] = st.steps || 0; const r = doGather(it.kind || 'herb'); Sound.sfx('item'); yield* say('【' + GATHER_KINDS[it.kind || 'herb'][0] + '】採集到了' + r.text + '！'); if (r.up) { Sound.sfx('statUp'); yield* say('採集熟練度升到了Lv' + r.up + '！' + (r.up === 3 || r.up === 5 ? '\n每次採集的數量+1！' : '\n更容易找到稀有素材了。')); } return; }
     st.flags[it.id] = 1;
     if (it.gold) { st.money += it.gold; Sound.jingle('item'); yield* say(st.name + '撿到了' + it.gold + ' G！'); return; }
     const n = it.n || 1; let nm; if (GEAR[it.item]) nm = gearName(makeGear(classGear(it.item), it.q || 1)); else { st.bag[it.item] = (st.bag[it.item] || 0) + n; nm = ITEMS[it.item].n + (n > 1 ? '×' + n : ''); } const fr = Sound.jingle('item');
@@ -231,7 +232,8 @@ class Overworld {
     Sound.cry(Object.keys(SPECIES).indexOf(e.sp) + 1);
     yield* sayAll(ELITE_TEXT[e.id] || ['……！']);
     const res = yield* this.battleScript({ sp: e.sp, lv: e.lv, kind: 'elite', id: e.id, drop: e.drop }, true);
-    if (res === 'win') { this.st.flags[e.id] = 1; this.elites = this.elites.filter(x => x !== e); }
+    if (res === 'win') { this.st.flags[e.id] = 1; this.elites = this.elites.filter(x => x !== e); if (e.id === 'boneKnight') { const st = this.st; yield* say('骸骨騎士倒下後，身後的石棺打開了……'); st.money += 2000; st.bag.powerFruit = (st.bag.powerFruit || 0) + 1; yield* itemGet(st.name + '找到了古王的寶藏：2000 G和力量果實！'); } }
+    else { const [hx, hy, hd] = e.home; e.x = e.tx = hx; e.y = e.ty = hy; e.px = hx * TS; e.py = hy * TS; e.dir = hd; e.moving = false; e.calmUntil = (this.st.steps || 0) + 40; if (res === 'run' && this.elites.includes(e)) yield* say(SPECIES[e.sp].n + '回到了原本的地方，暫時不會再追過來了。'); }
   }
   *battleScript(cfg, noResume) {
     const st = this.st; st.lastBattleStep = st.steps || 0;
@@ -290,7 +292,7 @@ class Overworld {
     if (g && g.big) { const sx = g.x * 16 - camX, sy = g.y * 16 - camY; x.drawImage(Tiles.gate(this.st.flags.gateOpen), sx, sy); }
     // entities
     for (const n of this.npcs) objs.push({ k: n.py + 15, d: () => this.drawChar(x, n, n.frames, camX, camY) });
-    for (const it of this.items) objs.push({ k: it.py + 15, d: () => x.drawImage(it.gather ? HERB_IMG : ITEM_BALL, it.px - camX, it.py - camY) });
+    for (const it of this.items) objs.push({ k: it.py + 15, d: () => { x.drawImage(it.gather ? GATHER_IMG[it.kind] || HERB_IMG : ITEM_BALL, it.px - camX, it.py - camY); if (it.gather && (this.t + it.x * 17) % 80 < 10) { const s = (this.t + it.x * 17) % 80; x.fillStyle = '#ffffff'; x.fillRect(it.px - camX + 11, it.py - camY + 2 + (s >> 2), 1, 3); x.fillRect(it.px - camX + 10, it.py - camY + 3 + (s >> 2), 3, 1); } } });
     for (const e of this.elites) objs.push({ k: e.py + 15, d: () => this.drawMon(x, e, camX, camY) });
     if (this.boss) objs.push({ k: this.boss.py + 15, d: () => this.drawBoss(x, this.boss, camX, camY) });
     if (!this.hideHero) objs.push({ k: p.py + 15.5, d: () => this.drawChar(x, p, heroFramesFor(this.st), camX, camY) });

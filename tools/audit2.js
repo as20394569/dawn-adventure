@@ -102,7 +102,7 @@ module.exports = async (g) => {
     try { for (const [mid, x, y] of questMarks(st)) { if (!MAPS[mid]) bad('任務標記', '地圖不存在', mid); else if (!getMap(mid).rows[y] || getMap(mid).rows[y][x] === undefined) bad('任務標記', '座標超出', mid, x, y); } } catch (e) { bad('任務標記', e.message); }
     // ---------- TALENTS / CLASSES stats ----------
     const okStat = s => [...STATS, 'mp', 'crit', 'hit', 'eva', 'drain', 'elem', 'counter', 'rage', 'fireUp', 'boltUp'].includes(s);
-    for (const T of TALENTS) for (const s in T.st) if (!okStat(s)) bad('天賦', T.id, '欄位無效', s);
+    for (const T of TALENTS) for (const s in T.st) if (!okStat(s) && !['pierceT', 'mpRegen'].includes(s)) bad('天賦', T.id, '欄位無效', s);
     for (const c in CLASSES) for (const s in CLASSES[c].st) if (!okStat(s)) bad('職業', c, '欄位無效', s);
     for (const s of ['counter', 'rage', 'fireUp', 'boltUp']) if (!new RegExp('\\.' + s + '\\b').test(SRC.replace(/st: \{[^}]*\}/g, ''))) bad('能力', s, '戰鬥程式沒有讀取');
     // ---------- CATEGORIES (every entry must have one) ----------

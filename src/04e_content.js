@@ -96,7 +96,7 @@ MAPS.mine = {
   ],
   edgeWarps: [{ dir: 'left', at: [17], to: ['route', 21, 29, 'left'] }],
   boss: { sp: 'banditBoss', lv: 15, x: 8, y: 2, flag: 'bandit', ev: 'banditBoss' },
-  elites: [{ id: 'thug1', sp: 'bandit', lv: 13, x: 9, y: 8, dir: 'down', sight: 4, drop: 'banditHood' }, { id: 'thug2', sp: 'bandit', lv: 12, x: 3, y: 12, dir: 'down', sight: 1 }],
+  elites: [{ id: 'thug1', sp: 'bandit', lv: 13, x: 9, y: 8, dir: 'down', sight: 3, drop: 'banditHood' }, { id: 'thug2', sp: 'bandit', lv: 12, x: 3, y: 12, dir: 'down', sight: 1 }],
   items: [{ id: 'm1', x: 1, y: 5, item: 'superPotion', n: 2 }, { id: 'm2', x: 16, y: 5, gold: 600 }, { id: 'm3', x: 1, y: 10, item: 'minerHelm', q: 2 }, { id: 'm4', x: 16, y: 10, item: 'elixir' }, { id: 'm5', x: 1, y: 13, item: 'ether', n: 2 }, { id: 'm6', x: 16, y: 15, item: 'powerFruit' }],
   gathers: [{ id: 'gm1', x: 5, y: 10, mat: 'stone' }, { id: 'gm2', x: 14, y: 13, mat: 'stone' }, { id: 'gm3', x: 11, y: 3, mat: 'gel' }],
   gearPool: ['knightSword', 'guardHelm', 'minerHelm', 'chainMail', 'stoneMail', 'featherBoots', 'wolfNecklace'],
