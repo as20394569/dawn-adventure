@@ -34,16 +34,16 @@ module.exports = async (g) => {
     const battle = (sp, lv) => new Battle({ sp, lv, kind: 'wild', bg: 'field' });
     const dmg = (b, u, t, id) => b.calcDamage(u, t, MOVES[id]).dmg;
     const cmp = (label, a, b2, ratio, tol = 0.12) => { const r = a / b2; if (Math.abs(r - ratio) > ratio * tol) fail(label, 'ratio', r.toFixed(2), 'want', ratio); else info(label, r.toFixed(2)); };
-    { const st = fresh(20); const b = battle('bandit', 20); const F = b.F, base = dmg(b, b.H, F, 'flameSlash');
+    { const st = fresh(20); const b = battle('bandit', 8); const F = b.F, base = dmg(b, b.H, F, 'flameSlash');
       const fx = (fam) => { F.fam = fam; return dmg(b, b.H, F, 'flameSlash'); };
       cmp('火打獸族(弱)', fx('beast'), fx('human'), 1.5); cmp('火打精靈(抗)', fx('spirit'), fx('human'), 0.6); cmp('火打水棲(抗)', fx('aquatic'), fx('human'), 0.6);
       F.fam = 'construct'; cmp('水打構造(弱)', dmg(b, b.H, F, 'aquaBlade'), (F.fam = 'human', dmg(b, b.H, F, 'aquaBlade')), 1.5);
       F.fam = 'construct'; cmp('揮砍打構造(一般無弱點)', dmg(b, b.H, F, 'slash'), (F.fam = 'human', dmg(b, b.H, F, 'slash')), 1.0); }
     { // vs-family affix and elem affix
-      const st = fresh(20); const b0 = battle('skeleton', 20), d0 = dmg(b0, b0.H, b0.F, 'slash');
-      st.gear.push({ u: 1, b: 'wolfNecklace', q: 1, r: 1, a: [['vs', 'undead', 20]] }); st.equip.acc1 = 1; const b1 = battle('skeleton', 20); b1.H.stats.crit = 0; const d1 = dmg(b1, b1.H, b1.F, 'slash');
+      const st = fresh(30); const b0 = battle('skeleton', 8), d0 = dmg(b0, b0.H, b0.F, 'slash');
+      st.gear.push({ u: 1, b: 'wolfNecklace', q: 1, r: 1, a: [['vs', 'undead', 20]] }); st.equip.acc1 = 1; const b1 = battle('skeleton', 8); b1.H.stats.crit = 0; const d1 = dmg(b1, b1.H, b1.F, 'slash');
       cmp('對不死+20%詞綴', d1, d0, 1.2, 0.1);
-      const e0 = dmg(b0, b0.H, b0.F, 'thunder'); st.gear[0].a = [['elem', 20]]; const b2 = battle('skeleton', 20); const e1 = dmg(b2, b2.H, b2.F, 'thunder'); cmp('屬性傷害+20%詞綴', e1, e0, 1.2, 0.1); }
+      const e0 = dmg(b0, b0.H, b0.F, 'thunder'); st.gear[0].a = [['elem', 20]]; const b2 = battle('skeleton', 8); const e1 = dmg(b2, b2.H, b2.F, 'thunder'); cmp('屬性傷害+20%詞綴', e1, e0, 1.2, 0.1); }
     { // monster → hero: resist affix, FOE_POWER, defend
       const st = fresh(20); const b = battle('emberSpirit', 20); const d0 = dmg(b, b.F, b.H, 'm_flare');
       st.gear.push({ u: 1, b: 'clothCap', q: 1, r: 1, a: [['resist', '火', 30]] }); st.equip.head = 1; const b2 = battle('emberSpirit', 20); const d1 = dmg(b2, b2.F, b2.H, 'm_flare');

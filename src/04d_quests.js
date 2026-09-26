@@ -92,7 +92,7 @@ function extraQuests(st, L) {
   const f = st.flags;
   if (f.q2) L.push({ n: '見習獵人提姆', t: !f.q2res ? '守衛的弟弟提姆一個人跑去迷霧森林，想討伐苔石巨人。' : f.q2done ? (f.q2res === 'home' ? '完成：把提姆帶回了哥哥身邊。' : '完成：和提姆並肩打倒了苔石巨人。') : f.q2res === 'home' ? '回晨霧道路北邊，告訴守衛提姆平安回家了。' : f.mossGiant ? '苔石巨人倒下了。回去找提姆吧。' : '和提姆一起打倒苔石巨人！（提姆會用弓箭支援）', done: !!f.q2done });
   if (f.q3) L.push({ n: '師父的遺作', t: f.q3 === 1 ? '鐵匠想完成師父的遺作。帶水晶碎片×3給他。（有' + (st.bag.crystal || 0) + '）' : f.q3res === 'take' ? '完成：收下了「名匠遺作」。' : '完成：讓鐵匠留著遺作，強化費用永久半價。', done: f.q3 === 2 });
-  if (f.golem) L.push({ n: '古王的墓穴', t: f.boneKnight ? '完成：打倒了守護墓室的骸骨騎士。' : '古岩遺跡的石板下出現了樓梯。地下墓穴裡有強大的亡者。（建議Lv17以上）', done: !!f.boneKnight });
+  if (f.golem) L.push({ n: '古王的墓穴', t: f.boneKnight ? '完成：打倒了守護墓室的骸骨騎士。' : '古岩遺跡的石板下出現了樓梯。地下墓穴裡有強大的亡者。（建議Lv' + MAPS.catacomb.encounters[0].table[0][1] + '以上）', done: !!f.boneKnight });
   if (f.mineOpen || f.bandit) L.push({ n: '失落的貨物', t: f.bandit ? '完成：打倒盜賊頭目「鐵斧」格倫，奪回了商隊的貨物。' : '商隊的貨物被盜賊搶走，藏進了晨霧道路東邊的廢棄礦坑。', done: !!f.bandit });
   for (const k in COMMISSIONS) { const s = comState(k, st); if (!s || s.s === 'done') continue; const p = comProgress(k, st); L.push({ n: '委託：' + COMMISSIONS[k].n, t: COMMISSIONS[k].d + '（' + p.cur + '/' + p.max + '）' + (p.ready ? '→ 回告示板交付' : ''), done: false }); }
   const dn = Object.keys(COMMISSIONS).filter(k => (comState(k, st) || {}).s === 'done').length; if (dn) L.push({ n: '委託告示板', t: '已完成 ' + dn + '/' + Object.keys(COMMISSIONS).length + ' 件委託。', done: dn === Object.keys(COMMISSIONS).length });

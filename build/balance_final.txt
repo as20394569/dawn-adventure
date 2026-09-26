@@ -1,0 +1,40 @@
+==== normal player ====
+area | arriveLv→leaveLv | wild(foe) | hitsNeutral/hitsBest | foeAvg%HP (max%) | turnsToDie
+道路南段 | 5→7 | mush Lv5 | 4/2 | 11% (11%) | 9
+道路中段 | 7→10 | fox Lv8 | 4/3 | 16% (22%) | 7
+   elite wolf Lv9 | hero Lv(pre) | 4/4 | 15% (19%) | 7 | foeHP 56 heroHP 37
+道路北段 | 10→13 | thunderBeetle Lv10 | 3/3 | 19% (23%) | 6
+   elite flower Lv12 | hero Lv(pre) | 6/6 | 20% (26%) | 6 | foeHP 83 heroHP 42
+   elite croc Lv13 | hero Lv(pre) | 6/6 | 27% (29%) | 4 | foeHP 87 heroHP 42
+迷霧森林 | 13→15 | thornMush Lv12 | 3/3 | 13% (18%) | 8
+   elite mossGiant Lv14 | hero Lv(pre) | 4/4 | 20% (24%) | 6 | foeHP 96 heroHP 46
+廢棄礦坑 | 15→17 | mineBat Lv14 | 2/2 | 12% (14%) | 9
+   elite bandit Lv15 | hero Lv(pre) | 3/3 | 14% (16%) | 8 | foeHP 118 heroHP 51
+   elite bandit Lv14 | hero Lv(pre) | 3/3 | 12% (14%) | 9 | foeHP 109 heroHP 51
+   boss banditBoss Lv16 | hero Lv(pre) | 6/6 | 18% (24%) | 6 | foeHP 246 heroHP 51
+古岩遺跡 | 17→18 | skeleton Lv15 | 2/2 | 15% (17%) | 7
+   boss golem Lv15 | hero Lv(pre) | 10/8 | 15% (15%) | 7 | foeHP 310 heroHP 54
+地下水道 | 18→20 | drownedSoul Lv17 | 2/2 | 17% (21%) | 6
+   boss crystalGolem Lv19 | hero Lv(pre) | 12/10 | 20% (30%) | 5 | foeHP 345 heroHP 66
+地下墓穴 | 20→23 | wraith Lv21 | 3/3 | 23% (31%) | 5
+   elite boneKnight Lv23 | hero Lv(pre) | 6/6 | 21% (25%) | 5 | foeHP 161 heroHP 73
+==== thorough player ====
+area | arriveLv→leaveLv | wild(foe) | hitsNeutral/hitsBest | foeAvg%HP (max%) | turnsToDie
+道路南段 | 5→7 | mush Lv5 | 4/2 | 11% (11%) | 9
+道路中段 | 7→10 | fox Lv8 | 4/3 | 16% (22%) | 7
+   elite wolf Lv9 | hero Lv(pre) | 3/3 | 15% (18%) | 7 | foeHP 56 heroHP 39
+道路北段 | 10→13 | thunderBeetle Lv10 | 3/3 | 19% (23%) | 6
+   elite flower Lv12 | hero Lv(pre) | 5/5 | 19% (25%) | 6 | foeHP 83 heroHP 44
+   elite croc Lv13 | hero Lv(pre) | 5/5 | 26% (27%) | 4 | foeHP 87 heroHP 44
+迷霧森林 | 13→15 | thornMush Lv12 | 3/3 | 13% (18%) | 8
+   elite mossGiant Lv14 | hero Lv(pre) | 3/3 | 17% (20%) | 6 | foeHP 96 heroHP 49
+廢棄礦坑 | 15→17 | mineBat Lv14 | 2/2 | 12% (14%) | 9
+   elite bandit Lv15 | hero Lv(pre) | 3/3 | 12% (13%) | 9 | foeHP 118 heroHP 54
+   elite bandit Lv14 | hero Lv(pre) | 3/3 | 10% (11%) | 10 | foeHP 109 heroHP 54
+   boss banditBoss Lv16 | hero Lv(pre) | 6/6 | 16% (20%) | 7 | foeHP 246 heroHP 54
+古岩遺跡 | 17→18 | skeleton Lv15 | 2/2 | 15% (17%) | 7
+   boss golem Lv15 | hero Lv(pre) | 9/7 | 14% (14%) | 7 | foeHP 310 heroHP 56
+地下水道 | 18→20 | drownedSoul Lv17 | 2/2 | 17% (21%) | 6
+   boss crystalGolem Lv19 | hero Lv(pre) | 11/9 | 20% (29%) | 6 | foeHP 345 heroHP 68
+地下墓穴 | 20→24 | wraith Lv21 | 3/3 | 23% (31%) | 5
+   elite boneKnight Lv23 | hero Lv(pre) | 5/5 | 19% (22%) | 6 | foeHP 161 heroHP 76

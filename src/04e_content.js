@@ -112,7 +112,7 @@ const MINE_EVENTS = {
     const st = Game.st; if (st.flags.bandit || !ow.boss) return null;
     return (function* () {
       yield* sayAll(['「哈！又來一個不怕死的。」', '「我是『鐵斧』格倫。商隊的貨？早就是我的了！」', '「想要的話——就用命來換吧！」']);
-      const res = yield* ow.battleScript({ sp: 'banditBoss', lv: 15, kind: 'boss' });
+      const res = yield* ow.battleScript({ sp: 'banditBoss', lv: MAPS.mine.boss.lv, kind: 'boss' });
       if (res !== 'win') return;
       st.flags.bandit = 1; ow.boss = null;
       yield* sayAll(['「……可惡……你這傢伙……到底是什麼人……」', '格倫丟下一張破舊的地圖，逃進了坑道深處。']);

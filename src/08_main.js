@@ -79,7 +79,7 @@ const Events = {
     const f = Game.st.flags;
     yield* sayAll(['救、救命！商隊的貨車被魔物包圍了！', '這樣下去，貨物就送不到萌芽鎮了……']); f.caravanMet = 1;
     if (!(yield* yesNo('要幫忙擊退魔物嗎？'))) { yield* say('拜託了……我撐不了太久……'); return; }
-    for (const [sp, lv] of [['fox', 10], ['bee', 10], ['wolf', 9]]) { const res = yield* ow.battleScript({ sp, lv, kind: 'wild' }); if (res !== 'win') { yield* say('……還有魔物！小心啊！'); return; } }
+    for (const [sp, lv] of CARAVAN_FIGHTS) { const res = yield* ow.battleScript({ sp, lv, kind: 'wild' }); if (res !== 'win') { yield* say('……還有魔物！小心啊！'); return; } }
     f.caravan = 'saved'; Game.st.money += 800; ow.npcs = ow.npcs.filter(n => n.id !== 'caravan');
     yield* sayAll(['得救了！真是太感謝你了！', '這是謝禮。我會在萌芽鎮擺攤，也給你算便宜一點！']); yield* itemGet(Game.st.name + '得到了800 G！');
     f.mineOpen = 1; yield* sayAll(['……不過，最前面那輛貨車被盜賊搶走了。', '他們躲在道路東邊的廢棄礦坑。封住入口的木板，好像被他們拆掉了……', '如果你有餘力，能幫忙把貨物搶回來嗎？'])
@@ -88,7 +88,7 @@ const Events = {
     const st = Game.st; if (st.flags.crystalBoss || !ow.boss) return null;
     return (function* () {
       yield* sayAll(['水晶石像散發著異界之門同樣的光芒……', '「……異界之人……證明……你的力量……」']);
-      const res = yield* ow.battleScript({ sp: 'crystalGolem', lv: 18, kind: 'boss' });
+      const res = yield* ow.battleScript({ sp: 'crystalGolem', lv: MAPS.sewer.boss.lv, kind: 'boss' });
       if (res === 'win') { st.flags.crystalBoss = 1; st.flags.hiddenCls = 1; ow.boss = null; yield* say('水晶魔像碎裂了。碎片化成光，流進了' + st.name + '的身體……'); yield* itemGet('覺醒了隱藏職業「異界勇者」！（找村長轉職）'); saveGame(); }
     })();
   },
@@ -146,7 +146,7 @@ const Events = {
       yield* say('……轟隆隆……');
       yield* tween(30, t => ow.bossGlow = t); Sound.cry(11, 0.6, 1.8); Game.shake = 30;
       yield* sayAll(['古岩魔像的眼睛亮了起來！', '「……異界之人……」', '「……門……不許……靠近……」']);
-      const res = yield* ow.battleScript({ sp: 'golem', lv: 14, kind: 'boss' });
+      const res = yield* ow.battleScript({ sp: 'golem', lv: MAPS.ruins.boss.lv, kind: 'boss' });
       ow.bossGlow = 0;
       if (res === 'win') {
         Game.st.flags.golem = 1; ow.boss = null; Sound.stop(); ow.camDY = -24;

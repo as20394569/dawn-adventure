@@ -2312,7 +2312,7 @@ function extraQuests(st, L) {
   const f = st.flags;
   if (f.q2) L.push({ n: '見習獵人提姆', t: !f.q2res ? '守衛的弟弟提姆一個人跑去迷霧森林，想討伐苔石巨人。' : f.q2done ? (f.q2res === 'home' ? '完成：把提姆帶回了哥哥身邊。' : '完成：和提姆並肩打倒了苔石巨人。') : f.q2res === 'home' ? '回晨霧道路北邊，告訴守衛提姆平安回家了。' : f.mossGiant ? '苔石巨人倒下了。回去找提姆吧。' : '和提姆一起打倒苔石巨人！（提姆會用弓箭支援）', done: !!f.q2done });
   if (f.q3) L.push({ n: '師父的遺作', t: f.q3 === 1 ? '鐵匠想完成師父的遺作。帶水晶碎片×3給他。（有' + (st.bag.crystal || 0) + '）' : f.q3res === 'take' ? '完成：收下了「名匠遺作」。' : '完成：讓鐵匠留著遺作，強化費用永久半價。', done: f.q3 === 2 });
-  if (f.golem) L.push({ n: '古王的墓穴', t: f.boneKnight ? '完成：打倒了守護墓室的骸骨騎士。' : '古岩遺跡的石板下出現了樓梯。地下墓穴裡有強大的亡者。（建議Lv17以上）', done: !!f.boneKnight });
+  if (f.golem) L.push({ n: '古王的墓穴', t: f.boneKnight ? '完成：打倒了守護墓室的骸骨騎士。' : '古岩遺跡的石板下出現了樓梯。地下墓穴裡有強大的亡者。（建議Lv' + MAPS.catacomb.encounters[0].table[0][1] + '以上）', done: !!f.boneKnight });
   if (f.mineOpen || f.bandit) L.push({ n: '失落的貨物', t: f.bandit ? '完成：打倒盜賊頭目「鐵斧」格倫，奪回了商隊的貨物。' : '商隊的貨物被盜賊搶走，藏進了晨霧道路東邊的廢棄礦坑。', done: !!f.bandit });
   for (const k in COMMISSIONS) { const s = comState(k, st); if (!s || s.s === 'done') continue; const p = comProgress(k, st); L.push({ n: '委託：' + COMMISSIONS[k].n, t: COMMISSIONS[k].d + '（' + p.cur + '/' + p.max + '）' + (p.ready ? '→ 回告示板交付' : ''), done: false }); }
   const dn = Object.keys(COMMISSIONS).filter(k => (comState(k, st) || {}).s === 'done').length; if (dn) L.push({ n: '委託告示板', t: '已完成 ' + dn + '/' + Object.keys(COMMISSIONS).length + ' 件委託。', done: dn === Object.keys(COMMISSIONS).length });
@@ -2545,7 +2545,7 @@ const MINE_EVENTS = {
     const st = Game.st; if (st.flags.bandit || !ow.boss) return null;
     return (function* () {
       yield* sayAll(['「哈！又來一個不怕死的。」', '「我是『鐵斧』格倫。商隊的貨？早就是我的了！」', '「想要的話——就用命來換吧！」']);
-      const res = yield* ow.battleScript({ sp: 'banditBoss', lv: 15, kind: 'boss' });
+      const res = yield* ow.battleScript({ sp: 'banditBoss', lv: MAPS.mine.boss.lv, kind: 'boss' });
       if (res !== 'win') return;
       st.flags.bandit = 1; ow.boss = null;
       yield* sayAll(['「……可惡……你這傢伙……到底是什麼人……」', '格倫丟下一張破舊的地圖，逃進了坑道深處。']);
@@ -3020,6 +3020,40 @@ Object.assign(GEAR, {
 GEAR.ruinMail.kind = '重裝'; GEAR.kingsSeal.kind = '飾品';
 MAPS.ruins.gearPool = ['boneSaber', 'ruinStaff', 'boneHelm', 'ruinMail', 'ectoLantern'];
 MAPS.catacomb.gearPool = ['stormStaff', 'kingsBlade', 'runeMantle', 'ancientGreaves', 'kingsSeal'];
+
+/* ===================== BALANCE: global difficulty knobs (tune with tools/balance.js) ===================== */
+// Monster toughness/power by rank (applied on top of MON_PANEL in makeFoe). Rares keep their own panel.
+const BALANCE = {
+  exp: 0.5,                 // global exp multiplier
+  expOver: 0.3,             // −30% exp per level the hero is ABOVE the monster (min 10%)
+  expUnder: 0.1,            // +10% exp per level the hero is BELOW the monster (max +50%)
+  hp: { wild: 1.35, elite: 1.6, boss: 2.0, rare: 1 },
+  pow: { wild: 1.25, elite: 1.22, boss: 1.2, rare: 1 },
+  def: { wild: 1.1, elite: 1.15, boss: 1.1, rare: 1 },
+  // level curve: gear/class/talents make the hero grow faster than a monster's panel scaling,
+  // so monsters above Lv8 gain extra HP/defence and a little extra power per level
+  curveFrom: 8, curveHP: 0.06, curveDef: 0.03, curvePow: 0.012,
+};
+const lvCurve = (lv, k) => 1 + Math.max(0, lv - BALANCE.curveFrom) * BALANCE[k];
+function expScale(heroLv, foeLv) { const d = heroLv - foeLv; const m = d <= 0 ? 1 + Math.min(0.5, -d * BALANCE.expUnder) : Math.max(0.1, 1 - d * BALANCE.expOver); return m * BALANCE.exp; }
+
+/* ---- area level table (the one place to move difficulty bands) ---- */
+// shift every wild row of a map by N levels; elites/bosses/rares are set explicitly
+const AREA_LV_SHIFT = { route: 1, forest: 2, mine: 2, ruins: 2, sewer: 2, catacomb: 2 };
+for (const id in AREA_LV_SHIFT) for (const e of MAPS[id].encounters || []) for (const r of e.table) { r[1] += AREA_LV_SHIFT[id]; r[2] += AREA_LV_SHIFT[id]; }
+const ELITE_LV = { wolf: 9, flower: 12, croc: 13, mossGiant: 14, thug1: 15, thug2: 14, boneKnight: 23 };
+for (const id in MAPS) for (const e of MAPS[id].elites || []) if (ELITE_LV[e.id]) e.lv = ELITE_LV[e.id];
+MAPS.ruins.boss.lv = 15; MAPS.mine.boss.lv = 16; MAPS.sewer.boss.lv = 19;
+const RARE_LV = { route: [5, 9], forest: [11, 13], mine: [13, 15], sewer: [16, 18], ruins: [14, 16], catacomb: [20, 22] };
+for (const id in RARE_LV) if (MAPS[id].rare) { MAPS[id].rare[1] = RARE_LV[id][0]; MAPS[id].rare[2] = RARE_LV[id][1]; }
+const CARAVAN_FIGHTS = [['fox', 11], ['bee', 11], ['wolf', 10]];
+// per-monster touch-ups found by the simulator
+Object.assign(MON_PANEL.crystalGolem, { hp: 100 }); Object.assign(MON_PANEL.croc, { hp: 40, atk: 20, def: 19 }); Object.assign(MON_PANEL.boneKnight, { hp: 50, atk: 30 });
+Object.assign(MON_PANEL.mineBat, { hp: 40 }); Object.assign(MON_PANEL.bandit, { hp: 46, def: 19 }); Object.assign(MON_PANEL.caveSpider, { hp: 40 }); Object.assign(MON_PANEL.wraith, { spa: 29 });
+Object.assign(MON_PANEL.banditBoss, { hp: 80 }); Object.assign(MON_PANEL.mossGiant, { hp: 42 }); MOVES.m_axeSpin.pow = 100;
+// rares: tough skin but not hopeless — a matched-level player needs about 3 hits before they flee
+Object.assign(MON_PANEL.goldSlime, { def: 14, spd: 14 }); Object.assign(MON_PANEL.gemSlime, { def: 28, spd: 28 }); Object.assign(MON_PANEL.goldSkeleton, { def: 26, spd: 26 }); Object.assign(MON_PANEL.paleWraith, { def: 30, spd: 30 });
+BALANCE.gangKnife = 0.045; // bandit henchmen knives: % of hero max HP per turn
 
 /* ===================== UI: text boxes, menus, screens ===================== */
 const UI = {
@@ -4042,6 +4076,7 @@ function badgeRow(x, list, X, Y) { for (const b of list) if (b) { statusBadge(x,
 function makeFoe(sp, lv, kind) {
   const d = SPECIES[sp], P = MON_PANEL[sp], f = (lv + 10) / (P.lv + 10);
   const s = {}; for (const k of ['hp', 'atk', 'def', 'spa', 'spd', 'spe']) s[k] = Math.max(1, Math.round(P[k] * f * (kind === 'wild' ? 0.92 + Math.random() * 0.16 : 1)));
+  { const rk = d.rare ? 'rare' : kind === 'boss' ? 'boss' : kind === 'elite' ? 'elite' : 'wild'; const cv = rk === 'rare' ? 0 : 1; s.hp = Math.round(s.hp * BALANCE.hp[rk] * (cv ? lvCurve(lv, 'curveHP') : 1)); for (const k of ['atk', 'spa']) s[k] = Math.round(s[k] * BALANCE.pow[rk] * (cv ? lvCurve(lv, 'curvePow') : 1)); for (const k of ['def', 'spd']) s[k] = Math.round(s[k] * BALANCE.def[rk] * (cv ? lvCurve(lv, 'curveDef') : 1)); }
   s.crit = P.crit ?? 6; s.hit = P.hit || 0; s.eva = P.eva || 0;
   const known = d.learn.filter(([l]) => l <= lv).map(([, m]) => m); const moves = [...new Set(known)].slice(-4).map(id => ({ id }));
   return { sp, n: d.n, fam: d.fam, rare: d.rare, lv, stats: s, hp: s.hp, maxhp: s.hp, status: null, moves, stages: { atk: 0, def: 0, spa: 0, spd: 0, spe: 0 }, wet: 0, trait: d.trait, kind, boss: kind === 'boss', elite: kind === 'elite', sleepT: 0 };
@@ -4397,7 +4432,7 @@ class Battle {
     if (this.cfg.id === 'mossGiant' && Game.st.flags.q2res === 'stay' && !Game.st.flags.q2done && this.F.hp > 0 && this.H.hp > 0) { yield* FX.sting.call(this, this.center(this.H), this.center(this.F)); const d = Math.ceil(this.F.maxhp * 0.06); this.F.hp = Math.max(0, this.F.hp - d); this.blinkF = 12; yield* this.animHP(this.F); yield* this.msg('提姆射出了箭！造成' + d + '點傷害！', { hold: 24 }); }
     if (this.H.stats.fx.deathWard && !this.dwUsed && this.H.hp > 0 && this.H.hp < this.H.maxhp * 0.3) { this.dwUsed = true; this.H.shield = 3; yield* FX.barrier.call(this, this.center(this.H)); yield* this.msg('亡者守護發動了！獲得了護盾！', { hold: 24 }); }
     if (this.H.stats.fx.regen && this.H.hp > 0 && this.H.hp < this.H.maxhp) { this.H.hp = Math.min(this.H.maxhp, this.H.hp + Math.ceil(this.H.maxhp * 0.06)); yield* this.animHP(this.H); }
-    if (this.bb && this.bb.gang > 0 && this.H.hp > 0 && this.F.hp > 0) { this.bb.gang--; yield* MFX.knives.call(this, this.center(this.F), this.center(this.H)); if (this.H.defending) yield* this.msg(this.H.n + '擋開了手下的飛刀！', { hold: 20 }); else { const d = Math.max(1, Math.floor(this.H.maxhp * 0.06)); this.H.hp = Math.max(0, this.H.hp - d); this.blinkH = 12; yield* this.animHP(this.H); yield* this.msg('手下丟出了飛刀！受到' + d + '點傷害！', { hold: 20 }); if (this.H.hp <= 0) return; } if (!this.bb.gang) yield* this.msg('手下們見苗頭不對，逃走了。', { hold: 20 }); }
+    if (this.bb && this.bb.gang > 0 && this.H.hp > 0 && this.F.hp > 0) { this.bb.gang--; yield* MFX.knives.call(this, this.center(this.F), this.center(this.H)); if (this.H.defending) yield* this.msg(this.H.n + '擋開了手下的飛刀！', { hold: 20 }); else { const d = Math.max(1, Math.floor(this.H.maxhp * BALANCE.gangKnife)); this.H.hp = Math.max(0, this.H.hp - d); this.blinkH = 12; yield* this.animHP(this.H); yield* this.msg('手下丟出了飛刀！受到' + d + '點傷害！', { hold: 20 }); if (this.H.hp <= 0) return; } if (!this.bb.gang) yield* this.msg('手下們見苗頭不對，逃走了。', { hold: 20 }); }
     for (const b of [this.H, this.F]) { if (b.tangle > 0) b.tangle--; if (b.wet > 0) b.wet--; if (b.shield > 0 && !--b.shield) yield* this.msg(b.n + '的魔法護盾消失了。', { hold: 24 }); }
     if (this.collapse && this.H.hp > 0 && this.F.hp > 0) { yield* FX.rock.call(this, null, this.center(this.H)); if (this.H.defending) yield* this.msg(this.H.n + '擋住了落石！'); else { const d = Math.max(1, Math.floor(this.H.maxhp / 10)); this.H.hp = Math.max(0, this.H.hp - d); this.blinkH = 12; yield* this.animHP(this.H); yield* this.msg(this.H.n + '被落石砸中了！'); if (this.H.hp <= 0) return; } }
     for (const b of [this.H, this.F]) {
@@ -4447,7 +4482,7 @@ class Battle {
     const st = Game.st, F = this.F, sp = SPECIES[F.sp]; Game.st.wins = (st.wins || 0) + 1; const de = (st.dex || (st.dex = {}))[F.sp] || (st.dex[F.sp] = { seen: 1, won: 0 }); de.won++;
     Sound.play('victory');
     if (this.bb && this.bb.stolen) { st.money += this.bb.stolen; yield* this.msg('奪回了被搶走的' + this.bb.stolen + ' G！'); }
-    const exp = Math.floor(sp.exp * F.lv / 5 * (F.elite || F.boss ? 1.5 : 1) * (this.H.stats.fx.wisdom ? 1.5 : 1) * (this.cfg.pack ? 1.25 : 1));
+    const exp = Math.max(1, Math.floor(sp.exp * F.lv / 5 * (F.elite || F.boss ? 1.5 : 1) * (this.H.stats.fx.wisdom ? 1.5 : 1) * (this.cfg.pack ? 1.25 : 1) * expScale(st.lv, F.lv)));
     yield* this.gainExp(exp);
     const gold = Math.floor((F.boss ? 1000 : sp.gold * F.lv) * (this.H.stats.fx.fortune ? 1.5 : 1));
     if (gold) { st.money += gold; yield* this.msg(st.name + '得到了' + gold + ' G！'); }
@@ -4862,7 +4897,7 @@ const Events = {
     const f = Game.st.flags;
     yield* sayAll(['救、救命！商隊的貨車被魔物包圍了！', '這樣下去，貨物就送不到萌芽鎮了……']); f.caravanMet = 1;
     if (!(yield* yesNo('要幫忙擊退魔物嗎？'))) { yield* say('拜託了……我撐不了太久……'); return; }
-    for (const [sp, lv] of [['fox', 10], ['bee', 10], ['wolf', 9]]) { const res = yield* ow.battleScript({ sp, lv, kind: 'wild' }); if (res !== 'win') { yield* say('……還有魔物！小心啊！'); return; } }
+    for (const [sp, lv] of CARAVAN_FIGHTS) { const res = yield* ow.battleScript({ sp, lv, kind: 'wild' }); if (res !== 'win') { yield* say('……還有魔物！小心啊！'); return; } }
     f.caravan = 'saved'; Game.st.money += 800; ow.npcs = ow.npcs.filter(n => n.id !== 'caravan');
     yield* sayAll(['得救了！真是太感謝你了！', '這是謝禮。我會在萌芽鎮擺攤，也給你算便宜一點！']); yield* itemGet(Game.st.name + '得到了800 G！');
     f.mineOpen = 1; yield* sayAll(['……不過，最前面那輛貨車被盜賊搶走了。', '他們躲在道路東邊的廢棄礦坑。封住入口的木板，好像被他們拆掉了……', '如果你有餘力，能幫忙把貨物搶回來嗎？'])
@@ -4871,7 +4906,7 @@ const Events = {
     const st = Game.st; if (st.flags.crystalBoss || !ow.boss) return null;
     return (function* () {
       yield* sayAll(['水晶石像散發著異界之門同樣的光芒……', '「……異界之人……證明……你的力量……」']);
-      const res = yield* ow.battleScript({ sp: 'crystalGolem', lv: 18, kind: 'boss' });
+      const res = yield* ow.battleScript({ sp: 'crystalGolem', lv: MAPS.sewer.boss.lv, kind: 'boss' });
       if (res === 'win') { st.flags.crystalBoss = 1; st.flags.hiddenCls = 1; ow.boss = null; yield* say('水晶魔像碎裂了。碎片化成光，流進了' + st.name + '的身體……'); yield* itemGet('覺醒了隱藏職業「異界勇者」！（找村長轉職）'); saveGame(); }
     })();
   },
@@ -4929,7 +4964,7 @@ const Events = {
       yield* say('……轟隆隆……');
       yield* tween(30, t => ow.bossGlow = t); Sound.cry(11, 0.6, 1.8); Game.shake = 30;
       yield* sayAll(['古岩魔像的眼睛亮了起來！', '「……異界之人……」', '「……門……不許……靠近……」']);
-      const res = yield* ow.battleScript({ sp: 'golem', lv: 14, kind: 'boss' });
+      const res = yield* ow.battleScript({ sp: 'golem', lv: MAPS.ruins.boss.lv, kind: 'boss' });
       ow.bossGlow = 0;
       if (res === 'win') {
         Game.st.flags.golem = 1; ow.boss = null; Sound.stop(); ow.camDY = -24;
