@@ -134,7 +134,8 @@ function heroStats(st = Game.st) {
   s.crit = 3 + a.luk * 0.5;   // 會心率% = 3 + 幸運×0.5
   s.hit = a.dex * 0.5;        // 命中加成% = 靈巧×0.5
   s.eva = a.agi * 0.4;        // 迴避率% = 敏捷×0.4
-  s.vs = []; s.resist = {}; s.drain = 0; // equipment affixes
+  s.vs = []; s.resist = {}; s.drain = 0; s.elem = 0; s.counter = 0; // equipment affixes & talents
+  for (const T of TALENTS) { const r = (st.tal || {})[T.id] || 0; if (r) for (const k in T.st) s[k] = (s[k] || 0) + T.st[k] * r; }
   for (const slot in st.equip) { const it = st.equip[slot] && ITEMS[st.equip[slot]]; const f = it && it.aff; if (!f) continue; s.crit += f.crit || 0; s.hit += f.hit || 0; s.eva += f.eva || 0; s.drain += f.drain || 0; if (f.vs) s.vs.push(f.vs); if (f.resist) s.resist[f.resist[0]] = (s.resist[f.resist[0]] || 0) + f.resist[1]; }
   return s;
 }
@@ -168,6 +169,7 @@ function questList(st = Game.st) {
   const f = st.flags, L = [];
   L.push({ main: 1, n: '回家的路', t: !f.license ? '去村長家問問看回家的方法。' : !f.golem ? '前往北方的古岩遺跡，尋找異界之門。' : '門的力量還不夠……繼續尋找線索。（第一章完）', done: !!f.golem });
   if (f.q1) L.push({ n: '失蹤的弟弟', t: !f.q1res ? '花店姊姊的弟弟「小麥」去晨霧道路後沒回來。' : !f.q1done ? '回萌芽鎮告訴花店的姊姊。' : f.q1res === 'home' ? '完成：勸小麥回家了。' : '完成：替小麥保守了秘密。', done: !!f.q1done });
+  if (f.herb) L.push({ n: '會讓路的樹', t: f.f6 ? '完成：在迷霧森林深處找到了晨曦之劍。' : '藥草師說，迷霧森林西北角有一棵「會讓路的樹」。', done: !!f.f6 });
   if (f.wellCharm) L.push({ n: '井底的月光', t: '完成：從老井撈起了月光護符。', done: true });
   return L;
 }
@@ -421,6 +423,44 @@ function* shopSell() {
 }
 const sellPrice = k => ITEMS[k].sell ?? Math.floor(ITEMS[k].price / 2);
 
+/* ---------- Talents ---------- */
+function* talentScreen() {
+  const st = Game.st; st.tal = st.tal || {}; let c = 0, r = 0;
+  const T = () => TALENTS.filter(t => t.line === c)[r];
+  const locked = t => t.req && (st.tal[t.req] || 0) < 2;
+  const scr = { draw(x) {
+    screenBG(x); headerBar(x, '天賦'); Font.drawR(x, '天賦點 ' + (st.tp || 0), W - 6, 2, st.tp ? UIC.warm : UIC.muted, UIC.textSh);
+    TALENT_LINES.forEach((ln, ci) => {
+      const X = 4 + ci * 57; Font.drawC(x, ln, X + 27, 24, UIC.accent, UIC.textSh);
+      TALENTS.filter(t => t.line === ci).forEach((t, ri) => { const Y = 42 + ri * 40, rk = st.tal[t.id] || 0, on = ci === c && ri === r, lk = locked(t);
+        drawBtn(x, X, Y, 54, 36, on); Font.drawC(x, t.n, X + 27, Y + 2, lk ? UIC.dis : rk ? UIC.text : '#c9cfe4', UIC.textSh, 11);
+        for (let k = 0; k < t.max; k++) { x.fillStyle = k < rk ? UIC.warm : '#30375a'; x.fillRect(X + 27 - t.max * 4 + k * 8 + 1, Y + 24, 6, 5); } });
+      if (ci < 2) { x.fillStyle = '#30375a'; for (let ri = 0; ri < 2; ri++) x.fillRect(X + 26, 78 + ri * 40, 2, 4); }
+    });
+    const t = T(), rk = st.tal[t.id] || 0; drawWin(x, 4, 164, 168, 88, 'menu');
+    Font.draw(x, t.n + '　' + rk + '/' + t.max, 12, 168, UIC.text, UIC.textSh);
+    Font.wrap(t.d, 152, 11).slice(0, 3).forEach((l, i) => Font.draw(x, l, 12, 186 + i * 14, UIC.accent, UIC.textSh, 11));
+    Font.draw(x, locked(t) ? '需要「' + TALENTS.find(q => q.id === t.req).n + '」2級' : rk >= t.max ? '已達最高等級' : st.tp ? 'A：投入1點天賦點' : '升級時可以獲得天賦點', 12, 232, locked(t) ? UIC.bad : UIC.muted, UIC.textSh, 11);
+  } };
+  UI.push(scr);
+  while (true) {
+    if (Input.repeat('left')) { c = (c + 2) % 3; Sound.sfx('cursor'); } if (Input.repeat('right')) { c = (c + 1) % 3; Sound.sfx('cursor'); }
+    if (Input.repeat('up')) { r = (r + 2) % 3; Sound.sfx('cursor'); } if (Input.repeat('down')) { r = (r + 1) % 3; Sound.sfx('cursor'); }
+    if (Input.pressed('b')) { Input.consume('b'); Sound.sfx('cancel'); break; }
+    if (Input.pressed('a')) {
+      Input.consume('a'); const t = T(), rk = st.tal[t.id] || 0;
+      if (!st.tp || rk >= t.max || locked(t)) { Sound.sfx('bump'); continue; }
+      if (t.move && !st.moves.some(m => m.id === t.move)) {
+        if (st.moves.length < 4) st.moves.push({ id: t.move, pp: MOVES[t.move].pp });
+        else { UI.remove(scr); const i = yield* pickMoveToForget(t.move); UI.push(scr); if (i >= 4) continue; st.moves[i] = { id: t.move, pp: MOVES[t.move].pp }; }
+      }
+      st.tp--; st.tal[t.id] = rk + 1; clampHP(); Sound.sfx('statUp');
+    }
+    yield;
+  }
+  UI.remove(scr);
+}
+
 /* ---------- Bestiary ---------- */
 function* dexScreen() {
   const list = Object.keys(SPECIES), VIS = 7; let idx = 0;
@@ -452,13 +492,14 @@ function* dexScreen() {
 function* startMenu() {
   Sound.sfx('menu'); let idx = Game.menuIdx || 0;
   while (true) {
-    const r = yield* choose(['狀態', '背包', '裝備', '圖鑑', '存檔', '設定', '關閉'], { x: W - 70, y: 4, w: 66, index: idx });
-    if (r < 0 || r === 6) break; idx = r; Game.menuIdx = r;
+    const r = yield* choose(['狀態', '天賦', '背包', '裝備', '圖鑑', '存檔', '設定', '關閉'].map(t => t === '天賦' && Game.st.tp ? { t, r: '●', col: UIC.warm } : t), { x: W - 74, y: 4, w: 70, index: idx });
+    if (r < 0 || r === 7) break; idx = r; Game.menuIdx = r;
     if (r === 0) yield* summaryScreen();
-    if (r === 1) yield* bagScreen('field');
-    if (r === 2) yield* equipScreen();
-    if (r === 3) yield* dexScreen();
-    if (r === 4) { const ok = yield* yesNo('要記錄目前的冒險進度嗎？'); if (ok) { const good = saveGame(); if (good) { Sound.sfx('save'); yield* say(Game.st.name + '把冒險記錄了下來！'); } else yield* say('無法存檔……這個瀏覽器可能不允許儲存資料。'); } break; }
-    if (r === 5) yield* optionsScreen();
+    if (r === 1) yield* talentScreen();
+    if (r === 2) yield* bagScreen('field');
+    if (r === 3) yield* equipScreen();
+    if (r === 4) yield* dexScreen();
+    if (r === 5) { const ok = yield* yesNo('要記錄目前的冒險進度嗎？'); if (ok) { const good = saveGame(); if (good) { Sound.sfx('save'); yield* say(Game.st.name + '把冒險記錄了下來！'); } else yield* say('無法存檔……這個瀏覽器可能不允許儲存資料。'); } break; }
+    if (r === 6) yield* optionsScreen();
   }
 }

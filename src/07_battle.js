@@ -9,7 +9,7 @@ const STATUS_NAME = { psn: '中毒', par: '麻痺', slp: '睡眠', brn: '灼傷'
 const IMMUNE = { psn: '毒', brn: '火', par: '雷' };
 const battleImgCache = {};
 // battle sprites: rendered at a low native size, then scaled 3x (same chunky pixel look as the hero)
-const FOE_NATIVE = { golem: 28 }, FOE_SCALE = 3, FOE_FOOT = 106;
+const FOE_NATIVE = { golem: 28, mossGiant: 28 }, FOE_SCALE = 3, FOE_FOOT = 106;
 function battleSprite(key) {
   if (battleImgCache[key]) return battleImgCache[key];
   const n = FOE_NATIVE[key] || 24, S = FOE_SCALE, sm = buildShaded(ART[key], n, n / 64);
@@ -29,7 +29,15 @@ function makeFoe(sp, lv, kind) {
 function buildBattleBG(kind) {
   const c = mkCanvas(W, BH), x = c.getContext('2d'), r = srand(kind === 'ruins' ? 9 : 5);
   const poly = (col, pts) => pxPoly(x, pts, col);
-  if (kind === 'ruins') { // torch-lit stone hall
+  if (kind === 'forest') { // deep misty forest
+    ['#27402f', '#2d4a35', '#34553b', '#3c6042', '#456b49', '#4e7650'].forEach((col, i) => { x.fillStyle = col; x.fillRect(0, i * 12, W, 12); });
+    for (let i = -6; i < W; i += 11) { const w = 5 + Math.floor(r() * 5); x.fillStyle = r() < 0.5 ? '#2a1f18' : '#33261c'; x.fillRect(i, 0, w, 76); x.fillStyle = '#45352a'; x.fillRect(i, 0, 1, 76); }
+    for (let i = -8; i < W; i += 9) pxEllipse(x, i + 4, 6 + Math.floor(r() * 10), 9, 7, r() < 0.5 ? '#1f3a26' : '#244430');
+    x.fillStyle = 'rgba(210,235,220,0.18)'; x.fillRect(0, 50, W, 26);
+    ['#5c8a4c', '#578548', '#528044', '#4d7a40', '#48743c', '#436e38', '#3f6834', '#3b6230', '#375c2e', '#34572c', '#31522a', '#2e4e28'].forEach((col, i) => { x.fillStyle = col; x.fillRect(0, 72 + i * 11, W, 11); });
+    x.fillStyle = '#6a9a58'; for (let y = 76; y < BH; y += 6) for (let i = (y * 13) % 29; i < W; i += 29) x.fillRect(i, y, 5, 1);
+    x.fillStyle = '#c8b060'; for (let k = 0; k < 14; k++) x.fillRect(Math.floor(r() * W), 20 + Math.floor(r() * 50), 1, 1);
+  } else if (kind === 'ruins') { // torch-lit stone hall
     x.fillStyle = '#2a2434'; x.fillRect(0, 0, W, BH);
     for (let y = 0, row = 0; y < 96; y += 8, row++) for (let i = (row % 2) * 8 - 8; i < W; i += 16) { x.fillStyle = r() < 0.5 ? '#3a3246' : '#40384c'; x.fillRect(i + 1, y + 1, 14, 6); x.fillStyle = '#4a4258'; x.fillRect(i + 1, y + 1, 14, 1); }
     x.fillStyle = '#120e18'; x.fillRect(64, 36, 48, 60); pxEllipse(x, 88, 38, 24, 16, '#120e18'); // archway
@@ -138,7 +146,7 @@ class Battle {
     const X = 8, w = W - 16, r = this.disp.H / this.H.maxhp; drawPanel(x, X, Y, w, 24, UIC.accent, 'rgba(11,13,24,0.92)');
     let cx = Font.draw(x, st.name, X + 6, Y + 1, UIC.text, UIC.textSh);
     cx = Font.draw(x, 'Lv' + st.lv, cx + 4, Y + 1, UIC.muted, UIC.textSh);
-    if (st.status) statusBadge(x, st.status, cx + 4, Y + 3); if (this.H.wet) statusBadge(x, 'wet', cx + (st.status ? 22 : 4), Y + 3);
+    if (st.status) statusBadge(x, st.status, cx + 4, Y + 3); if (this.H.wet) statusBadge(x, 'wet', cx + (st.status ? 22 : 4), Y + 3); if (this.H.shield) statusBadge(x, 'shield', cx + 4 + (st.status ? 18 : 0) + (this.H.wet ? 18 : 0), Y + 3);
     const hs = Math.ceil(this.disp.H) + '/' + this.H.maxhp; Font.drawR(x, hs, X + w - 6, Y + 1, r <= 0.2 ? UIC.bad : UIC.text, UIC.textSh); Font.drawR(x, 'HP', X + w - 9 - Font.width(hs), Y + 1, UIC.muted, UIC.textSh);
     drawHPBar(x, X + 6, Y + 16, w - 12, r, 3);
     const lo = expForLevel(st.lv), hi = expForLevel(st.lv + 1); drawExpBar(x, X + 6, Y + 21, w - 12, (this.disp.exp - lo) / (hi - lo), 1);
@@ -255,7 +263,7 @@ class Battle {
     let D = (phys ? t.stats.def : t.stats.spd) * stageMul(crit ? Math.min(0, ds) : ds);
     if (phys && u.status === 'brn') A *= 0.5;
     const base = Math.floor(Math.floor(Math.floor(2 * u.lv / 5 + 2) * mv.pow * A / D) / 50) + 2;
-    const mult = typeMult(mv.t, t.t); let m = mult * (rnd(85, 100) / 100); if (crit) m *= 1.5; if (u.t && u.t === mv.t) m *= 1.5; if (u.hero) { m *= HERO_POWER; for (const [ty, p] of u.stats.vs || []) if (t.t === ty) m *= 1 + p / 100; }
+    const mult = typeMult(mv.t, t.t); let m = mult * (rnd(85, 100) / 100); if (crit) m *= 1.5; if (u.t && u.t === mv.t) m *= 1.5; if (u.hero) { m *= HERO_POWER; if (u.stats.elem && mv.t !== '一般') m *= 1 + u.stats.elem / 100; for (const [ty, p] of u.stats.vs || []) if (t.t === ty) m *= 1 + p / 100; }
     if (t.hero && t.stats.resist && t.stats.resist[mv.t]) m *= 1 - t.stats.resist[mv.t] / 100;
     return { dmg: Math.max(1, Math.floor(base * m)), mult, crit };
   }
@@ -281,7 +289,7 @@ class Battle {
     if (mv.pow) {
       const r = this.calcDamage(u, t, mv); const shock = mv.t === '雷' && t.wet > 0;
       yield* this.playFx(mv.fx, u, t); UI.remove(utb);
-      let dmg = r.dmg; if (shock) dmg = Math.floor(dmg * 1.5); if (t.defending) dmg = Math.max(1, Math.floor(dmg / 2));
+      let dmg = r.dmg; if (shock) dmg = Math.floor(dmg * 1.5); if (t.shield > 0) dmg = Math.max(1, Math.floor(dmg * 0.6)); if (t.defending) dmg = Math.max(1, Math.floor(dmg / 2));
       dmg = Math.min(dmg, t.hp); t.hp -= dmg;
       Sound.sfx(r.mult > 1 ? 'hitSuper' : r.mult < 1 ? 'hitWeak' : 'hit'); if (r.crit) Sound.sfx('crit');
       yield* this.impact(t, r.mult > 1 || r.crit ? 2 : r.mult < 1 ? 0 : 1);
@@ -289,6 +297,7 @@ class Battle {
       if (r.crit) yield* this.msg('擊中要害！');
       if (r.mult > 1) yield* this.msg('效果絕佳！'); else if (r.mult < 1) yield* this.msg('效果不太好……');
       if (t.defending) yield* this.msg(t.n + '的防禦擋下了一半的傷害！');
+      if (t.hero && t.defending && t.stats.counter && t.hp > 0 && u.hp > 0) { const c2 = this.calcDamage(t, u, MOVES.slash), cd = Math.min(u.hp, Math.max(1, Math.floor(c2.dmg * 0.7))); yield* this.lunge(t, 10, 3); u.hp -= cd; Sound.sfx('hit'); yield* this.impact(u, 1); yield* this.animHP(u); yield* this.msg(t.n + '趁勢反擊！'); }
       if (shock) { t.wet = 0; Sound.sfx('thunder'); yield* this.msg('潮濕的身體導電了！' + t.n + '感電了！'); if (t.hp > 0) yield* this.inflict(t, 'par', true); }
       else if (mv.t === '水' && t.hp > 0) { const was = t.wet > 0; t.wet = 3; if (!was) yield* this.msg(t.n + '全身濕透了！'); }
       else if (mv.t === '火' && t.wet > 0) { t.wet = 0; yield* this.msg('熱氣蒸乾了' + t.n + '身上的水。'); }
@@ -306,6 +315,7 @@ class Battle {
     }
     // status moves
     UI.remove(utb);
+    if (mv.shield) { u.shield = mv.shield; yield* FX.guard.call(this, this.center(u)); yield* this.msg(u.n + '展開了魔法護盾！'); return; }
     if (mv.heal) {
       if (u.hp >= u.maxhp) { yield* this.msg('但是' + u.n + '的HP已經全滿了！'); return; }
       yield* FX.heal.call(this, this.center(u)); u.hp = Math.min(u.maxhp, u.hp + Math.floor(u.maxhp * mv.heal)); yield* this.animHP(u); yield* this.msg(u.n + '的HP恢復了！'); return;
@@ -333,7 +343,7 @@ class Battle {
     yield* this.msg(b.n + { psn: '中毒了！', par: '麻痺了！可能會無法行動！', slp: '睡著了！', brn: '灼傷了！' }[s]);
   }
   *endTurn() {
-    for (const b of [this.H, this.F]) if (b.wet > 0) b.wet--;
+    for (const b of [this.H, this.F]) { if (b.wet > 0) b.wet--; if (b.shield > 0 && !--b.shield) yield* this.msg(b.n + '的魔法護盾消失了。', { hold: 24 }); }
     if (this.collapse && this.H.hp > 0 && this.F.hp > 0) { yield* FX.rock.call(this, null, this.center(this.H)); if (this.H.defending) yield* this.msg(this.H.n + '擋住了落石！'); else { const d = Math.max(1, Math.floor(this.H.maxhp / 10)); this.H.hp = Math.max(0, this.H.hp - d); this.blinkH = 12; yield* this.animHP(this.H); yield* this.msg(this.H.n + '被落石砸中了！'); if (this.H.hp <= 0) return; } }
     for (const b of [this.H, this.F]) {
       if (b.hp <= 0 || !(b.status === 'psn' || b.status === 'brn')) continue;
@@ -409,6 +419,7 @@ class Battle {
     let showTotal = false; const rowsL = [['HP', before.hp, after.hp]].concat(ATTRS.map(k => [ATTR_NAMES[k], bA[k], aA[k]]));
     const win = { draw: x => { drawWin(x, 80, 34, 90, 122, 'menu'); rowsL.forEach(([n, b, a], i) => { const Y = 38 + i * 16; Font.draw(x, n, 90, Y, UIC.muted, UIC.textSh); const d = a - b; Font.drawR(x, showTotal ? String(a) : d > 0 ? '+' + d : '—', 162, Y, showTotal ? UIC.text : d > 0 ? UIC.accent : UIC.dis, UIC.textSh); }); } };
     UI.push(win); yield* waitA(); showTotal = true; Sound.sfx('cursor'); yield* waitA(); UI.remove(win); UI.remove(tb);
+    st.tp = (st.tp || 0) + 1; yield* this.msg('獲得了1點天賦點！（在選單的「天賦」中分配）', { hold: 44 });
     for (const id of heroLearnAt(st.lv)) yield* this.learnMove(id);
     if (Sound.current !== 'victory' && this.F.hp <= 0) Sound.play('victory');
   }

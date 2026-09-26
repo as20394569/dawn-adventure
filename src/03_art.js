@@ -496,6 +496,14 @@ const ART = {
   ] },
 };
 
+// palette-swapped variants for the forest
+function recolorDef(def, f) { const cp = JSON.parse(JSON.stringify(def)); const walk = o => { if (Array.isArray(o)) o.forEach(walk); else if (o && typeof o === 'object') for (const k in o) { if ((k === 'c' || k === 'w2') && typeof o[k] === 'string' && o[k][0] === '#') o[k] = f(o[k]); else walk(o[k]); } }; walk(cp); return cp; }
+const hueShift = (dh, ks = 1, kl = 1) => c => { const [h, s, l] = rgb2hsl(...hex2rgb(c)); return hsl2hex(h + dh, s * ks, l * kl); };
+ART.thornMush = recolorDef(ART.mush, hueShift(160, 1, 0.95));
+ART.nightBird = recolorDef(ART.bird, hueShift(45, 0.7, 0.72));
+ART.leafFox = recolorDef(ART.fox, hueShift(85, 0.9, 0.95));
+ART.mossGiant = recolorDef(ART.golem, hueShift(75, 1.6, 0.95));
+
 /* ---------------- Tiles ---------------- */
 const TP = { // shared tile palette
   g1: '#8cd878', g2: '#70c060', g3: '#58a850', g4: '#3e8a44', gk: '#2c6a38',
@@ -861,7 +869,7 @@ const DOWNARROW = spriteFrom(['kkkkk', '.kkk.', '..k..'], { k: '#6ee7d2' });
 const UPARROW = spriteFrom(['..k..', '.kkk.', 'kkkkk'], { k: '#6ee7d2' });
 const TYPE_COL = { '一般': '#9a9aa8', '火': '#f0783a', '水': '#4f8ff0', '草': '#5cbf55', '雷': '#e6bb2a', '岩': '#b0925a', '毒': '#a55ad0', '飛': '#8c8cf0' };
 function typeBadge(x, t, X, Y, w = 30) { const c = TYPE_COL[t]; x.fillStyle = shade(c, -0.25); x.fillRect(X + 1, Y, w - 2, 12); x.fillRect(X, Y + 1, w, 10); x.fillStyle = c; x.fillRect(X + 1, Y + 1, w - 2, 10); Font.drawC(x, t, X + w / 2, Y - 1, '#ffffff', shade(c, -0.5)); }
-const STATUS_INFO = { wet: ['濕', '#3f86d8'], psn: ['毒', '#a55ad0'], par: ['麻', '#d6a91e'], slp: ['眠', '#7f86a8'], brn: ['燒', '#f0603a'] };
+const STATUS_INFO = { shield: ['盾', '#b8902e'], wet: ['濕', '#3f86d8'], psn: ['毒', '#a55ad0'], par: ['麻', '#d6a91e'], slp: ['眠', '#7f86a8'], brn: ['燒', '#f0603a'] };
 function statusBadge(x, s, X, Y) { const [n, c] = STATUS_INFO[s]; x.fillStyle = c; x.fillRect(X + 1, Y, 14, 11); x.fillRect(X, Y + 1, 16, 9); Font.draw(x, n, X + 2, Y - 2, '#ffffff', shade(c, -0.5)); }
 function hpColor(r) { return r > 0.5 ? ['#62e08c', '#a8f5c4'] : r > 0.2 ? ['#ffcf5a', '#ffe7a8'] : ['#ff5d6c', '#ffb0b8']; }
 // slim bar: dark track, colored fill with a light top line

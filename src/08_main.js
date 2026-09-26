@@ -73,6 +73,11 @@ const Events = {
     st.flags.wellCharm = 1; st.bag.moonCharm = 1; yield* itemGet(st.name + '撈起了「月光護符」！');
     yield* say('古老的護符……說不定和異界之門有關。可以在背包裡裝備。');
   },
+  *herbalist() {
+    const f = Game.st.flags, st = Game.st;
+    if (!f.herb) { f.herb = 1; st.bag.superPotion = (st.bag.superPotion || 0) + 1; yield* sayAll(['哦？這麼深的森林裡，居然有客人。', '我是採藥的老頭子。這個給你，路上小心。']); yield* itemGet(st.name + '得到了好傷藥！'); }
+    yield* sayAll([f.mossGiant ? '苔石巨人倒下了啊……森林的空氣都變輕了。' : '西南邊的水池旁，住著一尊苔石巨人。它身上的青苔最怕火。', '對了……森林西北角有一棵「會讓路的樹」。老頭子我是這麼聽說的。']);
+  },
   *grandpa() { yield* sayAll(['年輕人，按住B鍵就可以跑步喔。', '你說你們那邊有不用馬就能跑的鐵箱子？……真是難以想像啊。', Game.st.flags.golem ? '聽說魔像倒下的那晚，鎮上那口老井發出了光。' : '鎮上那口老井，據說跟遺跡是連在一起的。']); },
   *florist() {
     const f = Game.st.flags, st = Game.st;
@@ -158,7 +163,7 @@ function newGameState(name) {
   const st = { name, lv: 5, exp: expForLevel(5), hp: 1, status: null, moves: [{ id: 'slash', pp: 35 }, { id: 'glare', pp: 30 }, { id: 'flameSlash', pp: 25 }], boost: {}, equip: { weapon: null, armor: 'uniform', acc: null }, bag: { uniform: 1, phone: 1 }, money: 1000, flags: {}, map: 'home', x: 1, y: 3, dir: 'right', respawn: { map: 'home', x: 1, y: 4, dir: 'up' }, time: 0, steps: 0, wins: 0 };
   Game.st = st; st.hp = heroStats(st).hp; return st;
 }
-function startOverworld() { const st = Game.st; const ow = Game.ow = new Overworld(); Game.setScene(ow); ow.load(st.map, st.x, st.y, st.dir); return ow; }
+function startOverworld() { const st = Game.st; if (!st.tal) { st.tal = {}; st.tp = Math.max(0, st.lv - 5); } const ow = Game.ow = new Overworld(); Game.setScene(ow); ow.load(st.map, st.x, st.y, st.dir); return ow; }
 
 /* ===================== SHARED ART: logo, title, modern street ===================== */
 function makeLogo(text, sc) {
@@ -394,5 +399,5 @@ function boot(data) {
   requestAnimationFrame(loop);
   try { if (window.claude && window.claude.hot && window.claude.hot.snapshot) window.claude.hot.snapshot(() => ({ st: (Game.scene instanceof Overworld && !Game.scene.script) ? Game.st : null })); } catch (e) { }
 }
-window.__game = { setScale: S => { Game.fixedScale = 1; setScale(S); render(); }, Game, Input, Events, MAPS, SPECIES, Battle, Overworld, heroStats, newGameState, startOverworld, UI, say, yesNo, startMenu, summaryScreen, bagScreen, equipScreen, optionsScreen, shopFlow, pickMoveToForget, blackText, dexScreen, Events, step(n = 1) { for (let i = 0; i < n; i++) tick(); render(); }, press(k, hold = 2, after = 6) { Input.set(k, true); for (let i = 0; i < hold; i++) tick(); Input.set(k, false); for (let i = 0; i < after; i++) tick(); render(); } };
+window.__game = { setScale: S => { Game.fixedScale = 1; setScale(S); render(); }, Game, Input, Events, MAPS, SPECIES, Battle, Overworld, heroStats, newGameState, startOverworld, UI, say, yesNo, startMenu, summaryScreen, bagScreen, equipScreen, optionsScreen, shopFlow, pickMoveToForget, blackText, dexScreen, talentScreen, Events, step(n = 1) { for (let i = 0; i < n; i++) tick(); render(); }, press(k, hold = 2, after = 6) { Input.set(k, true); for (let i = 0; i < hold; i++) tick(); Input.set(k, false); for (let i = 0; i < after; i++) tick(); render(); } };
 try { if (window.claude && window.claude.hot && window.claude.hot.ready) window.claude.hot.ready(boot); else boot((window.claude && window.claude.hot && window.claude.hot.data) || {}); } catch (e) { boot({}); }

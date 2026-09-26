@@ -22,6 +22,6 @@ module.exports = async (g) => {
   g.log('encounter', fought);
   await g.autoBattle(0);
   await g.settle(); g.log('after battle', JSON.stringify((await g.state()).st));
-  await g.press('start', 10); await g.press('down', 4); await g.press('down', 4); await g.press('down', 4); await g.press('down', 4); await g.press('a', 30); await g.press('a', 60); await g.settle();
+  await g.press('start', 10); await g.press('down', 4); await g.press('down', 4); await g.press('down', 4); await g.press('down', 4); await g.press('down', 4); await g.press('a', 30); await g.press('a', 60); await g.settle();
   g.log('saved', await g.ev(() => !!localStorage.getItem('dawnlight_save_v2')));
 };

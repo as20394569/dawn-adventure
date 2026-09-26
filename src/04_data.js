@@ -27,6 +27,8 @@ const MOVES = {
   glare: { n: '瞪眼', t: '一般', cat: '變', acc: 100, pp: 30, stat: { who: 'foe', def: -1 }, fx: 'glare', d: '用銳利的眼神瞪視對手，降低對手的物防。' },
   flameSlash: { n: '火焰斬', t: '火', cat: '物', pow: 45, acc: 100, pp: 25, eff: { st: 'brn', p: 10 }, fx: 'fireSlash', d: '以燃燒的劍刃砍擊。有時會讓對手灼傷。' },
   focus: { n: '集氣', t: '一般', cat: '變', pp: 20, stat: { who: 'self', atk: 1, spa: 1 }, fx: 'buff', d: '集中精神，提高自己的物攻和魔攻。' },
+  armorBreak: { n: '破甲斬', t: '一般', cat: '物', pow: 45, acc: 95, pp: 15, eff: { stat: { def: -1 }, p: 100 }, fx: 'slash', d: '劈開對手的防具。必定降低對手的物防。' },
+  barrier: { n: '魔法護盾', t: '一般', cat: '變', pp: 10, shield: 3, fx: 'guard', d: '展開魔法護盾，3回合內受到的傷害減少40%。' },
   aquaBlade: { n: '水流刃', t: '水', cat: '特', pow: 50, acc: 100, pp: 25, fx: 'water', d: '揮出激流般的水刃。會讓對手潮濕，再用雷系攻擊就能引發感電。' },
   thunder: { n: '落雷', t: '雷', cat: '特', pow: 55, acc: 95, pp: 20, eff: { st: 'par', p: 10 }, fx: 'thunder', d: '召喚雷電打向對手。對潮濕的對手會感電：傷害1.5倍並麻痺。' },
   gale: { n: '疾風刺', t: '一般', cat: '物', pow: 40, acc: 100, pp: 30, prio: 1, fx: 'quick', d: '以疾風般的速度突刺。必定能先出手。' },
@@ -79,6 +81,10 @@ const SPECIES = {
   wolf: { n: '狂牙狼', t: '一般', base: [60, 54, 48, 40, 46, 62], exp: 95, gold: 40, elite: 1, drop: 'fangDagger', learn: [[1, 'tackle'], [1, 'howl'], [1, 'quickAttack'], [1, 'bite']], dex: '晨霧道路的狼群首領。臉上有一道傷疤。' },
   flower: { n: '荊棘魔花', t: '草', base: [68, 58, 62, 72, 65, 42], exp: 105, gold: 45, elite: 1, drop: 'thornRing', learn: [[1, 'vineWhip'], [1, 'sleepPowder'], [1, 'megaDrain'], [1, 'poisonPowder']], dex: '守護著森林深處果實的食人花。' },
   croc: { n: '沼澤鱷', t: '水', base: [72, 76, 70, 50, 55, 52], exp: 115, gold: 50, elite: 1, drop: 'scaleArmor', learn: [[1, 'tailWhip'], [1, 'harden'], [1, 'waterGun'], [1, 'bite']], dex: '盤據在橋頭，不讓任何人通過。' },
+  thornMush: { n: '毒孢菇', t: '毒', base: [50, 48, 52, 50, 50, 32], exp: 70, gold: 14, learn: [[1, 'absorb'], [1, 'poisonPowder'], [5, 'acid'], [9, 'sleepPowder']], dex: '只生長在迷霧森林深處。孢子帶有劇毒。' },
+  nightBird: { n: '夜梟', t: '飛', base: [52, 55, 45, 50, 45, 66], exp: 72, gold: 14, learn: [[1, 'peck'], [1, 'sing'], [5, 'gust'], [9, 'quickAttack']], dex: '在森林的陰影裡也看得一清二楚。歌聲會讓人昏昏欲睡。' },
+  leafFox: { n: '翠狐', t: '草', base: [52, 60, 48, 58, 50, 70], exp: 76, gold: 16, learn: [[1, 'scratch'], [1, 'vineWhip'], [6, 'absorb'], [9, 'quickAttack']], dex: '尾巴的葉子能吸收陽光。和焰狐是遠親。' },
+  mossGiant: { n: '苔石巨人', t: '草', base: [80, 70, 78, 55, 60, 30], exp: 140, gold: 60, elite: 1, drop: 'mossBracer', learn: [[1, 'vineWhip'], [1, 'stomp'], [1, 'harden'], [1, 'megaDrain']], dex: '被青苔覆蓋的古老石像。守護著森林的秘密，怕火。' },
   golem: { n: '古岩魔像', t: '岩', base: [82, 48, 80, 45, 55, 35], exp: 200, gold: 0, boss: 1, drop: 'golemCore', learn: [[1, 'rockThrow'], [1, 'stomp'], [1, 'ironWall'], [1, 'ancientRoar']], dex: '守護古代遺跡的石像。沉睡了千年後甦醒。' },
 };
 
@@ -100,6 +106,11 @@ const ITEMS = {
   golemCore: { n: '古岩之心', q: 4, price: 0, sell: 0, equip: 'acc', bonus: { hp: 10, def: 3 }, aff: { crit: 4, resist: ['岩', 20] }, d: '魔像核心的碎片，仍有微弱的脈動。' },
   knightSword: { n: '騎士長劍', q: 2, price: 2600, equip: 'weapon', bonus: { atk: 7 }, aff: { hit: 5 }, d: '王都騎士團制式的長劍。' },
   chainMail: { n: '鎖子甲', q: 2, price: 2000, equip: 'armor', bonus: { def: 5, spd: 3 }, d: '細密鐵環編成的鎧甲。' },
+  hunterLeather: { n: '獵人皮甲', q: 2, price: 0, sell: 500, equip: 'armor', bonus: { def: 3, spd: 2 }, aff: { eva: 5 }, d: '森林獵人穿的輕便皮甲。' },
+  mossBracer: { n: '苔石護腕', q: 3, price: 0, sell: 600, equip: 'acc', bonus: { def: 3, hp: 8 }, aff: { resist: ['草', 20] }, d: '苔石巨人身上剝落的石環。' },
+  dawnSword: { n: '晨曦之劍', q: 5, price: 0, sell: 0, equip: 'weapon', bonus: { atk: 9 }, aff: { crit: 8, vs: ['岩', 25] }, d: '藏在森林深處的古劍，劍身映著黎明的光。' },
+  luckClover: { n: '幸運草', price: 0, sell: 300, d: '四片葉子的幸運草。使用後幸運永久+2。', use: 'boost', v: { luk: 2 } },
+  wisdomFruit: { n: '智慧果實', price: 0, sell: 500, d: '神奇的果實。吃下後智力永久+2。', use: 'boost', v: { int: 2 } },
   ironSword: { n: '鐵劍', price: 1200, equip: 'weapon', bonus: { atk: 4 }, d: '堅固的鐵劍。物攻+4' },
   woodSword: { n: '木劍', price: 0, sell: 50, equip: 'weapon', bonus: { atk: 1 }, d: '練習用的木劍。物攻+1' },
   clothes: { n: '旅行布衣', price: 0, sell: 50, equip: 'armor', bonus: { def: 1 }, d: '輕便的旅行服裝。物防+1' },
@@ -113,6 +124,18 @@ const ITEMS = {
 };
 const shopList = () => SHOP_LIST.concat(Game.st.flags.croc ? ['knightSword', 'chainMail'] : []);
 const SHOP_LIST = ['potion', 'superPotion', 'antidote', 'parlyzHeal', 'awakening', 'burnHeal', 'ether', 'smoke', 'ironSword', 'leather', 'charm', 'boots'];
+const TALENT_LINES = ['劍術', '魔法', '生存'];
+const TALENTS = [
+  { id: 'blade', n: '劍術精通', line: 0, max: 3, d: '物攻+2／級', st: { atk: 2 } },
+  { id: 'vital', n: '要害打擊', line: 0, max: 3, d: '會心+3%／級', st: { crit: 3 } },
+  { id: 'breaker', n: '破甲斬', line: 0, max: 1, d: '習得技能「破甲斬」：造成傷害並必定降低對手物防。', move: 'armorBreak', req: 'blade' },
+  { id: 'mana', n: '魔力親和', line: 1, max: 3, d: '魔攻+2／級', st: { spa: 2 } },
+  { id: 'elem', n: '元素掌握', line: 1, max: 3, d: '火、水、雷等屬性技能的傷害+8%／級', st: { elem: 8 } },
+  { id: 'barrier', n: '魔法護盾', line: 1, max: 1, d: '習得技能「魔法護盾」：3回合內受到的傷害減少40%。', move: 'barrier', req: 'mana' },
+  { id: 'body', n: '強健體魄', line: 2, max: 3, d: '最大HP+5／級', st: { hp: 5 } },
+  { id: 'agile', n: '身手矯健', line: 2, max: 3, d: '迴避+3%／級', st: { eva: 3 } },
+  { id: 'counter', n: '反擊架勢', line: 2, max: 1, d: '選擇「防禦」時被攻擊，會立刻反擊對手。', st: { counter: 1 }, req: 'body' },
+];
 const EQUIP_SLOTS = { weapon: '武器', armor: '防具', acc: '飾品' };
 
 /* ---------------- Maps ----------------
@@ -240,9 +263,9 @@ const MAPS = {
       'TT.####...::........TT',
       'TT.#####..::..###...TT',
       'TT..####..::.#####..TT',
-      'TT........::..###...TT',
+      'TTS.......::..###...TT',
       'TTLLLLLL..::..LLLLLLTT',
-      'TT........::........TT',
+      '..........::........TT',
       'TT.###....::...TTTTTTT',
       'TT####....::...T....TT',
       'TT####....::........TT',
@@ -261,7 +284,8 @@ const MAPS = {
       'TTTTTTTTT.::.TTTTTTTTT',
       'TTTTTTTTTT::TTTTTTTTTT',
     ],
-    signs: { '15,3': '「↑ 古岩遺跡」\n傳說中的異界之門就在遺跡深處。危險！', '6,40': '「晨霧道路」\n↑ 古岩遺跡　↓ 萌芽鎮' },
+    edgeWarps: [{ dir: 'left', at: [26], to: ['forest', 21, 11, 'left'] }],
+    signs: { '2,24': '「← 迷霧森林」\n樹林深處據說藏著古老的秘密。', '15,3': '「↑ 古岩遺跡」\n傳說中的異界之門就在遺跡深處。危險！', '6,40': '「晨霧道路」\n↑ 古岩遺跡　↓ 萌芽鎮' },
     connect: { s: { map: 'town', dx: 0 } },
     northWarp: { x: [10, 11], to: ['ruins', 7, 13, 'up'] },
     gate: { x: 9, y: 0 },
@@ -292,6 +316,40 @@ const MAPS = {
       { y0: 0, y1: 10, rate: 0.12, table: [['fox', 8, 10, 25], ['bee', 8, 10, 25], ['frog', 8, 10, 25], ['pebble', 8, 10, 15], ['slime', 8, 10, 10]] },
     ],
   },
+  forest: {
+    name: '迷霧森林', music: 'route', outdoor: 1, border: 'T', battleBg: 'forest',
+    rows: [
+      'TTTTTTTTTTTTTTTTTTTTTT',
+      'T....TTTTTTTTTTTTTTTTT',
+      'T.yf.TTTT###...TTTTTTT',
+      'T....TTT####....T....T',
+      'TTtTTTT####.....T.f..T',
+      'TT..TT.....##...T....T',
+      'TT.......#####..TT.TTT',
+      'TT..o..######....T.TTT',
+      'TTT...,,####.........T',
+      'TT....,,......##.....T',
+      'TT##..TTTT...####....T',
+      'T####.TTTT...####......',
+      'T####...........##...T',
+      'TT##....f....TTT.....T',
+      'TT......TT...TTT..#..T',
+      'TTT..TTTTT..........#T',
+      'T.....TTT...###...##.T',
+      'T.WW..TTT..####....TTT',
+      'T.WW.......####.....TT',
+      'T......y...##....f..TT',
+      'TTTTTTTTTTTTTTTTTTTTTT',
+    ],
+    edgeWarps: [{ dir: 'right', at: [11], to: ['route', 0, 26, 'right'] }],
+    npcs: [{ id: 'herbalist', x: 19, y: 4, dir: 'down', look: 'old', name: '藥草師' }],
+    elites: [{ id: 'mossGiant', sp: 'mossGiant', lv: 13, x: 4, y: 17, dir: 'right', sight: 2 }],
+    items: [
+      { id: 'f1', x: 14, y: 2, item: 'wisdomFruit' }, { id: 'f2', x: 4, y: 9, item: 'hunterLeather' }, { id: 'f3', x: 19, y: 14, item: 'superPotion', n: 2 },
+      { id: 'f4', x: 16, y: 19, gold: 500 }, { id: 'f5', x: 1, y: 19, item: 'luckClover' }, { id: 'f6', x: 1, y: 1, item: 'dawnSword' },
+    ],
+    encounters: [{ y0: 0, y1: 99, rate: 0.12, table: [['thornMush', 9, 11, 25], ['nightBird', 9, 11, 25], ['leafFox', 10, 12, 25], ['frog', 9, 11, 10], ['bee', 9, 11, 15]] }],
+  },
   ruins: {
     name: '古岩遺跡', music: 'ruins', border: 'X', battleBg: 'ruins',
     rows: [
@@ -321,4 +379,5 @@ const ELITE_TEXT = {
   wolf: ['嗷嗚——！', '狂牙狼露出了利牙！'],
   flower: ['……沙沙沙……', '荊棘魔花張開了血盆大口！'],
   croc: ['咕嚕嚕……', '沼澤鱷擋住了橋頭，不肯讓路！'],
+  mossGiant: ['……轟隆……', '苔石巨人擋住了去路！'],
 };

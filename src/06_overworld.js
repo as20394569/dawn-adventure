@@ -84,6 +84,7 @@ class Overworld {
     // interior exit mat
     if (m.d.exit && p.x === m.d.exit.x && p.y === m.d.exit.y && d === 'down') { const t = m.d.exit.to; this.run(this.warp(t[0], t[1], t[2], 'down', true)); return; }
     if (m.d.southWarp && d === 'down' && ny >= m.h) { const t = m.d.southWarp.to; this.run(this.warp(t[0], t[1], t[2], t[3])); return; }
+    for (const w of m.d.edgeWarps || []) if (w.dir === d && (d === 'left' ? nx < 0 : d === 'right' ? nx >= m.w : d === 'up' ? ny < 0 : ny >= m.h) && w.at.includes(d === 'left' || d === 'right' ? ny : nx)) { const t = w.to; this.run(this.warp(t[0], t[1], t[2], t[3])); return; }
     if (m.d.northWarp && d === 'up' && ny < 0 && m.d.northWarp.x.includes(nx)) { const t = m.d.northWarp.to; this.run(this.warp(t[0], t[1], t[2], t[3])); return; }
     const tc = this.tileAt(nx, ny);
     if (tc === 'L' && d === 'down' && !this.entityAt(nx, ny + 1) && !this.solidAt(nx, ny + 1)) { this.startJump(p, nx, ny + 1); return; }
@@ -249,7 +250,7 @@ class Overworld {
     for (let ty = ty0 - 1; ty <= ty0 + Math.ceil(H / 16) + 1; ty++) for (let tx = tx0; tx <= tx0 + Math.ceil(W / 16); tx++) {
       const c = this.tileAt(tx, ty); const sx = tx * 16 - camX, sy = ty * 16 - camY;
       this.drawTile(x, c, tx, ty, sx, sy, f, f2);
-      if (c === 'T') objs.push({ k: ty * 16 + 15, d: () => x.drawImage(Tiles.tree, sx, sy - 5) });
+      if (c === 'T' || c === 't') objs.push({ k: ty * 16 + 15, d: () => x.drawImage(Tiles.tree, sx, sy - 5) });
       if (c === 'P') objs.push({ k: ty * 16 + 15, d: () => x.drawImage(Tiles.pillar, sx, sy - 7) });
       if (c === 'U') objs.push({ k: ty * 16 + 15, d: () => x.drawImage(Tiles.well, sx, sy - 3) });
     }
@@ -282,7 +283,7 @@ class Overworld {
     const h = hash2(tx, ty);
     const base = () => x.drawImage(Tiles.grass(h % 4), sx, sy);
     switch (c) {
-      case '.': case 'T': base(); break;
+      case '.': case 'T': case 't': base(); break;
       case ',': x.drawImage(Tiles.grass(4 + (h % 2)), sx, sy); break;
       case 'f': x.drawImage(Tiles.flower(f2, 'r'), sx, sy); break;
       case 'y': x.drawImage(Tiles.flower(f2, 'y'), sx, sy); break;
