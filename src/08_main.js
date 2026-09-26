@@ -195,7 +195,7 @@ function buildTitleBG() {
   const gs = tinted(buildShaded(ART.golem, 36, 36 / 64), '#2a1a36'); x.drawImage(gs, 132, 142); x.fillStyle = '#ffe040'; x.fillRect(144, 152, 2, 1); x.fillRect(149, 152, 2, 1);
   mtn('#2a1c3c', [[0, 204], [40, 194], [90, 202], [140, 192], [176, 198]]);
   x.fillStyle = '#181024'; x.beginPath(); x.moveTo(0, H); x.lineTo(0, 214); x.lineTo(40, 208); x.lineTo(76, 216); x.lineTo(96, 232); x.lineTo(104, H); x.fill();
-  const hs = tinted(battleSprite('heroBack'), '#181024'); x.drawImage(hs, 8, 152);
+  const hs = tinted(heroBattleImg(0, 'woodSword'), '#181024'); x.drawImage(hs, 14, 150);
   return c;
 }
 class TitleScene {

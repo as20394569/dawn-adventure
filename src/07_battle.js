@@ -52,7 +52,7 @@ class Battle {
     const H = this.H = { hero: true, n: st.name, lv: st.lv, t: null, stats: s, maxhp: s.hp, moves: st.moves, stages: { atk: 0, def: 0, spa: 0, spd: 0, spe: 0 }, sleepT: st.sleepT ?? rnd(1, 3) };
     Object.defineProperty(H, 'hp', { get: () => st.hp, set: v => st.hp = v }); Object.defineProperty(H, 'status', { get: () => st.status, set: v => st.status = v });
     this.bg = buildBattleBG(cfg.bg); this.platF = buildPlatform(42, 9, cfg.bg); this.platH = buildPlatform(52, 11, cfg.bg);
-    this.imgF = battleSprite(cfg.sp); this.imgH = battleSprite('heroBack');
+    this.imgF = battleSprite(cfg.sp); this.imgH = heroBattleImg(0, st.equip.weapon); this.imgH2 = heroBattleImg(1, st.equip.weapon);
     this.disp = { F: this.F.hp, H: st.hp, exp: st.exp };
     this.foeX = -70; this.heroX = W + 10; this.boxF = -120; this.boxH = W + 10; this.cover = 1;
     this.offF = { x: 0, y: 0 }; this.offH = { x: 0, y: 0 }; this.sinkF = 0; this.sinkH = 0; this.blinkF = 0; this.blinkH = 0; this.alphaF = 1;
@@ -67,13 +67,13 @@ class Battle {
     this.fx = this.fx.filter(p => p.t < p.life);
     if (this.script) { const r = this.script.next(); if (r.done) this.script = null; }
   }
-  center(b) { return b.hero ? { x: this.heroX + 32, y: HERO_Y + 32 } : { x: this.foeX + 32, y: FOE_Y + 30 }; }
+  center(b) { return b.hero ? { x: this.heroX + 26, y: HERO_Y + 34 } : { x: this.foeX + 32, y: FOE_Y + 30 }; }
   /* ---------------- drawing ---------------- */
   draw(x) {
     const sx = this.shake > 0 ? rnd(-3, 3) : 0, sy = this.shake > 0 ? rnd(-2, 2) : 0;
     x.save(); x.translate(sx, sy);
     x.drawImage(this.bg, 0, 0);
-    x.drawImage(this.platF, this.foeX + 32 - 43, FOE_Y + 50); x.drawImage(this.platH, this.heroX + 32 - 53, HERO_Y + 49);
+    x.drawImage(this.platF, this.foeX + 32 - 43, FOE_Y + 50); x.drawImage(this.platH, this.heroX + 24 - 53, HERO_Y + 49);
     // foe
     const bob = this.idle && Math.floor(this.t / 16) % 2 ? 1 : 0;
     if (this.alphaF > 0 && !(this.blinkF > 0 && Math.floor(this.blinkF / 3) % 2)) {
@@ -85,8 +85,9 @@ class Battle {
     }
     if (!(this.blinkH > 0 && Math.floor(this.blinkH / 3) % 2)) {
       x.save(); x.beginPath(); x.rect(0, 0, W, BH); x.clip();
-      x.drawImage(this.imgH, this.heroX + this.offH.x, HERO_Y + this.offH.y + this.sinkH + bob);
-      if (this.tintH) { x.globalAlpha = this.tintH.a; x.drawImage(tinted(this.imgH, this.tintH.c), this.heroX + this.offH.x, HERO_Y + this.offH.y + this.sinkH + bob); }
+      const hi = (this.offH.x || this.offH.y) ? this.imgH2 : this.imgH;
+      x.drawImage(hi, this.heroX + this.offH.x, HERO_Y + this.offH.y + this.sinkH + bob);
+      if (this.tintH) { x.globalAlpha = this.tintH.a; x.drawImage(tinted(hi, this.tintH.c), this.heroX + this.offH.x, HERO_Y + this.offH.y + this.sinkH + bob); }
       x.restore();
     }
     for (const p of this.fx) drawParticle(x, p);
@@ -105,12 +106,12 @@ class Battle {
   }
   drawBoxH(x, bob) {
     const X = Math.round(this.boxH), Y = 142 + bob, st = Game.st; if (X > W) return;
-    x.fillStyle = '#383840'; x.fillRect(X + 2, Y + 2, 102, 40); roundRect(x, X, Y, 102, 40, '#484858'); roundRect(x, X + 1, Y + 1, 100, 38, '#f8f8e8'); x.fillStyle = '#e0e0c8'; x.fillRect(X + 2, Y + 34, 98, 4);
-    Font.draw(x, st.name, X + 6, Y - 1, UIC.text, UIC.textSh); Font.drawR(x, 'Lv' + st.lv, X + 98, Y - 1, UIC.text, UIC.textSh);
+    x.fillStyle = '#383840'; x.fillRect(X + 2, Y + 2, 100, 40); roundRect(x, X, Y, 100, 40, '#484858'); roundRect(x, X + 1, Y + 1, 98, 38, '#f8f8e8'); x.fillStyle = '#e0e0c8'; x.fillRect(X + 2, Y + 34, 96, 4);
+    Font.draw(x, st.name, X + 6, Y - 1, UIC.text, UIC.textSh); Font.drawR(x, 'Lv' + st.lv, X + 96, Y - 1, UIC.text, UIC.textSh);
     if (st.status) statusBadge(x, st.status, X + 6, Y + 16);
-    drawHPBar(x, X + 30, Y + 15, 48, this.disp.H / this.H.maxhp);
-    Font.drawR(x, Math.ceil(this.disp.H) + '/' + this.H.maxhp, X + 98, Y + 21, UIC.text, UIC.textSh);
-    const lo = expForLevel(st.lv), hi = expForLevel(st.lv + 1); drawExpBar(x, X + 26, Y + 35, 70, (this.disp.exp - lo) / (hi - lo));
+    drawHPBar(x, X + 28, Y + 15, 48, this.disp.H / this.H.maxhp);
+    Font.drawR(x, Math.ceil(this.disp.H) + '/' + this.H.maxhp, X + 96, Y + 21, UIC.text, UIC.textSh);
+    const lo = expForLevel(st.lv), hi = expForLevel(st.lv + 1); drawExpBar(x, X + 26, Y + 35, 68, (this.disp.exp - lo) / (hi - lo));
     Font.draw(x, 'EXP', X + 5, Y + 28, '#4878c8', null);
   }
   /* ---------------- helpers ---------------- */
@@ -168,7 +169,7 @@ class Battle {
     yield* parallel(tween(14, t => this.boxF = lerp(-120, 4, t)), wait(4));
     const intro = this.F.boss ? this.F.n + '擋住了去路！' : this.F.elite ? '精英魔物' + this.F.n + '發動了攻擊！' : '野生的' + this.F.n + '跳出來了！';
     yield* this.msg(intro, { hold: 44 });
-    yield* tween(14, t => this.boxH = lerp(W + 10, 70, t));
+    yield* tween(14, t => this.boxH = lerp(W + 10, 74, t));
   }
   *chooseAction() {
     const st = Game.st;
@@ -338,7 +339,7 @@ class Battle {
   }
   *heroFaint() {
     Sound.stop(); Sound.sfx('faint'); yield* tween(24, t => this.sinkH = t * 64);
-    yield* tween(10, t => this.boxH = lerp(70, W + 10, t));
+    yield* tween(10, t => this.boxH = lerp(74, W + 10, t));
     yield* this.msg(Game.st.name + '倒下了……', { wait: true });
   }
   *victory() {

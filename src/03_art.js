@@ -147,6 +147,30 @@ const HERO_ROWS = {
     '....kNNGNkkkk...',
   ],
 };
+/* Battle view of the hero: the same overworld pixel sprite (back view), scaled 3x, holding the equipped sword */
+const SWORD_PAL = { woodSword: ['#d8a868', '#a8743c', '#6a4424'], ironSword: ['#ffffff', '#b8c0d0', '#6a7488'] };
+const heroBattleCache = {};
+function heroBattleImg(frame = 0, weapon = null) {
+  const key = frame + '|' + weapon; if (heroBattleCache[key]) return heroBattleCache[key];
+  const n = mkCanvas(24, 23), x = n.getContext('2d'); x.drawImage(Hero.frames.up[frame], 0, 1);
+  const pal = SWORD_PAL[weapon];
+  if (pal) {
+    const pts = []; // walk up-right from the right hand (13,17)
+    pts.push([14, 16, '#6a3a26']);                                            // grip
+    pts.push([15, 15, '#e8c048'], [14, 14, '#e8c048'], [16, 16, '#e8c048']);  // guard
+    for (let t = 0; t < 6; t++) { pts.push([16 + t, 13 - t, pal[0]]); pts.push([16 + t, 14 - t, pal[1]]); }
+    pts.push([22, 7, pal[0]]);
+    const id = x.getImageData(0, 0, 24, 23), d = id.data; const set = new Set(pts.map(([a, b]) => a + ',' + b));
+    const put = (px, py, c) => { const [r, g, bb] = hex2rgb(c), k = (py * 24 + px) * 4; d[k] = r; d[k + 1] = g; d[k + 2] = bb; d[k + 3] = 255; };
+    for (const [px, py, c] of pts) put(px, py, c);
+    const outline = [];
+    for (const [px, py] of pts) for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const qx = px + dx, qy = py + dy; if (qx < 0 || qy < 0 || qx >= 24 || qy >= 23 || set.has(qx + ',' + qy)) continue; if (d[(qy * 24 + qx) * 4 + 3] === 0) outline.push([qx, qy]); }
+    for (const [qx, qy] of outline) put(qx, qy, '#2a2238');
+    x.putImageData(id, 0, 0);
+  }
+  const big = mkCanvas(72, 69), bx = big.getContext('2d'); bx.imageSmoothingEnabled = false; bx.drawImage(n, 0, 0, 24, 23, 0, 0, 72, 69);
+  heroBattleCache[key] = big; return big;
+}
 const Hero = (() => {
   const frames = {};
   function build(dir, legs, bob) {
@@ -468,28 +492,6 @@ const ART = {
     { s: 'line', pts: [[28, 47], [32, 49], [36, 47]], c: '#ffa040' },
     { s: 'ell', x: 31, y: 38, rx: 1.5, ry: 2, c: '#fff4c0' },
     { s: 'line', pts: [[15, 36], [17, 41]], c: '#5a5244' }, { s: 'line', pts: [[47, 44], [45, 48], [47, 50]], c: '#5a5244' }, { s: 'line', pts: [[6, 40], [8, 45]], c: '#5a5244' },
-  ] },
-  heroBack: { parts: [
-    { s: 'e', x: 25, y: 63, rx: 7, ry: 6, c: '#5a6070' }, { s: 'e', x: 39, y: 63, rx: 7, ry: 6, c: '#4e5462' },
-    { s: 'e', x: 32, y: 53, rx: 15, ry: 12, c: '#2e3c70', id: 'torso' },
-    { s: 'e', x: 15, y: 52, rx: 5, ry: 10, rot: -0.25, c: '#2a386a' },
-    { s: 'e', x: 13, y: 61, rx: 3, ry: 3, c: '#f8d0a8' },
-    { s: 'e', x: 46, y: 45, rx: 5, ry: 9, rot: 0.75, c: '#34447a' },
-    { s: 'p', pts: [[52, 35], [60, 3], [63, 5], [56, 37]], c: '#dfe4f0' },
-    { s: 'p', pts: [[47, 37], [58, 31], [60, 34], [49, 40]], c: '#b88840' },
-    { s: 'e', x: 53, y: 37, rx: 3.5, ry: 3.5, c: '#f8d0a8' },
-    { s: 'e', x: 32, y: 39, rx: 7, ry: 3, c: '#e0a07c' },
-    { s: 'e', x: 32, y: 41, rx: 9, ry: 3, c: '#f6f6f2' },
-    { u: [{ s: 'p', pts: [[20, 44], [44, 44], [45, 62], [19, 62]] }, { s: 'e', x: 32, y: 45, rx: 12, ry: 5 }], c: '#d8683a', id: 'pack' },
-    { s: 'p', pts: [[20, 44], [44, 44], [43, 52], [21, 52]], c: '#b8542e', clip: 'pack' },
-    { s: 'e', x: 32, y: 57, rx: 7, ry: 3.5, c: '#f0a060', clip: 'pack', line: false },
-    { s: 'e', x: 17.5, y: 27, rx: 2.2, ry: 3.2, c: '#f0c098' }, { s: 'e', x: 46.5, y: 27, rx: 2.2, ry: 3.2, c: '#f0c098' },
-    { u: [{ s: 'e', x: 32, y: 23, rx: 15, ry: 14 }, { s: 'e', x: 32, y: 31, rx: 13, ry: 7 }, { s: 'p', pts: [[31, 11], [35, 2], [38, 5], [36, 11]] }], c: '#3a2a2c', id: 'hair' },
-  ], details: [
-    { s: 'line', pts: [[25, 14], [27, 21]], c: '#6e524c' }, { s: 'line', pts: [[38, 14], [37, 21]], c: '#6e524c' }, { s: 'line', pts: [[31, 17], [31, 25]], c: '#5a4040' },
-    { s: 'line', pts: [[56, 30], [61, 8]], c: '#ffffff' },
-    { s: 'line', pts: [[22, 49], [42, 49]], c: '#7a3018' },
-    { s: 'dot', x: 38, y: 54, r: 1.5, c: '#58d8c8' },
   ] },
 };
 
