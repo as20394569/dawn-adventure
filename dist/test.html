@@ -3150,32 +3150,90 @@ const DOLL_DECO = { // extra pixels on top of a head shape
   visor: { down: { 8: '.kAakkkkkkkkaAk.', 9: '.kAAAAAAAAAAAAk.' }, up: {}, left: { 8: '.kAakkkkAAAAk...', 9: '.kAAAAAAAAAAk...' } },
   horns: { down: { 0: '.C............C.', 1: '.kC..........Ck.', 2: '..kC........Ck..' }, up: { 0: '.C............C.', 1: '.kC..........Ck.', 2: '..kC........Ck..' }, left: { 0: '............C...', 1: '...........Ck...', 2: '..........Ck....' } },
 };
-const DOLL_WEAPON = { // carried on the back in the field
-  sword: { down: { 10: '..............TU', 11: '..............UI', 12: '..............Ii' }, up: { 12: '...........TU...', 13: '..........UIi...', 14: '.........Iik....', 15: '........Iik.....', 16: '.......Iik......', 17: '......Iik.......' }, left: { 11: '..........TU....', 12: '.........UIi....', 13: '........Iik.....' } },
-  dagger: { down: { 16: '..............TI' }, up: { 16: '..........TIi...', 17: '.........TIi....' }, left: { 16: '........TIi.....' } },
-  staff: { down: { 6: '..............VV', 7: '..............VV', 8: '..............Tk', 9: '..............Tk', 10: '..............Tk', 11: '..............Tk', 12: '..............Tk' }, up: { 7: '...........VV...', 8: '...........VV...', 9: '...........Tk...', 10: '...........Tk...', 11: '...........Tk...', 12: '...........Tk...', 13: '...........Tk...', 14: '...........Tk...', 15: '...........Tk...' }, left: { 6: '............VV..', 7: '............VV..', 8: '............Tk..', 9: '............Tk..', 10: '............Tk..', 11: '............Tk..' } },
-  axe: { down: { 9: '.............III', 10: '.............IiT', 11: '...............T', 12: '...............T' }, up: { 11: '.........IIIT...', 12: '.........IiT....', 13: '..........T.....', 14: '.........T......' }, left: { 10: '...........IIIT.', 11: '...........IiT..', 12: '............T...' } },
-};
-const WEAPON_BACK = new Set(['sword', 'staff', 'axe']); // drawn only behind the body in front/side views
+// Field weapons are generated as pixel paths (so each shape reads clearly at 16px): [x, y, colorKey]
+function weaponPath(type, dir) {
+  const P = [], line = (x0, y0, x1, y1, c, c2) => { const n = Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0)); for (let t = 0; t <= n; t++) { const x = Math.round(x0 + (x1 - x0) * t / n), y = Math.round(y0 + (y1 - y0) * t / n); P.push([x, y, c]); if (c2) P.push([x + 1, y, c2]); } };
+  if (type === 'sword') {
+    if (dir === 'down') { P.push([15, 3, 'T'], [15, 4, 'T'], [14, 5, 'U'], [15, 5, 'U'], [13, 5, 'U']); line(14, 6, 1, 19, 'I', 'i'); }
+    if (dir === 'up') { P.push([13, 8, 'T'], [12, 9, 'T'], [11, 9, 'U'], [12, 10, 'U'], [13, 10, 'U']); line(11, 11, 4, 18, 'I', 'i'); }
+    if (dir === 'left') { P.push([13, 6, 'T'], [13, 7, 'T'], [12, 8, 'U'], [13, 8, 'U'], [14, 8, 'U']); line(13, 9, 13, 20, 'I', 'i'); }
+  }
+  if (type === 'axe') {
+    if (dir === 'down') { line(15, 4, 3, 19, 'T'); P.push([13, 3, 'I'], [14, 3, 'I'], [15, 2, 'I'], [14, 2, 'i'], [13, 4, 'i'], [12, 4, 'I']); }
+    if (dir === 'up') { line(12, 8, 4, 17, 'T'); P.push([12, 6, 'I'], [13, 6, 'I'], [13, 7, 'i'], [14, 7, 'I'], [11, 7, 'i'], [14, 6, 'i']); }
+    if (dir === 'left') { line(13, 6, 13, 19, 'T'); P.push([12, 5, 'I'], [13, 4, 'I'], [14, 4, 'i'], [14, 5, 'I'], [12, 4, 'i']); }
+  }
+  if (type === 'staff') {
+    const x = dir === 'down' ? 15 : dir === 'up' ? 11 : 13; line(x, 4, x, 20, 'T'); P.push([x, 2, 'V'], [x, 3, 'V'], [x - 1, 3, 'V'], [x - 1, 2, 'W'], [x - 1, 4, 'k'], [x - 1, 1, 'k'], [x, 1, 'k']);
+  }
+  if (type === 'dagger') {
+    if (dir === 'down') { P.push([13, 16, 'T'], [13, 17, 'U'], [14, 17, 'I'], [14, 18, 'i']); }
+    if (dir === 'up') { P.push([3, 16, 'T'], [3, 17, 'U'], [2, 17, 'I'], [2, 18, 'i']); }
+    if (dir === 'left') { P.push([11, 15, 'T'], [11, 16, 'U'], [12, 16, 'I'], [12, 17, 'i']); }
+  }
+  return P;
+}
+const WEAPON_FRONT_UP = new Set(['sword', 'axe', 'staff']); // strapped over the back → visible on top in the back view
 // palettes
 const HEAD_PAL = {
   cloth: { A: '#8a6a4a', a: '#5a4430', C: '#b08a60' }, hunter: { A: '#4a7a3a', a: '#2e5226', C: '#6a9a50', E: '#f0e8d8' }, bronze: { A: '#b08040', a: '#7a5424', C: '#e8bc68' },
   steel: { A: '#a8b0c0', a: '#6a7488', C: '#eef0f6' }, stone: { A: '#8a8070', a: '#5a5244', C: '#b8b098' }, bone: { A: '#e0d8c0', a: '#a89e84', C: '#fff8e8' },
   miner: { A: '#e0b030', a: '#a07818', C: '#fff0a0', E: '#fffbe0' }, bandit: { A: '#6a2a24', a: '#401814', C: '#8a3a30' },
 };
-const BODY_PAL = {
-  uniform: {},
-  leather: { N: '#8a5a34', n: '#5e3a1e', m: '#a8744a', W: '#d8c0a0', R: '#6a4020', G: '#c8a048', O: '#7a4e2a', o: '#5a3818', q: '#3a2410' },
-  hunter: { N: '#4e6a34', n: '#34481e', m: '#6a8a44', W: '#c8b890', R: '#5a3a1e', G: '#c8a048', O: '#5a7040', o: '#3a4c28', q: '#2a3418' },
-  mist: { N: '#6a7890', n: '#4a5468', m: '#8a98b0', W: '#d0d8e0', R: '#5a6478', G: '#c0c8d8', O: '#7a88a0', o: '#5a6478', q: '#3a4458' },
-  frog: { N: '#6a4a8a', n: '#4a3068', m: '#8a6aaa', W: '#c8f050', R: '#4a3068', G: '#c8f050', O: '#7a5a9a', o: '#5a3a78', q: '#3a2458' },
-  chain: { N: '#8a94a8', n: '#5a6478', m: '#b8c0d0', W: '#d8dce4', R: '#4a5060', G: '#e8c048', O: '#7a8498', o: '#5a6478', q: '#3a4050' },
-  scale: { N: '#3a8a8a', n: '#246060', m: '#5ab0a8', W: '#a8e0d0', R: '#246060', G: '#e8c048', O: '#3a7a7a', o: '#245a5a', q: '#143a3a' },
-  stone: { N: '#8a7e6a', n: '#5a5244', m: '#a89e88', W: '#c8c0a8', R: '#4a4234', G: '#d8b048', O: '#7a6e5a', o: '#5a5244', q: '#3a3428' },
-  ruin: { N: '#b09a70', n: '#7a6a48', m: '#d0bc90', W: '#e8dcc0', R: '#5a4a30', G: '#60d0c8', O: '#a08a60', o: '#7a6a48', q: '#4a3e28' },
-  silk: { N: '#d8d0e8', n: '#a098b8', m: '#f4f0fa', W: '#ffffff', R: '#8a70c0', G: '#c0a0f0', O: '#c8c0dc', o: '#a098b8', q: '#6a6088' },
-  rune: { N: '#2e3c80', n: '#1c2658', m: '#4a5aa8', W: '#e8d890', R: '#d8b048', G: '#60e0ff', O: '#2e3c80', o: '#1c2658', q: '#101838' },
-  boneKnight: { N: '#4a5068', n: '#2e3246', m: '#6a7090', W: '#e0d8c0', R: '#8a2030', G: '#e0d8c0', O: '#4a5068', o: '#2e3246', q: '#1c2030' },
+// Body armour changes the SHAPE of the torso (isekai gear, not a recoloured school uniform).
+// Letters: X main · x shade · Y light/pauldron · y pauldron shade · Z trim/belt · z buckle · W inner · D/d cape
+const BODY_SHAPES = {
+  tunic: {
+    down: ['..kkXXWWWWXXkk..', '.kXkYXXWWXXXkXk.', '.kXkYXXXXXXXkXk.', '.kSkZZZzZZZZkSk.', '..kkxXXXXXXxkk..'],
+    up: ['..kkXXXXXXXXkk..', '.kXkXXXXXXXXkXk.', '.kXkXxXXXXxXkXk.', '.kSkZZZZZZZZkSk.', '..kkxXXXXXXxkk..'],
+    left: ['...kkWXXXkk.....', '...kXXXYXk......', '...kSXXYXk......', '...kZZzZZk......', '....kxXXxk......'],
+  },
+  mail: {
+    down: ['.kYYYkXxXxkYYYk.', '.kyYykxXxXkyYyk.', '..kXkXxXxXxkXk..', '.kSkZZZzzZZZkSk.', '..kkXxXxXxXxkk..'],
+    up: ['.kYYYkXXXXkYYYk.', '.kyYykXxXxkyYyk.', '..kXkxXxXxXkXk..', '.kSkZZZZZZZZkSk.', '..kkXxXxXxXxkk..'],
+    left: ['...kkYYYYk......', '...kyYYYyk......', '...kSXxXXk......', '...kZZzZZk......', '....kXxXxk......'],
+    legs: ['...kXxXkkXxXk...'],
+  },
+  plate: {
+    down: ['.kYYYkXXXXkYYYk.', 'kYYYYkXZZXkYYYYk', '.kyykXXZZXXkyyk.', '.kSkxXXXXXXxkSk.', '..kkZxXXXXxZkk..'],
+    up: ['.kYYYkXXXXkYYYk.', 'kYYYYkXXXXkYYYYk', '.kyykXXXXXXkyyk.', '.kSkxXXXXXXxkSk.', '..kkZxXXXXxZkk..'],
+    left: ['..kYYYYYYk......', '..kyYYYYyk......', '...kSXZXXk......', '...kxXXXXk......', '....kZXXZk......'],
+    legs: ['...kYxYkkYxYk...'],
+  },
+  robe: {
+    down: ['..kkXWWZZWWXkk..', '.kXXkXXZZXXkXXk.', '.kXXkXXZZXXkXXk.', '.kSXkXXZZXXkXSk.', '..kkXXXZZXXXkk..'],
+    up: ['..kkXXXXXXXXkk..', '.kXXkXXXXXXkXXk.', '.kXXkXXXXXXkXXk.', '.kSXkXXXXXXkXSk.', '..kkXXXXXXXXkk..'],
+    left: ['...kkWXXXkk.....', '...kXXXXXXk.....', '...kSXXXXXk.....', '...kXXZXXXk.....', '...kXXZXXXk.....'],
+    robe: true,
+  },
+  cloak: {
+    down: ['.kkkXXWWWWXXkkk.', 'kDkXkYXWWXXkXkDk', 'kDkXkYXXXXXkXkDk', 'kdkSkZZzZZZkSkdk', '.kkkkxXXXXxkkkk.'],
+    up: ['..kkZDDDDDDZkk..', '.kXkDDDDDDDDkXk.', '.kXkDDdDDdDDkXk.', '.kSkDDDDDDDDkSk.', '..kkDDDDDDDDkk..'],
+    left: ['...kkWXXXkDk....', '...kXXXYXkDDk...', '...kSXXYXkDDk...', '...kZZzZZkDdk...', '....kxXXxkDDk...'],
+    cape: { up: ['...kDDdDDdDDk...', '...kdDDDDDDdk...'], left: ['..........kDk...', '..........kdk...'] },
+  },
+};
+// robe skirts replace the legs (4 rows per pose)
+const ROBE_LEGS = {
+  stand: ['...kXXXZZXXXk...', '...kXXXZZXXXk...', '...kxXXZZXXxk...', '...kkBbkkbBkk...'],
+  stepL: ['...kXXXZZXXXk...', '...kXXXZZXXXk...', '...kxXXZZXXxk...', '...kkBbkkkkkk...'],
+  stepR: ['...kXXXZZXXXk...', '...kXXXZZXXXk...', '...kxXXZZXXxk...', '...kkkkkkbBkk...'],
+  sideStand: ['...kXXZXXXk.....', '...kXXZXXXk.....', '...kxXZXXxk.....', '...kkBbkkkk.....'],
+  sideStepA: ['...kXXZXXXk.....', '..kXXXZXXXXk....', '..kxXXZXXXxk....', '..kkBbkkkbBk....'],
+  sideStepB: ['...kXXZXXXk.....', '...kXXZXXXk.....', '...kxXZXXxk.....', '....kkBbkk......'],
+};
+const BODY_LOOKS = { // [shape, palette]
+  leather: ['tunic', { X: '#8a5a34', x: '#5e3a1e', Y: '#a8744a', Z: '#4a2c14', z: '#e8c048', W: '#e0d0b0' }],
+  hunter: ['tunic', { X: '#4e6a34', x: '#34481e', Y: '#6a8a44', Z: '#5a3a1e', z: '#c8a048', W: '#d8c8a0' }],
+  mist: ['cloak', { X: '#5a6478', x: '#3a4458', Y: '#7a88a0', Z: '#3a3040', z: '#c0c8d8', W: '#d0d8e0', D: '#8a98b0', d: '#5a6478' }],
+  frog: ['cloak', { X: '#4a3a5a', x: '#2e2440', Y: '#6a5a7a', Z: '#3a2a20', z: '#c8f050', W: '#d8d0c0', D: '#7a5a9a', d: '#5a3a78' }],
+  rune: ['cloak', { X: '#5a2e88', x: '#3a1c60', Y: '#7a4aa8', Z: '#d8b048', z: '#60e0ff', W: '#f0e0a0', D: '#6a3a98', d: '#d8b048' }],
+  chain: ['mail', { X: '#8a94a8', x: '#5a6478', Y: '#c8d0dc', y: '#8a94a8', Z: '#4a3424', z: '#e8c048' }],
+  scale: ['mail', { X: '#3a8a8a', x: '#246060', Y: '#6ac0b0', y: '#3a8a8a', Z: '#3a2a1e', z: '#e8c048' }],
+  stone: ['plate', { X: '#8a7e6a', x: '#5a5244', Y: '#b0a488', y: '#7a6e5a', Z: '#d8b048' }],
+  ruin: ['plate', { X: '#b09a70', x: '#7a6a48', Y: '#d8c498', y: '#9a8660', Z: '#60d0c8' }],
+  boneKnight: ['plate', { X: '#3e4458', x: '#262a3a', Y: '#e0d8c0', y: '#a89e84', Z: '#a02a38' }],
+  silk: ['robe', { X: '#e8e0f4', x: '#b0a8c8', Z: '#8a70c0', W: '#ffffff' }],
 };
 const FEET_PAL = {
   school: {}, travel: { B: '#7a5030', b: '#4a3018' }, mist: { B: '#5a6478', b: '#3a4458' }, feather: { B: '#e8e0d0', b: '#a8a090' }, hunter: { B: '#4e6a34', b: '#2e4220' },
@@ -3209,17 +3267,26 @@ const dollCache = {};
 function dollApply(rows, ov, back) { for (const r in ov) { const y = +r; if (y < 0 || y >= rows.length) continue; const a = rows[y].split(''), o = ov[r]; for (let i = 0; i < 16; i++) { const c = o[i]; if (!c || c === '.') continue; if (back && a[i] !== '.') continue; a[i] = c === '_' ? '.' : c; } rows[y] = a.join(''); } }
 function heroFramesLook(L) {
   const key = lookKey(L); if (dollCache[key]) return dollCache[key];
-  const pal = { ...HERO_PAL, ...(BODY_PAL[L.body] || {}), ...(FEET_PAL[L.feet] || {}) };
+  const BL = BODY_LOOKS[L.body], shape = BL && BODY_SHAPES[BL[0]];
+  const pal = { ...HERO_PAL, ...(BL ? BL[1] : {}), ...(FEET_PAL[L.feet] || {}) };
   if (L.head) Object.assign(pal, HEAD_PAL[L.head[1]] || {}); if (L.weapon) Object.assign(pal, WPN_PAL[L.weapon[1]] || {});
   pal.k = HERO_PAL.k;
+  const put = (rows, y, x, c, back) => { if (y < 0 || y >= rows.length || x < 0 || x > 15) return; if (back && rows[y][x] !== '.') return; rows[y] = rows[y].slice(0, x) + c + rows[y].slice(x + 1); };
+  const outlineW = (rows, P, off, back) => { const S = new Set(P.map(([x, y]) => x + ',' + (y + off))); for (const [x, y0, c] of P) put(rows, y0 + off, x, c, back); for (const [x, y0] of P) for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const X = x + dx, Y = y0 + off + dy; if (S.has(X + ',' + Y)) continue; if (Y >= 0 && Y < rows.length && X >= 0 && X < 16 && rows[Y][X] === '.') put(rows, Y, X, 'k'); } };
   const build = (dir, legs, bob) => {
-    const out = new Array(22).fill('................'), off = bob ? -1 : 0, body = HERO_ROWS[dir], Lg = LEGS[legs];
+    const out = new Array(22).fill('................'), off = bob ? -1 : 0, body = HERO_ROWS[dir].slice();
+    const sdir = dir === 'right' ? 'left' : dir;
+    if (shape) for (let r = 0; r < 5; r++) body[13 + r] = shape[sdir][r];
+    let Lg = LEGS[legs]; if (shape && shape.robe) Lg = ROBE_LEGS[legs];
+    Lg = Lg.slice(); if (shape && shape.legs && sdir !== 'left') Lg[0] = shape.legs[0];
     for (let i = 0; i < body.length; i++) if (i + off >= 0) out[i + off] = body[i];
     for (let i = 0; i < Lg.length; i++) if (18 + off + i < 22) out[18 + off + i] = Lg[i];
+    if (shape && shape.cape && shape.cape[sdir]) shape.cape[sdir].forEach((r, i) => dollApply(out, { [18 + off + i]: r }, sdir === 'left'));
     const shift = ov => { const o = {}; for (const r in ov) o[+r + off] = ov[r]; return o; };
-    if (L.weapon && WEAPON_BACK.has(L.weapon[0]) && dir !== 'up') dollApply(out, shift(DOLL_WEAPON[L.weapon[0]][dir]), true);
-    if (L.head) { dollApply(out, shift(DOLL_HEAD[L.head[0]][dir])); if (L.head[2]) dollApply(out, shift(DOLL_DECO[L.head[2]][dir] || {})); }
-    if (L.weapon && (dir === 'up' || !WEAPON_BACK.has(L.weapon[0]))) dollApply(out, shift(DOLL_WEAPON[L.weapon[0]][dir]), dir !== 'up');
+    const wt = L.weapon && L.weapon[0], front = wt && (wt === 'dagger' || (dir === 'up' && WEAPON_FRONT_UP.has(wt)));
+    if (wt && !front) outlineW(out, weaponPath(wt, sdir), off, true);
+    if (L.head) { dollApply(out, shift(DOLL_HEAD[L.head[0]][sdir])); if (L.head[2]) dollApply(out, shift(DOLL_DECO[L.head[2]][sdir] || {})); }
+    if (wt && front) outlineW(out, weaponPath(wt, sdir), off, false);
     return spriteFrom(out, pal);
   };
   const f = {}; for (const d of ['down', 'up']) f[d] = [build(d, 'stand', 0), build(d, 'stepL', 1), build(d, 'stand', 0), build(d, 'stepR', 1)];
@@ -3232,22 +3299,23 @@ function heroFramesFor(st = Game.st) { const k = JSON.stringify(st && st.equip) 
 const heroBattleLookCache = {};
 function heroBattleImgLook(frame, L) {
   const key = frame + lookKey(L); if (heroBattleLookCache[key]) return heroBattleLookCache[key];
-  const n = mkCanvas(24, 23), x = n.getContext('2d'); x.drawImage(heroFramesLook({ ...L, weapon: null }).up[frame], 0, 1);
+  const CW = 28, CH = 24, n = mkCanvas(CW, CH), x = n.getContext('2d'); x.drawImage(heroFramesLook({ ...L, weapon: null }).up[frame], 0, 1);
   const W0 = L.weapon; if (W0) {
-    const P = WPN_PAL[W0[1]] || WPN_PAL.steel, pts = [];
-    if (W0[0] === 'sword' || W0[0] === 'dagger') { const len = W0[0] === 'sword' ? 6 : 3; pts.push([14, 16, P.T], [15, 15, P.U], [14, 14, P.U], [16, 16, P.U]); for (let t = 0; t < len; t++) { pts.push([16 + t, 13 - t, P.I], [16 + t, 14 - t, P.i]); } pts.push([16 + len, 13 - len + 1, P.I]); }
-    if (W0[0] === 'staff') { for (let t = 0; t < 9; t++) pts.push([15 + Math.floor(t / 3), 17 - t, P.T]); pts.push([18, 7, P.V], [19, 7, P.V], [18, 6, P.V], [19, 6, '#ffffff']); }
-    if (W0[0] === 'axe') { for (let t = 0; t < 7; t++) pts.push([14 + Math.floor(t / 2), 17 - t, P.T]); for (const [a, b] of [[17, 10], [18, 10], [19, 10], [18, 11], [19, 11], [18, 9], [19, 9], [20, 10]]) pts.push([a, b, (a + b) % 2 ? P.I : P.i]); }
-    const id = x.getImageData(0, 0, 24, 23), d = id.data, set = new Set(pts.map(([a, b]) => a + ',' + b));
-    const put = (px, py, c) => { if (px < 0 || py < 0 || px >= 24 || py >= 23) return; const [r, g, bb] = hex2rgb(c), k = (py * 24 + px) * 4; d[k] = r; d[k + 1] = g; d[k + 2] = bb; d[k + 3] = 255; };
+    const P = WPN_PAL[W0[1]] || WPN_PAL.steel, pts = [], ln = (x0, y0, x1, y1, c) => { const m = Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0)); for (let t = 0; t <= m; t++) pts.push([Math.round(x0 + (x1 - x0) * t / m), Math.round(y0 + (y1 - y0) * t / m), c]); };
+    // right hand ≈ (13,18)
+    if (W0[0] === 'sword') { pts.push([14, 18, P.T], [15, 17, P.T], [16, 17, P.U], [15, 16, P.U], [17, 18, P.U], [14, 15, P.U]); ln(17, 16, 25, 8, P.I); ln(16, 15, 24, 7, P.i); ln(18, 16, 25, 9, P.i); pts.push([26, 7, P.I]); }
+    if (W0[0] === 'dagger') { pts.push([14, 18, P.T], [15, 17, P.U], [14, 16, P.U], [16, 18, P.U]); ln(16, 16, 20, 12, P.I); ln(15, 15, 19, 11, P.i); }
+    if (W0[0] === 'staff') { ln(14, 22, 21, 5, P.T); pts.push([21, 3, P.V], [22, 3, P.V], [21, 4, P.V], [22, 4, P.V], [20, 3, P.V], [23, 4, P.V], [21, 2, '#ffffff'], [22, 5, P.V]); }
+    if (W0[0] === 'axe') { ln(14, 21, 21, 4, P.T); for (const [a, b, c] of [[22, 3, 'i'], [22, 4, 'I'], [23, 4, 'I'], [22, 5, 'I'], [23, 5, 'I'], [24, 5, 'I'], [22, 6, 'I'], [23, 6, 'I'], [24, 6, 'i'], [22, 7, 'I'], [23, 7, 'i'], [22, 8, 'i'], [20, 5, 'i'], [19, 5, 'i']]) pts.push([a, b, P[c]]); }
+    const id = x.getImageData(0, 0, CW, CH), d = id.data, set = new Set(pts.map(([a, b]) => a + ',' + b));
+    const put = (px, py, c) => { if (px < 0 || py < 0 || px >= CW || py >= CH) return; const [r, g, bb] = hex2rgb(c), k = (py * CW + px) * 4; d[k] = r; d[k + 1] = g; d[k + 2] = bb; d[k + 3] = 255; };
     for (const [px, py, c] of pts) put(px, py, c);
-    for (const [px, py] of pts) for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const qx = px + dx, qy = py + dy; if (qx < 0 || qy < 0 || qx >= 24 || qy >= 23 || set.has(qx + ',' + qy)) continue; if (d[(qy * 24 + qx) * 4 + 3] === 0) put(qx, qy, '#2a2238'); }
+    for (const [px, py] of pts) for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const qx = px + dx, qy = py + dy; if (qx < 0 || qy < 0 || qx >= CW || qy >= CH || set.has(qx + ',' + qy)) continue; if (d[(qy * CW + qx) * 4 + 3] === 0) put(qx, qy, '#2a2238'); }
     x.putImageData(id, 0, 0);
   }
-  const big = mkCanvas(72, 69), bx = big.getContext('2d'); bx.imageSmoothingEnabled = false; bx.drawImage(n, 0, 0, 24, 23, 0, 0, 72, 69);
+  const big = mkCanvas(CW * 3, CH * 3), bx = big.getContext('2d'); bx.imageSmoothingEnabled = false; bx.drawImage(n, 0, 0, CW, CH, 0, 0, CW * 3, CH * 3);
   return heroBattleLookCache[key] = big;
 }
-
 // front + back preview used by the equipment screen (dir toggles every 1.5s so both sides are visible)
 function dollPreview(x, L, X, Y, small) {
   const f = heroFramesLook(L), dirs = ['down', 'left', 'up', 'right'], d = dirs[Math.floor(Game.frame / 90) % 4], fr = f[d][Math.floor(Game.frame / 15) % 4];
@@ -5347,7 +5415,7 @@ class TitleScene {
     x.drawImage(this.logo, Math.round(W / 2 - this.logo.width / 2), 6 + bob);
     Font.drawC(x, '～異世界冒險RPG～', W / 2, 52 + bob, '#ffe0a0', '#3a1428');
     if (this.stage === 'press' && Math.floor(this.t / 30) % 2 === 0) Font.drawC(x, '按 A 鍵開始', W / 2, 232, '#ffffff', '#1a1024');
-    Font.draw(x, 'v4.2', W - 26, H - 13, '#b890b0', null);
+    Font.draw(x, 'v4.3', W - 26, H - 13, '#b890b0', null);
   }
 }
 
