@@ -36,7 +36,15 @@ function nodeState(n, st = Game.st) { // 'max' | 'learn' | 'up' | 'locked:reason
   if (st.lv < n.clv) return 'locked:Lv' + n.clv + '可學'; if (n.req && skillLv(n.req, st) < n.rl) return 'locked:需要「' + MOVES[n.req].n + '」Lv' + n.rl;
   return lv ? 'up' : 'learn';
 }
-function grantSkill(id, st = Game.st) { st.skills = st.skills || {}; if (!st.skills[id]) st.skills[id] = 1; }
+function grantSkill(id, st = Game.st) { st.skills = st.skills || {}; st.skFree = st.skFree || {}; if (!st.skills[id]) { st.skills[id] = 1; st.skFree[id] = 1; } }
+// refunds: a level can be taken back (free) unless it's a free starting level or another learned skill needs it
+function skFreeOf(st) { if (!st.skFree) { st.skFree = {}; const b = baseClassOf(st.cls); for (const id of CLASS_FREE[b] || []) st.skFree[id] = 1; if (st.cls && st.cls !== b && SKILL_TREES[st.cls]) st.skFree[SKILL_TREES[st.cls][0][0]] = 1; } return st.skFree; }
+function refundBlock(id, st = Game.st) {
+  const lv = skillLv(id, st); if (!lv) return '還沒有學會';
+  if (lv <= 1 && skFreeOf(st)[id]) return '起始技能不能退回';
+  const need = skillTreeOf(st.cls).find(m => m.req === id && skillLv(m.id, st) > 0 && lv - 1 < m.rl); if (need) return '「' + MOVES[need.id].n + '」需要它';
+  return null;
+}
 function migrateSkills(st) {
   if (st.skills) return; st.skills = {}; for (const m of st.moves || []) if (MOVES[m.id] && SKILL_MP[m.id] !== undefined) st.skills[m.id] = 1;
   if (st.cls) for (const id of CLASS_FREE[baseClassOf(st.cls)] || []) grantSkill(id, st);
@@ -75,6 +83,8 @@ function* skillTreeScreen() {
     if (lv && lv < SKILL_MAX) Font.draw(x, '下一級：' + stat(nxt), 10, 193, UIC.warm, UIC.textSh, 10);
     Font.wrap(mv.d, 152, 10).slice(0, 2).forEach((l, i) => Font.draw(x, l, 10, (lv && lv < SKILL_MAX ? 206 : 196) + i * 12, UIC.text, UIC.textSh, 10));
     Font.draw(x, s === 'max' ? '已達最高等級' : s.startsWith('locked') ? s.slice(7) : st.skp ? 'A：' + (lv ? '升級' : '學習') + '（消耗1點）' : '升級時可以獲得技能點', 10, 236, s.startsWith('locked') ? UIC.bad : UIC.muted, UIC.textSh, 10);
+    if (lv) { const rb = refundBlock(n.id); drawBtn(x, 124, 232, 44, 16, false); Font.drawC(x, '↩退點', 146, 232, rb ? UIC.dis : UIC.warm, UIC.textSh, 9); if (typeof touchRegion === 'function') touchRegion(124, 232, 44, 16, () => tapKey('select')); }
+    if (typeof touchRegion === 'function') for (let k = 0; k < N.length; k++) { const r = Math.floor(k / COLS) - top, c = k % COLS; if (r < 0 || r >= VIS) continue; touchRegion(4 + c * 57, 24 + r * 34, 54, 31, () => { if (idx === k) tapKey('a'); else idx = k; }); }
   } };
   UI.push(scr);
   while (true) {
@@ -82,6 +92,7 @@ function* skillTreeScreen() {
     let ni = idx; if (Input.repeat('left') && idx % COLS > 0) ni--; if (Input.repeat('right') && idx % COLS < COLS - 1 && idx + 1 < n) ni++; if (Input.repeat('up') && idx >= COLS) ni -= COLS; if (Input.repeat('down') && idx + COLS < n) ni += COLS;
     if (ni !== idx) { idx = ni; Sound.sfx('cursor'); const r = Math.floor(idx / COLS); if (r < top) top = r; if (r >= top + VIS) top = r - VIS + 1; }
     if (Input.pressed('b')) { Input.consume('b'); Sound.sfx('cancel'); break; }
+    if (Input.pressed('select')) { Input.consume('select'); const node = N[idx], rb = refundBlock(node.id); if (rb) { Sound.sfx('bump'); UI.remove(scr); yield* say('不能退回：' + rb + '。'); UI.push(scr); } else { st.skills[node.id]--; if (!st.skills[node.id]) delete st.skills[node.id]; st.skp = (st.skp || 0) + 1; Sound.sfx('cancel'); } }
     if (Input.pressed('a')) { Input.consume('a'); const node = N[idx], s = nodeState(node); if (!st.skp || s === 'max' || s.startsWith('locked')) { Sound.sfx('bump'); } else { st.skp--; st.skills[node.id] = skillLv(node.id) + 1; Sound.sfx('statUp'); } }
     yield;
   }

@@ -552,11 +552,12 @@ function* talentScreen() {
   const st = Game.st; st.tal = st.tal || {}; let c = 0, r = 0;
   const T = () => TALENTS.filter(t => t.line === c)[r];
   const locked = t => t.req && (st.tal[t.req] || 0) < 2;
-  const LBL = { atk: ['物攻', ''], crit: ['會心率', '%'], pierceT: ['無視物防', '%'], spa: ['魔攻', ''], elem: ['屬性傷害', '%'], mpRegen: ['每回合回MP', '%'], hp: ['最大HP', ''], eva: ['迴避率', '%'], counter: ['防禦反擊', ''] };
+  const talBlock = t => { const rk = st.tal[t.id] || 0; if (!rk) return '還沒有投入點數'; if (rk - 1 < 2 && TALENTS.some(q => q.req === t.id && (st.tal[q.id] || 0) > 0)) return '「' + TALENTS.find(q => q.req === t.id && (st.tal[q.id] || 0) > 0).n + '」需要它'; return null; };
+  const LBL = { atk: ['物攻', ''], crit: ['會心率', '%'], pierceT: ['破防', '%'], spa: ['魔攻', ''], elem: ['屬性傷害', '%'], mpRegen: ['每回合回MP', '%'], hp: ['最大HP', ''], eva: ['迴避率', '%'], counter: ['防禦反擊', ''] };
   const val = (t, n) => { const k = Object.keys(t.st)[0], L = LBL[k] || [k, '']; return n <= 0 ? '—' : k === 'counter' ? '啟用' : L[0] + '+' + t.st[k] * n + L[1]; };
   const scr = { draw(x) {
     screenBG(x); headerBar(x, '天賦'); Font.drawR(x, '天賦點 ' + (st.tp || 0), W - 6, 2, st.tp ? UIC.warm : UIC.muted, UIC.textSh);
-    Font.drawC(x, '永久的被動加成・每升1級獲得1點', W / 2, 21, UIC.muted, UIC.textSh, 10);
+    Font.drawC(x, '永久的被動加成・Lv6起每升1級+1點', W / 2, 21, UIC.muted, UIC.textSh, 10);
     TALENT_LINES.forEach((ln, ci) => {
       const X = 4 + ci * 57; Font.drawC(x, ln, X + 27, 34, UIC.accent, UIC.textSh);
       TALENTS.filter(t => t.line === ci).forEach((t, ri) => { const Y = 50 + ri * 38, rk = st.tal[t.id] || 0, on = ci === c && ri === r, lk = locked(t);
@@ -570,12 +571,15 @@ function* talentScreen() {
     Font.wrap(t.d, 152, 11).slice(0, 2).forEach((l, i) => Font.draw(x, l, 12, 185 + i * 13, UIC.text, UIC.textSh, 11));
     Font.draw(x, '目前：' + val(t, rk), 12, 211, UIC.accent, UIC.textSh, 10); if (rk < t.max) Font.draw(x, '下一級：' + val(t, rk + 1), 90, 211, UIC.warm, UIC.textSh, 10);
     Font.draw(x, locked(t) ? '需要先把「' + TALENTS.find(q => q.id === t.req).n + '」點到2級' : rk >= t.max ? '已達最高等級' : st.tp ? 'A：投入1點天賦點' : '天賦點不足（升級時獲得）', 12, 232, locked(t) ? UIC.bad : st.tp && rk < t.max ? UIC.warm : UIC.muted, UIC.textSh, 11);
+    if (rk) { drawBtn(x, 124, 230, 44, 16, false); Font.drawC(x, '↩退點', 146, 230, talBlock(t) ? UIC.dis : UIC.warm, UIC.textSh, 9); touchRegion(124, 230, 44, 16, () => tapKey('select')); }
+    TALENT_LINES.forEach((ln, ci) => TALENTS.filter(q => q.line === ci).forEach((q, ri) => touchRegion(4 + ci * 57, 50 + ri * 38, 54, 34, () => { if (c === ci && r === ri) tapKey('a'); else { c = ci; r = ri; } })));
   } };
   UI.push(scr);
   while (true) {
     if (Input.repeat('left')) { c = (c + 2) % 3; Sound.sfx('cursor'); } if (Input.repeat('right')) { c = (c + 1) % 3; Sound.sfx('cursor'); }
     if (Input.repeat('up')) { r = (r + 2) % 3; Sound.sfx('cursor'); } if (Input.repeat('down')) { r = (r + 1) % 3; Sound.sfx('cursor'); }
     if (Input.pressed('b')) { Input.consume('b'); Sound.sfx('cancel'); break; }
+    if (Input.pressed('select')) { Input.consume('select'); const t = T(), bl = talBlock(t); if (bl) { Sound.sfx('bump'); UI.remove(scr); yield* say('不能退回：' + bl + '。'); UI.push(scr); } else { st.tal[t.id]--; if (!st.tal[t.id]) delete st.tal[t.id]; st.tp = (st.tp || 0) + 1; clampHP(); Sound.sfx('cancel'); } }
     if (Input.pressed('a')) {
       Input.consume('a'); const t = T(), rk = st.tal[t.id] || 0;
       if (!st.tp || rk >= t.max || locked(t)) { Sound.sfx('bump'); continue; }
