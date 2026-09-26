@@ -361,7 +361,7 @@ class Overworld {
 function rollEnc(enc) { const tot = enc.table.reduce((a, r) => a + r[3], 0); let r = Math.random() * tot; for (const e of enc.table) { r -= e[3]; if (r <= 0) return e; } return enc.table[0]; }
 const miniCache = {};
 function monsterMini(sp, size) { const k = sp + size; if (miniCache[k]) return miniCache[k]; const c = buildShaded(ART[sp], size, size / 64); miniCache[k] = { c, flip: flipCanvas(c) }; return miniCache[k]; }
-function healHero() { const st = Game.st; st.hp = heroStats().hp; st.status = null; st.moves.forEach(m => m.pp = MOVES[m.id].pp); }
+function healHero() { const st = Game.st, s = heroStats(); st.hp = s.hp; st.mp = s.mp; st.status = null; }
 
 /* ---------- Battle transition (drawn over current scene) ---------- */
 function* battleTransition(kind) {

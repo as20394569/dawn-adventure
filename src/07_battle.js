@@ -4,7 +4,7 @@ const BTN_MENU = { x: 4, y: TB_Y + 1, w: W - 8, h: TB_H - 2, cols: 2, colW: 82, 
 const BH = TB_Y, FOE_X = W / 2 - 32, HERO_X = W / 2 - 24, HERO_Y = 112, HBAR_Y = 170;
 function critRate(u, mv) { const base = (u.stats.crit ?? 6) / 100; return mv.crit ? base * 2 : base; }
 function hitChance(u, t, mv) { let a = mv.acc; if (!a) return 1; a += u.stats.hit || 0; a -= t.stats.eva || 0; return clamp(a, 5, 100) / 100; }
-const stageMul = s => s >= 0 ? (2 + s) / 2 : 2 / (2 - s);
+const stageMul = s => s >= 0 ? 1 + 0.25 * s : 1 / (1 + 0.25 * -s); // buffs/debuffs: ±25% per step, max ±3, timed
 const STATUS_NAME = { psn: '中毒', par: '麻痺', slp: '睡眠', brn: '灼傷' };
 const IMMUNE = { psn: '毒', brn: '火', par: '雷' };
 const battleImgCache = {};
@@ -86,7 +86,7 @@ class Battle {
     this.F = makeFoe(cfg.sp, cfg.lv, cfg.kind);
     const H = this.H = { hero: true, n: st.name, lv: st.lv, t: null, stats: s, maxhp: s.hp, moves: st.moves, stages: { atk: 0, def: 0, spa: 0, spd: 0, spe: 0 }, wet: 0, sleepT: st.sleepT ?? rnd(1, 3) };
     const dx = st.dex || (st.dex = {}); (dx[cfg.sp] || (dx[cfg.sp] = { won: 0 })).seen = 1;
-    Object.defineProperty(H, 'hp', { get: () => st.hp, set: v => st.hp = v }); Object.defineProperty(H, 'status', { get: () => st.status, set: v => st.status = v });
+    Object.defineProperty(H, 'hp', { get: () => st.hp, set: v => st.hp = v }); if (st.mp === undefined) st.mp = s.mp; H.maxmp = s.mp; Object.defineProperty(H, 'mp', { get: () => st.mp, set: v => st.mp = clamp(v, 0, s.mp) }); Object.defineProperty(H, 'status', { get: () => st.status, set: v => st.status = v });
     this.bg = buildBattleBG(cfg.bg);
     this.imgF = battleSprite(cfg.sp); this.foeTX = FOE_X; this.shadowF = buildShadow(Math.round(this.imgF.bb.w * 0.38), 4); this.imgH = heroBattleImgLook(0, heroLookOf(st)); this.imgH2 = heroBattleImgLook(1, heroLookOf(st));
     this.disp = { F: this.F.hp, H: st.hp, exp: st.exp };
@@ -150,13 +150,14 @@ class Battle {
   }
   drawBoxH(x) {
     const Y = Math.round(this.boxH), st = Game.st; if (Y >= BH) return;
-    const X = 8, w = W - 16, r = this.disp.H / this.H.maxhp; drawPanel(x, X, Y, w, 24, UIC.accent, 'rgba(11,13,24,0.92)');
+    const X = 8, w = W - 16, r = this.disp.H / this.H.maxhp; drawPanel(x, X, Y, w, 26, UIC.accent, 'rgba(11,13,24,0.92)');
     let cx = Font.draw(x, st.name, X + 6, Y + 1, UIC.text, UIC.textSh);
     cx = Font.draw(x, 'Lv' + st.lv, cx + 4, Y + 1, UIC.muted, UIC.textSh);
     badgeRow(x, [st.status, this.H.wet && 'wet', this.H.tangle && 'tangle', this.H.shield && 'shield'], cx + 4, Y + 3);
     const hs = Math.ceil(this.disp.H) + '/' + this.H.maxhp; Font.drawR(x, hs, X + w - 6, Y + 1, r <= 0.2 ? UIC.bad : UIC.text, UIC.textSh); Font.drawR(x, 'HP', X + w - 9 - Font.width(hs), Y + 1, UIC.muted, UIC.textSh);
     drawHPBar(x, X + 6, Y + 16, w - 12, r, 3);
-    const lo = expForLevel(st.lv), hi = expForLevel(st.lv + 1); drawExpBar(x, X + 6, Y + 21, w - 12, (this.disp.exp - lo) / (hi - lo), 1);
+    { const mr = clamp(st.mp / (this.H.maxmp || 1), 0, 1); x.fillStyle = '#141a30'; x.fillRect(X + 6, Y + 20, w - 12, 2); x.fillStyle = '#5aa8ff'; x.fillRect(X + 6, Y + 20, Math.round((w - 12) * mr), 2); }
+    const lo = expForLevel(st.lv), hi = expForLevel(st.lv + 1); drawExpBar(x, X + 6, Y + 23, w - 12, (this.disp.exp - lo) / (hi - lo), 1);
   }
   /* ---------------- helpers ---------------- */
   *msg(text, o = {}) { const t = new TextBox(text, { style: 'battle', auto: o.wait ? false : (o.hold || 38) }); UI.push(t); while (!t.done) { t.update(); yield; } UI.remove(t); }
@@ -193,7 +194,7 @@ class Battle {
         const u = who === 'H' ? this.H : this.F, tg = who === 'H' ? this.F : this.H;
         if (u.hp <= 0 || tg.hp <= 0) continue;
         if (a.type === 'move') yield* this.useMove(u, tg, a.id);
-        else if (a.type === 'defend') { yield* this.msg(u.n + '擺出了防禦的架勢！'); yield* FX.guard.call(this, this.center(u)); if (u.stats.fx.guardHeal && u.hp < u.maxhp) { u.hp = Math.min(u.maxhp, u.hp + Math.ceil(u.maxhp * 0.15)); yield* this.animHP(u); yield* this.msg('守護之心回復了HP！', { hold: 20 }); } }
+        else if (a.type === 'defend') { yield* this.msg(u.n + '擺出了防禦的架勢！'); if (u.hero && u.mp < u.maxmp) { const g = Math.max(1, Math.round(u.maxmp * 0.12)); u.mp += g; yield* this.msg('調整呼吸，恢復了' + g + '點MP。', { hold: 18 }); } yield* FX.guard.call(this, this.center(u)); if (u.stats.fx.guardHeal && u.hp < u.maxhp) { u.hp = Math.min(u.maxhp, u.hp + Math.ceil(u.maxhp * 0.15)); yield* this.animHP(u); yield* this.msg('守護之心回復了HP！', { hold: 20 }); } }
         else if (a.type === 'item') { const r = yield* this.useItemAct(a.id); if (r === 'escaped') return yield* this.end('run'); }
         else if (a.type === 'mirror') { this.cg.mirror = 2; Sound.sfx('charge'); this.tintF = { c: '#c8f4ff', a: 0.6 }; yield* wait(14); this.tintF = null; yield* this.msg(u.n + '的表面變得像鏡子一樣！'); yield* this.msg('（這段期間，魔法攻擊會被反射回來！）'); }
         else if (a.type === 'steal') { const st = Game.st, g = Math.min(st.money, Math.max(50, Math.floor(st.money * 0.1))); this.bb.steals++; yield* MFX.steal.call(this, this.center(u), this.center(this.H), u); st.money -= g; this.bb.stolen += g; yield* this.msg(u.n + '搶走了' + g + ' G！'); if (this.bb.steals === 1) yield* this.msg('（打倒他就能把錢搶回來！）'); }
@@ -221,26 +222,28 @@ class Battle {
   }
   *chooseAction() {
     const st = Game.st;
+    if (Game.autoPlay) { for (let i = 0; i < 4; i++) yield; return Game.autoPlay(this); }
     while (true) {
       this.idle = true;
-      const r = yield* choose(['技能', '道具', '防禦', '逃跑'], { ...BTN_MENU, cancel: false, index: this.cmdIdx, title: '要讓' + st.name + '做什麼？' });
+      const r = yield* choose(['攻擊', '技能', '道具', '防禦', '逃跑'], { ...BTN_MENU, cols: 3, colW: 55, cancel: false, index: this.cmdIdx, title: '要讓' + st.name + '做什麼？　MP ' + st.mp + '/' + this.H.maxmp });
       this.idle = false; this.cmdIdx = r;
-      if (r === 0) { const m = yield* this.chooseMove(); if (m) return { type: 'move', id: m }; }
-      else if (r === 1) { const it = yield* bagScreen('battle'); if (it) return { type: 'item', id: it }; }
-      else if (r === 2) return { type: 'defend' };
-      else { if (this.F.boss) { yield* this.msg('不能從這場戰鬥中逃走！'); continue; } return { type: 'run' }; }
+      if (r === 0) return { type: 'move', id: 'attack' };
+      if (r === 1) { const m = yield* this.chooseMove(); if (m) return { type: 'move', id: m }; }
+      else if (r === 2) { const it = yield* bagScreen('battle'); if (it) return { type: 'item', id: it }; }
+      else if (r === 3) return { type: 'defend' };
+      else if (r === 4) { if (this.F.boss) { yield* this.msg('不能從這場戰鬥中逃走！'); continue; } return { type: 'run' }; }
     }
   }
   *chooseMove() {
-    const st = Game.st;
-    if (st.moves.every(m => m.pp <= 0)) { yield* this.msg(st.name + '已經沒有可以使用的技能了！'); return 'struggle'; }
-    let cur = Math.min(this.moveIdx, st.moves.length - 1); this.idle = true;
-    const info = (x, m) => { const mm = st.moves[m.i], mv = MOVES[mm.id]; typeBadge(x, mv.t, 10, TB_Y + 4, 24); Font.draw(x, (mv.cat === '變' ? '變化' : mv.cat === '物' ? '物理' : '魔法') + (mv.pow ? '·' + mv.pow : ''), 38, TB_Y + 2, UIC.muted, UIC.textSh); Font.drawR(x, 'PP ' + mm.pp + '/' + mv.pp, W - 12, TB_Y + 2, mm.pp === 0 ? UIC.bad : mm.pp <= mv.pp / 4 ? UIC.warm : UIC.text, UIC.textSh); };
+    const st = Game.st, list = learnedSkills(st);
+    if (!list.length) { yield* this.msg('還沒有學會技能！（在選單的「技能」學習）'); return null; }
+    let cur = Math.min(this.moveIdx || 0, list.length - 1); this.idle = true;
+    const info = (x, m) => { const id = list[m.i], mv = skillMove(id); typeBadge(x, mv.t, 10, TB_Y + 4, 24); Font.draw(x, (mv.cat === '變' ? '輔助' : mv.cat === '物' ? '物理' : '魔法') + (mv.pow ? '·' + mv.pow : '') + ' Lv' + skillLv(id), 38, TB_Y + 2, UIC.muted, UIC.textSh); Font.drawR(x, 'MP ' + skillMP(id) + '／' + st.mp, W - 12, TB_Y + 2, skillMP(id) > st.mp ? UIC.bad : UIC.accent, UIC.textSh); };
     while (true) {
-      const r = yield* choose(st.moves.map(m => ({ t: MOVES[m.id].n, strip: TYPE_COL[MOVES[m.id].t], col: m.pp === 0 ? UIC.dis : undefined })), { ...BTN_MENU, index: cur, onMove: i => cur = i, drawExtra: info });
+      const r = yield* choose(list.map(id => ({ t: MOVES[id].n, r: String(skillMP(id)), strip: TYPE_COL[MOVES[id].t], col: skillMP(id) > st.mp ? UIC.dis : undefined })), { ...BTN_MENU, visible: 2, index: cur, onMove: i => cur = i, drawExtra: info });
       if (r < 0) { this.idle = false; return null; }
-      if (st.moves[r].pp <= 0) { yield* this.msg('這個技能的PP已經用完了！'); continue; }
-      this.idle = false; this.moveIdx = r; return st.moves[r].id;
+      if (skillMP(list[r]) > st.mp) { yield* this.msg('MP不夠！'); continue; }
+      this.idle = false; this.moveIdx = r; return list[r];
     }
   }
   effSpe(b) { return b.stats.spe * stageMul(b.stages.spe) * (b.status === 'par' ? 0.25 : 1); }
@@ -284,7 +287,8 @@ class Battle {
     return { dmg: Math.max(1, Math.floor(base * m)), mult, crit };
   }
   *useMove(u, t, id) {
-    let mv = MOVES[id]; if (u.hero && u.stats.welem && mv.t === '一般' && mv.pow && mv.cat === (u.stats.wkind === '法杖' ? '特' : '物')) mv = { ...mv, t: u.stats.welem };
+    let mv = u.hero ? skillMove(id) : MOVES[id]; if (u.hero && id === 'attack' && u.stats.wkind === '法杖') mv = { ...mv, cat: '特', fx: 'magicBolt' };
+    if (u.hero && u.stats.welem && mv.t === '一般' && mv.pow && mv.cat === (u.stats.wkind === '法杖' ? '特' : '物')) mv = { ...mv, t: u.stats.welem };
     // can the user act?
     if (u.status === 'slp') {
       if (u.sleepT <= 0) { u.status = null; yield* this.msg(u.n + '醒過來了！'); }
@@ -297,7 +301,7 @@ class Battle {
       yield* this.msg(u.n + (mv.chargeMsg || '正在凝聚大地之力！')); if (!this.warned) { this.warned = true; yield* this.msg(mv.warn || '（它的拳頭發出了危險的光芒……）'); } return;
     }
     if (u.charging === id) u.charging = null;
-    if (u.hero && id !== 'struggle' && !(u.stats.fx.freeCast && chance(0.3))) { const m = u.moves.find(q => q.id === id); if (m) m.pp = Math.max(0, m.pp - 1); }
+    if (u.hero && id !== 'attack') { const c = skillMP(id); if (u.mp < c) { yield* this.msg('MP不夠，' + u.n + '改用普通攻擊！'); return yield* this.useMove(u, t, 'attack'); } if (!(u.stats.fx.freeCast && chance(0.3))) u.mp -= c; else yield* this.msg('魔力循環！沒有消耗MP。', { hold: 16 }); }
     const utb = new TextBox(u.n + '使用了' + mv.n + '！', { style: 'battle', keep: true }); UI.push(utb); while (!utb.done) { utb.update(); yield; } yield* wait(10);
     // accuracy
     const selfTarget = !mv.pow && mv.stat && mv.stat.who === 'self' || mv.heal;
@@ -311,7 +315,7 @@ class Battle {
       yield* this.impact(t, r.mult > 1 || r.crit ? 2 : r.mult < 1 ? 0 : 1);
       yield* this.animHP(t);
       if (r.crit) yield* this.msg('擊中要害！');
-      if (r.mult > 1) yield* this.msg('效果絕佳！'); else if (r.mult < 1) yield* this.msg('效果不太好……');
+      if (r.mult > 1) yield* this.msg('打中弱點！'); else if (r.mult < 1) yield* this.msg('被抵抗了……');
       if (t.defending) yield* this.msg(t.n + '的防禦擋下了一半的傷害！');
       if (endured) yield* this.msg(t.n + '咬緊牙關撐住了！（不屈）');
       if (mirrored && u.hp > 0) { const rf = Math.min(u.hp, Math.max(1, dmg)); u.hp -= rf; this.blinkH = 12; this.spawn({ k: 'line', x1: T0.x, y1: T0.y, x2: U0.x, y2: U0.y, c: '#c8f4ff', w: 3, grow: 3, life: 12 }); yield* this.animHP(u); yield* this.msg('魔法被鏡面反射了！' + u.n + '受到了' + rf + '點傷害！'); }
@@ -355,19 +359,21 @@ class Battle {
     if (mv.stat) {
       const who = mv.stat.who === 'self' ? u : t; const ch = { ...mv.stat }; delete ch.who;
       if (who === t) yield* this.playFx(mv.fx, u, t); else if (!u.hero) yield* (MFX[mv.fx] || MFX.mbuff).call(this, this.center(u), this.center(t), u, t); else yield* (FX[mv.fx] || FX.buff).call(this, this.center(u));
-      yield* this.statChange(who, ch, true); return;
+      yield* this.statChange(who, ch, true, mv.dur); return;
     }
     if (mv.st) { yield* this.playFx(mv.fx, u, t); yield* this.inflict(t, mv.st, false); }
   }
-  *statChange(b, ch, fromMove) {
+  *statChange(b, ch, fromMove, dur = 3) {
+    b.stageT = b.stageT || {};
     for (const k in ch) {
       const v = ch[k]; const cur = b.stages[k];
-      if ((v > 0 && cur >= 6) || (v < 0 && cur <= -6)) { yield* this.msg(b.n + '的' + STAT_NAMES[k] + '已經無法再' + (v > 0 ? '提升' : '降低') + '了！'); continue; }
-      b.stages[k] = clamp(cur + v, -6, 6);
+      if ((v > 0 && cur >= 3) || (v < 0 && cur <= -3)) { b.stageT[k] = Math.max(b.stageT[k] || 0, dur); yield* this.msg(b.n + '的' + STAT_NAMES[k] + '已經無法再' + (v > 0 ? '提升' : '降低') + '了！（持續時間延長）'); continue; }
+      b.stages[k] = clamp(cur + v, -3, 3); b.stageT[k] = dur;
       if (v > 0) { Sound.sfx('statUp'); yield* FX.statUpFx.call(this, this.center(b)); } else { Sound.sfx('statDown'); yield* FX.statDownFx.call(this, this.center(b)); }
-      yield* this.msg(b.n + '的' + STAT_NAMES[k] + (Math.abs(v) >= 2 ? '大幅' : '') + (v > 0 ? '提升了！' : '降低了！'));
+      yield* this.msg(b.n + '的' + STAT_NAMES[k] + (Math.abs(v) >= 2 ? '大幅' : '') + (v > 0 ? '提升了！' : '降低了！') + '（' + dur + '回合）');
     }
   }
+
   *inflict(b, s, secondary) {
     if (b.status || (!b.hero && famOf(b) && famOf(b).immune.includes(s))) { if (!secondary) yield* this.msg(b.status === s ? b.n + '已經' + STATUS_NAME[s] + '了！' : '但是對' + b.n + '沒有效果……'); return; }
     b.status = s; if (s === 'slp') b.sleepT = rnd(1, 3);
@@ -380,6 +386,7 @@ class Battle {
     if (this.H.stats.fx.deathWard && !this.dwUsed && this.H.hp > 0 && this.H.hp < this.H.maxhp * 0.3) { this.dwUsed = true; this.H.shield = 3; yield* FX.barrier.call(this, this.center(this.H)); yield* this.msg('亡者守護發動了！獲得了護盾！', { hold: 24 }); }
     if (this.H.stats.fx.regen && this.H.hp > 0 && this.H.hp < this.H.maxhp) { this.H.hp = Math.min(this.H.maxhp, this.H.hp + Math.ceil(this.H.maxhp * 0.06)); yield* this.animHP(this.H); }
     if (this.bb && this.bb.gang > 0 && this.H.hp > 0 && this.F.hp > 0) { this.bb.gang--; yield* MFX.knives.call(this, this.center(this.F), this.center(this.H)); if (this.H.defending) yield* this.msg(this.H.n + '擋開了手下的飛刀！', { hold: 20 }); else { const d = Math.max(1, Math.floor(this.H.maxhp * BALANCE.gangKnife)); this.H.hp = Math.max(0, this.H.hp - d); this.blinkH = 12; yield* this.animHP(this.H); yield* this.msg('手下丟出了飛刀！受到' + d + '點傷害！', { hold: 20 }); if (this.H.hp <= 0) return; } if (!this.bb.gang) yield* this.msg('手下們見苗頭不對，逃走了。', { hold: 20 }); }
+    for (const b of [this.H, this.F]) for (const k in b.stageT || {}) if (b.stageT[k] > 0 && --b.stageT[k] === 0 && b.stages[k]) { b.stages[k] = 0; yield* this.msg(b.n + '的' + STAT_NAMES[k] + '恢復原狀了。', { hold: 18 }); }
     for (const b of [this.H, this.F]) { if (b.tangle > 0) b.tangle--; if (b.wet > 0) b.wet--; if (b.shield > 0 && !--b.shield) yield* this.msg(b.n + '的魔法護盾消失了。', { hold: 24 }); }
     if (this.collapse && this.H.hp > 0 && this.F.hp > 0) { yield* FX.rock.call(this, null, this.center(this.H)); if (this.H.defending) yield* this.msg(this.H.n + '擋住了落石！'); else { const d = Math.max(1, Math.floor(this.H.maxhp / 10)); this.H.hp = Math.max(0, this.H.hp - d); this.blinkH = 12; yield* this.animHP(this.H); yield* this.msg(this.H.n + '被落石砸中了！'); if (this.H.hp <= 0) return; } }
     for (const b of [this.H, this.F]) {
@@ -460,9 +467,8 @@ class Battle {
     let showTotal = false; const rowsL = [['HP', before.hp, after.hp]].concat(ATTRS.map(k => [ATTR_NAMES[k], bA[k], aA[k]]));
     const win = { draw: x => { drawWin(x, 80, 34, 90, 122, 'menu'); rowsL.forEach(([n, b, a], i) => { const Y = 38 + i * 16; Font.draw(x, n, 90, Y, UIC.muted, UIC.textSh); const d = a - b; Font.drawR(x, showTotal ? String(a) : d > 0 ? '+' + d : '—', 162, Y, showTotal ? UIC.text : d > 0 ? UIC.accent : UIC.dis, UIC.textSh); }); } };
     UI.push(win); yield* waitA(); showTotal = true; Sound.sfx('cursor'); yield* waitA(); UI.remove(win); UI.remove(tb);
-    st.tp = (st.tp || 0) + 1; yield* this.msg('獲得了1點天賦點！（在選單的「天賦」中分配）', { hold: 44 });
-    for (const id of heroLearnAt(st.lv)) yield* this.learnMove(id);
-    const C = CLASSES[st.cls]; if (C && C.move2 && st.lv === C.lv2) yield* this.learnMove(C.move2);
+    st.tp = (st.tp || 0) + 2; st.mp = heroStats().mp; this.H.maxmp = st.mp; yield* this.msg('獲得了2點技能點！MP也全部恢復了。', { hold: 40 });
+    const nw = skillTreeOf(st.cls).filter(n => n.clv === st.lv); if (nw.length) yield* this.msg('可以學習新技能了：' + nw.map(n => MOVES[n.id].n).join('、') + '！（選單→技能）', { wait: true });
     if (Sound.current !== 'victory' && this.F.hp <= 0) Sound.play('victory');
   }
   *learnMove(id) {

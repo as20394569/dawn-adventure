@@ -51,7 +51,7 @@ const Events = {
       yield* say({ swordsman: '劍士的道路啊……這把練習木劍就交給你了。', mage: '魔導士的道路啊……這把魔杖是我年輕時用的，交給你了。', guardian: '守護者的道路啊……這把木劍和布帽給你，別逞強喔。' }[k]);
       st.flags.license = 1; st.bag.license = 1; yield* itemGet('得到了' + S.gear.filter(b => b !== 'guardBadge').map(b => GEAR[b].n).join('和') + '、護身符和冒險者證！');
       yield* say('還有這些傷藥，帶在身上吧。'); st.bag.potion = (st.bag.potion || 0) + 5; yield* itemGet('得到了傷藥×5！');
-      yield* sayAll(['你現在會的技能是：' + st.moves.map(m => MOVES[m.id].n).join('、') + '。', '隨著等級提升，你會學到更多' + C.n + '的技能。到了Lv14，還能走上更高的道路。', '魔物分成好幾個種族，各有害怕的屬性。善用屬性技能，戰鬥會輕鬆很多。', '按START可以打開選單，查看狀態、技能和背包，也能記錄進度。']);
+      yield* sayAll(['你已經會「' + learnedSkills(st).map(id => MOVES[id].n).join('」和「') + '」。', '另外還有2點技能點，打開選單的「技能」，可以自己決定要學什麼、要強化哪一招。', '每次升級都會得到技能點。技能要消耗MP，MP不夠時就用普通「攻擊」。', '到了Lv14，還能走上更高的道路，學到更強的技能。', '魔物分成好幾個種族，各有害怕的屬性。善用屬性技能，戰鬥會輕鬆很多。', '按START可以打開選單，查看狀態、技能和背包，也能記錄進度。']);
       const ap = ow && ow.npcs.find(n => n.id === 'apprentice');
       if (ap) { ap.dir = 'left'; yield* say('學徒：「村長爺爺！讓我幫忙！我在院子裡養了一隻練習用的泡泡姆！」');
         if (yield* yesNo('要和泡泡姆練習一場嗎？')) { const res = yield* ow.battleScript({ sp: 'slime', lv: 3, kind: 'wild' }); if (res === 'win') yield* say('學徒：「好厲害！這就是異界人之力！」'); else yield* say('學徒：「泡、泡泡姆，下手輕一點啦！」'); healHero(); }
@@ -195,7 +195,7 @@ function* classTalk() {
     const k = opts[r]; yield* say(C[k].n + '：' + C[k].d + '\n職業技能「' + MOVES[C[k].move].n + '」' + (C[k].move2 ? '、Lv' + C[k].lv2 + '「' + MOVES[C[k].move2].n + '」' : ''));
     if (!(yield* yesNo('確定要成為' + C[k].n + '嗎？'))) continue;
     st.cls = k; clampHP(); yield* itemGet(st.name + '成為了' + C[k].n + '！');
-    for (const mv of [C[k].move].concat(C[k].move2 && st.lv >= C[k].lv2 ? [C[k].move2] : [])) if (!st.moves.some(m => m.id === mv)) { yield* say('學會職業技能「' + MOVES[mv].n + '」的機會來了！'); if (st.moves.length < 4) st.moves.push({ id: mv, pp: MOVES[mv].pp }); else { const i = yield* pickMoveToForget(mv); if (i < 4) st.moves[i] = { id: mv, pp: MOVES[mv].pp }; } }
+    if (!C[k].from && k !== 'otherworlder') { st.skills = st.skills || {}; for (const id of CLASS_FREE[k]) grantSkill(id, st); } else { const first = (SKILL_TREES[k] || [])[0]; if (first) { grantSkill(first[0], st); yield* say('學會了職業技能「' + MOVES[first[0]].n + '」！更多' + C[k].n + '的技能可以在「技能」選單學習。'); } }
     return true;
   }
 }
@@ -207,10 +207,10 @@ function loadGame() { try { const s = localStorage.getItem(SAVE_KEY); return s ?
 function saveSettings() { try { localStorage.setItem(SET_KEY, JSON.stringify(Game.settings)); } catch (e) { } }
 function loadSettings() { try { const s = localStorage.getItem(SET_KEY); if (s) Object.assign(Game.settings, JSON.parse(s)); } catch (e) { } }
 function newGameState(name) {
-  const st = { name, lv: 5, exp: expForLevel(5), hp: 1, status: null, moves: [{ id: 'slash', pp: 35 }, { id: 'glare', pp: 30 }, { id: 'flameSlash', pp: 25 }], boost: {}, equip: { weapon: null, head: null, body: null, feet: null, acc1: null, acc2: null }, gear: [], gid: 0, bag: { phone: 1 }, money: 1000, flags: {}, map: 'home', x: 1, y: 3, dir: 'right', respawn: { map: 'home', x: 1, y: 4, dir: 'up' }, time: 0, steps: 0, wins: 0 };
+  const st = { name, lv: 5, exp: expForLevel(5), hp: 1, status: null, moves: [{ id: 'slash', pp: 35 }, { id: 'glare', pp: 30 }, { id: 'flameSlash', pp: 25 }], boost: {}, equip: { weapon: null, head: null, body: null, feet: null, acc1: null, acc2: null }, gear: [], gid: 0, skills: {}, bag: { phone: 1 }, money: 1000, flags: {}, map: 'home', x: 1, y: 3, dir: 'right', respawn: { map: 'home', x: 1, y: 4, dir: 'up' }, time: 0, steps: 0, wins: 0 };
   Game.st = st; st.equip.body = makeGear('uniform', 1, 1).u; st.equip.feet = makeGear('schoolShoes', 1, 1).u; st.hp = heroStats(st).hp; return st;
 }
-function startOverworld() { const st = Game.st; migrateGear(st); migrateVs(st); if (!st.tal) { st.tal = {}; st.tp = Math.max(0, st.lv - 5); } const ow = Game.ow = new Overworld(); Game.setScene(ow); ow.load(st.map, st.x, st.y, st.dir); return ow; }
+function startOverworld() { const st = Game.st; migrateGear(st); migrateVs(st); migrateSkills(st); if (!st.tal) { st.tal = {}; st.tp = Math.max(0, st.lv - 5); } const ow = Game.ow = new Overworld(); Game.setScene(ow); ow.load(st.map, st.x, st.y, st.dir); return ow; }
 
 /* ===================== SHARED ART: logo, title, modern street ===================== */
 function makeLogo(text, sc) {
@@ -316,7 +316,7 @@ class TitleScene {
     x.drawImage(this.logo, Math.round(W / 2 - this.logo.width / 2), 6 + bob);
     Font.drawC(x, '～異世界冒險RPG～', W / 2, 52 + bob, '#ffe0a0', '#3a1428');
     if (this.stage === 'press' && Math.floor(this.t / 30) % 2 === 0) Font.drawC(x, '按 A 鍵開始', W / 2, 232, '#ffffff', '#1a1024');
-    Font.draw(x, 'v4.3', W - 26, H - 13, '#b890b0', null);
+    Font.draw(x, 'v4.4', W - 26, H - 13, '#b890b0', null);
   }
 }
 

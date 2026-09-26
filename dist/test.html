@@ -1696,12 +1696,12 @@ const ITEMS = {
   parlyzHeal: { n: '解麻藥', price: 100, d: '治療麻痺狀態。', use: 'cure', v: 'par' },
   awakening: { n: '醒神草', price: 120, d: '治療睡眠狀態。', use: 'cure', v: 'slp' },
   burnHeal: { n: '燙傷膏', price: 120, d: '治療灼傷狀態。', use: 'cure', v: 'brn' },
-  ether: { n: '活力茶', price: 300, d: '所有技能的PP各恢復10點。', use: 'pp', v: 10 },
+  ether: { n: '活力茶', price: 300, d: '恢復25點MP。', use: 'mp', v: 25 },
   smoke: { n: '煙霧彈', price: 150, d: '在戰鬥中使用，必定能從野生魔物身邊逃走。', use: 'escape' },
   powerFruit: { n: '力量果實', price: 2500, sell: 500, d: '神奇的果實。吃下後力量永久+2。', use: 'boost', v: { str: 2 } },
   luckClover: { n: '幸運草', price: 0, sell: 300, d: '四片葉子的幸運草。使用後幸運永久+2。', use: 'boost', v: { luk: 2 } },
   wisdomFruit: { n: '智慧果實', price: 0, sell: 500, d: '神奇的果實。吃下後智力永久+2。', use: 'boost', v: { int: 2 } },
-  elixir: { n: '萬靈藥', price: 800, d: 'HP完全恢復，並治好所有異常狀態。', use: 'full' },
+  elixir: { n: '萬靈藥', price: 800, d: 'HP和MP完全恢復，並治好所有異常狀態。', use: 'full' },
   tpBook: { n: '天賦之書', price: 3000, d: '記載著古老修練法的書。使用後獲得1點天賦點。（每買一本會漲價）', use: 'tp' },
   herb: { n: '藥草', mat: 1, price: 0, sell: 10, d: '野外採集的藥草。可以用來調製藥品。' },
   shroomCap: { n: '蕈傘', mat: 1, price: 0, sell: 15, d: '嘟嘟菇的蕈傘。' }, feather: { n: '羽毛', mat: 1, price: 0, sell: 15, d: '輕盈的羽毛。' },
@@ -2968,7 +2968,7 @@ const ITEM_CAT_OVERRIDE = { smoke: '戰鬥道具', herb: '採集素材' };
 function itemCatOf(k) {
   const it = ITEMS[k]; if (ITEM_CAT_OVERRIDE[k]) return ITEM_CAT_OVERRIDE[k]; if (it.key) return '重要物品';
   if (it.mat) return Object.values(SPECIES).some(s => s.mat === k) ? '魔物素材' : '採集素材';
-  return { heal: '回復', pp: '回復', full: '回復', cure: '狀態治療', escape: '戰鬥道具', boost: '永久強化', tp: '永久強化' }[it.use] || null;
+  return { heal: '回復', pp: '回復', mp: '回復', full: '回復', cure: '狀態治療', escape: '戰鬥道具', boost: '永久強化', tp: '永久強化' }[it.use] || null;
 }
 for (const k in ITEMS) ITEMS[k].cat = itemCatOf(k);
 const ITEM_CAT_COL = { 回復: '#62e08c', 狀態治療: '#8ad0ff', 戰鬥道具: '#ffcf5a', 永久強化: '#ff9ad0', 魔物素材: '#c8a878', 採集素材: '#9ac860', 重要物品: '#ffc44d' };
@@ -3106,7 +3106,7 @@ function* classSelectScreen() {
     Font.draw(x, C.n, 12, 120, col, UIC.textSh); Font.drawR(x, S.tag, 164, 122, UIC.muted, UIC.textSh, 10);
     Font.wrap(S.pitch, 152, 11).slice(0, 3).forEach((l, n) => Font.draw(x, l, 12, 138 + n * 13, UIC.text, UIC.textSh, 11));
     Object.entries(S.bars).forEach(([nm, v], n) => { const X = 12 + (n % 2) * 80, Y = 180 + Math.floor(n / 2) * 13; Font.draw(x, nm, X, Y, UIC.muted, UIC.textSh, 10); for (let q = 0; q < 5; q++) { x.fillStyle = q < v ? col : '#2a3050'; x.fillRect(X + 30 + q * 8, Y + 5, 6, 4); } });
-    Font.draw(x, '起始技能', 12, 208, UIC.accent, UIC.textSh, 10); Font.draw(x, S.moves.map(m => MOVES[m].n).join('・'), 12, 221, UIC.text, UIC.textSh, 11);
+    Font.draw(x, '起始技能（另有2點技能點自由分配）', 12, 208, UIC.accent, UIC.textSh, 10); Font.draw(x, CLASS_FREE[k].map(m => MOVES[m].n).join('・') + '＋' + skillTreeOf(k).filter(n => !CLASS_FREE[k].includes(n.id) && n.clv <= 5).map(n => MOVES[n.id].n).join('／'), 12, 221, UIC.text, UIC.textSh, 11);
     Font.drawR(x, 'A：選擇　◀▶：切換', 164, 238, UIC.muted, UIC.textSh, 9);
   } };
   UI.push(scr);
@@ -3117,11 +3117,10 @@ function* classSelectScreen() {
   }
 }
 function applyStartClass(k) {
-  const st = Game.st, S = CLASS_START[k]; st.cls = k;
-  st.moves = S.moves.map(id => ({ id, pp: MOVES[id].pp }));
-  for (const [l, id] of CLASS_LINE[k]) if (l <= st.lv && st.moves.length < 4 && !st.moves.some(m => m.id === id)) st.moves.push({ id, pp: MOVES[id].pp });
+  const st = Game.st, S = CLASS_START[k]; st.cls = k; st.skills = {}; for (const id of CLASS_FREE[k]) grantSkill(id, st);
+  st.tp = (st.tp || 0) + 2; st.moves = [];
   const acc = ['acc1', 'acc2']; for (const b of S.gear) { const g = makeGear(b, 1, 1), sl = GEAR[b].slot === 'acc' ? acc.shift() : GEAR[b].slot; st.equip[sl] = g.u; }
-  st.hp = heroStats(st).hp;
+  const s = heroStats(st); st.hp = s.hp; st.mp = s.mp;
 }
 
 /* ===================== PAPER DOLL: equipped head/body/feet/weapon change the hero sprite ===================== */
@@ -3323,6 +3322,91 @@ function dollPreview(x, L, X, Y, small) {
   x.drawImage(fr, 0, 0, 16, 22, X, Y, 16 * sc, 22 * sc);
 }
 
+/* ===================== SKILL SYSTEM v2 (classic RPG): MP, skill points, skill trees, skill levels ===================== */
+// No more 4-move limit / PP / forgetting. Skills are learned and levelled on a class skill tree with skill points,
+// cost MP, and every learned skill is usable. Basic 「攻擊」 is free (magic with a staff, physical otherwise).
+MOVES.attack = { n: '攻擊', t: '一般', cat: '物', pow: 45, acc: 100, cls: 'slash', fx: 'slash', d: '用武器攻擊。不消耗MP。裝備法杖時改用魔攻。' };
+const SKILL_MP = {
+  powerSlash: 4, flameSlash: 4, focus: 3, voltSlash: 5, gale: 3, armorBreak: 4, leafBlade: 6, crossSlash: 7, tideSlash: 6, blaze: 9, bladeStorm: 12, iaiSlash: 10, recklessSlash: 9, bloodRage: 6,
+  fireBolt: 4, manaBurst: 5, aquaBlade: 4, thunder: 5, heal: 8, barrier: 7, leafStorm: 7, chainBolt: 8, flameWave: 10, aquaBurst: 12, inferno: 14, meteor: 18, thunderstorm: 14, skyJudge: 18,
+  guardStrike: 3, ironWill: 4, shieldBash: 6, holyLight: 12, sanctuary: 16, dawnBreak: 16, riftBlade: 14, magicBolt: 2, glare: 2,
+};
+const SKILL_MAX = 3;
+// Tree nodes: [skillId, character level needed, required node or null, required node level]
+const SKILL_TREES = {
+  swordsman: [['powerSlash', 5], ['flameSlash', 5], ['focus', 5], ['voltSlash', 8, 'flameSlash', 1], ['gale', 8], ['armorBreak', 8, 'powerSlash', 1], ['leafBlade', 11, 'voltSlash', 1], ['crossSlash', 11, 'powerSlash', 2], ['tideSlash', 11, 'voltSlash', 1], ['blaze', 16, 'flameSlash', 2]],
+  mage: [['fireBolt', 5], ['manaBurst', 5], ['aquaBlade', 5], ['thunder', 8, 'aquaBlade', 1], ['heal', 8], ['barrier', 8, 'manaBurst', 1], ['leafStorm', 11, 'aquaBlade', 1], ['chainBolt', 11, 'thunder', 1], ['flameWave', 11, 'fireBolt', 2], ['aquaBurst', 16, 'aquaBlade', 2]],
+  guardian: [['guardStrike', 5], ['ironWill', 5], ['flameSlash', 5], ['heal', 8], ['voltSlash', 8, 'flameSlash', 1], ['barrier', 8, 'ironWill', 1], ['shieldBash', 11, 'guardStrike', 2], ['tideSlash', 11, 'voltSlash', 1], ['leafBlade', 11, 'voltSlash', 1], ['armorBreak', 16, 'guardStrike', 1]],
+  swordmaster: [['bladeStorm', 14, 'crossSlash', 1], ['iaiSlash', 18, 'bladeStorm', 1]], berserker: [['recklessSlash', 14], ['bloodRage', 18, 'recklessSlash', 1]],
+  pyromancer: [['inferno', 14, 'flameWave', 1], ['meteor', 18, 'inferno', 1]], stormcaller: [['thunderstorm', 14, 'chainBolt', 1], ['skyJudge', 18, 'thunderstorm', 1]],
+  paladin: [['holyLight', 14], ['sanctuary', 18, 'holyLight', 1]], otherworlder: [['dawnBreak', 14], ['riftBlade', 20, 'dawnBreak', 1]],
+};
+const CLASS_FREE = { swordsman: ['powerSlash', 'flameSlash'], mage: ['fireBolt', 'manaBurst'], guardian: ['guardStrike', 'ironWill'] };
+function skillTreeOf(cls) { const base = baseClassOf(cls); const L = (SKILL_TREES[base] || []).map(n => ({ id: n[0], clv: n[1], req: n[2], rl: n[3] || 1 })); if (cls && cls !== base && SKILL_TREES[cls]) L.push(...SKILL_TREES[cls].map(n => ({ id: n[0], clv: n[1], req: n[2], rl: n[3] || 1, adv: 1 }))); return L; }
+const skillLv = (id, st = Game.st) => (st.skills || {})[id] || 0;
+const skillMP = (id, st = Game.st) => { const b = SKILL_MP[id]; if (b === undefined) return 0; return Math.round(b * (1 + 0.15 * (Math.max(1, skillLv(id, st)) - 1))); };
+const skillPow = lv => 1 + 0.15 * (Math.max(1, lv) - 1);
+function learnedSkills(st = Game.st) { return Object.keys(st.skills || {}).filter(k => st.skills[k] > 0 && MOVES[k]); }
+// effective move with skill-level scaling (power, status chance, heal, shield/buff duration)
+function skillMove(id, st = Game.st) {
+  const mv = MOVES[id], lv = skillLv(id, st); if (!lv || id === 'attack') return mv;
+  const m = { ...mv, lv }; if (m.pow) m.pow = Math.round(m.pow * skillPow(lv));
+  if (m.eff && m.eff.p !== undefined && m.eff.p < 100) m.eff = { ...m.eff, p: Math.min(100, m.eff.p + 10 * (lv - 1)) };
+  if (m.heal) m.heal = +(m.heal + 0.1 * (lv - 1)).toFixed(2); if (m.shield) m.shield += lv - 1; if (m.stat && m.stat.who === 'self') m.dur = 3 + (lv - 1);
+  return m;
+}
+function nodeState(n, st = Game.st) { // 'max' | 'learn' | 'up' | 'locked:reason'
+  const lv = skillLv(n.id, st); if (lv >= SKILL_MAX) return 'max';
+  if (st.lv < n.clv) return 'locked:Lv' + n.clv + '可學'; if (n.req && skillLv(n.req, st) < n.rl) return 'locked:需要「' + MOVES[n.req].n + '」Lv' + n.rl;
+  return lv ? 'up' : 'learn';
+}
+function grantSkill(id, st = Game.st) { st.skills = st.skills || {}; if (!st.skills[id]) st.skills[id] = 1; }
+function migrateSkills(st) {
+  if (st.skills) return; st.skills = {}; for (const m of st.moves || []) if (MOVES[m.id] && SKILL_MP[m.id] !== undefined) st.skills[m.id] = 1;
+  if (st.cls) for (const id of CLASS_FREE[baseClassOf(st.cls)] || []) grantSkill(id, st);
+  st.mp = heroStats(st).mp;
+}
+
+/* ---------- Skill tree screen ---------- */
+function* skillTreeScreen() {
+  const st = Game.st; st.skills = st.skills || {}; let idx = 0, top = 0; const COLS = 3, VIS = 4;
+  const nodes = () => skillTreeOf(st.cls);
+  const scr = { draw(x) {
+    const N = nodes(); screenBG(x); headerBar(x, '技能'); Font.drawR(x, '技能點 ' + (st.tp || 0), W - 6, 2, st.tp ? UIC.warm : UIC.muted, UIC.textSh);
+    if (!N.length) { Font.draw(x, '還沒有選擇職業。', 12, 30, UIC.muted, UIC.textSh); return; }
+    const rows = Math.ceil(N.length / COLS);
+    for (let k = 0; k < N.length; k++) {
+      const r = Math.floor(k / COLS) - top, c = k % COLS; if (r < 0 || r >= VIS) continue; const n = N[k], mv = MOVES[n.id], lv = skillLv(n.id), s = nodeState(n), X = 4 + c * 57, Y = 24 + r * 34, on = k === idx;
+      drawBtn(x, X, Y, 54, 31, on, TYPE_COL[mv.t]); if (n.adv) { x.fillStyle = UIC.warm; x.fillRect(X + 49, Y + 2, 3, 3); }
+      Font.drawC(x, mv.n, X + 28, Y + 1, s.startsWith('locked') ? UIC.dis : lv ? UIC.text : '#c9cfe4', UIC.textSh, 11);
+      for (let q = 0; q < SKILL_MAX; q++) { x.fillStyle = q < lv ? UIC.warm : '#30375a'; x.fillRect(X + 16 + q * 8, Y + 21, 6, 5); }
+      if (s === 'learn' && st.tp) { x.fillStyle = UIC.accent; x.fillRect(X + 3, Y + 22, 3, 3); }
+    }
+    if (top > 0) x.drawImage(UPARROW, 86, 21); if (top + VIS < rows) x.drawImage(DOWNARROW, 86, 24 + VIS * 34 - 2);
+    const n = N[idx], mv = MOVES[n.id], lv = skillLv(n.id), s = nodeState(n), cur = skillMove(n.id), nx = { ...Game.st, skills: { ...st.skills, [n.id]: Math.min(SKILL_MAX, lv + 1) } }, nxt = skillMove(n.id, nx);
+    drawWin(x, 4, 162, 168, 90, 'menu');
+    typeBadge(x, mv.t, 10, 166, 24); Font.draw(x, mv.n + '　Lv' + lv + '/' + SKILL_MAX, 38, 164, UIC.text, UIC.textSh);
+    const stat = m => (m.pow ? '威力' + m.pow + ' ' : '') + (m.heal ? '回復' + Math.round(m.heal * 100) + '% ' : '') + (m.shield ? '護盾' + m.shield + '回合 ' : '') + (m.dur ? '持續' + m.dur + '回合 ' : '') + 'MP' + Math.round(SKILL_MP[n.id] * (1 + 0.15 * ((m.lv || 1) - 1)));
+    Font.draw(x, (mv.cat === '變' ? '輔助' : mv.cat === '物' ? '物理' : '魔法') + '　' + (lv ? stat(cur) : stat(nxt)), 10, 180, UIC.accent, UIC.textSh, 10);
+    if (lv && lv < SKILL_MAX) Font.draw(x, '下一級：' + stat(nxt), 10, 193, UIC.warm, UIC.textSh, 10);
+    Font.wrap(mv.d, 152, 10).slice(0, 2).forEach((l, i) => Font.draw(x, l, 10, (lv && lv < SKILL_MAX ? 206 : 196) + i * 12, UIC.text, UIC.textSh, 10));
+    Font.draw(x, s === 'max' ? '已達最高等級' : s.startsWith('locked') ? s.slice(7) : st.tp ? 'A：' + (lv ? '升級' : '學習') + '（消耗1點）' : '升級時可以獲得技能點', 10, 236, s.startsWith('locked') ? UIC.bad : UIC.muted, UIC.textSh, 10);
+  } };
+  UI.push(scr);
+  while (true) {
+    const N = nodes(), n = N.length; if (!n) { if (Input.pressed('b') || Input.pressed('a')) { Input.consume('a', 'b'); break; } yield; continue; }
+    let ni = idx; if (Input.repeat('left') && idx % COLS > 0) ni--; if (Input.repeat('right') && idx % COLS < COLS - 1 && idx + 1 < n) ni++; if (Input.repeat('up') && idx >= COLS) ni -= COLS; if (Input.repeat('down') && idx + COLS < n) ni += COLS;
+    if (ni !== idx) { idx = ni; Sound.sfx('cursor'); const r = Math.floor(idx / COLS); if (r < top) top = r; if (r >= top + VIS) top = r - VIS + 1; }
+    if (Input.pressed('b')) { Input.consume('b'); Sound.sfx('cancel'); break; }
+    if (Input.pressed('a')) { Input.consume('a'); const node = N[idx], s = nodeState(node); if (!st.tp || s === 'max' || s.startsWith('locked')) { Sound.sfx('bump'); } else { st.tp--; st.skills[node.id] = skillLv(node.id) + 1; Sound.sfx('statUp'); } }
+    yield;
+  }
+  UI.remove(scr);
+}
+
+for (const [k, v] of Object.entries({ swordsman: 4, mage: 12, guardian: 4, swordmaster: 8, berserker: 4, pyromancer: 22, stormcaller: 22, paladin: 12, otherworlder: 14 })) if (CLASSES[k]) CLASSES[k].st.mp = v;
+SPECIALS.freeCast.d = '使用技能時有30%機率不消耗MP。';
+
 /* ===================== UI: text boxes, menus, screens ===================== */
 const UI = {
   stack: [], push(w) { this.stack.push(w); return w; }, remove(w) { const i = this.stack.indexOf(w); if (i >= 0) this.stack.splice(i, 1); },
@@ -3414,6 +3498,7 @@ class Menu {
         const bw = this.colW - 3, bh = this.rowH - 2; drawBtn(x, X, Y, bw, bh, on, it.strip);
         const ty = Y + Math.round(bh / 2) - 8;
         if (it.strip) Font.draw(x, it.t, X + 8, ty, tc, this.textSh); else Font.drawC(x, it.t, X + Math.floor(bw / 2), ty, tc, this.textSh);
+        if (it.r) Font.drawR(x, it.r, X + bw - 4, ty + 2, it.dis || it.col === UIC.dis ? UIC.dis : '#8ab8ff', this.textSh, 9);
         continue;
       }
       if (on) selBar(x, this.cols === 1 ? this.x + 2 : X - 7, Y + 7 - Math.floor((this.rowH - 1) / 2), this.cols === 1 ? this.w - 4 : this.colW - 4, this.rowH - 1);
@@ -3454,6 +3539,7 @@ function heroStats(st = Game.st) {
     spe: a.agi * 1.5 + L * 0.6,                     // 速度 = 敏捷×1.5 + 等級×0.6
   };
   for (const k in s) s[k] = Math.floor(s[k]);
+  s.mp = Math.floor(10 + L * 1.5 + a.int);           // 最大MP = 10 + 等級×1.5 + 智力
   for (const k in st.boost || {}) if (s[k] !== undefined) s[k] += st.boost[k]; // legacy saves
   for (const g of equippedGear(st)) { const o = gearStats(g).st; for (const k in o) s[k] += o[k]; }
   s.crit = 3 + a.luk * 0.5;   // 會心率% = 3 + 幸運×0.5
@@ -3530,21 +3616,22 @@ function* summaryScreen() {
       drawWin(x, 4, 98, 168, 62, 'menu');
       ATTRS.forEach((k, i) => { const X = 12 + (i % 2) * 80, Y = 103 + Math.floor(i / 2) * 17; Font.draw(x, ATTR_NAMES[k], X, Y, UIC.muted, UIC.textSh); Font.drawR(x, String(a[k]), X + 70, Y, (st.boost || {})[k] ? UIC.accent : UIC.text, UIC.textSh); });
       drawWin(x, 4, 162, 168, 90, 'menu');
-      const rowsD = [['HP', st.hp + '/' + s.hp], ['物攻', s.atk, 'atk'], ['物防', s.def, 'def'], ['魔攻', s.spa, 'spa'], ['魔防', s.spd, 'spd'], ['速度', s.spe, 'spe'], ['會心', s.crit.toFixed(1) + '%'], ['迴避', s.eva.toFixed(1) + '%']];
+      const rowsD = [['HP', st.hp + '/' + s.hp], ['MP', (st.mp ?? s.mp) + '/' + s.mp], ['物攻', s.atk, 'atk'], ['物防', s.def, 'def'], ['魔攻', s.spa, 'spa'], ['魔防', s.spd, 'spd'], ['速度', s.spe, 'spe'], ['會心', s.crit.toFixed(1) + '%']];
       rowsD.forEach(([n, v, k], i) => { const X = 12 + (i % 2) * 80, Y = 166 + Math.floor(i / 2) * 20; Font.draw(x, n, X, Y, UIC.muted, UIC.textSh); Font.drawR(x, String(v), X + 70, Y, k && eqB[k] ? UIC.accent : UIC.text, UIC.textSh); });
     } else {
-      drawWin(x, 4, 98, 168, 84, 'menu');
-      st.moves.forEach((m, i) => { const mv = MOVES[m.id]; const Y = 102 + i * 19; if (i === mi) selBar(x, 6, Y, 164, 17); typeBadge(x, mv.t, 14, Y + 2, 30); Font.draw(x, mv.n, 52, Y, UIC.text, UIC.textSh); Font.drawR(x, m.pp + '/' + mv.pp, 164, Y, m.pp === 0 ? UIC.bad : UIC.text, UIC.textSh); });
-      const mv = MOVES[st.moves[mi].id]; drawWin(x, 4, 184, 168, 68, 'menu');
-      Font.draw(x, (mv.cat === '變' ? '變化' : mv.cat === '物' ? '物理' : '魔法') + ' 威力' + (mv.pow || '—') + ' 命中' + (mv.acc || '—'), 12, 186, UIC.accent, UIC.textSh);
-      Font.wrap(mv.d, 152).slice(0, 3).forEach((l, i) => Font.draw(x, l, 12, 202 + i * 15, UIC.text, UIC.textSh));
+      const SK = learnedSkills(st); drawWin(x, 4, 98, 168, 84, 'menu'); const t0 = Math.max(0, Math.min(mi - 1, SK.length - 4));
+      if (!SK.length) Font.draw(x, '還沒有學會技能。（選單→技能）', 12, 104, UIC.muted, UIC.textSh, 11);
+      SK.slice(t0, t0 + 4).forEach((id, k) => { const i = t0 + k, mv = MOVES[id], Y = 102 + k * 19; if (i === mi) selBar(x, 6, Y, 164, 17); typeBadge(x, mv.t, 14, Y + 2, 30); Font.draw(x, mv.n + ' Lv' + skillLv(id), 52, Y, UIC.text, UIC.textSh); Font.drawR(x, 'MP ' + skillMP(id), 164, Y, UIC.accent, UIC.textSh); });
+      if (SK.length) { const id = SK[Math.min(mi, SK.length - 1)], mv = MOVES[id], m2 = skillMove(id); drawWin(x, 4, 184, 168, 68, 'menu');
+        Font.draw(x, (mv.cat === '變' ? '輔助' : mv.cat === '物' ? '物理' : '魔法') + (m2.pow ? ' 威力' + m2.pow : '') + ' MP' + skillMP(id) + '　' + (st.mp ?? s.mp) + '/' + s.mp, 12, 186, UIC.accent, UIC.textSh, 11);
+        Font.wrap(mv.d, 152).slice(0, 3).forEach((l, i) => Font.draw(x, l, 12, 202 + i * 15, UIC.text, UIC.textSh)); }
     }
   } };
   UI.push(scr);
   while (true) {
     if (Input.pressed('left') || Input.pressed('right')) { page = (page + (Input.pressed('left') ? 2 : 1)) % 3; Sound.sfx('cursor'); }
     if (page === 2) { const n = questList().length; if (Input.repeat('up') && qTop > 0) { qTop--; Sound.sfx('cursor'); } if (Input.repeat('down') && qTop < n - 1) { qTop++; Sound.sfx('cursor'); } }
-    if (page === 1) { if (Input.repeat('up')) { mi = (mi + Game.st.moves.length - 1) % Game.st.moves.length; Sound.sfx('cursor'); } if (Input.repeat('down')) { mi = (mi + 1) % Game.st.moves.length; Sound.sfx('cursor'); } }
+    if (page === 1) { const n = Math.max(1, learnedSkills().length); if (Input.repeat('up')) { mi = (mi + n - 1) % n; Sound.sfx('cursor'); } if (Input.repeat('down')) { mi = (mi + 1) % n; Sound.sfx('cursor'); } }
     if (Input.pressed('a') && page !== 1) { Input.consume('a'); page = (page + 1) % 3; Sound.sfx('cursor'); }
     else if (Input.pressed('b')) { Input.consume('a', 'b'); Sound.sfx('cancel'); break; }
     yield;
@@ -3634,22 +3721,22 @@ function* bagScreen(mode = 'field') { // returns item id used (battle) or null
   UI.remove(scr); return result;
 }
 function phoneText() { const st = Game.st; const pct = Math.max(1, 12 - Math.floor((st.steps || 0) / 400)); return '從原本的世界帶來的手機。\n電量剩下' + pct + '%……還是完全沒有訊號。\n桌布是家附近的那條街。'; }
-function clampHP() { const s = heroStats(); Game.st.hp = Math.min(Game.st.hp, s.hp); }
+function clampHP() { const s = heroStats(); Game.st.hp = Math.min(Game.st.hp, s.hp); if (Game.st.mp !== undefined) Game.st.mp = Math.min(Game.st.mp, s.mp); }
 function canUseItem(k) {
   const it = ITEMS[k], st = Game.st, s = heroStats();
   if (it.use === 'heal') return st.hp < s.hp && st.hp > 0;
   if (it.use === 'cure') return st.status === it.v;
-  if (it.use === 'pp') return st.moves.some(m => m.pp < MOVES[m.id].pp);
+  if (it.use === 'mp') return (st.mp ?? s.mp) < s.mp;
   if (it.use === 'boost' || it.use === 'tp') return true;
-  if (it.use === 'full') return st.hp > 0 && (st.hp < s.hp || !!st.status);
+  if (it.use === 'full') return st.hp > 0 && (st.hp < s.hp || !!st.status || (st.mp ?? s.mp) < s.mp);
   return false;
 }
 function useItem(k) { // returns message or null; applies to Game.st
   if (!canUseItem(k)) return null; const it = ITEMS[k], st = Game.st, s = heroStats(); st.bag[k]--;
   if (it.use === 'heal') { const b = st.hp; st.hp = Math.min(s.hp, st.hp + it.v); return st.name + '的HP恢復了' + (st.hp - b) + '點！'; }
   if (it.use === 'cure') { st.status = null; return st.name + '的' + { psn: '中毒', par: '麻痺', slp: '睡眠', brn: '灼傷' }[it.v] + '治好了！'; }
-  if (it.use === 'pp') { st.moves.forEach(m => m.pp = Math.min(MOVES[m.id].pp, m.pp + it.v)); return st.name + '的技能PP恢復了！'; }
-  if (it.use === 'full') { st.hp = s.hp; st.status = null; return st.name + '的HP完全恢復了！'; }
+  if (it.use === 'mp') { const b = st.mp ?? s.mp; st.mp = Math.min(s.mp, b + it.v); return st.name + '的MP恢復了' + (st.mp - b) + '點！'; }
+  if (it.use === 'full') { st.hp = s.hp; st.mp = s.mp; st.status = null; return st.name + '的HP和MP完全恢復了！'; }
   if (it.use === 'tp') { st.tp = (st.tp || 0) + 1; return st.name + '讀完了天賦之書，獲得1點天賦點！'; }
   if (it.use === 'boost') { st.boost = st.boost || {}; for (const q in it.v) st.boost[q] = (st.boost[q] || 0) + it.v[q]; return st.name + '的' + Object.keys(it.v).map(q => ATTR_NAMES[q] || STAT_NAMES[q]).join('、') + '永久提升了！'; }
   return null;
@@ -3665,7 +3752,7 @@ function* equipScreen() {
       Font.draw(x, EQUIP_SLOTS[sl], 12, Y, UIC.accent, UIC.textSh, 11); Font.draw(x, g ? GEAR[g.b].n : '——', 44, Y, g ? gCol(g) : UIC.dis, UIC.textSh);
       if (g) Font.draw(x, gearLines(g)[0] + (gearLines(g)[1] ? ' ＋特效' : ''), 44, Y + 12, UIC.muted, UIC.textSh, 9); });
     const s = heroStats(), Y0 = 24 + slots.length * 25 + 10; drawWin(x, 4, Y0, 168, H - Y0 - 4, 'menu');
-    [['HP', st.hp + '/' + s.hp], ['物攻', s.atk], ['物防', s.def], ['魔攻', s.spa], ['魔防', s.spd], ['速度', s.spe], ['會心', s.crit.toFixed(1) + '%'], ['迴避', s.eva.toFixed(1) + '%']].forEach(([a, b], i) => { const X = 58 + (i % 2) * 58, Y = Y0 + 3 + Math.floor(i / 2) * 15; Font.draw(x, a, X, Y, UIC.muted, UIC.textSh, 10); Font.drawR(x, String(b), X + 54, Y, UIC.text, UIC.textSh, 10); });
+    [['HP', st.hp + '/' + s.hp], ['MP', (st.mp ?? s.mp) + '/' + s.mp], ['物攻', s.atk], ['物防', s.def], ['魔攻', s.spa], ['魔防', s.spd], ['速度', s.spe], ['會心', s.crit.toFixed(1) + '%']].forEach(([a, b], i) => { const X = 58 + (i % 2) * 58, Y = Y0 + 3 + Math.floor(i / 2) * 15; Font.draw(x, a, X, Y, UIC.muted, UIC.textSh, 10); Font.drawR(x, String(b), X + 54, Y, UIC.text, UIC.textSh, 10); });
     dollPreview(x, heroLookOf(st), 8, Y0 + 4);
   } };
   UI.push(scr);
@@ -3882,10 +3969,7 @@ function* talentScreen() {
     if (Input.pressed('a')) {
       Input.consume('a'); const t = T(), rk = st.tal[t.id] || 0;
       if (!st.tp || rk >= t.max || locked(t)) { Sound.sfx('bump'); continue; }
-      if (t.move && !st.moves.some(m => m.id === t.move)) {
-        if (st.moves.length < 4) st.moves.push({ id: t.move, pp: MOVES[t.move].pp });
-        else { UI.remove(scr); const i = yield* pickMoveToForget(t.move); UI.push(scr); if (i >= 4) continue; st.moves[i] = { id: t.move, pp: MOVES[t.move].pp }; }
-      }
+      if (t.move) grantSkill(t.move, st);
       st.tp--; st.tal[t.id] = rk + 1; clampHP(); Sound.sfx('statUp');
     }
     yield;
@@ -3926,16 +4010,17 @@ function* dexScreen() {
 function* startMenu() {
   Sound.sfx('menu'); let idx = Game.menuIdx || 0;
   while (true) {
-    const r = yield* choose(['狀態', '天賦', '背包', '裝備', '圖鑑', '紀錄', '存檔', '設定', '關閉'].map(t => t === '天賦' && Game.st.tp ? { t, r: '●', col: UIC.warm } : t), { x: W - 74, y: 4, w: 70, index: idx });
-    if (r < 0 || r === 8) break; idx = r; Game.menuIdx = r;
+    const r = yield* choose(['狀態', '技能', '天賦', '背包', '裝備', '圖鑑', '紀錄', '存檔', '設定', '關閉'].map(t => (t === '天賦' || t === '技能') && Game.st.tp ? { t, r: '●', col: UIC.warm } : t), { x: W - 74, y: 4, w: 70, index: idx });
+    if (r < 0 || r === 9) break; idx = r; Game.menuIdx = r;
     if (r === 0) yield* summaryScreen();
-    if (r === 1) yield* talentScreen();
-    if (r === 2) yield* bagScreen('field');
-    if (r === 3) yield* equipScreen();
-    if (r === 4) yield* dexScreen();
-    if (r === 5) yield* recordScreen();
-    if (r === 6) { const ok = yield* yesNo('要記錄目前的冒險進度嗎？'); if (ok) { const good = saveGame(); if (good) { Sound.sfx('save'); yield* say(Game.st.name + '把冒險記錄了下來！'); } else yield* say('無法存檔……這個瀏覽器可能不允許儲存資料。'); } break; }
-    if (r === 7) yield* optionsScreen();
+    if (r === 1) yield* skillTreeScreen();
+    if (r === 2) yield* talentScreen();
+    if (r === 3) yield* bagScreen('field');
+    if (r === 4) yield* equipScreen();
+    if (r === 5) yield* dexScreen();
+    if (r === 6) yield* recordScreen();
+    if (r === 7) { const ok = yield* yesNo('要記錄目前的冒險進度嗎？'); if (ok) { const good = saveGame(); if (good) { Sound.sfx('save'); yield* say(Game.st.name + '把冒險記錄了下來！'); } else yield* say('無法存檔……這個瀏覽器可能不允許儲存資料。'); } break; }
+    if (r === 8) yield* optionsScreen();
   }
 }
 
@@ -4302,7 +4387,7 @@ class Overworld {
 function rollEnc(enc) { const tot = enc.table.reduce((a, r) => a + r[3], 0); let r = Math.random() * tot; for (const e of enc.table) { r -= e[3]; if (r <= 0) return e; } return enc.table[0]; }
 const miniCache = {};
 function monsterMini(sp, size) { const k = sp + size; if (miniCache[k]) return miniCache[k]; const c = buildShaded(ART[sp], size, size / 64); miniCache[k] = { c, flip: flipCanvas(c) }; return miniCache[k]; }
-function healHero() { const st = Game.st; st.hp = heroStats().hp; st.status = null; st.moves.forEach(m => m.pp = MOVES[m.id].pp); }
+function healHero() { const st = Game.st, s = heroStats(); st.hp = s.hp; st.mp = s.mp; st.status = null; }
 
 /* ---------- Battle transition (drawn over current scene) ---------- */
 function* battleTransition(kind) {
@@ -4326,7 +4411,7 @@ const BTN_MENU = { x: 4, y: TB_Y + 1, w: W - 8, h: TB_H - 2, cols: 2, colW: 82, 
 const BH = TB_Y, FOE_X = W / 2 - 32, HERO_X = W / 2 - 24, HERO_Y = 112, HBAR_Y = 170;
 function critRate(u, mv) { const base = (u.stats.crit ?? 6) / 100; return mv.crit ? base * 2 : base; }
 function hitChance(u, t, mv) { let a = mv.acc; if (!a) return 1; a += u.stats.hit || 0; a -= t.stats.eva || 0; return clamp(a, 5, 100) / 100; }
-const stageMul = s => s >= 0 ? (2 + s) / 2 : 2 / (2 - s);
+const stageMul = s => s >= 0 ? 1 + 0.25 * s : 1 / (1 + 0.25 * -s); // buffs/debuffs: ±25% per step, max ±3, timed
 const STATUS_NAME = { psn: '中毒', par: '麻痺', slp: '睡眠', brn: '灼傷' };
 const IMMUNE = { psn: '毒', brn: '火', par: '雷' };
 const battleImgCache = {};
@@ -4408,7 +4493,7 @@ class Battle {
     this.F = makeFoe(cfg.sp, cfg.lv, cfg.kind);
     const H = this.H = { hero: true, n: st.name, lv: st.lv, t: null, stats: s, maxhp: s.hp, moves: st.moves, stages: { atk: 0, def: 0, spa: 0, spd: 0, spe: 0 }, wet: 0, sleepT: st.sleepT ?? rnd(1, 3) };
     const dx = st.dex || (st.dex = {}); (dx[cfg.sp] || (dx[cfg.sp] = { won: 0 })).seen = 1;
-    Object.defineProperty(H, 'hp', { get: () => st.hp, set: v => st.hp = v }); Object.defineProperty(H, 'status', { get: () => st.status, set: v => st.status = v });
+    Object.defineProperty(H, 'hp', { get: () => st.hp, set: v => st.hp = v }); if (st.mp === undefined) st.mp = s.mp; H.maxmp = s.mp; Object.defineProperty(H, 'mp', { get: () => st.mp, set: v => st.mp = clamp(v, 0, s.mp) }); Object.defineProperty(H, 'status', { get: () => st.status, set: v => st.status = v });
     this.bg = buildBattleBG(cfg.bg);
     this.imgF = battleSprite(cfg.sp); this.foeTX = FOE_X; this.shadowF = buildShadow(Math.round(this.imgF.bb.w * 0.38), 4); this.imgH = heroBattleImgLook(0, heroLookOf(st)); this.imgH2 = heroBattleImgLook(1, heroLookOf(st));
     this.disp = { F: this.F.hp, H: st.hp, exp: st.exp };
@@ -4472,13 +4557,14 @@ class Battle {
   }
   drawBoxH(x) {
     const Y = Math.round(this.boxH), st = Game.st; if (Y >= BH) return;
-    const X = 8, w = W - 16, r = this.disp.H / this.H.maxhp; drawPanel(x, X, Y, w, 24, UIC.accent, 'rgba(11,13,24,0.92)');
+    const X = 8, w = W - 16, r = this.disp.H / this.H.maxhp; drawPanel(x, X, Y, w, 26, UIC.accent, 'rgba(11,13,24,0.92)');
     let cx = Font.draw(x, st.name, X + 6, Y + 1, UIC.text, UIC.textSh);
     cx = Font.draw(x, 'Lv' + st.lv, cx + 4, Y + 1, UIC.muted, UIC.textSh);
     badgeRow(x, [st.status, this.H.wet && 'wet', this.H.tangle && 'tangle', this.H.shield && 'shield'], cx + 4, Y + 3);
     const hs = Math.ceil(this.disp.H) + '/' + this.H.maxhp; Font.drawR(x, hs, X + w - 6, Y + 1, r <= 0.2 ? UIC.bad : UIC.text, UIC.textSh); Font.drawR(x, 'HP', X + w - 9 - Font.width(hs), Y + 1, UIC.muted, UIC.textSh);
     drawHPBar(x, X + 6, Y + 16, w - 12, r, 3);
-    const lo = expForLevel(st.lv), hi = expForLevel(st.lv + 1); drawExpBar(x, X + 6, Y + 21, w - 12, (this.disp.exp - lo) / (hi - lo), 1);
+    { const mr = clamp(st.mp / (this.H.maxmp || 1), 0, 1); x.fillStyle = '#141a30'; x.fillRect(X + 6, Y + 20, w - 12, 2); x.fillStyle = '#5aa8ff'; x.fillRect(X + 6, Y + 20, Math.round((w - 12) * mr), 2); }
+    const lo = expForLevel(st.lv), hi = expForLevel(st.lv + 1); drawExpBar(x, X + 6, Y + 23, w - 12, (this.disp.exp - lo) / (hi - lo), 1);
   }
   /* ---------------- helpers ---------------- */
   *msg(text, o = {}) { const t = new TextBox(text, { style: 'battle', auto: o.wait ? false : (o.hold || 38) }); UI.push(t); while (!t.done) { t.update(); yield; } UI.remove(t); }
@@ -4515,7 +4601,7 @@ class Battle {
         const u = who === 'H' ? this.H : this.F, tg = who === 'H' ? this.F : this.H;
         if (u.hp <= 0 || tg.hp <= 0) continue;
         if (a.type === 'move') yield* this.useMove(u, tg, a.id);
-        else if (a.type === 'defend') { yield* this.msg(u.n + '擺出了防禦的架勢！'); yield* FX.guard.call(this, this.center(u)); if (u.stats.fx.guardHeal && u.hp < u.maxhp) { u.hp = Math.min(u.maxhp, u.hp + Math.ceil(u.maxhp * 0.15)); yield* this.animHP(u); yield* this.msg('守護之心回復了HP！', { hold: 20 }); } }
+        else if (a.type === 'defend') { yield* this.msg(u.n + '擺出了防禦的架勢！'); if (u.hero && u.mp < u.maxmp) { const g = Math.max(1, Math.round(u.maxmp * 0.12)); u.mp += g; yield* this.msg('調整呼吸，恢復了' + g + '點MP。', { hold: 18 }); } yield* FX.guard.call(this, this.center(u)); if (u.stats.fx.guardHeal && u.hp < u.maxhp) { u.hp = Math.min(u.maxhp, u.hp + Math.ceil(u.maxhp * 0.15)); yield* this.animHP(u); yield* this.msg('守護之心回復了HP！', { hold: 20 }); } }
         else if (a.type === 'item') { const r = yield* this.useItemAct(a.id); if (r === 'escaped') return yield* this.end('run'); }
         else if (a.type === 'mirror') { this.cg.mirror = 2; Sound.sfx('charge'); this.tintF = { c: '#c8f4ff', a: 0.6 }; yield* wait(14); this.tintF = null; yield* this.msg(u.n + '的表面變得像鏡子一樣！'); yield* this.msg('（這段期間，魔法攻擊會被反射回來！）'); }
         else if (a.type === 'steal') { const st = Game.st, g = Math.min(st.money, Math.max(50, Math.floor(st.money * 0.1))); this.bb.steals++; yield* MFX.steal.call(this, this.center(u), this.center(this.H), u); st.money -= g; this.bb.stolen += g; yield* this.msg(u.n + '搶走了' + g + ' G！'); if (this.bb.steals === 1) yield* this.msg('（打倒他就能把錢搶回來！）'); }
@@ -4543,26 +4629,28 @@ class Battle {
   }
   *chooseAction() {
     const st = Game.st;
+    if (Game.autoPlay) { for (let i = 0; i < 4; i++) yield; return Game.autoPlay(this); }
     while (true) {
       this.idle = true;
-      const r = yield* choose(['技能', '道具', '防禦', '逃跑'], { ...BTN_MENU, cancel: false, index: this.cmdIdx, title: '要讓' + st.name + '做什麼？' });
+      const r = yield* choose(['攻擊', '技能', '道具', '防禦', '逃跑'], { ...BTN_MENU, cols: 3, colW: 55, cancel: false, index: this.cmdIdx, title: '要讓' + st.name + '做什麼？　MP ' + st.mp + '/' + this.H.maxmp });
       this.idle = false; this.cmdIdx = r;
-      if (r === 0) { const m = yield* this.chooseMove(); if (m) return { type: 'move', id: m }; }
-      else if (r === 1) { const it = yield* bagScreen('battle'); if (it) return { type: 'item', id: it }; }
-      else if (r === 2) return { type: 'defend' };
-      else { if (this.F.boss) { yield* this.msg('不能從這場戰鬥中逃走！'); continue; } return { type: 'run' }; }
+      if (r === 0) return { type: 'move', id: 'attack' };
+      if (r === 1) { const m = yield* this.chooseMove(); if (m) return { type: 'move', id: m }; }
+      else if (r === 2) { const it = yield* bagScreen('battle'); if (it) return { type: 'item', id: it }; }
+      else if (r === 3) return { type: 'defend' };
+      else if (r === 4) { if (this.F.boss) { yield* this.msg('不能從這場戰鬥中逃走！'); continue; } return { type: 'run' }; }
     }
   }
   *chooseMove() {
-    const st = Game.st;
-    if (st.moves.every(m => m.pp <= 0)) { yield* this.msg(st.name + '已經沒有可以使用的技能了！'); return 'struggle'; }
-    let cur = Math.min(this.moveIdx, st.moves.length - 1); this.idle = true;
-    const info = (x, m) => { const mm = st.moves[m.i], mv = MOVES[mm.id]; typeBadge(x, mv.t, 10, TB_Y + 4, 24); Font.draw(x, (mv.cat === '變' ? '變化' : mv.cat === '物' ? '物理' : '魔法') + (mv.pow ? '·' + mv.pow : ''), 38, TB_Y + 2, UIC.muted, UIC.textSh); Font.drawR(x, 'PP ' + mm.pp + '/' + mv.pp, W - 12, TB_Y + 2, mm.pp === 0 ? UIC.bad : mm.pp <= mv.pp / 4 ? UIC.warm : UIC.text, UIC.textSh); };
+    const st = Game.st, list = learnedSkills(st);
+    if (!list.length) { yield* this.msg('還沒有學會技能！（在選單的「技能」學習）'); return null; }
+    let cur = Math.min(this.moveIdx || 0, list.length - 1); this.idle = true;
+    const info = (x, m) => { const id = list[m.i], mv = skillMove(id); typeBadge(x, mv.t, 10, TB_Y + 4, 24); Font.draw(x, (mv.cat === '變' ? '輔助' : mv.cat === '物' ? '物理' : '魔法') + (mv.pow ? '·' + mv.pow : '') + ' Lv' + skillLv(id), 38, TB_Y + 2, UIC.muted, UIC.textSh); Font.drawR(x, 'MP ' + skillMP(id) + '／' + st.mp, W - 12, TB_Y + 2, skillMP(id) > st.mp ? UIC.bad : UIC.accent, UIC.textSh); };
     while (true) {
-      const r = yield* choose(st.moves.map(m => ({ t: MOVES[m.id].n, strip: TYPE_COL[MOVES[m.id].t], col: m.pp === 0 ? UIC.dis : undefined })), { ...BTN_MENU, index: cur, onMove: i => cur = i, drawExtra: info });
+      const r = yield* choose(list.map(id => ({ t: MOVES[id].n, r: String(skillMP(id)), strip: TYPE_COL[MOVES[id].t], col: skillMP(id) > st.mp ? UIC.dis : undefined })), { ...BTN_MENU, visible: 2, index: cur, onMove: i => cur = i, drawExtra: info });
       if (r < 0) { this.idle = false; return null; }
-      if (st.moves[r].pp <= 0) { yield* this.msg('這個技能的PP已經用完了！'); continue; }
-      this.idle = false; this.moveIdx = r; return st.moves[r].id;
+      if (skillMP(list[r]) > st.mp) { yield* this.msg('MP不夠！'); continue; }
+      this.idle = false; this.moveIdx = r; return list[r];
     }
   }
   effSpe(b) { return b.stats.spe * stageMul(b.stages.spe) * (b.status === 'par' ? 0.25 : 1); }
@@ -4606,7 +4694,8 @@ class Battle {
     return { dmg: Math.max(1, Math.floor(base * m)), mult, crit };
   }
   *useMove(u, t, id) {
-    let mv = MOVES[id]; if (u.hero && u.stats.welem && mv.t === '一般' && mv.pow && mv.cat === (u.stats.wkind === '法杖' ? '特' : '物')) mv = { ...mv, t: u.stats.welem };
+    let mv = u.hero ? skillMove(id) : MOVES[id]; if (u.hero && id === 'attack' && u.stats.wkind === '法杖') mv = { ...mv, cat: '特', fx: 'magicBolt' };
+    if (u.hero && u.stats.welem && mv.t === '一般' && mv.pow && mv.cat === (u.stats.wkind === '法杖' ? '特' : '物')) mv = { ...mv, t: u.stats.welem };
     // can the user act?
     if (u.status === 'slp') {
       if (u.sleepT <= 0) { u.status = null; yield* this.msg(u.n + '醒過來了！'); }
@@ -4619,7 +4708,7 @@ class Battle {
       yield* this.msg(u.n + (mv.chargeMsg || '正在凝聚大地之力！')); if (!this.warned) { this.warned = true; yield* this.msg(mv.warn || '（它的拳頭發出了危險的光芒……）'); } return;
     }
     if (u.charging === id) u.charging = null;
-    if (u.hero && id !== 'struggle' && !(u.stats.fx.freeCast && chance(0.3))) { const m = u.moves.find(q => q.id === id); if (m) m.pp = Math.max(0, m.pp - 1); }
+    if (u.hero && id !== 'attack') { const c = skillMP(id); if (u.mp < c) { yield* this.msg('MP不夠，' + u.n + '改用普通攻擊！'); return yield* this.useMove(u, t, 'attack'); } if (!(u.stats.fx.freeCast && chance(0.3))) u.mp -= c; else yield* this.msg('魔力循環！沒有消耗MP。', { hold: 16 }); }
     const utb = new TextBox(u.n + '使用了' + mv.n + '！', { style: 'battle', keep: true }); UI.push(utb); while (!utb.done) { utb.update(); yield; } yield* wait(10);
     // accuracy
     const selfTarget = !mv.pow && mv.stat && mv.stat.who === 'self' || mv.heal;
@@ -4633,7 +4722,7 @@ class Battle {
       yield* this.impact(t, r.mult > 1 || r.crit ? 2 : r.mult < 1 ? 0 : 1);
       yield* this.animHP(t);
       if (r.crit) yield* this.msg('擊中要害！');
-      if (r.mult > 1) yield* this.msg('效果絕佳！'); else if (r.mult < 1) yield* this.msg('效果不太好……');
+      if (r.mult > 1) yield* this.msg('打中弱點！'); else if (r.mult < 1) yield* this.msg('被抵抗了……');
       if (t.defending) yield* this.msg(t.n + '的防禦擋下了一半的傷害！');
       if (endured) yield* this.msg(t.n + '咬緊牙關撐住了！（不屈）');
       if (mirrored && u.hp > 0) { const rf = Math.min(u.hp, Math.max(1, dmg)); u.hp -= rf; this.blinkH = 12; this.spawn({ k: 'line', x1: T0.x, y1: T0.y, x2: U0.x, y2: U0.y, c: '#c8f4ff', w: 3, grow: 3, life: 12 }); yield* this.animHP(u); yield* this.msg('魔法被鏡面反射了！' + u.n + '受到了' + rf + '點傷害！'); }
@@ -4677,19 +4766,21 @@ class Battle {
     if (mv.stat) {
       const who = mv.stat.who === 'self' ? u : t; const ch = { ...mv.stat }; delete ch.who;
       if (who === t) yield* this.playFx(mv.fx, u, t); else if (!u.hero) yield* (MFX[mv.fx] || MFX.mbuff).call(this, this.center(u), this.center(t), u, t); else yield* (FX[mv.fx] || FX.buff).call(this, this.center(u));
-      yield* this.statChange(who, ch, true); return;
+      yield* this.statChange(who, ch, true, mv.dur); return;
     }
     if (mv.st) { yield* this.playFx(mv.fx, u, t); yield* this.inflict(t, mv.st, false); }
   }
-  *statChange(b, ch, fromMove) {
+  *statChange(b, ch, fromMove, dur = 3) {
+    b.stageT = b.stageT || {};
     for (const k in ch) {
       const v = ch[k]; const cur = b.stages[k];
-      if ((v > 0 && cur >= 6) || (v < 0 && cur <= -6)) { yield* this.msg(b.n + '的' + STAT_NAMES[k] + '已經無法再' + (v > 0 ? '提升' : '降低') + '了！'); continue; }
-      b.stages[k] = clamp(cur + v, -6, 6);
+      if ((v > 0 && cur >= 3) || (v < 0 && cur <= -3)) { b.stageT[k] = Math.max(b.stageT[k] || 0, dur); yield* this.msg(b.n + '的' + STAT_NAMES[k] + '已經無法再' + (v > 0 ? '提升' : '降低') + '了！（持續時間延長）'); continue; }
+      b.stages[k] = clamp(cur + v, -3, 3); b.stageT[k] = dur;
       if (v > 0) { Sound.sfx('statUp'); yield* FX.statUpFx.call(this, this.center(b)); } else { Sound.sfx('statDown'); yield* FX.statDownFx.call(this, this.center(b)); }
-      yield* this.msg(b.n + '的' + STAT_NAMES[k] + (Math.abs(v) >= 2 ? '大幅' : '') + (v > 0 ? '提升了！' : '降低了！'));
+      yield* this.msg(b.n + '的' + STAT_NAMES[k] + (Math.abs(v) >= 2 ? '大幅' : '') + (v > 0 ? '提升了！' : '降低了！') + '（' + dur + '回合）');
     }
   }
+
   *inflict(b, s, secondary) {
     if (b.status || (!b.hero && famOf(b) && famOf(b).immune.includes(s))) { if (!secondary) yield* this.msg(b.status === s ? b.n + '已經' + STATUS_NAME[s] + '了！' : '但是對' + b.n + '沒有效果……'); return; }
     b.status = s; if (s === 'slp') b.sleepT = rnd(1, 3);
@@ -4702,6 +4793,7 @@ class Battle {
     if (this.H.stats.fx.deathWard && !this.dwUsed && this.H.hp > 0 && this.H.hp < this.H.maxhp * 0.3) { this.dwUsed = true; this.H.shield = 3; yield* FX.barrier.call(this, this.center(this.H)); yield* this.msg('亡者守護發動了！獲得了護盾！', { hold: 24 }); }
     if (this.H.stats.fx.regen && this.H.hp > 0 && this.H.hp < this.H.maxhp) { this.H.hp = Math.min(this.H.maxhp, this.H.hp + Math.ceil(this.H.maxhp * 0.06)); yield* this.animHP(this.H); }
     if (this.bb && this.bb.gang > 0 && this.H.hp > 0 && this.F.hp > 0) { this.bb.gang--; yield* MFX.knives.call(this, this.center(this.F), this.center(this.H)); if (this.H.defending) yield* this.msg(this.H.n + '擋開了手下的飛刀！', { hold: 20 }); else { const d = Math.max(1, Math.floor(this.H.maxhp * BALANCE.gangKnife)); this.H.hp = Math.max(0, this.H.hp - d); this.blinkH = 12; yield* this.animHP(this.H); yield* this.msg('手下丟出了飛刀！受到' + d + '點傷害！', { hold: 20 }); if (this.H.hp <= 0) return; } if (!this.bb.gang) yield* this.msg('手下們見苗頭不對，逃走了。', { hold: 20 }); }
+    for (const b of [this.H, this.F]) for (const k in b.stageT || {}) if (b.stageT[k] > 0 && --b.stageT[k] === 0 && b.stages[k]) { b.stages[k] = 0; yield* this.msg(b.n + '的' + STAT_NAMES[k] + '恢復原狀了。', { hold: 18 }); }
     for (const b of [this.H, this.F]) { if (b.tangle > 0) b.tangle--; if (b.wet > 0) b.wet--; if (b.shield > 0 && !--b.shield) yield* this.msg(b.n + '的魔法護盾消失了。', { hold: 24 }); }
     if (this.collapse && this.H.hp > 0 && this.F.hp > 0) { yield* FX.rock.call(this, null, this.center(this.H)); if (this.H.defending) yield* this.msg(this.H.n + '擋住了落石！'); else { const d = Math.max(1, Math.floor(this.H.maxhp / 10)); this.H.hp = Math.max(0, this.H.hp - d); this.blinkH = 12; yield* this.animHP(this.H); yield* this.msg(this.H.n + '被落石砸中了！'); if (this.H.hp <= 0) return; } }
     for (const b of [this.H, this.F]) {
@@ -4782,9 +4874,8 @@ class Battle {
     let showTotal = false; const rowsL = [['HP', before.hp, after.hp]].concat(ATTRS.map(k => [ATTR_NAMES[k], bA[k], aA[k]]));
     const win = { draw: x => { drawWin(x, 80, 34, 90, 122, 'menu'); rowsL.forEach(([n, b, a], i) => { const Y = 38 + i * 16; Font.draw(x, n, 90, Y, UIC.muted, UIC.textSh); const d = a - b; Font.drawR(x, showTotal ? String(a) : d > 0 ? '+' + d : '—', 162, Y, showTotal ? UIC.text : d > 0 ? UIC.accent : UIC.dis, UIC.textSh); }); } };
     UI.push(win); yield* waitA(); showTotal = true; Sound.sfx('cursor'); yield* waitA(); UI.remove(win); UI.remove(tb);
-    st.tp = (st.tp || 0) + 1; yield* this.msg('獲得了1點天賦點！（在選單的「天賦」中分配）', { hold: 44 });
-    for (const id of heroLearnAt(st.lv)) yield* this.learnMove(id);
-    const C = CLASSES[st.cls]; if (C && C.move2 && st.lv === C.lv2) yield* this.learnMove(C.move2);
+    st.tp = (st.tp || 0) + 2; st.mp = heroStats().mp; this.H.maxmp = st.mp; yield* this.msg('獲得了2點技能點！MP也全部恢復了。', { hold: 40 });
+    const nw = skillTreeOf(st.cls).filter(n => n.clv === st.lv); if (nw.length) yield* this.msg('可以學習新技能了：' + nw.map(n => MOVES[n.id].n).join('、') + '！（選單→技能）', { wait: true });
     if (Sound.current !== 'victory' && this.F.hp <= 0) Sound.play('victory');
   }
   *learnMove(id) {
@@ -5150,7 +5241,7 @@ const Events = {
       yield* say({ swordsman: '劍士的道路啊……這把練習木劍就交給你了。', mage: '魔導士的道路啊……這把魔杖是我年輕時用的，交給你了。', guardian: '守護者的道路啊……這把木劍和布帽給你，別逞強喔。' }[k]);
       st.flags.license = 1; st.bag.license = 1; yield* itemGet('得到了' + S.gear.filter(b => b !== 'guardBadge').map(b => GEAR[b].n).join('和') + '、護身符和冒險者證！');
       yield* say('還有這些傷藥，帶在身上吧。'); st.bag.potion = (st.bag.potion || 0) + 5; yield* itemGet('得到了傷藥×5！');
-      yield* sayAll(['你現在會的技能是：' + st.moves.map(m => MOVES[m.id].n).join('、') + '。', '隨著等級提升，你會學到更多' + C.n + '的技能。到了Lv14，還能走上更高的道路。', '魔物分成好幾個種族，各有害怕的屬性。善用屬性技能，戰鬥會輕鬆很多。', '按START可以打開選單，查看狀態、技能和背包，也能記錄進度。']);
+      yield* sayAll(['你已經會「' + learnedSkills(st).map(id => MOVES[id].n).join('」和「') + '」。', '另外還有2點技能點，打開選單的「技能」，可以自己決定要學什麼、要強化哪一招。', '每次升級都會得到技能點。技能要消耗MP，MP不夠時就用普通「攻擊」。', '到了Lv14，還能走上更高的道路，學到更強的技能。', '魔物分成好幾個種族，各有害怕的屬性。善用屬性技能，戰鬥會輕鬆很多。', '按START可以打開選單，查看狀態、技能和背包，也能記錄進度。']);
       const ap = ow && ow.npcs.find(n => n.id === 'apprentice');
       if (ap) { ap.dir = 'left'; yield* say('學徒：「村長爺爺！讓我幫忙！我在院子裡養了一隻練習用的泡泡姆！」');
         if (yield* yesNo('要和泡泡姆練習一場嗎？')) { const res = yield* ow.battleScript({ sp: 'slime', lv: 3, kind: 'wild' }); if (res === 'win') yield* say('學徒：「好厲害！這就是異界人之力！」'); else yield* say('學徒：「泡、泡泡姆，下手輕一點啦！」'); healHero(); }
@@ -5294,7 +5385,7 @@ function* classTalk() {
     const k = opts[r]; yield* say(C[k].n + '：' + C[k].d + '\n職業技能「' + MOVES[C[k].move].n + '」' + (C[k].move2 ? '、Lv' + C[k].lv2 + '「' + MOVES[C[k].move2].n + '」' : ''));
     if (!(yield* yesNo('確定要成為' + C[k].n + '嗎？'))) continue;
     st.cls = k; clampHP(); yield* itemGet(st.name + '成為了' + C[k].n + '！');
-    for (const mv of [C[k].move].concat(C[k].move2 && st.lv >= C[k].lv2 ? [C[k].move2] : [])) if (!st.moves.some(m => m.id === mv)) { yield* say('學會職業技能「' + MOVES[mv].n + '」的機會來了！'); if (st.moves.length < 4) st.moves.push({ id: mv, pp: MOVES[mv].pp }); else { const i = yield* pickMoveToForget(mv); if (i < 4) st.moves[i] = { id: mv, pp: MOVES[mv].pp }; } }
+    if (!C[k].from && k !== 'otherworlder') { st.skills = st.skills || {}; for (const id of CLASS_FREE[k]) grantSkill(id, st); } else { const first = (SKILL_TREES[k] || [])[0]; if (first) { grantSkill(first[0], st); yield* say('學會了職業技能「' + MOVES[first[0]].n + '」！更多' + C[k].n + '的技能可以在「技能」選單學習。'); } }
     return true;
   }
 }
@@ -5306,10 +5397,10 @@ function loadGame() { try { const s = localStorage.getItem(SAVE_KEY); return s ?
 function saveSettings() { try { localStorage.setItem(SET_KEY, JSON.stringify(Game.settings)); } catch (e) { } }
 function loadSettings() { try { const s = localStorage.getItem(SET_KEY); if (s) Object.assign(Game.settings, JSON.parse(s)); } catch (e) { } }
 function newGameState(name) {
-  const st = { name, lv: 5, exp: expForLevel(5), hp: 1, status: null, moves: [{ id: 'slash', pp: 35 }, { id: 'glare', pp: 30 }, { id: 'flameSlash', pp: 25 }], boost: {}, equip: { weapon: null, head: null, body: null, feet: null, acc1: null, acc2: null }, gear: [], gid: 0, bag: { phone: 1 }, money: 1000, flags: {}, map: 'home', x: 1, y: 3, dir: 'right', respawn: { map: 'home', x: 1, y: 4, dir: 'up' }, time: 0, steps: 0, wins: 0 };
+  const st = { name, lv: 5, exp: expForLevel(5), hp: 1, status: null, moves: [{ id: 'slash', pp: 35 }, { id: 'glare', pp: 30 }, { id: 'flameSlash', pp: 25 }], boost: {}, equip: { weapon: null, head: null, body: null, feet: null, acc1: null, acc2: null }, gear: [], gid: 0, skills: {}, bag: { phone: 1 }, money: 1000, flags: {}, map: 'home', x: 1, y: 3, dir: 'right', respawn: { map: 'home', x: 1, y: 4, dir: 'up' }, time: 0, steps: 0, wins: 0 };
   Game.st = st; st.equip.body = makeGear('uniform', 1, 1).u; st.equip.feet = makeGear('schoolShoes', 1, 1).u; st.hp = heroStats(st).hp; return st;
 }
-function startOverworld() { const st = Game.st; migrateGear(st); migrateVs(st); if (!st.tal) { st.tal = {}; st.tp = Math.max(0, st.lv - 5); } const ow = Game.ow = new Overworld(); Game.setScene(ow); ow.load(st.map, st.x, st.y, st.dir); return ow; }
+function startOverworld() { const st = Game.st; migrateGear(st); migrateVs(st); migrateSkills(st); if (!st.tal) { st.tal = {}; st.tp = Math.max(0, st.lv - 5); } const ow = Game.ow = new Overworld(); Game.setScene(ow); ow.load(st.map, st.x, st.y, st.dir); return ow; }
 
 /* ===================== SHARED ART: logo, title, modern street ===================== */
 function makeLogo(text, sc) {
@@ -5415,7 +5506,7 @@ class TitleScene {
     x.drawImage(this.logo, Math.round(W / 2 - this.logo.width / 2), 6 + bob);
     Font.drawC(x, '～異世界冒險RPG～', W / 2, 52 + bob, '#ffe0a0', '#3a1428');
     if (this.stage === 'press' && Math.floor(this.t / 30) % 2 === 0) Font.drawC(x, '按 A 鍵開始', W / 2, 232, '#ffffff', '#1a1024');
-    Font.draw(x, 'v4.3', W - 26, H - 13, '#b890b0', null);
+    Font.draw(x, 'v4.4', W - 26, H - 13, '#b890b0', null);
   }
 }
 

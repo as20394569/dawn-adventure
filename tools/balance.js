@@ -26,15 +26,23 @@ module.exports = async (g) => {
     const setup = (lv, kit, enh) => { G.newGameState('測'); const st = G.Game.st; st.lv = lv; st.cls = lv >= 14 ? { swordsman: 'swordmaster', mage: 'stormcaller', guardian: 'paladin' }[CLS] : CLS; if (CLS === 'guardian') { st.tal = { body: Math.min(3, Math.max(0, lv - 5)), blade: Math.min(3, Math.max(0, lv - 8)) }; } if (CLS === 'mage') { st.tal = { mana: Math.min(3, Math.max(0, lv - 5)), elem: Math.min(3, Math.max(0, lv - 8)) }; } const tp = Math.max(0, lv - 5); st.tal = { blade: Math.min(3, tp), vital: Math.min(3, Math.max(0, tp - 3)) }; equipKit(st, kit, enh); st.hp = G.heroStats().hp; return st; };
     const expFor = (sp, lv, kind, heroLv) => { const s = SPECIES[sp]; let e = Math.floor(s.exp * lv / 5 * (kind !== 'wild' ? 1.5 : 1)); if (typeof expScale === 'function') e = Math.floor(e * expScale(heroLv, lv)); return e; };
     const bandOf = (map, i) => { const d = MAPS[map]; return (d.encounters || [])[i]; };
+    const build = (st) => { // typical build: ~70% of skill points into the class tree; learn everything once, then level the strongest attacks
+      let pts = Math.round((2 + 2 * (st.lv - 5)) * 0.7); st.skills = {}; for (const id of CLASS_FREE[CLS]) st.skills[id] = 1;
+      const tree = skillTreeOf(st.cls); let changed = true;
+      while (pts > 0 && changed) { changed = false; for (const n of tree) { if (pts <= 0) break; if (!st.skills[n.id] && nodeState(n, st) === 'learn') { st.skills[n.id] = 1; pts--; changed = true; } } }
+      const atk = tree.filter(n => MOVES[n.id].pow).sort((a, b2) => MOVES[b2.id].pow - MOVES[a.id].pow);
+      for (let r = 0; r < 2 && pts > 0; r++) for (const n of atk) { if (pts <= 0) break; if (st.skills[n.id] && st.skills[n.id] < 3 && nodeState(n, st) === 'up') { st.skills[n.id]++; pts--; } }
+    };
     const measure = (sp, lv, kind, heroLv, kit, enh) => {
-      const st = setup(heroLv, kit, enh); Math.random = () => 0.5; const b = new Battle({ sp, lv, kind, bg: 'field' }); Math.random = RND;
-      const ADV = { swordsman: 'swordmaster', mage: 'stormcaller', guardian: 'paladin' }[CLS]; const LINE = [...CLASS_START[CLS].moves.map(m => [1, m]), ...CLASS_LINE[CLS], [12, CLASSES[CLS].move2], [14, CLASSES[ADV].move], [CLASSES[ADV].lv2, CLASSES[ADV].move2]]; const has = m => LINE.some(([l, id]) => id === m && l <= heroLv); const avail = ['slash', 'powerSlash', 'crossSlash', 'magicBolt', 'manaBurst', 'guardStrike', 'shieldBash', 'bladeStorm', 'iaiSlash'].filter(has);
-      const elem = ['flameSlash', 'voltSlash', 'leafBlade', 'tideSlash', 'blaze', 'fireBolt', 'aquaBlade', 'thunder', 'leafStorm', 'chainBolt', 'flameWave', 'aquaBurst', 'thunderstorm', 'skyJudge'].filter(has);
-      Math.random = () => 0.5;
-      const neu = Math.max(...avail.map(m => b.calcDamage(b.H, b.F, MOVES[m]).dmg)), best = Math.max(neu, ...elem.map(m => b.calcDamage(b.H, b.F, MOVES[m]).dmg));
+      const st = setup(heroLv, kit, enh); build(st); st.mp = G.heroStats().mp; Math.random = () => 0.5; const b = new Battle({ sp, lv, kind, bg: 'field' });
+      // turn loop: best affordable skill (weakness-aware), else free attack
+      let hp = b.F.maxhp, mp = st.mp, turns = 0; const L = learnedSkills(st);
+      const dmgOf = id => { let m = id === 'attack' ? { ...MOVES.attack } : skillMove(id, st); if (id === 'attack' && b.H.stats.wkind === '法杖') m.cat = '特'; if (b.H.stats.welem && m.t === '一般' && m.pow) m = { ...m, t: b.H.stats.welem }; return b.calcDamage(b.H, b.F, m).dmg; };
+      const atkD = dmgOf('attack'); let skillBest = atkD;
+      while (hp > 0 && turns < 80) { turns++; let best = 'attack', bd = atkD; for (const id of L) { if (!MOVES[id].pow || skillMP(id, st) > mp) continue; const d = dmgOf(id); if (d > bd) { bd = d; best = id; } } if (bd > skillBest) skillBest = bd; if (best !== 'attack') mp -= skillMP(best, st); hp -= bd; }
       const dm = b.F.moves.map(m => MOVES[m.id]).filter(m => m.pow && !m.charge).map(m => b.calcDamage(b.F, b.H, m).dmg); Math.random = RND;
       const avg = dm.length ? dm.reduce((a, c) => a + c, 0) / dm.length : 0, mx = dm.length ? Math.max(...dm) : 0;
-      return { hitsN: Math.ceil(b.F.maxhp / neu), hitsB: Math.ceil(b.F.maxhp / best), avgPct: Math.round(avg / b.H.maxhp * 100), maxPct: Math.round(mx / b.H.maxhp * 100), turnsToDie: avg ? Math.ceil(b.H.maxhp / avg) : 99, heroHP: b.H.maxhp, foeHP: b.F.maxhp };
+      return { hitsN: Math.ceil(b.F.maxhp / atkD), hitsB: turns, avgPct: Math.round(avg / b.H.maxhp * 100), maxPct: Math.round(mx / b.H.maxhp * 100), turnsToDie: avg ? Math.ceil(b.H.maxhp / avg) : 99, heroHP: b.H.maxhp, foeHP: b.F.maxhp, mp: st.mp };
     };
     const res = {};
     for (const mode of ['normal', 'thorough']) {
@@ -58,7 +66,7 @@ module.exports = async (g) => {
   }, CLS);
   for (const mode in out) {
     g.log('==== ' + mode + ' player ====');
-    g.log('area | arriveLv→leaveLv | wild(foe) | hitsNeutral/hitsBest | foeAvg%HP (max%) | turnsToDie');
+    g.log('area | arriveLv→leaveLv | wild(foe) | attackOnly/turnsWithMP | foeAvg%HP (max%) | turnsToDie');
     for (const r of out[mode]) {
       g.log([r.label, r.arrive + '→' + r.leave, r.wild, r.mW.hitsN + '/' + r.mW.hitsB, r.mW.avgPct + '% (' + r.mW.maxPct + '%)', r.mW.turnsToDie].join(' | '));
       for (const b of r.bosses) g.log('   ' + [b.kind + ' ' + b.sp + ' Lv' + b.l, 'hero Lv' + '(pre)', b.hitsN + '/' + b.hitsB, b.avgPct + '% (' + b.maxPct + '%)', b.turnsToDie, 'foeHP ' + b.foeHP + ' heroHP ' + b.heroHP].join(' | '));

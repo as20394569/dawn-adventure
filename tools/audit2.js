@@ -37,7 +37,7 @@ module.exports = async (g) => {
       if (s.trait && !['swift', 'healer', 'berserk'].includes(s.trait)) bad('魔物', k, '特性無效', s.trait);
       if ((s.elite || s.boss) && !s.drop && k !== 'bandit') warn('魔物', k, '精英/頭目沒有專屬掉落'); }
     // ---------- MOVES ----------
-    const heroMoves = new Set([...Object.values(CLASS_LINE).flat().map(x => x[1]), ...Object.values(CLASS_START).flatMap(c => c.moves), ...Object.values(CLASSES).flatMap(c => [c.move, c.move2]).filter(Boolean), 'struggle', 'armorBreak', 'barrier', 'glare']);
+    const heroMoves = new Set(['attack', ...Object.values(SKILL_TREES).flat().map(n => n[0]), ...Object.values(CLASS_LINE).flat().map(x => x[1]), ...Object.values(CLASS_START).flatMap(c => c.moves), ...Object.values(CLASSES).flatMap(c => [c.move, c.move2]).filter(Boolean), 'struggle', 'armorBreak', 'barrier', 'glare']);
     for (const k in MOVES) { const m = MOVES[k];
       if (!ELEM.includes(m.t)) bad('技能', k, '屬性無效', m.t); if (!['物', '特', '變'].includes(m.cat)) bad('技能', k, '類別無效', m.cat); if (!m.cls) bad('技能', k, '缺內部分類');
       if (m.foe) { if (!MFX[m.fx]) bad('技能', k, '怪物特效不存在', m.fx); if (heroMoves.has(k)) bad('技能', k, '怪物技能被主角使用'); }
@@ -46,7 +46,7 @@ module.exports = async (g) => {
     for (const c in CLASS_LINE) for (const [lv, m] of CLASS_LINE[c]) if (!MOVES[m]) bad('職業技能表', c, m, '不存在'); for (const c in CLASS_START) { for (const m of CLASS_START[c].moves) if (!MOVES[m]) bad('起始技能', c, m); for (const b of CLASS_START[c].gear) if (!GEAR[b]) bad('起始裝備', c, b); }
     for (const c in CLASSES) { const C = CLASSES[c]; for (const m of [C.move, C.move2]) if (m && !MOVES[m]) bad('職業', c, '技能不存在', m); if (C.from && !CLASSES[C.from]) bad('職業', c, '前置職業無效'); }
     // hero FX uniqueness (different moves sharing the exact same effect)
-    const fxUse = {}; for (const k in MOVES) if (!MOVES[k].foe) (fxUse[MOVES[k].fx] = fxUse[MOVES[k].fx] || []).push(MOVES[k].n); for (const f in fxUse) if (fxUse[f].length > 1) warn('主角特效重複使用', f, fxUse[f].join('、'));
+    const fxUse = {}; for (const k in MOVES) if (!MOVES[k].foe) (fxUse[MOVES[k].fx] = fxUse[MOVES[k].fx] || []).push(MOVES[k].n); for (const f in fxUse) if (fxUse[f].length > 1 && !(f === 'slash' && fxUse[f].includes('攻擊'))) warn('主角特效重複使用', f, fxUse[f].join('、'));
     // ---------- GEAR ----------
     for (const k in GEAR) { const e = GEAR[k];
       if (!['weapon', 'head', 'body', 'feet', 'acc'].includes(e.slot)) bad('裝備', k, '部位無效'); if (!(e.t >= 1 && e.t <= 4)) bad('裝備', k, '階級無效');
@@ -65,7 +65,7 @@ module.exports = async (g) => {
     for (const a in AFFIX_TABLE) for (const s of AFFIX_TABLE[a].slots) if (!['weapon', 'head', 'body', 'feet', 'acc'].includes(s)) bad('詞綴', a, '部位無效', s);
     // ---------- ITEMS ----------
     for (const k in ITEMS) { const it = ITEMS[k];
-      if (!it.mat && !it.key && !['heal', 'cure', 'pp', 'escape', 'boost', 'full', 'tp'].includes(it.use)) bad('道具', k, '沒有用途');
+      if (!it.mat && !it.key && !['heal', 'cure', 'pp', 'mp', 'escape', 'boost', 'full', 'tp'].includes(it.use)) bad('道具', k, '沒有用途');
       if (!itemSrc[k] && !['phone', 'license', 'pocketWatch'].includes(k)) warn('道具', k, it.n, '取得不到');
       if (it.mat && !matUse[k]) warn('素材', k, it.n, '沒有用途（只能賣）');
       if (!it.d) warn('道具', k, '缺說明'); }
@@ -100,7 +100,7 @@ module.exports = async (g) => {
     try { const L = questList(st); info('任務數（旗標全開）', L.length); } catch (e) { bad('任務', '列表出錯', e.message); }
     try { for (const [mid, x, y] of questMarks(st)) { if (!MAPS[mid]) bad('任務標記', '地圖不存在', mid); else if (!getMap(mid).rows[y] || getMap(mid).rows[y][x] === undefined) bad('任務標記', '座標超出', mid, x, y); } } catch (e) { bad('任務標記', e.message); }
     // ---------- TALENTS / CLASSES stats ----------
-    const okStat = s => [...STATS, 'crit', 'hit', 'eva', 'drain', 'elem', 'counter', 'rage', 'fireUp', 'boltUp'].includes(s);
+    const okStat = s => [...STATS, 'mp', 'crit', 'hit', 'eva', 'drain', 'elem', 'counter', 'rage', 'fireUp', 'boltUp'].includes(s);
     for (const T of TALENTS) for (const s in T.st) if (!okStat(s)) bad('天賦', T.id, '欄位無效', s);
     for (const c in CLASSES) for (const s in CLASSES[c].st) if (!okStat(s)) bad('職業', c, '欄位無效', s);
     for (const s of ['counter', 'rage', 'fireUp', 'boltUp']) if (!new RegExp('\\.' + s + '\\b').test(SRC.replace(/st: \{[^}]*\}/g, ''))) bad('能力', s, '戰鬥程式沒有讀取');

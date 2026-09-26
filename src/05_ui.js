@@ -89,6 +89,7 @@ class Menu {
         const bw = this.colW - 3, bh = this.rowH - 2; drawBtn(x, X, Y, bw, bh, on, it.strip);
         const ty = Y + Math.round(bh / 2) - 8;
         if (it.strip) Font.draw(x, it.t, X + 8, ty, tc, this.textSh); else Font.drawC(x, it.t, X + Math.floor(bw / 2), ty, tc, this.textSh);
+        if (it.r) Font.drawR(x, it.r, X + bw - 4, ty + 2, it.dis || it.col === UIC.dis ? UIC.dis : '#8ab8ff', this.textSh, 9);
         continue;
       }
       if (on) selBar(x, this.cols === 1 ? this.x + 2 : X - 7, Y + 7 - Math.floor((this.rowH - 1) / 2), this.cols === 1 ? this.w - 4 : this.colW - 4, this.rowH - 1);
@@ -129,6 +130,7 @@ function heroStats(st = Game.st) {
     spe: a.agi * 1.5 + L * 0.6,                     // 速度 = 敏捷×1.5 + 等級×0.6
   };
   for (const k in s) s[k] = Math.floor(s[k]);
+  s.mp = Math.floor(10 + L * 1.5 + a.int);           // 最大MP = 10 + 等級×1.5 + 智力
   for (const k in st.boost || {}) if (s[k] !== undefined) s[k] += st.boost[k]; // legacy saves
   for (const g of equippedGear(st)) { const o = gearStats(g).st; for (const k in o) s[k] += o[k]; }
   s.crit = 3 + a.luk * 0.5;   // 會心率% = 3 + 幸運×0.5
@@ -205,21 +207,22 @@ function* summaryScreen() {
       drawWin(x, 4, 98, 168, 62, 'menu');
       ATTRS.forEach((k, i) => { const X = 12 + (i % 2) * 80, Y = 103 + Math.floor(i / 2) * 17; Font.draw(x, ATTR_NAMES[k], X, Y, UIC.muted, UIC.textSh); Font.drawR(x, String(a[k]), X + 70, Y, (st.boost || {})[k] ? UIC.accent : UIC.text, UIC.textSh); });
       drawWin(x, 4, 162, 168, 90, 'menu');
-      const rowsD = [['HP', st.hp + '/' + s.hp], ['物攻', s.atk, 'atk'], ['物防', s.def, 'def'], ['魔攻', s.spa, 'spa'], ['魔防', s.spd, 'spd'], ['速度', s.spe, 'spe'], ['會心', s.crit.toFixed(1) + '%'], ['迴避', s.eva.toFixed(1) + '%']];
+      const rowsD = [['HP', st.hp + '/' + s.hp], ['MP', (st.mp ?? s.mp) + '/' + s.mp], ['物攻', s.atk, 'atk'], ['物防', s.def, 'def'], ['魔攻', s.spa, 'spa'], ['魔防', s.spd, 'spd'], ['速度', s.spe, 'spe'], ['會心', s.crit.toFixed(1) + '%']];
       rowsD.forEach(([n, v, k], i) => { const X = 12 + (i % 2) * 80, Y = 166 + Math.floor(i / 2) * 20; Font.draw(x, n, X, Y, UIC.muted, UIC.textSh); Font.drawR(x, String(v), X + 70, Y, k && eqB[k] ? UIC.accent : UIC.text, UIC.textSh); });
     } else {
-      drawWin(x, 4, 98, 168, 84, 'menu');
-      st.moves.forEach((m, i) => { const mv = MOVES[m.id]; const Y = 102 + i * 19; if (i === mi) selBar(x, 6, Y, 164, 17); typeBadge(x, mv.t, 14, Y + 2, 30); Font.draw(x, mv.n, 52, Y, UIC.text, UIC.textSh); Font.drawR(x, m.pp + '/' + mv.pp, 164, Y, m.pp === 0 ? UIC.bad : UIC.text, UIC.textSh); });
-      const mv = MOVES[st.moves[mi].id]; drawWin(x, 4, 184, 168, 68, 'menu');
-      Font.draw(x, (mv.cat === '變' ? '變化' : mv.cat === '物' ? '物理' : '魔法') + ' 威力' + (mv.pow || '—') + ' 命中' + (mv.acc || '—'), 12, 186, UIC.accent, UIC.textSh);
-      Font.wrap(mv.d, 152).slice(0, 3).forEach((l, i) => Font.draw(x, l, 12, 202 + i * 15, UIC.text, UIC.textSh));
+      const SK = learnedSkills(st); drawWin(x, 4, 98, 168, 84, 'menu'); const t0 = Math.max(0, Math.min(mi - 1, SK.length - 4));
+      if (!SK.length) Font.draw(x, '還沒有學會技能。（選單→技能）', 12, 104, UIC.muted, UIC.textSh, 11);
+      SK.slice(t0, t0 + 4).forEach((id, k) => { const i = t0 + k, mv = MOVES[id], Y = 102 + k * 19; if (i === mi) selBar(x, 6, Y, 164, 17); typeBadge(x, mv.t, 14, Y + 2, 30); Font.draw(x, mv.n + ' Lv' + skillLv(id), 52, Y, UIC.text, UIC.textSh); Font.drawR(x, 'MP ' + skillMP(id), 164, Y, UIC.accent, UIC.textSh); });
+      if (SK.length) { const id = SK[Math.min(mi, SK.length - 1)], mv = MOVES[id], m2 = skillMove(id); drawWin(x, 4, 184, 168, 68, 'menu');
+        Font.draw(x, (mv.cat === '變' ? '輔助' : mv.cat === '物' ? '物理' : '魔法') + (m2.pow ? ' 威力' + m2.pow : '') + ' MP' + skillMP(id) + '　' + (st.mp ?? s.mp) + '/' + s.mp, 12, 186, UIC.accent, UIC.textSh, 11);
+        Font.wrap(mv.d, 152).slice(0, 3).forEach((l, i) => Font.draw(x, l, 12, 202 + i * 15, UIC.text, UIC.textSh)); }
     }
   } };
   UI.push(scr);
   while (true) {
     if (Input.pressed('left') || Input.pressed('right')) { page = (page + (Input.pressed('left') ? 2 : 1)) % 3; Sound.sfx('cursor'); }
     if (page === 2) { const n = questList().length; if (Input.repeat('up') && qTop > 0) { qTop--; Sound.sfx('cursor'); } if (Input.repeat('down') && qTop < n - 1) { qTop++; Sound.sfx('cursor'); } }
-    if (page === 1) { if (Input.repeat('up')) { mi = (mi + Game.st.moves.length - 1) % Game.st.moves.length; Sound.sfx('cursor'); } if (Input.repeat('down')) { mi = (mi + 1) % Game.st.moves.length; Sound.sfx('cursor'); } }
+    if (page === 1) { const n = Math.max(1, learnedSkills().length); if (Input.repeat('up')) { mi = (mi + n - 1) % n; Sound.sfx('cursor'); } if (Input.repeat('down')) { mi = (mi + 1) % n; Sound.sfx('cursor'); } }
     if (Input.pressed('a') && page !== 1) { Input.consume('a'); page = (page + 1) % 3; Sound.sfx('cursor'); }
     else if (Input.pressed('b')) { Input.consume('a', 'b'); Sound.sfx('cancel'); break; }
     yield;
@@ -309,22 +312,22 @@ function* bagScreen(mode = 'field') { // returns item id used (battle) or null
   UI.remove(scr); return result;
 }
 function phoneText() { const st = Game.st; const pct = Math.max(1, 12 - Math.floor((st.steps || 0) / 400)); return '從原本的世界帶來的手機。\n電量剩下' + pct + '%……還是完全沒有訊號。\n桌布是家附近的那條街。'; }
-function clampHP() { const s = heroStats(); Game.st.hp = Math.min(Game.st.hp, s.hp); }
+function clampHP() { const s = heroStats(); Game.st.hp = Math.min(Game.st.hp, s.hp); if (Game.st.mp !== undefined) Game.st.mp = Math.min(Game.st.mp, s.mp); }
 function canUseItem(k) {
   const it = ITEMS[k], st = Game.st, s = heroStats();
   if (it.use === 'heal') return st.hp < s.hp && st.hp > 0;
   if (it.use === 'cure') return st.status === it.v;
-  if (it.use === 'pp') return st.moves.some(m => m.pp < MOVES[m.id].pp);
+  if (it.use === 'mp') return (st.mp ?? s.mp) < s.mp;
   if (it.use === 'boost' || it.use === 'tp') return true;
-  if (it.use === 'full') return st.hp > 0 && (st.hp < s.hp || !!st.status);
+  if (it.use === 'full') return st.hp > 0 && (st.hp < s.hp || !!st.status || (st.mp ?? s.mp) < s.mp);
   return false;
 }
 function useItem(k) { // returns message or null; applies to Game.st
   if (!canUseItem(k)) return null; const it = ITEMS[k], st = Game.st, s = heroStats(); st.bag[k]--;
   if (it.use === 'heal') { const b = st.hp; st.hp = Math.min(s.hp, st.hp + it.v); return st.name + '的HP恢復了' + (st.hp - b) + '點！'; }
   if (it.use === 'cure') { st.status = null; return st.name + '的' + { psn: '中毒', par: '麻痺', slp: '睡眠', brn: '灼傷' }[it.v] + '治好了！'; }
-  if (it.use === 'pp') { st.moves.forEach(m => m.pp = Math.min(MOVES[m.id].pp, m.pp + it.v)); return st.name + '的技能PP恢復了！'; }
-  if (it.use === 'full') { st.hp = s.hp; st.status = null; return st.name + '的HP完全恢復了！'; }
+  if (it.use === 'mp') { const b = st.mp ?? s.mp; st.mp = Math.min(s.mp, b + it.v); return st.name + '的MP恢復了' + (st.mp - b) + '點！'; }
+  if (it.use === 'full') { st.hp = s.hp; st.mp = s.mp; st.status = null; return st.name + '的HP和MP完全恢復了！'; }
   if (it.use === 'tp') { st.tp = (st.tp || 0) + 1; return st.name + '讀完了天賦之書，獲得1點天賦點！'; }
   if (it.use === 'boost') { st.boost = st.boost || {}; for (const q in it.v) st.boost[q] = (st.boost[q] || 0) + it.v[q]; return st.name + '的' + Object.keys(it.v).map(q => ATTR_NAMES[q] || STAT_NAMES[q]).join('、') + '永久提升了！'; }
   return null;
@@ -340,7 +343,7 @@ function* equipScreen() {
       Font.draw(x, EQUIP_SLOTS[sl], 12, Y, UIC.accent, UIC.textSh, 11); Font.draw(x, g ? GEAR[g.b].n : '——', 44, Y, g ? gCol(g) : UIC.dis, UIC.textSh);
       if (g) Font.draw(x, gearLines(g)[0] + (gearLines(g)[1] ? ' ＋特效' : ''), 44, Y + 12, UIC.muted, UIC.textSh, 9); });
     const s = heroStats(), Y0 = 24 + slots.length * 25 + 10; drawWin(x, 4, Y0, 168, H - Y0 - 4, 'menu');
-    [['HP', st.hp + '/' + s.hp], ['物攻', s.atk], ['物防', s.def], ['魔攻', s.spa], ['魔防', s.spd], ['速度', s.spe], ['會心', s.crit.toFixed(1) + '%'], ['迴避', s.eva.toFixed(1) + '%']].forEach(([a, b], i) => { const X = 58 + (i % 2) * 58, Y = Y0 + 3 + Math.floor(i / 2) * 15; Font.draw(x, a, X, Y, UIC.muted, UIC.textSh, 10); Font.drawR(x, String(b), X + 54, Y, UIC.text, UIC.textSh, 10); });
+    [['HP', st.hp + '/' + s.hp], ['MP', (st.mp ?? s.mp) + '/' + s.mp], ['物攻', s.atk], ['物防', s.def], ['魔攻', s.spa], ['魔防', s.spd], ['速度', s.spe], ['會心', s.crit.toFixed(1) + '%']].forEach(([a, b], i) => { const X = 58 + (i % 2) * 58, Y = Y0 + 3 + Math.floor(i / 2) * 15; Font.draw(x, a, X, Y, UIC.muted, UIC.textSh, 10); Font.drawR(x, String(b), X + 54, Y, UIC.text, UIC.textSh, 10); });
     dollPreview(x, heroLookOf(st), 8, Y0 + 4);
   } };
   UI.push(scr);
@@ -557,10 +560,7 @@ function* talentScreen() {
     if (Input.pressed('a')) {
       Input.consume('a'); const t = T(), rk = st.tal[t.id] || 0;
       if (!st.tp || rk >= t.max || locked(t)) { Sound.sfx('bump'); continue; }
-      if (t.move && !st.moves.some(m => m.id === t.move)) {
-        if (st.moves.length < 4) st.moves.push({ id: t.move, pp: MOVES[t.move].pp });
-        else { UI.remove(scr); const i = yield* pickMoveToForget(t.move); UI.push(scr); if (i >= 4) continue; st.moves[i] = { id: t.move, pp: MOVES[t.move].pp }; }
-      }
+      if (t.move) grantSkill(t.move, st);
       st.tp--; st.tal[t.id] = rk + 1; clampHP(); Sound.sfx('statUp');
     }
     yield;
@@ -601,15 +601,16 @@ function* dexScreen() {
 function* startMenu() {
   Sound.sfx('menu'); let idx = Game.menuIdx || 0;
   while (true) {
-    const r = yield* choose(['狀態', '天賦', '背包', '裝備', '圖鑑', '紀錄', '存檔', '設定', '關閉'].map(t => t === '天賦' && Game.st.tp ? { t, r: '●', col: UIC.warm } : t), { x: W - 74, y: 4, w: 70, index: idx });
-    if (r < 0 || r === 8) break; idx = r; Game.menuIdx = r;
+    const r = yield* choose(['狀態', '技能', '天賦', '背包', '裝備', '圖鑑', '紀錄', '存檔', '設定', '關閉'].map(t => (t === '天賦' || t === '技能') && Game.st.tp ? { t, r: '●', col: UIC.warm } : t), { x: W - 74, y: 4, w: 70, index: idx });
+    if (r < 0 || r === 9) break; idx = r; Game.menuIdx = r;
     if (r === 0) yield* summaryScreen();
-    if (r === 1) yield* talentScreen();
-    if (r === 2) yield* bagScreen('field');
-    if (r === 3) yield* equipScreen();
-    if (r === 4) yield* dexScreen();
-    if (r === 5) yield* recordScreen();
-    if (r === 6) { const ok = yield* yesNo('要記錄目前的冒險進度嗎？'); if (ok) { const good = saveGame(); if (good) { Sound.sfx('save'); yield* say(Game.st.name + '把冒險記錄了下來！'); } else yield* say('無法存檔……這個瀏覽器可能不允許儲存資料。'); } break; }
-    if (r === 7) yield* optionsScreen();
+    if (r === 1) yield* skillTreeScreen();
+    if (r === 2) yield* talentScreen();
+    if (r === 3) yield* bagScreen('field');
+    if (r === 4) yield* equipScreen();
+    if (r === 5) yield* dexScreen();
+    if (r === 6) yield* recordScreen();
+    if (r === 7) { const ok = yield* yesNo('要記錄目前的冒險進度嗎？'); if (ok) { const good = saveGame(); if (good) { Sound.sfx('save'); yield* say(Game.st.name + '把冒險記錄了下來！'); } else yield* say('無法存檔……這個瀏覽器可能不允許儲存資料。'); } break; }
+    if (r === 8) yield* optionsScreen();
   }
 }

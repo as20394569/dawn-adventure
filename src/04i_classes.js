@@ -49,7 +49,7 @@ function* classSelectScreen() {
     Font.draw(x, C.n, 12, 120, col, UIC.textSh); Font.drawR(x, S.tag, 164, 122, UIC.muted, UIC.textSh, 10);
     Font.wrap(S.pitch, 152, 11).slice(0, 3).forEach((l, n) => Font.draw(x, l, 12, 138 + n * 13, UIC.text, UIC.textSh, 11));
     Object.entries(S.bars).forEach(([nm, v], n) => { const X = 12 + (n % 2) * 80, Y = 180 + Math.floor(n / 2) * 13; Font.draw(x, nm, X, Y, UIC.muted, UIC.textSh, 10); for (let q = 0; q < 5; q++) { x.fillStyle = q < v ? col : '#2a3050'; x.fillRect(X + 30 + q * 8, Y + 5, 6, 4); } });
-    Font.draw(x, '起始技能', 12, 208, UIC.accent, UIC.textSh, 10); Font.draw(x, S.moves.map(m => MOVES[m].n).join('・'), 12, 221, UIC.text, UIC.textSh, 11);
+    Font.draw(x, '起始技能（另有2點技能點自由分配）', 12, 208, UIC.accent, UIC.textSh, 10); Font.draw(x, CLASS_FREE[k].map(m => MOVES[m].n).join('・') + '＋' + skillTreeOf(k).filter(n => !CLASS_FREE[k].includes(n.id) && n.clv <= 5).map(n => MOVES[n.id].n).join('／'), 12, 221, UIC.text, UIC.textSh, 11);
     Font.drawR(x, 'A：選擇　◀▶：切換', 164, 238, UIC.muted, UIC.textSh, 9);
   } };
   UI.push(scr);
@@ -60,9 +60,8 @@ function* classSelectScreen() {
   }
 }
 function applyStartClass(k) {
-  const st = Game.st, S = CLASS_START[k]; st.cls = k;
-  st.moves = S.moves.map(id => ({ id, pp: MOVES[id].pp }));
-  for (const [l, id] of CLASS_LINE[k]) if (l <= st.lv && st.moves.length < 4 && !st.moves.some(m => m.id === id)) st.moves.push({ id, pp: MOVES[id].pp });
+  const st = Game.st, S = CLASS_START[k]; st.cls = k; st.skills = {}; for (const id of CLASS_FREE[k]) grantSkill(id, st);
+  st.tp = (st.tp || 0) + 2; st.moves = [];
   const acc = ['acc1', 'acc2']; for (const b of S.gear) { const g = makeGear(b, 1, 1), sl = GEAR[b].slot === 'acc' ? acc.shift() : GEAR[b].slot; st.equip[sl] = g.u; }
-  st.hp = heroStats(st).hp;
+  const s = heroStats(st); st.hp = s.hp; st.mp = s.mp;
 }
