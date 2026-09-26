@@ -348,7 +348,8 @@ Object.assign(MAPS.sewer, { gearPool: ['knightSword', 'tideStaff', 'knightHelm',
 
 /* ---------- Encounter tables & rare monsters (3%, may flee) ---------- */
 MAPS.route.encounters = [
-  { y0: 26, y1: 99, rate: 0.11, table: [['mush', 3, 5, 30], ['bird', 3, 5, 30], ['pebble', 3, 5, 15], ['slime', 4, 5, 25]] },
+  { y0: 34, y1: 99, rate: 0.11, table: [['mush', 0, 2, 30], ['bird', 0, 2, 30], ['pebble', 1, 2, 15], ['slime', 1, 3, 25]] }, // starter meadow next to town (Lv1-4 after the area shift)
+  { y0: 26, y1: 33, rate: 0.11, table: [['mush', 3, 5, 30], ['bird', 3, 5, 30], ['pebble', 3, 5, 15], ['slime', 4, 5, 25]] },
   { y0: 11, y1: 25, rate: 0.11, table: [['fox', 6, 8, 22], ['bee', 6, 8, 22], ['frog', 6, 8, 22], ['mush', 6, 8, 8], ['bird', 6, 8, 8], ['pebble', 6, 8, 8], ['slime', 7, 8, 10]] },
   { y0: 0, y1: 10, rate: 0.12, table: [['thunderBeetle', 8, 10, 24], ['emberSpirit', 8, 10, 22], ['fox', 8, 10, 16], ['bee', 8, 10, 14], ['frog', 8, 10, 14], ['pebble', 8, 10, 10]] },
 ];

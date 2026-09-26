@@ -117,7 +117,7 @@ const MINE_EVENTS = {
       st.flags.bandit = 1; ow.boss = null;
       yield* sayAll(['「……可惡……你這傢伙……到底是什麼人……」', '格倫丟下一張破舊的地圖，逃進了坑道深處。']);
       st.money += 1500; st.bag.superPotion = (st.bag.superPotion || 0) + 3; yield* itemGet('奪回了商隊的貨物！得到1500 G和好傷藥×3！');
-      yield* sayAll(['地圖上畫著王都的城牆……還有一個奇怪的記號：', '「異界之門・第二把鑰匙」。', st.flags.caravan === 'lost' ? '（把貨物的消息帶回萌芽鎮，道具店就能恢復進貨了。）' : '（回萌芽鎮告訴行商吧。）']);
+      yield* sayAll(['地圖上畫著王都的城牆……還有一個奇怪的記號：', '一個黑色的角形徽記——魔王軍的標誌。', '……有人在替魔王做事。', st.flags.caravan === 'lost' ? '（把貨物的消息帶回萌芽鎮，道具店就能恢復進貨了。）' : '（回萌芽鎮告訴行商吧。）']);
       saveGame();
     })();
   },

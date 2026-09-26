@@ -168,7 +168,7 @@ const qCol = it => UIC.text;
 /* ---------- Quests ---------- */
 function questList(st = Game.st) {
   const f = st.flags, L = [];
-  L.push({ main: 1, n: '回家的路', t: !f.license ? '去村長家問問看回家的方法。' : !f.golem ? '前往北方的古岩遺跡，尋找異界之門。' : '門的力量還不夠……繼續尋找線索。（第一章完）', done: !!f.golem, rw: '故事推進（第一章）' });
+  L.push({ main: 1, n: '曙光的冒險者', t: !f.license ? '去村長家，問問自己為什麼會來到這個世界。' : !f.golem ? '古岩遺跡的魔像被魔王的瘴氣侵蝕而暴走。前往北方的遺跡平息它。' : '黯滅之王札爾格斯正在甦醒。鍛鍊力量，準備踏上討伐魔王的旅程。（第一章完）', done: !!f.golem, rw: '故事推進（第一章）・曙光之印' });
   if (f.q1) L.push({ n: '失蹤的弟弟', t: !f.q1res ? '花店姊姊的弟弟「小麥」去晨霧道路後沒回來。' : !f.q1done ? '回萌芽鎮告訴花店的姊姊。' : f.q1res === 'home' ? '完成：勸小麥回家了。' : '完成：替小麥保守了秘密。', done: !!f.q1done, rw: '勸他回家：好傷藥×2、300 G／保守秘密：好傷藥×1、200 G' });
   if (st.lv >= 8 && !st.cls) L.push({ n: '力量的覺醒', t: '村長好像有話要跟你說。（選擇職業）', done: false, rw: '職業與起始技能' });
   else if (st.cls && CLASSES[st.cls].tier === 1 && st.lv >= 14) L.push({ n: '更高的道路', t: '已經可以進階職業了。去找村長吧。', done: false, rw: '進階職業與專屬技能' });

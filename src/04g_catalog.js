@@ -38,7 +38,7 @@ const ACH_CATS = { 戰鬥: ['win1', 'win100', 'elite', 'golem', 'crystal', 'band
 for (const c in ACH_CATS) for (const id of ACH_CATS[c]) { const a = ACHIEVEMENTS.find(x => x.id === id); if (a) a.cat = c; }
 
 // ---- 任務分類 ----
-const QUEST_CATS = { '回家的路': '主線', '失蹤的弟弟': '支線', '見習獵人提姆': '支線', '師父的遺作': '支線', '商隊的危機': '支線', '失落的貨物': '支線', '力量的覺醒': '成長', '更高的道路': '成長', '會讓路的樹': '隱藏', '井底的月光': '隱藏', '井底更深處': '隱藏', '古王的墓穴': '隱藏', '委託告示板': '委託' };
+const QUEST_CATS = { '曙光的冒險者': '主線', '失蹤的弟弟': '支線', '見習獵人提姆': '支線', '師父的遺作': '支線', '商隊的危機': '支線', '失落的貨物': '支線', '力量的覺醒': '成長', '更高的道路': '成長', '會讓路的樹': '隱藏', '井底的月光': '隱藏', '井底更深處': '隱藏', '古王的墓穴': '隱藏', '委託告示板': '委託' };
 const QUEST_CAT_COL = { 主線: '#6ee7d2', 支線: '#ffcf5a', 成長: '#c58cff', 隱藏: '#ff9ad0', 委託: '#8ad0ff' };
 const questCatOf = q => q.n.startsWith('委託：') ? '委託' : QUEST_CATS[q.n] || null;
 

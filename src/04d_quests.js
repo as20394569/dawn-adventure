@@ -11,7 +11,7 @@ Object.assign(ITEMS, { pocketWatch: { n: '銀懷錶', key: 1, d: '背面刻著�
 const COMMISSIONS = {
   c1: { n: '藥草告急', from: '旅店老闆娘', d: '旅店的傷藥快用完了。請帶來藥草×5。', need: { herb: 5 }, reward: { gold: 300, items: { superPotion: 2 } }, open: st => st.flags.license },
   c2: { n: '趕走電電蜂', from: '果園農夫', d: '電電蜂在道路北邊螫傷了好多人。接下委託後，擊敗電電蜂×4。', kill: ['bee', 4], reward: { gold: 400, items: { luckClover: 1 } }, open: st => st.flags.license },
-  c3: { n: '晶石研究', from: '村長', d: '想研究地下水道的水晶和異界之門的關係。請帶來水晶碎片×3。', need: { crystal: 3 }, reward: { items: { tpBook: 1 } }, open: st => st.flags.golem },
+  c3: { n: '晶石研究', from: '村長', d: '想研究地下水道的水晶和魔王封印的關係。請帶來水晶碎片×3。', need: { crystal: 3 }, reward: { items: { tpBook: 1 } }, open: st => st.flags.golem },
   c4: { n: '遺失的懷錶', from: '旅行者', d: '在迷霧森林東側弄丟了一只銀懷錶。找到的話，請放進委託箱。', key: 'pocketWatch', reward: { gold: 800 }, open: st => st.flags.wolf },
   c5: { n: '驅除嘟嘟菇', from: '菜園大嬸', d: '嘟嘟菇把菜園啃得亂七八糟。接下委託後，擊敗嘟嘟菇×5。', kill: ['mush', 5], reward: { gold: 250, items: { potion: 3 } }, open: st => st.flags.license },
   c6: { n: '魔力草研究', from: '魔法學徒', d: '想研究會發光的草。請帶來魔力草×3。（晨霧道路北邊、迷霧森林、地下水道都採得到）', need: { manaHerb: 3 }, reward: { gold: 400, items: { manaPotion: 3 } }, open: st => st.flags.license },
@@ -144,7 +144,7 @@ const QUEST_EVENTS = {
       st.money += 1000; const g = makeGear('guardHelm', 2); yield* itemGet(st.name + '得到了1000 G和' + gearName(g) + '！'); return;
     }
     if (f.q2res === 'stay' && f.q2done && !f.q2thx) { f.q2thx = 1; yield* sayAll(['提姆都跟我說了。你們一起打倒了苔石巨人！', '……那傢伙已經是獨當一面的獵人了。謝謝你相信他。']); return; }
-    yield* sayAll(f.golem ? ['你打倒了魔像！傳說中的門……真的存在嗎？'] : ['前方就是古岩遺跡。傳說中的異界之門，就在遺跡深處。', '魔像非常強大。先在泉水恢復體力，準備好道具再進去吧。', '也別忘了記錄進度！']);
+    yield* sayAll(f.golem ? ['你打倒了魔像！……魔王要復活的傳聞，是真的嗎？'] : ['前方就是古岩遺跡。魔像被瘴氣侵蝕，越來越凶暴了。', '魔像非常強大。先在泉水恢復體力，準備好道具再進去吧。', '也別忘了記錄進度！']);
   },
   *tim(ow, ent) {
     const st = Game.st, f = st.flags;

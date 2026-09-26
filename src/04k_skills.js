@@ -10,9 +10,9 @@ const SKILL_MP = {
 const SKILL_MAX = 3;
 // Tree nodes: [skillId, character level needed, required node or null, required node level]
 const SKILL_TREES = {
-  swordsman: [['powerSlash', 5], ['flameSlash', 5], ['focus', 5], ['voltSlash', 8, 'flameSlash', 1], ['gale', 8], ['armorBreak', 8, 'powerSlash', 1], ['leafBlade', 11, 'voltSlash', 1], ['crossSlash', 11, 'powerSlash', 2], ['tideSlash', 11, 'voltSlash', 1], ['blaze', 16, 'flameSlash', 2]],
-  mage: [['fireBolt', 5], ['manaBurst', 5], ['aquaBlade', 5], ['thunder', 8, 'aquaBlade', 1], ['heal', 8], ['barrier', 8, 'manaBurst', 1], ['leafStorm', 11, 'aquaBlade', 1], ['chainBolt', 11, 'thunder', 1], ['flameWave', 11, 'fireBolt', 2], ['aquaBurst', 16, 'aquaBlade', 2]],
-  guardian: [['guardStrike', 5], ['ironWill', 5], ['flameSlash', 5], ['heal', 8], ['voltSlash', 8, 'flameSlash', 1], ['barrier', 8, 'ironWill', 1], ['shieldBash', 11, 'guardStrike', 2], ['tideSlash', 11, 'voltSlash', 1], ['leafBlade', 11, 'voltSlash', 1], ['armorBreak', 16, 'guardStrike', 1]],
+  swordsman: [['powerSlash', 1], ['flameSlash', 1], ['focus', 3], ['voltSlash', 8, 'flameSlash', 1], ['gale', 8], ['armorBreak', 8, 'powerSlash', 1], ['leafBlade', 11, 'voltSlash', 1], ['crossSlash', 11, 'powerSlash', 2], ['tideSlash', 11, 'voltSlash', 1], ['blaze', 16, 'flameSlash', 2]],
+  mage: [['fireBolt', 1], ['manaBurst', 1], ['aquaBlade', 3], ['thunder', 8, 'aquaBlade', 1], ['heal', 8], ['barrier', 8, 'manaBurst', 1], ['leafStorm', 11, 'aquaBlade', 1], ['chainBolt', 11, 'thunder', 1], ['flameWave', 11, 'fireBolt', 2], ['aquaBurst', 16, 'aquaBlade', 2]],
+  guardian: [['guardStrike', 1], ['ironWill', 1], ['flameSlash', 3], ['heal', 8], ['voltSlash', 8, 'flameSlash', 1], ['barrier', 8, 'ironWill', 1], ['shieldBash', 11, 'guardStrike', 2], ['tideSlash', 11, 'voltSlash', 1], ['leafBlade', 11, 'voltSlash', 1], ['armorBreak', 16, 'guardStrike', 1]],
   swordmaster: [['bladeStorm', 14, 'crossSlash', 1], ['iaiSlash', 18, 'bladeStorm', 1]], berserker: [['recklessSlash', 14], ['bloodRage', 18, 'recklessSlash', 1]],
   pyromancer: [['inferno', 14, 'flameWave', 1], ['meteor', 18, 'inferno', 1]], stormcaller: [['thunderstorm', 14, 'chainBolt', 1], ['skyJudge', 18, 'thunderstorm', 1]],
   paladin: [['holyLight', 14], ['sanctuary', 18, 'holyLight', 1]], otherworlder: [['dawnBreak', 14], ['riftBlade', 20, 'dawnBreak', 1]],
