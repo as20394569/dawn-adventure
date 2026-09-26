@@ -210,7 +210,7 @@ function newGameState(name) {
   const st = { name, lv: 5, exp: expForLevel(5), hp: 1, status: null, moves: [{ id: 'slash', pp: 35 }, { id: 'glare', pp: 30 }, { id: 'flameSlash', pp: 25 }], boost: {}, equip: { weapon: null, head: null, body: null, feet: null, acc1: null, acc2: null }, gear: [], gid: 0, skills: {}, bag: { phone: 1 }, money: 1000, flags: {}, map: 'home', x: 1, y: 3, dir: 'right', respawn: { map: 'home', x: 1, y: 4, dir: 'up' }, time: 0, steps: 0, wins: 0 };
   Game.st = st; st.equip.body = makeGear('uniform', 1, 1).u; st.equip.feet = makeGear('schoolShoes', 1, 1).u; st.hp = heroStats(st).hp; return st;
 }
-function startOverworld() { const st = Game.st; migrateGear(st); migrateVs(st); migrateSkills(st); if (!st.tal) { st.tal = {}; st.tp = Math.max(0, st.lv - 5); } const ow = Game.ow = new Overworld(); Game.setScene(ow); ow.load(st.map, st.x, st.y, st.dir); return ow; }
+function startOverworld() { const st = Game.st; migrateGear(st); migrateVs(st); migrateSkills(st); if (!st.tal) { st.tal = {}; st.tp = (st.tp || 0) + Math.max(0, st.lv - 5); } const ow = Game.ow = new Overworld(); Game.setScene(ow); ow.load(st.map, st.x, st.y, st.dir); if (st.skillNote) ow.run(skillUpdateNote(st)); return ow; }
 
 /* ===================== SHARED ART: logo, title, modern street ===================== */
 function makeLogo(text, sc) {

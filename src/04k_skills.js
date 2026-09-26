@@ -40,7 +40,15 @@ function grantSkill(id, st = Game.st) { st.skills = st.skills || {}; if (!st.ski
 function migrateSkills(st) {
   if (st.skills) return; st.skills = {}; for (const m of st.moves || []) if (MOVES[m.id] && SKILL_MP[m.id] !== undefined) st.skills[m.id] = 1;
   if (st.cls) for (const id of CLASS_FREE[baseClassOf(st.cls)] || []) grantSkill(id, st);
+  // old saves earned 1 point/level (talents only); the new system gives 2/level + 2 at the start → make up the difference
+  const comp = 2 + Math.max(0, st.lv - 5); st.tp = (st.tp || 0) + comp; st.skillNote = comp;
   st.mp = heroStats(st).mp;
+}
+function* skillUpdateNote(st) {
+  const n = st.skillNote; delete st.skillNote; yield* wait(30);
+  yield* say('【系統更新】技能系統改版了！\n不再有4招上限和PP，技能改用MP施放。');
+  yield* say('原本學會的招式都保留成Lv1技能。\n另外補發了' + n + '點技能點作為補償。');
+  yield* say('打開選單的「技能」就能學新技能或升級。\n技能點和天賦點是同一個點數池。');
 }
 
 /* ---------- Skill tree screen ---------- */
