@@ -413,6 +413,10 @@ class Battle {
   }
   *useItemAct(k) {
     const st = Game.st, it = ITEMS[k];
+    if (it.use === 'home') {
+      st.bag[k]--; yield* this.msg(st.name + '舉起了歸鄉之羽！'); Sound.sfx('charge'); this.tintH = { c: '#ffffff', a: 0.8 }; yield* wait(16); this.tintH = null;
+      Sound.sfx('run'); yield* this.msg('羽毛化成光芒，包住了' + st.name + '……'); Game.homeWarp = 1; return 'escaped';
+    }
     if (it.use === 'escape') {
       st.bag[k]--; yield* this.msg(st.name + '丟出了煙霧彈！'); yield* FX.smoke.call(this);
       if (this.F.boss) { yield* this.msg('但是' + this.F.n + '擋住了出口，逃不掉！'); return; }

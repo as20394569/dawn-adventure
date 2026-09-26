@@ -66,7 +66,7 @@ module.exports = async (g) => {
     for (const a in AFFIX_TABLE) for (const s of AFFIX_TABLE[a].slots) if (!['weapon', 'head', 'body', 'feet', 'acc'].includes(s)) bad('詞綴', a, '部位無效', s);
     // ---------- ITEMS ----------
     for (const k in ITEMS) { const it = ITEMS[k];
-      if (!it.mat && !it.key && !['heal', 'cure', 'pp', 'mp', 'escape', 'boost', 'full', 'tp'].includes(it.use)) bad('道具', k, '沒有用途');
+      if (!it.mat && !it.key && !['heal', 'cure', 'pp', 'mp', 'escape', 'home', 'boost', 'full', 'tp'].includes(it.use)) bad('道具', k, '沒有用途');
       if (!itemSrc[k] && !['phone', 'license', 'pocketWatch'].includes(k)) warn('道具', k, it.n, '取得不到');
       if (it.mat && !matUse[k]) warn('素材', k, it.n, '沒有用途（只能賣）');
       if (!it.d) warn('道具', k, '缺說明'); }

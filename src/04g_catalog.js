@@ -5,7 +5,7 @@ const ITEM_CAT_OVERRIDE = { smoke: '戰鬥道具', herb: '採集素材' };
 function itemCatOf(k) {
   const it = ITEMS[k]; if (ITEM_CAT_OVERRIDE[k]) return ITEM_CAT_OVERRIDE[k]; if (it.key) return '重要物品';
   if (it.mat) return Object.values(SPECIES).some(s => s.mat === k) ? '魔物素材' : '採集素材';
-  return { heal: '回復', pp: '回復', mp: '回復', full: '回復', cure: '狀態治療', escape: '戰鬥道具', boost: '永久強化', tp: '永久強化' }[it.use] || null;
+  return { heal: '回復', pp: '回復', mp: '回復', full: '回復', cure: '狀態治療', escape: '戰鬥道具', home: '戰鬥道具', boost: '永久強化', tp: '永久強化' }[it.use] || null;
 }
 for (const k in ITEMS) ITEMS[k].cat = itemCatOf(k);
 const ITEM_CAT_COL = { 回復: '#62e08c', 狀態治療: '#8ad0ff', 戰鬥道具: '#ffcf5a', 永久強化: '#ff9ad0', 魔物素材: '#c8a878', 採集素材: '#9ac860', 重要物品: '#ffc44d' };

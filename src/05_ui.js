@@ -302,8 +302,9 @@ function* bagScreen(mode = 'field') { // returns item id used (battle) or null
       if (it.key || it.mat) { yield* say(it.use === 'phone' ? phoneText() : it.d); continue; }
       const r = yield* ask('要使用' + it.n + '嗎？', ['使用', '取消']);
       if (r !== 0) continue;
-      if (mode === 'battle') { if (it.use === 'escape' || canUseItem(k)) { result = k; break; } yield* say('現在使用也沒有效果。'); continue; }
+      if (mode === 'battle') { if (it.use === 'home' && Game.scene.F && Game.scene.F.boss) { yield* say('頭目戰中無法使用！'); continue; } if (it.use === 'escape' || it.use === 'home' || canUseItem(k)) { result = k; break; } yield* say('現在使用也沒有效果。'); continue; }
       if (it.use === 'escape') { yield* say('現在不能使用。'); continue; }
+      if (it.use === 'home') { if (HOME_MAPS.includes(Game.st.map)) { yield* say('已經在萌芽鎮了。'); continue; } Game.st.bag[k]--; Game.homeWarp = 1; break; }
       const msg = useItem(k); if (!msg) { yield* say('現在使用也沒有效果。'); continue; }
       Sound.sfx(it.use === 'heal' ? 'heal' : 'item'); yield* say(msg);
     }
@@ -414,7 +415,7 @@ function* shopBuy(stock) {
     if (Input.pressed('a')) {
       Input.consume('a'); Sound.sfx('select'); const k = list[idx], it = ITEMS[k] || GEAR[k], isG = !!GEAR[k];
       let qty = 1; const pr = priceOf(k); const maxQ = Math.min(isG || it.once ? 1 : 99, Math.floor(Game.st.money / pr));
-      if (it.once && Game.st.bag[k]) { UI.remove(scr); yield* say('你已經有' + it.n + '了。'); UI.push(scr); continue; }
+      if (it.once && Game.st.bag[k]) { UI.remove(scr); yield* say(it.key ? '你已經有' + it.n + '了。' : it.n + '一次只能帶一個喔。'); UI.push(scr); continue; }
       if (maxQ < 1) { UI.remove(scr); yield* say('錢不夠喔。'); UI.push(scr); continue; }
       if (!isG && !it.once) {
         const q = { draw(x) { drawWin(x, 80, TB_Y - 32, 94, 30, 'menu'); Font.draw(x, '×' + String(qty).padStart(2, '0'), 90, TB_Y - 25, UIC.text, UIC.textSh); Font.drawR(x, (qty * pr) + 'G', 166, TB_Y - 25, UIC.warm, UIC.textSh); } };
@@ -511,13 +512,16 @@ function* salvageFlow() {
 function* craftScreen() {
   const st = Game.st; let idx = 0; const have = k => st.bag[k] || 0;
   const can = R => Object.entries(R.mats).every(([k, n]) => have(k) >= n) && st.money >= (R.gold || 0);
+  const VIS = 7, top = () => clamp(idx - 3, 0, Math.max(0, RECIPES.length - VIS));
   const scr = { draw(x) {
     screenBG(x); headerBar(x, '鐵匠工房'); Font.drawR(x, st.money + ' G', W - 6, 2, UIC.warm, UIC.textSh);
-    drawWin(x, 4, 24, 168, RECIPES.length * 17 + 8, 'menu');
-    RECIPES.forEach((R, i) => { const Y = 28 + i * 17, it = ITEMS[R.out] || GEAR[R.out]; if (i === idx) selBar(x, 6, Y - 1, 164, 16); Font.draw(x, it.n + (R.n > 1 ? '×' + R.n : ''), 14, Y, can(R) ? (GEAR[R.out] ? GQ[2][1] : UIC.text) : UIC.dis, UIC.textSh); Font.drawR(x, can(R) ? '可製作' : '素材不足', 164, Y, can(R) ? UIC.accent : UIC.dis, UIC.textSh, 11); });
-    const R = RECIPES[idx], it = ITEMS[R.out] || GEAR[R.out], Y0 = 24 + RECIPES.length * 17 + 12; drawWin(x, 4, Y0, 168, H - Y0 - 4, 'menu'); let y = Y0 + 3;
-    Font.draw(x, GEAR[R.out] ? '【紫】' + gearLines({ b: R.out, q: 2, r: 1, a: [] })[0] + ' ＋隨機詞綴' : it.d, 10, y, GEAR[R.out] ? GQ[2][1] : UIC.text, UIC.textSh, 11); y += 15;
-    for (const [k, n] of Object.entries(R.mats)) { Font.draw(x, ITEMS[k].n, 14, y, UIC.text, UIC.textSh, 11); Font.drawR(x, have(k) + ' / ' + n, 164, y, have(k) >= n ? UIC.good : UIC.bad, UIC.textSh, 11); y += 13; }
+    const T = top(); drawWin(x, 4, 24, 168, VIS * 17 + 8, 'menu');
+    RECIPES.slice(T, T + VIS).forEach((R, i) => { const Y = 28 + i * 17, it = ITEMS[R.out] || GEAR[R.out]; if (T + i === idx) selBar(x, 6, Y - 1, 164, 16); Font.draw(x, it.n + (R.n > 1 ? '×' + R.n : ''), 14, Y, can(R) ? (GEAR[R.out] ? GQ[2][1] : UIC.text) : UIC.dis, UIC.textSh); Font.drawR(x, can(R) ? '可製作' : '素材不足', 164, Y, can(R) ? UIC.accent : UIC.dis, UIC.textSh, 11); });
+    if (T > 0) x.drawImage(UPARROW, 86, 25); if (T + VIS < RECIPES.length) x.drawImage(DOWNARROW, 86, 24 + VIS * 17 + 3);
+    const R = RECIPES[idx], it = ITEMS[R.out] || GEAR[R.out], Y0 = 24 + VIS * 17 + 12; drawWin(x, 4, Y0, 168, H - Y0 - 4, 'menu'); let y = Y0 + 3;
+    Font.draw(x, GEAR[R.out] ? '【紫】' + gearLines({ b: R.out, q: 2, r: 1, a: [] })[0] + ' ＋隨機詞綴' : it.d, 10, y, GEAR[R.out] ? GQ[2][1] : UIC.text, UIC.textSh, 11); y += 14;
+    Font.draw(x, '需要的素材', 10, y, UIC.muted, UIC.textSh, 10); y += 12;
+    for (const [k, n] of Object.entries(R.mats)) { Font.draw(x, '・' + ITEMS[k].n, 12, y, UIC.text, UIC.textSh, 11); Font.drawR(x, have(k) + ' / ' + n, 164, y, have(k) >= n ? UIC.good : UIC.bad, UIC.textSh, 11); y += 13; }
     if (R.gold) Font.drawR(x, '費用 ' + R.gold + ' G', 164, y, st.money >= R.gold ? UIC.warm : UIC.bad, UIC.textSh, 11);
   } };
   UI.push(scr);
@@ -606,11 +610,13 @@ function* startMenu() {
     if (r === 0) yield* summaryScreen();
     if (r === 1) yield* skillTreeScreen();
     if (r === 2) yield* talentScreen();
-    if (r === 3) yield* bagScreen('field');
+    if (r === 3) { yield* bagScreen('field'); if (Game.homeWarp) break; }
     if (r === 4) yield* equipScreen();
     if (r === 5) yield* dexScreen();
     if (r === 6) yield* recordScreen();
     if (r === 7) { const ok = yield* yesNo('要記錄目前的冒險進度嗎？'); if (ok) { const good = saveGame(); if (good) { Sound.sfx('save'); yield* say(Game.st.name + '把冒險記錄了下來！'); } else yield* say('無法存檔……這個瀏覽器可能不允許儲存資料。'); } break; }
     if (r === 8) yield* optionsScreen();
   }
+  if (Game.homeWarp && Game.ow) { Game.homeWarp = 0; yield* Game.ow.homeWarp(); }
 }
+const HOME_MAPS = ['town', 'home', 'elder', 'inn', 'shop'];

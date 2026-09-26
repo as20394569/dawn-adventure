@@ -113,6 +113,9 @@ const ITEMS = {
   awakening: { n: '醒神草', price: 120, d: '治療睡眠狀態。', use: 'cure', v: 'slp' },
   burnHeal: { n: '燙傷膏', price: 120, d: '治療灼傷狀態。', use: 'cure', v: 'brn' },
   ether: { n: '活力茶', price: 300, d: '恢復25點MP。', use: 'mp', v: 25 },
+  manaPotion: { n: '魔力藥水', price: 150, d: '恢復15點MP。', use: 'mp', v: 15 },
+  hiEther: { n: '高級魔力藥水', price: 700, d: '恢復50點MP。', use: 'mp', v: 50 },
+  returnWing: { n: '歸鄉之羽', price: 400, once: 1, d: '緊急時使用，立刻回到萌芽鎮。戰鬥中也能用（頭目戰除外）。一次只能帶一個。', use: 'home' },
   smoke: { n: '煙霧彈', price: 150, d: '在戰鬥中使用，必定能從野生魔物身邊逃走。', use: 'escape' },
   powerFruit: { n: '力量果實', price: 2500, sell: 500, d: '神奇的果實。吃下後力量永久+2。', use: 'boost', v: { str: 2 } },
   luckClover: { n: '幸運草', price: 0, sell: 300, d: '四片葉子的幸運草。使用後幸運永久+2。', use: 'boost', v: { luk: 2 } },
@@ -129,8 +132,8 @@ const ITEMS = {
   phone: { n: '手機', key: 1, use: 'phone', d: '從原本的世界帶來的手機。' },
   license: { n: '冒險者證', key: 1, d: '村長交給你的冒險者證明。持有它就能走出萌芽鎮。' },
 };
-const shopList = () => { const f = Game.st.flags; return SHOP_LIST.filter(k => !(k === 'superPotion' && f.caravan === 'lost' && !f.bandit)).concat(f.croc ? ['knightSword', 'magusStaff', 'guardHelm', 'chainMail'] : [], f.golem ? ['elixir', 'tpBook'] : [], f.caravan === 'lost' && f.golem ? ['rope'] : []); };
-const PEDDLER_LIST = ['rope', 'superPotion', 'elixir', 'ether', 'powerFruit', 'tpBook', 'knightHelm', 'knightGreaves'];
+const shopList = () => { const f = Game.st.flags; return SHOP_LIST.filter(k => !(k === 'superPotion' && f.caravan === 'lost' && !f.bandit)).concat(f.croc ? ['hiEther', 'knightSword', 'magusStaff', 'guardHelm', 'chainMail'] : [], f.golem ? ['elixir', 'tpBook'] : [], f.caravan === 'lost' && f.golem ? ['rope'] : []); };
+const PEDDLER_LIST = ['rope', 'superPotion', 'elixir', 'ether', 'hiEther', 'powerFruit', 'tpBook', 'knightHelm', 'knightGreaves'];
 const priceOf = k => Math.round(((ITEMS[k] || GEAR[k]).price + (k === 'tpBook' ? 1500 * (Game.st.tpBought || 0) : 0)) * (Game.st.flags.caravan === 'saved' ? 0.9 : Game.st.flags.caravan === 'lost' && k === 'rope' ? 3 : 1));
 const RECIPES = [
   { out: 'potion', n: 2, mats: { herb: 2 } }, { out: 'superPotion', mats: { herb: 3, gel: 1 } },
@@ -138,7 +141,7 @@ const RECIPES = [
   { out: 'foxBlade', mats: { foxfire: 4, stinger: 2 }, gold: 800 }, { out: 'frogCloak', mats: { frogSkin: 4, gel: 2 }, gold: 600 },
   { out: 'sporeCharm', mats: { spore: 4, shroomCap: 3 }, gold: 600 }, { out: 'crystalBlade', mats: { crystal: 5, leaf: 3 }, gold: 1500 },
 ];
-const SHOP_LIST = ['potion', 'superPotion', 'antidote', 'parlyzHeal', 'awakening', 'burnHeal', 'ether', 'smoke', 'ironSword', 'apprenticeStaff', 'clothCap', 'leather', 'travelBoots', 'charm', 'swiftFeather'];
+const SHOP_LIST = ['potion', 'superPotion', 'antidote', 'parlyzHeal', 'awakening', 'burnHeal', 'manaPotion', 'ether', 'smoke', 'returnWing', 'ironSword', 'apprenticeStaff', 'clothCap', 'leather', 'travelBoots', 'charm', 'swiftFeather'];
 const CLASSES = {
   swordsman: { n: '劍士', tier: 1, st: { atk: 3, def: 2, crit: 3 }, move: 'powerSlash', d: '擅長近身劍術。物攻、物防、會心提升。' },
   mage: { n: '魔導士', tier: 1, st: { spa: 4, spd: 2, elem: 10 }, move: 'manaBurst', d: '操控魔力。魔攻、魔防、屬性傷害提升。' },

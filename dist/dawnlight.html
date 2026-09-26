@@ -1697,6 +1697,9 @@ const ITEMS = {
   awakening: { n: '醒神草', price: 120, d: '治療睡眠狀態。', use: 'cure', v: 'slp' },
   burnHeal: { n: '燙傷膏', price: 120, d: '治療灼傷狀態。', use: 'cure', v: 'brn' },
   ether: { n: '活力茶', price: 300, d: '恢復25點MP。', use: 'mp', v: 25 },
+  manaPotion: { n: '魔力藥水', price: 150, d: '恢復15點MP。', use: 'mp', v: 15 },
+  hiEther: { n: '高級魔力藥水', price: 700, d: '恢復50點MP。', use: 'mp', v: 50 },
+  returnWing: { n: '歸鄉之羽', price: 400, once: 1, d: '緊急時使用，立刻回到萌芽鎮。戰鬥中也能用（頭目戰除外）。一次只能帶一個。', use: 'home' },
   smoke: { n: '煙霧彈', price: 150, d: '在戰鬥中使用，必定能從野生魔物身邊逃走。', use: 'escape' },
   powerFruit: { n: '力量果實', price: 2500, sell: 500, d: '神奇的果實。吃下後力量永久+2。', use: 'boost', v: { str: 2 } },
   luckClover: { n: '幸運草', price: 0, sell: 300, d: '四片葉子的幸運草。使用後幸運永久+2。', use: 'boost', v: { luk: 2 } },
@@ -1713,8 +1716,8 @@ const ITEMS = {
   phone: { n: '手機', key: 1, use: 'phone', d: '從原本的世界帶來的手機。' },
   license: { n: '冒險者證', key: 1, d: '村長交給你的冒險者證明。持有它就能走出萌芽鎮。' },
 };
-const shopList = () => { const f = Game.st.flags; return SHOP_LIST.filter(k => !(k === 'superPotion' && f.caravan === 'lost' && !f.bandit)).concat(f.croc ? ['knightSword', 'magusStaff', 'guardHelm', 'chainMail'] : [], f.golem ? ['elixir', 'tpBook'] : [], f.caravan === 'lost' && f.golem ? ['rope'] : []); };
-const PEDDLER_LIST = ['rope', 'superPotion', 'elixir', 'ether', 'powerFruit', 'tpBook', 'knightHelm', 'knightGreaves'];
+const shopList = () => { const f = Game.st.flags; return SHOP_LIST.filter(k => !(k === 'superPotion' && f.caravan === 'lost' && !f.bandit)).concat(f.croc ? ['hiEther', 'knightSword', 'magusStaff', 'guardHelm', 'chainMail'] : [], f.golem ? ['elixir', 'tpBook'] : [], f.caravan === 'lost' && f.golem ? ['rope'] : []); };
+const PEDDLER_LIST = ['rope', 'superPotion', 'elixir', 'ether', 'hiEther', 'powerFruit', 'tpBook', 'knightHelm', 'knightGreaves'];
 const priceOf = k => Math.round(((ITEMS[k] || GEAR[k]).price + (k === 'tpBook' ? 1500 * (Game.st.tpBought || 0) : 0)) * (Game.st.flags.caravan === 'saved' ? 0.9 : Game.st.flags.caravan === 'lost' && k === 'rope' ? 3 : 1));
 const RECIPES = [
   { out: 'potion', n: 2, mats: { herb: 2 } }, { out: 'superPotion', mats: { herb: 3, gel: 1 } },
@@ -1722,7 +1725,7 @@ const RECIPES = [
   { out: 'foxBlade', mats: { foxfire: 4, stinger: 2 }, gold: 800 }, { out: 'frogCloak', mats: { frogSkin: 4, gel: 2 }, gold: 600 },
   { out: 'sporeCharm', mats: { spore: 4, shroomCap: 3 }, gold: 600 }, { out: 'crystalBlade', mats: { crystal: 5, leaf: 3 }, gold: 1500 },
 ];
-const SHOP_LIST = ['potion', 'superPotion', 'antidote', 'parlyzHeal', 'awakening', 'burnHeal', 'ether', 'smoke', 'ironSword', 'apprenticeStaff', 'clothCap', 'leather', 'travelBoots', 'charm', 'swiftFeather'];
+const SHOP_LIST = ['potion', 'superPotion', 'antidote', 'parlyzHeal', 'awakening', 'burnHeal', 'manaPotion', 'ether', 'smoke', 'returnWing', 'ironSword', 'apprenticeStaff', 'clothCap', 'leather', 'travelBoots', 'charm', 'swiftFeather'];
 const CLASSES = {
   swordsman: { n: '劍士', tier: 1, st: { atk: 3, def: 2, crit: 3 }, move: 'powerSlash', d: '擅長近身劍術。物攻、物防、會心提升。' },
   mage: { n: '魔導士', tier: 1, st: { spa: 4, spd: 2, elem: 10 }, move: 'manaBurst', d: '操控魔力。魔攻、魔防、屬性傷害提升。' },
@@ -2969,7 +2972,7 @@ const ITEM_CAT_OVERRIDE = { smoke: '戰鬥道具', herb: '採集素材' };
 function itemCatOf(k) {
   const it = ITEMS[k]; if (ITEM_CAT_OVERRIDE[k]) return ITEM_CAT_OVERRIDE[k]; if (it.key) return '重要物品';
   if (it.mat) return Object.values(SPECIES).some(s => s.mat === k) ? '魔物素材' : '採集素材';
-  return { heal: '回復', pp: '回復', mp: '回復', full: '回復', cure: '狀態治療', escape: '戰鬥道具', boost: '永久強化', tp: '永久強化' }[it.use] || null;
+  return { heal: '回復', pp: '回復', mp: '回復', full: '回復', cure: '狀態治療', escape: '戰鬥道具', home: '戰鬥道具', boost: '永久強化', tp: '永久強化' }[it.use] || null;
 }
 for (const k in ITEMS) ITEMS[k].cat = itemCatOf(k);
 const ITEM_CAT_COL = { 回復: '#62e08c', 狀態治療: '#8ad0ff', 戰鬥道具: '#ffcf5a', 永久強化: '#ff9ad0', 魔物素材: '#c8a878', 採集素材: '#9ac860', 重要物品: '#ffc44d' };
@@ -3463,6 +3466,7 @@ SHOP_LIST.push('primerTome');
 MAPS.route.gearPool.push('primerTome'); MAPS.forest.gearPool.push('herbalTome'); MAPS.mine.gearPool.push('quartzWand');
 MAPS.ruins.gearPool.push('ancientTome'); MAPS.catacomb.gearPool.push('deathTome');
 RECIPES.push(
+  { out: 'manaPotion', n: 2, mats: { herb: 2, spore: 1 } },
   { out: 'emberRod', mats: { emberCore: 3, leaf: 2 }, gold: 500 }, { out: 'voltRod', mats: { beetleShell: 4, feather: 2 }, gold: 600 },
   { out: 'foxfireStaff', mats: { foxfire: 4, spore: 2 }, gold: 800 }, { out: 'crystalStaff', mats: { crystal: 5, silk: 2 }, gold: 1500 },
 );
@@ -3789,8 +3793,9 @@ function* bagScreen(mode = 'field') { // returns item id used (battle) or null
       if (it.key || it.mat) { yield* say(it.use === 'phone' ? phoneText() : it.d); continue; }
       const r = yield* ask('要使用' + it.n + '嗎？', ['使用', '取消']);
       if (r !== 0) continue;
-      if (mode === 'battle') { if (it.use === 'escape' || canUseItem(k)) { result = k; break; } yield* say('現在使用也沒有效果。'); continue; }
+      if (mode === 'battle') { if (it.use === 'home' && Game.scene.F && Game.scene.F.boss) { yield* say('頭目戰中無法使用！'); continue; } if (it.use === 'escape' || it.use === 'home' || canUseItem(k)) { result = k; break; } yield* say('現在使用也沒有效果。'); continue; }
       if (it.use === 'escape') { yield* say('現在不能使用。'); continue; }
+      if (it.use === 'home') { if (HOME_MAPS.includes(Game.st.map)) { yield* say('已經在萌芽鎮了。'); continue; } Game.st.bag[k]--; Game.homeWarp = 1; break; }
       const msg = useItem(k); if (!msg) { yield* say('現在使用也沒有效果。'); continue; }
       Sound.sfx(it.use === 'heal' ? 'heal' : 'item'); yield* say(msg);
     }
@@ -3901,7 +3906,7 @@ function* shopBuy(stock) {
     if (Input.pressed('a')) {
       Input.consume('a'); Sound.sfx('select'); const k = list[idx], it = ITEMS[k] || GEAR[k], isG = !!GEAR[k];
       let qty = 1; const pr = priceOf(k); const maxQ = Math.min(isG || it.once ? 1 : 99, Math.floor(Game.st.money / pr));
-      if (it.once && Game.st.bag[k]) { UI.remove(scr); yield* say('你已經有' + it.n + '了。'); UI.push(scr); continue; }
+      if (it.once && Game.st.bag[k]) { UI.remove(scr); yield* say(it.key ? '你已經有' + it.n + '了。' : it.n + '一次只能帶一個喔。'); UI.push(scr); continue; }
       if (maxQ < 1) { UI.remove(scr); yield* say('錢不夠喔。'); UI.push(scr); continue; }
       if (!isG && !it.once) {
         const q = { draw(x) { drawWin(x, 80, TB_Y - 32, 94, 30, 'menu'); Font.draw(x, '×' + String(qty).padStart(2, '0'), 90, TB_Y - 25, UIC.text, UIC.textSh); Font.drawR(x, (qty * pr) + 'G', 166, TB_Y - 25, UIC.warm, UIC.textSh); } };
@@ -3998,13 +4003,16 @@ function* salvageFlow() {
 function* craftScreen() {
   const st = Game.st; let idx = 0; const have = k => st.bag[k] || 0;
   const can = R => Object.entries(R.mats).every(([k, n]) => have(k) >= n) && st.money >= (R.gold || 0);
+  const VIS = 7, top = () => clamp(idx - 3, 0, Math.max(0, RECIPES.length - VIS));
   const scr = { draw(x) {
     screenBG(x); headerBar(x, '鐵匠工房'); Font.drawR(x, st.money + ' G', W - 6, 2, UIC.warm, UIC.textSh);
-    drawWin(x, 4, 24, 168, RECIPES.length * 17 + 8, 'menu');
-    RECIPES.forEach((R, i) => { const Y = 28 + i * 17, it = ITEMS[R.out] || GEAR[R.out]; if (i === idx) selBar(x, 6, Y - 1, 164, 16); Font.draw(x, it.n + (R.n > 1 ? '×' + R.n : ''), 14, Y, can(R) ? (GEAR[R.out] ? GQ[2][1] : UIC.text) : UIC.dis, UIC.textSh); Font.drawR(x, can(R) ? '可製作' : '素材不足', 164, Y, can(R) ? UIC.accent : UIC.dis, UIC.textSh, 11); });
-    const R = RECIPES[idx], it = ITEMS[R.out] || GEAR[R.out], Y0 = 24 + RECIPES.length * 17 + 12; drawWin(x, 4, Y0, 168, H - Y0 - 4, 'menu'); let y = Y0 + 3;
-    Font.draw(x, GEAR[R.out] ? '【紫】' + gearLines({ b: R.out, q: 2, r: 1, a: [] })[0] + ' ＋隨機詞綴' : it.d, 10, y, GEAR[R.out] ? GQ[2][1] : UIC.text, UIC.textSh, 11); y += 15;
-    for (const [k, n] of Object.entries(R.mats)) { Font.draw(x, ITEMS[k].n, 14, y, UIC.text, UIC.textSh, 11); Font.drawR(x, have(k) + ' / ' + n, 164, y, have(k) >= n ? UIC.good : UIC.bad, UIC.textSh, 11); y += 13; }
+    const T = top(); drawWin(x, 4, 24, 168, VIS * 17 + 8, 'menu');
+    RECIPES.slice(T, T + VIS).forEach((R, i) => { const Y = 28 + i * 17, it = ITEMS[R.out] || GEAR[R.out]; if (T + i === idx) selBar(x, 6, Y - 1, 164, 16); Font.draw(x, it.n + (R.n > 1 ? '×' + R.n : ''), 14, Y, can(R) ? (GEAR[R.out] ? GQ[2][1] : UIC.text) : UIC.dis, UIC.textSh); Font.drawR(x, can(R) ? '可製作' : '素材不足', 164, Y, can(R) ? UIC.accent : UIC.dis, UIC.textSh, 11); });
+    if (T > 0) x.drawImage(UPARROW, 86, 25); if (T + VIS < RECIPES.length) x.drawImage(DOWNARROW, 86, 24 + VIS * 17 + 3);
+    const R = RECIPES[idx], it = ITEMS[R.out] || GEAR[R.out], Y0 = 24 + VIS * 17 + 12; drawWin(x, 4, Y0, 168, H - Y0 - 4, 'menu'); let y = Y0 + 3;
+    Font.draw(x, GEAR[R.out] ? '【紫】' + gearLines({ b: R.out, q: 2, r: 1, a: [] })[0] + ' ＋隨機詞綴' : it.d, 10, y, GEAR[R.out] ? GQ[2][1] : UIC.text, UIC.textSh, 11); y += 14;
+    Font.draw(x, '需要的素材', 10, y, UIC.muted, UIC.textSh, 10); y += 12;
+    for (const [k, n] of Object.entries(R.mats)) { Font.draw(x, '・' + ITEMS[k].n, 12, y, UIC.text, UIC.textSh, 11); Font.drawR(x, have(k) + ' / ' + n, 164, y, have(k) >= n ? UIC.good : UIC.bad, UIC.textSh, 11); y += 13; }
     if (R.gold) Font.drawR(x, '費用 ' + R.gold + ' G', 164, y, st.money >= R.gold ? UIC.warm : UIC.bad, UIC.textSh, 11);
   } };
   UI.push(scr);
@@ -4093,14 +4101,16 @@ function* startMenu() {
     if (r === 0) yield* summaryScreen();
     if (r === 1) yield* skillTreeScreen();
     if (r === 2) yield* talentScreen();
-    if (r === 3) yield* bagScreen('field');
+    if (r === 3) { yield* bagScreen('field'); if (Game.homeWarp) break; }
     if (r === 4) yield* equipScreen();
     if (r === 5) yield* dexScreen();
     if (r === 6) yield* recordScreen();
     if (r === 7) { const ok = yield* yesNo('要記錄目前的冒險進度嗎？'); if (ok) { const good = saveGame(); if (good) { Sound.sfx('save'); yield* say(Game.st.name + '把冒險記錄了下來！'); } else yield* say('無法存檔……這個瀏覽器可能不允許儲存資料。'); } break; }
     if (r === 8) yield* optionsScreen();
   }
+  if (Game.homeWarp && Game.ow) { Game.homeWarp = 0; yield* Game.ow.homeWarp(); }
 }
+const HOME_MAPS = ['town', 'home', 'elder', 'inn', 'shop'];
 
 /* ===================== OVERWORLD ===================== */
 const CAM_X = Math.floor(W / 2) - 8, CAM_Y = 100;
@@ -4344,10 +4354,15 @@ class Overworld {
     const b = new Battle({ ...cfg, bg: this.map.d.battleBg || 'field' }); Game.setScene(b);
     while (Game.scene === b) yield; // paused until battle ends and returns to overworld
     const res = b.result; Game.trans = null;
-    if (res === 'lose') { yield* this.whiteout(); return res; }
+    if (res === 'lose') { Game.homeWarp = 0; yield* this.whiteout(); return res; }
+    if (Game.homeWarp) { Game.homeWarp = 0; this.load('town', 10, 12, 'down', true); yield* fadeIn(20); yield* say('回到了萌芽鎮。'); return 'run'; }
     this.load(this.map.id, this.p.x, this.p.y, this.p.dir, true);
     yield* fadeIn(14);
     return res;
+  }
+  *homeWarp() {
+    const st = this.st; UI.clear(); Sound.sfx('charge'); yield* say(st.name + '舉起了歸鄉之羽……');
+    yield* fadeOut(20); this.load('town', 10, 12, 'down', true); yield* fadeIn(20); yield* say('羽毛化成光芒……回到了萌芽鎮。');
   }
   *whiteout() {
     const st = this.st; Game.fade = 1; this.camDY = 0; this.bossGlow = 0; const lost = Math.floor(st.money / 2); st.money -= lost;
@@ -4898,6 +4913,10 @@ class Battle {
   }
   *useItemAct(k) {
     const st = Game.st, it = ITEMS[k];
+    if (it.use === 'home') {
+      st.bag[k]--; yield* this.msg(st.name + '舉起了歸鄉之羽！'); Sound.sfx('charge'); this.tintH = { c: '#ffffff', a: 0.8 }; yield* wait(16); this.tintH = null;
+      Sound.sfx('run'); yield* this.msg('羽毛化成光芒，包住了' + st.name + '……'); Game.homeWarp = 1; return 'escaped';
+    }
     if (it.use === 'escape') {
       st.bag[k]--; yield* this.msg(st.name + '丟出了煙霧彈！'); yield* FX.smoke.call(this);
       if (this.F.boss) { yield* this.msg('但是' + this.F.n + '擋住了出口，逃不掉！'); return; }
@@ -5585,7 +5604,7 @@ class TitleScene {
     x.drawImage(this.logo, Math.round(W / 2 - this.logo.width / 2), 6 + bob);
     Font.drawC(x, '～異世界冒險RPG～', W / 2, 52 + bob, '#ffe0a0', '#3a1428');
     if (this.stage === 'press' && Math.floor(this.t / 30) % 2 === 0) Font.drawC(x, '按 A 鍵開始', W / 2, 232, '#ffffff', '#1a1024');
-    Font.draw(x, 'v4.5', W - 26, H - 13, '#b890b0', null);
+    Font.draw(x, 'v4.6', W - 26, H - 13, '#b890b0', null);
   }
 }
 

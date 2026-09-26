@@ -34,6 +34,7 @@ SHOP_LIST.push('primerTome');
 MAPS.route.gearPool.push('primerTome'); MAPS.forest.gearPool.push('herbalTome'); MAPS.mine.gearPool.push('quartzWand');
 MAPS.ruins.gearPool.push('ancientTome'); MAPS.catacomb.gearPool.push('deathTome');
 RECIPES.push(
+  { out: 'manaPotion', n: 2, mats: { herb: 2, spore: 1 } },
   { out: 'emberRod', mats: { emberCore: 3, leaf: 2 }, gold: 500 }, { out: 'voltRod', mats: { beetleShell: 4, feather: 2 }, gold: 600 },
   { out: 'foxfireStaff', mats: { foxfire: 4, spore: 2 }, gold: 800 }, { out: 'crystalStaff', mats: { crystal: 5, silk: 2 }, gold: 1500 },
 );

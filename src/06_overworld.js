@@ -240,10 +240,15 @@ class Overworld {
     const b = new Battle({ ...cfg, bg: this.map.d.battleBg || 'field' }); Game.setScene(b);
     while (Game.scene === b) yield; // paused until battle ends and returns to overworld
     const res = b.result; Game.trans = null;
-    if (res === 'lose') { yield* this.whiteout(); return res; }
+    if (res === 'lose') { Game.homeWarp = 0; yield* this.whiteout(); return res; }
+    if (Game.homeWarp) { Game.homeWarp = 0; this.load('town', 10, 12, 'down', true); yield* fadeIn(20); yield* say('回到了萌芽鎮。'); return 'run'; }
     this.load(this.map.id, this.p.x, this.p.y, this.p.dir, true);
     yield* fadeIn(14);
     return res;
+  }
+  *homeWarp() {
+    const st = this.st; UI.clear(); Sound.sfx('charge'); yield* say(st.name + '舉起了歸鄉之羽……');
+    yield* fadeOut(20); this.load('town', 10, 12, 'down', true); yield* fadeIn(20); yield* say('羽毛化成光芒……回到了萌芽鎮。');
   }
   *whiteout() {
     const st = this.st; Game.fade = 1; this.camDY = 0; this.bossGlow = 0; const lost = Math.floor(st.money / 2); st.money -= lost;

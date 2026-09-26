@@ -353,12 +353,22 @@
   "burnHeal": [
    "道具店"
   ],
+  "manaPotion": [
+   "道具店",
+   "鐵匠配方"
+  ],
   "smoke": [
+   "道具店"
+  ],
+  "returnWing": [
    "道具店"
   ],
   "rope": [
    "行商",
    "道具店(魔像後)"
+  ],
+  "hiEther": [
+   "行商"
   ],
   "tpBook": [
    "行商",
@@ -412,6 +422,7 @@
   "herb": [
    "配方:potion",
    "配方:superPotion",
+   "配方:manaPotion",
    "委託c1"
   ],
   "gel": [
@@ -442,6 +453,7 @@
   ],
   "spore": [
    "配方:sporeCharm",
+   "配方:manaPotion",
    "配方:foxfireStaff"
   ],
   "shroomCap": [
