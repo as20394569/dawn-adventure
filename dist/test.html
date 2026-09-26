@@ -6065,11 +6065,11 @@ Object.assign(Events, {
 });
 // quest-list text points to the giver instead of the board
 { const _eq = extraQuests; extraQuests = function (st, L) { _eq(st, L); for (const q of L) if (q.n.startsWith('委託：')) { const k = Object.keys(COMMISSIONS).find(k => '委託：' + COMMISSIONS[k].n === q.n); if (!k) continue; const c = COMMISSIONS[k]; q.t = c.d + (c.deliver ? '（交給' + (NPC_WHERE[c.deliver[1]] || '') + '的守衛）' : '（' + comProgress(k, st).cur + '/' + comProgress(k, st).max + '）') + (comProgress(k, st).ready ? '→ 回去找' + c.from + '（' + (NPC_WHERE[COM_GIVER[k]] || '') + '）' : ''); q.n = '委託：' + c.n; } }; }
-// field markers over NPCs: ! = new request, ? = ready to report
-{ const _draw = Overworld.prototype.draw; Overworld.prototype.draw = function (x) {
-  _draw.call(this, x); if (UI.stack.length) return; const camX = Math.round(this.p.px) - CAM_X, camY = Math.round(this.p.py) - CAM_Y + Math.round(this.camDY || 0);
-  for (const n of this.npcs) { const m = npcQuestState(n.id); if (!m) continue; const X = Math.round(n.px - camX) + 5, Y = Math.round(n.py - camY) - 14 + (Math.floor(this.t / 20) % 2);
-    x.fillStyle = '#10121e'; x.fillRect(X - 1, Y - 1, 8, 11); x.fillStyle = m === '!' ? '#ffcf5a' : '#6ee7d2'; x.fillRect(X, Y, 6, 9); Font.drawC(x, m, X + 3, Y - 2, '#10121e', null, 9); }
+// field markers over NPCs: ! = new request, ? = ready to report (drawn with the NPC itself, so they use the exact same camera)
+{ const _dc = Overworld.prototype.drawChar; Overworld.prototype.drawChar = function (x, e, frames, camX, camY) {
+  _dc.call(this, x, e, frames, camX, camY); if (e === this.p || !this.npcs.includes(e)) return; const m = npcQuestState(e.id); if (!m) return;
+  const X = Math.round(e.px - camX) + 5, Y = Math.round(e.py - camY) - 13;
+  x.fillStyle = '#10121e'; x.fillRect(X - 1, Y - 1, 8, 11); x.fillStyle = m === '!' ? '#ffcf5a' : '#6ee7d2'; x.fillRect(X, Y, 6, 9); Font.drawC(x, m, X + 3, Y - 2, '#10121e', null, 9);
 }; }
 
 </script>
