@@ -1,0 +1,20 @@
+module.exports = async (g) => {
+  await g.ev(() => { const G = __game; G.newGameState('小晨'); const st = G.Game.st; st.flags.license = 1; st.hp = 5; st.bag.smoke = 2; st.map = 'route'; st.x = 3; st.y = 24; st.dir = 'down'; G.startOverworld(); G.Game.fade = 0; G.Game.noEnc = true; });
+  await g.step(5);
+  await g.hold('down', 10); await g.step(4); await g.shot('x_jump'); await g.step(40);
+  g.log('after jump', await g.ev(() => { const ow = __game.Game.scene; return ow.p.x + ',' + ow.p.y; }));
+  await g.ev(() => { const ow = __game.Game.scene; ow.load('route', 18, 24, 'right'); });
+  await g.press('a', 30); await g.shot('x_item'); await g.settle();
+  g.log('bag potion', await g.ev(() => __game.Game.st.bag.potion));
+  await g.ev(() => { const ow = __game.Game.scene; ow.load('route', 7, 4, 'left'); });
+  await g.press('a', 40); await g.shot('x_spring'); await g.settle();
+  g.log('hp after spring', await g.ev(() => __game.Game.st.hp + '/' + __game.heroStats().hp + ' respawn ' + JSON.stringify(__game.Game.st.respawn)));
+  await g.ev(() => { const ow = __game.Game.scene; ow.load('route', 10, 42, 'down'); });
+  await g.hold('down', 12); await g.shot('x_seam'); await g.hold('down', 30); await g.step(10);
+  g.log('south', JSON.stringify((await g.state()).st.map), await g.ev(() => { const ow = __game.Game.scene; return ow.p.x + ',' + ow.p.y; }));
+  await g.ev(() => { __game.Game.noEnc = false; const ow = __game.Game.scene; ow.run(ow.battleScript({ sp: 'bee', lv: 8, kind: 'wild' })); });
+  const until = async (pred, maxF = 800) => { for (let i = 0; i < maxF / 4; i++) { if (await g.ev(pred)) return true; const u = await g.ui(); if (u.includes('TextBox') && !u.includes('Menu')) await g.press('a', 2); else await g.step(4); } return false; };
+  await until(() => __game.UI.stack.some(w => w.items && w.items.some(i => i.t === '戰鬥')));
+  await g.press('right', 4); await g.press('a', 10); await g.shot('x_bag');
+  g.log('bagui', await g.ui());
+};
