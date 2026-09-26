@@ -1618,6 +1618,8 @@ const MOVES = {
   thunderstorm: { n: '雷暴', t: '雷', cat: '特', pow: 95, acc: 85, pp: 5, eff: { st: 'par', p: 30 }, fx: 'thunder', d: '降下猛烈的雷暴。有時會讓對手麻痺。對潮濕的對手會感電。' },
   holyLight: { n: '聖光', t: '一般', cat: '變', pp: 5, heal: 0.5, fx: 'heal', d: '恢復一半的最大HP。' },
   dawnBreak: { n: '破曉斬', t: '一般', cat: '物', pow: 120, acc: 100, pp: 5, crit: 1, fx: 'fireSlash', d: '異界勇者的奧義。劃破黑暗的一擊。' },
+  crystalSpark: { n: '晶雷', t: '雷', cat: '特', pow: 70, acc: 95, pp: 10, eff: { st: 'par', p: 20 }, d: '水晶放出的電流。' },
+  prismRay: { n: '稜光射線', t: '岩', cat: '特', pow: 80, acc: 90, pp: 10, d: '把光折射成七彩射線。' },
   armorBreak: { n: '破甲斬', t: '一般', cat: '物', pow: 45, acc: 95, pp: 15, eff: { stat: { def: -1 }, p: 100 }, fx: 'slash', d: '劈開對手的防具。必定降低對手的物防。' },
   barrier: { n: '魔法護盾', t: '一般', cat: '變', pp: 10, shield: 3, fx: 'guard', d: '展開魔法護盾，3回合內受到的傷害減少40%。' },
   aquaBlade: { n: '水流刃', t: '水', cat: '特', pow: 50, acc: 100, pp: 25, fx: 'water', d: '揮出激流般的水刃。會讓對手潮濕，再用雷系攻擊就能引發感電。' },
@@ -1679,7 +1681,7 @@ const SPECIES = {
   caveBat: { n: '洞窟飛影', t: '飛', base: [55, 62, 48, 50, 48, 80], exp: 82, gold: 18, mat: 'feather', trait: 'swift', learn: [[1, 'peck'], [1, 'gust'], [1, 'quickAttack'], [10, 'sing']], dex: '棲息在地下水道的黑影。速度極快。' },
   mudSlime: { n: '泥沼姆', t: '水', base: [70, 50, 55, 55, 55, 30], exp: 82, gold: 18, mat: 'gel', trait: 'healer', learn: [[1, 'bubble'], [1, 'waterGun'], [1, 'harden'], [10, 'acid']], dex: '混著泥沙的泡泡姆。會吸收污水回復。' },
   crystalPebble: { n: '晶石丸', t: '岩', base: [55, 60, 80, 45, 55, 30], exp: 88, gold: 22, mat: 'crystal', learn: [[1, 'tackle'], [1, 'harden'], [1, 'rockThrow'], [12, 'rockSlide']], dex: '身上長滿水晶的石丸。非常堅硬。' },
-  crystalGolem: { n: '水晶魔像', t: '岩', base: [90, 62, 85, 60, 65, 40], exp: 320, gold: 0, boss: 1, drop: 'crystalHeart', learn: [[1, 'rockThrow'], [1, 'stomp'], [1, 'ironWall'], [1, 'ancientRoar']], dex: '沉睡在井底深處的水晶石像。據說和異界之門同時誕生。' },
+  crystalGolem: { n: '水晶魔像', t: '岩', base: [90, 62, 85, 60, 65, 40], exp: 320, gold: 0, boss: 1, drop: 'crystalHeart', learn: [[1, 'rockThrow'], [1, 'stomp'], [1, 'prismRay'], [1, 'ancientRoar']], dex: '沉睡在井底深處的水晶石像。據說和異界之門同時誕生。' },
   golem: { n: '古岩魔像', t: '岩', base: [82, 48, 80, 45, 55, 35], exp: 200, gold: 0, boss: 1, drop: 'golemVisor', learn: [[1, 'rockThrow'], [1, 'stomp'], [1, 'ironWall'], [1, 'ancientRoar']], dex: '守護古代遺跡的石像。沉睡了千年後甦醒。' },
 };
 
@@ -1697,6 +1699,8 @@ const ITEMS = {
   powerFruit: { n: '力量果實', price: 0, sell: 500, d: '神奇的果實。吃下後力量永久+2。', use: 'boost', v: { str: 2 } },
   luckClover: { n: '幸運草', price: 0, sell: 300, d: '四片葉子的幸運草。使用後幸運永久+2。', use: 'boost', v: { luk: 2 } },
   wisdomFruit: { n: '智慧果實', price: 0, sell: 500, d: '神奇的果實。吃下後智力永久+2。', use: 'boost', v: { int: 2 } },
+  elixir: { n: '萬靈藥', price: 800, d: 'HP完全恢復，並治好所有異常狀態。', use: 'full' },
+  tpBook: { n: '天賦之書', price: 3000, d: '記載著古老修練法的書。使用後獲得1點天賦點。（每買一本會漲價）', use: 'tp' },
   herb: { n: '藥草', mat: 1, price: 0, sell: 10, d: '野外採集的藥草。可以用來調製藥品。' },
   shroomCap: { n: '蕈傘', mat: 1, price: 0, sell: 15, d: '嘟嘟菇的蕈傘。' }, feather: { n: '羽毛', mat: 1, price: 0, sell: 15, d: '輕盈的羽毛。' },
   stone: { n: '硬石', mat: 1, price: 0, sell: 15, d: '石丸身上的硬石。' }, gel: { n: '凝膠', mat: 1, price: 0, sell: 15, d: '黏黏的凝膠。' },
@@ -1707,9 +1711,9 @@ const ITEMS = {
   phone: { n: '手機', key: 1, use: 'phone', d: '從原本的世界帶來的手機。' },
   license: { n: '冒險者證', key: 1, d: '村長交給你的冒險者證明。持有它就能走出萌芽鎮。' },
 };
-const shopList = () => { const f = Game.st.flags; return SHOP_LIST.filter(k => !(k === 'superPotion' && f.caravan === 'lost')).concat(f.croc ? ['knightSword', 'guardHelm', 'chainMail'] : [], f.caravan === 'lost' && f.golem ? ['rope'] : []); };
-const PEDDLER_LIST = ['rope', 'superPotion', 'ether', 'powerFruit', 'knightHelm', 'knightGreaves'];
-const priceOf = k => Math.round((ITEMS[k] || GEAR[k]).price * (Game.st.flags.caravan === 'saved' ? 0.9 : Game.st.flags.caravan === 'lost' && k === 'rope' ? 3 : 1));
+const shopList = () => { const f = Game.st.flags; return SHOP_LIST.filter(k => !(k === 'superPotion' && f.caravan === 'lost')).concat(f.croc ? ['knightSword', 'guardHelm', 'chainMail'] : [], f.golem ? ['elixir', 'tpBook'] : [], f.caravan === 'lost' && f.golem ? ['rope'] : []); };
+const PEDDLER_LIST = ['rope', 'superPotion', 'elixir', 'ether', 'powerFruit', 'tpBook', 'knightHelm', 'knightGreaves'];
+const priceOf = k => Math.round(((ITEMS[k] || GEAR[k]).price + (k === 'tpBook' ? 1500 * (Game.st.tpBought || 0) : 0)) * (Game.st.flags.caravan === 'saved' ? 0.9 : Game.st.flags.caravan === 'lost' && k === 'rope' ? 3 : 1));
 const RECIPES = [
   { out: 'potion', n: 2, mats: { herb: 2 } }, { out: 'superPotion', mats: { herb: 3, gel: 1 } },
   { out: 'featherBoots', mats: { feather: 4 }, gold: 300 }, { out: 'stoneMail', mats: { stone: 5 }, gold: 400 },
@@ -2090,7 +2094,7 @@ const gearBy = (u, st = Game.st) => (st.gear || []).find(g => g.u === u);
 const equippedGear = (st = Game.st) => Object.values(st.equip || {}).map(u => gearBy(u, st)).filter(Boolean);
 const isEquipped = (g, st = Game.st) => Object.values(st.equip || {}).includes(g.u);
 function gearStats(g) {
-  const B = GEAR[g.b], m = GQ[g.q][2] * g.r, o = { st: {}, sp: { vs: [], resist: {} }, fx: B.fx || [] };
+  const B = GEAR[g.b], m = GQ[g.q][2] * g.r * (1 + 0.08 * (g.e || 0)), o = { st: {}, sp: { vs: [], resist: {} }, fx: B.fx || [] };
   for (const k in B.st) o.st[k] = Math.max(1, Math.round(B.st[k] * m));
   const add = (k, v, t) => { if (k === 'vs') o.sp.vs.push([t, v]); else if (k === 'resist') o.sp.resist[t] = (o.sp.resist[t] || 0) + v; else if (STATK.includes(k)) o.st[k] = (o.st[k] || 0) + v; else o.sp[k] = (o.sp[k] || 0) + v; };
   for (const k in B.sp || {}) { const v = B.sp[k]; if (Array.isArray(v)) add(k, v[1], v[0]); else add(k, v); }
@@ -2106,7 +2110,10 @@ function gearLines(g) { // [base stats text, special text]
   return [p.join(' '), s.join(' ')];
 }
 const gearText = g => gearLines(g).filter(Boolean).join(' ');
-const gearName = g => '【' + GQ[g.q][0] + '】' + GEAR[g.b].n;
+const gearName = g => '【' + GQ[g.q][0] + '】' + GEAR[g.b].n + (g.e ? ' +' + g.e : '');
+const gearShort = g => GEAR[g.b].n + (g.e ? ' +' + g.e : '');
+const enhanceCost = g => { const e = (g.e || 0) + 1, t = GEAR[g.b].t; return { gold: e * 150 * t, mats: t <= 2 ? { stone: e } : t === 3 ? { stone: e, gel: e } : { crystal: e }, rate: e <= 3 ? 1 : e === 4 ? 0.75 : 0.5 }; };
+const SALVAGE = { weapon: ['stone'], head: ['stone', 'gel'], body: ['stone', 'gel', 'frogSkin'], feet: ['feather', 'gel'], acc: ['feather', 'spore', 'leaf'] };
 const gCol = g => GQ[g.q][1];
 const gearSell = g => Math.round((GEAR[g.b].price || GEAR[g.b].t * 400) * 0.3 * GQ[g.q][2] * g.r);
 const rollQuality = () => { const r = Math.random() * 100; return r < 60 ? 1 : r < 92 ? 2 : 3; }; // 金 only from elites, bosses and hidden content
@@ -2203,6 +2210,7 @@ const MOVE_META = {
   growl: ['sound', 'sound'], sing: ['sound', 'sing'], ancientRoar: ['sound', 'roar'],
   focus: ['buff', 'focus'], harden: ['buff', 'harden'], ironWall: ['buff', 'ironWall'], howl: ['buff', 'howl'], agility: ['buff', 'agility'],
   glare: ['debuff', 'glare'], tailWhip: ['debuff', 'tailWhip'], thunderWave: ['debuff', 'thunderWave'],
+  crystalSpark: ['bolt', 'spark'], prismRay: ['area', 'prismRay'],
   heal: ['heal', 'heal'], holyLight: ['heal', 'holyLight'], barrier: ['guard', 'barrier'], golemFist: ['charge', 'bigRock'],
 };
 for (const k in MOVE_META) if (MOVES[k]) { MOVES[k].cls = MOVE_META[k][0]; MOVES[k].fx = MOVE_META[k][1]; }
@@ -2474,7 +2482,7 @@ function* equipGearFlow(g) { // put an instance on; accessories pick a free/olde
 }
 function* bagScreen(mode = 'field') { // returns item id used (battle) or null
   let tab = 0, idx = 0; const tabs = mode === 'battle' ? ['道具'] : ['道具', '裝備', '素材', '重要'];
-  const listFor = t => tabs[t] === '裝備' ? gearSort() : bagList(it => tabs[t] === '道具' ? (!it.key && !it.mat && (mode !== 'battle' || it.use !== 'boost')) : tabs[t] === '素材' ? !!it.mat : !!it.key);
+  const listFor = t => tabs[t] === '裝備' ? gearSort() : bagList(it => tabs[t] === '道具' ? (!it.key && !it.mat && (mode !== 'battle' || (it.use !== 'boost' && it.use !== 'tp'))) : tabs[t] === '素材' ? !!it.mat : !!it.key);
   const VIS = 7;
   const scr = { draw(x) {
     screenBG(x); headerBar(x, '背包'); Font.drawR(x, Game.st.money + ' G', W - 6, 2, UIC.warm, UIC.textSh);
@@ -2519,7 +2527,8 @@ function canUseItem(k) {
   if (it.use === 'heal') return st.hp < s.hp && st.hp > 0;
   if (it.use === 'cure') return st.status === it.v;
   if (it.use === 'pp') return st.moves.some(m => m.pp < MOVES[m.id].pp);
-  if (it.use === 'boost') return true;
+  if (it.use === 'boost' || it.use === 'tp') return true;
+  if (it.use === 'full') return st.hp > 0 && (st.hp < s.hp || !!st.status);
   return false;
 }
 function useItem(k) { // returns message or null; applies to Game.st
@@ -2527,6 +2536,8 @@ function useItem(k) { // returns message or null; applies to Game.st
   if (it.use === 'heal') { const b = st.hp; st.hp = Math.min(s.hp, st.hp + it.v); return st.name + '的HP恢復了' + (st.hp - b) + '點！'; }
   if (it.use === 'cure') { st.status = null; return st.name + '的' + { psn: '中毒', par: '麻痺', slp: '睡眠', brn: '灼傷' }[it.v] + '治好了！'; }
   if (it.use === 'pp') { st.moves.forEach(m => m.pp = Math.min(MOVES[m.id].pp, m.pp + it.v)); return st.name + '的技能PP恢復了！'; }
+  if (it.use === 'full') { st.hp = s.hp; st.status = null; return st.name + '的HP完全恢復了！'; }
+  if (it.use === 'tp') { st.tp = (st.tp || 0) + 1; return st.name + '讀完了天賦之書，獲得1點天賦點！'; }
   if (it.use === 'boost') { st.boost = st.boost || {}; for (const q in it.v) st.boost[q] = (st.boost[q] || 0) + it.v[q]; return st.name + '的' + Object.keys(it.v).map(q => ATTR_NAMES[q] || STAT_NAMES[q]).join('、') + '永久提升了！'; }
   return null;
 }
@@ -2621,7 +2632,7 @@ function* shopBuy(stock) {
       }
       UI.remove(scr);
       const yes = yield* yesNo(it.n + (isG || it.once ? '' : '×' + qty) + '，一共是' + (qty * pr) + 'G，可以嗎？');
-      if (yes) { Game.st.money -= qty * pr; if (isG) makeGear(k, 1, 1); else Game.st.bag[k] = (Game.st.bag[k] || 0) + qty; Sound.sfx('save'); yield* say('好的！這是您的' + it.n + '。' + (isG ? '記得到裝備畫面裝備喔！' : '')); }
+      if (yes) { Game.st.money -= qty * pr; if (isG) makeGear(k, 1, 1); else Game.st.bag[k] = (Game.st.bag[k] || 0) + qty; if (k === 'tpBook') Game.st.tpBought = (Game.st.tpBought || 0) + qty; Sound.sfx('save'); yield* say('好的！這是您的' + it.n + '。' + (isG ? '記得到裝備畫面裝備喔！' : '')); }
       UI.push(scr);
     }
     yield;
@@ -2656,6 +2667,53 @@ function* shopSell() {
   UI.remove(scr);
 }
 const sellPrice = k => ITEMS[k].sell ?? Math.floor(ITEMS[k].price / 2);
+
+/* ---------- Smith: enhance & salvage ---------- */
+function* gearPicker(title, getList, extra) { // returns a gear instance or null
+  let idx = 0; const VIS = 7;
+  const scr = { draw(x) {
+    screenBG(x); headerBar(x, title); Font.drawR(x, Game.st.money + ' G', W - 6, 2, UIC.warm, UIC.textSh);
+    const list = getList(); drawWin(x, 4, 24, 168, VIS * 18 + 10, 'menu'); if (!list.length) Font.draw(x, '（沒有可以選的裝備）', 14, 30, UIC.muted, UIC.textSh);
+    const top = Math.max(0, Math.min(idx - 3, list.length - VIS));
+    list.slice(top, top + VIS).forEach((g, i) => { const Y = 28 + i * 18; if (top + i === idx) selBar(x, 6, Y - 1, 164, 17); const e = Font.draw(x, gearShort(g), 14, Y, gCol(g), UIC.textSh); if (isEquipped(g)) Font.draw(x, 'E', e + 2, Y, UIC.accent, UIC.textSh); });
+    if (top > 0) x.drawImage(UPARROW, 85, 25); if (top + VIS < list.length) x.drawImage(DOWNARROW, 85, 24 + VIS * 18 + 4);
+    drawWin(x, 4, 164, 168, 88, 'menu'); const g = list[idx]; if (g) { drawGearDetail(x, g, 166, 44); extra(x, g, 212); }
+  } };
+  UI.push(scr); let res = null;
+  while (true) {
+    const list = getList(); if (idx >= list.length) idx = Math.max(0, list.length - 1);
+    if (Input.repeat('up') && list.length) { idx = (idx + list.length - 1) % list.length; Sound.sfx('cursor'); } if (Input.repeat('down') && list.length) { idx = (idx + 1) % list.length; Sound.sfx('cursor'); }
+    if (Input.pressed('b')) { Input.consume('b'); Sound.sfx('cancel'); break; }
+    if (Input.pressed('a') && list[idx]) { Input.consume('a'); Sound.sfx('select'); res = list[idx]; break; }
+    yield;
+  }
+  UI.remove(scr); return res;
+}
+function* enhanceFlow() {
+  const st = Game.st, matTxt = m => Object.entries(m).map(([k, n]) => ITEMS[k].n + '×' + n + '（有' + (st.bag[k] || 0) + '）').join(' ');
+  while (true) {
+    const g = yield* gearPicker('裝備強化', () => gearSort().filter(q => (q.e || 0) < 5), (x, g, Y) => { const c = enhanceCost(g); Font.draw(x, '+' + (g.e || 0) + ' → +' + ((g.e || 0) + 1) + '　成功率' + Math.round(c.rate * 100) + '%', 12, Y, UIC.accent, UIC.textSh, 11); Font.draw(x, matTxt(c.mats), 12, Y + 13, UIC.text, UIC.textSh, 10); Font.drawR(x, c.gold + ' G', 164, Y + 26, st.money >= c.gold ? UIC.warm : UIC.bad, UIC.textSh, 11); });
+    if (!g) return;
+    const c = enhanceCost(g), ok = st.money >= c.gold && Object.entries(c.mats).every(([k, n]) => (st.bag[k] || 0) >= n);
+    if (!ok) { yield* say('素材或金錢不夠喔。'); continue; }
+    if (!(yield* yesNo('要強化' + gearShort(g) + '嗎？' + (c.rate < 1 ? '\n（失敗的話素材和金錢會消失）' : '')))) continue;
+    st.money -= c.gold; for (const k in c.mats) st.bag[k] -= c.mats[k];
+    Sound.sfx('rock'); yield* say('鏘！鏘！鏘！');
+    if (Math.random() < c.rate) { g.e = (g.e || 0) + 1; clampHP(); Sound.jingle('item'); yield* say('強化成功！' + gearName(g) + '！'); } else { Sound.sfx('bump'); yield* say('……可惜，這次失敗了。'); }
+  }
+}
+function* salvageFlow() {
+  const st = Game.st;
+  while (true) {
+    const g = yield* gearPicker('分解裝備', () => gearSort().filter(q => !isEquipped(q) && q.q < 4), (x, g, Y) => { Font.draw(x, '分解後可以得到素材（' + SALVAGE[GEAR[g.b].slot].map(k => ITEMS[k].n).join('、') + '）', 12, Y, UIC.accent, UIC.textSh, 10); Font.draw(x, '金色和裝備中的東西不能分解', 12, Y + 14, UIC.muted, UIC.textSh, 10); });
+    if (!g) return;
+    if (!(yield* yesNo('要分解' + gearShort(g) + '嗎？'))) continue;
+    const pool = SALVAGE[GEAR[g.b].slot], n = GEAR[g.b].t + g.q - 1 + (g.e || 0), got = {};
+    for (let i = 0; i < n; i++) { const k = pick(pool); got[k] = (got[k] || 0) + 1; st.bag[k] = (st.bag[k] || 0) + 1; }
+    st.gear = st.gear.filter(q => q !== g); Sound.sfx('rock');
+    yield* say('分解完成！得到了' + Object.entries(got).map(([k, v]) => ITEMS[k].n + '×' + v).join('、') + '。');
+  }
+}
 
 /* ---------- Crafting ---------- */
 function* craftScreen() {
@@ -2826,7 +2884,7 @@ class Overworld {
     if (this.p !== except && ((this.p.x === x && this.p.y === y) || (this.p.moving && this.p.tx === x && this.p.ty === y))) return this.p;
     return null;
   }
-  solidAt(x, y) { const c = this.tileAt(x, y); if (SOLID.has(c)) return true; if (x >= 0 && y >= 0 && x < this.map.w && y < this.map.h && this.map.block.has(x + ',' + y)) return true; return false; }
+  solidAt(x, y) { const c = this.tileAt(x, y); if (SOLID.has(c) || (c === 't' && !this.st.flags.golem)) return true; if (x >= 0 && y >= 0 && x < this.map.w && y < this.map.h && this.map.block.has(x + ',' + y)) return true; return false; }
   /* ---------- update ---------- */
   update() {
     this.t++; this.st.time = (this.st.time || 0) + 1;
@@ -2944,6 +3002,7 @@ class Overworld {
     const sign = (this.map.d.signs || {})[x + ',' + y];
     if (c === 'S' && sign) { this.run(say(sign, { style: 'sign' })); return true; }
     if (c === 'Y') { this.run(Events.spring(this)); return true; }
+    if (c === 't') { this.run(say(this.st.flags.golem ? '樹輕輕搖晃，枝葉讓出了一條路。' : '一棵古老的大樹。樹幹上有奇妙的紋路……好像在沉睡。')); return true; }
     if (c === 'U') { this.run(Events.well(this)); return true; }
     const flavor = { k: '書架上擺滿了關於魔物與冒險的書。', w: '窗外是萌芽鎮悠閒的風景。', c: '燭火靜靜地搖曳著。', h: '架子上整齊地擺滿了商品。', K: '書架上有一本《魔物屬性入門》。\n「火剋草、草剋水、水剋火。岩石怕水也怕草。」', V: '木箱裡裝滿了蘋果和藥瓶。', Q: '桌上放著熱騰騰的早餐。', o: '一塊大石頭。', b: '修剪整齊的灌木叢。' };
     if (c === 'B' && this.map.id === 'home') { this.run(Events.bed(this)); return true; }
@@ -3222,6 +3281,7 @@ class Battle {
     this.offF = { x: 0, y: 0 }; this.offH = { x: 0, y: 0 }; this.sinkF = 0; this.sinkH = 0; this.blinkF = 0; this.blinkH = 0; this.alphaF = 1;
     this.fx = []; this.shake = 0; this.t = 0; this.idle = false; this.cmdIdx = 0; this.moveIdx = 0; this.runTries = 0; this.turn = 0; this.phase2 = false; this.fistCD = 2;
     this.tint = null; this.squishF = 0;
+    if (cfg.sp === 'crystalGolem') this.cg = { shards: 0, mirror: 0, flood: false, stage: 0 };
     this.script = this.main();
   }
   enter() { UI.clear(); }
@@ -3248,6 +3308,8 @@ class Battle {
       if (this.tintF && this.tintF.a > 0) { x.globalAlpha = this.tintF.a * this.alphaF; x.drawImage(tinted(this.imgF, this.tintF.c), fx0, fy0); }
       x.restore();
     }
+    if (this.cg && this.cg.shards > 0 && this.alphaF > 0) { const C = this.center(this.F); for (let i = 0; i < this.cg.shards; i++) { const an = this.t / 20 + i * Math.PI * 2 / 3, px0 = Math.round(C.x + Math.cos(an) * 44), py0 = Math.round(C.y + Math.sin(an) * 14); x.fillStyle = '#1a3050'; x.fillRect(px0 - 3, py0 - 5, 7, 11); x.fillStyle = '#9ae0ff'; x.fillRect(px0 - 2, py0 - 4, 5, 9); x.fillStyle = '#e8fbff'; x.fillRect(px0 - 1, py0 - 3, 2, 4); } }
+    if (this.cg && this.cg.mirror && this.alphaF > 0 && Math.floor(this.t / 8) % 2) { x.globalAlpha = 0.25; x.drawImage(tinted(this.imgF, '#e8fbff'), Math.round(this.foeX + 32 - this.imgF.bb.cx), Math.round(FOE_FOOT - this.imgF.bb.bot)); x.globalAlpha = 1; }
     // hero (foreground, lower body hidden behind the status bar)
     if (!(this.blinkH > 0 && Math.floor(this.blinkH / 3) % 2)) {
       x.save(); x.beginPath(); x.rect(0, 0, W, HBAR_Y + 20); x.clip();
@@ -3318,6 +3380,7 @@ class Battle {
         if (a.type === 'move') yield* this.useMove(u, tg, a.id);
         else if (a.type === 'defend') { yield* this.msg(u.n + '擺出了防禦的架勢！'); yield* FX.guard.call(this, this.center(u)); if (u.stats.fx.guardHeal && u.hp < u.maxhp) { u.hp = Math.min(u.maxhp, u.hp + Math.ceil(u.maxhp * 0.15)); yield* this.animHP(u); yield* this.msg('守護之心回復了HP！', { hold: 20 }); } }
         else if (a.type === 'item') { const r = yield* this.useItemAct(a.id); if (r === 'escaped') return yield* this.end('run'); }
+        else if (a.type === 'mirror') { this.cg.mirror = 2; Sound.sfx('charge'); this.tintF = { c: '#c8f4ff', a: 0.6 }; yield* wait(14); this.tintF = null; yield* this.msg(u.n + '的表面變得像鏡子一樣！'); yield* this.msg('（這段期間，魔法攻擊會被反射回來！）'); }
         else if (a.type === 'foeHeal') { u.heals = (u.heals || 0) + 1; yield* this.msg(u.n + '吸收了周圍的養分！'); yield* FX.heal.call(this, this.center(u)); u.hp = Math.min(u.maxhp, u.hp + Math.floor(u.maxhp * 0.3)); yield* this.animHP(u); }
         else if (a.type === 'run') { if (yield* this.tryRun()) return yield* this.end('run'); }
         if (this.F.hp <= 0) { yield* this.foeFaint(); yield* this.victory(); return yield* this.end('win'); }
@@ -3365,7 +3428,7 @@ class Battle {
   }
   effSpe(b) { return b.stats.spe * stageMul(b.stages.spe) * (b.status === 'par' ? 0.25 : 1); }
   order(ha, fa) {
-    const pr = a => a.type === 'run' ? 7 : a.type === 'item' ? 6 : a.type === 'defend' ? 5 : a.type === 'foeHeal' ? 1 : (MOVES[a.id].prio || 0);
+    const pr = a => a.type === 'run' ? 7 : a.type === 'item' ? 6 : a.type === 'defend' ? 5 : a.type !== 'move' ? 1 : (MOVES[a.id].prio || 0);
     const ph = pr(ha), pf = pr(fa) + (this.F.trait === 'swift' ? 0.5 : 0);
     if (this.turn === 1 && this.H.stats.fx.first && ha.type === 'move') return [['H', ha], ['F', fa]];
     let heroFirst = ph !== pf ? ph > pf : (this.effSpe(this.H) !== this.effSpe(this.F) ? this.effSpe(this.H) > this.effSpe(this.F) : chance(0.5));
@@ -3374,9 +3437,10 @@ class Battle {
   foeChoose() {
     const F = this.F, H = this.H;
     if (F.charging) return { type: 'move', id: F.charging };
+    if (this.cg) { const c = this.cg; if (this.turn % 4 === 0 && !c.mirror) return { type: 'mirror' }; const pl = c.flood ? ['crystalSpark', 'crystalSpark', 'prismRay', 'stomp'] : ['prismRay', 'rockThrow', 'stomp', 'ancientRoar']; return { type: 'move', id: pick(pl) }; }
     if (F.trait === 'healer' && F.hp < F.maxhp * 0.5 && (F.heals || 0) < 2 && chance(0.6)) return { type: 'foeHeal' };
     let pool = F.moves.map(m => m.id);
-    if (F.boss && this.phase2) { pool = ['rockSlide', 'stomp', 'rockThrow']; if (this.fistCD <= 0) { this.fistCD = 3; return { type: 'move', id: 'golemFist' }; } this.fistCD--; }
+    if (F.boss && this.phase2 && !this.cg) { pool = ['rockSlide', 'stomp', 'rockThrow']; if (this.fistCD <= 0) { this.fistCD = 3; return { type: 'move', id: 'golemFist' }; } this.fistCD--; }
     const w = pool.map(id => {
       const mv = MOVES[id]; let v = 10;
       if (mv.st) v = H.status ? 0 : 6;
@@ -3420,9 +3484,9 @@ class Battle {
     const selfTarget = !mv.pow && mv.stat && mv.stat.who === 'self' || mv.heal;
     if (!selfTarget && mv.acc && !chance(hitChance(u, t, mv))) { yield* wait(10); UI.remove(utb); yield* this.msg(mv.pow ? u.n + '的攻擊沒有打中！' : '但是失敗了！'); return; }
     if (mv.pow) {
-      const r = this.calcDamage(u, t, mv); const shock = mv.t === '雷' && t.wet > 0;
+      const U0 = this.center(u), T0 = this.center(t); const r = this.calcDamage(u, t, mv); const shock = mv.t === '雷' && t.wet > 0;
       yield* this.playFx(mv.fx, u, t); UI.remove(utb);
-      let dmg = r.dmg; if (shock) dmg = Math.floor(dmg * 1.5); if (t.shield > 0) dmg = Math.max(1, Math.floor(dmg * 0.6)); if (t.defending) dmg = Math.max(1, Math.floor(dmg / 2));
+      let dmg = r.dmg; if (shock) dmg = Math.floor(dmg * 1.5); if (this.cg && !t.hero && this.cg.shards > 0) dmg = Math.max(1, Math.floor(dmg * 0.6)); const mirrored = this.cg && !t.hero && this.cg.mirror && mv.cat === '特'; if (mirrored) dmg = Math.max(1, Math.floor(dmg * 0.5)); if (t.shield > 0) dmg = Math.max(1, Math.floor(dmg * 0.6)); if (t.defending) dmg = Math.max(1, Math.floor(dmg / 2));
       dmg = Math.min(dmg, t.hp); let endured = false; if (t.hero && t.stats.fx.endure && !this.endured && dmg >= t.hp && t.hp > 1) { dmg = t.hp - 1; this.endured = endured = true; } t.hp -= dmg;
       Sound.sfx(r.mult > 1 ? 'hitSuper' : r.mult < 1 ? 'hitWeak' : 'hit'); if (r.crit) Sound.sfx('crit');
       yield* this.impact(t, r.mult > 1 || r.crit ? 2 : r.mult < 1 ? 0 : 1);
@@ -3431,6 +3495,9 @@ class Battle {
       if (r.mult > 1) yield* this.msg('效果絕佳！'); else if (r.mult < 1) yield* this.msg('效果不太好……');
       if (t.defending) yield* this.msg(t.n + '的防禦擋下了一半的傷害！');
       if (endured) yield* this.msg(t.n + '咬緊牙關撐住了！（不屈）');
+      if (mirrored && u.hp > 0) { const rf = Math.min(u.hp, Math.max(1, dmg)); u.hp -= rf; this.blinkH = 12; this.spawn({ k: 'line', x1: T0.x, y1: T0.y, x2: U0.x, y2: U0.y, c: '#c8f4ff', w: 3, grow: 3, life: 12 }); yield* this.animHP(u); yield* this.msg('魔法被鏡面反射了！' + u.n + '受到了' + rf + '點傷害！'); }
+      if (this.cg && !t.hero && this.cg.shards > 0 && mv.cat === '物') { this.cg.shards--; Sound.sfx('rock'); this.sparks(T0.x, T0.y, 10, ['#c8f4ff', '#80c0ff'], 2.5); yield* this.msg(this.cg.shards ? '擊碎了一塊水晶碎片！（剩下' + this.cg.shards + '塊）' : '水晶碎片全部被擊碎了！'); }
+      if (this.cg && !t.hero && t.hp > 0) { const c = this.cg; if (c.stage < 1 && t.hp < t.maxhp * 0.7) { c.stage = 1; c.shards = 3; Sound.sfx('charge'); yield* this.msg('水晶碎片浮了起來，環繞著' + t.n + '！'); yield* this.msg('（碎片還在時，傷害會被減弱，而且它會回復。用物理攻擊擊碎碎片！）'); } if (c.stage < 2 && t.hp < t.maxhp * 0.35) { c.stage = 2; c.flood = true; Sound.sfx('water'); this.shake = 30; yield* this.msg('水道的牆壁裂開，大水湧了進來！'); yield* this.msg('（每回合都會全身濕透……小心雷擊！）'); } }
       if (u.hero && t.hp > 0 && u.stats.fx.double && mv.cat === '物' && chance(0.25)) { const d2 = Math.min(t.hp, Math.max(1, Math.floor(dmg * 0.5))); yield* this.lunge(u, 8, 2); t.hp -= d2; Sound.sfx('hit'); yield* this.impact(t, 0); yield* this.animHP(t); yield* this.msg('連擊！追加了' + d2 + '點傷害！', { hold: 24 }); }
       if (t.hero && !u.hero && t.stats.fx.thorns && u.hp > 0 && dmg > 0) { const d3 = Math.min(u.hp, Math.max(1, Math.floor(dmg * 0.25))); u.hp -= d3; this.blinkF = 12; yield* this.animHP(u); yield* this.msg('荊棘反彈了' + d3 + '點傷害！', { hold: 24 }); }
       if (u.hero && u.stats.fx.fervor && (this.fervor || 0) < 3) { this.fervor = (this.fervor || 0) + 1; u.stages.atk = Math.min(6, u.stages.atk + 1); yield* this.msg('狂熱！物攻提升了！', { hold: 20 }); }
@@ -3482,6 +3549,7 @@ class Battle {
     yield* this.msg(b.n + { psn: '中毒了！', par: '麻痺了！可能會無法行動！', slp: '睡著了！', brn: '灼傷了！' }[s]);
   }
   *endTurn() {
+    if (this.cg && this.F.hp > 0) { const c = this.cg; if (c.mirror) c.mirror--; if (c.shards > 0 && this.F.hp < this.F.maxhp) { this.F.hp = Math.min(this.F.maxhp, this.F.hp + Math.ceil(this.F.maxhp * 0.04)); yield* this.animHP(this.F); yield* this.msg('水晶碎片讓' + this.F.n + '回復了！', { hold: 20 }); } if (c.flood && this.H.hp > 0) { this.H.wet = 2; Sound.sfx('water'); yield* this.msg(this.H.n + '被大水淋得全身濕透！', { hold: 20 }); } }
     if (this.H.stats.fx.regen && this.H.hp > 0 && this.H.hp < this.H.maxhp) { this.H.hp = Math.min(this.H.maxhp, this.H.hp + Math.ceil(this.H.maxhp * 0.06)); yield* this.animHP(this.H); }
     for (const b of [this.H, this.F]) { if (b.wet > 0) b.wet--; if (b.shield > 0 && !--b.shield) yield* this.msg(b.n + '的魔法護盾消失了。', { hold: 24 }); }
     if (this.collapse && this.H.hp > 0 && this.F.hp > 0) { yield* FX.rock.call(this, null, this.center(this.H)); if (this.H.defending) yield* this.msg(this.H.n + '擋住了落石！'); else { const d = Math.max(1, Math.floor(this.H.maxhp / 10)); this.H.hp = Math.max(0, this.H.hp - d); this.blinkH = 12; yield* this.animHP(this.H); yield* this.msg(this.H.n + '被落石砸中了！'); if (this.H.hp <= 0) return; } }
@@ -3687,6 +3755,7 @@ const FX = {
   *ironWall(U) { Sound.sfx('quake'); this.shake = 8; for (let i = 0; i < 3; i++) { this.spawn({ k: 'hex', x: U.x, y: U.y, r0: 40, r1: 30 - i * 3, c: ['#a08868', '#c8b090', '#806a50'][i], life: 22 }); yield* wait(5); } yield* wait(12); },
   *howl(U) { Sound.sfx('buzz'); for (let i = 0; i < 3; i++) { this.spawn({ k: 'ring', x: U.x, y: U.y - 10, r0: 4, r1: 28, c: '#ff8060', w: 2, life: 14 }); yield* wait(5); } yield* wait(8); },
   *agility(U) { Sound.sfx('wind'); for (let i = 0; i < 10; i++) { const yy = U.y + rnd(-20, 20); this.spawn({ k: 'line', x1: U.x - 30, y1: yy, x2: U.x + 30, y2: yy, c: '#e8f0ff', w: 1, grow: 3, life: 10 }); } yield* wait(12); },
+  *prismRay(U, T) { Sound.sfx('charge'); this.spawn({ k: 'glow', x: U.x, y: U.y, r: 22, c: '#c8f4ff', life: 14 }); yield* wait(10); Sound.sfx('thunder'); const cols = ['#ff7070', '#ffd060', '#80f080', '#70c0ff', '#c080ff']; cols.forEach((c, i) => this.spawn({ k: 'line', x1: U.x, y1: U.y, x2: T.x + (i - 2) * 4, y2: T.y, c, w: 2, grow: 3, life: 16 })); this.spawn({ k: 'flash', c: '#ffffff', a: 0.5, life: 8 }); yield* wait(6); this.sparks(T.x, T.y, 14, cols, 2.5); yield* wait(12); },
   *smoke() { Sound.sfx('wind'); for (let i = 0; i < 30; i++) this.spawn({ k: 'circ', x: rnd(10, W - 10), y: rnd(20, BH - 20), r: rnd(6, 14), c: pick(['#d8d8d8', '#b8b8c0', '#f0f0f0']), life: 30 + rnd(0, 20), vy: -0.3 }); yield* wait(40); },
 };
 
@@ -3766,7 +3835,7 @@ const Events = {
     st.flags.wellCharm = 1; yield* itemGet(st.name + '撈起了' + gearName(makeGear('moonCharm', 4)) + '！');
     yield* say('古老的護符……說不定和異界之門有關。可以在背包裡裝備。');
   },
-  *smith() { yield* say(Game.st.flags.smith ? '有素材就拿來吧！' : '我是鎮上的鐵匠。把魔物身上的素材帶來，我就幫你打造好東西！'); Game.st.flags.smith = 1; yield* craftScreen(); },
+  *smith() { yield* say(Game.st.flags.smith ? '有素材就拿來吧！' : '我是鎮上的鐵匠。把魔物身上的素材帶來，我就幫你打造好東西！'); Game.st.flags.smith = 1; while (true) { const r = yield* ask('要做什麼？', ['打造', '強化', '分解', '離開']); if (r === 0) yield* craftScreen(); else if (r === 1) yield* enhanceFlow(); else if (r === 2) yield* salvageFlow(); else break; } yield* say('隨時再來！'); },
   *peddler() { yield* say('多虧了你，商隊才平安抵達！算你便宜一點。'); yield* shopFlow(PEDDLER_LIST); },
   *caravan(ow) {
     const f = Game.st.flags;
@@ -3787,7 +3856,7 @@ const Events = {
   *herbalist() {
     const f = Game.st.flags, st = Game.st;
     if (!f.herb) { f.herb = 1; st.bag.superPotion = (st.bag.superPotion || 0) + 1; yield* sayAll(['哦？這麼深的森林裡，居然有客人。', '我是採藥的老頭子。這個給你，路上小心。']); yield* itemGet(st.name + '得到了好傷藥！'); }
-    yield* sayAll([f.mossGiant ? '苔石巨人倒下了啊……森林的空氣都變輕了。' : '西南邊的水池旁，住著一尊苔石巨人。它身上的青苔最怕火。', '對了……森林西北角有一棵「會讓路的樹」。老頭子我是這麼聽說的。']);
+    yield* sayAll([f.mossGiant ? '苔石巨人倒下了啊……森林的空氣都變輕了。' : '西南邊的水池旁，住著一尊苔石巨人。它身上的青苔最怕火。', '對了……森林西北角有一棵「會讓路的樹」。聽說要等遺跡的魔像倒下，森林才會醒來。']);
   },
   *grandpa() { yield* sayAll(['年輕人，按住B鍵就可以跑步喔。', '你說你們那邊有不用馬就能跑的鐵箱子？……真是難以想像啊。', Game.st.flags.golem ? '聽說魔像倒下的那晚，鎮上那口老井發出了光。' : '鎮上那口老井，據說跟遺跡是連在一起的。']); },
   *florist() {
@@ -3815,8 +3884,9 @@ const Events = {
     else { f.q1res = 'secret'; st.bag.ether = (st.bag.ether || 0) + 1; yield* say('真的嗎！謝謝你！這個給你，是我在草叢裡撿到的。'); yield* itemGet(st.name + '得到了活力茶！'); yield* say('記得回去跟姊姊說我沒事喔！'); }
   },
   *healer() {
-    const st = Game.st; const ok = yield* yesNo('歡迎來到旅店！要讓我為你治療嗎？');
-    if (ok) { st.respawn = { map: 'inn', x: 4, y: 4, dir: 'up' }; yield* say('好的，請稍等一下。'); yield* healRitual(); yield* sayAll(['讓你久等了！你的體力已經完全恢復了。', '歡迎再來喔！']); }
+    const st = Game.st, cost = st.lv * 10; const ok = yield* yesNo('歡迎來到旅店！住一晚是' + cost + ' G，要休息嗎？');
+    if (ok && st.money < cost) { yield* say('哎呀，錢好像不太夠呢……'); return; }
+    if (ok) { st.money -= cost; st.respawn = { map: 'inn', x: 4, y: 4, dir: 'up' }; yield* say('好的，請稍等一下。'); yield* healRitual(); yield* sayAll(['讓你久等了！你的體力已經完全恢復了。', '歡迎再來喔！']); }
     else yield* say('歡迎再來喔！');
   },
   *traveler() { if (Game.st.flags.golem) { yield* sayAll(['你真的打倒魔像了？……', '我得把這件事告訴王都的朋友。說不定他們知道異界之門的事。']); return; } yield* sayAll(['我在古岩遺跡附近見過那隻魔像……', '它的拳頭開始發光、凝聚力量時，下一擊非常可怕。', '那時候就選「防禦」，能擋下一半的傷害！']); },
@@ -4128,7 +4198,7 @@ function boot(data) {
   requestAnimationFrame(loop);
   try { if (window.claude && window.claude.hot && window.claude.hot.snapshot) window.claude.hot.snapshot(() => ({ st: (Game.scene instanceof Overworld && !Game.scene.script) ? Game.st : null })); } catch (e) { }
 }
-window.__fx = () => FX; window.__game = { setScale: S => { Game.fixedScale = 1; setScale(S); render(); }, Game, Input, Events, MAPS, shopFlow, SPECIES, Battle, Overworld, heroStats, newGameState, startOverworld, UI, say, yesNo, startMenu, summaryScreen, bagScreen, equipScreen, optionsScreen, shopFlow, pickMoveToForget, blackText, dexScreen, talentScreen, craftScreen, Events, step(n = 1) { for (let i = 0; i < n; i++) tick(); render(); }, press(k, hold = 2, after = 6) { Input.set(k, true); for (let i = 0; i < hold; i++) tick(); Input.set(k, false); for (let i = 0; i < after; i++) tick(); render(); } };
+window.__fx = () => FX; window.__game = { setScale: S => { Game.fixedScale = 1; setScale(S); render(); }, Game, Input, Events, MAPS, shopFlow, SPECIES, Battle, Overworld, heroStats, newGameState, startOverworld, UI, say, yesNo, startMenu, summaryScreen, bagScreen, equipScreen, optionsScreen, shopFlow, pickMoveToForget, blackText, dexScreen, talentScreen, craftScreen, enhanceFlow, salvageFlow, Events, step(n = 1) { for (let i = 0; i < n; i++) tick(); render(); }, press(k, hold = 2, after = 6) { Input.set(k, true); for (let i = 0; i < hold; i++) tick(); Input.set(k, false); for (let i = 0; i < after; i++) tick(); render(); } };
 try { if (window.claude && window.claude.hot && window.claude.hot.ready) window.claude.hot.ready(boot); else boot((window.claude && window.claude.hot && window.claude.hot.data) || {}); } catch (e) { boot({}); }
 
 </script>

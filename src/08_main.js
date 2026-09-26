@@ -74,7 +74,7 @@ const Events = {
     st.flags.wellCharm = 1; yield* itemGet(st.name + '撈起了' + gearName(makeGear('moonCharm', 4)) + '！');
     yield* say('古老的護符……說不定和異界之門有關。可以在背包裡裝備。');
   },
-  *smith() { yield* say(Game.st.flags.smith ? '有素材就拿來吧！' : '我是鎮上的鐵匠。把魔物身上的素材帶來，我就幫你打造好東西！'); Game.st.flags.smith = 1; yield* craftScreen(); },
+  *smith() { yield* say(Game.st.flags.smith ? '有素材就拿來吧！' : '我是鎮上的鐵匠。把魔物身上的素材帶來，我就幫你打造好東西！'); Game.st.flags.smith = 1; while (true) { const r = yield* ask('要做什麼？', ['打造', '強化', '分解', '離開']); if (r === 0) yield* craftScreen(); else if (r === 1) yield* enhanceFlow(); else if (r === 2) yield* salvageFlow(); else break; } yield* say('隨時再來！'); },
   *peddler() { yield* say('多虧了你，商隊才平安抵達！算你便宜一點。'); yield* shopFlow(PEDDLER_LIST); },
   *caravan(ow) {
     const f = Game.st.flags;
@@ -95,7 +95,7 @@ const Events = {
   *herbalist() {
     const f = Game.st.flags, st = Game.st;
     if (!f.herb) { f.herb = 1; st.bag.superPotion = (st.bag.superPotion || 0) + 1; yield* sayAll(['哦？這麼深的森林裡，居然有客人。', '我是採藥的老頭子。這個給你，路上小心。']); yield* itemGet(st.name + '得到了好傷藥！'); }
-    yield* sayAll([f.mossGiant ? '苔石巨人倒下了啊……森林的空氣都變輕了。' : '西南邊的水池旁，住著一尊苔石巨人。它身上的青苔最怕火。', '對了……森林西北角有一棵「會讓路的樹」。老頭子我是這麼聽說的。']);
+    yield* sayAll([f.mossGiant ? '苔石巨人倒下了啊……森林的空氣都變輕了。' : '西南邊的水池旁，住著一尊苔石巨人。它身上的青苔最怕火。', '對了……森林西北角有一棵「會讓路的樹」。聽說要等遺跡的魔像倒下，森林才會醒來。']);
   },
   *grandpa() { yield* sayAll(['年輕人，按住B鍵就可以跑步喔。', '你說你們那邊有不用馬就能跑的鐵箱子？……真是難以想像啊。', Game.st.flags.golem ? '聽說魔像倒下的那晚，鎮上那口老井發出了光。' : '鎮上那口老井，據說跟遺跡是連在一起的。']); },
   *florist() {
@@ -123,8 +123,9 @@ const Events = {
     else { f.q1res = 'secret'; st.bag.ether = (st.bag.ether || 0) + 1; yield* say('真的嗎！謝謝你！這個給你，是我在草叢裡撿到的。'); yield* itemGet(st.name + '得到了活力茶！'); yield* say('記得回去跟姊姊說我沒事喔！'); }
   },
   *healer() {
-    const st = Game.st; const ok = yield* yesNo('歡迎來到旅店！要讓我為你治療嗎？');
-    if (ok) { st.respawn = { map: 'inn', x: 4, y: 4, dir: 'up' }; yield* say('好的，請稍等一下。'); yield* healRitual(); yield* sayAll(['讓你久等了！你的體力已經完全恢復了。', '歡迎再來喔！']); }
+    const st = Game.st, cost = st.lv * 10; const ok = yield* yesNo('歡迎來到旅店！住一晚是' + cost + ' G，要休息嗎？');
+    if (ok && st.money < cost) { yield* say('哎呀，錢好像不太夠呢……'); return; }
+    if (ok) { st.money -= cost; st.respawn = { map: 'inn', x: 4, y: 4, dir: 'up' }; yield* say('好的，請稍等一下。'); yield* healRitual(); yield* sayAll(['讓你久等了！你的體力已經完全恢復了。', '歡迎再來喔！']); }
     else yield* say('歡迎再來喔！');
   },
   *traveler() { if (Game.st.flags.golem) { yield* sayAll(['你真的打倒魔像了？……', '我得把這件事告訴王都的朋友。說不定他們知道異界之門的事。']); return; } yield* sayAll(['我在古岩遺跡附近見過那隻魔像……', '它的拳頭開始發光、凝聚力量時，下一擊非常可怕。', '那時候就選「防禦」，能擋下一半的傷害！']); },
@@ -436,5 +437,5 @@ function boot(data) {
   requestAnimationFrame(loop);
   try { if (window.claude && window.claude.hot && window.claude.hot.snapshot) window.claude.hot.snapshot(() => ({ st: (Game.scene instanceof Overworld && !Game.scene.script) ? Game.st : null })); } catch (e) { }
 }
-window.__fx = () => FX; window.__game = { setScale: S => { Game.fixedScale = 1; setScale(S); render(); }, Game, Input, Events, MAPS, shopFlow, SPECIES, Battle, Overworld, heroStats, newGameState, startOverworld, UI, say, yesNo, startMenu, summaryScreen, bagScreen, equipScreen, optionsScreen, shopFlow, pickMoveToForget, blackText, dexScreen, talentScreen, craftScreen, Events, step(n = 1) { for (let i = 0; i < n; i++) tick(); render(); }, press(k, hold = 2, after = 6) { Input.set(k, true); for (let i = 0; i < hold; i++) tick(); Input.set(k, false); for (let i = 0; i < after; i++) tick(); render(); } };
+window.__fx = () => FX; window.__game = { setScale: S => { Game.fixedScale = 1; setScale(S); render(); }, Game, Input, Events, MAPS, shopFlow, SPECIES, Battle, Overworld, heroStats, newGameState, startOverworld, UI, say, yesNo, startMenu, summaryScreen, bagScreen, equipScreen, optionsScreen, shopFlow, pickMoveToForget, blackText, dexScreen, talentScreen, craftScreen, enhanceFlow, salvageFlow, Events, step(n = 1) { for (let i = 0; i < n; i++) tick(); render(); }, press(k, hold = 2, after = 6) { Input.set(k, true); for (let i = 0; i < hold; i++) tick(); Input.set(k, false); for (let i = 0; i < after; i++) tick(); render(); } };
 try { if (window.claude && window.claude.hot && window.claude.hot.ready) window.claude.hot.ready(boot); else boot((window.claude && window.claude.hot && window.claude.hot.data) || {}); } catch (e) { boot({}); }

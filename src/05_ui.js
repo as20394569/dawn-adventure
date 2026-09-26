@@ -265,7 +265,7 @@ function* equipGearFlow(g) { // put an instance on; accessories pick a free/olde
 }
 function* bagScreen(mode = 'field') { // returns item id used (battle) or null
   let tab = 0, idx = 0; const tabs = mode === 'battle' ? ['道具'] : ['道具', '裝備', '素材', '重要'];
-  const listFor = t => tabs[t] === '裝備' ? gearSort() : bagList(it => tabs[t] === '道具' ? (!it.key && !it.mat && (mode !== 'battle' || it.use !== 'boost')) : tabs[t] === '素材' ? !!it.mat : !!it.key);
+  const listFor = t => tabs[t] === '裝備' ? gearSort() : bagList(it => tabs[t] === '道具' ? (!it.key && !it.mat && (mode !== 'battle' || (it.use !== 'boost' && it.use !== 'tp'))) : tabs[t] === '素材' ? !!it.mat : !!it.key);
   const VIS = 7;
   const scr = { draw(x) {
     screenBG(x); headerBar(x, '背包'); Font.drawR(x, Game.st.money + ' G', W - 6, 2, UIC.warm, UIC.textSh);
@@ -310,7 +310,8 @@ function canUseItem(k) {
   if (it.use === 'heal') return st.hp < s.hp && st.hp > 0;
   if (it.use === 'cure') return st.status === it.v;
   if (it.use === 'pp') return st.moves.some(m => m.pp < MOVES[m.id].pp);
-  if (it.use === 'boost') return true;
+  if (it.use === 'boost' || it.use === 'tp') return true;
+  if (it.use === 'full') return st.hp > 0 && (st.hp < s.hp || !!st.status);
   return false;
 }
 function useItem(k) { // returns message or null; applies to Game.st
@@ -318,6 +319,8 @@ function useItem(k) { // returns message or null; applies to Game.st
   if (it.use === 'heal') { const b = st.hp; st.hp = Math.min(s.hp, st.hp + it.v); return st.name + '的HP恢復了' + (st.hp - b) + '點！'; }
   if (it.use === 'cure') { st.status = null; return st.name + '的' + { psn: '中毒', par: '麻痺', slp: '睡眠', brn: '灼傷' }[it.v] + '治好了！'; }
   if (it.use === 'pp') { st.moves.forEach(m => m.pp = Math.min(MOVES[m.id].pp, m.pp + it.v)); return st.name + '的技能PP恢復了！'; }
+  if (it.use === 'full') { st.hp = s.hp; st.status = null; return st.name + '的HP完全恢復了！'; }
+  if (it.use === 'tp') { st.tp = (st.tp || 0) + 1; return st.name + '讀完了天賦之書，獲得1點天賦點！'; }
   if (it.use === 'boost') { st.boost = st.boost || {}; for (const q in it.v) st.boost[q] = (st.boost[q] || 0) + it.v[q]; return st.name + '的' + Object.keys(it.v).map(q => ATTR_NAMES[q] || STAT_NAMES[q]).join('、') + '永久提升了！'; }
   return null;
 }
@@ -412,7 +415,7 @@ function* shopBuy(stock) {
       }
       UI.remove(scr);
       const yes = yield* yesNo(it.n + (isG || it.once ? '' : '×' + qty) + '，一共是' + (qty * pr) + 'G，可以嗎？');
-      if (yes) { Game.st.money -= qty * pr; if (isG) makeGear(k, 1, 1); else Game.st.bag[k] = (Game.st.bag[k] || 0) + qty; Sound.sfx('save'); yield* say('好的！這是您的' + it.n + '。' + (isG ? '記得到裝備畫面裝備喔！' : '')); }
+      if (yes) { Game.st.money -= qty * pr; if (isG) makeGear(k, 1, 1); else Game.st.bag[k] = (Game.st.bag[k] || 0) + qty; if (k === 'tpBook') Game.st.tpBought = (Game.st.tpBought || 0) + qty; Sound.sfx('save'); yield* say('好的！這是您的' + it.n + '。' + (isG ? '記得到裝備畫面裝備喔！' : '')); }
       UI.push(scr);
     }
     yield;
@@ -447,6 +450,53 @@ function* shopSell() {
   UI.remove(scr);
 }
 const sellPrice = k => ITEMS[k].sell ?? Math.floor(ITEMS[k].price / 2);
+
+/* ---------- Smith: enhance & salvage ---------- */
+function* gearPicker(title, getList, extra) { // returns a gear instance or null
+  let idx = 0; const VIS = 7;
+  const scr = { draw(x) {
+    screenBG(x); headerBar(x, title); Font.drawR(x, Game.st.money + ' G', W - 6, 2, UIC.warm, UIC.textSh);
+    const list = getList(); drawWin(x, 4, 24, 168, VIS * 18 + 10, 'menu'); if (!list.length) Font.draw(x, '（沒有可以選的裝備）', 14, 30, UIC.muted, UIC.textSh);
+    const top = Math.max(0, Math.min(idx - 3, list.length - VIS));
+    list.slice(top, top + VIS).forEach((g, i) => { const Y = 28 + i * 18; if (top + i === idx) selBar(x, 6, Y - 1, 164, 17); const e = Font.draw(x, gearShort(g), 14, Y, gCol(g), UIC.textSh); if (isEquipped(g)) Font.draw(x, 'E', e + 2, Y, UIC.accent, UIC.textSh); });
+    if (top > 0) x.drawImage(UPARROW, 85, 25); if (top + VIS < list.length) x.drawImage(DOWNARROW, 85, 24 + VIS * 18 + 4);
+    drawWin(x, 4, 164, 168, 88, 'menu'); const g = list[idx]; if (g) { drawGearDetail(x, g, 166, 44); extra(x, g, 212); }
+  } };
+  UI.push(scr); let res = null;
+  while (true) {
+    const list = getList(); if (idx >= list.length) idx = Math.max(0, list.length - 1);
+    if (Input.repeat('up') && list.length) { idx = (idx + list.length - 1) % list.length; Sound.sfx('cursor'); } if (Input.repeat('down') && list.length) { idx = (idx + 1) % list.length; Sound.sfx('cursor'); }
+    if (Input.pressed('b')) { Input.consume('b'); Sound.sfx('cancel'); break; }
+    if (Input.pressed('a') && list[idx]) { Input.consume('a'); Sound.sfx('select'); res = list[idx]; break; }
+    yield;
+  }
+  UI.remove(scr); return res;
+}
+function* enhanceFlow() {
+  const st = Game.st, matTxt = m => Object.entries(m).map(([k, n]) => ITEMS[k].n + '×' + n + '（有' + (st.bag[k] || 0) + '）').join(' ');
+  while (true) {
+    const g = yield* gearPicker('裝備強化', () => gearSort().filter(q => (q.e || 0) < 5), (x, g, Y) => { const c = enhanceCost(g); Font.draw(x, '+' + (g.e || 0) + ' → +' + ((g.e || 0) + 1) + '　成功率' + Math.round(c.rate * 100) + '%', 12, Y, UIC.accent, UIC.textSh, 11); Font.draw(x, matTxt(c.mats), 12, Y + 13, UIC.text, UIC.textSh, 10); Font.drawR(x, c.gold + ' G', 164, Y + 26, st.money >= c.gold ? UIC.warm : UIC.bad, UIC.textSh, 11); });
+    if (!g) return;
+    const c = enhanceCost(g), ok = st.money >= c.gold && Object.entries(c.mats).every(([k, n]) => (st.bag[k] || 0) >= n);
+    if (!ok) { yield* say('素材或金錢不夠喔。'); continue; }
+    if (!(yield* yesNo('要強化' + gearShort(g) + '嗎？' + (c.rate < 1 ? '\n（失敗的話素材和金錢會消失）' : '')))) continue;
+    st.money -= c.gold; for (const k in c.mats) st.bag[k] -= c.mats[k];
+    Sound.sfx('rock'); yield* say('鏘！鏘！鏘！');
+    if (Math.random() < c.rate) { g.e = (g.e || 0) + 1; clampHP(); Sound.jingle('item'); yield* say('強化成功！' + gearName(g) + '！'); } else { Sound.sfx('bump'); yield* say('……可惜，這次失敗了。'); }
+  }
+}
+function* salvageFlow() {
+  const st = Game.st;
+  while (true) {
+    const g = yield* gearPicker('分解裝備', () => gearSort().filter(q => !isEquipped(q) && q.q < 4), (x, g, Y) => { Font.draw(x, '分解後可以得到素材（' + SALVAGE[GEAR[g.b].slot].map(k => ITEMS[k].n).join('、') + '）', 12, Y, UIC.accent, UIC.textSh, 10); Font.draw(x, '金色和裝備中的東西不能分解', 12, Y + 14, UIC.muted, UIC.textSh, 10); });
+    if (!g) return;
+    if (!(yield* yesNo('要分解' + gearShort(g) + '嗎？'))) continue;
+    const pool = SALVAGE[GEAR[g.b].slot], n = GEAR[g.b].t + g.q - 1 + (g.e || 0), got = {};
+    for (let i = 0; i < n; i++) { const k = pick(pool); got[k] = (got[k] || 0) + 1; st.bag[k] = (st.bag[k] || 0) + 1; }
+    st.gear = st.gear.filter(q => q !== g); Sound.sfx('rock');
+    yield* say('分解完成！得到了' + Object.entries(got).map(([k, v]) => ITEMS[k].n + '×' + v).join('、') + '。');
+  }
+}
 
 /* ---------- Crafting ---------- */
 function* craftScreen() {

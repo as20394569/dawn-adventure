@@ -92,6 +92,7 @@ class Battle {
     this.offF = { x: 0, y: 0 }; this.offH = { x: 0, y: 0 }; this.sinkF = 0; this.sinkH = 0; this.blinkF = 0; this.blinkH = 0; this.alphaF = 1;
     this.fx = []; this.shake = 0; this.t = 0; this.idle = false; this.cmdIdx = 0; this.moveIdx = 0; this.runTries = 0; this.turn = 0; this.phase2 = false; this.fistCD = 2;
     this.tint = null; this.squishF = 0;
+    if (cfg.sp === 'crystalGolem') this.cg = { shards: 0, mirror: 0, flood: false, stage: 0 };
     this.script = this.main();
   }
   enter() { UI.clear(); }
@@ -118,6 +119,8 @@ class Battle {
       if (this.tintF && this.tintF.a > 0) { x.globalAlpha = this.tintF.a * this.alphaF; x.drawImage(tinted(this.imgF, this.tintF.c), fx0, fy0); }
       x.restore();
     }
+    if (this.cg && this.cg.shards > 0 && this.alphaF > 0) { const C = this.center(this.F); for (let i = 0; i < this.cg.shards; i++) { const an = this.t / 20 + i * Math.PI * 2 / 3, px0 = Math.round(C.x + Math.cos(an) * 44), py0 = Math.round(C.y + Math.sin(an) * 14); x.fillStyle = '#1a3050'; x.fillRect(px0 - 3, py0 - 5, 7, 11); x.fillStyle = '#9ae0ff'; x.fillRect(px0 - 2, py0 - 4, 5, 9); x.fillStyle = '#e8fbff'; x.fillRect(px0 - 1, py0 - 3, 2, 4); } }
+    if (this.cg && this.cg.mirror && this.alphaF > 0 && Math.floor(this.t / 8) % 2) { x.globalAlpha = 0.25; x.drawImage(tinted(this.imgF, '#e8fbff'), Math.round(this.foeX + 32 - this.imgF.bb.cx), Math.round(FOE_FOOT - this.imgF.bb.bot)); x.globalAlpha = 1; }
     // hero (foreground, lower body hidden behind the status bar)
     if (!(this.blinkH > 0 && Math.floor(this.blinkH / 3) % 2)) {
       x.save(); x.beginPath(); x.rect(0, 0, W, HBAR_Y + 20); x.clip();
@@ -188,6 +191,7 @@ class Battle {
         if (a.type === 'move') yield* this.useMove(u, tg, a.id);
         else if (a.type === 'defend') { yield* this.msg(u.n + '擺出了防禦的架勢！'); yield* FX.guard.call(this, this.center(u)); if (u.stats.fx.guardHeal && u.hp < u.maxhp) { u.hp = Math.min(u.maxhp, u.hp + Math.ceil(u.maxhp * 0.15)); yield* this.animHP(u); yield* this.msg('守護之心回復了HP！', { hold: 20 }); } }
         else if (a.type === 'item') { const r = yield* this.useItemAct(a.id); if (r === 'escaped') return yield* this.end('run'); }
+        else if (a.type === 'mirror') { this.cg.mirror = 2; Sound.sfx('charge'); this.tintF = { c: '#c8f4ff', a: 0.6 }; yield* wait(14); this.tintF = null; yield* this.msg(u.n + '的表面變得像鏡子一樣！'); yield* this.msg('（這段期間，魔法攻擊會被反射回來！）'); }
         else if (a.type === 'foeHeal') { u.heals = (u.heals || 0) + 1; yield* this.msg(u.n + '吸收了周圍的養分！'); yield* FX.heal.call(this, this.center(u)); u.hp = Math.min(u.maxhp, u.hp + Math.floor(u.maxhp * 0.3)); yield* this.animHP(u); }
         else if (a.type === 'run') { if (yield* this.tryRun()) return yield* this.end('run'); }
         if (this.F.hp <= 0) { yield* this.foeFaint(); yield* this.victory(); return yield* this.end('win'); }
@@ -235,7 +239,7 @@ class Battle {
   }
   effSpe(b) { return b.stats.spe * stageMul(b.stages.spe) * (b.status === 'par' ? 0.25 : 1); }
   order(ha, fa) {
-    const pr = a => a.type === 'run' ? 7 : a.type === 'item' ? 6 : a.type === 'defend' ? 5 : a.type === 'foeHeal' ? 1 : (MOVES[a.id].prio || 0);
+    const pr = a => a.type === 'run' ? 7 : a.type === 'item' ? 6 : a.type === 'defend' ? 5 : a.type !== 'move' ? 1 : (MOVES[a.id].prio || 0);
     const ph = pr(ha), pf = pr(fa) + (this.F.trait === 'swift' ? 0.5 : 0);
     if (this.turn === 1 && this.H.stats.fx.first && ha.type === 'move') return [['H', ha], ['F', fa]];
     let heroFirst = ph !== pf ? ph > pf : (this.effSpe(this.H) !== this.effSpe(this.F) ? this.effSpe(this.H) > this.effSpe(this.F) : chance(0.5));
@@ -244,9 +248,10 @@ class Battle {
   foeChoose() {
     const F = this.F, H = this.H;
     if (F.charging) return { type: 'move', id: F.charging };
+    if (this.cg) { const c = this.cg; if (this.turn % 4 === 0 && !c.mirror) return { type: 'mirror' }; const pl = c.flood ? ['crystalSpark', 'crystalSpark', 'prismRay', 'stomp'] : ['prismRay', 'rockThrow', 'stomp', 'ancientRoar']; return { type: 'move', id: pick(pl) }; }
     if (F.trait === 'healer' && F.hp < F.maxhp * 0.5 && (F.heals || 0) < 2 && chance(0.6)) return { type: 'foeHeal' };
     let pool = F.moves.map(m => m.id);
-    if (F.boss && this.phase2) { pool = ['rockSlide', 'stomp', 'rockThrow']; if (this.fistCD <= 0) { this.fistCD = 3; return { type: 'move', id: 'golemFist' }; } this.fistCD--; }
+    if (F.boss && this.phase2 && !this.cg) { pool = ['rockSlide', 'stomp', 'rockThrow']; if (this.fistCD <= 0) { this.fistCD = 3; return { type: 'move', id: 'golemFist' }; } this.fistCD--; }
     const w = pool.map(id => {
       const mv = MOVES[id]; let v = 10;
       if (mv.st) v = H.status ? 0 : 6;
@@ -290,9 +295,9 @@ class Battle {
     const selfTarget = !mv.pow && mv.stat && mv.stat.who === 'self' || mv.heal;
     if (!selfTarget && mv.acc && !chance(hitChance(u, t, mv))) { yield* wait(10); UI.remove(utb); yield* this.msg(mv.pow ? u.n + '的攻擊沒有打中！' : '但是失敗了！'); return; }
     if (mv.pow) {
-      const r = this.calcDamage(u, t, mv); const shock = mv.t === '雷' && t.wet > 0;
+      const U0 = this.center(u), T0 = this.center(t); const r = this.calcDamage(u, t, mv); const shock = mv.t === '雷' && t.wet > 0;
       yield* this.playFx(mv.fx, u, t); UI.remove(utb);
-      let dmg = r.dmg; if (shock) dmg = Math.floor(dmg * 1.5); if (t.shield > 0) dmg = Math.max(1, Math.floor(dmg * 0.6)); if (t.defending) dmg = Math.max(1, Math.floor(dmg / 2));
+      let dmg = r.dmg; if (shock) dmg = Math.floor(dmg * 1.5); if (this.cg && !t.hero && this.cg.shards > 0) dmg = Math.max(1, Math.floor(dmg * 0.6)); const mirrored = this.cg && !t.hero && this.cg.mirror && mv.cat === '特'; if (mirrored) dmg = Math.max(1, Math.floor(dmg * 0.5)); if (t.shield > 0) dmg = Math.max(1, Math.floor(dmg * 0.6)); if (t.defending) dmg = Math.max(1, Math.floor(dmg / 2));
       dmg = Math.min(dmg, t.hp); let endured = false; if (t.hero && t.stats.fx.endure && !this.endured && dmg >= t.hp && t.hp > 1) { dmg = t.hp - 1; this.endured = endured = true; } t.hp -= dmg;
       Sound.sfx(r.mult > 1 ? 'hitSuper' : r.mult < 1 ? 'hitWeak' : 'hit'); if (r.crit) Sound.sfx('crit');
       yield* this.impact(t, r.mult > 1 || r.crit ? 2 : r.mult < 1 ? 0 : 1);
@@ -301,6 +306,9 @@ class Battle {
       if (r.mult > 1) yield* this.msg('效果絕佳！'); else if (r.mult < 1) yield* this.msg('效果不太好……');
       if (t.defending) yield* this.msg(t.n + '的防禦擋下了一半的傷害！');
       if (endured) yield* this.msg(t.n + '咬緊牙關撐住了！（不屈）');
+      if (mirrored && u.hp > 0) { const rf = Math.min(u.hp, Math.max(1, dmg)); u.hp -= rf; this.blinkH = 12; this.spawn({ k: 'line', x1: T0.x, y1: T0.y, x2: U0.x, y2: U0.y, c: '#c8f4ff', w: 3, grow: 3, life: 12 }); yield* this.animHP(u); yield* this.msg('魔法被鏡面反射了！' + u.n + '受到了' + rf + '點傷害！'); }
+      if (this.cg && !t.hero && this.cg.shards > 0 && mv.cat === '物') { this.cg.shards--; Sound.sfx('rock'); this.sparks(T0.x, T0.y, 10, ['#c8f4ff', '#80c0ff'], 2.5); yield* this.msg(this.cg.shards ? '擊碎了一塊水晶碎片！（剩下' + this.cg.shards + '塊）' : '水晶碎片全部被擊碎了！'); }
+      if (this.cg && !t.hero && t.hp > 0) { const c = this.cg; if (c.stage < 1 && t.hp < t.maxhp * 0.7) { c.stage = 1; c.shards = 3; Sound.sfx('charge'); yield* this.msg('水晶碎片浮了起來，環繞著' + t.n + '！'); yield* this.msg('（碎片還在時，傷害會被減弱，而且它會回復。用物理攻擊擊碎碎片！）'); } if (c.stage < 2 && t.hp < t.maxhp * 0.35) { c.stage = 2; c.flood = true; Sound.sfx('water'); this.shake = 30; yield* this.msg('水道的牆壁裂開，大水湧了進來！'); yield* this.msg('（每回合都會全身濕透……小心雷擊！）'); } }
       if (u.hero && t.hp > 0 && u.stats.fx.double && mv.cat === '物' && chance(0.25)) { const d2 = Math.min(t.hp, Math.max(1, Math.floor(dmg * 0.5))); yield* this.lunge(u, 8, 2); t.hp -= d2; Sound.sfx('hit'); yield* this.impact(t, 0); yield* this.animHP(t); yield* this.msg('連擊！追加了' + d2 + '點傷害！', { hold: 24 }); }
       if (t.hero && !u.hero && t.stats.fx.thorns && u.hp > 0 && dmg > 0) { const d3 = Math.min(u.hp, Math.max(1, Math.floor(dmg * 0.25))); u.hp -= d3; this.blinkF = 12; yield* this.animHP(u); yield* this.msg('荊棘反彈了' + d3 + '點傷害！', { hold: 24 }); }
       if (u.hero && u.stats.fx.fervor && (this.fervor || 0) < 3) { this.fervor = (this.fervor || 0) + 1; u.stages.atk = Math.min(6, u.stages.atk + 1); yield* this.msg('狂熱！物攻提升了！', { hold: 20 }); }
@@ -352,6 +360,7 @@ class Battle {
     yield* this.msg(b.n + { psn: '中毒了！', par: '麻痺了！可能會無法行動！', slp: '睡著了！', brn: '灼傷了！' }[s]);
   }
   *endTurn() {
+    if (this.cg && this.F.hp > 0) { const c = this.cg; if (c.mirror) c.mirror--; if (c.shards > 0 && this.F.hp < this.F.maxhp) { this.F.hp = Math.min(this.F.maxhp, this.F.hp + Math.ceil(this.F.maxhp * 0.04)); yield* this.animHP(this.F); yield* this.msg('水晶碎片讓' + this.F.n + '回復了！', { hold: 20 }); } if (c.flood && this.H.hp > 0) { this.H.wet = 2; Sound.sfx('water'); yield* this.msg(this.H.n + '被大水淋得全身濕透！', { hold: 20 }); } }
     if (this.H.stats.fx.regen && this.H.hp > 0 && this.H.hp < this.H.maxhp) { this.H.hp = Math.min(this.H.maxhp, this.H.hp + Math.ceil(this.H.maxhp * 0.06)); yield* this.animHP(this.H); }
     for (const b of [this.H, this.F]) { if (b.wet > 0) b.wet--; if (b.shield > 0 && !--b.shield) yield* this.msg(b.n + '的魔法護盾消失了。', { hold: 24 }); }
     if (this.collapse && this.H.hp > 0 && this.F.hp > 0) { yield* FX.rock.call(this, null, this.center(this.H)); if (this.H.defending) yield* this.msg(this.H.n + '擋住了落石！'); else { const d = Math.max(1, Math.floor(this.H.maxhp / 10)); this.H.hp = Math.max(0, this.H.hp - d); this.blinkH = 12; yield* this.animHP(this.H); yield* this.msg(this.H.n + '被落石砸中了！'); if (this.H.hp <= 0) return; } }
@@ -557,5 +566,6 @@ const FX = {
   *ironWall(U) { Sound.sfx('quake'); this.shake = 8; for (let i = 0; i < 3; i++) { this.spawn({ k: 'hex', x: U.x, y: U.y, r0: 40, r1: 30 - i * 3, c: ['#a08868', '#c8b090', '#806a50'][i], life: 22 }); yield* wait(5); } yield* wait(12); },
   *howl(U) { Sound.sfx('buzz'); for (let i = 0; i < 3; i++) { this.spawn({ k: 'ring', x: U.x, y: U.y - 10, r0: 4, r1: 28, c: '#ff8060', w: 2, life: 14 }); yield* wait(5); } yield* wait(8); },
   *agility(U) { Sound.sfx('wind'); for (let i = 0; i < 10; i++) { const yy = U.y + rnd(-20, 20); this.spawn({ k: 'line', x1: U.x - 30, y1: yy, x2: U.x + 30, y2: yy, c: '#e8f0ff', w: 1, grow: 3, life: 10 }); } yield* wait(12); },
+  *prismRay(U, T) { Sound.sfx('charge'); this.spawn({ k: 'glow', x: U.x, y: U.y, r: 22, c: '#c8f4ff', life: 14 }); yield* wait(10); Sound.sfx('thunder'); const cols = ['#ff7070', '#ffd060', '#80f080', '#70c0ff', '#c080ff']; cols.forEach((c, i) => this.spawn({ k: 'line', x1: U.x, y1: U.y, x2: T.x + (i - 2) * 4, y2: T.y, c, w: 2, grow: 3, life: 16 })); this.spawn({ k: 'flash', c: '#ffffff', a: 0.5, life: 8 }); yield* wait(6); this.sparks(T.x, T.y, 14, cols, 2.5); yield* wait(12); },
   *smoke() { Sound.sfx('wind'); for (let i = 0; i < 30; i++) this.spawn({ k: 'circ', x: rnd(10, W - 10), y: rnd(20, BH - 20), r: rnd(6, 14), c: pick(['#d8d8d8', '#b8b8c0', '#f0f0f0']), life: 30 + rnd(0, 20), vy: -0.3 }); yield* wait(40); },
 };

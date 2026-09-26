@@ -36,6 +36,8 @@ const MOVES = {
   thunderstorm: { n: '雷暴', t: '雷', cat: '特', pow: 95, acc: 85, pp: 5, eff: { st: 'par', p: 30 }, fx: 'thunder', d: '降下猛烈的雷暴。有時會讓對手麻痺。對潮濕的對手會感電。' },
   holyLight: { n: '聖光', t: '一般', cat: '變', pp: 5, heal: 0.5, fx: 'heal', d: '恢復一半的最大HP。' },
   dawnBreak: { n: '破曉斬', t: '一般', cat: '物', pow: 120, acc: 100, pp: 5, crit: 1, fx: 'fireSlash', d: '異界勇者的奧義。劃破黑暗的一擊。' },
+  crystalSpark: { n: '晶雷', t: '雷', cat: '特', pow: 70, acc: 95, pp: 10, eff: { st: 'par', p: 20 }, d: '水晶放出的電流。' },
+  prismRay: { n: '稜光射線', t: '岩', cat: '特', pow: 80, acc: 90, pp: 10, d: '把光折射成七彩射線。' },
   armorBreak: { n: '破甲斬', t: '一般', cat: '物', pow: 45, acc: 95, pp: 15, eff: { stat: { def: -1 }, p: 100 }, fx: 'slash', d: '劈開對手的防具。必定降低對手的物防。' },
   barrier: { n: '魔法護盾', t: '一般', cat: '變', pp: 10, shield: 3, fx: 'guard', d: '展開魔法護盾，3回合內受到的傷害減少40%。' },
   aquaBlade: { n: '水流刃', t: '水', cat: '特', pow: 50, acc: 100, pp: 25, fx: 'water', d: '揮出激流般的水刃。會讓對手潮濕，再用雷系攻擊就能引發感電。' },
@@ -97,7 +99,7 @@ const SPECIES = {
   caveBat: { n: '洞窟飛影', t: '飛', base: [55, 62, 48, 50, 48, 80], exp: 82, gold: 18, mat: 'feather', trait: 'swift', learn: [[1, 'peck'], [1, 'gust'], [1, 'quickAttack'], [10, 'sing']], dex: '棲息在地下水道的黑影。速度極快。' },
   mudSlime: { n: '泥沼姆', t: '水', base: [70, 50, 55, 55, 55, 30], exp: 82, gold: 18, mat: 'gel', trait: 'healer', learn: [[1, 'bubble'], [1, 'waterGun'], [1, 'harden'], [10, 'acid']], dex: '混著泥沙的泡泡姆。會吸收污水回復。' },
   crystalPebble: { n: '晶石丸', t: '岩', base: [55, 60, 80, 45, 55, 30], exp: 88, gold: 22, mat: 'crystal', learn: [[1, 'tackle'], [1, 'harden'], [1, 'rockThrow'], [12, 'rockSlide']], dex: '身上長滿水晶的石丸。非常堅硬。' },
-  crystalGolem: { n: '水晶魔像', t: '岩', base: [90, 62, 85, 60, 65, 40], exp: 320, gold: 0, boss: 1, drop: 'crystalHeart', learn: [[1, 'rockThrow'], [1, 'stomp'], [1, 'ironWall'], [1, 'ancientRoar']], dex: '沉睡在井底深處的水晶石像。據說和異界之門同時誕生。' },
+  crystalGolem: { n: '水晶魔像', t: '岩', base: [90, 62, 85, 60, 65, 40], exp: 320, gold: 0, boss: 1, drop: 'crystalHeart', learn: [[1, 'rockThrow'], [1, 'stomp'], [1, 'prismRay'], [1, 'ancientRoar']], dex: '沉睡在井底深處的水晶石像。據說和異界之門同時誕生。' },
   golem: { n: '古岩魔像', t: '岩', base: [82, 48, 80, 45, 55, 35], exp: 200, gold: 0, boss: 1, drop: 'golemVisor', learn: [[1, 'rockThrow'], [1, 'stomp'], [1, 'ironWall'], [1, 'ancientRoar']], dex: '守護古代遺跡的石像。沉睡了千年後甦醒。' },
 };
 
@@ -115,6 +117,8 @@ const ITEMS = {
   powerFruit: { n: '力量果實', price: 0, sell: 500, d: '神奇的果實。吃下後力量永久+2。', use: 'boost', v: { str: 2 } },
   luckClover: { n: '幸運草', price: 0, sell: 300, d: '四片葉子的幸運草。使用後幸運永久+2。', use: 'boost', v: { luk: 2 } },
   wisdomFruit: { n: '智慧果實', price: 0, sell: 500, d: '神奇的果實。吃下後智力永久+2。', use: 'boost', v: { int: 2 } },
+  elixir: { n: '萬靈藥', price: 800, d: 'HP完全恢復，並治好所有異常狀態。', use: 'full' },
+  tpBook: { n: '天賦之書', price: 3000, d: '記載著古老修練法的書。使用後獲得1點天賦點。（每買一本會漲價）', use: 'tp' },
   herb: { n: '藥草', mat: 1, price: 0, sell: 10, d: '野外採集的藥草。可以用來調製藥品。' },
   shroomCap: { n: '蕈傘', mat: 1, price: 0, sell: 15, d: '嘟嘟菇的蕈傘。' }, feather: { n: '羽毛', mat: 1, price: 0, sell: 15, d: '輕盈的羽毛。' },
   stone: { n: '硬石', mat: 1, price: 0, sell: 15, d: '石丸身上的硬石。' }, gel: { n: '凝膠', mat: 1, price: 0, sell: 15, d: '黏黏的凝膠。' },
@@ -125,9 +129,9 @@ const ITEMS = {
   phone: { n: '手機', key: 1, use: 'phone', d: '從原本的世界帶來的手機。' },
   license: { n: '冒險者證', key: 1, d: '村長交給你的冒險者證明。持有它就能走出萌芽鎮。' },
 };
-const shopList = () => { const f = Game.st.flags; return SHOP_LIST.filter(k => !(k === 'superPotion' && f.caravan === 'lost')).concat(f.croc ? ['knightSword', 'guardHelm', 'chainMail'] : [], f.caravan === 'lost' && f.golem ? ['rope'] : []); };
-const PEDDLER_LIST = ['rope', 'superPotion', 'ether', 'powerFruit', 'knightHelm', 'knightGreaves'];
-const priceOf = k => Math.round((ITEMS[k] || GEAR[k]).price * (Game.st.flags.caravan === 'saved' ? 0.9 : Game.st.flags.caravan === 'lost' && k === 'rope' ? 3 : 1));
+const shopList = () => { const f = Game.st.flags; return SHOP_LIST.filter(k => !(k === 'superPotion' && f.caravan === 'lost')).concat(f.croc ? ['knightSword', 'guardHelm', 'chainMail'] : [], f.golem ? ['elixir', 'tpBook'] : [], f.caravan === 'lost' && f.golem ? ['rope'] : []); };
+const PEDDLER_LIST = ['rope', 'superPotion', 'elixir', 'ether', 'powerFruit', 'tpBook', 'knightHelm', 'knightGreaves'];
+const priceOf = k => Math.round(((ITEMS[k] || GEAR[k]).price + (k === 'tpBook' ? 1500 * (Game.st.tpBought || 0) : 0)) * (Game.st.flags.caravan === 'saved' ? 0.9 : Game.st.flags.caravan === 'lost' && k === 'rope' ? 3 : 1));
 const RECIPES = [
   { out: 'potion', n: 2, mats: { herb: 2 } }, { out: 'superPotion', mats: { herb: 3, gel: 1 } },
   { out: 'featherBoots', mats: { feather: 4 }, gold: 300 }, { out: 'stoneMail', mats: { stone: 5 }, gold: 400 },

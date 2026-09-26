@@ -58,7 +58,7 @@ class Overworld {
     if (this.p !== except && ((this.p.x === x && this.p.y === y) || (this.p.moving && this.p.tx === x && this.p.ty === y))) return this.p;
     return null;
   }
-  solidAt(x, y) { const c = this.tileAt(x, y); if (SOLID.has(c)) return true; if (x >= 0 && y >= 0 && x < this.map.w && y < this.map.h && this.map.block.has(x + ',' + y)) return true; return false; }
+  solidAt(x, y) { const c = this.tileAt(x, y); if (SOLID.has(c) || (c === 't' && !this.st.flags.golem)) return true; if (x >= 0 && y >= 0 && x < this.map.w && y < this.map.h && this.map.block.has(x + ',' + y)) return true; return false; }
   /* ---------- update ---------- */
   update() {
     this.t++; this.st.time = (this.st.time || 0) + 1;
@@ -176,6 +176,7 @@ class Overworld {
     const sign = (this.map.d.signs || {})[x + ',' + y];
     if (c === 'S' && sign) { this.run(say(sign, { style: 'sign' })); return true; }
     if (c === 'Y') { this.run(Events.spring(this)); return true; }
+    if (c === 't') { this.run(say(this.st.flags.golem ? '樹輕輕搖晃，枝葉讓出了一條路。' : '一棵古老的大樹。樹幹上有奇妙的紋路……好像在沉睡。')); return true; }
     if (c === 'U') { this.run(Events.well(this)); return true; }
     const flavor = { k: '書架上擺滿了關於魔物與冒險的書。', w: '窗外是萌芽鎮悠閒的風景。', c: '燭火靜靜地搖曳著。', h: '架子上整齊地擺滿了商品。', K: '書架上有一本《魔物屬性入門》。\n「火剋草、草剋水、水剋火。岩石怕水也怕草。」', V: '木箱裡裝滿了蘋果和藥瓶。', Q: '桌上放著熱騰騰的早餐。', o: '一塊大石頭。', b: '修剪整齊的灌木叢。' };
     if (c === 'B' && this.map.id === 'home') { this.run(Events.bed(this)); return true; }
