@@ -503,6 +503,11 @@ ART.thornMush = recolorDef(ART.mush, hueShift(160, 1, 0.95));
 ART.nightBird = recolorDef(ART.bird, hueShift(45, 0.7, 0.72));
 ART.leafFox = recolorDef(ART.fox, hueShift(85, 0.9, 0.95));
 ART.mossGiant = recolorDef(ART.golem, hueShift(75, 1.6, 0.95));
+ART.caveBat = recolorDef(ART.bird, hueShift(90, 0.6, 0.55));
+ART.mudSlime = recolorDef(ART.slime, hueShift(170, 0.45, 0.8));
+ART.crystalPebble = recolorDef(ART.pebble, hueShift(180, 3, 1.1));
+ART.crystalGolem = recolorDef(ART.golem, hueShift(190, 3.2, 1.05));
+const HERB_IMG = spriteFrom(['................', '................', '................', '.......w........', '......kLk.......', '...k.kLlLk.k....', '..kLkkLlLkkLk...', '..kLlkLlLklLk...', '...kLlklklLk..w.', '....kLlklLk.....', '.....kLLLk......', '......kkk.......', '................', '................', '................', '................'], { k: '#1e4a2a', L: '#9ade7a', l: '#5cb850', w: '#ffffff' });
 
 /* ---------------- Tiles ---------------- */
 const TP = { // shared tile palette

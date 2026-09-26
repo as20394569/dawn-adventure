@@ -33,7 +33,9 @@ class Overworld {
     this.npcs = (this.map.d.npcs || []).filter(n => !n.show || n.show(st)).map(n => new Entity({ ...n, frames: npcFrames(n.look) }));
     this.elites = (this.map.d.elites || []).filter(e => !st.flags[e.id]).map(e => new Entity({ ...e, img: monsterMini(e.sp, 24) }));
     this.items = (this.map.d.items || []).filter(i => !st.flags[i.id]).map(i => new Entity({ ...i }));
-    const bd = this.map.d.boss; this.boss = bd && !st.flags.golem ? new Entity({ ...bd, img: monsterMini(bd.sp, 36), w2: 1 }) : null;
+    st.gath = st.gath || {}; for (const g of this.map.d.gathers || []) if (st.gath[g.id] === undefined || (st.steps || 0) - st.gath[g.id] > 150) this.items.push(new Entity({ ...g, gather: 1 }));
+    if (st.flags.caravanMet && !st.flags.caravan && id !== 'route') st.flags.caravan = 'lost';
+    const bd = this.map.d.boss; this.boss = bd && !st.flags[bd.flag || 'golem'] ? new Entity({ ...bd, img: monsterMini(bd.sp, 36), w2: 1 }) : null;
     // neighbors for seamless connections
     this.conn = {}; const c = this.map.d.connect || {}; for (const k in c) this.conn[k] = { m: getMap(c[k].map), dx: c[k].dx };
     if (this.map.d.music) Sound.play(this.map.d.music);
@@ -127,7 +129,7 @@ class Overworld {
     for (const tr of this.map.d.triggers || []) if (tr.x === p.x && tr.y === p.y) { const ev = Events[tr.id]; if (ev) { const g = ev(this); if (g) { this.run(g); return; } } }
     if (this.checkSight()) return;
     // encounters
-    if (c === '#' && !Game.noEnc) {
+    if ((c === '#' || (this.map.d.encAll && c === 's')) && !Game.noEnc) {
       const enc = (this.map.d.encounters || []).find(e => p.y >= e.y0 && p.y <= e.y1);
       if (enc && chance(enc.rate) && (st.steps - (st.lastBattleStep || 0)) > 2) {
         const tot = enc.table.reduce((a, r) => a + r[3], 0); let r = Math.random() * tot; let row = enc.table[0];
@@ -168,7 +170,7 @@ class Overworld {
     if (!ent && c === 'C') { ent = this.entityAt(x + dx, y + dy, p); }
     if (ent && ent.frames) { if (!ent.moving) { ent.dir = OPP[p.dir]; } const ev = Events[ent.id]; this.run(ev ? ev(this, ent) : say('……')); return true; }
     if (ent && ent.sp && ent !== this.boss) { this.run(this.eliteTalk(ent)); return true; }
-    if (ent && ent === this.boss) { const g = Events.bossLine(this); if (g) this.run(g); return true; }
+    if (ent && ent === this.boss) { const g = Events[this.map.d.boss.ev || 'bossLine'](this); if (g) this.run(g); return true; }
     if (ent && (ent.item || ent.gold)) { this.run(this.pickItem(ent)); return true; }
     const gt = this.map.d.gate; if (gt && gt.big && (x === gt.x || x === gt.x + 1) && y === gt.y + 1) { this.run(say(this.st.flags.gateOpen ? '門後的光芒已經消失，只剩下冰冷的石壁……（第二章，敬請期待！）' : '巨大的石門緊緊關著，上面刻著發光的古老紋路。這就是「異界之門」……')); return true; }
     const sign = (this.map.d.signs || {})[x + ',' + y];
@@ -182,7 +184,9 @@ class Overworld {
     return false;
   }
   *pickItem(it) {
-    const st = this.st; st.flags[it.id] = 1; this.items = this.items.filter(i => i !== it);
+    const st = this.st; this.items = this.items.filter(i => i !== it);
+    if (it.gather) { st.gath[it.id] = st.steps || 0; const n = rnd(1, 2); st.bag[it.mat] = (st.bag[it.mat] || 0) + n; Sound.sfx('item'); yield* say('採集到了' + ITEMS[it.mat].n + '×' + n + '！'); return; }
+    st.flags[it.id] = 1;
     if (it.gold) { st.money += it.gold; Sound.jingle('item'); yield* say(st.name + '撿到了' + it.gold + ' G！'); return; }
     const n = it.n || 1; st.bag[it.item] = (st.bag[it.item] || 0) + n; const fr = Sound.jingle('item');
     const tb = new TextBox(st.name + '撿到了' + ITEMS[it.item].n + (n > 1 ? '×' + n : '') + '！'); UI.push(tb);
@@ -265,7 +269,7 @@ class Overworld {
     if (g && g.big) { const sx = g.x * 16 - camX, sy = g.y * 16 - camY; x.drawImage(Tiles.gate(this.st.flags.gateOpen), sx, sy); }
     // entities
     for (const n of this.npcs) objs.push({ k: n.py + 15, d: () => this.drawChar(x, n, n.frames, camX, camY) });
-    for (const it of this.items) objs.push({ k: it.py + 15, d: () => x.drawImage(ITEM_BALL, it.px - camX, it.py - camY) });
+    for (const it of this.items) objs.push({ k: it.py + 15, d: () => x.drawImage(it.gather ? HERB_IMG : ITEM_BALL, it.px - camX, it.py - camY) });
     for (const e of this.elites) objs.push({ k: e.py + 15, d: () => this.drawMon(x, e, camX, camY) });
     if (this.boss) objs.push({ k: this.boss.py + 15, d: () => this.drawBoss(x, this.boss, camX, camY) });
     if (!this.hideHero) objs.push({ k: p.py + 15.5, d: () => this.drawChar(x, p, Hero.frames, camX, camY) });

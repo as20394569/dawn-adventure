@@ -41,6 +41,7 @@ const Events = {
   *bed(ow) { const ok = yield* yesNo('要在床上休息一下嗎？'); if (ok) { Game.st.respawn = { map: 'home', x: 1, y: 4, dir: 'up' }; yield* healRitual('睡得好飽！體力完全恢復了！'); } },
   *elder(ow) {
     const st = Game.st;
+    if (st.flags.license && (yield* classTalk())) return;
     if (!st.flags.license) {
       yield* sayAll(['喔？你就是瑪莎撿回來的那個孩子啊。', '……從另一個世界來的？', '這個會發光的小板子……嗯，看來不是在說謊。', '古老的傳說裡提過，北方的古岩遺跡深處，有一扇「異界之門」。', '據說很久以前，也有異世界的旅人從那扇門來到這裡。', '如果真有回去的路，大概就在那裡了。', '只是……最近守護遺跡的古岩魔像甦醒了，誰也無法靠近。', '嗯？你的手……在發光！', '這是「異界人之力」。傳說中，來自異世界的人都擁有不可思議的力量。', '有這股力量，你應該能和魔物戰鬥。']);
       st.flags.license = 1; st.bag.license = 1; st.bag.woodSword = 1; st.equip.weapon = 'woodSword';
@@ -64,14 +65,32 @@ const Events = {
     })();
   },
   *kid() { yield* say(Game.st.flags.golem ? '聽說你打倒了魔像！異世界的盔甲果然很強！' : '你的衣服好奇怪喔！那是異世界的盔甲嗎？'); },
-  *well() {
+  *well(ow) {
     const st = Game.st;
-    if (st.flags.wellCharm) { yield* say('一口很深的井。井底靜悄悄的。'); return; }
+    if (st.flags.wellCharm) { if (st.bag.rope) { if (yield* yesNo('要用繩索下到井底嗎？')) yield* ow.warp('sewer', 7, 12, 'up'); } else yield* say('一口很深的井。井底好像還有更深的通道……需要繩索才能下去。'); return; }
     if (!st.flags.golem) { yield* say('一口很深的井。往下看，只有一片漆黑。'); return; }
     yield* say('……井底好像有什麼東西，正發出淡淡的月光。');
     if (!(yield* yesNo('要把水桶放下去撈撈看嗎？'))) return;
     st.flags.wellCharm = 1; st.bag.moonCharm = 1; yield* itemGet(st.name + '撈起了「月光護符」！');
     yield* say('古老的護符……說不定和異界之門有關。可以在背包裡裝備。');
+  },
+  *smith() { yield* say(Game.st.flags.smith ? '有素材就拿來吧！' : '我是鎮上的鐵匠。把魔物身上的素材帶來，我就幫你打造好東西！'); Game.st.flags.smith = 1; yield* craftScreen(); },
+  *peddler() { yield* say('多虧了你，商隊才平安抵達！算你便宜一點。'); yield* shopFlow(PEDDLER_LIST); },
+  *caravan(ow) {
+    const f = Game.st.flags;
+    yield* sayAll(['救、救命！商隊的貨車被魔物包圍了！', '這樣下去，貨物就送不到萌芽鎮了……']); f.caravanMet = 1;
+    if (!(yield* yesNo('要幫忙擊退魔物嗎？'))) { yield* say('拜託了……我撐不了太久……'); return; }
+    for (const [sp, lv] of [['fox', 10], ['bee', 10], ['wolf', 9]]) { const res = yield* ow.battleScript({ sp, lv, kind: 'wild' }); if (res !== 'win') { yield* say('……還有魔物！小心啊！'); return; } }
+    f.caravan = 'saved'; Game.st.money += 800; ow.npcs = ow.npcs.filter(n => n.id !== 'caravan');
+    yield* sayAll(['得救了！真是太感謝你了！', '這是謝禮。我會在萌芽鎮擺攤，也給你算便宜一點！']); yield* itemGet(Game.st.name + '得到了800 G！');
+  },
+  *hiddenBoss(ow) {
+    const st = Game.st; if (st.flags.crystalBoss || !ow.boss) return null;
+    return (function* () {
+      yield* sayAll(['水晶石像散發著異界之門同樣的光芒……', '「……異界之人……證明……你的力量……」']);
+      const res = yield* ow.battleScript({ sp: 'crystalGolem', lv: 18, kind: 'boss' });
+      if (res === 'win') { st.flags.crystalBoss = 1; st.flags.hiddenCls = 1; ow.boss = null; yield* say('水晶魔像碎裂了。碎片化成光，流進了' + st.name + '的身體……'); yield* itemGet('覺醒了隱藏職業「異界勇者」！（找村長轉職）'); saveGame(); }
+    })();
   },
   *herbalist() {
     const f = Game.st.flags, st = Game.st;
@@ -151,6 +170,24 @@ function* visionScene() {
   v.fading = 1; for (let i = 0; i < 40; i++) { Game.fade = i / 40 * 0.85; Game.fadeColor = '#ffffff'; yield; }
   yield* sayAll(['……可是，光芒很快就黯淡了下來。', '門的力量似乎還不夠。', '回家的線索，一定就在這個世界的某處——']);
   UI.remove(v); Game.fade = 0;
+}
+
+function* classTalk() {
+  const st = Game.st, C = CLASSES, cur = C[st.cls]; let opts = [];
+  if (!st.cls && st.lv >= 8) opts = ['swordsman', 'mage', 'guardian'];
+  else if (cur && cur.tier === 1 && st.lv >= 14) opts = Object.keys(C).filter(k => C[k].from === st.cls);
+  if (st.flags.hiddenCls && st.cls !== 'otherworlder') opts.push('otherworlder');
+  if (!opts.length) return false;
+  yield* say(!st.cls ? '你的力量開始覺醒了……要選擇一條道路嗎？' : '你已經走得很遠了。要踏上新的道路嗎？');
+  while (true) {
+    const r = yield* ask('要選擇哪個職業？', opts.map(k => C[k].n).concat(['再想想']));
+    if (r < 0 || r >= opts.length) { yield* say('想好了再來找我吧。'); return true; }
+    const k = opts[r]; yield* say(C[k].n + '：' + C[k].d + '\n職業技能「' + MOVES[C[k].move].n + '」');
+    if (!(yield* yesNo('確定要成為' + C[k].n + '嗎？'))) continue;
+    st.cls = k; clampHP(); yield* itemGet(st.name + '成為了' + C[k].n + '！');
+    const mv = C[k].move; if (!st.moves.some(m => m.id === mv)) { if (st.moves.length < 4) st.moves.push({ id: mv, pp: MOVES[mv].pp }); else { const i = yield* pickMoveToForget(mv); if (i < 4) st.moves[i] = { id: mv, pp: MOVES[mv].pp }; } }
+    return true;
+  }
 }
 
 /* ===================== SAVE ===================== */
@@ -399,5 +436,5 @@ function boot(data) {
   requestAnimationFrame(loop);
   try { if (window.claude && window.claude.hot && window.claude.hot.snapshot) window.claude.hot.snapshot(() => ({ st: (Game.scene instanceof Overworld && !Game.scene.script) ? Game.st : null })); } catch (e) { }
 }
-window.__game = { setScale: S => { Game.fixedScale = 1; setScale(S); render(); }, Game, Input, Events, MAPS, SPECIES, Battle, Overworld, heroStats, newGameState, startOverworld, UI, say, yesNo, startMenu, summaryScreen, bagScreen, equipScreen, optionsScreen, shopFlow, pickMoveToForget, blackText, dexScreen, talentScreen, Events, step(n = 1) { for (let i = 0; i < n; i++) tick(); render(); }, press(k, hold = 2, after = 6) { Input.set(k, true); for (let i = 0; i < hold; i++) tick(); Input.set(k, false); for (let i = 0; i < after; i++) tick(); render(); } };
+window.__game = { setScale: S => { Game.fixedScale = 1; setScale(S); render(); }, Game, Input, Events, MAPS, SPECIES, Battle, Overworld, heroStats, newGameState, startOverworld, UI, say, yesNo, startMenu, summaryScreen, bagScreen, equipScreen, optionsScreen, shopFlow, pickMoveToForget, blackText, dexScreen, talentScreen, craftScreen, Events, step(n = 1) { for (let i = 0; i < n; i++) tick(); render(); }, press(k, hold = 2, after = 6) { Input.set(k, true); for (let i = 0; i < hold; i++) tick(); Input.set(k, false); for (let i = 0; i < after; i++) tick(); render(); } };
 try { if (window.claude && window.claude.hot && window.claude.hot.ready) window.claude.hot.ready(boot); else boot((window.claude && window.claude.hot && window.claude.hot.data) || {}); } catch (e) { boot({}); }

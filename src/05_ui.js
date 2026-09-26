@@ -136,6 +136,7 @@ function heroStats(st = Game.st) {
   s.eva = a.agi * 0.4;        // 迴避率% = 敏捷×0.4
   s.vs = []; s.resist = {}; s.drain = 0; s.elem = 0; s.counter = 0; // equipment affixes & talents
   for (const T of TALENTS) { const r = (st.tal || {})[T.id] || 0; if (r) for (const k in T.st) s[k] = (s[k] || 0) + T.st[k] * r; }
+  const CL = CLASSES[st.cls]; if (CL) for (const k in CL.st) s[k] = (s[k] || 0) + CL.st[k];
   for (const slot in st.equip) { const it = st.equip[slot] && ITEMS[st.equip[slot]]; const f = it && it.aff; if (!f) continue; s.crit += f.crit || 0; s.hit += f.hit || 0; s.eva += f.eva || 0; s.drain += f.drain || 0; if (f.vs) s.vs.push(f.vs); if (f.resist) s.resist[f.resist[0]] = (s.resist[f.resist[0]] || 0) + f.resist[1]; }
   return s;
 }
@@ -169,6 +170,10 @@ function questList(st = Game.st) {
   const f = st.flags, L = [];
   L.push({ main: 1, n: '回家的路', t: !f.license ? '去村長家問問看回家的方法。' : !f.golem ? '前往北方的古岩遺跡，尋找異界之門。' : '門的力量還不夠……繼續尋找線索。（第一章完）', done: !!f.golem });
   if (f.q1) L.push({ n: '失蹤的弟弟', t: !f.q1res ? '花店姊姊的弟弟「小麥」去晨霧道路後沒回來。' : !f.q1done ? '回萌芽鎮告訴花店的姊姊。' : f.q1res === 'home' ? '完成：勸小麥回家了。' : '完成：替小麥保守了秘密。', done: !!f.q1done });
+  if (st.lv >= 8 && !st.cls) L.push({ n: '力量的覺醒', t: '村長好像有話要跟你說。（選擇職業）', done: false });
+  else if (st.cls && CLASSES[st.cls].tier === 1 && st.lv >= 14) L.push({ n: '更高的道路', t: '已經可以進階職業了。去找村長吧。', done: false });
+  if (f.caravanMet || f.caravan) L.push({ n: '商隊的危機', t: !f.caravan ? '晨霧道路上的商隊被魔物包圍了！' : f.caravan === 'saved' ? '完成：擊退了魔物，行商在萌芽鎮擺攤。' : '失敗：商隊沒能抵達萌芽鎮。', done: !!f.caravan });
+  if (f.wellCharm) L.push({ n: '井底更深處', t: f.crystalBoss ? '完成：擊敗了水晶魔像，覺醒了隱藏職業。' : (st.bag.rope ? '帶著繩索，從鎮上的井往下探索。' : '井底似乎還有更深的通道……需要繩索。'), done: !!f.crystalBoss });
   if (f.herb) L.push({ n: '會讓路的樹', t: f.f6 ? '完成：在迷霧森林深處找到了晨曦之劍。' : '藥草師說，迷霧森林西北角有一棵「會讓路的樹」。', done: !!f.f6 });
   if (f.wellCharm) L.push({ n: '井底的月光', t: '完成：從老井撈起了月光護符。', done: true });
   return L;
@@ -180,7 +185,7 @@ function heroCard(x, st) {
   drawWin(x, 4, 24, 168, 70, 'menu');
   x.fillStyle = '#141a30'; x.fillRect(8, 28, 50, 62); x.fillStyle = '#1b2344'; x.fillRect(8, 76, 50, 14); x.fillStyle = 'rgba(110,231,210,0.25)'; x.fillRect(8, 76, 50, 1);
   x.drawImage(Hero.frames.down[Math.floor(Game.frame / 20) % 4], 0, 0, 16, 22, 17, 30, 32, 44);
-  Font.draw(x, st.name, 64, 27, UIC.text, UIC.textSh); Font.drawR(x, 'Lv.' + st.lv, 166, 27, UIC.accent, UIC.textSh);
+  const nx = Font.draw(x, st.name, 64, 27, UIC.text, UIC.textSh); if (CLASSES[st.cls]) Font.draw(x, CLASSES[st.cls].n, nx + 4, 28, UIC.warm, UIC.textSh, 10); Font.drawR(x, 'Lv.' + st.lv, 166, 27, UIC.accent, UIC.textSh);
   if (st.status) statusBadge(x, st.status, 64, 45); else Font.draw(x, '狀態良好', 64, 42, UIC.good, UIC.textSh);
   Font.drawR(x, st.money + 'G', 166, 42, UIC.warm, UIC.textSh);
   const cur = st.exp - expForLevel(st.lv), need = expForLevel(st.lv + 1) - expForLevel(st.lv);
@@ -248,12 +253,12 @@ function* pickMoveToForget(newId) {
 const ITEM_ORDER = Object.keys(ITEMS);
 function bagList(filter) { const st = Game.st; return Object.keys(st.bag).filter(k => st.bag[k] > 0 && ITEMS[k] && (!filter || filter(ITEMS[k], k))).sort((a, b) => ITEM_ORDER.indexOf(a) - ITEM_ORDER.indexOf(b)); }
 function* bagScreen(mode = 'field') { // returns item id used (battle) or null
-  let tab = 0, idx = 0; const tabs = mode === 'battle' ? ['道具'] : ['道具', '裝備', '重要'];
-  const listFor = t => bagList(it => tabs[t] === '道具' ? (!it.key && !it.equip && (mode !== 'battle' || it.use !== 'boost')) : tabs[t] === '裝備' ? !!it.equip : !!it.key);
+  let tab = 0, idx = 0; const tabs = mode === 'battle' ? ['道具'] : ['道具', '裝備', '素材', '重要'];
+  const listFor = t => bagList(it => tabs[t] === '道具' ? (!it.key && !it.equip && !it.mat && (mode !== 'battle' || it.use !== 'boost')) : tabs[t] === '裝備' ? !!it.equip : tabs[t] === '素材' ? !!it.mat : !!it.key);
   const VIS = 7;
   const scr = { draw(x) {
     screenBG(x); headerBar(x, '背包'); Font.drawR(x, Game.st.money + ' G', W - 6, 2, UIC.warm, UIC.textSh);
-    tabs.forEach((t, i) => { const X = 4 + i * 57; drawBtn(x, X, 23, 54, 15, i === tab); Font.drawC(x, t, X + 27, 22, i === tab ? UIC.text : UIC.muted, UIC.textSh); });
+    const tw = Math.floor(171 / tabs.length); tabs.forEach((t, i) => { const X = 4 + i * tw; drawBtn(x, X, 23, tw - 3, 15, i === tab); Font.drawC(x, t, X + (tw - 3) / 2, 22, i === tab ? UIC.text : UIC.muted, UIC.textSh); });
     const list = listFor(tab); drawWin(x, 4, 40, 168, VIS * 18 + 10, 'menu');
     if (!list.length) Font.draw(x, '（空空如也）', 20, 46, UIC.muted, UIC.textSh);
     const top = Math.max(0, Math.min(idx - 3, list.length - VIS));
@@ -271,7 +276,7 @@ function* bagScreen(mode = 'field') { // returns item id used (battle) or null
     if (Input.pressed('b')) { Input.consume('b'); Sound.sfx('cancel'); break; }
     if (Input.pressed('a') && list[idx]) {
       Input.consume('a'); Sound.sfx('select'); const k = list[idx], it = ITEMS[k];
-      if (it.key) { yield* say(it.use === 'phone' ? phoneText() : it.d); continue; }
+      if (it.key || it.mat) { yield* say(it.use === 'phone' ? phoneText() : it.d); continue; }
       if (it.equip) { const r = yield* ask('要裝備' + it.n + '嗎？', ['裝備', '取消']); if (r === 0) { Game.st.equip[it.equip] = k; clampHP(); Sound.sfx('item'); yield* say(Game.st.name + '裝備了' + it.n + '！'); } continue; }
       const r = yield* ask('要使用' + it.n + '嗎？', ['使用', '取消']);
       if (r !== 0) continue;
@@ -353,21 +358,22 @@ function* optionsScreen() {
 
 /* ---------- Shop ---------- */
 function moneyWin(x) { drawWin(x, 2, 2, 86, 30, 'menu'); Font.draw(x, '金錢', 10, 3, UIC.muted, UIC.textSh); Font.drawR(x, Game.st.money + ' G', 80, 15, UIC.warm, UIC.textSh); }
-function* shopFlow() {
+function* shopFlow(stock) {
   const mw = { draw: moneyWin }; UI.push(mw);
+  if (!stock && Game.st.flags.caravan === 'lost' && !Game.st.flags.shopLost) { Game.st.flags.shopLost = 1; yield* say('商隊沒能抵達……好傷藥進不了貨了。'); }
   if (Game.st.flags.croc && !Game.st.flags.shopNew) { Game.st.flags.shopNew = 1; yield* say('橋通了之後，王都的商人送來了新貨！騎士長劍和鎖子甲，要看看嗎？'); }
   while (true) {
     const r = yield* ask('歡迎光臨！請問需要什麼呢？', ['購買', '賣出', '離開']);
-    if (r === 0) yield* shopBuy(); else if (r === 1) yield* shopSell(); else break;
+    if (r === 0) yield* shopBuy(stock); else if (r === 1) yield* shopSell(); else break;
   }
   UI.remove(mw); yield* say('謝謝惠顧！歡迎再來！');
 }
-function* shopBuy() {
-  let idx = 0; const list = shopList(); const VIS = 8;
+function* shopBuy(stock) {
+  let idx = 0; const list = stock || shopList(); const VIS = 8;
   const scr = { draw(x) {
     drawWin(x, 4, 36, 168, VIS * 18 + 10, 'menu');
     const top = Math.max(0, Math.min(idx - 3, list.length - VIS));
-    list.slice(top, top + VIS).forEach((k, i) => { const Y = 40 + i * 18; const it = ITEMS[k]; if (top + i === idx) selBar(x, 6, Y - 1, 164, 17); Font.draw(x, it.n, 14, Y, UIC.text, UIC.textSh); Font.drawR(x, it.price + 'G', 164, Y, UIC.warm, UIC.textSh); });
+    list.slice(top, top + VIS).forEach((k, i) => { const Y = 40 + i * 18; const it = ITEMS[k]; if (top + i === idx) selBar(x, 6, Y - 1, 164, 17); Font.draw(x, it.n, 14, Y, UIC.text, UIC.textSh); Font.drawR(x, priceOf(k) + 'G', 164, Y, UIC.warm, UIC.textSh); });
     if (top > 0) x.drawImage(UPARROW, 85, 37); if (top + VIS < list.length) x.drawImage(DOWNARROW, 85, 36 + VIS * 18 + 4);
     drawWin(x, 4, TB_Y + 1, W - 8, TB_H - 2, 'ow'); const it = ITEMS[list[idx]];
     Font.wrap(it.d + (it.equip ? '' : '（持有' + (Game.st.bag[list[idx]] || 0) + '）'), 150).slice(0, 3).forEach((l, i) => Font.draw(x, l, 12, TB_Y + 7 + i * 16, UIC.text, UIC.textSh));
@@ -378,18 +384,18 @@ function* shopBuy() {
     if (Input.pressed('b')) { Input.consume('b'); Sound.sfx('cancel'); break; }
     if (Input.pressed('a')) {
       Input.consume('a'); Sound.sfx('select'); const k = list[idx], it = ITEMS[k];
-      let qty = 1; const maxQ = Math.min(it.equip ? 1 : 99, Math.floor(Game.st.money / it.price));
-      if (it.equip && (Game.st.bag[k] || Object.values(Game.st.equip).includes(k))) { UI.remove(scr); yield* say('你已經有' + it.n + '了。'); UI.push(scr); continue; }
+      let qty = 1; const pr = priceOf(k); const maxQ = Math.min(it.equip || it.once ? 1 : 99, Math.floor(Game.st.money / pr));
+      if ((it.equip || it.once) && (Game.st.bag[k] || Object.values(Game.st.equip).includes(k))) { UI.remove(scr); yield* say('你已經有' + it.n + '了。'); UI.push(scr); continue; }
       if (maxQ < 1) { UI.remove(scr); yield* say('錢不夠喔。'); UI.push(scr); continue; }
-      if (!it.equip) {
-        const q = { draw(x) { drawWin(x, 80, TB_Y - 32, 94, 30, 'menu'); Font.draw(x, '×' + String(qty).padStart(2, '0'), 90, TB_Y - 25, UIC.text, UIC.textSh); Font.drawR(x, (qty * it.price) + 'G', 166, TB_Y - 25, UIC.warm, UIC.textSh); } };
+      if (!it.equip && !it.once) {
+        const q = { draw(x) { drawWin(x, 80, TB_Y - 32, 94, 30, 'menu'); Font.draw(x, '×' + String(qty).padStart(2, '0'), 90, TB_Y - 25, UIC.text, UIC.textSh); Font.drawR(x, (qty * pr) + 'G', 166, TB_Y - 25, UIC.warm, UIC.textSh); } };
         UI.push(q); let ok = false;
         while (true) { if (Input.repeat('up')) { qty = qty >= maxQ ? 1 : qty + 1; Sound.sfx('cursor'); } if (Input.repeat('down')) { qty = qty <= 1 ? maxQ : qty - 1; Sound.sfx('cursor'); } if (Input.repeat('right')) { qty = Math.min(maxQ, qty + 10); Sound.sfx('cursor'); } if (Input.repeat('left')) { qty = Math.max(1, qty - 10); Sound.sfx('cursor'); } if (Input.pressed('a')) { Input.consume('a'); ok = true; break; } if (Input.pressed('b')) { Input.consume('b'); break; } yield; }
         UI.remove(q); if (!ok) continue;
       }
       UI.remove(scr);
-      const yes = yield* yesNo(it.n + (it.equip ? '' : '×' + qty) + '，一共是' + (qty * it.price) + 'G，可以嗎？');
-      if (yes) { Game.st.money -= qty * it.price; Game.st.bag[k] = (Game.st.bag[k] || 0) + qty; Sound.sfx('save'); yield* say('好的！這是您的' + it.n + '。' + (it.equip ? '記得到背包或裝備畫面裝備喔！' : '')); }
+      const yes = yield* yesNo(it.n + (it.equip || it.once ? '' : '×' + qty) + '，一共是' + (qty * pr) + 'G，可以嗎？');
+      if (yes) { Game.st.money -= qty * pr; Game.st.bag[k] = (Game.st.bag[k] || 0) + qty; Sound.sfx('save'); yield* say('好的！這是您的' + it.n + '。' + (it.equip ? '記得到背包或裝備畫面裝備喔！' : '')); }
       UI.push(scr);
     }
     yield;
@@ -422,6 +428,31 @@ function* shopSell() {
   UI.remove(scr);
 }
 const sellPrice = k => ITEMS[k].sell ?? Math.floor(ITEMS[k].price / 2);
+
+/* ---------- Crafting ---------- */
+function* craftScreen() {
+  const st = Game.st; let idx = 0; const have = k => st.bag[k] || 0;
+  const can = R => Object.entries(R.mats).every(([k, n]) => have(k) >= n) && st.money >= (R.gold || 0);
+  const scr = { draw(x) {
+    screenBG(x); headerBar(x, '鐵匠工房'); Font.drawR(x, st.money + ' G', W - 6, 2, UIC.warm, UIC.textSh);
+    drawWin(x, 4, 24, 168, RECIPES.length * 17 + 8, 'menu');
+    RECIPES.forEach((R, i) => { const Y = 28 + i * 17, it = ITEMS[R.out]; if (i === idx) selBar(x, 6, Y - 1, 164, 16); Font.draw(x, it.n + (R.n > 1 ? '×' + R.n : ''), 14, Y, can(R) ? qCol(it) : UIC.dis, UIC.textSh); Font.drawR(x, can(R) ? '可製作' : '素材不足', 164, Y, can(R) ? UIC.accent : UIC.dis, UIC.textSh, 11); });
+    const R = RECIPES[idx], it = ITEMS[R.out], Y0 = 24 + RECIPES.length * 17 + 12; drawWin(x, 4, Y0, 168, H - Y0 - 4, 'menu'); let y = Y0 + 3;
+    Font.draw(x, it.equip ? '【' + QUALITY[it.q][0] + '】' + gearText(it) : it.d, 10, y, it.equip ? qCol(it) : UIC.text, UIC.textSh, 11); y += 15;
+    for (const [k, n] of Object.entries(R.mats)) { Font.draw(x, ITEMS[k].n, 14, y, UIC.text, UIC.textSh, 11); Font.drawR(x, have(k) + ' / ' + n, 164, y, have(k) >= n ? UIC.good : UIC.bad, UIC.textSh, 11); y += 13; }
+    if (R.gold) Font.drawR(x, '費用 ' + R.gold + ' G', 164, y, st.money >= R.gold ? UIC.warm : UIC.bad, UIC.textSh, 11);
+  } };
+  UI.push(scr);
+  while (true) {
+    if (Input.repeat('up')) { idx = (idx + RECIPES.length - 1) % RECIPES.length; Sound.sfx('cursor'); } if (Input.repeat('down')) { idx = (idx + 1) % RECIPES.length; Sound.sfx('cursor'); }
+    if (Input.pressed('b')) { Input.consume('b'); Sound.sfx('cancel'); break; }
+    if (Input.pressed('a')) { Input.consume('a'); const R = RECIPES[idx]; if (!can(R)) { Sound.sfx('bump'); continue; }
+      for (const [k, n] of Object.entries(R.mats)) st.bag[k] -= n; st.money -= R.gold || 0; st.bag[R.out] = (st.bag[R.out] || 0) + (R.n || 1);
+      UI.remove(scr); yield* itemGet('鐵匠做好了「' + ITEMS[R.out].n + '」！'); UI.push(scr); }
+    yield;
+  }
+  UI.remove(scr);
+}
 
 /* ---------- Talents ---------- */
 function* talentScreen() {

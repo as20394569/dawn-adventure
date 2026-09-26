@@ -9,7 +9,7 @@ const STATUS_NAME = { psn: '中毒', par: '麻痺', slp: '睡眠', brn: '灼傷'
 const IMMUNE = { psn: '毒', brn: '火', par: '雷' };
 const battleImgCache = {};
 // battle sprites: rendered at a low native size, then scaled 3x (same chunky pixel look as the hero)
-const FOE_NATIVE = { golem: 28, mossGiant: 28 }, FOE_SCALE = 3, FOE_FOOT = 106;
+const FOE_NATIVE = { golem: 28, mossGiant: 28, crystalGolem: 28 }, FOE_SCALE = 3, FOE_FOOT = 106;
 function battleSprite(key) {
   if (battleImgCache[key]) return battleImgCache[key];
   const n = FOE_NATIVE[key] || 24, S = FOE_SCALE, sm = buildShaded(ART[key], n, n / 64);
@@ -24,7 +24,7 @@ function makeFoe(sp, lv, kind) {
   const s = {}; STAT_KEYS.forEach((k, i) => s[k] = statCalc(d.base[i], lv, iv, k === 'hp'));
   const hpMul = kind === 'boss' ? BOSS_HP : kind === 'elite' ? ELITE_HP : 1; s.hp = Math.floor(s.hp * hpMul);
   const known = d.learn.filter(([l]) => l <= lv).map(([, m]) => m); const moves = [...new Set(known)].slice(-4).map(id => ({ id }));
-  return { sp, n: d.n, t: d.t, lv, stats: s, hp: s.hp, maxhp: s.hp, status: null, moves, stages: { atk: 0, def: 0, spa: 0, spd: 0, spe: 0 }, wet: 0, kind, boss: kind === 'boss', elite: kind === 'elite', sleepT: 0 };
+  return { sp, n: d.n, t: d.t, lv, stats: s, hp: s.hp, maxhp: s.hp, status: null, moves, stages: { atk: 0, def: 0, spa: 0, spd: 0, spe: 0 }, wet: 0, trait: d.trait, kind, boss: kind === 'boss', elite: kind === 'elite', sleepT: 0 };
 }
 function buildBattleBG(kind) {
   const c = mkCanvas(W, BH), x = c.getContext('2d'), r = srand(kind === 'ruins' ? 9 : 5);
@@ -188,6 +188,7 @@ class Battle {
         if (a.type === 'move') yield* this.useMove(u, tg, a.id);
         else if (a.type === 'defend') { yield* this.msg(u.n + '擺出了防禦的架勢！'); yield* FX.guard.call(this, this.center(u)); }
         else if (a.type === 'item') { const r = yield* this.useItemAct(a.id); if (r === 'escaped') return yield* this.end('run'); }
+        else if (a.type === 'foeHeal') { u.heals = (u.heals || 0) + 1; yield* this.msg(u.n + '吸收了周圍的養分！'); yield* FX.heal.call(this, this.center(u)); u.hp = Math.min(u.maxhp, u.hp + Math.floor(u.maxhp * 0.3)); yield* this.animHP(u); }
         else if (a.type === 'run') { if (yield* this.tryRun()) return yield* this.end('run'); }
         if (this.F.hp <= 0) { yield* this.foeFaint(); yield* this.victory(); return yield* this.end('win'); }
         if (this.H.hp <= 0) { yield* this.heroFaint(); return yield* this.end('lose'); }
@@ -234,14 +235,15 @@ class Battle {
   }
   effSpe(b) { return b.stats.spe * stageMul(b.stages.spe) * (b.status === 'par' ? 0.25 : 1); }
   order(ha, fa) {
-    const pr = a => a.type === 'run' ? 7 : a.type === 'item' ? 6 : a.type === 'defend' ? 5 : (MOVES[a.id].prio || 0);
-    const ph = pr(ha), pf = pr(fa);
+    const pr = a => a.type === 'run' ? 7 : a.type === 'item' ? 6 : a.type === 'defend' ? 5 : a.type === 'foeHeal' ? 1 : (MOVES[a.id].prio || 0);
+    const ph = pr(ha), pf = pr(fa) + (this.F.trait === 'swift' ? 0.5 : 0);
     let heroFirst = ph !== pf ? ph > pf : (this.effSpe(this.H) !== this.effSpe(this.F) ? this.effSpe(this.H) > this.effSpe(this.F) : chance(0.5));
     return heroFirst ? [['H', ha], ['F', fa]] : [['F', fa], ['H', ha]];
   }
   foeChoose() {
     const F = this.F, H = this.H;
     if (F.charging) return { type: 'move', id: F.charging };
+    if (F.trait === 'healer' && F.hp < F.maxhp * 0.5 && (F.heals || 0) < 2 && chance(0.6)) return { type: 'foeHeal' };
     let pool = F.moves.map(m => m.id);
     if (F.boss && this.phase2) { pool = ['rockSlide', 'stomp', 'rockThrow']; if (this.fistCD <= 0) { this.fistCD = 3; return { type: 'move', id: 'golemFist' }; } this.fistCD--; }
     const w = pool.map(id => {
@@ -263,7 +265,7 @@ class Battle {
     let D = (phys ? t.stats.def : t.stats.spd) * stageMul(crit ? Math.min(0, ds) : ds);
     if (phys && u.status === 'brn') A *= 0.5;
     const base = Math.floor(Math.floor(Math.floor(2 * u.lv / 5 + 2) * mv.pow * A / D) / 50) + 2;
-    const mult = typeMult(mv.t, t.t); let m = mult * (rnd(85, 100) / 100); if (crit) m *= 1.5; if (u.t && u.t === mv.t) m *= 1.5; if (u.hero) { m *= HERO_POWER; if (u.stats.elem && mv.t !== '一般') m *= 1 + u.stats.elem / 100; for (const [ty, p] of u.stats.vs || []) if (t.t === ty) m *= 1 + p / 100; }
+    const mult = typeMult(mv.t, t.t); let m = mult * (rnd(85, 100) / 100); if (crit) m *= 1.5; if (u.t && u.t === mv.t) m *= 1.5; if (u.hero) { m *= HERO_POWER; const S = u.stats; if (S.elem && mv.t !== '一般') m *= 1 + S.elem / 100; if (S.fireUp && mv.t === '火') m *= 1 + S.fireUp / 100; if (S.boltUp && mv.t === '雷') m *= 1 + S.boltUp / 100; if (S.rage && u.hp < u.maxhp / 2) m *= 1.3; for (const [ty, p] of u.stats.vs || []) if (t.t === ty) m *= 1 + p / 100; }
     if (t.hero && t.stats.resist && t.stats.resist[mv.t]) m *= 1 - t.stats.resist[mv.t] / 100;
     return { dmg: Math.max(1, Math.floor(base * m)), mult, crit };
   }
@@ -309,6 +311,7 @@ class Battle {
         if (mv.eff.stat) yield* this.statChange(t, mv.eff.stat);
         if (mv.eff.flinch) t.flinched = true;
       }
+      if (!t.hero && t.trait === 'berserk' && !t.raged && t.hp > 0 && t.hp < t.maxhp * 0.4) { t.raged = 1; this.tintF = { c: '#ff3020', a: 0.5 }; yield* wait(12); this.tintF = null; yield* this.msg(t.n + '被激怒了！'); yield* this.statChange(t, { atk: 2 }); }
       if (!t.hero && t.boss && !this.phase2 && t.hp > 0 && t.hp < t.maxhp * 0.5) yield* this.bossPhase2();
       if (!t.hero && t.boss && this.phase2 && !this.collapse && t.hp > 0 && t.hp < t.maxhp * 0.25) { this.collapse = true; Sound.sfx('quake'); this.shake = 40; yield* this.msg(t.n + '猛力撞擊地面！'); yield* this.msg('遺跡開始崩塌了！每回合都會有落石掉下來！'); yield* this.msg('（選擇「防禦」就能擋住落石。）'); }
       return;
@@ -395,6 +398,7 @@ class Battle {
     yield* this.gainExp(exp);
     const gold = F.boss ? 1000 : sp.gold * F.lv;
     if (gold) { st.money += gold; yield* this.msg(st.name + '得到了' + gold + ' G！'); }
+    if (sp.mat && !F.elite && !F.boss && chance(0.5)) { st.bag[sp.mat] = (st.bag[sp.mat] || 0) + 1; yield* this.msg('得到了素材「' + ITEMS[sp.mat].n + '」！', { hold: 30 }); }
     if (sp.drop) { const it = ITEMS[sp.drop]; st.bag[sp.drop] = (st.bag[sp.drop] || 0) + 1; Sound.jingle('item'); yield* this.msg(F.n + '掉落了【' + QUALITY[it.q][0] + '】' + it.n + '！', { wait: true }); yield* this.msg(gearText(it) + '\n（可以在背包或裝備畫面裝備）', { wait: true }); }
   }
   *gainExp(amount) {
