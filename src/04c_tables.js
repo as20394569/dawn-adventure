@@ -20,7 +20,7 @@ const MON_PANEL = {
   mudSlime: { lv: 15, hp: 47, atk: 21, def: 23, spa: 23, spd: 23, spe: 15 },
   crystalPebble: { lv: 16, hp: 45, atk: 25, def: 32, spa: 21, spd: 24, spe: 16 },
   golem: { lv: 14, hp: 105, atk: 21, def: 30, spa: 20, spd: 23, spe: 17, crit: 8 },
-  crystalGolem: { lv: 18, hp: 320, atk: 30, def: 40, spa: 29, spd: 34, spe: 24, crit: 10, hit: 5 },
+  crystalGolem: { lv: 18, hp: 250, atk: 30, def: 40, spa: 29, spd: 34, spe: 24, crit: 10, hit: 5 },
 };
 
 // Random affix table. slots: which gear slots may roll it. min/max are for tier 1; higher tiers scale +35% per tier.

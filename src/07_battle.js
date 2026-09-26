@@ -196,7 +196,7 @@ class Battle {
         if (a.type === 'move') yield* this.useMove(u, tg, a.id);
         else if (a.type === 'defend') { yield* this.msg(u.n + '擺出了防禦的架勢！'); if (u.hero && u.mp < u.maxmp) { const g = Math.max(1, Math.round(u.maxmp * 0.12)); u.mp += g; yield* this.msg('調整呼吸，恢復了' + g + '點MP。', { hold: 18 }); } yield* FX.guard.call(this, this.center(u)); if (u.stats.fx.guardHeal && u.hp < u.maxhp) { u.hp = Math.min(u.maxhp, u.hp + Math.ceil(u.maxhp * 0.15)); yield* this.animHP(u); yield* this.msg('守護之心回復了HP！', { hold: 20 }); } }
         else if (a.type === 'item') { const r = yield* this.useItemAct(a.id); if (r === 'escaped') return yield* this.end('run'); }
-        else if (a.type === 'mirror') { this.cg.mirror = 2; Sound.sfx('charge'); this.tintF = { c: '#c8f4ff', a: 0.6 }; yield* wait(14); this.tintF = null; yield* this.msg(u.n + '的表面變得像鏡子一樣！'); yield* this.msg('（這段期間，魔法攻擊會被反射回來！）'); }
+        else if (a.type === 'mirror') { this.cg.mirror = 2; Sound.sfx('charge'); this.tintF = { c: '#c8f4ff', a: 0.6 }; yield* wait(14); this.tintF = null; yield* this.msg(u.n + '的表面變得像鏡子一樣！'); yield* this.msg('（下一回合的魔法攻擊會被反射回來！用物理攻擊或防禦吧。）'); }
         else if (a.type === 'steal') { const st = Game.st, g = Math.min(st.money, Math.max(50, Math.floor(st.money * 0.1))); this.bb.steals++; yield* MFX.steal.call(this, this.center(u), this.center(this.H), u); st.money -= g; this.bb.stolen += g; yield* this.msg(u.n + '搶走了' + g + ' G！'); if (this.bb.steals === 1) yield* this.msg('（打倒他就能把錢搶回來！）'); }
         else if (a.type === 'foeHeal') { u.heals = (u.heals || 0) + 1; yield* this.msg(u.n + '吸收了周圍的養分！'); yield* MFX.regrow.call(this, this.center(u)); u.hp = Math.min(u.maxhp, u.hp + Math.floor(u.maxhp * 0.3)); yield* this.animHP(u); }
         else if (a.type === 'flee') { Sound.sfx('run'); yield* tween(16, t => this.alphaF = 1 - t); yield* this.msg(u.n + '逃走了！'); return yield* this.end('run'); }
@@ -318,9 +318,9 @@ class Battle {
       if (r.mult > 1) yield* this.msg('打中弱點！'); else if (r.mult < 1) yield* this.msg('被抵抗了……');
       if (t.defending) yield* this.msg(t.n + '的防禦擋下了一半的傷害！');
       if (endured) yield* this.msg(t.n + '咬緊牙關撐住了！（不屈）');
-      if (mirrored && u.hp > 0) { const rf = Math.min(u.hp, Math.max(1, dmg)); u.hp -= rf; this.blinkH = 12; this.spawn({ k: 'line', x1: T0.x, y1: T0.y, x2: U0.x, y2: U0.y, c: '#c8f4ff', w: 3, grow: 3, life: 12 }); yield* this.animHP(u); yield* this.msg('魔法被鏡面反射了！' + u.n + '受到了' + rf + '點傷害！'); }
-      if (this.cg && !t.hero && this.cg.shards > 0 && mv.cat === '物') { this.cg.shards--; Sound.sfx('rock'); this.sparks(T0.x, T0.y, 10, ['#c8f4ff', '#80c0ff'], 2.5); yield* this.msg(this.cg.shards ? '擊碎了一塊水晶碎片！（剩下' + this.cg.shards + '塊）' : '水晶碎片全部被擊碎了！'); }
-      if (this.cg && !t.hero && t.hp > 0) { const c = this.cg; if (c.stage < 1 && t.hp < t.maxhp * 0.7) { c.stage = 1; c.shards = 3; Sound.sfx('charge'); yield* this.msg('水晶碎片浮了起來，環繞著' + t.n + '！'); yield* this.msg('（碎片還在時，傷害會被減弱，而且它會回復。用物理攻擊擊碎碎片！）'); } if (c.stage < 2 && t.hp < t.maxhp * 0.35) { c.stage = 2; c.flood = true; Sound.sfx('water'); this.shake = 30; yield* this.msg('水道的牆壁裂開，大水湧了進來！'); yield* this.msg('（每回合都會全身濕透……小心雷擊！）'); } }
+      if (mirrored && u.hp > 0) { const rf = Math.min(u.hp - 1 > 0 ? u.hp - 1 : u.hp, Math.max(1, Math.floor(dmg * 0.6))); u.hp -= rf; this.blinkH = 12; this.spawn({ k: 'line', x1: T0.x, y1: T0.y, x2: U0.x, y2: U0.y, c: '#c8f4ff', w: 3, grow: 3, life: 12 }); yield* this.animHP(u); yield* this.msg('魔法被鏡面反射了！' + u.n + '受到了' + rf + '點傷害！'); }
+      if (this.cg && !t.hero && this.cg.shards > 0 && dmg > 0) { this.cg.shards = Math.max(0, this.cg.shards - (mv.cat === '物' ? 2 : 1)); Sound.sfx('rock'); this.sparks(T0.x, T0.y, 10, ['#c8f4ff', '#80c0ff'], 2.5); yield* this.msg(this.cg.shards ? '擊碎了一塊水晶碎片！（剩下' + this.cg.shards + '塊）' : '水晶碎片全部被擊碎了！'); }
+      if (this.cg && !t.hero && t.hp > 0) { const c = this.cg; if (c.stage < 1 && t.hp < t.maxhp * 0.7) { c.stage = 1; c.shards = 2; Sound.sfx('charge'); yield* this.msg('水晶碎片浮了起來，環繞著' + t.n + '！'); yield* this.msg('（碎片還在時，傷害會被減弱，而且它會回復。攻擊它就能擊碎碎片，物理攻擊一次能打碎兩塊！）'); } if (c.stage < 2 && t.hp < t.maxhp * 0.35) { c.stage = 2; c.flood = true; Sound.sfx('water'); this.shake = 30; yield* this.msg('水道的牆壁裂開，大水湧了進來！'); yield* this.msg('（每回合都會全身濕透……小心雷擊！）'); } }
       if (u.hero && t.hp > 0 && u.stats.fx.double && mv.cat === '物' && chance(0.25)) { const d2 = Math.min(t.hp, Math.max(1, Math.floor(dmg * 0.5))); yield* this.lunge(u, 8, 2); t.hp -= d2; Sound.sfx('hit'); yield* this.impact(t, 0); yield* this.animHP(t); yield* this.msg('連擊！追加了' + d2 + '點傷害！', { hold: 24 }); }
       if (t.hero && !u.hero && t.stats.fx.thorns && u.hp > 0 && dmg > 0) { const d3 = Math.min(u.hp, Math.max(1, Math.floor(dmg * 0.25))); u.hp -= d3; this.blinkF = 12; yield* this.animHP(u); yield* this.msg('荊棘反彈了' + d3 + '點傷害！', { hold: 24 }); }
       if (u.hero && u.stats.fx.cleave && mv.cat === '物' && t.hp > 0 && chance(0.3)) { yield* this.msg('劈裂！', { hold: 16 }); yield* this.statChange(t, { def: -1 }); }
@@ -344,8 +344,8 @@ class Battle {
       }
       if (!t.hero && t.trait === 'berserk' && !t.raged && t.hp > 0 && t.hp < t.maxhp * 0.4) { t.raged = 1; this.tintF = { c: '#ff3020', a: 0.5 }; yield* wait(12); this.tintF = null; yield* this.msg(t.n + '被激怒了！'); yield* this.statChange(t, { atk: 2 }); }
       if (!t.hero && this.bb && !this.bb.called && t.hp > 0 && t.hp < t.maxhp * 0.5) { this.bb.called = true; this.bb.gang = 4; Sound.sfx('exclaim'); yield* this.msg(t.n + '吹響了口哨！'); yield* this.msg('手下們從暗處衝了出來！'); yield* this.msg('（手下每回合會丟飛刀。選擇「防禦」可以擋下。）'); }
-      if (!t.hero && t.boss && !this.bb && !this.phase2 && t.hp > 0 && t.hp < t.maxhp * 0.5) yield* this.bossPhase2();
-      if (!t.hero && t.boss && !this.bb && this.phase2 && !this.collapse && t.hp > 0 && t.hp < t.maxhp * 0.25) { this.collapse = true; Sound.sfx('quake'); this.shake = 40; yield* this.msg(t.n + '猛力撞擊地面！'); yield* this.msg('遺跡開始崩塌了！每回合都會有落石掉下來！'); yield* this.msg('（選擇「防禦」就能擋住落石。）'); }
+      if (!t.hero && t.boss && !this.bb && !this.cg && !this.phase2 && t.hp > 0 && t.hp < t.maxhp * 0.5) yield* this.bossPhase2();
+      if (!t.hero && t.boss && !this.bb && !this.cg && this.phase2 && !this.collapse && t.hp > 0 && t.hp < t.maxhp * 0.25) { this.collapse = true; Sound.sfx('quake'); this.shake = 40; yield* this.msg(t.n + '猛力撞擊地面！'); yield* this.msg('遺跡開始崩塌了！每回合都會有落石掉下來！'); yield* this.msg('（選擇「防禦」就能擋住落石。）'); }
       return;
     }
     // status moves
@@ -383,7 +383,7 @@ class Battle {
     yield* this.msg(b.n + { psn: '中毒了！', par: '麻痺了！可能會無法行動！', slp: '睡著了！', brn: '灼傷了！' }[s]);
   }
   *endTurn() {
-    if (this.cg && this.F.hp > 0) { const c = this.cg; if (c.mirror) c.mirror--; if (c.shards > 0 && this.F.hp < this.F.maxhp) { this.F.hp = Math.min(this.F.maxhp, this.F.hp + Math.ceil(this.F.maxhp * 0.04)); yield* this.animHP(this.F); yield* this.msg('水晶碎片讓' + this.F.n + '回復了！', { hold: 20 }); } if (c.flood && this.H.hp > 0) { this.H.wet = 2; Sound.sfx('water'); yield* this.msg(this.H.n + '被大水淋得全身濕透！', { hold: 20 }); } }
+    if (this.cg && this.F.hp > 0) { const c = this.cg; if (c.mirror) c.mirror--; if (c.shards > 0 && this.F.hp < this.F.maxhp) { this.F.hp = Math.min(this.F.maxhp, this.F.hp + Math.ceil(this.F.maxhp * 0.03)); yield* this.animHP(this.F); yield* this.msg('水晶碎片讓' + this.F.n + '回復了！', { hold: 20 }); } if (c.flood && this.H.hp > 0) { this.H.wet = 2; Sound.sfx('water'); yield* this.msg(this.H.n + '被大水淋得全身濕透！', { hold: 20 }); } }
     if (this.cfg.id === 'mossGiant' && Game.st.flags.q2res === 'stay' && !Game.st.flags.q2done && this.F.hp > 0 && this.H.hp > 0) { yield* FX.sting.call(this, this.center(this.H), this.center(this.F)); const d = Math.ceil(this.F.maxhp * 0.06); this.F.hp = Math.max(0, this.F.hp - d); this.blinkF = 12; yield* this.animHP(this.F); yield* this.msg('提姆射出了箭！造成' + d + '點傷害！', { hold: 24 }); }
     if (this.H.stats.fx.deathWard && !this.dwUsed && this.H.hp > 0 && this.H.hp < this.H.maxhp * 0.3) { this.dwUsed = true; this.H.shield = 3; yield* FX.barrier.call(this, this.center(this.H)); yield* this.msg('亡者守護發動了！獲得了護盾！', { hold: 24 }); }
     if (this.H.stats.mpRegen && this.H.hp > 0 && this.H.mp < this.H.maxmp) this.H.mp = Math.min(this.H.maxmp, this.H.mp + Math.max(1, Math.ceil(this.H.maxmp * this.H.stats.mpRegen / 100)));
