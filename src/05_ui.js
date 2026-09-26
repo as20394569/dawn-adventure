@@ -171,7 +171,8 @@ function questList(st = Game.st) {
   if (f.wellCharm) L.push({ n: '井底更深處', t: f.crystalBoss ? '完成：擊敗了水晶魔像，覺醒了隱藏職業。' : (st.bag.rope ? '帶著繩索，從鎮上的井往下探索。' : '井底似乎還有更深的通道……需要繩索。'), done: !!f.crystalBoss });
   if (f.herb) L.push({ n: '會讓路的樹', t: f.f6 ? '完成：在迷霧森林深處找到了晨曦之劍。' : '藥草師說，迷霧森林西北角有一棵「會讓路的樹」。', done: !!f.f6 });
   if (f.wellCharm) L.push({ n: '井底的月光', t: '完成：從老井撈起了月光護符。', done: true });
-  return L;
+  extraQuests(st, L);
+  return L.filter(q => !q.done).concat(L.filter(q => q.done));
 }
 
 /* ---------- Status (summary) screen ---------- */
@@ -188,14 +189,15 @@ function heroCard(x, st) {
   drawExpBar(x, 64, 84, 100, cur / need);
 }
 function* summaryScreen() {
-  let page = 0, mi = 0; const scr = { draw(x) {
+  let page = 0, mi = 0, qTop = 0; const scr = { draw(x) {
     const st = Game.st, s = heroStats(); screenBG(x);
     headerBar(x, ['冒險者資料', '技能一覽', '任務'][page]);
     Font.drawR(x, '← ' + (page + 1) + '/3 →', W - 6, 2, UIC.muted, UIC.textSh);
     heroCard(x, st);
     if (page === 2) {
       drawWin(x, 4, 98, 168, 154, 'menu'); let Y = 102;
-      for (const q of questList(st)) { Font.draw(x, (q.main ? '主線　' : '支線　') + q.n, 12, Y, q.done ? UIC.muted : q.main ? UIC.accent : UIC.warm, UIC.textSh); Y += 16; for (const l of Font.wrap(q.t, 150).slice(0, 3)) { Font.draw(x, l, 14, Y, q.done ? UIC.dis : UIC.text, UIC.textSh, 11); Y += 14; } Y += 6; if (Y > 236) break; }
+      const QL = questList(st); if (qTop > 0) x.drawImage(UPARROW, 86, 99); if (qTop < QL.length - 1) Font.drawR(x, (qTop + 1) + '/' + QL.length + ' ↑↓', 166, 238, UIC.muted, UIC.textSh, 9);
+      for (const q of QL.slice(qTop)) { Font.draw(x, (q.main ? '主線　' : '支線　') + q.n, 12, Y, q.done ? UIC.muted : q.main ? UIC.accent : UIC.warm, UIC.textSh); Y += 16; for (const l of Font.wrap(q.t, 150).slice(0, 3)) { Font.draw(x, l, 14, Y, q.done ? UIC.dis : UIC.text, UIC.textSh, 11); Y += 14; } Y += 6; if (Y > 236) break; }
     } else if (page === 0) {
       const a = heroAttr(st), eqB = eqBonus(st);
       drawWin(x, 4, 98, 168, 62, 'menu');
@@ -214,6 +216,7 @@ function* summaryScreen() {
   UI.push(scr);
   while (true) {
     if (Input.pressed('left') || Input.pressed('right')) { page = (page + (Input.pressed('left') ? 2 : 1)) % 3; Sound.sfx('cursor'); }
+    if (page === 2) { const n = questList().length; if (Input.repeat('up') && qTop > 0) { qTop--; Sound.sfx('cursor'); } if (Input.repeat('down') && qTop < n - 1) { qTop++; Sound.sfx('cursor'); } }
     if (page === 1) { if (Input.repeat('up')) { mi = (mi + Game.st.moves.length - 1) % Game.st.moves.length; Sound.sfx('cursor'); } if (Input.repeat('down')) { mi = (mi + 1) % Game.st.moves.length; Sound.sfx('cursor'); } }
     if (Input.pressed('a') && page !== 1) { Input.consume('a'); page = (page + 1) % 3; Sound.sfx('cursor'); }
     else if (Input.pressed('b')) { Input.consume('a', 'b'); Sound.sfx('cancel'); break; }
@@ -595,14 +598,15 @@ function* dexScreen() {
 function* startMenu() {
   Sound.sfx('menu'); let idx = Game.menuIdx || 0;
   while (true) {
-    const r = yield* choose(['狀態', '天賦', '背包', '裝備', '圖鑑', '存檔', '設定', '關閉'].map(t => t === '天賦' && Game.st.tp ? { t, r: '●', col: UIC.warm } : t), { x: W - 74, y: 4, w: 70, index: idx });
-    if (r < 0 || r === 7) break; idx = r; Game.menuIdx = r;
+    const r = yield* choose(['狀態', '天賦', '背包', '裝備', '圖鑑', '紀錄', '存檔', '設定', '關閉'].map(t => t === '天賦' && Game.st.tp ? { t, r: '●', col: UIC.warm } : t), { x: W - 74, y: 4, w: 70, index: idx });
+    if (r < 0 || r === 8) break; idx = r; Game.menuIdx = r;
     if (r === 0) yield* summaryScreen();
     if (r === 1) yield* talentScreen();
     if (r === 2) yield* bagScreen('field');
     if (r === 3) yield* equipScreen();
     if (r === 4) yield* dexScreen();
-    if (r === 5) { const ok = yield* yesNo('要記錄目前的冒險進度嗎？'); if (ok) { const good = saveGame(); if (good) { Sound.sfx('save'); yield* say(Game.st.name + '把冒險記錄了下來！'); } else yield* say('無法存檔……這個瀏覽器可能不允許儲存資料。'); } break; }
-    if (r === 6) yield* optionsScreen();
+    if (r === 5) yield* recordScreen();
+    if (r === 6) { const ok = yield* yesNo('要記錄目前的冒險進度嗎？'); if (ok) { const good = saveGame(); if (good) { Sound.sfx('save'); yield* say(Game.st.name + '把冒險記錄了下來！'); } else yield* say('無法存檔……這個瀏覽器可能不允許儲存資料。'); } break; }
+    if (r === 7) yield* optionsScreen();
   }
 }

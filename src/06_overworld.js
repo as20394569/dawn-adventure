@@ -2,7 +2,7 @@
 const CAM_X = Math.floor(W / 2) - 8, CAM_Y = 100;
 const DIRS = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] };
 const OPP = { up: 'down', down: 'up', left: 'right', right: 'left' };
-const SOLID = new Set('TWobSFPRXYUxwckhaBQKCpV'.split(''));
+const SOLID = new Set('TWobSFPRXYUNxwckhaBQKCpV'.split(''));
 const hash2 = (x, y) => ((x * 73856093) ^ (y * 19349663)) >>> 0;
 
 class GameMap {
@@ -32,7 +32,7 @@ class Overworld {
     this.p = new Entity({ x, y, dir: st.dir }); this.p.isPlayer = true;
     this.npcs = (this.map.d.npcs || []).filter(n => !n.show || n.show(st)).map(n => new Entity({ ...n, frames: npcFrames(n.look) }));
     this.elites = (this.map.d.elites || []).filter(e => !st.flags[e.id]).map(e => new Entity({ ...e, img: monsterMini(e.sp, 24) }));
-    this.items = (this.map.d.items || []).filter(i => !st.flags[i.id]).map(i => new Entity({ ...i }));
+    this.items = (this.map.d.items || []).filter(i => !st.flags[i.id] && (!i.show || i.show(st))).map(i => new Entity({ ...i }));
     st.gath = st.gath || {}; for (const g of this.map.d.gathers || []) if (st.gath[g.id] === undefined || (st.steps || 0) - st.gath[g.id] > 150) this.items.push(new Entity({ ...g, gather: 1 }));
     if (st.flags.caravanMet && !st.flags.caravan && id !== 'route') st.flags.caravan = 'lost';
     const bd = this.map.d.boss; this.boss = bd && !st.flags[bd.flag || 'golem'] ? new Entity({ ...bd, img: monsterMini(bd.sp, 36), w2: 1 }) : null;
@@ -40,7 +40,7 @@ class Overworld {
     this.conn = {}; const c = this.map.d.connect || {}; for (const k in c) this.conn[k] = { m: getMap(c[k].map), dx: c[k].dx };
     if (this.map.d.music) Sound.play(this.map.d.music);
     if (!silent && this.map.d.name !== prev && (this.map.d.outdoor || id === 'ruins')) this.popup = { name: this.map.d.name, t: 0 };
-    this.checkSight();
+    markVis(this.map, x, y); this.checkSight();
   }
   tileAt(x, y) {
     const m = this.map;
@@ -67,6 +67,7 @@ class Overworld {
     this.updateNPCs();
     this.updateMove(this.p);
     if (this.script) { const r = this.script.next(); if (r.done) this.script = null; return; }
+    if (this.t % 30 === 0) checkAch();
     if (this.p.moving || this.p.jump) return;
     // input
     if (Input.pressed('start')) { Input.consume('start'); this.run(startMenu()); return; }
@@ -120,7 +121,7 @@ class Overworld {
     }
   }
   onStep() {
-    const p = this.p, st = this.st; st.x = p.x; st.y = p.y; st.steps = (st.steps || 0) + 1;
+    const p = this.p, st = this.st; st.x = p.x; st.y = p.y; st.steps = (st.steps || 0) + 1; markVis(this.map, p.x, p.y);
     const c = this.tileAt(p.x, p.y);
     if (c === '#') { this.anim['g' + p.x + ',' + p.y] = 10; Sound.sfx('grass'); }
     // poison
@@ -178,6 +179,7 @@ class Overworld {
     if (c === 'Y') { this.run(Events.spring(this)); return true; }
     if (c === 't') { this.run(say(this.st.flags.golem ? '樹輕輕搖晃，枝葉讓出了一條路。' : '一棵古老的大樹。樹幹上有奇妙的紋路……好像在沉睡。')); return true; }
     if (c === 'U') { this.run(Events.well(this)); return true; }
+    if (c === 'N') { this.run(Events.board(this)); return true; }
     const flavor = { k: '書架上擺滿了關於魔物與冒險的書。', w: '窗外是萌芽鎮悠閒的風景。', c: '燭火靜靜地搖曳著。', h: '架子上整齊地擺滿了商品。', K: '書架上有一本《魔物屬性入門》。\n「火剋草、草剋水、水剋火。岩石怕水也怕草。」', V: '木箱裡裝滿了蘋果和藥瓶。', Q: '桌上放著熱騰騰的早餐。', o: '一塊大石頭。', b: '修剪整齊的灌木叢。' };
     if (c === 'B' && this.map.id === 'home') { this.run(Events.bed(this)); return true; }
     if (flavor[c]) { this.run(say(flavor[c])); return true; }
@@ -193,7 +195,7 @@ class Overworld {
     const tb = new TextBox(st.name + '撿到了' + nm + '！'); UI.push(tb);
     for (let i = 0; i < fr || !tb.done; i++) { if (i >= 30 || tb.state !== 'end') tb.update(); yield; if (tb.done && i >= fr) break; }
     UI.remove(tb);
-    yield* say(st.name + '把' + ITEMS[it.item].n + '放進了背包。');
+    yield* say(st.name + '把' + (ITEMS[it.item] ? ITEMS[it.item].n : '它') + '放進了' + (GEAR[it.item] ? '裝備欄。' : '背包。'));
   }
   *warp(id, x, y, dir, door) {
     Sound.sfx('door'); yield* fadeOut(12); this.load(id, x, y, dir); yield* wait(4); yield* fadeIn(12);
@@ -302,6 +304,7 @@ class Overworld {
       case 'U': base(); break;
       case 'b': x.drawImage(Tiles.bush, sx, sy); break;
       case 'S': x.drawImage(Tiles.sign, sx, sy); break;
+      case 'N': x.drawImage(Tiles.board, sx, sy); break;
       case 'F': { let m = 0; if (this.tileAt(tx + 1, ty) === 'F') m |= 2; if (this.tileAt(tx - 1, ty) === 'F') m |= 8; x.drawImage(Tiles.fence(m), sx, sy); break; }
       case 's': case 'P': x.drawImage(Tiles.stone(h % 2), sx, sy); break;
       case 'm': x.drawImage(Tiles.stone(2), sx, sy); break;

@@ -89,7 +89,7 @@ function gearLines(g) { // [base stats text, special text]
 const gearText = g => gearLines(g).filter(Boolean).join(' ');
 const gearName = g => '【' + GQ[g.q][0] + '】' + GEAR[g.b].n + (g.e ? ' +' + g.e : '');
 const gearShort = g => GEAR[g.b].n + (g.e ? ' +' + g.e : '');
-const enhanceCost = g => { const e = (g.e || 0) + 1, t = GEAR[g.b].t; return { gold: e * 150 * t, mats: t <= 2 ? { stone: e } : t === 3 ? { stone: e, gel: e } : { crystal: e }, rate: e <= 3 ? 1 : e === 4 ? 0.75 : 0.5 }; };
+const enhanceCost = g => { const e = (g.e || 0) + 1, t = GEAR[g.b].t; return { gold: e * 150 * t * (Game.st.flags.smithDisc ? 0.5 : 1), mats: t <= 2 ? { stone: e } : t === 3 ? { stone: e, gel: e } : { crystal: e }, rate: e <= 3 ? 1 : e === 4 ? 0.75 : 0.5 }; };
 const SALVAGE = { weapon: ['stone'], head: ['stone', 'gel'], body: ['stone', 'gel', 'frogSkin'], feet: ['feather', 'gel'], acc: ['feather', 'spore', 'leaf'] };
 const gCol = g => GQ[g.q][1];
 const gearSell = g => Math.round((GEAR[g.b].price || GEAR[g.b].t * 400) * 0.3 * GQ[g.q][2] * g.r);

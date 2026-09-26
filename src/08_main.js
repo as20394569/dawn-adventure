@@ -74,7 +74,6 @@ const Events = {
     st.flags.wellCharm = 1; yield* itemGet(st.name + '撈起了' + gearName(makeGear('moonCharm', 4)) + '！');
     yield* say('古老的護符……說不定和異界之門有關。可以在背包裡裝備。');
   },
-  *smith() { yield* say(Game.st.flags.smith ? '有素材就拿來吧！' : '我是鎮上的鐵匠。把魔物身上的素材帶來，我就幫你打造好東西！'); Game.st.flags.smith = 1; while (true) { const r = yield* ask('要做什麼？', ['打造', '強化', '分解', '離開']); if (r === 0) yield* craftScreen(); else if (r === 1) yield* enhanceFlow(); else if (r === 2) yield* salvageFlow(); else break; } yield* say('隨時再來！'); },
   *peddler() { yield* say('多虧了你，商隊才平安抵達！算你便宜一點。'); yield* shopFlow(PEDDLER_LIST); },
   *caravan(ow) {
     const f = Game.st.flags;
@@ -133,7 +132,6 @@ const Events = {
   *customer() { if (Game.st.flags.croc) { yield* say('騎士長劍是王都騎士團在用的劍！好想要喔……'); return; } yield* sayAll(['鐵劍好貴啊……不過攻擊會提升很多呢。', '魔法護符能提高魔攻，水流刃和落雷也會變強喔！']); },
   *hiker() { if (Game.st.flags.wolf) { yield* sayAll(['狂牙狼被你打倒了？難怪最近路上安靜多了！', '精英魔物身上常常會掉出好東西喔。']); return; } yield* sayAll(['嘿！這條路上的草叢很深，常有魔物跳出來。', '受傷了就回萌芽鎮的旅店休息吧。', '過了河之後，還有一座能恢復體力的泉水喔！']); },
   *girl2() { yield* sayAll(Game.st.flags.croc ? ['你打倒了沼澤鱷？太好了，終於可以過橋了！'] : ['橋頭那隻沼澤鱷好兇……', '聽說牠是水屬性，最怕雷和草的攻擊。']); },
-  *guard() { yield* sayAll(Game.st.flags.golem ? ['你打倒了魔像！傳說中的門……真的存在嗎？'] : ['前方就是古岩遺跡。傳說中的異界之門，就在遺跡深處。', '魔像非常強大。先在泉水恢復體力，準備好道具再進去吧。', '也別忘了記錄進度！']); },
   *spring() {
     const ok = yield* yesNo('清澈的泉水閃閃發亮……要喝一口嗎？');
     if (ok) { Game.st.respawn = { map: 'route', x: 7, y: 4, dir: 'left' }; yield* healRitual('好甜的泉水！體力完全恢復了！'); }
@@ -162,6 +160,7 @@ const Events = {
     })();
   },
 };
+Object.assign(Events, QUEST_EVENTS);
 function* itemGet(text) { const fr = Sound.jingle('item'); const t = new TextBox(text); UI.push(t); let i = 0; while (!t.done || i < fr) { if (i > 20 || t.state === 'type') t.update(); i++; yield; if (t.done && i >= fr) break; } UI.remove(t); }
 function* visionScene() {
   yield* fadeOut(24, '#ffffff'); let t = 0;
@@ -392,7 +391,7 @@ setScale(3);
 function render() {
   ctx.setTransform(SCALE, 0, 0, SCALE, 0, 0); ctx.imageSmoothingEnabled = false; ctx.save();
   if (Game.shake > 0) { ctx.translate(rnd(-2, 2), rnd(-2, 2)); Game.shake--; }
-  Game.scene.draw(ctx); UI.draw(ctx); drawTransition(ctx); ctx.restore();
+  Game.scene.draw(ctx); UI.draw(ctx); drawTransition(ctx); drawToast(ctx); ctx.restore();
   if (Game.flash > 0) { ctx.globalAlpha = clamp(Game.flash, 0, 1); ctx.fillStyle = Game.flashColor; ctx.fillRect(0, 0, W, H); ctx.globalAlpha = 1; if (!Game.flashTween) Game.flash = Math.max(0, Game.flash - 0.04); }
   if (Game.fade > 0) { ctx.globalAlpha = clamp(Game.fade, 0, 1); ctx.fillStyle = Game.fadeColor; ctx.fillRect(0, 0, W, H); ctx.globalAlpha = 1; }
 }
@@ -437,5 +436,5 @@ function boot(data) {
   requestAnimationFrame(loop);
   try { if (window.claude && window.claude.hot && window.claude.hot.snapshot) window.claude.hot.snapshot(() => ({ st: (Game.scene instanceof Overworld && !Game.scene.script) ? Game.st : null })); } catch (e) { }
 }
-window.__fx = () => FX; window.__game = { setScale: S => { Game.fixedScale = 1; setScale(S); render(); }, Game, Input, Events, MAPS, shopFlow, SPECIES, Battle, Overworld, heroStats, newGameState, startOverworld, UI, say, yesNo, startMenu, summaryScreen, bagScreen, equipScreen, optionsScreen, shopFlow, pickMoveToForget, blackText, dexScreen, talentScreen, craftScreen, enhanceFlow, salvageFlow, Events, step(n = 1) { for (let i = 0; i < n; i++) tick(); render(); }, press(k, hold = 2, after = 6) { Input.set(k, true); for (let i = 0; i < hold; i++) tick(); Input.set(k, false); for (let i = 0; i < after; i++) tick(); render(); } };
+window.__fx = () => FX; window.__game = { setScale: S => { Game.fixedScale = 1; setScale(S); render(); }, Game, Input, Events, MAPS, shopFlow, SPECIES, Battle, Overworld, heroStats, newGameState, startOverworld, UI, say, yesNo, startMenu, summaryScreen, bagScreen, equipScreen, optionsScreen, shopFlow, pickMoveToForget, blackText, dexScreen, talentScreen, craftScreen, enhanceFlow, salvageFlow, recordScreen, checkAch, markVis, mapPct, totalPct, questMarks, Events, step(n = 1) { for (let i = 0; i < n; i++) tick(); render(); }, press(k, hold = 2, after = 6) { Input.set(k, true); for (let i = 0; i < hold; i++) tick(); Input.set(k, false); for (let i = 0; i < after; i++) tick(); render(); } };
 try { if (window.claude && window.claude.hot && window.claude.hot.ready) window.claude.hot.ready(boot); else boot((window.claude && window.claude.hot && window.claude.hot.data) || {}); } catch (e) { boot({}); }
