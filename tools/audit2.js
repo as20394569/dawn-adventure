@@ -117,6 +117,8 @@ module.exports = async (g) => {
     miss('NPC', [...new Set(Object.values(MAPS).flatMap(d => (d.npcs || []).map(n => n.id)))].filter(id => !npcRoleOf(id)));
     miss('主角技能分類', Object.keys(MOVES).filter(k => !MOVES[k].foe && !SKILL_CLASS[MOVES[k].cls]));
     miss('怪物技能分類', Object.keys(MOVES).filter(k => MOVES[k].foe && !MON_CLASS[MOVES[k].cls]));
+    miss('紙娃娃外觀', Object.keys(GEAR).filter(k => GEAR[k].slot !== 'acc' && !GEAR[k].look));
+    for (const k in GEAR) { const L = GEAR[k].look; if (!L) continue; if (GEAR[k].slot === 'head' && !(DOLL_HEAD[L[0]] && HEAD_PAL[L[1]] && (!L[2] || DOLL_DECO[L[2]]))) bad('紙娃娃', k, '頭部外觀無效'); if (GEAR[k].slot === 'body' && !BODY_PAL[L]) bad('紙娃娃', k, '身體外觀無效'); if (GEAR[k].slot === 'feet' && !FEET_PAL[L]) bad('紙娃娃', k, '腳部外觀無效'); if (GEAR[k].slot === 'weapon' && !(DOLL_WEAPON[L[0]] && WPN_PAL[L[1]])) bad('紙娃娃', k, '武器外觀無效'); }
     miss('魔物種族', Object.keys(SPECIES).filter(k => !FAMILIES[SPECIES[k].fam]));
     // ---------- summary ----------
     const counts = { 魔物: Object.keys(SPECIES).length, 技能: Object.keys(MOVES).length, 裝備: Object.keys(GEAR).length, 道具: Object.keys(ITEMS).length, 地圖: Object.keys(MAPS).length, 配方: RECIPES.length, 特效: SPECIALS_KEYS.length, 成就: ACHIEVEMENTS.length, 委託: Object.keys(COMMISSIONS).length };

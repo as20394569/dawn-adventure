@@ -182,7 +182,7 @@ function eqBonus(st) { const eqB = {}; for (const g of equippedGear(st)) { const
 function heroCard(x, st) {
   drawWin(x, 4, 24, 168, 70, 'menu');
   x.fillStyle = '#141a30'; x.fillRect(8, 28, 50, 62); x.fillStyle = '#1b2344'; x.fillRect(8, 76, 50, 14); x.fillStyle = 'rgba(110,231,210,0.25)'; x.fillRect(8, 76, 50, 1);
-  x.drawImage(Hero.frames.down[Math.floor(Game.frame / 20) % 4], 0, 0, 16, 22, 17, 30, 32, 44);
+  x.drawImage(heroFramesFor(st).down[Math.floor(Game.frame / 20) % 4], 0, 0, 16, 22, 17, 30, 32, 44);
   const nx = Font.draw(x, st.name, 64, 27, UIC.text, UIC.textSh); if (CLASSES[st.cls]) Font.draw(x, CLASSES[st.cls].n, nx + 4, 28, UIC.warm, UIC.textSh, 10); Font.drawR(x, 'Lv.' + st.lv, 166, 27, UIC.accent, UIC.textSh);
   if (st.status) statusBadge(x, st.status, 64, 45); else Font.draw(x, '狀態良好', 64, 42, UIC.good, UIC.textSh);
   Font.drawR(x, st.money + 'G', 166, 42, UIC.warm, UIC.textSh);
@@ -340,7 +340,8 @@ function* equipScreen() {
       Font.draw(x, EQUIP_SLOTS[sl], 12, Y, UIC.accent, UIC.textSh, 11); Font.draw(x, g ? GEAR[g.b].n : '——', 44, Y, g ? gCol(g) : UIC.dis, UIC.textSh);
       if (g) Font.draw(x, gearLines(g)[0] + (gearLines(g)[1] ? ' ＋特效' : ''), 44, Y + 12, UIC.muted, UIC.textSh, 9); });
     const s = heroStats(), Y0 = 24 + slots.length * 25 + 10; drawWin(x, 4, Y0, 168, H - Y0 - 4, 'menu');
-    [['HP', st.hp + '/' + s.hp], ['物攻', s.atk], ['物防', s.def], ['魔攻', s.spa], ['魔防', s.spd], ['速度', s.spe], ['會心', s.crit.toFixed(1) + '%'], ['迴避', s.eva.toFixed(1) + '%']].forEach(([a, b], i) => { const X = 12 + (i % 2) * 82, Y = Y0 + 3 + Math.floor(i / 2) * 15; Font.draw(x, a, X, Y, UIC.muted, UIC.textSh, 11); Font.drawR(x, String(b), X + 72, Y, UIC.text, UIC.textSh, 11); });
+    [['HP', st.hp + '/' + s.hp], ['物攻', s.atk], ['物防', s.def], ['魔攻', s.spa], ['魔防', s.spd], ['速度', s.spe], ['會心', s.crit.toFixed(1) + '%'], ['迴避', s.eva.toFixed(1) + '%']].forEach(([a, b], i) => { const X = 58 + (i % 2) * 58, Y = Y0 + 3 + Math.floor(i / 2) * 15; Font.draw(x, a, X, Y, UIC.muted, UIC.textSh, 10); Font.drawR(x, String(b), X + 54, Y, UIC.text, UIC.textSh, 10); });
+    dollPreview(x, heroLookOf(st), 8, Y0 + 4);
   } };
   UI.push(scr);
   while (true) {
@@ -350,7 +351,7 @@ function* equipScreen() {
       Input.consume('a'); Sound.sfx('select'); const sl = slots[idx], cur = gearBy(st.equip[sl]);
       const own = gearSort().filter(g => GEAR[g.b].slot === SLOT_OF(sl) && (!isEquipped(g) || g === cur));
       const opts = own.map(g => ({ t: GEAR[g.b].n + (g === cur ? ' E' : ''), g, col: gCol(g) })).concat([{ t: '卸下', g: null }]);
-      let hi = 0; const tip = { draw(x) { const o = opts[hi]; drawWin(x, 4, 176, 168, 76, 'menu'); if (o && o.g) { const before = heroStats(); const sv = st.equip[sl]; st.equip[sl] = o.g.u; const after = heroStats(); st.equip[sl] = sv; const d = ['atk', 'def', 'spa', 'spd', 'spe'].map(k => [k, after[k] - before[k]]).filter(([, v]) => v).map(([k, v]) => STAT_NAMES[k] + (v > 0 ? '↑' : '↓') + Math.abs(v)).join(' '); drawGearDetail(x, o.g, 178, 72, d || '能力不變'); } else Font.draw(x, '把這個部位的裝備卸下。', 12, 182, UIC.muted, UIC.textSh); } };
+      let hi = 0; const tip = { draw(x) { const o = opts[hi]; drawWin(x, 4, 24, 34, 112, 'menu'); dollPreview(x, heroLookOf(st, { [sl]: o ? (o.g ? o.g.u : null) : st.equip[sl] }), 5, 30, 1); drawWin(x, 4, 176, 168, 76, 'menu'); if (o && o.g) { const before = heroStats(); const sv = st.equip[sl]; st.equip[sl] = o.g.u; const after = heroStats(); st.equip[sl] = sv; const d = ['atk', 'def', 'spa', 'spd', 'spe'].map(k => [k, after[k] - before[k]]).filter(([, v]) => v).map(([k, v]) => STAT_NAMES[k] + (v > 0 ? '↑' : '↓') + Math.abs(v)).join(' '); drawGearDetail(x, o.g, 178, 72, d || '能力不變'); } else Font.draw(x, '把這個部位的裝備卸下。', 12, 182, UIC.muted, UIC.textSh); } };
       UI.push(tip);
       const r = yield* choose(opts, { x: 40, y: 24, w: 132, visible: 8, onMove: i => hi = i });
       UI.remove(tip);

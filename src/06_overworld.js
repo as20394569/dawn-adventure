@@ -288,7 +288,7 @@ class Overworld {
     for (const it of this.items) objs.push({ k: it.py + 15, d: () => x.drawImage(it.gather ? HERB_IMG : ITEM_BALL, it.px - camX, it.py - camY) });
     for (const e of this.elites) objs.push({ k: e.py + 15, d: () => this.drawMon(x, e, camX, camY) });
     if (this.boss) objs.push({ k: this.boss.py + 15, d: () => this.drawBoss(x, this.boss, camX, camY) });
-    if (!this.hideHero) objs.push({ k: p.py + 15.5, d: () => this.drawChar(x, p, Hero.frames, camX, camY) });
+    if (!this.hideHero) objs.push({ k: p.py + 15.5, d: () => this.drawChar(x, p, heroFramesFor(this.st), camX, camY) });
     objs.sort((a, b) => a.k - b.k); for (const o of objs) o.d();
     // tall grass overlay on hero
     const fx = Math.floor((p.px + 8) / 16), fy = Math.floor((p.py + 12) / 16);
