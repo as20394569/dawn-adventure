@@ -29,7 +29,7 @@ const MOVES = {
   focus: { n: '集氣', t: '一般', cat: '變', pp: 20, stat: { who: 'self', atk: 1, spa: 1 }, fx: 'buff', d: '集中精神，提高自己的物攻和魔攻。' },
   powerSlash: { n: '強力斬', t: '一般', cat: '物', pow: 70, acc: 90, pp: 10, fx: 'slash', d: '灌注全力的一擊。' },
   manaBurst: { n: '魔力爆發', t: '一般', cat: '特', pow: 65, acc: 100, pp: 10, fx: 'sound', d: '把魔力凝聚後一口氣釋放。' },
-  guardStrike: { n: '盾擊', t: '一般', cat: '物', pow: 45, acc: 100, pp: 15, eff: { flinch: 1, p: 30 }, fx: 'hit', d: '用護甲撞擊對手，有時會讓對手退縮。' },
+  guardStrike: { n: '盾擊', t: '一般', cat: '物', pow: 55, acc: 100, pp: 15, eff: { flinch: 1, p: 30 }, fx: 'hit', d: '用護甲撞擊對手，有時會讓對手退縮。' },
   bladeStorm: { n: '劍刃風暴', t: '一般', cat: '物', pow: 90, acc: 90, pp: 5, crit: 1, fx: 'slash', d: '捲起劍刃的風暴。容易會心。' },
   recklessSlash: { n: '捨身斬', t: '一般', cat: '物', pow: 110, acc: 95, pp: 5, recoil: 0.25, fx: 'slash', d: '不顧一切的斬擊，自己也會受到反作用力傷害。' },
   inferno: { n: '業火', t: '火', cat: '特', pow: 95, acc: 85, pp: 5, eff: { st: 'brn', p: 30 }, fx: 'fireSlash', d: '召喚吞噬一切的火焰。有時會讓對手灼傷。' },

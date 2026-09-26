@@ -136,14 +136,14 @@ function heroStats(st = Game.st) {
   s.eva = a.agi * 0.4;        // 迴避率% = 敏捷×0.4
   s.vs = []; s.resist = {}; s.drain = 0; s.elem = 0; s.counter = 0; // equipment affixes & talents
   for (const T of TALENTS) { const r = (st.tal || {})[T.id] || 0; if (r) for (const k in T.st) s[k] = (s[k] || 0) + T.st[k] * r; }
-  const CL = CLASSES[st.cls]; if (CL) for (const k in CL.st) s[k] = (s[k] || 0) + CL.st[k];
-  { const wg = gearBy(st.equip && st.equip.weapon, st); s.welem = wg && GEAR[wg.b].elem || null; }
+  const CL = CLASSES[st.cls]; if (CL) { const f = CL.tier === 1 ? clamp((L - 2) / 8, 0.4, 1) : 1; for (const k in CL.st) s[k] = (s[k] || 0) + (STATK.includes(k) ? Math.round(CL.st[k] * f) : CL.st[k]); } // base-class bonus grows in until Lv10
+  { const wg = gearBy(st.equip && st.equip.weapon, st); s.welem = wg && GEAR[wg.b].elem || null; s.wkind = wg && GEAR[wg.b].kind || null; }
   s.fx = {}; for (const g of equippedGear(st)) for (const f of GEAR[g.b].fx || []) s.fx[f] = 1;
   for (const g of equippedGear(st)) { const p = gearStats(g).sp; s.crit += p.crit || 0; s.hit += p.hit || 0; s.eva += p.eva || 0; s.drain += p.drain || 0; s.elem += p.elem || 0; s.vs.push(...p.vs); for (const t in p.resist) s.resist[t] = (s.resist[t] || 0) + p.resist[t]; }
   return s;
 }
 const expForLevel = lv => Math.floor(0.8 * lv * lv * lv);
-function heroLearnAt(lv) { return HERO_LEARN.filter(([l]) => l === lv).map(([, m]) => m); }
+function heroLearnAt(lv, st = Game.st) { const line = classLine(st.cls) || HERO_LEARN; return line.filter(([l]) => l === lv).map(([, m]) => m); }
 
 /* ---------- Screen: background pattern ---------- */
 function screenBG(x) {

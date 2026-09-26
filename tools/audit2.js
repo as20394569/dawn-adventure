@@ -37,13 +37,13 @@ module.exports = async (g) => {
       if (s.trait && !['swift', 'healer', 'berserk'].includes(s.trait)) bad('魔物', k, '特性無效', s.trait);
       if ((s.elite || s.boss) && !s.drop && k !== 'bandit') warn('魔物', k, '精英/頭目沒有專屬掉落'); }
     // ---------- MOVES ----------
-    const heroMoves = new Set([...HERO_LEARN.map(x => x[1]), ...Object.values(CLASSES).flatMap(c => [c.move, c.move2]).filter(Boolean), 'struggle', 'armorBreak', 'barrier']);
+    const heroMoves = new Set([...Object.values(CLASS_LINE).flat().map(x => x[1]), ...Object.values(CLASS_START).flatMap(c => c.moves), ...Object.values(CLASSES).flatMap(c => [c.move, c.move2]).filter(Boolean), 'struggle', 'armorBreak', 'barrier', 'glare']);
     for (const k in MOVES) { const m = MOVES[k];
       if (!ELEM.includes(m.t)) bad('技能', k, '屬性無效', m.t); if (!['物', '特', '變'].includes(m.cat)) bad('技能', k, '類別無效', m.cat); if (!m.cls) bad('技能', k, '缺內部分類');
       if (m.foe) { if (!MFX[m.fx]) bad('技能', k, '怪物特效不存在', m.fx); if (heroMoves.has(k)) bad('技能', k, '怪物技能被主角使用'); }
       else { if (!FX[m.fx]) bad('技能', k, '主角特效不存在', m.fx); if (!heroMoves.has(k)) warn('技能', k, m.n, '主角學不到'); }
       if (m.st && !STATUS_NAME[m.st]) bad('技能', k, '異常無效', m.st); if (m.eff && m.eff.st && !STATUS_NAME[m.eff.st]) bad('技能', k, '附加異常無效'); }
-    for (const [lv, m] of HERO_LEARN) if (!MOVES[m]) bad('主角學習', m, '不存在');
+    for (const c in CLASS_LINE) for (const [lv, m] of CLASS_LINE[c]) if (!MOVES[m]) bad('職業技能表', c, m, '不存在'); for (const c in CLASS_START) { for (const m of CLASS_START[c].moves) if (!MOVES[m]) bad('起始技能', c, m); for (const b of CLASS_START[c].gear) if (!GEAR[b]) bad('起始裝備', c, b); }
     for (const c in CLASSES) { const C = CLASSES[c]; for (const m of [C.move, C.move2]) if (m && !MOVES[m]) bad('職業', c, '技能不存在', m); if (C.from && !CLASSES[C.from]) bad('職業', c, '前置職業無效'); }
     // hero FX uniqueness (different moves sharing the exact same effect)
     const fxUse = {}; for (const k in MOVES) if (!MOVES[k].foe) (fxUse[MOVES[k].fx] = fxUse[MOVES[k].fx] || []).push(MOVES[k].n); for (const f in fxUse) if (fxUse[f].length > 1) warn('主角特效重複使用', f, fxUse[f].join('、'));
@@ -56,7 +56,7 @@ module.exports = async (g) => {
       for (const f of e.fx || []) if (!SPECIALS[f]) bad('裝備', k, '特效不存在', f);
       if (e.elem && !['火', '水', '草', '雷'].includes(e.elem)) bad('裝備', k, '武器屬性無效', e.elem); if (e.elem && e.slot !== 'weapon') bad('裝備', k, '非武器卻有屬性');
       if (!e.d) warn('裝備', k, '缺介紹');
-      if (!gearSrc[k] && !['woodSword', 'guardBadge', 'uniform', 'schoolShoes'].includes(k)) warn('裝備', k, e.n, '取得不到（沒有任何來源）');
+      if (!gearSrc[k] && !['woodSword', 'guardBadge', 'uniform', 'schoolShoes', 'practiceWand'].includes(k)) warn('裝備', k, e.n, '取得不到（沒有任何來源）');
       if ((e.fx || []).length && gearSrc[k] && gearSrc[k].every(s => /掉落池|道具店|行商/.test(s))) warn('裝備', k, e.n, '有特效卻能在商店/野外取得（非金色）');
     }
     // ---------- SPECIALS ----------

@@ -43,11 +43,20 @@ const Events = {
     const st = Game.st;
     if (st.flags.license && (yield* classTalk())) return;
     if (!st.flags.license) {
-      yield* sayAll(['喔？你就是瑪莎撿回來的那個孩子啊。', '……從另一個世界來的？', '這個會發光的小板子……嗯，看來不是在說謊。', '古老的傳說裡提過，北方的古岩遺跡深處，有一扇「異界之門」。', '據說很久以前，也有異世界的旅人從那扇門來到這裡。', '如果真有回去的路，大概就在那裡了。', '只是……最近守護遺跡的古岩魔像甦醒了，誰也無法靠近。', '嗯？你的手……在發光！', '這是「異界人之力」。傳說中，來自異世界的人都擁有不可思議的力量。', '有這股力量，你應該能和魔物戰鬥。']);
-      st.flags.license = 1; st.bag.license = 1; st.equip.weapon = makeGear('woodSword', 1, 1).u; st.equip.acc1 = makeGear('guardBadge', 1, 1).u;
-      yield* itemGet('得到了木劍和冒險者證！'); yield* say(st.name + '把木劍拿在手上。……有點重。');
+      yield* sayAll(['喔？你就是瑪莎撿回來的那個孩子啊。', '……從另一個世界來的？', '這個會發光的小板子……嗯，看來不是在說謊。', '古老的傳說裡提過，北方的古岩遺跡深處，有一扇「異界之門」。', '據說很久以前，也有異世界的旅人從那扇門來到這裡。', '如果真有回去的路，大概就在那裡了。', '只是……最近守護遺跡的古岩魔像甦醒了，誰也無法靠近。', '嗯？你的手……在發光！', '這是「異界人之力」。傳說中，來自異世界的人都擁有不可思議的力量。', '不過，這股力量還沒有形狀。', '把手放在這塊古老的石板上。力量會回應你的心，化成你要走的道路。']);
+      yield* fadeOut(16, '#ffffff'); Game.fade = 0; Sound.sfx('charge'); const k = yield* classSelectScreen();
+      applyStartClass(k); Game.fadeColor = '#ffffff'; Game.fade = 1; Sound.jingle('levelup'); yield* fadeIn(30); Game.fadeColor = '#000';
+      const C = CLASSES[k], S = CLASS_START[k];
+      yield* itemGet(st.name + '覺醒成為了' + C.n + '！');
+      yield* say({ swordsman: '劍士的道路啊……這把練習木劍就交給你了。', mage: '魔導士的道路啊……這把魔杖是我年輕時用的，交給你了。', guardian: '守護者的道路啊……這把木劍和布帽給你，別逞強喔。' }[k]);
+      st.flags.license = 1; st.bag.license = 1; yield* itemGet('得到了' + S.gear.filter(b => b !== 'guardBadge').map(b => GEAR[b].n).join('和') + '、護身符和冒險者證！');
       yield* say('還有這些傷藥，帶在身上吧。'); st.bag.potion = (st.bag.potion || 0) + 5; yield* itemGet('得到了傷藥×5！');
-      yield* sayAll(['走在高高的草叢裡，會遇到野生的魔物。', '打倒魔物能累積經驗，你會越來越強。', '道路上還有更強大的「精英魔物」，被盯上可要小心。', '古岩魔像是「構造體」魔物，最怕水和草的攻擊。記住了。', '按START可以打開選單，查看狀態和背包，也能記錄進度。', '去吧，異世界的旅人。願曙光指引你回家的路。']);
+      yield* sayAll(['你現在會的技能是：' + st.moves.map(m => MOVES[m.id].n).join('、') + '。', '隨著等級提升，你會學到更多' + C.n + '的技能。到了Lv14，還能走上更高的道路。', '魔物分成好幾個種族，各有害怕的屬性。善用屬性技能，戰鬥會輕鬆很多。', '按START可以打開選單，查看狀態、技能和背包，也能記錄進度。']);
+      const ap = ow && ow.npcs.find(n => n.id === 'apprentice');
+      if (ap) { ap.dir = 'left'; yield* say('學徒：「村長爺爺！讓我幫忙！我在院子裡養了一隻練習用的泡泡姆！」');
+        if (yield* yesNo('要和泡泡姆練習一場嗎？')) { const res = yield* ow.battleScript({ sp: 'slime', lv: 3, kind: 'wild' }); if (res === 'win') yield* say('學徒：「好厲害！這就是異界人之力！」'); else yield* say('學徒：「泡、泡泡姆，下手輕一點啦！」'); healHero(); }
+        else yield* say('學徒：「那下次再練習吧！」'); }
+      yield* sayAll(['古岩魔像是「構造體」魔物，最怕水和草的攻擊。記住了。', '去吧，異世界的' + C.n + '。願曙光指引你回家的路。']);
       return;
     }
     if (st.flags.golem) { yield* sayAll(['門的另一邊，是你的故鄉？', '門只開了一瞬間……看來還缺少某種力量。', '別灰心。線索一定就在這個世界的某處。'].concat(st.flags.boneKnight ? [] : ['……對了，聽說魔像倒下後，遺跡的石板下面出現了往地底的樓梯。', '那裡是古王的墓穴。亡者怕火，別忘了帶上火系的武器或技能。'])); return; }
@@ -175,7 +184,7 @@ function* visionScene() {
 
 function* classTalk() {
   const st = Game.st, C = CLASSES, cur = C[st.cls]; let opts = [];
-  if (!st.cls && st.lv >= 8) opts = ['swordsman', 'mage', 'guardian'];
+  if (!st.cls) opts = ['swordsman', 'mage', 'guardian']; // saves from before the opening ceremony
   else if (cur && cur.tier === 1 && st.lv >= 14) opts = Object.keys(C).filter(k => C[k].from === st.cls);
   if (st.flags.hiddenCls && st.cls !== 'otherworlder') opts.push('otherworlder');
   if (!opts.length) return false;
@@ -307,7 +316,7 @@ class TitleScene {
     x.drawImage(this.logo, Math.round(W / 2 - this.logo.width / 2), 6 + bob);
     Font.drawC(x, '～異世界冒險RPG～', W / 2, 52 + bob, '#ffe0a0', '#3a1428');
     if (this.stage === 'press' && Math.floor(this.t / 30) % 2 === 0) Font.drawC(x, '按 A 鍵開始', W / 2, 232, '#ffffff', '#1a1024');
-    Font.draw(x, 'v4.1', W - 26, H - 13, '#b890b0', null);
+    Font.draw(x, 'v4.2', W - 26, H - 13, '#b890b0', null);
   }
 }
 

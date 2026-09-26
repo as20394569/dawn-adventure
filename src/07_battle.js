@@ -284,7 +284,7 @@ class Battle {
     return { dmg: Math.max(1, Math.floor(base * m)), mult, crit };
   }
   *useMove(u, t, id) {
-    let mv = MOVES[id]; if (u.hero && u.stats.welem && mv.t === '一般' && mv.cat === '物' && mv.pow) mv = { ...mv, t: u.stats.welem };
+    let mv = MOVES[id]; if (u.hero && u.stats.welem && mv.t === '一般' && mv.pow && mv.cat === (u.stats.wkind === '法杖' ? '特' : '物')) mv = { ...mv, t: u.stats.welem };
     // can the user act?
     if (u.status === 'slp') {
       if (u.sleepT <= 0) { u.status = null; yield* this.msg(u.n + '醒過來了！'); }

@@ -1613,7 +1613,7 @@ const MOVES = {
   focus: { n: '集氣', t: '一般', cat: '變', pp: 20, stat: { who: 'self', atk: 1, spa: 1 }, fx: 'buff', d: '集中精神，提高自己的物攻和魔攻。' },
   powerSlash: { n: '強力斬', t: '一般', cat: '物', pow: 70, acc: 90, pp: 10, fx: 'slash', d: '灌注全力的一擊。' },
   manaBurst: { n: '魔力爆發', t: '一般', cat: '特', pow: 65, acc: 100, pp: 10, fx: 'sound', d: '把魔力凝聚後一口氣釋放。' },
-  guardStrike: { n: '盾擊', t: '一般', cat: '物', pow: 45, acc: 100, pp: 15, eff: { flinch: 1, p: 30 }, fx: 'hit', d: '用護甲撞擊對手，有時會讓對手退縮。' },
+  guardStrike: { n: '盾擊', t: '一般', cat: '物', pow: 55, acc: 100, pp: 15, eff: { flinch: 1, p: 30 }, fx: 'hit', d: '用護甲撞擊對手，有時會讓對手退縮。' },
   bladeStorm: { n: '劍刃風暴', t: '一般', cat: '物', pow: 90, acc: 90, pp: 5, crit: 1, fx: 'slash', d: '捲起劍刃的風暴。容易會心。' },
   recklessSlash: { n: '捨身斬', t: '一般', cat: '物', pow: 110, acc: 95, pp: 5, recoil: 0.25, fx: 'slash', d: '不顧一切的斬擊，自己也會受到反作用力傷害。' },
   inferno: { n: '業火', t: '火', cat: '特', pow: 95, acc: 85, pp: 5, eff: { st: 'brn', p: 30 }, fx: 'fireSlash', d: '召喚吞噬一切的火焰。有時會讓對手灼傷。' },
@@ -3055,6 +3055,75 @@ Object.assign(MON_PANEL.banditBoss, { hp: 80 }); Object.assign(MON_PANEL.mossGia
 Object.assign(MON_PANEL.goldSlime, { def: 14, spd: 14 }); Object.assign(MON_PANEL.gemSlime, { def: 28, spd: 28 }); Object.assign(MON_PANEL.goldSkeleton, { def: 26, spd: 26 }); Object.assign(MON_PANEL.paleWraith, { def: 30, spd: 30 });
 BALANCE.gangKnife = 0.045; // bandit henchmen knives: % of hero max HP per turn
 
+/* ===================== CLASSES v2: chosen at the opening, each with its own skill line ===================== */
+// New hero skills that fill out the class lines (VFX in 07e_herofx.js — hero materials only)
+Object.assign(MOVES, {
+  voltSlash: { n: '雷光斬', t: '雷', cat: '物', pow: 55, acc: 95, pp: 20, eff: { st: 'par', p: 10 }, d: '讓劍身帶雷斬擊。有時會讓對手麻痺。對潮濕的對手會感電。' },
+  tideSlash: { n: '流水斬', t: '水', cat: '物', pow: 60, acc: 100, pp: 20, d: '如流水般連綿的斬擊。會讓對手全身濕透。' },
+  magicBolt: { n: '魔彈', t: '一般', cat: '特', pow: 40, acc: 100, pp: 35, d: '把魔力凝成光彈射出。最基本的魔法。' },
+  fireBolt: { n: '火球術', t: '火', cat: '特', pow: 45, acc: 100, pp: 25, eff: { st: 'brn', p: 10 }, d: '射出一顆火球。有時會造成灼傷。' },
+  leafStorm: { n: '翠葉風暴', t: '草', cat: '特', pow: 60, acc: 95, pp: 15, d: '捲起鋒利的葉片風暴。會讓對手被藤蔓纏住。' },
+  flameWave: { n: '炎浪', t: '火', cat: '特', pow: 75, acc: 95, pp: 10, eff: { st: 'brn', p: 20 }, d: '掀起一道橫掃的火焰巨浪。有時會造成灼傷。' },
+  aquaBurst: { n: '激流', t: '水', cat: '特', pow: 80, acc: 90, pp: 10, d: '從地面噴出巨大的水柱。' },
+  ironWill: { n: '鐵壁', t: '一般', cat: '變', pp: 15, stat: { who: 'self', def: 1, spd: 1 }, d: '穩住架勢，提升物防和魔防。' },
+});
+const HERO_META2 = { voltSlash: ['slash', 'voltSlash'], tideSlash: ['slash', 'tideSlash'], magicBolt: ['bolt', 'magicBolt'], fireBolt: ['bolt', 'fireBolt'], leafStorm: ['area', 'leafStorm'], aquaBurst: ['area', 'aquaBurst'], flameWave: ['area', 'flameWave'], ironWill: ['buff', 'ironWill'] };
+Object.assign(CLASSES.guardian.st, { atk: 2 }); CLASSES.paladin.st.atk = 4;
+for (const k in HERO_META2) { MOVES[k].cls = HERO_META2[k][0]; MOVES[k].fx = HERO_META2[k][1]; }
+
+// Starting kit & skills per base class (the ceremony at the elder's house)
+const CLASS_START = {
+  swordsman: { moves: ['slash', 'flameSlash', 'powerSlash'], gear: ['woodSword', 'guardBadge'], tag: '近身劍術', bars: { 物攻: 4, 魔攻: 1, 防禦: 3, HP: 3 }, pitch: '用劍斬開一切。火、雷、水、草四種屬性劍技樣樣精通，專打魔物的弱點。' },
+  mage: { moves: ['magicBolt', 'fireBolt', 'manaBurst'], gear: ['practiceWand', 'guardBadge'], tag: '四系魔法', bars: { 物攻: 1, 魔攻: 5, 防禦: 2, HP: 2 }, pitch: '操控魔力的術士。四系魔法威力強大，還能用護盾和治癒保護自己。' },
+  guardian: { moves: ['slash', 'guardStrike', 'ironWill'], gear: ['woodSword', 'guardBadge', 'clothCap'], tag: '堅守反擊', bars: { 物攻: 3, 魔攻: 1, 防禦: 5, HP: 5 }, pitch: '站在最前線的守護者。又硬又耐打，還會治癒自己，適合想穩穩前進的人。' },
+};
+// Level-up skill line per BASE class (advanced classes keep their base line and add their own class skills)
+const CLASS_LINE = {
+  swordsman: [[7, 'focus'], [9, 'voltSlash'], [11, 'gale'], [13, 'leafBlade'], [15, 'tideSlash'], [17, 'blaze'], [20, 'armorBreak']],
+  mage: [[7, 'aquaBlade'], [9, 'thunder'], [11, 'heal'], [13, 'leafStorm'], [15, 'flameWave'], [17, 'aquaBurst'], [19, 'barrier']],
+  guardian: [[7, 'flameSlash'], [9, 'voltSlash'], [11, 'heal'], [13, 'tideSlash'], [15, 'leafBlade'], [17, 'barrier'], [20, 'armorBreak']],
+};
+const baseClassOf = cls => { const C = CLASSES[cls]; if (!C) return null; return C.from || (cls === 'otherworlder' ? 'swordsman' : cls); };
+function classLine(cls) { return CLASS_LINE[baseClassOf(cls)] || null; }
+Object.assign(GEAR, { practiceWand: { n: '練習魔杖', slot: 'weapon', t: 1, st: { spa: 3 }, spr: 'woodSword', kind: '法杖', d: '村長年輕時用過的樺木魔杖。杖頭刻著新芽紋章。' } });
+
+/* ---------- Class ceremony screen ---------- */
+function* classSelectScreen() {
+  const keys = ['swordsman', 'mage', 'guardian']; let i = 0, t = 0;
+  const scr = { draw(x) {
+    t++; const k = keys[i], C = CLASSES[k], S = CLASS_START[k];
+    x.fillStyle = '#0a0c18'; x.fillRect(0, 0, W, H);
+    const col = { swordsman: '#ff9a50', mage: '#b080ff', guardian: '#6ec8ff' }[k];
+    const g = x.createRadialGradient(W / 2, 74, 4, W / 2, 74, 70); const [r, gg, b] = hex2rgb(col); g.addColorStop(0, `rgba(${r},${gg},${b},0.45)`); g.addColorStop(1, `rgba(${r},${gg},${b},0)`); x.fillStyle = g; x.fillRect(0, 0, W, 150);
+    for (let n = 0; n < 10; n++) { const a = t / 40 + n * 0.63, R = 40 + Math.sin(t / 30 + n) * 6; x.fillStyle = n % 2 ? col : '#ffffff'; x.fillRect(Math.round(W / 2 + Math.cos(a) * R), Math.round(74 + Math.sin(a) * R * 0.5), 2, 2); }
+    headerBar(x, '覺醒的儀式'); Font.drawR(x, (i + 1) + '/3', W - 6, 2, UIC.muted, UIC.textSh);
+    const bob = Math.round(Math.sin(t / 20) * 2), fr = Hero.frames.down[Math.floor(t / 16) % 4 === 1 ? 0 : 0]; x.fillStyle = 'rgba(0,0,0,0.35)'; x.beginPath(); x.ellipse(W / 2 - 14, 106, 18, 5, 0, 0, 7); x.fill(); x.drawImage(fr, 0, 0, 16, 22, W / 2 - 14 - 24, 36 + bob, 48, 66);
+    { const ex = W / 2 + 34, ey = 70 - bob; x.save(); x.lineCap = 'round'; x.strokeStyle = '#10121e'; x.fillStyle = '#10121e'; x.lineWidth = 6;
+      const glyph = (c, w) => { x.strokeStyle = c; x.lineWidth = w; if (k === 'swordsman') { x.beginPath(); x.moveTo(ex - 10, ey + 14); x.lineTo(ex + 10, ey - 14); x.moveTo(ex - 10, ey - 2); x.lineTo(ex + 2, ey + 8); x.stroke(); } else if (k === 'mage') { x.beginPath(); x.moveTo(ex - 8, ey + 16); x.lineTo(ex + 4, ey - 6); x.stroke(); x.beginPath(); x.arc(ex + 6, ey - 10, 5, 0, 7); x.stroke(); } else { x.beginPath(); x.moveTo(ex - 11, ey - 12); x.lineTo(ex + 11, ey - 12); x.lineTo(ex + 11, ey + 2); x.lineTo(ex, ey + 14); x.lineTo(ex - 11, ey + 2); x.closePath(); x.stroke(); } };
+      glyph('#10121e', 6); glyph(col, 3); glyph('#ffffff', 1); x.restore(); }
+    Font.drawC(x, '◀', 14, 64, i > 0 ? UIC.text : UIC.dis, UIC.textSh); Font.drawC(x, '▶', W - 14, 64, i < 2 ? UIC.text : UIC.dis, UIC.textSh);
+    drawWin(x, 4, 118, 168, 134, 'menu');
+    Font.draw(x, C.n, 12, 120, col, UIC.textSh); Font.drawR(x, S.tag, 164, 122, UIC.muted, UIC.textSh, 10);
+    Font.wrap(S.pitch, 152, 11).slice(0, 3).forEach((l, n) => Font.draw(x, l, 12, 138 + n * 13, UIC.text, UIC.textSh, 11));
+    Object.entries(S.bars).forEach(([nm, v], n) => { const X = 12 + (n % 2) * 80, Y = 180 + Math.floor(n / 2) * 13; Font.draw(x, nm, X, Y, UIC.muted, UIC.textSh, 10); for (let q = 0; q < 5; q++) { x.fillStyle = q < v ? col : '#2a3050'; x.fillRect(X + 30 + q * 8, Y + 5, 6, 4); } });
+    Font.draw(x, '起始技能', 12, 208, UIC.accent, UIC.textSh, 10); Font.draw(x, S.moves.map(m => MOVES[m].n).join('・'), 12, 221, UIC.text, UIC.textSh, 11);
+    Font.drawR(x, 'A：選擇　◀▶：切換', 164, 238, UIC.muted, UIC.textSh, 9);
+  } };
+  UI.push(scr);
+  while (true) {
+    if (Input.repeat('left') && i > 0) { i--; Sound.sfx('cursor'); } if (Input.repeat('right') && i < 2) { i++; Sound.sfx('cursor'); }
+    if (Input.pressed('a')) { Input.consume('a'); Sound.sfx('select'); const k = keys[i]; UI.remove(scr); if (yield* yesNo('要走上「' + CLASSES[k].n + '」的道路嗎？\n（之後在Lv14可以進階）')) return k; UI.push(scr); }
+    yield;
+  }
+}
+function applyStartClass(k) {
+  const st = Game.st, S = CLASS_START[k]; st.cls = k;
+  st.moves = S.moves.map(id => ({ id, pp: MOVES[id].pp }));
+  for (const [l, id] of CLASS_LINE[k]) if (l <= st.lv && st.moves.length < 4 && !st.moves.some(m => m.id === id)) st.moves.push({ id, pp: MOVES[id].pp });
+  const acc = ['acc1', 'acc2']; for (const b of S.gear) { const g = makeGear(b, 1, 1), sl = GEAR[b].slot === 'acc' ? acc.shift() : GEAR[b].slot; st.equip[sl] = g.u; }
+  st.hp = heroStats(st).hp;
+}
+
 /* ===================== UI: text boxes, menus, screens ===================== */
 const UI = {
   stack: [], push(w) { this.stack.push(w); return w; }, remove(w) { const i = this.stack.indexOf(w); if (i >= 0) this.stack.splice(i, 1); },
@@ -3193,14 +3262,14 @@ function heroStats(st = Game.st) {
   s.eva = a.agi * 0.4;        // 迴避率% = 敏捷×0.4
   s.vs = []; s.resist = {}; s.drain = 0; s.elem = 0; s.counter = 0; // equipment affixes & talents
   for (const T of TALENTS) { const r = (st.tal || {})[T.id] || 0; if (r) for (const k in T.st) s[k] = (s[k] || 0) + T.st[k] * r; }
-  const CL = CLASSES[st.cls]; if (CL) for (const k in CL.st) s[k] = (s[k] || 0) + CL.st[k];
-  { const wg = gearBy(st.equip && st.equip.weapon, st); s.welem = wg && GEAR[wg.b].elem || null; }
+  const CL = CLASSES[st.cls]; if (CL) { const f = CL.tier === 1 ? clamp((L - 2) / 8, 0.4, 1) : 1; for (const k in CL.st) s[k] = (s[k] || 0) + (STATK.includes(k) ? Math.round(CL.st[k] * f) : CL.st[k]); } // base-class bonus grows in until Lv10
+  { const wg = gearBy(st.equip && st.equip.weapon, st); s.welem = wg && GEAR[wg.b].elem || null; s.wkind = wg && GEAR[wg.b].kind || null; }
   s.fx = {}; for (const g of equippedGear(st)) for (const f of GEAR[g.b].fx || []) s.fx[f] = 1;
   for (const g of equippedGear(st)) { const p = gearStats(g).sp; s.crit += p.crit || 0; s.hit += p.hit || 0; s.eva += p.eva || 0; s.drain += p.drain || 0; s.elem += p.elem || 0; s.vs.push(...p.vs); for (const t in p.resist) s.resist[t] = (s.resist[t] || 0) + p.resist[t]; }
   return s;
 }
 const expForLevel = lv => Math.floor(0.8 * lv * lv * lv);
-function heroLearnAt(lv) { return HERO_LEARN.filter(([l]) => l === lv).map(([, m]) => m); }
+function heroLearnAt(lv, st = Game.st) { const line = classLine(st.cls) || HERO_LEARN; return line.filter(([l]) => l === lv).map(([, m]) => m); }
 
 /* ---------- Screen: background pattern ---------- */
 function screenBG(x) {
@@ -4337,7 +4406,7 @@ class Battle {
     return { dmg: Math.max(1, Math.floor(base * m)), mult, crit };
   }
   *useMove(u, t, id) {
-    let mv = MOVES[id]; if (u.hero && u.stats.welem && mv.t === '一般' && mv.cat === '物' && mv.pow) mv = { ...mv, t: u.stats.welem };
+    let mv = MOVES[id]; if (u.hero && u.stats.welem && mv.t === '一般' && mv.pow && mv.cat === (u.stats.wkind === '法杖' ? '特' : '物')) mv = { ...mv, t: u.stats.welem };
     // can the user act?
     if (u.status === 'slp') {
       if (u.sleepT <= 0) { u.status = null; yield* this.msg(u.n + '醒過來了！'); }
@@ -4816,6 +4885,18 @@ const MFX = {
   *m_deathCry(U) { Sound.cry(15, 0.45, 1.5); mSpawn(this, 'mjag', { x: U.x, y: U.y, r0: 10, r1: 50, c: '#8a50c0', n: 16, life: 22 }); mRise(this, U.x, U.y, 6, () => ({ k: 'mskull', c: '#e0d0ff', tail: 1 }), 24); yield* wait(22); },
 };
 
+/* ===================== FX pack 3: class-line skills (hero materials: clean light lines, crescents, beams, hex) ===================== */
+Object.assign(FX, {
+  *voltSlash(U, T, u) { const pts = []; for (let y = U.y - 18; y < U.y + 4; y += 5) pts.push([U.x + rnd(-3, 3), y]); this.spawn({ k: 'bolt', pts, w: 2, life: 10 }); Sound.sfx('thunder'); yield* wait(6); yield* this.lunge(u, 14, 3); Sound.sfx('slash'); this.spawn({ k: 'cres', x: T.x, y: T.y, r: 18, ang: 0.4, c: '#fffbe0', c2: '#f8d030', w: 6, life: 12 }); for (let i = 0; i < 3; i++) { const p2 = []; let x0 = T.x + rnd(-14, 14); for (let y = T.y - 18; y < T.y + 18; y += 6) { p2.push([x0, y]); x0 += rnd(-5, 5); } this.spawn({ k: 'bolt', pts: p2, w: 2, life: 8 }); } yield* wait(14); },
+  *tideSlash(U, T, u) { yield* this.lunge(u, 12, 3); Sound.sfx('water'); for (let i = 0; i < 3; i++) { this.spawn({ k: 'cres', x: T.x + (i - 1) * 8, y: T.y + (i - 1) * 3, r: 16, ang: -0.3 + i * 0.3, c: '#e8fbff', c2: '#3aa8f0', w: 5, life: 14 }); yield* wait(4); } for (let i = 0; i < 10; i++) this.spawn({ k: 'bub', x: T.x + rnd(-16, 16), y: T.y + rnd(-6, 12), vy: -0.6, r: rnd(1, 3), c: '#9ae0ff', life: 20 }); yield* wait(12); },
+  *magicBolt(U, T) { Sound.sfx('charge'); this.spawn({ k: 'glow', x: U.x, y: U.y - 6, r: 14, c: '#c8e8ff', life: 10 }); yield* wait(6); this.projectile(U, T, 1, () => ({ k: 'circ', r: 3, c: '#e0f4ff', hl: '#ffffff' }), 0, 12); yield* wait(12); Sound.sfx('hit'); this.spawn({ k: 'ring', x: T.x, y: T.y, r0: 3, r1: 18, c: '#c8e8ff', w: 2, life: 10 }); this.star(T.x, T.y, '#ffffff', 10); yield* wait(10); },
+  *fireBolt(U, T) { Sound.sfx('fire'); this.projectile(U, T, 1, () => ({ k: 'circ', r: 4, c: '#ff8030', hl: '#fff0a0', arc: 10 }), 0, 16); for (let i = 0; i < 8; i++) { const t = i / 8; this.spawn({ k: 'flame', x: lerp(U.x, T.x, t), y: lerp(U.y, T.y, t) - Math.sin(t * Math.PI) * 10, vy: -0.4, s: 3, life: 10 + i * 2 }); } yield* wait(16); Sound.sfx('hitSuper'); this.spawn({ k: 'ring', x: T.x, y: T.y, r0: 4, r1: 24, c: '#ffb050', w: 3, life: 12 }); for (let i = 0; i < 12; i++) this.spawn({ k: 'flame', x: T.x + rnd(-10, 10), y: T.y + rnd(-6, 8), vy: -1 - Math.random(), s: rnd(3, 6), life: 16 }); yield* wait(14); },
+  *leafStorm(U, T) { Sound.sfx('leaf'); for (let i = 0; i < 18; i++) { const a0 = i / 18 * Math.PI * 2, p = this.spawn({ k: 'img', img: LEAF_IMG, x: T.x, y: T.y, life: 30 }); p.upd = q => { const a = a0 + q.t * 0.25, r = 28 - q.t * 0.6; q.x = T.x + Math.cos(a) * r; q.y = T.y + Math.sin(a) * r * 0.6; }; } for (let i = 0; i < 3; i++) this.spawn({ k: 'arc', x: T.x, y: T.y, r: 16 + i * 6, a0: i * 2, c: '#a8f0a0', life: 26 }); yield* wait(30); },
+  *aquaBurst(U, T) { Sound.sfx('water'); for (let i = 0; i < 6; i++) this.spawn({ k: 'bub', x: T.x + rnd(-14, 14), y: T.y + 26, vy: -0.5, r: 2, c: '#9ae0ff', life: 14 }); yield* wait(10); Sound.sfx('hitSuper'); this.spawn({ k: 'beam', x: T.x, w: 16, y1: T.y + 28, h: 90, c: '#58c0f8', life: 22 }); this.spawn({ k: 'beam', x: T.x, w: 6, y1: T.y + 28, h: 90, c: '#e8fbff', life: 18 }); this.shake = 8; for (let i = 0; i < 16; i++) { const a = -Math.PI / 2 + rnd(-10, 10) / 10; this.spawn({ k: 'dot', x: T.x, y: T.y - 30, vx: Math.cos(a) * 2, vy: Math.sin(a) * 2, g: 0.15, c: pick(['#e8fbff', '#9ae0ff']), s: 2, life: 26 }); } yield* wait(22); },
+  *flameWave(U, T) { Sound.sfx('fire'); for (let i = 0; i < 7; i++) { const x0 = T.x - 36 + i * 12; this.spawn({ k: 'beam', x: x0, w: 5, y1: T.y + 24, h: 26 + i * 3, c: '#ff9030', life: 16 }); for (let j = 0; j < 4; j++) this.spawn({ k: 'flame', x: x0 + rnd(-3, 3), y: T.y + 20 - rnd(0, 14), vy: -1.1, s: rnd(3, 6), life: 16 }); yield* wait(2); } this.spawn({ k: 'ring', x: T.x, y: T.y + 14, r0: 10, r1: 44, c: '#ffc060', w: 3, life: 16, fl: 0.35 }); yield* wait(18); },
+  *ironWill(U) { Sound.sfx('statUp'); for (let i = 0; i < 2; i++) { this.spawn({ k: 'hex', x: U.x, y: U.y, r0: 12 + i * 6, r1: 30 + i * 6, c: ['#e0e8f8', '#a8c0e0'][i], life: 20 }); yield* wait(5); } this.spawn({ k: 'glow', x: U.x, y: U.y, r: 26, c: '#c8d8f0', life: 16 }); yield* wait(14); },
+});
+
 /* ===================== EVENTS (異世界篇) ===================== */
 function* healRitual(text) {
   yield* fadeOut(10); healHero(); const fr = Sound.jingle('heal'); yield* wait(Math.max(40, fr)); yield* fadeIn(10);
@@ -4861,11 +4942,20 @@ const Events = {
     const st = Game.st;
     if (st.flags.license && (yield* classTalk())) return;
     if (!st.flags.license) {
-      yield* sayAll(['喔？你就是瑪莎撿回來的那個孩子啊。', '……從另一個世界來的？', '這個會發光的小板子……嗯，看來不是在說謊。', '古老的傳說裡提過，北方的古岩遺跡深處，有一扇「異界之門」。', '據說很久以前，也有異世界的旅人從那扇門來到這裡。', '如果真有回去的路，大概就在那裡了。', '只是……最近守護遺跡的古岩魔像甦醒了，誰也無法靠近。', '嗯？你的手……在發光！', '這是「異界人之力」。傳說中，來自異世界的人都擁有不可思議的力量。', '有這股力量，你應該能和魔物戰鬥。']);
-      st.flags.license = 1; st.bag.license = 1; st.equip.weapon = makeGear('woodSword', 1, 1).u; st.equip.acc1 = makeGear('guardBadge', 1, 1).u;
-      yield* itemGet('得到了木劍和冒險者證！'); yield* say(st.name + '把木劍拿在手上。……有點重。');
+      yield* sayAll(['喔？你就是瑪莎撿回來的那個孩子啊。', '……從另一個世界來的？', '這個會發光的小板子……嗯，看來不是在說謊。', '古老的傳說裡提過，北方的古岩遺跡深處，有一扇「異界之門」。', '據說很久以前，也有異世界的旅人從那扇門來到這裡。', '如果真有回去的路，大概就在那裡了。', '只是……最近守護遺跡的古岩魔像甦醒了，誰也無法靠近。', '嗯？你的手……在發光！', '這是「異界人之力」。傳說中，來自異世界的人都擁有不可思議的力量。', '不過，這股力量還沒有形狀。', '把手放在這塊古老的石板上。力量會回應你的心，化成你要走的道路。']);
+      yield* fadeOut(16, '#ffffff'); Game.fade = 0; Sound.sfx('charge'); const k = yield* classSelectScreen();
+      applyStartClass(k); Game.fadeColor = '#ffffff'; Game.fade = 1; Sound.jingle('levelup'); yield* fadeIn(30); Game.fadeColor = '#000';
+      const C = CLASSES[k], S = CLASS_START[k];
+      yield* itemGet(st.name + '覺醒成為了' + C.n + '！');
+      yield* say({ swordsman: '劍士的道路啊……這把練習木劍就交給你了。', mage: '魔導士的道路啊……這把魔杖是我年輕時用的，交給你了。', guardian: '守護者的道路啊……這把木劍和布帽給你，別逞強喔。' }[k]);
+      st.flags.license = 1; st.bag.license = 1; yield* itemGet('得到了' + S.gear.filter(b => b !== 'guardBadge').map(b => GEAR[b].n).join('和') + '、護身符和冒險者證！');
       yield* say('還有這些傷藥，帶在身上吧。'); st.bag.potion = (st.bag.potion || 0) + 5; yield* itemGet('得到了傷藥×5！');
-      yield* sayAll(['走在高高的草叢裡，會遇到野生的魔物。', '打倒魔物能累積經驗，你會越來越強。', '道路上還有更強大的「精英魔物」，被盯上可要小心。', '古岩魔像是「構造體」魔物，最怕水和草的攻擊。記住了。', '按START可以打開選單，查看狀態和背包，也能記錄進度。', '去吧，異世界的旅人。願曙光指引你回家的路。']);
+      yield* sayAll(['你現在會的技能是：' + st.moves.map(m => MOVES[m.id].n).join('、') + '。', '隨著等級提升，你會學到更多' + C.n + '的技能。到了Lv14，還能走上更高的道路。', '魔物分成好幾個種族，各有害怕的屬性。善用屬性技能，戰鬥會輕鬆很多。', '按START可以打開選單，查看狀態、技能和背包，也能記錄進度。']);
+      const ap = ow && ow.npcs.find(n => n.id === 'apprentice');
+      if (ap) { ap.dir = 'left'; yield* say('學徒：「村長爺爺！讓我幫忙！我在院子裡養了一隻練習用的泡泡姆！」');
+        if (yield* yesNo('要和泡泡姆練習一場嗎？')) { const res = yield* ow.battleScript({ sp: 'slime', lv: 3, kind: 'wild' }); if (res === 'win') yield* say('學徒：「好厲害！這就是異界人之力！」'); else yield* say('學徒：「泡、泡泡姆，下手輕一點啦！」'); healHero(); }
+        else yield* say('學徒：「那下次再練習吧！」'); }
+      yield* sayAll(['古岩魔像是「構造體」魔物，最怕水和草的攻擊。記住了。', '去吧，異世界的' + C.n + '。願曙光指引你回家的路。']);
       return;
     }
     if (st.flags.golem) { yield* sayAll(['門的另一邊，是你的故鄉？', '門只開了一瞬間……看來還缺少某種力量。', '別灰心。線索一定就在這個世界的某處。'].concat(st.flags.boneKnight ? [] : ['……對了，聽說魔像倒下後，遺跡的石板下面出現了往地底的樓梯。', '那裡是古王的墓穴。亡者怕火，別忘了帶上火系的武器或技能。'])); return; }
@@ -4993,7 +5083,7 @@ function* visionScene() {
 
 function* classTalk() {
   const st = Game.st, C = CLASSES, cur = C[st.cls]; let opts = [];
-  if (!st.cls && st.lv >= 8) opts = ['swordsman', 'mage', 'guardian'];
+  if (!st.cls) opts = ['swordsman', 'mage', 'guardian']; // saves from before the opening ceremony
   else if (cur && cur.tier === 1 && st.lv >= 14) opts = Object.keys(C).filter(k => C[k].from === st.cls);
   if (st.flags.hiddenCls && st.cls !== 'otherworlder') opts.push('otherworlder');
   if (!opts.length) return false;
@@ -5125,7 +5215,7 @@ class TitleScene {
     x.drawImage(this.logo, Math.round(W / 2 - this.logo.width / 2), 6 + bob);
     Font.drawC(x, '～異世界冒險RPG～', W / 2, 52 + bob, '#ffe0a0', '#3a1428');
     if (this.stage === 'press' && Math.floor(this.t / 30) % 2 === 0) Font.drawC(x, '按 A 鍵開始', W / 2, 232, '#ffffff', '#1a1024');
-    Font.draw(x, 'v4.1', W - 26, H - 13, '#b890b0', null);
+    Font.draw(x, 'v4.2', W - 26, H - 13, '#b890b0', null);
   }
 }
 

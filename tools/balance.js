@@ -1,7 +1,8 @@
 // Progression & difficulty simulator. node tools/play.js tools/balance.js
 // Plays a "normal" and a "thorough" player through chapter 1, levelling from real exp, then measures fights at each stage.
 module.exports = async (g) => {
-  const out = await g.ev(() => {
+  const CLS = process.env.CLS || 'swordsman';
+  const out = await g.ev((CLS) => {
     const G = __game, RND = Math.random;
     const AREAS = [ // [label, map, encounter band index or null, normal fights, thorough fights, extra fixed fights, gear kit, enhance]
       ['道路南段', 'route', 0, 8, 14, [], 0, 0],
@@ -21,14 +22,14 @@ module.exports = async (g) => {
       ['crystalBlade', 'knightHelm', 'ruinMail', 'knightGreaves', 'wolfNecklace', 'mossBracer'],
     ];
     const slotFor = b => GEAR[b].slot === 'acc' ? null : GEAR[b].slot;
-    const equipKit = (st, i, enh) => { st.gear = []; for (const k in st.equip) st.equip[k] = null; let acc = 0; KITS[i].forEach((b, j) => { st.gear.push({ u: j + 1, b, q: 2, r: 0.88, e: enh, a: [] }); const sl = slotFor(b) || (acc++ ? 'acc2' : 'acc1'); st.equip[sl] = j + 1; }); };
-    const setup = (lv, kit, enh) => { G.newGameState('測'); const st = G.Game.st; st.lv = lv; st.cls = lv >= 14 ? 'swordmaster' : lv >= 8 ? 'swordsman' : null; const tp = Math.max(0, lv - 5); st.tal = { blade: Math.min(3, tp), vital: Math.min(3, Math.max(0, tp - 3)) }; equipKit(st, kit, enh); st.hp = G.heroStats().hp; return st; };
+    const STAFF = ['practiceWand', 'apprenticeStaff', 'oakStaff', 'tideStaff', 'tideStaff']; const equipKit = (st, i, enh) => { st.gear = []; const kitL = KITS[i].map(b => CLS === 'mage' && GEAR[b].slot === 'weapon' ? STAFF[i] : b); for (const k in st.equip) st.equip[k] = null; let acc = 0; kitL.forEach((b, j) => { st.gear.push({ u: j + 1, b, q: 2, r: 0.88, e: enh, a: [] }); const sl = slotFor(b) || (acc++ ? 'acc2' : 'acc1'); st.equip[sl] = j + 1; }); };
+    const setup = (lv, kit, enh) => { G.newGameState('測'); const st = G.Game.st; st.lv = lv; st.cls = lv >= 14 ? { swordsman: 'swordmaster', mage: 'stormcaller', guardian: 'paladin' }[CLS] : CLS; if (CLS === 'guardian') { st.tal = { body: Math.min(3, Math.max(0, lv - 5)), blade: Math.min(3, Math.max(0, lv - 8)) }; } if (CLS === 'mage') { st.tal = { mana: Math.min(3, Math.max(0, lv - 5)), elem: Math.min(3, Math.max(0, lv - 8)) }; } const tp = Math.max(0, lv - 5); st.tal = { blade: Math.min(3, tp), vital: Math.min(3, Math.max(0, tp - 3)) }; equipKit(st, kit, enh); st.hp = G.heroStats().hp; return st; };
     const expFor = (sp, lv, kind, heroLv) => { const s = SPECIES[sp]; let e = Math.floor(s.exp * lv / 5 * (kind !== 'wild' ? 1.5 : 1)); if (typeof expScale === 'function') e = Math.floor(e * expScale(heroLv, lv)); return e; };
     const bandOf = (map, i) => { const d = MAPS[map]; return (d.encounters || [])[i]; };
     const measure = (sp, lv, kind, heroLv, kit, enh) => {
       const st = setup(heroLv, kit, enh); Math.random = () => 0.5; const b = new Battle({ sp, lv, kind, bg: 'field' }); Math.random = RND;
-      const avail = ['slash', 'powerSlash', 'crossSlash'].filter(m => m === 'slash' || (m === 'powerSlash' && heroLv >= 8) || (m === 'crossSlash' && heroLv >= 12));
-      const elem = ['flameSlash', 'aquaBlade', 'thunder', 'leafBlade'].filter(m => HERO_LEARN.some(([l, id]) => id === m && l <= heroLv));
+      const ADV = { swordsman: 'swordmaster', mage: 'stormcaller', guardian: 'paladin' }[CLS]; const LINE = [...CLASS_START[CLS].moves.map(m => [1, m]), ...CLASS_LINE[CLS], [12, CLASSES[CLS].move2], [14, CLASSES[ADV].move], [CLASSES[ADV].lv2, CLASSES[ADV].move2]]; const has = m => LINE.some(([l, id]) => id === m && l <= heroLv); const avail = ['slash', 'powerSlash', 'crossSlash', 'magicBolt', 'manaBurst', 'guardStrike', 'shieldBash', 'bladeStorm', 'iaiSlash'].filter(has);
+      const elem = ['flameSlash', 'voltSlash', 'leafBlade', 'tideSlash', 'blaze', 'fireBolt', 'aquaBlade', 'thunder', 'leafStorm', 'chainBolt', 'flameWave', 'aquaBurst', 'thunderstorm', 'skyJudge'].filter(has);
       Math.random = () => 0.5;
       const neu = Math.max(...avail.map(m => b.calcDamage(b.H, b.F, MOVES[m]).dmg)), best = Math.max(neu, ...elem.map(m => b.calcDamage(b.H, b.F, MOVES[m]).dmg));
       const dm = b.F.moves.map(m => MOVES[m.id]).filter(m => m.pow && !m.charge).map(m => b.calcDamage(b.F, b.H, m).dmg); Math.random = RND;
@@ -54,7 +55,7 @@ module.exports = async (g) => {
       res[mode] = rows;
     }
     return res;
-  });
+  }, CLS);
   for (const mode in out) {
     g.log('==== ' + mode + ' player ====');
     g.log('area | arriveLv→leaveLv | wild(foe) | hitsNeutral/hitsBest | foeAvg%HP (max%) | turnsToDie');
