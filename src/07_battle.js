@@ -1,7 +1,7 @@
 /* ===================== BATTLE ===================== */
 let HERO_POWER = 1.45, BOSS_HP = 2.1, ELITE_HP = 1.1;
 const BTN_MENU = { x: 4, y: TB_Y + 1, w: W - 8, h: TB_H - 2, cols: 2, colW: 82, rowH: 20, ox: 3, oy: 17, buttons: true, style: 'cmd' };
-const BH = TB_Y, FOE_X = 20, HERO_X = 92, HERO_Y = 81, HBAR_Y = 170; // side view: foe on the left, hero on the right, both standing on the same ground line
+const BH = TB_Y, FOE_X = 96, HERO_X = 6, HERO_Y = 122, HBAR_Y = 156; // facing the foe: foe far (upper right), hero's back near (lower left); panels on the opposite corners
 function critRate(u, mv) { const base = (u.stats.crit ?? 6) / 100; return mv.crit ? base * 2 : base; }
 function hitChance(u, t, mv) { let a = mv.acc; if (!a) return 1; a += u.stats.hit || 0; a -= t.stats.eva || 0; return clamp(a, 5, 100) / 100; }
 const stageMul = s => s >= 0 ? 1 + 0.25 * s : 1 / (1 + 0.25 * -s); // buffs/debuffs: ±25% per step, max ±3, timed
@@ -9,7 +9,7 @@ const STATUS_NAME = { psn: '中毒', par: '麻痺', slp: '睡眠', brn: '灼傷'
 const IMMUNE = { psn: '毒', brn: '火', par: '雷' };
 const battleImgCache = {};
 // battle sprites: rendered at a low native size, then scaled 3x (same chunky pixel look as the hero)
-const FOE_NATIVE = { golem: 28, mossGiant: 28, crystalGolem: 28, banditBoss: 28, boneKnight: 28, runeGolem: 28 }, FOE_SCALE = 3, FOE_FOOT = 152;
+const FOE_NATIVE = { golem: 28, mossGiant: 28, crystalGolem: 28, banditBoss: 28, boneKnight: 28, runeGolem: 28 }, FOE_SCALE = 3, FOE_FOOT = 110;
 function battleSprite(key) {
   if (battleImgCache[key]) return battleImgCache[key];
   const n = FOE_NATIVE[key] || 24, S = FOE_SCALE, sm = buildShaded(ART[key], n, n / 64);
@@ -88,9 +88,9 @@ class Battle {
     const dx = st.dex || (st.dex = {}); (dx[cfg.sp] || (dx[cfg.sp] = { won: 0 })).seen = 1;
     Object.defineProperty(H, 'hp', { get: () => st.hp, set: v => st.hp = v }); if (st.mp === undefined) st.mp = s.mp; H.maxmp = s.mp; Object.defineProperty(H, 'mp', { get: () => st.mp, set: v => st.mp = clamp(v, 0, s.mp) }); Object.defineProperty(H, 'status', { get: () => st.status, set: v => st.status = v });
     this.bg = buildBattleBG(cfg.bg);
-    this.imgF = battleSprite(cfg.sp); this.foeTX = FOE_X; this.shadowF = buildShadow(Math.round(this.imgF.bb.w * 0.38), 4); this.imgH = heroSideImg(0, heroLookOf(st)); this.imgH2 = heroSideImg(1, heroLookOf(st)); this.shadowH = buildShadow(15, 4);
+    this.imgF = battleSprite(cfg.sp); this.foeTX = FOE_X; this.shadowF = buildShadow(Math.round(this.imgF.bb.w * 0.38), 4); this.imgH = heroBattleImgLook(0, heroLookOf(st)); this.imgH2 = heroBattleImgLook(1, heroLookOf(st)); this.shadowH = buildShadow(22, 5);
     this.disp = { F: this.F.hp, H: st.hp, exp: st.exp };
-    this.foeX = -90; this.heroX = W + 40; this.boxF = -30; this.boxH = BH + 4; this.cover = 1;
+    this.foeX = W + 40; this.heroX = -90; this.boxF = -30; this.boxH = BH + 4; this.cover = 1;
     this.offF = { x: 0, y: 0 }; this.offH = { x: 0, y: 0 }; this.sinkF = 0; this.sinkH = 0; this.blinkF = 0; this.blinkH = 0; this.alphaF = 1;
     this.fx = []; this.shake = 0; this.t = 0; this.idle = false; this.cmdIdx = 0; this.moveIdx = 0; this.runTries = 0; this.turn = 0; this.phase2 = false; this.fistCD = 2;
     this.tint = null; this.squishF = 0;
@@ -106,7 +106,7 @@ class Battle {
     this.fx = this.fx.filter(p => p.t < p.life);
     if (this.script) { const r = this.script.next(); if (r.done) this.script = null; }
   }
-  center(b) { return b.hero ? { x: this.heroX + 42, y: HERO_Y + 36 } : { x: this.foeX + 32, y: FOE_FOOT - Math.round(this.imgF.bb.h * 0.5) }; }
+  center(b) { return b.hero ? { x: this.heroX + 24, y: HERO_Y + 30 } : { x: this.foeX + 32, y: FOE_FOOT - Math.round(this.imgF.bb.h * 0.5) }; }
   /* ---------------- drawing ---------------- */
   draw(x) {
     const sx = this.shake > 0 ? rnd(-3, 3) : 0, sy = this.shake > 0 ? rnd(-2, 2) : 0;
@@ -127,7 +127,7 @@ class Battle {
     if (this.cg && this.cg.mirror && this.alphaF > 0 && Math.floor(this.t / 8) % 2) { x.globalAlpha = 0.25; x.drawImage(tinted(this.imgF, '#e8fbff'), Math.round(this.foeX + 32 - this.imgF.bb.cx), Math.round(FOE_FOOT - this.imgF.bb.bot)); x.globalAlpha = 1; }
     // hero (foreground, lower body hidden behind the status bar)
     if (!(this.blinkH > 0 && Math.floor(this.blinkH / 3) % 2)) {
-      x.save(); x.globalAlpha = 0.25; x.drawImage(this.shadowH, Math.round(this.heroX + 42 + this.offH.x - this.shadowH.width / 2), FOE_FOOT - 4); x.globalAlpha = Math.max(0, 1 - this.sinkH / 70);
+      x.save(); x.globalAlpha = 0.25; x.drawImage(this.shadowH, Math.round(this.heroX + 24 + this.offH.x - this.shadowH.width / 2), HERO_Y + 64); x.globalAlpha = Math.max(0, 1 - this.sinkH / 70);
       const hi = (this.offH.x || this.offH.y) ? this.imgH2 : this.imgH; const hx = Math.round(this.heroX + this.offH.x), hy = Math.round(HERO_Y + this.offH.y + this.sinkH * 0.25 + bobH);
       x.drawImage(hi, hx, hy);
       if (this.tintH) { x.globalAlpha = this.tintH.a; x.drawImage(tinted(hi, this.tintH.c), hx, hy); }
@@ -139,25 +139,23 @@ class Battle {
     x.fillStyle = '#0b0d18'; x.fillRect(0, BH, W, H - BH); x.fillStyle = PANEL.edge; x.fillRect(0, BH, W, 1);
     if (this.cover > 0) { x.fillStyle = '#000'; const h = Math.round(this.cover * (H / 2 + 1)); x.fillRect(0, 0, W, h); x.fillRect(0, H - h, W, h); }
   }
-  drawBoxF(x) {
-    const Y = Math.round(this.boxF), F = this.F; if (Y < -27) return;
-    const X = 8, w = W - 16; drawPanel(x, X, Y, w, 26, F.boss ? UIC.bad : F.elite ? UIC.warm : UIC.accent);
-    let cx = Font.draw(x, F.n, X + 6, Y + 1, UIC.text, UIC.textSh);
-    cx = Font.draw(x, 'Lv' + F.lv, cx + 4, Y + 1, UIC.muted, UIC.textSh);
-    const tag = F.rare ? '稀有' : F.boss ? '頭目' : F.elite ? '精英' : ''; let rx = X + w - 6; if (tag) { Font.drawR(x, tag, rx, Y + 1, F.rare ? '#ffd84a' : F.boss ? UIC.bad : UIC.warm, UIC.textSh); rx -= Font.width(tag) + 4; } if (FAMILIES[F.fam]) { Font.drawR(x, FAMILIES[F.fam].n, rx, Y + 2, FAMILIES[F.fam].c, UIC.textSh, 10); rx -= Font.width(FAMILIES[F.fam].n, 10) + 4; }
-    { const bs = [F.status, F.wet && 'wet', F.tangle && 'tangle', F.shield && 'shield'].filter(Boolean), room = Math.max(0, Math.floor((rx - cx - 4) / 18)); badgeRow(x, bs.slice(0, room), cx + 4, Y + 3); if (bs.length > room) Font.draw(x, '+' + (bs.length - room), cx + 4 + room * 18, Y + 2, UIC.muted, UIC.textSh, 10); }
-    drawHPBar(x, X + 6, Y + 18, w - 12, this.disp.F / F.maxhp, 3);
+  drawBoxF(x) { // top-left, compact
+    const Y = Math.round(this.boxF), F = this.F; if (Y < -33) return;
+    const X = 4, w = 104; drawPanel(x, X, Y, w, 30, F.boss ? UIC.bad : F.elite ? UIC.warm : UIC.accent);
+    const cx = Font.draw(x, F.n, X + 5, Y, UIC.text, UIC.textSh, 11); Font.draw(x, 'Lv' + F.lv, cx + 3, Y + 1, UIC.muted, UIC.textSh, 10);
+    let lx = X + 5; if (FAMILIES[F.fam]) lx = Font.draw(x, FAMILIES[F.fam].n, lx, Y + 12, FAMILIES[F.fam].c, UIC.textSh, 9) + 3;
+    const tag = F.rare ? '稀有' : F.boss ? '頭目' : F.elite ? '精英' : ''; if (tag) lx = Font.draw(x, tag, lx, Y + 12, F.rare ? '#ffd84a' : F.boss ? UIC.bad : UIC.warm, UIC.textSh, 9) + 3;
+    { const bs = [F.status, F.wet && 'wet', F.tangle && 'tangle', F.shield && 'shield'].filter(Boolean), room = Math.max(0, Math.floor((X + w - 4 - lx) / 18)); badgeRow(x, bs.slice(0, room), lx, Y + 13); }
+    drawHPBar(x, X + 5, Y + 25, w - 10, this.disp.F / F.maxhp, 3);
   }
-  drawBoxH(x) {
+  drawBoxH(x) { // bottom-right, clear of the hero sprite
     const Y = Math.round(this.boxH), st = Game.st; if (Y >= BH) return;
-    const X = 8, w = W - 16, r = this.disp.H / this.H.maxhp; drawPanel(x, X, Y, w, 26, UIC.accent, 'rgba(11,13,24,0.92)');
-    let cx = Font.draw(x, st.name, X + 6, Y + 1, UIC.text, UIC.textSh);
-    cx = Font.draw(x, 'Lv' + st.lv, cx + 4, Y + 1, UIC.muted, UIC.textSh);
-    badgeRow(x, [st.status, this.H.wet && 'wet', this.H.tangle && 'tangle', this.H.shield && 'shield'], cx + 4, Y + 3);
-    const hs = Math.ceil(this.disp.H) + '/' + this.H.maxhp; Font.drawR(x, hs, X + w - 6, Y + 1, r <= 0.2 ? UIC.bad : UIC.text, UIC.textSh); Font.drawR(x, 'HP', X + w - 9 - Font.width(hs), Y + 1, UIC.muted, UIC.textSh);
-    drawHPBar(x, X + 6, Y + 16, w - 12, r, 3);
-    { const mr = clamp(st.mp / (this.H.maxmp || 1), 0, 1); x.fillStyle = '#141a30'; x.fillRect(X + 6, Y + 20, w - 12, 2); x.fillStyle = '#5aa8ff'; x.fillRect(X + 6, Y + 20, Math.round((w - 12) * mr), 2); }
-    const lo = expForLevel(st.lv), hi = expForLevel(st.lv + 1); drawExpBar(x, X + 6, Y + 23, w - 12, (this.disp.exp - lo) / (hi - lo), 1);
+    const X = 90, w = W - 94, r = this.disp.H / this.H.maxhp, mr = clamp(st.mp / (this.H.maxmp || 1), 0, 1); drawPanel(x, X, Y, w, 39, UIC.accent, 'rgba(11,13,24,0.92)');
+    const cx = Font.draw(x, st.name, X + 5, Y, UIC.text, UIC.textSh, 11); Font.draw(x, 'Lv' + st.lv, cx + 3, Y + 1, UIC.muted, UIC.textSh, 10);
+    badgeRow(x, [st.status, this.H.wet && 'wet', this.H.tangle && 'tangle', this.H.shield && 'shield'].filter(Boolean).slice(0, 1), X + w - 22, Y + 2);
+    const bw = w - 60; Font.draw(x, 'HP', X + 5, Y + 12, UIC.muted, UIC.textSh, 9); drawHPBar(x, X + 20, Y + 18, bw, r, 3); Font.drawR(x, Math.ceil(this.disp.H) + '/' + this.H.maxhp, X + w - 4, Y + 12, r <= 0.2 ? UIC.bad : UIC.text, UIC.textSh, 9);
+    Font.draw(x, 'MP', X + 5, Y + 23, UIC.muted, UIC.textSh, 9); x.fillStyle = '#141a30'; x.fillRect(X + 20, Y + 29, bw, 3); x.fillStyle = '#5aa8ff'; x.fillRect(X + 20, Y + 29, Math.round(bw * mr), 3); Font.drawR(x, st.mp + '/' + this.H.maxmp, X + w - 4, Y + 23, '#86b4ff', UIC.textSh, 9);
+    const lo = expForLevel(st.lv), hi = expForLevel(st.lv + 1); drawExpBar(x, X + 5, Y + 36, w - 10, (this.disp.exp - lo) / (hi - lo), 1);
   }
   /* ---------------- helpers ---------------- */
   *msg(text, o = {}) { const t = new TextBox(text, { style: 'battle', auto: o.wait ? false : (o.hold || 38) }); UI.push(t); while (!t.done) { t.update(); yield; } UI.remove(t); }
@@ -212,7 +210,7 @@ class Battle {
   }
   *intro() {
     Sound.sfx('encounter');
-    yield* parallel(tween(14, t => this.cover = 1 - t), tween(40, t => { const e = 1 - Math.pow(1 - t, 3); this.foeX = lerp(-90, this.foeTX, e); this.heroX = lerp(W + 40, HERO_X, e); }));
+    yield* parallel(tween(14, t => this.cover = 1 - t), tween(40, t => { const e = 1 - Math.pow(1 - t, 3); this.foeX = lerp(W + 40, this.foeTX, e); this.heroX = lerp(-90, HERO_X, e); }));
     this.cover = 0; Sound.cry(Object.keys(SPECIES).indexOf(this.cfg.sp) + 1, this.F.boss ? 0.7 : 1, this.F.boss ? 1.6 : 1);
     if (this.F.boss) { this.shake = 30; Sound.sfx('quake'); }
     yield* parallel(tween(12, t => this.boxF = lerp(-30, 4, 1 - Math.pow(1 - t, 2))), wait(4));
@@ -225,7 +223,8 @@ class Battle {
     if (Game.autoPlay) { for (let i = 0; i < 4; i++) yield; return Game.autoPlay(this); }
     while (true) {
       this.idle = true;
-      const r = yield* choose(['攻擊', '技能', '道具', '防禦', '逃跑'], { ...BTN_MENU, cols: 3, colW: 55, cancel: false, index: this.cmdIdx, title: '要讓' + st.name + '做什麼？　MP ' + st.mp + '/' + this.H.maxmp });
+      const pr = { draw(x) { drawWin(x, 4, TB_Y + 1, 76, TB_H - 2, 'ow'); Font.draw(x, st.name, 12, TB_Y + 8, UIC.accent, UIC.textSh); Font.draw(x, '要做什麼？', 12, TB_Y + 26, UIC.text, UIC.textSh); } }; UI.push(pr);
+      const r = yield* choose(['攻擊', '技能', '道具', '防禦', '逃跑'], { ...BTN_MENU, x: 82, w: W - 86, cols: 2, colW: 44, rowH: 18, ox: 2, oy: 3, cancel: false, index: this.cmdIdx }); UI.remove(pr);
       this.idle = false; this.cmdIdx = r;
       if (r === 0) return { type: 'move', id: 'attack' };
       if (r === 1) { const m = yield* this.chooseMove(); if (m) return { type: 'move', id: m }; }
