@@ -7,8 +7,9 @@ const UI = {
 class TextBox {
   constructor(text, o = {}) {
     this.style = o.style || 'ow'; const bb = this.style === 'battle' && typeof BB_Y !== 'undefined'; this.x = o.x ?? 4; this.y = o.y ?? (bb ? BB_Y + 1 : TB_Y + 1); this.w = o.w ?? W - 8; this.h = o.h ?? (bb ? BB_H - 2 : TB_H - 2);
-    this.pad = o.pad ?? 8; this.rows = Math.max(1, Math.floor((this.h - 10) / 16));
-    this.lines = Font.wrap(text, this.w - this.pad * 2 - 2);
+    this.fs = o.fs ?? (bb ? 10 : undefined); this.lh = o.lh ?? (bb ? 13 : 16);
+    this.pad = o.pad ?? 8; this.rows = Math.max(1, Math.floor((this.h - 10) / this.lh));
+    this.lines = Font.wrap(text, this.w - this.pad * 2 - 2, this.fs);
     this.li = 0; this.ci = 0; this.top = 0; this.scroll = 0; this.state = 'type'; this.t = 0; this.hold = 0;
     this.auto = o.auto; this.keep = o.keep; this.done = false; this.instant = o.instant;
     this.col = UIC.text; this.sh = UIC.textSh;
@@ -31,7 +32,7 @@ class TextBox {
       if (this.auto && ++this.hold > 50) { this.hold = 0; this.state = 'scroll'; this.scroll = 0; }
       if (Input.pressed('a') || Input.pressed('b')) { Input.consume('a', 'b'); if (!this.auto) Sound.sfx('cursor'); this.state = 'scroll'; this.scroll = 0; this.hold = 0; }
     } else if (this.state === 'scroll') {
-      this.scroll += 4; if (this.scroll >= 16) { this.scroll = 0; this.top++; this.li++; this.ci = 0; this.state = 'type'; }
+      this.scroll += 4; if (this.scroll >= this.lh) { this.scroll = 0; this.top++; this.li++; this.ci = 0; this.state = 'type'; }
     } else if (this.state === 'end') {
       if (this.auto) { if (++this.hold > (this.auto === true ? 40 : this.auto) || Input.pressed('a')) { Input.consume('a', 'b'); this.done = true; } }
       else if (Input.pressed('a') || Input.pressed('b')) { Input.consume('a', 'b'); Sound.sfx('cursor'); this.done = true; }
@@ -40,14 +41,14 @@ class TextBox {
   draw(x) {
     drawWin(x, this.x, this.y, this.w, this.h, this.style);
     x.save(); x.beginPath(); x.rect(this.x + 4, this.y + 4, this.w - 8, this.h - 8); x.clip();
-    const ty = this.y + 6;
+    const ty = this.y + (this.lh < 16 ? 5 : 6);
     for (let i = this.top; i <= Math.min(this.li, this.top + this.rows); i++) {
       const row = i - this.top; const s = i < this.li ? this.lines[i] : [...this.lines[i]].slice(0, this.ci).join('');
-      Font.draw(x, s, this.x + this.pad, ty + row * 16 - this.scroll, this.col, this.sh);
+      Font.draw(x, s, this.x + this.pad, ty + row * this.lh - this.scroll, this.col, this.sh, this.fs);
     }
     x.restore();
     if ((this.state === 'wait' || this.state === 'end') && !this.auto && Math.floor(this.t / 16) % 2 === 0) {
-      const lastW = Font.width(this.lines[this.li]); const ay = ty + (this.li - this.top) * 16 + 5;
+      const lastW = Font.width(this.lines[this.li], this.fs); const ay = ty + (this.li - this.top) * this.lh + 5;
       x.drawImage(DOWNARROW, Math.min(this.x + this.pad + lastW + 3, this.x + this.w - 14), ay + (Math.floor(this.t / 8) % 2));
     }
   }
@@ -61,7 +62,7 @@ class Menu {
     this.colW = o.colW || maxW + 20; this.w = o.w || this.colW * this.cols + 16; const rowsN = Math.ceil(this.items.length / this.cols);
     const fitRows = Math.max(1, Math.floor(((o.y !== undefined ? H - o.y : TB_Y - 5) - 10) / this.rowH)); if (!o.visible && !o.h && rowsN > fitRows) o = { ...o, visible: fitRows }; // long menus scroll instead of running off screen
     this.h = o.h || Math.min(rowsN, o.visible || rowsN) * this.rowH + 10; this.x = o.x ?? (W - this.w - 4); this.y = o.y ?? (TB_Y - this.h - 1); this.buttons = o.buttons; this.ox = o.ox ?? 14; this.oy = o.oy ?? 5; this.title = o.title;
-    this.scrollMax = o.visible || rowsN; this.scrollTop = Math.max(0, Math.floor(this.i / this.cols) - this.scrollMax + 1); this.drawExtra = o.drawExtra; this.noFrame = o.noFrame; this.textCol = o.textCol || '#c9cfe4'; this.textSh = o.textSh || UIC.textSh;
+    this.scrollMax = o.visible || rowsN; this.scrollTop = Math.max(0, Math.floor(this.i / this.cols) - this.scrollMax + 1); this.drawExtra = o.drawExtra; this.noFrame = o.noFrame; this.textCol = o.textCol || '#c9cfe4'; this.textSh = o.textSh || UIC.textSh; this.fs = o.fs;
     if (this.onMove) this.onMove(this.i);
   }
   move(d) { const n = this.items.length; let i = this.i; if (this.cols === 1) i = (i + d + n) % n; else { if (d === -1 || d === 1) i = (i + d + n) % n; else i = (i + d * 1 + n * 4) % n; } return i; }
@@ -94,8 +95,8 @@ class Menu {
         continue;
       }
       if (on) selBar(x, this.cols === 1 ? this.x + 2 : X - 7, Y + 7 - Math.floor((this.rowH - 1) / 2), this.cols === 1 ? this.w - 4 : this.colW - 4, this.rowH - 1);
-      Font.draw(x, it.t, X, Y, tc, this.textSh);
-      if (it.r) Font.drawR(x, it.r, this.x + this.w - 8, Y, it.dis ? UIC.dis : UIC.muted, this.textSh);
+      Font.draw(x, it.t, X, Y, tc, this.textSh, this.fs);
+      if (it.r) Font.drawR(x, it.r, this.x + this.w - 8, Y, it.dis ? UIC.dis : UIC.muted, this.textSh, this.fs);
     }
     if (this.scrollTop > 0) x.drawImage(UPARROW, this.x + this.w / 2 - 2, this.y + 2);
     if (this.scrollTop + this.scrollMax < Math.ceil(n / this.cols)) x.drawImage(DOWNARROW, this.x + this.w / 2 - 2, this.y + this.h - 5);

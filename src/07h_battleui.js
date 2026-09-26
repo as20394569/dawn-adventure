@@ -63,8 +63,8 @@ Battle.prototype.chooseMove = function* () {
   let cur = Math.min(this.moveIdx || 0, list.length - 1); this.idle = true;
   const info = (x, m) => { const id = list[m.i], mv = skillMove(id); drawWin(x, 4, BB_Y + 1, W - 8, BB_H - 2, 'ow'); typeBadge(x, mv.t, 10, BB_Y + 6, 24); Font.draw(x, (mv.cat === '變' ? '輔助' : mv.cat === '物' ? '物理' : '魔法') + (mv.pow ? '・威力' + mv.pow : '') + ' Lv' + skillLv(id), 38, BB_Y + 4, UIC.muted, UIC.textSh, 10); Font.drawR(x, 'MP' + skillMP(id), W - 10, BB_Y + 4, skillMP(id) > st.mp ? UIC.bad : UIC.accent, UIC.textSh, 10); Font.draw(x, Font.wrap(MOVES[id].d, 156, 9)[0] || '', 10, BB_Y + 22, UIC.text, UIC.textSh, 9); };
   while (true) {
-    const vis = Math.min(list.length, 7), h = vis * 16 + 10;
-    const r = yield* choose(list.map(id => ({ t: MOVES[id].n, r: String(skillMP(id)), col: skillMP(id) > st.mp ? UIC.dis : undefined })), { x: W - 100, y: BH - 22 - h, w: 96, rowH: 16, visible: vis, index: cur, onMove: i => cur = i, drawExtra: info });
+    const vis = Math.min(list.length, 8), h = vis * 14 + 10;
+    const r = yield* choose(list.map(id => ({ t: MOVES[id].n, r: String(skillMP(id)), col: skillMP(id) > st.mp ? UIC.dis : undefined })), { x: W - 88, y: BH - 20 - h, w: 84, rowH: 14, fs: 10, ox: 10, visible: vis, index: cur, onMove: i => cur = i, drawExtra: info });
     if (r < 0) { this.idle = false; return null; }
     if (skillMP(list[r]) > st.mp) { yield* this.msg('MP不夠！'); continue; }
     this.idle = false; this.moveIdx = r; return list[r];
