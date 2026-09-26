@@ -1,6 +1,7 @@
 'use strict';
 /* ===================== CORE: constants, utils, font, input, coroutines ===================== */
-const W = 240, H = 160, TS = 16;
+const W = 176, H = 256, TS = 16;
+const TB_H = 60, TB_Y = H - TB_H; // bottom text box area (3 lines)
 const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
 const rnd = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
 const chance = p => Math.random() < p;
@@ -82,7 +83,10 @@ const Font = (() => {
       let line = '', w = 0; const chars = [...para];
       for (let i = 0; i < chars.length; i++) {
         const ch = chars[i], cw = glyph(ch.codePointAt(0)).adv;
-        if (w + cw > maxW && line && !NOSTART.includes(ch)) { lines.push(line); line = ''; w = 0; if (ch === ' ') continue; }
+        if (w + cw > maxW && line) {
+          if (NOSTART.includes(ch)) { const lc = [...line]; const last = lc.pop(); lines.push(lc.join('')); line = last; w = glyph(last.codePointAt(0)).adv; }
+          else { lines.push(line); line = ''; w = 0; if (ch === ' ') continue; }
+        }
         line += ch; w += cw;
       }
       lines.push(line);

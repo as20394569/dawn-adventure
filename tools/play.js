@@ -13,7 +13,7 @@ const path = require('path');
     press: (k, after = 6) => p.evaluate(([k, a]) => __game.press(k, 2, a), [k, after]),
     hold: (k, n) => p.evaluate(([k, n]) => { __game.Input.set(k, true); __game.step(n); __game.Input.set(k, false); __game.step(1); }, [k, n]),
     mash: async (k, times, gap = 8) => { for (let i = 0; i < times; i++) await p.evaluate(([k, g]) => __game.press(k, 2, g), [k, gap]); },
-    shot: async name => { await p.evaluate(() => __game.step(0)); const el = await p.$('#screen'); await p.evaluate(() => { const c = document.getElementById('screen'); c.style.width = '480px'; c.style.height = '320px'; }); await el.screenshot({ path: 'build/' + name + '.png' }); },
+    shot: async name => { const d = await p.evaluate(() => { __game.step(0); return document.getElementById('screen').toDataURL(); }); require('fs').writeFileSync('build/' + name + '.png', Buffer.from(d.split(',')[1], 'base64')); },
     state: () => p.evaluate(() => { const g = __game.Game; return { scene: g.scene && g.scene.constructor.name, st: g.st && { map: g.st.map, x: g.st.x, y: g.st.y, lv: g.st.lv, hp: g.st.hp, exp: g.st.exp, money: g.st.money, flags: g.st.flags, moves: g.st.moves.map(m => m.id + ':' + m.pp), status: g.st.status }, ui: g.ui.stack ? g.ui.stack.length : __game.UI.stack.length, script: !!(g.scene && g.scene.script) }; }),
     log: (...a) => console.log(...a),
     // BFS walk on current map (no warps); returns true if reached

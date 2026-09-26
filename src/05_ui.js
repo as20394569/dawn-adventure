@@ -6,17 +6,17 @@ const UI = {
 
 class TextBox {
   constructor(text, o = {}) {
-    this.style = o.style || 'ow'; this.x = o.x ?? 0; this.y = o.y ?? 112; this.w = o.w ?? 240; this.h = o.h ?? 48;
-    this.pad = this.style === 'battle' ? 10 : 12;
-    this.lines = Font.wrap(text, this.w - this.pad * 2 - 4);
+    this.style = o.style || 'ow'; this.x = o.x ?? 0; this.y = o.y ?? TB_Y; this.w = o.w ?? W; this.h = o.h ?? TB_H;
+    this.pad = o.pad ?? 9; this.rows = Math.max(1, Math.floor((this.h - 10) / 16));
+    this.lines = Font.wrap(text, this.w - this.pad * 2 - 2);
     this.li = 0; this.ci = 0; this.top = 0; this.scroll = 0; this.state = 'type'; this.t = 0; this.hold = 0;
     this.auto = o.auto; this.keep = o.keep; this.done = false; this.instant = o.instant;
     this.col = this.style === 'battle' || this.style === 'dark' ? UIC.white : UIC.text; this.sh = this.style === 'battle' || this.style === 'dark' ? UIC.whiteSh : UIC.textSh;
-    if (this.instant) { this.li = Math.min(1, this.lines.length - 1); this.ci = [...this.lines[this.li]].length; this.state = this.lines.length > 2 ? 'wait' : 'end'; if (this.lines.length <= 2) this.finishLine(); }
+    if (this.instant) { this.li = Math.min(this.rows - 1, this.lines.length - 1); this.ci = [...this.lines[this.li]].length; this.state = this.lines.length > this.rows ? 'wait' : 'end'; if (this.lines.length <= this.rows) this.finishLine(); }
   }
   speed() { const base = [0.5, 1, 2][Game.settings.text] || 1; return (Input.held('a') || Input.held('b')) ? Math.max(4, base) : base; }
   finishLine() {
-    if (this.li + 1 < this.lines.length) { if (this.li - this.top >= 1) this.state = 'wait'; else { this.li++; this.ci = 0; this.state = 'type'; } }
+    if (this.li + 1 < this.lines.length) { if (this.li - this.top >= this.rows - 1) this.state = 'wait'; else { this.li++; this.ci = 0; this.state = 'type'; } }
     else { this.state = this.keep ? 'done' : 'end'; if (this.keep) this.done = true; }
   }
   update() {
@@ -40,8 +40,8 @@ class TextBox {
   draw(x) {
     drawWin(x, this.x, this.y, this.w, this.h, this.style);
     x.save(); x.beginPath(); x.rect(this.x + 4, this.y + 4, this.w - 8, this.h - 8); x.clip();
-    const ty = this.y + (this.style === 'battle' ? 7 : 7);
-    for (let i = this.top; i <= Math.min(this.li, this.top + 2); i++) {
+    const ty = this.y + 6;
+    for (let i = this.top; i <= Math.min(this.li, this.top + this.rows); i++) {
       const row = i - this.top; const s = i < this.li ? this.lines[i] : [...this.lines[i]].slice(0, this.ci).join('');
       Font.draw(x, s, this.x + this.pad, ty + row * 16 - this.scroll, this.col, this.sh);
     }
@@ -59,7 +59,7 @@ class Menu {
     this.rowH = o.rowH || 16; this.style = o.style || 'menu'; this.cancel = o.cancel !== false; this.onMove = o.onMove; this.done = false; this.result = -1;
     const maxW = Math.max(...this.items.map(it => Font.width(it.t) + (it.r ? Font.width(it.r) + 12 : 0)));
     this.colW = o.colW || maxW + 18; this.w = o.w || this.colW * this.cols + 14; const rowsN = Math.ceil(this.items.length / this.cols);
-    this.h = o.h || rowsN * this.rowH + 12; this.x = o.x ?? (240 - this.w - 2); this.y = o.y ?? (112 - this.h - 2);
+    this.h = o.h || Math.min(rowsN, o.visible || rowsN) * this.rowH + 12; this.x = o.x ?? (W - this.w - 2); this.y = o.y ?? (TB_Y - this.h - 2); this.ox = o.ox ?? 14; this.oy = o.oy ?? 5; this.title = o.title;
     this.scrollMax = o.visible || rowsN; this.scrollTop = 0; this.drawExtra = o.drawExtra; this.noFrame = o.noFrame; this.textCol = o.textCol || UIC.text; this.textSh = o.textSh || UIC.textSh;
     if (this.onMove) this.onMove(this.i);
   }
@@ -79,10 +79,11 @@ class Menu {
   }
   draw(x) {
     if (!this.noFrame) drawWin(x, this.x, this.y, this.w, this.h, this.style);
+    if (this.title) Font.draw(x, this.title, this.x + 10, this.y + 5, this.style === 'dark' || this.style === 'battle' ? UIC.white : UIC.text, this.style === 'dark' || this.style === 'battle' ? UIC.whiteSh : UIC.textSh);
     const n = this.items.length;
     for (let k = 0; k < n; k++) {
       const r = Math.floor(k / this.cols) - this.scrollTop, c = k % this.cols; if (r < 0 || r >= this.scrollMax) continue;
-      const X = this.x + 14 + c * this.colW, Y = this.y + 5 + r * this.rowH; const it = this.items[k];
+      const X = this.x + this.ox + c * this.colW, Y = this.y + this.oy + r * this.rowH; const it = this.items[k];
       Font.draw(x, it.t, X, Y, it.dis ? '#a0a0a8' : (it.col || this.textCol), this.textSh);
       if (it.r) Font.drawR(x, it.r, this.x + this.w - 10, Y, it.dis ? '#a0a0a8' : this.textCol, this.textSh);
       if (k === this.i) x.drawImage(this.style === 'dark' ? CURSOR_W : CURSOR, X - 9, Y + 3);
@@ -128,41 +129,44 @@ function headerBar(x, title, col = '#e86868') {
 }
 
 /* ---------- Status (summary) screen ---------- */
+function eqBonus(st) { const eqB = {}; for (const slot in st.equip) { const it = st.equip[slot] && ITEMS[st.equip[slot]]; if (it && it.bonus) for (const k in it.bonus) eqB[k] = (eqB[k] || 0) + it.bonus[k]; } for (const k in st.boost || {}) eqB[k] = (eqB[k] || 0) + st.boost[k]; return eqB; }
+function heroCard(x, st) {
+  drawWin(x, 4, 24, 168, 70, 'menu');
+  x.fillStyle = '#b8e0a8'; x.fillRect(8, 28, 56, 62); x.fillStyle = '#a0d090'; x.fillRect(8, 76, 56, 14);
+  x.drawImage(Hero.frames.down[Math.floor(Game.frame / 20) % 4], 0, 0, 16, 22, 20, 30, 32, 44);
+  Font.draw(x, st.name, 72, 28, UIC.text, UIC.textSh); Font.draw(x, 'Lv.' + st.lv, 72, 44, UIC.text, UIC.textSh);
+  if (st.status) statusBadge(x, st.status, 72, 64); else Font.draw(x, '狀態良好', 72, 60, '#58a058', UIC.textSh);
+  Font.drawR(x, st.money + ' G', 166, 44, '#4878c8', UIC.textSh);
+}
 function* summaryScreen() {
   let page = 0, mi = 0; const scr = { draw(x) {
     const st = Game.st, s = heroStats(); screenBG(x, '#f0d8a0', '#e8cc90');
     headerBar(x, page === 0 ? '冒險者資料' : '技能一覽', page === 0 ? '#d86848' : '#4878c8');
-    Font.drawR(x, (page + 1) + '/2  ←→', 232, 2, '#ffffff', '#8a3a28');
-    // portrait panel
-    drawWin(x, 4, 24, 76, 132, 'menu');
-    x.fillStyle = '#b8e0a8'; x.fillRect(8, 28, 68, 64); x.fillStyle = '#a0d090'; x.fillRect(8, 76, 68, 16);
-    x.drawImage(Hero.frames.down[Math.floor(Game.frame / 20) % 4], 0, 0, 16, 22, 26, 30, 32, 44);
-    Font.drawC(x, st.name, 42, 94, UIC.text, UIC.textSh); Font.drawC(x, 'Lv.' + st.lv, 42, 110, UIC.text, UIC.textSh);
-    if (st.status) statusBadge(x, st.status, 34, 128); else Font.drawC(x, '狀態良好', 42, 126, '#58a058', UIC.textSh);
+    Font.drawR(x, (page + 1) + '/2 ←→', W - 6, 2, '#ffffff', page === 0 ? '#8a3a28' : '#284878');
+    heroCard(x, st);
     if (page === 0) {
-      drawWin(x, 84, 24, 152, 132, 'menu');
-      const rowsS = [['HP', st.hp + '/' + s.hp], ['攻擊', s.atk], ['防禦', s.def], ['特攻', s.spa], ['特防', s.spd], ['速度', s.spe]];
-      rowsS.forEach(([a, b], i) => { const Y = 28 + i * 15; Font.draw(x, a, 94, Y, UIC.text, UIC.textSh); Font.drawR(x, String(b), 172, Y, UIC.text, UIC.textSh); });
-      const eqB = {}; for (const slot in st.equip) { const it = st.equip[slot] && ITEMS[st.equip[slot]]; if (it && it.bonus) for (const k in it.bonus) eqB[k] = (eqB[k] || 0) + it.bonus[k]; }
-      for (const k in st.boost || {}) eqB[k] = (eqB[k] || 0) + st.boost[k];
-      ['atk', 'def', 'spa', 'spd', 'spe'].forEach((k, i) => { if (eqB[k]) Font.draw(x, '(+' + eqB[k] + ')', 176, 28 + (i + 1) * 15, '#4878c8', UIC.textSh); });
-      drawHPBar(x, 94, 124, 60, st.hp / s.hp);
+      drawWin(x, 4, 98, 168, 104, 'menu'); const eqB = eqBonus(st);
+      const rowsS = [['HP', st.hp + '/' + s.hp], ['攻擊', s.atk, 'atk'], ['防禦', s.def, 'def'], ['特攻', s.spa, 'spa'], ['特防', s.spd, 'spd'], ['速度', s.spe, 'spe']];
+      rowsS.forEach(([a, b, k], i) => { const Y = 102 + i * 16; Font.draw(x, a, 16, Y, UIC.text, UIC.textSh); Font.drawR(x, String(b), 112, Y, UIC.text, UIC.textSh); if (k && eqB[k]) Font.draw(x, '(+' + eqB[k] + ')', 118, Y, '#4878c8', UIC.textSh); });
+      drawWin(x, 4, 204, 168, 48, 'menu');
+      drawHPBar(x, 14, 210, 60, st.hp / s.hp);
       const cur = st.exp - expForLevel(st.lv), need = expForLevel(st.lv + 1) - expForLevel(st.lv);
-      Font.draw(x, '下一級', 94, 132, UIC.text, UIC.textSh); Font.drawR(x, (need - cur) + '', 228, 132, UIC.text, UIC.textSh);
-      drawExpBar(x, 94, 148, 132, cur / need);
+      Font.draw(x, '下一級還差', 14, 220, UIC.text, UIC.textSh); Font.drawR(x, (need - cur) + '', 164, 220, UIC.text, UIC.textSh);
+      drawExpBar(x, 14, 240, 148, cur / need);
     } else {
-      drawWin(x, 84, 24, 152, 80, 'menu');
-      st.moves.forEach((m, i) => { const mv = MOVES[m.id]; const Y = 28 + i * 18; typeBadge(x, mv.t, 90, Y + 2, 28); Font.draw(x, mv.n, 124, Y, UIC.text, UIC.textSh); Font.drawR(x, m.pp + '/' + mv.pp, 230, Y, m.pp === 0 ? '#e04848' : UIC.text, UIC.textSh); if (i === mi) x.drawImage(CURSOR, 86, Y + 5); });
-      const mv = MOVES[st.moves[mi].id]; drawWin(x, 84, 106, 152, 50, 'menu');
-      Font.draw(x, (mv.cat === '變' ? '變化' : mv.cat === '物' ? '物理' : '特殊') + '  威力 ' + (mv.pow || '—') + '  命中 ' + (mv.acc || '—'), 92, 108, '#4878c8', UIC.textSh);
-      const dl = Font.wrap(mv.d, 136); dl.slice(0, 2).forEach((l, i) => Font.draw(x, l, 92, 123 + i * 14, UIC.text, UIC.textSh));
+      drawWin(x, 4, 98, 168, 84, 'menu');
+      st.moves.forEach((m, i) => { const mv = MOVES[m.id]; const Y = 102 + i * 19; typeBadge(x, mv.t, 18, Y + 2, 28); Font.draw(x, mv.n, 52, Y, UIC.text, UIC.textSh); Font.drawR(x, m.pp + '/' + mv.pp, 164, Y, m.pp === 0 ? '#e04848' : UIC.text, UIC.textSh); if (i === mi) x.drawImage(CURSOR, 9, Y + 5); });
+      const mv = MOVES[st.moves[mi].id]; drawWin(x, 4, 184, 168, 68, 'menu');
+      Font.draw(x, (mv.cat === '變' ? '變化' : mv.cat === '物' ? '物理' : '特殊') + ' 威力' + (mv.pow || '—') + ' 命中' + (mv.acc || '—'), 12, 186, '#4878c8', UIC.textSh);
+      Font.wrap(mv.d, 152).slice(0, 3).forEach((l, i) => Font.draw(x, l, 12, 202 + i * 15, UIC.text, UIC.textSh));
     }
   } };
   UI.push(scr);
   while (true) {
     if (Input.pressed('left') || Input.pressed('right')) { page = 1 - page; Sound.sfx('cursor'); }
     if (page === 1) { if (Input.repeat('up')) { mi = (mi + Game.st.moves.length - 1) % Game.st.moves.length; Sound.sfx('cursor'); } if (Input.repeat('down')) { mi = (mi + 1) % Game.st.moves.length; Sound.sfx('cursor'); } }
-    if (Input.pressed('b') || (Input.pressed('a') && page === 0)) { Input.consume('a', 'b'); Sound.sfx('cancel'); break; }
+    if (Input.pressed('a') && page === 0) { Input.consume('a'); page = 1; Sound.sfx('cursor'); }
+    else if (Input.pressed('b')) { Input.consume('a', 'b'); Sound.sfx('cancel'); break; }
     yield;
   }
   UI.remove(scr);
@@ -173,9 +177,12 @@ function* pickMoveToForget(newId) {
   let mi = 0; const list = [...Game.st.moves.map(m => m.id), newId];
   const scr = { draw(x) {
     screenBG(x, '#c8d8f0', '#b8c8e8'); headerBar(x, '要忘記哪個技能？', '#4878c8');
-    drawWin(x, 4, 24, 232, 96, 'menu');
-    list.forEach((id, i) => { const mv = MOVES[id]; const Y = 28 + i * 17; typeBadge(x, mv.t, 16, Y + 2, 28); Font.draw(x, mv.n + (i === 4 ? '（新）' : ''), 50, Y, i === 4 ? '#4878c8' : UIC.text, UIC.textSh); Font.drawR(x, '威力 ' + (mv.pow || '—') + '  PP ' + mv.pp, 226, Y, UIC.text, UIC.textSh); if (i === mi) x.drawImage(CURSOR, 7, Y + 5); });
-    const mv = MOVES[list[mi]]; drawWin(x, 4, 122, 232, 36, 'menu'); Font.wrap(mv.d, 212).slice(0, 2).forEach((l, i) => Font.draw(x, l, 12, 124 + i * 14, UIC.text, UIC.textSh));
+    drawWin(x, 4, 24, 168, 104, 'menu');
+    list.forEach((id, i) => { const mv = MOVES[id]; const Y = 28 + i * 19; typeBadge(x, mv.t, 18, Y + 2, 28); Font.draw(x, mv.n, 52, Y, i === 4 ? '#4878c8' : UIC.text, UIC.textSh); Font.drawR(x, i === 4 ? '新技能' : 'PP ' + Game.st.moves[i].pp, 164, Y, i === 4 ? '#4878c8' : UIC.text, UIC.textSh); if (i === mi) x.drawImage(CURSOR, 9, Y + 5); });
+    const mv = MOVES[list[mi]]; drawWin(x, 4, 132, 168, 80, 'menu');
+    Font.draw(x, (mv.cat === '變' ? '變化' : mv.cat === '物' ? '物理' : '特殊') + ' 威力' + (mv.pow || '—') + ' PP' + mv.pp, 12, 134, '#4878c8', UIC.textSh);
+    Font.wrap(mv.d, 152).slice(0, 4).forEach((l, i) => Font.draw(x, l, 12, 150 + i * 15, UIC.text, UIC.textSh));
+    drawWin(x, 4, 216, 168, 36, 'menu'); Font.draw(x, 'A：忘記這招', 14, 218, UIC.text, UIC.textSh); Font.draw(x, 'B：不學新技能', 14, 234, '#8890a0', UIC.textSh);
   } };
   UI.push(scr); let res = -1;
   while (true) {
@@ -191,20 +198,19 @@ function* pickMoveToForget(newId) {
 const ITEM_ORDER = Object.keys(ITEMS);
 function bagList(filter) { const st = Game.st; return Object.keys(st.bag).filter(k => st.bag[k] > 0 && ITEMS[k] && (!filter || filter(ITEMS[k], k))).sort((a, b) => ITEM_ORDER.indexOf(a) - ITEM_ORDER.indexOf(b)); }
 function* bagScreen(mode = 'field') { // returns item id used (battle) or null
-  let tab = 0, idx = 0; const tabs = mode === 'battle' ? ['道具'] : ['道具', '裝備', '重要物品'];
+  let tab = 0, idx = 0; const tabs = mode === 'battle' ? ['道具'] : ['道具', '裝備', '重要'];
   const listFor = t => bagList(it => tabs[t] === '道具' ? (!it.key && !it.equip && (mode !== 'battle' || it.use !== 'boost')) : tabs[t] === '裝備' ? !!it.equip : !!it.key);
+  const VIS = 7;
   const scr = { draw(x) {
-    screenBG(x, '#f0c890', '#e8bc80'); headerBar(x, '背包', '#c87838');
-    tabs.forEach((t, i) => { const X = 60 + i * 56; roundRect(x, X, 3, 50, 14, i === tab ? '#fff4d8' : '#a86028'); Font.drawC(x, t, X + 25, 2, i === tab ? UIC.text : '#f8e0c0', i === tab ? UIC.textSh : '#6a3818'); });
-    // bag icon
-    x.drawImage(MINI_ICONS.bag, 0, 0, 8, 8, 14, 40, 48, 48);
-    Font.drawC(x, Game.st.money + ' G', 38, 96, UIC.text, UIC.textSh);
-    const list = listFor(tab); drawWin(x, 84, 22, 152, 96, 'menu');
-    if (!list.length) Font.draw(x, '（空空如也）', 100, 28, '#909098', UIC.textSh);
-    const top = Math.max(0, Math.min(idx - 2, list.length - 5));
-    list.slice(top, top + 5).forEach((k, i) => { const Y = 26 + i * 17; const eq = Object.values(Game.st.equip).includes(k); Font.draw(x, ITEMS[k].n + (eq ? ' [E]' : ''), 98, Y, UIC.text, UIC.textSh); if (!ITEMS[k].key) Font.drawR(x, '×' + Game.st.bag[k], 228, Y, UIC.text, UIC.textSh); if (top + i === idx) x.drawImage(CURSOR, 90, Y + 3); });
-    drawWin(x, 4, 120, 232, 38, 'menu');
-    if (list[idx]) Font.wrap(ITEMS[list[idx]].d, 212).slice(0, 2).forEach((l, i) => Font.draw(x, l, 12, 122 + i * 15, UIC.text, UIC.textSh));
+    screenBG(x, '#f0c890', '#e8bc80'); headerBar(x, '背包', '#c87838'); Font.drawR(x, Game.st.money + ' G', W - 6, 2, '#ffffff', '#6a3818');
+    tabs.forEach((t, i) => { const X = 4 + i * 57; roundRect(x, X, 22, 54, 15, i === tab ? '#fff4d8' : '#a86028'); Font.drawC(x, t, X + 27, 22, i === tab ? UIC.text : '#f8e0c0', i === tab ? UIC.textSh : '#6a3818'); });
+    const list = listFor(tab); drawWin(x, 4, 40, 168, VIS * 18 + 10, 'menu');
+    if (!list.length) Font.draw(x, '（空空如也）', 20, 46, '#909098', UIC.textSh);
+    const top = Math.max(0, Math.min(idx - 3, list.length - VIS));
+    list.slice(top, top + VIS).forEach((k, i) => { const Y = 44 + i * 18; const eq = Object.values(Game.st.equip).includes(k); Font.draw(x, ITEMS[k].n + (eq ? '[E]' : ''), 20, Y, UIC.text, UIC.textSh); if (!ITEMS[k].key) Font.drawR(x, '×' + Game.st.bag[k], 164, Y, UIC.text, UIC.textSh); if (top + i === idx) x.drawImage(CURSOR, 11, Y + 3); });
+    if (top > 0) x.drawImage(UPARROW, 85, 41); if (top + VIS < list.length) x.drawImage(DOWNARROW, 85, 40 + VIS * 18 + 4);
+    drawWin(x, 4, 180, 168, 72, 'menu');
+    if (list[idx]) Font.wrap(ITEMS[list[idx]].d, 152).slice(0, 4).forEach((l, i) => Font.draw(x, l, 12, 184 + i * 16, UIC.text, UIC.textSh));
   } };
   UI.push(scr); let result = null;
   while (true) {
@@ -215,9 +221,9 @@ function* bagScreen(mode = 'field') { // returns item id used (battle) or null
     if (Input.pressed('b')) { Input.consume('b'); Sound.sfx('cancel'); break; }
     if (Input.pressed('a') && list[idx]) {
       Input.consume('a'); Sound.sfx('select'); const k = list[idx], it = ITEMS[k];
-      if (it.key) { yield* say(it.d); continue; }
-      if (it.equip) { const r = yield* ask('要裝備' + it.n + '嗎？', ['裝備', '取消'], { mx: 176, my: 70 }); if (r === 0) { Game.st.equip[it.equip] = k; clampHP(); Sound.sfx('item'); yield* say(Game.st.name + '裝備了' + it.n + '！'); } continue; }
-      const r = yield* ask('要使用' + it.n + '嗎？', ['使用', '取消'], { mx: 176, my: 70 });
+      if (it.key) { yield* say(it.use === 'phone' ? phoneText() : it.d); continue; }
+      if (it.equip) { const r = yield* ask('要裝備' + it.n + '嗎？', ['裝備', '取消']); if (r === 0) { Game.st.equip[it.equip] = k; clampHP(); Sound.sfx('item'); yield* say(Game.st.name + '裝備了' + it.n + '！'); } continue; }
+      const r = yield* ask('要使用' + it.n + '嗎？', ['使用', '取消']);
       if (r !== 0) continue;
       if (mode === 'battle') { if (it.use === 'escape' || canUseItem(k)) { result = k; break; } yield* say('現在使用也沒有效果。'); continue; }
       if (it.use === 'escape') { yield* say('現在不能使用。'); continue; }
@@ -228,6 +234,7 @@ function* bagScreen(mode = 'field') { // returns item id used (battle) or null
   }
   UI.remove(scr); return result;
 }
+function phoneText() { const st = Game.st; const pct = Math.max(1, 12 - Math.floor((st.steps || 0) / 400)); return '從原本的世界帶來的手機。\n電量剩下' + pct + '%……還是完全沒有訊號。\n桌布是家附近的那條街。'; }
 function clampHP() { const s = heroStats(); Game.st.hp = Math.min(Game.st.hp, s.hp); }
 function canUseItem(k) {
   const it = ITEMS[k], st = Game.st, s = heroStats();
@@ -251,10 +258,10 @@ function* equipScreen() {
   let idx = 0; const slots = Object.keys(EQUIP_SLOTS);
   const scr = { draw(x) {
     screenBG(x, '#c8e0c0', '#b8d4b0'); headerBar(x, '裝備', '#58a068');
-    drawWin(x, 4, 22, 232, 64, 'menu');
-    slots.forEach((sl, i) => { const Y = 26 + i * 18; Font.draw(x, EQUIP_SLOTS[sl], 20, Y, '#58a068', UIC.textSh); const it = Game.st.equip[sl] && ITEMS[Game.st.equip[sl]]; Font.draw(x, it ? it.n : '——', 64, Y, UIC.text, UIC.textSh); if (it) Font.drawR(x, Object.entries(it.bonus).map(([k, v]) => STAT_NAMES[k] + '+' + v).join(' '), 228, Y, '#4878c8', UIC.textSh); if (i === idx) x.drawImage(CURSOR, 10, Y + 3); });
-    const s = heroStats(); drawWin(x, 4, 88, 232, 70, 'menu');
-    [['攻擊', s.atk], ['防禦', s.def], ['特攻', s.spa], ['特防', s.spd], ['速度', s.spe], ['HP', Game.st.hp + '/' + s.hp]].forEach(([a, b], i) => { const X = 16 + (i % 2) * 112, Y = 92 + Math.floor(i / 2) * 20; Font.draw(x, a, X, Y, UIC.text, UIC.textSh); Font.drawR(x, String(b), X + 96, Y, UIC.text, UIC.textSh); });
+    drawWin(x, 4, 24, 168, 116, 'menu');
+    slots.forEach((sl, i) => { const Y = 28 + i * 36; Font.draw(x, EQUIP_SLOTS[sl], 20, Y, '#58a068', UIC.textSh); const it = Game.st.equip[sl] && ITEMS[Game.st.equip[sl]]; Font.draw(x, it ? it.n : '——', 60, Y, UIC.text, UIC.textSh); if (it) Font.drawR(x, Object.entries(it.bonus).map(([k, v]) => STAT_NAMES[k] + '+' + v).join(' '), 164, Y + 16, '#4878c8', UIC.textSh); if (i === idx) x.drawImage(CURSOR, 11, Y + 3); });
+    const s = heroStats(); drawWin(x, 4, 144, 168, 108, 'menu');
+    [['HP', Game.st.hp + '/' + s.hp], ['攻擊', s.atk], ['防禦', s.def], ['特攻', s.spa], ['特防', s.spd], ['速度', s.spe]].forEach(([a, b], i) => { const Y = 148 + i * 16; Font.draw(x, a, 20, Y, UIC.text, UIC.textSh); Font.drawR(x, String(b), 150, Y, UIC.text, UIC.textSh); });
   } };
   UI.push(scr);
   while (true) {
@@ -263,8 +270,8 @@ function* equipScreen() {
     if (Input.pressed('a')) {
       Input.consume('a'); Sound.sfx('select'); const sl = slots[idx];
       const own = bagList(it => it.equip === sl);
-      const opts = own.map(k => ({ t: ITEMS[k].n + (Game.st.equip[sl] === k ? ' [E]' : ''), k })).concat([{ t: '卸下', k: null }]);
-      const r = yield* choose(opts, { x: 120, y: 24 + idx * 18, w: 112 });
+      const opts = own.map(k => ({ t: ITEMS[k].n + (Game.st.equip[sl] === k ? '[E]' : ''), k })).concat([{ t: '卸下', k: null }]);
+      const r = yield* choose(opts, { x: 60, y: 40 + idx * 36, w: 112 });
       if (r >= 0) { Game.st.equip[sl] = opts[r].k; clampHP(); Sound.sfx('item'); }
     }
     yield;
@@ -278,14 +285,15 @@ function* optionsScreen() {
   const val = i => i === 0 ? ['慢', '普通', '快'][Game.settings.text] : i === 1 ? (Game.settings.music ? '開' : '關') : i === 2 ? (Game.settings.sfx ? '開' : '關') : '';
   const scr = { draw(x) {
     screenBG(x, '#d8d0f0', '#ccc4e8'); headerBar(x, '設定', '#7868b8');
-    drawWin(x, 16, 30, 208, 84, 'menu');
-    labels.forEach((l, i) => { const Y = 36 + i * 18; Font.draw(x, l, 34, Y, UIC.text, UIC.textSh); if (i < 3) Font.drawR(x, '← ' + val(i) + ' →', 212, Y, '#e05050', UIC.textSh); if (i === idx) x.drawImage(CURSOR, 22, Y + 3); });
-    drawWin(x, 16, 118, 208, 36, 'menu'); Font.draw(x, '左右鍵切換設定，B鍵返回。', 26, 126, UIC.text, UIC.textSh);
+    drawWin(x, 4, 30, 168, 84, 'menu');
+    labels.forEach((l, i) => { const Y = 36 + i * 18; Font.draw(x, l, 20, Y, UIC.text, UIC.textSh); if (i < 3) Font.drawR(x, '← ' + val(i) + ' →', 164, Y, '#e05050', UIC.textSh); if (i === idx) x.drawImage(CURSOR, 11, Y + 3); });
+    drawWin(x, 4, 118, 168, 52, 'menu'); Font.draw(x, '← → 切換設定', 14, 124, UIC.text, UIC.textSh); Font.draw(x, 'B 鍵返回', 14, 140, UIC.text, UIC.textSh);
   } };
   UI.push(scr);
   while (true) {
     if (Input.repeat('up')) { idx = (idx + 3) % 4; Sound.sfx('cursor'); } if (Input.repeat('down')) { idx = (idx + 1) % 4; Sound.sfx('cursor'); }
-    const d = Input.pressed('left') ? -1 : Input.pressed('right') ? 1 : 0;
+    let d = Input.pressed('left') ? -1 : Input.pressed('right') ? 1 : 0;
+    if (!d && Input.pressed('a') && idx < 3) { Input.consume('a'); d = 1; if (idx === 0 && Game.settings.text === 2) d = -2; }
     if (d) { if (idx === 0) Game.settings.text = clamp(Game.settings.text + d, 0, 2); if (idx === 1) Game.settings.music = !Game.settings.music; if (idx === 2) Game.settings.sfx = !Game.settings.sfx; Sound.applySettings(); Sound.sfx('cursor'); saveSettings(); }
     if (Input.pressed('b') || (Input.pressed('a') && idx === 3)) { Input.consume('a', 'b'); Sound.sfx('cancel'); break; }
     yield;
@@ -294,24 +302,24 @@ function* optionsScreen() {
 }
 
 /* ---------- Shop ---------- */
-function moneyWin(x) { drawWin(x, 2, 2, 90, 30, 'menu'); Font.draw(x, '金錢', 10, 3, '#4878c8', UIC.textSh); Font.drawR(x, Game.st.money + ' G', 84, 15, UIC.text, UIC.textSh); }
+function moneyWin(x) { drawWin(x, 2, 2, 86, 30, 'menu'); Font.draw(x, '金錢', 10, 3, '#4878c8', UIC.textSh); Font.drawR(x, Game.st.money + ' G', 80, 15, UIC.text, UIC.textSh); }
 function* shopFlow() {
   const mw = { draw: moneyWin }; UI.push(mw);
   while (true) {
-    const r = yield* ask('歡迎光臨！請問需要什麼呢？', ['購買', '賣出', '離開'], { mx: 170, my: 50 });
+    const r = yield* ask('歡迎光臨！請問需要什麼呢？', ['購買', '賣出', '離開']);
     if (r === 0) yield* shopBuy(); else if (r === 1) yield* shopSell(); else break;
   }
   UI.remove(mw); yield* say('謝謝惠顧！歡迎再來！');
 }
 function* shopBuy() {
-  let idx = 0; const list = SHOP_LIST;
+  let idx = 0; const list = SHOP_LIST; const VIS = 8;
   const scr = { draw(x) {
-    drawWin(x, 96, 2, 142, 110, 'menu');
-    const top = Math.max(0, Math.min(idx - 3, list.length - 6));
-    list.slice(top, top + 6).forEach((k, i) => { const Y = 6 + i * 17; const it = ITEMS[k]; const owned = Game.st.bag[k] || 0; Font.draw(x, it.n, 110, Y, UIC.text, UIC.textSh); Font.drawR(x, it.price + 'G', 232, Y, UIC.text, UIC.textSh); if (top + i === idx) x.drawImage(CURSOR, 102, Y + 3); });
-    if (top > 0) x.drawImage(DOWNARROW, 164, 2);
-    drawWin(x, 0, 112, 240, 48, 'ow'); const it = ITEMS[list[idx]];
-    Font.wrap(it.d + (it.equip ? '' : '（持有：' + (Game.st.bag[list[idx]] || 0) + '）'), 212).slice(0, 2).forEach((l, i) => Font.draw(x, l, 12, 119 + i * 16, UIC.text, UIC.textSh));
+    drawWin(x, 4, 36, 168, VIS * 18 + 10, 'menu');
+    const top = Math.max(0, Math.min(idx - 3, list.length - VIS));
+    list.slice(top, top + VIS).forEach((k, i) => { const Y = 40 + i * 18; const it = ITEMS[k]; Font.draw(x, it.n, 20, Y, UIC.text, UIC.textSh); Font.drawR(x, it.price + 'G', 164, Y, UIC.text, UIC.textSh); if (top + i === idx) x.drawImage(CURSOR, 11, Y + 3); });
+    if (top > 0) x.drawImage(UPARROW, 85, 37); if (top + VIS < list.length) x.drawImage(DOWNARROW, 85, 36 + VIS * 18 + 4);
+    drawWin(x, 0, TB_Y, W, TB_H, 'ow'); const it = ITEMS[list[idx]];
+    Font.wrap(it.d + (it.equip ? '' : '（持有' + (Game.st.bag[list[idx]] || 0) + '）'), 156).slice(0, 3).forEach((l, i) => Font.draw(x, l, 9, TB_Y + 6 + i * 16, UIC.text, UIC.textSh));
   } };
   UI.push(scr);
   while (true) {
@@ -320,17 +328,17 @@ function* shopBuy() {
     if (Input.pressed('a')) {
       Input.consume('a'); Sound.sfx('select'); const k = list[idx], it = ITEMS[k];
       let qty = 1; const maxQ = Math.min(it.equip ? 1 : 99, Math.floor(Game.st.money / it.price));
-      if (maxQ < 1) { UI.remove(scr); yield* say('錢不夠喔。'); UI.push(scr); continue; }
       if (it.equip && (Game.st.bag[k] || Object.values(Game.st.equip).includes(k))) { UI.remove(scr); yield* say('你已經有' + it.n + '了。'); UI.push(scr); continue; }
+      if (maxQ < 1) { UI.remove(scr); yield* say('錢不夠喔。'); UI.push(scr); continue; }
       if (!it.equip) {
-        const q = { draw(x) { drawWin(x, 140, 112 - 30, 98, 28, 'menu'); Font.draw(x, '×' + String(qty).padStart(2, '0'), 150, 86, UIC.text, UIC.textSh); Font.drawR(x, (qty * it.price) + 'G', 230, 86, UIC.text, UIC.textSh); } };
+        const q = { draw(x) { drawWin(x, 80, TB_Y - 32, 94, 30, 'menu'); Font.draw(x, '×' + String(qty).padStart(2, '0'), 90, TB_Y - 25, UIC.text, UIC.textSh); Font.drawR(x, (qty * it.price) + 'G', 166, TB_Y - 25, UIC.text, UIC.textSh); } };
         UI.push(q); let ok = false;
         while (true) { if (Input.repeat('up')) { qty = qty >= maxQ ? 1 : qty + 1; Sound.sfx('cursor'); } if (Input.repeat('down')) { qty = qty <= 1 ? maxQ : qty - 1; Sound.sfx('cursor'); } if (Input.repeat('right')) { qty = Math.min(maxQ, qty + 10); Sound.sfx('cursor'); } if (Input.repeat('left')) { qty = Math.max(1, qty - 10); Sound.sfx('cursor'); } if (Input.pressed('a')) { Input.consume('a'); ok = true; break; } if (Input.pressed('b')) { Input.consume('b'); break; } yield; }
         UI.remove(q); if (!ok) continue;
       }
       UI.remove(scr);
-      const yes = yield* yesNo(it.n + (it.equip ? '' : '×' + qty) + '，一共是' + (qty * it.price) + 'G，可以嗎？', { mx: 186, my: 60 });
-      if (yes) { Game.st.money -= qty * it.price; Game.st.bag[k] = (Game.st.bag[k] || 0) + qty; Sound.sfx('save'); yield* say('好的！這是您的' + it.n + '。' + (it.equip ? '\n記得到背包或裝備畫面裝備喔！' : '')); }
+      const yes = yield* yesNo(it.n + (it.equip ? '' : '×' + qty) + '，一共是' + (qty * it.price) + 'G，可以嗎？');
+      if (yes) { Game.st.money -= qty * it.price; Game.st.bag[k] = (Game.st.bag[k] || 0) + qty; Sound.sfx('save'); yield* say('好的！這是您的' + it.n + '。' + (it.equip ? '記得到背包或裝備畫面裝備喔！' : '')); }
       UI.push(scr);
     }
     yield;
@@ -338,14 +346,14 @@ function* shopBuy() {
   UI.remove(scr);
 }
 function* shopSell() {
-  let idx = 0;
+  let idx = 0; const VIS = 8;
   const listNow = () => bagList(it => !it.key && !(it.price === 0 && !it.sell)).filter(k => !Object.values(Game.st.equip).includes(k) || Game.st.bag[k] > 1);
   const scr = { draw(x) {
-    const list = listNow(); drawWin(x, 96, 2, 142, 110, 'menu');
-    if (!list.length) Font.draw(x, '沒有可以賣的東西', 106, 8, '#909098', UIC.textSh);
-    const top = Math.max(0, Math.min(idx - 3, list.length - 6));
-    list.slice(top, top + 6).forEach((k, i) => { const Y = 6 + i * 17; const it = ITEMS[k]; Font.draw(x, it.n + '×' + Game.st.bag[k], 110, Y, UIC.text, UIC.textSh); Font.drawR(x, sellPrice(k) + 'G', 232, Y, UIC.text, UIC.textSh); if (top + i === idx) x.drawImage(CURSOR, 102, Y + 3); });
-    drawWin(x, 0, 112, 240, 48, 'ow'); Font.draw(x, list.length ? '要賣哪一樣東西呢？' : '目前沒有可以賣的東西。', 12, 119, UIC.text, UIC.textSh); Font.draw(x, '（裝備中的物品不能賣）', 12, 135, '#8890a0', UIC.textSh);
+    const list = listNow(); drawWin(x, 4, 36, 168, VIS * 18 + 10, 'menu');
+    if (!list.length) Font.draw(x, '沒有可以賣的東西', 20, 42, '#909098', UIC.textSh);
+    const top = Math.max(0, Math.min(idx - 3, list.length - VIS));
+    list.slice(top, top + VIS).forEach((k, i) => { const Y = 40 + i * 18; const it = ITEMS[k]; Font.draw(x, it.n + '×' + Game.st.bag[k], 20, Y, UIC.text, UIC.textSh); Font.drawR(x, sellPrice(k) + 'G', 164, Y, UIC.text, UIC.textSh); if (top + i === idx) x.drawImage(CURSOR, 11, Y + 3); });
+    drawWin(x, 0, TB_Y, W, TB_H, 'ow'); Font.draw(x, list.length ? '要賣哪一樣東西呢？' : '目前沒有可以賣的東西。', 9, TB_Y + 6, UIC.text, UIC.textSh); Font.draw(x, '（裝備中的物品不能賣）', 9, TB_Y + 22, '#8890a0', UIC.textSh);
   } };
   UI.push(scr);
   while (true) {
@@ -354,7 +362,7 @@ function* shopSell() {
     if (Input.pressed('b')) { Input.consume('b'); Sound.sfx('cancel'); break; }
     if (Input.pressed('a') && list[idx]) {
       Input.consume('a'); const k = list[idx]; UI.remove(scr);
-      const yes = yield* yesNo(ITEMS[k].n + '可以用' + sellPrice(k) + 'G收購，要賣嗎？', { mx: 186, my: 60 });
+      const yes = yield* yesNo(ITEMS[k].n + '可以用' + sellPrice(k) + 'G收購，要賣嗎？');
       if (yes) { Game.st.bag[k]--; Game.st.money += sellPrice(k); Sound.sfx('save'); yield* say('謝謝！收下了' + ITEMS[k].n + '。'); }
       UI.push(scr);
     }
@@ -368,7 +376,7 @@ const sellPrice = k => ITEMS[k].sell ?? Math.floor(ITEMS[k].price / 2);
 function* startMenu() {
   Sound.sfx('menu'); let idx = Game.menuIdx || 0;
   while (true) {
-    const r = yield* choose(['狀態', '背包', '裝備', '存檔', '設定', '關閉'], { x: 172, y: 2, w: 66, index: idx });
+    const r = yield* choose(['狀態', '背包', '裝備', '存檔', '設定', '關閉'], { x: W - 70, y: 4, w: 66, index: idx });
     if (r < 0 || r === 5) break; idx = r; Game.menuIdx = r;
     if (r === 0) yield* summaryScreen();
     if (r === 1) yield* bagScreen('field');

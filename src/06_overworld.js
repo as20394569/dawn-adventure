@@ -1,4 +1,5 @@
 /* ===================== OVERWORLD ===================== */
+const CAM_X = Math.floor(W / 2) - 8, CAM_Y = 100;
 const DIRS = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] };
 const OPP = { up: 'down', down: 'up', left: 'right', right: 'left' };
 const SOLID = new Set('TWobSFPRXYxwckhaBQKCpV'.split(''));
@@ -168,7 +169,7 @@ class Overworld {
     if (ent && ent.sp && ent !== this.boss) { this.run(this.eliteTalk(ent)); return true; }
     if (ent && ent === this.boss) { const g = Events.bossLine(this); if (g) this.run(g); return true; }
     if (ent && (ent.item || ent.gold)) { this.run(this.pickItem(ent)); return true; }
-    const gt = this.map.d.gate; if (gt && gt.big && (x === gt.x || x === gt.x + 1) && y === gt.y + 1) { this.run(say(this.st.flags.gateOpen ? '石門後面是一道通往遠方的長長石階……\n（第二章，敬請期待！）' : '巨大的石門緊緊關著，\n上面刻著發光的古老紋路。')); return true; }
+    const gt = this.map.d.gate; if (gt && gt.big && (x === gt.x || x === gt.x + 1) && y === gt.y + 1) { this.run(say(this.st.flags.gateOpen ? '門後的光芒已經消失，只剩下冰冷的石壁……（第二章，敬請期待！）' : '巨大的石門緊緊關著，上面刻著發光的古老紋路。這就是「異界之門」……')); return true; }
     const sign = (this.map.d.signs || {})[x + ',' + y];
     if (c === 'S' && sign) { this.run(say(sign, { style: 'sign' })); return true; }
     if (c === 'Y') { this.run(Events.spring(this)); return true; }
@@ -227,22 +228,24 @@ class Overworld {
     Sound.stop(); UI.clear();
     const box = { draw(x) { x.fillStyle = '#000'; x.fillRect(0, 0, W, H); } }; UI.push(box);
     Game.fade = 0;
-    yield* say(st.name + '眼前一片漆黑……', { style: 'dark', y: 56 });
-    if (lost) yield* say('慌亂之中弄丟了' + lost + ' G……', { style: 'dark', y: 56 });
+    yield* say(st.name + '眼前一片漆黑……', { style: 'dark', y: 98 });
+    if (lost) yield* say('慌亂之中弄丟了' + lost + ' G……', { style: 'dark', y: 98 });
     UI.remove(box); Game.fade = 1;
     healHero(); const r = st.respawn; this.load(r.map, r.x, r.y, r.dir, true);
     yield* fadeIn(20);
-    yield* say(r.map === 'home' ? '媽媽：「你醒啦！別太勉強自己喔。」' : r.map === 'inn' ? '老闆娘：「你被送來這裡了呢。我已經幫你治療好了，要小心喔！」' : '清涼的泉水讓你恢復了精神。');
+    yield* say(r.map === 'home' ? '瑪莎：「你醒啦！別太勉強自己喔。」' : r.map === 'inn' ? '老闆娘：「你被送來這裡了呢。我已經幫你治療好了，要小心喔！」' : '清涼的泉水讓你恢復了精神。');
   }
   /* ---------- draw ---------- */
   draw(x) {
-    const p = this.p; const camX = Math.round(p.px) - 112, camY = Math.round(p.py) - 64 + Math.round(this.camDY || 0);
+    const p = this.p; let camX = Math.round(p.px) - CAM_X, camY = Math.round(p.py) - CAM_Y + Math.round(this.camDY || 0);
+    if (!this.map.d.outdoor && this.map.w * 16 <= W) camX = Math.round((this.map.w * 16 - W) / 2);
+    if (!this.map.d.outdoor && this.map.h * 16 <= H - TB_H) camY = Math.round((this.map.h * 16 - (H - TB_H)) / 2) - 8;
     this.camX = camX; this.camY = camY;
     const f = Math.floor(this.t / 20) % 3, f2 = Math.floor(this.t / 30) % 2;
     const tx0 = Math.floor(camX / 16), ty0 = Math.floor(camY / 16);
     x.fillStyle = '#101018'; x.fillRect(0, 0, W, H);
     const objs = [];
-    for (let ty = ty0 - 1; ty <= ty0 + 11; ty++) for (let tx = tx0; tx <= tx0 + 15; tx++) {
+    for (let ty = ty0 - 1; ty <= ty0 + Math.ceil(H / 16) + 1; ty++) for (let tx = tx0; tx <= tx0 + Math.ceil(W / 16); tx++) {
       const c = this.tileAt(tx, ty); const sx = tx * 16 - camX, sy = ty * 16 - camY;
       this.drawTile(x, c, tx, ty, sx, sy, f, f2);
       if (c === 'T') objs.push({ k: ty * 16 + 15, d: () => x.drawImage(Tiles.tree, sx, sy - 5) });
@@ -344,7 +347,7 @@ function* battleTransition(kind) {
 }
 function drawTransition(x) {
   const tr = Game.trans; if (!tr) return; const t = tr.t; x.fillStyle = '#000';
-  if (tr.kind === 'wild') { for (let i = 0; i < 10; i++) { const w = clamp(t * 1.6 - i * 0.06, 0, 1) * W; if (i % 2) x.fillRect(0, i * 16, w, 16); else x.fillRect(W - w, i * 16, w, 16); } }
-  else if (tr.kind === 'elite') { for (let i = 0; i < 12; i++) for (let j = 0; j < 8; j++) { const k = clamp(t * 2.2 - (i + j) * 0.06, 0, 1); const s = 20 * k; x.fillRect(i * 20 + 10 - s / 2, j * 20 + 10 - s / 2, s, s); } }
-  else { const h = t * 82; for (let i = 0; i < W; i += 8) { const j = ((i / 8) % 2) * 6 * (1 - t); x.fillRect(i, 0, 8, h + j); x.fillRect(i, H - h - j, 8, h + j); } x.fillStyle = '#a02010'; x.globalAlpha = 1 - t; x.fillRect(0, h - 2, W, 2); x.fillRect(0, H - h, W, 2); x.globalAlpha = 1; }
+  if (tr.kind === 'wild') { const n = Math.ceil(H / 16); for (let i = 0; i < n; i++) { const w = clamp(t * 1.8 - i * 0.05, 0, 1) * W; if (i % 2) x.fillRect(0, i * 16, w, 16); else x.fillRect(W - w, i * 16, w, 16); } }
+  else if (tr.kind === 'elite') { for (let i = 0; i < Math.ceil(W / 20); i++) for (let j = 0; j < Math.ceil(H / 20); j++) { const k = clamp(t * 2.2 - (i + j) * 0.06, 0, 1); const s = 20 * k; x.fillRect(i * 20 + 10 - s / 2, j * 20 + 10 - s / 2, s, s); } }
+  else { const h = t * (H / 2 + 2); for (let i = 0; i < W; i += 8) { const j = ((i / 8) % 2) * 6 * (1 - t); x.fillRect(i, 0, 8, h + j); x.fillRect(i, H - h - j, 8, h + j); } x.fillStyle = '#a02010'; x.globalAlpha = 1 - t; x.fillRect(0, h - 2, W, 2); x.fillRect(0, H - h, W, 2); x.globalAlpha = 1; }
 }

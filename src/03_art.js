@@ -12,8 +12,8 @@ function spriteFrom(rows, pal, flip = false) {
 function flipCanvas(c) { const o = mkCanvas(c.width, c.height), x = o.getContext('2d'); x.translate(c.width, 0); x.scale(-1, 1); x.drawImage(c, 0, 0); return o; }
 
 /* ---------------- Hero overworld sprite (16x22) ---------------- */
-const HERO_PAL = { k: '#2a2238', H: '#34407a', h: '#4d62b0', j: '#86a0e8', S: '#f8d0a8', s: '#e0a07c', w: '#ffffff', Y: '#f8c838', y: '#d08818', R: '#d04848', r: '#982838', B: '#7a4828', b: '#4e2c1c', P: '#3c3a58', p: '#2a2840', G: '#d8dce8', g: '#8088a0' };
-const HERO_ROWS = {
+const VILLAGER_PAL = { k: '#2a2238', H: '#34407a', h: '#4d62b0', j: '#86a0e8', S: '#f8d0a8', s: '#e0a07c', w: '#ffffff', Y: '#f8c838', y: '#d08818', R: '#d04848', r: '#982838', B: '#7a4828', b: '#4e2c1c', P: '#3c3a58', p: '#2a2840', G: '#d8dce8', g: '#8088a0' };
+const VILLAGER_ROWS = {
   down: [
     '................',
     '......kkkk......',
@@ -82,6 +82,70 @@ const LEGS = {
   sideStand: ['....kPPPPPk.....', '....kPPkPPk.....', '....kBBkBBk.....', '....kkkkkkk.....'],
   sideStepA: ['....kPPPPPk.....', '...kPPPkPPPk....', '...kbBkkkPPk....', '...kkk..kBBbk...', '........kkkk....'],
   sideStepB: ['....kPPPPPk.....', '....kPPPPk......', '....kPPPkk......', '....kBBBbk......', '....kkkkkk......'],
+};
+
+const HERO_PAL = { k: '#2a2238', H: '#3a2a2c', h: '#5a4040', j: '#7e5e56', S: '#f8d0a8', s: '#e0a07c', W: '#f6f6f2', w: '#c8ccd8', R: '#d83a3a', N: '#2e3c70', n: '#1e2850', m: '#46589a', G: '#e8c048', P: '#5a6070', p: '#40444f', B: '#30303a', b: '#1c1c24', O: '#d8683a', o: '#a4482a', q: '#6a3a26' };
+const HERO_ROWS = {
+  down: [
+    '................',
+    '.....kkkkkk.....',
+    '...kkHHHHHHkk...',
+    '..kHHhhHHHHHHk..',
+    '..kHhjjhHHHHHk..',
+    '.kHHHHHHHHHHHHk.',
+    '.kHHHHHHHHHHHHk.',
+    '.kHHkHHHHkHHHHk.',
+    '.kHkSSkHHkSSSHk.',
+    '.kHSSSSSSSSSSHk.',
+    '.kkSSkSSSSkSSkk.',
+    '..kSSkSSSSkSSk..',
+    '...ksSSSSSSsk...',
+    '..kkNWWRRWWNkk..',
+    '.kNkmNWRRWNNkNk.',
+    '.kNkmNNRRNNNkNk.',
+    '.kSknNNNNNNnkSk.',
+    '..kknNGNNGNnkk..',
+  ],
+  up: [
+    '................',
+    '.....kkkkkk.....',
+    '...kkHHHHHHkk...',
+    '..kHHHhhHHHHHk..',
+    '..kHHhjjhHHHHk..',
+    '.kHHHHhhHHHHHHk.',
+    '.kHHHHHHHHHHHHk.',
+    '.kHHHHHHHHHHHHk.',
+    '.kHHHHHHHHHHHHk.',
+    '.kHHHHHHHHHHHHk.',
+    '.kkHHHHHHHHHHkk.',
+    '..kkHHHHHHHHkk..',
+    '...ksHHHHHHsk...',
+    '..kkNqkkkkqNkk..',
+    '.kNkqOOOOOOqkNk.',
+    '.kNkqOooooOqkNk.',
+    '.kSkqOOOOOOqkSk.',
+    '..kkNkOOOOkNkk..',
+  ],
+  left: [
+    '................',
+    '.....kkkkk......',
+    '...kkHHHHHkk....',
+    '..kHHHHhhjHHk...',
+    '.kHHHHHHhhHHHk..',
+    '.kHHHHHHHHHHHk..',
+    '.kHHHHHHHHHHHHk.',
+    '.kHSkHHHHHHHHHk.',
+    '.kSSSSHHHHHHHk..',
+    '.kSSSSSHHHHHHk..',
+    '.kSkSSSSHHHHHk..',
+    '.kSkSSSSsHHHk...',
+    '..kSSSSskHkk....',
+    '...kkWRNNkkkk...',
+    '...kRNNmNkOOk...',
+    '...kSNNmNkOok...',
+    '...ksNNNnkOOk...',
+    '....kNNGNkkkk...',
+  ],
 };
 const Hero = (() => {
   const frames = {};
@@ -406,23 +470,26 @@ const ART = {
     { s: 'line', pts: [[15, 36], [17, 41]], c: '#5a5244' }, { s: 'line', pts: [[47, 44], [45, 48], [47, 50]], c: '#5a5244' }, { s: 'line', pts: [[6, 40], [8, 45]], c: '#5a5244' },
   ] },
   heroBack: { parts: [
-    { s: 'e', x: 25, y: 63, rx: 7, ry: 6, c: '#3c3a58' }, { s: 'e', x: 39, y: 63, rx: 7, ry: 6, c: '#34324e' },
-    { s: 'e', x: 32, y: 53, rx: 14, ry: 12, c: '#d04848', id: 'torso' },
-    { s: 'e', x: 32, y: 61, rx: 16, ry: 3, c: '#7a4828', clip: 'torso', line: false },
-    { s: 'e', x: 46, y: 45, rx: 5, ry: 9, rot: 0.75, c: '#c04040' },
+    { s: 'e', x: 25, y: 63, rx: 7, ry: 6, c: '#5a6070' }, { s: 'e', x: 39, y: 63, rx: 7, ry: 6, c: '#4e5462' },
+    { s: 'e', x: 32, y: 53, rx: 15, ry: 12, c: '#2e3c70', id: 'torso' },
+    { s: 'e', x: 15, y: 52, rx: 5, ry: 10, rot: -0.25, c: '#2a386a' },
+    { s: 'e', x: 13, y: 61, rx: 3, ry: 3, c: '#f8d0a8' },
+    { s: 'e', x: 46, y: 45, rx: 5, ry: 9, rot: 0.75, c: '#34447a' },
     { s: 'p', pts: [[52, 35], [60, 3], [63, 5], [56, 37]], c: '#dfe4f0' },
-    { s: 'p', pts: [[47, 37], [58, 31], [60, 34], [49, 40]], c: '#e8b830' },
+    { s: 'p', pts: [[47, 37], [58, 31], [60, 34], [49, 40]], c: '#b88840' },
     { s: 'e', x: 53, y: 37, rx: 3.5, ry: 3.5, c: '#f8d0a8' },
-    { s: 'e', x: 14, y: 50, rx: 11, ry: 13, c: '#b8bcc8' },
-    { s: 'e', x: 14, y: 50, rx: 8.5, ry: 10.5, c: '#8a5a30', line: false },
-    { s: 'e', x: 14, y: 50, rx: 3, ry: 3.5, c: '#e8b830' },
-    { s: 'e', x: 32, y: 39, rx: 6, ry: 3, c: '#e0a07c' },
-    { s: 'e', x: 32, y: 41, rx: 13, ry: 5, c: '#f8c838' },
-    { s: 'p', pts: [[20, 40], [8, 33], [2, 36], [7, 39], [1, 43], [12, 44], [22, 44]], c: '#f0b828' },
-    { u: [{ s: 'e', x: 32, y: 24, rx: 16, ry: 15 }, { s: 'p', pts: [[17, 28], [7, 21], [18, 16]] }, { s: 'p', pts: [[19, 14], [17, 3], [28, 9]] }, { s: 'p', pts: [[31, 9], [38, 0], [41, 11]] }, { s: 'p', pts: [[45, 15], [56, 11], [48, 24]] }, { s: 'p', pts: [[47, 27], [55, 33], [45, 34]] }, { s: 'p', pts: [[18, 32], [10, 37], [21, 37]] }], c: '#3a4888', id: 'hair' },
+    { s: 'e', x: 32, y: 39, rx: 7, ry: 3, c: '#e0a07c' },
+    { s: 'e', x: 32, y: 41, rx: 9, ry: 3, c: '#f6f6f2' },
+    { u: [{ s: 'p', pts: [[20, 44], [44, 44], [45, 62], [19, 62]] }, { s: 'e', x: 32, y: 45, rx: 12, ry: 5 }], c: '#d8683a', id: 'pack' },
+    { s: 'p', pts: [[20, 44], [44, 44], [43, 52], [21, 52]], c: '#b8542e', clip: 'pack' },
+    { s: 'e', x: 32, y: 57, rx: 7, ry: 3.5, c: '#f0a060', clip: 'pack', line: false },
+    { s: 'e', x: 17.5, y: 27, rx: 2.2, ry: 3.2, c: '#f0c098' }, { s: 'e', x: 46.5, y: 27, rx: 2.2, ry: 3.2, c: '#f0c098' },
+    { u: [{ s: 'e', x: 32, y: 23, rx: 15, ry: 14 }, { s: 'e', x: 32, y: 31, rx: 13, ry: 7 }, { s: 'p', pts: [[31, 11], [35, 2], [38, 5], [36, 11]] }], c: '#3a2a2c', id: 'hair' },
   ], details: [
-    { s: 'line', pts: [[26, 15], [28, 22]], c: '#5a70c0' }, { s: 'line', pts: [[36, 13], [36, 20]], c: '#5a70c0' },
+    { s: 'line', pts: [[25, 14], [27, 21]], c: '#6e524c' }, { s: 'line', pts: [[38, 14], [37, 21]], c: '#6e524c' }, { s: 'line', pts: [[31, 17], [31, 25]], c: '#5a4040' },
     { s: 'line', pts: [[56, 30], [61, 8]], c: '#ffffff' },
+    { s: 'line', pts: [[22, 49], [42, 49]], c: '#7a3018' },
+    { s: 'dot', x: 38, y: 54, r: 1.5, c: '#58d8c8' },
   ] },
 };
 
@@ -717,7 +784,7 @@ const MINI_ICONS = {
 
 /* ---------------- NPC looks (palette + hair variants of the hero template) ---------------- */
 function variantRows(style) {
-  const R = { down: HERO_ROWS.down.slice(), up: HERO_ROWS.up.slice(), left: HERO_ROWS.left.slice() };
+  const R = { down: VILLAGER_ROWS.down.slice(), up: VILLAGER_ROWS.up.slice(), left: VILLAGER_ROWS.left.slice() };
   const set = (d, i, s) => { R[d][i] = s; };
   // remove sword on back for NPCs
   R.up = R.up.map(r => r.replace(/G/g, 'R').replace(/g/g, 'r')); R.down = R.down.map(r => r.replace(/G/g, 'B'));
@@ -774,6 +841,6 @@ const LOOKS = {
 const NPCSprites = {};
 function npcFrames(look) {
   if (NPCSprites[look]) return NPCSprites[look]; const L = LOOKS[look];
-  const pal = { ...HERO_PAL, ...L }; delete pal.style; delete pal.skirt; if (!pal.W) pal.W = '#f8f8f8';
+  const pal = { ...VILLAGER_PAL, ...L }; delete pal.style; delete pal.skirt; if (!pal.W) pal.W = '#f8f8f8';
   NPCSprites[look] = buildCharFrames(variantRows(L.style), pal, L.skirt); return NPCSprites[look];
 }

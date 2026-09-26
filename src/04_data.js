@@ -94,6 +94,8 @@ const ITEMS = {
   leather: { n: '皮甲', price: 900, equip: 'armor', bonus: { def: 3, spd: 2 }, d: '結實的皮甲。防禦+3 特防+2' },
   charm: { n: '魔法護符', price: 1000, equip: 'acc', bonus: { spa: 4 }, d: '注入魔力的護符。特攻+4' },
   boots: { n: '疾風靴', price: 800, equip: 'acc', bonus: { spe: 4 }, d: '穿上後腳步變得輕快。速度+4' },
+  uniform: { n: '學生制服', price: 0, equip: 'armor', bonus: { def: 1 }, d: '原本世界學校的制服。在這裡好像很少見。防禦+1' },
+  phone: { n: '手機', key: 1, use: 'phone', d: '從原本的世界帶來的手機。' },
   license: { n: '冒險者證', key: 1, d: '村長交給你的冒險者證明。持有它就能走出萌芽鎮。' },
 };
 const SHOP_LIST = ['potion', 'superPotion', 'antidote', 'parlyzHeal', 'awakening', 'burnHeal', 'ether', 'smoke', 'ironSword', 'leather', 'charm', 'boots'];
@@ -146,7 +148,7 @@ const MAPS = {
     triggers: [{ x: 10, y: 1, id: 'exitBlock' }, { x: 11, y: 1, id: 'exitBlock' }],
   },
   home: {
-    name: '主角的家', music: 'town', rows: [
+    name: '瑪莎的家', music: 'town', rows: [
       'xxxxxxxxxx',
       'xwxxcxxwxx',
       'BnnnnnnnKp',
@@ -156,7 +158,7 @@ const MAPS = {
       'nnnnnnnnnn',
       'nnnnDnnnnn',
     ], exit: { x: 4, y: 7, to: ['town', 5, 7] }, wallPal: '',
-    npcs: [{ id: 'mom', x: 6, y: 4, dir: 'left', look: 'mom', name: '媽媽' }],
+    npcs: [{ id: 'mom', x: 6, y: 4, dir: 'left', look: 'mom', name: '瑪莎' }],
   },
   elder: {
     name: '村長的家', music: 'town', rows: [
@@ -245,7 +247,7 @@ const MAPS = {
       'TTTTTTTTT.::.TTTTTTTTT',
       'TTTTTTTTTT::TTTTTTTTTT',
     ],
-    signs: { '15,3': '「↑ 古岩遺跡」\n危險！前方有強大的魔物。', '6,40': '「晨霧道路」\n↑ 古岩遺跡　↓ 萌芽鎮' },
+    signs: { '15,3': '「↑ 古岩遺跡」\n傳說中的異界之門就在遺跡深處。危險！', '6,40': '「晨霧道路」\n↑ 古岩遺跡　↓ 萌芽鎮' },
     connect: { s: { map: 'town', dx: 0 } },
     northWarp: { x: [10, 11], to: ['ruins', 7, 13, 'up'] },
     gate: { x: 9, y: 0 },

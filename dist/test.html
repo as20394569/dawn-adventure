@@ -1,5 +1,5 @@
 <!doctype html><html><head><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1,viewport-fit=cover'></head><body><title>曙光冒險</title>
-<meta name="description" content="GBA 風格的回合制冒險 RPG：由你親自上場戰鬥。">
+<meta name="description" content="手機直式遊玩的 GBA 風格異世界冒險 RPG。">
 <meta name="theme-color" content="#101a17">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&display=swap" rel="stylesheet">
@@ -17,17 +17,17 @@
 html,body{height:100%}
 body{margin:0;background:var(--bg);background-image:radial-gradient(var(--bg-dot) 1px,transparent 1px);background-size:6px 6px;color:var(--ink);
   font-family:var(--pix);overflow:hidden;overscroll-behavior:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
-#app{height:100%;box-sizing:border-box;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding-inline:16px;padding-block:8px}
-#shell{width:100%;max-width:560px;display:flex;flex-direction:column;align-items:stretch;gap:14px;
-  background:linear-gradient(170deg,var(--shell-hi),var(--shell) 30%,var(--shell-lo));border-radius:22px 22px 44px 22px;padding:14px 14px 22px;box-sizing:border-box;
+#app{height:100%;box-sizing:border-box;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding-inline:16px;padding-block:6px}
+#shell{--padh:178px;width:min(100%,440px,calc((100dvh - var(--padh) - 44px) * 0.6875 + 32px));display:flex;flex-direction:column;align-items:stretch;gap:10px;box-sizing:border-box;
+  background:linear-gradient(170deg,var(--shell-hi),var(--shell) 30%,var(--shell-lo));border-radius:22px 22px 40px 40px;padding:10px 10px 14px;
   box-shadow:inset 0 2px 0 rgba(255,255,255,.14),inset 0 -4px 0 var(--shell-edge),0 10px 30px rgba(0,0,0,.45)}
-#bezel{background:var(--bezel);border-radius:10px 10px 26px 10px;padding:8px 10px 12px;box-shadow:inset 0 0 0 2px var(--bezel-hi)}
-#bezelTop{display:flex;align-items:center;gap:8px;font-size:10px;letter-spacing:.14em;color:#7a8296;padding:0 2px 6px}
-.led{width:7px;height:7px;border-radius:50%;background:var(--led);box-shadow:0 0 6px var(--led)}
+#bezel{background:var(--bezel);border-radius:10px 10px 18px 18px;padding:5px 6px 8px;box-shadow:inset 0 0 0 2px var(--bezel-hi)}
+#bezelTop{display:flex;align-items:center;gap:8px;font-size:9px;letter-spacing:.14em;color:#7a8296;padding:0 2px 4px}
+.led{width:6px;height:6px;border-radius:50%;background:var(--led);box-shadow:0 0 6px var(--led)}
 .brand{margin-left:auto}
-#screenWrap{width:100%;aspect-ratio:3/2;display:flex;align-items:center;justify-content:center;background:#000;border-radius:3px;overflow:hidden}
+#screenWrap{width:100%;aspect-ratio:11/16;display:flex;align-items:center;justify-content:center;background:#000;border-radius:3px;overflow:hidden}
 #screen{display:block;image-rendering:pixelated;image-rendering:crisp-edges;touch-action:none;background:#000}
-#pad{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:6px;touch-action:none;--s:min(34vw,136px);--b:min(15.5vw,62px)}
+#pad{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:4px;touch-action:none;--s:min(33vw,132px);--b:min(15vw,60px);min-height:calc(var(--s) + 4px)}
 #dpad{position:relative;width:var(--s);height:var(--s);justify-self:start;touch-action:none;cursor:pointer}
 #dpad::before,#dpad::after{content:"";position:absolute;background:var(--dpad);border-radius:8px;box-shadow:inset 0 2px 0 var(--dpad-hi),0 3px 0 #0b0d10}
 #dpad::before{left:33%;top:2%;width:34%;height:96%}
@@ -39,16 +39,16 @@ body{margin:0;background:var(--bg);background-image:radial-gradient(var(--bg-dot
 #dpad .r{top:50%;left:86%;border-left:9px solid #9aa3b5;border-right:0}
 #dpad[data-dir=up] .u,#dpad[data-dir=down] .d,#dpad[data-dir=left] .l,#dpad[data-dir=right] .r{opacity:1;filter:drop-shadow(0 0 3px #fff)}
 #dpad .hub{position:absolute;z-index:1;left:50%;top:50%;width:22%;height:22%;transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(circle at 40% 35%,#2e343e,#1a1e24)}
-#mid{display:flex;flex-direction:column;gap:12px;align-items:center;justify-self:center;align-self:end;padding-bottom:4px}
+#mid{display:flex;flex-direction:column;gap:12px;align-items:center;justify-self:center;align-self:end;padding-bottom:2px}
 #mid button{font-family:var(--pix);font-size:10px;letter-spacing:.06em;color:var(--muted);background:var(--pill);border:0;border-radius:20px;padding:6px 10px;box-shadow:inset 0 -2px 0 rgba(0,0,0,.35),0 1px 0 rgba(255,255,255,.08);touch-action:none;cursor:pointer}
 #mid button.on{transform:translateY(1px);color:var(--ink)}
-#ab{position:relative;width:calc(var(--b) * 2.25);height:calc(var(--b) * 1.9);justify-self:end}
+#ab{position:relative;width:calc(var(--b) * 2.2);height:calc(var(--b) * 1.9);justify-self:end}
 #ab .round{position:absolute;width:var(--b);height:var(--b);border-radius:50%;border:0;font-family:var(--pix);font-weight:700;font-size:calc(var(--b) * .32);color:var(--btn-ink);
   background:radial-gradient(circle at 38% 32%,var(--btn-hi),var(--btn) 55%,var(--btn-lo));box-shadow:0 4px 0 #6f5218,0 6px 12px rgba(0,0,0,.35);touch-action:none;cursor:pointer}
 #ab .round.on{transform:translateY(3px);box-shadow:0 1px 0 #6f5218}
 #ab [data-k=a]{right:0;top:0}
 #ab [data-k=b]{left:0;bottom:4px}
-#keys{margin:0;font-family:system-ui,sans-serif;font-size:13px;color:var(--muted);text-align:center;line-height:1.6;max-width:640px}
+#keys{margin:0;font-family:system-ui,sans-serif;font-size:12px;color:var(--muted);text-align:center;line-height:1.6;max-width:440px}
 #keys b{font-family:var(--pix);color:var(--ink);font-weight:400;background:#1c2b26;border-radius:4px;padding:0 5px}
 #nameBox{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(6,10,12,.6);z-index:10;padding-inline:16px}
 #nameBox[hidden]{display:none}
@@ -60,32 +60,29 @@ body{margin:0;background:var(--bg);background-image:radial-gradient(var(--bg-dot
 #nameForm button{font-size:15px;padding:8px 16px;border-radius:4px;border:2px solid #384868;background:#e8eef8;color:#223;cursor:pointer}
 #nameForm button[type=submit]{background:#5888c8;color:#fff}
 button:focus-visible{outline:3px solid #f0b030;outline-offset:2px}
-/* desktop: keyboard first */
-@media (hover:hover) and (pointer:fine){
-  #shell{max-width:min(1000px,calc((100dvh - 110px) * 1.5 + 48px))}
-  #pad{display:none}
-}
 @media (hover:none),(pointer:coarse){ #keys{display:none} }
-/* phone landscape */
+@media (hover:hover) and (pointer:fine){ #shell{--padh:196px} }
+/* short screens: tighten controls */
+@media (orientation:portrait) and (max-height:700px){ #pad{--s:min(30vw,112px);--b:min(13.5vw,52px)} #shell{--padh:150px;gap:8px;padding-bottom:10px} #mid{gap:8px} }
+/* phone held sideways: controls on both sides of the tall screen */
 @media (orientation:landscape) and (pointer:coarse){
   #app{padding-block:4px}
-  #shell{max-width:none;height:100%;display:grid;grid-template-columns:1fr auto 1fr;grid-template-rows:1fr auto;align-items:center;column-gap:10px;row-gap:4px;border-radius:26px;padding:8px 10px}
-  #pad{display:contents;--s:min(128px,15vw,38dvh);--b:min(58px,7vw,17dvh)}
-  #bezel{grid-column:2;grid-row:1/3;height:min(calc(100dvh - 34px),calc((100vw - 2 * min(128px,15vw,38dvh) - 110px) / 1.5 + 28px));display:flex;flex-direction:column;box-sizing:border-box;padding:4px 8px 8px}
-  #bezelTop{padding-bottom:3px}
+  #shell{width:auto;max-width:100%;height:100%;display:grid;grid-template-columns:auto auto auto;grid-template-rows:1fr auto;align-items:center;justify-content:center;column-gap:18px;row-gap:4px;border-radius:26px;padding:8px 14px}
+  #pad{display:contents;--s:min(128px,17vw,40dvh);--b:min(58px,8vw,18dvh)}
+  #bezel{grid-column:2;grid-row:1/3;height:calc(100dvh - 34px);display:flex;flex-direction:column;box-sizing:border-box;padding:4px 6px 6px}
+  #bezelTop{padding-bottom:2px}
   #screenWrap{height:100%;width:auto;flex:1;min-height:0}
   #dpad{grid-column:1;grid-row:1/3;justify-self:center}
   #ab{grid-column:3;grid-row:1;justify-self:center;align-self:end}
   #mid{grid-column:3;grid-row:2;flex-direction:row;justify-self:center;align-self:start;padding:0}
 }
-@media (orientation:portrait) and (max-height:700px){ #pad{--s:min(30vw,112px);--b:min(13.5vw,54px)} #shell{gap:8px;padding-bottom:14px} }
 @media (prefers-reduced-motion:reduce){ #ab .round.on,#mid button.on{transform:none} }
 </style>
 <main id="app">
   <div id="shell">
     <div id="bezel">
       <div id="bezelTop"><span class="led"></span><span>BATTERY</span><span class="brand">DAWNLIGHT</span></div>
-      <div id="screenWrap"><canvas id="screen" width="240" height="160" aria-label="遊戲畫面"></canvas></div>
+      <div id="screenWrap"><canvas id="screen" width="176" height="256" aria-label="遊戲畫面"></canvas></div>
     </div>
     <div id="pad">
       <div id="dpad" role="group" aria-label="方向鍵"><span class="hub"></span><span class="arr u"></span><span class="arr d"></span><span class="arr l"></span><span class="arr r"></span></div>
@@ -93,7 +90,7 @@ button:focus-visible{outline:3px solid #f0b030;outline-offset:2px}
       <div id="ab"><button type="button" class="round" data-k="b" aria-label="B 取消／跑步">B</button><button type="button" class="round" data-k="a" aria-label="A 確認">A</button></div>
     </div>
   </div>
-  <p id="keys"><b>↑↓←→</b> / <b>WASD</b> 移動　<b>Z</b> 確認（A）　<b>X</b> 取消・按住跑步（B）　<b>Enter</b> 選單（START）</p>
+  <p id="keys"><b>↑↓←→</b>/<b>WASD</b> 移動　<b>Z</b> 確認　<b>X</b> 取消・按住跑步　<b>Enter</b> 選單</p>
   <div id="nameBox" hidden><form id="nameForm" autocomplete="off"><label for="nameField">輸入你的名字（最多 6 個字）</label><input id="nameField" maxlength="6" enterkeyhint="done"><div class="row"><button type="button" id="nameCancel">返回</button><button type="submit">決定</button></div></form></div>
 </main>
 
@@ -214,7 +211,8 @@ const FONT_B64="ehwAAIQcAAAgAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEB
 
 'use strict';
 /* ===================== CORE: constants, utils, font, input, coroutines ===================== */
-const W = 240, H = 160, TS = 16;
+const W = 176, H = 256, TS = 16;
+const TB_H = 60, TB_Y = H - TB_H; // bottom text box area (3 lines)
 const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
 const rnd = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
 const chance = p => Math.random() < p;
@@ -296,7 +294,10 @@ const Font = (() => {
       let line = '', w = 0; const chars = [...para];
       for (let i = 0; i < chars.length; i++) {
         const ch = chars[i], cw = glyph(ch.codePointAt(0)).adv;
-        if (w + cw > maxW && line && !NOSTART.includes(ch)) { lines.push(line); line = ''; w = 0; if (ch === ' ') continue; }
+        if (w + cw > maxW && line) {
+          if (NOSTART.includes(ch)) { const lc = [...line]; const last = lc.pop(); lines.push(lc.join('')); line = last; w = glyph(last.codePointAt(0)).adv; }
+          else { lines.push(line); line = ''; w = 0; if (ch === ' ') continue; }
+        }
         line += ch; w += cw;
       }
       lines.push(line);
@@ -619,8 +620,8 @@ function spriteFrom(rows, pal, flip = false) {
 function flipCanvas(c) { const o = mkCanvas(c.width, c.height), x = o.getContext('2d'); x.translate(c.width, 0); x.scale(-1, 1); x.drawImage(c, 0, 0); return o; }
 
 /* ---------------- Hero overworld sprite (16x22) ---------------- */
-const HERO_PAL = { k: '#2a2238', H: '#34407a', h: '#4d62b0', j: '#86a0e8', S: '#f8d0a8', s: '#e0a07c', w: '#ffffff', Y: '#f8c838', y: '#d08818', R: '#d04848', r: '#982838', B: '#7a4828', b: '#4e2c1c', P: '#3c3a58', p: '#2a2840', G: '#d8dce8', g: '#8088a0' };
-const HERO_ROWS = {
+const VILLAGER_PAL = { k: '#2a2238', H: '#34407a', h: '#4d62b0', j: '#86a0e8', S: '#f8d0a8', s: '#e0a07c', w: '#ffffff', Y: '#f8c838', y: '#d08818', R: '#d04848', r: '#982838', B: '#7a4828', b: '#4e2c1c', P: '#3c3a58', p: '#2a2840', G: '#d8dce8', g: '#8088a0' };
+const VILLAGER_ROWS = {
   down: [
     '................',
     '......kkkk......',
@@ -689,6 +690,70 @@ const LEGS = {
   sideStand: ['....kPPPPPk.....', '....kPPkPPk.....', '....kBBkBBk.....', '....kkkkkkk.....'],
   sideStepA: ['....kPPPPPk.....', '...kPPPkPPPk....', '...kbBkkkPPk....', '...kkk..kBBbk...', '........kkkk....'],
   sideStepB: ['....kPPPPPk.....', '....kPPPPk......', '....kPPPkk......', '....kBBBbk......', '....kkkkkk......'],
+};
+
+const HERO_PAL = { k: '#2a2238', H: '#3a2a2c', h: '#5a4040', j: '#7e5e56', S: '#f8d0a8', s: '#e0a07c', W: '#f6f6f2', w: '#c8ccd8', R: '#d83a3a', N: '#2e3c70', n: '#1e2850', m: '#46589a', G: '#e8c048', P: '#5a6070', p: '#40444f', B: '#30303a', b: '#1c1c24', O: '#d8683a', o: '#a4482a', q: '#6a3a26' };
+const HERO_ROWS = {
+  down: [
+    '................',
+    '.....kkkkkk.....',
+    '...kkHHHHHHkk...',
+    '..kHHhhHHHHHHk..',
+    '..kHhjjhHHHHHk..',
+    '.kHHHHHHHHHHHHk.',
+    '.kHHHHHHHHHHHHk.',
+    '.kHHkHHHHkHHHHk.',
+    '.kHkSSkHHkSSSHk.',
+    '.kHSSSSSSSSSSHk.',
+    '.kkSSkSSSSkSSkk.',
+    '..kSSkSSSSkSSk..',
+    '...ksSSSSSSsk...',
+    '..kkNWWRRWWNkk..',
+    '.kNkmNWRRWNNkNk.',
+    '.kNkmNNRRNNNkNk.',
+    '.kSknNNNNNNnkSk.',
+    '..kknNGNNGNnkk..',
+  ],
+  up: [
+    '................',
+    '.....kkkkkk.....',
+    '...kkHHHHHHkk...',
+    '..kHHHhhHHHHHk..',
+    '..kHHhjjhHHHHk..',
+    '.kHHHHhhHHHHHHk.',
+    '.kHHHHHHHHHHHHk.',
+    '.kHHHHHHHHHHHHk.',
+    '.kHHHHHHHHHHHHk.',
+    '.kHHHHHHHHHHHHk.',
+    '.kkHHHHHHHHHHkk.',
+    '..kkHHHHHHHHkk..',
+    '...ksHHHHHHsk...',
+    '..kkNqkkkkqNkk..',
+    '.kNkqOOOOOOqkNk.',
+    '.kNkqOooooOqkNk.',
+    '.kSkqOOOOOOqkSk.',
+    '..kkNkOOOOkNkk..',
+  ],
+  left: [
+    '................',
+    '.....kkkkk......',
+    '...kkHHHHHkk....',
+    '..kHHHHhhjHHk...',
+    '.kHHHHHHhhHHHk..',
+    '.kHHHHHHHHHHHk..',
+    '.kHHHHHHHHHHHHk.',
+    '.kHSkHHHHHHHHHk.',
+    '.kSSSSHHHHHHHk..',
+    '.kSSSSSHHHHHHk..',
+    '.kSkSSSSHHHHHk..',
+    '.kSkSSSSsHHHk...',
+    '..kSSSSskHkk....',
+    '...kkWRNNkkkk...',
+    '...kRNNmNkOOk...',
+    '...kSNNmNkOok...',
+    '...ksNNNnkOOk...',
+    '....kNNGNkkkk...',
+  ],
 };
 const Hero = (() => {
   const frames = {};
@@ -1013,23 +1078,26 @@ const ART = {
     { s: 'line', pts: [[15, 36], [17, 41]], c: '#5a5244' }, { s: 'line', pts: [[47, 44], [45, 48], [47, 50]], c: '#5a5244' }, { s: 'line', pts: [[6, 40], [8, 45]], c: '#5a5244' },
   ] },
   heroBack: { parts: [
-    { s: 'e', x: 25, y: 63, rx: 7, ry: 6, c: '#3c3a58' }, { s: 'e', x: 39, y: 63, rx: 7, ry: 6, c: '#34324e' },
-    { s: 'e', x: 32, y: 53, rx: 14, ry: 12, c: '#d04848', id: 'torso' },
-    { s: 'e', x: 32, y: 61, rx: 16, ry: 3, c: '#7a4828', clip: 'torso', line: false },
-    { s: 'e', x: 46, y: 45, rx: 5, ry: 9, rot: 0.75, c: '#c04040' },
+    { s: 'e', x: 25, y: 63, rx: 7, ry: 6, c: '#5a6070' }, { s: 'e', x: 39, y: 63, rx: 7, ry: 6, c: '#4e5462' },
+    { s: 'e', x: 32, y: 53, rx: 15, ry: 12, c: '#2e3c70', id: 'torso' },
+    { s: 'e', x: 15, y: 52, rx: 5, ry: 10, rot: -0.25, c: '#2a386a' },
+    { s: 'e', x: 13, y: 61, rx: 3, ry: 3, c: '#f8d0a8' },
+    { s: 'e', x: 46, y: 45, rx: 5, ry: 9, rot: 0.75, c: '#34447a' },
     { s: 'p', pts: [[52, 35], [60, 3], [63, 5], [56, 37]], c: '#dfe4f0' },
-    { s: 'p', pts: [[47, 37], [58, 31], [60, 34], [49, 40]], c: '#e8b830' },
+    { s: 'p', pts: [[47, 37], [58, 31], [60, 34], [49, 40]], c: '#b88840' },
     { s: 'e', x: 53, y: 37, rx: 3.5, ry: 3.5, c: '#f8d0a8' },
-    { s: 'e', x: 14, y: 50, rx: 11, ry: 13, c: '#b8bcc8' },
-    { s: 'e', x: 14, y: 50, rx: 8.5, ry: 10.5, c: '#8a5a30', line: false },
-    { s: 'e', x: 14, y: 50, rx: 3, ry: 3.5, c: '#e8b830' },
-    { s: 'e', x: 32, y: 39, rx: 6, ry: 3, c: '#e0a07c' },
-    { s: 'e', x: 32, y: 41, rx: 13, ry: 5, c: '#f8c838' },
-    { s: 'p', pts: [[20, 40], [8, 33], [2, 36], [7, 39], [1, 43], [12, 44], [22, 44]], c: '#f0b828' },
-    { u: [{ s: 'e', x: 32, y: 24, rx: 16, ry: 15 }, { s: 'p', pts: [[17, 28], [7, 21], [18, 16]] }, { s: 'p', pts: [[19, 14], [17, 3], [28, 9]] }, { s: 'p', pts: [[31, 9], [38, 0], [41, 11]] }, { s: 'p', pts: [[45, 15], [56, 11], [48, 24]] }, { s: 'p', pts: [[47, 27], [55, 33], [45, 34]] }, { s: 'p', pts: [[18, 32], [10, 37], [21, 37]] }], c: '#3a4888', id: 'hair' },
+    { s: 'e', x: 32, y: 39, rx: 7, ry: 3, c: '#e0a07c' },
+    { s: 'e', x: 32, y: 41, rx: 9, ry: 3, c: '#f6f6f2' },
+    { u: [{ s: 'p', pts: [[20, 44], [44, 44], [45, 62], [19, 62]] }, { s: 'e', x: 32, y: 45, rx: 12, ry: 5 }], c: '#d8683a', id: 'pack' },
+    { s: 'p', pts: [[20, 44], [44, 44], [43, 52], [21, 52]], c: '#b8542e', clip: 'pack' },
+    { s: 'e', x: 32, y: 57, rx: 7, ry: 3.5, c: '#f0a060', clip: 'pack', line: false },
+    { s: 'e', x: 17.5, y: 27, rx: 2.2, ry: 3.2, c: '#f0c098' }, { s: 'e', x: 46.5, y: 27, rx: 2.2, ry: 3.2, c: '#f0c098' },
+    { u: [{ s: 'e', x: 32, y: 23, rx: 15, ry: 14 }, { s: 'e', x: 32, y: 31, rx: 13, ry: 7 }, { s: 'p', pts: [[31, 11], [35, 2], [38, 5], [36, 11]] }], c: '#3a2a2c', id: 'hair' },
   ], details: [
-    { s: 'line', pts: [[26, 15], [28, 22]], c: '#5a70c0' }, { s: 'line', pts: [[36, 13], [36, 20]], c: '#5a70c0' },
+    { s: 'line', pts: [[25, 14], [27, 21]], c: '#6e524c' }, { s: 'line', pts: [[38, 14], [37, 21]], c: '#6e524c' }, { s: 'line', pts: [[31, 17], [31, 25]], c: '#5a4040' },
     { s: 'line', pts: [[56, 30], [61, 8]], c: '#ffffff' },
+    { s: 'line', pts: [[22, 49], [42, 49]], c: '#7a3018' },
+    { s: 'dot', x: 38, y: 54, r: 1.5, c: '#58d8c8' },
   ] },
 };
 
@@ -1324,7 +1392,7 @@ const MINI_ICONS = {
 
 /* ---------------- NPC looks (palette + hair variants of the hero template) ---------------- */
 function variantRows(style) {
-  const R = { down: HERO_ROWS.down.slice(), up: HERO_ROWS.up.slice(), left: HERO_ROWS.left.slice() };
+  const R = { down: VILLAGER_ROWS.down.slice(), up: VILLAGER_ROWS.up.slice(), left: VILLAGER_ROWS.left.slice() };
   const set = (d, i, s) => { R[d][i] = s; };
   // remove sword on back for NPCs
   R.up = R.up.map(r => r.replace(/G/g, 'R').replace(/g/g, 'r')); R.down = R.down.map(r => r.replace(/G/g, 'B'));
@@ -1381,7 +1449,7 @@ const LOOKS = {
 const NPCSprites = {};
 function npcFrames(look) {
   if (NPCSprites[look]) return NPCSprites[look]; const L = LOOKS[look];
-  const pal = { ...HERO_PAL, ...L }; delete pal.style; delete pal.skirt; if (!pal.W) pal.W = '#f8f8f8';
+  const pal = { ...VILLAGER_PAL, ...L }; delete pal.style; delete pal.skirt; if (!pal.W) pal.W = '#f8f8f8';
   NPCSprites[look] = buildCharFrames(variantRows(L.style), pal, L.skirt); return NPCSprites[look];
 }
 
@@ -1481,6 +1549,8 @@ const ITEMS = {
   leather: { n: '皮甲', price: 900, equip: 'armor', bonus: { def: 3, spd: 2 }, d: '結實的皮甲。防禦+3 特防+2' },
   charm: { n: '魔法護符', price: 1000, equip: 'acc', bonus: { spa: 4 }, d: '注入魔力的護符。特攻+4' },
   boots: { n: '疾風靴', price: 800, equip: 'acc', bonus: { spe: 4 }, d: '穿上後腳步變得輕快。速度+4' },
+  uniform: { n: '學生制服', price: 0, equip: 'armor', bonus: { def: 1 }, d: '原本世界學校的制服。在這裡好像很少見。防禦+1' },
+  phone: { n: '手機', key: 1, use: 'phone', d: '從原本的世界帶來的手機。' },
   license: { n: '冒險者證', key: 1, d: '村長交給你的冒險者證明。持有它就能走出萌芽鎮。' },
 };
 const SHOP_LIST = ['potion', 'superPotion', 'antidote', 'parlyzHeal', 'awakening', 'burnHeal', 'ether', 'smoke', 'ironSword', 'leather', 'charm', 'boots'];
@@ -1533,7 +1603,7 @@ const MAPS = {
     triggers: [{ x: 10, y: 1, id: 'exitBlock' }, { x: 11, y: 1, id: 'exitBlock' }],
   },
   home: {
-    name: '主角的家', music: 'town', rows: [
+    name: '瑪莎的家', music: 'town', rows: [
       'xxxxxxxxxx',
       'xwxxcxxwxx',
       'BnnnnnnnKp',
@@ -1543,7 +1613,7 @@ const MAPS = {
       'nnnnnnnnnn',
       'nnnnDnnnnn',
     ], exit: { x: 4, y: 7, to: ['town', 5, 7] }, wallPal: '',
-    npcs: [{ id: 'mom', x: 6, y: 4, dir: 'left', look: 'mom', name: '媽媽' }],
+    npcs: [{ id: 'mom', x: 6, y: 4, dir: 'left', look: 'mom', name: '瑪莎' }],
   },
   elder: {
     name: '村長的家', music: 'town', rows: [
@@ -1632,7 +1702,7 @@ const MAPS = {
       'TTTTTTTTT.::.TTTTTTTTT',
       'TTTTTTTTTT::TTTTTTTTTT',
     ],
-    signs: { '15,3': '「↑ 古岩遺跡」\n危險！前方有強大的魔物。', '6,40': '「晨霧道路」\n↑ 古岩遺跡　↓ 萌芽鎮' },
+    signs: { '15,3': '「↑ 古岩遺跡」\n傳說中的異界之門就在遺跡深處。危險！', '6,40': '「晨霧道路」\n↑ 古岩遺跡　↓ 萌芽鎮' },
     connect: { s: { map: 'town', dx: 0 } },
     northWarp: { x: [10, 11], to: ['ruins', 7, 13, 'up'] },
     gate: { x: 9, y: 0 },
@@ -1701,17 +1771,17 @@ const UI = {
 
 class TextBox {
   constructor(text, o = {}) {
-    this.style = o.style || 'ow'; this.x = o.x ?? 0; this.y = o.y ?? 112; this.w = o.w ?? 240; this.h = o.h ?? 48;
-    this.pad = this.style === 'battle' ? 10 : 12;
-    this.lines = Font.wrap(text, this.w - this.pad * 2 - 4);
+    this.style = o.style || 'ow'; this.x = o.x ?? 0; this.y = o.y ?? TB_Y; this.w = o.w ?? W; this.h = o.h ?? TB_H;
+    this.pad = o.pad ?? 9; this.rows = Math.max(1, Math.floor((this.h - 10) / 16));
+    this.lines = Font.wrap(text, this.w - this.pad * 2 - 2);
     this.li = 0; this.ci = 0; this.top = 0; this.scroll = 0; this.state = 'type'; this.t = 0; this.hold = 0;
     this.auto = o.auto; this.keep = o.keep; this.done = false; this.instant = o.instant;
     this.col = this.style === 'battle' || this.style === 'dark' ? UIC.white : UIC.text; this.sh = this.style === 'battle' || this.style === 'dark' ? UIC.whiteSh : UIC.textSh;
-    if (this.instant) { this.li = Math.min(1, this.lines.length - 1); this.ci = [...this.lines[this.li]].length; this.state = this.lines.length > 2 ? 'wait' : 'end'; if (this.lines.length <= 2) this.finishLine(); }
+    if (this.instant) { this.li = Math.min(this.rows - 1, this.lines.length - 1); this.ci = [...this.lines[this.li]].length; this.state = this.lines.length > this.rows ? 'wait' : 'end'; if (this.lines.length <= this.rows) this.finishLine(); }
   }
   speed() { const base = [0.5, 1, 2][Game.settings.text] || 1; return (Input.held('a') || Input.held('b')) ? Math.max(4, base) : base; }
   finishLine() {
-    if (this.li + 1 < this.lines.length) { if (this.li - this.top >= 1) this.state = 'wait'; else { this.li++; this.ci = 0; this.state = 'type'; } }
+    if (this.li + 1 < this.lines.length) { if (this.li - this.top >= this.rows - 1) this.state = 'wait'; else { this.li++; this.ci = 0; this.state = 'type'; } }
     else { this.state = this.keep ? 'done' : 'end'; if (this.keep) this.done = true; }
   }
   update() {
@@ -1735,8 +1805,8 @@ class TextBox {
   draw(x) {
     drawWin(x, this.x, this.y, this.w, this.h, this.style);
     x.save(); x.beginPath(); x.rect(this.x + 4, this.y + 4, this.w - 8, this.h - 8); x.clip();
-    const ty = this.y + (this.style === 'battle' ? 7 : 7);
-    for (let i = this.top; i <= Math.min(this.li, this.top + 2); i++) {
+    const ty = this.y + 6;
+    for (let i = this.top; i <= Math.min(this.li, this.top + this.rows); i++) {
       const row = i - this.top; const s = i < this.li ? this.lines[i] : [...this.lines[i]].slice(0, this.ci).join('');
       Font.draw(x, s, this.x + this.pad, ty + row * 16 - this.scroll, this.col, this.sh);
     }
@@ -1754,7 +1824,7 @@ class Menu {
     this.rowH = o.rowH || 16; this.style = o.style || 'menu'; this.cancel = o.cancel !== false; this.onMove = o.onMove; this.done = false; this.result = -1;
     const maxW = Math.max(...this.items.map(it => Font.width(it.t) + (it.r ? Font.width(it.r) + 12 : 0)));
     this.colW = o.colW || maxW + 18; this.w = o.w || this.colW * this.cols + 14; const rowsN = Math.ceil(this.items.length / this.cols);
-    this.h = o.h || rowsN * this.rowH + 12; this.x = o.x ?? (240 - this.w - 2); this.y = o.y ?? (112 - this.h - 2);
+    this.h = o.h || Math.min(rowsN, o.visible || rowsN) * this.rowH + 12; this.x = o.x ?? (W - this.w - 2); this.y = o.y ?? (TB_Y - this.h - 2); this.ox = o.ox ?? 14; this.oy = o.oy ?? 5; this.title = o.title;
     this.scrollMax = o.visible || rowsN; this.scrollTop = 0; this.drawExtra = o.drawExtra; this.noFrame = o.noFrame; this.textCol = o.textCol || UIC.text; this.textSh = o.textSh || UIC.textSh;
     if (this.onMove) this.onMove(this.i);
   }
@@ -1774,10 +1844,11 @@ class Menu {
   }
   draw(x) {
     if (!this.noFrame) drawWin(x, this.x, this.y, this.w, this.h, this.style);
+    if (this.title) Font.draw(x, this.title, this.x + 10, this.y + 5, this.style === 'dark' || this.style === 'battle' ? UIC.white : UIC.text, this.style === 'dark' || this.style === 'battle' ? UIC.whiteSh : UIC.textSh);
     const n = this.items.length;
     for (let k = 0; k < n; k++) {
       const r = Math.floor(k / this.cols) - this.scrollTop, c = k % this.cols; if (r < 0 || r >= this.scrollMax) continue;
-      const X = this.x + 14 + c * this.colW, Y = this.y + 5 + r * this.rowH; const it = this.items[k];
+      const X = this.x + this.ox + c * this.colW, Y = this.y + this.oy + r * this.rowH; const it = this.items[k];
       Font.draw(x, it.t, X, Y, it.dis ? '#a0a0a8' : (it.col || this.textCol), this.textSh);
       if (it.r) Font.drawR(x, it.r, this.x + this.w - 10, Y, it.dis ? '#a0a0a8' : this.textCol, this.textSh);
       if (k === this.i) x.drawImage(this.style === 'dark' ? CURSOR_W : CURSOR, X - 9, Y + 3);
@@ -1823,41 +1894,44 @@ function headerBar(x, title, col = '#e86868') {
 }
 
 /* ---------- Status (summary) screen ---------- */
+function eqBonus(st) { const eqB = {}; for (const slot in st.equip) { const it = st.equip[slot] && ITEMS[st.equip[slot]]; if (it && it.bonus) for (const k in it.bonus) eqB[k] = (eqB[k] || 0) + it.bonus[k]; } for (const k in st.boost || {}) eqB[k] = (eqB[k] || 0) + st.boost[k]; return eqB; }
+function heroCard(x, st) {
+  drawWin(x, 4, 24, 168, 70, 'menu');
+  x.fillStyle = '#b8e0a8'; x.fillRect(8, 28, 56, 62); x.fillStyle = '#a0d090'; x.fillRect(8, 76, 56, 14);
+  x.drawImage(Hero.frames.down[Math.floor(Game.frame / 20) % 4], 0, 0, 16, 22, 20, 30, 32, 44);
+  Font.draw(x, st.name, 72, 28, UIC.text, UIC.textSh); Font.draw(x, 'Lv.' + st.lv, 72, 44, UIC.text, UIC.textSh);
+  if (st.status) statusBadge(x, st.status, 72, 64); else Font.draw(x, '狀態良好', 72, 60, '#58a058', UIC.textSh);
+  Font.drawR(x, st.money + ' G', 166, 44, '#4878c8', UIC.textSh);
+}
 function* summaryScreen() {
   let page = 0, mi = 0; const scr = { draw(x) {
     const st = Game.st, s = heroStats(); screenBG(x, '#f0d8a0', '#e8cc90');
     headerBar(x, page === 0 ? '冒險者資料' : '技能一覽', page === 0 ? '#d86848' : '#4878c8');
-    Font.drawR(x, (page + 1) + '/2  ←→', 232, 2, '#ffffff', '#8a3a28');
-    // portrait panel
-    drawWin(x, 4, 24, 76, 132, 'menu');
-    x.fillStyle = '#b8e0a8'; x.fillRect(8, 28, 68, 64); x.fillStyle = '#a0d090'; x.fillRect(8, 76, 68, 16);
-    x.drawImage(Hero.frames.down[Math.floor(Game.frame / 20) % 4], 0, 0, 16, 22, 26, 30, 32, 44);
-    Font.drawC(x, st.name, 42, 94, UIC.text, UIC.textSh); Font.drawC(x, 'Lv.' + st.lv, 42, 110, UIC.text, UIC.textSh);
-    if (st.status) statusBadge(x, st.status, 34, 128); else Font.drawC(x, '狀態良好', 42, 126, '#58a058', UIC.textSh);
+    Font.drawR(x, (page + 1) + '/2 ←→', W - 6, 2, '#ffffff', page === 0 ? '#8a3a28' : '#284878');
+    heroCard(x, st);
     if (page === 0) {
-      drawWin(x, 84, 24, 152, 132, 'menu');
-      const rowsS = [['HP', st.hp + '/' + s.hp], ['攻擊', s.atk], ['防禦', s.def], ['特攻', s.spa], ['特防', s.spd], ['速度', s.spe]];
-      rowsS.forEach(([a, b], i) => { const Y = 28 + i * 15; Font.draw(x, a, 94, Y, UIC.text, UIC.textSh); Font.drawR(x, String(b), 172, Y, UIC.text, UIC.textSh); });
-      const eqB = {}; for (const slot in st.equip) { const it = st.equip[slot] && ITEMS[st.equip[slot]]; if (it && it.bonus) for (const k in it.bonus) eqB[k] = (eqB[k] || 0) + it.bonus[k]; }
-      for (const k in st.boost || {}) eqB[k] = (eqB[k] || 0) + st.boost[k];
-      ['atk', 'def', 'spa', 'spd', 'spe'].forEach((k, i) => { if (eqB[k]) Font.draw(x, '(+' + eqB[k] + ')', 176, 28 + (i + 1) * 15, '#4878c8', UIC.textSh); });
-      drawHPBar(x, 94, 124, 60, st.hp / s.hp);
+      drawWin(x, 4, 98, 168, 104, 'menu'); const eqB = eqBonus(st);
+      const rowsS = [['HP', st.hp + '/' + s.hp], ['攻擊', s.atk, 'atk'], ['防禦', s.def, 'def'], ['特攻', s.spa, 'spa'], ['特防', s.spd, 'spd'], ['速度', s.spe, 'spe']];
+      rowsS.forEach(([a, b, k], i) => { const Y = 102 + i * 16; Font.draw(x, a, 16, Y, UIC.text, UIC.textSh); Font.drawR(x, String(b), 112, Y, UIC.text, UIC.textSh); if (k && eqB[k]) Font.draw(x, '(+' + eqB[k] + ')', 118, Y, '#4878c8', UIC.textSh); });
+      drawWin(x, 4, 204, 168, 48, 'menu');
+      drawHPBar(x, 14, 210, 60, st.hp / s.hp);
       const cur = st.exp - expForLevel(st.lv), need = expForLevel(st.lv + 1) - expForLevel(st.lv);
-      Font.draw(x, '下一級', 94, 132, UIC.text, UIC.textSh); Font.drawR(x, (need - cur) + '', 228, 132, UIC.text, UIC.textSh);
-      drawExpBar(x, 94, 148, 132, cur / need);
+      Font.draw(x, '下一級還差', 14, 220, UIC.text, UIC.textSh); Font.drawR(x, (need - cur) + '', 164, 220, UIC.text, UIC.textSh);
+      drawExpBar(x, 14, 240, 148, cur / need);
     } else {
-      drawWin(x, 84, 24, 152, 80, 'menu');
-      st.moves.forEach((m, i) => { const mv = MOVES[m.id]; const Y = 28 + i * 18; typeBadge(x, mv.t, 90, Y + 2, 28); Font.draw(x, mv.n, 124, Y, UIC.text, UIC.textSh); Font.drawR(x, m.pp + '/' + mv.pp, 230, Y, m.pp === 0 ? '#e04848' : UIC.text, UIC.textSh); if (i === mi) x.drawImage(CURSOR, 86, Y + 5); });
-      const mv = MOVES[st.moves[mi].id]; drawWin(x, 84, 106, 152, 50, 'menu');
-      Font.draw(x, (mv.cat === '變' ? '變化' : mv.cat === '物' ? '物理' : '特殊') + '  威力 ' + (mv.pow || '—') + '  命中 ' + (mv.acc || '—'), 92, 108, '#4878c8', UIC.textSh);
-      const dl = Font.wrap(mv.d, 136); dl.slice(0, 2).forEach((l, i) => Font.draw(x, l, 92, 123 + i * 14, UIC.text, UIC.textSh));
+      drawWin(x, 4, 98, 168, 84, 'menu');
+      st.moves.forEach((m, i) => { const mv = MOVES[m.id]; const Y = 102 + i * 19; typeBadge(x, mv.t, 18, Y + 2, 28); Font.draw(x, mv.n, 52, Y, UIC.text, UIC.textSh); Font.drawR(x, m.pp + '/' + mv.pp, 164, Y, m.pp === 0 ? '#e04848' : UIC.text, UIC.textSh); if (i === mi) x.drawImage(CURSOR, 9, Y + 5); });
+      const mv = MOVES[st.moves[mi].id]; drawWin(x, 4, 184, 168, 68, 'menu');
+      Font.draw(x, (mv.cat === '變' ? '變化' : mv.cat === '物' ? '物理' : '特殊') + ' 威力' + (mv.pow || '—') + ' 命中' + (mv.acc || '—'), 12, 186, '#4878c8', UIC.textSh);
+      Font.wrap(mv.d, 152).slice(0, 3).forEach((l, i) => Font.draw(x, l, 12, 202 + i * 15, UIC.text, UIC.textSh));
     }
   } };
   UI.push(scr);
   while (true) {
     if (Input.pressed('left') || Input.pressed('right')) { page = 1 - page; Sound.sfx('cursor'); }
     if (page === 1) { if (Input.repeat('up')) { mi = (mi + Game.st.moves.length - 1) % Game.st.moves.length; Sound.sfx('cursor'); } if (Input.repeat('down')) { mi = (mi + 1) % Game.st.moves.length; Sound.sfx('cursor'); } }
-    if (Input.pressed('b') || (Input.pressed('a') && page === 0)) { Input.consume('a', 'b'); Sound.sfx('cancel'); break; }
+    if (Input.pressed('a') && page === 0) { Input.consume('a'); page = 1; Sound.sfx('cursor'); }
+    else if (Input.pressed('b')) { Input.consume('a', 'b'); Sound.sfx('cancel'); break; }
     yield;
   }
   UI.remove(scr);
@@ -1868,9 +1942,12 @@ function* pickMoveToForget(newId) {
   let mi = 0; const list = [...Game.st.moves.map(m => m.id), newId];
   const scr = { draw(x) {
     screenBG(x, '#c8d8f0', '#b8c8e8'); headerBar(x, '要忘記哪個技能？', '#4878c8');
-    drawWin(x, 4, 24, 232, 96, 'menu');
-    list.forEach((id, i) => { const mv = MOVES[id]; const Y = 28 + i * 17; typeBadge(x, mv.t, 16, Y + 2, 28); Font.draw(x, mv.n + (i === 4 ? '（新）' : ''), 50, Y, i === 4 ? '#4878c8' : UIC.text, UIC.textSh); Font.drawR(x, '威力 ' + (mv.pow || '—') + '  PP ' + mv.pp, 226, Y, UIC.text, UIC.textSh); if (i === mi) x.drawImage(CURSOR, 7, Y + 5); });
-    const mv = MOVES[list[mi]]; drawWin(x, 4, 122, 232, 36, 'menu'); Font.wrap(mv.d, 212).slice(0, 2).forEach((l, i) => Font.draw(x, l, 12, 124 + i * 14, UIC.text, UIC.textSh));
+    drawWin(x, 4, 24, 168, 104, 'menu');
+    list.forEach((id, i) => { const mv = MOVES[id]; const Y = 28 + i * 19; typeBadge(x, mv.t, 18, Y + 2, 28); Font.draw(x, mv.n, 52, Y, i === 4 ? '#4878c8' : UIC.text, UIC.textSh); Font.drawR(x, i === 4 ? '新技能' : 'PP ' + Game.st.moves[i].pp, 164, Y, i === 4 ? '#4878c8' : UIC.text, UIC.textSh); if (i === mi) x.drawImage(CURSOR, 9, Y + 5); });
+    const mv = MOVES[list[mi]]; drawWin(x, 4, 132, 168, 80, 'menu');
+    Font.draw(x, (mv.cat === '變' ? '變化' : mv.cat === '物' ? '物理' : '特殊') + ' 威力' + (mv.pow || '—') + ' PP' + mv.pp, 12, 134, '#4878c8', UIC.textSh);
+    Font.wrap(mv.d, 152).slice(0, 4).forEach((l, i) => Font.draw(x, l, 12, 150 + i * 15, UIC.text, UIC.textSh));
+    drawWin(x, 4, 216, 168, 36, 'menu'); Font.draw(x, 'A：忘記這招', 14, 218, UIC.text, UIC.textSh); Font.draw(x, 'B：不學新技能', 14, 234, '#8890a0', UIC.textSh);
   } };
   UI.push(scr); let res = -1;
   while (true) {
@@ -1886,20 +1963,19 @@ function* pickMoveToForget(newId) {
 const ITEM_ORDER = Object.keys(ITEMS);
 function bagList(filter) { const st = Game.st; return Object.keys(st.bag).filter(k => st.bag[k] > 0 && ITEMS[k] && (!filter || filter(ITEMS[k], k))).sort((a, b) => ITEM_ORDER.indexOf(a) - ITEM_ORDER.indexOf(b)); }
 function* bagScreen(mode = 'field') { // returns item id used (battle) or null
-  let tab = 0, idx = 0; const tabs = mode === 'battle' ? ['道具'] : ['道具', '裝備', '重要物品'];
+  let tab = 0, idx = 0; const tabs = mode === 'battle' ? ['道具'] : ['道具', '裝備', '重要'];
   const listFor = t => bagList(it => tabs[t] === '道具' ? (!it.key && !it.equip && (mode !== 'battle' || it.use !== 'boost')) : tabs[t] === '裝備' ? !!it.equip : !!it.key);
+  const VIS = 7;
   const scr = { draw(x) {
-    screenBG(x, '#f0c890', '#e8bc80'); headerBar(x, '背包', '#c87838');
-    tabs.forEach((t, i) => { const X = 60 + i * 56; roundRect(x, X, 3, 50, 14, i === tab ? '#fff4d8' : '#a86028'); Font.drawC(x, t, X + 25, 2, i === tab ? UIC.text : '#f8e0c0', i === tab ? UIC.textSh : '#6a3818'); });
-    // bag icon
-    x.drawImage(MINI_ICONS.bag, 0, 0, 8, 8, 14, 40, 48, 48);
-    Font.drawC(x, Game.st.money + ' G', 38, 96, UIC.text, UIC.textSh);
-    const list = listFor(tab); drawWin(x, 84, 22, 152, 96, 'menu');
-    if (!list.length) Font.draw(x, '（空空如也）', 100, 28, '#909098', UIC.textSh);
-    const top = Math.max(0, Math.min(idx - 2, list.length - 5));
-    list.slice(top, top + 5).forEach((k, i) => { const Y = 26 + i * 17; const eq = Object.values(Game.st.equip).includes(k); Font.draw(x, ITEMS[k].n + (eq ? ' [E]' : ''), 98, Y, UIC.text, UIC.textSh); if (!ITEMS[k].key) Font.drawR(x, '×' + Game.st.bag[k], 228, Y, UIC.text, UIC.textSh); if (top + i === idx) x.drawImage(CURSOR, 90, Y + 3); });
-    drawWin(x, 4, 120, 232, 38, 'menu');
-    if (list[idx]) Font.wrap(ITEMS[list[idx]].d, 212).slice(0, 2).forEach((l, i) => Font.draw(x, l, 12, 122 + i * 15, UIC.text, UIC.textSh));
+    screenBG(x, '#f0c890', '#e8bc80'); headerBar(x, '背包', '#c87838'); Font.drawR(x, Game.st.money + ' G', W - 6, 2, '#ffffff', '#6a3818');
+    tabs.forEach((t, i) => { const X = 4 + i * 57; roundRect(x, X, 22, 54, 15, i === tab ? '#fff4d8' : '#a86028'); Font.drawC(x, t, X + 27, 22, i === tab ? UIC.text : '#f8e0c0', i === tab ? UIC.textSh : '#6a3818'); });
+    const list = listFor(tab); drawWin(x, 4, 40, 168, VIS * 18 + 10, 'menu');
+    if (!list.length) Font.draw(x, '（空空如也）', 20, 46, '#909098', UIC.textSh);
+    const top = Math.max(0, Math.min(idx - 3, list.length - VIS));
+    list.slice(top, top + VIS).forEach((k, i) => { const Y = 44 + i * 18; const eq = Object.values(Game.st.equip).includes(k); Font.draw(x, ITEMS[k].n + (eq ? '[E]' : ''), 20, Y, UIC.text, UIC.textSh); if (!ITEMS[k].key) Font.drawR(x, '×' + Game.st.bag[k], 164, Y, UIC.text, UIC.textSh); if (top + i === idx) x.drawImage(CURSOR, 11, Y + 3); });
+    if (top > 0) x.drawImage(UPARROW, 85, 41); if (top + VIS < list.length) x.drawImage(DOWNARROW, 85, 40 + VIS * 18 + 4);
+    drawWin(x, 4, 180, 168, 72, 'menu');
+    if (list[idx]) Font.wrap(ITEMS[list[idx]].d, 152).slice(0, 4).forEach((l, i) => Font.draw(x, l, 12, 184 + i * 16, UIC.text, UIC.textSh));
   } };
   UI.push(scr); let result = null;
   while (true) {
@@ -1910,9 +1986,9 @@ function* bagScreen(mode = 'field') { // returns item id used (battle) or null
     if (Input.pressed('b')) { Input.consume('b'); Sound.sfx('cancel'); break; }
     if (Input.pressed('a') && list[idx]) {
       Input.consume('a'); Sound.sfx('select'); const k = list[idx], it = ITEMS[k];
-      if (it.key) { yield* say(it.d); continue; }
-      if (it.equip) { const r = yield* ask('要裝備' + it.n + '嗎？', ['裝備', '取消'], { mx: 176, my: 70 }); if (r === 0) { Game.st.equip[it.equip] = k; clampHP(); Sound.sfx('item'); yield* say(Game.st.name + '裝備了' + it.n + '！'); } continue; }
-      const r = yield* ask('要使用' + it.n + '嗎？', ['使用', '取消'], { mx: 176, my: 70 });
+      if (it.key) { yield* say(it.use === 'phone' ? phoneText() : it.d); continue; }
+      if (it.equip) { const r = yield* ask('要裝備' + it.n + '嗎？', ['裝備', '取消']); if (r === 0) { Game.st.equip[it.equip] = k; clampHP(); Sound.sfx('item'); yield* say(Game.st.name + '裝備了' + it.n + '！'); } continue; }
+      const r = yield* ask('要使用' + it.n + '嗎？', ['使用', '取消']);
       if (r !== 0) continue;
       if (mode === 'battle') { if (it.use === 'escape' || canUseItem(k)) { result = k; break; } yield* say('現在使用也沒有效果。'); continue; }
       if (it.use === 'escape') { yield* say('現在不能使用。'); continue; }
@@ -1923,6 +1999,7 @@ function* bagScreen(mode = 'field') { // returns item id used (battle) or null
   }
   UI.remove(scr); return result;
 }
+function phoneText() { const st = Game.st; const pct = Math.max(1, 12 - Math.floor((st.steps || 0) / 400)); return '從原本的世界帶來的手機。\n電量剩下' + pct + '%……還是完全沒有訊號。\n桌布是家附近的那條街。'; }
 function clampHP() { const s = heroStats(); Game.st.hp = Math.min(Game.st.hp, s.hp); }
 function canUseItem(k) {
   const it = ITEMS[k], st = Game.st, s = heroStats();
@@ -1946,10 +2023,10 @@ function* equipScreen() {
   let idx = 0; const slots = Object.keys(EQUIP_SLOTS);
   const scr = { draw(x) {
     screenBG(x, '#c8e0c0', '#b8d4b0'); headerBar(x, '裝備', '#58a068');
-    drawWin(x, 4, 22, 232, 64, 'menu');
-    slots.forEach((sl, i) => { const Y = 26 + i * 18; Font.draw(x, EQUIP_SLOTS[sl], 20, Y, '#58a068', UIC.textSh); const it = Game.st.equip[sl] && ITEMS[Game.st.equip[sl]]; Font.draw(x, it ? it.n : '——', 64, Y, UIC.text, UIC.textSh); if (it) Font.drawR(x, Object.entries(it.bonus).map(([k, v]) => STAT_NAMES[k] + '+' + v).join(' '), 228, Y, '#4878c8', UIC.textSh); if (i === idx) x.drawImage(CURSOR, 10, Y + 3); });
-    const s = heroStats(); drawWin(x, 4, 88, 232, 70, 'menu');
-    [['攻擊', s.atk], ['防禦', s.def], ['特攻', s.spa], ['特防', s.spd], ['速度', s.spe], ['HP', Game.st.hp + '/' + s.hp]].forEach(([a, b], i) => { const X = 16 + (i % 2) * 112, Y = 92 + Math.floor(i / 2) * 20; Font.draw(x, a, X, Y, UIC.text, UIC.textSh); Font.drawR(x, String(b), X + 96, Y, UIC.text, UIC.textSh); });
+    drawWin(x, 4, 24, 168, 116, 'menu');
+    slots.forEach((sl, i) => { const Y = 28 + i * 36; Font.draw(x, EQUIP_SLOTS[sl], 20, Y, '#58a068', UIC.textSh); const it = Game.st.equip[sl] && ITEMS[Game.st.equip[sl]]; Font.draw(x, it ? it.n : '——', 60, Y, UIC.text, UIC.textSh); if (it) Font.drawR(x, Object.entries(it.bonus).map(([k, v]) => STAT_NAMES[k] + '+' + v).join(' '), 164, Y + 16, '#4878c8', UIC.textSh); if (i === idx) x.drawImage(CURSOR, 11, Y + 3); });
+    const s = heroStats(); drawWin(x, 4, 144, 168, 108, 'menu');
+    [['HP', Game.st.hp + '/' + s.hp], ['攻擊', s.atk], ['防禦', s.def], ['特攻', s.spa], ['特防', s.spd], ['速度', s.spe]].forEach(([a, b], i) => { const Y = 148 + i * 16; Font.draw(x, a, 20, Y, UIC.text, UIC.textSh); Font.drawR(x, String(b), 150, Y, UIC.text, UIC.textSh); });
   } };
   UI.push(scr);
   while (true) {
@@ -1958,8 +2035,8 @@ function* equipScreen() {
     if (Input.pressed('a')) {
       Input.consume('a'); Sound.sfx('select'); const sl = slots[idx];
       const own = bagList(it => it.equip === sl);
-      const opts = own.map(k => ({ t: ITEMS[k].n + (Game.st.equip[sl] === k ? ' [E]' : ''), k })).concat([{ t: '卸下', k: null }]);
-      const r = yield* choose(opts, { x: 120, y: 24 + idx * 18, w: 112 });
+      const opts = own.map(k => ({ t: ITEMS[k].n + (Game.st.equip[sl] === k ? '[E]' : ''), k })).concat([{ t: '卸下', k: null }]);
+      const r = yield* choose(opts, { x: 60, y: 40 + idx * 36, w: 112 });
       if (r >= 0) { Game.st.equip[sl] = opts[r].k; clampHP(); Sound.sfx('item'); }
     }
     yield;
@@ -1973,14 +2050,15 @@ function* optionsScreen() {
   const val = i => i === 0 ? ['慢', '普通', '快'][Game.settings.text] : i === 1 ? (Game.settings.music ? '開' : '關') : i === 2 ? (Game.settings.sfx ? '開' : '關') : '';
   const scr = { draw(x) {
     screenBG(x, '#d8d0f0', '#ccc4e8'); headerBar(x, '設定', '#7868b8');
-    drawWin(x, 16, 30, 208, 84, 'menu');
-    labels.forEach((l, i) => { const Y = 36 + i * 18; Font.draw(x, l, 34, Y, UIC.text, UIC.textSh); if (i < 3) Font.drawR(x, '← ' + val(i) + ' →', 212, Y, '#e05050', UIC.textSh); if (i === idx) x.drawImage(CURSOR, 22, Y + 3); });
-    drawWin(x, 16, 118, 208, 36, 'menu'); Font.draw(x, '左右鍵切換設定，B鍵返回。', 26, 126, UIC.text, UIC.textSh);
+    drawWin(x, 4, 30, 168, 84, 'menu');
+    labels.forEach((l, i) => { const Y = 36 + i * 18; Font.draw(x, l, 20, Y, UIC.text, UIC.textSh); if (i < 3) Font.drawR(x, '← ' + val(i) + ' →', 164, Y, '#e05050', UIC.textSh); if (i === idx) x.drawImage(CURSOR, 11, Y + 3); });
+    drawWin(x, 4, 118, 168, 52, 'menu'); Font.draw(x, '← → 切換設定', 14, 124, UIC.text, UIC.textSh); Font.draw(x, 'B 鍵返回', 14, 140, UIC.text, UIC.textSh);
   } };
   UI.push(scr);
   while (true) {
     if (Input.repeat('up')) { idx = (idx + 3) % 4; Sound.sfx('cursor'); } if (Input.repeat('down')) { idx = (idx + 1) % 4; Sound.sfx('cursor'); }
-    const d = Input.pressed('left') ? -1 : Input.pressed('right') ? 1 : 0;
+    let d = Input.pressed('left') ? -1 : Input.pressed('right') ? 1 : 0;
+    if (!d && Input.pressed('a') && idx < 3) { Input.consume('a'); d = 1; if (idx === 0 && Game.settings.text === 2) d = -2; }
     if (d) { if (idx === 0) Game.settings.text = clamp(Game.settings.text + d, 0, 2); if (idx === 1) Game.settings.music = !Game.settings.music; if (idx === 2) Game.settings.sfx = !Game.settings.sfx; Sound.applySettings(); Sound.sfx('cursor'); saveSettings(); }
     if (Input.pressed('b') || (Input.pressed('a') && idx === 3)) { Input.consume('a', 'b'); Sound.sfx('cancel'); break; }
     yield;
@@ -1989,24 +2067,24 @@ function* optionsScreen() {
 }
 
 /* ---------- Shop ---------- */
-function moneyWin(x) { drawWin(x, 2, 2, 90, 30, 'menu'); Font.draw(x, '金錢', 10, 3, '#4878c8', UIC.textSh); Font.drawR(x, Game.st.money + ' G', 84, 15, UIC.text, UIC.textSh); }
+function moneyWin(x) { drawWin(x, 2, 2, 86, 30, 'menu'); Font.draw(x, '金錢', 10, 3, '#4878c8', UIC.textSh); Font.drawR(x, Game.st.money + ' G', 80, 15, UIC.text, UIC.textSh); }
 function* shopFlow() {
   const mw = { draw: moneyWin }; UI.push(mw);
   while (true) {
-    const r = yield* ask('歡迎光臨！請問需要什麼呢？', ['購買', '賣出', '離開'], { mx: 170, my: 50 });
+    const r = yield* ask('歡迎光臨！請問需要什麼呢？', ['購買', '賣出', '離開']);
     if (r === 0) yield* shopBuy(); else if (r === 1) yield* shopSell(); else break;
   }
   UI.remove(mw); yield* say('謝謝惠顧！歡迎再來！');
 }
 function* shopBuy() {
-  let idx = 0; const list = SHOP_LIST;
+  let idx = 0; const list = SHOP_LIST; const VIS = 8;
   const scr = { draw(x) {
-    drawWin(x, 96, 2, 142, 110, 'menu');
-    const top = Math.max(0, Math.min(idx - 3, list.length - 6));
-    list.slice(top, top + 6).forEach((k, i) => { const Y = 6 + i * 17; const it = ITEMS[k]; const owned = Game.st.bag[k] || 0; Font.draw(x, it.n, 110, Y, UIC.text, UIC.textSh); Font.drawR(x, it.price + 'G', 232, Y, UIC.text, UIC.textSh); if (top + i === idx) x.drawImage(CURSOR, 102, Y + 3); });
-    if (top > 0) x.drawImage(DOWNARROW, 164, 2);
-    drawWin(x, 0, 112, 240, 48, 'ow'); const it = ITEMS[list[idx]];
-    Font.wrap(it.d + (it.equip ? '' : '（持有：' + (Game.st.bag[list[idx]] || 0) + '）'), 212).slice(0, 2).forEach((l, i) => Font.draw(x, l, 12, 119 + i * 16, UIC.text, UIC.textSh));
+    drawWin(x, 4, 36, 168, VIS * 18 + 10, 'menu');
+    const top = Math.max(0, Math.min(idx - 3, list.length - VIS));
+    list.slice(top, top + VIS).forEach((k, i) => { const Y = 40 + i * 18; const it = ITEMS[k]; Font.draw(x, it.n, 20, Y, UIC.text, UIC.textSh); Font.drawR(x, it.price + 'G', 164, Y, UIC.text, UIC.textSh); if (top + i === idx) x.drawImage(CURSOR, 11, Y + 3); });
+    if (top > 0) x.drawImage(UPARROW, 85, 37); if (top + VIS < list.length) x.drawImage(DOWNARROW, 85, 36 + VIS * 18 + 4);
+    drawWin(x, 0, TB_Y, W, TB_H, 'ow'); const it = ITEMS[list[idx]];
+    Font.wrap(it.d + (it.equip ? '' : '（持有' + (Game.st.bag[list[idx]] || 0) + '）'), 156).slice(0, 3).forEach((l, i) => Font.draw(x, l, 9, TB_Y + 6 + i * 16, UIC.text, UIC.textSh));
   } };
   UI.push(scr);
   while (true) {
@@ -2015,17 +2093,17 @@ function* shopBuy() {
     if (Input.pressed('a')) {
       Input.consume('a'); Sound.sfx('select'); const k = list[idx], it = ITEMS[k];
       let qty = 1; const maxQ = Math.min(it.equip ? 1 : 99, Math.floor(Game.st.money / it.price));
-      if (maxQ < 1) { UI.remove(scr); yield* say('錢不夠喔。'); UI.push(scr); continue; }
       if (it.equip && (Game.st.bag[k] || Object.values(Game.st.equip).includes(k))) { UI.remove(scr); yield* say('你已經有' + it.n + '了。'); UI.push(scr); continue; }
+      if (maxQ < 1) { UI.remove(scr); yield* say('錢不夠喔。'); UI.push(scr); continue; }
       if (!it.equip) {
-        const q = { draw(x) { drawWin(x, 140, 112 - 30, 98, 28, 'menu'); Font.draw(x, '×' + String(qty).padStart(2, '0'), 150, 86, UIC.text, UIC.textSh); Font.drawR(x, (qty * it.price) + 'G', 230, 86, UIC.text, UIC.textSh); } };
+        const q = { draw(x) { drawWin(x, 80, TB_Y - 32, 94, 30, 'menu'); Font.draw(x, '×' + String(qty).padStart(2, '0'), 90, TB_Y - 25, UIC.text, UIC.textSh); Font.drawR(x, (qty * it.price) + 'G', 166, TB_Y - 25, UIC.text, UIC.textSh); } };
         UI.push(q); let ok = false;
         while (true) { if (Input.repeat('up')) { qty = qty >= maxQ ? 1 : qty + 1; Sound.sfx('cursor'); } if (Input.repeat('down')) { qty = qty <= 1 ? maxQ : qty - 1; Sound.sfx('cursor'); } if (Input.repeat('right')) { qty = Math.min(maxQ, qty + 10); Sound.sfx('cursor'); } if (Input.repeat('left')) { qty = Math.max(1, qty - 10); Sound.sfx('cursor'); } if (Input.pressed('a')) { Input.consume('a'); ok = true; break; } if (Input.pressed('b')) { Input.consume('b'); break; } yield; }
         UI.remove(q); if (!ok) continue;
       }
       UI.remove(scr);
-      const yes = yield* yesNo(it.n + (it.equip ? '' : '×' + qty) + '，一共是' + (qty * it.price) + 'G，可以嗎？', { mx: 186, my: 60 });
-      if (yes) { Game.st.money -= qty * it.price; Game.st.bag[k] = (Game.st.bag[k] || 0) + qty; Sound.sfx('save'); yield* say('好的！這是您的' + it.n + '。' + (it.equip ? '\n記得到背包或裝備畫面裝備喔！' : '')); }
+      const yes = yield* yesNo(it.n + (it.equip ? '' : '×' + qty) + '，一共是' + (qty * it.price) + 'G，可以嗎？');
+      if (yes) { Game.st.money -= qty * it.price; Game.st.bag[k] = (Game.st.bag[k] || 0) + qty; Sound.sfx('save'); yield* say('好的！這是您的' + it.n + '。' + (it.equip ? '記得到背包或裝備畫面裝備喔！' : '')); }
       UI.push(scr);
     }
     yield;
@@ -2033,14 +2111,14 @@ function* shopBuy() {
   UI.remove(scr);
 }
 function* shopSell() {
-  let idx = 0;
+  let idx = 0; const VIS = 8;
   const listNow = () => bagList(it => !it.key && !(it.price === 0 && !it.sell)).filter(k => !Object.values(Game.st.equip).includes(k) || Game.st.bag[k] > 1);
   const scr = { draw(x) {
-    const list = listNow(); drawWin(x, 96, 2, 142, 110, 'menu');
-    if (!list.length) Font.draw(x, '沒有可以賣的東西', 106, 8, '#909098', UIC.textSh);
-    const top = Math.max(0, Math.min(idx - 3, list.length - 6));
-    list.slice(top, top + 6).forEach((k, i) => { const Y = 6 + i * 17; const it = ITEMS[k]; Font.draw(x, it.n + '×' + Game.st.bag[k], 110, Y, UIC.text, UIC.textSh); Font.drawR(x, sellPrice(k) + 'G', 232, Y, UIC.text, UIC.textSh); if (top + i === idx) x.drawImage(CURSOR, 102, Y + 3); });
-    drawWin(x, 0, 112, 240, 48, 'ow'); Font.draw(x, list.length ? '要賣哪一樣東西呢？' : '目前沒有可以賣的東西。', 12, 119, UIC.text, UIC.textSh); Font.draw(x, '（裝備中的物品不能賣）', 12, 135, '#8890a0', UIC.textSh);
+    const list = listNow(); drawWin(x, 4, 36, 168, VIS * 18 + 10, 'menu');
+    if (!list.length) Font.draw(x, '沒有可以賣的東西', 20, 42, '#909098', UIC.textSh);
+    const top = Math.max(0, Math.min(idx - 3, list.length - VIS));
+    list.slice(top, top + VIS).forEach((k, i) => { const Y = 40 + i * 18; const it = ITEMS[k]; Font.draw(x, it.n + '×' + Game.st.bag[k], 20, Y, UIC.text, UIC.textSh); Font.drawR(x, sellPrice(k) + 'G', 164, Y, UIC.text, UIC.textSh); if (top + i === idx) x.drawImage(CURSOR, 11, Y + 3); });
+    drawWin(x, 0, TB_Y, W, TB_H, 'ow'); Font.draw(x, list.length ? '要賣哪一樣東西呢？' : '目前沒有可以賣的東西。', 9, TB_Y + 6, UIC.text, UIC.textSh); Font.draw(x, '（裝備中的物品不能賣）', 9, TB_Y + 22, '#8890a0', UIC.textSh);
   } };
   UI.push(scr);
   while (true) {
@@ -2049,7 +2127,7 @@ function* shopSell() {
     if (Input.pressed('b')) { Input.consume('b'); Sound.sfx('cancel'); break; }
     if (Input.pressed('a') && list[idx]) {
       Input.consume('a'); const k = list[idx]; UI.remove(scr);
-      const yes = yield* yesNo(ITEMS[k].n + '可以用' + sellPrice(k) + 'G收購，要賣嗎？', { mx: 186, my: 60 });
+      const yes = yield* yesNo(ITEMS[k].n + '可以用' + sellPrice(k) + 'G收購，要賣嗎？');
       if (yes) { Game.st.bag[k]--; Game.st.money += sellPrice(k); Sound.sfx('save'); yield* say('謝謝！收下了' + ITEMS[k].n + '。'); }
       UI.push(scr);
     }
@@ -2063,7 +2141,7 @@ const sellPrice = k => ITEMS[k].sell ?? Math.floor(ITEMS[k].price / 2);
 function* startMenu() {
   Sound.sfx('menu'); let idx = Game.menuIdx || 0;
   while (true) {
-    const r = yield* choose(['狀態', '背包', '裝備', '存檔', '設定', '關閉'], { x: 172, y: 2, w: 66, index: idx });
+    const r = yield* choose(['狀態', '背包', '裝備', '存檔', '設定', '關閉'], { x: W - 70, y: 4, w: 66, index: idx });
     if (r < 0 || r === 5) break; idx = r; Game.menuIdx = r;
     if (r === 0) yield* summaryScreen();
     if (r === 1) yield* bagScreen('field');
@@ -2074,6 +2152,7 @@ function* startMenu() {
 }
 
 /* ===================== OVERWORLD ===================== */
+const CAM_X = Math.floor(W / 2) - 8, CAM_Y = 100;
 const DIRS = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] };
 const OPP = { up: 'down', down: 'up', left: 'right', right: 'left' };
 const SOLID = new Set('TWobSFPRXYxwckhaBQKCpV'.split(''));
@@ -2243,7 +2322,7 @@ class Overworld {
     if (ent && ent.sp && ent !== this.boss) { this.run(this.eliteTalk(ent)); return true; }
     if (ent && ent === this.boss) { const g = Events.bossLine(this); if (g) this.run(g); return true; }
     if (ent && (ent.item || ent.gold)) { this.run(this.pickItem(ent)); return true; }
-    const gt = this.map.d.gate; if (gt && gt.big && (x === gt.x || x === gt.x + 1) && y === gt.y + 1) { this.run(say(this.st.flags.gateOpen ? '石門後面是一道通往遠方的長長石階……\n（第二章，敬請期待！）' : '巨大的石門緊緊關著，\n上面刻著發光的古老紋路。')); return true; }
+    const gt = this.map.d.gate; if (gt && gt.big && (x === gt.x || x === gt.x + 1) && y === gt.y + 1) { this.run(say(this.st.flags.gateOpen ? '門後的光芒已經消失，只剩下冰冷的石壁……（第二章，敬請期待！）' : '巨大的石門緊緊關著，上面刻著發光的古老紋路。這就是「異界之門」……')); return true; }
     const sign = (this.map.d.signs || {})[x + ',' + y];
     if (c === 'S' && sign) { this.run(say(sign, { style: 'sign' })); return true; }
     if (c === 'Y') { this.run(Events.spring(this)); return true; }
@@ -2302,22 +2381,24 @@ class Overworld {
     Sound.stop(); UI.clear();
     const box = { draw(x) { x.fillStyle = '#000'; x.fillRect(0, 0, W, H); } }; UI.push(box);
     Game.fade = 0;
-    yield* say(st.name + '眼前一片漆黑……', { style: 'dark', y: 56 });
-    if (lost) yield* say('慌亂之中弄丟了' + lost + ' G……', { style: 'dark', y: 56 });
+    yield* say(st.name + '眼前一片漆黑……', { style: 'dark', y: 98 });
+    if (lost) yield* say('慌亂之中弄丟了' + lost + ' G……', { style: 'dark', y: 98 });
     UI.remove(box); Game.fade = 1;
     healHero(); const r = st.respawn; this.load(r.map, r.x, r.y, r.dir, true);
     yield* fadeIn(20);
-    yield* say(r.map === 'home' ? '媽媽：「你醒啦！別太勉強自己喔。」' : r.map === 'inn' ? '老闆娘：「你被送來這裡了呢。我已經幫你治療好了，要小心喔！」' : '清涼的泉水讓你恢復了精神。');
+    yield* say(r.map === 'home' ? '瑪莎：「你醒啦！別太勉強自己喔。」' : r.map === 'inn' ? '老闆娘：「你被送來這裡了呢。我已經幫你治療好了，要小心喔！」' : '清涼的泉水讓你恢復了精神。');
   }
   /* ---------- draw ---------- */
   draw(x) {
-    const p = this.p; const camX = Math.round(p.px) - 112, camY = Math.round(p.py) - 64 + Math.round(this.camDY || 0);
+    const p = this.p; let camX = Math.round(p.px) - CAM_X, camY = Math.round(p.py) - CAM_Y + Math.round(this.camDY || 0);
+    if (!this.map.d.outdoor && this.map.w * 16 <= W) camX = Math.round((this.map.w * 16 - W) / 2);
+    if (!this.map.d.outdoor && this.map.h * 16 <= H - TB_H) camY = Math.round((this.map.h * 16 - (H - TB_H)) / 2) - 8;
     this.camX = camX; this.camY = camY;
     const f = Math.floor(this.t / 20) % 3, f2 = Math.floor(this.t / 30) % 2;
     const tx0 = Math.floor(camX / 16), ty0 = Math.floor(camY / 16);
     x.fillStyle = '#101018'; x.fillRect(0, 0, W, H);
     const objs = [];
-    for (let ty = ty0 - 1; ty <= ty0 + 11; ty++) for (let tx = tx0; tx <= tx0 + 15; tx++) {
+    for (let ty = ty0 - 1; ty <= ty0 + Math.ceil(H / 16) + 1; ty++) for (let tx = tx0; tx <= tx0 + Math.ceil(W / 16); tx++) {
       const c = this.tileAt(tx, ty); const sx = tx * 16 - camX, sy = ty * 16 - camY;
       this.drawTile(x, c, tx, ty, sx, sy, f, f2);
       if (c === 'T') objs.push({ k: ty * 16 + 15, d: () => x.drawImage(Tiles.tree, sx, sy - 5) });
@@ -2419,13 +2500,14 @@ function* battleTransition(kind) {
 }
 function drawTransition(x) {
   const tr = Game.trans; if (!tr) return; const t = tr.t; x.fillStyle = '#000';
-  if (tr.kind === 'wild') { for (let i = 0; i < 10; i++) { const w = clamp(t * 1.6 - i * 0.06, 0, 1) * W; if (i % 2) x.fillRect(0, i * 16, w, 16); else x.fillRect(W - w, i * 16, w, 16); } }
-  else if (tr.kind === 'elite') { for (let i = 0; i < 12; i++) for (let j = 0; j < 8; j++) { const k = clamp(t * 2.2 - (i + j) * 0.06, 0, 1); const s = 20 * k; x.fillRect(i * 20 + 10 - s / 2, j * 20 + 10 - s / 2, s, s); } }
-  else { const h = t * 82; for (let i = 0; i < W; i += 8) { const j = ((i / 8) % 2) * 6 * (1 - t); x.fillRect(i, 0, 8, h + j); x.fillRect(i, H - h - j, 8, h + j); } x.fillStyle = '#a02010'; x.globalAlpha = 1 - t; x.fillRect(0, h - 2, W, 2); x.fillRect(0, H - h, W, 2); x.globalAlpha = 1; }
+  if (tr.kind === 'wild') { const n = Math.ceil(H / 16); for (let i = 0; i < n; i++) { const w = clamp(t * 1.8 - i * 0.05, 0, 1) * W; if (i % 2) x.fillRect(0, i * 16, w, 16); else x.fillRect(W - w, i * 16, w, 16); } }
+  else if (tr.kind === 'elite') { for (let i = 0; i < Math.ceil(W / 20); i++) for (let j = 0; j < Math.ceil(H / 20); j++) { const k = clamp(t * 2.2 - (i + j) * 0.06, 0, 1); const s = 20 * k; x.fillRect(i * 20 + 10 - s / 2, j * 20 + 10 - s / 2, s, s); } }
+  else { const h = t * (H / 2 + 2); for (let i = 0; i < W; i += 8) { const j = ((i / 8) % 2) * 6 * (1 - t); x.fillRect(i, 0, 8, h + j); x.fillRect(i, H - h - j, 8, h + j); } x.fillStyle = '#a02010'; x.globalAlpha = 1 - t; x.fillRect(0, h - 2, W, 2); x.fillRect(0, H - h, W, 2); x.globalAlpha = 1; }
 }
 
 /* ===================== BATTLE ===================== */
 let HERO_POWER = 1.4, BOSS_HP = 2.1, ELITE_HP = 1.1;
+const BH = TB_Y, FOE_X = 104, FOE_Y = 42, HERO_X = 4, HERO_Y = 126;
 const stageMul = s => s >= 0 ? (2 + s) / 2 : 2 / (2 - s);
 const STATUS_NAME = { psn: '中毒', par: '麻痺', slp: '睡眠', brn: '灼傷' };
 const IMMUNE = { psn: '毒', brn: '火', par: '雷' };
@@ -2439,23 +2521,24 @@ function makeFoe(sp, lv, kind) {
   return { sp, n: d.n, t: d.t, lv, stats: s, hp: s.hp, maxhp: s.hp, status: null, moves, stages: { atk: 0, def: 0, spa: 0, spd: 0, spe: 0 }, kind, boss: kind === 'boss', elite: kind === 'elite', sleepT: 0 };
 }
 function buildBattleBG(kind) {
-  const c = mkCanvas(W, 112), x = c.getContext('2d');
+  const c = mkCanvas(W, BH), x = c.getContext('2d');
   if (kind === 'ruins') {
-    const bands = ['#4a3c5c', '#54466a', '#5e5076', '#685a80', '#72648a'];
-    bands.forEach((col, i) => { x.fillStyle = col; x.fillRect(0, i * 8, W, 8); });
-    x.fillStyle = '#3a3048'; for (let i = 0; i < W; i += 40) { x.fillRect(i + 6, 8, 14, 40); x.fillStyle = '#463a56'; x.fillRect(i + 8, 8, 4, 40); x.fillStyle = '#3a3048'; }
-    x.fillStyle = '#8a7e6a'; x.fillRect(0, 40, W, 72); x.fillStyle = '#7c7060';
-    for (let y = 44; y < 112; y += 8) for (let i = ((y / 8) % 2) * 12; i < W; i += 24) x.fillRect(i, y, 22, 1);
-    x.fillStyle = '#9a8e78'; for (let y = 48; y < 112; y += 16) x.fillRect(0, y, W, 1);
+    const bands = ['#3e3252', '#463a5c', '#4e4266', '#564a70', '#5e527a', '#665a84'];
+    bands.forEach((col, i) => { x.fillStyle = col; x.fillRect(0, i * 12, W, 12); });
+    for (let i = 4; i < W; i += 44) { x.fillStyle = '#342a44'; x.fillRect(i, 6, 18, 70); x.fillStyle = '#433756'; x.fillRect(i + 3, 6, 5, 70); x.fillStyle = '#2a2238'; x.fillRect(i - 2, 4, 22, 5); }
+    x.fillStyle = '#8a7e6a'; x.fillRect(0, 72, W, BH - 72); x.fillStyle = '#7c7060';
+    for (let y = 76; y < BH; y += 8) for (let i = ((y / 8) % 2) * 12; i < W; i += 24) x.fillRect(i, y, 22, 1);
+    x.fillStyle = '#9a8e78'; for (let y = 80; y < BH; y += 16) x.fillRect(0, y, W, 1);
+    x.fillStyle = '#6aa048'; for (const [a1, b1] of [[12, 150], [140, 120], [70, 176], [150, 180]]) { x.fillRect(a1, b1, 6, 2); x.fillRect(a1 + 2, b1 - 1, 2, 1); }
   } else {
-    const sky = ['#88c8f0', '#98d0f0', '#a8d8f0', '#b8e0f0', '#c8e8f0'];
-    sky.forEach((col, i) => { x.fillStyle = col; x.fillRect(0, i * 7, W, 7); });
-    x.fillStyle = '#e8f4f8'; for (const [a, b, w] of [[20, 8, 30], [120, 14, 40], [190, 6, 24]]) { x.fillRect(a, b, w, 4); x.fillRect(a + 4, b - 2, w - 8, 2); }
-    x.fillStyle = '#4a9a58'; for (let i = 0; i < W; i += 12) { const h = 6 + ((i * 7) % 5); x.fillRect(i, 36 - h, 12, h + 4); }
-    x.fillStyle = '#3a8a48'; for (let i = 6; i < W; i += 12) { const h = 4 + ((i * 3) % 4); x.fillRect(i, 38 - h, 10, h + 2); }
-    const field = ['#9ad880', '#90d078', '#88c870', '#80c068', '#78b860', '#70b058'];
-    field.forEach((col, i) => { x.fillStyle = col; x.fillRect(0, 40 + i * 12, W, 12); });
-    x.fillStyle = '#a8e090'; for (let y = 44; y < 112; y += 6) for (let i = (y * 13) % 29; i < W; i += 29) x.fillRect(i, y, 6, 1);
+    const sky = ['#78c0f0', '#88c8f0', '#98d0f0', '#a8d8f0', '#b8e0f0', '#c8e8f0'];
+    sky.forEach((col, i) => { x.fillStyle = col; x.fillRect(0, i * 9, W, 9); });
+    x.fillStyle = '#eef8fc'; for (const [a1, b1, w] of [[12, 12, 30], [100, 22, 40], [150, 8, 22]]) { x.fillRect(a1, b1, w, 4); x.fillRect(a1 + 4, b1 - 2, w - 8, 2); }
+    x.fillStyle = '#5aa868'; for (let i = 0; i < W; i += 12) { const h = 6 + ((i * 7) % 5); x.fillRect(i, 56 - h, 12, h + 4); }
+    x.fillStyle = '#4a9a58'; for (let i = 6; i < W; i += 12) { const h = 4 + ((i * 3) % 4); x.fillRect(i, 58 - h, 10, h + 2); }
+    const field = ['#9ad880', '#94d47a', '#8ecc74', '#88c870', '#82c26a', '#7cbc64', '#76b660', '#70b05a', '#6aaa56', '#66a452', '#62a050', '#5e9c4e'];
+    field.forEach((col, i) => { x.fillStyle = col; x.fillRect(0, 60 + i * 12, W, 12); });
+    x.fillStyle = '#a8e090'; for (let y = 64; y < BH; y += 6) for (let i = (y * 13) % 29; i < W; i += 29) x.fillRect(i, y, 6, 1);
   }
   return c;
 }
@@ -2473,10 +2556,10 @@ class Battle {
     this.F = makeFoe(cfg.sp, cfg.lv, cfg.kind);
     const H = this.H = { hero: true, n: st.name, lv: st.lv, t: null, stats: s, maxhp: s.hp, moves: st.moves, stages: { atk: 0, def: 0, spa: 0, spd: 0, spe: 0 }, sleepT: st.sleepT ?? rnd(1, 3) };
     Object.defineProperty(H, 'hp', { get: () => st.hp, set: v => st.hp = v }); Object.defineProperty(H, 'status', { get: () => st.status, set: v => st.status = v });
-    this.bg = buildBattleBG(cfg.bg); this.platF = buildPlatform(46, 9, cfg.bg); this.platH = buildPlatform(58, 12, cfg.bg);
+    this.bg = buildBattleBG(cfg.bg); this.platF = buildPlatform(42, 9, cfg.bg); this.platH = buildPlatform(52, 11, cfg.bg);
     this.imgF = battleSprite(cfg.sp); this.imgH = battleSprite('heroBack');
     this.disp = { F: this.F.hp, H: st.hp, exp: st.exp };
-    this.foeX = -70; this.heroX = 250; this.boxF = -120; this.boxH = 250; this.cover = 1;
+    this.foeX = -70; this.heroX = W + 10; this.boxF = -120; this.boxH = W + 10; this.cover = 1;
     this.offF = { x: 0, y: 0 }; this.offH = { x: 0, y: 0 }; this.sinkF = 0; this.sinkH = 0; this.blinkF = 0; this.blinkH = 0; this.alphaF = 1;
     this.fx = []; this.shake = 0; this.t = 0; this.idle = false; this.cmdIdx = 0; this.moveIdx = 0; this.runTries = 0; this.turn = 0; this.phase2 = false; this.fistCD = 2;
     this.tint = null; this.squishF = 0;
@@ -2489,52 +2572,51 @@ class Battle {
     this.fx = this.fx.filter(p => p.t < p.life);
     if (this.script) { const r = this.script.next(); if (r.done) this.script = null; }
   }
-  center(b) { return b.hero ? { x: 60 + this.heroX - 28, y: 80 } : { x: 176 + this.foeX - 144, y: 38 }; }
+  center(b) { return b.hero ? { x: this.heroX + 32, y: HERO_Y + 32 } : { x: this.foeX + 32, y: FOE_Y + 30 }; }
   /* ---------------- drawing ---------------- */
   draw(x) {
     const sx = this.shake > 0 ? rnd(-3, 3) : 0, sy = this.shake > 0 ? rnd(-2, 2) : 0;
     x.save(); x.translate(sx, sy);
     x.drawImage(this.bg, 0, 0);
-    x.drawImage(this.platF, this.foeX + 32 - 47 + 1, 57); x.drawImage(this.platH, this.heroX + 32 - 59 - 2, 98);
+    x.drawImage(this.platF, this.foeX + 32 - 43, FOE_Y + 50); x.drawImage(this.platH, this.heroX + 32 - 53, HERO_Y + 49);
     // foe
     const bob = this.idle && Math.floor(this.t / 16) % 2 ? 1 : 0;
     if (this.alphaF > 0 && !(this.blinkF > 0 && Math.floor(this.blinkF / 3) % 2)) {
-      x.save(); x.beginPath(); x.rect(0, 0, W, 66 + 6); x.clip(); x.globalAlpha = this.alphaF;
-      const sq = this.squishF; const fx0 = this.foeX + this.offF.x, fy0 = 6 + this.offF.y + this.sinkF;
+      x.save(); x.beginPath(); x.rect(0, 0, W, FOE_Y + 66); x.clip(); x.globalAlpha = this.alphaF;
+      const sq = this.squishF; const fx0 = this.foeX + this.offF.x, fy0 = FOE_Y + this.offF.y + this.sinkF;
       if (sq) x.drawImage(this.imgF, fx0 - sq, fy0 + sq * 2, 64 + sq * 2, 64 - sq * 2); else x.drawImage(this.imgF, fx0, fy0);
       if (this.tintF && this.tintF.a > 0) { x.globalAlpha = this.tintF.a * this.alphaF; x.drawImage(tinted(this.imgF, this.tintF.c), fx0, fy0); }
       x.restore();
     }
     if (!(this.blinkH > 0 && Math.floor(this.blinkH / 3) % 2)) {
-      x.save(); x.beginPath(); x.rect(0, 0, W, 112); x.clip();
-      x.drawImage(this.imgH, this.heroX + this.offH.x, 48 + this.offH.y + this.sinkH + bob);
-      if (this.tintH) { x.globalAlpha = this.tintH.a; x.drawImage(tinted(this.imgH, this.tintH.c), this.heroX + this.offH.x, 48 + this.offH.y + this.sinkH + bob); }
+      x.save(); x.beginPath(); x.rect(0, 0, W, BH); x.clip();
+      x.drawImage(this.imgH, this.heroX + this.offH.x, HERO_Y + this.offH.y + this.sinkH + bob);
+      if (this.tintH) { x.globalAlpha = this.tintH.a; x.drawImage(tinted(this.imgH, this.tintH.c), this.heroX + this.offH.x, HERO_Y + this.offH.y + this.sinkH + bob); }
       x.restore();
     }
     for (const p of this.fx) drawParticle(x, p);
     this.drawBoxF(x); this.drawBoxH(x, bob);
     x.restore();
-    drawWin(x, 0, 112, 240, 48, 'battle');
-    if (this.cover > 0) { x.fillStyle = '#000'; const h = Math.round(this.cover * 80); x.fillRect(0, 0, W, h); x.fillRect(0, H - h, W, h); }
+    drawWin(x, 0, BH, W, H - BH, 'battle');
+    if (this.cover > 0) { x.fillStyle = '#000'; const h = Math.round(this.cover * (H / 2 + 1)); x.fillRect(0, 0, W, h); x.fillRect(0, H - h, W, h); }
   }
   drawBoxF(x) {
-    const X = Math.round(this.boxF), Y = 8, F = this.F; if (X < -110) return;
-    x.fillStyle = '#383840'; x.fillRect(X + 2, Y + 2, 104, 30); roundRect(x, X, Y, 104, 30, '#484858'); roundRect(x, X + 1, Y + 1, 102, 28, '#f8f8e8'); x.fillStyle = '#e0e0c8'; x.fillRect(X + 2, Y + 24, 100, 4);
+    const X = Math.round(this.boxF), Y = 6, F = this.F; if (X < -110) return;
+    x.fillStyle = '#383840'; x.fillRect(X + 2, Y + 2, 106, 30); roundRect(x, X, Y, 106, 30, '#484858'); roundRect(x, X + 1, Y + 1, 104, 28, '#f8f8e8'); x.fillStyle = '#e0e0c8'; x.fillRect(X + 2, Y + 24, 102, 4);
     Font.draw(x, F.n + (F.elite ? '★' : ''), X + 6, Y - 1, UIC.text, UIC.textSh);
-    Font.drawR(x, 'Lv' + F.lv, X + 100, Y - 1, UIC.text, UIC.textSh);
+    Font.drawR(x, 'Lv' + F.lv, X + 102, Y - 1, UIC.text, UIC.textSh);
     if (F.status) statusBadge(x, F.status, X + 6, Y + 15);
-    drawHPBar(x, X + 30, Y + 17, 48, this.disp.F / F.maxhp);
+    drawHPBar(x, X + 32, Y + 17, 48, this.disp.F / F.maxhp);
   }
   drawBoxH(x, bob) {
-    const X = Math.round(this.boxH), Y = 72 + bob, st = Game.st; if (X > 240) return;
-    x.fillStyle = '#383840'; x.fillRect(X + 2, Y + 2, 110, 38); roundRect(x, X, Y, 110, 38, '#484858'); roundRect(x, X + 1, Y + 1, 108, 36, '#f8f8e8'); x.fillStyle = '#e0e0c8'; x.fillRect(X + 2, Y + 32, 106, 4);
-    x.fillStyle = '#484858'; x.fillRect(X - 6, Y + 30, 7, 2); x.fillRect(X - 6, Y + 32, 2, 4);
-    Font.draw(x, st.name, X + 7, Y - 1, UIC.text, UIC.textSh); Font.drawR(x, 'Lv' + st.lv, X + 104, Y - 1, UIC.text, UIC.textSh);
-    if (st.status) statusBadge(x, st.status, X + 7, Y + 16);
-    drawHPBar(x, X + 34, Y + 15, 48, this.disp.H / this.H.maxhp);
-    Font.drawR(x, Math.ceil(this.disp.H) + '/' + this.H.maxhp, X + 104, Y + 20, UIC.text, UIC.textSh);
-    const lo = expForLevel(st.lv), hi = expForLevel(st.lv + 1); drawExpBar(x, X + 26, Y + 33, 80, (this.disp.exp - lo) / (hi - lo));
-    x.fillStyle = '#48a8f8'; Font.draw(x, 'EXP', X + 5, Y + 26, '#4878c8', null);
+    const X = Math.round(this.boxH), Y = 142 + bob, st = Game.st; if (X > W) return;
+    x.fillStyle = '#383840'; x.fillRect(X + 2, Y + 2, 102, 40); roundRect(x, X, Y, 102, 40, '#484858'); roundRect(x, X + 1, Y + 1, 100, 38, '#f8f8e8'); x.fillStyle = '#e0e0c8'; x.fillRect(X + 2, Y + 34, 98, 4);
+    Font.draw(x, st.name, X + 6, Y - 1, UIC.text, UIC.textSh); Font.drawR(x, 'Lv' + st.lv, X + 98, Y - 1, UIC.text, UIC.textSh);
+    if (st.status) statusBadge(x, st.status, X + 6, Y + 16);
+    drawHPBar(x, X + 30, Y + 15, 48, this.disp.H / this.H.maxhp);
+    Font.drawR(x, Math.ceil(this.disp.H) + '/' + this.H.maxhp, X + 98, Y + 21, UIC.text, UIC.textSh);
+    const lo = expForLevel(st.lv), hi = expForLevel(st.lv + 1); drawExpBar(x, X + 26, Y + 35, 70, (this.disp.exp - lo) / (hi - lo));
+    Font.draw(x, 'EXP', X + 5, Y + 28, '#4878c8', null);
   }
   /* ---------------- helpers ---------------- */
   *msg(text, o = {}) { const t = new TextBox(text, { style: 'battle', auto: o.wait ? false : (o.hold || 38) }); UI.push(t); while (!t.done) { t.update(); yield; } UI.remove(t); }
@@ -2585,21 +2667,20 @@ class Battle {
   }
   *intro() {
     Sound.sfx('encounter');
-    yield* parallel(tween(14, t => this.cover = 1 - t), tween(44, t => { const e = 1 - Math.pow(1 - t, 2); this.foeX = lerp(-70, 144, e); this.heroX = lerp(250, 28, e); }));
+    yield* parallel(tween(14, t => this.cover = 1 - t), tween(44, t => { const e = 1 - Math.pow(1 - t, 2); this.foeX = lerp(-70, FOE_X, e); this.heroX = lerp(W + 10, HERO_X, e); }));
     this.cover = 0; Sound.cry(Object.keys(SPECIES).indexOf(this.cfg.sp) + 1, this.F.boss ? 0.7 : 1, this.F.boss ? 1.6 : 1);
     if (this.F.boss) { this.shake = 30; Sound.sfx('quake'); }
-    yield* parallel(tween(14, t => this.boxF = lerp(-120, 6, t)), wait(4));
+    yield* parallel(tween(14, t => this.boxF = lerp(-120, 4, t)), wait(4));
     const intro = this.F.boss ? this.F.n + '擋住了去路！' : this.F.elite ? '精英魔物' + this.F.n + '發動了攻擊！' : '野生的' + this.F.n + '跳出來了！';
     yield* this.msg(intro, { hold: 44 });
-    yield* tween(14, t => this.boxH = lerp(250, 126, t));
+    yield* tween(14, t => this.boxH = lerp(W + 10, 70, t));
   }
   *chooseAction() {
     const st = Game.st;
     while (true) {
-      const tb = new TextBox('要讓' + st.name + '\n做什麼呢？', { style: 'battle', w: 124, keep: true, instant: true }); UI.push(tb);
       this.idle = true;
-      const r = yield* choose(['戰鬥', '背包', '防禦', '逃跑'], { x: 120, y: 112, w: 120, h: 48, cols: 2, colW: 52, rowH: 16, style: 'cmd', cancel: false, index: this.cmdIdx });
-      this.idle = false; UI.remove(tb); this.cmdIdx = r;
+      const r = yield* choose(['戰鬥', '背包', '防禦', '逃跑'], { x: 0, y: TB_Y, w: W, h: TB_H, cols: 2, colW: 80, rowH: 16, ox: 22, oy: 24, style: 'cmd', cancel: false, index: this.cmdIdx, title: '要讓' + st.name + '做什麼？' });
+      this.idle = false; this.cmdIdx = r;
       if (r === 0) { const m = yield* this.chooseMove(); if (m) return { type: 'move', id: m }; }
       else if (r === 1) { const it = yield* bagScreen('battle'); if (it) return { type: 'item', id: it }; }
       else if (r === 2) return { type: 'defend' };
@@ -2610,10 +2691,10 @@ class Battle {
     const st = Game.st;
     if (st.moves.every(m => m.pp <= 0)) { yield* this.msg(st.name + '已經沒有可以使用的技能了！'); return 'struggle'; }
     let cur = Math.min(this.moveIdx, st.moves.length - 1);
-    const info = { draw: x => { drawWin(x, 160, 112, 80, 48, 'cmd'); const m = st.moves[cur], mv = MOVES[m.id]; Font.draw(x, 'PP', 170, 116, UIC.text, UIC.textSh); Font.drawR(x, m.pp + '/' + mv.pp, 230, 116, m.pp === 0 ? '#e04848' : m.pp <= mv.pp / 4 ? '#e08830' : UIC.text, UIC.textSh); typeBadge(x, mv.t, 184, 135, 34); } };
+    const info = { draw: x => { drawWin(x, 116, TB_Y, W - 116, TB_H, 'cmd'); const m = st.moves[cur], mv = MOVES[m.id]; Font.draw(x, 'PP', 124, TB_Y + 5, UIC.text, UIC.textSh); Font.drawR(x, m.pp + '/' + mv.pp, W - 8, TB_Y + 20, m.pp === 0 ? '#e04848' : m.pp <= mv.pp / 4 ? '#e08830' : UIC.text, UIC.textSh); typeBadge(x, mv.t, 129, TB_Y + 40, 34); } };
     UI.push(info); this.idle = true;
     while (true) {
-      const r = yield* choose(st.moves.map(m => ({ t: MOVES[m.id].n, col: m.pp === 0 ? '#b0b0b8' : undefined })), { x: 0, y: 112, w: 160, h: 48, cols: 2, colW: 74, rowH: 16, style: 'cmd', index: cur, onMove: i => cur = i });
+      const r = yield* choose(st.moves.map(m => ({ t: MOVES[m.id].n, col: m.pp === 0 ? '#b0b0b8' : undefined })), { x: 0, y: TB_Y, w: 116, h: TB_H, cols: 2, colW: 50, rowH: 22, ox: 16, oy: 11, style: 'cmd', index: cur, onMove: i => cur = i });
       if (r < 0) { UI.remove(info); this.idle = false; return null; }
       if (st.moves[r].pp <= 0) { UI.remove(info); yield* this.msg('這個技能的PP已經用完了！'); UI.push(info); continue; }
       UI.remove(info); this.idle = false; this.moveIdx = r; return st.moves[r].id;
@@ -2755,14 +2836,14 @@ class Battle {
   }
   *foeFaint() {
     Sound.cry(Object.keys(SPECIES).indexOf(this.cfg.sp) + 1, 0.6, 1.2); yield* wait(20);
-    if (this.F.boss) { Sound.sfx('quake'); this.shake = 50; for (let i = 0; i < 30; i++) { if (i % 3 === 0) this.sparks(176 + rnd(-24, 24), 38 + rnd(-24, 24), 3, ['#8a8272', '#a09884', '#ff8040'], 2.5, 26, 0.15); yield; } }
+    if (this.F.boss) { Sound.sfx('quake'); this.shake = 50; for (let i = 0; i < 30; i++) { if (i % 3 === 0) this.sparks(FOE_X + 32 + rnd(-24, 24), FOE_Y + 30 + rnd(-24, 24), 3, ['#8a8272', '#a09884', '#ff8040'], 2.5, 26, 0.15); yield; } }
     Sound.sfx('faint'); yield* tween(this.F.boss ? 40 : 22, t => { this.sinkF = t * 64; this.alphaF = 1 - t * 0.3; }); this.alphaF = 0;
-    yield* tween(10, t => this.boxF = lerp(6, -120, t));
+    yield* tween(10, t => this.boxF = lerp(4, -120, t));
     yield* this.msg((this.F.boss ? '' : this.F.elite ? '精英魔物' : '野生的') + this.F.n + '倒下了！', { hold: 40 });
   }
   *heroFaint() {
     Sound.stop(); Sound.sfx('faint'); yield* tween(24, t => this.sinkH = t * 64);
-    yield* tween(10, t => this.boxH = lerp(126, 250, t));
+    yield* tween(10, t => this.boxH = lerp(70, W + 10, t));
     yield* this.msg(Game.st.name + '倒下了……', { wait: true });
   }
   *victory() {
@@ -2793,7 +2874,7 @@ class Battle {
     for (let i = 0; i < 24; i++) { this.tintH.a = Math.sin(i / 24 * Math.PI) * 0.8; tb.update(); yield; } this.tintH = null;
     while (!tb.done) { tb.update(); yield; }
     let showTotal = false; const keys = ['hp', 'atk', 'def', 'spa', 'spd', 'spe'], names = ['HP', '攻擊', '防禦', '特攻', '特防', '速度'];
-    const win = { draw: x => { drawWin(x, 136, 4, 102, 106, 'menu'); keys.forEach((k, i) => { const Y = 7 + i * 16; Font.draw(x, names[i], 146, Y, UIC.text, UIC.textSh); Font.drawR(x, showTotal ? String(after[k]) : '+' + (after[k] - before[k]), 228, Y, showTotal ? UIC.text : '#e05050', UIC.textSh); }); } };
+    const win = { draw: x => { drawWin(x, 84, 40, 90, 106, 'menu'); keys.forEach((k, i) => { const Y = 43 + i * 16; Font.draw(x, names[i], 94, Y, UIC.text, UIC.textSh); Font.drawR(x, showTotal ? String(after[k]) : '+' + (after[k] - before[k]), 166, Y, showTotal ? UIC.text : '#e05050', UIC.textSh); }); } };
     UI.push(win); yield* waitA(); showTotal = true; Sound.sfx('cursor'); yield* waitA(); UI.remove(win); UI.remove(tb);
     for (const id of heroLearnAt(st.lv)) yield* this.learnMove(id);
     if (Sound.current !== 'victory' && this.F.hp <= 0) Sound.play('victory');
@@ -2805,7 +2886,7 @@ class Battle {
     yield* this.msg(nm + '想要學習新技能「' + mv.n + '」。', { wait: true });
     yield* this.msg('但是' + nm + '已經會四個技能了。', { wait: true });
     while (true) {
-      const yes = yield* yesNo('要忘記一個舊技能，\n來學習「' + mv.n + '」嗎？', { style: 'battle', mx: 186, my: 60 });
+      const yes = yield* yesNo('要忘記一個舊技能，\n來學習「' + mv.n + '」嗎？', { style: 'battle' });
       if (yes) {
         const idx = yield* pickMoveToForget(id);
         if (idx < 4) {
@@ -2813,7 +2894,7 @@ class Battle {
           yield* this.msg('然後……', { wait: true }); st.moves[idx] = { id, pp: mv.pp }; Sound.jingle('item'); yield* this.msg(nm + '學會了「' + mv.n + '」！', { wait: true }); return;
         }
       }
-      const giveUp = yield* yesNo('要放棄學習「' + mv.n + '」嗎？', { style: 'battle', mx: 186, my: 60 });
+      const giveUp = yield* yesNo('要放棄學習「' + mv.n + '」嗎？', { style: 'battle' });
       if (giveUp) { yield* this.msg(nm + '沒有學習「' + mv.n + '」。', { wait: true }); return; }
     }
   }
@@ -2847,7 +2928,7 @@ function drawParticle(x, p) {
     case 'arc': { x.globalAlpha = a; x.strokeStyle = p.c; x.lineWidth = 2; x.beginPath(); x.ellipse(p.x, p.y, p.r, p.r * 0.5, 0, p.a0 + p.t * 0.25, p.a0 + p.t * 0.25 + 2.2); x.stroke(); x.globalAlpha = 1; break; }
     case 'cres': { x.save(); x.translate(p.x, p.y); x.rotate(p.ang || 0); x.globalAlpha = Math.min(1, a * 2); x.lineCap = 'round'; x.strokeStyle = p.c2; x.lineWidth = p.w || 6; x.beginPath(); x.arc(0, 0, p.r, -1.15, 1.15); x.stroke(); x.strokeStyle = p.c; x.lineWidth = Math.max(1, (p.w || 6) / 3); x.beginPath(); x.arc(0, 0, p.r - 1, -1.0, 1.0); x.stroke(); x.restore(); x.globalAlpha = 1; break; }
     case 'glow': { const r = p.r * (0.6 + 0.4 * a); const gr = x.createRadialGradient(p.x, p.y, 0, p.x, p.y, r); const [cr, cg, cb] = hex2rgb(p.c); gr.addColorStop(0, `rgba(${cr},${cg},${cb},0.85)`); gr.addColorStop(1, `rgba(${cr},${cg},${cb},0)`); x.globalAlpha = a; x.fillStyle = gr; x.fillRect(p.x - r, p.y - r, r * 2, r * 2); x.globalAlpha = 1; break; }
-    case 'flash': x.globalAlpha = a * (p.a || 0.6); x.fillStyle = p.c; x.fillRect(0, 0, W, 112); x.globalAlpha = 1; break;
+    case 'flash': x.globalAlpha = a * (p.a || 0.6); x.fillStyle = p.c; x.fillRect(0, 0, W, BH); x.globalAlpha = 1; break;
   }
 }
 const FX = {
@@ -2893,83 +2974,110 @@ const FX = {
   *zzz(U, T) { const P = T || U; for (let i = 0; i < 3; i++) { this.spawn({ k: 'txt', s: 'Z', x: P.x + 8 + i * 5, y: P.y - 10 - i * 6, vy: -0.4, c: '#a0c0ff', sh: '#304060', life: 30, fade: 1 }); yield* wait(8); } yield* wait(14); },
   *psnFx(U, T) { const P = T || U; Sound.sfx('poison'); for (let i = 0; i < 10; i++) this.spawn({ k: 'bub', x: P.x + rnd(-18, 18), y: P.y + rnd(0, 20), vy: -0.8, r: rnd(2, 3), c: '#c060d0', life: 26 }); if (this.tintF !== undefined) { } yield* wait(24); },
   *burnFx(U, T) { const P = T || U; Sound.sfx('fire'); for (let i = 0; i < 12; i++) this.spawn({ k: 'flame', x: P.x + rnd(-16, 16), y: P.y + rnd(0, 20), vy: -0.7, s: rnd(3, 5), life: 22 }); yield* wait(22); },
-  *smoke() { Sound.sfx('wind'); for (let i = 0; i < 30; i++) this.spawn({ k: 'circ', x: rnd(20, 220), y: rnd(20, 100), r: rnd(6, 14), c: pick(['#d8d8d8', '#b8b8c0', '#f0f0f0']), life: 30 + rnd(0, 20), vy: -0.3 }); yield* wait(40); },
+  *smoke() { Sound.sfx('wind'); for (let i = 0; i < 30; i++) this.spawn({ k: 'circ', x: rnd(10, W - 10), y: rnd(20, BH - 20), r: rnd(6, 14), c: pick(['#d8d8d8', '#b8b8c0', '#f0f0f0']), life: 30 + rnd(0, 20), vy: -0.3 }); yield* wait(40); },
 };
 
-/* ===================== EVENTS ===================== */
+/* ===================== EVENTS (異世界篇) ===================== */
 function* healRitual(text) {
   yield* fadeOut(10); healHero(); const fr = Sound.jingle('heal'); yield* wait(Math.max(40, fr)); yield* fadeIn(10);
   if (text) yield* say(text);
 }
+function* blackText(lines) { // text over a black screen
+  const box = { draw(x) { x.fillStyle = '#000'; x.fillRect(0, 0, W, H); } }; UI.push(box); const f = Game.fade; Game.fade = 0;
+  for (const l of lines) yield* say(l, { style: 'dark', y: 98 });
+  UI.remove(box); Game.fade = f;
+}
+function* chooseName() {
+  let name = null;
+  while (!name) {
+    const r = yield* ask('我叫瑪莎。你呢？你叫什麼名字？', ['小晨', '阿勇', '凱', '光', '自己輸入'], { cancel: false });
+    if (r < 4) name = ['小晨', '阿勇', '凱', '光'][r]; else { name = yield* askName(); if (!name) continue; }
+    const ok = yield* yesNo('「' + name + '」……是這個名字對吧？'); if (!ok) name = null;
+  }
+  return name;
+}
 const Events = {
+  *wakeUp(ow) {
+    const st = Game.st; const m = ow.npcs.find(n => n.id === 'mom');
+    if (m) { m.x = 2; m.y = 3; m.px = 32; m.py = 48; m.dir = 'left'; }
+    ow.p.dir = 'right'; Game.fade = 1;
+    yield* blackText(['…………', '……喂……', '……你還好嗎？']);
+    yield* fadeIn(30);
+    yield* sayAll(['啊，你醒了！太好了……', '你倒在村外的草原上，一動也不動，我就把你背回來了。']);
+    st.name = yield* chooseName();
+    yield* sayAll([st.name + '……好特別的名字呢。', '你身上的衣服也很少見。上面的扣子亮晶晶的。', '……日本？那是哪裡？', '沒聽過呢……這裡是艾爾迪亞王國的萌芽鎮喔。', '你說你是從「另一個世界」來的？', '這種事……村長見多識廣，也許知道些什麼。', '村長家在鎮上的東北邊，咖啡色屋頂的那間。', '在找到回家的路之前，就把這裡當成自己家吧！']);
+    if (m) { for (const d of ['right', 'right', 'right', 'right', 'down']) yield* ow.walkEntity(m, d, 1); m.hx = m.x; m.hy = m.y; m.dir = 'left'; }
+    st.flags.woke = 1;
+  },
   *mom(ow) {
     const st = Game.st;
-    if (!st.flags.license) { yield* sayAll(['早安，' + st.name + '！\n今天就是你成為冒險者的日子呢。', '村長說有重要的東西要交給你，\n他在家裡等你喔。', '村長家就在鎮上的東北邊，\n咖啡色屋頂的那一間。']); return; }
-    if (st.flags.golem && !st.flags.momEnd) { st.flags.momEnd = 1; yield* sayAll(['你打倒了古岩魔像？\n媽媽真為你驕傲！', '不過，冒險才剛開始呢。\n累了就隨時回家吧。']); }
-    else if (!st.flags.momAfter) { st.flags.momAfter = 1; yield* sayAll(['你拿到冒險者證了呀！真是長大了呢。', '受傷了就回家吧，\n媽媽隨時幫你恢復精神。']); }
-    else yield* say('今天也要小心喔！來，先休息一下吧。');
-    yield* healRitual(st.name + '的體力完全恢復了！'); st.respawn = { map: 'home', x: 6, y: 5, dir: 'up' };
+    if (!st.flags.license) { yield* say('村長家在鎮上的東北邊，咖啡色屋頂那間喔。'); return; }
+    if (st.flags.golem && !st.flags.momEnd) { st.flags.momEnd = 1; yield* sayAll(['你看到了故鄉？……真的有門呢。', '不過，你又回到這裡了。', '累了就隨時回來吧。這裡也是你的家。']); }
+    else if (!st.flags.momAfter) { st.flags.momAfter = 1; yield* sayAll(['要去找「異界之門」啊……', '外面很危險，受傷了一定要回來喔。']); }
+    else yield* say('歡迎回來！先休息一下吧。');
+    st.respawn = { map: 'home', x: 6, y: 5, dir: 'up' }; yield* healRitual(st.name + '的體力完全恢復了！');
   },
   *bed(ow) { const ok = yield* yesNo('要在床上休息一下嗎？'); if (ok) { Game.st.respawn = { map: 'home', x: 1, y: 4, dir: 'up' }; yield* healRitual('睡得好飽！體力完全恢復了！'); } },
   *elder(ow) {
     const st = Game.st;
     if (!st.flags.license) {
-      yield* sayAll(['喔，你來啦，' + st.name + '。', '最近，北方古岩遺跡裡沉睡的魔像\n突然甦醒了。', '它擋住了通往王都的道路，\n連商隊都過不來。', '鎮上的年輕人裡，就屬你最有勇氣。\n這件事就拜託你了。', '這是冒險者證。\n有了它，你就能離開小鎮。']);
-      st.flags.license = 1; st.bag.license = 1; yield* itemGet('得到了冒險者證！');
+      yield* sayAll(['喔？你就是瑪莎撿回來的那個孩子啊。', '……從另一個世界來的？', '這個會發光的小板子……嗯，看來不是在說謊。', '古老的傳說裡提過，北方的古岩遺跡深處，有一扇「異界之門」。', '據說很久以前，也有異世界的旅人從那扇門來到這裡。', '如果真有回去的路，大概就在那裡了。', '只是……最近守護遺跡的古岩魔像甦醒了，誰也無法靠近。', '嗯？你的手……在發光！', '這是「異界人之力」。傳說中，來自異世界的人都擁有不可思議的力量。', '有這股力量，你應該能和魔物戰鬥。']);
+      st.flags.license = 1; st.bag.license = 1; st.bag.woodSword = 1; st.equip.weapon = 'woodSword';
+      yield* itemGet('得到了木劍和冒險者證！'); yield* say(st.name + '把木劍拿在手上。……有點重。');
       yield* say('還有這些傷藥，帶在身上吧。'); st.bag.potion = (st.bag.potion || 0) + 5; yield* itemGet('得到了傷藥×5！');
-      yield* sayAll(['走在高高的草叢裡，\n會遇到野生的魔物。', '打倒魔物可以累積經驗，讓你變得更強。', '道路上還有更強大的「精英魔物」，\n被牠們盯上可要小心。', '還有，別忘了屬性相剋。\n古岩魔像是岩石屬性，最怕水和草！', '按START鍵可以打開選單，\n查看狀態、背包，或是記錄進度。', '準備好了，就往北邊出發吧！']);
+      yield* sayAll(['走在高高的草叢裡，會遇到野生的魔物。', '打倒魔物能累積經驗，你會越來越強。', '道路上還有更強大的「精英魔物」，被盯上可要小心。', '古岩魔像是岩石屬性，最怕水和草。記住了。', '按START可以打開選單，查看狀態和背包，也能記錄進度。', '去吧，異世界的旅人。願曙光指引你回家的路。']);
       return;
     }
-    if (st.flags.golem) { yield* sayAll(['你真的打倒了古岩魔像！', '通往王都的道路打開了，\n商隊很快就會回來。', st.name + '，你是萌芽鎮的驕傲！']); return; }
-    yield* sayAll(['古岩魔像是岩石屬性，\n最怕水和草的攻擊。', '累了就去旅店休息，\n別太勉強自己。']);
+    if (st.flags.golem) { yield* sayAll(['門的另一邊，是你的故鄉？', '門只開了一瞬間……看來還缺少某種力量。', '別灰心。線索一定就在這個世界的某處。']); return; }
+    yield* sayAll(['古岩魔像是岩石屬性，最怕水和草的攻擊。', '累了就去旅店休息，別太勉強自己。']);
   },
-  *apprentice() { yield* say(Game.st.flags.golem ? '你打倒魔像了？好厲害！\n我以後也要成為冒險者！' : '村長爺爺說，\n強大的冒險者都很會用「防禦」。'); },
-  *gatekeeper() { yield* say(Game.st.flags.license ? '有冒險者證就可以出發了！\n路上小心喔！' : '前面就是晨霧道路了。\n沒有冒險者證的人不能出鎮喔！'); },
+  *apprentice() { yield* say(Game.st.flags.golem ? '你真的打倒魔像了！我以後也要變得和你一樣強！' : '村長爺爺說，異世界來的人都很強！是真的嗎？'); },
+  *gatekeeper() { yield* say(Game.st.flags.license ? '你就是那個從異世界來的人？好厲害！路上小心喔！' : '前面就是晨霧道路，外面有魔物喔！沒有冒險者證的人不能出鎮。'); },
   exitBlock(ow) {
     if (Game.st.flags.license) return null;
     return (function* () {
       const g = ow.npcs.find(n => n.id === 'gatekeeper'); if (g) g.dir = 'left'; Sound.sfx('exclaim'); ow.p.excl = 30; yield* wait(30);
-      yield* sayAll(['等一下！', '外面的草叢裡有野生魔物，很危險的！', '沒有冒險者證的人不能出鎮喔。\n先去找村長吧！']);
+      yield* sayAll(['等一下！', '外面的草叢裡有野生魔物，很危險的！', '沒有冒險者證的人不能出鎮喔。先去找村長吧！']);
       yield* ow.walkEntity(ow.p, 'down', 1); ow.p.dir = 'down';
       if (g) g.dir = 'down';
     })();
   },
-  *kid() { yield* say('你知道嗎？在高高的草叢裡，\n會突然跳出野生魔物喔！'); },
-  *grandpa() { yield* sayAll(['年輕人，按住B鍵就可以跑步喔。', '老頭子我年輕的時候，\n也是一口氣跑完整條晨霧道路呢！']); },
-  *florist() { yield* sayAll(['魔物都有自己的屬性喔。', '火怕水、水怕草、草怕火。\n雷擊對水和飛行的魔物特別有效。', '岩石屬性的魔物最討厭水和草了！']); },
+  *kid() { yield* say('你的衣服好奇怪喔！那是異世界的盔甲嗎？'); },
+  *grandpa() { yield* sayAll(['年輕人，按住B鍵就可以跑步喔。', '你說你們那邊有不用馬就能跑的鐵箱子？……真是難以想像啊。']); },
+  *florist() { yield* sayAll(['魔物都有自己的屬性喔。', '火怕水、水怕草、草怕火。雷電對水和飛行的魔物特別有效。', '岩石屬性的魔物，最討厭水和草了！']); },
   *healer() {
-    const st = Game.st; const ok = yield* yesNo('歡迎來到旅店！\n要讓我為你治療嗎？');
-    if (ok) { st.respawn = { map: 'inn', x: 4, y: 4, dir: 'up' }; yield* say('好的，請稍等一下。'); yield* healRitual(); yield* sayAll(['讓你久等了！\n你的體力已經完全恢復了。', '歡迎再來喔！']); }
+    const st = Game.st; const ok = yield* yesNo('歡迎來到旅店！要讓我為你治療嗎？');
+    if (ok) { st.respawn = { map: 'inn', x: 4, y: 4, dir: 'up' }; yield* say('好的，請稍等一下。'); yield* healRitual(); yield* sayAll(['讓你久等了！你的體力已經完全恢復了。', '歡迎再來喔！']); }
     else yield* say('歡迎再來喔！');
   },
-  *traveler() { yield* sayAll(['我在古岩遺跡附近見過那隻魔像……', '當它的拳頭開始發光、凝聚力量時，\n下一擊會非常可怕。', '那時候最好選擇「防禦」，\n就能擋下一半的傷害！']); },
+  *traveler() { yield* sayAll(['我在古岩遺跡附近見過那隻魔像……', '它的拳頭開始發光、凝聚力量時，下一擊非常可怕。', '那時候就選「防禦」，能擋下一半的傷害！']); },
   *clerk() { yield* shopFlow(); },
-  *customer() { yield* sayAll(['鐵劍好貴啊……\n不過攻擊力會提升很多呢。', '魔法護符能提高特攻，\n水流刃和落雷也會變得更強喔！']); },
-  *hiker() { yield* sayAll(['嘿！這條路上的草叢很深，\n常常有魔物跳出來。', '受傷了就回萌芽鎮的旅店休息吧。', '聽說過了河之後，\n有一座能恢復體力的泉水喔！']); },
-  *girl2() { yield* sayAll(Game.st.flags.croc ? ['你打倒了沼澤鱷？\n太好了，終於可以過橋了！'] : ['橋頭那隻沼澤鱷好兇……', '聽說牠是水屬性，\n最怕雷和草的攻擊。']); },
-  *guard() { yield* sayAll(Game.st.flags.golem ? ['你竟然打倒了魔像！', '通往王都的道路終於打開了，\n謝謝你，冒險者！'] : ['前方就是古岩遺跡了。', '魔像非常強大。\n進去之前，先在泉水恢復體力吧。', '記得準備好傷藥，也別忘了記錄進度！']); },
+  *customer() { yield* sayAll(['鐵劍好貴啊……不過攻擊會提升很多呢。', '魔法護符能提高特攻，水流刃和落雷也會變強喔！']); },
+  *hiker() { yield* sayAll(['嘿！這條路上的草叢很深，常有魔物跳出來。', '受傷了就回萌芽鎮的旅店休息吧。', '過了河之後，還有一座能恢復體力的泉水喔！']); },
+  *girl2() { yield* sayAll(Game.st.flags.croc ? ['你打倒了沼澤鱷？太好了，終於可以過橋了！'] : ['橋頭那隻沼澤鱷好兇……', '聽說牠是水屬性，最怕雷和草的攻擊。']); },
+  *guard() { yield* sayAll(Game.st.flags.golem ? ['你打倒了魔像！傳說中的門……真的存在嗎？'] : ['前方就是古岩遺跡。傳說中的異界之門，就在遺跡深處。', '魔像非常強大。先在泉水恢復體力，準備好道具再進去吧。', '也別忘了記錄進度！']); },
   *spring() {
-    const ok = yield* yesNo('清澈的泉水閃閃發亮……\n要喝一口嗎？');
-    if (ok) { Game.st.respawn = { map: 'route', x: 7, y: 4, dir: 'left' }; yield* healRitual('好甜的泉水！\n體力完全恢復了！'); }
+    const ok = yield* yesNo('清澈的泉水閃閃發亮……要喝一口嗎？');
+    if (ok) { Game.st.respawn = { map: 'route', x: 7, y: 4, dir: 'left' }; yield* healRitual('好甜的泉水！體力完全恢復了！'); }
   },
   bossLine(ow) {
     if (Game.st.flags.golem || !ow.boss) return null;
     return (function* () {
-      const p = ow.p; Sound.stop(); yield* wait(20);
-      yield* tween(36, t => ow.camDY = -40 * (1 - Math.pow(1 - t, 2)));
+      Sound.stop(); yield* wait(20);
+      yield* tween(30, t => ow.camDY = -24 * (1 - Math.pow(1 - t, 2)));
       Sound.sfx('quake'); Game.shake = 40; yield* wait(40);
       yield* say('……轟隆隆……');
       yield* tween(30, t => ow.bossGlow = t); Sound.cry(11, 0.6, 1.8); Game.shake = 30;
-      yield* sayAll(['古岩魔像的眼睛亮了起來！', '「……入侵者……離開……\n　這裡……不許通過……」']);
+      yield* sayAll(['古岩魔像的眼睛亮了起來！', '「……異界之人……」', '「……門……不許……靠近……」']);
       const res = yield* ow.battleScript({ sp: 'golem', lv: 14, kind: 'boss' });
       ow.bossGlow = 0;
       if (res === 'win') {
-        Game.st.flags.golem = 1; ow.boss = null; Sound.stop(); ow.camDY = -40;
+        Game.st.flags.golem = 1; ow.boss = null; Sound.stop(); ow.camDY = -24;
         Sound.sfx('quake'); Game.shake = 60; yield* wait(40);
         yield* say('古岩魔像化為碎石，崩塌了……');
         Game.shake = 50; Sound.sfx('quake'); yield* wait(30); Game.st.flags.gateOpen = 1; Sound.sfx('door');
-        yield* say('遺跡深處的石門，緩緩地打開了！');
-        yield* say('通往王都的道路，終於再次打開了！');
+        yield* say('遺跡深處的「異界之門」緩緩打開了！');
+        yield* visionScene();
         yield* fadeOut(40, '#ffffff'); saveGame();
         Game.setScene(new EndingScene()); Game.sys.push(fadeIn(30));
       }
@@ -2977,52 +3085,96 @@ const Events = {
   },
 };
 function* itemGet(text) { const fr = Sound.jingle('item'); const t = new TextBox(text); UI.push(t); let i = 0; while (!t.done || i < fr) { if (i > 20 || t.state === 'type') t.update(); i++; yield; if (t.done && i >= fr) break; } UI.remove(t); }
+function* visionScene() {
+  yield* fadeOut(24, '#ffffff'); let t = 0;
+  const v = { draw(x) { t++; drawStreet(x, t, { vision: 1 }); } }; UI.push(v); Game.fadeColor = '#ffffff';
+  yield* fadeIn(40); Sound.sfx('heal');
+  yield* sayAll(['門的另一邊……是熟悉的街道！？', '紅綠燈、自動販賣機……那是每天放學走的路！']);
+  v.fading = 1; for (let i = 0; i < 40; i++) { Game.fade = i / 40 * 0.85; Game.fadeColor = '#ffffff'; yield; }
+  yield* sayAll(['……可是，光芒很快就黯淡了下來。', '門的力量似乎還不夠。', '回家的線索，一定就在這個世界的某處——']);
+  UI.remove(v); Game.fade = 0;
+}
 
 /* ===================== SAVE ===================== */
-const SAVE_KEY = 'dawnlight_save_v1', SET_KEY = 'dawnlight_settings_v1';
+const SAVE_KEY = 'dawnlight_save_v2', SET_KEY = 'dawnlight_settings_v1';
 function saveGame() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(Game.st)); return true; } catch (e) { return false; } }
 function loadGame() { try { const s = localStorage.getItem(SAVE_KEY); return s ? JSON.parse(s) : null; } catch (e) { return null; } }
 function saveSettings() { try { localStorage.setItem(SET_KEY, JSON.stringify(Game.settings)); } catch (e) { } }
 function loadSettings() { try { const s = localStorage.getItem(SET_KEY); if (s) Object.assign(Game.settings, JSON.parse(s)); } catch (e) { } }
 function newGameState(name) {
-  const st = { name, lv: 5, exp: expForLevel(5), hp: 1, status: null, moves: [{ id: 'slash', pp: 35 }, { id: 'glare', pp: 30 }, { id: 'flameSlash', pp: 25 }], boost: {}, equip: { weapon: 'woodSword', armor: 'clothes', acc: null }, bag: { woodSword: 1, clothes: 1 }, money: 1000, flags: {}, map: 'home', x: 1, y: 4, dir: 'up', respawn: { map: 'home', x: 1, y: 4, dir: 'up' }, time: 0, steps: 0, wins: 0 };
+  const st = { name, lv: 5, exp: expForLevel(5), hp: 1, status: null, moves: [{ id: 'slash', pp: 35 }, { id: 'glare', pp: 30 }, { id: 'flameSlash', pp: 25 }], boost: {}, equip: { weapon: null, armor: 'uniform', acc: null }, bag: { uniform: 1, phone: 1 }, money: 1000, flags: {}, map: 'home', x: 1, y: 3, dir: 'right', respawn: { map: 'home', x: 1, y: 4, dir: 'up' }, time: 0, steps: 0, wins: 0 };
   Game.st = st; st.hp = heroStats(st).hp; return st;
 }
 function startOverworld() { const st = Game.st; const ow = Game.ow = new Overworld(); Game.setScene(ow); ow.load(st.map, st.x, st.y, st.dir); return ow; }
 
-/* ===================== TITLE ===================== */
+/* ===================== SHARED ART: logo, title, modern street ===================== */
 function makeLogo(text, sc) {
   const w = Font.width(text) + 2, base = mkCanvas(w, 14), bx = base.getContext('2d'); Font.draw(bx, text, 0, 0, '#ffffff', null);
   const big = mkCanvas(w * sc, 14 * sc), gx = big.getContext('2d'); gx.imageSmoothingEnabled = false; gx.drawImage(base, 0, 0, w * sc, 14 * sc);
   const col = mkCanvas(big.width, big.height), cx = col.getContext('2d'); cx.drawImage(big, 0, 0); cx.globalCompositeOperation = 'source-in';
   const g = cx.createLinearGradient(0, 0, 0, big.height); g.addColorStop(0, '#fffbe8'); g.addColorStop(0.45, '#ffe38a'); g.addColorStop(0.75, '#ffb454'); g.addColorStop(1, '#f08a3c'); cx.fillStyle = g; cx.fillRect(0, 0, col.width, col.height);
-  const dark = tinted(big, '#3a1428'), mid = tinted(big, '#8a2e3c');
+  const dark = tinted(big, '#2a1030'), mid = tinted(big, '#7a2e4c');
   const out = mkCanvas(big.width + 8, big.height + 10), ox = out.getContext('2d');
   ox.drawImage(dark, 4, 8); ox.drawImage(dark, 5, 8);
   for (const [dx, dy] of [[-2, 0], [2, 0], [0, -2], [0, 2], [-2, -2], [2, 2], [2, -2], [-2, 2]]) ox.drawImage(dark, 4 + dx, 4 + dy);
   for (const [dx, dy] of [[-1, 0], [1, 0], [0, -1], [0, 1]]) ox.drawImage(mid, 4 + dx, 4 + dy);
   ox.drawImage(col, 4, 4); return out;
 }
+function cityLayer(x, y0, h, cols, seed, lit) {
+  const r = srand(seed); let X = -4;
+  while (X < W) { const bw = 12 + Math.floor(r() * 18), bh = 20 + Math.floor(r() * h); x.fillStyle = cols[Math.floor(r() * cols.length)]; x.fillRect(X, y0 - bh, bw, bh + 4);
+    if (lit) for (let wy = y0 - bh + 4; wy < y0 - 3; wy += 5) for (let wx = X + 2; wx < X + bw - 2; wx += 4) if (r() < 0.45) { x.fillStyle = r() < 0.8 ? lit : '#f8f0c0'; x.fillRect(wx, wy, 2, 2); }
+    X += bw + Math.floor(r() * 3); }
+}
+const STREET_BG = (() => {
+  const c = mkCanvas(W, H), x = c.getContext('2d');
+  const sky = ['#2c2448', '#3c2c58', '#523466', '#6c3c6c', '#8a466c', '#a8526a', '#c66468', '#de7c62', '#ee9a60', '#f4b864'];
+  sky.forEach((col, i) => { x.fillStyle = col; x.fillRect(0, i * 12, W, 12); });
+  cityLayer(x, 120, 60, ['#4a3458', '#523a60', '#44304e'], 7, '#f0c070');
+  cityLayer(x, 140, 40, ['#2e2438', '#342a40', '#281f30'], 19, '#ffd880');
+  x.fillStyle = '#6a6a78'; x.fillRect(0, 140, W, 36); x.fillStyle = '#7a7a88'; for (let i = 0; i < W; i += 16) { x.fillRect(i, 140, 15, 17); x.fillRect(i + 8, 158, 15, 17); }
+  x.fillStyle = '#9a9aa8'; x.fillRect(0, 174, W, 3);
+  x.fillStyle = '#34343e'; x.fillRect(0, 177, W, H - 177); x.fillStyle = '#e8e8e8'; for (let i = 8; i < W; i += 16) x.fillRect(i, 200, 9, 36);
+  x.fillStyle = '#d8c040'; x.fillRect(0, 246, W, 2);
+  // vending machine
+  x.fillStyle = '#1e1e28'; x.fillRect(6, 104, 30, 42); x.fillStyle = '#d83a3a'; x.fillRect(7, 105, 28, 40); x.fillStyle = '#e8f4ff'; x.fillRect(10, 108, 22, 16);
+  for (let i = 0; i < 4; i++) { x.fillStyle = ['#4888e0', '#e8c048', '#58c070', '#e06060'][i]; x.fillRect(12 + i * 5, 110, 3, 5); x.fillRect(12 + i * 5, 117, 3, 5); }
+  x.fillStyle = '#20202a'; x.fillRect(12, 132, 18, 6); x.fillStyle = '#f8f8f8'; x.fillRect(29, 126, 3, 3);
+  // street lamp & traffic light
+  x.fillStyle = '#2a2a34'; x.fillRect(146, 82, 3, 76); x.fillRect(140, 80, 14, 4); x.fillStyle = '#fff4c0'; x.fillRect(141, 84, 8, 2);
+  x.fillStyle = '#2a2a34'; x.fillRect(118, 100, 2, 58); x.fillRect(112, 96, 14, 8); x.fillStyle = '#f04848'; x.fillRect(114, 98, 3, 3); x.fillStyle = '#3a4a3a'; x.fillRect(120, 98, 3, 3);
+  return c;
+})();
+function drawStreet(x, t, o = {}) {
+  x.drawImage(STREET_BG, 0, 0);
+  const gl = x.createRadialGradient(145, 90, 2, 145, 90, 50); gl.addColorStop(0, 'rgba(255,240,180,0.35)'); gl.addColorStop(1, 'rgba(255,240,180,0)'); x.fillStyle = gl; x.fillRect(95, 40, 100, 120);
+  if (o.vision) { x.fillStyle = 'rgba(255,255,255,' + (0.25 + 0.1 * Math.sin(t / 10)) + ')'; x.fillRect(0, 0, W, H); const vg = x.createRadialGradient(88, 128, 60, 88, 128, 150); vg.addColorStop(0, 'rgba(255,255,255,0)'); vg.addColorStop(1, 'rgba(255,255,255,0.95)'); x.fillStyle = vg; x.fillRect(0, 0, W, H); }
+}
+
+/* ===================== TITLE ===================== */
 function buildTitleBG() {
   const c = mkCanvas(W, H), x = c.getContext('2d');
-  const sky = ['#2a1e4a', '#3a2456', '#4e2c62', '#6a3668', '#8a426a', '#ac5068', '#cc6464', '#e47e5c', '#f09c58', '#f6bc5c', '#f8d470'];
-  sky.forEach((col, i) => { x.fillStyle = col; x.fillRect(0, i * 10, W, 10); });
-  // sun & rays
-  const sx = 150, sy = 104; x.globalAlpha = 0.18; x.fillStyle = '#fff4c0'; for (let i = 0; i < 9; i++) { const a = Math.PI + 0.2 + i * 0.35; x.beginPath(); x.moveTo(sx, sy); x.lineTo(sx + Math.cos(a) * 240, sy + Math.sin(a) * 240); x.lineTo(sx + Math.cos(a + 0.12) * 240, sy + Math.sin(a + 0.12) * 240); x.fill(); } x.globalAlpha = 1;
-  pxEllipse(x, sx, sy, 22, 22, '#fff0b0'); pxEllipse(x, sx, sy, 18, 18, '#fffbe0');
-  x.fillStyle = '#f8f0e0'; for (const [a, b] of [[18, 14], [60, 30], [210, 20], [230, 40], [100, 8], [40, 50]]) x.fillRect(a, b, 1, 1);
-  // far mountains
-  const mtn = (col, base, pts) => { x.fillStyle = col; x.beginPath(); x.moveTo(0, H); pts.forEach(([a, b]) => x.lineTo(a, b)); x.lineTo(W, H); x.fill(); };
-  mtn('#8a4a6a', 0, [[0, 104], [30, 88], [60, 96], [96, 76], [128, 92], [170, 80], [204, 64], [240, 84]]);
-  mtn('#5a3458', 0, [[0, 116], [40, 100], [80, 110], [120, 96], [164, 108], [200, 92], [240, 104]]);
-  // golem silhouette on right peak
-  const g = buildShaded(ART.golem, 40, 40 / 64); const gs = tinted(g, '#2a1a36'); x.drawImage(gs, 186, 56); x.fillStyle = '#ffe040'; x.fillRect(199, 67, 2, 1); x.fillRect(205, 67, 2, 1);
-  mtn('#2e2040', 0, [[0, 128], [50, 118], [110, 126], [170, 116], [240, 124]]);
-  // cliff with hero
-  x.fillStyle = '#1e1628'; x.beginPath(); x.moveTo(0, H); x.lineTo(0, 124); x.lineTo(40, 120); x.lineTo(78, 128); x.lineTo(96, 140); x.lineTo(100, H); x.fill();
-  x.fillStyle = '#3a2c48'; x.fillRect(0, 122, 40, 2); x.fillRect(40, 120, 30, 2);
-  const hb = battleSprite('heroBack'); const hs = tinted(hb, '#1e1628'); x.drawImage(hs, 14, 70);
-  x.fillStyle = '#f6bc5c'; x.globalAlpha = 0.9; x.fillRect(33, 73, 1, 1); x.globalAlpha = 1;
+  const sky = ['#1e1640', '#261a4a', '#2e1e52', '#3a2458', '#4a2a60', '#5e3266', '#763a6a', '#90446c', '#aa506c', '#c45e6a', '#da7266', '#ea8a60', '#f4a45c', '#f8c060'];
+  sky.forEach((col, i) => { x.fillStyle = col; x.fillRect(0, i * 13, W, 13); });
+  const r = srand(3); x.fillStyle = '#f8f0e0'; for (let i = 0; i < 26; i++) x.fillRect(Math.floor(r() * W), Math.floor(r() * 90), 1, 1);
+  // rift
+  const cx0 = 88, cy0 = 104, rx = 30, ry = 42;
+  x.globalAlpha = 0.16; x.fillStyle = '#c8f4ff'; for (let i = 0; i < 10; i++) { const a = i * 0.63 + 0.2; x.beginPath(); x.moveTo(cx0, cy0); x.lineTo(cx0 + Math.cos(a) * 200, cy0 + Math.sin(a) * 200); x.lineTo(cx0 + Math.cos(a + 0.12) * 200, cy0 + Math.sin(a + 0.12) * 200); x.fill(); } x.globalAlpha = 1;
+  x.save(); x.beginPath(); x.ellipse(cx0, cy0, rx, ry, 0, 0, 7); x.clip();
+  const ig = x.createLinearGradient(0, cy0 - ry, 0, cy0 + ry); ig.addColorStop(0, '#101a3a'); ig.addColorStop(1, '#2a3a6a'); x.fillStyle = ig; x.fillRect(cx0 - rx, cy0 - ry, rx * 2, ry * 2);
+  const r2 = srand(11); let X = cx0 - rx; while (X < cx0 + rx) { const bw = 6 + Math.floor(r2() * 9), bh = 16 + Math.floor(r2() * 40); x.fillStyle = '#0a1024'; x.fillRect(X, cy0 + ry - 14 - bh, bw, bh + 14); for (let wy = cy0 + ry - 12 - bh; wy < cy0 + ry - 16; wy += 4) for (let wx = X + 1; wx < X + bw - 1; wx += 3) if (r2() < 0.5) { x.fillStyle = '#ffd870'; x.fillRect(wx, wy, 1, 2); } X += bw + 1; }
+  x.fillStyle = '#383848'; x.fillRect(cx0 - rx, cy0 + ry - 14, rx * 2, 14); x.fillStyle = '#e8e8e8'; for (let i = cx0 - rx; i < cx0 + rx; i += 6) x.fillRect(i, cy0 + ry - 8, 3, 6);
+  x.fillStyle = '#f04848'; x.fillRect(cx0 + 12, cy0 + 8, 2, 2);
+  x.restore();
+  for (let k = 0; k < 3; k++) { x.strokeStyle = ['#ffffff', '#a8f0ff', '#58c8f0'][k]; x.globalAlpha = [0.95, 0.7, 0.45][k]; x.lineWidth = [2, 2, 3][k]; x.beginPath(); x.ellipse(cx0, cy0, rx + k * 3, ry + k * 3, 0, 0, 7); x.stroke(); } x.globalAlpha = 1;
+  // mountains
+  const mtn = (col, pts) => { x.fillStyle = col; x.beginPath(); x.moveTo(0, H); pts.forEach(([a, b]) => x.lineTo(a, b)); x.lineTo(W, H); x.fill(); };
+  mtn('#7a426a', [[0, 170], [24, 150], [50, 162], [80, 146], [110, 160], [140, 138], [176, 156]]);
+  mtn('#50305a', [[0, 186], [30, 170], [70, 182], [110, 168], [150, 180], [176, 172]]);
+  const gs = tinted(buildShaded(ART.golem, 36, 36 / 64), '#2a1a36'); x.drawImage(gs, 132, 142); x.fillStyle = '#ffe040'; x.fillRect(144, 152, 2, 1); x.fillRect(149, 152, 2, 1);
+  mtn('#2a1c3c', [[0, 204], [40, 194], [90, 202], [140, 192], [176, 198]]);
+  x.fillStyle = '#181024'; x.beginPath(); x.moveTo(0, H); x.lineTo(0, 214); x.lineTo(40, 208); x.lineTo(76, 216); x.lineTo(96, 232); x.lineTo(104, H); x.fill();
+  const hs = tinted(battleSprite('heroBack'), '#181024'); x.drawImage(hs, 8, 152);
   return c;
 }
 class TitleScene {
@@ -3036,56 +3188,71 @@ class TitleScene {
   *menu() {
     while (true) {
       const opts = this.hasSave ? ['繼續冒險', '新的冒險', '設定'] : ['新的冒險', '設定'];
-      const r = yield* choose(opts, { x: 70, y: 96, w: 100, cancel: true });
+      const r = yield* choose(opts, { x: 38, y: 176, w: 100, cancel: true });
       if (r < 0) { this.stage = 'press'; return; }
       const o = opts[r];
       if (o === '設定') { yield* optionsScreen(); continue; }
       if (o === '繼續冒險') { Game.st = loadGame(); yield* fadeOut(20); startOverworld(); Game.sys.push(fadeIn(20)); return; }
       if (o === '新的冒險') {
-        if (this.hasSave) { const ok = yield* yesNo('開始新的冒險後，\n舊的記錄會在下次存檔時被覆蓋。確定嗎？'); if (!ok) continue; }
-        yield* fadeOut(24); Game.setScene(new IntroScene()); Game.sys.push(fadeIn(20)); return;
+        if (this.hasSave) { const ok = yield* yesNo('開始新的冒險後，舊的記錄會在下次存檔時被覆蓋。確定嗎？'); if (!ok) continue; }
+        yield* fadeOut(24); Game.setScene(new IntroScene()); return;
       }
     }
   }
   draw(x) {
     x.drawImage(this.bg, 0, 0);
+    const k = (Math.sin(this.t / 20) + 1) / 2; x.strokeStyle = 'rgba(200,244,255,' + (0.25 + 0.35 * k) + ')'; x.lineWidth = 2; x.beginPath(); x.ellipse(88, 104, 36 + k * 3, 48 + k * 3, 0, 0, 7); x.stroke();
+    const r = srand(Math.floor(this.t / 6)); x.fillStyle = '#e8fcff'; for (let i = 0; i < 6; i++) { const a = r() * 7, d = 34 + r() * 16; x.fillRect(Math.round(88 + Math.cos(a) * d), Math.round(104 + Math.sin(a) * d * 1.35), 1, 1); }
     const bob = Math.round(Math.sin(this.t / 30) * 1.5);
     if (!this.logo) this.logo = makeLogo('曙光冒險', 3);
-    x.drawImage(this.logo, Math.round(120 - this.logo.width / 2), 10 + bob);
-    const sub = 'DAWNLIGHT QUEST'; Font.drawC(x, sub, 120, 60 + bob, '#ffe0a0', '#5a2238');
-    if (this.stage === 'press' && Math.floor(this.t / 30) % 2 === 0) Font.drawC(x, '按 A 鍵 開 始', 120, 138, '#ffffff', '#3a1a30');
-    Font.draw(x, 'v1.0', 214, 148, '#b890b0', null);
+    x.drawImage(this.logo, Math.round(W / 2 - this.logo.width / 2), 6 + bob);
+    Font.drawC(x, '～異世界冒險RPG～', W / 2, 52 + bob, '#ffe0a0', '#3a1428');
+    if (this.stage === 'press' && Math.floor(this.t / 30) % 2 === 0) Font.drawC(x, '按 A 鍵開始', W / 2, 232, '#ffffff', '#1a1024');
+    Font.draw(x, 'v2.0', W - 26, H - 13, '#b890b0', null);
   }
 }
 
-/* ===================== INTRO / NAMING ===================== */
+/* ===================== INTRO: the everyday street ===================== */
 class IntroScene {
-  constructor() { this.t = 0; this.showElder = 0; this.showMon = 0; this.script = this.run(); }
-  enter() { UI.clear(); Sound.play('town'); }
-  update() { this.t++; if (this.script) { const r = this.script.next(); if (r.done) this.script = null; } }
+  constructor() { this.t = 0; this.hx = -24; this.walking = false; this.dir = 'right'; this.circle = 0; this.parts = []; this.showScene = false; this.script = this.run(); }
+  enter() { UI.clear(); Sound.stop(); }
+  update() {
+    this.t++; if (this.walking) this.hx += 0.75;
+    for (const p of this.parts) { p.y += p.vy; p.life--; } this.parts = this.parts.filter(p => p.life > 0);
+    if (this.circle > 0.05) for (let i = 0; i < 1 + this.circle * 3; i++) this.parts.push({ x: this.hx + 16 + (Math.random() - 0.5) * 60 * this.circle, y: 166 + (Math.random() - 0.5) * 16 * this.circle, vy: -0.6 - Math.random(), life: 30 + Math.random() * 20 });
+    if (this.script) { const r = this.script.next(); if (r.done) this.script = null; }
+  }
   *run() {
-    yield* tween(20, t => this.showElder = t);
-    yield* sayAll(['歡迎來到魔物與人共存的世界！', '我是萌芽鎮的村長。']);
-    this.showMon = 0.01; Sound.cry(1); yield* tween(20, t => this.showMon = t);
-    yield* sayAll(['這個世界的草叢、森林與遺跡裡，\n住著各式各樣的魔物。', '有些魔物很溫和，\n有些則非常兇猛。', '而勇敢面對牠們、守護大家的人，\n我們稱為「冒險者」。']);
-    yield* tween(16, t => this.showMon = 1 - t); this.showMon = 0;
-    let name = null;
-    while (!name) {
-      const r = yield* ask('那麼，告訴我你的名字吧。', ['小晨', '阿勇', '凱', '光', '自己輸入'], { mx: 170, my: 20, cancel: false });
-      if (r < 4) name = ['小晨', '阿勇', '凱', '光'][r];
-      else { name = yield* askName(); if (!name) continue; }
-      const ok = yield* yesNo('你的名字是「' + name + '」，對嗎？'); if (!ok) name = null;
-    }
-    newGameState(name);
-    yield* sayAll(['原來如此，你就是' + name + '啊！', name + '，屬於你的冒險就要開始了！', '去吧！前往充滿夢想與冒險的世界！']);
-    yield* fadeOut(30); startOverworld(); Game.sys.push((function* () { yield* wait(10); yield* fadeIn(24); })());
+    Game.fade = 1;
+    yield* blackText(['那天，是一個再普通不過的放學日。']);
+    this.showScene = true; yield* fadeIn(30);
+    this.walking = true; for (let i = 0; i < 125; i++) { if (i % 16 === 0) Sound.sfx('step'); yield; } this.walking = false;
+    yield* sayAll(['（今天的作業好多……）', '（晚餐要吃什麼呢……）']);
+    Sound.sfx('charge'); yield* tween(40, t => this.circle = t * 0.35);
+    this.dir = 'down'; Sound.sfx('exclaim'); this.excl = 30; yield* wait(30);
+    yield* say('咦……？腳下……在發光？');
+    Sound.sfx('charge'); Game.shake = 30; yield* tween(50, t => this.circle = 0.35 + t * 0.65);
+    yield* say('等、等一下——！', { auto: 30 });
+    Sound.sfx('quake'); yield* fadeOut(30, '#ffffff'); yield* wait(30);
+    Game.fadeColor = '#000'; Game.fade = 1;
+    newGameState(''); const ow = startOverworld(); Game.fade = 1; ow.run(Events.wakeUp(ow));
   }
   draw(x) {
-    const g = x.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#203050'); g.addColorStop(1, '#3a5a78'); x.fillStyle = g; x.fillRect(0, 0, W, H);
-    x.fillStyle = '#2a4262'; for (let i = 0; i < W; i += 16) for (let j = (i / 16) % 2 * 8; j < 112; j += 16) x.fillRect(i + 6, j + 6, 2, 2);
-    pxEllipse(x, 120, 92, 36, 7, '#18283e');
-    if (this.showElder > 0) { x.globalAlpha = this.showElder; const f = npcFrames('elder').down[0]; x.drawImage(f, 0, 0, 16, 22, 96 - (this.showMon ? 30 * this.showMon : 0), 26, 48, 66); x.globalAlpha = 1; }
-    if (this.showMon > 0) { x.globalAlpha = this.showMon; x.drawImage(battleSprite('mush'), 124, 32); x.globalAlpha = 1; }
+    if (!this.showScene) { x.fillStyle = '#000'; x.fillRect(0, 0, W, H); return; }
+    drawStreet(x, this.t);
+    if (this.circle > 0) {
+      const cx = Math.round(this.hx + 16), cy = 168, R = 8 + this.circle * 46;
+      x.save(); x.globalAlpha = Math.min(1, this.circle * 2);
+      const g = x.createRadialGradient(cx, cy, 2, cx, cy, R); g.addColorStop(0, 'rgba(200,250,255,0.9)'); g.addColorStop(1, 'rgba(80,200,255,0)'); x.fillStyle = g; x.beginPath(); x.ellipse(cx, cy, R, R * 0.34, 0, 0, 7); x.fill();
+      x.strokeStyle = '#c8f8ff'; x.lineWidth = 1; x.beginPath(); x.ellipse(cx, cy, R * 0.8, R * 0.27, 0, 0, 7); x.stroke(); x.beginPath(); x.ellipse(cx, cy, R * 0.55, R * 0.19, 0, 0, 7); x.stroke();
+      for (let i = 0; i < 8; i++) { const a = i / 8 * Math.PI * 2 + this.t / 30; x.fillStyle = '#ffffff'; x.fillRect(Math.round(cx + Math.cos(a) * R * 0.68), Math.round(cy + Math.sin(a) * R * 0.23), 2, 2); }
+      if (this.circle > 0.5) { x.globalAlpha = (this.circle - 0.5) * 1.6; const bg = x.createLinearGradient(0, 0, 0, cy); bg.addColorStop(0, 'rgba(200,250,255,0)'); bg.addColorStop(1, 'rgba(220,252,255,0.8)'); x.fillStyle = bg; x.fillRect(cx - R * 0.6, 0, R * 1.2, cy); }
+      x.restore();
+    }
+    for (const p of this.parts) { x.fillStyle = p.life > 20 ? '#ffffff' : '#a8ecff'; x.fillRect(Math.round(p.x), Math.round(p.y), 1, 2); }
+    const f = Hero.frames[this.dir][this.walking ? Math.floor(this.t / 8) % 4 : 0];
+    x.drawImage(f, 0, 0, 16, 22, Math.round(this.hx), 124, 32, 44);
+    if (this.excl > 0) { this.excl--; x.drawImage(EXCLAIM, Math.round(this.hx) + 12, 110); }
   }
 }
 function* askName() {
@@ -3098,7 +3265,7 @@ function* askName() {
 
 /* ===================== ENDING ===================== */
 class EndingScene {
-  constructor() { this.bg = buildTitleBG(); this.t = 0; this.y = 0; this.done = false; Sound.play('title'); }
+  constructor() { this.bg = buildTitleBG(); this.t = 0; this.y = 0; Sound.play('title'); }
   enter() { UI.clear(); }
   update() {
     this.t++; if (this.y < this.maxY) this.y += Input.held('a') ? 1.5 : 0.35;
@@ -3106,20 +3273,20 @@ class EndingScene {
   }
   leave() { if (this.leaving) return; this.leaving = true; Game.sys.push((function* () { yield* fadeOut(24); startOverworld(); yield* fadeIn(24); })()); }
   draw(x) {
-    x.drawImage(this.bg, 0, 0); x.fillStyle = 'rgba(20,10,30,0.55)'; x.fillRect(0, 0, W, H);
+    x.drawImage(this.bg, 0, 0); x.fillStyle = 'rgba(16,8,28,0.62)'; x.fillRect(0, 0, W, H);
     const st = Game.st; const mins = Math.floor((st.time || 0) / 3600);
-    const lines = [['曙光冒險', 'big'], ['第一章「萌芽」　完', 'sub'], [''], ['古岩魔像再次沉睡，'], ['通往王都的道路打開了。'], [''], ['萌芽鎮冒險者的名字，'], ['很快就會傳遍整個大陸——'], [''], ['— 冒險記錄 —', 'sub'], ['冒險者　' + st.name], ['等級　Lv.' + st.lv], ['戰鬥勝利　' + (st.wins || 0) + ' 次'], ['遊玩時間　' + Math.floor(mins / 60) + ' 小時 ' + (mins % 60) + ' 分'], [''], ['感謝遊玩！', 'sub'], [''], ['按 A 鍵繼續探索', 'hint']];
-    let yy = 170 - this.y; this.maxY = 170 + lines.length * 18 - 150;
+    const lines = [['曙光冒險', 'big'], ['第一章「異界的旅人」', 'sub'], ['完', 'sub'], [''], ['異界之門短暫地打開，'], ['讓' + st.name + '看見了'], ['故鄉的街道。'], [''], ['門的力量從何而來？'], ['回家的路，'], ['還在曙光的彼端——'], [''], ['— 冒險記錄 —', 'sub'], ['旅人　' + st.name], ['等級　Lv.' + st.lv], ['戰鬥勝利　' + (st.wins || 0) + ' 次'], ['遊玩時間　' + Math.floor(mins / 60) + '小時' + (mins % 60) + '分'], [''], ['感謝遊玩！', 'sub'], [''], ['按 A 鍵繼續探索', 'hint']];
+    let yy = H + 10 - this.y; this.maxY = H + 10 + lines.length * 18 - 230;
     for (const [s, k] of lines) {
-      if (k === 'big') { if (!this.logo) this.logo = makeLogo(s, 2); x.drawImage(this.logo, Math.round(120 - this.logo.width / 2), yy - 8); yy += 34; continue; }
+      if (k === 'big') { if (!this.logo) this.logo = makeLogo(s, 2); x.drawImage(this.logo, Math.round(W / 2 - this.logo.width / 2), yy - 8); yy += 36; continue; }
       if (k === 'hint' && Math.floor(this.t / 30) % 2) { yy += 18; continue; }
-      Font.drawC(x, s, 120, yy, k === 'sub' ? '#ffe0a0' : '#ffffff', '#2a1020'); yy += 18;
+      Font.drawC(x, s, W / 2, yy, k === 'sub' ? '#ffe0a0' : '#ffffff', '#2a1020'); yy += 18;
     }
   }
 }
 
 /* ===================== BOOT & LOOP ===================== */
-const cv = document.getElementById('screen'); const ctx = cv.getContext('2d'); ctx.imageSmoothingEnabled = false;
+const cv = document.getElementById('screen'); cv.width = W; cv.height = H; const ctx = cv.getContext('2d'); ctx.imageSmoothingEnabled = false;
 function render() {
   ctx.imageSmoothingEnabled = false; ctx.save();
   if (Game.shake > 0) { ctx.translate(rnd(-2, 2), rnd(-2, 2)); Game.shake--; }
