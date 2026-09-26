@@ -63,7 +63,7 @@ const Events = {
       if (g) g.dir = 'down';
     })();
   },
-  *kid() { yield* say('你的衣服好奇怪喔！那是異世界的盔甲嗎？'); },
+  *kid() { yield* say(Game.st.flags.golem ? '聽說你打倒了魔像！異世界的盔甲果然很強！' : '你的衣服好奇怪喔！那是異世界的盔甲嗎？'); },
   *well() {
     const st = Game.st;
     if (st.flags.wellCharm) { yield* say('一口很深的井。井底靜悄悄的。'); return; }
@@ -74,16 +74,39 @@ const Events = {
     yield* say('古老的護符……說不定和異界之門有關。可以在背包裡裝備。');
   },
   *grandpa() { yield* sayAll(['年輕人，按住B鍵就可以跑步喔。', '你說你們那邊有不用馬就能跑的鐵箱子？……真是難以想像啊。', Game.st.flags.golem ? '聽說魔像倒下的那晚，鎮上那口老井發出了光。' : '鎮上那口老井，據說跟遺跡是連在一起的。']); },
-  *florist() { yield* sayAll(['魔物都有自己的屬性喔。', '火怕水、水怕草、草怕火。雷電對水和飛行的魔物特別有效。', '岩石屬性的魔物，最討厭水和草了！']); },
+  *florist() {
+    const f = Game.st.flags, st = Game.st;
+    if (!f.q1) {
+      yield* sayAll(['魔物都有自己的屬性喔。火怕水、水怕草、草怕火。', '……對了，你有看到我弟弟小麥嗎？', '他說要去晨霧道路採藥草，到現在都還沒回來……']);
+      if (yield* yesNo('要幫忙找小麥嗎？')) { f.q1 = 1; yield* say('謝謝你！他穿著黃色的衣服，應該就在道路的某處……拜託你了！'); } else yield* say('……這樣啊。要是看到他，請叫他回家。');
+      return;
+    }
+    if (!f.q1res) { yield* say('小麥還沒回來……晨霧道路上草叢很多，他會不會躲在哪裡？'); return; }
+    if (!f.q1done) {
+      f.q1done = 1;
+      if (f.q1res === 'home') { yield* sayAll(['小麥回來了！還跟我道了歉……', '他說想變得跟你一樣強。這是謝禮，請收下！']); st.bag.superPotion = (st.bag.superPotion || 0) + 2; st.money += 300; yield* itemGet(st.name + '得到了好傷藥×2和300 G！'); }
+      else yield* sayAll(['你說小麥沒事？……他在做什麼，你不能告訴我？', '……好吧，我相信你。只要他平安就好。']);
+      return;
+    }
+    yield* say(f.q1res === 'home' ? '小麥說要先在鎮上好好練習劍術，再去冒險。' : '最近小麥常常晚回家，手上還多了好多傷……你知道些什麼嗎？');
+  },
+  *lostBoy(ow, ent) {
+    const f = Game.st.flags, st = Game.st;
+    if (f.q1res === 'secret') { yield* say('我會小心的！等我變強了，再光明正大地告訴姊姊。'); return; }
+    yield* sayAll(['哇！……什、什麼嘛，是你啊。', '我才沒有迷路！我是在這裡偷偷練劍。', '姊姊老是說冒險很危險……可是我也想變得跟你一樣強。']);
+    const r = yield* ask('要怎麼做？', ['勸他回家', '幫他保密'], { cancel: false });
+    if (r === 0) { f.q1res = 'home'; yield* sayAll(['……你說得對，姊姊一定很擔心。', '我先回家跟她道歉。謝謝你！']); if (ow && ent) ow.npcs = ow.npcs.filter(n => n !== ent); }
+    else { f.q1res = 'secret'; st.bag.ether = (st.bag.ether || 0) + 1; yield* say('真的嗎！謝謝你！這個給你，是我在草叢裡撿到的。'); yield* itemGet(st.name + '得到了活力茶！'); yield* say('記得回去跟姊姊說我沒事喔！'); }
+  },
   *healer() {
     const st = Game.st; const ok = yield* yesNo('歡迎來到旅店！要讓我為你治療嗎？');
     if (ok) { st.respawn = { map: 'inn', x: 4, y: 4, dir: 'up' }; yield* say('好的，請稍等一下。'); yield* healRitual(); yield* sayAll(['讓你久等了！你的體力已經完全恢復了。', '歡迎再來喔！']); }
     else yield* say('歡迎再來喔！');
   },
-  *traveler() { yield* sayAll(['我在古岩遺跡附近見過那隻魔像……', '它的拳頭開始發光、凝聚力量時，下一擊非常可怕。', '那時候就選「防禦」，能擋下一半的傷害！']); },
+  *traveler() { if (Game.st.flags.golem) { yield* sayAll(['你真的打倒魔像了？……', '我得把這件事告訴王都的朋友。說不定他們知道異界之門的事。']); return; } yield* sayAll(['我在古岩遺跡附近見過那隻魔像……', '它的拳頭開始發光、凝聚力量時，下一擊非常可怕。', '那時候就選「防禦」，能擋下一半的傷害！']); },
   *clerk() { yield* shopFlow(); },
-  *customer() { yield* sayAll(['鐵劍好貴啊……不過攻擊會提升很多呢。', '魔法護符能提高魔攻，水流刃和落雷也會變強喔！']); },
-  *hiker() { yield* sayAll(['嘿！這條路上的草叢很深，常有魔物跳出來。', '受傷了就回萌芽鎮的旅店休息吧。', '過了河之後，還有一座能恢復體力的泉水喔！']); },
+  *customer() { if (Game.st.flags.croc) { yield* say('騎士長劍是王都騎士團在用的劍！好想要喔……'); return; } yield* sayAll(['鐵劍好貴啊……不過攻擊會提升很多呢。', '魔法護符能提高魔攻，水流刃和落雷也會變強喔！']); },
+  *hiker() { if (Game.st.flags.wolf) { yield* sayAll(['狂牙狼被你打倒了？難怪最近路上安靜多了！', '精英魔物身上常常會掉出好東西喔。']); return; } yield* sayAll(['嘿！這條路上的草叢很深，常有魔物跳出來。', '受傷了就回萌芽鎮的旅店休息吧。', '過了河之後，還有一座能恢復體力的泉水喔！']); },
   *girl2() { yield* sayAll(Game.st.flags.croc ? ['你打倒了沼澤鱷？太好了，終於可以過橋了！'] : ['橋頭那隻沼澤鱷好兇……', '聽說牠是水屬性，最怕雷和草的攻擊。']); },
   *guard() { yield* sayAll(Game.st.flags.golem ? ['你打倒了魔像！傳說中的門……真的存在嗎？'] : ['前方就是古岩遺跡。傳說中的異界之門，就在遺跡深處。', '魔像非常強大。先在泉水恢復體力，準備好道具再進去吧。', '也別忘了記錄進度！']); },
   *spring() {

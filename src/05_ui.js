@@ -134,6 +134,8 @@ function heroStats(st = Game.st) {
   s.crit = 3 + a.luk * 0.5;   // 會心率% = 3 + 幸運×0.5
   s.hit = a.dex * 0.5;        // 命中加成% = 靈巧×0.5
   s.eva = a.agi * 0.4;        // 迴避率% = 敏捷×0.4
+  s.vs = []; s.resist = {}; s.drain = 0; // equipment affixes
+  for (const slot in st.equip) { const it = st.equip[slot] && ITEMS[st.equip[slot]]; const f = it && it.aff; if (!f) continue; s.crit += f.crit || 0; s.hit += f.hit || 0; s.eva += f.eva || 0; s.drain += f.drain || 0; if (f.vs) s.vs.push(f.vs); if (f.resist) s.resist[f.resist[0]] = (s.resist[f.resist[0]] || 0) + f.resist[1]; }
   return s;
 }
 const expForLevel = lv => Math.floor(0.8 * lv * lv * lv);
@@ -152,6 +154,24 @@ function headerBar(x, title) {
   x.fillStyle = PANEL.edge; x.fillRect(0, 20, W, 1); x.fillStyle = UIC.accent; x.fillRect(0, 20, 32, 1);
 }
 
+/* ---------- Gear text & quality ---------- */
+function gearText(it) {
+  const p = Object.entries(it.bonus || {}).map(([k, v]) => STAT_NAMES[k] + '+' + v), f = it.aff || {};
+  if (f.crit) p.push('會心+' + f.crit + '%'); if (f.hit) p.push('命中+' + f.hit + '%'); if (f.eva) p.push('迴避+' + f.eva + '%'); if (f.drain) p.push('吸血' + f.drain + '%');
+  if (f.vs) p.push('對' + f.vs[0] + '系+' + f.vs[1] + '%'); if (f.resist) p.push(f.resist[0] + '系傷害-' + f.resist[1] + '%');
+  return p.join(' ');
+}
+const qCol = it => it.q >= 2 ? QUALITY[it.q][1] : UIC.text;
+
+/* ---------- Quests ---------- */
+function questList(st = Game.st) {
+  const f = st.flags, L = [];
+  L.push({ main: 1, n: '回家的路', t: !f.license ? '去村長家問問看回家的方法。' : !f.golem ? '前往北方的古岩遺跡，尋找異界之門。' : '門的力量還不夠……繼續尋找線索。（第一章完）', done: !!f.golem });
+  if (f.q1) L.push({ n: '失蹤的弟弟', t: !f.q1res ? '花店姊姊的弟弟「小麥」去晨霧道路後沒回來。' : !f.q1done ? '回萌芽鎮告訴花店的姊姊。' : f.q1res === 'home' ? '完成：勸小麥回家了。' : '完成：替小麥保守了秘密。', done: !!f.q1done });
+  if (f.wellCharm) L.push({ n: '井底的月光', t: '完成：從老井撈起了月光護符。', done: true });
+  return L;
+}
+
 /* ---------- Status (summary) screen ---------- */
 function eqBonus(st) { const eqB = {}; for (const slot in st.equip) { const it = st.equip[slot] && ITEMS[st.equip[slot]]; if (it && it.bonus) for (const k in it.bonus) eqB[k] = (eqB[k] || 0) + it.bonus[k]; } for (const k in st.boost || {}) eqB[k] = (eqB[k] || 0) + st.boost[k]; return eqB; }
 function heroCard(x, st) {
@@ -168,10 +188,13 @@ function heroCard(x, st) {
 function* summaryScreen() {
   let page = 0, mi = 0; const scr = { draw(x) {
     const st = Game.st, s = heroStats(); screenBG(x);
-    headerBar(x, page === 0 ? '冒險者資料' : '技能一覽');
-    Font.drawR(x, '← ' + (page + 1) + '/2 →', W - 6, 2, UIC.muted, UIC.textSh);
+    headerBar(x, ['冒險者資料', '技能一覽', '任務'][page]);
+    Font.drawR(x, '← ' + (page + 1) + '/3 →', W - 6, 2, UIC.muted, UIC.textSh);
     heroCard(x, st);
-    if (page === 0) {
+    if (page === 2) {
+      drawWin(x, 4, 98, 168, 154, 'menu'); let Y = 102;
+      for (const q of questList(st)) { Font.draw(x, (q.main ? '主線　' : '支線　') + q.n, 12, Y, q.done ? UIC.muted : q.main ? UIC.accent : UIC.warm, UIC.textSh); Y += 16; for (const l of Font.wrap(q.t, 150).slice(0, 3)) { Font.draw(x, l, 14, Y, q.done ? UIC.dis : UIC.text, UIC.textSh, 11); Y += 14; } Y += 6; if (Y > 236) break; }
+    } else if (page === 0) {
       const a = heroAttr(st), eqB = eqBonus(st);
       drawWin(x, 4, 98, 168, 62, 'menu');
       ATTRS.forEach((k, i) => { const X = 12 + (i % 2) * 80, Y = 103 + Math.floor(i / 2) * 17; Font.draw(x, ATTR_NAMES[k], X, Y, UIC.muted, UIC.textSh); Font.drawR(x, String(a[k]), X + 70, Y, (st.boost || {})[k] ? UIC.accent : UIC.text, UIC.textSh); });
@@ -188,9 +211,9 @@ function* summaryScreen() {
   } };
   UI.push(scr);
   while (true) {
-    if (Input.pressed('left') || Input.pressed('right')) { page = 1 - page; Sound.sfx('cursor'); }
+    if (Input.pressed('left') || Input.pressed('right')) { page = (page + (Input.pressed('left') ? 2 : 1)) % 3; Sound.sfx('cursor'); }
     if (page === 1) { if (Input.repeat('up')) { mi = (mi + Game.st.moves.length - 1) % Game.st.moves.length; Sound.sfx('cursor'); } if (Input.repeat('down')) { mi = (mi + 1) % Game.st.moves.length; Sound.sfx('cursor'); } }
-    if (Input.pressed('a') && page === 0) { Input.consume('a'); page = 1; Sound.sfx('cursor'); }
+    if (Input.pressed('a') && page !== 1) { Input.consume('a'); page = (page + 1) % 3; Sound.sfx('cursor'); }
     else if (Input.pressed('b')) { Input.consume('a', 'b'); Sound.sfx('cancel'); break; }
     yield;
   }
@@ -232,10 +255,10 @@ function* bagScreen(mode = 'field') { // returns item id used (battle) or null
     const list = listFor(tab); drawWin(x, 4, 40, 168, VIS * 18 + 10, 'menu');
     if (!list.length) Font.draw(x, '（空空如也）', 20, 46, UIC.muted, UIC.textSh);
     const top = Math.max(0, Math.min(idx - 3, list.length - VIS));
-    list.slice(top, top + VIS).forEach((k, i) => { const Y = 44 + i * 18; const eq = Object.values(Game.st.equip).includes(k); if (top + i === idx) selBar(x, 6, Y - 1, 164, 17); Font.draw(x, ITEMS[k].n, 14, Y, UIC.text, UIC.textSh); if (eq) Font.draw(x, 'E', 16 + Font.width(ITEMS[k].n), Y, UIC.accent, UIC.textSh); if (!ITEMS[k].key) Font.drawR(x, '×' + Game.st.bag[k], 164, Y, UIC.muted, UIC.textSh); });
+    list.slice(top, top + VIS).forEach((k, i) => { const Y = 44 + i * 18; const eq = Object.values(Game.st.equip).includes(k); if (top + i === idx) selBar(x, 6, Y - 1, 164, 17); Font.draw(x, ITEMS[k].n, 14, Y, qCol(ITEMS[k]), UIC.textSh); if (eq) Font.draw(x, 'E', 16 + Font.width(ITEMS[k].n), Y, UIC.accent, UIC.textSh); if (!ITEMS[k].key) Font.drawR(x, '×' + Game.st.bag[k], 164, Y, UIC.muted, UIC.textSh); });
     if (top > 0) x.drawImage(UPARROW, 85, 41); if (top + VIS < list.length) x.drawImage(DOWNARROW, 85, 40 + VIS * 18 + 4);
     drawWin(x, 4, 180, 168, 72, 'menu');
-    if (list[idx]) Font.wrap(ITEMS[list[idx]].d, 152).slice(0, 4).forEach((l, i) => Font.draw(x, l, 12, 184 + i * 16, UIC.text, UIC.textSh));
+    if (list[idx]) { const it = ITEMS[list[idx]], ls = Font.wrap(it.d, 152).slice(0, it.aff || it.q >= 2 ? 2 : 4); ls.forEach((l, i) => Font.draw(x, l, 12, 184 + i * 16, UIC.text, UIC.textSh)); if (it.aff || it.q >= 2) Font.wrap('【' + QUALITY[it.q][0] + '】' + gearText(it), 152, 11).slice(0, 2).forEach((l, i) => Font.draw(x, l, 10, 184 + ls.length * 16 + i * 13, i ? UIC.accent : qCol(it), UIC.textSh, 11)); }
   } };
   UI.push(scr); let result = null;
   while (true) {
@@ -284,7 +307,7 @@ function* equipScreen() {
   const scr = { draw(x) {
     screenBG(x); headerBar(x, '裝備');
     drawWin(x, 4, 24, 168, 116, 'menu');
-    slots.forEach((sl, i) => { const Y = 28 + i * 36; if (i === idx) selBar(x, 6, Y, 164, 34); Font.draw(x, EQUIP_SLOTS[sl], 14, Y, UIC.accent, UIC.textSh); const it = Game.st.equip[sl] && ITEMS[Game.st.equip[sl]]; Font.draw(x, it ? it.n : '——', 60, Y, UIC.text, UIC.textSh); if (it) Font.drawR(x, Object.entries(it.bonus).map(([k, v]) => STAT_NAMES[k] + '+' + v).join(' '), 164, Y + 16, UIC.muted, UIC.textSh); });
+    slots.forEach((sl, i) => { const Y = 28 + i * 36; if (i === idx) selBar(x, 6, Y, 164, 34); Font.draw(x, EQUIP_SLOTS[sl], 14, Y, UIC.accent, UIC.textSh); const it = Game.st.equip[sl] && ITEMS[Game.st.equip[sl]]; Font.draw(x, it ? it.n : '——', 60, Y, it ? qCol(it) : UIC.text, UIC.textSh); if (it) Font.drawR(x, gearText(it), 164, Y + 16, UIC.muted, UIC.textSh, 10); });
     const s = heroStats(); drawWin(x, 4, 144, 168, 108, 'menu');
     [['HP', Game.st.hp + '/' + s.hp], ['物攻', s.atk], ['物防', s.def], ['魔攻', s.spa], ['魔防', s.spd], ['速度', s.spe]].forEach(([a, b], i) => { const Y = 148 + i * 16; Font.draw(x, a, 14, Y, UIC.muted, UIC.textSh); Font.drawR(x, String(b), 150, Y, UIC.text, UIC.textSh); });
   } };
@@ -295,7 +318,7 @@ function* equipScreen() {
     if (Input.pressed('a')) {
       Input.consume('a'); Sound.sfx('select'); const sl = slots[idx];
       const own = bagList(it => it.equip === sl);
-      const opts = own.map(k => ({ t: ITEMS[k].n + (Game.st.equip[sl] === k ? '[E]' : ''), k })).concat([{ t: '卸下', k: null }]);
+      const opts = own.map(k => ({ t: ITEMS[k].n + (Game.st.equip[sl] === k ? '[E]' : ''), k, col: qCol(ITEMS[k]) })).concat([{ t: '卸下', k: null }]);
       const r = yield* choose(opts, { x: 60, y: 40 + idx * 36, w: 112 });
       if (r >= 0) { Game.st.equip[sl] = opts[r].k; clampHP(); Sound.sfx('item'); }
     }
@@ -330,6 +353,7 @@ function* optionsScreen() {
 function moneyWin(x) { drawWin(x, 2, 2, 86, 30, 'menu'); Font.draw(x, '金錢', 10, 3, UIC.muted, UIC.textSh); Font.drawR(x, Game.st.money + ' G', 80, 15, UIC.warm, UIC.textSh); }
 function* shopFlow() {
   const mw = { draw: moneyWin }; UI.push(mw);
+  if (Game.st.flags.croc && !Game.st.flags.shopNew) { Game.st.flags.shopNew = 1; yield* say('橋通了之後，王都的商人送來了新貨！騎士長劍和鎖子甲，要看看嗎？'); }
   while (true) {
     const r = yield* ask('歡迎光臨！請問需要什麼呢？', ['購買', '賣出', '離開']);
     if (r === 0) yield* shopBuy(); else if (r === 1) yield* shopSell(); else break;
@@ -337,7 +361,7 @@ function* shopFlow() {
   UI.remove(mw); yield* say('謝謝惠顧！歡迎再來！');
 }
 function* shopBuy() {
-  let idx = 0; const list = SHOP_LIST; const VIS = 8;
+  let idx = 0; const list = shopList(); const VIS = 8;
   const scr = { draw(x) {
     drawWin(x, 4, 36, 168, VIS * 18 + 10, 'menu');
     const top = Math.max(0, Math.min(idx - 3, list.length - VIS));

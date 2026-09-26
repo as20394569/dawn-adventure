@@ -255,7 +255,8 @@ class Battle {
     let D = (phys ? t.stats.def : t.stats.spd) * stageMul(crit ? Math.min(0, ds) : ds);
     if (phys && u.status === 'brn') A *= 0.5;
     const base = Math.floor(Math.floor(Math.floor(2 * u.lv / 5 + 2) * mv.pow * A / D) / 50) + 2;
-    const mult = typeMult(mv.t, t.t); let m = mult * (rnd(85, 100) / 100); if (crit) m *= 1.5; if (u.t && u.t === mv.t) m *= 1.5; if (u.hero) m *= HERO_POWER;
+    const mult = typeMult(mv.t, t.t); let m = mult * (rnd(85, 100) / 100); if (crit) m *= 1.5; if (u.t && u.t === mv.t) m *= 1.5; if (u.hero) { m *= HERO_POWER; for (const [ty, p] of u.stats.vs || []) if (t.t === ty) m *= 1 + p / 100; }
+    if (t.hero && t.stats.resist && t.stats.resist[mv.t]) m *= 1 - t.stats.resist[mv.t] / 100;
     return { dmg: Math.max(1, Math.floor(base * m)), mult, crit };
   }
   *useMove(u, t, id) {
@@ -291,6 +292,7 @@ class Battle {
       if (shock) { t.wet = 0; Sound.sfx('thunder'); yield* this.msg('潮濕的身體導電了！' + t.n + '感電了！'); if (t.hp > 0) yield* this.inflict(t, 'par', true); }
       else if (mv.t === '水' && t.hp > 0) { const was = t.wet > 0; t.wet = 3; if (!was) yield* this.msg(t.n + '全身濕透了！'); }
       else if (mv.t === '火' && t.wet > 0) { t.wet = 0; yield* this.msg('熱氣蒸乾了' + t.n + '身上的水。'); }
+      if (u.hero && u.stats.drain && dmg > 0 && u.hp > 0 && u.hp < u.maxhp) { const hv = Math.max(1, Math.floor(dmg * u.stats.drain / 100)); u.hp = Math.min(u.maxhp, u.hp + hv); yield* this.animHP(u); yield* this.msg('荊棘吸取了' + hv + '點HP！', { hold: 24 }); }
       if (mv.drain && dmg > 0 && u.hp < u.maxhp) { u.hp = Math.min(u.maxhp, u.hp + Math.max(1, Math.floor(dmg * mv.drain))); yield* FX.drainBack.call(this, this.center(t), this.center(u)); yield* this.animHP(u); yield* this.msg('從' + t.n + '身上吸取了養分！'); }
       if (mv.recoil) { u.hp = Math.max(0, u.hp - Math.max(1, Math.floor(dmg * mv.recoil))); yield* this.animHP(u); yield* this.msg(u.n + '受到了反作用力的傷害！'); }
       if (t.hp > 0 && mv.eff && chance(mv.eff.p / 100)) {
@@ -299,6 +301,7 @@ class Battle {
         if (mv.eff.flinch) t.flinched = true;
       }
       if (!t.hero && t.boss && !this.phase2 && t.hp > 0 && t.hp < t.maxhp * 0.5) yield* this.bossPhase2();
+      if (!t.hero && t.boss && this.phase2 && !this.collapse && t.hp > 0 && t.hp < t.maxhp * 0.25) { this.collapse = true; Sound.sfx('quake'); this.shake = 40; yield* this.msg(t.n + '猛力撞擊地面！'); yield* this.msg('遺跡開始崩塌了！每回合都會有落石掉下來！'); yield* this.msg('（選擇「防禦」就能擋住落石。）'); }
       return;
     }
     // status moves
@@ -331,6 +334,7 @@ class Battle {
   }
   *endTurn() {
     for (const b of [this.H, this.F]) if (b.wet > 0) b.wet--;
+    if (this.collapse && this.H.hp > 0 && this.F.hp > 0) { yield* FX.rock.call(this, null, this.center(this.H)); if (this.H.defending) yield* this.msg(this.H.n + '擋住了落石！'); else { const d = Math.max(1, Math.floor(this.H.maxhp / 10)); this.H.hp = Math.max(0, this.H.hp - d); this.blinkH = 12; yield* this.animHP(this.H); yield* this.msg(this.H.n + '被落石砸中了！'); if (this.H.hp <= 0) return; } }
     for (const b of [this.H, this.F]) {
       if (b.hp <= 0 || !(b.status === 'psn' || b.status === 'brn')) continue;
       const d = Math.max(1, Math.floor(b.maxhp / (b.boss ? 16 : 8)));
@@ -381,6 +385,7 @@ class Battle {
     yield* this.gainExp(exp);
     const gold = F.boss ? 1000 : sp.gold * F.lv;
     if (gold) { st.money += gold; yield* this.msg(st.name + '得到了' + gold + ' G！'); }
+    if (sp.drop) { const it = ITEMS[sp.drop]; st.bag[sp.drop] = (st.bag[sp.drop] || 0) + 1; Sound.jingle('item'); yield* this.msg(F.n + '掉落了【' + QUALITY[it.q][0] + '】' + it.n + '！', { wait: true }); yield* this.msg(gearText(it) + '\n（可以在背包或裝備畫面裝備）', { wait: true }); }
   }
   *gainExp(amount) {
     const st = Game.st; yield* this.msg(st.name + '獲得了' + amount + '點經驗值！', { hold: 20 });

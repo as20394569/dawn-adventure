@@ -30,7 +30,7 @@ class Overworld {
   load(id, x, y, dir, silent) {
     const prev = this.map && this.map.d.name; this.map = getMap(id); const st = this.st; st.map = id; st.x = x; st.y = y; st.dir = dir || st.dir || 'down';
     this.p = new Entity({ x, y, dir: st.dir }); this.p.isPlayer = true;
-    this.npcs = (this.map.d.npcs || []).map(n => new Entity({ ...n, frames: npcFrames(n.look) }));
+    this.npcs = (this.map.d.npcs || []).filter(n => !n.show || n.show(st)).map(n => new Entity({ ...n, frames: npcFrames(n.look) }));
     this.elites = (this.map.d.elites || []).filter(e => !st.flags[e.id]).map(e => new Entity({ ...e, img: monsterMini(e.sp, 24) }));
     this.items = (this.map.d.items || []).filter(i => !st.flags[i.id]).map(i => new Entity({ ...i }));
     const bd = this.map.d.boss; this.boss = bd && !st.flags.golem ? new Entity({ ...bd, img: monsterMini(bd.sp, 36), w2: 1 }) : null;

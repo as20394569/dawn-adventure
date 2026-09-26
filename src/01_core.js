@@ -92,14 +92,14 @@ const Font = (() => {
     return out;
   }
   const NOSTART = '。，、！？」』）：；…～．,.!?)';
-  function wrap(str, maxW) {
+  function wrap(str, maxW, size) {
     const lines = [];
     for (const para of String(str).split('\n')) {
       let line = '', w = 0; const chars = [...para];
       for (let i = 0; i < chars.length; i++) {
-        const ch = chars[i], cw = width(ch);
+        const ch = chars[i], cw = width(ch, size);
         if (w + cw > maxW && line) {
-          if (NOSTART.includes(ch)) { const lc = [...line]; const last = lc.pop(); lines.push(lc.join('')); line = last; w = width(last); }
+          if (NOSTART.includes(ch)) { const lc = [...line]; const last = lc.pop(); lines.push(lc.join('')); line = last; w = width(last, size); }
           else { lines.push(line); line = ''; w = 0; if (ch === ' ') continue; }
         }
         line += ch; w += cw;

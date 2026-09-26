@@ -11,7 +11,8 @@ const EFF = {
   '飛': { '草': 2, '雷': 0.5, '岩': 0.5 },
 };
 const typeMult = (atk, def) => def ? ((EFF[atk] || {})[def] ?? 1) : 1;
-const STAT_NAMES = { atk: '物攻', def: '物防', spa: '魔攻', spd: '魔防', spe: '速度' };
+const STAT_NAMES = { hp: 'HP', atk: '物攻', def: '物防', spa: '魔攻', spd: '魔防', spe: '速度' };
+const QUALITY = [null, ['普通', '#c9cfe4'], ['優良', '#72e39a'], ['稀有', '#86b4ff'], ['史詩', '#c58cff'], ['傳說', '#ffb454']];
 // classic six attributes for the hero
 const ATTRS = ['str', 'agi', 'vit', 'int', 'dex', 'luk'];
 const ATTR_NAMES = { str: '力量', agi: '敏捷', vit: '體力', int: '智力', dex: '靈巧', luk: '幸運' };
@@ -75,10 +76,10 @@ const SPECIES = {
   fox: { n: '焰狐', t: '火', base: [45, 55, 42, 55, 45, 65], exp: 66, gold: 12, learn: [[1, 'scratch'], [1, 'tailWhip'], [4, 'ember'], [9, 'quickAttack']], dex: '興奮時尾巴的火焰會燒得更旺。' },
   bee: { n: '電電蜂', t: '雷', base: [42, 50, 40, 55, 40, 70], exp: 64, gold: 12, learn: [[1, 'poisonSting'], [1, 'shock'], [7, 'thunderWave'], [10, 'agility']], dex: '翅膀高速振動時會產生電流。' },
   frog: { n: '紫斑蛙', t: '毒', base: [60, 50, 45, 50, 50, 40], exp: 64, gold: 12, learn: [[1, 'lick'], [4, 'acid'], [7, 'sing']], dex: '身上的斑點越鮮豔，毒性就越強。' },
-  wolf: { n: '狂牙狼', t: '一般', base: [60, 54, 48, 40, 46, 62], exp: 95, gold: 40, elite: 1, learn: [[1, 'tackle'], [1, 'howl'], [1, 'quickAttack'], [1, 'bite']], dex: '晨霧道路的狼群首領。臉上有一道傷疤。' },
-  flower: { n: '荊棘魔花', t: '草', base: [68, 58, 62, 72, 65, 42], exp: 105, gold: 45, elite: 1, learn: [[1, 'vineWhip'], [1, 'sleepPowder'], [1, 'megaDrain'], [1, 'poisonPowder']], dex: '守護著森林深處果實的食人花。' },
-  croc: { n: '沼澤鱷', t: '水', base: [72, 76, 70, 50, 55, 52], exp: 115, gold: 50, elite: 1, learn: [[1, 'tailWhip'], [1, 'harden'], [1, 'waterGun'], [1, 'bite']], dex: '盤據在橋頭，不讓任何人通過。' },
-  golem: { n: '古岩魔像', t: '岩', base: [82, 48, 80, 45, 55, 35], exp: 200, gold: 0, boss: 1, learn: [[1, 'rockThrow'], [1, 'stomp'], [1, 'ironWall'], [1, 'ancientRoar']], dex: '守護古代遺跡的石像。沉睡了千年後甦醒。' },
+  wolf: { n: '狂牙狼', t: '一般', base: [60, 54, 48, 40, 46, 62], exp: 95, gold: 40, elite: 1, drop: 'fangDagger', learn: [[1, 'tackle'], [1, 'howl'], [1, 'quickAttack'], [1, 'bite']], dex: '晨霧道路的狼群首領。臉上有一道傷疤。' },
+  flower: { n: '荊棘魔花', t: '草', base: [68, 58, 62, 72, 65, 42], exp: 105, gold: 45, elite: 1, drop: 'thornRing', learn: [[1, 'vineWhip'], [1, 'sleepPowder'], [1, 'megaDrain'], [1, 'poisonPowder']], dex: '守護著森林深處果實的食人花。' },
+  croc: { n: '沼澤鱷', t: '水', base: [72, 76, 70, 50, 55, 52], exp: 115, gold: 50, elite: 1, drop: 'scaleArmor', learn: [[1, 'tailWhip'], [1, 'harden'], [1, 'waterGun'], [1, 'bite']], dex: '盤據在橋頭，不讓任何人通過。' },
+  golem: { n: '古岩魔像', t: '岩', base: [82, 48, 80, 45, 55, 35], exp: 200, gold: 0, boss: 1, drop: 'golemCore', learn: [[1, 'rockThrow'], [1, 'stomp'], [1, 'ironWall'], [1, 'ancientRoar']], dex: '守護古代遺跡的石像。沉睡了千年後甦醒。' },
 };
 
 const HERO_LEARN = [[1, 'slash'], [1, 'glare'], [4, 'flameSlash'], [6, 'focus'], [8, 'aquaBlade'], [10, 'thunder'], [11, 'gale'], [13, 'leafBlade'], [15, 'heal'], [18, 'blaze']];
@@ -93,17 +94,24 @@ const ITEMS = {
   ether: { n: '活力茶', price: 300, d: '所有技能的PP各恢復10點。', use: 'pp', v: 10 },
   smoke: { n: '煙霧彈', price: 150, d: '在戰鬥中使用，必定能從野生魔物身邊逃走。', use: 'escape' },
   powerFruit: { n: '力量果實', price: 0, sell: 500, d: '神奇的果實。吃下後力量永久+2。', use: 'boost', v: { str: 2 } },
+  fangDagger: { n: '狼牙短劍', q: 2, price: 0, sell: 400, equip: 'weapon', bonus: { atk: 5 }, aff: { crit: 6, vs: ['一般', 20] }, d: '用狂牙狼的尖牙磨成的短劍。' },
+  thornRing: { n: '荊棘指環', q: 3, price: 0, sell: 600, equip: 'acc', bonus: { spa: 2 }, aff: { drain: 12, hit: 5 }, d: '纏著活荊棘的指環。攻擊時會吸取生命。' },
+  scaleArmor: { n: '鱷鱗甲', q: 3, price: 0, sell: 700, equip: 'armor', bonus: { def: 4, spd: 3 }, aff: { resist: ['水', 30] }, d: '用沼澤鱷的鱗片做成的鎧甲。' },
+  golemCore: { n: '古岩之心', q: 4, price: 0, sell: 0, equip: 'acc', bonus: { hp: 10, def: 3 }, aff: { crit: 4, resist: ['岩', 20] }, d: '魔像核心的碎片，仍有微弱的脈動。' },
+  knightSword: { n: '騎士長劍', q: 2, price: 2600, equip: 'weapon', bonus: { atk: 7 }, aff: { hit: 5 }, d: '王都騎士團制式的長劍。' },
+  chainMail: { n: '鎖子甲', q: 2, price: 2000, equip: 'armor', bonus: { def: 5, spd: 3 }, d: '細密鐵環編成的鎧甲。' },
   ironSword: { n: '鐵劍', price: 1200, equip: 'weapon', bonus: { atk: 4 }, d: '堅固的鐵劍。物攻+4' },
   woodSword: { n: '木劍', price: 0, sell: 50, equip: 'weapon', bonus: { atk: 1 }, d: '練習用的木劍。物攻+1' },
   clothes: { n: '旅行布衣', price: 0, sell: 50, equip: 'armor', bonus: { def: 1 }, d: '輕便的旅行服裝。物防+1' },
   leather: { n: '皮甲', price: 900, equip: 'armor', bonus: { def: 3, spd: 2 }, d: '結實的皮甲。物防+3 魔防+2' },
-  moonCharm: { n: '月光護符', price: 0, sell: 0, equip: 'acc', bonus: { spa: 3, spe: 3 }, d: '從井底撈起的古老護符，散發著淡淡月光。魔攻+3 速度+3' },
+  moonCharm: { n: '月光護符', q: 4, price: 0, sell: 0, equip: 'acc', bonus: { spa: 3, spe: 3 }, d: '從井底撈起的古老護符，散發著淡淡月光。魔攻+3 速度+3' },
   charm: { n: '魔法護符', price: 1000, equip: 'acc', bonus: { spa: 4 }, d: '注入魔力的護符。魔攻+4' },
   boots: { n: '疾風靴', price: 800, equip: 'acc', bonus: { spe: 4 }, d: '穿上後腳步變得輕快。速度+4' },
   uniform: { n: '學生制服', price: 0, equip: 'armor', bonus: { def: 1 }, d: '原本世界學校的制服。在這裡好像很少見。物防+1' },
   phone: { n: '手機', key: 1, use: 'phone', d: '從原本的世界帶來的手機。' },
   license: { n: '冒險者證', key: 1, d: '村長交給你的冒險者證明。持有它就能走出萌芽鎮。' },
 };
+const shopList = () => SHOP_LIST.concat(Game.st.flags.croc ? ['knightSword', 'chainMail'] : []);
 const SHOP_LIST = ['potion', 'superPotion', 'antidote', 'parlyzHeal', 'awakening', 'burnHeal', 'ether', 'smoke', 'ironSword', 'leather', 'charm', 'boots'];
 const EQUIP_SLOTS = { weapon: '武器', armor: '防具', acc: '飾品' };
 
@@ -261,6 +269,7 @@ const MAPS = {
       { id: 'hiker', x: 8, y: 34, dir: 'right', look: 'man' },
       { id: 'guard', x: 12, y: 2, dir: 'down', look: 'guard', name: '守衛' },
       { id: 'girl2', x: 16, y: 13, dir: 'left', look: 'girl', walk: 1 },
+      { id: 'lostBoy', x: 3, y: 31, dir: 'right', look: 'kid', name: '小麥', show: st => st.flags.q1 && st.flags.q1res !== 'home' },
     ],
     elites: [
       { id: 'wolf', sp: 'wolf', lv: 8, x: 16, y: 29, dir: 'left', sight: 5 },
