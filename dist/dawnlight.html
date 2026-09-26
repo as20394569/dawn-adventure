@@ -4279,7 +4279,7 @@ class Battle {
       if (u.hero && u.stats.fx.cleave && mv.cat === '物' && t.hp > 0 && chance(0.3)) { yield* this.msg('劈裂！', { hold: 16 }); yield* this.statChange(t, { def: -1 }); }
       if (u.hero && u.stats.fx.fervor && (this.fervor || 0) < 3) { this.fervor = (this.fervor || 0) + 1; u.stages.atk = Math.min(6, u.stages.atk + 1); yield* this.msg('狂熱！物攻提升了！', { hold: 20 }); }
       if (u.hero && u.stats.fx.stormMark && t.hp > 0 && chance(0.15)) yield* this.inflict(t, 'par', true);
-      if (t.hero && t.defending && t.stats.counter && t.hp > 0 && u.hp > 0) { const c2 = this.calcDamage(t, u, MOVES.slash), cd = Math.min(u.hp, Math.max(1, Math.floor(c2.dmg * 0.7))); yield* this.lunge(t, 10, 3); u.hp -= cd; Sound.sfx('hit'); yield* this.impact(u, 1); yield* this.animHP(u); yield* this.msg(t.n + '趁勢反擊！'); }
+      if (t.hero && t.defending && t.stats.counter && t.hp > 0 && u.hp > 0) { const c2 = this.calcDamage(t, u, t.stats.welem ? { ...MOVES.slash, t: t.stats.welem } : MOVES.slash), cd = Math.min(u.hp, Math.max(1, Math.floor(c2.dmg * 0.7))); yield* this.lunge(t, 10, 3); u.hp -= cd; Sound.sfx('hit'); yield* this.impact(u, 1); yield* this.animHP(u); yield* this.msg(t.n + '趁勢反擊！'); }
       if (shock) { t.wet = 0; Sound.sfx('thunder'); yield* this.msg('潮濕的身體導電了！' + t.n + '感電了！'); if (t.hp > 0) yield* this.inflict(t, 'par', true); }
       else if (mv.t === '水' && t.hp > 0) { const was = t.wet > 0; t.wet = 3; if (!was) yield* this.msg(t.n + '全身濕透了！'); }
       else if (mv.t === '火' && t.wet > 0) { t.wet = 0; yield* this.msg('熱氣蒸乾了' + t.n + '身上的水。'); }
