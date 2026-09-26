@@ -10,8 +10,7 @@ const GROUND_PAL = {
   const n = BH - y0; for (let y = y0; y < BH; y++) { const t = (y - y0) / n; const [a, b] = [hex2rgb(P.far), hex2rgb(P.near)]; x.fillStyle = `rgb(${Math.round(lerp(a[0], b[0], t))},${Math.round(lerp(a[1], b[1], t))},${Math.round(lerp(a[2], b[2], t))})`; x.fillRect(0, y, W, 1); }
   for (let i = 0; i < 80; i++) { const py = y0 + 4 + Math.floor(r() * (BH - y0 - 6)), px = Math.floor(r() * W), s = 1 + Math.floor((py - y0) / 40); x.fillStyle = r() < 0.6 ? P.tuft : P.dot; x.fillRect(px, py, s + 1, 1); if (k !== 'ruins') x.fillRect(px + 1, py - 1, 1, 1); }
   x.fillStyle = 'rgba(0,0,0,0.12)'; x.fillRect(0, y0, W, 2);
-  // platforms: foe (smaller, farther) and hero (bigger, nearer)
-  pxEllipse(x, 128, FOE_FOOT, 42, 9, P.pad2); pxEllipse(x, 128, FOE_FOOT - 1, 40, 7, P.pad);
-  pxEllipse(x, 34, HERO_Y + 70, 50, 11, P.pad2); pxEllipse(x, 34, HERO_Y + 69, 48, 9, P.pad);
+  // soft vignette instead of battle platforms
+  const g = x.createRadialGradient(W / 2, 110, 40, W / 2, 110, 150); g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(1, 'rgba(6,4,14,0.55)'); x.fillStyle = g; x.fillRect(0, 0, W, BH);
   return c;
 }; }
