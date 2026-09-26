@@ -7,7 +7,7 @@ const UI = {
 class TextBox {
   constructor(text, o = {}) {
     this.style = o.style || 'ow'; const bb = this.style === 'battle' && typeof BB_Y !== 'undefined'; this.x = o.x ?? 4; this.y = o.y ?? (bb ? BB_Y + 1 : TB_Y + 1); this.w = o.w ?? W - 8; this.h = o.h ?? (bb ? BB_H - 2 : TB_H - 2);
-    this.fs = o.fs ?? (bb ? 10 : undefined); this.lh = o.lh ?? (bb ? 13 : 16);
+    this.fs = o.fs ?? (bb ? 9 : undefined); this.lh = o.lh ?? (bb ? 12 : 16);
     this.pad = o.pad ?? 8; this.rows = Math.max(1, Math.floor((this.h - 10) / this.lh));
     this.lines = Font.wrap(text, this.w - this.pad * 2 - 2, this.fs);
     this.li = 0; this.ci = 0; this.top = 0; this.scroll = 0; this.state = 'type'; this.t = 0; this.hold = 0;
