@@ -44,7 +44,7 @@ const Events = {
     if (st.flags.license && (yield* classTalk())) return;
     if (!st.flags.license) {
       yield* sayAll(['喔？你就是瑪莎撿回來的那個孩子啊。', '……從另一個世界來的？', '這個會發光的小板子……嗯，看來不是在說謊。', '古老的傳說裡提過，北方的古岩遺跡深處，有一扇「異界之門」。', '據說很久以前，也有異世界的旅人從那扇門來到這裡。', '如果真有回去的路，大概就在那裡了。', '只是……最近守護遺跡的古岩魔像甦醒了，誰也無法靠近。', '嗯？你的手……在發光！', '這是「異界人之力」。傳說中，來自異世界的人都擁有不可思議的力量。', '有這股力量，你應該能和魔物戰鬥。']);
-      st.flags.license = 1; st.bag.license = 1; st.bag.woodSword = 1; st.equip.weapon = 'woodSword';
+      st.flags.license = 1; st.bag.license = 1; st.equip.weapon = makeGear('woodSword', 1, 1).u; st.equip.acc1 = makeGear('guardBadge', 1, 1).u;
       yield* itemGet('得到了木劍和冒險者證！'); yield* say(st.name + '把木劍拿在手上。……有點重。');
       yield* say('還有這些傷藥，帶在身上吧。'); st.bag.potion = (st.bag.potion || 0) + 5; yield* itemGet('得到了傷藥×5！');
       yield* sayAll(['走在高高的草叢裡，會遇到野生的魔物。', '打倒魔物能累積經驗，你會越來越強。', '道路上還有更強大的「精英魔物」，被盯上可要小心。', '古岩魔像是岩石屬性，最怕水和草。記住了。', '按START可以打開選單，查看狀態和背包，也能記錄進度。', '去吧，異世界的旅人。願曙光指引你回家的路。']);
@@ -71,7 +71,7 @@ const Events = {
     if (!st.flags.golem) { yield* say('一口很深的井。往下看，只有一片漆黑。'); return; }
     yield* say('……井底好像有什麼東西，正發出淡淡的月光。');
     if (!(yield* yesNo('要把水桶放下去撈撈看嗎？'))) return;
-    st.flags.wellCharm = 1; st.bag.moonCharm = 1; yield* itemGet(st.name + '撈起了「月光護符」！');
+    st.flags.wellCharm = 1; yield* itemGet(st.name + '撈起了' + gearName(makeGear('moonCharm', 4)) + '！');
     yield* say('古老的護符……說不定和異界之門有關。可以在背包裡裝備。');
   },
   *smith() { yield* say(Game.st.flags.smith ? '有素材就拿來吧！' : '我是鎮上的鐵匠。把魔物身上的素材帶來，我就幫你打造好東西！'); Game.st.flags.smith = 1; yield* craftScreen(); },
@@ -197,10 +197,10 @@ function loadGame() { try { const s = localStorage.getItem(SAVE_KEY); return s ?
 function saveSettings() { try { localStorage.setItem(SET_KEY, JSON.stringify(Game.settings)); } catch (e) { } }
 function loadSettings() { try { const s = localStorage.getItem(SET_KEY); if (s) Object.assign(Game.settings, JSON.parse(s)); } catch (e) { } }
 function newGameState(name) {
-  const st = { name, lv: 5, exp: expForLevel(5), hp: 1, status: null, moves: [{ id: 'slash', pp: 35 }, { id: 'glare', pp: 30 }, { id: 'flameSlash', pp: 25 }], boost: {}, equip: { weapon: null, armor: 'uniform', acc: null }, bag: { uniform: 1, phone: 1 }, money: 1000, flags: {}, map: 'home', x: 1, y: 3, dir: 'right', respawn: { map: 'home', x: 1, y: 4, dir: 'up' }, time: 0, steps: 0, wins: 0 };
-  Game.st = st; st.hp = heroStats(st).hp; return st;
+  const st = { name, lv: 5, exp: expForLevel(5), hp: 1, status: null, moves: [{ id: 'slash', pp: 35 }, { id: 'glare', pp: 30 }, { id: 'flameSlash', pp: 25 }], boost: {}, equip: { weapon: null, head: null, body: null, feet: null, acc1: null, acc2: null }, gear: [], gid: 0, bag: { phone: 1 }, money: 1000, flags: {}, map: 'home', x: 1, y: 3, dir: 'right', respawn: { map: 'home', x: 1, y: 4, dir: 'up' }, time: 0, steps: 0, wins: 0 };
+  Game.st = st; st.equip.body = makeGear('uniform', 1, 1).u; st.equip.feet = makeGear('schoolShoes', 1, 1).u; st.hp = heroStats(st).hp; return st;
 }
-function startOverworld() { const st = Game.st; if (!st.tal) { st.tal = {}; st.tp = Math.max(0, st.lv - 5); } const ow = Game.ow = new Overworld(); Game.setScene(ow); ow.load(st.map, st.x, st.y, st.dir); return ow; }
+function startOverworld() { const st = Game.st; migrateGear(st); if (!st.tal) { st.tal = {}; st.tp = Math.max(0, st.lv - 5); } const ow = Game.ow = new Overworld(); Game.setScene(ow); ow.load(st.map, st.x, st.y, st.dir); return ow; }
 
 /* ===================== SHARED ART: logo, title, modern street ===================== */
 function makeLogo(text, sc) {
@@ -436,5 +436,5 @@ function boot(data) {
   requestAnimationFrame(loop);
   try { if (window.claude && window.claude.hot && window.claude.hot.snapshot) window.claude.hot.snapshot(() => ({ st: (Game.scene instanceof Overworld && !Game.scene.script) ? Game.st : null })); } catch (e) { }
 }
-window.__game = { setScale: S => { Game.fixedScale = 1; setScale(S); render(); }, Game, Input, Events, MAPS, SPECIES, Battle, Overworld, heroStats, newGameState, startOverworld, UI, say, yesNo, startMenu, summaryScreen, bagScreen, equipScreen, optionsScreen, shopFlow, pickMoveToForget, blackText, dexScreen, talentScreen, craftScreen, Events, step(n = 1) { for (let i = 0; i < n; i++) tick(); render(); }, press(k, hold = 2, after = 6) { Input.set(k, true); for (let i = 0; i < hold; i++) tick(); Input.set(k, false); for (let i = 0; i < after; i++) tick(); render(); } };
+window.__game = { setScale: S => { Game.fixedScale = 1; setScale(S); render(); }, Game, Input, Events, MAPS, shopFlow, SPECIES, Battle, Overworld, heroStats, newGameState, startOverworld, UI, say, yesNo, startMenu, summaryScreen, bagScreen, equipScreen, optionsScreen, shopFlow, pickMoveToForget, blackText, dexScreen, talentScreen, craftScreen, Events, step(n = 1) { for (let i = 0; i < n; i++) tick(); render(); }, press(k, hold = 2, after = 6) { Input.set(k, true); for (let i = 0; i < hold; i++) tick(); Input.set(k, false); for (let i = 0; i < after; i++) tick(); render(); } };
 try { if (window.claude && window.claude.hot && window.claude.hot.ready) window.claude.hot.ready(boot); else boot((window.claude && window.claude.hot && window.claude.hot.data) || {}); } catch (e) { boot({}); }

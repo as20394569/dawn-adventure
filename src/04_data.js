@@ -98,7 +98,7 @@ const SPECIES = {
   mudSlime: { n: '泥沼姆', t: '水', base: [70, 50, 55, 55, 55, 30], exp: 82, gold: 18, mat: 'gel', trait: 'healer', learn: [[1, 'bubble'], [1, 'waterGun'], [1, 'harden'], [10, 'acid']], dex: '混著泥沙的泡泡姆。會吸收污水回復。' },
   crystalPebble: { n: '晶石丸', t: '岩', base: [55, 60, 80, 45, 55, 30], exp: 88, gold: 22, mat: 'crystal', learn: [[1, 'tackle'], [1, 'harden'], [1, 'rockThrow'], [12, 'rockSlide']], dex: '身上長滿水晶的石丸。非常堅硬。' },
   crystalGolem: { n: '水晶魔像', t: '岩', base: [90, 62, 85, 60, 65, 40], exp: 320, gold: 0, boss: 1, drop: 'crystalHeart', learn: [[1, 'rockThrow'], [1, 'stomp'], [1, 'ironWall'], [1, 'ancientRoar']], dex: '沉睡在井底深處的水晶石像。據說和異界之門同時誕生。' },
-  golem: { n: '古岩魔像', t: '岩', base: [82, 48, 80, 45, 55, 35], exp: 200, gold: 0, boss: 1, drop: 'golemCore', learn: [[1, 'rockThrow'], [1, 'stomp'], [1, 'ironWall'], [1, 'ancientRoar']], dex: '守護古代遺跡的石像。沉睡了千年後甦醒。' },
+  golem: { n: '古岩魔像', t: '岩', base: [82, 48, 80, 45, 55, 35], exp: 200, gold: 0, boss: 1, drop: 'golemVisor', learn: [[1, 'rockThrow'], [1, 'stomp'], [1, 'ironWall'], [1, 'ancientRoar']], dex: '守護古代遺跡的石像。沉睡了千年後甦醒。' },
 };
 
 const HERO_LEARN = [[1, 'slash'], [1, 'glare'], [4, 'flameSlash'], [6, 'focus'], [8, 'aquaBlade'], [10, 'thunder'], [11, 'gale'], [13, 'leafBlade'], [15, 'heal'], [18, 'blaze']];
@@ -113,15 +113,6 @@ const ITEMS = {
   ether: { n: '活力茶', price: 300, d: '所有技能的PP各恢復10點。', use: 'pp', v: 10 },
   smoke: { n: '煙霧彈', price: 150, d: '在戰鬥中使用，必定能從野生魔物身邊逃走。', use: 'escape' },
   powerFruit: { n: '力量果實', price: 0, sell: 500, d: '神奇的果實。吃下後力量永久+2。', use: 'boost', v: { str: 2 } },
-  fangDagger: { n: '狼牙短劍', q: 2, price: 0, sell: 400, equip: 'weapon', bonus: { atk: 5 }, aff: { crit: 6, vs: ['一般', 20] }, d: '用狂牙狼的尖牙磨成的短劍。' },
-  thornRing: { n: '荊棘指環', q: 3, price: 0, sell: 600, equip: 'acc', bonus: { spa: 2 }, aff: { drain: 12, hit: 5 }, d: '纏著活荊棘的指環。攻擊時會吸取生命。' },
-  scaleArmor: { n: '鱷鱗甲', q: 3, price: 0, sell: 700, equip: 'armor', bonus: { def: 4, spd: 3 }, aff: { resist: ['水', 30] }, d: '用沼澤鱷的鱗片做成的鎧甲。' },
-  golemCore: { n: '古岩之心', q: 4, price: 0, sell: 0, equip: 'acc', bonus: { hp: 10, def: 3 }, aff: { crit: 4, resist: ['岩', 20] }, d: '魔像核心的碎片，仍有微弱的脈動。' },
-  knightSword: { n: '騎士長劍', q: 2, price: 2600, equip: 'weapon', bonus: { atk: 7 }, aff: { hit: 5 }, d: '王都騎士團制式的長劍。' },
-  chainMail: { n: '鎖子甲', q: 2, price: 2000, equip: 'armor', bonus: { def: 5, spd: 3 }, d: '細密鐵環編成的鎧甲。' },
-  hunterLeather: { n: '獵人皮甲', q: 2, price: 0, sell: 500, equip: 'armor', bonus: { def: 3, spd: 2 }, aff: { eva: 5 }, d: '森林獵人穿的輕便皮甲。' },
-  mossBracer: { n: '苔石護腕', q: 3, price: 0, sell: 600, equip: 'acc', bonus: { def: 3, hp: 8 }, aff: { resist: ['草', 20] }, d: '苔石巨人身上剝落的石環。' },
-  dawnSword: { n: '晨曦之劍', q: 5, price: 0, sell: 0, equip: 'weapon', bonus: { atk: 9 }, aff: { crit: 8, vs: ['岩', 25] }, d: '藏在森林深處的古劍，劍身映著黎明的光。' },
   luckClover: { n: '幸運草', price: 0, sell: 300, d: '四片葉子的幸運草。使用後幸運永久+2。', use: 'boost', v: { luk: 2 } },
   wisdomFruit: { n: '智慧果實', price: 0, sell: 500, d: '神奇的果實。吃下後智力永久+2。', use: 'boost', v: { int: 2 } },
   herb: { n: '藥草', mat: 1, price: 0, sell: 10, d: '野外採集的藥草。可以用來調製藥品。' },
@@ -131,34 +122,19 @@ const ITEMS = {
   frogSkin: { n: '蛙皮', mat: 1, price: 0, sell: 25, d: '有彈性的蛙皮。' }, spore: { n: '毒孢子', mat: 1, price: 0, sell: 30, d: '裝在袋子裡的毒孢子。' },
   leaf: { n: '靈葉', mat: 1, price: 0, sell: 30, d: '翠狐尾巴上的葉子。' }, crystal: { n: '水晶碎片', mat: 1, price: 0, sell: 60, d: '地下水道的水晶碎片。' },
   rope: { n: '繩索', key: 1, once: 1, price: 500, d: '結實的長繩索。可以用來下到深處。' },
-  featherBoots: { n: '羽翼之靴', q: 2, price: 0, sell: 300, equip: 'acc', bonus: { spe: 5 }, aff: { eva: 4 }, d: '縫著羽毛的長靴。' },
-  stoneMail: { n: '硬石鎧甲', q: 2, price: 0, sell: 400, equip: 'armor', bonus: { def: 6 }, aff: { resist: ['岩', 15] }, d: '鑲著硬石的鎧甲。' },
-  foxBlade: { n: '狐火劍', q: 3, price: 0, sell: 800, equip: 'weapon', bonus: { atk: 7 }, aff: { crit: 4, vs: ['草', 20] }, d: '劍身燃著狐火的劍。' },
-  frogCloak: { n: '蛙皮斗篷', q: 3, price: 0, sell: 600, equip: 'armor', bonus: { def: 4, spd: 5 }, aff: { resist: ['毒', 30] }, d: '防水又防毒的斗篷。' },
-  sporeCharm: { n: '孢子護符', q: 3, price: 0, sell: 600, equip: 'acc', bonus: { spa: 5 }, aff: { drain: 8 }, d: '封著孢子的護符。' },
-  crystalBlade: { n: '水晶劍', q: 4, price: 0, sell: 1500, equip: 'weapon', bonus: { atk: 10 }, aff: { crit: 6, vs: ['水', 25] }, d: '用水晶碎片鍛造的利劍。' },
-  crystalHeart: { n: '水晶之心', q: 5, price: 0, sell: 0, equip: 'acc', bonus: { hp: 15, atk: 3, spa: 3, spe: 3 }, aff: { crit: 5 }, d: '水晶魔像的核心，閃耀著異界的光芒。' },
-  ironSword: { n: '鐵劍', price: 1200, equip: 'weapon', bonus: { atk: 4 }, d: '堅固的鐵劍。物攻+4' },
-  woodSword: { n: '木劍', price: 0, sell: 50, equip: 'weapon', bonus: { atk: 1 }, d: '練習用的木劍。物攻+1' },
-  clothes: { n: '旅行布衣', price: 0, sell: 50, equip: 'armor', bonus: { def: 1 }, d: '輕便的旅行服裝。物防+1' },
-  leather: { n: '皮甲', price: 900, equip: 'armor', bonus: { def: 3, spd: 2 }, d: '結實的皮甲。物防+3 魔防+2' },
-  moonCharm: { n: '月光護符', q: 4, price: 0, sell: 0, equip: 'acc', bonus: { spa: 3, spe: 3 }, d: '從井底撈起的古老護符，散發著淡淡月光。魔攻+3 速度+3' },
-  charm: { n: '魔法護符', price: 1000, equip: 'acc', bonus: { spa: 4 }, d: '注入魔力的護符。魔攻+4' },
-  boots: { n: '疾風靴', price: 800, equip: 'acc', bonus: { spe: 4 }, d: '穿上後腳步變得輕快。速度+4' },
-  uniform: { n: '學生制服', price: 0, equip: 'armor', bonus: { def: 1 }, d: '原本世界學校的制服。在這裡好像很少見。物防+1' },
   phone: { n: '手機', key: 1, use: 'phone', d: '從原本的世界帶來的手機。' },
   license: { n: '冒險者證', key: 1, d: '村長交給你的冒險者證明。持有它就能走出萌芽鎮。' },
 };
-const shopList = () => { const f = Game.st.flags; return SHOP_LIST.filter(k => !(k === 'superPotion' && f.caravan === 'lost')).concat(f.croc ? ['knightSword', 'chainMail'] : [], f.caravan === 'lost' && f.golem ? ['rope'] : []); };
-const PEDDLER_LIST = ['rope', 'superPotion', 'ether', 'powerFruit'];
-const priceOf = k => Math.round(ITEMS[k].price * (Game.st.flags.caravan === 'saved' ? 0.9 : Game.st.flags.caravan === 'lost' && k === 'rope' ? 3 : 1));
+const shopList = () => { const f = Game.st.flags; return SHOP_LIST.filter(k => !(k === 'superPotion' && f.caravan === 'lost')).concat(f.croc ? ['knightSword', 'guardHelm', 'chainMail'] : [], f.caravan === 'lost' && f.golem ? ['rope'] : []); };
+const PEDDLER_LIST = ['rope', 'superPotion', 'ether', 'powerFruit', 'knightHelm', 'knightGreaves'];
+const priceOf = k => Math.round((ITEMS[k] || GEAR[k]).price * (Game.st.flags.caravan === 'saved' ? 0.9 : Game.st.flags.caravan === 'lost' && k === 'rope' ? 3 : 1));
 const RECIPES = [
   { out: 'potion', n: 2, mats: { herb: 2 } }, { out: 'superPotion', mats: { herb: 3, gel: 1 } },
   { out: 'featherBoots', mats: { feather: 4 }, gold: 300 }, { out: 'stoneMail', mats: { stone: 5 }, gold: 400 },
   { out: 'foxBlade', mats: { foxfire: 4, stinger: 2 }, gold: 800 }, { out: 'frogCloak', mats: { frogSkin: 4, gel: 2 }, gold: 600 },
   { out: 'sporeCharm', mats: { spore: 4, shroomCap: 3 }, gold: 600 }, { out: 'crystalBlade', mats: { crystal: 5, leaf: 3 }, gold: 1500 },
 ];
-const SHOP_LIST = ['potion', 'superPotion', 'antidote', 'parlyzHeal', 'awakening', 'burnHeal', 'ether', 'smoke', 'ironSword', 'leather', 'charm', 'boots'];
+const SHOP_LIST = ['potion', 'superPotion', 'antidote', 'parlyzHeal', 'awakening', 'burnHeal', 'ether', 'smoke', 'ironSword', 'apprenticeStaff', 'clothCap', 'leather', 'travelBoots', 'charm', 'swiftFeather'];
 const CLASSES = {
   swordsman: { n: '劍士', tier: 1, st: { atk: 3, def: 2, crit: 3 }, move: 'powerSlash', d: '擅長近身劍術。物攻、物防、會心提升。' },
   mage: { n: '魔導士', tier: 1, st: { spa: 4, spd: 2, elem: 10 }, move: 'manaBurst', d: '操控魔力。魔攻、魔防、屬性傷害提升。' },
@@ -182,7 +158,6 @@ const TALENTS = [
   { id: 'agile', n: '身手矯健', line: 2, max: 3, d: '迴避+3%／級', st: { eva: 3 } },
   { id: 'counter', n: '反擊架勢', line: 2, max: 1, d: '選擇「防禦」時被攻擊，會立刻反擊對手。', st: { counter: 1 }, req: 'body' },
 ];
-const EQUIP_SLOTS = { weapon: '武器', armor: '防具', acc: '飾品' };
 
 /* ---------------- Maps ----------------
  T tree  . grass  , grass2  f flower(red) y flower(yellow)  : path  # tall grass  L ledge  W water  = bridge
@@ -360,6 +335,7 @@ const MAPS = {
       { id: 'i7', x: 13, y: 21, item: 'awakening' },
     ],
     springs: 1,
+    gearPool: ['ironSword', 'apprenticeStaff', 'mistDagger', 'clothCap', 'leather', 'travelBoots', 'mistBoots', 'swiftFeather', 'wolfNecklace'],
     encounters: [
       { y0: 26, y1: 99, rate: 0.11, table: [['mush', 3, 5, 32], ['bird', 3, 5, 32], ['pebble', 3, 5, 12], ['slime', 4, 5, 24]] },
       { y0: 11, y1: 25, rate: 0.11, table: [['fox', 6, 8, 20], ['bee', 6, 8, 20], ['frog', 6, 8, 20], ['mush', 6, 8, 10], ['bird', 6, 8, 10], ['pebble', 6, 8, 10], ['slime', 7, 8, 10]] },
@@ -395,9 +371,10 @@ const MAPS = {
     npcs: [{ id: 'herbalist', x: 19, y: 4, dir: 'down', look: 'old', name: '藥草師' }],
     elites: [{ id: 'mossGiant', sp: 'mossGiant', lv: 13, x: 4, y: 17, dir: 'right', sight: 2 }],
     items: [
-      { id: 'f1', x: 14, y: 2, item: 'wisdomFruit' }, { id: 'f2', x: 4, y: 9, item: 'hunterLeather' }, { id: 'f3', x: 19, y: 14, item: 'superPotion', n: 2 },
-      { id: 'f4', x: 16, y: 19, gold: 500 }, { id: 'f5', x: 1, y: 19, item: 'luckClover' }, { id: 'f6', x: 1, y: 1, item: 'dawnSword' },
+      { id: 'f1', x: 14, y: 2, item: 'wisdomFruit' }, { id: 'f2', x: 4, y: 9, item: 'hunterLeather', q: 2 }, { id: 'f3', x: 19, y: 14, item: 'superPotion', n: 2 },
+      { id: 'f4', x: 16, y: 19, gold: 500 }, { id: 'f5', x: 1, y: 19, item: 'luckClover' }, { id: 'f6', x: 1, y: 1, item: 'dawnSword', q: 4 },
     ],
+    gearPool: ['mistDagger', 'oakStaff', 'guardHelm', 'hunterLeather', 'mistBoots', 'wolfNecklace', 'herbPouch'],
     gathers: [{ id: 'gf1', x: 9, y: 12, mat: 'herb' }, { id: 'gf2', x: 9, y: 18, mat: 'herb' }],
     encounters: [{ y0: 0, y1: 99, rate: 0.12, table: [['thornMush', 9, 11, 25], ['nightBird', 9, 11, 25], ['leafFox', 10, 12, 25], ['frog', 9, 11, 10], ['bee', 9, 11, 15]] }],
   },
@@ -422,6 +399,7 @@ const MAPS = {
     exit: { x: 7, y: 13, to: ['town', 18, 18] },
     boss: { sp: 'crystalGolem', lv: 18, x: 7, y: 2, flag: 'crystalBoss', ev: 'hiddenBoss' },
     items: [{ id: 's1', x: 1, y: 8, item: 'ether', n: 2 }, { id: 's2', x: 14, y: 5, item: 'superPotion', n: 2 }, { id: 's3', x: 1, y: 12, gold: 800 }, { id: 's4', x: 14, y: 10, item: 'powerFruit' }],
+    gearPool: ['knightSword', 'ruinStaff', 'knightHelm', 'chainMail', 'knightGreaves', 'thornRing', 'herbPouch'],
     gathers: [{ id: 'gs1', x: 4, y: 6, mat: 'crystal' }, { id: 'gs2', x: 10, y: 10, mat: 'crystal' }],
     encounters: [{ y0: 0, y1: 99, rate: 0.08, table: [['caveBat', 14, 16, 35], ['mudSlime', 14, 16, 35], ['crystalPebble', 15, 17, 30]] }],
   },

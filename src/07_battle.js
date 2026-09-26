@@ -86,7 +86,7 @@ class Battle {
     const dx = st.dex || (st.dex = {}); (dx[cfg.sp] || (dx[cfg.sp] = { won: 0 })).seen = 1;
     Object.defineProperty(H, 'hp', { get: () => st.hp, set: v => st.hp = v }); Object.defineProperty(H, 'status', { get: () => st.status, set: v => st.status = v });
     this.bg = buildBattleBG(cfg.bg);
-    this.imgF = battleSprite(cfg.sp); this.foeTX = FOE_X; this.shadowF = buildShadow(Math.round(this.imgF.bb.w * 0.38), 4); this.imgH = heroBattleImg(0, st.equip.weapon); this.imgH2 = heroBattleImg(1, st.equip.weapon);
+    this.imgF = battleSprite(cfg.sp); this.foeTX = FOE_X; this.shadowF = buildShadow(Math.round(this.imgF.bb.w * 0.38), 4); this.imgH = heroBattleImg(0, weaponSpr(st)); this.imgH2 = heroBattleImg(1, weaponSpr(st));
     this.disp = { F: this.F.hp, H: st.hp, exp: st.exp };
     this.foeX = W + 40; this.heroX = -80; this.boxF = -30; this.boxH = BH + 4; this.cover = 1;
     this.offF = { x: 0, y: 0 }; this.offH = { x: 0, y: 0 }; this.sinkF = 0; this.sinkH = 0; this.blinkF = 0; this.blinkH = 0; this.alphaF = 1;
@@ -399,7 +399,8 @@ class Battle {
     const gold = F.boss ? 1000 : sp.gold * F.lv;
     if (gold) { st.money += gold; yield* this.msg(st.name + '得到了' + gold + ' G！'); }
     if (sp.mat && !F.elite && !F.boss && chance(0.5)) { st.bag[sp.mat] = (st.bag[sp.mat] || 0) + 1; yield* this.msg('得到了素材「' + ITEMS[sp.mat].n + '」！', { hold: 30 }); }
-    if (sp.drop) { const it = ITEMS[sp.drop]; st.bag[sp.drop] = (st.bag[sp.drop] || 0) + 1; Sound.jingle('item'); yield* this.msg(F.n + '掉落了【' + QUALITY[it.q][0] + '】' + it.n + '！', { wait: true }); yield* this.msg(gearText(it) + '\n（可以在背包或裝備畫面裝備）', { wait: true }); }
+    if (sp.drop) { const g = makeGear(sp.drop, F.boss ? 4 : 3); Sound.jingle('item'); yield* this.msg(F.n + '掉落了' + gearName(g) + '！', { wait: true }); yield* this.msg(gearText(g) + '\n（可以在裝備畫面裝備）', { wait: true }); }
+    const pool = Game.ow && Game.ow.map && Game.ow.map.d.gearPool; if (pool && !F.elite && !F.boss && chance(0.08)) { const g = makeGear(pick(pool), rollQuality()); Sound.jingle('item'); yield* this.msg(F.n + '掉落了' + gearName(g) + '！', { wait: true }); }
   }
   *gainExp(amount) {
     const st = Game.st; yield* this.msg(st.name + '獲得了' + amount + '點經驗值！', { hold: 20 });

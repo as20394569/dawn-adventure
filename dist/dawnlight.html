@@ -1680,7 +1680,7 @@ const SPECIES = {
   mudSlime: { n: '泥沼姆', t: '水', base: [70, 50, 55, 55, 55, 30], exp: 82, gold: 18, mat: 'gel', trait: 'healer', learn: [[1, 'bubble'], [1, 'waterGun'], [1, 'harden'], [10, 'acid']], dex: '混著泥沙的泡泡姆。會吸收污水回復。' },
   crystalPebble: { n: '晶石丸', t: '岩', base: [55, 60, 80, 45, 55, 30], exp: 88, gold: 22, mat: 'crystal', learn: [[1, 'tackle'], [1, 'harden'], [1, 'rockThrow'], [12, 'rockSlide']], dex: '身上長滿水晶的石丸。非常堅硬。' },
   crystalGolem: { n: '水晶魔像', t: '岩', base: [90, 62, 85, 60, 65, 40], exp: 320, gold: 0, boss: 1, drop: 'crystalHeart', learn: [[1, 'rockThrow'], [1, 'stomp'], [1, 'ironWall'], [1, 'ancientRoar']], dex: '沉睡在井底深處的水晶石像。據說和異界之門同時誕生。' },
-  golem: { n: '古岩魔像', t: '岩', base: [82, 48, 80, 45, 55, 35], exp: 200, gold: 0, boss: 1, drop: 'golemCore', learn: [[1, 'rockThrow'], [1, 'stomp'], [1, 'ironWall'], [1, 'ancientRoar']], dex: '守護古代遺跡的石像。沉睡了千年後甦醒。' },
+  golem: { n: '古岩魔像', t: '岩', base: [82, 48, 80, 45, 55, 35], exp: 200, gold: 0, boss: 1, drop: 'golemVisor', learn: [[1, 'rockThrow'], [1, 'stomp'], [1, 'ironWall'], [1, 'ancientRoar']], dex: '守護古代遺跡的石像。沉睡了千年後甦醒。' },
 };
 
 const HERO_LEARN = [[1, 'slash'], [1, 'glare'], [4, 'flameSlash'], [6, 'focus'], [8, 'aquaBlade'], [10, 'thunder'], [11, 'gale'], [13, 'leafBlade'], [15, 'heal'], [18, 'blaze']];
@@ -1695,15 +1695,6 @@ const ITEMS = {
   ether: { n: '活力茶', price: 300, d: '所有技能的PP各恢復10點。', use: 'pp', v: 10 },
   smoke: { n: '煙霧彈', price: 150, d: '在戰鬥中使用，必定能從野生魔物身邊逃走。', use: 'escape' },
   powerFruit: { n: '力量果實', price: 0, sell: 500, d: '神奇的果實。吃下後力量永久+2。', use: 'boost', v: { str: 2 } },
-  fangDagger: { n: '狼牙短劍', q: 2, price: 0, sell: 400, equip: 'weapon', bonus: { atk: 5 }, aff: { crit: 6, vs: ['一般', 20] }, d: '用狂牙狼的尖牙磨成的短劍。' },
-  thornRing: { n: '荊棘指環', q: 3, price: 0, sell: 600, equip: 'acc', bonus: { spa: 2 }, aff: { drain: 12, hit: 5 }, d: '纏著活荊棘的指環。攻擊時會吸取生命。' },
-  scaleArmor: { n: '鱷鱗甲', q: 3, price: 0, sell: 700, equip: 'armor', bonus: { def: 4, spd: 3 }, aff: { resist: ['水', 30] }, d: '用沼澤鱷的鱗片做成的鎧甲。' },
-  golemCore: { n: '古岩之心', q: 4, price: 0, sell: 0, equip: 'acc', bonus: { hp: 10, def: 3 }, aff: { crit: 4, resist: ['岩', 20] }, d: '魔像核心的碎片，仍有微弱的脈動。' },
-  knightSword: { n: '騎士長劍', q: 2, price: 2600, equip: 'weapon', bonus: { atk: 7 }, aff: { hit: 5 }, d: '王都騎士團制式的長劍。' },
-  chainMail: { n: '鎖子甲', q: 2, price: 2000, equip: 'armor', bonus: { def: 5, spd: 3 }, d: '細密鐵環編成的鎧甲。' },
-  hunterLeather: { n: '獵人皮甲', q: 2, price: 0, sell: 500, equip: 'armor', bonus: { def: 3, spd: 2 }, aff: { eva: 5 }, d: '森林獵人穿的輕便皮甲。' },
-  mossBracer: { n: '苔石護腕', q: 3, price: 0, sell: 600, equip: 'acc', bonus: { def: 3, hp: 8 }, aff: { resist: ['草', 20] }, d: '苔石巨人身上剝落的石環。' },
-  dawnSword: { n: '晨曦之劍', q: 5, price: 0, sell: 0, equip: 'weapon', bonus: { atk: 9 }, aff: { crit: 8, vs: ['岩', 25] }, d: '藏在森林深處的古劍，劍身映著黎明的光。' },
   luckClover: { n: '幸運草', price: 0, sell: 300, d: '四片葉子的幸運草。使用後幸運永久+2。', use: 'boost', v: { luk: 2 } },
   wisdomFruit: { n: '智慧果實', price: 0, sell: 500, d: '神奇的果實。吃下後智力永久+2。', use: 'boost', v: { int: 2 } },
   herb: { n: '藥草', mat: 1, price: 0, sell: 10, d: '野外採集的藥草。可以用來調製藥品。' },
@@ -1713,34 +1704,19 @@ const ITEMS = {
   frogSkin: { n: '蛙皮', mat: 1, price: 0, sell: 25, d: '有彈性的蛙皮。' }, spore: { n: '毒孢子', mat: 1, price: 0, sell: 30, d: '裝在袋子裡的毒孢子。' },
   leaf: { n: '靈葉', mat: 1, price: 0, sell: 30, d: '翠狐尾巴上的葉子。' }, crystal: { n: '水晶碎片', mat: 1, price: 0, sell: 60, d: '地下水道的水晶碎片。' },
   rope: { n: '繩索', key: 1, once: 1, price: 500, d: '結實的長繩索。可以用來下到深處。' },
-  featherBoots: { n: '羽翼之靴', q: 2, price: 0, sell: 300, equip: 'acc', bonus: { spe: 5 }, aff: { eva: 4 }, d: '縫著羽毛的長靴。' },
-  stoneMail: { n: '硬石鎧甲', q: 2, price: 0, sell: 400, equip: 'armor', bonus: { def: 6 }, aff: { resist: ['岩', 15] }, d: '鑲著硬石的鎧甲。' },
-  foxBlade: { n: '狐火劍', q: 3, price: 0, sell: 800, equip: 'weapon', bonus: { atk: 7 }, aff: { crit: 4, vs: ['草', 20] }, d: '劍身燃著狐火的劍。' },
-  frogCloak: { n: '蛙皮斗篷', q: 3, price: 0, sell: 600, equip: 'armor', bonus: { def: 4, spd: 5 }, aff: { resist: ['毒', 30] }, d: '防水又防毒的斗篷。' },
-  sporeCharm: { n: '孢子護符', q: 3, price: 0, sell: 600, equip: 'acc', bonus: { spa: 5 }, aff: { drain: 8 }, d: '封著孢子的護符。' },
-  crystalBlade: { n: '水晶劍', q: 4, price: 0, sell: 1500, equip: 'weapon', bonus: { atk: 10 }, aff: { crit: 6, vs: ['水', 25] }, d: '用水晶碎片鍛造的利劍。' },
-  crystalHeart: { n: '水晶之心', q: 5, price: 0, sell: 0, equip: 'acc', bonus: { hp: 15, atk: 3, spa: 3, spe: 3 }, aff: { crit: 5 }, d: '水晶魔像的核心，閃耀著異界的光芒。' },
-  ironSword: { n: '鐵劍', price: 1200, equip: 'weapon', bonus: { atk: 4 }, d: '堅固的鐵劍。物攻+4' },
-  woodSword: { n: '木劍', price: 0, sell: 50, equip: 'weapon', bonus: { atk: 1 }, d: '練習用的木劍。物攻+1' },
-  clothes: { n: '旅行布衣', price: 0, sell: 50, equip: 'armor', bonus: { def: 1 }, d: '輕便的旅行服裝。物防+1' },
-  leather: { n: '皮甲', price: 900, equip: 'armor', bonus: { def: 3, spd: 2 }, d: '結實的皮甲。物防+3 魔防+2' },
-  moonCharm: { n: '月光護符', q: 4, price: 0, sell: 0, equip: 'acc', bonus: { spa: 3, spe: 3 }, d: '從井底撈起的古老護符，散發著淡淡月光。魔攻+3 速度+3' },
-  charm: { n: '魔法護符', price: 1000, equip: 'acc', bonus: { spa: 4 }, d: '注入魔力的護符。魔攻+4' },
-  boots: { n: '疾風靴', price: 800, equip: 'acc', bonus: { spe: 4 }, d: '穿上後腳步變得輕快。速度+4' },
-  uniform: { n: '學生制服', price: 0, equip: 'armor', bonus: { def: 1 }, d: '原本世界學校的制服。在這裡好像很少見。物防+1' },
   phone: { n: '手機', key: 1, use: 'phone', d: '從原本的世界帶來的手機。' },
   license: { n: '冒險者證', key: 1, d: '村長交給你的冒險者證明。持有它就能走出萌芽鎮。' },
 };
-const shopList = () => { const f = Game.st.flags; return SHOP_LIST.filter(k => !(k === 'superPotion' && f.caravan === 'lost')).concat(f.croc ? ['knightSword', 'chainMail'] : [], f.caravan === 'lost' && f.golem ? ['rope'] : []); };
-const PEDDLER_LIST = ['rope', 'superPotion', 'ether', 'powerFruit'];
-const priceOf = k => Math.round(ITEMS[k].price * (Game.st.flags.caravan === 'saved' ? 0.9 : Game.st.flags.caravan === 'lost' && k === 'rope' ? 3 : 1));
+const shopList = () => { const f = Game.st.flags; return SHOP_LIST.filter(k => !(k === 'superPotion' && f.caravan === 'lost')).concat(f.croc ? ['knightSword', 'guardHelm', 'chainMail'] : [], f.caravan === 'lost' && f.golem ? ['rope'] : []); };
+const PEDDLER_LIST = ['rope', 'superPotion', 'ether', 'powerFruit', 'knightHelm', 'knightGreaves'];
+const priceOf = k => Math.round((ITEMS[k] || GEAR[k]).price * (Game.st.flags.caravan === 'saved' ? 0.9 : Game.st.flags.caravan === 'lost' && k === 'rope' ? 3 : 1));
 const RECIPES = [
   { out: 'potion', n: 2, mats: { herb: 2 } }, { out: 'superPotion', mats: { herb: 3, gel: 1 } },
   { out: 'featherBoots', mats: { feather: 4 }, gold: 300 }, { out: 'stoneMail', mats: { stone: 5 }, gold: 400 },
   { out: 'foxBlade', mats: { foxfire: 4, stinger: 2 }, gold: 800 }, { out: 'frogCloak', mats: { frogSkin: 4, gel: 2 }, gold: 600 },
   { out: 'sporeCharm', mats: { spore: 4, shroomCap: 3 }, gold: 600 }, { out: 'crystalBlade', mats: { crystal: 5, leaf: 3 }, gold: 1500 },
 ];
-const SHOP_LIST = ['potion', 'superPotion', 'antidote', 'parlyzHeal', 'awakening', 'burnHeal', 'ether', 'smoke', 'ironSword', 'leather', 'charm', 'boots'];
+const SHOP_LIST = ['potion', 'superPotion', 'antidote', 'parlyzHeal', 'awakening', 'burnHeal', 'ether', 'smoke', 'ironSword', 'apprenticeStaff', 'clothCap', 'leather', 'travelBoots', 'charm', 'swiftFeather'];
 const CLASSES = {
   swordsman: { n: '劍士', tier: 1, st: { atk: 3, def: 2, crit: 3 }, move: 'powerSlash', d: '擅長近身劍術。物攻、物防、會心提升。' },
   mage: { n: '魔導士', tier: 1, st: { spa: 4, spd: 2, elem: 10 }, move: 'manaBurst', d: '操控魔力。魔攻、魔防、屬性傷害提升。' },
@@ -1764,7 +1740,6 @@ const TALENTS = [
   { id: 'agile', n: '身手矯健', line: 2, max: 3, d: '迴避+3%／級', st: { eva: 3 } },
   { id: 'counter', n: '反擊架勢', line: 2, max: 1, d: '選擇「防禦」時被攻擊，會立刻反擊對手。', st: { counter: 1 }, req: 'body' },
 ];
-const EQUIP_SLOTS = { weapon: '武器', armor: '防具', acc: '飾品' };
 
 /* ---------------- Maps ----------------
  T tree  . grass  , grass2  f flower(red) y flower(yellow)  : path  # tall grass  L ledge  W water  = bridge
@@ -1942,6 +1917,7 @@ const MAPS = {
       { id: 'i7', x: 13, y: 21, item: 'awakening' },
     ],
     springs: 1,
+    gearPool: ['ironSword', 'apprenticeStaff', 'mistDagger', 'clothCap', 'leather', 'travelBoots', 'mistBoots', 'swiftFeather', 'wolfNecklace'],
     encounters: [
       { y0: 26, y1: 99, rate: 0.11, table: [['mush', 3, 5, 32], ['bird', 3, 5, 32], ['pebble', 3, 5, 12], ['slime', 4, 5, 24]] },
       { y0: 11, y1: 25, rate: 0.11, table: [['fox', 6, 8, 20], ['bee', 6, 8, 20], ['frog', 6, 8, 20], ['mush', 6, 8, 10], ['bird', 6, 8, 10], ['pebble', 6, 8, 10], ['slime', 7, 8, 10]] },
@@ -1977,9 +1953,10 @@ const MAPS = {
     npcs: [{ id: 'herbalist', x: 19, y: 4, dir: 'down', look: 'old', name: '藥草師' }],
     elites: [{ id: 'mossGiant', sp: 'mossGiant', lv: 13, x: 4, y: 17, dir: 'right', sight: 2 }],
     items: [
-      { id: 'f1', x: 14, y: 2, item: 'wisdomFruit' }, { id: 'f2', x: 4, y: 9, item: 'hunterLeather' }, { id: 'f3', x: 19, y: 14, item: 'superPotion', n: 2 },
-      { id: 'f4', x: 16, y: 19, gold: 500 }, { id: 'f5', x: 1, y: 19, item: 'luckClover' }, { id: 'f6', x: 1, y: 1, item: 'dawnSword' },
+      { id: 'f1', x: 14, y: 2, item: 'wisdomFruit' }, { id: 'f2', x: 4, y: 9, item: 'hunterLeather', q: 2 }, { id: 'f3', x: 19, y: 14, item: 'superPotion', n: 2 },
+      { id: 'f4', x: 16, y: 19, gold: 500 }, { id: 'f5', x: 1, y: 19, item: 'luckClover' }, { id: 'f6', x: 1, y: 1, item: 'dawnSword', q: 4 },
     ],
+    gearPool: ['mistDagger', 'oakStaff', 'guardHelm', 'hunterLeather', 'mistBoots', 'wolfNecklace', 'herbPouch'],
     gathers: [{ id: 'gf1', x: 9, y: 12, mat: 'herb' }, { id: 'gf2', x: 9, y: 18, mat: 'herb' }],
     encounters: [{ y0: 0, y1: 99, rate: 0.12, table: [['thornMush', 9, 11, 25], ['nightBird', 9, 11, 25], ['leafFox', 10, 12, 25], ['frog', 9, 11, 10], ['bee', 9, 11, 15]] }],
   },
@@ -2004,6 +1981,7 @@ const MAPS = {
     exit: { x: 7, y: 13, to: ['town', 18, 18] },
     boss: { sp: 'crystalGolem', lv: 18, x: 7, y: 2, flag: 'crystalBoss', ev: 'hiddenBoss' },
     items: [{ id: 's1', x: 1, y: 8, item: 'ether', n: 2 }, { id: 's2', x: 14, y: 5, item: 'superPotion', n: 2 }, { id: 's3', x: 1, y: 12, gold: 800 }, { id: 's4', x: 14, y: 10, item: 'powerFruit' }],
+    gearPool: ['knightSword', 'ruinStaff', 'knightHelm', 'chainMail', 'knightGreaves', 'thornRing', 'herbPouch'],
     gathers: [{ id: 'gs1', x: 4, y: 6, mat: 'crystal' }, { id: 'gs2', x: 10, y: 10, mat: 'crystal' }],
     encounters: [{ y0: 0, y1: 99, rate: 0.08, table: [['caveBat', 14, 16, 35], ['mudSlime', 14, 16, 35], ['crystalPebble', 15, 17, 30]] }],
   },
@@ -2038,6 +2016,110 @@ const ELITE_TEXT = {
   croc: ['咕嚕嚕……', '沼澤鱷擋住了橋頭，不肯讓路！'],
   mossGiant: ['……轟隆……', '苔石巨人擋住了去路！'],
 };
+
+/* ===================== GEAR: slots, random rolls, qualities, affixes ===================== */
+// 6 slots: head/body/feet give the big numbers, accessories are small but carry special effects
+const EQUIP_SLOTS = { weapon: '武器', head: '頭部', body: '身體', feet: '腳部', acc1: '飾品', acc2: '飾品' };
+const SLOT_OF = s => s === 'acc1' || s === 'acc2' ? 'acc' : s;
+// 藍 → 紫(+1 random affix) → 紅(stronger base) → 金(+2 random affixes)
+const GQ = [null, ['藍', '#86b4ff', 1.0], ['紫', '#c58cff', 1.1], ['紅', '#ff6b7a', 1.25], ['金', '#ffc44d', 1.4]];
+const GEAR = {
+  // weapons
+  woodSword: { n: '練習木劍', slot: 'weapon', t: 1, st: { atk: 2 }, spr: 'woodSword', d: '村長的學徒練習用的木劍。' },
+  ironSword: { n: '萌芽鎮鐵劍', slot: 'weapon', t: 1, st: { atk: 5 }, price: 1200, d: '鎮上鐵匠打的樸素鐵劍。' },
+  apprenticeStaff: { n: '見習魔杖', slot: 'weapon', t: 1, st: { spa: 5 }, price: 1200, spr: 'woodSword', d: '魔法學徒用的樺木杖。' },
+  mistDagger: { n: '晨霧短刀', slot: 'weapon', t: 2, st: { atk: 6 }, sp: { crit: 4 }, d: '在晨霧道路上撿到的旅人短刀。' },
+  oakStaff: { n: '森林橡木杖', slot: 'weapon', t: 2, st: { spa: 7 }, sp: { elem: 5 }, spr: 'woodSword', d: '用迷霧森林的古橡木削成的杖。' },
+  fangDagger: { n: '狼王牙刃', slot: 'weapon', t: 2, st: { atk: 7 }, sp: { vs: ['一般', 15] }, d: '狂牙狼的尖牙磨成的短刃。' },
+  knightSword: { n: '騎士團長劍', slot: 'weapon', t: 3, st: { atk: 9 }, sp: { hit: 5 }, price: 2600, d: '王都騎士團的制式長劍。' },
+  foxBlade: { n: '狐火劍', slot: 'weapon', t: 3, st: { atk: 8 }, sp: { vs: ['草', 20] }, d: '劍身燃著狐火的劍。' },
+  ruinStaff: { n: '古岩符文杖', slot: 'weapon', t: 3, st: { spa: 10 }, sp: { elem: 8 }, spr: 'woodSword', d: '刻著古岩遺跡符文的石杖。' },
+  crystalBlade: { n: '水晶劍', slot: 'weapon', t: 4, st: { atk: 11 }, sp: { vs: ['水', 20] }, d: '用地下水道的水晶鍛造的利劍。' },
+  dawnSword: { n: '晨曦之劍', slot: 'weapon', t: 4, st: { atk: 11 }, sp: { crit: 6, vs: ['岩', 20] }, d: '藏在森林深處的古劍，劍身映著黎明的光。' },
+  // head
+  clothCap: { n: '旅人布帽', slot: 'head', t: 1, st: { spd: 2, def: 1 }, price: 400, d: '旅人常戴的布帽。' },
+  guardHelm: { n: '萌芽鎮衛兵盔', slot: 'head', t: 2, st: { def: 3, spd: 2 }, price: 1100, d: '萌芽鎮衛兵用過的舊頭盔。' },
+  knightHelm: { n: '騎士團鐵盔', slot: 'head', t: 3, st: { def: 5, spd: 3 }, price: 2200, d: '王都騎士團的鐵盔。' },
+  golemVisor: { n: '古岩面甲', slot: 'head', t: 4, st: { def: 6, spd: 5 }, d: '用古岩魔像的碎片打磨成的面甲。' },
+  // body
+  uniform: { n: '學生制服', slot: 'body', t: 1, st: { def: 2, spd: 2 }, d: '原本世界的學校制服。在這裡很少見。' },
+  leather: { n: '旅人皮甲', slot: 'body', t: 1, st: { def: 4, spd: 1 }, price: 900, d: '結實的皮甲。' },
+  hunterLeather: { n: '獵人皮甲', slot: 'body', t: 2, st: { def: 5, spd: 3 }, d: '森林獵人穿的輕便皮甲。' },
+  frogCloak: { n: '蛙皮斗篷', slot: 'body', t: 2, st: { def: 5, spd: 5 }, sp: { resist: ['毒', 20] }, d: '防水又防毒的斗篷。' },
+  chainMail: { n: '鎖子甲', slot: 'body', t: 3, st: { def: 8, spd: 3 }, price: 2000, d: '細密鐵環編成的鎧甲。' },
+  scaleArmor: { n: '鱷鱗甲', slot: 'body', t: 3, st: { def: 7, spd: 5 }, sp: { resist: ['水', 20] }, d: '沼澤鱷的鱗片做成的鎧甲。' },
+  stoneMail: { n: '硬石鎧甲', slot: 'body', t: 3, st: { def: 9, spd: 2 }, sp: { resist: ['岩', 15] }, d: '鑲著硬石的鎧甲。' },
+  // feet
+  schoolShoes: { n: '學生皮鞋', slot: 'feet', t: 1, st: { spe: 2, def: 1 }, d: '上學穿的皮鞋。走在石板路上會喀喀響。' },
+  travelBoots: { n: '旅人皮靴', slot: 'feet', t: 1, st: { spe: 3, def: 1 }, price: 600, d: '走長路也不會累的皮靴。' },
+  mistBoots: { n: '晨霧長靴', slot: 'feet', t: 2, st: { spe: 4, def: 2 }, d: '浸過晨霧也不會濕的長靴。' },
+  featherBoots: { n: '羽翼之靴', slot: 'feet', t: 2, st: { spe: 5, def: 1 }, d: '縫著羽毛的長靴。' },
+  knightGreaves: { n: '騎士團護脛', slot: 'feet', t: 3, st: { spe: 4, def: 4 }, price: 1800, d: '王都騎士團的鐵護脛。' },
+  // accessories: small numbers, special effects
+  guardBadge: { n: '萌芽鎮護身符', slot: 'acc', t: 1, st: { hp: 3 }, sp: { resist: ['一般', 10] }, d: '村長給的護身符。刻著萌芽鎮的新芽紋章。' },
+  charm: { n: '魔法護符', slot: 'acc', t: 1, st: { spa: 2 }, sp: { elem: 5 }, price: 1000, d: '注入魔力的護符。' },
+  swiftFeather: { n: '疾風羽飾', slot: 'acc', t: 1, st: { spe: 1 }, sp: { eva: 4 }, price: 800, d: '啾啾鳥羽毛做的髮飾。' },
+  wolfNecklace: { n: '狼牙頸鍊', slot: 'acc', t: 2, st: { atk: 1 }, sp: { crit: 5 }, d: '晨霧道路的獵人愛戴的頸鍊。' },
+  herbPouch: { n: '藥草香囊', slot: 'acc', t: 2, st: { hp: 4 }, sp: { resist: ['毒', 15] }, d: '藥草師愛用的香囊。' },
+  sporeCharm: { n: '孢子護符', slot: 'acc', t: 2, st: { spa: 2 }, sp: { drain: 6 }, d: '封著孢子的護符。' },
+  thornRing: { n: '荊棘指環', slot: 'acc', t: 3, st: { spa: 2 }, sp: { drain: 10, hit: 5 }, d: '纏著活荊棘的指環。' },
+  mossBracer: { n: '苔石護腕', slot: 'acc', t: 3, st: { hp: 6, def: 1 }, sp: { resist: ['草', 20] }, d: '苔石巨人身上剝落的石環。' },
+  moonCharm: { n: '月光護符', slot: 'acc', t: 4, st: { spa: 2, spe: 2 }, sp: { elem: 10 }, d: '從井底撈起的古老護符，散發著淡淡月光。' },
+  crystalHeart: { n: '水晶之心', slot: 'acc', t: 4, st: { hp: 8, atk: 2, spa: 2 }, sp: { crit: 5 }, d: '水晶魔像的核心，閃耀著異界的光芒。' },
+};
+const STATK = ['hp', 'atk', 'def', 'spa', 'spd', 'spe'];
+const SP_NAMES = { crit: '會心', hit: '命中', eva: '迴避', drain: '吸血', elem: '屬性傷害' };
+const AFFIX = [['crit', 2, 6], ['hit', 3, 8], ['eva', 2, 5], ['drain', 3, 7], ['hp', 3, 10], ['atk', 1, 3], ['spa', 1, 3], ['def', 1, 3], ['spd', 1, 3], ['spe', 1, 3], ['elem', 4, 10], ['vs', 8, 15], ['resist', 8, 15]];
+const AFF_T = ['一般', '火', '水', '草', '雷', '岩', '毒', '飛'];
+function rollAffixes(n) {
+  const out = [], used = new Set();
+  while (out.length < n) { const [k, a, b] = pick(AFFIX); if (used.has(k)) continue; used.add(k); out.push(k === 'vs' || k === 'resist' ? [k, pick(AFF_T), rnd(a, b)] : [k, rnd(a, b)]); }
+  return out;
+}
+function makeGear(b, q = 1, r) {
+  const st = Game.st; st.gid = (st.gid || 0) + 1;
+  const g = { u: st.gid, b, q, r: r ?? Math.round((0.75 + Math.random() * 0.25) * 100) / 100, a: q === 2 ? rollAffixes(1) : q === 4 ? rollAffixes(2) : [] };
+  (st.gear || (st.gear = [])).push(g); return g;
+}
+const gearBy = (u, st = Game.st) => (st.gear || []).find(g => g.u === u);
+const equippedGear = (st = Game.st) => Object.values(st.equip || {}).map(u => gearBy(u, st)).filter(Boolean);
+const isEquipped = (g, st = Game.st) => Object.values(st.equip || {}).includes(g.u);
+function gearStats(g) {
+  const B = GEAR[g.b], m = GQ[g.q][2] * g.r, o = { st: {}, sp: { vs: [], resist: {} } };
+  for (const k in B.st) o.st[k] = Math.max(1, Math.round(B.st[k] * m));
+  const add = (k, v, t) => { if (k === 'vs') o.sp.vs.push([t, v]); else if (k === 'resist') o.sp.resist[t] = (o.sp.resist[t] || 0) + v; else if (STATK.includes(k)) o.st[k] = (o.st[k] || 0) + v; else o.sp[k] = (o.sp[k] || 0) + v; };
+  for (const k in B.sp || {}) { const v = B.sp[k]; if (Array.isArray(v)) add(k, v[1], v[0]); else add(k, v); }
+  for (const a of g.a || []) if (a.length === 3) add(a[0], a[2], a[1]); else add(a[0], a[1]);
+  return o;
+}
+function gearLines(g) { // [base stats text, special text]
+  const o = gearStats(g), p = [], s = [];
+  for (const k of STATK) if (o.st[k]) p.push(STAT_NAMES[k] + '+' + o.st[k]);
+  for (const k in SP_NAMES) if (o.sp[k]) s.push(SP_NAMES[k] + '+' + o.sp[k] + '%');
+  for (const [t, v] of o.sp.vs) s.push('對' + t + '系+' + v + '%'); for (const t in o.sp.resist) s.push(t + '系傷害-' + o.sp.resist[t] + '%');
+  return [p.join(' '), s.join(' ')];
+}
+const gearText = g => gearLines(g).filter(Boolean).join(' ');
+const gearName = g => '【' + GQ[g.q][0] + '】' + GEAR[g.b].n;
+const gCol = g => GQ[g.q][1];
+const gearSell = g => Math.round((GEAR[g.b].price || GEAR[g.b].t * 400) * 0.3 * GQ[g.q][2] * g.r);
+const rollQuality = () => { const r = Math.random() * 100; return r < 60 ? 1 : r < 90 ? 2 : r < 98 ? 3 : 4; };
+function weaponSpr(st = Game.st) { const g = gearBy(st.equip && st.equip.weapon, st); return g ? GEAR[g.b].spr || 'ironSword' : null; }
+// convert pre-v13 saves (item ids in bag/equip) into gear instances
+const OLD_GEAR = { woodSword: ['woodSword', 1], ironSword: ['ironSword', 1], knightSword: ['knightSword', 2], fangDagger: ['fangDagger', 3], foxBlade: ['foxBlade', 2], crystalBlade: ['crystalBlade', 2], dawnSword: ['dawnSword', 4],
+  uniform: ['uniform', 1], clothes: ['leather', 1], leather: ['leather', 1], chainMail: ['chainMail', 2], hunterLeather: ['hunterLeather', 2], scaleArmor: ['scaleArmor', 3], frogCloak: ['frogCloak', 2], stoneMail: ['stoneMail', 2],
+  charm: ['charm', 1], boots: ['travelBoots', 1], featherBoots: ['featherBoots', 2], thornRing: ['thornRing', 3], sporeCharm: ['sporeCharm', 2], mossBracer: ['mossBracer', 3], moonCharm: ['moonCharm', 4], golemCore: ['golemVisor', 4], crystalHeart: ['crystalHeart', 4] };
+function migrateGear(st) {
+  if (st.gear) return; const G0 = Game.st; Game.st = st; st.gear = []; st.gid = 0;
+  const old = st.equip || {}; st.equip = { weapon: null, head: null, body: null, feet: null, acc1: null, acc2: null };
+  const conv = id => { const m = OLD_GEAR[id]; return m ? makeGear(m[0], m[1], 1) : null; };
+  const slotMap = { weapon: 'weapon', armor: 'body', acc: 'acc1' };
+  for (const s in old) { const g = old[s] && conv(old[s]); if (g) { const sl = GEAR[g.b].slot === 'acc' ? 'acc1' : GEAR[g.b].slot; st.equip[sl] = g.u; if (st.bag[old[s]]) st.bag[old[s]]--; } }
+  for (const k in OLD_GEAR) { for (let i = 0; i < (st.bag[k] || 0); i++) conv(k); delete st.bag[k]; }
+  if (!st.equip.feet) st.equip.feet = makeGear('schoolShoes', 1, 1).u;
+  if (!st.equip.body) st.equip.body = makeGear('uniform', 1, 1).u;
+  Game.st = G0;
+}
 
 /* ===================== UI: text boxes, menus, screens ===================== */
 const UI = {
@@ -2171,14 +2253,14 @@ function heroStats(st = Game.st) {
   };
   for (const k in s) s[k] = Math.floor(s[k]);
   for (const k in st.boost || {}) if (s[k] !== undefined) s[k] += st.boost[k]; // legacy saves
-  for (const slot in st.equip) { const it = st.equip[slot] && ITEMS[st.equip[slot]]; if (it && it.bonus) for (const k in it.bonus) s[k] += it.bonus[k]; }
+  for (const g of equippedGear(st)) { const o = gearStats(g).st; for (const k in o) s[k] += o[k]; }
   s.crit = 3 + a.luk * 0.5;   // 會心率% = 3 + 幸運×0.5
   s.hit = a.dex * 0.5;        // 命中加成% = 靈巧×0.5
   s.eva = a.agi * 0.4;        // 迴避率% = 敏捷×0.4
   s.vs = []; s.resist = {}; s.drain = 0; s.elem = 0; s.counter = 0; // equipment affixes & talents
   for (const T of TALENTS) { const r = (st.tal || {})[T.id] || 0; if (r) for (const k in T.st) s[k] = (s[k] || 0) + T.st[k] * r; }
   const CL = CLASSES[st.cls]; if (CL) for (const k in CL.st) s[k] = (s[k] || 0) + CL.st[k];
-  for (const slot in st.equip) { const it = st.equip[slot] && ITEMS[st.equip[slot]]; const f = it && it.aff; if (!f) continue; s.crit += f.crit || 0; s.hit += f.hit || 0; s.eva += f.eva || 0; s.drain += f.drain || 0; if (f.vs) s.vs.push(f.vs); if (f.resist) s.resist[f.resist[0]] = (s.resist[f.resist[0]] || 0) + f.resist[1]; }
+  for (const g of equippedGear(st)) { const p = gearStats(g).sp; s.crit += p.crit || 0; s.hit += p.hit || 0; s.eva += p.eva || 0; s.drain += p.drain || 0; s.elem += p.elem || 0; s.vs.push(...p.vs); for (const t in p.resist) s.resist[t] = (s.resist[t] || 0) + p.resist[t]; }
   return s;
 }
 const expForLevel = lv => Math.floor(0.8 * lv * lv * lv);
@@ -2198,13 +2280,7 @@ function headerBar(x, title) {
 }
 
 /* ---------- Gear text & quality ---------- */
-function gearText(it) {
-  const p = Object.entries(it.bonus || {}).map(([k, v]) => STAT_NAMES[k] + '+' + v), f = it.aff || {};
-  if (f.crit) p.push('會心+' + f.crit + '%'); if (f.hit) p.push('命中+' + f.hit + '%'); if (f.eva) p.push('迴避+' + f.eva + '%'); if (f.drain) p.push('吸血' + f.drain + '%');
-  if (f.vs) p.push('對' + f.vs[0] + '系+' + f.vs[1] + '%'); if (f.resist) p.push(f.resist[0] + '系傷害-' + f.resist[1] + '%');
-  return p.join(' ');
-}
-const qCol = it => it.q >= 2 ? QUALITY[it.q][1] : UIC.text;
+const qCol = it => UIC.text;
 
 /* ---------- Quests ---------- */
 function questList(st = Game.st) {
@@ -2221,7 +2297,7 @@ function questList(st = Game.st) {
 }
 
 /* ---------- Status (summary) screen ---------- */
-function eqBonus(st) { const eqB = {}; for (const slot in st.equip) { const it = st.equip[slot] && ITEMS[st.equip[slot]]; if (it && it.bonus) for (const k in it.bonus) eqB[k] = (eqB[k] || 0) + it.bonus[k]; } for (const k in st.boost || {}) eqB[k] = (eqB[k] || 0) + st.boost[k]; return eqB; }
+function eqBonus(st) { const eqB = {}; for (const g of equippedGear(st)) { const o = gearStats(g).st; for (const k in o) eqB[k] = (eqB[k] || 0) + o[k]; } for (const k in st.boost || {}) eqB[k] = (eqB[k] || 0) + st.boost[k]; return eqB; }
 function heroCard(x, st) {
   drawWin(x, 4, 24, 168, 70, 'menu');
   x.fillStyle = '#141a30'; x.fillRect(8, 28, 50, 62); x.fillStyle = '#1b2344'; x.fillRect(8, 76, 50, 14); x.fillStyle = 'rgba(110,231,210,0.25)'; x.fillRect(8, 76, 50, 1);
@@ -2293,20 +2369,37 @@ function* pickMoveToForget(newId) {
 /* ---------- Bag ---------- */
 const ITEM_ORDER = Object.keys(ITEMS);
 function bagList(filter) { const st = Game.st; return Object.keys(st.bag).filter(k => st.bag[k] > 0 && ITEMS[k] && (!filter || filter(ITEMS[k], k))).sort((a, b) => ITEM_ORDER.indexOf(a) - ITEM_ORDER.indexOf(b)); }
+function gearSort(st = Game.st) { const order = ['weapon', 'head', 'body', 'feet', 'acc']; return (st.gear || []).slice().sort((x, y) => (isEquipped(y) - isEquipped(x)) || order.indexOf(GEAR[x.b].slot) - order.indexOf(GEAR[y.b].slot) || y.q - x.q); }
+function drawGearDetail(x, g, Y, h, cmp) { // quality, roll, stats, specials, story text
+  const B = GEAR[g.b], [a, b] = gearLines(g);
+  Font.draw(x, gearName(g), 10, Y, gCol(g), UIC.textSh); Font.drawR(x, '品相' + Math.round(g.r * 100) + '%', 166, Y + 1, UIC.muted, UIC.textSh, 10);
+  let y = Y + 17; Font.draw(x, EQUIP_SLOTS[B.slot === 'acc' ? 'acc1' : B.slot] + '｜' + a, 12, y, UIC.text, UIC.textSh, 11); y += 14;
+  if (b) for (const l of Font.wrap(b, 150, 11).slice(0, 2)) { Font.draw(x, l, 12, y, UIC.accent, UIC.textSh, 11); y += 13; }
+  if (cmp) { Font.draw(x, cmp, 12, y, UIC.warm, UIC.textSh, 11); y += 13; }
+  if (y + 12 < Y + h) Font.wrap(B.d, 150, 11).slice(0, Math.floor((Y + h - y) / 13)).forEach((l, i) => Font.draw(x, l, 12, y + i * 13, UIC.muted, UIC.textSh, 11));
+}
+function* equipGearFlow(g) { // put an instance on; accessories pick a free/older slot
+  const st = Game.st, sl0 = GEAR[g.b].slot; let sl = sl0;
+  if (sl0 === 'acc') { if (!st.equip.acc1) sl = 'acc1'; else if (!st.equip.acc2) sl = 'acc2'; else { const r = yield* ask('要替換哪一個飾品？', [GEAR[gearBy(st.equip.acc1).b].n, GEAR[gearBy(st.equip.acc2).b].n, '取消']); if (r < 0 || r > 1) return false; sl = r ? 'acc2' : 'acc1'; } }
+  for (const k in st.equip) if (st.equip[k] === g.u) st.equip[k] = null;
+  st.equip[sl] = g.u; clampHP(); Sound.sfx('item'); return true;
+}
 function* bagScreen(mode = 'field') { // returns item id used (battle) or null
   let tab = 0, idx = 0; const tabs = mode === 'battle' ? ['道具'] : ['道具', '裝備', '素材', '重要'];
-  const listFor = t => bagList(it => tabs[t] === '道具' ? (!it.key && !it.equip && !it.mat && (mode !== 'battle' || it.use !== 'boost')) : tabs[t] === '裝備' ? !!it.equip : tabs[t] === '素材' ? !!it.mat : !!it.key);
+  const listFor = t => tabs[t] === '裝備' ? gearSort() : bagList(it => tabs[t] === '道具' ? (!it.key && !it.mat && (mode !== 'battle' || it.use !== 'boost')) : tabs[t] === '素材' ? !!it.mat : !!it.key);
   const VIS = 7;
   const scr = { draw(x) {
     screenBG(x); headerBar(x, '背包'); Font.drawR(x, Game.st.money + ' G', W - 6, 2, UIC.warm, UIC.textSh);
     const tw = Math.floor(171 / tabs.length); tabs.forEach((t, i) => { const X = 4 + i * tw; drawBtn(x, X, 23, tw - 3, 15, i === tab); Font.drawC(x, t, X + (tw - 3) / 2, 22, i === tab ? UIC.text : UIC.muted, UIC.textSh); });
-    const list = listFor(tab); drawWin(x, 4, 40, 168, VIS * 18 + 10, 'menu');
+    const list = listFor(tab), gear = tabs[tab] === '裝備'; drawWin(x, 4, 40, 168, VIS * 18 + 10, 'menu');
     if (!list.length) Font.draw(x, '（空空如也）', 20, 46, UIC.muted, UIC.textSh);
     const top = Math.max(0, Math.min(idx - 3, list.length - VIS));
-    list.slice(top, top + VIS).forEach((k, i) => { const Y = 44 + i * 18; const eq = Object.values(Game.st.equip).includes(k); if (top + i === idx) selBar(x, 6, Y - 1, 164, 17); Font.draw(x, ITEMS[k].n, 14, Y, qCol(ITEMS[k]), UIC.textSh); if (eq) Font.draw(x, 'E', 16 + Font.width(ITEMS[k].n), Y, UIC.accent, UIC.textSh); if (!ITEMS[k].key) Font.drawR(x, '×' + Game.st.bag[k], 164, Y, UIC.muted, UIC.textSh); });
+    list.slice(top, top + VIS).forEach((k, i) => { const Y = 44 + i * 18; if (top + i === idx) selBar(x, 6, Y - 1, 164, 17);
+      if (gear) { const e = Font.draw(x, GEAR[k.b].n, 14, Y, gCol(k), UIC.textSh); if (isEquipped(k)) Font.draw(x, 'E', e + 2, Y, UIC.accent, UIC.textSh); Font.drawR(x, EQUIP_SLOTS[GEAR[k.b].slot === 'acc' ? 'acc1' : GEAR[k.b].slot], 164, Y, UIC.muted, UIC.textSh, 11); return; }
+      Font.draw(x, ITEMS[k].n, 14, Y, UIC.text, UIC.textSh); if (!ITEMS[k].key) Font.drawR(x, '×' + Game.st.bag[k], 164, Y, UIC.muted, UIC.textSh); });
     if (top > 0) x.drawImage(UPARROW, 85, 41); if (top + VIS < list.length) x.drawImage(DOWNARROW, 85, 40 + VIS * 18 + 4);
     drawWin(x, 4, 180, 168, 72, 'menu');
-    if (list[idx]) { const it = ITEMS[list[idx]], ls = Font.wrap(it.d, 152).slice(0, it.aff || it.q >= 2 ? 2 : 4); ls.forEach((l, i) => Font.draw(x, l, 12, 184 + i * 16, UIC.text, UIC.textSh)); if (it.aff || it.q >= 2) Font.wrap('【' + QUALITY[it.q][0] + '】' + gearText(it), 152, 11).slice(0, 2).forEach((l, i) => Font.draw(x, l, 10, 184 + ls.length * 16 + i * 13, i ? UIC.accent : qCol(it), UIC.textSh, 11)); }
+    if (list[idx]) { if (gear) drawGearDetail(x, list[idx], 182, 68); else Font.wrap(ITEMS[list[idx]].d, 152).slice(0, 4).forEach((l, i) => Font.draw(x, l, 12, 184 + i * 16, UIC.text, UIC.textSh)); }
   } };
   UI.push(scr); let result = null;
   while (true) {
@@ -2316,9 +2409,10 @@ function* bagScreen(mode = 'field') { // returns item id used (battle) or null
     if (Input.repeat('down') && list.length) { idx = (idx + 1) % list.length; Sound.sfx('cursor'); }
     if (Input.pressed('b')) { Input.consume('b'); Sound.sfx('cancel'); break; }
     if (Input.pressed('a') && list[idx]) {
-      Input.consume('a'); Sound.sfx('select'); const k = list[idx], it = ITEMS[k];
+      Input.consume('a'); Sound.sfx('select');
+      if (tabs[tab] === '裝備') { const g = list[idx]; if (isEquipped(g)) { yield* say('已經裝備著了。'); continue; } const r = yield* ask('要裝備' + GEAR[g.b].n + '嗎？', ['裝備', '取消']); if (r === 0 && (yield* equipGearFlow(g))) yield* say(Game.st.name + '裝備了' + GEAR[g.b].n + '！'); continue; }
+      const k = list[idx], it = ITEMS[k];
       if (it.key || it.mat) { yield* say(it.use === 'phone' ? phoneText() : it.d); continue; }
-      if (it.equip) { const r = yield* ask('要裝備' + it.n + '嗎？', ['裝備', '取消']); if (r === 0) { Game.st.equip[it.equip] = k; clampHP(); Sound.sfx('item'); yield* say(Game.st.name + '裝備了' + it.n + '！'); } continue; }
       const r = yield* ask('要使用' + it.n + '嗎？', ['使用', '取消']);
       if (r !== 0) continue;
       if (mode === 'battle') { if (it.use === 'escape' || canUseItem(k)) { result = k; break; } yield* say('現在使用也沒有效果。'); continue; }
@@ -2351,30 +2445,34 @@ function useItem(k) { // returns message or null; applies to Game.st
 
 /* ---------- Equipment ---------- */
 function* equipScreen() {
-  let idx = 0; const slots = Object.keys(EQUIP_SLOTS);
+  let idx = 0; const slots = Object.keys(EQUIP_SLOTS), st = Game.st;
   const scr = { draw(x) {
     screenBG(x); headerBar(x, '裝備');
-    drawWin(x, 4, 24, 168, 116, 'menu');
-    slots.forEach((sl, i) => { const Y = 28 + i * 36; if (i === idx) selBar(x, 6, Y, 164, 34); Font.draw(x, EQUIP_SLOTS[sl], 14, Y, UIC.accent, UIC.textSh); const it = Game.st.equip[sl] && ITEMS[Game.st.equip[sl]]; Font.draw(x, it ? it.n : '——', 60, Y, it ? qCol(it) : UIC.text, UIC.textSh); if (it) Font.drawR(x, gearText(it), 164, Y + 16, UIC.muted, UIC.textSh, 10); });
-    const s = heroStats(); drawWin(x, 4, 144, 168, 108, 'menu');
-    [['HP', Game.st.hp + '/' + s.hp], ['物攻', s.atk], ['物防', s.def], ['魔攻', s.spa], ['魔防', s.spd], ['速度', s.spe]].forEach(([a, b], i) => { const Y = 148 + i * 16; Font.draw(x, a, 14, Y, UIC.muted, UIC.textSh); Font.drawR(x, String(b), 150, Y, UIC.text, UIC.textSh); });
+    drawWin(x, 4, 24, 168, slots.length * 25 + 6, 'menu');
+    slots.forEach((sl, i) => { const Y = 27 + i * 25, g = gearBy(st.equip[sl]); if (i === idx) selBar(x, 6, Y, 164, 24);
+      Font.draw(x, EQUIP_SLOTS[sl], 12, Y, UIC.accent, UIC.textSh, 11); Font.draw(x, g ? GEAR[g.b].n : '——', 44, Y, g ? gCol(g) : UIC.dis, UIC.textSh);
+      if (g) Font.draw(x, gearLines(g)[0] + (gearLines(g)[1] ? ' ＋特效' : ''), 44, Y + 12, UIC.muted, UIC.textSh, 9); });
+    const s = heroStats(), Y0 = 24 + slots.length * 25 + 10; drawWin(x, 4, Y0, 168, H - Y0 - 4, 'menu');
+    [['HP', st.hp + '/' + s.hp], ['物攻', s.atk], ['物防', s.def], ['魔攻', s.spa], ['魔防', s.spd], ['速度', s.spe], ['會心', s.crit.toFixed(1) + '%'], ['迴避', s.eva.toFixed(1) + '%']].forEach(([a, b], i) => { const X = 12 + (i % 2) * 82, Y = Y0 + 3 + Math.floor(i / 2) * 15; Font.draw(x, a, X, Y, UIC.muted, UIC.textSh, 11); Font.drawR(x, String(b), X + 72, Y, UIC.text, UIC.textSh, 11); });
   } };
   UI.push(scr);
   while (true) {
-    if (Input.repeat('up')) { idx = (idx + 2) % 3; Sound.sfx('cursor'); } if (Input.repeat('down')) { idx = (idx + 1) % 3; Sound.sfx('cursor'); }
+    if (Input.repeat('up')) { idx = (idx + slots.length - 1) % slots.length; Sound.sfx('cursor'); } if (Input.repeat('down')) { idx = (idx + 1) % slots.length; Sound.sfx('cursor'); }
     if (Input.pressed('b')) { Input.consume('b'); Sound.sfx('cancel'); break; }
     if (Input.pressed('a')) {
-      Input.consume('a'); Sound.sfx('select'); const sl = slots[idx];
-      const own = bagList(it => it.equip === sl);
-      const opts = own.map(k => ({ t: ITEMS[k].n + (Game.st.equip[sl] === k ? '[E]' : ''), k, col: qCol(ITEMS[k]) })).concat([{ t: '卸下', k: null }]);
-      const r = yield* choose(opts, { x: 60, y: 40 + idx * 36, w: 112 });
-      if (r >= 0) { Game.st.equip[sl] = opts[r].k; clampHP(); Sound.sfx('item'); }
+      Input.consume('a'); Sound.sfx('select'); const sl = slots[idx], cur = gearBy(st.equip[sl]);
+      const own = gearSort().filter(g => GEAR[g.b].slot === SLOT_OF(sl) && (!isEquipped(g) || g === cur));
+      const opts = own.map(g => ({ t: GEAR[g.b].n + (g === cur ? ' E' : ''), g, col: gCol(g) })).concat([{ t: '卸下', g: null }]);
+      let hi = 0; const tip = { draw(x) { const o = opts[hi]; drawWin(x, 4, 176, 168, 76, 'menu'); if (o && o.g) { const before = heroStats(); const sv = st.equip[sl]; st.equip[sl] = o.g.u; const after = heroStats(); st.equip[sl] = sv; const d = ['atk', 'def', 'spa', 'spd', 'spe'].map(k => [k, after[k] - before[k]]).filter(([, v]) => v).map(([k, v]) => STAT_NAMES[k] + (v > 0 ? '↑' : '↓') + Math.abs(v)).join(' '); drawGearDetail(x, o.g, 178, 72, d || '能力不變'); } else Font.draw(x, '把這個部位的裝備卸下。', 12, 182, UIC.muted, UIC.textSh); } };
+      UI.push(tip);
+      const r = yield* choose(opts, { x: 40, y: 24, w: 132, visible: 8, onMove: i => hi = i });
+      UI.remove(tip);
+      if (r >= 0) { for (const k in st.equip) if (opts[r].g && st.equip[k] === opts[r].g.u) st.equip[k] = null; st.equip[sl] = opts[r].g ? opts[r].g.u : null; clampHP(); Sound.sfx('item'); }
     }
     yield;
   }
   UI.remove(scr);
 }
-
 /* ---------- Options ---------- */
 function* optionsScreen() {
   let idx = 0; const labels = ['文字速度', '背景音樂', '音效', '關閉'];
@@ -2397,7 +2495,6 @@ function* optionsScreen() {
   UI.remove(scr);
 }
 
-/* ---------- Shop ---------- */
 function moneyWin(x) { drawWin(x, 2, 2, 86, 30, 'menu'); Font.draw(x, '金錢', 10, 3, UIC.muted, UIC.textSh); Font.drawR(x, Game.st.money + ' G', 80, 15, UIC.warm, UIC.textSh); }
 function* shopFlow(stock) {
   const mw = { draw: moneyWin }; UI.push(mw);
@@ -2414,29 +2511,29 @@ function* shopBuy(stock) {
   const scr = { draw(x) {
     drawWin(x, 4, 36, 168, VIS * 18 + 10, 'menu');
     const top = Math.max(0, Math.min(idx - 3, list.length - VIS));
-    list.slice(top, top + VIS).forEach((k, i) => { const Y = 40 + i * 18; const it = ITEMS[k]; if (top + i === idx) selBar(x, 6, Y - 1, 164, 17); Font.draw(x, it.n, 14, Y, UIC.text, UIC.textSh); Font.drawR(x, priceOf(k) + 'G', 164, Y, UIC.warm, UIC.textSh); });
+    list.slice(top, top + VIS).forEach((k, i) => { const Y = 40 + i * 18; const it = ITEMS[k] || GEAR[k]; if (top + i === idx) selBar(x, 6, Y - 1, 164, 17); Font.draw(x, it.n, 14, Y, GEAR[k] ? GQ[1][1] : UIC.text, UIC.textSh); Font.drawR(x, priceOf(k) + 'G', 164, Y, UIC.warm, UIC.textSh); });
     if (top > 0) x.drawImage(UPARROW, 85, 37); if (top + VIS < list.length) x.drawImage(DOWNARROW, 85, 36 + VIS * 18 + 4);
-    drawWin(x, 4, TB_Y + 1, W - 8, TB_H - 2, 'ow'); const it = ITEMS[list[idx]];
-    Font.wrap(it.d + (it.equip ? '' : '（持有' + (Game.st.bag[list[idx]] || 0) + '）'), 150).slice(0, 3).forEach((l, i) => Font.draw(x, l, 12, TB_Y + 7 + i * 16, UIC.text, UIC.textSh));
+    drawWin(x, 4, TB_Y + 1, W - 8, TB_H - 2, 'ow'); const k0 = list[idx];
+    if (GEAR[k0]) drawGearDetail(x, { b: k0, q: 1, r: 1, a: [] }, TB_Y + 3, 54); else Font.wrap(ITEMS[k0].d + '（持有' + (Game.st.bag[k0] || 0) + '）', 150).slice(0, 3).forEach((l, i) => Font.draw(x, l, 12, TB_Y + 7 + i * 16, UIC.text, UIC.textSh));
   } };
   UI.push(scr);
   while (true) {
     if (Input.repeat('up')) { idx = (idx + list.length - 1) % list.length; Sound.sfx('cursor'); } if (Input.repeat('down')) { idx = (idx + 1) % list.length; Sound.sfx('cursor'); }
     if (Input.pressed('b')) { Input.consume('b'); Sound.sfx('cancel'); break; }
     if (Input.pressed('a')) {
-      Input.consume('a'); Sound.sfx('select'); const k = list[idx], it = ITEMS[k];
-      let qty = 1; const pr = priceOf(k); const maxQ = Math.min(it.equip || it.once ? 1 : 99, Math.floor(Game.st.money / pr));
-      if ((it.equip || it.once) && (Game.st.bag[k] || Object.values(Game.st.equip).includes(k))) { UI.remove(scr); yield* say('你已經有' + it.n + '了。'); UI.push(scr); continue; }
+      Input.consume('a'); Sound.sfx('select'); const k = list[idx], it = ITEMS[k] || GEAR[k], isG = !!GEAR[k];
+      let qty = 1; const pr = priceOf(k); const maxQ = Math.min(isG || it.once ? 1 : 99, Math.floor(Game.st.money / pr));
+      if (it.once && Game.st.bag[k]) { UI.remove(scr); yield* say('你已經有' + it.n + '了。'); UI.push(scr); continue; }
       if (maxQ < 1) { UI.remove(scr); yield* say('錢不夠喔。'); UI.push(scr); continue; }
-      if (!it.equip && !it.once) {
+      if (!isG && !it.once) {
         const q = { draw(x) { drawWin(x, 80, TB_Y - 32, 94, 30, 'menu'); Font.draw(x, '×' + String(qty).padStart(2, '0'), 90, TB_Y - 25, UIC.text, UIC.textSh); Font.drawR(x, (qty * pr) + 'G', 166, TB_Y - 25, UIC.warm, UIC.textSh); } };
         UI.push(q); let ok = false;
         while (true) { if (Input.repeat('up')) { qty = qty >= maxQ ? 1 : qty + 1; Sound.sfx('cursor'); } if (Input.repeat('down')) { qty = qty <= 1 ? maxQ : qty - 1; Sound.sfx('cursor'); } if (Input.repeat('right')) { qty = Math.min(maxQ, qty + 10); Sound.sfx('cursor'); } if (Input.repeat('left')) { qty = Math.max(1, qty - 10); Sound.sfx('cursor'); } if (Input.pressed('a')) { Input.consume('a'); ok = true; break; } if (Input.pressed('b')) { Input.consume('b'); break; } yield; }
         UI.remove(q); if (!ok) continue;
       }
       UI.remove(scr);
-      const yes = yield* yesNo(it.n + (it.equip || it.once ? '' : '×' + qty) + '，一共是' + (qty * pr) + 'G，可以嗎？');
-      if (yes) { Game.st.money -= qty * pr; Game.st.bag[k] = (Game.st.bag[k] || 0) + qty; Sound.sfx('save'); yield* say('好的！這是您的' + it.n + '。' + (it.equip ? '記得到背包或裝備畫面裝備喔！' : '')); }
+      const yes = yield* yesNo(it.n + (isG || it.once ? '' : '×' + qty) + '，一共是' + (qty * pr) + 'G，可以嗎？');
+      if (yes) { Game.st.money -= qty * pr; if (isG) makeGear(k, 1, 1); else Game.st.bag[k] = (Game.st.bag[k] || 0) + qty; Sound.sfx('save'); yield* say('好的！這是您的' + it.n + '。' + (isG ? '記得到裝備畫面裝備喔！' : '')); }
       UI.push(scr);
     }
     yield;
@@ -2444,14 +2541,16 @@ function* shopBuy(stock) {
   UI.remove(scr);
 }
 function* shopSell() {
-  let idx = 0; const VIS = 8;
-  const listNow = () => bagList(it => !it.key && !(it.price === 0 && !it.sell)).filter(k => !Object.values(Game.st.equip).includes(k) || Game.st.bag[k] > 1);
+  let idx = 0; const VIS = 8, st = Game.st;
+  const listNow = () => bagList(it => !it.key && !(it.price === 0 && !it.sell)).concat(gearSort().filter(g => !isEquipped(g) && g.q < 4));
+  const nameOf = k => typeof k === 'string' ? ITEMS[k].n + '×' + st.bag[k] : GEAR[k.b].n, priceK = k => typeof k === 'string' ? sellPrice(k) : gearSell(k);
   const scr = { draw(x) {
     const list = listNow(); drawWin(x, 4, 36, 168, VIS * 18 + 10, 'menu');
     if (!list.length) Font.draw(x, '沒有可以賣的東西', 14, 42, UIC.muted, UIC.textSh);
     const top = Math.max(0, Math.min(idx - 3, list.length - VIS));
-    list.slice(top, top + VIS).forEach((k, i) => { const Y = 40 + i * 18; const it = ITEMS[k]; if (top + i === idx) selBar(x, 6, Y - 1, 164, 17); Font.draw(x, it.n + '×' + Game.st.bag[k], 14, Y, UIC.text, UIC.textSh); Font.drawR(x, sellPrice(k) + 'G', 164, Y, UIC.warm, UIC.textSh); });
-    drawWin(x, 4, TB_Y + 1, W - 8, TB_H - 2, 'ow'); Font.draw(x, list.length ? '要賣哪一樣東西呢？' : '目前沒有可以賣的東西。', 12, TB_Y + 7, UIC.text, UIC.textSh); Font.draw(x, '（裝備中的物品不能賣）', 12, TB_Y + 23, UIC.muted, UIC.textSh);
+    list.slice(top, top + VIS).forEach((k, i) => { const Y = 40 + i * 18; if (top + i === idx) selBar(x, 6, Y - 1, 164, 17); Font.draw(x, nameOf(k), 14, Y, typeof k === 'string' ? UIC.text : gCol(k), UIC.textSh); Font.drawR(x, priceK(k) + 'G', 164, Y, UIC.warm, UIC.textSh); });
+    drawWin(x, 4, TB_Y + 1, W - 8, TB_H - 2, 'ow'); const k = list[idx];
+    if (k && typeof k !== 'string') drawGearDetail(x, k, TB_Y + 3, 54); else { Font.draw(x, list.length ? '要賣哪一樣東西呢？' : '目前沒有可以賣的東西。', 12, TB_Y + 7, UIC.text, UIC.textSh); Font.draw(x, '（裝備中和金色的裝備不能賣）', 12, TB_Y + 23, UIC.muted, UIC.textSh); }
   } };
   UI.push(scr);
   while (true) {
@@ -2459,9 +2558,9 @@ function* shopSell() {
     if (Input.repeat('up') && list.length) { idx = (idx + list.length - 1) % list.length; Sound.sfx('cursor'); } if (Input.repeat('down') && list.length) { idx = (idx + 1) % list.length; Sound.sfx('cursor'); }
     if (Input.pressed('b')) { Input.consume('b'); Sound.sfx('cancel'); break; }
     if (Input.pressed('a') && list[idx]) {
-      Input.consume('a'); const k = list[idx]; UI.remove(scr);
-      const yes = yield* yesNo(ITEMS[k].n + '可以用' + sellPrice(k) + 'G收購，要賣嗎？');
-      if (yes) { Game.st.bag[k]--; Game.st.money += sellPrice(k); Sound.sfx('save'); yield* say('謝謝！收下了' + ITEMS[k].n + '。'); }
+      Input.consume('a'); const k = list[idx]; UI.remove(scr); const nm = typeof k === 'string' ? ITEMS[k].n : GEAR[k.b].n, pr = priceK(k);
+      const yes = yield* yesNo(nm + '可以用' + pr + 'G收購，要賣嗎？');
+      if (yes) { if (typeof k === 'string') st.bag[k]--; else st.gear = st.gear.filter(g => g !== k); st.money += pr; Sound.sfx('save'); yield* say('謝謝！收下了' + nm + '。'); }
       UI.push(scr);
     }
     yield;
@@ -2477,9 +2576,9 @@ function* craftScreen() {
   const scr = { draw(x) {
     screenBG(x); headerBar(x, '鐵匠工房'); Font.drawR(x, st.money + ' G', W - 6, 2, UIC.warm, UIC.textSh);
     drawWin(x, 4, 24, 168, RECIPES.length * 17 + 8, 'menu');
-    RECIPES.forEach((R, i) => { const Y = 28 + i * 17, it = ITEMS[R.out]; if (i === idx) selBar(x, 6, Y - 1, 164, 16); Font.draw(x, it.n + (R.n > 1 ? '×' + R.n : ''), 14, Y, can(R) ? qCol(it) : UIC.dis, UIC.textSh); Font.drawR(x, can(R) ? '可製作' : '素材不足', 164, Y, can(R) ? UIC.accent : UIC.dis, UIC.textSh, 11); });
-    const R = RECIPES[idx], it = ITEMS[R.out], Y0 = 24 + RECIPES.length * 17 + 12; drawWin(x, 4, Y0, 168, H - Y0 - 4, 'menu'); let y = Y0 + 3;
-    Font.draw(x, it.equip ? '【' + QUALITY[it.q][0] + '】' + gearText(it) : it.d, 10, y, it.equip ? qCol(it) : UIC.text, UIC.textSh, 11); y += 15;
+    RECIPES.forEach((R, i) => { const Y = 28 + i * 17, it = ITEMS[R.out] || GEAR[R.out]; if (i === idx) selBar(x, 6, Y - 1, 164, 16); Font.draw(x, it.n + (R.n > 1 ? '×' + R.n : ''), 14, Y, can(R) ? (GEAR[R.out] ? GQ[2][1] : UIC.text) : UIC.dis, UIC.textSh); Font.drawR(x, can(R) ? '可製作' : '素材不足', 164, Y, can(R) ? UIC.accent : UIC.dis, UIC.textSh, 11); });
+    const R = RECIPES[idx], it = ITEMS[R.out] || GEAR[R.out], Y0 = 24 + RECIPES.length * 17 + 12; drawWin(x, 4, Y0, 168, H - Y0 - 4, 'menu'); let y = Y0 + 3;
+    Font.draw(x, GEAR[R.out] ? '【紫】' + gearLines({ b: R.out, q: 2, r: 1, a: [] })[0] + ' ＋隨機詞綴' : it.d, 10, y, GEAR[R.out] ? GQ[2][1] : UIC.text, UIC.textSh, 11); y += 15;
     for (const [k, n] of Object.entries(R.mats)) { Font.draw(x, ITEMS[k].n, 14, y, UIC.text, UIC.textSh, 11); Font.drawR(x, have(k) + ' / ' + n, 164, y, have(k) >= n ? UIC.good : UIC.bad, UIC.textSh, 11); y += 13; }
     if (R.gold) Font.drawR(x, '費用 ' + R.gold + ' G', 164, y, st.money >= R.gold ? UIC.warm : UIC.bad, UIC.textSh, 11);
   } };
@@ -2488,8 +2587,9 @@ function* craftScreen() {
     if (Input.repeat('up')) { idx = (idx + RECIPES.length - 1) % RECIPES.length; Sound.sfx('cursor'); } if (Input.repeat('down')) { idx = (idx + 1) % RECIPES.length; Sound.sfx('cursor'); }
     if (Input.pressed('b')) { Input.consume('b'); Sound.sfx('cancel'); break; }
     if (Input.pressed('a')) { Input.consume('a'); const R = RECIPES[idx]; if (!can(R)) { Sound.sfx('bump'); continue; }
-      for (const [k, n] of Object.entries(R.mats)) st.bag[k] -= n; st.money -= R.gold || 0; st.bag[R.out] = (st.bag[R.out] || 0) + (R.n || 1);
-      UI.remove(scr); yield* itemGet('鐵匠做好了「' + ITEMS[R.out].n + '」！'); UI.push(scr); }
+      for (const [k, n] of Object.entries(R.mats)) st.bag[k] -= n; st.money -= R.gold || 0; let nm;
+      if (GEAR[R.out]) nm = gearName(makeGear(R.out, 2)); else { st.bag[R.out] = (st.bag[R.out] || 0) + (R.n || 1); nm = ITEMS[R.out].n; }
+      UI.remove(scr); yield* itemGet('鐵匠做好了' + nm + '！'); UI.push(scr); }
     yield;
   }
   UI.remove(scr);
@@ -2766,8 +2866,8 @@ class Overworld {
     if (it.gather) { st.gath[it.id] = st.steps || 0; const n = rnd(1, 2); st.bag[it.mat] = (st.bag[it.mat] || 0) + n; Sound.sfx('item'); yield* say('採集到了' + ITEMS[it.mat].n + '×' + n + '！'); return; }
     st.flags[it.id] = 1;
     if (it.gold) { st.money += it.gold; Sound.jingle('item'); yield* say(st.name + '撿到了' + it.gold + ' G！'); return; }
-    const n = it.n || 1; st.bag[it.item] = (st.bag[it.item] || 0) + n; const fr = Sound.jingle('item');
-    const tb = new TextBox(st.name + '撿到了' + ITEMS[it.item].n + (n > 1 ? '×' + n : '') + '！'); UI.push(tb);
+    const n = it.n || 1; let nm; if (GEAR[it.item]) nm = gearName(makeGear(it.item, it.q || 1)); else { st.bag[it.item] = (st.bag[it.item] || 0) + n; nm = ITEMS[it.item].n + (n > 1 ? '×' + n : ''); } const fr = Sound.jingle('item');
+    const tb = new TextBox(st.name + '撿到了' + nm + '！'); UI.push(tb);
     for (let i = 0; i < fr || !tb.done; i++) { if (i >= 30 || tb.state !== 'end') tb.update(); yield; if (tb.done && i >= fr) break; }
     UI.remove(tb);
     yield* say(st.name + '把' + ITEMS[it.item].n + '放進了背包。');
@@ -3026,7 +3126,7 @@ class Battle {
     const dx = st.dex || (st.dex = {}); (dx[cfg.sp] || (dx[cfg.sp] = { won: 0 })).seen = 1;
     Object.defineProperty(H, 'hp', { get: () => st.hp, set: v => st.hp = v }); Object.defineProperty(H, 'status', { get: () => st.status, set: v => st.status = v });
     this.bg = buildBattleBG(cfg.bg);
-    this.imgF = battleSprite(cfg.sp); this.foeTX = FOE_X; this.shadowF = buildShadow(Math.round(this.imgF.bb.w * 0.38), 4); this.imgH = heroBattleImg(0, st.equip.weapon); this.imgH2 = heroBattleImg(1, st.equip.weapon);
+    this.imgF = battleSprite(cfg.sp); this.foeTX = FOE_X; this.shadowF = buildShadow(Math.round(this.imgF.bb.w * 0.38), 4); this.imgH = heroBattleImg(0, weaponSpr(st)); this.imgH2 = heroBattleImg(1, weaponSpr(st));
     this.disp = { F: this.F.hp, H: st.hp, exp: st.exp };
     this.foeX = W + 40; this.heroX = -80; this.boxF = -30; this.boxH = BH + 4; this.cover = 1;
     this.offF = { x: 0, y: 0 }; this.offH = { x: 0, y: 0 }; this.sinkF = 0; this.sinkH = 0; this.blinkF = 0; this.blinkH = 0; this.alphaF = 1;
@@ -3339,7 +3439,8 @@ class Battle {
     const gold = F.boss ? 1000 : sp.gold * F.lv;
     if (gold) { st.money += gold; yield* this.msg(st.name + '得到了' + gold + ' G！'); }
     if (sp.mat && !F.elite && !F.boss && chance(0.5)) { st.bag[sp.mat] = (st.bag[sp.mat] || 0) + 1; yield* this.msg('得到了素材「' + ITEMS[sp.mat].n + '」！', { hold: 30 }); }
-    if (sp.drop) { const it = ITEMS[sp.drop]; st.bag[sp.drop] = (st.bag[sp.drop] || 0) + 1; Sound.jingle('item'); yield* this.msg(F.n + '掉落了【' + QUALITY[it.q][0] + '】' + it.n + '！', { wait: true }); yield* this.msg(gearText(it) + '\n（可以在背包或裝備畫面裝備）', { wait: true }); }
+    if (sp.drop) { const g = makeGear(sp.drop, F.boss ? 4 : 3); Sound.jingle('item'); yield* this.msg(F.n + '掉落了' + gearName(g) + '！', { wait: true }); yield* this.msg(gearText(g) + '\n（可以在裝備畫面裝備）', { wait: true }); }
+    const pool = Game.ow && Game.ow.map && Game.ow.map.d.gearPool; if (pool && !F.elite && !F.boss && chance(0.08)) { const g = makeGear(pick(pool), rollQuality()); Sound.jingle('item'); yield* this.msg(F.n + '掉落了' + gearName(g) + '！', { wait: true }); }
   }
   *gainExp(amount) {
     const st = Game.st; yield* this.msg(st.name + '獲得了' + amount + '點經驗值！', { hold: 20 });
@@ -3511,7 +3612,7 @@ const Events = {
     if (st.flags.license && (yield* classTalk())) return;
     if (!st.flags.license) {
       yield* sayAll(['喔？你就是瑪莎撿回來的那個孩子啊。', '……從另一個世界來的？', '這個會發光的小板子……嗯，看來不是在說謊。', '古老的傳說裡提過，北方的古岩遺跡深處，有一扇「異界之門」。', '據說很久以前，也有異世界的旅人從那扇門來到這裡。', '如果真有回去的路，大概就在那裡了。', '只是……最近守護遺跡的古岩魔像甦醒了，誰也無法靠近。', '嗯？你的手……在發光！', '這是「異界人之力」。傳說中，來自異世界的人都擁有不可思議的力量。', '有這股力量，你應該能和魔物戰鬥。']);
-      st.flags.license = 1; st.bag.license = 1; st.bag.woodSword = 1; st.equip.weapon = 'woodSword';
+      st.flags.license = 1; st.bag.license = 1; st.equip.weapon = makeGear('woodSword', 1, 1).u; st.equip.acc1 = makeGear('guardBadge', 1, 1).u;
       yield* itemGet('得到了木劍和冒險者證！'); yield* say(st.name + '把木劍拿在手上。……有點重。');
       yield* say('還有這些傷藥，帶在身上吧。'); st.bag.potion = (st.bag.potion || 0) + 5; yield* itemGet('得到了傷藥×5！');
       yield* sayAll(['走在高高的草叢裡，會遇到野生的魔物。', '打倒魔物能累積經驗，你會越來越強。', '道路上還有更強大的「精英魔物」，被盯上可要小心。', '古岩魔像是岩石屬性，最怕水和草。記住了。', '按START可以打開選單，查看狀態和背包，也能記錄進度。', '去吧，異世界的旅人。願曙光指引你回家的路。']);
@@ -3538,7 +3639,7 @@ const Events = {
     if (!st.flags.golem) { yield* say('一口很深的井。往下看，只有一片漆黑。'); return; }
     yield* say('……井底好像有什麼東西，正發出淡淡的月光。');
     if (!(yield* yesNo('要把水桶放下去撈撈看嗎？'))) return;
-    st.flags.wellCharm = 1; st.bag.moonCharm = 1; yield* itemGet(st.name + '撈起了「月光護符」！');
+    st.flags.wellCharm = 1; yield* itemGet(st.name + '撈起了' + gearName(makeGear('moonCharm', 4)) + '！');
     yield* say('古老的護符……說不定和異界之門有關。可以在背包裡裝備。');
   },
   *smith() { yield* say(Game.st.flags.smith ? '有素材就拿來吧！' : '我是鎮上的鐵匠。把魔物身上的素材帶來，我就幫你打造好東西！'); Game.st.flags.smith = 1; yield* craftScreen(); },
@@ -3664,10 +3765,10 @@ function loadGame() { try { const s = localStorage.getItem(SAVE_KEY); return s ?
 function saveSettings() { try { localStorage.setItem(SET_KEY, JSON.stringify(Game.settings)); } catch (e) { } }
 function loadSettings() { try { const s = localStorage.getItem(SET_KEY); if (s) Object.assign(Game.settings, JSON.parse(s)); } catch (e) { } }
 function newGameState(name) {
-  const st = { name, lv: 5, exp: expForLevel(5), hp: 1, status: null, moves: [{ id: 'slash', pp: 35 }, { id: 'glare', pp: 30 }, { id: 'flameSlash', pp: 25 }], boost: {}, equip: { weapon: null, armor: 'uniform', acc: null }, bag: { uniform: 1, phone: 1 }, money: 1000, flags: {}, map: 'home', x: 1, y: 3, dir: 'right', respawn: { map: 'home', x: 1, y: 4, dir: 'up' }, time: 0, steps: 0, wins: 0 };
-  Game.st = st; st.hp = heroStats(st).hp; return st;
+  const st = { name, lv: 5, exp: expForLevel(5), hp: 1, status: null, moves: [{ id: 'slash', pp: 35 }, { id: 'glare', pp: 30 }, { id: 'flameSlash', pp: 25 }], boost: {}, equip: { weapon: null, head: null, body: null, feet: null, acc1: null, acc2: null }, gear: [], gid: 0, bag: { phone: 1 }, money: 1000, flags: {}, map: 'home', x: 1, y: 3, dir: 'right', respawn: { map: 'home', x: 1, y: 4, dir: 'up' }, time: 0, steps: 0, wins: 0 };
+  Game.st = st; st.equip.body = makeGear('uniform', 1, 1).u; st.equip.feet = makeGear('schoolShoes', 1, 1).u; st.hp = heroStats(st).hp; return st;
 }
-function startOverworld() { const st = Game.st; if (!st.tal) { st.tal = {}; st.tp = Math.max(0, st.lv - 5); } const ow = Game.ow = new Overworld(); Game.setScene(ow); ow.load(st.map, st.x, st.y, st.dir); return ow; }
+function startOverworld() { const st = Game.st; migrateGear(st); if (!st.tal) { st.tal = {}; st.tp = Math.max(0, st.lv - 5); } const ow = Game.ow = new Overworld(); Game.setScene(ow); ow.load(st.map, st.x, st.y, st.dir); return ow; }
 
 /* ===================== SHARED ART: logo, title, modern street ===================== */
 function makeLogo(text, sc) {
@@ -3903,7 +4004,7 @@ function boot(data) {
   requestAnimationFrame(loop);
   try { if (window.claude && window.claude.hot && window.claude.hot.snapshot) window.claude.hot.snapshot(() => ({ st: (Game.scene instanceof Overworld && !Game.scene.script) ? Game.st : null })); } catch (e) { }
 }
-window.__game = { setScale: S => { Game.fixedScale = 1; setScale(S); render(); }, Game, Input, Events, MAPS, SPECIES, Battle, Overworld, heroStats, newGameState, startOverworld, UI, say, yesNo, startMenu, summaryScreen, bagScreen, equipScreen, optionsScreen, shopFlow, pickMoveToForget, blackText, dexScreen, talentScreen, craftScreen, Events, step(n = 1) { for (let i = 0; i < n; i++) tick(); render(); }, press(k, hold = 2, after = 6) { Input.set(k, true); for (let i = 0; i < hold; i++) tick(); Input.set(k, false); for (let i = 0; i < after; i++) tick(); render(); } };
+window.__game = { setScale: S => { Game.fixedScale = 1; setScale(S); render(); }, Game, Input, Events, MAPS, shopFlow, SPECIES, Battle, Overworld, heroStats, newGameState, startOverworld, UI, say, yesNo, startMenu, summaryScreen, bagScreen, equipScreen, optionsScreen, shopFlow, pickMoveToForget, blackText, dexScreen, talentScreen, craftScreen, Events, step(n = 1) { for (let i = 0; i < n; i++) tick(); render(); }, press(k, hold = 2, after = 6) { Input.set(k, true); for (let i = 0; i < hold; i++) tick(); Input.set(k, false); for (let i = 0; i < after; i++) tick(); render(); } };
 try { if (window.claude && window.claude.hot && window.claude.hot.ready) window.claude.hot.ready(boot); else boot((window.claude && window.claude.hot && window.claude.hot.data) || {}); } catch (e) { boot({}); }
 
 </script>
