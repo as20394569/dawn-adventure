@@ -137,6 +137,7 @@ function heroStats(st = Game.st) {
   s.vs = []; s.resist = {}; s.drain = 0; s.elem = 0; s.counter = 0; // equipment affixes & talents
   for (const T of TALENTS) { const r = (st.tal || {})[T.id] || 0; if (r) for (const k in T.st) s[k] = (s[k] || 0) + T.st[k] * r; }
   const CL = CLASSES[st.cls]; if (CL) for (const k in CL.st) s[k] = (s[k] || 0) + CL.st[k];
+  s.fx = {}; for (const g of equippedGear(st)) for (const f of GEAR[g.b].fx || []) s.fx[f] = 1;
   for (const g of equippedGear(st)) { const p = gearStats(g).sp; s.crit += p.crit || 0; s.hit += p.hit || 0; s.eva += p.eva || 0; s.drain += p.drain || 0; s.elem += p.elem || 0; s.vs.push(...p.vs); for (const t in p.resist) s.resist[t] = (s.resist[t] || 0) + p.resist[t]; }
   return s;
 }
@@ -253,6 +254,7 @@ function drawGearDetail(x, g, Y, h, cmp) { // quality, roll, stats, specials, st
   let y = Y + 17; Font.draw(x, EQUIP_SLOTS[B.slot === 'acc' ? 'acc1' : B.slot] + '｜' + a, 12, y, UIC.text, UIC.textSh, 11); y += 14;
   if (b) for (const l of Font.wrap(b, 150, 11).slice(0, 2)) { Font.draw(x, l, 12, y, UIC.accent, UIC.textSh, 11); y += 13; }
   if (cmp) { Font.draw(x, cmp, 12, y, UIC.warm, UIC.textSh, 11); y += 13; }
+  for (const f of B.fx || []) if (y + 12 < Y + h) for (const l of Font.wrap(SPECIALS[f].n + '：' + SPECIALS[f].d, 150, 10).slice(0, 2)) { if (y + 11 > Y + h) break; Font.draw(x, l, 12, y, UIC.warm, UIC.textSh, 10); y += 12; }
   if (y + 12 < Y + h) Font.wrap(B.d, 150, 11).slice(0, Math.floor((Y + h - y) / 13)).forEach((l, i) => Font.draw(x, l, 12, y + i * 13, UIC.muted, UIC.textSh, 11));
 }
 function* equipGearFlow(g) { // put an instance on; accessories pick a free/older slot
@@ -512,7 +514,7 @@ function* talentScreen() {
 
 /* ---------- Bestiary ---------- */
 function* dexScreen() {
-  const list = Object.keys(SPECIES), VIS = 7; let idx = 0;
+  const list = Object.keys(SPECIES), VIS = 7; let idx = 0, view = 0;
   const scr = { draw(x) {
     const dex = Game.st.dex || {}, seenN = list.filter(k => dex[k] && dex[k].seen).length;
     screenBG(x); headerBar(x, '魔物圖鑑'); Font.drawR(x, '收集率 ' + Math.round(seenN / list.length * 100) + '%', W - 6, 2, UIC.accent, UIC.textSh);
@@ -525,13 +527,15 @@ function* dexScreen() {
     drawWin(x, 4, 164, 168, 88, 'menu'); const k = list[idx], e = dex[k];
     if (e && e.seen) { const im = battleSprite(k); x.drawImage(im, 0, 0, im.width, im.height, 8, 172, 72, 72); const sp = SPECIES[k];
       typeBadge(x, sp.t, 86, 170, 28); Font.draw(x, sp.elite ? '精英' : sp.boss ? '頭目' : '野生', 120, 168, sp.boss ? UIC.bad : sp.elite ? UIC.warm : UIC.muted, UIC.textSh);
-      Font.wrap(sp.dex || '', 80).slice(0, 4).forEach((l, i) => Font.draw(x, l, 86, 186 + i * 15, UIC.text, UIC.textSh)); }
+      if (view) { const P = MON_PANEL[k]; Font.draw(x, 'Lv' + P.lv + ' 能力', 86, 184, UIC.muted, UIC.textSh, 10); [['HP', P.hp], ['物攻', P.atk], ['物防', P.def], ['魔攻', P.spa], ['魔防', P.spd], ['速度', P.spe]].forEach(([a, b], i) => { Font.draw(x, a, 86, 197 + i * 9, UIC.muted, UIC.textSh, 9); Font.drawR(x, String(b), 164, 197 + i * 9, UIC.text, UIC.textSh, 9); }); }
+      else Font.wrap(sp.dex || '', 80).slice(0, 4).forEach((l, i) => Font.draw(x, l, 86, 186 + i * 15, UIC.text, UIC.textSh)); Font.drawR(x, 'A：' + (view ? '介紹' : '能力'), 166, 238, UIC.accent, UIC.textSh, 9); }
     else Font.draw(x, '還沒有遇見過這種魔物。', 14, 170, UIC.muted, UIC.textSh);
   } };
   UI.push(scr);
   while (true) {
     if (Input.repeat('up')) { idx = (idx + list.length - 1) % list.length; Sound.sfx('cursor'); } if (Input.repeat('down')) { idx = (idx + 1) % list.length; Sound.sfx('cursor'); }
-    if (Input.pressed('b') || Input.pressed('a')) { Input.consume('a', 'b'); Sound.sfx('cancel'); break; }
+    if (Input.pressed('a')) { Input.consume('a'); view = 1 - view; Sound.sfx('cursor'); }
+    if (Input.pressed('b')) { Input.consume('b'); Sound.sfx('cancel'); break; }
     yield;
   }
   UI.remove(scr);

@@ -2,8 +2,8 @@
 let HERO_POWER = 1.45, BOSS_HP = 2.1, ELITE_HP = 1.1;
 const BTN_MENU = { x: 4, y: TB_Y + 1, w: W - 8, h: TB_H - 2, cols: 2, colW: 82, rowH: 20, ox: 3, oy: 17, buttons: true, style: 'cmd' };
 const BH = TB_Y, FOE_X = W / 2 - 32, HERO_X = W / 2 - 24, HERO_Y = 112, HBAR_Y = 170;
-function critRate(u, mv) { const base = u.hero ? (u.stats.crit || 5) / 100 : 1 / 16; return mv.crit ? base * 2 : base; }
-function hitChance(u, t, mv) { let a = mv.acc; if (!a) return 1; if (u.hero) a += u.stats.hit || 0; if (t.hero) a -= t.stats.eva || 0; return clamp(a, 5, 100) / 100; }
+function critRate(u, mv) { const base = (u.stats.crit ?? 6) / 100; return mv.crit ? base * 2 : base; }
+function hitChance(u, t, mv) { let a = mv.acc; if (!a) return 1; a += u.stats.hit || 0; a -= t.stats.eva || 0; return clamp(a, 5, 100) / 100; }
 const stageMul = s => s >= 0 ? (2 + s) / 2 : 2 / (2 - s);
 const STATUS_NAME = { psn: '中毒', par: '麻痺', slp: '睡眠', brn: '灼傷' };
 const IMMUNE = { psn: '毒', brn: '火', par: '雷' };
@@ -20,9 +20,9 @@ function battleSprite(key) {
   return battleImgCache[key] = c;
 }
 function makeFoe(sp, lv, kind) {
-  const d = SPECIES[sp]; const iv = kind === 'wild' ? rnd(4, 15) : kind === 'boss' ? 22 : 18;
-  const s = {}; STAT_KEYS.forEach((k, i) => s[k] = statCalc(d.base[i], lv, iv, k === 'hp'));
-  const hpMul = kind === 'boss' ? BOSS_HP : kind === 'elite' ? ELITE_HP : 1; s.hp = Math.floor(s.hp * hpMul);
+  const d = SPECIES[sp], P = MON_PANEL[sp], f = (lv + 10) / (P.lv + 10);
+  const s = {}; for (const k of ['hp', 'atk', 'def', 'spa', 'spd', 'spe']) s[k] = Math.max(1, Math.round(P[k] * f * (kind === 'wild' ? 0.92 + Math.random() * 0.16 : 1)));
+  s.crit = P.crit ?? 6; s.hit = P.hit || 0; s.eva = P.eva || 0;
   const known = d.learn.filter(([l]) => l <= lv).map(([, m]) => m); const moves = [...new Set(known)].slice(-4).map(id => ({ id }));
   return { sp, n: d.n, t: d.t, lv, stats: s, hp: s.hp, maxhp: s.hp, status: null, moves, stages: { atk: 0, def: 0, spa: 0, spd: 0, spe: 0 }, wet: 0, trait: d.trait, kind, boss: kind === 'boss', elite: kind === 'elite', sleepT: 0 };
 }
@@ -186,7 +186,7 @@ class Battle {
         const u = who === 'H' ? this.H : this.F, tg = who === 'H' ? this.F : this.H;
         if (u.hp <= 0 || tg.hp <= 0) continue;
         if (a.type === 'move') yield* this.useMove(u, tg, a.id);
-        else if (a.type === 'defend') { yield* this.msg(u.n + '擺出了防禦的架勢！'); yield* FX.guard.call(this, this.center(u)); }
+        else if (a.type === 'defend') { yield* this.msg(u.n + '擺出了防禦的架勢！'); yield* FX.guard.call(this, this.center(u)); if (u.stats.fx.guardHeal && u.hp < u.maxhp) { u.hp = Math.min(u.maxhp, u.hp + Math.ceil(u.maxhp * 0.15)); yield* this.animHP(u); yield* this.msg('守護之心回復了HP！', { hold: 20 }); } }
         else if (a.type === 'item') { const r = yield* this.useItemAct(a.id); if (r === 'escaped') return yield* this.end('run'); }
         else if (a.type === 'foeHeal') { u.heals = (u.heals || 0) + 1; yield* this.msg(u.n + '吸收了周圍的養分！'); yield* FX.heal.call(this, this.center(u)); u.hp = Math.min(u.maxhp, u.hp + Math.floor(u.maxhp * 0.3)); yield* this.animHP(u); }
         else if (a.type === 'run') { if (yield* this.tryRun()) return yield* this.end('run'); }
@@ -237,6 +237,7 @@ class Battle {
   order(ha, fa) {
     const pr = a => a.type === 'run' ? 7 : a.type === 'item' ? 6 : a.type === 'defend' ? 5 : a.type === 'foeHeal' ? 1 : (MOVES[a.id].prio || 0);
     const ph = pr(ha), pf = pr(fa) + (this.F.trait === 'swift' ? 0.5 : 0);
+    if (this.turn === 1 && this.H.stats.fx.first && ha.type === 'move') return [['H', ha], ['F', fa]];
     let heroFirst = ph !== pf ? ph > pf : (this.effSpe(this.H) !== this.effSpe(this.F) ? this.effSpe(this.H) > this.effSpe(this.F) : chance(0.5));
     return heroFirst ? [['H', ha], ['F', fa]] : [['F', fa], ['H', ha]];
   }
@@ -262,10 +263,10 @@ class Battle {
     const phys = mv.cat === '物'; const crit = chance(critRate(u, mv));
     const as = phys ? u.stages.atk : u.stages.spa, ds = phys ? t.stages.def : t.stages.spd;
     let A = (phys ? u.stats.atk : u.stats.spa) * stageMul(crit ? Math.max(0, as) : as);
-    let D = (phys ? t.stats.def : t.stats.spd) * stageMul(crit ? Math.min(0, ds) : ds);
+    let D = (phys ? t.stats.def : t.stats.spd) * stageMul(crit ? Math.min(0, ds) : ds); if (u.hero && phys && u.stats.fx.pierce) D *= 0.7;
     if (phys && u.status === 'brn') A *= 0.5;
     const base = Math.floor(Math.floor(Math.floor(2 * u.lv / 5 + 2) * mv.pow * A / D) / 50) + 2;
-    const mult = typeMult(mv.t, t.t); let m = mult * (rnd(85, 100) / 100); if (crit) m *= 1.5; if (u.t && u.t === mv.t) m *= 1.5; if (u.hero) { m *= HERO_POWER; const S = u.stats; if (S.elem && mv.t !== '一般') m *= 1 + S.elem / 100; if (S.fireUp && mv.t === '火') m *= 1 + S.fireUp / 100; if (S.boltUp && mv.t === '雷') m *= 1 + S.boltUp / 100; if (S.rage && u.hp < u.maxhp / 2) m *= 1.3; for (const [ty, p] of u.stats.vs || []) if (t.t === ty) m *= 1 + p / 100; }
+    const mult = typeMult(mv.t, t.t); let m = mult * (rnd(85, 100) / 100); if (crit) m *= 1.5; if (u.t && u.t === mv.t) m *= 1.5; if (u.hero) { m *= HERO_POWER; const S = u.stats; if (S.elem && mv.t !== '一般') m *= 1 + S.elem / 100; if (S.fireUp && mv.t === '火') m *= 1 + S.fireUp / 100; if (S.boltUp && mv.t === '雷') m *= 1 + S.boltUp / 100; if (S.rage && u.hp < u.maxhp / 2) m *= 1.3; if (S.fx.lastStand) m *= 1 + 0.5 * (1 - u.hp / u.maxhp); for (const [ty, p] of u.stats.vs || []) if (t.t === ty) m *= 1 + p / 100; }
     if (t.hero && t.stats.resist && t.stats.resist[mv.t]) m *= 1 - t.stats.resist[mv.t] / 100;
     return { dmg: Math.max(1, Math.floor(base * m)), mult, crit };
   }
@@ -283,7 +284,7 @@ class Battle {
       yield* this.msg(u.n + '正在凝聚大地之力！'); if (!this.warned) { this.warned = true; yield* this.msg('（它的拳頭發出了危險的光芒……）'); } return;
     }
     if (u.charging === id) u.charging = null;
-    if (u.hero && id !== 'struggle') { const m = u.moves.find(q => q.id === id); if (m) m.pp = Math.max(0, m.pp - 1); }
+    if (u.hero && id !== 'struggle' && !(u.stats.fx.freeCast && chance(0.3))) { const m = u.moves.find(q => q.id === id); if (m) m.pp = Math.max(0, m.pp - 1); }
     const utb = new TextBox(u.n + '使用了' + mv.n + '！', { style: 'battle', keep: true }); UI.push(utb); while (!utb.done) { utb.update(); yield; } yield* wait(10);
     // accuracy
     const selfTarget = !mv.pow && mv.stat && mv.stat.who === 'self' || mv.heal;
@@ -292,13 +293,18 @@ class Battle {
       const r = this.calcDamage(u, t, mv); const shock = mv.t === '雷' && t.wet > 0;
       yield* this.playFx(mv.fx, u, t); UI.remove(utb);
       let dmg = r.dmg; if (shock) dmg = Math.floor(dmg * 1.5); if (t.shield > 0) dmg = Math.max(1, Math.floor(dmg * 0.6)); if (t.defending) dmg = Math.max(1, Math.floor(dmg / 2));
-      dmg = Math.min(dmg, t.hp); t.hp -= dmg;
+      dmg = Math.min(dmg, t.hp); let endured = false; if (t.hero && t.stats.fx.endure && !this.endured && dmg >= t.hp && t.hp > 1) { dmg = t.hp - 1; this.endured = endured = true; } t.hp -= dmg;
       Sound.sfx(r.mult > 1 ? 'hitSuper' : r.mult < 1 ? 'hitWeak' : 'hit'); if (r.crit) Sound.sfx('crit');
       yield* this.impact(t, r.mult > 1 || r.crit ? 2 : r.mult < 1 ? 0 : 1);
       yield* this.animHP(t);
       if (r.crit) yield* this.msg('擊中要害！');
       if (r.mult > 1) yield* this.msg('效果絕佳！'); else if (r.mult < 1) yield* this.msg('效果不太好……');
       if (t.defending) yield* this.msg(t.n + '的防禦擋下了一半的傷害！');
+      if (endured) yield* this.msg(t.n + '咬緊牙關撐住了！（不屈）');
+      if (u.hero && t.hp > 0 && u.stats.fx.double && mv.cat === '物' && chance(0.25)) { const d2 = Math.min(t.hp, Math.max(1, Math.floor(dmg * 0.5))); yield* this.lunge(u, 8, 2); t.hp -= d2; Sound.sfx('hit'); yield* this.impact(t, 0); yield* this.animHP(t); yield* this.msg('連擊！追加了' + d2 + '點傷害！', { hold: 24 }); }
+      if (t.hero && !u.hero && t.stats.fx.thorns && u.hp > 0 && dmg > 0) { const d3 = Math.min(u.hp, Math.max(1, Math.floor(dmg * 0.25))); u.hp -= d3; this.blinkF = 12; yield* this.animHP(u); yield* this.msg('荊棘反彈了' + d3 + '點傷害！', { hold: 24 }); }
+      if (u.hero && u.stats.fx.fervor && (this.fervor || 0) < 3) { this.fervor = (this.fervor || 0) + 1; u.stages.atk = Math.min(6, u.stages.atk + 1); yield* this.msg('狂熱！物攻提升了！', { hold: 20 }); }
+      if (u.hero && u.stats.fx.stormMark && t.hp > 0 && chance(0.15)) yield* this.inflict(t, 'par', true);
       if (t.hero && t.defending && t.stats.counter && t.hp > 0 && u.hp > 0) { const c2 = this.calcDamage(t, u, MOVES.slash), cd = Math.min(u.hp, Math.max(1, Math.floor(c2.dmg * 0.7))); yield* this.lunge(t, 10, 3); u.hp -= cd; Sound.sfx('hit'); yield* this.impact(u, 1); yield* this.animHP(u); yield* this.msg(t.n + '趁勢反擊！'); }
       if (shock) { t.wet = 0; Sound.sfx('thunder'); yield* this.msg('潮濕的身體導電了！' + t.n + '感電了！'); if (t.hp > 0) yield* this.inflict(t, 'par', true); }
       else if (mv.t === '水' && t.hp > 0) { const was = t.wet > 0; t.wet = 3; if (!was) yield* this.msg(t.n + '全身濕透了！'); }
@@ -318,14 +324,14 @@ class Battle {
     }
     // status moves
     UI.remove(utb);
-    if (mv.shield) { u.shield = mv.shield; yield* FX.guard.call(this, this.center(u)); yield* this.msg(u.n + '展開了魔法護盾！'); return; }
+    if (mv.shield) { u.shield = mv.shield; yield* (FX[mv.fx] || FX.guard).call(this, this.center(u)); yield* this.msg(u.n + '展開了魔法護盾！'); return; }
     if (mv.heal) {
       if (u.hp >= u.maxhp) { yield* this.msg('但是' + u.n + '的HP已經全滿了！'); return; }
-      yield* FX.heal.call(this, this.center(u)); u.hp = Math.min(u.maxhp, u.hp + Math.floor(u.maxhp * mv.heal)); yield* this.animHP(u); yield* this.msg(u.n + '的HP恢復了！'); return;
+      yield* (FX[mv.fx] || FX.heal).call(this, this.center(u)); u.hp = Math.min(u.maxhp, u.hp + Math.floor(u.maxhp * mv.heal)); yield* this.animHP(u); yield* this.msg(u.n + '的HP恢復了！'); return;
     }
     if (mv.stat) {
       const who = mv.stat.who === 'self' ? u : t; const ch = { ...mv.stat }; delete ch.who;
-      if (who === t) yield* this.playFx(mv.fx, u, t); else yield* FX.buff.call(this, this.center(u));
+      if (who === t) yield* this.playFx(mv.fx, u, t); else yield* (FX[mv.fx] || FX.buff).call(this, this.center(u));
       yield* this.statChange(who, ch, true); return;
     }
     if (mv.st) { yield* this.playFx(mv.fx, u, t); yield* this.inflict(t, mv.st, false); }
@@ -346,6 +352,7 @@ class Battle {
     yield* this.msg(b.n + { psn: '中毒了！', par: '麻痺了！可能會無法行動！', slp: '睡著了！', brn: '灼傷了！' }[s]);
   }
   *endTurn() {
+    if (this.H.stats.fx.regen && this.H.hp > 0 && this.H.hp < this.H.maxhp) { this.H.hp = Math.min(this.H.maxhp, this.H.hp + Math.ceil(this.H.maxhp * 0.06)); yield* this.animHP(this.H); }
     for (const b of [this.H, this.F]) { if (b.wet > 0) b.wet--; if (b.shield > 0 && !--b.shield) yield* this.msg(b.n + '的魔法護盾消失了。', { hold: 24 }); }
     if (this.collapse && this.H.hp > 0 && this.F.hp > 0) { yield* FX.rock.call(this, null, this.center(this.H)); if (this.H.defending) yield* this.msg(this.H.n + '擋住了落石！'); else { const d = Math.max(1, Math.floor(this.H.maxhp / 10)); this.H.hp = Math.max(0, this.H.hp - d); this.blinkH = 12; yield* this.animHP(this.H); yield* this.msg(this.H.n + '被落石砸中了！'); if (this.H.hp <= 0) return; } }
     for (const b of [this.H, this.F]) {
@@ -394,13 +401,13 @@ class Battle {
   *victory() {
     const st = Game.st, F = this.F, sp = SPECIES[F.sp]; Game.st.wins = (st.wins || 0) + 1; const de = (st.dex || (st.dex = {}))[F.sp] || (st.dex[F.sp] = { seen: 1, won: 0 }); de.won++;
     Sound.play('victory');
-    const exp = Math.floor(sp.exp * F.lv / 5 * (F.elite || F.boss ? 1.5 : 1));
+    const exp = Math.floor(sp.exp * F.lv / 5 * (F.elite || F.boss ? 1.5 : 1) * (this.H.stats.fx.wisdom ? 1.5 : 1));
     yield* this.gainExp(exp);
-    const gold = F.boss ? 1000 : sp.gold * F.lv;
+    const gold = Math.floor((F.boss ? 1000 : sp.gold * F.lv) * (this.H.stats.fx.fortune ? 1.5 : 1));
     if (gold) { st.money += gold; yield* this.msg(st.name + '得到了' + gold + ' G！'); }
     if (sp.mat && !F.elite && !F.boss && chance(0.5)) { st.bag[sp.mat] = (st.bag[sp.mat] || 0) + 1; yield* this.msg('得到了素材「' + ITEMS[sp.mat].n + '」！', { hold: 30 }); }
-    if (sp.drop) { const g = makeGear(sp.drop, F.boss ? 4 : 3); Sound.jingle('item'); yield* this.msg(F.n + '掉落了' + gearName(g) + '！', { wait: true }); yield* this.msg(gearText(g) + '\n（可以在裝備畫面裝備）', { wait: true }); }
-    const pool = Game.ow && Game.ow.map && Game.ow.map.d.gearPool; if (pool && !F.elite && !F.boss && chance(0.08)) { const g = makeGear(pick(pool), rollQuality()); Sound.jingle('item'); yield* this.msg(F.n + '掉落了' + gearName(g) + '！', { wait: true }); }
+    if (sp.drop) { const g = makeGear(sp.drop, 4); Sound.jingle('item'); yield* this.msg(F.n + '掉落了' + gearName(g) + '！', { wait: true }); yield* this.msg(gearText(g) + '\n（可以在裝備畫面裝備）', { wait: true }); }
+    const pool = Game.ow && Game.ow.map && Game.ow.map.d.gearPool; if (pool && !F.elite && !F.boss && chance(this.H.stats.fx.fortune ? 0.16 : 0.08)) { const g = makeGear(pick(pool), rollQuality()); Sound.jingle('item'); yield* this.msg(F.n + '掉落了' + gearName(g) + '！', { wait: true }); }
   }
   *gainExp(amount) {
     const st = Game.st; yield* this.msg(st.name + '獲得了' + amount + '點經驗值！', { hold: 20 });
@@ -477,6 +484,8 @@ function drawParticle(x, p) {
     case 'arc': { x.globalAlpha = a; x.strokeStyle = p.c; x.lineWidth = 2; x.beginPath(); x.ellipse(p.x, p.y, p.r, p.r * 0.5, 0, p.a0 + p.t * 0.25, p.a0 + p.t * 0.25 + 2.2); x.stroke(); x.globalAlpha = 1; break; }
     case 'cres': { x.save(); x.translate(p.x, p.y); x.rotate(p.ang || 0); x.globalAlpha = Math.min(1, a * 2); x.lineCap = 'round'; x.strokeStyle = p.c2; x.lineWidth = p.w || 6; x.beginPath(); x.arc(0, 0, p.r, -1.15, 1.15); x.stroke(); x.strokeStyle = p.c; x.lineWidth = Math.max(1, (p.w || 6) / 3); x.beginPath(); x.arc(0, 0, p.r - 1, -1.0, 1.0); x.stroke(); x.restore(); x.globalAlpha = 1; break; }
     case 'glow': { const r = p.r * (0.6 + 0.4 * a); const gr = x.createRadialGradient(p.x, p.y, 0, p.x, p.y, r); const [cr, cg, cb] = hex2rgb(p.c); gr.addColorStop(0, `rgba(${cr},${cg},${cb},0.85)`); gr.addColorStop(1, `rgba(${cr},${cg},${cb},0)`); x.globalAlpha = a; x.fillStyle = gr; x.fillRect(p.x - r, p.y - r, r * 2, r * 2); x.globalAlpha = 1; break; }
+    case 'beam': { x.globalAlpha = a * 0.85; const g = x.createLinearGradient(p.x - p.w, 0, p.x + p.w, 0); g.addColorStop(0, 'rgba(255,255,255,0)'); g.addColorStop(0.5, p.c); g.addColorStop(1, 'rgba(255,255,255,0)'); x.fillStyle = g; x.fillRect(p.x - p.w, p.y1 - p.h, p.w * 2, p.h); x.globalAlpha = 1; break; }
+    case 'hex': { const r = lerp(p.r0, p.r1, p.t / p.life); x.globalAlpha = a; x.strokeStyle = p.c; x.lineWidth = 2; x.beginPath(); for (let i = 0; i <= 6; i++) { const an = i * Math.PI / 3 + Math.PI / 6, px = p.x + Math.cos(an) * r, py = p.y + Math.sin(an) * r * 0.9; if (i) x.lineTo(px, py); else x.moveTo(px, py); } x.stroke(); x.globalAlpha = 1; break; }
     case 'flash': x.globalAlpha = a * (p.a || 0.6); x.fillStyle = p.c; x.fillRect(0, 0, W, BH); x.globalAlpha = 1; break;
   }
 }
@@ -523,5 +532,30 @@ const FX = {
   *zzz(U, T) { const P = T || U; for (let i = 0; i < 3; i++) { this.spawn({ k: 'txt', s: 'Z', x: P.x + 8 + i * 5, y: P.y - 10 - i * 6, vy: -0.4, c: '#a0c0ff', sh: '#304060', life: 30, fade: 1 }); yield* wait(8); } yield* wait(14); },
   *psnFx(U, T) { const P = T || U; Sound.sfx('poison'); for (let i = 0; i < 10; i++) this.spawn({ k: 'bub', x: P.x + rnd(-18, 18), y: P.y + rnd(0, 20), vy: -0.8, r: rnd(2, 3), c: '#c060d0', life: 26 }); if (this.tintF !== undefined) { } yield* wait(24); },
   *burnFx(U, T) { const P = T || U; Sound.sfx('fire'); for (let i = 0; i < 12; i++) this.spawn({ k: 'flame', x: P.x + rnd(-16, 16), y: P.y + rnd(0, 20), vy: -0.7, s: rnd(3, 5), life: 22 }); yield* wait(22); },
+  *armorBreak(U, T, u) { yield* this.lunge(u, 10, 3); Sound.sfx('slash'); this.spawn({ k: 'line', x1: T.x, y1: T.y - 28, x2: T.x, y2: T.y + 22, c: '#c8d0e0', w: 7, grow: 3, life: 14 }); this.spawn({ k: 'line', x1: T.x, y1: T.y - 28, x2: T.x, y2: T.y + 22, c: '#ffffff', w: 2, grow: 3, life: 16 }); yield* wait(5); Sound.sfx('rock'); for (let i = 0; i < 12; i++) this.spawn({ k: 'dot', x: T.x + rnd(-12, 12), y: T.y + rnd(-10, 6), vx: rnd(-20, 20) / 10, vy: -1.5 - Math.random(), g: 0.25, c: pick(['#9aa4b8', '#6a7488', '#d8dce8']), s: rnd(2, 3), life: 26 }); yield* wait(14); },
+  *powerSlash(U, T, u) { this.spawn({ k: 'glow', x: U.x, y: U.y, r: 26, c: '#ffb040', life: 16 }); Sound.sfx('charge'); yield* wait(10); yield* this.lunge(u, 12, 3); Sound.sfx('slash'); for (const d of [1, -1]) { this.spawn({ k: 'line', x1: T.x - 20 * d, y1: T.y - 20, x2: T.x + 20 * d, y2: T.y + 20, c: '#ff9a30', w: 6, grow: 3, life: 14 }); this.spawn({ k: 'line', x1: T.x - 20 * d, y1: T.y - 20, x2: T.x + 20 * d, y2: T.y + 20, c: '#fff4c0', w: 2, grow: 3, life: 16 }); yield* wait(4); } this.spawn({ k: 'ring', x: T.x, y: T.y, r0: 4, r1: 30, c: '#ffc060', w: 2, life: 12 }); yield* wait(8); },
+  *bladeStorm(U, T) { Sound.sfx('wind'); for (let i = 0; i < 8; i++) { const an = Math.random() * Math.PI, r = 24; this.spawn({ k: 'line', x1: T.x - Math.cos(an) * r, y1: T.y - Math.sin(an) * r, x2: T.x + Math.cos(an) * r, y2: T.y + Math.sin(an) * r, c: i % 2 ? '#ffffff' : '#a8e0ff', w: 2, grow: 2, life: 10 }); if (i % 2 === 0) Sound.sfx('slash'); yield* wait(3); } for (let i = 0; i < 4; i++) this.spawn({ k: 'arc', x: T.x, y: T.y, r: 18 + i * 4, a0: i * 1.5, c: '#e0f4ff', life: 16 }); yield* wait(12); },
+  *reckless(U, T, u) { this.tintH = { c: '#ff3020', a: 0.5 }; yield* wait(8); this.tintH = null; yield* this.lunge(u, 16, 3); Sound.sfx('slash'); this.spawn({ k: 'flash', c: '#c01010', a: 0.35, life: 8 }); this.spawn({ k: 'line', x1: T.x - 26, y1: T.y + 20, x2: T.x + 26, y2: T.y - 22, c: '#e02020', w: 8, grow: 2, life: 16 }); this.spawn({ k: 'line', x1: T.x - 26, y1: T.y + 20, x2: T.x + 26, y2: T.y - 22, c: '#ffd0d0', w: 2, grow: 2, life: 18 }); this.shake = 12; yield* wait(14); },
+  *inferno(U, T) { Sound.sfx('fire'); this.spawn({ k: 'flash', c: '#ff6010', a: 0.3, life: 10 }); for (let k = 0; k < 4; k++) { const x0 = T.x + (k - 1.5) * 14; this.spawn({ k: 'beam', x: x0, w: 6, y1: T.y + 26, h: 60, c: '#ff7a20', life: 22 }); for (let i = 0; i < 8; i++) this.spawn({ k: 'flame', x: x0 + rnd(-4, 4), y: T.y + 24 - rnd(0, 30), vy: -1.2 - Math.random(), s: rnd(3, 7), life: 20 + rnd(0, 10) }); yield* wait(5); } yield* wait(16); },
+  *dawnBreak(U, T, u) { this.spawn({ k: 'beam', x: U.x, w: 10, y1: U.y + 20, h: 200, c: '#ffe070', life: 20 }); Sound.sfx('charge'); yield* wait(14); yield* this.lunge(u, 14, 3); Sound.sfx('slash'); this.spawn({ k: 'cres', x: T.x, y: T.y, r: 22, ang: -0.6, c: '#fffbe0', c2: '#ffc030', w: 9, life: 16 }); this.spawn({ k: 'flash', c: '#fff4c0', a: 0.8, life: 10 }); this.spawn({ k: 'ring', x: T.x, y: T.y, r0: 6, r1: 44, c: '#ffe070', w: 3, life: 16 }); this.sparks(T.x, T.y, 18, ['#fff4c0', '#ffd040'], 3, 22); yield* wait(16); },
+  *thunderstorm(U, T) { Sound.sfx('thunder'); this.spawn({ k: 'flash', c: '#101830', a: 0.5, life: 40 }); for (let i = 0; i < 30; i++) this.spawn({ k: 'dot', x: rnd(0, W), y: rnd(-20, 60), vx: -0.6, vy: 5, c: '#8ab0ff', s: 1, life: 30 }); for (let k = 0; k < 5; k++) { const pts = []; let px0 = T.x + rnd(-40, 40); for (let y = -4; y < T.y; y += 8) { pts.push([px0, y]); px0 += rnd(-7, 7); } pts.push([T.x + rnd(-8, 8), T.y]); this.spawn({ k: 'bolt', pts, life: 12 }); this.shake = 8; yield* wait(6); } this.sparks(T.x, T.y, 14, ['#fff8a0', '#a0c0ff'], 3); yield* wait(12); },
+  *manaBurst(U, T) { Sound.sfx('charge'); this.projectile(U, T, 1, () => ({ k: 'circ', r: 4, c: '#a070ff', hl: '#ffffff' }), 0, 14); yield* wait(15); Sound.sfx('hitSuper'); for (let i = 0; i < 3; i++) { this.spawn({ k: 'ring', x: T.x, y: T.y, r0: 4, r1: 26 + i * 8, c: ['#e0c8ff', '#a070ff', '#6a40d0'][i], w: 2, life: 16 }); yield* wait(3); } this.sparks(T.x, T.y, 10, ['#c0a0ff', '#ffffff'], 2.5); yield* wait(10); },
+  *guardStrike(U, T, u) { this.spawn({ k: 'hex', x: U.x, y: U.y, r0: 12, r1: 18, c: '#80b8ff', life: 10 }); yield* wait(6); yield* this.lunge(u, 16, 4); Sound.sfx('hit'); this.spawn({ k: 'hex', x: T.x, y: T.y, r0: 4, r1: 26, c: '#a8d0ff', life: 12 }); this.star(T.x, T.y, '#c8e0ff'); yield* wait(10); },
+  *holyLight(U) { Sound.sfx('heal'); this.spawn({ k: 'beam', x: U.x, w: 14, y1: U.y + 26, h: 200, c: '#fff0a0', life: 30 }); for (let i = 0; i < 16; i++) this.spawn({ k: 'dot', x: U.x + rnd(-14, 14), y: U.y + rnd(-20, 20), vy: -0.6, c: pick(['#fff4c0', '#ffffff', '#ffe070']), s: 2, life: 26 }); yield* wait(30); },
+  *blaze(U, T, u) { yield* this.lunge(u, 10, 3); Sound.sfx('slash'); for (let i = 0; i < 3; i++) { const o = (i - 1) * 9; this.spawn({ k: 'line', x1: T.x - 20 + o, y1: T.y - 18, x2: T.x + 16 + o, y2: T.y + 18, c: '#ff4010', w: 5, grow: 2, life: 12 }); yield* wait(3); } Sound.sfx('fire'); this.spawn({ k: 'ring', x: T.x, y: T.y + 10, r0: 6, r1: 34, c: '#ff8030', w: 3, life: 18, fl: 0.45 }); for (let i = 0; i < 30; i++) { const an = i / 30 * Math.PI * 2; this.spawn({ k: 'flame', x: T.x + Math.cos(an) * 24, y: T.y + 10 + Math.sin(an) * 10, vy: -0.8, s: rnd(3, 6), life: 22 }); } yield* wait(20); },
+  *barrier(U) { Sound.sfx('statUp'); for (let i = 0; i < 3; i++) { this.spawn({ k: 'hex', x: U.x, y: U.y, r0: 34 - i * 4, r1: 30 - i * 4, c: ['#a0d0ff', '#80b0ff', '#c8e8ff'][i], life: 28 - i * 4 }); yield* wait(4); } yield* wait(14); },
+  *gale(U, T, u) { for (let i = 0; i < 3; i++) this.spawn({ k: 'line', x1: U.x, y1: U.y - 6 + i * 6, x2: T.x, y2: T.y - 6 + i * 6, c: '#e8f4ff', w: 1, grow: 3, life: 8 }); yield* this.lunge(u, 20, 3); Sound.sfx('slash'); this.spawn({ k: 'line', x1: T.x - 18, y1: T.y + 10, x2: T.x + 18, y2: T.y - 10, c: '#ffffff', w: 3, grow: 1, life: 8 }); this.spawn({ k: 'arc', x: T.x, y: T.y, r: 16, a0: 0, c: '#c8e8ff', life: 12 }); yield* wait(10); },
+  *peck(U, T, u) { yield* this.lunge(u, 6, 2); for (let i = 0; i < 3; i++) { Sound.sfx('hit'); this.spawn({ k: 'line', x1: T.x + rnd(-8, 8), y1: T.y - 14, x2: T.x + rnd(-4, 4), y2: T.y + 2, c: '#f8e070', w: 2, grow: 2, life: 8 }); this.star(T.x + rnd(-6, 6), T.y + rnd(-6, 6), '#ffffff', 8); yield* wait(4); } yield* wait(6); },
+  *lick(U, T) { Sound.sfx('water'); for (let i = 0; i < 3; i++) this.spawn({ k: 'arc', x: T.x, y: T.y, r: 10 + i * 5, a0: 2 + i, c: '#f090c0', life: 16 }); yield* wait(16); },
+  *tailWhip(U, T, u, t) { for (let i = 0; i < 3; i++) { this.spawn({ k: 'arc', x: U.x, y: U.y, r: 14, a0: i * 2, c: '#ffe0a0', life: 12 }); yield* wait(4); } yield* this.shakeB(t, 10, 2); },
+  *waterGun(U, T) { Sound.sfx('water'); this.projectile(U, T, 10, () => ({ k: 'circ', r: 2, c: '#58a8f8', hl: '#ffffff' }), 1, 12); yield* wait(24); this.sparks(T.x, T.y, 10, ['#88c8ff', '#ffffff'], 2, 16, 0.15); yield* wait(8); },
+  *rockSlide(U, T) { for (let i = 0; i < 6; i++) { const x0 = T.x + rnd(-28, 28); const p = this.spawn({ k: 'img', img: ROCK_IMG, x: x0, y: -10, life: 16 }); p.upd = q => { q.y = Math.min(T.y + 10, q.y + 7); }; yield* wait(4); Sound.sfx('rock'); this.shake = 6; for (let k = 0; k < 3; k++) this.spawn({ k: 'circ', x: x0 + rnd(-6, 6), y: T.y + 14, r: rnd(3, 6), c: '#b8ac98', vy: -0.3, life: 20 }); } yield* wait(14); },
+  *megaDrain(U, T) { Sound.sfx('leaf'); for (let i = 0; i < 20; i++) { const an = i / 20 * Math.PI * 2; const p = this.spawn({ k: 'dot', x: T.x + Math.cos(an) * 30, y: T.y + Math.sin(an) * 30, c: pick(['#9ae070', '#d8f8a0']), s: 2, life: 22 }); p.upd = q => { q.x = lerp(q.x, T.x, 0.12); q.y = lerp(q.y, T.y, 0.12); }; } this.spawn({ k: 'glow', x: T.x, y: T.y, r: 26, c: '#60c040', life: 20 }); yield* wait(22); },
+  *thunderWave(U, T) { Sound.sfx('buzz'); for (let i = 0; i < 4; i++) { this.spawn({ k: 'ring', x: T.x, y: T.y, r0: 4, r1: 30, c: '#f8e060', w: 1, life: 14 }); yield* wait(4); } yield* wait(8); },
+  *focus(U) { Sound.sfx('charge'); this.spawn({ k: 'glow', x: U.x, y: U.y, r: 30, c: '#ffd060', life: 24 }); for (let i = 0; i < 12; i++) this.spawn({ k: 'dot', x: U.x + rnd(-16, 16), y: U.y + 20, vy: -1.2, c: '#ffe080', s: 2, life: 22 }); yield* wait(20); },
+  *harden(U) { Sound.sfx('statUp'); for (let i = 0; i < 8; i++) this.spawn({ k: 'dot', x: U.x + rnd(-18, 18), y: U.y + rnd(-18, 18), c: '#c8c8d8', s: 3, life: 18 }); this.spawn({ k: 'hex', x: U.x, y: U.y, r0: 22, r1: 22, c: '#b0b0c8', life: 16 }); yield* wait(18); },
+  *ironWall(U) { Sound.sfx('quake'); this.shake = 8; for (let i = 0; i < 3; i++) { this.spawn({ k: 'hex', x: U.x, y: U.y, r0: 40, r1: 30 - i * 3, c: ['#a08868', '#c8b090', '#806a50'][i], life: 22 }); yield* wait(5); } yield* wait(12); },
+  *howl(U) { Sound.sfx('buzz'); for (let i = 0; i < 3; i++) { this.spawn({ k: 'ring', x: U.x, y: U.y - 10, r0: 4, r1: 28, c: '#ff8060', w: 2, life: 14 }); yield* wait(5); } yield* wait(8); },
+  *agility(U) { Sound.sfx('wind'); for (let i = 0; i < 10; i++) { const yy = U.y + rnd(-20, 20); this.spawn({ k: 'line', x1: U.x - 30, y1: yy, x2: U.x + 30, y2: yy, c: '#e8f0ff', w: 1, grow: 3, life: 10 }); } yield* wait(12); },
   *smoke() { Sound.sfx('wind'); for (let i = 0; i < 30; i++) this.spawn({ k: 'circ', x: rnd(10, W - 10), y: rnd(20, BH - 20), r: rnd(6, 14), c: pick(['#d8d8d8', '#b8b8c0', '#f0f0f0']), life: 30 + rnd(0, 20), vy: -0.3 }); yield* wait(40); },
 };

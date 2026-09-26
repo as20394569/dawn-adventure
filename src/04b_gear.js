@@ -50,27 +50,32 @@ const GEAR = {
 };
 const STATK = ['hp', 'atk', 'def', 'spa', 'spd', 'spe'];
 const SP_NAMES = { crit: '會心', hit: '命中', eva: '迴避', drain: '吸血', elem: '屬性傷害' };
-const AFFIX = [['crit', 2, 6], ['hit', 3, 8], ['eva', 2, 5], ['drain', 3, 7], ['hp', 3, 10], ['atk', 1, 3], ['spa', 1, 3], ['def', 1, 3], ['spd', 1, 3], ['spe', 1, 3], ['elem', 4, 10], ['vs', 8, 15], ['resist', 8, 15]];
 const AFF_T = ['一般', '火', '水', '草', '雷', '岩', '毒', '飛'];
-function rollAffixes(n) {
-  const out = [], used = new Set();
-  while (out.length < n) { const [k, a, b] = pick(AFFIX); if (used.has(k)) continue; used.add(k); out.push(k === 'vs' || k === 'resist' ? [k, pick(AFF_T), rnd(a, b)] : [k, rnd(a, b)]); }
+const AFFIX_COUNT = [0, 0, 1, 2, 2]; // 藍0 紫1 紅2 金2
+function rollAffixes(n, slot = 'acc', tier = 1) {
+  const pool = Object.keys(AFFIX_TABLE).filter(k => AFFIX_TABLE[k].slots.includes(slot)), out = [], used = new Set(), sc = 1 + (tier - 1) * 0.35;
+  for (let guard = 0; out.length < n && guard < 50; guard++) {
+    const tot = pool.reduce((a, k) => a + (used.has(k) ? 0 : AFFIX_TABLE[k].w), 0); let r = Math.random() * tot, id = pool[0];
+    for (const k of pool) { if (used.has(k)) continue; r -= AFFIX_TABLE[k].w; if (r <= 0) { id = k; break; } }
+    if (used.has(id)) continue; used.add(id); const A = AFFIX_TABLE[id], v = Math.max(1, Math.round(rnd(A.min, A.max) * sc));
+    out.push(A.typed ? [id, pick(AFF_T), v] : [id, v]);
+  }
   return out;
 }
 function makeGear(b, q = 1, r) {
   const st = Game.st; st.gid = (st.gid || 0) + 1;
-  const g = { u: st.gid, b, q, r: r ?? Math.round((0.75 + Math.random() * 0.25) * 100) / 100, a: q === 2 ? rollAffixes(1) : q === 4 ? rollAffixes(2) : [] };
+  const B = GEAR[b]; const g = { u: st.gid, b, q, r: r ?? Math.round((0.75 + Math.random() * 0.25) * 100) / 100, a: rollAffixes(AFFIX_COUNT[q], B.slot, B.t) };
   (st.gear || (st.gear = [])).push(g); return g;
 }
 const gearBy = (u, st = Game.st) => (st.gear || []).find(g => g.u === u);
 const equippedGear = (st = Game.st) => Object.values(st.equip || {}).map(u => gearBy(u, st)).filter(Boolean);
 const isEquipped = (g, st = Game.st) => Object.values(st.equip || {}).includes(g.u);
 function gearStats(g) {
-  const B = GEAR[g.b], m = GQ[g.q][2] * g.r, o = { st: {}, sp: { vs: [], resist: {} } };
+  const B = GEAR[g.b], m = GQ[g.q][2] * g.r, o = { st: {}, sp: { vs: [], resist: {} }, fx: B.fx || [] };
   for (const k in B.st) o.st[k] = Math.max(1, Math.round(B.st[k] * m));
   const add = (k, v, t) => { if (k === 'vs') o.sp.vs.push([t, v]); else if (k === 'resist') o.sp.resist[t] = (o.sp.resist[t] || 0) + v; else if (STATK.includes(k)) o.st[k] = (o.st[k] || 0) + v; else o.sp[k] = (o.sp[k] || 0) + v; };
   for (const k in B.sp || {}) { const v = B.sp[k]; if (Array.isArray(v)) add(k, v[1], v[0]); else add(k, v); }
-  for (const a of g.a || []) if (a.length === 3) add(a[0], a[2], a[1]); else add(a[0], a[1]);
+  for (const a of g.a || []) { const key = (AFFIX_TABLE[a[0]] || {}).key || a[0]; if (a.length === 3) add(key, a[2], a[1]); else add(key, a[1]); }
   return o;
 }
 function gearLines(g) { // [base stats text, special text]
@@ -78,13 +83,14 @@ function gearLines(g) { // [base stats text, special text]
   for (const k of STATK) if (o.st[k]) p.push(STAT_NAMES[k] + '+' + o.st[k]);
   for (const k in SP_NAMES) if (o.sp[k]) s.push(SP_NAMES[k] + '+' + o.sp[k] + '%');
   for (const [t, v] of o.sp.vs) s.push('對' + t + '系+' + v + '%'); for (const t in o.sp.resist) s.push(t + '系傷害-' + o.sp.resist[t] + '%');
+  for (const f of o.fx) s.push('★' + SPECIALS[f].n);
   return [p.join(' '), s.join(' ')];
 }
 const gearText = g => gearLines(g).filter(Boolean).join(' ');
 const gearName = g => '【' + GQ[g.q][0] + '】' + GEAR[g.b].n;
 const gCol = g => GQ[g.q][1];
 const gearSell = g => Math.round((GEAR[g.b].price || GEAR[g.b].t * 400) * 0.3 * GQ[g.q][2] * g.r);
-const rollQuality = () => { const r = Math.random() * 100; return r < 60 ? 1 : r < 90 ? 2 : r < 98 ? 3 : 4; };
+const rollQuality = () => { const r = Math.random() * 100; return r < 60 ? 1 : r < 92 ? 2 : 3; }; // 金 only from elites, bosses and hidden content
 function weaponSpr(st = Game.st) { const g = gearBy(st.equip && st.equip.weapon, st); return g ? GEAR[g.b].spr || 'ironSword' : null; }
 // convert pre-v13 saves (item ids in bag/equip) into gear instances
 const OLD_GEAR = { woodSword: ['woodSword', 1], ironSword: ['ironSword', 1], knightSword: ['knightSword', 2], fangDagger: ['fangDagger', 3], foxBlade: ['foxBlade', 2], crystalBlade: ['crystalBlade', 2], dawnSword: ['dawnSword', 4],
