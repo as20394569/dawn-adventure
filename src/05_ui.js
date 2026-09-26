@@ -373,21 +373,22 @@ function* equipScreen() {
 }
 /* ---------- Options ---------- */
 function* optionsScreen() {
-  let idx = 0; const labels = ['文字速度', '背景音樂', '音效', '關閉'];
-  const val = i => i === 0 ? ['慢', '普通', '快'][Game.settings.text] : i === 1 ? (Game.settings.music ? '開' : '關') : i === 2 ? (Game.settings.sfx ? '開' : '關') : '';
+  let idx = 0; const labels = ['文字速度', '背景音樂', '音效', '自動存檔', '關閉'], N = labels.length, TOG = ['music', 'sfx', 'autosave'];
+  const val = i => i === 0 ? ['慢', '普通', '快'][Game.settings.text] : i < N - 1 ? (Game.settings[TOG[i - 1]] ? '開' : '關') : '';
   const scr = { draw(x) {
     screenBG(x); headerBar(x, '設定');
-    drawWin(x, 4, 30, 168, 84, 'menu');
-    labels.forEach((l, i) => { const Y = 36 + i * 18; if (i === idx) selBar(x, 6, Y - 1, 164, 17); Font.draw(x, l, 14, Y, UIC.text, UIC.textSh); if (i < 3) Font.drawR(x, '← ' + val(i) + ' →', 164, Y, UIC.accent, UIC.textSh); });
-    drawWin(x, 4, 118, 168, 52, 'menu'); Font.draw(x, '← → 切換設定', 14, 124, UIC.muted, UIC.textSh); Font.draw(x, 'B 鍵返回', 14, 140, UIC.muted, UIC.textSh);
+    drawWin(x, 4, 30, 168, N * 18 + 12, 'menu');
+    labels.forEach((l, i) => { const Y = 36 + i * 18; if (i === idx) selBar(x, 6, Y - 1, 164, 17); Font.draw(x, l, 14, Y, UIC.text, UIC.textSh); if (i < N - 1) Font.drawR(x, '← ' + val(i) + ' →', 164, Y, UIC.accent, UIC.textSh); });
+    const Y2 = 30 + N * 18 + 16; drawWin(x, 4, Y2, 168, 70, 'menu'); Font.draw(x, '← → 切換設定　B 鍵返回', 14, Y2 + 6, UIC.muted, UIC.textSh, 11);
+    Font.wrap('自動存檔：換地圖、打完戰鬥、每走100步時自動記錄，關閉網頁時也會記錄。', 150, 10).slice(0, 3).forEach((l, i) => Font.draw(x, l, 14, Y2 + 24 + i * 13, UIC.muted, UIC.textSh, 10));
   } };
   UI.push(scr);
   while (true) {
-    if (Input.repeat('up')) { idx = (idx + 3) % 4; Sound.sfx('cursor'); } if (Input.repeat('down')) { idx = (idx + 1) % 4; Sound.sfx('cursor'); }
+    if (Input.repeat('up')) { idx = (idx + N - 1) % N; Sound.sfx('cursor'); } if (Input.repeat('down')) { idx = (idx + 1) % N; Sound.sfx('cursor'); }
     let d = Input.pressed('left') ? -1 : Input.pressed('right') ? 1 : 0;
-    if (!d && Input.pressed('a') && idx < 3) { Input.consume('a'); d = 1; if (idx === 0 && Game.settings.text === 2) d = -2; }
-    if (d) { if (idx === 0) Game.settings.text = clamp(Game.settings.text + d, 0, 2); if (idx === 1) Game.settings.music = !Game.settings.music; if (idx === 2) Game.settings.sfx = !Game.settings.sfx; Sound.applySettings(); Sound.sfx('cursor'); saveSettings(); }
-    if (Input.pressed('b') || (Input.pressed('a') && idx === 3)) { Input.consume('a', 'b'); Sound.sfx('cancel'); break; }
+    if (!d && Input.pressed('a') && idx < N - 1) { Input.consume('a'); d = 1; if (idx === 0 && Game.settings.text === 2) d = -2; }
+    if (d) { if (idx === 0) Game.settings.text = clamp(Game.settings.text + d, 0, 2); else Game.settings[TOG[idx - 1]] = !Game.settings[TOG[idx - 1]]; Sound.applySettings(); Sound.sfx('cursor'); saveSettings(); }
+    if (Input.pressed('b') || (Input.pressed('a') && idx === N - 1)) { Input.consume('a', 'b'); Sound.sfx('cancel'); break; }
     yield;
   }
   UI.remove(scr);

@@ -144,8 +144,8 @@ class Battle {
     const X = 8, w = W - 16; drawPanel(x, X, Y, w, 26, F.boss ? UIC.bad : F.elite ? UIC.warm : UIC.accent);
     let cx = Font.draw(x, F.n, X + 6, Y + 1, UIC.text, UIC.textSh);
     cx = Font.draw(x, 'Lv' + F.lv, cx + 4, Y + 1, UIC.muted, UIC.textSh);
-    badgeRow(x, [F.status, F.wet && 'wet', F.tangle && 'tangle', F.shield && 'shield'], cx + 4, Y + 3);
-    const tag = F.rare ? '稀有' : F.boss ? '頭目' : F.elite ? '精英' : ''; let rx = X + w - 6; if (tag) { Font.drawR(x, tag, rx, Y + 1, F.rare ? '#ffd84a' : F.boss ? UIC.bad : UIC.warm, UIC.textSh); rx -= Font.width(tag) + 4; } if (FAMILIES[F.fam]) Font.drawR(x, FAMILIES[F.fam].n, rx, Y + 2, FAMILIES[F.fam].c, UIC.textSh, 10);
+    const tag = F.rare ? '稀有' : F.boss ? '頭目' : F.elite ? '精英' : ''; let rx = X + w - 6; if (tag) { Font.drawR(x, tag, rx, Y + 1, F.rare ? '#ffd84a' : F.boss ? UIC.bad : UIC.warm, UIC.textSh); rx -= Font.width(tag) + 4; } if (FAMILIES[F.fam]) { Font.drawR(x, FAMILIES[F.fam].n, rx, Y + 2, FAMILIES[F.fam].c, UIC.textSh, 10); rx -= Font.width(FAMILIES[F.fam].n, 10) + 4; }
+    { const bs = [F.status, F.wet && 'wet', F.tangle && 'tangle', F.shield && 'shield'].filter(Boolean), room = Math.max(0, Math.floor((rx - cx - 4) / 18)); badgeRow(x, bs.slice(0, room), cx + 4, Y + 3); if (bs.length > room) Font.draw(x, '+' + (bs.length - room), cx + 4 + room * 18, Y + 2, UIC.muted, UIC.textSh, 10); }
     drawHPBar(x, X + 6, Y + 18, w - 12, this.disp.F / F.maxhp, 3);
   }
   drawBoxH(x) {
@@ -302,13 +302,13 @@ class Battle {
     }
     if (u.charging === id) u.charging = null;
     if (u.hero && id !== 'attack') { const c = skillMP(id); if (u.mp < c) { yield* this.msg('MP不夠，' + u.n + '改用普通攻擊！'); return yield* this.useMove(u, t, 'attack'); } if (!(u.stats.fx.freeCast && chance(0.3))) u.mp -= c; else yield* this.msg('魔力循環！沒有消耗MP。', { hold: 16 }); }
-    const utb = new TextBox(u.n + '使用了' + mv.n + '！', { style: 'battle', keep: true }); UI.push(utb); while (!utb.done) { utb.update(); yield; } yield* wait(10); const flourish = u.hero && id !== 'attack'; if (flourish) yield* heroCast.call(this, u, mv);
+    const utb = new TextBox(u.n + '使用了' + mv.n + '！', { style: 'battle', keep: true }); UI.push(utb); while (!utb.done) { utb.update(); yield; } yield* wait(10); const flourish = u.hero && id !== 'attack'; if (flourish) yield* heroCast.call(this, u, mv, id, t);
     // accuracy
     const selfTarget = !mv.pow && mv.stat && mv.stat.who === 'self' || mv.heal;
     if (!selfTarget && mv.acc && !chance(hitChance(u, t, mv))) { yield* wait(10); UI.remove(utb); yield* this.msg(mv.pow ? u.n + '的攻擊沒有打中！' : '但是失敗了！'); return; }
     if (mv.pow) {
       const U0 = this.center(u), T0 = this.center(t); const r = this.calcDamage(u, t, mv); const shock = mv.t === '雷' && t.wet > 0, ignite = mv.t === '火' && t.tangle > 0, steam = mv.t === '水' && t.status === 'brn';
-      yield* this.playFx(mv.fx, u, t); if (flourish) heroImpact.call(this, T0, mv, r); UI.remove(utb);
+      yield* this.playFx(mv.fx, u, t); if (flourish) yield* heroImpact.call(this, T0, mv, r, id, u); UI.remove(utb);
       let dmg = r.dmg; if (shock || ignite) dmg = Math.floor(dmg * 1.5); if (steam) dmg = Math.floor(dmg * 1.3); if (ignite || steam) yield* FX[ignite ? 'ignite' : 'steam'].call(this, U0, T0); if (this.cg && !t.hero && this.cg.shards > 0) dmg = Math.max(1, Math.floor(dmg * 0.6)); const mirrored = this.cg && !t.hero && this.cg.mirror && mv.cat === '特'; if (mirrored) dmg = Math.max(1, Math.floor(dmg * 0.5)); if (t.shield > 0) dmg = Math.max(1, Math.floor(dmg * 0.6)); if (t.defending) dmg = Math.max(1, Math.floor(dmg / 2));
       dmg = Math.min(dmg, t.hp); let endured = false; if (t.hero && t.stats.fx.endure && !this.endured && dmg >= t.hp && t.hp > 1) { dmg = t.hp - 1; this.endured = endured = true; } t.hp -= dmg;
       Sound.sfx(r.mult > 1 ? 'hitSuper' : r.mult < 1 ? 'hitWeak' : 'hit'); if (r.crit) Sound.sfx('crit');
@@ -352,7 +352,7 @@ class Battle {
     UI.remove(utb);
     if (mv.shield && mv.heal) { yield* (FX[mv.fx] || FX.heal).call(this, this.center(u)); u.shield = mv.shield; u.hp = Math.min(u.maxhp, u.hp + Math.floor(u.maxhp * mv.heal)); yield* this.animHP(u); yield* this.msg(u.n + '被神聖的領域包圍了！HP恢復，並獲得了護盾！'); return; }
     if (mv.hpCost) { const c = Math.max(1, Math.floor(u.maxhp * mv.hpCost)); if (u.hp <= c) { yield* this.msg('但是' + u.n + '的HP不夠了！'); return; } u.hp -= c; yield* this.animHP(u); }
-    if (u.hero && id !== 'attack' && (mv.shield || mv.heal || mv.stat && mv.stat.who === 'self')) heroBless.call(this, u, mv);
+    if (u.hero && id !== 'attack' && (mv.shield || mv.heal || mv.stat && mv.stat.who === 'self')) heroBless.call(this, u, mv, id);
     if (mv.shield) { u.shield = mv.shield; yield* (FX[mv.fx] || FX.guard).call(this, this.center(u)); yield* this.msg(u.n + '展開了魔法護盾！'); return; }
     if (mv.heal) {
       if (u.hp >= u.maxhp) { yield* this.msg('但是' + u.n + '的HP已經全滿了！'); return; }
