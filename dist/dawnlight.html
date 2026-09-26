@@ -2314,7 +2314,7 @@ function questMarks(st = Game.st) {
   if (f.mineOpen && !f.bandit) M.push(['mine', 9, 2]);
   if (f.golem && !f.boneKnight) M.push(st.map === 'catacomb' ? ['catacomb', 9, 3] : ['ruins', 13, 10]);
   const c4 = comState('c4', st); if (c4 && c4.s === 'on' && !st.bag.pocketWatch) M.push(['forest', 19, 9]);
-  if (Object.keys(COMMISSIONS).some(k => { const s = comState(k, st); return s && s.s === 'on' && comProgress(k, st).ready; })) M.push(['town', 12, 8]);
+  if (typeof COM_GIVER !== 'undefined') for (const id in NPC_WHERE) { if (!npcQuestState(id, st)) continue; for (const m in MAPS) for (const n of MAPS[m].npcs || []) if (n.id === id) M.push([m, n.x, n.y]); }
   return M;
 }
 
@@ -4373,7 +4373,7 @@ class Overworld {
     const p = this.p; const [dx, dy] = DIRS[p.dir]; let x = p.x + dx, y = p.y + dy;
     let ent = this.entityAt(x, y, p); let c = this.tileAt(x, y);
     if (!ent && c === 'C') { ent = this.entityAt(x + dx, y + dy, p); }
-    if (ent && ent.frames) { if (!ent.moving) { ent.dir = OPP[p.dir]; } const ev = Events[ent.id]; this.run(ev ? ev(this, ent) : say('……')); return true; }
+    if (ent && ent.frames) { if (!ent.moving) { ent.dir = OPP[p.dir]; } const ev = Events[ent.id], cq = npcCommission(ent.id, this, ent); this.run(cq || (ev ? ev(this, ent) : say('……'))); return true; }
     if (ent && ent.sp && ent !== this.boss) { this.run(this.eliteTalk(ent)); return true; }
     if (ent && ent === this.boss) { const g = Events[this.map.d.boss.ev || 'bossLine'](this); if (g) this.run(g); return true; }
     if (ent && (ent.item || ent.gold || ent.gather)) { this.run(this.pickItem(ent)); return true; }
@@ -4592,7 +4592,7 @@ function drawTransition(x) {
 /* ===================== BATTLE ===================== */
 let HERO_POWER = 1.45, BOSS_HP = 2.1, ELITE_HP = 1.1;
 const BTN_MENU = { x: 4, y: TB_Y + 1, w: W - 8, h: TB_H - 2, cols: 2, colW: 82, rowH: 20, ox: 3, oy: 17, buttons: true, style: 'cmd' };
-const BH = TB_Y, FOE_X = W / 2 - 32, HERO_X = W / 2 - 24, HERO_Y = 112, HBAR_Y = 170;
+const BH = TB_Y, FOE_X = 20, HERO_X = 92, HERO_Y = 81, HBAR_Y = 170; // side view: foe on the left, hero on the right, both standing on the same ground line
 function critRate(u, mv) { const base = (u.stats.crit ?? 6) / 100; return mv.crit ? base * 2 : base; }
 function hitChance(u, t, mv) { let a = mv.acc; if (!a) return 1; a += u.stats.hit || 0; a -= t.stats.eva || 0; return clamp(a, 5, 100) / 100; }
 const stageMul = s => s >= 0 ? 1 + 0.25 * s : 1 / (1 + 0.25 * -s); // buffs/debuffs: ±25% per step, max ±3, timed
@@ -4600,7 +4600,7 @@ const STATUS_NAME = { psn: '中毒', par: '麻痺', slp: '睡眠', brn: '灼傷'
 const IMMUNE = { psn: '毒', brn: '火', par: '雷' };
 const battleImgCache = {};
 // battle sprites: rendered at a low native size, then scaled 3x (same chunky pixel look as the hero)
-const FOE_NATIVE = { golem: 28, mossGiant: 28, crystalGolem: 28, banditBoss: 28, boneKnight: 28, runeGolem: 28 }, FOE_SCALE = 3, FOE_FOOT = 106;
+const FOE_NATIVE = { golem: 28, mossGiant: 28, crystalGolem: 28, banditBoss: 28, boneKnight: 28, runeGolem: 28 }, FOE_SCALE = 3, FOE_FOOT = 152;
 function battleSprite(key) {
   if (battleImgCache[key]) return battleImgCache[key];
   const n = FOE_NATIVE[key] || 24, S = FOE_SCALE, sm = buildShaded(ART[key], n, n / 64);
@@ -4679,9 +4679,9 @@ class Battle {
     const dx = st.dex || (st.dex = {}); (dx[cfg.sp] || (dx[cfg.sp] = { won: 0 })).seen = 1;
     Object.defineProperty(H, 'hp', { get: () => st.hp, set: v => st.hp = v }); if (st.mp === undefined) st.mp = s.mp; H.maxmp = s.mp; Object.defineProperty(H, 'mp', { get: () => st.mp, set: v => st.mp = clamp(v, 0, s.mp) }); Object.defineProperty(H, 'status', { get: () => st.status, set: v => st.status = v });
     this.bg = buildBattleBG(cfg.bg);
-    this.imgF = battleSprite(cfg.sp); this.foeTX = FOE_X; this.shadowF = buildShadow(Math.round(this.imgF.bb.w * 0.38), 4); this.imgH = heroBattleImgLook(0, heroLookOf(st)); this.imgH2 = heroBattleImgLook(1, heroLookOf(st));
+    this.imgF = battleSprite(cfg.sp); this.foeTX = FOE_X; this.shadowF = buildShadow(Math.round(this.imgF.bb.w * 0.38), 4); this.imgH = heroSideImg(0, heroLookOf(st)); this.imgH2 = heroSideImg(1, heroLookOf(st)); this.shadowH = buildShadow(15, 4);
     this.disp = { F: this.F.hp, H: st.hp, exp: st.exp };
-    this.foeX = W + 40; this.heroX = -80; this.boxF = -30; this.boxH = BH + 4; this.cover = 1;
+    this.foeX = -90; this.heroX = W + 40; this.boxF = -30; this.boxH = BH + 4; this.cover = 1;
     this.offF = { x: 0, y: 0 }; this.offH = { x: 0, y: 0 }; this.sinkF = 0; this.sinkH = 0; this.blinkF = 0; this.blinkH = 0; this.alphaF = 1;
     this.fx = []; this.shake = 0; this.t = 0; this.idle = false; this.cmdIdx = 0; this.moveIdx = 0; this.runTries = 0; this.turn = 0; this.phase2 = false; this.fistCD = 2;
     this.tint = null; this.squishF = 0;
@@ -4697,7 +4697,7 @@ class Battle {
     this.fx = this.fx.filter(p => p.t < p.life);
     if (this.script) { const r = this.script.next(); if (r.done) this.script = null; }
   }
-  center(b) { return b.hero ? { x: this.heroX + 24, y: HERO_Y + 32 } : { x: this.foeX + 32, y: FOE_FOOT - Math.round(this.imgF.bb.h * 0.5) }; }
+  center(b) { return b.hero ? { x: this.heroX + 42, y: HERO_Y + 36 } : { x: this.foeX + 32, y: FOE_FOOT - Math.round(this.imgF.bb.h * 0.5) }; }
   /* ---------------- drawing ---------------- */
   draw(x) {
     const sx = this.shake > 0 ? rnd(-3, 3) : 0, sy = this.shake > 0 ? rnd(-2, 2) : 0;
@@ -4718,8 +4718,8 @@ class Battle {
     if (this.cg && this.cg.mirror && this.alphaF > 0 && Math.floor(this.t / 8) % 2) { x.globalAlpha = 0.25; x.drawImage(tinted(this.imgF, '#e8fbff'), Math.round(this.foeX + 32 - this.imgF.bb.cx), Math.round(FOE_FOOT - this.imgF.bb.bot)); x.globalAlpha = 1; }
     // hero (foreground, lower body hidden behind the status bar)
     if (!(this.blinkH > 0 && Math.floor(this.blinkH / 3) % 2)) {
-      x.save(); x.beginPath(); x.rect(0, 0, W, HBAR_Y + 20); x.clip();
-      const hi = (this.offH.x || this.offH.y) ? this.imgH2 : this.imgH; const hx = Math.round(this.heroX + this.offH.x), hy = Math.round(HERO_Y + this.offH.y + this.sinkH + bobH);
+      x.save(); x.globalAlpha = 0.25; x.drawImage(this.shadowH, Math.round(this.heroX + 42 + this.offH.x - this.shadowH.width / 2), FOE_FOOT - 4); x.globalAlpha = Math.max(0, 1 - this.sinkH / 70);
+      const hi = (this.offH.x || this.offH.y) ? this.imgH2 : this.imgH; const hx = Math.round(this.heroX + this.offH.x), hy = Math.round(HERO_Y + this.offH.y + this.sinkH * 0.25 + bobH);
       x.drawImage(hi, hx, hy);
       if (this.tintH) { x.globalAlpha = this.tintH.a; x.drawImage(tinted(hi, this.tintH.c), hx, hy); }
       x.restore();
@@ -4803,7 +4803,7 @@ class Battle {
   }
   *intro() {
     Sound.sfx('encounter');
-    yield* parallel(tween(14, t => this.cover = 1 - t), tween(40, t => { const e = 1 - Math.pow(1 - t, 3); this.foeX = lerp(W + 40, this.foeTX, e); this.heroX = lerp(-80, HERO_X, e); }));
+    yield* parallel(tween(14, t => this.cover = 1 - t), tween(40, t => { const e = 1 - Math.pow(1 - t, 3); this.foeX = lerp(-90, this.foeTX, e); this.heroX = lerp(W + 40, HERO_X, e); }));
     this.cover = 0; Sound.cry(Object.keys(SPECIES).indexOf(this.cfg.sp) + 1, this.F.boss ? 0.7 : 1, this.F.boss ? 1.6 : 1);
     if (this.F.boss) { this.shake = 30; Sound.sfx('quake'); }
     yield* parallel(tween(12, t => this.boxF = lerp(-30, 4, 1 - Math.pow(1 - t, 2))), wait(4));
@@ -5490,6 +5490,49 @@ function heroBless(u, mv, id) {
   else { this.spawn({ k: 'ring', x: U.x, y: U.y, r0: 34, r1: 6, c, w: 2, life: 16 }); this.spawn({ k: 'glow', x: U.x, y: U.y, r: 30, c, life: 18 }); }
 }
 
+/* ===================== SIDE-VIEW BATTLE: flat ground stage + hero drawn from the field sprite (facing left, weapon in hand) ===================== */
+const GROUND_Y = { field: 70, forest: 72, ruins: 96 };
+const GROUND_PAL = {
+  field: { far: '#86c46e', near: '#4e8a44', strip: '#c8a870', strip2: '#b89860', tuft: '#a8dc88', dot: '#3e7a38' },
+  forest: { far: '#4e7a44', near: '#2e4e2a', strip: '#6a5a3a', strip2: '#5a4c30', tuft: '#6a9a58', dot: '#24402a' },
+  ruins: { far: '#524a60', near: '#322c3e', strip: '#5e566e', strip2: '#4a4458', tuft: '#6aa048', dot: '#26222e' },
+};
+{ const _bg = buildBattleBG; buildBattleBG = function (kind) {
+  const c = _bg(kind), x = c.getContext('2d'), k = GROUND_PAL[kind] ? kind : 'field', P = GROUND_PAL[k], y0 = GROUND_Y[k], r = srand(7);
+  // flat ground: light far away → darker in front (no vanishing road)
+  const n = BH - y0; for (let y = y0; y < BH; y++) { const t = (y - y0) / n; const [a, b] = [hex2rgb(P.far), hex2rgb(P.near)]; x.fillStyle = `rgb(${Math.round(lerp(a[0], b[0], t))},${Math.round(lerp(a[1], b[1], t))},${Math.round(lerp(a[2], b[2], t))})`; x.fillRect(0, y, W, 1); }
+  // the stage both fighters stand on
+  x.fillStyle = P.strip2; x.fillRect(0, FOE_FOOT - 10, W, 18); x.fillStyle = P.strip; x.fillRect(0, FOE_FOOT - 9, W, 15); x.fillStyle = 'rgba(255,255,255,0.12)'; x.fillRect(0, FOE_FOOT - 9, W, 1); x.fillStyle = 'rgba(0,0,0,0.18)'; x.fillRect(0, FOE_FOOT + 6, W, 2);
+  for (let i = 0; i < 40; i++) { const px = Math.floor(r() * W), py = FOE_FOOT - 8 + Math.floor(r() * 13); x.fillStyle = r() < 0.5 ? P.strip2 : 'rgba(255,255,255,0.15)'; x.fillRect(px, py, 2, 1); }
+  // texture above/below the stage
+  for (let i = 0; i < 70; i++) { const py = y0 + 4 + Math.floor(r() * (FOE_FOOT - 16 - y0)), px = Math.floor(r() * W), s = 1 + Math.floor((py - y0) / 30); x.fillStyle = r() < 0.6 ? P.tuft : P.dot; x.fillRect(px, py, s + 1, 1); if (k !== 'ruins') x.fillRect(px + 1, py - 1, 1, 1); }
+  for (let i = 0; i < 30; i++) { const py = FOE_FOOT + 10 + Math.floor(r() * (BH - FOE_FOOT - 12)), px = Math.floor(r() * W); x.fillStyle = r() < 0.5 ? P.tuft : P.dot; x.fillRect(px, py, 3, 1); if (k !== 'ruins') x.fillRect(px + 1, py - 1, 1, 1); }
+  x.fillStyle = 'rgba(0,0,0,0.12)'; x.fillRect(0, y0, W, 2);
+  return c;
+}; }
+// hero in battle = the field paper-doll sprite facing left (toward the foe), 3x, with the weapon held forward
+const heroSideCache = {};
+function heroSideImg(frame, L) {
+  const key = frame + lookKey(L); if (heroSideCache[key]) return heroSideCache[key];
+  const CW = 28, CH = 24, n = mkCanvas(CW, CH), x = n.getContext('2d'); const body = heroFramesLook({ ...L, weapon: null }).left[frame ? 1 : 0]; x.drawImage(body, 8, 1);
+  const W0 = L.weapon; if (W0) {
+    const P = WPN_PAL[W0[1]] || WPN_PAL.steel, pts = [], ln = (x0, y0, x1, y1, c) => { const m = Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0)); for (let t = 0; t <= m; t++) pts.push([Math.round(x0 + (x1 - x0) * t / m), Math.round(y0 + (y1 - y0) * t / m), c]); };
+    const up = frame ? -2 : 0; // raised during attacks
+    if (W0[0] === 'sword') { pts.push([13, 17, P.T], [12, 16, P.T], [11, 15, P.U], [12, 14, P.U], [10, 16, P.U]); ln(10, 14 + up, 3, 7 + up * 2, P.I); ln(11, 13 + up, 4, 6 + up * 2, P.i); pts.push([2, 6 + up * 2, P.I]); }
+    if (W0[0] === 'dagger') { pts.push([13, 17, P.T], [12, 16, P.U], [11, 17, P.U]); ln(11, 15, 8, 12 + up, P.I); ln(12, 15, 9, 12 + up, P.i); }
+    if (W0[0] === 'axe') { ln(14, 21, 9, 5 + up, P.T); for (const [a, b, c] of [[8, 3, 'i'], [7, 4, 'I'], [6, 4, 'I'], [7, 5, 'I'], [6, 5, 'I'], [5, 5, 'I'], [7, 6, 'I'], [6, 6, 'i'], [7, 7, 'i'], [10, 4, 'i'], [10, 5, 'i']]) pts.push([a, b + up, P[c]]); }
+    if (W0[0] === 'staff') { ln(14, 22, 9, 4 + up, P.T); for (const [a, b] of [[8, 2], [9, 2], [8, 3], [9, 3], [7, 3], [10, 3], [8, 1]]) pts.push([a, b + up, P.V]); pts.push([8, 2 + up, '#ffffff']); }
+    if (W0[0] === 'tome') { for (let yy = 10; yy <= 13; yy++) for (let xx = 3; xx <= 10; xx++) { const edge = yy === 13 || xx === 3 || xx === 10; pts.push([xx, yy + up, edge ? P.T : xx === 6 || xx === 7 ? P.U : P.V]); } pts.push([6, 7 + up, P.U], [4, 8 + up, '#ffffff'], [12, 16, P.T]); }
+    const id = x.getImageData(0, 0, CW, CH), d = id.data, set = new Set(pts.map(([a, b]) => a + ',' + b));
+    const put = (px, py, c) => { if (px < 0 || py < 0 || px >= CW || py >= CH) return; const [r, g, bb] = hex2rgb(c), k = (py * CW + px) * 4; d[k] = r; d[k + 1] = g; d[k + 2] = bb; d[k + 3] = 255; };
+    for (const [px, py, c] of pts) put(px, py, c);
+    for (const [px, py] of pts) for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const qx = px + dx, qy = py + dy; if (qx < 0 || qy < 0 || qx >= CW || qy >= CH || set.has(qx + ',' + qy)) continue; if (d[(qy * CW + qx) * 4 + 3] === 0) put(qx, qy, '#2a2238'); }
+    x.putImageData(id, 0, 0);
+  }
+  const big = mkCanvas(CW * 3, CH * 3), bx = big.getContext('2d'); bx.imageSmoothingEnabled = false; bx.drawImage(n, 0, 0, CW, CH, 0, 0, CW * 3, CH * 3);
+  return heroSideCache[key] = big;
+}
+
 /* ===================== EVENTS (異世界篇) ===================== */
 function* healRitual(text) {
   yield* fadeOut(10); healHero(); const fr = Sound.jingle('heal'); yield* wait(Math.max(40, fr)); yield* fadeIn(10);
@@ -5808,7 +5851,7 @@ class TitleScene {
     x.drawImage(this.logo, Math.round(W / 2 - this.logo.width / 2), 6 + bob);
     Font.drawC(x, '～異世界冒險RPG～', W / 2, 52 + bob, '#ffe0a0', '#3a1428');
     if (this.stage === 'press' && Math.floor(this.t / 30) % 2 === 0) Font.drawC(x, '按 A 鍵開始', W / 2, 232, '#ffffff', '#1a1024');
-    Font.draw(x, 'v4.7', W - 26, H - 13, '#b890b0', null);
+    Font.draw(x, 'v4.8', W - 26, H - 13, '#b890b0', null);
   }
 }
 
@@ -5962,5 +6005,97 @@ window.addEventListener('pagehide', pageLeaveSave);
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') pageLeaveSave(); });
 // small indicator in the corner
 { const _dt = drawToast; drawToast = function (x) { _dt(x); if (Game.autoSaveT > 0) { Game.autoSaveT--; const a = Math.min(1, Game.autoSaveT / 20); x.globalAlpha = a; drawWin(x, W - 66, 4, 62, 16, 'menu'); x.fillStyle = UIC.accent; x.fillRect(W - 60, 9, 5, 6); x.fillStyle = '#0e1120'; x.fillRect(W - 59, 10, 3, 2); Font.draw(x, '自動存檔', W - 52, 5, UIC.text, UIC.textSh, 10); x.globalAlpha = 1; } }; }
+
+/* ===================== NPC QUESTS: commissions are taken from / handed in to the townsfolk themselves =====================
+   The board only shows who needs help and where. Each NPC offers its request ("!" over the head), and you report back to them ("?"). */
+Object.assign(ITEMS, { letter: { n: '花店的信', key: 1, price: 0, d: '花店姊姊寫給道路守衛的信。封口畫了一朵小花。' } }); ITEMS.letter.cat = '重要物品';
+Object.assign(COMMISSIONS, {
+  c13: { n: '寄不出去的信', from: '花店的姊姊', d: '想請你把一封信交給晨霧道路北邊的守衛。', deliver: ['letter', 'guard'], reward: { gold: 300, items: { potion: 2 } }, open: st => st.flags.q1 },
+  c14: { n: '爺爺的藥', from: '老爺爺', d: '腰痛又犯了。請帶來藥草×3和魔力草×1。', need: { herb: 3, manaHerb: 1 }, reward: { gold: 400, items: { ether: 2 } }, open: st => st.flags.license },
+  c15: { n: '小芽的收藏', from: '小芽', d: '想收集魔物的羽毛做髮飾。請帶來羽毛×3。', need: { feather: 3 }, reward: { gold: 200, items: { luckClover: 1 } }, open: st => st.flags.license },
+});
+const COM_GIVER = { c1: 'healer', c2: 'farmer', c3: 'elder', c4: 'traveler', c5: 'auntie', c6: 'apprentice', c7: 'herbalist', c8: 'healer', c9: 'smith', c10: 'miner', c11: 'antiquer', c12: 'elder', c13: 'florist', c14: 'grandpa', c15: 'gatekeeper' };
+const NPC_WHERE = { healer: '萌芽鎮・旅店', farmer: '萌芽鎮・南邊的果園', elder: '萌芽鎮・村長家', traveler: '萌芽鎮・旅店', auntie: '萌芽鎮・池塘邊', apprentice: '萌芽鎮・村長家', herbalist: '迷霧森林', smith: '萌芽鎮・鐵匠舖前', miner: '廢棄礦坑・入口', antiquer: '萌芽鎮・旅店', florist: '萌芽鎮・花店前', grandpa: '萌芽鎮・西邊', gatekeeper: '萌芽鎮・北門', guard: '晨霧道路・北邊' };
+// what each giver says when offering / thanking (their own voice)
+const COM_TALK = {
+  c1: ['客人一多，傷藥一下就用完了……', '你能幫我採5株藥草回來嗎？'], c2: ['電電蜂把果園的工人都螫跑了！', '幫我打倒4隻電電蜂吧。'],
+  c3: ['地下水道的水晶……說不定和異界之門有關。', '能幫我帶3塊水晶碎片回來嗎？'], c4: ['我在迷霧森林東邊弄丟了一只銀懷錶。', '那是很重要的東西……如果找到了，請還給我。'],
+  c5: ['哎呀，嘟嘟菇又把我的菜啃光了！', '年輕人，幫我打倒5隻嘟嘟菇吧。'], c6: ['我在研究會發光的草！', '能幫我找3株魔力草嗎？道路北邊、森林和水道都有。'],
+  c7: ['毒孢菇的孢子讓森林的藥草都枯萎了。', '請你打倒4隻毒孢菇。'], c8: ['我想做一鍋招牌菇菇燉湯。', '需要毒孢子3個和蕈傘2個。'],
+  c9: ['硬石不夠，連鐵鎚都要生鏽了。', '幫我帶6塊硬石來吧，礦坑裡的礦脈最多。'], c10: ['坑道蝠在裡面亂飛，大家都不敢進去工作。', '幫我打倒5隻坑道蝠好嗎？'],
+  c11: ['我在收集古代的骨頭飾品。', '帶5塊骨片來，我會付好價錢。'], c12: ['地下墓穴的怨靈越來越多了……', '請你打倒4隻怨靈，讓亡者安息。'],
+  c13: ['這封信……能幫我交給道路北邊的守衛嗎？', '我自己不太敢去……拜託了。'], c14: ['唉喲，我的腰……', '能幫我帶藥草3株和魔力草1株來嗎？'], c15: ['我想用魔物的羽毛做髮飾！', '可以幫我找3根羽毛嗎？'],
+};
+const COM_THANKS = { c1: '太好了，這下客人受傷也不怕了！', c2: '果園終於安靜了！', c3: '這些水晶……果然在發光。', c5: '我的菜園得救了！', c6: '好漂亮的光！研究有進展了！', c7: '森林的藥草會慢慢長回來的。', c8: '燉湯的香味出來了！下次來吃吧！', c9: '好硬石！這下能打出好劍了。', c10: '大家終於能回去工作了！', c11: '真是好東西！拿去，這是約好的報酬。', c12: '亡者們終於能安息了……', c14: '這樣腰就不痛了，謝謝你啊。', c15: '好漂亮！我會好好珍惜的！' };
+// new townsfolk
+MAPS.town.npcs.push({ id: 'farmer', x: 18, y: 16, dir: 'down', look: 'man', name: '果園農夫' }, { id: 'auntie', x: 8, y: 18, dir: 'left', look: 'woman', name: '菜園大嬸' });
+MAPS.inn.npcs.push({ id: 'antiquer', x: 2, y: 5, dir: 'right', look: 'clerk', name: '古董商' });
+MAPS.mine.npcs = MAPS.mine.npcs || []; MAPS.mine.npcs.push({ id: 'miner', x: 1, y: 15, dir: 'right', look: 'old', name: '老礦工' });
+NPC_ROLES.任務.push('farmer', 'auntie', 'miner', 'antiquer');
+
+function comAvail(k, st = Game.st) { return !comState(k, st) && COMMISSIONS[k].open(st); }
+function npcQuestState(id, st = Game.st) { // '!' new request · '?' ready to report · null
+  if (!st.flags || !st.flags.license) return null; let m = null;
+  for (const k in COM_GIVER) { const c = COMMISSIONS[k], s = comState(k, st); if (!c) continue;
+    if (c.deliver && s && s.s === 'on' && c.deliver[1] === id) return '?';
+    if (COM_GIVER[k] !== id) continue; if (s && s.s === 'on' && !c.deliver && comProgress(k, st).ready) return '?'; if (comAvail(k, st)) m = '!'; }
+  return m;
+}
+function npcCommission(id, ow, ent) {
+  const st = Game.st; if (!st.flags || !st.flags.license) return null; st.com = st.com || {};
+  // delivery target
+  for (const k in COMMISSIONS) { const c = COMMISSIONS[k], s = comState(k, st); if (c.deliver && s && s.s === 'on' && c.deliver[1] === id) return (function* () {
+    delete st.bag[c.deliver[0]]; s.s = 'done'; yield* say('把「' + ITEMS[c.deliver[0]].n + '」交給了' + (ent && ent.name || '對方') + '。');
+    yield* sayAll(['……這是花店的她寫的？', '（守衛的臉一下子紅了起來。）', '謝、謝謝你特地送來。這是一點心意。']); yield* giveReward(c.reward); })(); }
+  // antique dealer buys the silver watch
+  if (id === 'antiquer' && st.bag.pocketWatch && (comState('c4', st) || {}).s === 'on') return (function* () {
+    yield* say('喔？你手上那只懷錶……是王都鐘塔的工藝！');
+    if ((yield* ask('要把銀懷錶賣給古董商嗎？（1500 G）', ['賣掉', '不賣'])) !== 0) { yield* say('可惜啊。改變主意隨時來找我。'); return; }
+    delete st.bag.pocketWatch; st.com.c4.s = 'done'; st.com.c4.res = 'sold'; st.money += 1500; yield* itemGet(st.name + '把懷錶賣了1500 G。'); yield* say('……不過，失主應該還在找它吧。'); })();
+  const mine = Object.keys(COM_GIVER).filter(k => COM_GIVER[k] === id && COMMISSIONS[k]);
+  // report a finished request
+  for (const k of mine) { const c = COMMISSIONS[k], s = comState(k, st); if (!s || s.s !== 'on' || c.deliver || !comProgress(k, st).ready) continue;
+    return (function* () {
+      if (k === 'c4') { delete st.bag.pocketWatch; s.s = 'done'; s.res = 'returned'; yield* sayAll(['這是……我的懷錶！', '它是鐘塔的鑰匙錶，停在三點十分——異界之門開啟的那一刻。', '若你來到王都，請到鐘塔找我。我叫艾德。']); yield* giveReward(c.reward); return; }
+      if (c.need) for (const i in c.need) st.bag[i] -= c.need[i];
+      s.s = 'done'; Sound.sfx('select'); yield* say(COM_THANKS[k] || '謝謝你！'); yield* say('完成了委託「' + c.n + '」！'); yield* giveReward(c.reward); })();
+  }
+  // offer a new request
+  const k = mine.find(q => comAvail(q, st)); if (!k) return null; const c = COMMISSIONS[k];
+  return (function* () {
+    yield* sayAll(COM_TALK[k] || [c.d]); yield* say('報酬：' + rewardText(c.reward));
+    if (!(yield* yesNo('要接下「' + c.n + '」嗎？'))) { yield* say('這樣啊……有空的話再來找我吧。'); return; }
+    st.com[k] = { s: 'on', k: c.kill ? (((st.dex || {})[c.kill[0]] || {}).won || 0) : 0 };
+    if (c.deliver) st.bag[c.deliver[0]] = 1;
+    Sound.sfx('select'); yield* say('接下了「' + c.n + '」！' + (c.deliver ? '\n得到了「' + ITEMS[c.deliver[0]].n + '」。' : '（可以在「狀態→任務」查看進度）'));
+  })();
+}
+// deliveries count as "ready" once accepted (the target NPC completes them)
+{ const _cp = comProgress; comProgress = function (id, st = Game.st) { const c = COMMISSIONS[id]; if (c && c.deliver) { const s = comState(id, st) || {}; return { cur: s.s === 'done' ? 1 : 0, max: 1, ready: false }; } return _cp(id, st); }; }
+// the board is now a notice board: who needs help and where
+Events.board = function* () {
+  const st = Game.st; yield* say('「萌芽鎮告示板」\n鎮民的請求。直接去找委託人就能接下。', { style: 'sign' });
+  while (true) {
+    const ids = Object.keys(COMMISSIONS).filter(k => COMMISSIONS[k].open(st) && COM_GIVER[k]);
+    const opts = ids.map(k => { const s = comState(k, st), p = comProgress(k, st); return { t: COMMISSIONS[k].n, r: !s ? '未接' : s.s === 'done' ? '完成' : p.ready ? '可回報' : '進行中', col: !s ? UIC.accent : s.s === 'done' ? UIC.dis : p.ready ? UIC.warm : UIC.text }; });
+    const r = yield* ask('要看哪一張？', opts.concat(['離開'])); if (r < 0 || r >= ids.length) return;
+    const k = ids[r], c = COMMISSIONS[k], g = COM_GIVER[k];
+    yield* say('委託人：' + c.from + '（' + (NPC_WHERE[g] || '？') + '）\n' + c.d); yield* say('報酬：' + rewardText(c.reward));
+  }
+};
+Object.assign(Events, {
+  *farmer() { yield* say(Game.st.flags.license ? '這片果園的蘋果，是萌芽鎮最甜的喔。' : '你是……新來的？'); },
+  *auntie() { yield* say('種菜最重要的就是耐心。還有，要提防嘟嘟菇！'); },
+  *miner() { yield* sayAll(['我在這座礦坑挖了四十年的礦。', '礦脈上閃閃發亮的地方，偶爾能挖到水晶喔。']); },
+  *antiquer() { yield* say('古老的東西都有故事。你身上有沒有什麼稀奇的寶貝？'); },
+});
+// quest-list text points to the giver instead of the board
+{ const _eq = extraQuests; extraQuests = function (st, L) { _eq(st, L); for (const q of L) if (q.n.startsWith('委託：')) { const k = Object.keys(COMMISSIONS).find(k => '委託：' + COMMISSIONS[k].n === q.n); if (!k) continue; const c = COMMISSIONS[k]; q.t = c.d + (c.deliver ? '（交給' + (NPC_WHERE[c.deliver[1]] || '') + '的守衛）' : '（' + comProgress(k, st).cur + '/' + comProgress(k, st).max + '）') + (comProgress(k, st).ready ? '→ 回去找' + c.from + '（' + (NPC_WHERE[COM_GIVER[k]] || '') + '）' : ''); q.n = '委託：' + c.n; } }; }
+// field markers over NPCs: ! = new request, ? = ready to report
+{ const _draw = Overworld.prototype.draw; Overworld.prototype.draw = function (x) {
+  _draw.call(this, x); if (UI.stack.length) return; const camX = Math.round(this.p.px) - CAM_X, camY = Math.round(this.p.py) - CAM_Y + Math.round(this.camDY || 0);
+  for (const n of this.npcs) { const m = npcQuestState(n.id); if (!m) continue; const X = Math.round(n.px - camX) + 5, Y = Math.round(n.py - camY) - 14 + (Math.floor(this.t / 20) % 2);
+    x.fillStyle = '#10121e'; x.fillRect(X - 1, Y - 1, 8, 11); x.fillStyle = m === '!' ? '#ffcf5a' : '#6ee7d2'; x.fillRect(X, Y, 6, 9); Font.drawC(x, m, X + 3, Y - 2, '#10121e', null, 9); }
+}; }
 
 </script>

@@ -170,7 +170,7 @@ class Overworld {
     const p = this.p; const [dx, dy] = DIRS[p.dir]; let x = p.x + dx, y = p.y + dy;
     let ent = this.entityAt(x, y, p); let c = this.tileAt(x, y);
     if (!ent && c === 'C') { ent = this.entityAt(x + dx, y + dy, p); }
-    if (ent && ent.frames) { if (!ent.moving) { ent.dir = OPP[p.dir]; } const ev = Events[ent.id]; this.run(ev ? ev(this, ent) : say('……')); return true; }
+    if (ent && ent.frames) { if (!ent.moving) { ent.dir = OPP[p.dir]; } const ev = Events[ent.id], cq = npcCommission(ent.id, this, ent); this.run(cq || (ev ? ev(this, ent) : say('……'))); return true; }
     if (ent && ent.sp && ent !== this.boss) { this.run(this.eliteTalk(ent)); return true; }
     if (ent && ent === this.boss) { const g = Events[this.map.d.boss.ev || 'bossLine'](this); if (g) this.run(g); return true; }
     if (ent && (ent.item || ent.gold || ent.gather)) { this.run(this.pickItem(ent)); return true; }

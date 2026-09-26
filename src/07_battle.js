@@ -1,7 +1,7 @@
 /* ===================== BATTLE ===================== */
 let HERO_POWER = 1.45, BOSS_HP = 2.1, ELITE_HP = 1.1;
 const BTN_MENU = { x: 4, y: TB_Y + 1, w: W - 8, h: TB_H - 2, cols: 2, colW: 82, rowH: 20, ox: 3, oy: 17, buttons: true, style: 'cmd' };
-const BH = TB_Y, FOE_X = W / 2 - 32, HERO_X = W / 2 - 24, HERO_Y = 112, HBAR_Y = 170;
+const BH = TB_Y, FOE_X = 20, HERO_X = 92, HERO_Y = 81, HBAR_Y = 170; // side view: foe on the left, hero on the right, both standing on the same ground line
 function critRate(u, mv) { const base = (u.stats.crit ?? 6) / 100; return mv.crit ? base * 2 : base; }
 function hitChance(u, t, mv) { let a = mv.acc; if (!a) return 1; a += u.stats.hit || 0; a -= t.stats.eva || 0; return clamp(a, 5, 100) / 100; }
 const stageMul = s => s >= 0 ? 1 + 0.25 * s : 1 / (1 + 0.25 * -s); // buffs/debuffs: ±25% per step, max ±3, timed
@@ -9,7 +9,7 @@ const STATUS_NAME = { psn: '中毒', par: '麻痺', slp: '睡眠', brn: '灼傷'
 const IMMUNE = { psn: '毒', brn: '火', par: '雷' };
 const battleImgCache = {};
 // battle sprites: rendered at a low native size, then scaled 3x (same chunky pixel look as the hero)
-const FOE_NATIVE = { golem: 28, mossGiant: 28, crystalGolem: 28, banditBoss: 28, boneKnight: 28, runeGolem: 28 }, FOE_SCALE = 3, FOE_FOOT = 106;
+const FOE_NATIVE = { golem: 28, mossGiant: 28, crystalGolem: 28, banditBoss: 28, boneKnight: 28, runeGolem: 28 }, FOE_SCALE = 3, FOE_FOOT = 152;
 function battleSprite(key) {
   if (battleImgCache[key]) return battleImgCache[key];
   const n = FOE_NATIVE[key] || 24, S = FOE_SCALE, sm = buildShaded(ART[key], n, n / 64);
@@ -88,9 +88,9 @@ class Battle {
     const dx = st.dex || (st.dex = {}); (dx[cfg.sp] || (dx[cfg.sp] = { won: 0 })).seen = 1;
     Object.defineProperty(H, 'hp', { get: () => st.hp, set: v => st.hp = v }); if (st.mp === undefined) st.mp = s.mp; H.maxmp = s.mp; Object.defineProperty(H, 'mp', { get: () => st.mp, set: v => st.mp = clamp(v, 0, s.mp) }); Object.defineProperty(H, 'status', { get: () => st.status, set: v => st.status = v });
     this.bg = buildBattleBG(cfg.bg);
-    this.imgF = battleSprite(cfg.sp); this.foeTX = FOE_X; this.shadowF = buildShadow(Math.round(this.imgF.bb.w * 0.38), 4); this.imgH = heroBattleImgLook(0, heroLookOf(st)); this.imgH2 = heroBattleImgLook(1, heroLookOf(st));
+    this.imgF = battleSprite(cfg.sp); this.foeTX = FOE_X; this.shadowF = buildShadow(Math.round(this.imgF.bb.w * 0.38), 4); this.imgH = heroSideImg(0, heroLookOf(st)); this.imgH2 = heroSideImg(1, heroLookOf(st)); this.shadowH = buildShadow(15, 4);
     this.disp = { F: this.F.hp, H: st.hp, exp: st.exp };
-    this.foeX = W + 40; this.heroX = -80; this.boxF = -30; this.boxH = BH + 4; this.cover = 1;
+    this.foeX = -90; this.heroX = W + 40; this.boxF = -30; this.boxH = BH + 4; this.cover = 1;
     this.offF = { x: 0, y: 0 }; this.offH = { x: 0, y: 0 }; this.sinkF = 0; this.sinkH = 0; this.blinkF = 0; this.blinkH = 0; this.alphaF = 1;
     this.fx = []; this.shake = 0; this.t = 0; this.idle = false; this.cmdIdx = 0; this.moveIdx = 0; this.runTries = 0; this.turn = 0; this.phase2 = false; this.fistCD = 2;
     this.tint = null; this.squishF = 0;
@@ -106,7 +106,7 @@ class Battle {
     this.fx = this.fx.filter(p => p.t < p.life);
     if (this.script) { const r = this.script.next(); if (r.done) this.script = null; }
   }
-  center(b) { return b.hero ? { x: this.heroX + 24, y: HERO_Y + 32 } : { x: this.foeX + 32, y: FOE_FOOT - Math.round(this.imgF.bb.h * 0.5) }; }
+  center(b) { return b.hero ? { x: this.heroX + 42, y: HERO_Y + 36 } : { x: this.foeX + 32, y: FOE_FOOT - Math.round(this.imgF.bb.h * 0.5) }; }
   /* ---------------- drawing ---------------- */
   draw(x) {
     const sx = this.shake > 0 ? rnd(-3, 3) : 0, sy = this.shake > 0 ? rnd(-2, 2) : 0;
@@ -127,8 +127,8 @@ class Battle {
     if (this.cg && this.cg.mirror && this.alphaF > 0 && Math.floor(this.t / 8) % 2) { x.globalAlpha = 0.25; x.drawImage(tinted(this.imgF, '#e8fbff'), Math.round(this.foeX + 32 - this.imgF.bb.cx), Math.round(FOE_FOOT - this.imgF.bb.bot)); x.globalAlpha = 1; }
     // hero (foreground, lower body hidden behind the status bar)
     if (!(this.blinkH > 0 && Math.floor(this.blinkH / 3) % 2)) {
-      x.save(); x.beginPath(); x.rect(0, 0, W, HBAR_Y + 20); x.clip();
-      const hi = (this.offH.x || this.offH.y) ? this.imgH2 : this.imgH; const hx = Math.round(this.heroX + this.offH.x), hy = Math.round(HERO_Y + this.offH.y + this.sinkH + bobH);
+      x.save(); x.globalAlpha = 0.25; x.drawImage(this.shadowH, Math.round(this.heroX + 42 + this.offH.x - this.shadowH.width / 2), FOE_FOOT - 4); x.globalAlpha = Math.max(0, 1 - this.sinkH / 70);
+      const hi = (this.offH.x || this.offH.y) ? this.imgH2 : this.imgH; const hx = Math.round(this.heroX + this.offH.x), hy = Math.round(HERO_Y + this.offH.y + this.sinkH * 0.25 + bobH);
       x.drawImage(hi, hx, hy);
       if (this.tintH) { x.globalAlpha = this.tintH.a; x.drawImage(tinted(hi, this.tintH.c), hx, hy); }
       x.restore();
@@ -212,7 +212,7 @@ class Battle {
   }
   *intro() {
     Sound.sfx('encounter');
-    yield* parallel(tween(14, t => this.cover = 1 - t), tween(40, t => { const e = 1 - Math.pow(1 - t, 3); this.foeX = lerp(W + 40, this.foeTX, e); this.heroX = lerp(-80, HERO_X, e); }));
+    yield* parallel(tween(14, t => this.cover = 1 - t), tween(40, t => { const e = 1 - Math.pow(1 - t, 3); this.foeX = lerp(-90, this.foeTX, e); this.heroX = lerp(W + 40, HERO_X, e); }));
     this.cover = 0; Sound.cry(Object.keys(SPECIES).indexOf(this.cfg.sp) + 1, this.F.boss ? 0.7 : 1, this.F.boss ? 1.6 : 1);
     if (this.F.boss) { this.shake = 30; Sound.sfx('quake'); }
     yield* parallel(tween(12, t => this.boxF = lerp(-30, 4, 1 - Math.pow(1 - t, 2))), wait(4));

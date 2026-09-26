@@ -67,7 +67,7 @@ module.exports = async (g) => {
     // ---------- ITEMS ----------
     for (const k in ITEMS) { const it = ITEMS[k];
       if (!it.mat && !it.key && !['heal', 'cure', 'pp', 'mp', 'escape', 'home', 'boost', 'full', 'tp'].includes(it.use)) bad('道具', k, '沒有用途');
-      if (!itemSrc[k] && !['phone', 'license', 'pocketWatch'].includes(k)) warn('道具', k, it.n, '取得不到');
+      if (!itemSrc[k] && !['phone', 'license', 'pocketWatch', 'letter'].includes(k)) warn('道具', k, it.n, '取得不到');
       if (it.mat && !matUse[k]) warn('素材', k, it.n, '沒有用途（只能賣）');
       if (!it.d) warn('道具', k, '缺說明'); }
     for (const k of [...SHOP_LIST, ...PEDDLER_LIST]) { if (!ITEMS[k] && !GEAR[k]) bad('商店', k, '不存在'); else if (!((ITEMS[k] || GEAR[k]).price > 0)) bad('商店', k, '沒有價格'); }
