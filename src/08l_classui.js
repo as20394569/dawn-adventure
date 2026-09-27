@@ -3,14 +3,15 @@
    was a plain text menu. Each card now shows: art + glyph, role tag, pitch, stat bars (base) or bonuses (advanced),
    the starting / class skills as type-coloured chips, and where the class leads (advanced classes at Lv14). */
 const CLASS_BONUS_N = { hp: ['HP', ''], atk: ['物攻', ''], def: ['物防', ''], spa: ['魔攻', ''], spd: ['魔防', ''], spe: ['速度', ''], crit: ['會心', '%'], eva: ['迴避', '%'], elem: ['屬性傷害', '%'], fireUp: ['火系', '%'], boltUp: ['雷系', '%'], venomous: ['對中毒', '%'] };
+const CLASS_STYLE = { swordmaster: '會心・先制', berserker: '以血換力', pyromancer: '灼燒引爆', stormcaller: '濕透麻痺', paladin: '防禦反擊', assassin: '毒・處決', shadowdancer: '迴避反擊', otherworlder: '全能', spellblade: '魔劍合一' };
 const classColOf = k => CLASS_COL[k] || (CLASSES[k] && CLASSES[k].from && CLASS_COL[CLASSES[k].from]) || (k === 'otherworlder' ? '#ffd860' : k === 'spellblade' ? '#ff7ab4' : '#c0c8e0');
 function classCard(k) {
   const C = CLASSES[k], S = CLASS_START[k], col = classColOf(k);
   if (S) return { k, n: C.n, tag: S.tag, col, text: S.pitch, bars: S.bars, glyph: k,
     chips: CLASS_FREE[k].map(id => ({ id })).concat(skillTreeOf(k).filter(n => !CLASS_FREE[k].includes(n.id) && n.clv <= 5).map(n => ({ id: n.id, lv: n.clv }))),
-    next: Object.keys(CLASSES).filter(q => CLASSES[q].from === k).map(q => CLASSES[q].n) };
+    next: Object.keys(CLASSES).filter(q => CLASSES[q].from === k).map(q => CLASSES[q].n), nextK: Object.keys(CLASSES).filter(q => CLASSES[q].from === k) };
   const bonus = Object.entries(C.st).filter(([s]) => CLASS_BONUS_N[s]).map(([s, v]) => CLASS_BONUS_N[s][0] + '+' + v + CLASS_BONUS_N[s][1]).join('　');
-  return { k, n: C.n, tag: C.tier >= 3 ? '隱藏職業' : '進階職業', col, text: C.d, bonus, glyph: C.from || (k === 'spellblade' ? 'spell' : 'star'),
+  return { k, n: C.n, tag: (C.tier >= 3 ? '隱藏職業' : '進階職業') + (CLASS_STYLE[k] ? '・' + CLASS_STYLE[k] : ''), col, text: C.d, bonus, glyph: C.from || (k === 'spellblade' ? 'spell' : 'star'),
     chips: skillTreeOf(k).filter(n => n.adv).map(n => ({ id: n.id })), treeN: skillTreeOf(k).length, inhN: C.tier >= 3 ? 3 : 2 }; /* v23: own tree → show its exclusive skills */
 }
 function classGlyph(x, g, ex, ey, col) {
@@ -58,8 +59,11 @@ function* classCardScreen(keys, o = {}) {
     else { Font.draw(x, '能力加成', 12, y - 1, UIC.accent, UIC.textSh, 9); Font.wrap(c.bonus, 152, 9).slice(0, 2).forEach((l, n) => Font.draw(x, l, 12, y + 10 + n * 11, UIC.text, UIC.textSh, 9)); y += 34; }
     Font.draw(x, c.bars ? '起始技能' : '專屬技能', 12, y - 1, UIC.accent, UIC.textSh, 9); if (c.bars) Font.drawR(x, '＋2點技能點自由分配', 164, y - 1, UIC.muted, UIC.textSh, 8); else if (c.treeN) Font.drawR(x, '技能樹' + c.treeN + '招・舊技能可繼承' + c.inhN + '招', 164, y - 1, UIC.muted, UIC.textSh, 8);
     skillChips(x, c.chips, 12, y + 13, 152);
-    if (c.next && c.next.length) Font.draw(x, 'Lv14 進階：' + c.next.join('・'), 12, y + 30, shade(col, 0.25), UIC.textSh, 9);
-    Font.drawR(x, (o.cancel ? 'B：返回　' : '') + 'A：選擇' + (keys.length > 1 ? '　◀▶：切換' : ''), 164, 238, UIC.muted, UIC.textSh, 8);
+    if (c.nextK && c.nextK.length) { /* v23b: the opening card shows where each path leads and how it plays */
+      Font.draw(x, 'Lv14 進階（各有專屬技能樹）', 12, y + 28, UIC.accent, UIC.textSh, 8); let nx = 12;
+      for (const q of c.nextK) { const t = CLASSES[q].n + '〔' + (CLASS_STYLE[q] || '') + '〕', z = Font.width(t, 8) > 74 ? 7 : 8; Font.draw(x, t, nx, y + 38, shade(classColOf(q), 0.3), UIC.textSh, z); nx += 78; } }
+    else if (c.next && c.next.length) Font.draw(x, 'Lv14 進階：' + c.next.join('・'), 12, y + 30, shade(col, 0.25), UIC.textSh, 9);
+    Font.drawR(x, (o.cancel ? 'B：返回　' : '') + 'A：選擇' + (keys.length > 1 ? '　◀▶：切換' : ''), 164, 241, UIC.muted, UIC.textSh, 8);
   } };
   UI.push(scr);
   while (true) {
