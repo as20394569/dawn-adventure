@@ -8192,6 +8192,13 @@ HERO_PK.mblade = (x, p, a) => {
   x.save(); x.translate(X, Y); x.rotate(ang); x.fillStyle = p.c; x.beginPath(); x.moveTo(7, 0); x.lineTo(0, 2.2); x.lineTo(-6, 0.8); x.lineTo(-6, -0.8); x.lineTo(0, -2.2); x.closePath(); x.fill();
   x.fillStyle = '#ffffff'; x.fillRect(-4, -0.5, 9, 1); x.fillStyle = p.c2; x.fillRect(-8, -2, 2, 4); x.restore();
 };
+HERO_PK.bloom = (x, p, a) => { // a flower of blade-petals opening around a point
+  const k = Math.min(1, p.t / p.grow), e = 1 - Math.pow(1 - k, 3), R = 4 + (p.R - 4) * e, rot = p.rot0 + (p.spin || 1) * p.t * 0.03; x.globalAlpha = Math.min(1, a * 1.5);
+  for (let i = 0; i < p.n; i++) { const an = rot + i * Math.PI * 2 / p.n; x.save(); x.translate(p.x + Math.cos(an) * R * 0.55, p.y + Math.sin(an) * R * 0.55 * 0.8); x.rotate(an);
+    x.fillStyle = p.c; x.beginPath(); x.moveTo(R * 0.55, 0); x.quadraticCurveTo(0, p.s * 0.6 * e, -R * 0.35, 0); x.quadraticCurveTo(0, -p.s * 0.6 * e, R * 0.55, 0); x.fill();
+    x.fillStyle = p.c2; x.fillRect(-R * 0.25, -0.75, R * 0.7, 1.5); x.restore(); }
+  x.fillStyle = p.c2; x.beginPath(); x.arc(p.x, p.y, 3 + 3 * e, 0, 7); x.fill();
+};
 HERO_PK.petal = (x, p, a) => { x.globalAlpha = a; x.save(); x.translate(p.x, p.y); x.rotate(p.rot + p.t * 0.2); x.fillStyle = p.c; x.beginPath(); x.ellipse(0, 0, p.s, p.s * 0.45, 0, 0, 7); x.fill(); x.fillStyle = '#ffffff'; x.fillRect(-p.s * 0.4, -0.5, p.s * 0.6, 1); x.restore(); };
 Object.assign(FX, {
   *arcaneEdge(U, T, u) {
@@ -8202,9 +8209,15 @@ Object.assign(FX, {
     yield* wait(14);
     for (let v = 0; v < 3; v++) { yield* wait(v ? 11 : 6); Sound.sfx('slash'); this.spawn({ k: 'glow', x: T.x, y: T.y, r: 16 + v * 4, c: '#b890ff', life: 8 });
       for (let i = 0; i < 6; i++) { const an = i * Math.PI / 3 + v; this.spawn({ k: 'petal', x: T.x, y: T.y, vx: Math.cos(an) * 1.6, vy: Math.sin(an) * 1.2, rot: an, s: 4, c: i % 2 ? '#e0c8ff' : '#b890ff', life: 12 }); } this.shake = Math.max(this.shake, 4 + v * 2); }
-    yield* wait(6); Sound.sfx('hitSuper'); this.spawn({ k: 'flash', c: '#e0c8ff', a: 0.3, life: 6 });
-    for (let i = 0; i < 12; i++) { const an = i * Math.PI / 6; this.spawn({ k: 'petal', x: T.x + Math.cos(an) * 6, y: T.y + Math.sin(an) * 4, vx: Math.cos(an) * 2.4, vy: Math.sin(an) * 1.6, rot: an, s: 6, c: i % 2 ? '#f0e0ff' : '#a070ff', life: 20 }); }
-    this.spawn({ k: 'sigil', x: T.x, y: T.y, r: 24, c: '#b890ff', life: 18 }); yield* wait(12);
+    // 千華綻放 (v22b: much bigger — a two-layer flower of blades opens over the foe and holds for a moment)
+    yield* wait(6); Sound.sfx('hitSuper'); Sound.sfx('charge'); this.spawn({ k: 'flash', c: '#e8d8ff', a: 0.5, life: 10 }); this.shake = Math.max(this.shake, 14);
+    this.spawn({ k: 'glow', x: T.x, y: T.y, r: 60, c: '#b890ff', life: 34 });
+    this.spawn({ k: 'bloom', x: T.x, y: T.y, R: 58, n: 12, s: 13, c: '#a070ff', c2: '#f0e0ff', rot0: 0, grow: 10, life: 40 });
+    this.spawn({ k: 'bloom', x: T.x, y: T.y, R: 32, n: 8, s: 10, c: '#d8b8ff', c2: '#ffffff', rot0: Math.PI / 8, grow: 8, life: 38, spin: -1 });
+    this.spawn({ k: 'sigil', x: T.x, y: T.y, r: 46, c: '#b890ff', life: 32 });
+    for (let i = 0; i < 3; i++) this.spawn({ k: 'shock', x: T.x, y: T.y + 10, r0: 10 + i * 8, r1: 70 + i * 16, c: i % 2 ? '#ffffff' : '#b890ff', life: 18 + i * 5 });
+    for (let i = 0; i < 24; i++) { const an = i * Math.PI / 12; this.spawn({ k: 'petal', x: T.x + Math.cos(an) * 10, y: T.y + Math.sin(an) * 7, vx: Math.cos(an) * 3.4, vy: Math.sin(an) * 2.4, rot: an, s: 7, c: i % 2 ? '#f0e0ff' : '#a070ff', life: 26 }); }
+    yield* wait(28);
   },
 });
 SKILL_STYLE.arcaneEdge = ['rune', 'pop', 'arcane', 'slash'];
