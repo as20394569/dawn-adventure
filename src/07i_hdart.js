@@ -312,7 +312,7 @@ function hdStep(b, A, who) {
     if (this.cg && this.cg.shards > 0 && this.alphaF > 0) { const C = this.center(this.F); for (let i = 0; i < this.cg.shards; i++) { const an = this.t / 20 + i * Math.PI * 2 / 3, px0 = Math.round(C.x + Math.cos(an) * 44), py0 = Math.round(C.y + Math.sin(an) * 14); x.fillStyle = '#1a3050'; x.fillRect(px0 - 3, py0 - 5, 7, 11); x.fillStyle = '#9ae0ff'; x.fillRect(px0 - 2, py0 - 4, 5, 9); x.fillStyle = '#e8fbff'; x.fillRect(px0 - 1, py0 - 3, 2, 4); } }
     if (this.cg && this.cg.mirror && this.alphaF > 0 && Math.floor(this.t / 8) % 2) { x.globalAlpha = 0.25; blit(D.pxF ? pxRender(D.F, D.pxF, this.t, '#e8fbff') : hdRenderFoe(D.F, D.specF, this.t, '#e8fbff'), this.foeX + 32 - im.bb.cx, FOE_FOOT - im.bb.bot, fw, fh); x.globalAlpha = 1; }
     if (!(this.blinkH > 0 && Math.floor(this.blinkH / 3) % 2)) {
-      const hx0 = this.heroX + HD_HERO_OX; x.save(); hd2dSoftShadow(x, hx0 + 28 + this.offH.x, HERO_Y + 72, 26, 6, 0.4); x.globalAlpha = Math.max(0, 1 - this.sinkH / 70);
+      const hx0 = this.heroX + HD_HERO_OX; x.save(); hd2dSoftShadow(x, hx0 + 28 + this.offH.x, HERO_Y + 72 - (this.hd && this.hd.pxH && this.hd.pxH.chibi ? this.hd.pxH.lift || 0 : 0), 26, 6, 0.4); x.globalAlpha = Math.max(0, 1 - this.sinkH / 70);
       const hx = (hi.px ? hx0 + 28 - hi.bb.cx : hx0) + this.offH.x, hy = (hi.px ? HERO_Y + 76 - hi.bb.bot : HERO_Y) + this.offH.y + this.sinkH * 0.25, hw = hi.width * hi.ds, hh = hi.height * hi.ds;
       blit(hi, hx, hy); if (this.tintH) { x.globalAlpha = this.tintH.a; blit(D.pxH ? dollRender(this, D.H, D.pxH, this.t, this.tintH.c) : hdRenderHero(D.H, D.look, this.t, this.tintH.c), hx, hy, hw, hh); }
       x.restore();

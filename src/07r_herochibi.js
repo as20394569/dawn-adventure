@@ -5,10 +5,10 @@
 const HERO_PX = {};
 for (const k in (typeof HERO_PX_SRC !== 'undefined' ? HERO_PX_SRC : {})) { const im = new Image(); im.onload = () => { im.ok = true; }; im.src = HERO_PX_SRC[k]; HERO_PX[k] = im; }
 const heroChibiReady = () => Game.settings.chibiHero !== false && typeof HERO_PX_META !== 'undefined' && HERO_PX_META && HERO_PX.base && HERO_PX.base.ok;
-const HERO_KEYS = {
-  head: [['#ff0000', 'A'], ['#800000', 'a'], ['#ff8080', 'C']], deco: [['#ffff00', 'E'], ['#ff8080', 'C']],
-  body: [['#00ff00', 'X'], ['#008000', 'x'], ['#80ff80', 'Y'], ['#40a040', 'y'], ['#ffff00', 'Z'], ['#808000', 'z'], ['#ffffff', 'W'], ['#00ffff', 'D'], ['#008080', 'd']],
-  feet: [['#0000ff', 'B'], ['#000080', 'b']], weapon: [['#ff00ff', 'I'], ['#800080', 'i'], ['#ff8000', 'T'], ['#804000', 'U'], ['#00ffff', 'V']],
+const HERO_KEYS = { // H2 adds deeper / brighter tones (a2, C2, E2, x2, Y2, d2, b2, B2, I2, i2, V2) derived from the item palette
+  head: [['#ff0000', 'A'], ['#800000', 'a'], ['#400000', 'a2'], ['#ff8080', 'C'], ['#ffc0c0', 'C2']], deco: [['#ffff00', 'E'], ['#808000', 'E2'], ['#ff8080', 'C']],
+  body: [['#00ff00', 'X'], ['#008000', 'x'], ['#004000', 'x2'], ['#80ff80', 'Y'], ['#c0ffc0', 'Y2'], ['#40a040', 'y'], ['#ffff00', 'Z'], ['#808000', 'z'], ['#ffffff', 'W'], ['#00ffff', 'D'], ['#008080', 'd'], ['#004040', 'd2']],
+  feet: [['#0000ff', 'B'], ['#000080', 'b'], ['#000040', 'b2'], ['#8080ff', 'B2']], weapon: [['#ff00ff', 'I'], ['#ffc0ff', 'I2'], ['#800080', 'i'], ['#400040', 'i2'], ['#ff8000', 'T'], ['#804000', 'U'], ['#00ffff', 'V'], ['#c0ffff', 'V2']],
 };
 function heroPalFill(group, P) { // derive missing shades from the ones the palette has
   const p = { ...P }, sh = (c, a) => shade(c, a);
@@ -17,6 +17,8 @@ function heroPalFill(group, P) { // derive missing shades from the ones the pale
   if (group === 'body') { p.X = p.X || HERO_PAL.N; p.x = p.x || sh(p.X, -0.25); p.Y = p.Y || sh(p.X, 0.2); p.y = p.y || sh(p.Y, -0.25); p.Z = p.Z || sh(p.X, -0.4); p.z = p.z || '#e8c048'; p.W = p.W || '#f0f0ec'; p.D = p.D || p.X; p.d = p.d || sh(p.D, -0.25); }
   if (group === 'feet') { p.B = p.B || HERO_PAL.B; p.b = p.b || sh(p.B, -0.3); }
   if (group === 'weapon') { p.I = p.I || '#e8eef8'; p.i = p.i || sh(p.I, -0.3); p.T = p.T || '#7a4c28'; p.U = p.U || sh(p.T, 0.2); p.V = p.V || '#a0e0ff'; }
+  const d = (k, from, amt) => { if (!p[k] && p[from]) p[k] = sh(p[from], amt); };
+  d('a2', 'a', -0.3); d('C2', 'C', 0.25); d('E2', 'E', -0.3); d('x2', 'x', -0.3); d('Y2', 'Y', 0.25); d('d2', 'd', -0.3); d('b2', 'b', -0.3); d('B2', 'B', 0.3); d('I2', 'I', 0.3); d('i2', 'i', -0.3); d('V2', 'V', 0.3);
   return p;
 }
 const HERO_LAYER_CACHE = {};
@@ -43,7 +45,8 @@ function heroChibiImg(pose, L) {
 }
 { const _ds = dollSpec; dollSpec = function () {
     if (!heroChibiReady()) return _ds(); const w = HERO_PX_META.w * 2, h = HERO_PX_META.h * 2;
-    return { doll: true, chibi: true, w, h, cw: w, ch: h + 2, bb: { cx: Math.round(w * 0.5), top: 0, bot: h, w, h } };
+    const foot = ((HERO_PX_META.manifest && HERO_PX_META.manifest.foot_line_y) || 45) * 2 + 2, lift = 12; // feet stand clear of the status bar
+    return { doll: true, chibi: true, lift, w, h, cw: w, ch: h + 2, bb: { cx: Math.round(w * 0.5), top: 0, bot: foot + lift, w, h } };
   };
   const _dr = dollRender; dollRender = function (b, A, S, T, tint) {
     if (!S.chibi) return _dr(b, A, S, T, tint);

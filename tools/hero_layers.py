@@ -4,10 +4,10 @@ recolours them with the equipped item's palette (07r_herochibi.js)."""
 import os, glob, re, json, sys
 from PIL import Image
 ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..')
-SRC = os.path.join(ROOT, 'art', 'battle', 'hero'); OUT = os.path.join(ROOT, 'art', 'hero', 'px')
+SRC = os.path.join(ROOT, 'art', 'battle', sys.argv[1] if len(sys.argv) > 1 else 'hero'); OUT = os.path.join(ROOT, 'art', 'hero', 'px')
 POSES = ['idle1', 'idle2', 'attack1', 'attack2', 'cast1', 'hurt1', 'guard1']
 LAYERS = {'base': ['base'], 'head': ['cap', 'helm', 'hood'], 'deco': ['feather', 'horns'], 'body': ['tunic', 'mail', 'plate', 'robe', 'cloak'], 'feet': ['boots'], 'weapon': ['sword', 'dagger', 'axe', 'staff', 'tome']}
-files = [f for f in glob.glob(os.path.join(SRC, '**', '*.png'), recursive=True) if 'preview' not in os.path.basename(f)]
+files = [f for f in glob.glob(os.path.join(SRC, '**', '*.png'), recursive=True) if 'preview' not in os.path.basename(f) and 'candidates' not in f]
 man = {}
 mp = os.path.join(SRC, 'manifest.json')
 if os.path.exists(mp): man = json.load(open(mp, encoding='utf-8'))
