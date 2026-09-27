@@ -20,7 +20,7 @@ Object.assign(MFX, {
     for (let i = 0; i < 16; i++) { const x0 = rnd(-10, W + 10); mSpawn(this, 'mglob', { x: x0, y: -10, vy: 4 + Math.random() * 3, vx: (T.x - x0) / 30, r: rnd(3, 6), c: i % 2 ? '#8ad0ff' : '#e8f8ff', life: 30 }); }
     yield* wait(20); this.shake = 26; Sound.sfx('quake'); mImpact(this, T, '#8ad0ff', 40); yield* wait(14); },
   *m_gateJudgment(U, T) { Sound.sfx('charge'); for (let i = 0; i < 3; i++) { mSpawn(this, 'maura', { x: U.x, y: U.y, r0: 60, r1: 6, c: '#fff4c0', life: 14 }); yield* wait(5); }
-    this.spawn({ k: 'beam', x: T.x, w: 26, life: 24 }); this.spawn({ k: 'flash', c: '#ffffff', a: 0.8, life: 14 }); Sound.sfx('thunder'); this.shake = 30; yield* wait(26); },
+    this.spawn({ k: 'beam', x: T.x, y1: T.y + 30, w: 26, h: BH + 40, c: '#fff4c0', life: 24 }); this.spawn({ k: 'glow', x: T.x, y: T.y, r: 50, c: '#fff4c0', life: 24 }); /* v23 fix: the beam had no colour/height → the renderer threw every frame (game froze, map drawn shifted) */ this.spawn({ k: 'flash', c: '#ffffff', a: 0.8, life: 14 }); Sound.sfx('thunder'); this.shake = 30; yield* wait(26); },
 });
 // battle backgrounds: moonlit lake, the Rift
 { const _bb = buildBattleBG; buildBattleBG = function (kind) {
