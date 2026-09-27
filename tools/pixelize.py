@@ -4,7 +4,7 @@ import sys, os
 from PIL import Image, ImageFilter
 import numpy as np
 ROOT = os.path.join(os.path.dirname(__file__), '..', 'art', 'battle')
-HEIGHT = {'hero': 72, 'wolf': 74, 'bandit': 86}
+HEIGHT = {'hero': 72, 'wolf': 74, 'bandit': 86, 'mush': 66, 'bird': 62, 'pebble': 66, 'slime': 60, 'fox': 70, 'bee': 70, 'frog': 60, 'flower': 82}
 DEFAULT_H, BIG_H = 78, 90
 def pixelize(key, h=None, colors=40):
     im = Image.open(os.path.join(ROOT, key + '_raw.png')).convert('RGBA')
