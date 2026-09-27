@@ -4,8 +4,9 @@ import os, glob, json
 import numpy as np
 from PIL import Image
 ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'art', 'ui')
-ICONS = ['psn', 'par', 'slp', 'brn', 'wet', 'shield', 'tangle', 'atk_up', 'atk_down', 'def_up', 'def_down', 'spa_up', 'spa_down', 'spd_up', 'spd_down', 'spe_up', 'spe_down']
-ICON, FX = 12, 64
+ICONS = ['psn', 'par', 'slp', 'brn', 'wet', 'shield', 'tangle', 'atk_up', 'atk_down', 'def_up', 'def_down', 'spa_up', 'spa_down', 'spd_up', 'spd_down', 'spe_up', 'spe_down',
+         'rage', 'smoke', 'mark', 'focus', 'crit', 'wall', 'static', 'after', 'ench', 'aegis', 'frozen', 'parry']  # v23: Codex task J, native 14x14 pixel art in art/ui/icons14
+ICON, FX = 14, 64
 def shrink(im, s):
     im = im.convert('RGBA'); a = np.array(im).astype(np.float32); al = a[:, :, 3:4] / 255; a[:, :, :3] *= al
     p = np.array(Image.fromarray(a.clip(0, 255).astype(np.uint8), 'RGBA').resize((s, s), Image.BOX)).astype(np.float32); A = p[:, :, 3:4] / 255
@@ -13,7 +14,10 @@ def shrink(im, s):
     return Image.fromarray(np.dstack([rgb, np.where(p[:, :, 3] > 90, 255, 0)]).astype(np.uint8), 'RGBA')
 os.makedirs(os.path.join(ROOT, 'px'), exist_ok=True)
 strip = Image.new('RGBA', (ICON * len(ICONS), ICON))
-for i, k in enumerate(ICONS): strip.alpha_composite(shrink(Image.open(os.path.join(ROOT, 'icons', 'icon_' + k + '.png')), ICON), (i * ICON, 0))
+for i, k in enumerate(ICONS):
+    nat = os.path.join(ROOT, 'icons14', 'icon_' + k + '.png')
+    im = Image.open(nat).convert('RGBA') if os.path.exists(nat) else shrink(Image.open(os.path.join(ROOT, 'icons', 'icon_' + k + '.png')), ICON)
+    strip.alpha_composite(im if im.size == (ICON, ICON) else shrink(im, ICON), (i * ICON, 0))
 strip.save(os.path.join(ROOT, 'px', 'icons.png'))
 import re
 kinds = sorted({re.match(r'fx_(.+?)\d+\.png$', os.path.basename(f)).group(1) for f in glob.glob(os.path.join(ROOT, 'fx', 'fx_*.png'))})

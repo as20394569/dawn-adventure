@@ -11,7 +11,7 @@ function classCard(k) {
     next: Object.keys(CLASSES).filter(q => CLASSES[q].from === k).map(q => CLASSES[q].n) };
   const bonus = Object.entries(C.st).filter(([s]) => CLASS_BONUS_N[s]).map(([s, v]) => CLASS_BONUS_N[s][0] + '+' + v + CLASS_BONUS_N[s][1]).join('　');
   return { k, n: C.n, tag: C.tier >= 3 ? '隱藏職業' : '進階職業', col, text: C.d, bonus, glyph: C.from || (k === 'spellblade' ? 'spell' : 'star'),
-    chips: (SKILL_TREES[k] || []).map(n => ({ id: n[0], lv: n[1] })) };
+    chips: skillTreeOf(k).filter(n => n.adv).map(n => ({ id: n.id })), treeN: skillTreeOf(k).length, inhN: C.tier >= 3 ? 3 : 2 }; /* v23: own tree → show its exclusive skills */
 }
 function classGlyph(x, g, ex, ey, col) {
   const path = (c, w) => { x.strokeStyle = c; x.lineWidth = w; x.beginPath();
@@ -56,7 +56,7 @@ function* classCardScreen(keys, o = {}) {
     let y = 167;
     if (c.bars) { Object.entries(c.bars).forEach(([nm, v], n) => { const X = 12 + (n % 2) * 78, Y = y + Math.floor(n / 2) * 11; Font.draw(x, nm, X, Y - 1, UIC.muted, UIC.textSh, 9); for (let q = 0; q < 5; q++) { x.fillStyle = q < v ? col : '#2a3050'; x.fillRect(X + 28 + q * 8, Y + 5, 6, 4); } }); y += 24; }
     else { Font.draw(x, '能力加成', 12, y - 1, UIC.accent, UIC.textSh, 9); Font.wrap(c.bonus, 152, 9).slice(0, 2).forEach((l, n) => Font.draw(x, l, 12, y + 10 + n * 11, UIC.text, UIC.textSh, 9)); y += 34; }
-    Font.draw(x, c.bars ? '起始技能' : '職業技能', 12, y - 1, UIC.accent, UIC.textSh, 9); if (c.bars) Font.drawR(x, '＋2點技能點自由分配', 164, y - 1, UIC.muted, UIC.textSh, 8);
+    Font.draw(x, c.bars ? '起始技能' : '專屬技能', 12, y - 1, UIC.accent, UIC.textSh, 9); if (c.bars) Font.drawR(x, '＋2點技能點自由分配', 164, y - 1, UIC.muted, UIC.textSh, 8); else if (c.treeN) Font.drawR(x, '技能樹' + c.treeN + '招・舊技能可繼承' + c.inhN + '招', 164, y - 1, UIC.muted, UIC.textSh, 8);
     skillChips(x, c.chips, 12, y + 13, 152);
     if (c.next && c.next.length) Font.draw(x, 'Lv14 進階：' + c.next.join('・'), 12, y + 30, shade(col, 0.25), UIC.textSh, 9);
     Font.drawR(x, (o.cancel ? 'B：返回　' : '') + 'A：選擇' + (keys.length > 1 ? '　◀▶：切換' : ''), 164, 238, UIC.muted, UIC.textSh, 8);

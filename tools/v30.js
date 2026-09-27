@@ -1,0 +1,1 @@
+module.exports = async (api) => { console.log(await api.ev(() => Object.keys(SFX).join(' '))); console.log(await api.ev(() => { const b = Battle.prototype; return Object.getOwnPropertyNames(b).join(' '); })); };

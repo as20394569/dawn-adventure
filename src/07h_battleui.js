@@ -12,7 +12,7 @@ const CMD_ICONS = {
 // v20.6: the hero's status / stat-stage icons sit beside the hero (left of the body, at hip height) instead of the screen corner
 function heroIconPos(b) {
   const H = b.H, nb = [Game.st.status, H.wet && 'wet', H.tangle && 'tangle', H.shield && 'shield'].some(Boolean) ? 1 : 0, ns = Math.min(4, ['atk', 'def', 'spa', 'spd', 'spe'].filter(k => H.stages && H.stages[k]).length);
-  const cx = b.center(H).x, w = (nb + ns) * 14; return { x: Math.max(2, Math.round(cx - 20 - w + b.offH.x)), y: Math.round(HERO_FOOT - 20 + b.offH.y), nb };
+  const cx = b.center(H).x, w = (nb + ns) * ((typeof ICON_SZ !== 'undefined' ? ICON_SZ : 12) + 2); return { x: Math.max(2, Math.round(cx - 20 - w + b.offH.x)), y: Math.round(HERO_FOOT - 20 + b.offH.y), nb };
 }
 Object.assign(Battle.prototype, {
   drawBoxF(x) { // centred banner at the top: name + rank / Lv · family + status / HP gauge
@@ -62,7 +62,7 @@ Object.assign(Battle.prototype, {
 });
 
 Battle.prototype.chooseMove = function* () { // v20.7: a small pop-up (list + detail) over the stage; the command bar and HUD stay visible below
-  const st = Game.st, list = learnedSkills(st);
+  const st = Game.st, list = typeof usableSkills === 'function' ? usableSkills(st) : learnedSkills(st); /* v23: tree skills + chosen 繼承 skills */
   if (!list.length) { yield* this.msg('還沒有學會技能！（在選單的「技能」學習）'); return null; }
   let cur = Math.min(this.moveIdx || 0, list.length - 1); this.idle = true;
   const VIS = Math.min(list.length, 4), X = 8, w = W - 16, Y = 58, rowH = 14, h = 18 + VIS * rowH + 4, DY = Y + h + 2, DH = BH - 18 - DY; // v20.7b: taller detail box (4 lines) so long descriptions stay inside the frame
@@ -86,7 +86,7 @@ Battle.prototype.chooseMove = function* () { // v20.7: a small pop-up (list + de
     Ls.forEach((l, n) => Font.draw(x, l, L, y + n * lh, UIC.text, UIC.textSh, z));
   };
   while (true) {
-    const r = yield* choose(list.map(id => ({ t: MOVES[id].n, r: 'MP' + skillMP(id), col: skillMP(id) > st.mp ? UIC.dis : undefined })), { x: X, y: Y, w, h, rowH, fs: 10, ox: 12, oy: 17, visible: VIS, title: '選擇技能', index: cur, onMove: i => cur = i, drawExtra: info });
+    const r = yield* choose(list.map(id => ({ t: MOVES[id].n, r: (typeof isInherited === 'function' && isInherited(id) ? '繼 ' : '') + 'MP' + skillMP(id), col: skillMP(id) > st.mp || (typeof hpCostBlocked === 'function' && hpCostBlocked(id)) ? UIC.dis : undefined })), { x: X, y: Y, w, h, rowH, fs: 10, ox: 12, oy: 17, visible: VIS, title: '選擇技能', index: cur, onMove: i => cur = i, drawExtra: info });
     if (r < 0) { this.idle = false; return null; }
     if (skillMP(list[r]) > st.mp) { yield* this.msg('MP不夠！'); continue; }
     this.idle = false; this.moveIdx = r; return list[r];

@@ -216,9 +216,9 @@ function* summaryScreen() {
       const rowsD = [['HP', st.hp + '/' + s.hp], ['MP', (st.mp ?? s.mp) + '/' + s.mp], ['物攻', s.atk, 'atk'], ['物防', s.def, 'def'], ['魔攻', s.spa, 'spa'], ['魔防', s.spd, 'spd'], ['速度', s.spe, 'spe'], ['會心', s.crit.toFixed(1) + '%']];
       rowsD.forEach(([n, v, k], i) => { const X = 12 + (i % 2) * 80, Y = 166 + Math.floor(i / 2) * 20; Font.draw(x, n, X, Y, UIC.muted, UIC.textSh); Font.drawR(x, String(v), X + 70, Y, k && eqB[k] ? UIC.accent : UIC.text, UIC.textSh); });
     } else {
-      const SK = learnedSkills(st), VIS = 7; drawWin(x, 4, 24, 168, VIS * 19 + 8, 'menu'); const t0 = clamp(mi - 3, 0, Math.max(0, SK.length - VIS));
+      const SK = typeof summarySkills === 'function' ? summarySkills(st) : learnedSkills(st), US = typeof usableSkills === 'function' ? usableSkills(st) : SK, VIS = 7; drawWin(x, 4, 24, 168, VIS * 19 + 8, 'menu'); const t0 = clamp(mi - 3, 0, Math.max(0, SK.length - VIS));
       if (!SK.length) Font.draw(x, '還沒有學會技能。（選單→技能）', 12, 30, UIC.muted, UIC.textSh, 11);
-      SK.slice(t0, t0 + VIS).forEach((id, k) => { const i = t0 + k, mv = MOVES[id], Y = 28 + k * 19; if (i === mi) selBar(x, 6, Y, 164, 17); typeBadge(x, mv.t, 14, Y + 2, 30); Font.draw(x, mv.n + ' Lv' + skillLv(id), 52, Y, UIC.text, UIC.textSh); Font.drawR(x, 'MP ' + skillMP(id), 164, Y, UIC.accent, UIC.textSh); });
+      SK.slice(t0, t0 + VIS).forEach((id, k) => { const i = t0 + k, mv = MOVES[id], Y = 28 + k * 19; if (i === mi) selBar(x, 6, Y, 164, 17); typeBadge(x, mv.t, 14, Y + 2, 30); const use = US.includes(id); Font.draw(x, mv.n + ' Lv' + skillLv(id), 52, Y, use ? UIC.text : UIC.dis, UIC.textSh); Font.drawR(x, use ? 'MP ' + skillMP(id) : '未繼承', 164, Y, use ? UIC.accent : UIC.muted, UIC.textSh); });
       if (t0 > 0) x.drawImage(UPARROW, 86, 25); if (t0 + VIS < SK.length) x.drawImage(DOWNARROW, 86, 24 + VIS * 19 + 3);
       if (SK.length) { const id = SK[Math.min(mi, SK.length - 1)], mv = MOVES[id], m2 = skillMove(id); drawWin(x, 4, 168, 168, 84, 'menu');
         Font.draw(x, (mv.cat === '變' ? '輔助' : mv.cat === '物' ? '物理' : '魔法') + (m2.pow ? '　' + (typeof powTxt === 'function' ? powTxt(m2) : '威力' + m2.pow) : '') + '　消耗MP ' + skillMP(id), 12, 171, UIC.accent, UIC.textSh, 11);
@@ -229,7 +229,7 @@ function* summaryScreen() {
   while (true) {
     if (Input.pressed('left') || Input.pressed('right')) { page = (page + (Input.pressed('left') ? 2 : 1)) % 3; Sound.sfx('cursor'); }
     if (page === 2) { const n = questList().length; if (Input.repeat('up') && qTop > 0) { qTop--; Sound.sfx('cursor'); } if (Input.repeat('down') && qTop < n - 1) { qTop++; Sound.sfx('cursor'); } }
-    if (page === 1) { const n = Math.max(1, learnedSkills().length); if (Input.repeat('up')) { mi = (mi + n - 1) % n; Sound.sfx('cursor'); } if (Input.repeat('down')) { mi = (mi + 1) % n; Sound.sfx('cursor'); } }
+    if (page === 1) { const n = Math.max(1, (typeof summarySkills === 'function' ? summarySkills(Game.st) : learnedSkills()).length); if (Input.repeat('up')) { mi = (mi + n - 1) % n; Sound.sfx('cursor'); } if (Input.repeat('down')) { mi = (mi + 1) % n; Sound.sfx('cursor'); } }
     if (Input.pressed('a') && page === 2 && questList().length && typeof questDetailScreen === 'function') { Input.consume('a'); Sound.sfx('select'); const QL = questList(); UI.remove(scr); yield* questDetailScreen(QL[Math.min(qTop, QL.length - 1)]); UI.push(scr); }
     else if (Input.pressed('a') && page !== 1) { Input.consume('a'); page = (page + 1) % 3; Sound.sfx('cursor'); }
     else if (Input.pressed('b')) { Input.consume('a', 'b'); Sound.sfx('cancel'); break; }
@@ -314,7 +314,7 @@ function* bagScreen(mode = 'field') { // returns item id used (battle) or null
       if (mode === 'battle') { if (it.use === 'home' && Game.scene.F && Game.scene.F.boss) { yield* say('頭目戰中無法使用！'); continue; } if (it.use === 'escape' || it.use === 'home' || canUseItem(k)) { result = k; break; } yield* say('現在使用也沒有效果。'); continue; }
       if (it.use === 'escape') { yield* say('現在不能使用。'); continue; }
       if (it.use === 'home') { if (HOME_MAPS.includes(Game.st.map)) { yield* say('已經在萌芽鎮了。'); continue; } Game.st.bag[k]--; Game.homeWarp = 1; break; }
-      const msg = useItem(k); if (!msg) { yield* say('現在使用也沒有效果。'); continue; }
+      const msg = useItem(k); if (!msg) { yield* say((typeof itemBlockMsg === 'function' && itemBlockMsg(k)) || '現在使用也沒有效果。'); continue; }
       Sound.sfx(it.use === 'heal' ? 'heal' : 'item'); yield* say(msg);
     }
     yield;
