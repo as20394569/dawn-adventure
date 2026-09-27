@@ -1,4 +1,5 @@
-import glob, os
+import glob, os, subprocess, sys
+subprocess.run([sys.executable, os.path.join(os.path.dirname(os.path.abspath(__file__)), 'embed_sprites.py')], check=True)
 root='/home/claude/dawn'
 head=open(root+'/web/head.html').read()
 js=''.join(open(f).read()+'\n' for f in sorted(glob.glob(root+'/src/*.js')))

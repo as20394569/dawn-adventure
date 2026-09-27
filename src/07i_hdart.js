@@ -139,7 +139,8 @@ const HD_IDLE_PERIOD = 72;
 // adaptive quality: if drawing the battle is slow on this device, drop bloom/shafts/near motes and render at 2x
 const HD_QUALITY = { ema: 0, n: 0, low: false };
 function hdQualityTick(ms) { const Q = HD_QUALITY; Q.n++; Q.ema = Q.n < 5 ? ms : Q.ema * 0.95 + ms * 0.05; if (!Q.low && Q.n > 40 && Q.ema > 11) Q.low = true; }
-const hdD = () => Math.min(SCALE, HD_QUALITY.low ? 2 : 3); // render density cap (smoothly upscaled beyond that)
+const HD_PIXEL = true; // battle actors on the game's pixel grid (players asked for a more pixelated look)
+const hdD = () => HD_PIXEL ? 1 : Math.min(SCALE, HD_QUALITY.low ? 2 : 3); // render density cap (smoothly upscaled beyond that)
 function hdCanvas(A, wL, hL) { const D = hdD(); if (!A.cv || A.cvD !== D) { A.cv = mkCanvas(Math.ceil(wL * D), Math.ceil(hL * D)); A.cvT = mkCanvas(A.cv.width, A.cv.height); A.cvD = D; } A.cv.ds = A.cvT.ds = 1 / D; return A.cv; }
 function hdFoeSpec(sp) {
   const def = ART[sp], rig = hdRig(sp), kL = FOE_NATIVE[sp] ? HD_KL_BIG : HD_KL, pad = 16, SL = Math.round(64 * kL + pad * 2);
@@ -246,7 +247,8 @@ function hdAnim(b, who, state, dur, hold) { const A = b.hd && b.hd[who]; if (!A)
 function hdInit(b) {
   b.hd = { F: { state: 'idle', t: 0, dur: 1, phase: 0 }, H: { state: 'idle', t: 0, dur: 1, phase: 29 }, hpF: b.F.hp, hpH: b.H.hp, ok: false };
   try { b.hd.specF = hdFoeSpec(b.F.sp); b.hd.look = heroLookOf(Game.st); b.hd.oldF = b.imgF; b.hd.oldShadow = b.shadowF; b.hd.oldH = [b.imgH, b.imgH2];
-    b.imgF = hdRenderFoe(b.hd.F, b.hd.specF, b.t); b.imgH = b.imgH2 = hdRenderHero(b.hd.H, b.hd.look, b.t); b.shadowF = buildShadow(Math.round(b.hd.specF.bb.w * 0.38), 4); b.hd.ok = true; }
+    if (pxReady(b.F.sp)) b.hd.pxF = pxSpec(b.F.sp); if (pxReady('hero')) b.hd.pxH = pxSpec('hero');
+    b.imgF = hdRenderFoe(b.hd.F, b.hd.specF, b.t); b.imgH = b.imgH2 = hdRenderHero(b.hd.H, b.hd.look, b.t); b.shadowF = buildShadow(Math.round((b.hd.pxF ? b.hd.pxF.bb : b.hd.specF.bb).w * 0.38), 4); b.hd.ok = true; }
   catch (e) { console.error('hdArt fallback', e); b.hd.ok = false; }
 }
 function hdStep(b, A, who) {
@@ -289,13 +291,13 @@ function hdStep(b, A, who) {
   const _d = Battle.prototype.draw; Battle.prototype.draw = function (x) {
     if (!hdOn() || !this.hd || !this.hd.ok) return _d.call(this, x);
     const tStart = performance.now();
-    const D = this.hd, blit = (im, X, Y, w, h) => { const ds = im.ds || 1; x.imageSmoothingEnabled = true; x.drawImage(im, X, Y, w ?? im.width * ds, h ?? im.height * ds); x.imageSmoothingEnabled = false; };
+    const D = this.hd, blit = (im, X, Y, w, h) => { const ds = im.ds || 1; x.imageSmoothingEnabled = !im.px && !HD_PIXEL; x.drawImage(im, X, Y, w ?? im.width * ds, h ?? im.height * ds); x.imageSmoothingEnabled = false; };
     if (!this.hd2d) { this.cfgBg = this.bg.kind || 'field'; hd2dInit(this); } const LK = this.hd2d.L;
     // actors are re-rendered every frame while acting, every other frame while idle (saves battery on phones)
-    const redraw = A => !A.cv || A.state !== 'idle' || (this.t & 1) === 0 || A.lastT === undefined || A.cvD !== hdD();
-    let im = D.F.cv, hi = D.H.cv;
-    if (redraw(D.F)) { im = hdRenderFoe(D.F, D.specF, this.t); hd2dLightActor(im, LK); D.F.lastT = this.t; }
-    if (redraw(D.H)) { hi = hdRenderHero(D.H, D.look, this.t); hd2dLightActor(hi, LK); D.H.lastT = this.t; }
+    const redraw = A => !(A.cv || A.pcv) || A.state !== 'idle' || (this.t & 1) === 0 || A.lastT === undefined || A.cvD !== hdD();
+    let im = D.F.pcv && D.pxF ? D.F.pcv : D.F.cv, hi = D.H.pcv && D.pxH ? D.H.pcv : D.H.cv;
+    if (redraw(D.F)) { im = D.pxF ? pxRender(D.F, D.pxF, this.t) : hdRenderFoe(D.F, D.specF, this.t); hd2dLightActor(im, LK); D.F.lastT = this.t; }
+    if (redraw(D.H)) { hi = D.pxH ? pxRender(D.H, D.pxH, this.t) : hdRenderHero(D.H, D.look, this.t); hd2dLightActor(hi, LK); D.H.lastT = this.t; }
     this.imgF = im; this.imgH = this.imgH2 = hi;
     const sx = this.shake > 0 ? rnd(-3, 3) : 0, sy = this.shake > 0 ? rnd(-2, 2) : 0;
     x.save(); x.translate(sx, sy); x.imageSmoothingEnabled = true; x.drawImage(hd2dStageFor(this), 0, 0, W, BH); x.imageSmoothingEnabled = false; hd2dMotes(this, x, false);
@@ -304,15 +306,15 @@ function hdStep(b, A, who) {
     if (this.alphaF > 0 && !(this.blinkF > 0 && Math.floor(this.blinkF / 3) % 2)) {
       x.save(); x.beginPath(); x.rect(0, 0, W, FOE_FOOT + 3); x.clip(); x.globalAlpha = this.alphaF;
       const sq = this.squishF; if (sq) blit(im, fx0 - sq, fy0 + sq * 2, fw + sq * 2, fh - sq * 2); else blit(im, fx0, fy0);
-      if (this.tintF && this.tintF.a > 0) { x.globalAlpha = this.tintF.a * this.alphaF; blit(hdRenderFoe(D.F, D.specF, this.t, this.tintF.c), fx0, fy0, fw, fh); }
+      if (this.tintF && this.tintF.a > 0) { x.globalAlpha = this.tintF.a * this.alphaF; blit(D.pxF ? pxRender(D.F, D.pxF, this.t, this.tintF.c) : hdRenderFoe(D.F, D.specF, this.t, this.tintF.c), fx0, fy0, fw, fh); }
       x.restore();
     }
     if (this.cg && this.cg.shards > 0 && this.alphaF > 0) { const C = this.center(this.F); for (let i = 0; i < this.cg.shards; i++) { const an = this.t / 20 + i * Math.PI * 2 / 3, px0 = Math.round(C.x + Math.cos(an) * 44), py0 = Math.round(C.y + Math.sin(an) * 14); x.fillStyle = '#1a3050'; x.fillRect(px0 - 3, py0 - 5, 7, 11); x.fillStyle = '#9ae0ff'; x.fillRect(px0 - 2, py0 - 4, 5, 9); x.fillStyle = '#e8fbff'; x.fillRect(px0 - 1, py0 - 3, 2, 4); } }
-    if (this.cg && this.cg.mirror && this.alphaF > 0 && Math.floor(this.t / 8) % 2) { x.globalAlpha = 0.25; blit(hdRenderFoe(D.F, D.specF, this.t, '#e8fbff'), this.foeX + 32 - im.bb.cx, FOE_FOOT - im.bb.bot, fw, fh); x.globalAlpha = 1; }
+    if (this.cg && this.cg.mirror && this.alphaF > 0 && Math.floor(this.t / 8) % 2) { x.globalAlpha = 0.25; blit(D.pxF ? pxRender(D.F, D.pxF, this.t, '#e8fbff') : hdRenderFoe(D.F, D.specF, this.t, '#e8fbff'), this.foeX + 32 - im.bb.cx, FOE_FOOT - im.bb.bot, fw, fh); x.globalAlpha = 1; }
     if (!(this.blinkH > 0 && Math.floor(this.blinkH / 3) % 2)) {
       const hx0 = this.heroX + HD_HERO_OX; x.save(); hd2dSoftShadow(x, hx0 + 28 + this.offH.x, HERO_Y + 72, 26, 6, 0.4); x.globalAlpha = Math.max(0, 1 - this.sinkH / 70);
-      const hx = hx0 + this.offH.x, hy = HERO_Y + this.offH.y + this.sinkH * 0.25, hw = hi.width * hi.ds, hh = hi.height * hi.ds;
-      blit(hi, hx, hy); if (this.tintH) { x.globalAlpha = this.tintH.a; blit(hdRenderHero(D.H, D.look, this.t, this.tintH.c), hx, hy, hw, hh); }
+      const hx = (hi.px ? hx0 + 28 - hi.bb.cx : hx0) + this.offH.x, hy = (hi.px ? HERO_Y + 76 - hi.bb.bot : HERO_Y) + this.offH.y + this.sinkH * 0.25, hw = hi.width * hi.ds, hh = hi.height * hi.ds;
+      blit(hi, hx, hy); if (this.tintH) { x.globalAlpha = this.tintH.a; blit(D.pxH ? pxRender(D.H, D.pxH, this.t, this.tintH.c) : hdRenderHero(D.H, D.look, this.t, this.tintH.c), hx, hy, hw, hh); }
       x.restore();
     }
     for (const p of this.fx) drawParticle(x, p);
