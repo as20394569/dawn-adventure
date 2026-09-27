@@ -4,7 +4,8 @@
    Settings → 主角造型: Q版 / 原版 (the 16px field doll). Inactive until the layer images are embedded. */
 const HERO_PX = {};
 for (const k in (typeof HERO_PX_SRC !== 'undefined' ? HERO_PX_SRC : {})) { const im = new Image(); im.onload = () => { im.ok = true; }; im.src = HERO_PX_SRC[k]; HERO_PX[k] = im; }
-const heroChibiReady = () => Game.settings.chibiHero !== false && typeof HERO_PX_META !== 'undefined' && HERO_PX_META && HERO_PX.base && HERO_PX.base.ok;
+const heroChibiReady = () => Game.settings.chibiHero === true && // off: the player preferred the original paper doll (v20.4)
+   typeof HERO_PX_META !== 'undefined' && HERO_PX_META && HERO_PX.base && HERO_PX.base.ok;
 const HERO_KEYS = { // H2 adds deeper / brighter tones (a2, C2, E2, x2, Y2, d2, b2, B2, I2, i2, V2) derived from the item palette
   head: [['#ff0000', 'A'], ['#800000', 'a'], ['#400000', 'a2'], ['#ff8080', 'C'], ['#ffc0c0', 'C2']], deco: [['#ffff00', 'E'], ['#808000', 'E2'], ['#ff8080', 'C']],
   body: [['#00ff00', 'X'], ['#008000', 'x'], ['#004000', 'x2'], ['#80ff80', 'Y'], ['#c0ffc0', 'Y2'], ['#40a040', 'y'], ['#ffff00', 'Z'], ['#808000', 'z'], ['#ffffff', 'W'], ['#00ffff', 'D'], ['#008080', 'd'], ['#004040', 'd2']],
