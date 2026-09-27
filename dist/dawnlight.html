@@ -3432,10 +3432,11 @@ function* skillTreeScreen() {
     if (top > 0) x.drawImage(UPARROW, 86, 21); if (top + VIS < rows) x.drawImage(DOWNARROW, 86, 24 + VIS * 34 - 2);
     const n = N[idx], mv = MOVES[n.id], lv = skillLv(n.id), s = nodeState(n), cur = skillMove(n.id), nx = { ...Game.st, skills: { ...st.skills, [n.id]: Math.min(SKILL_MAX, lv + 1) } }, nxt = skillMove(n.id, nx);
     drawWin(x, 4, 162, 168, 90, 'menu');
-    typeBadge(x, mv.t, 10, 166, 24); Font.draw(x, mv.n + '　Lv' + lv + '/' + SKILL_MAX, 38, 164, UIC.text, UIC.textSh);
-    const stat = m => (m.pow ? '威力' + m.pow + ' ' : '') + (m.heal ? '回復' + Math.round(m.heal * 100) + '% ' : '') + (m.shield ? '護盾' + m.shield + '回合 ' : '') + (m.dur ? '持續' + m.dur + '回合 ' : '') + 'MP' + Math.round(SKILL_MP[n.id] * (1 + 0.15 * ((m.lv || 1) - 1)));
-    Font.draw(x, (mv.cat === '變' ? '輔助' : mv.cat === '物' ? '物理' : '魔法') + '　' + (lv ? stat(cur) : stat(nxt)), 10, 180, UIC.accent, UIC.textSh, 10);
-    if (lv && lv < SKILL_MAX) Font.draw(x, '下一級：' + stat(nxt), 10, 193, UIC.warm, UIC.textSh, 10);
+    typeBadge(x, mv.t, 10, 166, 24); Font.draw(x, mv.n + '　Lv' + lv + '/' + SKILL_MAX, 38, 164, UIC.text, UIC.textSh); if (mv.scale) Font.drawR(x, ATTR_NAMES[mv.scale[0]] + '加成', 166, 167, UIC.muted, UIC.textSh, 9);
+    const fitL = (t, y, col) => { let z = 10; while (z > 7 && Font.width(t, z) > 156) z--; Font.draw(x, t, 10, y + (10 - z) / 2, col, UIC.textSh, z); };
+    const stat = m => (m.pow ? (typeof powTxt === 'function' ? powTxt(m) : '威力' + m.pow) + ' ' : '') + (m.heal ? '回復' + Math.round(m.heal * 100) + '% ' : '') + (m.shield ? '護盾' + m.shield + '回合 ' : '') + (m.dur ? '持續' + m.dur + '回合 ' : '') + 'MP' + Math.round(SKILL_MP[n.id] * (1 + 0.15 * ((m.lv || 1) - 1)));
+    fitL((mv.cat === '變' ? '輔助' : mv.cat === '物' ? '物理' : '魔法') + '　' + (lv ? stat(cur) : stat(nxt)), 180, UIC.accent);
+    if (lv && lv < SKILL_MAX) fitL('下一級：' + stat(nxt), 193, UIC.warm);
     Font.wrap(mv.d, 152, 10).slice(0, 2).forEach((l, i) => Font.draw(x, l, 10, (lv && lv < SKILL_MAX ? 206 : 196) + i * 12, UIC.text, UIC.textSh, 10));
     Font.draw(x, s === 'max' ? '已達最高等級' : s.startsWith('locked') ? s.slice(7) : st.skp ? 'A：' + (lv ? '升級' : '學習') + '（消耗1點）' : '升級時可以獲得技能點', 10, 236, s.startsWith('locked') ? UIC.bad : UIC.muted, UIC.textSh, 10);
     if (lv) { const rb = refundBlock(n.id); drawBtn(x, 124, 232, 44, 16, false); Font.drawC(x, '↩退點', 146, 232, rb ? UIC.dis : UIC.warm, UIC.textSh, 9); if (typeof touchRegion === 'function') touchRegion(124, 232, 44, 16, () => tapKey('select')); }
@@ -4480,7 +4481,7 @@ function heroAttr(st = Game.st) { const a = {}; for (const k of ATTRS) a[k] = HE
 function heroStats(st = Game.st) {
   const a = heroAttr(st), L = st.lv;
   const s = {
-    hp: 8 + L * 2 + a.vit,                          // 最大HP = 8 + 等級×2 + 體力
+    hp: 6 + L * 1.8 + a.vit * 1.6,                  // 最大HP = 6 + 等級×1.8 + 體力×1.6 (v22: 體力 matters with free allocation)
     atk: a.str + a.dex / 2 + L * 0.6,               // 物攻 = 力量 + 靈巧÷2 + 等級×0.6
     def: a.vit + a.agi / 3 + L * 0.6,               // 物防 = 體力 + 敏捷÷3 + 等級×0.6
     spa: a.int * 1.2 + a.dex / 3 + L * 0.6,         // 魔攻 = 智力×1.2 + 靈巧÷3 + 等級×0.6
@@ -4488,12 +4489,12 @@ function heroStats(st = Game.st) {
     spe: a.agi * 1.5 + L * 0.6,                     // 速度 = 敏捷×1.5 + 等級×0.6
   };
   for (const k in s) s[k] = Math.floor(s[k]);
-  s.mp = Math.floor(10 + L * 1.5 + a.int);           // 最大MP = 10 + 等級×1.5 + 智力
+  s.mp = Math.floor(8 + L * 1.3 + a.int * 1.5);      // 最大MP = 8 + 等級×1.3 + 智力×1.5
   for (const k in st.boost || {}) if (s[k] !== undefined) s[k] += st.boost[k]; // legacy saves
   for (const g of equippedGear(st)) { const o = gearStats(g).st; for (const k in o) s[k] += o[k]; }
-  s.crit = 3 + a.luk * 0.5;   // 會心率% = 3 + 幸運×0.5
+  s.crit = 3 + a.luk * 0.6;   // 會心率% = 3 + 幸運×0.6
   s.hit = a.dex * 0.5;        // 命中加成% = 靈巧×0.5
-  s.eva = a.agi * 0.4;        // 迴避率% = 敏捷×0.4
+  s.eva = a.agi * 0.4 + a.luk * 0.1; // 迴避率% = 敏捷×0.4 + 幸運×0.1
   s.vs = []; s.resist = {}; s.drain = 0; s.elem = 0; s.counter = 0; // equipment affixes & talents
   for (const T of TALENTS) { const r = (st.tal || {})[T.id] || 0; if (r) for (const k in T.st) s[k] = (s[k] || 0) + T.st[k] * r; }
   const CL = CLASSES[st.cls]; if (CL) { const f = CL.tier === 1 ? clamp((L - 2) / 8, 0.4, 1) : 1; for (const k in CL.st) s[k] = (s[k] || 0) + (STATK.includes(k) ? Math.round(CL.st[k] * f) : CL.st[k]); } // base-class bonus grows in until Lv10
@@ -4577,7 +4578,7 @@ function* summaryScreen() {
       SK.slice(t0, t0 + VIS).forEach((id, k) => { const i = t0 + k, mv = MOVES[id], Y = 28 + k * 19; if (i === mi) selBar(x, 6, Y, 164, 17); typeBadge(x, mv.t, 14, Y + 2, 30); Font.draw(x, mv.n + ' Lv' + skillLv(id), 52, Y, UIC.text, UIC.textSh); Font.drawR(x, 'MP ' + skillMP(id), 164, Y, UIC.accent, UIC.textSh); });
       if (t0 > 0) x.drawImage(UPARROW, 86, 25); if (t0 + VIS < SK.length) x.drawImage(DOWNARROW, 86, 24 + VIS * 19 + 3);
       if (SK.length) { const id = SK[Math.min(mi, SK.length - 1)], mv = MOVES[id], m2 = skillMove(id); drawWin(x, 4, 168, 168, 84, 'menu');
-        Font.draw(x, (mv.cat === '變' ? '輔助' : mv.cat === '物' ? '物理' : '魔法') + (m2.pow ? '　威力' + m2.pow : '') + '　消耗MP ' + skillMP(id), 12, 171, UIC.accent, UIC.textSh, 11);
+        Font.draw(x, (mv.cat === '變' ? '輔助' : mv.cat === '物' ? '物理' : '魔法') + (m2.pow ? '　' + (typeof powTxt === 'function' ? powTxt(m2) : '威力' + m2.pow) : '') + '　消耗MP ' + skillMP(id), 12, 171, UIC.accent, UIC.textSh, 11);
         Font.wrap(mv.d, 152, 11).slice(0, 4).forEach((l, i) => Font.draw(x, l, 12, 188 + i * 15, UIC.text, UIC.textSh, 11)); }
     }
   } };
@@ -6000,10 +6001,10 @@ class Battle {
     const tb = new TextBox(st.name + '升到了Lv.' + st.lv + '！', { style: 'battle' }); UI.push(tb);
     for (let i = 0; i < 24; i++) { this.tintH.a = Math.sin(i / 24 * Math.PI) * 0.8; tb.update(); yield; } this.tintH = null;
     while (!tb.done) { tb.update(); yield; }
-    let showTotal = false; const rowsL = [['HP', before.hp, after.hp]].concat(ATTRS.map(k => [ATTR_NAMES[k], bA[k], aA[k]]));
+    let showTotal = false; const rowsL = Game.st.attr ? [['HP', before.hp, after.hp], ['MP', before.mp, after.mp], ['物攻', before.atk, after.atk], ['物防', before.def, after.def], ['魔攻', before.spa, after.spa], ['魔防', before.spd, after.spd], ['速度', before.spe, after.spe]] : [['HP', before.hp, after.hp]].concat(ATTRS.map(k => [ATTR_NAMES[k], bA[k], aA[k]])); // v22: attributes come from 屬性點
     const win = { draw: x => { drawWin(x, 80, 34, 90, 122, 'menu'); rowsL.forEach(([n, b, a], i) => { const Y = 38 + i * 16; Font.draw(x, n, 90, Y, UIC.muted, UIC.textSh); const d = a - b; Font.drawR(x, showTotal ? String(a) : d > 0 ? '+' + d : '—', 162, Y, showTotal ? UIC.text : d > 0 ? UIC.accent : UIC.dis, UIC.textSh); }); } };
     UI.push(win); yield* waitA(); showTotal = true; Sound.sfx('cursor'); yield* waitA(); UI.remove(win); UI.remove(tb);
-    const early = st.lv <= 5, gs = early ? 1 : 2, gt = typeof tpGainAt === 'function' ? tpGainAt(st.lv) : early ? 0 : 1; // v21: talent points every 2 levels st.skp = (st.skp || 0) + gs; st.tp = (st.tp || 0) + gt; st.mp = heroStats().mp; this.H.maxmp = st.mp; yield* this.msg('獲得了' + gs + '點技能點' + (gt ? '和' + gt + '點天賦點' : '') + '！MP也全部恢復了。', { hold: 40 });
+    const early = st.lv <= 5, gs = early ? 1 : 2, gt = typeof tpGainAt === 'function' ? tpGainAt(st.lv) : early ? 0 : 1; /* v21: talent points every 2 levels */ st.skp = (st.skp || 0) + gs; st.tp = (st.tp || 0) + gt; st.mp = heroStats().mp; this.H.maxmp = st.mp; yield* this.msg('獲得了' + gs + '點技能點' + (gt ? '和' + gt + '點天賦點' : '') + '！MP也全部恢復了。', { hold: 40 });
     const nw = skillTreeOf(st.cls).filter(n => n.clv === st.lv); if (nw.length) yield* this.msg('可以學習新技能了：' + nw.map(n => MOVES[n.id].n).join('、') + '！（選單→技能）', { wait: true });
     if (Sound.current !== 'victory' && this.F.hp <= 0) Sound.play('victory');
   }
@@ -6515,13 +6516,13 @@ Battle.prototype.chooseMove = function* () { // v20.7: a small pop-up (list + de
   const info = (x, m) => {
     Font.drawR(x, 'MP ' + st.mp + '/' + (this.H.maxmp || st.mp), X + w - 8, Y + 2, '#8ab8ff', UIC.textSh, 9);
     const id = list[m.i], mv = skillMove(id), c = TYPE_COL[mv.t]; drawWin(x, X, DY, w, DH, 'menu');
-    const t1 = mv.t === '一般' ? '無屬性' : mv.t + '屬性', t2 = '・' + (mv.cat === '變' ? '輔助' : mv.cat === '物' ? '物理' : '魔法') + (mv.pow ? '・威力' + mv.pow : '') + (mv.hits ? '×' + mv.hits : '') + '・Lv' + skillLv(id), lack = skillMP(id) > st.mp;
-    let tz = 9; while (tz > 7 && Font.width(t1 + t2, tz) + (lack ? Font.width('MP不足', tz) + 6 : 0) > w - 23) tz--;
+    const t1 = mv.t === '一般' ? '無屬性' : mv.t + '屬性', t2 = '・' + (mv.cat === '變' ? '輔助' : mv.cat === '物' ? '物理' : '魔法') + (mv.pow ? '・' + (typeof powTxt === 'function' ? powTxt(mv) : '威力' + mv.pow) : '') + '・Lv' + skillLv(id), lack = skillMP(id) > st.mp, est = !lack && mv.pow && this.estimateDamage ? this.estimateDamage(id) : 0;
+    let tz = 9; while (tz > 7 && Font.width(t1 + t2, tz) + (lack ? Font.width('MP不足', tz) + 6 : est ? Font.width('預估≈' + est, tz) + 6 : 0) > w - 23) tz--;
     x.fillStyle = c; x.fillRect(X + 8, DY + 7, 4, 4); const ex = Font.draw(x, t1, X + 15, DY + 1, mv.t === '一般' ? '#c9cfe4' : c, UIC.textSh, tz); Font.draw(x, t2, ex + 1, DY + 1, '#c9cfe4', UIC.textSh, tz);
-    if (lack) Font.drawR(x, 'MP不足', X + w - 8, DY + 1, UIC.bad, UIC.textSh, tz);
+    if (lack) Font.drawR(x, 'MP不足', X + w - 8, DY + 1, UIC.bad, UIC.textSh, tz); else if (est) Font.drawR(x, '預估≈' + est, X + w - 8, DY + 1, UIC.warm, UIC.textSh, tz);
     Font.drawC(x, 'A：使用　B：返回', W / 2, BB_Y + 11, UIC.muted, UIC.textSh, 9);
-    const room = DH - 17; let z = 9, lh = 11, Ls = Font.wrap(mv.d || '', w - 16, z); // shrink the text until it fits the box
-    while (Ls.length * lh > room && z > 7) { z--; lh = z + 2; Ls = Font.wrap(mv.d || '', w - 16, z); }
+    const room = DH - 17; const dtx = (mv.d || '') + (mv.scale ? '【' + ATTR_NAMES[mv.scale[0]] + '越高，傷害越高】' : ''); let z = 9, lh = 11, Ls = Font.wrap(dtx, w - 16, z); // shrink the text until it fits the box
+    while (Ls.length * lh > room && z > 7) { z--; lh = z + 2; Ls = Font.wrap(dtx, w - 16, z); }
     const maxL = Math.floor(room / lh); if (Ls.length > maxL) { Ls = Ls.slice(0, maxL); Ls[maxL - 1] = Ls[maxL - 1].slice(0, -1) + '…'; }
     Ls.forEach((l, n) => Font.draw(x, l, X + 8, DY + 13 + n * lh, UIC.text, UIC.textSh, z));
   };
@@ -8154,6 +8155,32 @@ function rework3Migrate(st) {
   };
 }
 
+/* ---------- v22: 勇者之魂 gets its own animation (it shared 破曉斬's sunrise); the new sword skills get their own styles ---------- */
+PAL.soul = ['#5ac8ff', '#e8fbff'];
+HERO_PK.soulBlade = (x, p, a) => { // a giant spectral sword that drops onto the target
+  const k = Math.min(1, p.t / 8), y = lerp(p.y0, p.y1, k * k), L = p.len, wd = p.w; x.globalAlpha = Math.min(1, a * 1.4);
+  const g = x.createLinearGradient(p.x, y - L, p.x, y); g.addColorStop(0, 'rgba(232,251,255,0.1)'); g.addColorStop(0.6, 'rgba(140,220,255,0.8)'); g.addColorStop(1, 'rgba(255,255,255,0.95)'); x.fillStyle = g;
+  x.beginPath(); x.moveTo(p.x, y + 6); x.lineTo(p.x + wd / 2, y - 6); x.lineTo(p.x + wd / 2, y - L); x.lineTo(p.x - wd / 2, y - L); x.lineTo(p.x - wd / 2, y - 6); x.closePath(); x.fill();
+  x.fillStyle = 'rgba(90,200,255,0.9)'; x.fillRect(p.x - wd * 1.6, y - L - 3, wd * 3.2, 4); x.fillRect(p.x - 2, y - L - 16, 4, 13); x.fillStyle = '#ffffff'; x.fillRect(p.x - 1, y - L + 2, 2, L - 12);
+};
+Object.assign(FX, {
+  *heroSoul(U, T, u) {
+    Sound.sfx('charge'); this.spawn({ k: 'pillar', x: U.x, y: U.y + 20, w: 18, h: 90, c: '#8ad8ff', life: 30 }); this.spawn({ k: 'glow', x: U.x, y: U.y, r: 34, c: '#5ac8ff', life: 30 });
+    for (let i = 0; i < 26; i++) this.spawn({ k: 'mote', x: U.x + rnd(-18, 18), y: U.y + rnd(-4, 22), vy: -(0.6 + Math.random() * 1.2), s: 2, c: i % 3 ? '#8ad8ff' : '#ffffff', life: rnd(18, 30) });
+    yield* wait(16);
+    for (let i = 0; i < 14; i++) this.spawn({ k: 'mote', x: U.x + rnd(-14, 14), y: U.y + rnd(-20, 4), to: T, s: 2, c: i % 2 ? '#5ac8ff' : '#e8fbff', life: 20 });
+    this.spawn({ k: 'soulBlade', x: T.x, y0: T.y - 150, y1: T.y + 14, len: 74, w: 12, life: 30 }); Sound.sfx('wind'); yield* wait(8);
+    this.shake = 18; Sound.sfx('quake'); this.spawn({ k: 'flash', c: '#c8ecff', a: 0.45, life: 8 });
+    for (let i = 0; i < 3; i++) this.spawn({ k: 'shock', x: T.x, y: T.y + 18, r0: 6 + i * 6, r1: 48 + i * 14, c: i % 2 ? '#ffffff' : '#5ac8ff', life: 16 + i * 4 });
+    this.sparks(T.x, T.y, 34, ['#8ad8ff', '#ffffff', '#5aa0ff'], 3.4, 26, 0.08); yield* wait(16);
+  },
+});
+MOVES.heroSoul.fx = 'heroSoul';
+Object.assign(SKILL_STYLE, {
+  heroSoul: ['focus', 'nova', 'soul', 'hitSuper'], doubleSlash: ['draw', 'xcut', 'steel', 'slash'], whirlSlash: ['dash', 'multicut', 'wind', 'slash'],
+  zantetsu: ['still', 'shatter', 'steel', 'crit'], parry: ['hex', null, 'steel'], timeStop: ['still', null, 'guard'],
+});
+
 /* ===================== EVENTS (異世界篇) ===================== */
 function* healRitual(text) {
   yield* fadeOut(10); healHero(); const fr = Sound.jingle('heal'); yield* wait(Math.max(40, fr)); yield* fadeIn(10);
@@ -8477,7 +8504,7 @@ class TitleScene {
     x.drawImage(this.logo, Math.round(W / 2 - this.logo.width / 2), 6 + bob);
     Font.drawC(x, '～異世界冒險RPG～', W / 2, 52 + bob, '#ffe0a0', '#3a1428');
     if (this.stage === 'press' && Math.floor(this.t / 30) % 2 === 0) Font.drawC(x, '按 A 鍵開始', W / 2, 232, '#ffffff', '#1a1024');
-    Font.draw(x, 'v5.6', W - 26, H - 13, '#b890b0', null);
+    Font.draw(x, 'v5.7', W - 26, H - 13, '#b890b0', null);
   }
 }
 
@@ -9736,5 +9763,140 @@ function* questDetailScreen(q) {
   while (true) { if (Input.repeat('up') && top > 0) { top--; Sound.sfx('cursor'); } if (Input.repeat('down') && scr.more) { top++; Sound.sfx('cursor'); } if (Input.pressed('b') || Input.pressed('a')) { Input.consume('a', 'b'); Sound.sfx('cancel'); break; } yield; }
   UI.remove(scr);
 }
+
+/* ===================== v22 free attribute allocation + RPG-style skill scaling (playtest: "角色應該可以自由加點") =====================
+   - Attributes no longer grow on their own. Every level gives 屬性點 (2, +1 on every 3rd level ≈ the old automatic growth),
+     spent freely in 選單 → 屬性. Raising an attribute past 20 costs 2 points, past 30 costs 3 (specialists pay more).
+   - Each attribute has a clear job (see ATTR_HELP); 體力 / 智力 / 幸運 are worth more than before so every build is viable.
+   - Skills show their damage as 物攻×% / 魔攻×% (the basic attack = 100%), and scale with one attribute:
+     +1–1.5% damage per point above 10 (敏捷 for fast / multi-hit skills, 力量 for heavy blows, 靈巧 for precise ones, 智力 for magic…).
+   - 推薦配點 fills the remaining points by the class's template; the first 重置 is free, later ones cost gold.
+   - Old saves keep exactly the attributes they had (converted to allocated points) and get one free reset. */
+const ATTR_BASE = { str: 4, agi: 4, vit: 4, int: 4, dex: 4, luk: 3 };
+const ATTR_HELP = { str: '物攻+1　（重擊技能加成）', agi: '速度+1.5、迴避+0.4%、物防+0.3　（連擊技能加成）', vit: '最大HP+1.6、物防+1、魔防+0.6', int: '魔攻+1.2、最大MP+1.5、魔防+0.6　（魔法加成）', dex: '命中+0.5%、物攻+0.5、魔攻+0.3　（精準技能加成）', luk: '會心率+0.6%、迴避+0.1%　（暗殺技能加成）' };
+const ATTR_TEMPLATE = { swordsman: { str: 3, vit: 2, dex: 2, agi: 1, luk: 1 }, mage: { int: 4, dex: 2, vit: 2, agi: 1 }, guardian: { vit: 4, str: 2, dex: 1, int: 1 }, ranger: { agi: 3, dex: 2, str: 2, vit: 2, luk: 1 }, _: { str: 2, int: 2, vit: 2, agi: 1, dex: 1 } };
+const attrPointsFor = lv => Math.max(0, lv - 1) * 2; // 2 per level: free allocation already wastes nothing, so this keeps builds close to the old balance
+const attrCost = v => v < 20 ? 1 : v < 30 ? 2 : 3;
+function attrSpent(st) { let n = 0; for (const k of ATTRS) { const b = ATTR_BASE[k], a = (st.attr || {})[k] || 0; for (let v = b; v < b + a; v++) n += attrCost(v); } return n; }
+const attrAvail = (st = Game.st) => st && st.attr ? attrPointsFor(st.lv) + (st.attrBonus || 0) - attrSpent(st) : 0;
+{ const _ha = heroAttr; heroAttr = function (st = Game.st) {
+    if (!st || !st.attr) return _ha(st); const a = {};
+    for (const k of ATTRS) a[k] = ATTR_BASE[k] + (st.attr[k] || 0) + ((st.boost || {})[k] || 0); return a;
+  };
+}
+function attrAuto(st = Game.st) { // spend the remaining points by the class template (cheapest-ratio first)
+  const T = ATTR_TEMPLATE[baseClassOf(st.cls)] || ATTR_TEMPLATE._; st.attr = st.attr || {};
+  for (let guard = 0; guard < 400; guard++) {
+    const left = attrAvail(st); let best = null, br = 1e9;
+    for (const k in T) { const cur = ATTR_BASE[k] + (st.attr[k] || 0), c = attrCost(cur); if (c > left) continue; const r = ((st.attr[k] || 0) + 1) / T[k]; if (r < br) { br = r; best = k; } }
+    if (!best) break; st.attr[best] = (st.attr[best] || 0) + 1;
+  }
+}
+function attrLegacy(st) { const a = {}; for (const k of ATTRS) a[k] = HERO_ATTR_INIT[k] + Math.floor(HERO_GROWTH_OFS[k] + HERO_GROWTH[k] * (st.lv - 5)); return a; }
+function attrMigrate(st) {
+  if (!st || st.attr) return false; const old = attrLegacy(st); st.attr = {};
+  for (const k of ATTRS) st.attr[k] = Math.max(0, old[k] - ATTR_BASE[k]);
+  const over = attrSpent(st) - attrPointsFor(st.lv); st.attrBonus = Math.max(0, over); st.attrFreeReset = 1; return true;
+}
+{ const _ng = newGameState; newGameState = function (...a) { const st = _ng.apply(this, a); if (st) { st.attr = {}; st.attrFreeReset = 1; } return st; }; }
+{ const _so = startOverworld; startOverworld = function (...a) {
+    const mig = attrMigrate(Game.st), ow = _so.apply(this, a);
+    if (mig && ow && ow.run && Game.st.lv > 1) ow.run((function* () { yield* wait(30); yield* say('【系統更新】屬性改成自由加點了！\n每次升級會得到「屬性點」，在選單的「屬性」自由分配。'); yield* say('目前的屬性已經換算好了，第一次重置免費，可以重新打造自己的角色。'); })());
+    return ow;
+  };
+}
+// the level-up window: HP / MP / derived stats grow with the level, attributes come from the new 屬性點
+{ const _lu = Battle.prototype.levelUp; Battle.prototype.levelUp = function* () {
+    const st = Game.st, before = attrAvail(st); const r = yield* _lu.call(this); const gain = attrAvail(st) - before;
+    if (st.attr && gain > 0) { Sound.sfx('item'); yield* this.msg('獲得了' + gain + '點屬性點！（目前' + attrAvail(st) + '點，選單→屬性 分配）', { hold: 40 }); }
+    return r;
+  };
+}
+
+/* ---------- 屬性 screen ---------- */
+function* attrScreen() {
+  const st = Game.st; st.attr = st.attr || {}; let i = 0; const s0 = heroStats(st), add = {}; const N = ATTRS.length + 2;
+  const DER = [['HP', 'hp'], ['MP', 'mp'], ['物攻', 'atk'], ['物防', 'def'], ['魔攻', 'spa'], ['魔防', 'spd'], ['速度', 'spe'], ['會心', 'crit', '%'], ['命中', 'hit', '%'], ['迴避', 'eva', '%']];
+  const resetCost = () => st.attrFreeReset ? 0 : 100 * st.lv;
+  const scr = { touchBack: true, draw(x) {
+    screenBG(x); headerBar(x, '屬性'); const av = attrAvail(st); Font.drawR(x, '屬性點 ' + av, W - 6, 2, av ? UIC.warm : UIC.muted, UIC.textSh);
+    const a = heroAttr(st); drawWin(x, 4, 22, 168, 118, 'menu');
+    ATTRS.forEach((k, r) => { const Y = 26 + r * 15, on = i === r; if (on) selBar(x, 6, Y - 1, 164, 14);
+      Font.draw(x, ATTR_NAMES[k], 12, Y - 1, on ? UIC.text : '#c9cfe4', UIC.textSh, 11); Font.drawR(x, String(a[k]), 74, Y - 1, add[k] ? UIC.good : UIC.text, UIC.textSh, 11);
+      if ((st.boost || {})[k]) Font.draw(x, '(+' + st.boost[k] + ')', 77, Y, UIC.accent, UIC.textSh, 8);
+      const c = attrCost(ATTR_BASE[k] + (st.attr[k] || 0)); Font.drawR(x, (add[k] ? '◀ ' : '') + '▶ ' + c + '點', 164, Y, c <= av ? UIC.warm : UIC.dis, UIC.textSh, 9);
+      touchRegion(4, Y - 1, 168, 14, () => { if (i === r) tapKey('right'); else i = r; }); });
+    const Y2 = 26 + ATTRS.length * 15 + 1; [['推薦配點', av > 0], ['重置屬性' + (resetCost() ? '（' + resetCost() + 'G）' : '（免費）'), attrSpent(st) > 0]].forEach(([t, ok], n) => { const X = 8 + n * 82, on = i === ATTRS.length + n; drawBtn(x, X, Y2, 78, 16, on); Font.drawC(x, t, X + 39, Y2, ok ? (on ? UIC.text : '#c9cfe4') : UIC.dis, UIC.textSh, 9); touchRegion(X, Y2, 78, 16, () => { i = ATTRS.length + n; tapKey('a'); }); });
+    const k = ATTRS[i]; drawWin(x, 4, 142, 168, 110, 'menu');
+    Font.draw(x, k ? ATTR_NAMES[k] + '：' : (i === ATTRS.length ? '依職業的推薦比例分配剩下的點數。' : '把所有屬性點收回來重新分配。'), 12, 144, UIC.accent, UIC.textSh, 10);
+    if (k) Font.wrap(ATTR_HELP[k], 118, 9).slice(0, 2).forEach((l, n) => Font.draw(x, l, 48, 145 + n * 11, UIC.text, UIC.textSh, 9));
+    const s = heroStats(st); DER.forEach(([n, key, u], r) => { const X = 12 + (r % 2) * 80, Y = 170 + Math.floor(r / 2) * 13, v = s[key], d = Math.round((v - s0[key]) * 10) / 10;
+      Font.draw(x, n, X, Y, UIC.muted, UIC.textSh, 10); Font.drawR(x, (u ? (Math.round(v * 10) / 10) : v) + (u || ''), X + 52, Y, UIC.text, UIC.textSh, 10); if (d) Font.draw(x, (d > 0 ? '+' : '') + d, X + 55, Y + 1, d > 0 ? UIC.good : UIC.bad, UIC.textSh, 8); });
+    Font.drawR(x, '▶加點　◀取消　B確定', 166, 239, UIC.muted, UIC.textSh, 8);
+  } };
+  UI.push(scr);
+  while (true) {
+    if (Input.repeat('up')) { i = (i + N - 1) % N; Sound.sfx('cursor'); } if (Input.repeat('down')) { i = (i + 1) % N; Sound.sfx('cursor'); }
+    const k = ATTRS[i];
+    if (k && (Input.repeat('right') || Input.pressed('a'))) { Input.consume('a'); const c = attrCost(ATTR_BASE[k] + (st.attr[k] || 0)); if (c <= attrAvail(st)) { st.attr[k] = (st.attr[k] || 0) + 1; add[k] = (add[k] || 0) + 1; Sound.sfx('statUp'); clampHP(); } else Sound.sfx('bump'); }
+    if (k && Input.repeat('left')) { if (add[k] > 0) { add[k]--; st.attr[k]--; Sound.sfx('cancel'); clampHP(); } else Sound.sfx('bump'); }
+    if (!k && Input.pressed('a')) { Input.consume('a');
+      if (i === ATTRS.length) { if (attrAvail(st) > 0) { const b4 = { ...st.attr }; attrAuto(st); for (const q of ATTRS) { const dq = (st.attr[q] || 0) - (b4[q] || 0); if (dq) add[q] = (add[q] || 0) + dq; } Sound.sfx('statUp'); clampHP(); } else Sound.sfx('bump'); }
+      else { const cost = resetCost(); if (!attrSpent(st)) { Sound.sfx('bump'); } else { UI.remove(scr); const ok = yield* yesNo('要把所有屬性點收回來重新分配嗎？' + (cost ? '\n（費用 ' + cost + ' G）' : '\n（這次免費）')); if (ok) { if (cost && st.money < cost) yield* say('錢不夠喔。'); else { st.money -= cost; st.attrFreeReset = 0; st.attr = {}; for (const q of ATTRS) delete add[q]; Sound.sfx('cancel'); clampHP(); } } UI.push(scr); } } }
+    if (Input.pressed('b')) { Input.consume('b'); Sound.sfx('cancel'); break; }
+    yield;
+  }
+  UI.remove(scr); clampHP();
+}
+// main menu: 11 tiles (屬性 added), drawn two lines per tile
+{ const TILES = [['狀態', '能力・任務'], ['屬性', '自由加點'], ['技能', '學習・升級'], ['天賦', '被動加成'], ['背包', '道具・素材'], ['裝備', '更換・詳情'], ['圖鑑', '魔物資料'], ['紀錄', '地圖・成就'], ['存檔', '記錄進度'], ['設定', '音量・速度'], ['關閉', '回到遊戲']];
+  startMenu = function* () {
+    Sound.sfx('menu'); let idx = Game.menuIdx || 0;
+    while (true) {
+      const st = Game.st, s = heroStats();
+      const hdr = { draw(x) { x.fillStyle = 'rgba(8,10,20,0.78)'; x.fillRect(0, 0, W, H); drawWin(x, 4, 4, 168, 40, 'menu'); x.drawImage(heroFramesFor(st).down[0], 0, 0, 16, 22, 10, 8, 24, 33);
+        const nx = Font.draw(x, st.name, 40, 6, UIC.text, UIC.textSh); if (CLASSES[st.cls]) Font.draw(x, CLASSES[st.cls].n, nx + 4, 7, UIC.warm, UIC.textSh, 10); Font.drawR(x, 'Lv' + st.lv, 166, 6, UIC.accent, UIC.textSh);
+        Font.draw(x, 'HP ' + st.hp + '/' + s.hp, 40, 22, UIC.good, UIC.textSh, 10); Font.draw(x, 'MP ' + (st.mp ?? s.mp) + '/' + s.mp, 96, 22, '#86b4ff', UIC.textSh, 10); Font.drawR(x, st.money + ' G', 166, 32, UIC.warm, UIC.textSh, 10);
+        Font.draw(x, MAPS[st.map] ? MAPS[st.map].name || '' : '', 40, 32, UIC.muted, UIC.textSh, 9); } };
+      UI.push(hdr);
+      const items = TILES.map(([t, sub]) => ({ t: '', name: t, dot: (t === '天賦' && st.tp) || (t === '技能' && st.skp) || (t === '屬性' && attrAvail(st) > 0), sub }));
+      const r = yield* choose(items, { x: 4, y: 48, w: 168, h: 204, cols: 2, colW: 82, rowH: 33, ox: 4, oy: 3, buttons: true, style: 'menu', index: Math.min(idx, items.length - 1), drawExtra: (x, m) => { for (let k = 0; k < items.length; k++) { const c = k % 2, rr = Math.floor(k / 2), X = m.x + m.ox + c * m.colW, Y = m.y + m.oy + rr * m.rowH, on = k === m.i; Font.drawC(x, items[k].name, X + 39, Y + 1, on ? UIC.text : '#c9cfe4', UIC.textSh, 12); Font.drawC(x, items[k].sub, X + 39, Y + 16, on ? UIC.accent : UIC.muted, UIC.textSh, 8); if (items[k].dot) { x.fillStyle = UIC.warm; x.fillRect(X + 70, Y + 4, 4, 4); } } } });
+      UI.remove(hdr);
+      const name = r >= 0 ? TILES[r][0] : '關閉'; if (name === '關閉') break; idx = r; Game.menuIdx = r;
+      if (name === '狀態') yield* summaryScreen(); if (name === '屬性') yield* attrScreen(); if (name === '技能') yield* skillTreeScreen(); if (name === '天賦') yield* talentScreen();
+      if (name === '背包') { yield* bagScreen('field'); if (Game.homeWarp) break; }
+      if (name === '裝備') yield* equipScreen(); if (name === '圖鑑') yield* dexScreen(); if (name === '紀錄') yield* recordScreen();
+      if (name === '存檔') { const ok = yield* yesNo('要記錄目前的冒險進度嗎？'); if (ok) { const good = saveGame(); if (good) { Sound.sfx('save'); yield* say(Game.st.name + '把冒險記錄了下來！'); } else yield* say('無法存檔……這個瀏覽器可能不允許儲存資料。'); } }
+      if (name === '設定') yield* optionsScreen();
+    }
+    if (Game.homeWarp && Game.ow) { Game.homeWarp = 0; yield* Game.ow.homeWarp(); }
+  };
+}
+
+/* ---------- RPG-style skill numbers: 物攻×% / 魔攻×%, one scaling attribute per damage skill ---------- */
+const SKILL_SCALE = {
+  gale: ['agi', 1.5], doubleSlash: ['agi', 1], whirlSlash: ['agi', 1], twinStrike: ['agi', 1], flurry: ['agi', 1], bladeDance: ['agi', 1], quickDraw: ['dex', 1.5],
+  powerSlash: ['str', 1], crossSlash: ['str', 1], zantetsu: ['str', 1.5], recklessSlash: ['str', 1.5], bladeStorm: ['str', 1], armorBreak: ['str', 1], dawnBreak: ['str', 1], riftBlade: ['str', 1],
+  iaiSlash: ['dex', 1.5], venomFang: ['dex', 1], toxicBlade: ['dex', 1], lacerate: ['dex', 1], shadowStab: ['luk', 1.5], deathMark: ['luk', 1.5],
+  guardStrike: ['vit', 1], shieldBash: ['vit', 1.5], heroSoul: ['int', 1], eclipseSlash: ['int', 1], arcaneEdge: ['int', 1],
+};
+for (const k of ['magicBolt', 'fireBolt', 'manaBurst', 'aquaBlade', 'thunder', 'leafStorm', 'flameWave', 'aquaBurst', 'chainBolt', 'inferno', 'meteor', 'thunderstorm', 'skyJudge', 'holyLight']) SKILL_SCALE[k] = ['int', 1];
+for (const k in SKILL_SCALE) if (MOVES[k]) MOVES[k].scale = SKILL_SCALE[k];
+const ATTR_SCALE_FROM = 10;
+const powTxt = mv => mv && mv.pow ? (mv.cat === '特' ? '魔攻' : '物攻') + '×' + Math.round(mv.pow / MOVES.attack.pow * 100) + '%' + (mv.hits ? '×' + mv.hits + '段' : '') : '';
+const scaleTxt = mv => mv && mv.scale ? ATTR_NAMES[mv.scale[0]] + '加成' : '';
+{ const _cd = Battle.prototype.calcDamage; Battle.prototype.calcDamage = function (u, t, mv) {
+    const r = _cd.call(this, u, t, mv); if (!u || !u.hero || !mv || !mv.pow || !mv.scale) return r;
+    const a = heroAttr(Game.st)[mv.scale[0]] || 0, m = 1 + Math.max(0, a - ATTR_SCALE_FROM) * mv.scale[1] / 100;
+    if (m > 1) r.dmg = Math.max(1, Math.floor(r.dmg * m)); return r;
+  };
+}
+// a steady damage preview for the skill pop-up (no random spread, no crit, weakness only once it's revealed)
+Battle.prototype.estimateDamage = function (id) {
+  const mv = id === 'attack' ? MOVES.attack : skillMove(id); if (!mv || !mv.pow) return 0;
+  const R = Math.random, hit = this._lastHit; Math.random = () => 0.5; this._estimating = true; let d = 0;
+  try { const r = this.calcDamage(this.H, this.F, this.H.stats.welem && mv.t === '一般' ? { ...mv, t: this.H.stats.welem } : mv); d = r.dmg; if (r.mult !== 1 && !(this.tac && this.tac.rev)) d = Math.round(d / r.mult); } finally { Math.random = R; this._estimating = false; this._lastHit = hit; }
+  return d * (mv.hits || 1);
+};
 
 </script>

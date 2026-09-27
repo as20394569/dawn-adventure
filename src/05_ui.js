@@ -124,7 +124,7 @@ function heroAttr(st = Game.st) { const a = {}; for (const k of ATTRS) a[k] = HE
 function heroStats(st = Game.st) {
   const a = heroAttr(st), L = st.lv;
   const s = {
-    hp: 8 + L * 2 + a.vit,                          // 最大HP = 8 + 等級×2 + 體力
+    hp: 6 + L * 1.8 + a.vit * 1.6,                  // 最大HP = 6 + 等級×1.8 + 體力×1.6 (v22: 體力 matters with free allocation)
     atk: a.str + a.dex / 2 + L * 0.6,               // 物攻 = 力量 + 靈巧÷2 + 等級×0.6
     def: a.vit + a.agi / 3 + L * 0.6,               // 物防 = 體力 + 敏捷÷3 + 等級×0.6
     spa: a.int * 1.2 + a.dex / 3 + L * 0.6,         // 魔攻 = 智力×1.2 + 靈巧÷3 + 等級×0.6
@@ -132,12 +132,12 @@ function heroStats(st = Game.st) {
     spe: a.agi * 1.5 + L * 0.6,                     // 速度 = 敏捷×1.5 + 等級×0.6
   };
   for (const k in s) s[k] = Math.floor(s[k]);
-  s.mp = Math.floor(10 + L * 1.5 + a.int);           // 最大MP = 10 + 等級×1.5 + 智力
+  s.mp = Math.floor(8 + L * 1.3 + a.int * 1.5);      // 最大MP = 8 + 等級×1.3 + 智力×1.5
   for (const k in st.boost || {}) if (s[k] !== undefined) s[k] += st.boost[k]; // legacy saves
   for (const g of equippedGear(st)) { const o = gearStats(g).st; for (const k in o) s[k] += o[k]; }
-  s.crit = 3 + a.luk * 0.5;   // 會心率% = 3 + 幸運×0.5
+  s.crit = 3 + a.luk * 0.6;   // 會心率% = 3 + 幸運×0.6
   s.hit = a.dex * 0.5;        // 命中加成% = 靈巧×0.5
-  s.eva = a.agi * 0.4;        // 迴避率% = 敏捷×0.4
+  s.eva = a.agi * 0.4 + a.luk * 0.1; // 迴避率% = 敏捷×0.4 + 幸運×0.1
   s.vs = []; s.resist = {}; s.drain = 0; s.elem = 0; s.counter = 0; // equipment affixes & talents
   for (const T of TALENTS) { const r = (st.tal || {})[T.id] || 0; if (r) for (const k in T.st) s[k] = (s[k] || 0) + T.st[k] * r; }
   const CL = CLASSES[st.cls]; if (CL) { const f = CL.tier === 1 ? clamp((L - 2) / 8, 0.4, 1) : 1; for (const k in CL.st) s[k] = (s[k] || 0) + (STATK.includes(k) ? Math.round(CL.st[k] * f) : CL.st[k]); } // base-class bonus grows in until Lv10
@@ -221,7 +221,7 @@ function* summaryScreen() {
       SK.slice(t0, t0 + VIS).forEach((id, k) => { const i = t0 + k, mv = MOVES[id], Y = 28 + k * 19; if (i === mi) selBar(x, 6, Y, 164, 17); typeBadge(x, mv.t, 14, Y + 2, 30); Font.draw(x, mv.n + ' Lv' + skillLv(id), 52, Y, UIC.text, UIC.textSh); Font.drawR(x, 'MP ' + skillMP(id), 164, Y, UIC.accent, UIC.textSh); });
       if (t0 > 0) x.drawImage(UPARROW, 86, 25); if (t0 + VIS < SK.length) x.drawImage(DOWNARROW, 86, 24 + VIS * 19 + 3);
       if (SK.length) { const id = SK[Math.min(mi, SK.length - 1)], mv = MOVES[id], m2 = skillMove(id); drawWin(x, 4, 168, 168, 84, 'menu');
-        Font.draw(x, (mv.cat === '變' ? '輔助' : mv.cat === '物' ? '物理' : '魔法') + (m2.pow ? '　威力' + m2.pow : '') + '　消耗MP ' + skillMP(id), 12, 171, UIC.accent, UIC.textSh, 11);
+        Font.draw(x, (mv.cat === '變' ? '輔助' : mv.cat === '物' ? '物理' : '魔法') + (m2.pow ? '　' + (typeof powTxt === 'function' ? powTxt(m2) : '威力' + m2.pow) : '') + '　消耗MP ' + skillMP(id), 12, 171, UIC.accent, UIC.textSh, 11);
         Font.wrap(mv.d, 152, 11).slice(0, 4).forEach((l, i) => Font.draw(x, l, 12, 188 + i * 15, UIC.text, UIC.textSh, 11)); }
     }
   } };

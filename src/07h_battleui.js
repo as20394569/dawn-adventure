@@ -69,13 +69,13 @@ Battle.prototype.chooseMove = function* () { // v20.7: a small pop-up (list + de
   const info = (x, m) => {
     Font.drawR(x, 'MP ' + st.mp + '/' + (this.H.maxmp || st.mp), X + w - 8, Y + 2, '#8ab8ff', UIC.textSh, 9);
     const id = list[m.i], mv = skillMove(id), c = TYPE_COL[mv.t]; drawWin(x, X, DY, w, DH, 'menu');
-    const t1 = mv.t === '一般' ? '無屬性' : mv.t + '屬性', t2 = '・' + (mv.cat === '變' ? '輔助' : mv.cat === '物' ? '物理' : '魔法') + (mv.pow ? '・威力' + mv.pow : '') + (mv.hits ? '×' + mv.hits : '') + '・Lv' + skillLv(id), lack = skillMP(id) > st.mp;
-    let tz = 9; while (tz > 7 && Font.width(t1 + t2, tz) + (lack ? Font.width('MP不足', tz) + 6 : 0) > w - 23) tz--;
+    const t1 = mv.t === '一般' ? '無屬性' : mv.t + '屬性', t2 = '・' + (mv.cat === '變' ? '輔助' : mv.cat === '物' ? '物理' : '魔法') + (mv.pow ? '・' + (typeof powTxt === 'function' ? powTxt(mv) : '威力' + mv.pow) : '') + '・Lv' + skillLv(id), lack = skillMP(id) > st.mp, est = !lack && mv.pow && this.estimateDamage ? this.estimateDamage(id) : 0;
+    let tz = 9; while (tz > 7 && Font.width(t1 + t2, tz) + (lack ? Font.width('MP不足', tz) + 6 : est ? Font.width('預估≈' + est, tz) + 6 : 0) > w - 23) tz--;
     x.fillStyle = c; x.fillRect(X + 8, DY + 7, 4, 4); const ex = Font.draw(x, t1, X + 15, DY + 1, mv.t === '一般' ? '#c9cfe4' : c, UIC.textSh, tz); Font.draw(x, t2, ex + 1, DY + 1, '#c9cfe4', UIC.textSh, tz);
-    if (lack) Font.drawR(x, 'MP不足', X + w - 8, DY + 1, UIC.bad, UIC.textSh, tz);
+    if (lack) Font.drawR(x, 'MP不足', X + w - 8, DY + 1, UIC.bad, UIC.textSh, tz); else if (est) Font.drawR(x, '預估≈' + est, X + w - 8, DY + 1, UIC.warm, UIC.textSh, tz);
     Font.drawC(x, 'A：使用　B：返回', W / 2, BB_Y + 11, UIC.muted, UIC.textSh, 9);
-    const room = DH - 17; let z = 9, lh = 11, Ls = Font.wrap(mv.d || '', w - 16, z); // shrink the text until it fits the box
-    while (Ls.length * lh > room && z > 7) { z--; lh = z + 2; Ls = Font.wrap(mv.d || '', w - 16, z); }
+    const room = DH - 17; const dtx = (mv.d || '') + (mv.scale ? '【' + ATTR_NAMES[mv.scale[0]] + '越高，傷害越高】' : ''); let z = 9, lh = 11, Ls = Font.wrap(dtx, w - 16, z); // shrink the text until it fits the box
+    while (Ls.length * lh > room && z > 7) { z--; lh = z + 2; Ls = Font.wrap(dtx, w - 16, z); }
     const maxL = Math.floor(room / lh); if (Ls.length > maxL) { Ls = Ls.slice(0, maxL); Ls[maxL - 1] = Ls[maxL - 1].slice(0, -1) + '…'; }
     Ls.forEach((l, n) => Font.draw(x, l, X + 8, DY + 13 + n * lh, UIC.text, UIC.textSh, z));
   };

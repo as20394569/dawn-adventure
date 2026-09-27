@@ -68,3 +68,29 @@ function rework3Migrate(st) {
     return ow;
   };
 }
+
+/* ---------- v22: 勇者之魂 gets its own animation (it shared 破曉斬's sunrise); the new sword skills get their own styles ---------- */
+PAL.soul = ['#5ac8ff', '#e8fbff'];
+HERO_PK.soulBlade = (x, p, a) => { // a giant spectral sword that drops onto the target
+  const k = Math.min(1, p.t / 8), y = lerp(p.y0, p.y1, k * k), L = p.len, wd = p.w; x.globalAlpha = Math.min(1, a * 1.4);
+  const g = x.createLinearGradient(p.x, y - L, p.x, y); g.addColorStop(0, 'rgba(232,251,255,0.1)'); g.addColorStop(0.6, 'rgba(140,220,255,0.8)'); g.addColorStop(1, 'rgba(255,255,255,0.95)'); x.fillStyle = g;
+  x.beginPath(); x.moveTo(p.x, y + 6); x.lineTo(p.x + wd / 2, y - 6); x.lineTo(p.x + wd / 2, y - L); x.lineTo(p.x - wd / 2, y - L); x.lineTo(p.x - wd / 2, y - 6); x.closePath(); x.fill();
+  x.fillStyle = 'rgba(90,200,255,0.9)'; x.fillRect(p.x - wd * 1.6, y - L - 3, wd * 3.2, 4); x.fillRect(p.x - 2, y - L - 16, 4, 13); x.fillStyle = '#ffffff'; x.fillRect(p.x - 1, y - L + 2, 2, L - 12);
+};
+Object.assign(FX, {
+  *heroSoul(U, T, u) {
+    Sound.sfx('charge'); this.spawn({ k: 'pillar', x: U.x, y: U.y + 20, w: 18, h: 90, c: '#8ad8ff', life: 30 }); this.spawn({ k: 'glow', x: U.x, y: U.y, r: 34, c: '#5ac8ff', life: 30 });
+    for (let i = 0; i < 26; i++) this.spawn({ k: 'mote', x: U.x + rnd(-18, 18), y: U.y + rnd(-4, 22), vy: -(0.6 + Math.random() * 1.2), s: 2, c: i % 3 ? '#8ad8ff' : '#ffffff', life: rnd(18, 30) });
+    yield* wait(16);
+    for (let i = 0; i < 14; i++) this.spawn({ k: 'mote', x: U.x + rnd(-14, 14), y: U.y + rnd(-20, 4), to: T, s: 2, c: i % 2 ? '#5ac8ff' : '#e8fbff', life: 20 });
+    this.spawn({ k: 'soulBlade', x: T.x, y0: T.y - 150, y1: T.y + 14, len: 74, w: 12, life: 30 }); Sound.sfx('wind'); yield* wait(8);
+    this.shake = 18; Sound.sfx('quake'); this.spawn({ k: 'flash', c: '#c8ecff', a: 0.45, life: 8 });
+    for (let i = 0; i < 3; i++) this.spawn({ k: 'shock', x: T.x, y: T.y + 18, r0: 6 + i * 6, r1: 48 + i * 14, c: i % 2 ? '#ffffff' : '#5ac8ff', life: 16 + i * 4 });
+    this.sparks(T.x, T.y, 34, ['#8ad8ff', '#ffffff', '#5aa0ff'], 3.4, 26, 0.08); yield* wait(16);
+  },
+});
+MOVES.heroSoul.fx = 'heroSoul';
+Object.assign(SKILL_STYLE, {
+  heroSoul: ['focus', 'nova', 'soul', 'hitSuper'], doubleSlash: ['draw', 'xcut', 'steel', 'slash'], whirlSlash: ['dash', 'multicut', 'wind', 'slash'],
+  zantetsu: ['still', 'shatter', 'steel', 'crit'], parry: ['hex', null, 'steel'], timeStop: ['still', null, 'guard'],
+});
