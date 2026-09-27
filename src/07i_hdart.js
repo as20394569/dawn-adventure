@@ -247,7 +247,7 @@ function hdAnim(b, who, state, dur, hold) { const A = b.hd && b.hd[who]; if (!A)
 function hdInit(b) {
   b.hd = { F: { state: 'idle', t: 0, dur: 1, phase: 0 }, H: { state: 'idle', t: 0, dur: 1, phase: 29 }, hpF: b.F.hp, hpH: b.H.hp, ok: false };
   try { b.hd.specF = hdFoeSpec(b.F.sp); b.hd.look = heroLookOf(Game.st); b.hd.oldF = b.imgF; b.hd.oldShadow = b.shadowF; b.hd.oldH = [b.imgH, b.imgH2];
-    if (pxReady(b.F.sp)) b.hd.pxF = pxSpec(b.F.sp); b.hd.pxH = HD_HERO_DOLL ? dollSpec() : null; // hero keeps the paper-doll look (shows equipment)
+    if (pxReady(b.F.sp) || (chibiOn() && chibiBase(b.F.sp))) b.hd.pxF = pxSpec(b.F.sp); b.hd.pxH = HD_HERO_DOLL ? dollSpec() : null; // hero keeps the paper-doll look (shows equipment)
     b.imgF = hdRenderFoe(b.hd.F, b.hd.specF, b.t); b.imgH = b.imgH2 = hdRenderHero(b.hd.H, b.hd.look, b.t); b.shadowF = buildShadow(Math.round((b.hd.pxF ? b.hd.pxF.bb : b.hd.specF.bb).w * 0.38), 4); b.hd.ok = true; }
   catch (e) { console.error('hdArt fallback', e); b.hd.ok = false; }
 }

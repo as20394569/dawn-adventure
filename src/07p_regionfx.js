@@ -105,3 +105,12 @@ const LAMP_IMG = spriteFrom(LAMP_ROWS, { k: '#1a1a20', G: '#6a6a78', f: '#2a3040
 const MIASMA_IMG = (() => { const c = mkCanvas(16, 16), x = c.getContext('2d'); for (let i = 0; i < 6; i++) pxEllipse(x, 3 + (i * 5) % 11, 4 + (i * 7) % 9, 4, 3, ['#4a2a5a', '#5a3a6a', '#3a2248'][i % 3]); x.globalAlpha = 0.6; pxEllipse(x, 8, 8, 7, 7, '#6a4a80'); return c; })();
 const propFrames = (im, dy = 6) => { const c = mkCanvas(16, 22); c.getContext('2d').drawImage(im, 0, dy); const a = [c, c, c, c]; return { down: a, up: a, left: a, right: a }; };
 { const _nf = npcFrames; npcFrames = function (look) { if (look === 'bell') return propFrames(BELL_IMG); if (look === 'lamp') return propFrames(LAMP_IMG, 5); if (look === 'lampLit') return propFrames(LAMP_LIT, 5); if (look === 'miasma') return propFrames(MIASMA_IMG, 5); return _nf(look); }; }
+// species that only exist as Codex chibis (no realistic strip): bestiary / map minis come from the chibi idle frame
+{ const _mm = monsterMini; monsterMini = function (sp, size) {
+    if (!(PLACEHOLDER[sp] && !pxAnimOwn(sp) && typeof chibiOwn === 'function' && chibiOwn(sp))) return _mm(sp, size);
+    const k = 'cb' + sp + size; if (miniCache[k]) return miniCache[k];
+    const im = BATTLE_PXC[sp], M = BATTLE_PXC_META[sp], fi = (M.frames.idle || [0])[0], c = mkCanvas(size, size), x = c.getContext('2d'); x.imageSmoothingEnabled = false;
+    const s = Math.min(size / M.w, size / M.h); x.drawImage(im, fi * M.w, 0, M.w, M.h, Math.round((size - M.w * s) / 2), Math.round(size - M.h * s), Math.round(M.w * s), Math.round(M.h * s));
+    return miniCache[k] = { c, flip: flipCanvas(c) };
+  };
+}

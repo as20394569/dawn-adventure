@@ -5,7 +5,7 @@ import os, glob, re, json
 from PIL import Image
 ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'art', 'battle')
 SCALE = 2
-BIG = {'golem', 'crystalGolem', 'banditBoss', 'mossGiant', 'boneKnight', 'silverWyrm', 'gatekeeper'}  # bosses / giants: 32px walkers are shown ×3
+BIG = {'golem', 'crystalGolem', 'banditBoss', 'mossGiant', 'boneKnight', 'silverWyrm', 'gatekeeper', 'rockRhino', 'duneWorm', 'hydra'}  # bosses / giants: 32px walkers are shown ×3
 ORDER = ['idle', 'attack', 'cast', 'hurt', 'defend']
 def frames_for(k):
     fr = {}
