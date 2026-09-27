@@ -1723,7 +1723,8 @@ const ITEMS = {
 };
 const shopList = () => { const f = Game.st.flags; return SHOP_LIST.filter(k => !(k === 'superPotion' && f.caravan === 'lost' && !f.bandit)).concat(f.croc ? ['hiEther', 'knightSword', 'magusStaff', 'guardHelm', 'chainMail'] : [], f.golem ? ['elixir', 'tpBook'] : [], f.caravan === 'lost' && f.golem ? ['rope'] : []); };
 const PEDDLER_LIST = ['rope', 'superPotion', 'elixir', 'ether', 'hiEther', 'powerFruit', 'tpBook', 'knightHelm', 'knightGreaves'];
-const priceOf = k => Math.round(((ITEMS[k] || GEAR[k]).price + (k === 'tpBook' ? 1500 * (Game.st.tpBought || 0) : 0)) * (Game.st.flags.caravan === 'saved' ? 0.9 : Game.st.flags.caravan === 'lost' && k === 'rope' ? 3 : 1));
+const priceOf = (k, n = 0) => Math.round(((ITEMS[k] || GEAR[k]).price + (k === 'tpBook' ? 1500 * ((Game.st.tpBought || 0) + n) : 0)) * (Game.st.flags.caravan === 'saved' ? 0.9 : Game.st.flags.caravan === 'lost' && k === 'rope' ? 3 : 1));
+const priceFor = (k, q) => { let t = 0; for (let i = 0; i < q; i++) t += priceOf(k, i); return t; }; // v20.7: bulk buys pay each book's rising price (天賦之書 +1500 G per book)
 const RECIPES = [
   { out: 'potion', n: 2, mats: { herb: 2 } }, { out: 'superPotion', mats: { herb: 3, gel: 1 } },
   { out: 'featherBoots', mats: { feather: 4 }, gold: 300 }, { out: 'stoneMail', mats: { stone: 5 }, gold: 400 },
@@ -4699,18 +4700,18 @@ function* shopBuy(stock) {
     if (Input.pressed('right') && GEAR[list[idx]]) { UI.remove(scr); yield* gearInfoScreen({ b: list[idx], q: 1, r: 1, a: [] }, '商品詳情'); UI.push(scr); }
     if (Input.pressed('a')) {
       Input.consume('a'); Sound.sfx('select'); const k = list[idx], it = ITEMS[k] || GEAR[k], isG = !!GEAR[k];
-      let qty = 1; const pr = priceOf(k); const maxQ = Math.min(isG || it.once ? 1 : 99, Math.floor(Game.st.money / pr));
+      let qty = 1; const pr = priceOf(k); let maxQ = 0; const cap = isG || it.once ? 1 : 99; while (maxQ < cap && priceFor(k, maxQ + 1) <= Game.st.money) maxQ++;
       if (it.once && Game.st.bag[k]) { UI.remove(scr); yield* say(it.key ? '你已經有' + it.n + '了。' : it.n + '一次只能帶一個喔。'); UI.push(scr); continue; }
       if (maxQ < 1) { UI.remove(scr); yield* say('錢不夠喔。'); UI.push(scr); continue; }
       if (!isG && !it.once) {
-        const q = { draw(x) { drawWin(x, 80, TB_Y - 32, 94, 30, 'menu'); Font.draw(x, '×' + String(qty).padStart(2, '0'), 90, TB_Y - 25, UIC.text, UIC.textSh); Font.drawR(x, (qty * pr) + 'G', 166, TB_Y - 25, UIC.warm, UIC.textSh); } };
+        const q = { draw(x) { drawWin(x, 80, TB_Y - 32, 94, 30, 'menu'); Font.draw(x, '×' + String(qty).padStart(2, '0'), 90, TB_Y - 25, UIC.text, UIC.textSh); Font.drawR(x, priceFor(k, qty) + 'G', 166, TB_Y - 25, UIC.warm, UIC.textSh); } };
         UI.push(q); let ok = false;
         while (true) { if (Input.repeat('up')) { qty = qty >= maxQ ? 1 : qty + 1; Sound.sfx('cursor'); } if (Input.repeat('down')) { qty = qty <= 1 ? maxQ : qty - 1; Sound.sfx('cursor'); } if (Input.repeat('right')) { qty = Math.min(maxQ, qty + 10); Sound.sfx('cursor'); } if (Input.repeat('left')) { qty = Math.max(1, qty - 10); Sound.sfx('cursor'); } if (Input.pressed('a')) { Input.consume('a'); ok = true; break; } if (Input.pressed('b')) { Input.consume('b'); break; } yield; }
         UI.remove(q); if (!ok) continue;
       }
       UI.remove(scr);
-      const yes = yield* yesNo(it.n + (isG || it.once ? '' : '×' + qty) + '，一共是' + (qty * pr) + 'G，可以嗎？');
-      if (yes) { Game.st.money -= qty * pr; if (isG) makeGear(k, 1, 0.8); else Game.st.bag[k] = (Game.st.bag[k] || 0) + qty; if (k === 'tpBook') Game.st.tpBought = (Game.st.tpBought || 0) + qty; Sound.sfx('save'); yield* say('好的！這是您的' + it.n + '。' + (isG ? '記得到裝備畫面裝備喔！' : '')); }
+      const yes = yield* yesNo(it.n + (isG || it.once ? '' : '×' + qty) + '，一共是' + priceFor(k, qty) + 'G，可以嗎？' + (k === 'tpBook' && qty > 1 ? '\n（已含每本+1500G的漲價）' : ''));
+      if (yes) { Game.st.money -= priceFor(k, qty); if (isG) makeGear(k, 1, 0.8); else Game.st.bag[k] = (Game.st.bag[k] || 0) + qty; if (k === 'tpBook') Game.st.tpBought = (Game.st.tpBought || 0) + qty; Sound.sfx('save'); yield* say('好的！這是您的' + it.n + '。' + (isG ? '記得到裝備畫面裝備喔！' : '')); }
       UI.push(scr);
     }
     yield;

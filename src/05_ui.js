@@ -425,18 +425,18 @@ function* shopBuy(stock) {
     if (Input.pressed('right') && GEAR[list[idx]]) { UI.remove(scr); yield* gearInfoScreen({ b: list[idx], q: 1, r: 1, a: [] }, '商品詳情'); UI.push(scr); }
     if (Input.pressed('a')) {
       Input.consume('a'); Sound.sfx('select'); const k = list[idx], it = ITEMS[k] || GEAR[k], isG = !!GEAR[k];
-      let qty = 1; const pr = priceOf(k); const maxQ = Math.min(isG || it.once ? 1 : 99, Math.floor(Game.st.money / pr));
+      let qty = 1; const pr = priceOf(k); let maxQ = 0; const cap = isG || it.once ? 1 : 99; while (maxQ < cap && priceFor(k, maxQ + 1) <= Game.st.money) maxQ++;
       if (it.once && Game.st.bag[k]) { UI.remove(scr); yield* say(it.key ? '你已經有' + it.n + '了。' : it.n + '一次只能帶一個喔。'); UI.push(scr); continue; }
       if (maxQ < 1) { UI.remove(scr); yield* say('錢不夠喔。'); UI.push(scr); continue; }
       if (!isG && !it.once) {
-        const q = { draw(x) { drawWin(x, 80, TB_Y - 32, 94, 30, 'menu'); Font.draw(x, '×' + String(qty).padStart(2, '0'), 90, TB_Y - 25, UIC.text, UIC.textSh); Font.drawR(x, (qty * pr) + 'G', 166, TB_Y - 25, UIC.warm, UIC.textSh); } };
+        const q = { draw(x) { drawWin(x, 80, TB_Y - 32, 94, 30, 'menu'); Font.draw(x, '×' + String(qty).padStart(2, '0'), 90, TB_Y - 25, UIC.text, UIC.textSh); Font.drawR(x, priceFor(k, qty) + 'G', 166, TB_Y - 25, UIC.warm, UIC.textSh); } };
         UI.push(q); let ok = false;
         while (true) { if (Input.repeat('up')) { qty = qty >= maxQ ? 1 : qty + 1; Sound.sfx('cursor'); } if (Input.repeat('down')) { qty = qty <= 1 ? maxQ : qty - 1; Sound.sfx('cursor'); } if (Input.repeat('right')) { qty = Math.min(maxQ, qty + 10); Sound.sfx('cursor'); } if (Input.repeat('left')) { qty = Math.max(1, qty - 10); Sound.sfx('cursor'); } if (Input.pressed('a')) { Input.consume('a'); ok = true; break; } if (Input.pressed('b')) { Input.consume('b'); break; } yield; }
         UI.remove(q); if (!ok) continue;
       }
       UI.remove(scr);
-      const yes = yield* yesNo(it.n + (isG || it.once ? '' : '×' + qty) + '，一共是' + (qty * pr) + 'G，可以嗎？');
-      if (yes) { Game.st.money -= qty * pr; if (isG) makeGear(k, 1, 0.8); else Game.st.bag[k] = (Game.st.bag[k] || 0) + qty; if (k === 'tpBook') Game.st.tpBought = (Game.st.tpBought || 0) + qty; Sound.sfx('save'); yield* say('好的！這是您的' + it.n + '。' + (isG ? '記得到裝備畫面裝備喔！' : '')); }
+      const yes = yield* yesNo(it.n + (isG || it.once ? '' : '×' + qty) + '，一共是' + priceFor(k, qty) + 'G，可以嗎？' + (k === 'tpBook' && qty > 1 ? '\n（已含每本+1500G的漲價）' : ''));
+      if (yes) { Game.st.money -= priceFor(k, qty); if (isG) makeGear(k, 1, 0.8); else Game.st.bag[k] = (Game.st.bag[k] || 0) + qty; if (k === 'tpBook') Game.st.tpBought = (Game.st.tpBought || 0) + qty; Sound.sfx('save'); yield* say('好的！這是您的' + it.n + '。' + (isG ? '記得到裝備畫面裝備喔！' : '')); }
       UI.push(scr);
     }
     yield;
