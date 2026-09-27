@@ -26,6 +26,23 @@ const chibiReady = k => !!chibiBase(k);
 { const _ps = pxSpec; pxSpec = function (key) {
     if (!chibiOn() || !chibiReady(key)) return _ps(key);
     const im = chibiImage(key), meta = BATTLE_PXC_META[chibiBase(key)], w = meta.w, h = meta.h, cw = w + PX_PAD * 2, ch = h + PX_PAD + 1;
-    return { im, meta, w, h, cw, ch, chibi: 1, bb: { cx: PX_PAD + Math.floor(w / 2), top: PX_PAD, bot: PX_PAD + h - 1, w, h } };
+    return { im, meta, w, h, cw, ch, chibi: 1, sp: key, bb: { cx: PX_PAD + Math.floor(w / 2), top: PX_PAD, bot: PX_PAD + h - 1, w, h } };
+  };
+}
+/* v20.6 idle: the Codex idle2 frames only shifted the upper body 1px over fixed feet, which read as a twitching head (playtest).
+   Idle now uses frame 1 only: grounded monsters breathe (the whole body squashes 0–2px toward the feet, nearest-neighbour so the
+   drop is spread over the body); floaters (wings / flames / ghosts / orbs) bob up and down as one piece above their shadow. */
+const CHIBI_FLOAT = new Set(['duskMoth', 'moonSprite', 'voidEye']);
+const chibiFloats = k => CHIBI_FLOAT.has(k) || ['buzz', 'flame', 'lamp', 'ghost'].includes(hdRig(k).kind);
+{ const _pr = pxRender; pxRender = function (A, S, T, tint) {
+    if (!S.chibi || !S.meta || A.state !== 'idle') return _pr(A, S, T, tint);
+    if (!A.pcv || A.pcv.width !== S.cw) { A.pcv = mkCanvas(S.cw, S.ch); A.pcvT = mkCanvas(S.cw, S.ch); }
+    const cv = tint ? A.pcvT : A.pcv, x = cv.getContext('2d'), f = S.meta.frames.idle[0], big = S.h > 80, p = ((T + A.phase) % HD_IDLE_PERIOD) / HD_IDLE_PERIOD;
+    if (S.float === undefined) S.float = chibiFloats(S.sp);
+    x.setTransform(1, 0, 0, 1, 0, 0); x.globalCompositeOperation = 'source-over'; x.clearRect(0, 0, cv.width, cv.height); x.imageSmoothingEnabled = false;
+    if (S.float) { const dy = -Math.round((big ? 3 : 2) * (0.5 + 0.5 * Math.sin(TAU * p))); x.drawImage(S.im, f * S.w, 0, S.w, S.h, PX_PAD, PX_PAD + dy, S.w, S.h); }
+    else { const amp = big ? 3 : hdRig(S.sp).kind === 'slime' ? 3 : 2, s = Math.round(amp * (0.5 - 0.5 * Math.cos(TAU * p))); x.drawImage(S.im, f * S.w, 0, S.w, S.h, PX_PAD, PX_PAD + s, S.w, S.h - s); }
+    if (tint) { x.globalCompositeOperation = 'source-in'; x.fillStyle = tint; x.fillRect(0, 0, cv.width, cv.height); x.globalCompositeOperation = 'source-over'; }
+    cv.ds = 1; cv.bb = S.bb; cv.px = true; return cv;
   };
 }

@@ -6,7 +6,7 @@ for (const k in (typeof UI_SKIN_SRC !== 'undefined' ? UI_SKIN_SRC : {})) { const
 const skinOk = k => !!(UISKIN[k] && UISKIN[k].ok);
 const inBattle = () => !!(Game.scene && Game.scene.constructor === Battle);
 const uiSkinOn = () => inBattle() && skinOk('win');
-function plateExtra() { return uiSkinOn() && skinOk('plate') ? 5 : 0; }
+function plateExtra() { return uiSkinOn() && skinOk('plate') ? 7 : 0; } // v20.6: the skinned plate grows up and down so its rim clears the text
 function skin9(x, k, X, Y, w, h, c) {
   const im = UISKIN[k], iw = im.width, ih = im.height; X = Math.round(X); Y = Math.round(Y); w = Math.round(w); h = Math.round(h);
   const cx = Math.min(c, Math.floor(w / 2)), cy = Math.min(c, Math.floor(h / 2)), mw = w - cx * 2, mh = h - cy * 2, sw = iw - c * 2, sh = ih - c * 2;
@@ -26,11 +26,13 @@ function uiBar(x, X, Y, w, r, kind) {
   const fw = Math.round(w * clamp(r, 0, 1)); for (let i = 0; i < fw; i += 4) x.drawImage(T, 0, 0, Math.min(4, fw - i), 5, X + i, Y - 1, Math.min(4, fw - i), 5);
   x.imageSmoothingEnabled = sm; return true;
 }
-function uiPlate(x, X, Y, w, h, F) { const k = F.boss ? 'plate_boss' : F.elite || F.rare ? 'plate_elite' : 'plate'; if (!uiSkinOn() || !skinOk(k)) return false; skin9(x, k, X, Y, w, h, 6); return true; }
-function uiHud(x, X, Y, w, h) { if (!uiSkinOn() || !skinOk('hud')) return false; skin9(x, 'hud', X, Y, w, h, 6); return true; }
+function uiPlate(x, X, Y, w, h, F) { const k = F.boss ? 'plate_boss' : F.elite || F.rare ? 'plate_elite' : 'plate'; if (!uiSkinOn() || !skinOk(k)) return false; skin9(x, k, X - 2, Y - 4, w + 4, h + 3, 6); return true; }
+function uiHud(x, X, Y, w, h) { // the strip is only 13px tall: a full 9-slice frame ran through the name and numbers, so fill + top rim only
+  if (!uiSkinOn() || !skinOk('hud')) return false; const im = UISKIN.hud, c = 6, iw = im.width, ih = im.height, sm = x.imageSmoothingEnabled; x.imageSmoothingEnabled = false;
+  x.drawImage(im, c, c, iw - c * 2, ih - c * 2, X, Y, w, h); x.drawImage(im, c, 0, iw - c * 2, c, X, Y - 1, w, c); x.imageSmoothingEnabled = sm; return true; }
 function uiCmdIcon(x, i, X, Y) { if (!uiSkinOn() || !skinOk('icon_cmd')) return false; const sm = x.imageSmoothingEnabled; x.imageSmoothingEnabled = false; x.drawImage(UISKIN.icon_cmd, i * 16, 0, 16, 16, Math.round(X), Math.round(Y), 16, 16); x.imageSmoothingEnabled = sm; return true; }
-{ const _dw = drawWin; drawWin = function (x, X, Y, w, h, style) { if (inBattle() && style !== 'sign' && skinOk('win')) { skin9(x, 'win', X, Y, w, h, 8); return; } return _dw(x, X, Y, w, h, style); }; }
-{ const _db = drawBtn; drawBtn = function (x, X, Y, w, h, on, strip) { if (!uiSkinOn() || !skinOk('btn')) return _db(x, X, Y, w, h, on, strip); skin9(x, on ? 'btn_on' : 'btn', X, Y, w, h, 5); if (strip) { x.fillStyle = strip; x.fillRect(X + 3, Y + 4, 2, h - 8); } }; }
+{ const _dw = drawWin; drawWin = function (x, X, Y, w, h, style) { if (inBattle() && style !== 'sign' && skinOk('win') && h >= 24 && w >= 24) { skin9(x, 'win', X, Y, w, h, 8); return; } return _dw(x, X, Y, w, h, style); }; }
+{ const _db = drawBtn; drawBtn = function (x, X, Y, w, h, on, strip) { if (!uiSkinOn() || !skinOk('btn') || h < 24) return _db(x, X, Y, w, h, on, strip); /* small tabs keep the flat look (the rim covered their text) */ skin9(x, on ? 'btn_on' : 'btn', X, Y, w, h, 5); if (strip) { x.fillStyle = strip; x.fillRect(X + 3, Y + 4, 2, h - 8); } }; }
 { const _sb = drawShieldBadge; drawShieldBadge = function (x, X, Y, n, broken, flash) {
     if (!uiSkinOn() || !skinOk('badge_shield')) return _sb(x, X, Y, n, broken, flash);
     const sm = x.imageSmoothingEnabled; x.imageSmoothingEnabled = false; x.drawImage(UISKIN.badge_shield, Math.round(X), Math.round(Y)); x.imageSmoothingEnabled = sm;
