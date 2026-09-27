@@ -8181,6 +8181,34 @@ Object.assign(SKILL_STYLE, {
   zantetsu: ['still', 'shatter', 'steel', 'crit'], parry: ['hex', null, 'steel'], timeStop: ['still', null, 'guard'],
 });
 
+/* ---------- v22: 魔刃千華 redesigned to match its text (「無數魔力之刃的三連擊」) ----------
+   A fan of violet magic blades appears behind the hero on a rune circle, then flies at the foe in three volleys (one per hit),
+   each volley ending in a burst of blade-petals; the last one blooms into a big flower of blades (千華). */
+HERO_PK.mblade = (x, p, a) => {
+  let X = p.sx, Y = p.sy + Math.sin((p.t + p.ph) / 3) * 1.2, ang = p.a0;
+  if (p.t >= p.hold) { const k = Math.min(1, (p.t - p.hold) / p.fly), e = k * k; X = lerp(p.sx, p.tx, e); Y = lerp(p.sy, p.ty, e); ang = Math.atan2(p.ty - p.sy, p.tx - p.sx);
+    if (k < 1) { x.globalAlpha = 0.45; x.strokeStyle = p.c; x.lineWidth = 1; x.beginPath(); x.moveTo(X, Y); x.lineTo(X - Math.cos(ang) * 14, Y - Math.sin(ang) * 14); x.stroke(); } }
+  x.globalAlpha = p.t > p.hold + p.fly ? Math.max(0, 1 - (p.t - p.hold - p.fly) / 3) : Math.min(1, p.t / 4);
+  x.save(); x.translate(X, Y); x.rotate(ang); x.fillStyle = p.c; x.beginPath(); x.moveTo(7, 0); x.lineTo(0, 2.2); x.lineTo(-6, 0.8); x.lineTo(-6, -0.8); x.lineTo(0, -2.2); x.closePath(); x.fill();
+  x.fillStyle = '#ffffff'; x.fillRect(-4, -0.5, 9, 1); x.fillStyle = p.c2; x.fillRect(-8, -2, 2, 4); x.restore();
+};
+HERO_PK.petal = (x, p, a) => { x.globalAlpha = a; x.save(); x.translate(p.x, p.y); x.rotate(p.rot + p.t * 0.2); x.fillStyle = p.c; x.beginPath(); x.ellipse(0, 0, p.s, p.s * 0.45, 0, 0, 7); x.fill(); x.fillStyle = '#ffffff'; x.fillRect(-p.s * 0.4, -0.5, p.s * 0.6, 1); x.restore(); };
+Object.assign(FX, {
+  *arcaneEdge(U, T, u) {
+    Sound.sfx('charge'); const C = ['#b890ff', '#e0c8ff', '#9a60ff'], n = 18;
+    this.spawn({ k: 'rune', x: U.x, y: U.y - 6, r: 30, sq: 0.5, c: '#a070ff', c2: '#e8d8ff', n: 12, poly: 6, dir: 1, life: 64 });
+    for (let i = 0; i < n; i++) { const an = Math.PI * (1.08 + 0.84 * i / (n - 1)), r = 40 + (i % 2) * 10, v = i % 3, j = Math.floor(i / 3);
+      this.spawn({ k: 'mblade', sx: U.x + Math.cos(an) * r, sy: U.y - 24 + Math.sin(an) * r * 0.6, tx: T.x + rnd(-12, 12), ty: T.y + rnd(-14, 10), a0: an + Math.PI, ph: i, hold: 14 + v * 11 + j, fly: 6, c: C[i % 3], c2: '#6a3ac8', life: 14 + v * 11 + j + 10 }); }
+    yield* wait(14);
+    for (let v = 0; v < 3; v++) { yield* wait(v ? 11 : 6); Sound.sfx('slash'); this.spawn({ k: 'glow', x: T.x, y: T.y, r: 16 + v * 4, c: '#b890ff', life: 8 });
+      for (let i = 0; i < 6; i++) { const an = i * Math.PI / 3 + v; this.spawn({ k: 'petal', x: T.x, y: T.y, vx: Math.cos(an) * 1.6, vy: Math.sin(an) * 1.2, rot: an, s: 4, c: i % 2 ? '#e0c8ff' : '#b890ff', life: 12 }); } this.shake = Math.max(this.shake, 4 + v * 2); }
+    yield* wait(6); Sound.sfx('hitSuper'); this.spawn({ k: 'flash', c: '#e0c8ff', a: 0.3, life: 6 });
+    for (let i = 0; i < 12; i++) { const an = i * Math.PI / 6; this.spawn({ k: 'petal', x: T.x + Math.cos(an) * 6, y: T.y + Math.sin(an) * 4, vx: Math.cos(an) * 2.4, vy: Math.sin(an) * 1.6, rot: an, s: 6, c: i % 2 ? '#f0e0ff' : '#a070ff', life: 20 }); }
+    this.spawn({ k: 'sigil', x: T.x, y: T.y, r: 24, c: '#b890ff', life: 18 }); yield* wait(12);
+  },
+});
+SKILL_STYLE.arcaneEdge = ['rune', 'pop', 'arcane', 'slash'];
+
 /* ===================== EVENTS (異世界篇) ===================== */
 function* healRitual(text) {
   yield* fadeOut(10); healHero(); const fr = Sound.jingle('heal'); yield* wait(Math.max(40, fr)); yield* fadeIn(10);
