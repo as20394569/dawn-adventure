@@ -284,7 +284,7 @@ class Overworld {
     // buildings
     for (const { b, img } of this.map.bimgs) {
       const sx = b.x * 16 - camX, sy = b.y * 16 - camY; x.drawImage(img, sx, sy);
-      if (this.doorAnim && this.doorAnim.x === b.x + b.door) archDoorShape(x, sx + b.door * 16 + 2, sy + b.h * 16 - 22, '#18101a');
+      if (this.doorAnim && this.doorAnim.x === b.x + b.door && this.doorAnim.y === b.y + b.h - 1) archDoorShape(x, sx + b.door * 16 + 2, sy + b.h * 16 - 22, '#18101a');
     }
     // gates
     const g = this.map.d.gate;
