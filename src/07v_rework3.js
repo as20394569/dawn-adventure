@@ -114,24 +114,39 @@ HERO_PK.bloom = (x, p, a) => { // a flower of blade-petals opening around a poin
   x.fillStyle = p.c2; x.beginPath(); x.arc(p.x, p.y, 3 + 3 * e, 0, 7); x.fill();
 };
 HERO_PK.petal = (x, p, a) => { x.globalAlpha = a; x.save(); x.translate(p.x, p.y); x.rotate(p.rot + p.t * 0.2); x.fillStyle = p.c; x.beginPath(); x.ellipse(0, 0, p.s, p.s * 0.45, 0, 0, 7); x.fill(); x.fillStyle = '#ffffff'; x.fillRect(-p.s * 0.4, -0.5, p.s * 0.6, 1); x.restore(); };
+// v22c: the damage lands volley by volley — hit 1 after the first volley (main FX), hits 2 and 3 in the multi-hit loop (07k → mv.hitFx),
+// the bloom opens with the third hit. Blades of later volleys hover in the fan until their hit.
+const AE_COL = ['#b890ff', '#e0c8ff', '#9a60ff'];
+function aeLaunch(b, v, T) { const G = b._aeBlades && b._aeBlades[v]; if (!G) return; for (const p of G) { p.tx = T.x + rnd(-12, 12); p.ty = T.y + rnd(-14, 10); p.hold = p.t; p.life = p.t + p.fly + 4; } b._aeBlades[v] = null; }
+function aeBurst(b, T, v) { Sound.sfx('slash'); b.spawn({ k: 'glow', x: T.x, y: T.y, r: 16 + v * 4, c: '#b890ff', life: 8 });
+  for (let i = 0; i < 6; i++) { const an = i * Math.PI / 3 + v; b.spawn({ k: 'petal', x: T.x, y: T.y, vx: Math.cos(an) * 1.6, vy: Math.sin(an) * 1.2, rot: an, s: 4, c: i % 2 ? '#e0c8ff' : '#b890ff', life: 12 }); } }
+function aeBloom(b, T) {
+  Sound.sfx('hitSuper'); Sound.sfx('charge'); b.spawn({ k: 'flash', c: '#e8d8ff', a: 0.5, life: 10 }); b.shake = Math.max(b.shake, 14);
+  b.spawn({ k: 'glow', x: T.x, y: T.y, r: 60, c: '#b890ff', life: 34 });
+  b.spawn({ k: 'bloom', x: T.x, y: T.y, R: 58, n: 12, s: 13, c: '#a070ff', c2: '#f0e0ff', rot0: 0, grow: 10, life: 40 });
+  b.spawn({ k: 'bloom', x: T.x, y: T.y, R: 32, n: 8, s: 10, c: '#d8b8ff', c2: '#ffffff', rot0: Math.PI / 8, grow: 8, life: 38, spin: -1 });
+  b.spawn({ k: 'sigil', x: T.x, y: T.y, r: 46, c: '#b890ff', life: 32 });
+  for (let i = 0; i < 3; i++) b.spawn({ k: 'shock', x: T.x, y: T.y + 10, r0: 10 + i * 8, r1: 70 + i * 16, c: i % 2 ? '#ffffff' : '#b890ff', life: 18 + i * 5 });
+  for (let i = 0; i < 24; i++) { const an = i * Math.PI / 12; b.spawn({ k: 'petal', x: T.x + Math.cos(an) * 10, y: T.y + Math.sin(an) * 7, vx: Math.cos(an) * 3.4, vy: Math.sin(an) * 2.4, rot: an, s: 7, c: i % 2 ? '#f0e0ff' : '#a070ff', life: 26 }); }
+}
 Object.assign(FX, {
-  *arcaneEdge(U, T, u) {
-    Sound.sfx('charge'); const C = ['#b890ff', '#e0c8ff', '#9a60ff'], n = 18;
-    this.spawn({ k: 'rune', x: U.x, y: U.y - 6, r: 30, sq: 0.5, c: '#a070ff', c2: '#e8d8ff', n: 12, poly: 6, dir: 1, life: 64 });
-    for (let i = 0; i < n; i++) { const an = Math.PI * (1.08 + 0.84 * i / (n - 1)), r = 40 + (i % 2) * 10, v = i % 3, j = Math.floor(i / 3);
-      this.spawn({ k: 'mblade', sx: U.x + Math.cos(an) * r, sy: U.y - 24 + Math.sin(an) * r * 0.6, tx: T.x + rnd(-12, 12), ty: T.y + rnd(-14, 10), a0: an + Math.PI, ph: i, hold: 14 + v * 11 + j, fly: 6, c: C[i % 3], c2: '#6a3ac8', life: 14 + v * 11 + j + 10 }); }
-    yield* wait(14);
-    for (let v = 0; v < 3; v++) { yield* wait(v ? 11 : 6); Sound.sfx('slash'); this.spawn({ k: 'glow', x: T.x, y: T.y, r: 16 + v * 4, c: '#b890ff', life: 8 });
-      for (let i = 0; i < 6; i++) { const an = i * Math.PI / 3 + v; this.spawn({ k: 'petal', x: T.x, y: T.y, vx: Math.cos(an) * 1.6, vy: Math.sin(an) * 1.2, rot: an, s: 4, c: i % 2 ? '#e0c8ff' : '#b890ff', life: 12 }); } this.shake = Math.max(this.shake, 4 + v * 2); }
-    // 千華綻放 (v22b: much bigger — a two-layer flower of blades opens over the foe and holds for a moment)
-    yield* wait(6); Sound.sfx('hitSuper'); Sound.sfx('charge'); this.spawn({ k: 'flash', c: '#e8d8ff', a: 0.5, life: 10 }); this.shake = Math.max(this.shake, 14);
-    this.spawn({ k: 'glow', x: T.x, y: T.y, r: 60, c: '#b890ff', life: 34 });
-    this.spawn({ k: 'bloom', x: T.x, y: T.y, R: 58, n: 12, s: 13, c: '#a070ff', c2: '#f0e0ff', rot0: 0, grow: 10, life: 40 });
-    this.spawn({ k: 'bloom', x: T.x, y: T.y, R: 32, n: 8, s: 10, c: '#d8b8ff', c2: '#ffffff', rot0: Math.PI / 8, grow: 8, life: 38, spin: -1 });
-    this.spawn({ k: 'sigil', x: T.x, y: T.y, r: 46, c: '#b890ff', life: 32 });
-    for (let i = 0; i < 3; i++) this.spawn({ k: 'shock', x: T.x, y: T.y + 10, r0: 10 + i * 8, r1: 70 + i * 16, c: i % 2 ? '#ffffff' : '#b890ff', life: 18 + i * 5 });
-    for (let i = 0; i < 24; i++) { const an = i * Math.PI / 12; this.spawn({ k: 'petal', x: T.x + Math.cos(an) * 10, y: T.y + Math.sin(an) * 7, vx: Math.cos(an) * 3.4, vy: Math.sin(an) * 2.4, rot: an, s: 7, c: i % 2 ? '#f0e0ff' : '#a070ff', life: 26 }); }
-    yield* wait(28);
+  *arcaneEdge(U, T, u) { // fan of blades + volley 1
+    Sound.sfx('charge'); const n = 18; this._aeBlades = [[], [], []];
+    this.spawn({ k: 'rune', x: U.x, y: U.y - 6, r: 30, sq: 0.5, c: '#a070ff', c2: '#e8d8ff', n: 12, poly: 6, dir: 1, life: 90 });
+    for (let i = 0; i < n; i++) { const an = Math.PI * (1.08 + 0.84 * i / (n - 1)), r = 40 + (i % 2) * 10, v = i % 3;
+      const p = this.spawn({ k: 'mblade', sx: U.x + Math.cos(an) * r, sy: U.y - 24 + Math.sin(an) * r * 0.6, tx: T.x, ty: T.y, a0: an + Math.PI, ph: i, hold: 9999, fly: 6, c: AE_COL[i % 3], c2: '#6a3ac8', life: 400 }) || this.fx[this.fx.length - 1];
+      this._aeBlades[v].push(p); }
+    yield* wait(14); aeLaunch(this, 0, T); yield* wait(6); aeBurst(this, T, 0); yield* wait(4);
+  },
+  *arcaneEdgeHit(U, T, u, i, hits) { // volleys 2 and 3 (the last one blooms)
+    aeLaunch(this, i, T); yield* wait(6); aeBurst(this, T, i); if (i >= hits - 1) { aeBloom(this, T); yield* wait(8); } else yield* wait(3);
   },
 });
+MOVES.arcaneEdge.hitFx = 'arcaneEdgeHit';
+{ const _um = Battle.prototype.useMove; Battle.prototype.useMove = function* (u, t, id) { // blades that never got to fly (the foe fell early / a hit missed) dissolve
+    const r = yield* _um.call(this, u, t, id);
+    if (this._aeBlades) { for (const G of this._aeBlades) if (G) for (const p of G) { p.hold = p.t; p.tx = p.sx; p.ty = p.sy - 20; p.life = p.t + 8; } this._aeBlades = null; }
+    return r;
+  };
+}
 SKILL_STYLE.arcaneEdge = ['rune', 'pop', 'arcane', 'slash'];

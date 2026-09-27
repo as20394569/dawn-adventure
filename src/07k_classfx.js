@@ -38,7 +38,7 @@ Object.assign(FX, {
     for (let i = 1; i < mv.hits && t.hp > 0; i++) {
       if (!chance(Math.min(1, hitChance(u, t, mv)))) continue;
       const T0 = this.center(t), r = this.calcDamage(u, t, mv); let d = r.dmg; if (t.shield > 0) d = Math.max(1, Math.floor(d * 0.6)); d = Math.min(d, t.hp);
-      this.spawn({ k: 'line', x1: T0.x - 18 + i * 5, y1: T0.y - 16, x2: T0.x + 14 - i * 3, y2: T0.y + 16, c: '#ffffff', w: 2, grow: 2, life: 8 }); Sound.sfx(r.crit ? 'crit' : 'hit');
+      if (mv.hitFx && FX[mv.hitFx]) yield* FX[mv.hitFx].call(this, this.center(u), T0, u, i, mv.hits); /* v22c: per-hit animation */ else this.spawn({ k: 'line', x1: T0.x - 18 + i * 5, y1: T0.y - 16, x2: T0.x + 14 - i * 3, y2: T0.y + 16, c: '#ffffff', w: 2, grow: 2, life: 8 }); Sound.sfx(r.crit ? 'crit' : 'hit');
       t.hp -= d; total += d; n++; yield* this.impact(t, r.mult > 1 || r.crit ? 2 : 1); yield* this.animHP(t); yield* wait(3);
     }
     if (n > 1) yield* this.msg(n + '連擊！合計' + total + '點傷害！', { hold: 22 });
