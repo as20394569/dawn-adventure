@@ -56,6 +56,7 @@ function pxRender(A, S, T, tint) {
     else if (st === 'cast') { if (fr.cast) f = fr.cast[0]; else oy = -1; }
     else if (st === 'defend' && fr.defend) f = fr.defend[0];
     else if (A.state === 'faint' && fr.hurt) f = fr.hurt[0];
+    if (S.chibi) { if (st === 'attack') oy += p < 0.3 ? 1 : p < 0.65 ? -3 : 0; else if (st === 'hurt') ox = p < 0.7 ? 3 : 0; else if (st === 'cast' && !fr.cast) oy = Math.sin(T / 3) > 0 ? -2 : -1; }
     x.drawImage(S.im, f * S.w, 0, S.w, S.h, PX_PAD + ox, PX_PAD + oy, S.w, S.h);
     if (tint) { x.globalCompositeOperation = 'source-in'; x.fillStyle = tint; x.fillRect(0, 0, cv.width, cv.height); x.globalCompositeOperation = 'source-over'; }
     cv.ds = 1; cv.bb = S.bb; cv.px = true; return cv;

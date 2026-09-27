@@ -375,8 +375,8 @@ function* equipScreen() {
 }
 /* ---------- Options ---------- */
 function* optionsScreen() {
-  let idx = 0; const labels = ['文字速度', '背景音樂', '音效', '自動存檔', '戰鬥美術', '關閉'], N = labels.length, TOG = ['music', 'sfx', 'autosave', 'hdArt'];
-  const val = i => i === 0 ? ['慢', '普通', '快'][Game.settings.text] : TOG[i - 1] === 'hdArt' ? (Game.settings.hdArt !== false ? '新版' : '舊版') : i < N - 1 ? (Game.settings[TOG[i - 1]] ? '開' : '關') : '';
+  let idx = 0; const labels = ['文字速度', '背景音樂', '音效', '自動存檔', '戰鬥美術', '怪物造型', '關閉'], N = labels.length, TOG = ['music', 'sfx', 'autosave', 'hdArt', 'chibi'];
+  const val = i => i === 0 ? ['慢', '普通', '快'][Game.settings.text] : TOG[i - 1] === 'hdArt' ? (Game.settings.hdArt !== false ? '新版' : '舊版') : TOG[i - 1] === 'chibi' ? (Game.settings.chibi !== false ? 'Q版' : '寫實') : i < N - 1 ? (Game.settings[TOG[i - 1]] ? '開' : '關') : '';
   const scr = { draw(x) {
     screenBG(x); headerBar(x, '設定');
     drawWin(x, 4, 30, 168, N * 18 + 12, 'menu');
@@ -389,7 +389,7 @@ function* optionsScreen() {
     if (Input.repeat('up')) { idx = (idx + N - 1) % N; Sound.sfx('cursor'); } if (Input.repeat('down')) { idx = (idx + 1) % N; Sound.sfx('cursor'); }
     let d = Input.pressed('left') ? -1 : Input.pressed('right') ? 1 : 0;
     if (!d && Input.pressed('a') && idx < N - 1) { Input.consume('a'); d = 1; if (idx === 0 && Game.settings.text === 2) d = -2; }
-    if (d) { if (idx === 0) Game.settings.text = clamp(Game.settings.text + d, 0, 2); else Game.settings[TOG[idx - 1]] = TOG[idx - 1] === 'hdArt' ? Game.settings.hdArt === false : !Game.settings[TOG[idx - 1]]; Sound.applySettings(); Sound.sfx('cursor'); saveSettings(); }
+    if (d) { if (idx === 0) Game.settings.text = clamp(Game.settings.text + d, 0, 2); else Game.settings[TOG[idx - 1]] = TOG[idx - 1] === 'hdArt' ? Game.settings.hdArt === false : TOG[idx - 1] === 'chibi' ? Game.settings.chibi === false : !Game.settings[TOG[idx - 1]]; Sound.applySettings(); Sound.sfx('cursor'); saveSettings(); }
     if (Input.pressed('b') || (Input.pressed('a') && idx === N - 1)) { Input.consume('a', 'b'); Sound.sfx('cancel'); break; }
     yield;
   }

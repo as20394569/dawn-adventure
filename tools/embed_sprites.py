@@ -20,12 +20,17 @@ fd = {}
 for f in sorted(glob.glob(os.path.join(root, 'art', 'battle', 'fieldpx', '*.png'))):
     fd[os.path.basename(f)[:-4]] = 'data:image/png;base64,' + base64.b64encode(open(f, 'rb').read()).decode()
 js += 'const BATTLE_FIELD_SRC = ' + json.dumps(fd, separators=(',', ':')) + ';\n'
+pc, pcm = {}, {}
+for f in sorted(glob.glob(os.path.join(root, 'art', 'battle', 'chibipx', '*.png'))):
+    k = os.path.basename(f)[:-4]; pc[k] = 'data:image/png;base64,' + base64.b64encode(open(f, 'rb').read()).decode(); pcm[k] = json.load(open(f[:-4] + '.json'))
+js += 'const BATTLE_PXC_SRC = ' + json.dumps(pc, separators=(',', ':')) + ';\n'
+js += 'const BATTLE_PXC_META = ' + json.dumps(pcm, separators=(',', ':')) + ';\n'
 ui = {}
 for f in sorted(glob.glob(os.path.join(root, 'art', 'ui', 'px', '*.png'))):
     ui[os.path.basename(f)[:-4]] = 'data:image/png;base64,' + base64.b64encode(open(f, 'rb').read()).decode()
 js += 'const UI_PX_SRC = ' + json.dumps(ui, separators=(',', ':')) + ';\n'
 mp = os.path.join(root, 'art', 'ui', 'px', 'meta.json')
 js += 'const UI_PX_META = ' + (open(mp).read() if os.path.exists(mp) else '{}') + ';\n'
-print('animated', len(a), 'field', len(fd), 'ui', len(ui))
+print('animated', len(a), 'field', len(fd), 'ui', len(ui), 'chibi', len(pc))
 open(os.path.join(root, 'src', '07id_sprites.js'), 'w').write(js)
 print('embedded', len(d), 'sprites', sum(len(v) for v in d.values()) // 1024, 'KB')

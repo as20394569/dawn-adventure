@@ -55,7 +55,7 @@ Object.assign(MON_PANEL, {
   gatekeeper: { lv: 30, hp: 260, atk: 50, def: 50, spa: 52, spd: 48, spe: 34, crit: 8, hit: 5 },
 });
 // placeholder look (recolour of an existing monster) until the Codex strip exists; pxVariant uses the ART colour shift
-const PLACEHOLDER = { moonSprite: ['ghostLamp', 190, 1, 1.15], reedCrab: ['croc', 110, 1, 0.9], duskMoth: ['bee', 250, 0.8, 0.9], lizardman: ['bandit', 90, 0.9, 1], lizardChief: ['lizardman', 30, 1.1, 0.9],
+const PLACEHOLDER = { moonSprite: ['ghostLamp', 190, 1, 1.15], reedCrab: ['croc', 110, 1, 0.9], duskMoth: ['bee', 250, 0.8, 0.9], lizardman: ['bandit', 90, 0.9, 1], lizardChief: ['lizardman', 190, 1.2, 0.85],
   rogueBlade: ['bandit', 220, 0.8, 0.8], silverWyrm: ['croc', 180, 0.4, 1.35], voidEye: ['ghostLamp', 270, 1.2, 0.8], riftKnight: ['boneKnight', 260, 1.2, 0.8], gatekeeper: ['golem', 240, 0.6, 1.1] };
 function artRecolor(A, dh, ks, kl) { const tr = v => { if (typeof v === 'string' && /^#[0-9a-f]{6}$/i.test(v)) { const [h, s, l] = rgb2hsl(...hex2rgb(v)); return hsl2hex(h + dh, clamp(s * ks, 0, 1), clamp(l * kl, 0, 1)); } if (Array.isArray(v)) return v.map(tr); if (v && typeof v === 'object') { const o = {}; for (const k in v) o[k] = tr(v[k]); return o; } return v; }; return tr(A); }
 for (const k in PLACEHOLDER) { const [b, dh, ks, kl] = PLACEHOLDER[k], base = ART[b] ? b : PLACEHOLDER[b][0]; ART[k] = artRecolor(ART[base], dh, ks, kl); }
