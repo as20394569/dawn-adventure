@@ -375,13 +375,13 @@ function* equipScreen() {
 }
 /* ---------- Options ---------- */
 function* optionsScreen() {
-  let idx = 0; const labels = ['文字速度', '背景音樂', '音效', '自動存檔', '戰鬥美術', '怪物造型', '關閉'], N = labels.length, TOG = ['music', 'sfx', 'autosave', 'hdArt', 'chibi'];
-  const val = i => i === 0 ? ['慢', '普通', '快'][Game.settings.text] : TOG[i - 1] === 'hdArt' ? (Game.settings.hdArt !== false ? '新版' : '舊版') : TOG[i - 1] === 'chibi' ? (Game.settings.chibi !== false ? 'Q版' : '寫實') : i < N - 1 ? (Game.settings[TOG[i - 1]] ? '開' : '關') : '';
+  let idx = 0; const labels = ['文字速度', '背景音樂', '音效', '自動存檔', '戰鬥美術', '怪物造型', '主角造型', '關閉'], N = labels.length, TOG = ['music', 'sfx', 'autosave', 'hdArt', 'chibi', 'chibiHero'];
+  const val = i => i === 0 ? ['慢', '普通', '快'][Game.settings.text] : TOG[i - 1] === 'hdArt' ? (Game.settings.hdArt !== false ? '新版' : '舊版') : TOG[i - 1] === 'chibi' ? (Game.settings.chibi !== false ? 'Q版' : '寫實') : TOG[i - 1] === 'chibiHero' ? (Game.settings.chibiHero !== false ? 'Q版' : '原版') : i < N - 1 ? (Game.settings[TOG[i - 1]] ? '開' : '關') : '';
   const scr = { draw(x) {
     screenBG(x); headerBar(x, '設定');
     drawWin(x, 4, 30, 168, N * 18 + 12, 'menu');
     labels.forEach((l, i) => { const Y = 36 + i * 18; if (i === idx) selBar(x, 6, Y - 1, 164, 17); Font.draw(x, l, 14, Y, UIC.text, UIC.textSh); if (i < N - 1) Font.drawR(x, '← ' + val(i) + ' →', 164, Y, UIC.accent, UIC.textSh); });
-    const Y2 = 30 + N * 18 + 16; drawWin(x, 4, Y2, 168, 70, 'menu'); Font.draw(x, '← → 切換設定　B 鍵返回', 14, Y2 + 6, UIC.muted, UIC.textSh, 11);
+    const Y2 = 30 + N * 18 + 16; drawWin(x, 4, Y2, 168, Math.min(70, 252 - Y2), 'menu'); Font.draw(x, '← → 切換設定　B 鍵返回', 14, Y2 + 6, UIC.muted, UIC.textSh, 11);
     Font.wrap('自動存檔：換地圖、打完戰鬥、每走100步時自動記錄，關閉網頁時也會記錄。', 150, 10).slice(0, 3).forEach((l, i) => Font.draw(x, l, 14, Y2 + 24 + i * 13, UIC.muted, UIC.textSh, 10));
   } };
   UI.push(scr);
@@ -389,7 +389,7 @@ function* optionsScreen() {
     if (Input.repeat('up')) { idx = (idx + N - 1) % N; Sound.sfx('cursor'); } if (Input.repeat('down')) { idx = (idx + 1) % N; Sound.sfx('cursor'); }
     let d = Input.pressed('left') ? -1 : Input.pressed('right') ? 1 : 0;
     if (!d && Input.pressed('a') && idx < N - 1) { Input.consume('a'); d = 1; if (idx === 0 && Game.settings.text === 2) d = -2; }
-    if (d) { if (idx === 0) Game.settings.text = clamp(Game.settings.text + d, 0, 2); else Game.settings[TOG[idx - 1]] = TOG[idx - 1] === 'hdArt' ? Game.settings.hdArt === false : TOG[idx - 1] === 'chibi' ? Game.settings.chibi === false : !Game.settings[TOG[idx - 1]]; Sound.applySettings(); Sound.sfx('cursor'); saveSettings(); }
+    if (d) { if (idx === 0) Game.settings.text = clamp(Game.settings.text + d, 0, 2); else Game.settings[TOG[idx - 1]] = TOG[idx - 1] === 'hdArt' ? Game.settings.hdArt === false : TOG[idx - 1] === 'chibi' ? Game.settings.chibi === false : TOG[idx - 1] === 'chibiHero' ? Game.settings.chibiHero === false : !Game.settings[TOG[idx - 1]]; Sound.applySettings(); Sound.sfx('cursor'); saveSettings(); }
     if (Input.pressed('b') || (Input.pressed('a') && idx === N - 1)) { Input.consume('a', 'b'); Sound.sfx('cancel'); break; }
     yield;
   }
