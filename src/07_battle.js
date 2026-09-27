@@ -481,7 +481,7 @@ class Battle {
     let showTotal = false; const rowsL = [['HP', before.hp, after.hp]].concat(ATTRS.map(k => [ATTR_NAMES[k], bA[k], aA[k]]));
     const win = { draw: x => { drawWin(x, 80, 34, 90, 122, 'menu'); rowsL.forEach(([n, b, a], i) => { const Y = 38 + i * 16; Font.draw(x, n, 90, Y, UIC.muted, UIC.textSh); const d = a - b; Font.drawR(x, showTotal ? String(a) : d > 0 ? '+' + d : '—', 162, Y, showTotal ? UIC.text : d > 0 ? UIC.accent : UIC.dis, UIC.textSh); }); } };
     UI.push(win); yield* waitA(); showTotal = true; Sound.sfx('cursor'); yield* waitA(); UI.remove(win); UI.remove(tb);
-    const early = st.lv <= 5, gs = early ? 1 : 2, gt = early ? 0 : 1; st.skp = (st.skp || 0) + gs; st.tp = (st.tp || 0) + gt; st.mp = heroStats().mp; this.H.maxmp = st.mp; yield* this.msg('獲得了' + gs + '點技能點' + (gt ? '和' + gt + '點天賦點' : '') + '！MP也全部恢復了。', { hold: 40 });
+    const early = st.lv <= 5, gs = early ? 1 : 2, gt = typeof tpGainAt === 'function' ? tpGainAt(st.lv) : early ? 0 : 1; // v21: talent points every 2 levels st.skp = (st.skp || 0) + gs; st.tp = (st.tp || 0) + gt; st.mp = heroStats().mp; this.H.maxmp = st.mp; yield* this.msg('獲得了' + gs + '點技能點' + (gt ? '和' + gt + '點天賦點' : '') + '！MP也全部恢復了。', { hold: 40 });
     const nw = skillTreeOf(st.cls).filter(n => n.clv === st.lv); if (nw.length) yield* this.msg('可以學習新技能了：' + nw.map(n => MOVES[n.id].n).join('、') + '！（選單→技能）', { wait: true });
     if (Sound.current !== 'victory' && this.F.hp <= 0) Sound.play('victory');
   }

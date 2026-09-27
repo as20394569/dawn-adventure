@@ -498,6 +498,9 @@
   "batCloak": [
    "鐵匠配方"
   ],
+  "verdantBlade": [
+   "鐵匠配方"
+  ],
   "uniform": [
    "劇情/任務"
   ],
@@ -841,6 +844,7 @@
    "配方:emberKnife",
    "配方:voltSword",
    "配方:crabMail",
+   "配方:verdantBlade",
    "強化",
    "委託c9"
   ],
@@ -902,6 +906,7 @@
    "配方:manaPotion",
    "配方:hiEther",
    "配方:returnWing",
+   "配方:verdantBlade",
    "委託c6",
    "委託c14"
   ],

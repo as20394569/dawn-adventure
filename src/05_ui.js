@@ -558,16 +558,18 @@ function* talentScreen() {
   const talBlock = t => { const rk = st.tal[t.id] || 0; if (!rk) return '還沒有投入點數'; if (rk - 1 < 2 && TALENTS.some(q => q.req === t.id && (st.tal[q.id] || 0) > 0)) return '「' + TALENTS.find(q => q.req === t.id && (st.tal[q.id] || 0) > 0).n + '」需要它'; return null; };
   const LBL = { atk: ['物攻', ''], crit: ['會心率', '%'], pierceT: ['破防', '%'], spa: ['魔攻', ''], elem: ['屬性傷害', '%'], mpRegen: ['每回合回MP', '%'], hp: ['最大HP', ''], eva: ['迴避率', '%'], counter: ['防禦反擊', ''] };
   const val = (t, n) => { const k = Object.keys(t.st)[0], L = t.lbl || LBL[k] || [k, '']; return n <= 0 ? '—' : t.on ? t.on : k === 'counter' ? '啟用' : L[0] + '+' + t.st[k] * n + L[1]; };
-  const rows = () => Math.max(...TALENT_LINES.map((_, ci) => TALENTS.filter(t => t.line === ci).length)), RP = () => rows() > 3 ? 32 : 38, RH = () => rows() > 3 ? 30 : 34, DY = () => rows() > 3 ? 178 : 166;
+  const rows = () => Math.max(...TALENT_LINES.map((_, ci) => TALENTS.filter(t => t.line === ci).length)), RP = () => rows() > 4 ? 21 : rows() > 3 ? 32 : 38, RH = () => rows() > 4 ? 19 : rows() > 3 ? 30 : 34, DY = () => rows() > 3 ? 178 : 166; // v21: 6 talents per line → one-line buttons
   const fitC = (x, s, cx, y, col, sz) => { let z = sz; while (z > 7 && Font.width(s, z) > 52) z--; Font.drawC(x, s, cx, y, col, UIC.textSh, z); };
   const scr = { draw(x) {
     screenBG(x); headerBar(x, '天賦'); Font.drawR(x, '天賦點 ' + (st.tp || 0), W - 6, 2, st.tp ? UIC.warm : UIC.muted, UIC.textSh);
-    Font.drawC(x, '永久的被動加成・Lv6起每升1級+1點', W / 2, 21, UIC.muted, UIC.textSh, 10);
+    Font.drawC(x, '永久的被動加成・Lv6起每2級+1點', W / 2, 21, UIC.muted, UIC.textSh, 10);
     TALENT_LINES.forEach((ln, ci) => {
       const X = 4 + ci * 57; Font.drawC(x, ln, X + 27, 34, UIC.accent, UIC.textSh);
       const rp = RP(), rh = RH(), cmp = rh < 34, n = TALENTS.filter(t => t.line === ci).length;
       TALENTS.filter(t => t.line === ci).forEach((t, ri) => { const Y = 50 + ri * rp, rk = st.tal[t.id] || 0, on = ci === c && ri === r, lk = locked(t);
-        drawBtn(x, X, Y, 54, rh, on); fitC(x, t.n, X + 27, Y + (cmp ? -1 : 1), lk ? UIC.dis : rk ? UIC.text : '#c9cfe4', 11);
+        drawBtn(x, X, Y, 54, rh, on); const tiny = rh < 24;
+        if (tiny) { fitC(x, t.n, X + 27, Y - 2, lk ? UIC.dis : rk ? UIC.text : '#c9cfe4', 10); for (let k = 0; k < t.max; k++) { x.fillStyle = k < rk ? UIC.warm : '#30375a'; x.fillRect(X + 27 - t.max * 4 + k * 8 + 1, Y + rh - 4, 6, 2); } return; }
+        fitC(x, t.n, X + 27, Y + (cmp ? -1 : 1), lk ? UIC.dis : rk ? UIC.text : '#c9cfe4', 11);
         fitC(x, rk ? val(t, rk) : (lk ? '未解鎖' : '未學習'), X + 27, Y + (cmp ? 10 : 14), rk ? UIC.good : UIC.dis, 9);
         for (let k = 0; k < t.max; k++) { x.fillStyle = k < rk ? UIC.warm : '#30375a'; x.fillRect(X + 27 - t.max * 4 + k * 8 + 1, Y + rh - (cmp ? 5 : 7), 6, cmp ? 3 : 4); } });
       x.fillStyle = '#30375a'; for (let ri = 0; ri < n - 1; ri++) x.fillRect(X + 26, 50 + ri * rp + rh, 2, rp - rh);
@@ -575,7 +577,8 @@ function* talentScreen() {
     const t = T(), rk = st.tal[t.id] || 0, dy = DY(), dd = dy - 166; drawWin(x, 4, dy, 168, 252 - dy, 'menu');
     Font.draw(x, t.n, 12, dy + (dd ? 1 : 3), UIC.text, UIC.textSh); Font.drawR(x, '等級 ' + rk + '/' + t.max, 164, dy + (dd ? 3 : 4), UIC.muted, UIC.textSh, 10);
     Font.wrap(t.d, 152, 11).slice(0, 2).forEach((l, i) => Font.draw(x, l, 12, dd ? dy + 15 + i * 12 : 185 + i * 13, UIC.text, UIC.textSh, 11));
-    Font.draw(x, '目前：' + val(t, rk), 12, dd ? dy + 40 : 211, UIC.accent, UIC.textSh, 10); if (rk < t.max) { const nx = '下一級：' + val(t, rk + 1); let z = 10; while (z > 7 && Font.width(nx, z) > 80) z--; Font.drawR(x, nx, 166, (dd ? dy + 40 : 211) + (10 - z), UIC.warm, UIC.textSh, z); }
+    { const cy = dd ? dy + 40 : 211, cur = '目前：' + val(t, rk), ce = Font.draw(x, cur, 12, cy, UIC.accent, UIC.textSh, 10); // v21: the next-level text never runs into the current one
+      if (rk < t.max) { const room = 164 - ce - 8; let nx = '下一級：' + val(t, rk + 1), z = 10; while (z > 7 && Font.width(nx, z) > room) z--; if (Font.width(nx, z) > room) { nx = '→' + val(t, rk + 1).replace(/^[^+]*/, ''); z = 10; while (z > 7 && Font.width(nx, z) > room) z--; } Font.drawR(x, nx, 164, cy + (10 - z), UIC.warm, UIC.textSh, z); } }
     Font.draw(x, locked(t) ? '需要先把「' + TALENTS.find(q => q.id === t.req).n + '」點到2級' : rk >= t.max ? '已達最高等級' : st.tp ? 'A：投入1點天賦點' : '天賦點不足（升級時獲得）', 12, dd ? 235 : 232, locked(t) ? UIC.bad : st.tp && rk < t.max ? UIC.warm : UIC.muted, UIC.textSh, 11);
     if (rk) { drawBtn(x, 124, 230, 44, 16, false); Font.drawC(x, '↩退點', 146, 230, talBlock(t) ? UIC.dis : UIC.warm, UIC.textSh, 9); touchRegion(124, 230, 44, 16, () => tapKey('select')); }
     TALENT_LINES.forEach((ln, ci) => TALENTS.filter(q => q.line === ci).forEach((q, ri) => touchRegion(4 + ci * 57, 50 + ri * RP(), 54, RH(), () => { if (c === ci && r === ri) tapKey('a'); else { c = ci; r = ri; } })));
