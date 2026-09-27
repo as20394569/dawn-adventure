@@ -33,8 +33,14 @@ function attrMigrate(st) {
   const over = attrSpent(st) - attrPointsFor(st.lv); st.attrBonus = Math.max(0, over); st.attrFreeReset = 1; return true;
 }
 { const _ng = newGameState; newGameState = function (...a) { const st = _ng.apply(this, a); if (st) { st.attr = {}; st.attrFreeReset = 1; } return st; }; }
+// v21 had a bug: level-ups gave no skill / talent points. Top both pools up to what the level entitles (never takes anything away).
+function fixV22(st) {
+  if (!st || st.fixV22) return; st.fixV22 = 1; const L = st.lv;
+  if (st.cls) { const earned = 2 + Math.min(L, 5) - 1 + 2 * Math.max(0, L - 5), free = st.skFree || {}; let spent = 0; for (const k in st.skills || {}) spent += Math.max(0, (st.skills[k] || 0) - (free[k] ? 1 : 0)); st.skp = Math.max(st.skp || 0, earned - spent); }
+  const tsp = Object.values(st.tal || {}).reduce((q, b) => q + b, 0); st.tp = Math.max(st.tp || 0, tpForLevel(L) - tsp);
+}
 { const _so = startOverworld; startOverworld = function (...a) {
-    const mig = attrMigrate(Game.st), ow = _so.apply(this, a);
+    fixV22(Game.st); const mig = attrMigrate(Game.st), ow = _so.apply(this, a);
     if (mig && ow && ow.run && Game.st.lv > 1) ow.run((function* () { yield* wait(30); yield* say('【系統更新】屬性改成自由加點了！\n每次升級會得到「屬性點」，在選單的「屬性」自由分配。'); yield* say('目前的屬性已經換算好了，第一次重置免費，可以重新打造自己的角色。'); })());
     return ow;
   };
