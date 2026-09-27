@@ -455,9 +455,9 @@ class Battle {
     if (gold) { st.money += gold; yield* this.msg(st.name + '得到了' + gold + ' G！'); }
     { const H = this.H, r = F.elite || F.boss ? 0.3 : 0.15, dh = Math.min(H.maxhp - H.hp, Math.ceil(H.maxhp * r)), dm = Math.min(H.maxmp - H.mp, Math.ceil(H.maxmp * r)); if (H.hp > 0 && (dh > 0 || dm > 0)) { H.hp += dh; H.mp += dm; yield* this.animHP(H); Sound.sfx('heal'); yield* this.msg('戰鬥結束，調整了呼吸。' + (dh ? 'HP+' + dh + ' ' : '') + (dm ? 'MP+' + dm : ''), { hold: 30 }); } }
     if (sp.mat && !F.elite && !F.boss && chance(0.5)) { st.bag[sp.mat] = (st.bag[sp.mat] || 0) + 1; yield* this.msg('得到了素材「' + ITEMS[sp.mat].n + '」！', { hold: 30 }); }
-    const rpool = Game.ow && Game.ow.map && Game.ow.map.d.gearPool; if (F.rare && rpool) { const g = makeGear(pick(rpool), 3); Sound.jingle('item'); yield* this.msg(F.n + '掉落了' + gearName(g) + '！', { wait: true }); }
-    for (const g of lootDrops(this)) { Sound.jingle('item'); yield* this.msg(F.n + '掉落了' + gearName(g) + '！', { wait: true }); yield* this.msg(gearText(g) + '\n（可以在裝備畫面裝備）', { wait: true }); }
-    const pool = Game.ow && Game.ow.map && Game.ow.map.d.gearPool; if (pool && !F.elite && !F.boss && chance(this.H.stats.fx.fortune ? 0.16 : 0.08)) { const g = makeGear(pick(pool), rollQuality()); Sound.jingle('item'); yield* this.msg(F.n + '掉落了' + gearName(g) + '！', { wait: true }); }
+    const rpool = Game.ow && Game.ow.map && Game.ow.map.d.gearPool; if (F.rare && rpool) { const g = makeGear(pick(rpool), 3); yield* this.lootShow(g, F.n + '掉落了裝備！'); }
+    for (const g of lootDrops(this)) yield* this.lootShow(g, F.n + '掉落了裝備！');
+    const pool = Game.ow && Game.ow.map && Game.ow.map.d.gearPool; if (pool && !F.elite && !F.boss && chance(this.H.stats.fx.fortune ? 0.16 : 0.08)) { const g = makeGear(pick(pool), rollQuality()); yield* this.lootShow(g, F.n + '掉落了裝備！'); }
   }
   *gainExp(amount) {
     const st = Game.st; yield* this.msg(st.name + '獲得了' + amount + '點經驗值！', { hold: 20 });

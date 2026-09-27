@@ -77,7 +77,7 @@ function* battleHelpScreen() {
 
 /* ---------- v20.6 level up: an SFX-bus fanfare (always audible with 音效 on) + a LEVEL UP! pop over the hero ---------- */
 { const _lu = Battle.prototype.levelUp; Battle.prototype.levelUp = function* () {
-    Sound.sfx('levelUp'); tacInit(this); const C = this.center(this.H); this.tac.pops.push({ x: C.x, y: C.y - 30, s: 'LEVEL UP!', c: '#ffe070', t: 0, big: 1 });
+    Sound.sfx('levelUp'); tacInit(this); const C = this.center(this.H); this.tac.pops.push({ x: C.x, y: C.y - 12, s: 'LEVEL UP!', c: '#ffe070', t: 0, big: 1 });
     return yield* _lu.call(this);
   };
 }

@@ -26,3 +26,11 @@ encounterCard = function (sp, lv, key, kind, extra) { // same card, the picture 
   } };
 };
 function dexPortrait(sp) { return chibiPortrait(sp); }
+// the bats' ART is still the bird vector: once their own chibi exists, their small icons (bestiary list etc.) come from it too
+{ const BATS = ['mineBat', 'caveBat', 'crystalBat']; const _mm = monsterMini; monsterMini = function (sp, size) {
+    if (!BATS.includes(sp) || typeof chibiOwn !== 'function' || !chibiOwn(sp)) return _mm(sp, size);
+    const k = 'cb' + sp + size; if (miniCache[k]) return miniCache[k]; const pic = chibiPortrait(sp) || (() => { const M = BATTLE_PXC_META[sp], t = mkCanvas(M.w, M.h); t.getContext('2d').drawImage(BATTLE_PXC[sp], 0, 0, M.w, M.h, 0, 0, M.w, M.h); return t; })();
+    const s = size / Math.max(pic.width, pic.height), c = mkCanvas(size, size), x = c.getContext('2d'); x.imageSmoothingEnabled = size < 24;
+    x.drawImage(pic, Math.round((size - pic.width * s) / 2), Math.round(size - pic.height * s), Math.round(pic.width * s), Math.round(pic.height * s)); return miniCache[k] = { c, flip: flipCanvas(c) };
+  };
+}

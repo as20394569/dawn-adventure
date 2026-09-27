@@ -89,7 +89,7 @@ function aevEnd(ow, quiet) {
 { const _vi = Battle.prototype.victory; Battle.prototype.victory = function* () {
     yield* _vi.call(this); const c = this.cfg, st = Game.st, F = this.F;
     if (c.aevGold) { const g = Math.floor((SPECIES[F.sp].gold || 0) * F.lv * (c.aevGold - 1)); if (g > 0) { st.money += g; yield* this.msg('魔物潮加成：額外獲得' + g + ' G！'); } }
-    if (c.aevLoot) { const pool = (Game.ow && Game.ow.map && Game.ow.map.d.gearPool) || []; if (pool.length) { const g = makeGear(classGear(pick(pool)), Math.max(c.aevLoot, rollLootQuality(false))); Sound.jingle('item'); yield* this.msg(F.n + '留下了' + gearName(g) + '！', { wait: true }); yield* this.msg(gearText(g) + '\n（可以在裝備畫面裝備）', { wait: true }); }
+    if (c.aevLoot) { const pool = (Game.ow && Game.ow.map && Game.ow.map.d.gearPool) || []; if (pool.length) { const g = makeGear(classGear(pick(pool)), Math.max(c.aevLoot, rollLootQuality(false))); yield* this.lootShow(g, F.n + '留下了裝備！'); }
       const gg = F.lv * 40; st.money += gg; yield* this.msg('得到了' + gg + ' G！'); }
   };
 }

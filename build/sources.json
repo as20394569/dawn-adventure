@@ -495,6 +495,9 @@
   "foxfireStaff": [
    "鐵匠配方"
   ],
+  "batCloak": [
+   "鐵匠配方"
+  ],
   "uniform": [
    "劇情/任務"
   ],
@@ -743,8 +746,6 @@
   "feather": [
    "魔物:啾啾鳥",
    "魔物:夜梟",
-   "魔物:洞窟飛影",
-   "魔物:坑道蝠",
    "分解",
    "分解"
   ],
@@ -765,6 +766,10 @@
   "leaf": [
    "魔物:翠狐",
    "分解"
+  ],
+  "batWing": [
+   "魔物:洞窟飛影",
+   "魔物:坑道蝠"
   ],
   "beetleShell": [
    "魔物:雷角甲蟲"
@@ -863,6 +868,7 @@
    "配方:crystalStaff",
    "配方:hiEther",
    "配方:moonPendant",
+   "配方:batCloak",
    "強化",
    "委託c3",
    "支線:師父的遺作"
@@ -915,6 +921,9 @@
   ],
   "riftShard": [
    "配方:riftRing"
+  ],
+  "batWing": [
+   "配方:batCloak"
   ],
   "scorpTail": [
    "委託c18"

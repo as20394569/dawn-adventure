@@ -4268,6 +4268,18 @@ Object.assign(LOOKS, {
 });
 Object.assign(QUEST_CATS, { '峽谷的信差': '支線', '古代鐘聲': '隱藏', '犀角工匠': '支線', '迷路的藥師學徒': '支線', '驅霧之燈': '支線', '魔女的去留': '支線', '行商人的收藏': '支線', '寶箱怪獵人': '隱藏', '區域事件': '事件' });
 
+/* ===================== v20.7 bats are bats (playtest: 坑道蝠 looked like a bird and dropped feathers) =====================
+   - Codex redraws 坑道蝠 / 洞窟飛影 / 水晶蝠 as bat chibis (task I → art/battle/chibi/mineBat_*, caveBat_*, crystalBat_*).
+   - Bats drop 蝙蝠翼膜 instead of 羽毛, and use bat moves (吸血・超音波・尖嘯・俯衝) instead of 啄擊／羽毛旋風.
+   - 蝙蝠翼膜 has a use: the smith makes 夜翼斗篷 (a light cloak with evasion) from it. */
+Object.assign(ITEMS, { batWing: { n: '蝙蝠翼膜', mat: 1, price: 0, sell: 18, cat: '魔物素材', d: '蝙蝠薄薄的翼膜，又輕又韌。可以做成斗篷。' } });
+Object.assign(SPECIES.mineBat, { mat: 'batWing', learn: [[1, 'm_leechBite'], [1, 'm_screech'], [1, 'm_sonic'], [1, 'm_dive']] });
+Object.assign(SPECIES.caveBat, { mat: 'batWing', learn: [[1, 'm_dive'], [1, 'm_leechBite'], [1, 'm_sonic'], [10, 'm_lullaby']] });
+Object.assign(SPECIES.crystalBat, { learn: [[1, 'm_dive'], [1, 'm_sonic'], [1, 'm_leechBite']] });
+Object.assign(GEAR, { batCloak: { n: '夜翼斗篷', slot: 'body', t: 3, st: { def: 4, spd: 4, spe: 3 }, sp: { eva: 5 }, d: '用蝙蝠翼膜縫成的輕薄斗篷。在黑暗裡幾乎看不見。', kind: '輕裝', look: 'batCloak' } });
+BODY_LOOKS.batCloak = ['cloak', { X: '#3a2e48', x: '#241c30', Y: '#5a4a70', Z: '#1a1420', z: '#b8a0d8', W: '#c8c0d8', D: '#6a5a88', d: '#3a2e48' }];
+RECIPES.push({ out: 'batCloak', mats: { batWing: 4, crystal: 1 }, gold: 900 });
+
 /* ===================== v19 catalog pass: categories for everything added by the chapter-1 expansion ===================== */
 for (const k in ITEMS) if (!ITEMS[k].cat) ITEMS[k].cat = itemCatOf(k);
 Object.assign(SPECIALS.predator, { cat: '攻擊' }); Object.assign(SPECIALS.breaker, { cat: '攻擊' }); Object.assign(SPECIALS.poisonEdge, { cat: '攻擊' }); Object.assign(SPECIALS.spellblade, { cat: '攻擊' });
@@ -5892,9 +5904,9 @@ class Battle {
     if (gold) { st.money += gold; yield* this.msg(st.name + '得到了' + gold + ' G！'); }
     { const H = this.H, r = F.elite || F.boss ? 0.3 : 0.15, dh = Math.min(H.maxhp - H.hp, Math.ceil(H.maxhp * r)), dm = Math.min(H.maxmp - H.mp, Math.ceil(H.maxmp * r)); if (H.hp > 0 && (dh > 0 || dm > 0)) { H.hp += dh; H.mp += dm; yield* this.animHP(H); Sound.sfx('heal'); yield* this.msg('戰鬥結束，調整了呼吸。' + (dh ? 'HP+' + dh + ' ' : '') + (dm ? 'MP+' + dm : ''), { hold: 30 }); } }
     if (sp.mat && !F.elite && !F.boss && chance(0.5)) { st.bag[sp.mat] = (st.bag[sp.mat] || 0) + 1; yield* this.msg('得到了素材「' + ITEMS[sp.mat].n + '」！', { hold: 30 }); }
-    const rpool = Game.ow && Game.ow.map && Game.ow.map.d.gearPool; if (F.rare && rpool) { const g = makeGear(pick(rpool), 3); Sound.jingle('item'); yield* this.msg(F.n + '掉落了' + gearName(g) + '！', { wait: true }); }
-    for (const g of lootDrops(this)) { Sound.jingle('item'); yield* this.msg(F.n + '掉落了' + gearName(g) + '！', { wait: true }); yield* this.msg(gearText(g) + '\n（可以在裝備畫面裝備）', { wait: true }); }
-    const pool = Game.ow && Game.ow.map && Game.ow.map.d.gearPool; if (pool && !F.elite && !F.boss && chance(this.H.stats.fx.fortune ? 0.16 : 0.08)) { const g = makeGear(pick(pool), rollQuality()); Sound.jingle('item'); yield* this.msg(F.n + '掉落了' + gearName(g) + '！', { wait: true }); }
+    const rpool = Game.ow && Game.ow.map && Game.ow.map.d.gearPool; if (F.rare && rpool) { const g = makeGear(pick(rpool), 3); yield* this.lootShow(g, F.n + '掉落了裝備！'); }
+    for (const g of lootDrops(this)) yield* this.lootShow(g, F.n + '掉落了裝備！');
+    const pool = Game.ow && Game.ow.map && Game.ow.map.d.gearPool; if (pool && !F.elite && !F.boss && chance(this.H.stats.fx.fortune ? 0.16 : 0.08)) { const g = makeGear(pick(pool), rollQuality()); yield* this.lootShow(g, F.n + '掉落了裝備！'); }
   }
   *gainExp(amount) {
     const st = Game.st; yield* this.msg(st.name + '獲得了' + amount + '點經驗值！', { hold: 20 });
@@ -7813,7 +7825,7 @@ function* battleHelpScreen() {
 
 /* ---------- v20.6 level up: an SFX-bus fanfare (always audible with 音效 on) + a LEVEL UP! pop over the hero ---------- */
 { const _lu = Battle.prototype.levelUp; Battle.prototype.levelUp = function* () {
-    Sound.sfx('levelUp'); tacInit(this); const C = this.center(this.H); this.tac.pops.push({ x: C.x, y: C.y - 30, s: 'LEVEL UP!', c: '#ffe070', t: 0, big: 1 });
+    Sound.sfx('levelUp'); tacInit(this); const C = this.center(this.H); this.tac.pops.push({ x: C.x, y: C.y - 12, s: 'LEVEL UP!', c: '#ffe070', t: 0, big: 1 });
     return yield* _lu.call(this);
   };
 }
@@ -7933,6 +7945,58 @@ Object.assign(HD2D_LOOK, {
   sewer: { key: [170, 230, 210], shaft: 'rgba(170,230,210,', haze: 'rgba(90,130,120,', mote: ['#a0e0c8', '#d0ffe8', '#80c0a8'], cool: [10, 30, 30], sharp: [110, 150], far: 104 },
   catacomb: { key: [255, 190, 130], shaft: 'rgba(170,180,255,', haze: 'rgba(110,110,170,', mote: ['#c0c8ff', '#ffd8a0', '#e0e0ff'], cool: [20, 10, 50], sharp: [104, 150], far: 98 },
 });
+
+/* ===================== v20.7 loot showcase (playtest: after-battle text still overflowed; "make gear drops an animation + showcase") =====================
+   A dropped piece of gear no longer comes as two long text boxes. Instead:
+   1. a glowing orb in the quality colour pops out of the fallen monster, arcs to the middle of the stage and bursts;
+   2. a showcase card slides in: light rays (stronger for 紅 / 金), the gear drawn on the hero doll (or an accessory charm),
+      the name in its quality colour, slot / kind, stats, affixes and special effects (wrapped to the card), A to continue.
+   Level-up: the LEVEL UP! pop now sits over the hero's head so the stat window doesn't cover it. */
+function lootIcon(g) { // the gear on the hero doll (wearables) or a charm glyph (accessories), 3x
+  const B = GEAR[g.b]; if (B.look && B.slot !== 'acc') { const L = { head: null, body: 'uniform', feet: 'school', weapon: null }; L[B.slot] = B.look; try { return { doll: heroFramesLook(L).down[0] }; } catch (e) { } }
+  return null;
+}
+function drawCharm(x, cx, cy, col, t) {
+  x.save(); x.translate(cx, cy); x.strokeStyle = '#10121e'; x.lineWidth = 4; x.beginPath(); x.arc(0, -10, 6, Math.PI * 0.15, Math.PI * 0.85, true); x.stroke(); x.strokeStyle = '#d8c080'; x.lineWidth = 2; x.stroke();
+  x.fillStyle = '#10121e'; x.beginPath(); x.moveTo(0, -6); x.lineTo(9, 3); x.lineTo(0, 14); x.lineTo(-9, 3); x.closePath(); x.fill();
+  x.fillStyle = col; x.beginPath(); x.moveTo(0, -3); x.lineTo(6, 3); x.lineTo(0, 11); x.lineTo(-6, 3); x.closePath(); x.fill();
+  x.fillStyle = 'rgba(255,255,255,' + (0.5 + 0.3 * Math.sin(t / 8)) + ')'; x.fillRect(-2, -1, 2, 4); x.restore();
+}
+Battle.prototype.lootShow = function* (g, head) {
+  const q = g.q || 1, col = gCol(g), [cr, cg2, cb] = hex2rgb(col), F = this.F, C = this.center(F), T = { x: 88, y: 96 };
+  // 1) the orb
+  Sound.sfx(q >= 3 ? 'charge' : 'item'); const orb = { t: 0 }; const u = { draw: x => { const k = Math.min(1, orb.t / 26), e = 1 - Math.pow(1 - k, 2), X = lerp(C.x, T.x, e), Y = lerp(C.y, T.y, e) - Math.sin(k * Math.PI) * 34;
+      const R = 7 + Math.sin(orb.t / 3) * 1.5; const gr = x.createRadialGradient(X, Y, 0, X, Y, R * 2.6); gr.addColorStop(0, `rgba(${cr},${cg2},${cb},0.9)`); gr.addColorStop(1, `rgba(${cr},${cg2},${cb},0)`); x.fillStyle = gr; x.fillRect(X - R * 3, Y - R * 3, R * 6, R * 6);
+      x.fillStyle = '#ffffff'; x.beginPath(); x.arc(X, Y, R * 0.45, 0, 7); x.fill(); } };
+  UI.push(u); for (let i = 0; i < 28; i++) { orb.t++; if (i % 3 === 0) { const k = Math.min(1, orb.t / 26), e = 1 - Math.pow(1 - k, 2); this.spawn({ k: 'dot', x: lerp(C.x, T.x, e), y: lerp(C.y, T.y, e) - Math.sin(k * Math.PI) * 34, vx: rnd(-0.4, 0.4), vy: rnd(-0.2, 0.6), c: pick([col, '#ffffff']), s: 1, life: 14 }); } yield; }
+  UI.remove(u); this.sparks(T.x, T.y, 18 + q * 8, [col, '#ffffff', shade(col, 0.4)], 2.6, 24, 0.06); this.spawn({ k: 'flash', c: col, a: q >= 3 ? 0.45 : 0.3, life: 8 }); if (q >= 3) { this.shake = 8; Sound.sfx('crit'); }
+  Sound.jingle('item');
+  // 2) the showcase card
+  const icon = lootIcon(g), B = GEAR[g.b], info = gearInfoLines(g, 128).filter(l => l[2] !== 9 && l[1] !== UIC.muted && l[1] !== UIC.accent && l[0] !== ''), kind = EQUIP_SLOTS[B.slot === 'acc' ? 'acc1' : B.slot] + (B.kind && B.kind !== '飾品' ? '・' + B.kind : '');
+  const s = { t: 0, out: 0, draw(x) {
+    s.t++; const a = s.out ? Math.max(0, 1 - s.out / 6) : Math.min(1, s.t / 8), slide = Math.round((1 - Math.min(1, s.t / 8)) * 18);
+    x.save(); x.globalAlpha = a; x.fillStyle = 'rgba(4,4,12,0.55)'; x.fillRect(0, 0, W, BH);
+    const X = 14, Y = 14 + slide, w = 148, h = 180; drawWin(x, X, Y, w, h, 'menu');
+    Font.drawC(x, head || '獲得了裝備！', W / 2, Y + 4, col, UIC.textSh, 10);
+    // rays + icon
+    const cx = W / 2, cy = Y + 44; x.save(); x.translate(cx, cy); x.rotate(s.t / 90); const nR = q >= 3 ? 12 : 8;
+    for (let i = 0; i < nR; i++) { x.rotate(Math.PI * 2 / nR); const gr = x.createLinearGradient(0, 0, 0, -34); gr.addColorStop(0, `rgba(${cr},${cg2},${cb},${q >= 3 ? 0.55 : 0.32})`); gr.addColorStop(1, `rgba(${cr},${cg2},${cb},0)`); x.fillStyle = gr; x.beginPath(); x.moveTo(-3, 0); x.lineTo(3, 0); x.lineTo(7, -34); x.lineTo(-7, -34); x.closePath(); x.fill(); }
+    x.restore(); const glow = x.createRadialGradient(cx, cy, 0, cx, cy, 22); glow.addColorStop(0, `rgba(${cr},${cg2},${cb},0.45)`); glow.addColorStop(1, `rgba(${cr},${cg2},${cb},0)`); x.fillStyle = glow; x.fillRect(cx - 24, cy - 24, 48, 48);
+    const bob = Math.round(Math.sin(s.t / 14) * 2);
+    if (icon && icon.doll) { x.imageSmoothingEnabled = false; x.drawImage(icon.doll, 0, 0, 16, 22, cx - 16, cy - 24 + bob, 32, 44); } else drawCharm(x, cx, cy + bob, col, s.t);
+    for (let i = 0; i < 4; i++) { const an = s.t / 30 + i * 1.57, rr = 24 + Math.sin(s.t / 11 + i) * 4; x.fillStyle = i % 2 ? '#ffffff' : col; x.fillRect(Math.round(cx + Math.cos(an) * rr), Math.round(cy + Math.sin(an) * rr * 0.7), 2, 2); }
+    // name + details
+    let y = Y + 70; { const nm = gearName(g); let z = 12; while (z > 9 && Font.width(nm, z) > w - 16) z--; Font.drawC(x, nm, W / 2, y, col, UIC.textSh, z); } y += 15; Font.drawC(x, kind, W / 2, y - 1, UIC.muted, UIC.textSh, 8); y += 11;
+    x.fillStyle = `rgba(${cr},${cg2},${cb},0.5)`; x.fillRect(X + 10, y, w - 20, 1); y += 3;
+    const maxY = Y + h - 20; let shown = 0;
+    for (const [t, c2, sz, ind] of info) { const lh = lineH(sz); if (y + lh > maxY) break; Font.draw(x, t, X + 10 + Math.min(ind, 6), y, c2, UIC.textSh, Math.min(sz, 10)); y += Math.min(lh, 12); shown++; }
+    const blink = Math.floor(s.t / 20) % 2; Font.drawR(x, 'A：繼續', X + w - 10, Y + h - 13, blink ? UIC.accent : '#ffffff', UIC.textSh, 9); Font.draw(x, shown < info.length ? '▼更多詳情見裝備畫面' : '可在裝備畫面裝備', X + 10, Y + h - 13, UIC.muted, UIC.textSh, 8);
+    x.restore();
+  } };
+  UI.push(s); for (let i = 0; i < 10; i++) yield; Input.consume('a', 'b');
+  while (!(Input.pressed('a') || Input.pressed('b'))) { if (Game.autoPlay && s.t > 30) break; yield; } Input.consume('a', 'b'); Sound.sfx('cursor');
+  for (s.out = 1; s.out <= 6; s.out++) yield; UI.remove(s);
+};
 
 /* ===================== EVENTS (異世界篇) ===================== */
 function* healRitual(text) {
@@ -9167,7 +9231,7 @@ function aevEnd(ow, quiet) {
 { const _vi = Battle.prototype.victory; Battle.prototype.victory = function* () {
     yield* _vi.call(this); const c = this.cfg, st = Game.st, F = this.F;
     if (c.aevGold) { const g = Math.floor((SPECIES[F.sp].gold || 0) * F.lv * (c.aevGold - 1)); if (g > 0) { st.money += g; yield* this.msg('魔物潮加成：額外獲得' + g + ' G！'); } }
-    if (c.aevLoot) { const pool = (Game.ow && Game.ow.map && Game.ow.map.d.gearPool) || []; if (pool.length) { const g = makeGear(classGear(pick(pool)), Math.max(c.aevLoot, rollLootQuality(false))); Sound.jingle('item'); yield* this.msg(F.n + '留下了' + gearName(g) + '！', { wait: true }); yield* this.msg(gearText(g) + '\n（可以在裝備畫面裝備）', { wait: true }); }
+    if (c.aevLoot) { const pool = (Game.ow && Game.ow.map && Game.ow.map.d.gearPool) || []; if (pool.length) { const g = makeGear(classGear(pick(pool)), Math.max(c.aevLoot, rollLootQuality(false))); yield* this.lootShow(g, F.n + '留下了裝備！'); }
       const gg = F.lv * 40; st.money += gg; yield* this.msg('得到了' + gg + ' G！'); }
   };
 }
@@ -9446,6 +9510,14 @@ encounterCard = function (sp, lv, key, kind, extra) { // same card, the picture 
   } };
 };
 function dexPortrait(sp) { return chibiPortrait(sp); }
+// the bats' ART is still the bird vector: once their own chibi exists, their small icons (bestiary list etc.) come from it too
+{ const BATS = ['mineBat', 'caveBat', 'crystalBat']; const _mm = monsterMini; monsterMini = function (sp, size) {
+    if (!BATS.includes(sp) || typeof chibiOwn !== 'function' || !chibiOwn(sp)) return _mm(sp, size);
+    const k = 'cb' + sp + size; if (miniCache[k]) return miniCache[k]; const pic = chibiPortrait(sp) || (() => { const M = BATTLE_PXC_META[sp], t = mkCanvas(M.w, M.h); t.getContext('2d').drawImage(BATTLE_PXC[sp], 0, 0, M.w, M.h, 0, 0, M.w, M.h); return t; })();
+    const s = size / Math.max(pic.width, pic.height), c = mkCanvas(size, size), x = c.getContext('2d'); x.imageSmoothingEnabled = size < 24;
+    x.drawImage(pic, Math.round((size - pic.width * s) / 2), Math.round(size - pic.height * s), Math.round(pic.width * s), Math.round(pic.height * s)); return miniCache[k] = { c, flip: flipCanvas(c) };
+  };
+}
 
 </script>
 </body></html>
