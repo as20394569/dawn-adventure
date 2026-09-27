@@ -30,4 +30,5 @@ Object.assign(MON_PANEL.mineBat, { hp: 40 }); Object.assign(MON_PANEL.bandit, { 
 Object.assign(MON_PANEL.banditBoss, { hp: 80 }); Object.assign(MON_PANEL.mossGiant, { hp: 42 }); MOVES.m_axeSpin.pow = 100;
 // rares: tough skin but not hopeless — a matched-level player needs about 3 hits before they flee
 Object.assign(MON_PANEL.goldSlime, { def: 14, spd: 14 }); Object.assign(MON_PANEL.gemSlime, { def: 28, spd: 28 }); Object.assign(MON_PANEL.goldSkeleton, { def: 26, spd: 26 }); Object.assign(MON_PANEL.paleWraith, { def: 30, spd: 30 });
-BALANCE.gangKnife = 0.045; // bandit henchmen knives: % of hero max HP per turn
+BALANCE.gangKnife = 0.045;
+Object.assign(MON_PANEL.golem, { hp: 90 }); // v19: shorter story-boss fight (break + AI make it tougher already) // bandit henchmen knives: % of hero max HP per turn

@@ -24,7 +24,7 @@ const NG_LV = 8; // New Game+: monsters +8 Lv per cycle
 
 /* ---------- AI personalities: brute (damage first) / trick (ailments, debuffs) / guard (buffs, heals, counters) ---------- */
 const AI_PROFILE = { mush: 'trick', thornMush: 'trick', flower: 'trick', bee: 'trick', caveSpider: 'trick', duskMoth: 'trick', ghostLamp: 'trick', wraith: 'trick', frog: 'trick', moonSprite: 'trick', voidEye: 'trick',
-  pebble: 'guard', golem: 'guard', mossGiant: 'guard', croc: 'guard', thunderBeetle: 'guard', slime: 'guard', reedCrab: 'guard', riftKnight: 'guard', boneKnight: 'guard', crystalGolem: 'guard' };
+  pebble: 'guard', mossGiant: 'guard', croc: 'guard', thunderBeetle: 'guard', slime: 'guard', reedCrab: 'guard', riftKnight: 'guard', boneKnight: 'guard', crystalGolem: 'guard' };
 const aiProfile = F => AI_PROFILE[F.sp] || (HD_RIG_OF && HD_RIG_OF[F.sp] && AI_PROFILE[HD_RIG_OF[F.sp]]) || 'brute';
 
 /* ---------- a monster-only move for smart foes: wipe the hero's buffs ---------- */
@@ -49,7 +49,7 @@ Battle.prototype.popNum = function (b, n, col, tag) { const C = this.center(b); 
 
 { const _cd = Battle.prototype.calcDamage; Battle.prototype.calcDamage = function (u, t, mv) {
     const r = _cd.call(this, u, t, mv);
-    if (!t.hero && t.broken > 0) r.dmg = Math.max(1, Math.floor(r.dmg * (t.boss ? 1.35 : 1.5)));
+    if (!t.hero && t.broken > 0) r.dmg = Math.max(1, Math.floor(r.dmg * (t.boss ? 1.25 : 1.35)));
     if (u.hero && !t.hero) this._lastHit = r;
     return r;
   };
@@ -142,7 +142,10 @@ const PHASE_MOVES = { wolf: 'm_rend', croc: 'm_tailSlam', flower: 'm_thornRain',
     if (F.broken > 0) return { type: 'move', id: '__stun' };
     const base = _fc.call(this);
     if (base.type !== 'move' || F.charging || this.cg || (this.bb && base.id === 'm_axeSpin') || base.id === F.charging) return base;
-    return tacAI(this, base);
+    let a = tacAI(this, base);
+    // a charged attack needs a breather: never two charges within 3 turns
+    if (a.type === 'move' && MOVES[a.id] && MOVES[a.id].charge) { if (this.turn - (F.lastCharge ?? -9) < 3) { const alt = F.moves.map(m => m.id).filter(id => MOVES[id] && !MOVES[id].charge); if (alt.length) a = { type: 'move', id: pick(alt) }; } else F.lastCharge = this.turn; }
+    return a;
   };
 }
 function tacAI(b, base) {
@@ -198,7 +201,7 @@ function drawShieldBadge(x, X, Y, n, broken, flash) {
   Font.drawC(x, broken ? '×' : String(n), X + 7, Y - 1, broken ? '#ffd0d0' : '#ffffff', '#000000', 9);
 }
 { const _bf = Battle.prototype.drawBoxF; Battle.prototype.drawBoxF = function (x) {
-    _bf.call(this, x); const F = this.F, T = this.tac; if (!T || this.boxF < -20 || this.alphaF <= 0) return;
+    _bf.call(this, x); if (!this.tac) tacInit(this); const F = this.F, T = this.tac; if (!T || this.boxF < -20 || this.alphaF <= 0) return;
     const w = 120, X = (W - w) / 2, py = 6, a = clamp((this.boxF + 30) / 34, 0, 1); x.globalAlpha = a;
     if (F.brkMax) { drawShieldBadge(x, X - 16, py + 9, F.brk, F.broken > 0, T.brkFlash > 0 && Math.floor(T.brkFlash / 3) % 2); }
     // weakness strip below the plate: hidden until the hero has hit a weakness of this species once

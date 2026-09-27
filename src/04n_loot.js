@@ -23,12 +23,15 @@ Object.assign(SPECIALS, {
   shadowStep: { n: '殘影', d: '閃過對手的攻擊後，立刻反擊（70%傷害）。' },
   spellblade: { n: '魔劍共鳴', d: '物理攻擊加上魔攻的30%；魔法攻擊加上物攻的30%。' },
 });
+// quality scaling + sane caps for percentage affixes (t5 gear would otherwise roll 40%+ resistances)
+const AFFIX_CAP = { resist: 30, vs: 30, crit: 12, hit: 15, eva: 10, drain: 12, elem: 18 };
+function scaleAffixes(list, q) { const k = AFFIX_Q[q] || 1; return list.map(a => { const key = (AFFIX_TABLE[a[0]] || {}).key || a[0], cap = AFFIX_CAP[key] || 99; return a.length === 3 ? [a[0], a[1], Math.min(cap, Math.round(a[2] * k))] : [a[0], Math.min(cap, Math.round(a[1] * k))]; }); }
 const RAINBOW_FX = ['double', 'thorns', 'guardHeal', 'regen', 'endure', 'first', 'pierce', 'lastStand', 'fervor', 'predator', 'breaker', 'swift', 'poisonEdge', 'spellblade', 'mpGuard', 'shadowStep'];
 
 makeGear = function (b, q = 1, r) {
   const st = Game.st; st.gid = (st.gid || 0) + 1; const B = GEAR[b], R = GQ_ROLL[q] || GQ_ROLL[1];
   const g = { u: st.gid, b, q, r: r ?? Math.round((R[0] + Math.random() * (R[1] - R[0])) * 100) / 100, a: rollAffixes(AFFIX_COUNT[q], B.slot, B.t) };
-  const k = AFFIX_Q[q] || 1; if (k > 1) g.a = g.a.map(a => a.length === 3 ? [a[0], a[1], Math.round(a[2] * k)] : [a[0], Math.round(a[1] * k)]);
+  g.a = scaleAffixes(g.a, q);
   if (q >= 5) { const pool = RAINBOW_FX.filter(f => !(B.fx || []).includes(f)); g.x = pick(pool); }
   (st.gear || (st.gear = [])).push(g); return g;
 };
@@ -155,7 +158,7 @@ function* reforgeFlow() {
     if (!ok) { yield* say('素材或金錢不夠喔。'); continue; }
     if (!(yield* yesNo('要重鑄' + gearShort(g) + '的詞綴嗎？\n（原本的詞綴會消失）'))) continue;
     st.money -= c.gold; for (const [k, n] of matsOf(c)) st.bag[k] -= n;
-    const B = GEAR[g.b], k = AFFIX_Q[g.q] || 1; g.a = rollAffixes(AFFIX_COUNT[g.q], B.slot, B.t).map(a => a.length === 3 ? [a[0], a[1], Math.round(a[2] * k)] : [a[0], Math.round(a[1] * k)]);
+    const B = GEAR[g.b]; g.a = scaleAffixes(rollAffixes(AFFIX_COUNT[g.q], B.slot, B.t), g.q);
     Sound.sfx('rock'); yield* say('鏘！鏘！鏘！'); Sound.jingle('item'); yield* say('重鑄完成！\n' + gearText(g));
   }
 }

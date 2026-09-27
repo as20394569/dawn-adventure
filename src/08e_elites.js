@@ -52,12 +52,12 @@ function lootHint(key, sp) { const first = !((Game.st.kills || {})[key]), sig = 
 function encounterCard(sp, lv, key, kind, extra) {
   const pic = battlePortrait(sp), stars = dangerStars(lv), hint = lootHint(key, sp);
   return { draw(x) {
-    const X = 8, Y = 18, w = W - 16, h = 126; drawPanel(x, X, Y, w, h, kind === 'boss' ? '#ff6b7a' : '#ffc46b');
+    const X = 8, Y = 18, w = W - 16, h = 118; drawPanel(x, X, Y, w, h, kind === 'boss' ? '#ff6b7a' : '#ffc46b');
     Font.drawC(x, (kind === 'boss' ? '頭目' : '菁英魔物') + (extra ? '・' + extra : ''), W / 2, Y + 3, kind === 'boss' ? '#ff9aa4' : '#ffd890', UIC.textSh, 9);
-    if (pic) { const s = Math.min(1, 84 / pic.height, 100 / pic.width); x.imageSmoothingEnabled = false; x.drawImage(pic, Math.round(W / 2 - pic.width * s / 2), Math.round(Y + 16 + 84 - pic.height * s), Math.round(pic.width * s), Math.round(pic.height * s)); }
-    Font.drawC(x, SPECIES[sp].n + '　Lv' + lv, W / 2, Y + 102, UIC.text, UIC.textSh, 11);
-    let s = ''; for (let i = 0; i < 5; i++) s += i < stars ? '★' : '☆'; Font.drawC(x, '危險度 ' + s, W / 2, Y + 115, stars >= 4 ? '#ff7a7a' : stars === 3 ? '#ffd070' : '#9ad890', UIC.textSh, 9);
-    if (hint) Font.drawC(x, hint, W / 2, Y + 126, '#c8b0ff', UIC.textSh, 8);
+    if (pic) { const s = Math.min(1, 70 / pic.height, 100 / pic.width); x.imageSmoothingEnabled = false; x.drawImage(pic, Math.round(W / 2 - pic.width * s / 2), Math.round(Y + 15 + 70 - pic.height * s), Math.round(pic.width * s), Math.round(pic.height * s)); }
+    Font.drawC(x, SPECIES[sp].n + '　Lv' + lv, W / 2, Y + 86, UIC.text, UIC.textSh, 11);
+    let s = ''; for (let i = 0; i < 5; i++) s += i < stars ? '★' : '☆'; Font.drawC(x, '危險度 ' + s, W / 2, Y + 99, stars >= 4 ? '#ff7a7a' : stars === 3 ? '#ffd070' : '#9ad890', UIC.textSh, 9);
+    if (hint) Font.drawC(x, hint.length > 24 ? hint.slice(0, 23) + '…' : hint, W / 2, Y + 108, '#c8b0ff', UIC.textSh, 8);
   } };
 }
 function* askFight(sp, lv, key, kind, extra) {
@@ -71,7 +71,7 @@ const ELITE_RESPAWN = 250;
     _ld.call(this, id, x, y, dir, silent); const st = this.st, down = st.eliteDown || {};
     for (const e of this.map.d.elites || []) if (st.flags[e.id] && (st.steps || 0) - (down[e.id] || 0) >= ELITE_RESPAWN && !this.elites.some(q => q.id === e.id) && !(e.x === this.p.x && e.y === this.p.y))
       this.elites.push(new Entity({ ...e, lv: e.lv + 3, rematch: true, home: [e.x, e.y, e.dir], img: monsterMini(e.sp, 24) }));
-    const bd = this.map.d.boss; if (bd && st.flags[bd.flag || 'golem']) this.npcs.push(new Entity({ id: 'stele', x: bd.x, y: bd.y, dir: 'down', frames: STELE_FRAMES, stele: bd }));
+    const bd = this.map.d.boss; if (bd && id !== 'rift' && st.flags[bd.flag || 'golem']) this.npcs.push(new Entity({ id: 'stele', x: bd.x, y: bd.y, dir: 'down', frames: STELE_FRAMES, stele: bd }));
     for (const s of this.map.d.steles || []) if (!s.show || s.show(st)) this.npcs.push(new Entity({ id: 'stele', dir: 'down', frames: STELE_FRAMES, ...s, stele: s }));
   };
   const _in = Overworld.prototype.interact; Overworld.prototype.interact = function () {

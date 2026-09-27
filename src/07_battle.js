@@ -268,7 +268,7 @@ class Battle {
     if (this.cg) { const c = this.cg; if (this.turn % 4 === 0 && !c.mirror) return { type: 'mirror' }; const pl = c.flood ? ['m_crystalSpark', 'm_crystalSpark', 'm_prismRay', 'm_quake'] : ['m_prismRay', 'm_crystalShard', 'm_quake', 'm_rumble']; return { type: 'move', id: pick(pl) }; }
     if (F.trait === 'healer' && F.hp < F.maxhp * 0.5 && (F.heals || 0) < 2 && chance(0.6)) return { type: 'foeHeal' };
     let pool = F.moves.map(m => m.id);
-    if (F.boss && this.phase2 && !this.cg) { pool = ['m_rockfall', 'm_quake', 'm_boulder']; if (this.fistCD <= 0) { this.fistCD = 3 + (chance(0.5) ? 1 : 0); return { type: 'move', id: 'm_golemFist' }; } this.fistCD--; }
+    if (F.boss && this.phase2 && !this.cg && this.cfg.sp === 'golem') { pool = ['m_rockfall', 'm_quake', 'm_boulder']; if (this.fistCD <= 0) { this.fistCD = 3 + (chance(0.5) ? 1 : 0); return { type: 'move', id: 'm_golemFist' }; } this.fistCD--; }
     const w = pool.map(id => {
       const mv = MOVES[id]; let v = 10;
       if (mv.st) v = H.status ? 0 : 6;
@@ -350,8 +350,8 @@ class Battle {
       }
       if (!t.hero && t.trait === 'berserk' && !t.raged && t.hp > 0 && t.hp < t.maxhp * 0.4) { t.raged = 1; this.tintF = { c: '#ff3020', a: 0.5 }; yield* wait(12); this.tintF = null; yield* this.msg(t.n + '被激怒了！'); yield* this.statChange(t, { atk: 2 }); }
       if (!t.hero && this.bb && !this.bb.called && t.hp > 0 && t.hp < t.maxhp * 0.5) { this.bb.called = true; this.bb.gang = 4; Sound.sfx('exclaim'); yield* this.msg(t.n + '吹響了口哨！'); yield* this.msg('手下們從暗處衝了出來！'); yield* this.msg('（手下每回合會丟飛刀。選擇「防禦」可以擋下。）'); }
-      if (!t.hero && t.boss && !this.bb && !this.cg && !this.phase2 && t.hp > 0 && t.hp < t.maxhp * 0.5) yield* this.bossPhase2();
-      if (!t.hero && t.boss && !this.bb && !this.cg && this.phase2 && !this.collapse && t.hp > 0 && t.hp < t.maxhp * 0.25) { this.collapse = true; Sound.sfx('quake'); this.shake = 40; yield* this.msg(t.n + '猛力撞擊地面！'); yield* this.msg('遺跡開始崩塌了！每回合都會有落石掉下來！'); yield* this.msg('（選擇「防禦」就能擋住落石。）'); }
+      if (!t.hero && t.boss && !this.bb && !this.cg && this.cfg.sp === 'golem' && !this.phase2 && t.hp > 0 && t.hp < t.maxhp * 0.5) yield* this.bossPhase2();
+      if (!t.hero && t.boss && !this.bb && !this.cg && this.cfg.sp === 'golem' && this.phase2 && !this.collapse && t.hp > 0 && t.hp < t.maxhp * 0.25) { this.collapse = true; Sound.sfx('quake'); this.shake = 40; yield* this.msg(t.n + '猛力撞擊地面！'); yield* this.msg('遺跡開始崩塌了！每回合都會有落石掉下來！'); yield* this.msg('（選擇「防禦」就能擋住落石。）'); }
       return;
     }
     // status moves

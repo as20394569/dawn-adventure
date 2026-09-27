@@ -177,6 +177,84 @@
   "deathTome": [
    "catacomb掉落池"
   ],
+  "moonBlade": [
+   "lake掉落池",
+   "lake寶箱",
+   "重戰掉落:rogueBlade"
+  ],
+  "lakeStaff": [
+   "lake掉落池",
+   "鐵匠配方"
+  ],
+  "moonDagger": [
+   "lake掉落池",
+   "重戰掉落:lizardChief",
+   "鐵匠配方"
+  ],
+  "reedHat": [
+   "lake掉落池",
+   "重戰掉落:lizardChief"
+  ],
+  "crabMail": [
+   "lake掉落池",
+   "鐵匠配方"
+  ],
+  "lakeBoots": [
+   "lake掉落池"
+  ],
+  "moonPendant": [
+   "lake掉落池",
+   "重戰掉落:silverWyrm",
+   "鐵匠配方"
+  ],
+  "lakeTome": [
+   "lake掉落池",
+   "lake寶箱",
+   "重戰掉落:thug1(魔導士)",
+   "重戰掉落:thug2(魔導士)",
+   "重戰掉落:banditBoss(魔導士)"
+  ],
+  "riftSword": [
+   "rift掉落池",
+   "異界迴廊"
+  ],
+  "riftStaff": [
+   "rift掉落池",
+   "異界迴廊"
+  ],
+  "riftDagger": [
+   "rift掉落池",
+   "異界迴廊"
+  ],
+  "riftTome": [
+   "rift掉落池",
+   "異界迴廊"
+  ],
+  "riftHelm": [
+   "rift掉落池",
+   "異界迴廊",
+   "迴廊兌換"
+  ],
+  "riftMail": [
+   "rift掉落池",
+   "異界迴廊"
+  ],
+  "riftRobe": [
+   "rift掉落池",
+   "異界迴廊"
+  ],
+  "riftBoots": [
+   "rift掉落池",
+   "異界迴廊",
+   "迴廊兌換"
+  ],
+  "riftRing": [
+   "rift掉落池",
+   "重戰掉落:gatekeeper",
+   "異界迴廊",
+   "迴廊兌換",
+   "鐵匠配方"
+  ],
   "magusStaff": [
    "道具店(沼澤鱷後)"
   ],
@@ -255,29 +333,22 @@
    "鐵匠配方"
   ],
   "reedBoots": [
-   "重戰掉落:lizardChief"
+   "重戰掉落:lizardChief",
+   "蜥人隊長掉落"
   ],
   "scaleCharm": [
    "重戰掉落:lizardChief"
   ],
-  "moonDagger": [
-   "重戰掉落:lizardChief",
-   "鐵匠配方"
-  ],
-  "reedHat": [
-   "重戰掉落:lizardChief"
-  ],
   "eclipseBlade": [
-   "重戰掉落:rogueBlade"
+   "重戰掉落:rogueBlade",
+   "流浪的魔劍士掉落"
   ],
   "wandererCloak": [
    "重戰掉落:rogueBlade"
   ],
-  "moonBlade": [
-   "重戰掉落:rogueBlade"
-  ],
   "wyrmMail": [
-   "重戰掉落:silverWyrm"
+   "重戰掉落:silverWyrm",
+   "銀鱗水龍掉落"
   ],
   "wyrmFang": [
    "重戰掉落:silverWyrm"
@@ -287,12 +358,9 @@
    "重戰掉落:boneKnight(魔導士)",
    "重戰掉落:silverWyrm(魔導士)"
   ],
-  "moonPendant": [
-   "重戰掉落:silverWyrm",
-   "鐵匠配方"
-  ],
   "gateKey": [
-   "重戰掉落:gatekeeper"
+   "重戰掉落:gatekeeper",
+   "異界守門者掉落"
   ],
   "voidBlade": [
    "重戰掉落:gatekeeper"
@@ -300,10 +368,6 @@
   "voidTome": [
    "重戰掉落:gatekeeper",
    "重戰掉落:gatekeeper(魔導士)"
-  ],
-  "riftRing": [
-   "重戰掉落:gatekeeper",
-   "鐵匠配方"
   ],
   "woodSword": [
    "職業起始",
@@ -345,12 +409,6 @@
   "foxfireStaff": [
    "鐵匠配方"
   ],
-  "lakeStaff": [
-   "鐵匠配方"
-  ],
-  "crabMail": [
-   "鐵匠配方"
-  ],
   "uniform": [
    "劇情/任務"
   ],
@@ -375,11 +433,6 @@
   "fangWand": [
    "重戰掉落:wolf(魔導士)",
    "狂牙狼掉落(魔導士)"
-  ],
-  "lakeTome": [
-   "重戰掉落:thug1(魔導士)",
-   "重戰掉落:thug2(魔導士)",
-   "重戰掉落:banditBoss(魔導士)"
   ]
  },
  "item": {
@@ -400,7 +453,8 @@
    "sewer寶箱",
    "mine寶箱",
    "catacomb寶箱",
-   "行商"
+   "行商",
+   "迴廊兌換"
   ],
   "potion": [
    "route寶箱",
@@ -435,19 +489,23 @@
    "route採集",
    "route採集",
    "forest採集",
-   "forest採集"
+   "forest採集",
+   "lake採集"
   ],
   "manaHerb": [
    "route採集",
    "forest採集",
    "sewer採集",
-   "ruins採集"
+   "ruins採集",
+   "lake採集"
   ],
   "wisdomFruit": [
-   "forest寶箱"
+   "forest寶箱",
+   "迴廊兌換"
   ],
   "luckClover": [
    "forest寶箱",
+   "迴廊兌換",
    "委託獎勵",
    "委託獎勵"
   ],
@@ -496,8 +554,10 @@
   "elixir": [
    "mine寶箱",
    "catacomb寶箱",
+   "lake寶箱",
    "行商",
    "道具店(魔像後)",
+   "迴廊兌換",
    "委託獎勵"
   ],
   "ectoplasm": [
@@ -506,6 +566,22 @@
    "魔物:幽靈燈",
    "魔物:溺魂",
    "魔物:怨靈"
+  ],
+  "hiEther": [
+   "lake寶箱",
+   "行商",
+   "迴廊兌換",
+   "鐵匠配方",
+   "委託獎勵",
+   "委託獎勵"
+  ],
+  "swordPage": [
+   "lake寶箱"
+  ],
+  "moonDew": [
+   "lake採集",
+   "lake採集",
+   "魔物:月光水精"
   ],
   "antidote": [
    "道具店"
@@ -529,16 +605,18 @@
    "行商",
    "道具店(魔像後)"
   ],
-  "hiEther": [
-   "行商",
-   "鐵匠配方",
-   "委託獎勵"
-  ],
   "tpBook": [
    "行商",
    "道具店(魔像後)",
+   "迴廊兌換",
+   "委託獎勵",
    "委託獎勵",
    "委託獎勵"
+  ],
+  "riftShard": [
+   "迴廊兌換",
+   "魔物:虛空之眼",
+   "魔物:裂界騎士"
   ],
   "shroomCap": [
    "魔物:嘟嘟菇"
@@ -579,7 +657,17 @@
    "魔物:礦坑毒蛛",
    "分解"
   ],
+  "lizardScale": [
+   "魔物:蘆葦鉗蟹",
+   "魔物:湖蜥戰士"
+  ],
+  "mothDust": [
+   "魔物:暮光蛾"
+  ],
   "license": [
+   "劇情/任務"
+  ],
+  "riftToken": [
    "劇情/任務"
   ]
  },
@@ -675,7 +763,8 @@
    "配方:moonDagger",
    "配方:lakeStaff",
    "配方:moonPendant",
-   "配方:riftRing"
+   "配方:riftRing",
+   "委託c16"
   ],
   "lizardScale": [
    "配方:moonDagger",
