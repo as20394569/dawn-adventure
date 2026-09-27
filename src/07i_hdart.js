@@ -136,7 +136,11 @@ function hdPoseDef(def, rig, pose, off) {
 const HD_KL = 80 / 64, HD_KL_BIG = 92 / 64; // screen pixels per design unit (monster box ≈ 80 / 92 px)
 const HD_GLOSS = { slime: 0.55, ghost: 0.15, golem: 0.08, brute: 0.12, flame: 0.2, lamp: 0.45, beast: 0.18, human: 0.2 };
 const HD_IDLE_PERIOD = 72;
-function hdCanvas(A, wL, hL) { const D = SCALE; if (!A.cv || A.cvD !== D) { A.cv = mkCanvas(Math.ceil(wL * D), Math.ceil(hL * D)); A.cvT = mkCanvas(A.cv.width, A.cv.height); A.cvD = D; } A.cv.ds = A.cvT.ds = 1 / D; return A.cv; }
+// adaptive quality: if drawing the battle is slow on this device, drop bloom/shafts/near motes and render at 2x
+const HD_QUALITY = { ema: 0, n: 0, low: false };
+function hdQualityTick(ms) { const Q = HD_QUALITY; Q.n++; Q.ema = Q.n < 5 ? ms : Q.ema * 0.95 + ms * 0.05; if (!Q.low && Q.n > 40 && Q.ema > 11) Q.low = true; }
+const hdD = () => Math.min(SCALE, HD_QUALITY.low ? 2 : 3); // render density cap (smoothly upscaled beyond that)
+function hdCanvas(A, wL, hL) { const D = hdD(); if (!A.cv || A.cvD !== D) { A.cv = mkCanvas(Math.ceil(wL * D), Math.ceil(hL * D)); A.cvT = mkCanvas(A.cv.width, A.cv.height); A.cvD = D; } A.cv.ds = A.cvT.ds = 1 / D; return A.cv; }
 function hdFoeSpec(sp) {
   const def = ART[sp], rig = hdRig(sp), kL = FOE_NATIVE[sp] ? HD_KL_BIG : HD_KL, pad = 16, SL = Math.round(64 * kL + pad * 2);
   const off = [1, 0, 0, 1, pad / kL, (SL - 64 * kL - 1) / kL];
@@ -284,11 +288,18 @@ function hdStep(b, A, who) {
   };
   const _d = Battle.prototype.draw; Battle.prototype.draw = function (x) {
     if (!hdOn() || !this.hd || !this.hd.ok) return _d.call(this, x);
-    const D = this.hd, blit = (im, X, Y, w, h) => { const ds = im.ds || 1; x.drawImage(im, X, Y, w ?? im.width * ds, h ?? im.height * ds); };
-    const im = this.imgF = hdRenderFoe(D.F, D.specF, this.t), hi = this.imgH = this.imgH2 = hdRenderHero(D.H, D.look, this.t);
+    const tStart = performance.now();
+    const D = this.hd, blit = (im, X, Y, w, h) => { const ds = im.ds || 1; x.imageSmoothingEnabled = true; x.drawImage(im, X, Y, w ?? im.width * ds, h ?? im.height * ds); x.imageSmoothingEnabled = false; };
+    if (!this.hd2d) { this.cfgBg = this.bg.kind || 'field'; hd2dInit(this); } const LK = this.hd2d.L;
+    // actors are re-rendered every frame while acting, every other frame while idle (saves battery on phones)
+    const redraw = A => !A.cv || A.state !== 'idle' || (this.t & 1) === 0 || A.lastT === undefined || A.cvD !== hdD();
+    let im = D.F.cv, hi = D.H.cv;
+    if (redraw(D.F)) { im = hdRenderFoe(D.F, D.specF, this.t); hd2dLightActor(im, LK); D.F.lastT = this.t; }
+    if (redraw(D.H)) { hi = hdRenderHero(D.H, D.look, this.t); hd2dLightActor(hi, LK); D.H.lastT = this.t; }
+    this.imgF = im; this.imgH = this.imgH2 = hi;
     const sx = this.shake > 0 ? rnd(-3, 3) : 0, sy = this.shake > 0 ? rnd(-2, 2) : 0;
-    x.save(); x.translate(sx, sy); x.drawImage(this.bg, 0, 0);
-    if (this.alphaF > 0) { x.globalAlpha = 0.22 * this.alphaF; x.drawImage(this.shadowF, Math.round(this.foeX + 32 + this.offF.x - this.shadowF.width / 2), FOE_FOOT - 5); x.globalAlpha = 1; }
+    x.save(); x.translate(sx, sy); x.imageSmoothingEnabled = true; x.drawImage(hd2dStageFor(this), 0, 0, W, BH); x.imageSmoothingEnabled = false; hd2dMotes(this, x, false);
+    if (this.alphaF > 0) hd2dSoftShadow(x, this.foeX + 32 + this.offF.x, FOE_FOOT - 1, im.bb.w * 0.46, 5, 0.42 * this.alphaF);
     const ds = im.ds, fw = im.width * ds, fh = im.height * ds, fx0 = this.foeX + 32 - im.bb.cx + this.offF.x, fy0 = FOE_FOOT - im.bb.bot + this.offF.y + this.sinkF;
     if (this.alphaF > 0 && !(this.blinkF > 0 && Math.floor(this.blinkF / 3) % 2)) {
       x.save(); x.beginPath(); x.rect(0, 0, W, FOE_FOOT + 3); x.clip(); x.globalAlpha = this.alphaF;
@@ -299,15 +310,17 @@ function hdStep(b, A, who) {
     if (this.cg && this.cg.shards > 0 && this.alphaF > 0) { const C = this.center(this.F); for (let i = 0; i < this.cg.shards; i++) { const an = this.t / 20 + i * Math.PI * 2 / 3, px0 = Math.round(C.x + Math.cos(an) * 44), py0 = Math.round(C.y + Math.sin(an) * 14); x.fillStyle = '#1a3050'; x.fillRect(px0 - 3, py0 - 5, 7, 11); x.fillStyle = '#9ae0ff'; x.fillRect(px0 - 2, py0 - 4, 5, 9); x.fillStyle = '#e8fbff'; x.fillRect(px0 - 1, py0 - 3, 2, 4); } }
     if (this.cg && this.cg.mirror && this.alphaF > 0 && Math.floor(this.t / 8) % 2) { x.globalAlpha = 0.25; blit(hdRenderFoe(D.F, D.specF, this.t, '#e8fbff'), this.foeX + 32 - im.bb.cx, FOE_FOOT - im.bb.bot, fw, fh); x.globalAlpha = 1; }
     if (!(this.blinkH > 0 && Math.floor(this.blinkH / 3) % 2)) {
-      const hx0 = this.heroX + HD_HERO_OX; x.save(); x.globalAlpha = 0.25; x.drawImage(this.shadowH, Math.round(hx0 + 28 + this.offH.x - this.shadowH.width / 2), HERO_Y + 66); x.globalAlpha = Math.max(0, 1 - this.sinkH / 70);
+      const hx0 = this.heroX + HD_HERO_OX; x.save(); hd2dSoftShadow(x, hx0 + 28 + this.offH.x, HERO_Y + 72, 26, 6, 0.4); x.globalAlpha = Math.max(0, 1 - this.sinkH / 70);
       const hx = hx0 + this.offH.x, hy = HERO_Y + this.offH.y + this.sinkH * 0.25, hw = hi.width * hi.ds, hh = hi.height * hi.ds;
       blit(hi, hx, hy); if (this.tintH) { x.globalAlpha = this.tintH.a; blit(hdRenderHero(D.H, D.look, this.t, this.tintH.c), hx, hy, hw, hh); }
       x.restore();
     }
     for (const p of this.fx) drawParticle(x, p);
+    const lowQ = HD_QUALITY.low; if (!lowQ) { hd2dMotes(this, x, true); hd2dShafts(this, x); hd2dBloom(this, x); }
     this.drawBoxF(x); this.drawBoxH(x);
     x.restore();
     x.fillStyle = '#0b0d18'; x.fillRect(0, BH, W, H - BH); x.fillStyle = PANEL.edge; x.fillRect(0, BH, W, 1);
     if (this.cover > 0) { x.fillStyle = '#000'; const h = Math.round(this.cover * (H / 2 + 1)); x.fillRect(0, 0, W, h); x.fillRect(0, H - h, W, h); }
+    hdQualityTick(performance.now() - tStart);
   };
 }
