@@ -31,6 +31,17 @@ for f in sorted(glob.glob(os.path.join(root, 'art', 'ui', 'px', '*.png'))):
 js += 'const UI_PX_SRC = ' + json.dumps(ui, separators=(',', ':')) + ';\n'
 mp = os.path.join(root, 'art', 'ui', 'px', 'meta.json')
 js += 'const UI_PX_META = ' + (open(mp).read() if os.path.exists(mp) else '{}') + ';\n'
-print('animated', len(a), 'field', len(fd), 'ui', len(ui), 'chibi', len(pc))
+sk = {}
+for f in sorted(glob.glob(os.path.join(root, 'art', 'ui', 'battle', '*.png'))):
+    n = os.path.basename(f)[:-4]
+    if n != 'ui_mockup': sk[n] = 'data:image/png;base64,' + base64.b64encode(open(f, 'rb').read()).decode()
+js += 'const UI_SKIN_SRC = ' + json.dumps(sk, separators=(',', ':')) + ';\n'
+hr = {}
+for f in sorted(glob.glob(os.path.join(root, 'art', 'hero', 'px', '*.png'))):
+    hr[os.path.basename(f)[:-4]] = 'data:image/png;base64,' + base64.b64encode(open(f, 'rb').read()).decode()
+hm = os.path.join(root, 'art', 'hero', 'px', 'meta.json')
+js += 'const HERO_PX_SRC = ' + json.dumps(hr, separators=(',', ':')) + ';\n'
+js += 'const HERO_PX_META = ' + (open(hm).read() if os.path.exists(hm) else 'null') + ';\n'
+print('animated', len(a), 'field', len(fd), 'ui', len(ui), 'chibi', len(pc), 'skin', len(sk), 'hero', len(hr))
 open(os.path.join(root, 'src', '07id_sprites.js'), 'w').write(js)
 print('embedded', len(d), 'sprites', sum(len(v) for v in d.values()) // 1024, 'KB')

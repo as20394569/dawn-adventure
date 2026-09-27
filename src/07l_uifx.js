@@ -15,7 +15,7 @@ function drawStageIcons(x, b, X, Y, max = 4) {
 }
 { const _bf = Battle.prototype.drawBoxF; Battle.prototype.drawBoxF = function (x) {
     _bf.call(this, x); const F = this.F; if (!UI_PX.icons || !UI_PX.icons.ok || this.boxF < -20 || this.alphaF <= 0) return;
-    const a = clamp((this.boxF + 30) / 34, 0, 1); x.globalAlpha = a; const n = ['atk', 'def', 'spa', 'spd', 'spe'].filter(k => F.stages[k]).length; drawStageIcons(x, F, (W + 120) / 2 - 4 - Math.min(4, n) * (ICON_SZ + 2), 6 + 34); x.globalAlpha = 1;
+    const a = clamp((this.boxF + 30) / 34, 0, 1); x.globalAlpha = a; const n = ['atk', 'def', 'spa', 'spd', 'spe'].filter(k => F.stages[k]).length; drawStageIcons(x, F, (W + 120) / 2 - 4 - Math.min(4, n) * (ICON_SZ + 2), 6 + 34 + plateExtra()); x.globalAlpha = 1;
   };
   const _bh = Battle.prototype.drawBoxH; Battle.prototype.drawBoxH = function (x) {
     _bh.call(this, x); const Y = Math.round(this.boxH), H = this.H; if (Y >= BH || !UI_PX.icons || !UI_PX.icons.ok) return;

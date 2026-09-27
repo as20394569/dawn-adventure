@@ -14,20 +14,20 @@ Object.assign(Battle.prototype, {
     const F = this.F; if (this.boxF < -20 || this.alphaF <= 0) return;
     const a = clamp((this.boxF + 30) / 34, 0, 1), w = 120, X = (W - w) / 2, py = 6;
     const rim = F.boss ? '#ff6b7a' : F.elite ? '#ffc46b' : F.rare ? '#ffd84a' : '#8a93b3', tag = F.rare ? '稀有' : F.boss ? '頭目' : F.elite ? '菁英' : '';
-    x.globalAlpha = a; x.fillStyle = 'rgba(10,8,20,0.75)'; x.fillRect(X, py, w, 33); x.fillStyle = rim; x.fillRect(X + 2, py, w - 4, 1); x.fillRect(X + 2, py + 32, w - 4, 1); x.fillRect(X, py + 2, 1, 29); x.fillRect(X + w - 1, py + 2, 1, 29);
+    x.globalAlpha = a; if (!uiPlate(x, X, py, w, 33 + plateExtra(), F)) { x.fillStyle = 'rgba(10,8,20,0.75)'; x.fillRect(X, py, w, 33); x.fillStyle = rim; x.fillRect(X + 2, py, w - 4, 1); x.fillRect(X + 2, py + 32, w - 4, 1); x.fillRect(X, py + 2, 1, 29); x.fillRect(X + w - 1, py + 2, 1, 29); }
     Font.draw(x, F.n, X + 6, py + 1, UIC.text, UIC.textSh, 10); if (tag) Font.drawR(x, tag, X + w - 6, py + 2, rim, UIC.textSh, 8);
     let lx = Font.draw(x, 'Lv' + F.lv, X + 6, py + 14, UIC.muted, UIC.textSh, 8); if (FAMILIES[F.fam]) lx = Font.draw(x, '・' + FAMILIES[F.fam].n, lx + 1, py + 14, FAMILIES[F.fam].c, UIC.textSh, 8);
     const bs = [F.status, F.wet && 'wet', F.tangle && 'tangle', F.shield && 'shield'].filter(Boolean); badgeRow(x, bs.slice(0, 3), X + w - 6 - Math.min(3, bs.length) * 18, py + 14);
-    const r = clamp(this.disp.F / F.maxhp, 0, 1); x.fillStyle = '#1a1024'; x.fillRect(X + 6, py + 27, w - 12, 3); x.fillStyle = r > 0.5 ? '#e0504a' : r > 0.2 ? '#ff8a3a' : '#ffd040'; x.fillRect(X + 6, py + 27, Math.round((w - 12) * r), 3);
+    const r = clamp(this.disp.F / F.maxhp, 0, 1); if (!uiBar(x, X + 7, py + 30, w - 14, r, r > 0.25 ? 'foe' : 'low')) { x.fillStyle = '#1a1024'; x.fillRect(X + 6, py + 27, w - 12, 3); x.fillStyle = r > 0.5 ? '#e0504a' : r > 0.2 ? '#ff8a3a' : '#ffd040'; x.fillRect(X + 6, py + 27, Math.round((w - 12) * r), 3); }
     x.globalAlpha = 1;
   },
   drawBoxH(x) { // one slim row: name · Lv │ HP ▬▬ 49 │ MP ▬▬ 45
     const Y = Math.round(this.boxH), st = Game.st; if (Y >= BH) return;
     const r = clamp(this.disp.H / this.H.maxhp, 0, 1), mr = clamp(st.mp / (this.H.maxmp || 1), 0, 1), my = Y + 6;
-    x.fillStyle = 'rgba(12,10,22,0.9)'; x.fillRect(0, Y, W, BH - Y); x.fillStyle = '#c8a050'; x.fillRect(0, Y, W, 1);
+    if (!uiHud(x, 0, Y - 3, W, BH - Y + 4)) { x.fillStyle = 'rgba(12,10,22,0.9)'; x.fillRect(0, Y, W, BH - Y); x.fillStyle = '#c8a050'; x.fillRect(0, Y, W, 1); }
     const cx = Font.draw(x, st.name, 4, Y, UIC.text, UIC.textSh, 9); Font.draw(x, 'Lv' + st.lv, cx + 2, Y + 2, '#c8a050', UIC.textSh, 7);
-    Font.draw(x, 'HP', 62, Y + 2, '#ff9a8a', UIC.textSh, 7); x.fillStyle = '#241018'; x.fillRect(74, my, 30, 3); x.fillStyle = r > 0.5 ? '#5ad07a' : r > 0.2 ? '#ffc040' : '#ff5a5a'; x.fillRect(74, my, Math.round(30 * r), 3); Font.drawR(x, Math.ceil(this.disp.H) + '', 122, Y + 1, r <= 0.2 ? UIC.bad : UIC.text, UIC.textSh, 8);
-    Font.draw(x, 'MP', 127, Y + 2, '#8ab8ff', UIC.textSh, 7); x.fillStyle = '#101a30'; x.fillRect(139, my, 21, 3); x.fillStyle = '#5aa8ff'; x.fillRect(139, my, Math.round(21 * mr), 3); Font.drawR(x, st.mp + '', 174, Y + 1, '#b8d4ff', UIC.textSh, 8);
+    Font.draw(x, 'HP', 62, Y + 2, '#ff9a8a', UIC.textSh, 7); if (!uiBar(x, 76, my, 28, r, r > 0.25 ? 'hp' : 'low')) { x.fillStyle = '#241018'; x.fillRect(74, my, 30, 3); x.fillStyle = r > 0.5 ? '#5ad07a' : r > 0.2 ? '#ffc040' : '#ff5a5a'; x.fillRect(74, my, Math.round(30 * r), 3); } Font.drawR(x, Math.ceil(this.disp.H) + '', 122, Y + 1, r <= 0.2 ? UIC.bad : UIC.text, UIC.textSh, 8);
+    Font.draw(x, 'MP', 127, Y + 2, '#8ab8ff', UIC.textSh, 7); if (!uiBar(x, 141, my, 19, mr, 'mp')) { x.fillStyle = '#101a30'; x.fillRect(139, my, 21, 3); x.fillStyle = '#5aa8ff'; x.fillRect(139, my, Math.round(21 * mr), 3); } Font.drawR(x, st.mp + '', 174, Y + 1, '#b8d4ff', UIC.textSh, 8);
     const bs = [st.status, this.H.wet && 'wet', this.H.tangle && 'tangle', this.H.shield && 'shield'].filter(Boolean); if (bs.length) badgeRow(x, bs.slice(0, 1), 4, Y - 13);
   },
   *intro() { // flash in: the foe materialises, the hero steps up from below
@@ -45,7 +45,7 @@ Object.assign(Battle.prototype, {
     while (true) {
       this.idle = true;
       const r = yield* choose(names.map(() => ({ t: '' })), { x: 4, y: BB_Y + 3, w: W - 8, h: BB_H - 5, cols: 5, colW: 34, rowH: BB_H - 6, ox: 0, oy: 0, buttons: true, noFrame: true, cancel: false, index: this.cmdIdx,
-        drawExtra: (x, m) => { names.forEach((n, k) => { const X = m.x + k * 34, on = k === m.i; if (on) { x.fillStyle = '#c8a050'; x.fillRect(X + 1, m.y, 29, 1); x.fillRect(X + 1, m.y + m.rowH - 3, 29, 1); } x.drawImage(CMD_ICONS[n], 0, 0, 12, 12, X + 9, m.y + 3, 12, 12); Font.drawC(x, n, X + 15, m.y + 16, on ? '#ffe8b0' : UIC.muted, UIC.textSh, 8); }); } });
+        drawExtra: (x, m) => { names.forEach((n, k) => { const X = m.x + k * 34, on = k === m.i; if (!uiCmdIcon(x, k, X + 7, m.y + 1)) { if (on) { x.fillStyle = '#c8a050'; x.fillRect(X + 1, m.y, 29, 1); x.fillRect(X + 1, m.y + m.rowH - 3, 29, 1); } x.drawImage(CMD_ICONS[n], 0, 0, 12, 12, X + 9, m.y + 3, 12, 12); } Font.drawC(x, n, X + 15, m.y + 16, on ? '#ffe8b0' : UIC.muted, UIC.textSh, 8); }); } });
       this.idle = false; this.cmdIdx = r;
       if (r === 0) return { type: 'move', id: 'attack' };
       if (r === 1) { const m = yield* this.chooseMove(); if (m) return { type: 'move', id: m }; }

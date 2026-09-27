@@ -206,9 +206,9 @@ function drawShieldBadge(x, X, Y, n, broken, flash) {
     if (F.brkMax) { drawShieldBadge(x, X - 16, py + 9, F.brk, F.broken > 0, T.brkFlash > 0 && Math.floor(T.brkFlash / 3) % 2); }
     // weakness strip below the plate: hidden until the hero has hit a weakness of this species once
     const fam = FAMILIES[F.fam];
-    if (fam && fam.weak.length) { const s = '弱 ' + (T.rev ? fam.weak.join('・') : '？'); x.fillStyle = 'rgba(10,8,20,0.7)'; const tw = Font.width(s, 8) + 8; x.fillRect(X + 4, py + 33, tw, 11); Font.draw(x, s, X + 8, py + 32, T.rev ? '#ffd070' : UIC.muted, UIC.textSh, 8); }
-    if (F.broken > 0) { const bl = Math.floor(this.t / 6) % 2; Font.drawC(x, '— 破防中 —', W / 2, py + 45, bl ? '#ffd040' : '#ff8a50', '#000000', 10); }
-    else if (F.charging) { const bl = Math.floor(this.t / 8) % 2; Font.drawC(x, '蓄力中！下回合發動', W / 2, py + 45, bl ? '#ff5a5a' : '#ffb0a0', '#000000', 10); }
+    if (fam && fam.weak.length) { const s = '弱 ' + (T.rev ? fam.weak.join('・') : '？'); const pe = plateExtra(); x.fillStyle = 'rgba(10,8,20,0.7)'; const tw = Font.width(s, 8) + 8; x.fillRect(X + 4, py + 33 + pe, tw, 11); Font.draw(x, s, X + 8, py + 32 + pe, T.rev ? '#ffd070' : UIC.muted, UIC.textSh, 8); }
+    if (F.broken > 0) { const bl = Math.floor(this.t / 6) % 2; Font.drawC(x, '— 破防中 —', W / 2, py + 45 + plateExtra(), bl ? '#ffd040' : '#ff8a50', '#000000', 10); }
+    else if (F.charging) { const bl = Math.floor(this.t / 8) % 2; Font.drawC(x, '蓄力中！下回合發動', W / 2, py + 45 + plateExtra(), bl ? '#ff5a5a' : '#ffb0a0', '#000000', 10); }
     x.globalAlpha = 1;
   };
   const _dr = Battle.prototype.draw; Battle.prototype.draw = function (x) {
