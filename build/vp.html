@@ -1902,7 +1902,7 @@ const MAPS = {
     ],
     edgeWarps: [{ dir: 'left', at: [26], to: ['forest', 21, 11, 'left'] }],
     gathers: [{ id: 'gr1', x: 5, y: 26, mat: 'herb' }, { id: 'gr2', x: 18, y: 14, mat: 'herb' }],
-    signs: { '2,24': '「← 迷霧森林」\n樹林深處據說藏著古老的秘密。', '15,3': '「↑ 古岩遺跡」\n傳說中的異界之門就在遺跡深處。危險！', '6,40': '「晨霧道路」\n↑ 古岩遺跡　↓ 萌芽鎮' },
+    signs: { '2,24': '「← 迷霧森林」\n樹林深處據說藏著古老的秘密。', '15,3': '「↑ 古岩遺跡」\n最近魔物暴動，魔像甦醒。非冒險者禁止進入！', '6,40': '「晨霧道路」\n↑ 古岩遺跡　↓ 萌芽鎮' },
     connect: { s: { map: 'town', dx: 0 } },
     northWarp: { x: [10, 11], to: ['ruins', 7, 13, 'up'] },
     gate: { x: 9, y: 0 },
@@ -2236,7 +2236,7 @@ Object.assign(ITEMS, { pocketWatch: { n: '銀懷錶', key: 1, d: '背面刻著�
 const COMMISSIONS = {
   c1: { n: '藥草告急', from: '旅店老闆娘', d: '旅店的傷藥快用完了。請帶來藥草×5。', need: { herb: 5 }, reward: { gold: 300, items: { superPotion: 2 } }, open: st => st.flags.license },
   c2: { n: '趕走電電蜂', from: '果園農夫', d: '電電蜂在道路北邊螫傷了好多人。接下委託後，擊敗電電蜂×4。', kill: ['bee', 4], reward: { gold: 400, items: { luckClover: 1 } }, open: st => st.flags.license },
-  c3: { n: '晶石研究', from: '村長', d: '想研究地下水道的水晶和異界之門的關係。請帶來水晶碎片×3。', need: { crystal: 3 }, reward: { items: { tpBook: 1 } }, open: st => st.flags.golem },
+  c3: { n: '晶石研究', from: '村長', d: '想研究地下水道的水晶和魔王封印的關係。請帶來水晶碎片×3。', need: { crystal: 3 }, reward: { items: { tpBook: 1 } }, open: st => st.flags.golem },
   c4: { n: '遺失的懷錶', from: '旅行者', d: '在迷霧森林東側弄丟了一只銀懷錶。找到的話，請放進委託箱。', key: 'pocketWatch', reward: { gold: 800 }, open: st => st.flags.wolf },
   c5: { n: '驅除嘟嘟菇', from: '菜園大嬸', d: '嘟嘟菇把菜園啃得亂七八糟。接下委託後，擊敗嘟嘟菇×5。', kill: ['mush', 5], reward: { gold: 250, items: { potion: 3 } }, open: st => st.flags.license },
   c6: { n: '魔力草研究', from: '魔法學徒', d: '想研究會發光的草。請帶來魔力草×3。（晨霧道路北邊、迷霧森林、地下水道都採得到）', need: { manaHerb: 3 }, reward: { gold: 400, items: { manaPotion: 3 } }, open: st => st.flags.license },
@@ -2369,7 +2369,7 @@ const QUEST_EVENTS = {
       st.money += 1000; const g = makeGear('guardHelm', 2); yield* itemGet(st.name + '得到了1000 G和' + gearName(g) + '！'); return;
     }
     if (f.q2res === 'stay' && f.q2done && !f.q2thx) { f.q2thx = 1; yield* sayAll(['提姆都跟我說了。你們一起打倒了苔石巨人！', '……那傢伙已經是獨當一面的獵人了。謝謝你相信他。']); return; }
-    yield* sayAll(f.golem ? ['你打倒了魔像！傳說中的門……真的存在嗎？'] : ['前方就是古岩遺跡。傳說中的異界之門，就在遺跡深處。', '魔像非常強大。先在泉水恢復體力，準備好道具再進去吧。', '也別忘了記錄進度！']);
+    yield* sayAll(f.golem ? ['你打倒了魔像！……魔王要復活的傳聞，是真的嗎？'] : ['前方就是古岩遺跡。魔像被瘴氣侵蝕，越來越凶暴了。', '魔像非常強大。先在泉水恢復體力，準備好道具再進去吧。', '也別忘了記錄進度！']);
   },
   *tim(ow, ent) {
     const st = Game.st, f = st.flags;
@@ -2564,7 +2564,7 @@ const MINE_EVENTS = {
       st.flags.bandit = 1; ow.boss = null;
       yield* sayAll(['「……可惡……你這傢伙……到底是什麼人……」', '格倫丟下一張破舊的地圖，逃進了坑道深處。']);
       st.money += 1500; st.bag.superPotion = (st.bag.superPotion || 0) + 3; yield* itemGet('奪回了商隊的貨物！得到1500 G和好傷藥×3！');
-      yield* sayAll(['地圖上畫著王都的城牆……還有一個奇怪的記號：', '「異界之門・第二把鑰匙」。', st.flags.caravan === 'lost' ? '（把貨物的消息帶回萌芽鎮，道具店就能恢復進貨了。）' : '（回萌芽鎮告訴行商吧。）']);
+      yield* sayAll(['地圖上畫著王都的城牆……還有一個奇怪的記號：', '一個黑色的角形徽記——魔王軍的標誌。', '……有人在替魔王做事。', st.flags.caravan === 'lost' ? '（把貨物的消息帶回萌芽鎮，道具店就能恢復進貨了。）' : '（回萌芽鎮告訴行商吧。）']);
       saveGame();
     })();
   },
@@ -2920,7 +2920,8 @@ Object.assign(MAPS.sewer, { gearPool: ['knightSword', 'tideStaff', 'knightHelm',
 
 /* ---------- Encounter tables & rare monsters (3%, may flee) ---------- */
 MAPS.route.encounters = [
-  { y0: 26, y1: 99, rate: 0.11, table: [['mush', 3, 5, 30], ['bird', 3, 5, 30], ['pebble', 3, 5, 15], ['slime', 4, 5, 25]] },
+  { y0: 34, y1: 99, rate: 0.11, table: [['mush', 0, 2, 30], ['bird', 0, 2, 30], ['pebble', 1, 2, 15], ['slime', 1, 3, 25]] }, // starter meadow next to town (Lv1-4 after the area shift)
+  { y0: 26, y1: 33, rate: 0.11, table: [['mush', 3, 5, 30], ['bird', 3, 5, 30], ['pebble', 3, 5, 15], ['slime', 4, 5, 25]] },
   { y0: 11, y1: 25, rate: 0.11, table: [['fox', 6, 8, 22], ['bee', 6, 8, 22], ['frog', 6, 8, 22], ['mush', 6, 8, 8], ['bird', 6, 8, 8], ['pebble', 6, 8, 8], ['slime', 7, 8, 10]] },
   { y0: 0, y1: 10, rate: 0.12, table: [['thunderBeetle', 8, 10, 24], ['emberSpirit', 8, 10, 22], ['fox', 8, 10, 16], ['bee', 8, 10, 14], ['frog', 8, 10, 14], ['pebble', 8, 10, 10]] },
 ];
@@ -3015,7 +3016,7 @@ const ACH_CATS = { 戰鬥: ['win1', 'win100', 'elite', 'golem', 'crystal', 'band
 for (const c in ACH_CATS) for (const id of ACH_CATS[c]) { const a = ACHIEVEMENTS.find(x => x.id === id); if (a) a.cat = c; }
 
 // ---- 任務分類 ----
-const QUEST_CATS = { '回家的路': '主線', '失蹤的弟弟': '支線', '見習獵人提姆': '支線', '師父的遺作': '支線', '商隊的危機': '支線', '失落的貨物': '支線', '力量的覺醒': '成長', '更高的道路': '成長', '會讓路的樹': '隱藏', '井底的月光': '隱藏', '井底更深處': '隱藏', '古王的墓穴': '隱藏', '委託告示板': '委託' };
+const QUEST_CATS = { '曙光的冒險者': '主線', '失蹤的弟弟': '支線', '見習獵人提姆': '支線', '師父的遺作': '支線', '商隊的危機': '支線', '失落的貨物': '支線', '力量的覺醒': '成長', '更高的道路': '成長', '會讓路的樹': '隱藏', '井底的月光': '隱藏', '井底更深處': '隱藏', '古王的墓穴': '隱藏', '委託告示板': '委託' };
 const QUEST_CAT_COL = { 主線: '#6ee7d2', 支線: '#ffcf5a', 成長: '#c58cff', 隱藏: '#ff9ad0', 委託: '#8ad0ff' };
 const questCatOf = q => q.n.startsWith('委託：') ? '委託' : QUEST_CATS[q.n] || null;
 
@@ -3359,9 +3360,9 @@ const SKILL_MP = {
 const SKILL_MAX = 3;
 // Tree nodes: [skillId, character level needed, required node or null, required node level]
 const SKILL_TREES = {
-  swordsman: [['powerSlash', 5], ['flameSlash', 5], ['focus', 5], ['voltSlash', 8, 'flameSlash', 1], ['gale', 8], ['armorBreak', 8, 'powerSlash', 1], ['leafBlade', 11, 'voltSlash', 1], ['crossSlash', 11, 'powerSlash', 2], ['tideSlash', 11, 'voltSlash', 1], ['blaze', 16, 'flameSlash', 2]],
-  mage: [['fireBolt', 5], ['manaBurst', 5], ['aquaBlade', 5], ['thunder', 8, 'aquaBlade', 1], ['heal', 8], ['barrier', 8, 'manaBurst', 1], ['leafStorm', 11, 'aquaBlade', 1], ['chainBolt', 11, 'thunder', 1], ['flameWave', 11, 'fireBolt', 2], ['aquaBurst', 16, 'aquaBlade', 2]],
-  guardian: [['guardStrike', 5], ['ironWill', 5], ['flameSlash', 5], ['heal', 8], ['voltSlash', 8, 'flameSlash', 1], ['barrier', 8, 'ironWill', 1], ['shieldBash', 11, 'guardStrike', 2], ['tideSlash', 11, 'voltSlash', 1], ['leafBlade', 11, 'voltSlash', 1], ['armorBreak', 16, 'guardStrike', 1]],
+  swordsman: [['powerSlash', 1], ['flameSlash', 1], ['focus', 3], ['voltSlash', 8, 'flameSlash', 1], ['gale', 8], ['armorBreak', 8, 'powerSlash', 1], ['leafBlade', 11, 'voltSlash', 1], ['crossSlash', 11, 'powerSlash', 2], ['tideSlash', 11, 'voltSlash', 1], ['blaze', 16, 'flameSlash', 2]],
+  mage: [['fireBolt', 1], ['manaBurst', 1], ['aquaBlade', 3], ['thunder', 8, 'aquaBlade', 1], ['heal', 8], ['barrier', 8, 'manaBurst', 1], ['leafStorm', 11, 'aquaBlade', 1], ['chainBolt', 11, 'thunder', 1], ['flameWave', 11, 'fireBolt', 2], ['aquaBurst', 16, 'aquaBlade', 2]],
+  guardian: [['guardStrike', 1], ['ironWill', 1], ['flameSlash', 3], ['heal', 8], ['voltSlash', 8, 'flameSlash', 1], ['barrier', 8, 'ironWill', 1], ['shieldBash', 11, 'guardStrike', 2], ['tideSlash', 11, 'voltSlash', 1], ['leafBlade', 11, 'voltSlash', 1], ['armorBreak', 16, 'guardStrike', 1]],
   swordmaster: [['bladeStorm', 14, 'crossSlash', 1], ['iaiSlash', 18, 'bladeStorm', 1]], berserker: [['recklessSlash', 14], ['bloodRage', 18, 'recklessSlash', 1]],
   pyromancer: [['inferno', 14, 'flameWave', 1], ['meteor', 18, 'inferno', 1]], stormcaller: [['thunderstorm', 14, 'chainBolt', 1], ['skyJudge', 18, 'thunderstorm', 1]],
   paladin: [['holyLight', 14], ['sanctuary', 18, 'holyLight', 1]], otherworlder: [['dawnBreak', 14], ['riftBlade', 20, 'dawnBreak', 1]],
@@ -3385,7 +3386,15 @@ function nodeState(n, st = Game.st) { // 'max' | 'learn' | 'up' | 'locked:reason
   if (st.lv < n.clv) return 'locked:Lv' + n.clv + '可學'; if (n.req && skillLv(n.req, st) < n.rl) return 'locked:需要「' + MOVES[n.req].n + '」Lv' + n.rl;
   return lv ? 'up' : 'learn';
 }
-function grantSkill(id, st = Game.st) { st.skills = st.skills || {}; if (!st.skills[id]) st.skills[id] = 1; }
+function grantSkill(id, st = Game.st) { st.skills = st.skills || {}; st.skFree = st.skFree || {}; if (!st.skills[id]) { st.skills[id] = 1; st.skFree[id] = 1; } }
+// refunds: a level can be taken back (free) unless it's a free starting level or another learned skill needs it
+function skFreeOf(st) { if (!st.skFree) { st.skFree = {}; const b = baseClassOf(st.cls); for (const id of CLASS_FREE[b] || []) st.skFree[id] = 1; if (st.cls && st.cls !== b && SKILL_TREES[st.cls]) st.skFree[SKILL_TREES[st.cls][0][0]] = 1; } return st.skFree; }
+function refundBlock(id, st = Game.st) {
+  const lv = skillLv(id, st); if (!lv) return '還沒有學會';
+  if (lv <= 1 && skFreeOf(st)[id]) return '起始技能不能退回';
+  const need = skillTreeOf(st.cls).find(m => m.req === id && skillLv(m.id, st) > 0 && lv - 1 < m.rl); if (need) return '「' + MOVES[need.id].n + '」需要它';
+  return null;
+}
 function migrateSkills(st) {
   if (st.skills) return; st.skills = {}; for (const m of st.moves || []) if (MOVES[m.id] && SKILL_MP[m.id] !== undefined) st.skills[m.id] = 1;
   if (st.cls) for (const id of CLASS_FREE[baseClassOf(st.cls)] || []) grantSkill(id, st);
@@ -3424,6 +3433,8 @@ function* skillTreeScreen() {
     if (lv && lv < SKILL_MAX) Font.draw(x, '下一級：' + stat(nxt), 10, 193, UIC.warm, UIC.textSh, 10);
     Font.wrap(mv.d, 152, 10).slice(0, 2).forEach((l, i) => Font.draw(x, l, 10, (lv && lv < SKILL_MAX ? 206 : 196) + i * 12, UIC.text, UIC.textSh, 10));
     Font.draw(x, s === 'max' ? '已達最高等級' : s.startsWith('locked') ? s.slice(7) : st.skp ? 'A：' + (lv ? '升級' : '學習') + '（消耗1點）' : '升級時可以獲得技能點', 10, 236, s.startsWith('locked') ? UIC.bad : UIC.muted, UIC.textSh, 10);
+    if (lv) { const rb = refundBlock(n.id); drawBtn(x, 124, 232, 44, 16, false); Font.drawC(x, '↩退點', 146, 232, rb ? UIC.dis : UIC.warm, UIC.textSh, 9); if (typeof touchRegion === 'function') touchRegion(124, 232, 44, 16, () => tapKey('select')); }
+    if (typeof touchRegion === 'function') for (let k = 0; k < N.length; k++) { const r = Math.floor(k / COLS) - top, c = k % COLS; if (r < 0 || r >= VIS) continue; touchRegion(4 + c * 57, 24 + r * 34, 54, 31, () => { if (idx === k) tapKey('a'); else idx = k; }); }
   } };
   UI.push(scr);
   while (true) {
@@ -3431,6 +3442,7 @@ function* skillTreeScreen() {
     let ni = idx; if (Input.repeat('left') && idx % COLS > 0) ni--; if (Input.repeat('right') && idx % COLS < COLS - 1 && idx + 1 < n) ni++; if (Input.repeat('up') && idx >= COLS) ni -= COLS; if (Input.repeat('down') && idx + COLS < n) ni += COLS;
     if (ni !== idx) { idx = ni; Sound.sfx('cursor'); const r = Math.floor(idx / COLS); if (r < top) top = r; if (r >= top + VIS) top = r - VIS + 1; }
     if (Input.pressed('b')) { Input.consume('b'); Sound.sfx('cancel'); break; }
+    if (Input.pressed('select')) { Input.consume('select'); const node = N[idx], rb = refundBlock(node.id); if (rb) { Sound.sfx('bump'); UI.remove(scr); yield* say('不能退回：' + rb + '。'); UI.push(scr); } else { st.skills[node.id]--; if (!st.skills[node.id]) delete st.skills[node.id]; st.skp = (st.skp || 0) + 1; Sound.sfx('cancel'); } }
     if (Input.pressed('a')) { Input.consume('a'); const node = N[idx], s = nodeState(node); if (!st.skp || s === 'max' || s.startsWith('locked')) { Sound.sfx('bump'); } else { st.skp--; st.skills[node.id] = skillLv(node.id) + 1; Sound.sfx('statUp'); } }
     yield;
   }
@@ -3739,7 +3751,7 @@ const qCol = it => UIC.text;
 /* ---------- Quests ---------- */
 function questList(st = Game.st) {
   const f = st.flags, L = [];
-  L.push({ main: 1, n: '回家的路', t: !f.license ? '去村長家問問看回家的方法。' : !f.golem ? '前往北方的古岩遺跡，尋找異界之門。' : '門的力量還不夠……繼續尋找線索。（第一章完）', done: !!f.golem, rw: '故事推進（第一章）' });
+  L.push({ main: 1, n: '曙光的冒險者', t: !f.license ? '去村長家，問問自己為什麼會來到這個世界。' : !f.golem ? '古岩遺跡的魔像被魔王的瘴氣侵蝕而暴走。前往北方的遺跡平息它。' : '黯滅之王札爾格斯正在甦醒。鍛鍊力量，準備踏上討伐魔王的旅程。（第一章完）', done: !!f.golem, rw: '故事推進（第一章）・曙光之印' });
   if (f.q1) L.push({ n: '失蹤的弟弟', t: !f.q1res ? '花店姊姊的弟弟「小麥」去晨霧道路後沒回來。' : !f.q1done ? '回萌芽鎮告訴花店的姊姊。' : f.q1res === 'home' ? '完成：勸小麥回家了。' : '完成：替小麥保守了秘密。', done: !!f.q1done, rw: '勸他回家：好傷藥×2、300 G／保守秘密：好傷藥×1、200 G' });
   if (st.lv >= 8 && !st.cls) L.push({ n: '力量的覺醒', t: '村長好像有話要跟你說。（選擇職業）', done: false, rw: '職業與起始技能' });
   else if (st.cls && CLASSES[st.cls].tier === 1 && st.lv >= 14) L.push({ n: '更高的道路', t: '已經可以進階職業了。去找村長吧。', done: false, rw: '進階職業與專屬技能' });
@@ -3946,8 +3958,8 @@ function* equipScreen() {
 }
 /* ---------- Options ---------- */
 function* optionsScreen() {
-  let idx = 0; const labels = ['文字速度', '背景音樂', '音效', '自動存檔', '關閉'], N = labels.length, TOG = ['music', 'sfx', 'autosave'];
-  const val = i => i === 0 ? ['慢', '普通', '快'][Game.settings.text] : i < N - 1 ? (Game.settings[TOG[i - 1]] ? '開' : '關') : '';
+  let idx = 0; const labels = ['文字速度', '背景音樂', '音效', '自動存檔', '戰鬥美術', '關閉'], N = labels.length, TOG = ['music', 'sfx', 'autosave', 'hdArt'];
+  const val = i => i === 0 ? ['慢', '普通', '快'][Game.settings.text] : TOG[i - 1] === 'hdArt' ? (Game.settings.hdArt !== false ? '新版' : '舊版') : i < N - 1 ? (Game.settings[TOG[i - 1]] ? '開' : '關') : '';
   const scr = { draw(x) {
     screenBG(x); headerBar(x, '設定');
     drawWin(x, 4, 30, 168, N * 18 + 12, 'menu');
@@ -3960,7 +3972,7 @@ function* optionsScreen() {
     if (Input.repeat('up')) { idx = (idx + N - 1) % N; Sound.sfx('cursor'); } if (Input.repeat('down')) { idx = (idx + 1) % N; Sound.sfx('cursor'); }
     let d = Input.pressed('left') ? -1 : Input.pressed('right') ? 1 : 0;
     if (!d && Input.pressed('a') && idx < N - 1) { Input.consume('a'); d = 1; if (idx === 0 && Game.settings.text === 2) d = -2; }
-    if (d) { if (idx === 0) Game.settings.text = clamp(Game.settings.text + d, 0, 2); else Game.settings[TOG[idx - 1]] = !Game.settings[TOG[idx - 1]]; Sound.applySettings(); Sound.sfx('cursor'); saveSettings(); }
+    if (d) { if (idx === 0) Game.settings.text = clamp(Game.settings.text + d, 0, 2); else Game.settings[TOG[idx - 1]] = TOG[idx - 1] === 'hdArt' ? Game.settings.hdArt === false : !Game.settings[TOG[idx - 1]]; Sound.applySettings(); Sound.sfx('cursor'); saveSettings(); }
     if (Input.pressed('b') || (Input.pressed('a') && idx === N - 1)) { Input.consume('a', 'b'); Sound.sfx('cancel'); break; }
     yield;
   }
@@ -4123,11 +4135,12 @@ function* talentScreen() {
   const st = Game.st; st.tal = st.tal || {}; let c = 0, r = 0;
   const T = () => TALENTS.filter(t => t.line === c)[r];
   const locked = t => t.req && (st.tal[t.req] || 0) < 2;
-  const LBL = { atk: ['物攻', ''], crit: ['會心率', '%'], pierceT: ['無視物防', '%'], spa: ['魔攻', ''], elem: ['屬性傷害', '%'], mpRegen: ['每回合回MP', '%'], hp: ['最大HP', ''], eva: ['迴避率', '%'], counter: ['防禦反擊', ''] };
+  const talBlock = t => { const rk = st.tal[t.id] || 0; if (!rk) return '還沒有投入點數'; if (rk - 1 < 2 && TALENTS.some(q => q.req === t.id && (st.tal[q.id] || 0) > 0)) return '「' + TALENTS.find(q => q.req === t.id && (st.tal[q.id] || 0) > 0).n + '」需要它'; return null; };
+  const LBL = { atk: ['物攻', ''], crit: ['會心率', '%'], pierceT: ['破防', '%'], spa: ['魔攻', ''], elem: ['屬性傷害', '%'], mpRegen: ['每回合回MP', '%'], hp: ['最大HP', ''], eva: ['迴避率', '%'], counter: ['防禦反擊', ''] };
   const val = (t, n) => { const k = Object.keys(t.st)[0], L = LBL[k] || [k, '']; return n <= 0 ? '—' : k === 'counter' ? '啟用' : L[0] + '+' + t.st[k] * n + L[1]; };
   const scr = { draw(x) {
     screenBG(x); headerBar(x, '天賦'); Font.drawR(x, '天賦點 ' + (st.tp || 0), W - 6, 2, st.tp ? UIC.warm : UIC.muted, UIC.textSh);
-    Font.drawC(x, '永久的被動加成・每升1級獲得1點', W / 2, 21, UIC.muted, UIC.textSh, 10);
+    Font.drawC(x, '永久的被動加成・Lv6起每升1級+1點', W / 2, 21, UIC.muted, UIC.textSh, 10);
     TALENT_LINES.forEach((ln, ci) => {
       const X = 4 + ci * 57; Font.drawC(x, ln, X + 27, 34, UIC.accent, UIC.textSh);
       TALENTS.filter(t => t.line === ci).forEach((t, ri) => { const Y = 50 + ri * 38, rk = st.tal[t.id] || 0, on = ci === c && ri === r, lk = locked(t);
@@ -4141,12 +4154,15 @@ function* talentScreen() {
     Font.wrap(t.d, 152, 11).slice(0, 2).forEach((l, i) => Font.draw(x, l, 12, 185 + i * 13, UIC.text, UIC.textSh, 11));
     Font.draw(x, '目前：' + val(t, rk), 12, 211, UIC.accent, UIC.textSh, 10); if (rk < t.max) Font.draw(x, '下一級：' + val(t, rk + 1), 90, 211, UIC.warm, UIC.textSh, 10);
     Font.draw(x, locked(t) ? '需要先把「' + TALENTS.find(q => q.id === t.req).n + '」點到2級' : rk >= t.max ? '已達最高等級' : st.tp ? 'A：投入1點天賦點' : '天賦點不足（升級時獲得）', 12, 232, locked(t) ? UIC.bad : st.tp && rk < t.max ? UIC.warm : UIC.muted, UIC.textSh, 11);
+    if (rk) { drawBtn(x, 124, 230, 44, 16, false); Font.drawC(x, '↩退點', 146, 230, talBlock(t) ? UIC.dis : UIC.warm, UIC.textSh, 9); touchRegion(124, 230, 44, 16, () => tapKey('select')); }
+    TALENT_LINES.forEach((ln, ci) => TALENTS.filter(q => q.line === ci).forEach((q, ri) => touchRegion(4 + ci * 57, 50 + ri * 38, 54, 34, () => { if (c === ci && r === ri) tapKey('a'); else { c = ci; r = ri; } })));
   } };
   UI.push(scr);
   while (true) {
     if (Input.repeat('left')) { c = (c + 2) % 3; Sound.sfx('cursor'); } if (Input.repeat('right')) { c = (c + 1) % 3; Sound.sfx('cursor'); }
     if (Input.repeat('up')) { r = (r + 2) % 3; Sound.sfx('cursor'); } if (Input.repeat('down')) { r = (r + 1) % 3; Sound.sfx('cursor'); }
     if (Input.pressed('b')) { Input.consume('b'); Sound.sfx('cancel'); break; }
+    if (Input.pressed('select')) { Input.consume('select'); const t = T(), bl = talBlock(t); if (bl) { Sound.sfx('bump'); UI.remove(scr); yield* say('不能退回：' + bl + '。'); UI.push(scr); } else { st.tal[t.id]--; if (!st.tal[t.id]) delete st.tal[t.id]; st.tp = (st.tp || 0) + 1; clampHP(); Sound.sfx('cancel'); } }
     if (Input.pressed('a')) {
       Input.consume('a'); const t = T(), rk = st.tal[t.id] || 0;
       if (!st.tp || rk >= t.max || locked(t)) { Sound.sfx('bump'); continue; }
@@ -4510,7 +4526,7 @@ class Overworld {
     if (ent && ent.sp && ent !== this.boss) { this.run(this.eliteTalk(ent)); return true; }
     if (ent && ent === this.boss) { const g = Events[this.map.d.boss.ev || 'bossLine'](this); if (g) this.run(g); return true; }
     if (ent && (ent.item || ent.gold || ent.gather)) { this.run(this.pickItem(ent)); return true; }
-    const gt = this.map.d.gate; if (gt && gt.big && (x === gt.x || x === gt.x + 1) && y === gt.y + 1) { this.run(say(this.st.flags.gateOpen ? '門後的光芒已經消失，只剩下冰冷的石壁……（第二章，敬請期待！）' : '巨大的石門緊緊關著，上面刻著發光的古老紋路。這就是「異界之門」……')); return true; }
+    const gt = this.map.d.gate; if (gt && gt.big && (x === gt.x || x === gt.x + 1) && y === gt.y + 1) { this.run(say(this.st.flags.gateOpen ? '異界之門靜靜地沉睡著。門後只剩下北方的黑雲……（第二章「魔王軍的影子」，敬請期待！）' : '巨大的石門緊緊關著，上面刻著發光的古老紋路。這就是「異界之門」……')); return true; }
     const sign = (this.map.d.signs || {})[x + ',' + y];
     if (c === 'S' && sign) { this.run(say(sign, { style: 'sign' })); return true; }
     if (c === 'Y') { this.run(Events.spring(this)); return true; }
@@ -5198,7 +5214,7 @@ class Battle {
     let showTotal = false; const rowsL = [['HP', before.hp, after.hp]].concat(ATTRS.map(k => [ATTR_NAMES[k], bA[k], aA[k]]));
     const win = { draw: x => { drawWin(x, 80, 34, 90, 122, 'menu'); rowsL.forEach(([n, b, a], i) => { const Y = 38 + i * 16; Font.draw(x, n, 90, Y, UIC.muted, UIC.textSh); const d = a - b; Font.drawR(x, showTotal ? String(a) : d > 0 ? '+' + d : '—', 162, Y, showTotal ? UIC.text : d > 0 ? UIC.accent : UIC.dis, UIC.textSh); }); } };
     UI.push(win); yield* waitA(); showTotal = true; Sound.sfx('cursor'); yield* waitA(); UI.remove(win); UI.remove(tb);
-    st.skp = (st.skp || 0) + 2; st.tp = (st.tp || 0) + 1; st.mp = heroStats().mp; this.H.maxmp = st.mp; yield* this.msg('獲得了2點技能點和1點天賦點！MP也全部恢復了。', { hold: 40 });
+    const early = st.lv <= 5, gs = early ? 1 : 2, gt = early ? 0 : 1; st.skp = (st.skp || 0) + gs; st.tp = (st.tp || 0) + gt; st.mp = heroStats().mp; this.H.maxmp = st.mp; yield* this.msg('獲得了' + gs + '點技能點' + (gt ? '和' + gt + '點天賦點' : '') + '！MP也全部恢復了。', { hold: 40 });
     const nw = skillTreeOf(st.cls).filter(n => n.clv === st.lv); if (nw.length) yield* this.msg('可以學習新技能了：' + nw.map(n => MOVES[n.id].n).join('、') + '！（選單→技能）', { wait: true });
     if (Sound.current !== 'victory' && this.F.hp <= 0) Sound.play('victory');
   }
@@ -5711,6 +5727,293 @@ Battle.prototype.chooseMove = function* () {
   }
 };
 
+/* ===================== HD BATTLE ART: 2x-resolution sprites + vector part animation (battle only) =====================
+   Monsters are re-rendered from their own vector designs (ART) at twice the resolution. Every animation frame is made
+   by transforming the design's parts (head, wings, arms, tail…) BEFORE rasterising, so each frame is clean pixel art,
+   the facing never changes and the foot anchor stays put. The field (overworld) sprites are untouched.
+   Setting: Game.settings.hdArt (default on) — off = the original battle sprites, exactly as before. */
+if (Game.settings.hdArt === undefined) Game.settings.hdArt = true;
+const hdOn = () => Game.settings.hdArt !== false;
+const HD_SCALE = 2, HD_NATIVE = 40, HD_NATIVE_BIG = 46;
+/* ---------- 2D affine helpers (64-space) ---------- */
+const M_ID = [1, 0, 0, 1, 0, 0]; // x' = a x + c y + e, y' = b x + d y + f
+const mMul = (A, B) => [A[0] * B[0] + A[2] * B[1], A[1] * B[0] + A[3] * B[1], A[0] * B[2] + A[2] * B[3], A[1] * B[2] + A[3] * B[3], A[0] * B[4] + A[2] * B[5] + A[4], A[1] * B[4] + A[3] * B[5] + A[5]];
+const mPt = (M, x, y) => [M[0] * x + M[2] * y + M[4], M[1] * x + M[3] * y + M[5]];
+// transform about a pivot: translate(p + d) · rotate(r) · scale(sx, sy) · translate(-p)
+function mAbout(px, py, o) {
+  if (!o) return M_ID; const r = o.rot || 0, sx = o.sx ?? 1, sy = o.sy ?? 1, c = Math.cos(r), s = Math.sin(r);
+  const A = [c * sx, s * sx, -s * sy, c * sy, 0, 0]; const [tx, ty] = mPt(A, -px, -py);
+  return [A[0], A[1], A[2], A[3], tx + px + (o.dx || 0), ty + py + (o.dy || 0)];
+}
+function xfShape(p, M, warp) {
+  const q = { ...p };
+  if (p.u) { q.u = p.u.map(s => xfShape(s, M, warp)); return q; }
+  if (p.s === 'e') {
+    const [cx, cy] = mPt(M, p.x, p.y), th = p.rot || 0, ry = p.ry || p.rx;
+    const ux = Math.cos(th) * p.rx, uy = Math.sin(th) * p.rx, vx = -Math.sin(th) * ry, vy = Math.cos(th) * ry;
+    const Ux = M[0] * ux + M[2] * uy, Uy = M[1] * ux + M[3] * uy, Vx = M[0] * vx + M[2] * vy, Vy = M[1] * vx + M[3] * vy;
+    q.x = cx; q.y = cy; q.rx = Math.hypot(Ux, Uy); q.ry = Math.hypot(Vx, Vy); q.rot = Math.atan2(Uy, Ux);
+    if (warp) { const [wx, wy] = warp(q.x, q.y); q.x = wx; q.y = wy; }
+    return q;
+  }
+  if (p.pts) { q.pts = p.pts.map(([x, y]) => { let v = mPt(M, x, y); if (warp) v = warp(v[0], v[1]); return v; }); }
+  return q;
+}
+function xfDetail(d, M) {
+  const q = { ...d };
+  if (d.x !== undefined) { const [x, y] = mPt(M, d.x, d.y); q.x = x; q.y = y; }
+  if (d.pts) q.pts = d.pts.map(([x, y]) => mPt(M, x, y));
+  return q;
+}
+/* ---------- rigs: which parts move together (indices into ART[key].parts), pivots in 64-space ---------- */
+// kind picks the motion style; layers: name → [part indices, pivot x, pivot y, parent layer?]
+const HD_RIG = {
+  mush: { kind: 'hop', layers: { cap: [[3, 4, 5, 6, 7, 8, 9, 10, 11], 32, 42] } },
+  bird: { kind: 'fly', layers: { wingL: [[3], 18, 34], wingR: [[4], 46, 34], tail: [[0], 44, 50], crest: [[7, 8, 9], 32, 26] } },
+  pebble: { kind: 'brute', layers: { armL: [[2], 14, 45], armR: [[3], 50, 45] } },
+  slime: { kind: 'slime', layers: { drops: [[1, 2, 3], 32, 20] } },
+  fox: { kind: 'beast', damp: { tail: 0.5 }, layers: { tail: [[0, 1], 44, 50], head: [[8, 9, 10, 11], 32, 38], earL: [[8], 22, 20, 'head'], earR: [[9], 42, 20, 'head'] } },
+  bee: { kind: 'buzz', layers: { wingL: [[0], 24, 30], wingR: [[1], 40, 30], head: [[7], 32, 34], sting: [[2], 32, 56] } },
+  frog: { kind: 'hop', layers: { legs: [[0, 1], 32, 56] } },
+  wolf: { kind: 'beast', layers: { tail: [[0], 46, 46], head: [[7, 8, 9, 10, 11], 32, 44], earL: [[8], 22, 22, 'head'], earR: [[9], 42, 22, 'head'] } },
+  flower: { kind: 'plant', layers: { bloom: [[5, 6, 7, 8, 9, 10, 11, 12], 32, 36], leafL: [[0], 14, 56], leafR: [[1], 50, 56] } },
+  croc: { kind: 'beast', layers: { tail: [[0], 46, 48], head: [[9, 10, 11], 32, 42] } },
+  golem: { kind: 'golem', layers: { armL: [[2, 6, 8, 10], 13, 28], armR: [[3, 7, 9, 11], 51, 28], head: [[12, 13], 32, 27], core: [[14], 32, 40] } },
+  bandit: { kind: 'human', layers: { armL: [[5, 7], 14, 36], armR: [[6, 8, 12, 13], 50, 36], head: [[9, 10, 11], 32, 36] } },
+  banditBoss: { kind: 'human', layers: { armL: [[5, 7], 14, 36], armR: [[6, 8, 15, 16], 50, 36], head: [[9, 10, 11, 12, 13], 32, 36] } },
+  thunderBeetle: { kind: 'bug', layers: { head: [[7, 8, 9, 10], 32, 36], mandL: [[8], 26, 31, 'head'], mandR: [[9], 38, 31, 'head'] } },
+  emberSpirit: { kind: 'flame', layers: { embers: [[0, 1], 32, 14], flame: [[2, 3, 4], 32, 56] } },
+  skeleton: { kind: 'human', layers: { armL: [[3], 18, 31], armR: [[4, 9, 10], 46, 31], head: [[7, 8], 32, 29], jaw: [[8], 32, 27, 'head'] } },
+  ghostLamp: { kind: 'lamp', damp: { lamp: 0.3, wisp: 0.6 }, layers: { lamp: [[0, 1, 2, 3, 4], 32, 54], flame: [[3], 32, 32, 'lamp'], wisp: [[5], 32, 54] } },
+  caveSpider: { kind: 'spider', layers: { legsL: [[0, 2, 4, 6], 29, 38], legsR: [[1, 3, 5, 7], 35, 38], head: [[10, 11, 12], 32, 38], fangL: [[11], 29, 37, 'head'], fangR: [[12], 35, 37, 'head'] } },
+  wraith: { kind: 'ghost', layers: { armL: [[0, 2], 16, 36], armR: [[1, 3], 48, 36], body: [[4, 5], 32, 40] } },
+  boneHound: { kind: 'beast', layers: { head: [[5, 6, 7], 32, 40], mane: [[4], 32, 30] } },
+  boneKnight: { kind: 'human', layers: { armL: [[3, 13], 18, 31], armR: [[4, 14, 15], 46, 31], head: [[9, 10, 11, 12], 32, 29], jaw: [[10], 32, 27, 'head'] } },
+};
+const HD_RIG_OF = { thornMush: 'mush', nightBird: 'bird', leafFox: 'fox', mossGiant: 'golem', caveBat: 'bird', mudSlime: 'slime', crystalPebble: 'pebble', crystalGolem: 'golem', mineBat: 'bird', oreSlime: 'slime', drownedSoul: 'wraith', paleWraith: 'wraith', runeGolem: 'golem', goldSlime: 'slime', gemSlime: 'slime', moonFox: 'fox', crystalBat: 'bird', goldSkeleton: 'skeleton' };
+const hdRig = sp => HD_RIG[HD_RIG_OF[sp] || sp] || { kind: 'blob', layers: {} };
+/* ---------- motion: pose(kind, state, phase) → { G: global transform about the foot, L: per-layer transforms, wave } ---------- */
+const sstep = (a, b, x) => { const t = clamp((x - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
+const TAU = Math.PI * 2;
+const BREATH = { slime: 0.07, hop: 0.045, beast: 0.03, human: 0.025, brute: 0.025, golem: 0.018, ghost: 0.02, flame: 0.05, plant: 0.025, fly: 0.03, buzz: 0.025, bug: 0.02, spider: 0.02, lamp: 0.015, blob: 0.03 };
+function monPose(kind, state, p) {
+  const G = { rot: 0, sx: 1, sy: 1, dx: 0, dy: 0 }, L = {}; let wave = 0;
+  const set = (n, o) => { L[n] = Object.assign(L[n] || {}, o); };
+  if (state === 'idle') {
+    const s = Math.sin(TAU * p), s2 = Math.sin(TAU * p * 2), B = BREATH[kind] || 0.03;
+    G.sy = 1 + B * s; G.sx = 1 - B * 0.6 * s;
+    set('head', { dy: 0.9 * Math.sin(TAU * p - 0.7), rot: 0.03 * Math.sin(TAU * p + 1) });
+    set('jaw', { rot: 0.1 * Math.max(0, Math.sin(TAU * p * 2)) });
+    const flap = kind === 'buzz' ? 0.32 * Math.sin(TAU * p * 4) : 0.18 + 0.3 * s2;
+    set('wingL', { rot: flap }); set('wingR', { rot: -flap });
+    set('tail', { rot: 0.22 * s }); set('earL', { rot: 0.08 * Math.max(0, Math.sin(TAU * p * 2 + 2)) }); set('earR', { rot: -0.08 * Math.max(0, Math.sin(TAU * p * 2 + 2.6)) });
+    set('armL', { rot: 0.06 * s }); set('armR', { rot: -0.06 * s });
+    set('cap', { rot: 0.05 * Math.sin(TAU * p + 0.6), dy: 0.6 * s }); set('bloom', { rot: 0.07 * Math.sin(TAU * p) }); set('leafL', { rot: -0.1 * s }); set('leafR', { rot: 0.1 * s });
+    set('core', { sx: 1 + 0.12 * s, sy: 1 + 0.12 * s }); set('crest', { rot: 0.08 * s2 });
+    set('drops', { dy: 1.5 * Math.sin(TAU * p + 1) }); set('embers', { dy: 2 * Math.sin(TAU * p * 2), rot: 0.1 * s });
+    set('legsL', { rot: 0.025 * s2 }); set('legsR', { rot: -0.025 * s2 }); set('fangL', { rot: 0.12 * Math.max(0, s2) }); set('fangR', { rot: -0.12 * Math.max(0, s2) });
+    set('mandL', { rot: 0.12 * Math.max(0, s2) }); set('mandR', { rot: -0.12 * Math.max(0, s2) });
+    set('lamp', { rot: 0.05 * s }); set('flame', { sx: 1 + 0.08 * s2, sy: 1 + 0.12 * s2 }); set('wisp', { rot: -0.12 * s });
+    set('mane', { sy: 1 + 0.08 * s2 }); set('sting', { rot: 0.1 * s }); set('legs', { sx: 1 - 0.04 * s });
+    wave = p;
+  } else if (state === 'attack') { // wind-up (lean back) → strike (lunge toward the hero, lower-left) → recover
+    const w = sstep(0, 0.28, p) * (1 - sstep(0.28, 0.42, p)), k = sstep(0.28, 0.42, p) * (1 - sstep(0.62, 1, p));
+    G.rot = 0.07 * w - 0.11 * k; G.sy = 1 - 0.05 * w + 0.05 * k; G.sx = 1 + 0.03 * w - 0.02 * k; G.dx = -2 * k;
+    set('head', { rot: -0.08 * k + 0.05 * w, dy: 1.5 * k }); set('jaw', { rot: 0.22 * k });
+    set('wingL', { rot: 0.7 * w - 0.2 * k }); set('wingR', { rot: -0.7 * w + 0.2 * k });
+    set('armR', { rot: -0.9 * w + 0.55 * k }); set('armL', { rot: 0.5 * w - 0.25 * k });
+    set('tail', { rot: 0.45 * w - 0.2 * k }); set('cap', { rot: -0.1 * w + 0.12 * k }); set('bloom', { rot: 0.12 * w - 0.15 * k });
+    set('fangL', { rot: 0.3 * w }); set('fangR', { rot: -0.3 * w }); set('mandL', { rot: 0.35 * w }); set('mandR', { rot: -0.35 * w });
+    set('core', { sx: 1 + 0.3 * k, sy: 1 + 0.3 * k }); set('legsL', { rot: 0.06 * w }); set('legsR', { rot: -0.06 * w });
+    set('lamp', { rot: 0.1 * w - 0.14 * k }); set('earL', { rot: -0.15 * k }); set('earR', { rot: 0.15 * k }); set('drops', { dy: -3 * k });
+    wave = p * 2;
+  } else if (state === 'cast') { // rise and open up
+    const c = sstep(0, 1, p);
+    G.sy = 1 + 0.05 * c; G.sx = 1 - 0.02 * c;
+    set('armR', { rot: -0.7 * c }); set('armL', { rot: 0.7 * c }); set('wingL', { rot: 0.55 * c }); set('wingR', { rot: -0.55 * c });
+    set('head', { rot: -0.04 * c, dy: -1 * c }); set('core', { sx: 1 + 0.35 * c, sy: 1 + 0.35 * c }); set('bloom', { sx: 1 + 0.08 * c, sy: 1 + 0.08 * c });
+    set('cap', { dy: -1.5 * c }); set('embers', { dy: -3 * c }); set('flame', { sy: 1 + 0.2 * c }); set('jaw', { rot: 0.15 * c }); set('tail', { rot: 0.3 * c });
+    wave = p;
+  } else if (state === 'hurt') { // knocked back (top moves away from the hero), then settle
+    const h = Math.sin(Math.PI * clamp(p / 0.7, 0, 1));
+    G.rot = 0.13 * h; G.sy = 1 - 0.06 * h; G.sx = 1 + 0.03 * h; G.dx = 2 * h;
+    set('head', { rot: 0.12 * h, dy: -1 * h }); set('armL', { rot: -0.35 * h }); set('armR', { rot: 0.35 * h }); set('wingL', { rot: -0.3 * h }); set('wingR', { rot: 0.3 * h });
+    set('tail', { rot: -0.3 * h }); set('jaw', { rot: 0.2 * h }); set('cap', { rot: 0.1 * h }); set('earL', { rot: 0.2 * h }); set('earR', { rot: -0.2 * h });
+    wave = p;
+  }
+  return { G, L, wave };
+}
+/* ---------- build one posed definition ---------- */
+function hdPoseDef(def, rig, pose, off) {
+  const parts = def.parts, layerOf = new Array(parts.length).fill(null), ids = {};
+  parts.forEach((p, i) => { if (p.id) ids[p.id] = i; });
+  for (const n in rig.layers) for (const i of rig.layers[n][0]) layerOf[i] = n; // later layers (children) win
+  parts.forEach((p, i) => { if (!layerOf[i] && typeof p.clip === 'string' && ids[p.clip] !== undefined) layerOf[i] = layerOf[ids[p.clip]]; });
+  const gM = mMul(off, mAbout(32, 63, pose.G)), cache = {};
+  const layerM = n => { if (!n) return gM; if (cache[n]) return cache[n]; const [, px, py, par] = rig.layers[n]; const M = mMul(par ? layerM(par) : gM, mAbout(px, py, pose.L[n])); return cache[n] = M; };
+  const waveOf = n => { if (!(rig.kind === 'ghost' && n === 'body') && !(rig.kind === 'flame' && n === 'flame') && !(n === 'mane') && !(rig.kind === 'lamp' && n === 'wisp')) return null;
+    const ph = pose.wave * TAU, amp = rig.kind === 'flame' || n === 'mane' ? 0.9 : 1.2;
+    return (x, y) => { const Y0 = mPt(off, 0, 0)[1], rel = (y - Y0) / (64 * off[3]); const wgt = rig.kind === 'flame' || n === 'mane' ? clamp(1 - rel * 1.2, 0, 1) : clamp((rel - 0.45) * 2, 0, 1); return [x + amp * off[0] * wgt * Math.sin(ph + y * 0.18 / off[3]), y]; }; };
+  const outParts = parts.map((p, i) => xfShape(p, layerM(layerOf[i]), waveOf(layerOf[i])));
+  // details follow whichever part they sit on (topmost part containing the anchor point)
+  const inside = (p, X, Y) => { if (p.u) return p.u.some(q => inside(q, X, Y)); if (p.s === 'e') { let dx = X - p.x, dy = Y - p.y; if (p.rot) { const c = Math.cos(-p.rot), s = Math.sin(-p.rot); [dx, dy] = [dx * c - dy * s, dx * s + dy * c]; } const ry = p.ry || p.rx; return dx * dx / (p.rx * p.rx) + dy * dy / (ry * ry) <= 1; } if (!p.pts) return false; let ins = false; for (let a = 0, b = p.pts.length - 1; a < p.pts.length; b = a++) { const [xi, yi] = p.pts[a], [xj, yj] = p.pts[b]; if (((yi > Y) !== (yj > Y)) && (X < (xj - xi) * (Y - yi) / (yj - yi) + xi)) ins = !ins; } return ins; };
+  const details = (def.details || []).map(d => { const ax = d.x !== undefined ? d.x : d.pts ? d.pts.reduce((s, q) => s + q[0], 0) / d.pts.length : 32, ay = d.y !== undefined ? d.y : d.pts ? d.pts.reduce((s, q) => s + q[1], 0) / d.pts.length : 32;
+    let li = -1; for (let i = parts.length - 1; i >= 0; i--) if (inside(parts[i], ax, ay)) { li = i; break; }
+    return xfDetail(d, layerM(li >= 0 ? layerOf[li] : null)); });
+  return { ...def, parts: outParts, details };
+}
+function hdRaster(def, S, k, scale) {
+  const sm = buildShaded(def, S, k), c = mkCanvas(S * scale, S * scale), x = c.getContext('2d'); x.imageSmoothingEnabled = false; x.drawImage(sm, 0, 0, S * scale, S * scale); c.small = sm; return c;
+}
+function hdBounds(c) { const S = c.width, d = c.getContext('2d').getImageData(0, 0, S, S).data; let x0 = S, x1 = -1, y0 = S, y1 = -1; for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) if (d[(y * S + x) * 4 + 3]) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; } return { x0, x1, y0, y1 }; }
+/* ---------- monster frame sets ---------- */
+const HD_FRAMES = { idle: 12, attack: 10, cast: 6, hurt: 6 };
+const hdFoeCache = {};
+function hdFoeSet(sp) {
+  if (hdFoeCache[sp]) return hdFoeCache[sp];
+  const def = ART[sp], rig = hdRig(sp), N = FOE_NATIVE[sp] ? HD_NATIVE_BIG : HD_NATIVE, k = N / 64, pad = Math.round(N * 0.2), S = N + pad * 2;
+  const off = [1, 0, 0, 1, pad / k, (S - N - 1) / k]; // design centred horizontally, foot one pixel above the canvas bottom
+  const set = { jobs: [] }, make = (st, i) => { const n = HD_FRAMES[st], p = st === 'idle' ? i / n : i / (n - 1); const pose = monPose(rig.kind, st, p); if (rig.damp && st === 'idle') for (const q in rig.damp) { const o = pose.L[q]; if (o) for (const f of ['rot', 'dx', 'dy']) if (o[f]) o[f] *= rig.damp[q]; } const c = hdRaster(hdPoseDef(def, rig, pose, off), S, k, HD_SCALE); c.bb = set.bb; set[st][i] = c; };
+  for (const st in HD_FRAMES) set[st] = [];
+  make('idle', 0); const b = hdBounds(set.idle[0].small), Sc = HD_SCALE;
+  set.bb = set.idle[0].bb = { cx: Math.round((b.x0 + b.x1 + 1) * Sc / 2), top: b.y0 * Sc, bot: (b.y1 + 1) * Sc, w: (b.x1 - b.x0 + 1) * Sc, h: (b.y1 - b.y0 + 1) * Sc }; // one shared anchor: frames never shift
+  // the rest is built a few frames at a time during the battle intro (no hitch on slow phones)
+  for (const st of ['idle', 'hurt', 'attack', 'cast']) for (let i = st === 'idle' ? 1 : 0; i < HD_FRAMES[st]; i++) set.jobs.push(() => make(st, i));
+  return hdFoeCache[sp] = set;
+}
+/* ---------- hero (back view, full body) built from the equipped look ---------- */
+const HERO_HD = { N: 38, W: 46 }; // native canvas: 46 × 38 (design space 72 × 64 at k = 38/64)
+const SKIN = { ramp: ['#fff4e8', '#fbe0c4', '#f4cca8', '#e0a880', '#8a5a48'], line: false, flat: 1 };
+function heroHDDef(L) {
+  const P = HERO_PAL, BL = BODY_LOOKS[L.body], shape = BL ? BL[0] : 'uniform', bp = BL ? BL[1] : {}, fp = { ...P, ...(FEET_PAL[L.feet] || {}) };
+  const parts = [], ids = {}, add = (layer, q) => { q.layer = layer; parts.push(q); if (q.id) ids[q.id] = parts.length - 1; return q; };
+  const E = (layer, x, y, rx, ry, c, o = {}) => add(layer, { s: 'e', x, y, rx, ry, c, ...o }), Pg = (layer, pts, c, o = {}) => add(layer, { s: 'p', pts, c, ...o });
+  const cloth = shape === 'uniform' ? '#2e3c70' : bp.X, clothD = shape === 'uniform' ? '#1e2850' : (bp.x || bp.X), trim = bp.Z || '#4a3424', light = bp.Y || bp.X;
+  // legs & boots
+  const pants = shape === 'robe' ? bp.X : shape === 'uniform' ? '#1e2850' : '#3a3444';
+  E('legs', 18, 50, 4.2, 7, pants); E('legs', 30, 50, 4.2, 7, pants);
+  E('legs', 18, 58.5, 4.8, 4.5, fp.B || '#30303a'); E('legs', 30, 58.5, 4.8, 4.5, fp.B || '#30303a');
+  // torso by armour shape
+  if (shape === 'robe') Pg('body', [[12, 30], [36, 30], [42, 60], [6, 60]], cloth, { id: 'torso' });
+  else E('body', 24, 38, 13, 12, cloth, { id: 'torso' });
+  if (shape === 'robe') { E('body', 24, 58, 17, 3, trim, { clip: 'torso', line: false }); E('body', 24, 31, 8, 3, bp.W || '#ffffff'); }
+  else if (shape === 'uniform') { E('body', 24, 45, 12, 2.6, '#1e2850', { clip: 'torso', line: false }); E('body', 24, 27.5, 7, 3, '#f6f6f2'); }
+  else { E('body', 24, 45.5, 12.5, 2.4, trim, { clip: 'torso', line: false }); if (bp.z) E('body', 24, 45.5, 2, 2, bp.z, { line: false }); }
+  if (shape === 'mail' || shape === 'plate') { const r = shape === 'plate' ? 6.5 : 5.2; E('body', 11, 30, r, r * 0.8, light, { id: 'pl' }); E('body', 37, 30, r, r * 0.8, light, { id: 'pr' }); }
+  if (shape === 'mail') for (let y = 34; y <= 42; y += 4) E('body', 24, y, 10, 0.9, clothD, { clip: 'torso', line: false, noCast: 1 });
+  if (shape === 'plate') E('body', 24, 36, 3, 8, light, { clip: 'torso', line: false });
+  // arms (left = screen-left, right holds the weapon)
+  const sleeve = shape === 'uniform' ? '#2e3c70' : shape === 'plate' || shape === 'mail' ? light : cloth;
+  E('armL', 9, 38, 4.2, 8.5, sleeve, { rot: 0.25 }); E('armL', 7.5, 46, 3.2, 3.2, P.S, SKIN);
+  E('armR', 39, 38, 4.2, 8.5, sleeve, { rot: -0.25 });
+  // cape (cloak) hangs over the back — in front of the torso in a back view
+  if (shape === 'cloak') { Pg('cape', [[13, 27], [35, 27], [40, 55], [24, 58], [8, 55]], bp.D || cloth, { id: 'cape' }); Pg('cape', [[13, 27], [35, 27], [33, 31], [15, 31]], bp.d || clothD, { line: false }); }
+  // head: back of the head is hair
+  E('head', 12.5, 18, 2.4, 3.2, P.S, SKIN); E('head', 35.5, 18, 2.4, 3.2, P.S, SKIN); E('head', 24, 25, 5.5, 3, P.S, SKIN);
+  E('head', 24, 15, 12, 11.5, P.H, { id: 'hair' }); Pg('head', [[15, 8], [19, 3], [22, 7]], P.H); Pg('head', [[25, 6], [30, 2], [31, 8]], P.H);
+  E('head', 19, 10, 4, 3, P.h, { clip: 'hair', line: false, noCast: 1 });
+  if (L.head) { const [ht, pk, deco] = L.head, hp = HEAD_PAL[pk] || HEAD_PAL.cloth;
+    if (ht === 'cap') { E('head', 24, 11, 12.6, 8, hp.A, { id: 'hat' }); E('head', 24, 17.5, 13, 2.2, hp.a); }
+    else if (ht === 'helm') { E('head', 24, 13.5, 13.2, 12, hp.A, { id: 'hat' }); E('head', 24, 13, 1.6, 11, hp.C, { clip: 'hat', line: false }); E('head', 24, 24, 11, 3, hp.a); }
+    else if (ht === 'hood') { E('head', 24, 15, 13.5, 13, hp.A, { id: 'hat' }); Pg('head', [[12, 20], [36, 20], [38, 30], [10, 30]], hp.a); }
+    if (deco === 'feather') Pg('head', [[10, 12], [3, 0], [6, 1], [13, 10]], hp.E || '#f0e8d8');
+    if (deco === 'horns') { Pg('head', [[12, 9], [4, 2], [5, 7], [11, 13]], hp.C); Pg('head', [[36, 9], [44, 2], [43, 7], [37, 13]], hp.C); }
+    if (deco === 'lamp') E('head', 24, 16, 13.4, 1.4, '#3a2a1e', { line: false });
+  }
+  // weapon in the right hand (grip at 41,46), pointing up-right toward the foe
+  const wt = L.weapon && L.weapon[0], wp = (L.weapon && WPN_PAL[L.weapon[1]]) || WPN_PAL.steel;
+  if (wt === 'sword') { Pg('wpn', [[41, 43], [44, 44], [66, 10], [64, 8]], wp.i || '#b8c0d0', { id: 'blade' }); Pg('wpn', [[42, 43], [44, 43.5], [64.5, 9.5], [64, 8]], wp.I || '#ffffff', { line: false }); Pg('wpn', [[37, 42], [40, 39], [48, 47], [45, 50]], wp.U || '#e8c048'); Pg('wpn', [[38, 50], [41, 47], [43, 49], [40, 52]], wp.T || '#6a3a26'); }
+  else if (wt === 'dagger') { Pg('wpn', [[41, 43], [44, 44], [54, 30], [52, 28]], wp.i || '#b8c0d0'); Pg('wpn', [[39, 43], [41, 41], [46, 46], [44, 48]], wp.U || '#8a6a4a'); }
+  else if (wt === 'axe') { Pg('wpn', [[38, 56], [41, 57], [59, 12], [56, 11]], wp.T || '#4a3a30'); Pg('wpn', [[54, 12], [66, 6], [69, 18], [60, 22], [55, 18]], wp.i || '#98a0b0', { id: 'axe' }); Pg('wpn', [[62, 8], [66, 6], [69, 18], [66, 17]], wp.I || '#e8ecf0', { clip: 'axe', line: false }); }
+  else if (wt === 'staff') { Pg('wpn', [[37, 60], [40, 61], [57, 9], [54, 8]], wp.T || '#8a5a30'); E('wpn', 56.5, 6, 4.2, 4.2, wp.V || '#f0f4ff', { glow: 1 }); }
+  else if (wt === 'tome') { Pg('wpn', [[42, 30], [52, 26], [62, 30], [52, 34]], wp.T || '#5a3a70'); Pg('wpn', [[43, 29], [52, 25], [52, 32], [44, 32]], wp.V || '#f0e8d0', { line: false }); Pg('wpn', [[52, 25], [61, 29], [60, 32], [52, 32]], wp.V || '#f0e8d0', { line: false }); E('wpn', 52, 20, 2.2, 2.2, wp.U || '#c0a0ff', { glow: 1 }); }
+  E('armR', 41, 46.5, 3.2, 3.2, P.S, SKIN); // right hand on top of the grip
+  return { parts, ids };
+}
+// hero layers: pivots in 72×64 design space
+const HERO_LAYERS = { legs: [24, 60], body: [24, 60], armL: [11, 31], armR: [37, 31], cape: [24, 28], head: [24, 26], wpn: [37, 31] };
+function heroPose(kind, state, p) {
+  const G = { rot: 0, sx: 1, sy: 1, dx: 0, dy: 0 }, L = {}; let wave = 0;
+  const set = (n, o) => { L[n] = Object.assign(L[n] || {}, o); };
+  if (state === 'idle') { const s = Math.sin(TAU * p); G.sy = 1 + 0.02 * s; set('head', { dy: 0.6 * Math.sin(TAU * p - 0.8) }); set('armR', { rot: -0.04 * s }); set('wpn', { rot: -0.04 * s }); set('armL', { rot: 0.04 * s }); wave = p; }
+  else if (state === 'attack') {
+    const w = sstep(0, 0.28, p) * (1 - sstep(0.28, 0.42, p)), k = sstep(0.28, 0.42, p) * (1 - sstep(0.62, 1, p));
+    G.rot = 0.07 * k - 0.04 * w; G.dx = 2 * k; G.dy = -1.5 * k; set('head', { rot: 0.06 * k });
+    if (kind === 'dagger') { const o = { rot: 0.25 * k - 0.2 * w, dx: 6 * k - 2 * w, dy: -6 * k + 2 * w }; set('armR', o); set('wpn', o); }
+    else if (kind === 'staff' || kind === 'tome') { const o = { rot: -0.35 * w + 0.35 * k, dy: -4 * w - 2 * k, dx: 3 * k }; set('armR', o); set('wpn', { ...o, sx: 1 + 0.1 * k, sy: 1 + 0.1 * k }); }
+    else { const o = { rot: -0.75 * w + 1.0 * k, dy: -2 * w }; set('armR', o); set('wpn', o); }
+    set('armL', { rot: 0.3 * w - 0.2 * k }); wave = p * 2;
+  } else if (state === 'cast') { const c = sstep(0, 1, p); G.sy = 1 + 0.03 * c; set('armR', { rot: -0.35 * c, dy: -3 * c }); set('wpn', { rot: -0.35 * c, dy: -3 * c }); set('armL', { rot: 0.5 * c, dy: -2 * c }); set('head', { rot: 0.03 * c }); wave = p; }
+  else if (state === 'hurt') { const h = Math.sin(Math.PI * clamp(p / 0.7, 0, 1)); G.rot = -0.1 * h; G.dx = -2 * h; G.dy = 1 * h; set('head', { rot: -0.12 * h }); set('armR', { rot: 0.3 * h }); set('wpn', { rot: 0.3 * h }); set('armL', { rot: -0.3 * h }); wave = p; }
+  else if (state === 'defend') { const d = sstep(0, 1, p); const o = { rot: -0.95 * d, dx: -9 * d, dy: 2 * d }; set('armR', o); set('wpn', o); set('armL', { rot: -0.4 * d, dx: 4 * d }); G.sy = 1 - 0.03 * d; }
+  return { G, L, wave };
+}
+function heroHDPosed(L, state, p) {
+  const { parts } = heroHDDef(L), kind = L.weapon ? L.weapon[0] : 'none', pose = heroPose(kind, state, p), k = HERO_HD.N / 64;
+  const gM = mAbout(24, 62, pose.G), cache = {};
+  const layerM = n => cache[n] || (cache[n] = mMul(gM, mAbout(HERO_LAYERS[n][0], HERO_LAYERS[n][1], pose.L[n])));
+  const warp = (x, y) => [x + 0.8 * clamp((y - 36) / 20, 0, 1) * Math.sin(pose.wave * TAU + y * 0.25), y];
+  const out = parts.map(q => { const r = xfShape(q, layerM(q.layer), q.layer === 'cape' ? warp : null); delete r.layer; return r; });
+  return { def: { parts: out, details: [] }, k };
+}
+const hdHeroCache = {};
+function hdHeroSet(L) {
+  const key = lookKey(L); if (hdHeroCache[key]) return hdHeroCache[key];
+  const n = { ...HD_FRAMES, defend: 5 }, set = { jobs: [] }, S = Math.max(HERO_HD.W, HERO_HD.N);
+  const make = (st, i) => { const p = st === 'idle' ? i / n[st] : i / (n[st] - 1); const { def, k } = heroHDPosed(L, st, p); set[st][i] = hdRaster(def, S, k, HD_SCALE); };
+  for (const st in n) set[st] = []; make('idle', 0);
+  for (const st of ['idle', 'attack', 'hurt', 'defend', 'cast']) for (let i = st === 'idle' ? 1 : 0; i < n[st]; i++) set.jobs.push(() => make(st, i));
+  return hdHeroCache[key] = set;
+}
+/* ---------- battle integration (animation state machine; the old draw code is reused unchanged) ---------- */
+const HD_IDLE_TICKS = 6;
+function hdAnim(b, who, state, dur, hold) { const A = b.hd && b.hd[who]; if (!A) return; if (A.state === 'faint') return; A.state = state; A.t = 0; A.dur = dur; A.hold = !!hold; }
+function hdPump(set, ms) { const t0 = performance.now(); while (set.jobs.length && performance.now() - t0 < ms) set.jobs.shift()(); }
+const hdPick = (fr, i) => { for (let j = Math.min(i, fr.length - 1); j >= 0; j--) if (fr[j]) return fr[j]; return null; };
+function hdFrame(A, set, T) {
+  const st = A.state === 'faint' ? 'hurt' : A.state; let fr = set[st]; if (!fr || !fr.length || !fr[0]) fr = set.idle;
+  if (fr === set.idle) { const n = HD_FRAMES.idle, i = Math.floor((T + A.phase) / HD_IDLE_TICKS) % n; return fr[i] || fr[0]; }
+  const p = A.state === 'faint' ? 0.4 : clamp(A.t / Math.max(1, A.dur), 0, 1);
+  const n = HD_FRAMES[st] || (st === 'defend' ? 5 : fr.length); return hdPick(fr, Math.min(n - 1, Math.floor(p * n))) || set.idle[0];
+}
+function hdInit(b) {
+  b.hd = { F: { state: 'idle', t: 0, dur: 1, phase: 0 }, H: { state: 'idle', t: 0, dur: 1, phase: 17 }, hpF: b.F.hp, hpH: b.H.hp, ok: false };
+  try { b.hd.setF = hdFoeSet(b.F.sp); b.hd.setH = hdHeroSet(heroLookOf(Game.st)); b.hd.ok = true; b.hd.oldF = b.imgF; b.hd.oldShadow = b.shadowF; b.shadowF = buildShadow(Math.round(b.hd.setF.idle[0].bb.w * 0.38), 4); b.hd.oldH = [b.imgH, b.imgH2]; }
+  catch (e) { console.error('hdArt fallback', e); b.hd.ok = false; }
+}
+function hdStep(b, A, who) {
+  A.t++;
+  if (A.state !== 'idle' && A.state !== 'faint' && !A.hold && A.t >= A.dur) { A.state = 'idle'; A.t = 0; }
+}
+{ const _u = Battle.prototype.update; Battle.prototype.update = function () {
+    _u.call(this);
+    if (!hdOn()) { if (this.hd && this.hd.ok) { this.imgF = this.hd.oldF; this.shadowF = this.hd.oldShadow; [this.imgH, this.imgH2] = this.hd.oldH; this.hd = null; } return; }
+    if (!this.hd) hdInit(this); if (!this.hd.ok) return;
+    const D = this.hd, F = this.F, H = this.H;
+    // damage → hurt; defending / charging → held poses; fainting → frozen knock-back pose
+    if (F.hp < D.hpF && F.hp > 0) hdAnim(this, 'F', 'hurt', 22); if (H.hp < D.hpH && H.hp > 0) hdAnim(this, 'H', 'hurt', 22); D.hpF = F.hp; D.hpH = H.hp;
+    if (F.hp <= 0 && this.sinkF > 0) D.F.state = 'faint';
+    if (H.defending && D.H.state === 'idle') hdAnim(this, 'H', 'defend', 8, true); if (!H.defending && D.H.state === 'defend') { D.H.state = 'idle'; }
+    if (F.charging && D.F.state === 'idle') hdAnim(this, 'F', 'cast', 14, true); if (!F.charging && D.F.state === 'cast' && D.F.hold && !D.F.fx) D.F.state = 'idle';
+    hdPump(D.setF, 6); hdPump(D.setH, 4); hdStep(this, D.F, 'F'); hdStep(this, D.H, 'H');
+    this.imgF = hdFrame(D.F, D.setF, this.t); const h = hdFrame(D.H, D.setH, this.t); this.imgH = this.imgH2 = h;
+  };
+  // attacks: a short wind-up before the lunge, then the strike pose plays while the lunge moves
+  const _l = Battle.prototype.lunge; Battle.prototype.lunge = function* (b, dist = 10, frames = 5) {
+    if (!hdOn() || !this.hd || !this.hd.ok) { yield* _l.call(this, b, dist, frames); return; }
+    const who = b.hero ? 'H' : 'F'; hdAnim(this, who, 'attack', 5 + frames * 2 + 10); this.hd[who].fx = 0;
+    yield* wait(5); yield* _l.call(this, b, dist, frames);
+  };
+  // spells / skills without a lunge: raise into a cast pose while the effect plays
+  const _p = Battle.prototype.playFx; Battle.prototype.playFx = function* (name, u, t) {
+    const on = hdOn() && this.hd && this.hd.ok, who = u && u.hero ? 'H' : 'F', A = on && this.hd[who];
+    if (A && A.state === 'idle') { hdAnim(this, who, 'cast', 12, true); A.fx = 1; }
+    yield* _p.call(this, name, u, t);
+    if (A && A.state === 'cast' && A.fx) { A.hold = false; A.state = 'idle'; } if (A) A.fx = 0;
+  };
+  // new hero look after changing gear mid-battle is not possible, but the hero set follows the current look on each battle
+}
+
 /* ===================== EVENTS (異世界篇) ===================== */
 function* healRitual(text) {
   yield* fadeOut(10); healHero(); const fr = Sound.jingle('heal'); yield* wait(Math.max(40, fr)); yield* fadeIn(10);
@@ -5746,8 +6049,8 @@ const Events = {
   *mom(ow) {
     const st = Game.st;
     if (!st.flags.license) { yield* say('村長家在鎮上的東北邊，咖啡色屋頂那間喔。'); return; }
-    if (st.flags.golem && !st.flags.momEnd) { st.flags.momEnd = 1; yield* sayAll(['你看到了故鄉？……真的有門呢。', '不過，你又回到這裡了。', '累了就隨時回來吧。這裡也是你的家。']); }
-    else if (!st.flags.momAfter) { st.flags.momAfter = 1; yield* sayAll(['要去找「異界之門」啊……', '外面很危險，受傷了一定要回來喔。']); }
+    if (st.flags.golem && !st.flags.momEnd) { st.flags.momEnd = 1; yield* sayAll(['……魔王？那種傳說中的東西，真的要回來了？', '……你要去打倒它，對吧。', '不管走得多遠，累了就回來。這裡是你的家。']); }
+    else if (!st.flags.momAfter) { st.flags.momAfter = 1; yield* sayAll(['……回不去了嗎。', '那就把這裡當成你的家吧。我會一直等你回來吃晚飯的。', '當冒險者很危險，受傷了一定要回來喔。']); }
     else yield* say('歡迎回來！先休息一下吧。');
     st.respawn = { map: 'home', x: 6, y: 5, dir: 'up' }; yield* healRitual(st.name + '的體力完全恢復了！');
   },
@@ -5756,7 +6059,9 @@ const Events = {
     const st = Game.st;
     if (st.flags.license && (yield* classTalk())) return;
     if (!st.flags.license) {
-      yield* sayAll(['喔？你就是瑪莎撿回來的那個孩子啊。', '……從另一個世界來的？', '這個會發光的小板子……嗯，看來不是在說謊。', '古老的傳說裡提過，北方的古岩遺跡深處，有一扇「異界之門」。', '據說很久以前，也有異世界的旅人從那扇門來到這裡。', '如果真有回去的路，大概就在那裡了。', '只是……最近守護遺跡的古岩魔像甦醒了，誰也無法靠近。', '嗯？你的手……在發光！', '這是「異界人之力」。傳說中，來自異世界的人都擁有不可思議的力量。', '不過，這股力量還沒有形狀。', '把手放在這塊古老的石板上。力量會回應你的心，化成你要走的道路。']);
+      yield* sayAll(['喔？你就是瑪莎撿回來的那個孩子啊。', '……從另一個世界來的？', '這個會發光的小板子……嗯，看來不是在說謊。', '……孩子，有件事我必須老實告訴你。', '五百年前，「黯滅之王」札爾格斯率領魔物，差點讓這個世界沉入黑暗。', '那時，北方古岩遺跡的「異界之門」打開了，一位異世界的少年從門裡走了出來。', '他就是傳說中的初代「曙光勇者」。他封印了魔王，自己卻再也沒有回去。', '門只會朝這個世界打開。……傳說裡，從來沒有人回去過。']);
+      yield* blackText(['……回不去了。', '爸媽、朋友、每天放學走的那條路……', '……', '可是，哭也沒有用。', '既然來到了這裡——', '就在這個世界，好好地活下去。']);
+      yield* sayAll(['……你的眼神變了呢。', '最近魔物越來越凶暴，古岩遺跡的魔像也甦醒了。', '門會在這個時候打開……恐怕，魔王的封印正在減弱。', '嗯？你的手……在發光！', '這是「異界人之力」，和初代勇者一樣的力量。', '不過，這股力量還沒有形狀。', '把手放在這塊古老的石板上。力量會回應你的心，化成你要走的道路。']);
       yield* fadeOut(16, '#ffffff'); Game.fade = 0; Sound.sfx('charge'); const k = yield* classSelectScreen();
       applyStartClass(k); Game.fadeColor = '#ffffff'; Game.fade = 1; Sound.jingle('levelup'); yield* fadeIn(30); Game.fadeColor = '#000';
       const C = CLASSES[k], S = CLASS_START[k];
@@ -5764,16 +6069,16 @@ const Events = {
       yield* say({ swordsman: '劍士的道路啊……這把練習木劍就交給你了。', mage: '魔導士的道路啊……這把魔杖是我年輕時用的，交給你了。', guardian: '守護者的道路啊……這把木劍和布帽給你，別逞強喔。' }[k]);
       st.flags.license = 1; st.bag.license = 1; yield* itemGet('得到了' + S.gear.filter(b => b !== 'guardBadge').map(b => GEAR[b].n).join('和') + '、護身符和冒險者證！');
       yield* say('還有這些傷藥，帶在身上吧。'); st.bag.potion = (st.bag.potion || 0) + 5; yield* itemGet('得到了傷藥×5！');
-      yield* sayAll(['你已經會「' + learnedSkills(st).map(id => MOVES[id].n).join('」和「') + '」。', '另外還有2點技能點，打開選單的「技能」，可以自己決定要學什麼、要強化哪一招。', '每次升級會得到2點技能點和1點天賦點。技能點用來學技能；天賦點用來點永久的被動加成。', '技能要消耗MP，MP不夠時就用普通「攻擊」。', '到了Lv14，還能走上更高的道路，學到更強的技能。', '魔物分成好幾個種族，各有害怕的屬性。善用屬性技能，戰鬥會輕鬆很多。', '按START可以打開選單，查看狀態、技能和背包，也能記錄進度。']);
+      yield* sayAll(['你已經會「' + learnedSkills(st).map(id => MOVES[id].n).join('」和「') + '」。', '另外還有2點技能點，打開選單的「技能」，可以自己決定要學什麼、要強化哪一招。', '每次升級都會得到技能點（Lv6起還有天賦點）。技能點用來學技能；天賦點用來點永久的被動加成。', '技能要消耗MP，MP不夠時就用普通「攻擊」。', '到了Lv14，還能走上更高的道路，學到更強的技能。', '魔物分成好幾個種族，各有害怕的屬性。善用屬性技能，戰鬥會輕鬆很多。', '按START可以打開選單，查看狀態、技能和背包，也能記錄進度。']);
       const ap = ow && ow.npcs.find(n => n.id === 'apprentice');
       if (ap) { ap.dir = 'left'; yield* say('學徒：「村長爺爺！讓我幫忙！我在院子裡養了一隻練習用的泡泡姆！」');
-        if (yield* yesNo('要和泡泡姆練習一場嗎？')) { const res = yield* ow.battleScript({ sp: 'slime', lv: 3, kind: 'wild' }); if (res === 'win') yield* say('學徒：「好厲害！這就是異界人之力！」'); else yield* say('學徒：「泡、泡泡姆，下手輕一點啦！」'); healHero(); }
+        if (yield* yesNo('要和泡泡姆練習一場嗎？')) { const res = yield* ow.battleScript({ sp: 'slime', lv: 1, kind: 'wild' }); if (res === 'win') yield* say('學徒：「好厲害！這就是異界人之力！」'); else yield* say('學徒：「泡、泡泡姆，下手輕一點啦！」'); healHero(); }
         else yield* say('學徒：「那下次再練習吧！」'); }
-      yield* sayAll(['古岩魔像是「構造體」魔物，最怕水和草的攻擊。記住了。', '去吧，異世界的' + C.n + '。願曙光指引你回家的路。']);
+      yield* sayAll(['古岩魔像是「構造體」魔物，最怕水和草的攻擊。記住了。', '從今天起，你就是萌芽鎮的冒險者了。', '先去古岩遺跡，查清楚魔像為什麼會暴走。', '去吧，異世界的' + C.n + '。願曙光指引你的道路。']);
       return;
     }
-    if (st.flags.golem) { yield* sayAll(['門的另一邊，是你的故鄉？', '門只開了一瞬間……看來還缺少某種力量。', '別灰心。線索一定就在這個世界的某處。'].concat(st.flags.boneKnight ? [] : ['……對了，聽說魔像倒下後，遺跡的石板下面出現了往地底的樓梯。', '那裡是古王的墓穴。亡者怕火，別忘了帶上火系的武器或技能。'])); return; }
-    yield* sayAll(['古岩魔像是「構造體」魔物，最怕水和草的攻擊。', '累了就去旅店休息，別太勉強自己。']);
+    if (st.flags.golem) { yield* sayAll(['……你在門的另一邊，看到了魔王城？', '果然，札爾格斯正在甦醒。', '你手上的「曙光之印」，是初代勇者留下的印記。它選中了你。', '魔王城在遙遠的北方。你還需要更多的力量和夥伴。', '在那之前，先把這一帶的魔物清理乾淨，好好鍛鍊吧。'].concat(st.flags.boneKnight ? [] : ['……對了，聽說魔像倒下後，遺跡的石板下面出現了往地底的樓梯。', '那裡是古王的墓穴。亡者怕火，別忘了帶上火系的武器或技能。'])); return; }
+    yield* sayAll(['古岩魔像被魔王的瘴氣侵蝕，才會暴走。牠是「構造體」魔物，最怕水和草的攻擊。', '累了就去旅店休息，別太勉強自己。']);
   },
   *apprentice() { yield* say(Game.st.flags.golem ? '你真的打倒魔像了！我以後也要變得和你一樣強！' : '村長爺爺說，異世界來的人都很強！是真的嗎？'); },
   *gatekeeper() { yield* say(Game.st.flags.license ? '你就是那個從異世界來的人？好厲害！路上小心喔！' : '前面就是晨霧道路，外面有魔物喔！沒有冒險者證的人不能出鎮。'); },
@@ -5809,7 +6114,7 @@ const Events = {
   hiddenBoss(ow) {
     const st = Game.st; if (st.flags.crystalBoss || !ow.boss) return null;
     return (function* () {
-      yield* sayAll(['水晶石像散發著異界之門同樣的光芒……', '「……異界之人……證明……你的力量……」']);
+      yield* sayAll(['水晶石像散發著和你手上的印記同樣的光芒……', '「……異界之人……證明……你的力量……」']);
       const res = yield* ow.battleScript({ sp: 'crystalGolem', lv: MAPS.sewer.boss.lv, kind: 'boss' });
       if (res === 'win') { st.flags.crystalBoss = 1; st.flags.hiddenCls = 1; ow.boss = null; yield* say('水晶魔像碎裂了。碎片化成光，流進了' + st.name + '的身體……'); yield* itemGet('覺醒了隱藏職業「異界勇者」！（找村長轉職）'); saveGame(); }
     })();
@@ -5850,7 +6155,7 @@ const Events = {
     if (ok) { st.money -= cost; st.respawn = { map: 'inn', x: 4, y: 4, dir: 'up' }; yield* say('好的，請稍等一下。'); yield* healRitual(); yield* sayAll(['讓你久等了！你的體力已經完全恢復了。', '歡迎再來喔！']); }
     else yield* say('歡迎再來喔！');
   },
-  *traveler() { if (Game.st.flags.golem) { yield* sayAll(['你真的打倒魔像了？……', '我得把這件事告訴王都的朋友。說不定他們知道異界之門的事。']); return; } yield* sayAll(['我在古岩遺跡附近見過那隻魔像……', '它的拳頭開始發光、凝聚力量時，下一擊非常可怕。', '那時候就選「防禦」，能擋下一半的傷害！']); },
+  *traveler() { if (Game.st.flags.golem) { yield* sayAll(['你真的打倒魔像了？……', '魔王復活的傳聞，王都那邊也開始流傳了。', '我得趕快把這件事告訴王都的朋友。']); return; } yield* sayAll(['我在古岩遺跡附近見過那隻魔像……', '它的拳頭開始發光、凝聚力量時，下一擊非常可怕。', '那時候就選「防禦」，能擋下一半的傷害！']); },
   *clerk() { yield* shopFlow(); },
   *customer() { if (Game.st.flags.croc) { yield* say('騎士長劍是王都騎士團在用的劍！好想要喔……'); return; } yield* sayAll(['鐵劍好貴啊……不過攻擊會提升很多呢。', '魔法護符能提高魔攻，水流刃和落雷也會變強喔！']); },
   *hiker() { const hf = Game.st.flags; if (hf.mineOpen && !hf.bandit) { yield* sayAll(['東邊的廢棄礦坑被盜賊佔據了。商隊被搶的貨物應該就藏在裡面。', '入口在道路東側的小路盡頭。盜賊頭目「鐵斧」格倫會蓄力揮斧，那時候記得防禦！']); return; } if (Game.st.flags.wolf) { yield* sayAll(['狂牙狼被你打倒了？難怪最近路上安靜多了！', '精英魔物身上常常會掉出好東西喔。']); return; } yield* sayAll(['嘿！這條路上的草叢很深，常有魔物跳出來。', '受傷了就回萌芽鎮的旅店休息吧。', '過了河之後，還有一座能恢復體力的泉水喔！']); },
@@ -5867,7 +6172,7 @@ const Events = {
       Sound.sfx('quake'); Game.shake = 40; yield* wait(40);
       yield* say('……轟隆隆……');
       yield* tween(30, t => ow.bossGlow = t); Sound.cry(11, 0.6, 1.8); Game.shake = 30;
-      yield* sayAll(['古岩魔像的眼睛亮了起來！', '「……異界之人……」', '「……門……不許……靠近……」']);
+      yield* sayAll(['古岩魔像的眼睛亮起了紫黑色的光！', '「……異界之人……」', '「……王……即將……甦醒……」', '（魔像被魔王的瘴氣侵蝕了！）']);
       const res = yield* ow.battleScript({ sp: 'golem', lv: MAPS.ruins.boss.lv, kind: 'boss' });
       ow.bossGlow = 0;
       if (res === 'win') {
@@ -5875,7 +6180,7 @@ const Events = {
         Sound.sfx('quake'); Game.shake = 60; yield* wait(40);
         yield* say('古岩魔像化為碎石，崩塌了……');
         Game.shake = 50; Sound.sfx('quake'); yield* wait(30); Game.st.flags.gateOpen = 1; Sound.sfx('door');
-        yield* say('遺跡深處的「異界之門」緩緩打開了！');
+        yield* say('瘴氣散去，遺跡深處的「異界之門」再次亮了起來！');
         yield* visionScene();
         yield* fadeOut(40, '#ffffff'); saveGame();
         Game.setScene(new EndingScene()); Game.sys.push(fadeIn(30));
@@ -5889,10 +6194,12 @@ function* visionScene() {
   yield* fadeOut(24, '#ffffff'); let t = 0;
   const v = { draw(x) { t++; drawStreet(x, t, { vision: 1 }); } }; UI.push(v); Game.fadeColor = '#ffffff';
   yield* fadeIn(40); Sound.sfx('heal');
-  yield* sayAll(['門的另一邊……是熟悉的街道！？', '紅綠燈、自動販賣機……那是每天放學走的路！']);
+  yield* sayAll(['門的另一邊……是熟悉的街道。', '紅綠燈、自動販賣機、每天放學走的路。', '……這只是回憶。門不會帶我回去。']);
   v.fading = 1; for (let i = 0; i < 40; i++) { Game.fade = i / 40 * 0.85; Game.fadeColor = '#ffffff'; yield; }
-  yield* sayAll(['……可是，光芒很快就黯淡了下來。', '門的力量似乎還不夠。', '回家的線索，一定就在這個世界的某處——']);
-  UI.remove(v); Game.fade = 0;
+  UI.remove(v); Game.fade = 1; Game.fadeColor = '#000';
+  yield* blackText(['街道的影像碎裂了，', '取而代之的，是一座被黑雲包圍的城堡。', '「……異界之人……」', '「……五百年了……這次，我不會再輸……」', '——黯滅之王，札爾格斯。']);
+  Sound.sfx('charge'); yield* blackText(['手上的光芒變得滾燙。', '浮現出一個太陽般的紋章——「曙光之印」。', '……我明白了。', '這個世界，就是我要守護的地方。']);
+  Game.fade = 0;
 }
 
 function* classTalk() {
@@ -5920,7 +6227,7 @@ function loadGame() { try { const s = localStorage.getItem(SAVE_KEY); return s ?
 function saveSettings() { try { localStorage.setItem(SET_KEY, JSON.stringify(Game.settings)); } catch (e) { } }
 function loadSettings() { try { const s = localStorage.getItem(SET_KEY); if (s) Object.assign(Game.settings, JSON.parse(s)); } catch (e) { } }
 function newGameState(name) {
-  const st = { name, lv: 5, exp: expForLevel(5), hp: 1, status: null, moves: [{ id: 'slash', pp: 35 }, { id: 'glare', pp: 30 }, { id: 'flameSlash', pp: 25 }], boost: {}, equip: { weapon: null, head: null, body: null, feet: null, acc1: null, acc2: null }, gear: [], gid: 0, skills: {}, bag: { phone: 1 }, money: 1000, flags: {}, map: 'home', x: 1, y: 3, dir: 'right', respawn: { map: 'home', x: 1, y: 4, dir: 'up' }, time: 0, steps: 0, wins: 0 };
+  const st = { name, lv: 1, exp: expForLevel(1), hp: 1, status: null, moves: [{ id: 'slash', pp: 35 }, { id: 'glare', pp: 30 }, { id: 'flameSlash', pp: 25 }], boost: {}, equip: { weapon: null, head: null, body: null, feet: null, acc1: null, acc2: null }, gear: [], gid: 0, skills: {}, bag: { phone: 1 }, money: 1000, flags: {}, map: 'home', x: 1, y: 3, dir: 'right', respawn: { map: 'home', x: 1, y: 4, dir: 'up' }, time: 0, steps: 0, wins: 0 };
   Game.st = st; st.equip.body = makeGear('uniform', 1, 1).u; st.equip.feet = makeGear('schoolShoes', 1, 1).u; st.hp = heroStats(st).hp; return st;
 }
 function startOverworld() { const st = Game.st; migrateGear(st); migrateVs(st); migrateSkills(st); splitPoints(st); if (!st.tal) { st.tal = {}; st.tp = (st.tp || 0) + Math.max(0, st.lv - 5); } const ow = Game.ow = new Overworld(); Game.setScene(ow); ow.load(st.map, st.x, st.y, st.dir); if (st.skillNote) ow.run(skillUpdateNote(st)); else if (st.pointNote) ow.run(pointUpdateNote(st)); return ow; }
@@ -6096,7 +6403,7 @@ class EndingScene {
   draw(x) {
     x.drawImage(this.bg, 0, 0); x.fillStyle = 'rgba(16,8,28,0.62)'; x.fillRect(0, 0, W, H);
     const st = Game.st; const mins = Math.floor((st.time || 0) / 3600);
-    const lines = [['曙光冒險', 'big'], ['第一章「異界的旅人」', 'sub'], ['完', 'sub'], [''], ['異界之門短暫地打開，'], ['讓' + st.name + '看見了'], ['故鄉的街道。'], [''], ['門的力量從何而來？'], ['回家的路，'], ['還在曙光的彼端——'], [''], ['— 冒險記錄 —', 'sub'], ['旅人　' + st.name], ['等級　Lv.' + st.lv], ['戰鬥勝利　' + (st.wins || 0) + ' 次'], ['遊玩時間　' + Math.floor(mins / 60) + '小時' + (mins % 60) + '分'], [''], ['感謝遊玩！', 'sub'], [''], ['按 A 鍵繼續探索', 'hint']];
+    const lines = [['曙光冒險', 'big'], ['第一章「異界的旅人」', 'sub'], ['完', 'sub'], [''], ['回不去的故鄉，'], ['留在了心裡。'], [''], ['在這個世界，'], [st.name + '選擇了拿起武器。'], [''], ['黯滅之王札爾格斯的陰影'], ['正在北方擴散——'], ['曙光的冒險，才剛開始。'], [''], ['— 冒險記錄 —', 'sub'], ['旅人　' + st.name], ['等級　Lv.' + st.lv], ['戰鬥勝利　' + (st.wins || 0) + ' 次'], ['遊玩時間　' + Math.floor(mins / 60) + '小時' + (mins % 60) + '分'], [''], ['感謝遊玩！', 'sub'], [''], ['按 A 鍵繼續探索', 'hint']];
     let yy = H + 10 - this.y; this.maxY = H + 10 + lines.length * 18 - 230;
     for (const [s, k] of lines) {
       if (k === 'big') { if (!this.logo) this.logo = makeLogo(s, 2); x.drawImage(this.logo, Math.round(W / 2 - this.logo.width / 2), yy - 8); yy += 36; continue; }
@@ -6197,7 +6504,7 @@ const NPC_WHERE = { healer: '萌芽鎮・旅店', farmer: '萌芽鎮・南邊的
 // what each giver says when offering / thanking (their own voice)
 const COM_TALK = {
   c1: ['客人一多，傷藥一下就用完了……', '你能幫我採5株藥草回來嗎？'], c2: ['電電蜂把果園的工人都螫跑了！', '幫我打倒4隻電電蜂吧。'],
-  c3: ['地下水道的水晶……說不定和異界之門有關。', '能幫我帶3塊水晶碎片回來嗎？'], c4: ['我在迷霧森林東邊弄丟了一只銀懷錶。', '那是很重要的東西……如果找到了，請還給我。'],
+  c3: ['地下水道的水晶……說不定和魔王的封印有關。', '能幫我帶3塊水晶碎片回來嗎？'], c4: ['我在迷霧森林東邊弄丟了一只銀懷錶。', '那是很重要的東西……如果找到了，請還給我。'],
   c5: ['哎呀，嘟嘟菇又把我的菜啃光了！', '年輕人，幫我打倒5隻嘟嘟菇吧。'], c6: ['我在研究會發光的草！', '能幫我找3株魔力草嗎？道路北邊、森林和水道都有。'],
   c7: ['毒孢菇的孢子讓森林的藥草都枯萎了。', '請你打倒4隻毒孢菇。'], c8: ['我想做一鍋招牌菇菇燉湯。', '需要毒孢子3個和蕈傘2個。'],
   c9: ['硬石不夠，連鐵鎚都要生鏽了。', '幫我帶6塊硬石來吧，礦坑裡的礦脈最多。'], c10: ['坑道蝠在裡面亂飛，大家都不敢進去工作。', '幫我打倒5隻坑道蝠好嗎？'],
