@@ -214,6 +214,59 @@
    "重戰掉落:thug2(魔導士)",
    "重戰掉落:banditBoss(魔導士)"
   ],
+  "sandSaber": [
+   "canyon掉落池",
+   "canyon寶箱",
+   "重戰掉落:rockRhino"
+  ],
+  "stingerDagger": [
+   "canyon掉落池"
+  ],
+  "harpyStaff": [
+   "canyon掉落池",
+   "canyon掉落池(魔導士)",
+   "canyon寶箱(魔導士)",
+   "重戰掉落:rockRhino(魔導士)"
+  ],
+  "desertTurban": [
+   "canyon掉落池",
+   "canyon寶箱"
+  ],
+  "scorpMail": [
+   "canyon掉落池",
+   "canyon寶箱",
+   "重戰掉落:rockRhino"
+  ],
+  "sandBoots": [
+   "canyon掉落池",
+   "重戰掉落:duneWorm"
+  ],
+  "cactusCharm": [
+   "canyon掉落池",
+   "重戰掉落:rockRhino"
+  ],
+  "bogStaff": [
+   "swamp掉落池",
+   "swamp寶箱",
+   "swamp掉落池(魔導士)"
+  ],
+  "toadBlade": [
+   "swamp掉落池"
+  ],
+  "treantMail": [
+   "swamp掉落池",
+   "swamp寶箱",
+   "重戰掉落:hydra"
+  ],
+  "mireBoots": [
+   "swamp掉落池",
+   "swamp寶箱",
+   "重戰掉落:bogWitch"
+  ],
+  "wispLantern": [
+   "swamp掉落池",
+   "重戰掉落:bogWitch"
+  ],
   "riftSword": [
    "rift掉落池",
    "異界迴廊"
@@ -369,6 +422,39 @@
    "重戰掉落:gatekeeper",
    "重戰掉落:gatekeeper(魔導士)"
   ],
+  "rhinoHelm": [
+   "重戰掉落:rockRhino",
+   "岩角犀掉落"
+  ],
+  "wormCharm": [
+   "重戰掉落:duneWorm",
+   "沙丘巨蟲掉落"
+  ],
+  "duneFang": [
+   "重戰掉落:duneWorm"
+  ],
+  "sandTome": [
+   "重戰掉落:duneWorm",
+   "重戰掉落:duneWorm(魔導士)"
+  ],
+  "witchHat": [
+   "重戰掉落:bogWitch",
+   "沼澤魔女掉落"
+  ],
+  "witchTome": [
+   "重戰掉落:bogWitch"
+  ],
+  "hydraScale": [
+   "重戰掉落:hydra",
+   "腐沼九頭蛇掉落"
+  ],
+  "hydraFang": [
+   "重戰掉落:hydra"
+  ],
+  "hydraStaff": [
+   "重戰掉落:hydra",
+   "重戰掉落:hydra(魔導士)"
+  ],
   "woodSword": [
    "職業起始",
    "職業起始"
@@ -424,6 +510,12 @@
   "masterBlade": [
    "劇情/任務"
   ],
+  "merchantBadge": [
+   "劇情/任務"
+  ],
+  "mimicTooth": [
+   "劇情/任務"
+  ],
   "dawnStaff": [
    "forest寶箱(魔導士)"
   ],
@@ -442,9 +534,12 @@
    "sewer寶箱",
    "mine寶箱",
    "catacomb寶箱",
+   "canyon寶箱",
    "道具店",
    "行商",
    "鐵匠配方",
+   "委託獎勵",
+   "委託獎勵",
    "委託獎勵",
    "委託獎勵"
   ],
@@ -490,17 +585,20 @@
    "route採集",
    "forest採集",
    "forest採集",
-   "lake採集"
+   "lake採集",
+   "canyon採集"
   ],
   "manaHerb": [
    "route採集",
    "forest採集",
    "sewer採集",
    "ruins採集",
-   "lake採集"
+   "lake採集",
+   "swamp採集"
   ],
   "wisdomFruit": [
    "forest寶箱",
+   "swamp寶箱",
    "迴廊兌換"
   ],
   "luckClover": [
@@ -536,6 +634,7 @@
    "mine採集",
    "mine採集",
    "mine採集",
+   "canyon採集",
    "魔物:石丸",
    "魔物:礦泥怪",
    "魔物:符文石像",
@@ -555,9 +654,11 @@
    "mine寶箱",
    "catacomb寶箱",
    "lake寶箱",
+   "swamp寶箱",
    "行商",
    "道具店(魔像後)",
    "迴廊兌換",
+   "委託獎勵",
    "委託獎勵"
   ],
   "ectoplasm": [
@@ -569,9 +670,12 @@
   ],
   "hiEther": [
    "lake寶箱",
+   "canyon寶箱",
+   "swamp寶箱",
    "行商",
    "迴廊兌換",
    "鐵匠配方",
+   "委託獎勵",
    "委託獎勵",
    "委託獎勵"
   ],
@@ -583,8 +687,23 @@
    "lake採集",
    "魔物:月光水精"
   ],
+  "bellShard": [
+   "canyon寶箱"
+  ],
+  "cactusFruit": [
+   "canyon採集",
+   "canyon採集",
+   "魔物:仙人掌怪"
+  ],
+  "bogMoss": [
+   "swamp採集",
+   "swamp採集",
+   "魔物:沼澤水蛭",
+   "魔物:腐沼蟾"
+  ],
   "antidote": [
-   "道具店"
+   "道具店",
+   "委託獎勵"
   ],
   "burnHeal": [
    "道具店"
@@ -664,10 +783,31 @@
   "mothDust": [
    "魔物:暮光蛾"
   ],
+  "scorpTail": [
+   "魔物:砂鉗蠍"
+  ],
+  "harpyFeather": [
+   "魔物:峽谷鷹妖"
+  ],
+  "sandCrystal": [
+   "魔物:塵旋精"
+  ],
+  "wispFlame": [
+   "魔物:沼地鬼火"
+  ],
+  "rotWood": [
+   "魔物:枯木樹妖"
+  ],
   "license": [
    "劇情/任務"
   ],
   "riftToken": [
+   "劇情/任務"
+  ],
+  "starShard": [
+   "劇情/任務"
+  ],
+  "rhinoHorn": [
    "劇情/任務"
   ]
  },
@@ -775,6 +915,12 @@
   ],
   "riftShard": [
    "配方:riftRing"
+  ],
+  "scorpTail": [
+   "委託c18"
+  ],
+  "bogMoss": [
+   "委託c20"
   ]
  }
 }
