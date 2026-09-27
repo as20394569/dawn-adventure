@@ -13,7 +13,7 @@ module.exports = async (g) => {
   // silhouette of one actor = pixels that change when that actor is hidden
   const measure = (who) => g.ev(who => {
     const G = __game, b = G.Game.scene, cv = document.getElementById('screen'), S = cv.width / 176;
-    const box = who === 'foe' ? [24, 40, 152, b.constructor.name === 'Battle' ? 175 : 175] : [0, 110, 100, 205];
+    const box = who === 'foe' ? [24, 40, 152, b.constructor.name === 'Battle' ? 175 : 175] : [0, 110, 176, 205];
     b.shake = 0; b.fx = []; G.Game.shake = 0; const grab = () => { G.step(0); const x = cv.getContext('2d'); return x.getImageData(Math.round(box[0] * S), Math.round(box[1] * S), Math.round((box[2] - box[0]) * S), Math.round((box[3] - box[1]) * S)); };
     const a = grab(); const keep = who === 'foe' ? b.alphaF : b.heroX; if (who === 'foe') b.alphaF = 0; else b.heroX = -400; const bg = grab(); if (who === 'foe') b.alphaF = keep; else b.heroX = keep;
     const w = a.width, h = a.height, m = new Uint8Array(w * h); let n = 0, sx = 0, foot = -1, top = h, l = w, r = -1;

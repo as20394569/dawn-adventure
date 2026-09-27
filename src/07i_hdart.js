@@ -5,7 +5,6 @@
    Setting: Game.settings.hdArt (default on) — off = the original battle sprites, exactly as before. */
 if (Game.settings.hdArt === undefined) Game.settings.hdArt = true;
 const hdOn = () => Game.settings.hdArt !== false;
-const HD_DENSITY = 2, HD_NATIVE = 80 * HD_DENSITY, HD_NATIVE_BIG = 92 * HD_DENSITY; // sprite pixels: 2 per screen pixel (finer than the UI grid)
 /* ---------- 2D affine helpers (64-space) ---------- */
 const M_ID = [1, 0, 0, 1, 0, 0]; // x' = a x + c y + e, y' = b x + d y + f
 const mMul = (A, B) => [A[0] * B[0] + A[2] * B[1], A[1] * B[0] + A[3] * B[1], A[0] * B[2] + A[2] * B[3], A[1] * B[2] + A[3] * B[3], A[0] * B[4] + A[2] * B[5] + A[4], A[1] * B[4] + A[3] * B[5] + A[5]];
@@ -133,28 +132,32 @@ function hdPoseDef(def, rig, pose, off) {
     return xfDetail(d, layerM(li >= 0 ? layerOf[li] : null)); });
   return { ...def, parts: outParts, details };
 }
-function hdRaster(def, S, k, grain) {
-  const c = renderFine(def, S, k, { grain }); c.ds = 1 / HD_DENSITY; c.small = c; return c;
+/* ---------- live vector actors (drawn every frame at the screen's real resolution) ---------- */
+const HD_KL = 80 / 64, HD_KL_BIG = 92 / 64; // screen pixels per design unit (monster box ≈ 80 / 92 px)
+const HD_GLOSS = { slime: 0.55, ghost: 0.15, golem: 0.08, brute: 0.12, flame: 0.2, lamp: 0.45, beast: 0.18, human: 0.2 };
+const HD_IDLE_PERIOD = 72;
+function hdCanvas(A, wL, hL) { const D = SCALE; if (!A.cv || A.cvD !== D) { A.cv = mkCanvas(Math.ceil(wL * D), Math.ceil(hL * D)); A.cvT = mkCanvas(A.cv.width, A.cv.height); A.cvD = D; } A.cv.ds = A.cvT.ds = 1 / D; return A.cv; }
+function hdFoeSpec(sp) {
+  const def = ART[sp], rig = hdRig(sp), kL = FOE_NATIVE[sp] ? HD_KL_BIG : HD_KL, pad = 16, SL = Math.round(64 * kL + pad * 2);
+  const off = [1, 0, 0, 1, pad / kL, (SL - 64 * kL - 1) / kL];
+  const spec = { def, rig, kL, SL, off, line: 1.15 / kL, gloss: HD_GLOSS[rig.kind] ?? 0.25 };
+  // anchor box from the base pose (measured once on a 2x canvas)
+  const c = mkCanvas(SL * 2, SL * 2), x = c.getContext('2d'); x.setTransform(2 * kL, 0, 0, 2 * kL, 0, 0); vecDraw(x, hdPoseDef(def, rig, monPose(rig.kind, 'idle', 0), off), spec);
+  const d = x.getImageData(0, 0, c.width, c.height).data, S = c.width; let x0 = S, x1 = -1, y0 = S, y1 = -1;
+  for (let y = 0; y < S; y++) for (let X = 0; X < S; X++) if (d[(y * S + X) * 4 + 3] > 100) { if (X < x0) x0 = X; if (X > x1) x1 = X; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+  spec.bb = { cx: Math.round((x0 + x1 + 1) / 4), top: y0 / 2, bot: Math.round((y1 + 1) / 2), w: (x1 - x0 + 1) / 2, h: (y1 - y0 + 1) / 2 };
+  return spec;
 }
-function hdBounds(c) { const S = c.width, d = c.getContext('2d').getImageData(0, 0, S, S).data; let x0 = S, x1 = -1, y0 = S, y1 = -1; for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) if (d[(y * S + x) * 4 + 3]) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; } return { x0, x1, y0, y1 }; }
-/* ---------- monster frame sets ---------- */
-const HD_GRAIN = { golem: 0.14, brute: 0.12, beast: 0.09, slime: 0.02, ghost: 0.04, flame: 0.03, lamp: 0.03, fly: 0.07, hop: 0.06, human: 0.06, bug: 0.05, spider: 0.07, plant: 0.06, buzz: 0.05 };
-const HD_FRAMES = { idle: 12, attack: 10, cast: 6, hurt: 6 };
-const hdFoeCache = {};
-function hdFoeSet(sp) {
-  if (hdFoeCache[sp]) return hdFoeCache[sp];
-  const def = ART[sp], rig = hdRig(sp), N = FOE_NATIVE[sp] ? HD_NATIVE_BIG : HD_NATIVE, k = N / 64, pad = Math.round(N * 0.2), S = N + pad * 2;
-  const off = [1, 0, 0, 1, pad / k, (S - N - 1) / k]; // design centred horizontally, foot one pixel above the canvas bottom
-  const set = { jobs: [] }, make = (st, i) => { const n = HD_FRAMES[st], p = st === 'idle' ? i / n : i / (n - 1); const pose = monPose(rig.kind, st, p); if (rig.damp && st === 'idle') for (const q in rig.damp) { const o = pose.L[q]; if (o) for (const f of ['rot', 'dx', 'dy']) if (o[f]) o[f] *= rig.damp[q]; } const c = hdRaster(hdPoseDef(def, rig, pose, off), S, k, HD_GRAIN[rig.kind] ?? 0.06); c.bb = set.bb; set[st][i] = c; };
-  for (const st in HD_FRAMES) set[st] = [];
-  make('idle', 0); const b = hdBounds(set.idle[0].small), Sc = 1 / HD_DENSITY;
-  set.bb = set.idle[0].bb = { cx: Math.round((b.x0 + b.x1 + 1) * Sc / 2), top: b.y0 * Sc, bot: (b.y1 + 1) * Sc, w: (b.x1 - b.x0 + 1) * Sc, h: (b.y1 - b.y0 + 1) * Sc }; // one shared anchor: frames never shift
-  // the rest is built a few frames at a time during the battle intro (no hitch on slow phones)
-  for (const st of ['idle', 'hurt', 'attack', 'cast']) for (let i = st === 'idle' ? 1 : 0; i < HD_FRAMES[st]; i++) set.jobs.push(() => make(st, i));
-  return hdFoeCache[sp] = set;
+function hdPhase(A, T) { if (A.state === 'idle') return ['idle', ((T + A.phase) % HD_IDLE_PERIOD) / HD_IDLE_PERIOD]; if (A.state === 'faint') return ['hurt', 0.4]; return [A.state, clamp(A.t / Math.max(1, A.dur), 0, 1)]; }
+function hdRenderFoe(A, spec, T, tint) {
+  const cv = hdCanvas(A, spec.SL, spec.SL), tgt = tint ? A.cvT : cv, x = tgt.getContext('2d'), [st, p] = hdPhase(A, T), pose = monPose(spec.rig.kind, st, p);
+  if (spec.rig.damp && st === 'idle') for (const q in spec.rig.damp) { const o = pose.L[q]; if (o) for (const f of ['rot', 'dx', 'dy']) if (o[f]) o[f] *= spec.rig.damp[q]; }
+  x.setTransform(1, 0, 0, 1, 0, 0); x.clearRect(0, 0, tgt.width, tgt.height); const k = spec.kL * A.cvD; x.setTransform(k, 0, 0, k, 0, 0);
+  vecDraw(x, hdPoseDef(spec.def, spec.rig, pose, spec.off), { line: spec.line, gloss: spec.gloss, tint });
+  tgt.bb = spec.bb; return tgt;
 }
 /* ---------- hero (back view, full body) built from the equipped look ---------- */
-const HERO_HD = { N: 76 * HD_DENSITY, W: 92 * HD_DENSITY }; // 92 × 76 screen pixels (design space 72 × 64)
+const HERO_HD = { N: 76, W: 92 }; // 92 × 76 screen pixels (design space 72 × 64)
 const SKIN = { ramp: ['#fff4e8', '#fbe0c4', '#f4cca8', '#e0a880', '#8a5a48'], line: false, flat: 1 };
 function heroHDDef(L) {
   const P = HERO_PAL, BL = BODY_LOOKS[L.body], shape = BL ? BL[0] : 'uniform', bp = BL ? BL[1] : {}, fp = { ...P, ...(FEET_PAL[L.feet] || {}) };
@@ -228,29 +231,18 @@ function heroHDPosed(L, state, p) {
   const out = parts.map(q => { const r = xfShape(q, layerM(q.layer), q.layer === 'cape' ? warp : null); delete r.layer; return r; });
   return { def: { parts: out, details: [] }, k };
 }
-const hdHeroCache = {};
-function hdHeroSet(L) {
-  const key = lookKey(L); if (hdHeroCache[key]) return hdHeroCache[key];
-  const n = { ...HD_FRAMES, defend: 5 }, set = { jobs: [] }, S = Math.max(HERO_HD.W, HERO_HD.N);
-  const make = (st, i) => { const p = st === 'idle' ? i / n[st] : i / (n[st] - 1); const { def, k } = heroHDPosed(L, st, p); set[st][i] = hdRaster(def, S, k, 0.05); };
-  for (const st in n) set[st] = []; make('idle', 0);
-  for (const st of ['idle', 'attack', 'hurt', 'defend', 'cast']) for (let i = st === 'idle' ? 1 : 0; i < n[st]; i++) set.jobs.push(() => make(st, i));
-  return hdHeroCache[key] = set;
+const HERO_KL = 76 / 64, HERO_BOX = [92, 80], HD_HERO_OX = 60; // hero drawn centred at the bottom of the stage
+function hdRenderHero(A, L, T, tint) {
+  const cv = hdCanvas(A, HERO_BOX[0], HERO_BOX[1]), tgt = tint ? A.cvT : cv, x = tgt.getContext('2d'), [st, p] = hdPhase(A, T), { def } = heroHDPosed(L, st, p);
+  x.setTransform(1, 0, 0, 1, 0, 0); x.clearRect(0, 0, tgt.width, tgt.height); const k = HERO_KL * A.cvD; x.setTransform(k, 0, 0, k, 0, 0);
+  vecDraw(x, def, { line: 1.1 / HERO_KL, gloss: 0.2, tint }); return tgt;
 }
 /* ---------- battle integration (animation state machine; the old draw code is reused unchanged) ---------- */
-const HD_IDLE_TICKS = 6;
 function hdAnim(b, who, state, dur, hold) { const A = b.hd && b.hd[who]; if (!A) return; if (A.state === 'faint') return; A.state = state; A.t = 0; A.dur = dur; A.hold = !!hold; }
-function hdPump(set, ms) { const t0 = performance.now(); while (set.jobs.length && performance.now() - t0 < ms) set.jobs.shift()(); }
-const hdPick = (fr, i) => { for (let j = Math.min(i, fr.length - 1); j >= 0; j--) if (fr[j]) return fr[j]; return null; };
-function hdFrame(A, set, T) {
-  const st = A.state === 'faint' ? 'hurt' : A.state; let fr = set[st]; if (!fr || !fr.length || !fr[0]) fr = set.idle;
-  if (fr === set.idle) { const n = HD_FRAMES.idle, i = Math.floor((T + A.phase) / HD_IDLE_TICKS) % n; return fr[i] || fr[0]; }
-  const p = A.state === 'faint' ? 0.4 : clamp(A.t / Math.max(1, A.dur), 0, 1);
-  const n = HD_FRAMES[st] || (st === 'defend' ? 5 : fr.length); return hdPick(fr, Math.min(n - 1, Math.floor(p * n))) || set.idle[0];
-}
 function hdInit(b) {
-  b.hd = { F: { state: 'idle', t: 0, dur: 1, phase: 0 }, H: { state: 'idle', t: 0, dur: 1, phase: 17 }, hpF: b.F.hp, hpH: b.H.hp, ok: false };
-  try { b.hd.setF = hdFoeSet(b.F.sp); b.hd.setH = hdHeroSet(heroLookOf(Game.st)); b.hd.ok = true; b.hd.oldF = b.imgF; b.hd.oldShadow = b.shadowF; b.shadowF = buildShadow(Math.round(b.hd.setF.idle[0].bb.w * 0.38), 4); b.hd.oldH = [b.imgH, b.imgH2]; }
+  b.hd = { F: { state: 'idle', t: 0, dur: 1, phase: 0 }, H: { state: 'idle', t: 0, dur: 1, phase: 29 }, hpF: b.F.hp, hpH: b.H.hp, ok: false };
+  try { b.hd.specF = hdFoeSpec(b.F.sp); b.hd.look = heroLookOf(Game.st); b.hd.oldF = b.imgF; b.hd.oldShadow = b.shadowF; b.hd.oldH = [b.imgH, b.imgH2];
+    b.imgF = hdRenderFoe(b.hd.F, b.hd.specF, b.t); b.imgH = b.imgH2 = hdRenderHero(b.hd.H, b.hd.look, b.t); b.shadowF = buildShadow(Math.round(b.hd.specF.bb.w * 0.38), 4); b.hd.ok = true; }
   catch (e) { console.error('hdArt fallback', e); b.hd.ok = false; }
 }
 function hdStep(b, A, who) {
@@ -259,7 +251,7 @@ function hdStep(b, A, who) {
 }
 { const _u = Battle.prototype.update; Battle.prototype.update = function () {
     _u.call(this);
-    if (!hdOn()) { if (this.hd && this.hd.ok) { this.imgF = this.hd.oldF; this.shadowF = this.hd.oldShadow; [this.imgH, this.imgH2] = this.hd.oldH; this.hd = null; } return; }
+    if (!hdOn()) { if (this.hd && this.hd.ok) { this.hd.ok = false; this.imgF = this.hd.oldF; this.shadowF = this.hd.oldShadow; [this.imgH, this.imgH2] = this.hd.oldH; this.hd = null; } return; }
     if (!this.hd) hdInit(this); if (!this.hd.ok) return;
     const D = this.hd, F = this.F, H = this.H;
     // damage → hurt; defending / charging → held poses; fainting → frozen knock-back pose
@@ -267,8 +259,7 @@ function hdStep(b, A, who) {
     if (F.hp <= 0 && this.sinkF > 0) D.F.state = 'faint';
     if (H.defending && D.H.state === 'idle') hdAnim(this, 'H', 'defend', 8, true); if (!H.defending && D.H.state === 'defend') { D.H.state = 'idle'; }
     if (F.charging && D.F.state === 'idle') hdAnim(this, 'F', 'cast', 14, true); if (!F.charging && D.F.state === 'cast' && D.F.hold && !D.F.fx) D.F.state = 'idle';
-    hdPump(D.setF.jobs.length ? D.setF : D.setH, 8); hdStep(this, D.F, 'F'); hdStep(this, D.H, 'H');
-    this.imgF = hdFrame(D.F, D.setF, this.t); const h = hdFrame(D.H, D.setH, this.t); this.imgH = this.imgH2 = h;
+    hdStep(this, D.F, 'F'); hdStep(this, D.H, 'H');
   };
   // attacks: a short wind-up before the lunge, then the strike pose plays while the lunge moves
   const _l = Battle.prototype.lunge; Battle.prototype.lunge = function* (b, dist = 10, frames = 5) {
@@ -286,27 +277,31 @@ function hdStep(b, A, who) {
   // new hero look after changing gear mid-battle is not possible, but the hero set follows the current look on each battle
 }
 
-/* ---------- drawing: same as Battle.draw, but sprites carry their own pixel density (im.ds) ---------- */
-{ const _d = Battle.prototype.draw; Battle.prototype.draw = function (x) {
+/* ---------- drawing: same layout as Battle.draw; actors are rendered live as smooth vectors ---------- */
+{ const _c = Battle.prototype.center; Battle.prototype.center = function (b) {
+    if (b && b.hero && hdOn() && this.hd && this.hd.ok) return { x: this.heroX + HD_HERO_OX + 28, y: HERO_Y + 30 };
+    return _c.call(this, b);
+  };
+  const _d = Battle.prototype.draw; Battle.prototype.draw = function (x) {
     if (!hdOn() || !this.hd || !this.hd.ok) return _d.call(this, x);
-    const blit = (im, X, Y, w, h) => { const ds = im.ds || 1; x.drawImage(im, X, Y, w ?? im.width * ds, h ?? im.height * ds); };
+    const D = this.hd, blit = (im, X, Y, w, h) => { const ds = im.ds || 1; x.drawImage(im, X, Y, w ?? im.width * ds, h ?? im.height * ds); };
+    const im = this.imgF = hdRenderFoe(D.F, D.specF, this.t), hi = this.imgH = this.imgH2 = hdRenderHero(D.H, D.look, this.t);
     const sx = this.shake > 0 ? rnd(-3, 3) : 0, sy = this.shake > 0 ? rnd(-2, 2) : 0;
     x.save(); x.translate(sx, sy); x.drawImage(this.bg, 0, 0);
     if (this.alphaF > 0) { x.globalAlpha = 0.22 * this.alphaF; x.drawImage(this.shadowF, Math.round(this.foeX + 32 + this.offF.x - this.shadowF.width / 2), FOE_FOOT - 5); x.globalAlpha = 1; }
+    const ds = im.ds, fw = im.width * ds, fh = im.height * ds, fx0 = this.foeX + 32 - im.bb.cx + this.offF.x, fy0 = FOE_FOOT - im.bb.bot + this.offF.y + this.sinkF;
     if (this.alphaF > 0 && !(this.blinkF > 0 && Math.floor(this.blinkF / 3) % 2)) {
       x.save(); x.beginPath(); x.rect(0, 0, W, FOE_FOOT + 3); x.clip(); x.globalAlpha = this.alphaF;
-      const sq = this.squishF, im = this.imgF, ds = im.ds || 1, fw = im.width * ds, fh = im.height * ds;
-      const fx0 = Math.round(this.foeX + 32 - im.bb.cx + this.offF.x), fy0 = Math.round(FOE_FOOT - im.bb.bot + this.offF.y + this.sinkF);
-      if (sq) blit(im, fx0 - sq, fy0 + sq * 2, fw + sq * 2, fh - sq * 2); else blit(im, fx0, fy0);
-      if (this.tintF && this.tintF.a > 0) { x.globalAlpha = this.tintF.a * this.alphaF; blit(tinted(im, this.tintF.c), fx0, fy0, fw, fh); }
+      const sq = this.squishF; if (sq) blit(im, fx0 - sq, fy0 + sq * 2, fw + sq * 2, fh - sq * 2); else blit(im, fx0, fy0);
+      if (this.tintF && this.tintF.a > 0) { x.globalAlpha = this.tintF.a * this.alphaF; blit(hdRenderFoe(D.F, D.specF, this.t, this.tintF.c), fx0, fy0, fw, fh); }
       x.restore();
     }
     if (this.cg && this.cg.shards > 0 && this.alphaF > 0) { const C = this.center(this.F); for (let i = 0; i < this.cg.shards; i++) { const an = this.t / 20 + i * Math.PI * 2 / 3, px0 = Math.round(C.x + Math.cos(an) * 44), py0 = Math.round(C.y + Math.sin(an) * 14); x.fillStyle = '#1a3050'; x.fillRect(px0 - 3, py0 - 5, 7, 11); x.fillStyle = '#9ae0ff'; x.fillRect(px0 - 2, py0 - 4, 5, 9); x.fillStyle = '#e8fbff'; x.fillRect(px0 - 1, py0 - 3, 2, 4); } }
-    if (this.cg && this.cg.mirror && this.alphaF > 0 && Math.floor(this.t / 8) % 2) { const im = this.imgF, ds = im.ds || 1; x.globalAlpha = 0.25; blit(tinted(im, '#e8fbff'), Math.round(this.foeX + 32 - im.bb.cx), Math.round(FOE_FOOT - im.bb.bot), im.width * ds, im.height * ds); x.globalAlpha = 1; }
+    if (this.cg && this.cg.mirror && this.alphaF > 0 && Math.floor(this.t / 8) % 2) { x.globalAlpha = 0.25; blit(hdRenderFoe(D.F, D.specF, this.t, '#e8fbff'), this.foeX + 32 - im.bb.cx, FOE_FOOT - im.bb.bot, fw, fh); x.globalAlpha = 1; }
     if (!(this.blinkH > 0 && Math.floor(this.blinkH / 3) % 2)) {
-      x.save(); x.globalAlpha = 0.25; x.drawImage(this.shadowH, Math.round(this.heroX + 24 + this.offH.x - this.shadowH.width / 2), HERO_Y + 64); x.globalAlpha = Math.max(0, 1 - this.sinkH / 70);
-      const hi = this.imgH, hx = Math.round(this.heroX + this.offH.x), hy = Math.round(HERO_Y + this.offH.y + this.sinkH * 0.25);
-      blit(hi, hx, hy); if (this.tintH) { x.globalAlpha = this.tintH.a; blit(tinted(hi, this.tintH.c), hx, hy, hi.width * (hi.ds || 1), hi.height * (hi.ds || 1)); }
+      const hx0 = this.heroX + HD_HERO_OX; x.save(); x.globalAlpha = 0.25; x.drawImage(this.shadowH, Math.round(hx0 + 28 + this.offH.x - this.shadowH.width / 2), HERO_Y + 66); x.globalAlpha = Math.max(0, 1 - this.sinkH / 70);
+      const hx = hx0 + this.offH.x, hy = HERO_Y + this.offH.y + this.sinkH * 0.25, hw = hi.width * hi.ds, hh = hi.height * hi.ds;
+      blit(hi, hx, hy); if (this.tintH) { x.globalAlpha = this.tintH.a; blit(hdRenderHero(D.H, D.look, this.t, this.tintH.c), hx, hy, hw, hh); }
       x.restore();
     }
     for (const p of this.fx) drawParticle(x, p);
