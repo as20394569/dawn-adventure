@@ -5,7 +5,7 @@
    Setting: Game.settings.hdArt (default on) — off = the original battle sprites, exactly as before. */
 if (Game.settings.hdArt === undefined) Game.settings.hdArt = true;
 const hdOn = () => Game.settings.hdArt !== false;
-const HD_SCALE = 2, HD_NATIVE = 40, HD_NATIVE_BIG = 46;
+const HD_DENSITY = 2, HD_NATIVE = 80 * HD_DENSITY, HD_NATIVE_BIG = 92 * HD_DENSITY; // sprite pixels: 2 per screen pixel (finer than the UI grid)
 /* ---------- 2D affine helpers (64-space) ---------- */
 const M_ID = [1, 0, 0, 1, 0, 0]; // x' = a x + c y + e, y' = b x + d y + f
 const mMul = (A, B) => [A[0] * B[0] + A[2] * B[1], A[1] * B[0] + A[3] * B[1], A[0] * B[2] + A[2] * B[3], A[1] * B[2] + A[3] * B[3], A[0] * B[4] + A[2] * B[5] + A[4], A[1] * B[4] + A[3] * B[5] + A[5]];
@@ -66,7 +66,7 @@ const hdRig = sp => HD_RIG[HD_RIG_OF[sp] || sp] || { kind: 'blob', layers: {} };
 /* ---------- motion: pose(kind, state, phase) → { G: global transform about the foot, L: per-layer transforms, wave } ---------- */
 const sstep = (a, b, x) => { const t = clamp((x - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
 const TAU = Math.PI * 2;
-const BREATH = { slime: 0.07, hop: 0.045, beast: 0.03, human: 0.025, brute: 0.025, golem: 0.018, ghost: 0.02, flame: 0.05, plant: 0.025, fly: 0.03, buzz: 0.025, bug: 0.02, spider: 0.02, lamp: 0.015, blob: 0.03 };
+const BREATH = { slime: 0.07, hop: 0.045, beast: 0.03, human: 0.025, brute: 0.025, golem: 0.018, ghost: 0.02, flame: 0.035, plant: 0.025, fly: 0.03, buzz: 0.025, bug: 0.02, spider: 0.02, lamp: 0.015, blob: 0.03 };
 function monPose(kind, state, p) {
   const G = { rot: 0, sx: 1, sy: 1, dx: 0, dy: 0 }, L = {}; let wave = 0;
   const set = (n, o) => { L[n] = Object.assign(L[n] || {}, o); };
@@ -84,7 +84,7 @@ function monPose(kind, state, p) {
     set('drops', { dy: 1.5 * Math.sin(TAU * p + 1) }); set('embers', { dy: 2 * Math.sin(TAU * p * 2), rot: 0.1 * s });
     set('legsL', { rot: 0.025 * s2 }); set('legsR', { rot: -0.025 * s2 }); set('fangL', { rot: 0.12 * Math.max(0, s2) }); set('fangR', { rot: -0.12 * Math.max(0, s2) });
     set('mandL', { rot: 0.12 * Math.max(0, s2) }); set('mandR', { rot: -0.12 * Math.max(0, s2) });
-    set('lamp', { rot: 0.05 * s }); set('flame', { sx: 1 + 0.08 * s2, sy: 1 + 0.12 * s2 }); set('wisp', { rot: -0.12 * s });
+    set('lamp', { rot: 0.05 * s }); set('flame', { sx: 1 + 0.04 * s2, sy: 1 + 0.07 * s2 }); set('wisp', { rot: -0.12 * s });
     set('mane', { sy: 1 + 0.08 * s2 }); set('sting', { rot: 0.1 * s }); set('legs', { sx: 1 - 0.04 * s });
     wave = p;
   } else if (state === 'attack') { // wind-up (lean back) → strike (lunge toward the hero, lower-left) → recover
@@ -133,27 +133,28 @@ function hdPoseDef(def, rig, pose, off) {
     return xfDetail(d, layerM(li >= 0 ? layerOf[li] : null)); });
   return { ...def, parts: outParts, details };
 }
-function hdRaster(def, S, k, scale) {
-  const sm = buildShaded(def, S, k), c = mkCanvas(S * scale, S * scale), x = c.getContext('2d'); x.imageSmoothingEnabled = false; x.drawImage(sm, 0, 0, S * scale, S * scale); c.small = sm; return c;
+function hdRaster(def, S, k, grain) {
+  const c = renderFine(def, S, k, { grain }); c.ds = 1 / HD_DENSITY; c.small = c; return c;
 }
 function hdBounds(c) { const S = c.width, d = c.getContext('2d').getImageData(0, 0, S, S).data; let x0 = S, x1 = -1, y0 = S, y1 = -1; for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) if (d[(y * S + x) * 4 + 3]) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; } return { x0, x1, y0, y1 }; }
 /* ---------- monster frame sets ---------- */
+const HD_GRAIN = { golem: 0.14, brute: 0.12, beast: 0.09, slime: 0.02, ghost: 0.04, flame: 0.03, lamp: 0.03, fly: 0.07, hop: 0.06, human: 0.06, bug: 0.05, spider: 0.07, plant: 0.06, buzz: 0.05 };
 const HD_FRAMES = { idle: 12, attack: 10, cast: 6, hurt: 6 };
 const hdFoeCache = {};
 function hdFoeSet(sp) {
   if (hdFoeCache[sp]) return hdFoeCache[sp];
   const def = ART[sp], rig = hdRig(sp), N = FOE_NATIVE[sp] ? HD_NATIVE_BIG : HD_NATIVE, k = N / 64, pad = Math.round(N * 0.2), S = N + pad * 2;
   const off = [1, 0, 0, 1, pad / k, (S - N - 1) / k]; // design centred horizontally, foot one pixel above the canvas bottom
-  const set = { jobs: [] }, make = (st, i) => { const n = HD_FRAMES[st], p = st === 'idle' ? i / n : i / (n - 1); const pose = monPose(rig.kind, st, p); if (rig.damp && st === 'idle') for (const q in rig.damp) { const o = pose.L[q]; if (o) for (const f of ['rot', 'dx', 'dy']) if (o[f]) o[f] *= rig.damp[q]; } const c = hdRaster(hdPoseDef(def, rig, pose, off), S, k, HD_SCALE); c.bb = set.bb; set[st][i] = c; };
+  const set = { jobs: [] }, make = (st, i) => { const n = HD_FRAMES[st], p = st === 'idle' ? i / n : i / (n - 1); const pose = monPose(rig.kind, st, p); if (rig.damp && st === 'idle') for (const q in rig.damp) { const o = pose.L[q]; if (o) for (const f of ['rot', 'dx', 'dy']) if (o[f]) o[f] *= rig.damp[q]; } const c = hdRaster(hdPoseDef(def, rig, pose, off), S, k, HD_GRAIN[rig.kind] ?? 0.06); c.bb = set.bb; set[st][i] = c; };
   for (const st in HD_FRAMES) set[st] = [];
-  make('idle', 0); const b = hdBounds(set.idle[0].small), Sc = HD_SCALE;
+  make('idle', 0); const b = hdBounds(set.idle[0].small), Sc = 1 / HD_DENSITY;
   set.bb = set.idle[0].bb = { cx: Math.round((b.x0 + b.x1 + 1) * Sc / 2), top: b.y0 * Sc, bot: (b.y1 + 1) * Sc, w: (b.x1 - b.x0 + 1) * Sc, h: (b.y1 - b.y0 + 1) * Sc }; // one shared anchor: frames never shift
   // the rest is built a few frames at a time during the battle intro (no hitch on slow phones)
   for (const st of ['idle', 'hurt', 'attack', 'cast']) for (let i = st === 'idle' ? 1 : 0; i < HD_FRAMES[st]; i++) set.jobs.push(() => make(st, i));
   return hdFoeCache[sp] = set;
 }
 /* ---------- hero (back view, full body) built from the equipped look ---------- */
-const HERO_HD = { N: 38, W: 46 }; // native canvas: 46 × 38 (design space 72 × 64 at k = 38/64)
+const HERO_HD = { N: 76 * HD_DENSITY, W: 92 * HD_DENSITY }; // 92 × 76 screen pixels (design space 72 × 64)
 const SKIN = { ramp: ['#fff4e8', '#fbe0c4', '#f4cca8', '#e0a880', '#8a5a48'], line: false, flat: 1 };
 function heroHDDef(L) {
   const P = HERO_PAL, BL = BODY_LOOKS[L.body], shape = BL ? BL[0] : 'uniform', bp = BL ? BL[1] : {}, fp = { ...P, ...(FEET_PAL[L.feet] || {}) };
@@ -231,7 +232,7 @@ const hdHeroCache = {};
 function hdHeroSet(L) {
   const key = lookKey(L); if (hdHeroCache[key]) return hdHeroCache[key];
   const n = { ...HD_FRAMES, defend: 5 }, set = { jobs: [] }, S = Math.max(HERO_HD.W, HERO_HD.N);
-  const make = (st, i) => { const p = st === 'idle' ? i / n[st] : i / (n[st] - 1); const { def, k } = heroHDPosed(L, st, p); set[st][i] = hdRaster(def, S, k, HD_SCALE); };
+  const make = (st, i) => { const p = st === 'idle' ? i / n[st] : i / (n[st] - 1); const { def, k } = heroHDPosed(L, st, p); set[st][i] = hdRaster(def, S, k, 0.05); };
   for (const st in n) set[st] = []; make('idle', 0);
   for (const st of ['idle', 'attack', 'hurt', 'defend', 'cast']) for (let i = st === 'idle' ? 1 : 0; i < n[st]; i++) set.jobs.push(() => make(st, i));
   return hdHeroCache[key] = set;
@@ -266,7 +267,7 @@ function hdStep(b, A, who) {
     if (F.hp <= 0 && this.sinkF > 0) D.F.state = 'faint';
     if (H.defending && D.H.state === 'idle') hdAnim(this, 'H', 'defend', 8, true); if (!H.defending && D.H.state === 'defend') { D.H.state = 'idle'; }
     if (F.charging && D.F.state === 'idle') hdAnim(this, 'F', 'cast', 14, true); if (!F.charging && D.F.state === 'cast' && D.F.hold && !D.F.fx) D.F.state = 'idle';
-    hdPump(D.setF, 6); hdPump(D.setH, 4); hdStep(this, D.F, 'F'); hdStep(this, D.H, 'H');
+    hdPump(D.setF.jobs.length ? D.setF : D.setH, 8); hdStep(this, D.F, 'F'); hdStep(this, D.H, 'H');
     this.imgF = hdFrame(D.F, D.setF, this.t); const h = hdFrame(D.H, D.setH, this.t); this.imgH = this.imgH2 = h;
   };
   // attacks: a short wind-up before the lunge, then the strike pose plays while the lunge moves
@@ -283,4 +284,35 @@ function hdStep(b, A, who) {
     if (A && A.state === 'cast' && A.fx) { A.hold = false; A.state = 'idle'; } if (A) A.fx = 0;
   };
   // new hero look after changing gear mid-battle is not possible, but the hero set follows the current look on each battle
+}
+
+/* ---------- drawing: same as Battle.draw, but sprites carry their own pixel density (im.ds) ---------- */
+{ const _d = Battle.prototype.draw; Battle.prototype.draw = function (x) {
+    if (!hdOn() || !this.hd || !this.hd.ok) return _d.call(this, x);
+    const blit = (im, X, Y, w, h) => { const ds = im.ds || 1; x.drawImage(im, X, Y, w ?? im.width * ds, h ?? im.height * ds); };
+    const sx = this.shake > 0 ? rnd(-3, 3) : 0, sy = this.shake > 0 ? rnd(-2, 2) : 0;
+    x.save(); x.translate(sx, sy); x.drawImage(this.bg, 0, 0);
+    if (this.alphaF > 0) { x.globalAlpha = 0.22 * this.alphaF; x.drawImage(this.shadowF, Math.round(this.foeX + 32 + this.offF.x - this.shadowF.width / 2), FOE_FOOT - 5); x.globalAlpha = 1; }
+    if (this.alphaF > 0 && !(this.blinkF > 0 && Math.floor(this.blinkF / 3) % 2)) {
+      x.save(); x.beginPath(); x.rect(0, 0, W, FOE_FOOT + 3); x.clip(); x.globalAlpha = this.alphaF;
+      const sq = this.squishF, im = this.imgF, ds = im.ds || 1, fw = im.width * ds, fh = im.height * ds;
+      const fx0 = Math.round(this.foeX + 32 - im.bb.cx + this.offF.x), fy0 = Math.round(FOE_FOOT - im.bb.bot + this.offF.y + this.sinkF);
+      if (sq) blit(im, fx0 - sq, fy0 + sq * 2, fw + sq * 2, fh - sq * 2); else blit(im, fx0, fy0);
+      if (this.tintF && this.tintF.a > 0) { x.globalAlpha = this.tintF.a * this.alphaF; blit(tinted(im, this.tintF.c), fx0, fy0, fw, fh); }
+      x.restore();
+    }
+    if (this.cg && this.cg.shards > 0 && this.alphaF > 0) { const C = this.center(this.F); for (let i = 0; i < this.cg.shards; i++) { const an = this.t / 20 + i * Math.PI * 2 / 3, px0 = Math.round(C.x + Math.cos(an) * 44), py0 = Math.round(C.y + Math.sin(an) * 14); x.fillStyle = '#1a3050'; x.fillRect(px0 - 3, py0 - 5, 7, 11); x.fillStyle = '#9ae0ff'; x.fillRect(px0 - 2, py0 - 4, 5, 9); x.fillStyle = '#e8fbff'; x.fillRect(px0 - 1, py0 - 3, 2, 4); } }
+    if (this.cg && this.cg.mirror && this.alphaF > 0 && Math.floor(this.t / 8) % 2) { const im = this.imgF, ds = im.ds || 1; x.globalAlpha = 0.25; blit(tinted(im, '#e8fbff'), Math.round(this.foeX + 32 - im.bb.cx), Math.round(FOE_FOOT - im.bb.bot), im.width * ds, im.height * ds); x.globalAlpha = 1; }
+    if (!(this.blinkH > 0 && Math.floor(this.blinkH / 3) % 2)) {
+      x.save(); x.globalAlpha = 0.25; x.drawImage(this.shadowH, Math.round(this.heroX + 24 + this.offH.x - this.shadowH.width / 2), HERO_Y + 64); x.globalAlpha = Math.max(0, 1 - this.sinkH / 70);
+      const hi = this.imgH, hx = Math.round(this.heroX + this.offH.x), hy = Math.round(HERO_Y + this.offH.y + this.sinkH * 0.25);
+      blit(hi, hx, hy); if (this.tintH) { x.globalAlpha = this.tintH.a; blit(tinted(hi, this.tintH.c), hx, hy, hi.width * (hi.ds || 1), hi.height * (hi.ds || 1)); }
+      x.restore();
+    }
+    for (const p of this.fx) drawParticle(x, p);
+    this.drawBoxF(x); this.drawBoxH(x);
+    x.restore();
+    x.fillStyle = '#0b0d18'; x.fillRect(0, BH, W, H - BH); x.fillStyle = PANEL.edge; x.fillRect(0, BH, W, 1);
+    if (this.cover > 0) { x.fillStyle = '#000'; const h = Math.round(this.cover * (H / 2 + 1)); x.fillRect(0, 0, W, h); x.fillRect(0, H - h, W, h); }
+  };
 }
