@@ -17,7 +17,7 @@ module.exports = async (g) => {
         if ((GEAR[b].elem || null) !== (GEAR[b].slot === 'weapon' ? s1.welem : null)) fail('weapon elem', b);
         if (GEAR[b].sp && GEAR[b].sp.vs && !FAMILIES[GEAR[b].sp.vs[0]]) fail('vs not a family', b, GEAR[b].sp.vs[0]);
         // multiplier check
-        for (const k in GEAR[b].st) { const want = Math.max(1, Math.round(GEAR[b].st[k] * GQ[q][2] * (1 + 0.08 * e))); if (o.st[k] !== want) fail('mult', b, k, o.st[k], want); }
+        for (const k in GEAR[b].st) { const want = Math.max(1, Math.round(GEAR[b].st[k] * (GQ[q][2] * 1 * (1 + 0.08 * e)))); if (o.st[k] !== want) fail('mult', b, k, o.st[k], want); }
       }
     }
     // ---------- 2. every affix feeds heroStats ----------

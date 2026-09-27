@@ -19,6 +19,10 @@ module.exports = async (g) => {
     }
     for (const k of SHOP_LIST) (GEAR[k] ? addG : addI)(k, '道具店'); for (const k of PEDDLER_LIST) (GEAR[k] ? addG : addI)(k, '行商');
     for (const k of ['knightSword', 'magusStaff', 'guardHelm', 'chainMail']) addG(k, '道具店(沼澤鱷後)'); for (const k of ['elixir', 'tpBook', 'rope']) addI(k, '道具店(魔像後)');
+    if (typeof LOOT !== 'undefined') for (const k in LOOT) for (const g of LOOT[k]) addG(g, '重戰掉落:' + k);
+    if (typeof TOWER_LOOT !== 'undefined') for (const g of TOWER_LOOT) addG(g, '異界迴廊');
+    if (typeof TOWER_SHOP !== 'undefined') for (const k of TOWER_SHOP.map(r => r[0])) (GEAR[k] ? addG : addI)(k, '迴廊兌換');
+    for (const c in CLASS_START) for (const b of CLASS_START[c].gear) addG(b, '職業起始');
     for (const r of RECIPES) { (GEAR[r.out] ? addG : addI)(r.out, '鐵匠配方'); for (const m in r.mats) useM(m, '配方:' + r.out); }
     for (const sp in SPECIES) { const s = SPECIES[sp]; if (s.mat) addI(s.mat, '魔物:' + s.n); if (s.drop) addG(s.drop, s.n + '掉落'); }
     for (const k in SALVAGE) for (const m of SALVAGE[k]) addI(m, '分解');
@@ -50,7 +54,7 @@ module.exports = async (g) => {
     const fxUse = {}; for (const k in MOVES) if (!MOVES[k].foe) (fxUse[MOVES[k].fx] = fxUse[MOVES[k].fx] || []).push(MOVES[k].n); for (const f in fxUse) if (fxUse[f].length > 1 && !(f === 'slash' && fxUse[f].includes('攻擊'))) warn('主角特效重複使用', f, fxUse[f].join('、'));
     // ---------- GEAR ----------
     for (const k in GEAR) { const e = GEAR[k];
-      if (!['weapon', 'head', 'body', 'feet', 'acc'].includes(e.slot)) bad('裝備', k, '部位無效'); if (!(e.t >= 1 && e.t <= 4)) bad('裝備', k, '階級無效');
+      if (!['weapon', 'head', 'body', 'feet', 'acc'].includes(e.slot)) bad('裝備', k, '部位無效'); if (!(e.t >= 1 && e.t <= 5)) bad('裝備', k, '階級無效');
       for (const s in e.st || {}) if (!STATS.includes(s) && !(s === 'mp' && e.kind === '魔導書')) bad('裝備', k, '數值欄位無效', s);
       for (const s in e.sp || {}) { if (!SPK.includes(s)) bad('裝備', k, '特殊欄位無效', s); }
       if (e.sp && e.sp.vs && !FAMILIES[e.sp.vs[0]]) bad('裝備', k, '對種族無效', e.sp.vs[0]); if (e.sp && e.sp.resist && !ELEM.includes(e.sp.resist[0])) bad('裝備', k, '抗性屬性無效');
@@ -101,10 +105,10 @@ module.exports = async (g) => {
     try { const L = questList(st); info('任務數（旗標全開）', L.length); } catch (e) { bad('任務', '列表出錯', e.message); }
     try { for (const [mid, x, y] of questMarks(st)) { if (!MAPS[mid]) bad('任務標記', '地圖不存在', mid); else if (!getMap(mid).rows[y] || getMap(mid).rows[y][x] === undefined) bad('任務標記', '座標超出', mid, x, y); } } catch (e) { bad('任務標記', e.message); }
     // ---------- TALENTS / CLASSES stats ----------
-    const okStat = s => [...STATS, 'mp', 'crit', 'hit', 'eva', 'drain', 'elem', 'counter', 'rage', 'fireUp', 'boltUp'].includes(s);
+    const okStat = s => [...STATS, 'mp', 'crit', 'hit', 'eva', 'drain', 'elem', 'counter', 'rage', 'fireUp', 'boltUp', 'venomEdge', 'assassin', 'venomous', 'shadowStep', 'spellblade'].includes(s);
     for (const T of TALENTS) for (const s in T.st) if (!okStat(s) && !['pierceT', 'mpRegen'].includes(s)) bad('天賦', T.id, '欄位無效', s);
     for (const c in CLASSES) for (const s in CLASSES[c].st) if (!okStat(s)) bad('職業', c, '欄位無效', s);
-    for (const s of ['counter', 'rage', 'fireUp', 'boltUp']) if (!new RegExp('\\.' + s + '\\b').test(SRC.replace(/st: \{[^}]*\}/g, ''))) bad('能力', s, '戰鬥程式沒有讀取');
+    for (const s of ['counter', 'rage', 'fireUp', 'boltUp', 'venomEdge', 'assassin', 'venomous', 'shadowStep', 'spellblade']) if (!new RegExp('\\.' + s + '\\b').test(SRC.replace(/st: \{[^}]*\}/g, ''))) bad('能力', s, '戰鬥程式沒有讀取');
     // ---------- CATEGORIES (every entry must have one) ----------
     const miss = (sys, list) => { if (list.length) bad('未分類', sys, list.join(',')); else info('分類完整', sys); };
     miss('道具', Object.keys(ITEMS).filter(k => !ITEM_CATS.includes(ITEMS[k].cat)));

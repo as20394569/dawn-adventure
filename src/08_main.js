@@ -50,7 +50,7 @@ const Events = {
       applyStartClass(k); Game.fadeColor = '#ffffff'; Game.fade = 1; Sound.jingle('levelup'); yield* fadeIn(30); Game.fadeColor = '#000';
       const C = CLASSES[k], S = CLASS_START[k];
       yield* itemGet(st.name + '覺醒成為了' + C.n + '！');
-      yield* say({ swordsman: '劍士的道路啊……這把練習木劍就交給你了。', mage: '魔導士的道路啊……這把魔杖是我年輕時用的，交給你了。', guardian: '守護者的道路啊……這把木劍和布帽給你，別逞強喔。' }[k]);
+      yield* say({ swordsman: '劍士的道路啊……這把練習木劍就交給你了。', mage: '魔導士的道路啊……這把魔杖是我年輕時用的，交給你了。', guardian: '守護者的道路啊……這把木劍和布帽給你，別逞強喔。', ranger: '遊俠的道路啊……這把獵刀是村裡獵人送的，拿去吧。' }[k]);
       st.flags.license = 1; st.bag.license = 1; yield* itemGet('得到了' + S.gear.filter(b => b !== 'guardBadge').map(b => GEAR[b].n).join('和') + '、護身符和冒險者證！');
       yield* say('還有這些傷藥，帶在身上吧。'); st.bag.potion = (st.bag.potion || 0) + 5; yield* itemGet('得到了傷藥×5！');
       yield* sayAll(['你已經會「' + learnedSkills(st).map(id => MOVES[id].n).join('」和「') + '」。', '另外還有2點技能點，打開選單的「技能」，可以自己決定要學什麼、要強化哪一招。', '每次升級都會得到技能點（Lv6起還有天賦點）。技能點用來學技能；天賦點用來點永久的被動加成。', '技能要消耗MP，MP不夠時就用普通「攻擊」。', '到了Lv14，還能走上更高的道路，學到更強的技能。', '魔物分成好幾個種族，各有害怕的屬性。善用屬性技能，戰鬥會輕鬆很多。', '按START可以打開選單，查看狀態、技能和背包，也能記錄進度。']);
@@ -188,9 +188,10 @@ function* visionScene() {
 
 function* classTalk() {
   const st = Game.st, C = CLASSES, cur = C[st.cls]; let opts = [];
-  if (!st.cls) opts = ['swordsman', 'mage', 'guardian']; // saves from before the opening ceremony
+  if (!st.cls) opts = ['swordsman', 'mage', 'guardian', 'ranger']; // saves from before the opening ceremony
   else if (cur && cur.tier === 1 && st.lv >= 14) opts = Object.keys(C).filter(k => C[k].from === st.cls);
   if (st.flags.hiddenCls && st.cls !== 'otherworlder') opts.push('otherworlder');
+  if (st.flags.spellbladeOk && st.cls !== 'spellblade') opts.push('spellblade');
   if (!opts.length) return false;
   yield* say(!st.cls ? '你的力量開始覺醒了……要選擇一條道路嗎？' : '你已經走得很遠了。要踏上新的道路嗎？');
   while (true) {
@@ -198,8 +199,8 @@ function* classTalk() {
     if (r < 0 || r >= opts.length) { yield* say('想好了再來找我吧。'); return true; }
     const k = opts[r]; yield* say(C[k].n + '：' + C[k].d + '\n職業技能「' + MOVES[C[k].move].n + '」' + (C[k].move2 ? '、Lv' + C[k].lv2 + '「' + MOVES[C[k].move2].n + '」' : ''));
     if (!(yield* yesNo('確定要成為' + C[k].n + '嗎？'))) continue;
-    st.cls = k; clampHP(); yield* itemGet(st.name + '成為了' + C[k].n + '！');
-    if (!C[k].from && k !== 'otherworlder') { st.skills = st.skills || {}; for (const id of CLASS_FREE[k]) grantSkill(id, st); } else { const first = (SKILL_TREES[k] || [])[0]; if (first) { grantSkill(first[0], st); yield* say('學會了職業技能「' + MOVES[first[0]].n + '」！更多' + C[k].n + '的技能可以在「技能」選單學習。'); } }
+    if (k === 'spellblade' || k === 'otherworlder') { if (st.cls && CLASSES[st.cls] && CLASSES[st.cls].tier < 3) st.baseCls = baseClassOf(st.cls); } st.cls = k; clampHP(); yield* itemGet(st.name + '成為了' + C[k].n + '！');
+    if (!C[k].from && C[k].tier === 1) { st.skills = st.skills || {}; for (const id of CLASS_FREE[k]) grantSkill(id, st); } else { const first = (SKILL_TREES[k] || [])[0]; if (first) { grantSkill(first[0], st); yield* say('學會了職業技能「' + MOVES[first[0]].n + '」！更多' + C[k].n + '的技能可以在「技能」選單學習。'); } }
     return true;
   }
 }

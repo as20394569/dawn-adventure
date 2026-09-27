@@ -142,7 +142,7 @@ function heroStats(st = Game.st) {
   for (const T of TALENTS) { const r = (st.tal || {})[T.id] || 0; if (r) for (const k in T.st) s[k] = (s[k] || 0) + T.st[k] * r; }
   const CL = CLASSES[st.cls]; if (CL) { const f = CL.tier === 1 ? clamp((L - 2) / 8, 0.4, 1) : 1; for (const k in CL.st) s[k] = (s[k] || 0) + (STATK.includes(k) ? Math.round(CL.st[k] * f) : CL.st[k]); } // base-class bonus grows in until Lv10
   { const wg = gearBy(st.equip && st.equip.weapon, st); s.welem = wg && GEAR[wg.b].elem || null; s.wkind = wg && GEAR[wg.b].kind || null; }
-  s.fx = {}; for (const g of equippedGear(st)) for (const f of GEAR[g.b].fx || []) s.fx[f] = 1;
+  s.fx = {}; for (const g of equippedGear(st)) for (const f of gearFx(g)) s.fx[f] = 1;
   for (const g of equippedGear(st)) { const p = gearStats(g).sp; s.crit += p.crit || 0; s.hit += p.hit || 0; s.eva += p.eva || 0; s.drain += p.drain || 0; s.elem += p.elem || 0; s.vs.push(...p.vs); for (const t in p.resist) s.resist[t] = (s.resist[t] || 0) + p.resist[t]; }
   return s;
 }
@@ -435,7 +435,7 @@ function* shopBuy(stock) {
       }
       UI.remove(scr);
       const yes = yield* yesNo(it.n + (isG || it.once ? '' : '×' + qty) + '，一共是' + (qty * pr) + 'G，可以嗎？');
-      if (yes) { Game.st.money -= qty * pr; if (isG) makeGear(k, 1, 1); else Game.st.bag[k] = (Game.st.bag[k] || 0) + qty; if (k === 'tpBook') Game.st.tpBought = (Game.st.tpBought || 0) + qty; Sound.sfx('save'); yield* say('好的！這是您的' + it.n + '。' + (isG ? '記得到裝備畫面裝備喔！' : '')); }
+      if (yes) { Game.st.money -= qty * pr; if (isG) makeGear(k, 1, 0.8); else Game.st.bag[k] = (Game.st.bag[k] || 0) + qty; if (k === 'tpBook') Game.st.tpBought = (Game.st.tpBought || 0) + qty; Sound.sfx('save'); yield* say('好的！這是您的' + it.n + '。' + (isG ? '記得到裝備畫面裝備喔！' : '')); }
       UI.push(scr);
     }
     yield;
@@ -529,7 +529,7 @@ function* craftScreen() {
     RECIPES.slice(T, T + VIS).forEach((R, i) => { const Y = 28 + i * 17, it = ITEMS[R.out] || GEAR[R.out]; if (T + i === idx) selBar(x, 6, Y - 1, 164, 16); Font.draw(x, it.n + (R.n > 1 ? '×' + R.n : ''), 14, Y, can(R) ? (GEAR[R.out] ? GQ[2][1] : UIC.text) : UIC.dis, UIC.textSh); Font.drawR(x, can(R) ? '可製作' : '素材不足', 164, Y, can(R) ? UIC.accent : UIC.dis, UIC.textSh, 11); });
     if (T > 0) x.drawImage(UPARROW, 86, 25); if (T + VIS < RECIPES.length) x.drawImage(DOWNARROW, 86, 24 + VIS * 17 + 3);
     const R = RECIPES[idx], it = ITEMS[R.out] || GEAR[R.out], Y0 = 24 + VIS * 17 + 12; drawWin(x, 4, Y0, 168, H - Y0 - 4, 'menu'); let y = Y0 + 3;
-    Font.draw(x, GEAR[R.out] ? '【紫】' + gearLines({ b: R.out, q: 2, r: 1, a: [] })[0] + ' ＋隨機詞綴' : it.d, 10, y, GEAR[R.out] ? GQ[2][1] : UIC.text, UIC.textSh, 11); y += 14;
+    Font.draw(x, GEAR[R.out] ? '【藍／紫】' + gearLines({ b: R.out, q: 1, r: 0.9, a: [] })[0] + '（工匠品）' : it.d, 10, y, GEAR[R.out] ? GQ[1][1] : UIC.text, UIC.textSh, 11); y += 14;
     Font.draw(x, '需要的素材', 10, y, UIC.muted, UIC.textSh, 10); y += 12;
     for (const [k, n] of Object.entries(R.mats)) { Font.draw(x, '・' + ITEMS[k].n, 12, y, UIC.text, UIC.textSh, 11); Font.drawR(x, have(k) + ' / ' + n, 164, y, have(k) >= n ? UIC.good : UIC.bad, UIC.textSh, 11); y += 13; }
     if (R.gold) Font.drawR(x, '費用 ' + R.gold + ' G', 164, y, st.money >= R.gold ? UIC.warm : UIC.bad, UIC.textSh, 11);
@@ -540,7 +540,7 @@ function* craftScreen() {
     if (Input.pressed('b')) { Input.consume('b'); Sound.sfx('cancel'); break; }
     if (Input.pressed('a')) { Input.consume('a'); const R = RECIPES[idx]; if (!can(R)) { Sound.sfx('bump'); continue; }
       for (const [k, n] of Object.entries(R.mats)) st.bag[k] -= n; st.money -= R.gold || 0; let nm;
-      if (GEAR[R.out]) nm = gearName(makeGear(R.out, 2)); else { st.bag[R.out] = (st.bag[R.out] || 0) + (R.n || 1); nm = ITEMS[R.out].n; }
+      if (GEAR[R.out]) nm = gearName(makeGear(R.out, craftQuality(), craftRoll())); else { st.bag[R.out] = (st.bag[R.out] || 0) + (R.n || 1); nm = ITEMS[R.out].n; }
       UI.remove(scr); yield* itemGet('鐵匠做好了' + nm + '！'); UI.push(scr); }
     yield;
   }

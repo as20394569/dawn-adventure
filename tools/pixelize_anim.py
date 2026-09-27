@@ -11,6 +11,7 @@ ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'art', 'ba
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from pixelize import HEIGHT, DEFAULT_H, MAX_W
 ORDER = ['idle', 'attack', 'cast', 'hurt', 'defend']
+BATTLE_SCALE = 0.78  # v19: actors drawn smaller so skill effects have room (player feedback)
 
 def load(path):
     im = Image.open(path).convert('RGBA'); a = np.array(im)
@@ -48,9 +49,10 @@ def process(key, colors=40):
     boxes = [np.array(a)[:, :, 3] > 40 for a in aligned]; U = np.any(boxes, axis=0); ys, xs = np.nonzero(U)
     box = (xs.min(), ys.min(), xs.max() + 1, ys.max() + 1)
     m0 = boxes[0]; ys0, _ = np.nonzero(m0); h0 = ys0.max() - ys0.min() + 1          # idle1's own height sets the scale
-    H = HEIGHT.get(key, DEFAULT_H); k = H / h0
+    H = HEIGHT.get(key, DEFAULT_H) * BATTLE_SCALE; k = H / h0
     W2 = max(1, round((box[2] - box[0]) * k)); H2 = max(1, round((box[3] - box[1]) * k))
-    if W2 > MAX_W + 20: k *= (MAX_W + 20) / W2; W2 = MAX_W + 20; H2 = max(1, round((box[3] - box[1]) * k))
+    LIM = int((MAX_W + 20) * BATTLE_SCALE)
+    if W2 > LIM: k *= LIM / W2; W2 = LIM; H2 = max(1, round((box[3] - box[1]) * k))
     outs = []
     for im in aligned:
         c = im.crop(box); arr = np.array(c).astype(np.float32); al = arr[:, :, 3:4] / 255; arr[:, :, :3] *= al

@@ -188,9 +188,10 @@ class Battle {
       const fAct = this.foeChoose();
       const order = this.order(act, fAct);
       this.H.defending = act.type === 'defend'; this.H.flinched = false; this.F.flinched = false;
-      for (const [who, a] of order) {
+      for (let [who, a] of order) {
         const u = who === 'H' ? this.H : this.F, tg = who === 'H' ? this.F : this.H;
         if (u.hp <= 0 || tg.hp <= 0) continue;
+        if (!u.hero && u.broken > 0) a = { type: 'move', id: '__stun' }; // v19 break: a broken monster loses its action
         if (a.type === 'move') yield* this.useMove(u, tg, a.id);
         else if (a.type === 'defend') { yield* this.msg(u.n + '擺出了防禦的架勢！'); if (u.hero && u.mp < u.maxmp) { const g = Math.max(1, Math.round(u.maxmp * 0.12)); u.mp += g; yield* this.msg('調整呼吸，恢復了' + g + '點MP。', { hold: 18 }); } yield* FX.guard.call(this, this.center(u)); if (u.stats.fx.guardHeal && u.hp < u.maxhp) { u.hp = Math.min(u.maxhp, u.hp + Math.ceil(u.maxhp * 0.15)); yield* this.animHP(u); yield* this.msg('守護之心回復了HP！', { hold: 20 }); } }
         else if (a.type === 'item') { const r = yield* this.useItemAct(a.id); if (r === 'escaped') return yield* this.end('run'); }
@@ -199,6 +200,12 @@ class Battle {
         else if (a.type === 'foeHeal') { u.heals = (u.heals || 0) + 1; yield* this.msg(u.n + '吸收了周圍的養分！'); yield* MFX.regrow.call(this, this.center(u)); u.hp = Math.min(u.maxhp, u.hp + Math.floor(u.maxhp * 0.3)); yield* this.animHP(u); }
         else if (a.type === 'flee') { Sound.sfx('run'); yield* tween(16, t => this.alphaF = 1 - t); yield* this.msg(u.n + '逃走了！'); return yield* this.end('run'); }
         else if (a.type === 'run') { if (yield* this.tryRun()) return yield* this.end('run'); }
+        if (this.F.hp <= 0) { yield* this.foeFaint(); yield* this.victory(); return yield* this.end('win'); }
+        if (this.H.hp <= 0) { yield* this.heroFaint(); return yield* this.end('lose'); }
+      }
+      // v19 frenzy: a boss in its last phase acts twice every other turn
+      if (this.F.frenzy && this.turn % 2 === 0 && this.F.hp > 0 && this.H.hp > 0 && !(this.F.broken > 0) && !(this.F.status === 'slp' && this.F.sleepT > 0)) {
+        const a2 = this.foeChoose(); if (a2.type === 'move' && a2.id !== '__stun') { yield* this.msg(this.F.n + '的狂怒！再次行動！', { hold: 22 }); yield* this.useMove(this.F, this.H, a2.id); }
         if (this.F.hp <= 0) { yield* this.foeFaint(); yield* this.victory(); return yield* this.end('win'); }
         if (this.H.hp <= 0) { yield* this.heroFaint(); return yield* this.end('lose'); }
       }
@@ -257,11 +264,11 @@ class Battle {
     const F = this.F, H = this.H;
     if (F.charging) return { type: 'move', id: F.charging };
     if (F.rare && this.turn >= 3 && chance(0.45)) return { type: 'flee' };
-    if (this.bb) { const b = this.bb; if (--b.cd <= 0) { b.cd = 3; return { type: 'move', id: 'm_axeSpin' }; } if (Game.st.money > 0 && b.steals < 2 && chance(0.25)) return { type: 'steal' }; return { type: 'move', id: pick(['m_gutSlash', 'm_knife', 'm_dirtyKick', F.stages.atk < 2 ? 'm_warCry' : 'm_gutSlash']) }; }
+    if (this.bb) { const b = this.bb; if (--b.cd <= 0) { b.cd = 3 + (chance(0.5) ? 1 : 0); return { type: 'move', id: 'm_axeSpin' }; } if (Game.st.money > 0 && b.steals < 2 && chance(0.25)) return { type: 'steal' }; return { type: 'move', id: pick(['m_gutSlash', 'm_knife', 'm_dirtyKick', F.stages.atk < 2 ? 'm_warCry' : 'm_gutSlash']) }; }
     if (this.cg) { const c = this.cg; if (this.turn % 4 === 0 && !c.mirror) return { type: 'mirror' }; const pl = c.flood ? ['m_crystalSpark', 'm_crystalSpark', 'm_prismRay', 'm_quake'] : ['m_prismRay', 'm_crystalShard', 'm_quake', 'm_rumble']; return { type: 'move', id: pick(pl) }; }
     if (F.trait === 'healer' && F.hp < F.maxhp * 0.5 && (F.heals || 0) < 2 && chance(0.6)) return { type: 'foeHeal' };
     let pool = F.moves.map(m => m.id);
-    if (F.boss && this.phase2 && !this.cg) { pool = ['m_rockfall', 'm_quake', 'm_boulder']; if (this.fistCD <= 0) { this.fistCD = 3; return { type: 'move', id: 'm_golemFist' }; } this.fistCD--; }
+    if (F.boss && this.phase2 && !this.cg) { pool = ['m_rockfall', 'm_quake', 'm_boulder']; if (this.fistCD <= 0) { this.fistCD = 3 + (chance(0.5) ? 1 : 0); return { type: 'move', id: 'm_golemFist' }; } this.fistCD--; }
     const w = pool.map(id => {
       const mv = MOVES[id]; let v = 10;
       if (mv.st) v = H.status ? 0 : 6;
@@ -449,7 +456,7 @@ class Battle {
     { const H = this.H, r = F.elite || F.boss ? 0.3 : 0.15, dh = Math.min(H.maxhp - H.hp, Math.ceil(H.maxhp * r)), dm = Math.min(H.maxmp - H.mp, Math.ceil(H.maxmp * r)); if (H.hp > 0 && (dh > 0 || dm > 0)) { H.hp += dh; H.mp += dm; yield* this.animHP(H); Sound.sfx('heal'); yield* this.msg('戰鬥結束，調整了呼吸。' + (dh ? 'HP+' + dh + ' ' : '') + (dm ? 'MP+' + dm : ''), { hold: 30 }); } }
     if (sp.mat && !F.elite && !F.boss && chance(0.5)) { st.bag[sp.mat] = (st.bag[sp.mat] || 0) + 1; yield* this.msg('得到了素材「' + ITEMS[sp.mat].n + '」！', { hold: 30 }); }
     const rpool = Game.ow && Game.ow.map && Game.ow.map.d.gearPool; if (F.rare && rpool) { const g = makeGear(pick(rpool), 3); Sound.jingle('item'); yield* this.msg(F.n + '掉落了' + gearName(g) + '！', { wait: true }); }
-    const dropId = this.cfg.drop || sp.drop; if (dropId) { const g = makeGear(classGear(dropId), 4); Sound.jingle('item'); yield* this.msg(F.n + '掉落了' + gearName(g) + '！', { wait: true }); yield* this.msg(gearText(g) + '\n（可以在裝備畫面裝備）', { wait: true }); }
+    for (const g of lootDrops(this)) { Sound.jingle('item'); yield* this.msg(F.n + '掉落了' + gearName(g) + '！', { wait: true }); yield* this.msg(gearText(g) + '\n（可以在裝備畫面裝備）', { wait: true }); }
     const pool = Game.ow && Game.ow.map && Game.ow.map.d.gearPool; if (pool && !F.elite && !F.boss && chance(this.H.stats.fx.fortune ? 0.16 : 0.08)) { const g = makeGear(pick(pool), rollQuality()); Sound.jingle('item'); yield* this.msg(F.n + '掉落了' + gearName(g) + '！', { wait: true }); }
   }
   *gainExp(amount) {

@@ -4,7 +4,8 @@ import sys, os
 from PIL import Image, ImageFilter
 import numpy as np
 ROOT = os.path.join(os.path.dirname(__file__), '..', 'art', 'battle')
-HEIGHT = {'hero': 72, 'wolf': 74, 'bandit': 86, 'mush': 66, 'bird': 62, 'pebble': 66, 'slime': 60, 'fox': 70, 'bee': 70, 'frog': 60, 'flower': 82, 'croc': 58, 'golem': 90, 'thunderBeetle': 66, 'emberSpirit': 74, 'skeleton': 82, 'ghostLamp': 78, 'caveSpider': 62, 'wraith': 86, 'boneHound': 68, 'boneKnight': 90, 'banditBoss': 90}
+HEIGHT = {'hero': 72, 'wolf': 74, 'bandit': 86, 'mush': 66, 'bird': 62, 'pebble': 66, 'slime': 60, 'fox': 70, 'bee': 70, 'frog': 60, 'flower': 82, 'croc': 58, 'golem': 90, 'thunderBeetle': 66, 'emberSpirit': 74, 'skeleton': 82, 'ghostLamp': 78, 'caveSpider': 62, 'wraith': 86, 'boneHound': 68, 'boneKnight': 90, 'banditBoss': 90,
+          'moonSprite': 76, 'reedCrab': 62, 'duskMoth': 72, 'lizardman': 86, 'rogueBlade': 86, 'silverWyrm': 100, 'voidEye': 72, 'riftKnight': 92, 'gatekeeper': 108}
 MAX_W = 136
 DEFAULT_H, BIG_H = 78, 90
 def pixelize(key, h=None, colors=40):

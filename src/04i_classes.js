@@ -26,25 +26,25 @@ const CLASS_LINE = {
   mage: [[7, 'aquaBlade'], [9, 'thunder'], [11, 'heal'], [13, 'leafStorm'], [15, 'flameWave'], [17, 'aquaBurst'], [19, 'barrier']],
   guardian: [[7, 'flameSlash'], [9, 'voltSlash'], [11, 'heal'], [13, 'tideSlash'], [15, 'leafBlade'], [17, 'barrier'], [20, 'armorBreak']],
 };
-const baseClassOf = cls => { const C = CLASSES[cls]; if (!C) return null; return C.from || (cls === 'otherworlder' ? 'swordsman' : cls); };
+const baseClassOf = cls => { const C = CLASSES[cls]; if (!C) return null; return C.from || (cls === 'otherworlder' || cls === 'spellblade' ? ((Game.st && Game.st.baseCls) || 'swordsman') : cls); };
 function classLine(cls) { return CLASS_LINE[baseClassOf(cls)] || null; }
 Object.assign(GEAR, { practiceWand: { n: '練習魔杖', slot: 'weapon', t: 1, st: { spa: 3 }, spr: 'woodSword', kind: '法杖', d: '村長年輕時用過的樺木魔杖。杖頭刻著新芽紋章。' } });
 
 /* ---------- Class ceremony screen ---------- */
 function* classSelectScreen() {
-  const keys = ['swordsman', 'mage', 'guardian']; let i = 0, t = 0;
+  const keys = ['swordsman', 'mage', 'guardian', 'ranger']; let i = 0, t = 0;
   const scr = { draw(x) {
     t++; const k = keys[i], C = CLASSES[k], S = CLASS_START[k];
     x.fillStyle = '#0a0c18'; x.fillRect(0, 0, W, H);
-    const col = { swordsman: '#ff9a50', mage: '#b080ff', guardian: '#6ec8ff' }[k];
+    const col = CLASS_COL[k];
     const g = x.createRadialGradient(W / 2, 74, 4, W / 2, 74, 70); const [r, gg, b] = hex2rgb(col); g.addColorStop(0, `rgba(${r},${gg},${b},0.45)`); g.addColorStop(1, `rgba(${r},${gg},${b},0)`); x.fillStyle = g; x.fillRect(0, 0, W, 150);
     for (let n = 0; n < 10; n++) { const a = t / 40 + n * 0.63, R = 40 + Math.sin(t / 30 + n) * 6; x.fillStyle = n % 2 ? col : '#ffffff'; x.fillRect(Math.round(W / 2 + Math.cos(a) * R), Math.round(74 + Math.sin(a) * R * 0.5), 2, 2); }
-    headerBar(x, '覺醒的儀式'); Font.drawR(x, (i + 1) + '/3', W - 6, 2, UIC.muted, UIC.textSh);
+    headerBar(x, '覺醒的儀式'); Font.drawR(x, (i + 1) + '/' + keys.length, W - 6, 2, UIC.muted, UIC.textSh);
     const bob = Math.round(Math.sin(t / 20) * 2), fr = heroFramesLook({ head: k === 'guardian' ? GEAR.clothCap.look : null, body: 'uniform', feet: 'school', weapon: GEAR[S.gear[0]].look }).down[0]; x.fillStyle = 'rgba(0,0,0,0.35)'; x.beginPath(); x.ellipse(W / 2 - 14, 106, 18, 5, 0, 0, 7); x.fill(); x.drawImage(fr, 0, 0, 16, 22, W / 2 - 14 - 24, 36 + bob, 48, 66);
     { const ex = W / 2 + 34, ey = 70 - bob; x.save(); x.lineCap = 'round'; x.strokeStyle = '#10121e'; x.fillStyle = '#10121e'; x.lineWidth = 6;
-      const glyph = (c, w) => { x.strokeStyle = c; x.lineWidth = w; if (k === 'swordsman') { x.beginPath(); x.moveTo(ex - 10, ey + 14); x.lineTo(ex + 10, ey - 14); x.moveTo(ex - 10, ey - 2); x.lineTo(ex + 2, ey + 8); x.stroke(); } else if (k === 'mage') { x.beginPath(); x.moveTo(ex - 8, ey + 16); x.lineTo(ex + 4, ey - 6); x.stroke(); x.beginPath(); x.arc(ex + 6, ey - 10, 5, 0, 7); x.stroke(); } else { x.beginPath(); x.moveTo(ex - 11, ey - 12); x.lineTo(ex + 11, ey - 12); x.lineTo(ex + 11, ey + 2); x.lineTo(ex, ey + 14); x.lineTo(ex - 11, ey + 2); x.closePath(); x.stroke(); } };
+      const glyph = (c, w) => { x.strokeStyle = c; x.lineWidth = w; if (k === 'swordsman') { x.beginPath(); x.moveTo(ex - 10, ey + 14); x.lineTo(ex + 10, ey - 14); x.moveTo(ex - 10, ey - 2); x.lineTo(ex + 2, ey + 8); x.stroke(); } else if (k === 'mage') { x.beginPath(); x.moveTo(ex - 8, ey + 16); x.lineTo(ex + 4, ey - 6); x.stroke(); x.beginPath(); x.arc(ex + 6, ey - 10, 5, 0, 7); x.stroke(); } else if (k === 'ranger') { x.beginPath(); x.moveTo(ex - 12, ey + 10); x.lineTo(ex + 2, ey - 12); x.moveTo(ex + 12, ey + 10); x.lineTo(ex - 2, ey - 12); x.moveTo(ex - 8, ey + 2); x.lineTo(ex - 3, ey + 6); x.moveTo(ex + 8, ey + 2); x.lineTo(ex + 3, ey + 6); x.stroke(); } else { x.beginPath(); x.moveTo(ex - 11, ey - 12); x.lineTo(ex + 11, ey - 12); x.lineTo(ex + 11, ey + 2); x.lineTo(ex, ey + 14); x.lineTo(ex - 11, ey + 2); x.closePath(); x.stroke(); } };
       glyph('#10121e', 6); glyph(col, 3); glyph('#ffffff', 1); x.restore(); }
-    Font.drawC(x, '◀', 14, 64, i > 0 ? UIC.text : UIC.dis, UIC.textSh); Font.drawC(x, '▶', W - 14, 64, i < 2 ? UIC.text : UIC.dis, UIC.textSh);
+    Font.drawC(x, '◀', 14, 64, i > 0 ? UIC.text : UIC.dis, UIC.textSh); Font.drawC(x, '▶', W - 14, 64, i < keys.length - 1 ? UIC.text : UIC.dis, UIC.textSh);
     drawWin(x, 4, 118, 168, 134, 'menu');
     Font.draw(x, C.n, 12, 120, col, UIC.textSh); Font.drawR(x, S.tag, 164, 122, UIC.muted, UIC.textSh, 10);
     Font.wrap(S.pitch, 152, 11).slice(0, 3).forEach((l, n) => Font.draw(x, l, 12, 138 + n * 13, UIC.text, UIC.textSh, 11));
@@ -54,7 +54,7 @@ function* classSelectScreen() {
   } };
   UI.push(scr);
   while (true) {
-    if (Input.repeat('left') && i > 0) { i--; Sound.sfx('cursor'); } if (Input.repeat('right') && i < 2) { i++; Sound.sfx('cursor'); }
+    if (Input.repeat('left') && i > 0) { i--; Sound.sfx('cursor'); } if (Input.repeat('right') && i < keys.length - 1) { i++; Sound.sfx('cursor'); }
     if (Input.pressed('a')) { Input.consume('a'); Sound.sfx('select'); const k = keys[i]; UI.remove(scr); if (yield* yesNo('要走上「' + CLASSES[k].n + '」的道路嗎？\n（之後在Lv14可以進階）')) return k; UI.push(scr); }
     yield;
   }

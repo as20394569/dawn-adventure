@@ -13,7 +13,8 @@
   ],
   "clothCap": [
    "route掉落池",
-   "道具店"
+   "道具店",
+   "職業起始"
   ],
   "leather": [
    "route掉落池",
@@ -34,7 +35,8 @@
    "道具店"
   ],
   "wolfNecklace": [
-   "route掉落池"
+   "route掉落池",
+   "重戰掉落:wolf"
   ],
   "primerTome": [
    "route掉落池",
@@ -51,7 +53,8 @@
   ],
   "hunterLeather": [
    "forest掉落池",
-   "forest寶箱"
+   "forest寶箱",
+   "重戰掉落:mossGiant"
   ],
   "hunterBoots": [
    "forest掉落池"
@@ -93,20 +96,24 @@
   ],
   "thornRing": [
    "sewer掉落池",
+   "重戰掉落:flower",
    "荊棘魔花掉落"
   ],
   "boneSaber": [
    "ruins掉落池"
   ],
   "ruinStaff": [
-   "ruins掉落池"
+   "ruins掉落池",
+   "重戰掉落:golem"
   ],
   "boneHelm": [
    "ruins掉落池",
+   "重戰掉落:boneKnight",
    "鐵匠配方"
   ],
   "ruinMail": [
-   "ruins掉落池"
+   "ruins掉落池",
+   "重戰掉落:golem"
   ],
   "ectoLantern": [
    "ruins掉落池",
@@ -116,11 +123,14 @@
    "ruins掉落池"
   ],
   "banditHood": [
-   "mine精英掉落"
+   "mine精英掉落",
+   "重戰掉落:thug1",
+   "重戰掉落:thug2"
   ],
   "minerHelm": [
    "mine掉落池",
-   "mine寶箱"
+   "mine寶箱",
+   "重戰掉落:thug2"
   ],
   "guardHelm": [
    "mine掉落池",
@@ -132,10 +142,12 @@
   ],
   "frogCloak": [
    "mine掉落池",
+   "重戰掉落:croc",
    "鐵匠配方"
   ],
   "minerBoots": [
-   "mine掉落池"
+   "mine掉落池",
+   "重戰掉落:thug1"
   ],
   "charm": [
    "mine掉落池",
@@ -159,7 +171,8 @@
    "catacomb掉落池"
   ],
   "kingsSeal": [
-   "catacomb掉落池"
+   "catacomb掉落池",
+   "重戰掉落:boneKnight"
   ],
   "deathTome": [
    "catacomb掉落池"
@@ -167,13 +180,148 @@
   "magusStaff": [
    "道具店(沼澤鱷後)"
   ],
-  "foxBlade": [
-   "鐵匠配方"
+  "fangDagger": [
+   "重戰掉落:wolf",
+   "狂牙狼掉落"
+  ],
+  "wolfMantle": [
+   "重戰掉落:wolf"
+  ],
+  "thornCrown": [
+   "重戰掉落:flower"
   ],
   "sporeCharm": [
+   "重戰掉落:flower",
    "鐵匠配方"
   ],
+  "scaleArmor": [
+   "重戰掉落:croc",
+   "沼澤鱷掉落"
+  ],
+  "crocBoots": [
+   "重戰掉落:croc"
+  ],
+  "mossBracer": [
+   "重戰掉落:mossGiant",
+   "苔石巨人掉落"
+  ],
+  "giantCore": [
+   "重戰掉落:mossGiant"
+  ],
+  "banditKnife": [
+   "重戰掉落:thug1",
+   "重戰掉落:thug2",
+   "重戰掉落:banditBoss"
+  ],
+  "boneKnightMail": [
+   "重戰掉落:boneKnight",
+   "骸骨騎士掉落"
+  ],
+  "graveBlade": [
+   "重戰掉落:boneKnight"
+  ],
+  "golemVisor": [
+   "重戰掉落:golem",
+   "古岩魔像掉落"
+  ],
+  "golemFist": [
+   "重戰掉落:golem"
+  ],
+  "grenAxe": [
+   "重戰掉落:banditBoss",
+   "鐵斧格倫掉落"
+  ],
+  "grenBelt": [
+   "重戰掉落:banditBoss"
+  ],
+  "stolenTome": [
+   "重戰掉落:banditBoss",
+   "重戰掉落:banditBoss(魔導士)",
+   "鐵斧格倫掉落(魔導士)"
+  ],
+  "crystalHeart": [
+   "重戰掉落:crystalGolem",
+   "水晶魔像掉落"
+  ],
+  "prismCrown": [
+   "重戰掉落:crystalGolem"
+  ],
   "crystalBlade": [
+   "重戰掉落:crystalGolem",
+   "鐵匠配方"
+  ],
+  "crystalStaff": [
+   "重戰掉落:crystalGolem",
+   "鐵匠配方"
+  ],
+  "reedBoots": [
+   "重戰掉落:lizardChief"
+  ],
+  "scaleCharm": [
+   "重戰掉落:lizardChief"
+  ],
+  "moonDagger": [
+   "重戰掉落:lizardChief",
+   "鐵匠配方"
+  ],
+  "reedHat": [
+   "重戰掉落:lizardChief"
+  ],
+  "eclipseBlade": [
+   "重戰掉落:rogueBlade"
+  ],
+  "wandererCloak": [
+   "重戰掉落:rogueBlade"
+  ],
+  "moonBlade": [
+   "重戰掉落:rogueBlade"
+  ],
+  "wyrmMail": [
+   "重戰掉落:silverWyrm"
+  ],
+  "wyrmFang": [
+   "重戰掉落:silverWyrm"
+  ],
+  "wyrmStaff": [
+   "重戰掉落:silverWyrm",
+   "重戰掉落:boneKnight(魔導士)",
+   "重戰掉落:silverWyrm(魔導士)"
+  ],
+  "moonPendant": [
+   "重戰掉落:silverWyrm",
+   "鐵匠配方"
+  ],
+  "gateKey": [
+   "重戰掉落:gatekeeper"
+  ],
+  "voidBlade": [
+   "重戰掉落:gatekeeper"
+  ],
+  "voidTome": [
+   "重戰掉落:gatekeeper",
+   "重戰掉落:gatekeeper(魔導士)"
+  ],
+  "riftRing": [
+   "重戰掉落:gatekeeper",
+   "鐵匠配方"
+  ],
+  "woodSword": [
+   "職業起始",
+   "職業起始"
+  ],
+  "guardBadge": [
+   "職業起始",
+   "職業起始",
+   "職業起始",
+   "職業起始"
+  ],
+  "practiceWand": [
+   "職業起始"
+  ],
+  "huntKnife": [
+   "職業起始"
+  ],
+  "foxBlade": [
    "鐵匠配方"
   ],
   "emberKnife": [
@@ -197,29 +345,11 @@
   "foxfireStaff": [
    "鐵匠配方"
   ],
-  "crystalStaff": [
+  "lakeStaff": [
    "鐵匠配方"
   ],
-  "fangDagger": [
-   "狂牙狼掉落"
-  ],
-  "scaleArmor": [
-   "沼澤鱷掉落"
-  ],
-  "mossBracer": [
-   "苔石巨人掉落"
-  ],
-  "crystalHeart": [
-   "水晶魔像掉落"
-  ],
-  "golemVisor": [
-   "古岩魔像掉落"
-  ],
-  "grenAxe": [
-   "鐵斧格倫掉落"
-  ],
-  "boneKnightMail": [
-   "骸骨騎士掉落"
+  "crabMail": [
+   "鐵匠配方"
   ],
   "uniform": [
    "劇情/任務"
@@ -243,10 +373,13 @@
    "劇情/任務(魔導士)"
   ],
   "fangWand": [
+   "重戰掉落:wolf(魔導士)",
    "狂牙狼掉落(魔導士)"
   ],
-  "stolenTome": [
-   "鐵斧格倫掉落(魔導士)"
+  "lakeTome": [
+   "重戰掉落:thug1(魔導士)",
+   "重戰掉落:thug2(魔導士)",
+   "重戰掉落:banditBoss(魔導士)"
   ]
  },
  "item": {
@@ -474,6 +607,7 @@
    "配方:stoneMail",
    "配方:emberKnife",
    "配方:voltSword",
+   "配方:crabMail",
    "強化",
    "委託c9"
   ],
@@ -500,6 +634,7 @@
    "配方:crystalBlade",
    "配方:crystalStaff",
    "配方:hiEther",
+   "配方:moonPendant",
    "強化",
    "委託c3",
    "支線:師父的遺作"
@@ -535,6 +670,22 @@
    "配方:returnWing",
    "委託c6",
    "委託c14"
+  ],
+  "moonDew": [
+   "配方:moonDagger",
+   "配方:lakeStaff",
+   "配方:moonPendant",
+   "配方:riftRing"
+  ],
+  "lizardScale": [
+   "配方:moonDagger",
+   "配方:crabMail"
+  ],
+  "mothDust": [
+   "配方:lakeStaff"
+  ],
+  "riftShard": [
+   "配方:riftRing"
   ]
  }
 }

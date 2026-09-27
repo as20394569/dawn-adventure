@@ -93,7 +93,7 @@ const enhanceCost = g => { const e = (g.e || 0) + 1, t = GEAR[g.b].t; return { g
 const SALVAGE = { weapon: ['stone'], head: ['stone', 'gel'], body: ['stone', 'gel', 'frogSkin'], feet: ['feather', 'gel'], acc: ['feather', 'spore', 'leaf'] };
 const gCol = g => GQ[g.q][1];
 const gearSell = g => Math.round((GEAR[g.b].price || GEAR[g.b].t * 400) * 0.3 * GQ[g.q][2] * g.r);
-const rollQuality = () => { const r = Math.random() * 100; return r < 60 ? 1 : r < 92 ? 2 : 3; }; // 金 only from elites, bosses and hidden content
+let rollQuality = () => { const r = Math.random() * 100; return r < 60 ? 1 : r < 92 ? 2 : 3; }; // 金 only from elites, bosses and hidden content
 function weaponSpr(st = Game.st) { const g = gearBy(st.equip && st.equip.weapon, st); return g ? GEAR[g.b].spr || 'ironSword' : null; }
 // convert pre-v13 saves (item ids in bag/equip) into gear instances
 const OLD_GEAR = { woodSword: ['woodSword', 1], ironSword: ['ironSword', 1], knightSword: ['knightSword', 2], fangDagger: ['fangDagger', 3], foxBlade: ['foxBlade', 2], crystalBlade: ['crystalBlade', 2], dawnSword: ['dawnSword', 4],
