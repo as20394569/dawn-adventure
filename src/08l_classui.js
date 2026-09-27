@@ -9,9 +9,9 @@ function classCard(k) {
   const C = CLASSES[k], S = CLASS_START[k], col = classColOf(k);
   if (S) return { k, n: C.n, tag: S.tag, col, text: S.pitch, bars: S.bars, glyph: k,
     chips: CLASS_FREE[k].map(id => ({ id })).concat(skillTreeOf(k).filter(n => !CLASS_FREE[k].includes(n.id) && n.clv <= 5).map(n => ({ id: n.id, lv: n.clv }))),
-    next: Object.keys(CLASSES).filter(q => CLASSES[q].from === k).map(q => CLASSES[q].n), nextK: Object.keys(CLASSES).filter(q => CLASSES[q].from === k) };
+    next: Object.keys(CLASSES).filter(q => CLASSES[q].from === k && CLASSES[q].tier === 2).map(q => CLASSES[q].n), nextK: Object.keys(CLASSES).filter(q => CLASSES[q].from === k && CLASSES[q].tier === 2) };
   const bonus = Object.entries(C.st).filter(([s]) => CLASS_BONUS_N[s]).map(([s, v]) => CLASS_BONUS_N[s][0] + '+' + v + CLASS_BONUS_N[s][1]).join('　');
-  return { k, n: C.n, tag: (C.tier >= 3 ? '隱藏職業' : '進階職業') + (CLASS_STYLE[k] ? '・' + CLASS_STYLE[k] : ''), col, text: C.d, bonus, glyph: C.from || (k === 'spellblade' ? 'spell' : 'star'),
+  return { k, n: C.n, tag: (C.tier >= 3 ? (k === 'otherworlder' || k === 'spellblade' ? '隱藏職業' : '上級職業') : '進階職業') + (CLASS_STYLE[k] ? '・' + CLASS_STYLE[k] : ''), col, text: C.d, bonus, glyph: C.from || (k === 'spellblade' ? 'spell' : 'star'),
     chips: skillTreeOf(k).filter(n => n.adv).map(n => ({ id: n.id })), treeN: skillTreeOf(k).length, inhN: C.tier >= 3 ? 3 : 2 }; /* v23: own tree → show its exclusive skills */
 }
 function classGlyph(x, g, ex, ey, col) {
@@ -77,7 +77,7 @@ classSelectScreen = function* () { return yield* classCardScreen(['swordsman', '
 classTalk = function* () { // same rules as before (08_main), the text menu is replaced by the class cards
   const st = Game.st, C = CLASSES, cur = C[st.cls]; let opts = [];
   if (!st.cls) opts = ['swordsman', 'mage', 'guardian', 'ranger']; // saves from before the opening ceremony
-  else if (cur && cur.tier === 1 && st.lv >= 14) opts = Object.keys(C).filter(k => C[k].from === st.cls);
+  else if (cur && cur.tier === 1 && st.lv >= 14) opts = Object.keys(C).filter(k => C[k].from === st.cls && C[k].tier === 2);
   if (st.flags.hiddenCls && st.cls !== 'otherworlder') opts.push('otherworlder');
   if (st.flags.spellbladeOk && st.cls !== 'spellblade') opts.push('spellblade');
   if (!opts.length) return false;

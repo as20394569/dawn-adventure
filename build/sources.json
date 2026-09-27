@@ -308,6 +308,258 @@
    "迴廊兌換",
    "鐵匠配方"
   ],
+  "wolfFang2": [
+   "northRoad掉落池",
+   "重戰掉落:blackFeather"
+  ],
+  "hornSpear": [
+   "northRoad掉落池",
+   "goldPlains掉落池",
+   "重戰掉落:boarKing"
+  ],
+  "wolfHood": [
+   "northRoad掉落池",
+   "northRoad寶箱",
+   "capSewer掉落池",
+   "goldPlains掉落池",
+   "重戰掉落:blackFeather"
+  ],
+  "rustMail": [
+   "northRoad掉落池",
+   "capSewer掉落池",
+   "capSewer寶箱",
+   "重戰掉落:ratKing",
+   "重戰掉落:harvestGolem"
+  ],
+  "wheatBoots": [
+   "northRoad掉落池",
+   "capSewer掉落池",
+   "goldPlains掉落池",
+   "重戰掉落:ratKing",
+   "重戰掉落:boarKing"
+  ],
+  "honeyCharm": [
+   "northRoad掉落池",
+   "capSewer掉落池",
+   "goldPlains掉落池",
+   "goldPlains寶箱",
+   "重戰掉落:blackFeather",
+   "重戰掉落:boarKing"
+  ],
+  "windStaff": [
+   "northRoad掉落池",
+   "capSewer掉落池",
+   "goldPlains掉落池",
+   "goldPlains寶箱",
+   "重戰掉落:harvestGolem",
+   "northRoad掉落池(魔導士)",
+   "goldPlains掉落池(魔導士)",
+   "重戰掉落:boarKing(魔導士)"
+  ],
+  "royalGreaves": [
+   "northRoad寶箱"
+  ],
+  "royalDagger": [
+   "capSewer掉落池",
+   "capSewer寶箱",
+   "重戰掉落:ratKing"
+  ],
+  "royalBadge": [
+   "goldPlains掉落池",
+   "重戰掉落:harvestGolem"
+  ],
+  "brassSword": [
+   "clockTower1掉落池",
+   "重戰掉落:clockColossus"
+  ],
+  "gearStaff": [
+   "clockTower1掉落池",
+   "重戰掉落:clockColossus",
+   "clockTower1掉落池(魔導士)",
+   "重戰掉落:clockColossus(魔導士)",
+   "重戰掉落:harvestGolem(魔導士)",
+   "收穫魔像掉落(魔導士)",
+   "重戰掉落:clockKnight(魔導士)",
+   "發條騎士掉落(魔導士)"
+  ],
+  "clockHelm": [
+   "clockTower1掉落池",
+   "clockTower1寶箱",
+   "重戰掉落:clockKnight"
+  ],
+  "clockMail": [
+   "clockTower1掉落池",
+   "重戰掉落:clockColossus"
+  ],
+  "springBoots": [
+   "clockTower1掉落池",
+   "clockTower1寶箱",
+   "重戰掉落:clockKnight"
+  ],
+  "ancientWatch": [
+   "clockTower1掉落池",
+   "重戰掉落:clockKnight"
+  ],
+  "frostBrand": [
+   "frostField掉落池",
+   "iceCave掉落池",
+   "重戰掉落:frostQueen"
+  ],
+  "iceDagger": [
+   "frostField掉落池",
+   "iceCave掉落池",
+   "iceCave寶箱"
+  ],
+  "glacierStaff": [
+   "frostField掉落池",
+   "iceCave掉落池",
+   "重戰掉落:frostLich",
+   "重戰掉落:frostQueen",
+   "frostField掉落池(魔導士)",
+   "iceCave掉落池(魔導士)",
+   "重戰掉落:frostQueen(魔導士)"
+  ],
+  "frostHood": [
+   "frostField掉落池",
+   "frostField寶箱",
+   "iceCave掉落池",
+   "重戰掉落:snowBear",
+   "重戰掉落:frostLich"
+  ],
+  "yetiFur": [
+   "frostField掉落池",
+   "iceCave掉落池",
+   "重戰掉落:frostQueen"
+  ],
+  "snowBoots": [
+   "frostField掉落池",
+   "frostField寶箱",
+   "iceCave掉落池",
+   "重戰掉落:snowBear"
+  ],
+  "iceCharm": [
+   "frostField掉落池",
+   "iceCave掉落池",
+   "iceCave寶箱",
+   "重戰掉落:snowBear",
+   "重戰掉落:frostLich"
+  ],
+  "flameBrand": [
+   "emberPass掉落池",
+   "lavaTunnel掉落池",
+   "重戰掉落:youngDragon"
+  ],
+  "magmaDagger": [
+   "emberPass掉落池",
+   "lavaTunnel掉落池",
+   "lavaTunnel寶箱"
+  ],
+  "volcanoStaff": [
+   "emberPass掉落池",
+   "lavaTunnel掉落池",
+   "重戰掉落:lavaGiant",
+   "emberPass掉落池(魔導士)",
+   "lavaTunnel掉落池(魔導士)",
+   "重戰掉落:youngDragon(魔導士)",
+   "emberPass掉落池(魔導士)",
+   "lavaTunnel掉落池(魔導士)",
+   "lavaTunnel寶箱(魔導士)"
+  ],
+  "salamanderHelm": [
+   "emberPass掉落池",
+   "emberPass寶箱",
+   "lavaTunnel掉落池",
+   "重戰掉落:youngDragon"
+  ],
+  "magmaPlate": [
+   "emberPass掉落池",
+   "lavaTunnel掉落池",
+   "重戰掉落:lavaGiant"
+  ],
+  "lavaBoots": [
+   "emberPass掉落池",
+   "emberPass寶箱",
+   "lavaTunnel掉落池",
+   "重戰掉落:lavaGiant"
+  ],
+  "emberCharm": [
+   "emberPass掉落池",
+   "lavaTunnel掉落池",
+   "lavaTunnel寶箱",
+   "重戰掉落:youngDragon"
+  ],
+  "duskSword": [
+   "duskFort1掉落池"
+  ],
+  "shadowDagger": [
+   "duskFort1掉落池"
+  ],
+  "voidStaff": [
+   "duskFort1掉落池",
+   "重戰掉落:shadowGeneral",
+   "duskFort1掉落池(魔導士)",
+   "重戰掉落:shadowGeneral(魔導士)",
+   "影將莫爾德掉落(魔導士)"
+  ],
+  "voidTome": [
+   "duskFort1掉落池",
+   "重戰掉落:gatekeeper",
+   "重戰掉落:victorDemon",
+   "重戰掉落:gatekeeper(魔導士)",
+   "duskFort1掉落池(魔導士)",
+   "重戰掉落:duskCaptain(魔導士)",
+   "黯滅騎士長掉落(魔導士)"
+  ],
+  "duskHelm": [
+   "duskFort1掉落池",
+   "duskFort1寶箱",
+   "重戰掉落:duskCaptain"
+  ],
+  "duskPlate": [
+   "duskFort1掉落池",
+   "重戰掉落:duskCaptain",
+   "重戰掉落:shadowGeneral"
+  ],
+  "shadowRobe": [
+   "duskFort1掉落池",
+   "重戰掉落:victorDemon"
+  ],
+  "voidBoots": [
+   "duskFort1掉落池",
+   "duskFort1寶箱",
+   "重戰掉落:duskCaptain"
+  ],
+  "voidRing": [
+   "duskFort1掉落池",
+   "重戰掉落:victorDemon",
+   "重戰掉落:shadowGeneral"
+  ],
+  "starSword": [
+   "starShrine掉落池",
+   "重戰掉落:starGuardian"
+  ],
+  "cometDagger": [
+   "starShrine掉落池"
+  ],
+  "starStaff": [
+   "starShrine掉落池",
+   "重戰掉落:starGuardian",
+   "starShrine掉落池(魔導士)",
+   "重戰掉落:starGuardian(魔導士)",
+   "starShrine掉落池(魔導士)"
+  ],
+  "starCrown": [
+   "starShrine掉落池",
+   "starShrine寶箱"
+  ],
+  "starRobe": [
+   "starShrine掉落池",
+   "重戰掉落:starGuardian"
+  ],
+  "starBoots": [
+   "starShrine掉落池",
+   "starShrine寶箱"
+  ],
   "magusStaff": [
    "道具店(沼澤鱷後)"
   ],
@@ -418,10 +670,6 @@
   "voidBlade": [
    "重戰掉落:gatekeeper"
   ],
-  "voidTome": [
-   "重戰掉落:gatekeeper",
-   "重戰掉落:gatekeeper(魔導士)"
-  ],
   "rhinoHelm": [
    "重戰掉落:rockRhino",
    "岩角犀掉落"
@@ -454,6 +702,69 @@
   "hydraStaff": [
    "重戰掉落:hydra",
    "重戰掉落:hydra(魔導士)"
+  ],
+  "blackCloak": [
+   "重戰掉落:blackFeather",
+   "盜賊頭目「黑羽」掉落"
+  ],
+  "ratCrown": [
+   "重戰掉落:ratKing",
+   "溝鼠王掉落"
+  ],
+  "boarHelm": [
+   "重戰掉落:boarKing",
+   "暴走野豬王掉落"
+  ],
+  "harvestScythe": [
+   "重戰掉落:harvestGolem",
+   "收穫魔像掉落"
+  ],
+  "chronoLance": [
+   "重戰掉落:clockKnight",
+   "發條騎士掉落"
+  ],
+  "colossusCore": [
+   "重戰掉落:clockColossus",
+   "時計巨像掉落"
+  ],
+  "bearMantle": [
+   "重戰掉落:snowBear",
+   "雪原巨熊掉落"
+  ],
+  "lichTome": [
+   "重戰掉落:frostLich",
+   "冰霜巫妖掉落",
+   "frostField掉落池(魔導士)",
+   "iceCave掉落池(魔導士)",
+   "iceCave寶箱(魔導士)"
+  ],
+  "frostTiara": [
+   "重戰掉落:frostQueen",
+   "霜之女王掉落"
+  ],
+  "dragonMail": [
+   "重戰掉落:youngDragon",
+   "火龍幼體掉落"
+  ],
+  "lavaHeart": [
+   "重戰掉落:lavaGiant",
+   "熔岩巨人掉落"
+  ],
+  "duskBlade": [
+   "重戰掉落:duskCaptain",
+   "黯滅騎士長掉落"
+  ],
+  "victorRing": [
+   "重戰掉落:victorDemon",
+   "魔人維克托掉落"
+  ],
+  "moldBlade": [
+   "重戰掉落:shadowGeneral",
+   "影將莫爾德掉落"
+  ],
+  "starLance": [
+   "重戰掉落:starGuardian",
+   "星之守護者掉落"
   ],
   "woodSword": [
    "職業起始",
@@ -531,6 +842,10 @@
   "fangWand": [
    "重戰掉落:wolf(魔導士)",
    "狂牙狼掉落(魔導士)"
+  ],
+  "royalTome": [
+   "northRoad掉落池(魔導士)",
+   "重戰掉落:blackFeather(魔導士)"
   ]
  },
  "item": {
@@ -541,6 +856,7 @@
    "mine寶箱",
    "catacomb寶箱",
    "canyon寶箱",
+   "northRoad寶箱",
    "道具店",
    "行商",
    "鐵匠配方",
@@ -592,7 +908,9 @@
    "forest採集",
    "forest採集",
    "lake採集",
-   "canyon採集"
+   "canyon採集",
+   "northRoad採集",
+   "goldPlains採集"
   ],
   "manaHerb": [
    "route採集",
@@ -600,7 +918,9 @@
    "sewer採集",
    "ruins採集",
    "lake採集",
-   "swamp採集"
+   "swamp採集",
+   "northRoad採集",
+   "frostField採集"
   ],
   "wisdomFruit": [
    "forest寶箱",
@@ -610,6 +930,7 @@
   "luckClover": [
    "forest寶箱",
    "迴廊兌換",
+   "委託獎勵",
    "委託獎勵",
    "委託獎勵"
   ],
@@ -622,13 +943,17 @@
    "mine採集",
    "catacomb採集",
    "catacomb採集",
+   "iceCave採集",
    "魔物:晶石丸"
   ],
   "gel": [
    "sewer採集",
    "mine採集",
+   "capSewer採集",
    "魔物:泡泡姆",
    "魔物:泥沼姆",
+   "魔物:汙泥姆",
+   "魔物:冰凍姆",
    "分解",
    "分解",
    "分解"
@@ -641,6 +966,10 @@
    "mine採集",
    "mine採集",
    "canyon採集",
+   "northRoad採集",
+   "capSewer採集",
+   "clockTower1採集",
+   "lavaTunnel採集",
    "魔物:石丸",
    "魔物:礦泥怪",
    "魔物:符文石像",
@@ -654,6 +983,7 @@
    "catacomb採集",
    "魔物:骷髏兵",
    "魔物:骨犬",
+   "魔物:焰骨兵",
    "分解"
   ],
   "elixir": [
@@ -661,9 +991,20 @@
    "catacomb寶箱",
    "lake寶箱",
    "swamp寶箱",
+   "goldPlains寶箱",
+   "frostField寶箱",
+   "iceCave寶箱",
+   "emberPass寶箱",
+   "lavaTunnel寶箱",
+   "duskFort1寶箱",
+   "starShrine寶箱",
    "行商",
    "道具店(魔像後)",
    "迴廊兌換",
+   "委託獎勵",
+   "委託獎勵",
+   "委託獎勵",
+   "委託獎勵",
    "委託獎勵",
    "委託獎勵"
   ],
@@ -672,15 +1013,20 @@
    "catacomb採集",
    "魔物:幽靈燈",
    "魔物:溺魂",
-   "魔物:怨靈"
+   "魔物:怨靈",
+   "魔物:霜之魂"
   ],
   "hiEther": [
    "lake寶箱",
    "canyon寶箱",
    "swamp寶箱",
+   "northRoad寶箱",
+   "capSewer寶箱",
+   "goldPlains寶箱",
    "行商",
    "迴廊兌換",
    "鐵匠配方",
+   "委託獎勵",
    "委託獎勵",
    "委託獎勵",
    "委託獎勵"
@@ -707,6 +1053,75 @@
    "魔物:沼澤水蛭",
    "魔物:腐沼蟾"
   ],
+  "megaPotion": [
+   "northRoad寶箱",
+   "capSewer寶箱",
+   "goldPlains寶箱",
+   "clockTower1寶箱",
+   "frostField寶箱",
+   "iceCave寶箱",
+   "emberPass寶箱",
+   "lavaTunnel寶箱",
+   "duskFort1寶箱",
+   "委託獎勵",
+   "委託獎勵",
+   "委託獎勵"
+  ],
+  "lostScore": [
+   "capSewer寶箱"
+  ],
+  "wheat": [
+   "goldPlains採集",
+   "goldPlains採集",
+   "goldPlains採集",
+   "魔物:稻草人"
+  ],
+  "megaEther": [
+   "clockTower1寶箱",
+   "frostField寶箱",
+   "iceCave寶箱",
+   "emberPass寶箱",
+   "lavaTunnel寶箱",
+   "duskFort1寶箱",
+   "starShrine寶箱",
+   "委託獎勵",
+   "委託獎勵",
+   "委託獎勵"
+  ],
+  "iceCrystal": [
+   "frostField採集",
+   "frostField採集",
+   "iceCave採集",
+   "魔物:霜精",
+   "魔物:冰晶蝠",
+   "魔物:冰晶石怪"
+  ],
+  "magmaStone": [
+   "emberPass採集",
+   "emberPass採集",
+   "lavaTunnel採集",
+   "魔物:熔岩姆",
+   "魔物:岩漿蟹",
+   "魔物:熔岩石怪",
+   "魔物:爆炎精"
+  ],
+  "tpBook": [
+   "starShrine寶箱",
+   "行商",
+   "道具店(魔像後)",
+   "迴廊兌換",
+   "委託獎勵",
+   "委託獎勵",
+   "委託獎勵",
+   "委託獎勵",
+   "委託獎勵"
+  ],
+  "starDust": [
+   "starShrine採集",
+   "starShrine採集",
+   "魔物:星靈",
+   "魔物:天使石像"
+  ],
   "antidote": [
    "道具店",
    "委託獎勵"
@@ -730,14 +1145,6 @@
    "行商",
    "道具店(魔像後)"
   ],
-  "tpBook": [
-   "行商",
-   "道具店(魔像後)",
-   "迴廊兌換",
-   "委託獎勵",
-   "委託獎勵",
-   "委託獎勵"
-  ],
   "riftShard": [
    "迴廊兌換",
    "魔物:虛空之眼",
@@ -749,6 +1156,10 @@
   "feather": [
    "魔物:啾啾鳥",
    "魔物:夜梟",
+   "魔物:草原鷹",
+   "魔物:冰晶鴞",
+   "魔物:火山鷹",
+   "魔物:彗星鳥",
    "分解",
    "分解"
   ],
@@ -772,7 +1183,8 @@
   ],
   "batWing": [
    "魔物:洞窟飛影",
-   "魔物:坑道蝠"
+   "魔物:坑道蝠",
+   "魔物:鐘樓蝠"
   ],
   "beetleShell": [
    "魔物:雷角甲蟲"
@@ -806,6 +1218,58 @@
   "rotWood": [
    "魔物:枯木樹妖"
   ],
+  "wolfPelt": [
+   "魔物:灰鬃狼"
+  ],
+  "banditCloth": [
+   "魔物:街道盜賊"
+  ],
+  "beetleHorn": [
+   "魔物:巨角甲蟲"
+  ],
+  "ratTail": [
+   "魔物:溝鼠"
+  ],
+  "rustScrap": [
+   "魔物:鐵鏽蛛",
+   "魔物:空洞鎧甲"
+  ],
+  "crocHide": [
+   "魔物:水道鱷"
+  ],
+  "honey": [
+   "魔物:麥田蜂"
+  ],
+  "boarTusk": [
+   "魔物:暴走野豬"
+  ],
+  "windStone": [
+   "魔物:風精"
+  ],
+  "spring": [
+   "魔物:發條兵"
+  ],
+  "brassGear": [
+   "魔物:齒輪精"
+  ],
+  "snowPelt": [
+   "魔物:雪狼",
+   "魔物:雪人"
+  ],
+  "salamanderScale": [
+   "魔物:火蜥蜴",
+   "魔物:地獄犬"
+  ],
+  "shadowCloth": [
+   "魔物:黯滅騎士",
+   "魔物:暗影法師",
+   "魔物:夢魘"
+  ],
+  "voidShard": [
+   "魔物:魔像哨兵",
+   "魔物:虛空獵犬",
+   "魔物:深淵之眼"
+  ],
   "license": [
    "劇情/任務"
   ],
@@ -816,6 +1280,30 @@
    "劇情/任務"
   ],
   "rhinoHorn": [
+   "劇情/任務"
+  ],
+  "dragonScale": [
+   "劇情/任務"
+  ],
+  "royalSummons": [
+   "劇情/任務"
+  ],
+  "timeGear": [
+   "劇情/任務"
+  ],
+  "northPass": [
+   "劇情/任務"
+  ],
+  "frostKey": [
+   "劇情/任務"
+  ],
+  "fireSeal": [
+   "劇情/任務"
+  ],
+  "dawnHeart": [
+   "劇情/任務"
+  ],
+  "dragonFlame": [
    "劇情/任務"
   ]
  },
@@ -935,6 +1423,33 @@
   ],
   "bogMoss": [
    "委託c20"
+  ],
+  "wolfPelt": [
+   "委託c22"
+  ],
+  "rustScrap": [
+   "委託c25"
+  ],
+  "honey": [
+   "委託c26"
+  ],
+  "spring": [
+   "委託c28"
+  ],
+  "brassGear": [
+   "委託c28"
+  ],
+  "magmaStone": [
+   "委託c30"
+  ],
+  "voidShard": [
+   "委託c32"
+  ],
+  "salamanderScale": [
+   "委託c33"
+  ],
+  "starDust": [
+   "委託c34"
   ]
  }
 }
