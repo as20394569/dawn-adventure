@@ -55,11 +55,11 @@ function npcCommission(id, ow, ent) {
   // offer a new request
   const k = mine.find(q => comAvail(q, st)); if (!k) return null; const c = COMMISSIONS[k];
   return (function* () {
-    yield* sayAll(COM_TALK[k] || [c.d]); yield* say('報酬：' + rewardText(c.reward));
+    yield* sayAll(COM_TALK[k] || [c.d]); yield* comHintSay(c); yield* say('報酬：' + rewardText(c.reward));
     if (!(yield* yesNo('要接下「' + c.n + '」嗎？'))) { yield* say('這樣啊……有空的話再來找我吧。'); return; }
     st.com[k] = { s: 'on', k: c.kill ? (((st.dex || {})[c.kill[0]] || {}).won || 0) : 0 };
     if (c.deliver) st.bag[c.deliver[0]] = 1;
-    Sound.sfx('select'); yield* say('接下了「' + c.n + '」！' + (c.deliver ? '\n得到了「' + ITEMS[c.deliver[0]].n + '」。' : '（可以在「狀態→任務」查看進度）'));
+    Sound.sfx('select'); yield* say('接下了「' + c.n + '」！' + (c.deliver ? '\n得到了「' + ITEMS[c.deliver[0]].n + '」。' : '（「狀態→任務」按A可以看進度和取得地點）'));
   })();
 }
 // deliveries count as "ready" once accepted (the target NPC completes them)
@@ -72,7 +72,7 @@ Events.board = function* () {
     const opts = ids.map(k => { const s = comState(k, st), p = comProgress(k, st); return { t: COMMISSIONS[k].n, r: !s ? '未接' : s.s === 'done' ? '完成' : p.ready ? '可回報' : '進行中', col: !s ? UIC.accent : s.s === 'done' ? UIC.dis : p.ready ? UIC.warm : UIC.text }; });
     const r = yield* ask('要看哪一張？', opts.concat(['離開'])); if (r < 0 || r >= ids.length) return;
     const k = ids[r], c = COMMISSIONS[k], g = COM_GIVER[k];
-    yield* say('委託人：' + c.from + '（' + (NPC_WHERE[g] || '？') + '）\n' + c.d); yield* say('報酬：' + rewardText(c.reward));
+    yield* say('委託人：' + c.from + '（' + (NPC_WHERE[g] || '？') + '）\n' + c.d); yield* comHintSay(c); yield* say('報酬：' + rewardText(c.reward));
   }
 };
 Object.assign(Events, {

@@ -61,14 +61,22 @@ Object.assign(Battle.prototype, {
   },
 });
 
-Battle.prototype.chooseMove = function* () {
+Battle.prototype.chooseMove = function* () { // v20.7: a small pop-up (list + detail) over the stage; the command bar and HUD stay visible below
   const st = Game.st, list = learnedSkills(st);
   if (!list.length) { yield* this.msg('還沒有學會技能！（在選單的「技能」學習）'); return null; }
   let cur = Math.min(this.moveIdx || 0, list.length - 1); this.idle = true;
-  const info = (x, m) => { const id = list[m.i], mv = skillMove(id); drawWin(x, 4, BB_Y + 1, W - 8, BB_H - 2, 'ow'); const c = TYPE_COL[mv.t]; x.fillStyle = c; x.fillRect(10, BB_Y + 8, 4, 4); const ex = Font.draw(x, mv.t === '一般' ? '無屬性' : mv.t + '屬性', 17, BB_Y + 5, mv.t === '一般' ? '#c9cfe4' : c, UIC.textSh, 8); Font.draw(x, '・' + (mv.cat === '變' ? '輔助' : mv.cat === '物' ? '物理' : '魔法') + (mv.pow ? '・威力' + mv.pow : '') + '・Lv' + skillLv(id), ex + 1, BB_Y + 5, UIC.muted, UIC.textSh, 8); Font.drawR(x, 'MP' + skillMP(id), W - 10, BB_Y + 5, skillMP(id) > st.mp ? UIC.bad : UIC.accent, UIC.textSh, 8); Font.wrap(MOVES[id].d, 156, 8).slice(0, 2).forEach((l, i) => Font.draw(x, l, 10, BB_Y + 17 + i * 10, UIC.text, UIC.textSh, 8)); };
+  const VIS = Math.min(list.length, 5), X = 14, w = W - 28, Y = 56, rowH = 14, h = 18 + VIS * rowH + 4, DY = Y + h + 2, DH = 48;
+  const info = (x, m) => {
+    Font.drawR(x, 'MP ' + st.mp + '/' + (this.H.maxmp || st.mp), X + w - 8, Y + 2, '#8ab8ff', UIC.textSh, 9);
+    const id = list[m.i], mv = skillMove(id), c = TYPE_COL[mv.t]; drawWin(x, X, DY, w, DH, 'menu');
+    x.fillStyle = c; x.fillRect(X + 8, DY + 7, 4, 4); let ex = Font.draw(x, mv.t === '一般' ? '無屬性' : mv.t + '屬性', X + 15, DY + 1, mv.t === '一般' ? '#c9cfe4' : c, UIC.textSh, 9);
+    ex = Font.draw(x, '・' + (mv.cat === '變' ? '輔助' : mv.cat === '物' ? '物理' : '魔法') + (mv.pow ? '・威力' + mv.pow : '') + '・Lv' + skillLv(id), ex + 1, DY + 1, '#c9cfe4', UIC.textSh, 9);
+    if (skillMP(id) > st.mp) Font.drawR(x, 'MP不足', X + w - 8, DY + 1, UIC.bad, UIC.textSh, 9);
+    Font.drawC(x, 'A：使用　B：返回', W / 2, BB_Y + 11, UIC.muted, UIC.textSh, 9);
+    Font.wrap(mv.d || '', w - 16, 9).slice(0, 3).forEach((l, n) => Font.draw(x, l, X + 8, DY + 13 + n * 11, UIC.text, UIC.textSh, 9));
+  };
   while (true) {
-    const vis = Math.min(list.length, 9), h = vis * 12 + 8;
-    const r = yield* choose(list.map(id => ({ t: MOVES[id].n, r: String(skillMP(id)), col: skillMP(id) > st.mp ? UIC.dis : undefined })), { x: W - 76, y: BH - 16 - h, w: 72, rowH: 12, fs: 8, ox: 8, oy: 4, visible: vis, index: cur, onMove: i => cur = i, drawExtra: info });
+    const r = yield* choose(list.map(id => ({ t: MOVES[id].n, r: 'MP' + skillMP(id), col: skillMP(id) > st.mp ? UIC.dis : undefined })), { x: X, y: Y, w, h, rowH, fs: 10, ox: 12, oy: 17, visible: VIS, title: '選擇技能', index: cur, onMove: i => cur = i, drawExtra: info });
     if (r < 0) { this.idle = false; return null; }
     if (skillMP(list[r]) > st.mp) { yield* this.msg('MP不夠！'); continue; }
     this.idle = false; this.moveIdx = r; return list[r];

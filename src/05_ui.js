@@ -206,7 +206,7 @@ function* summaryScreen() {
       QL.slice(t0, t0 + VIS).forEach((q, k) => { const i = t0 + k, Y = 28 + k * 17; if (i === sel) selBar(x, 6, Y - 1, 164, 16); const cc = q.done ? UIC.dis : QUEST_CAT_COL[q.cat] || UIC.warm; Font.draw(x, q.cat, 12, Y + 1, cc, UIC.textSh, 10); Font.draw(x, q.n, 40, Y, q.done ? UIC.muted : UIC.text, UIC.textSh, 11); Font.drawR(x, q.done ? '完成' : '進行中', 164, Y + 1, q.done ? UIC.dis : UIC.accent, UIC.textSh, 9); });
       if (t0 > 0) x.drawImage(UPARROW, 86, 25); if (t0 + VIS < QL.length) x.drawImage(DOWNARROW, 86, 24 + VIS * 17 + 3);
       const q = QL[sel]; drawWin(x, 4, 155, 168, 97, 'menu');
-      if (q) { Font.draw(x, q.n, 12, 158, QUEST_CAT_COL[q.cat] || UIC.warm, UIC.textSh); const rwL = q.rw ? Font.wrap('報酬：' + q.rw, 156, 10).slice(0, 2) : []; Font.wrap(q.t, 152, 11).slice(0, 5 - rwL.length).forEach((l, i) => Font.draw(x, l, 12, 175 + i * 14, q.done ? UIC.muted : UIC.text, UIC.textSh, 11));
+      if (q) { Font.draw(x, q.n, 12, 158, QUEST_CAT_COL[q.cat] || UIC.warm, UIC.textSh); Font.drawR(x, 'A 詳情', 164, 160, UIC.accent, UIC.textSh, 9); const rwL = q.rw ? Font.wrap('報酬：' + q.rw, 156, 10).slice(0, 2) : []; Font.wrap(q.t, 152, 11).slice(0, 5 - rwL.length).forEach((l, i) => Font.draw(x, l, 12, 175 + i * 14, q.done ? UIC.muted : UIC.text, UIC.textSh, 11));
         rwL.forEach((l, i) => Font.draw(x, l, 10, 250 - rwL.length * 12 + i * 12 - 2, q.done ? UIC.dis : UIC.warm, UIC.textSh, 10)); }
     } else if (page === 0) {
       const a = heroAttr(st), eqB = eqBonus(st);
@@ -230,7 +230,8 @@ function* summaryScreen() {
     if (Input.pressed('left') || Input.pressed('right')) { page = (page + (Input.pressed('left') ? 2 : 1)) % 3; Sound.sfx('cursor'); }
     if (page === 2) { const n = questList().length; if (Input.repeat('up') && qTop > 0) { qTop--; Sound.sfx('cursor'); } if (Input.repeat('down') && qTop < n - 1) { qTop++; Sound.sfx('cursor'); } }
     if (page === 1) { const n = Math.max(1, learnedSkills().length); if (Input.repeat('up')) { mi = (mi + n - 1) % n; Sound.sfx('cursor'); } if (Input.repeat('down')) { mi = (mi + 1) % n; Sound.sfx('cursor'); } }
-    if (Input.pressed('a') && page !== 1) { Input.consume('a'); page = (page + 1) % 3; Sound.sfx('cursor'); }
+    if (Input.pressed('a') && page === 2 && questList().length && typeof questDetailScreen === 'function') { Input.consume('a'); Sound.sfx('select'); const QL = questList(); UI.remove(scr); yield* questDetailScreen(QL[Math.min(qTop, QL.length - 1)]); UI.push(scr); }
+    else if (Input.pressed('a') && page !== 1) { Input.consume('a'); page = (page + 1) % 3; Sound.sfx('cursor'); }
     else if (Input.pressed('b')) { Input.consume('a', 'b'); Sound.sfx('cancel'); break; }
     yield;
   }
