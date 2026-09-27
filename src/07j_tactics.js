@@ -217,7 +217,7 @@ function drawShieldBadge(x, X, Y, n, broken, flash) {
     if (T.dim > 0.02) { const C = this.center(this.F), g = x.createRadialGradient(C.x, C.y, 20, C.x, C.y, 120); g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(1, 'rgba(8,0,6,' + (T.dim * 0.8).toFixed(3) + ')'); x.fillStyle = g; x.fillRect(0, 0, W, BH); }
     if (T.red > 0) { x.fillStyle = 'rgba(210,20,30,' + (T.red / 16 * 0.32).toFixed(3) + ')'; x.fillRect(0, 0, W, BH); }
     // danger ring under the hero while the monster charges
-    if (this.F.charging && this.F.hp > 0 && !this.F.broken) { const p = (this.t % 40) / 40, cx = this.heroX + HD_HERO_OX + 28, cy = HERO_Y + 60; x.save(); x.strokeStyle = 'rgba(255,50,60,' + (0.8 - p * 0.6).toFixed(2) + ')'; x.lineWidth = 1.5; x.beginPath(); x.ellipse(cx, cy, 18 + p * 16, 5 + p * 4, 0, 0, Math.PI * 2); x.stroke(); x.restore(); }
+    if (this.F.charging && this.F.hp > 0 && !this.F.broken) { const p = (this.t % 40) / 40, cx = this.center(this.H).x, cy = HERO_FOOT - 3; x.save(); x.strokeStyle = 'rgba(255,50,60,' + (0.8 - p * 0.6).toFixed(2) + ')'; x.lineWidth = 1.5; x.beginPath(); x.ellipse(cx, cy, 18 + p * 16, 5 + p * 4, 0, 0, Math.PI * 2); x.stroke(); x.restore(); }
     // skill banner (monster)
     if (T.banner) { const B = T.banner, k = Math.min(1, B.t / 6), fade = B.t > B.life - 10 ? (B.life - B.t) / 10 : 1, s = (B.charge ? '蓄力 ' : '▼ ') + B.s, fs = B.strong ? 11 : 9, tw = Font.width(s, fs) + 18, X = Math.round(W / 2 - tw / 2 * k), Y = 64;
       x.globalAlpha = clamp(fade, 0, 1); x.fillStyle = B.strong ? 'rgba(60,4,12,0.88)' : 'rgba(20,8,16,0.78)'; x.fillRect(X, Y, Math.round(tw * k), fs + 7); x.fillStyle = B.strong ? '#ff4050' : '#c05060'; x.fillRect(X, Y, Math.round(tw * k), 1); x.fillRect(X, Y + fs + 6, Math.round(tw * k), 1);

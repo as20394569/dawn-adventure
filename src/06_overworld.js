@@ -239,7 +239,7 @@ class Overworld {
     const st = this.st; st.lastBattleStep = st.steps || 0;
     Sound.play(cfg.kind === 'boss' ? 'boss' : cfg.kind === 'elite' ? 'elite' : 'battle');
     yield* battleTransition(cfg.kind);
-    const b = new Battle({ ...cfg, bg: this.map.d.battleBg || 'field' }); Game.setScene(b);
+    const b = new Battle({ ...cfg, bg: typeof battleBgFor === 'function' ? battleBgFor(this, cfg) : this.map.d.battleBg || 'field' }); Game.setScene(b);
     while (Game.scene === b) yield; // paused until battle ends and returns to overworld
     const res = b.result; Game.trans = null;
     if (res === 'lose') { Game.homeWarp = 0; yield* this.whiteout(); return res; }

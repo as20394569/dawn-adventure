@@ -285,7 +285,7 @@ function hdStep(b, A, who) {
 
 /* ---------- drawing: same layout as Battle.draw; actors are rendered live as smooth vectors ---------- */
 { const _c = Battle.prototype.center; Battle.prototype.center = function (b) {
-    if (b && b.hero && hdOn() && this.hd && this.hd.ok) return { x: this.heroX + HD_HERO_OX + 28, y: HERO_Y + 30 };
+    if (b && b.hero && hdOn() && this.hd && this.hd.ok) return { x: this.heroX + HD_HERO_OX + 28, y: HERO_FOOT - 21 }; // v20.6: the middle of the hero's body (was the top of the head)
     return _c.call(this, b);
   };
   const _d = Battle.prototype.draw; Battle.prototype.draw = function (x) {
@@ -312,8 +312,8 @@ function hdStep(b, A, who) {
     if (this.cg && this.cg.shards > 0 && this.alphaF > 0) { const C = this.center(this.F); for (let i = 0; i < this.cg.shards; i++) { const an = this.t / 20 + i * Math.PI * 2 / 3, px0 = Math.round(C.x + Math.cos(an) * 44), py0 = Math.round(C.y + Math.sin(an) * 14); x.fillStyle = '#1a3050'; x.fillRect(px0 - 3, py0 - 5, 7, 11); x.fillStyle = '#9ae0ff'; x.fillRect(px0 - 2, py0 - 4, 5, 9); x.fillStyle = '#e8fbff'; x.fillRect(px0 - 1, py0 - 3, 2, 4); } }
     if (this.cg && this.cg.mirror && this.alphaF > 0 && Math.floor(this.t / 8) % 2) { x.globalAlpha = 0.25; blit(D.pxF ? pxRender(D.F, D.pxF, this.t, '#e8fbff') : hdRenderFoe(D.F, D.specF, this.t, '#e8fbff'), this.foeX + 32 - im.bb.cx, FOE_FOOT - im.bb.bot, fw, fh); x.globalAlpha = 1; }
     if (!(this.blinkH > 0 && Math.floor(this.blinkH / 3) % 2)) {
-      const hx0 = this.heroX + HD_HERO_OX; x.save(); hd2dSoftShadow(x, hx0 + 28 + this.offH.x, HERO_Y + 72 - (this.hd && this.hd.pxH && this.hd.pxH.chibi ? this.hd.pxH.lift || 0 : 0), 26, 6, 0.4); x.globalAlpha = Math.max(0, 1 - this.sinkH / 70);
-      const hx = (hi.px ? hx0 + 28 - hi.bb.cx : hx0) + this.offH.x, hy = (hi.px ? HERO_Y + 76 - hi.bb.bot : HERO_Y) + this.offH.y + this.sinkH * 0.25, hw = hi.width * hi.ds, hh = hi.height * hi.ds;
+      const hx0 = this.heroX + HD_HERO_OX; x.save(); hd2dSoftShadow(x, hx0 + 28 + this.offH.x, HERO_FOOT - 1 - (this.hd && this.hd.pxH && this.hd.pxH.chibi ? this.hd.pxH.lift || 0 : 0), 26, 6, 0.4); x.globalAlpha = Math.max(0, 1 - this.sinkH / 70);
+      const hx = (hi.px ? hx0 + 28 - hi.bb.cx : hx0) + this.offH.x, hy = (hi.px ? HERO_FOOT - hi.bb.bot : HERO_Y) + this.offH.y + this.sinkH * 0.25, hw = hi.width * hi.ds, hh = hi.height * hi.ds;
       blit(hi, hx, hy); if (this.tintH) { x.globalAlpha = this.tintH.a; blit(D.pxH ? dollRender(this, D.H, D.pxH, this.t, this.tintH.c) : hdRenderHero(D.H, D.look, this.t, this.tintH.c), hx, hy, hw, hh); }
       x.restore();
     }
@@ -332,7 +332,7 @@ const HD_HERO_DOLL = true;
 const DOLL_SCALE = 2; // field doll pixels shown at 2x (the old battle view used 3x)
 const dollNative = {};
 function dollImg(frame, L) { const key = frame + lookKey(L); if (dollNative[key]) return dollNative[key]; const big = heroBattleImgLook(frame, L), w = big.width / 3, h = big.height / 3, c = mkCanvas(w * DOLL_SCALE, h * DOLL_SCALE), x = c.getContext('2d'), n = mkCanvas(w, h); n.getContext('2d').drawImage(big, 0, 0, w, h); x.imageSmoothingEnabled = false; x.drawImage(n, 0, 0, w * DOLL_SCALE, h * DOLL_SCALE); return dollNative[key] = c; }
-function dollSpec() { const im = dollImg(0, heroLookOf(Game.st)); return { doll: true, w: im.width, h: im.height, cw: im.width, ch: im.height + 2, bb: { cx: Math.round(im.width * 0.43), top: 0, bot: im.height, w: im.width, h: im.height } }; }
+function dollSpec() { const im = dollImg(0, heroLookOf(Game.st)); return { doll: true, w: im.width, h: im.height, cw: im.width, ch: im.height + 2, bb: { cx: Math.round(im.width * 0.29), top: 0, bot: im.height - 2, w: im.width, h: im.height } }; } // cx = the body's middle (the weapon sticks out to the right), bot = the foot row
 function dollRender(b, A, S, T, tint) {
   if (!A.pcv || A.pcv.width !== S.cw) { A.pcv = mkCanvas(S.cw, S.ch); A.pcvT = mkCanvas(S.cw, S.ch); }
   const cv = tint ? A.pcvT : A.pcv, x = cv.getContext('2d'), [st] = hdPhase(A, T), L = b.hd.look;

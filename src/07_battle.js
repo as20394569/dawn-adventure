@@ -1,7 +1,7 @@
 /* ===================== BATTLE ===================== */
 let HERO_POWER = 1.45, BOSS_HP = 2.1, ELITE_HP = 1.1;
 const BTN_MENU = { x: 4, y: TB_Y + 1, w: W - 8, h: TB_H - 2, cols: 2, colW: 82, rowH: 20, ox: 3, oy: 17, buttons: true, style: 'cmd' };
-const BB_Y = 218, BB_H = H - 218, BH = BB_Y, FOE_X = 56, HERO_X = 0, HERO_Y = 136, HBAR_Y = 205; // compact battle HUD: bigger stage, 2-line messages // facing the foe: foe far (upper right), hero's back near (lower left); panels on the opposite corners
+const BB_Y = 218, BB_H = H - 218, BH = BB_Y, FOE_X = 56, HERO_X = 0, HERO_Y = 136, HBAR_Y = 205, HERO_FOOT = 200; // compact battle HUD: bigger stage, 2-line messages // facing the foe: foe far (upper right), hero's back near (lower left); panels on the opposite corners
 function critRate(u, mv) { const base = (u.stats.crit ?? 6) / 100; return mv.crit ? base * 2 : base; }
 function hitChance(u, t, mv) { let a = mv.acc; if (!a) return 1; a += u.stats.hit || 0; a -= t.stats.eva || 0; return clamp(a, 5, 100) / 100; }
 const stageMul = s => s >= 0 ? 1 + 0.25 * s : 1 / (1 + 0.25 * -s); // buffs/debuffs: ±25% per step, max ±3, timed

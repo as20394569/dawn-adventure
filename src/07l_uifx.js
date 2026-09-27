@@ -19,8 +19,7 @@ function drawStageIcons(x, b, X, Y, max = 4) {
   };
   const _bh = Battle.prototype.drawBoxH; Battle.prototype.drawBoxH = function (x) {
     _bh.call(this, x); const Y = Math.round(this.boxH), H = this.H; if (Y >= BH || !UI_PX.icons || !UI_PX.icons.ok) return;
-    const nb = [Game.st.status, H.wet && 'wet', H.tangle && 'tangle', H.shield && 'shield'].filter(Boolean).length ? 1 : 0;
-    drawStageIcons(x, H, 4 + nb * (ICON_SZ + 2), Y - 13);
+    const P = heroIconPos(this); drawStageIcons(x, H, P.x + P.nb * (ICON_SZ + 2), P.y);
   };
 }
 // animated effects

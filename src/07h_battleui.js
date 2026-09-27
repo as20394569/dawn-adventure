@@ -9,6 +9,11 @@ const CMD_ICONS = {
   防禦: spriteFrom(['kkkkkkkkkkk.', 'kSSSSSSSSSk.', 'kSWWSSSSSSk.', 'kSWSSSGSSSk.', 'kSSSSGGGSSk.', 'kSSSSSGSSSk.', '.kSSSSSSSk..', '.kSSSSSSSk..', '..kSSSSSk...', '...kSSSk....', '....kSk.....', '.....k......'], { k: '#1a1420', S: '#6a9ae0', W: '#d8e8ff', G: '#ffcf5a' }),
   逃跑: spriteFrom(['......kk....', '.....kSSk...', '.....kSSk...', '...kkkSk....', '..kSSSSSkk..', '.k..kSSk.Sk.', '....kSSk....', '...kSkkSk...', '..kSk..kSk..', '.kSk....kSk.', 'kkk......kk.', '............'], { k: '#1a1420', S: '#9ae0c0' }),
 };
+// v20.6: the hero's status / stat-stage icons sit beside the hero (left of the body, at hip height) instead of the screen corner
+function heroIconPos(b) {
+  const H = b.H, nb = [Game.st.status, H.wet && 'wet', H.tangle && 'tangle', H.shield && 'shield'].some(Boolean) ? 1 : 0, ns = Math.min(4, ['atk', 'def', 'spa', 'spd', 'spe'].filter(k => H.stages && H.stages[k]).length);
+  const cx = b.center(H).x, w = (nb + ns) * 14; return { x: Math.max(2, Math.round(cx - 20 - w + b.offH.x)), y: Math.round(HERO_FOOT - 20 + b.offH.y), nb };
+}
 Object.assign(Battle.prototype, {
   drawBoxF(x) { // centred banner at the top: name + rank / Lv · family + status / HP gauge
     const F = this.F; if (this.boxF < -20 || this.alphaF <= 0) return;
@@ -28,7 +33,7 @@ Object.assign(Battle.prototype, {
     const cx = Font.draw(x, st.name, 4, Y, UIC.text, UIC.textSh, 9); Font.draw(x, 'Lv' + st.lv, cx + 2, Y + 2, '#c8a050', UIC.textSh, 7);
     Font.draw(x, 'HP', 62, Y + 2, '#ff9a8a', UIC.textSh, 7); if (!uiBar(x, 76, my, 28, r, r > 0.25 ? 'hp' : 'low')) { x.fillStyle = '#241018'; x.fillRect(74, my, 30, 3); x.fillStyle = r > 0.5 ? '#5ad07a' : r > 0.2 ? '#ffc040' : '#ff5a5a'; x.fillRect(74, my, Math.round(30 * r), 3); } Font.drawR(x, Math.ceil(this.disp.H) + '', 122, Y + 1, r <= 0.2 ? UIC.bad : UIC.text, UIC.textSh, 8);
     Font.draw(x, 'MP', 127, Y + 2, '#8ab8ff', UIC.textSh, 7); if (!uiBar(x, 141, my, 19, mr, 'mp')) { x.fillStyle = '#101a30'; x.fillRect(139, my, 21, 3); x.fillStyle = '#5aa8ff'; x.fillRect(139, my, Math.round(21 * mr), 3); } Font.drawR(x, st.mp + '', 174, Y + 1, '#b8d4ff', UIC.textSh, 8);
-    const bs = [st.status, this.H.wet && 'wet', this.H.tangle && 'tangle', this.H.shield && 'shield'].filter(Boolean); if (bs.length) badgeRow(x, bs.slice(0, 1), 4, Y - 13);
+    const bs = [st.status, this.H.wet && 'wet', this.H.tangle && 'tangle', this.H.shield && 'shield'].filter(Boolean); if (bs.length) { const P = heroIconPos(this); badgeRow(x, bs.slice(0, 1), P.x, P.y); }
   },
   *intro() { // flash in: the foe materialises, the hero steps up from below
     Sound.sfx('encounter'); this.foeX = this.foeTX; this.heroX = HERO_X; this.alphaF = 0; this.offH.y = 60;

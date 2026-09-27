@@ -228,6 +228,9 @@ const Sound = (() => {
     faint: () => sweep(900, 60, 0.7, 'p', .5, .14),
     run: () => { [0, 1, 2].forEach(i => noise(0.05, 0.15, 'bandpass', 1500, null, i * 0.09)); },
     item: () => { sweep(1200, 1200, 0.05, 'p', .5, .1); sweep(1600, 1600, 0.08, 'p', .5, .1, .06); },
+    // v20.6 level up on the SFX bus (the levelup jingle rides the music bus, so it was silent with 背景音樂 off): G major arpeggio + shimmer
+    levelUp: () => { const n = [784, 988, 1175, 1568]; n.forEach((f, i) => { sweep(f, f, 0.09, 'p', .25, .13, i * 0.07); sweep(f / 2, f / 2, 0.09, 'triangle', .5, .12, i * 0.07); });
+      sweep(1568, 1568, 0.42, 'p', .5, .1, 0.3); sweep(1976, 1976, 0.36, 'p', .25, .06, 0.34); [0, 1, 2, 3, 4, 5].forEach(i => sweep(2400 + i * 180, 2600 + i * 180, 0.04, 'p', .5, .05, 0.34 + i * 0.05)); },
     poison: () => { [0, 1, 2].forEach(i => sweep(300 + i * 60, 200, 0.08, 'p', .25, .12, i * 0.07)); },
     save: () => { [0, 1, 2].forEach(i => sweep(660 * Math.pow(1.335, i), 660 * Math.pow(1.335, i), 0.09, 'p', .5, .1, i * 0.09)); },
     slash: () => { noise(0.12, 0.35, 'highpass', 2000, 6000); },

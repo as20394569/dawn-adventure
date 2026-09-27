@@ -375,19 +375,20 @@ function* equipScreen() {
 }
 /* ---------- Options ---------- */
 function* optionsScreen() {
-  let idx = 0; const labels = ['文字速度', '背景音樂', '音效', '自動存檔', '戰鬥美術', '怪物造型', '關閉'], N = labels.length, TOG = ['music', 'sfx', 'autosave', 'hdArt', 'chibi'];
+  let idx = 0; const labels = ['文字速度', '背景音樂', '音效', '自動存檔', '戰鬥美術', '怪物造型', '戰鬥說明', '關閉'], N = labels.length, HELP = N - 2, TOG = ['music', 'sfx', 'autosave', 'hdArt', 'chibi'];
   const val = i => i === 0 ? ['慢', '普通', '快'][Game.settings.text] : TOG[i - 1] === 'hdArt' ? (Game.settings.hdArt !== false ? '新版' : '舊版') : TOG[i - 1] === 'chibi' ? (Game.settings.chibi !== false ? 'Q版' : '寫實') : TOG[i - 1] === 'chibiHero' ? (Game.settings.chibiHero !== false ? 'Q版' : '原版') : i < N - 1 ? (Game.settings[TOG[i - 1]] ? '開' : '關') : '';
   const scr = { draw(x) {
     screenBG(x); headerBar(x, '設定');
     drawWin(x, 4, 30, 168, N * 18 + 12, 'menu');
-    labels.forEach((l, i) => { const Y = 36 + i * 18; if (i === idx) selBar(x, 6, Y - 1, 164, 17); Font.draw(x, l, 14, Y, UIC.text, UIC.textSh); if (i < N - 1) Font.drawR(x, '← ' + val(i) + ' →', 164, Y, UIC.accent, UIC.textSh); });
-    const Y2 = 30 + N * 18 + 16; drawWin(x, 4, Y2, 168, Math.min(70, 252 - Y2), 'menu'); Font.draw(x, '← → 切換設定　B 鍵返回', 14, Y2 + 6, UIC.muted, UIC.textSh, 11);
-    Font.wrap('自動存檔：換地圖、打完戰鬥、每走100步時自動記錄，關閉網頁時也會記錄。', 150, 10).slice(0, 3).forEach((l, i) => Font.draw(x, l, 14, Y2 + 24 + i * 13, UIC.muted, UIC.textSh, 10));
+    labels.forEach((l, i) => { const Y = 36 + i * 18; if (i === idx) selBar(x, 6, Y - 1, 164, 17); Font.draw(x, l, 14, Y, UIC.text, UIC.textSh); if (i === HELP) Font.drawR(x, 'A 查看 ▶', 164, Y, UIC.accent, UIC.textSh); else if (i < N - 1) Font.drawR(x, '← ' + val(i) + ' →', 164, Y, UIC.accent, UIC.textSh); });
+    const Y2 = 30 + N * 18 + 16; drawWin(x, 4, Y2, 168, Math.min(70, 252 - Y2), 'menu'); Font.draw(x, '← → 切換設定　B 鍵返回', 14, Y2 + 3, UIC.muted, UIC.textSh, 11);
+    Font.wrap('自動存檔：換地圖、打完戰鬥、每走100步時自動記錄，關閉網頁時也會記錄。', 150, 10).slice(0, 3).forEach((l, i) => Font.draw(x, l, 14, Y2 + 18 + i * 12, UIC.muted, UIC.textSh, 10));
   } };
   UI.push(scr);
   while (true) {
     if (Input.repeat('up')) { idx = (idx + N - 1) % N; Sound.sfx('cursor'); } if (Input.repeat('down')) { idx = (idx + 1) % N; Sound.sfx('cursor'); }
-    let d = Input.pressed('left') ? -1 : Input.pressed('right') ? 1 : 0;
+    if (idx === HELP && Input.pressed('a')) { Input.consume('a'); Sound.sfx('select'); UI.remove(scr); yield* battleHelpScreen(); UI.push(scr); yield; continue; }
+    let d = idx === HELP ? 0 : Input.pressed('left') ? -1 : Input.pressed('right') ? 1 : 0;
     if (!d && Input.pressed('a') && idx < N - 1) { Input.consume('a'); d = 1; if (idx === 0 && Game.settings.text === 2) d = -2; }
     if (d) { if (idx === 0) Game.settings.text = clamp(Game.settings.text + d, 0, 2); else Game.settings[TOG[idx - 1]] = TOG[idx - 1] === 'hdArt' ? Game.settings.hdArt === false : TOG[idx - 1] === 'chibi' ? Game.settings.chibi === false : TOG[idx - 1] === 'chibiHero' ? Game.settings.chibiHero === false : !Game.settings[TOG[idx - 1]]; Sound.applySettings(); Sound.sfx('cursor'); saveSettings(); }
     if (Input.pressed('b') || (Input.pressed('a') && idx === N - 1)) { Input.consume('a', 'b'); Sound.sfx('cancel'); break; }
@@ -526,13 +527,14 @@ function* craftScreen() {
   const scr = { draw(x) {
     screenBG(x); headerBar(x, '鐵匠工房'); Font.drawR(x, st.money + ' G', W - 6, 2, UIC.warm, UIC.textSh);
     const T = top(); drawWin(x, 4, 24, 168, VIS * 17 + 8, 'menu');
-    RECIPES.slice(T, T + VIS).forEach((R, i) => { const Y = 28 + i * 17, it = ITEMS[R.out] || GEAR[R.out]; if (T + i === idx) selBar(x, 6, Y - 1, 164, 16); Font.draw(x, it.n + (R.n > 1 ? '×' + R.n : ''), 14, Y, can(R) ? (GEAR[R.out] ? GQ[2][1] : UIC.text) : UIC.dis, UIC.textSh); Font.drawR(x, can(R) ? '可製作' : '素材不足', 164, Y, can(R) ? UIC.accent : UIC.dis, UIC.textSh, 11); });
+    RECIPES.slice(T, T + VIS).forEach((R, i) => { const Y = 28 + i * 17, it = ITEMS[R.out] || GEAR[R.out]; if (T + i === idx) selBar(x, 6, Y - 1, 164, 16); { const nm = it.n + (R.n > 1 ? '×' + R.n : ''); let z = 12; while (z > 8 && Font.width(nm, z) > 100) z--; Font.draw(x, nm, 14, Y, can(R) ? (GEAR[R.out] ? GQ[2][1] : UIC.text) : UIC.dis, UIC.textSh, z); } Font.drawR(x, can(R) ? '可製作' : '素材不足', 164, Y, can(R) ? UIC.accent : UIC.dis, UIC.textSh, 11); });
     if (T > 0) x.drawImage(UPARROW, 86, 25); if (T + VIS < RECIPES.length) x.drawImage(DOWNARROW, 86, 24 + VIS * 17 + 3);
     const R = RECIPES[idx], it = ITEMS[R.out] || GEAR[R.out], Y0 = 24 + VIS * 17 + 12; drawWin(x, 4, Y0, 168, H - Y0 - 4, 'menu'); let y = Y0 + 3;
-    Font.draw(x, GEAR[R.out] ? '【藍／紫】' + gearLines({ b: R.out, q: 1, r: 0.9, a: [] })[0] + '（工匠品）' : it.d, 10, y, GEAR[R.out] ? GQ[1][1] : UIC.text, UIC.textSh, 11); y += 14;
-    Font.draw(x, '需要的素材', 10, y, UIC.muted, UIC.textSh, 10); y += 12;
-    for (const [k, n] of Object.entries(R.mats)) { Font.draw(x, '・' + ITEMS[k].n, 12, y, UIC.text, UIC.textSh, 11); Font.drawR(x, have(k) + ' / ' + n, 164, y, have(k) >= n ? UIC.good : UIC.bad, UIC.textSh, 11); y += 13; }
-    if (R.gold) Font.drawR(x, '費用 ' + R.gold + ' G', 164, y, st.money >= R.gold ? UIC.warm : UIC.bad, UIC.textSh, 11);
+    // v20.6: the description wraps inside the window (long gear lines used to run off the right edge)
+    const DL = GEAR[R.out] ? ['【藍／紫・工匠品】'].concat(Font.wrap(gearLines({ b: R.out, q: 1, r: 0.9, a: [] })[0], 152, 10)).slice(0, 3) : Font.wrap(it.d, 152, 10).slice(0, 3);
+    DL.forEach((l, n) => Font.draw(x, l, 10, y + n * 12, GEAR[R.out] ? (n ? UIC.text : GQ[1][1]) : UIC.text, UIC.textSh, 10)); y += DL.length * 12 + 3;
+    Font.draw(x, '需要的素材', 10, y, UIC.muted, UIC.textSh, 10); if (R.gold) Font.drawR(x, '費用 ' + R.gold + ' G', 164, y, st.money >= R.gold ? UIC.warm : UIC.bad, UIC.textSh, 10); y += 13;
+    for (const [k, n] of Object.entries(R.mats)) { let z = 11; while (z > 8 && Font.width('・' + ITEMS[k].n, z) > 110) z--; Font.draw(x, '・' + ITEMS[k].n, 12, y, UIC.text, UIC.textSh, z); Font.drawR(x, have(k) + ' / ' + n, 164, y, have(k) >= n ? UIC.good : UIC.bad, UIC.textSh, 11); y += 13; }
   } };
   UI.push(scr);
   while (true) {
