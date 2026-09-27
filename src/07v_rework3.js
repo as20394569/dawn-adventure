@@ -150,3 +150,52 @@ MOVES.arcaneEdge.hitFx = 'arcaneEdgeHit';
   };
 }
 SKILL_STYLE.arcaneEdge = ['rune', 'pop', 'arcane', 'slash'];
+
+/* ---------- v22d: slash skills looked too alike (thin white lines + a white flash). Each now has its own shape, colour and rhythm ----------
+   燕返 teal V (down-sweep, then the return) · 雙刃連擊 twin green dagger stabs · 十字斬 big lingering steel X · 迴旋斬 a spinning ring around the foe
+   劍刃風暴 a rising tornado of blades · 劍舞 purple afterimage cuts from five directions · 亂舞 a red storm of short stabs
+   疾風刺 a long green thrust with wind rings · 斬鐵 a vertical cleave that splits the foe with sparks and metal shards
+   盾擊 a blue shield imprint · 重盾衝撞 a ground shockwave and dust. Multi-hit skills play one beat per hit (hitFx). */
+HERO_PK.arc = (x, p, a) => { // a sweeping blade arc
+  const k = Math.min(1, p.t / (p.grow || 5)), d = p.a1 >= p.a0 ? 1 : -1, head = p.a0 + (p.a1 - p.a0) * k, tl = p.tail || 1.8;
+  const from = d > 0 ? Math.max(p.a0, head - tl) : head, to = d > 0 ? head : Math.min(p.a0, head + tl); if (to - from < 0.02) return;
+  x.globalAlpha = Math.min(1, a * 1.6); x.lineCap = 'round';
+  for (const [c, w] of [[p.c, p.w], [p.c2 || '#ffffff', Math.max(1, p.w / 3)]]) { x.strokeStyle = c; x.lineWidth = w; x.beginPath(); x.ellipse(p.x, p.y, p.r, p.r * (p.sq || 0.6), p.rot || 0, from, to); x.stroke(); }
+};
+const arcCut = (b, T, o) => b.spawn(Object.assign({ k: 'arc', x: T.x, y: T.y, r: 26, a0: 0, a1: 2, w: 4, c: '#ffffff', grow: 5, life: 14 }, o));
+const slashBeat = (b, T, hits, c) => { b.spawn({ k: 'glow', x: T.x, y: T.y, r: 14, c, life: 8 }); for (let i = 0; i < hits; i++) b.spawn({ k: 'dot', x: T.x, y: T.y, vx: rnd(-20, 20) / 10, vy: rnd(-20, 10) / 10, c, s: 2, life: 10 }); };
+Object.assign(FX, {
+  *swallowCut(U, T, u) { yield* this.lunge(u, 10, 3); Sound.sfx('slash'); arcCut(this, { x: T.x, y: T.y - 4 }, { r: 28, a0: -2.8, a1: -0.3, rot: 0.5, c: '#3ac8b0', c2: '#e8fff8' });
+    for (let i = 0; i < 5; i++) this.spawn({ k: 'streak', x: T.x - 24 + i * 9, y: T.y - 12 + i * 5, len: 7, c: '#8af0e0', vx: 1.6, life: 10 }); yield* wait(8); },
+  *swallowHit(U, T, u, i) { Sound.sfx('slash'); arcCut(this, { x: T.x, y: T.y + 4 }, { r: 28, a0: 0.3, a1: 2.8, rot: -0.5, c: '#3ac8b0', c2: '#e8fff8' }); slashBeat(this, T, 6, '#8af0e0'); yield* wait(6); },
+  *twinDagger(U, T, u) { yield* this.lunge(u, 12, 2); Sound.sfx('slash'); for (const dy of [-6, 6]) { this.spawn({ k: 'line', x1: T.x - 22, y1: T.y + dy - 4, x2: T.x + 10, y2: T.y + dy + 2, c: '#5cd060', w: 5, grow: 3, life: 12 }); this.spawn({ k: 'line', x1: T.x - 22, y1: T.y + dy - 4, x2: T.x + 10, y2: T.y + dy + 2, c: '#ffffff', w: 2, grow: 3, life: 12 }); this.spawn({ k: 'star', x: T.x + 12, y: T.y + dy + 2, c: '#d8ffb0', life: 12 }); } this.spawn({ k: 'glow', x: T.x, y: T.y, r: 16, c: '#5cd060', life: 10 }); yield* wait(6); },
+  *twinDaggerHit(U, T, u, i) { Sound.sfx('slash'); for (const dy of [-8, 8]) this.spawn({ k: 'line', x1: T.x + 22, y1: T.y + dy - 4, x2: T.x - 10, y2: T.y + dy + 2, c: '#9ae07a', w: 5, grow: 3, life: 12 }); for (const dy of [-8, 8]) this.spawn({ k: 'star', x: T.x - 12, y: T.y + dy + 2, c: '#ffffff', life: 12 }); slashBeat(this, T, 5, '#d8ffb0'); yield* wait(5); },
+  *bigCross(U, T, u) { yield* this.lunge(u, 12, 3); Sound.sfx('slash');
+    for (const d of [1, -1]) { this.spawn({ k: 'line', x1: T.x - 30 * d, y1: T.y - 30, x2: T.x + 30 * d, y2: T.y + 28, c: '#9ab8e8', w: 5, grow: 4, life: 22 }); this.spawn({ k: 'line', x1: T.x - 30 * d, y1: T.y - 30, x2: T.x + 30 * d, y2: T.y + 28, c: '#ffffff', w: 2, grow: 4, life: 22 }); yield* wait(5); Sound.sfx('slash'); }
+    this.spawn({ k: 'xcut', x: T.x, y: T.y, r: 34, c: '#86b4ff', life: 22 }); for (let i = 0; i < 4; i++) this.spawn({ k: 'star', x: T.x + (i % 2 ? 26 : -26), y: T.y + (i < 2 ? -24 : 24), c: '#e8f4ff', life: 14 }); yield* wait(8); },
+  *whirlRing(U, T, u) { yield* this.lunge(u, 10, 3); Sound.sfx('wind'); arcCut(this, T, { r: 30, a0: 0, a1: Math.PI * 2, tail: 3.2, grow: 8, c: '#72e3b0', c2: '#f0fff8', w: 4, life: 16 });
+    for (let i = 0; i < 10; i++) { const an = i * Math.PI / 5; this.spawn({ k: 'dot', x: T.x + Math.cos(an) * 30, y: T.y + Math.sin(an) * 18, vx: -Math.sin(an) * 1.5, vy: Math.cos(an), c: '#bff5dc', s: 2, life: 12 }); } yield* wait(8); },
+  *whirlHit(U, T, u, i) { Sound.sfx('wind'); arcCut(this, T, { r: 30 + i * 4, a0: i * 1.2, a1: i * 1.2 + Math.PI * 2, tail: 3.2, grow: 7, c: '#72e3b0', c2: '#f0fff8', w: 4, life: 14 }); slashBeat(this, T, 6, '#bff5dc'); yield* wait(6); },
+  *bladeTornado(U, T, u) { Sound.sfx('wind'); for (let i = 0; i < 22; i++) { const an = i * 0.9, h = i * 3; this.spawn({ k: 'shard', x: T.x + Math.cos(an) * (10 + i), y: T.y + 26 - h, vx: -Math.sin(an) * 1.8, vy: -0.8, s: 5, spin: 0.5, c: i % 3 ? '#c8d8f0' : '#ffffff', life: 24 }); }
+    for (let k = 0; k < 3; k++) { arcCut(this, { x: T.x, y: T.y + 20 - k * 18 }, { r: 20 + k * 6, a0: 0, a1: Math.PI * 2, tail: 2.6, grow: 10, c: '#9ab8e8', w: 2, life: 22 }); yield* wait(4); Sound.sfx('slash'); } yield* wait(10); },
+  *shadowDance(U, T, u) { Sound.sfx('wind'); this.spawn({ k: 'dark', a: 0.35, life: 30 }); yield* this.lunge(u, 14, 2);
+    this.spawn({ k: 'slit', x: T.x - 24, y: T.y, ang: -0.9, w: 3, h: 22, c: '#a070ff', life: 12 }); yield* wait(6); },
+  *shadowDanceHit(U, T, u, i) { const an = [-0.9, 0.9, 0, 1.6, -1.6][i % 5], ox = [24, -20, 0, 18, -18][i % 5]; Sound.sfx('slash'); this.spawn({ k: 'slit', x: T.x + ox, y: T.y, ang: an, w: 3, h: 22, c: i % 2 ? '#d8b0ff' : '#8a3aff', life: 12 }); slashBeat(this, T, 4, '#c8a0ff'); yield* wait(5); },
+  *redFlurry(U, T, u) { yield* this.lunge(u, 8, 2); Sound.sfx('slash'); for (let i = 0; i < 4; i++) { const an = rnd(0, 628) / 100; this.spawn({ k: 'line', x1: T.x + Math.cos(an) * 16, y1: T.y + Math.sin(an) * 14, x2: T.x - Math.cos(an) * 6, y2: T.y - Math.sin(an) * 5, c: '#ff6a5a', w: 2, grow: 2, life: 7 }); } yield* wait(4); },
+  *redFlurryHit(U, T, u, i) { Sound.sfx('hit'); for (let k = 0; k < 3; k++) { const an = rnd(0, 628) / 100; this.spawn({ k: 'line', x1: T.x + Math.cos(an) * 16, y1: T.y + Math.sin(an) * 14, x2: T.x - Math.cos(an) * 6, y2: T.y - Math.sin(an) * 5, c: k % 2 ? '#ffffff' : '#ff6a5a', w: 2, grow: 2, life: 7 }); } this.spawn({ k: 'glow', x: T.x, y: T.y, r: 10, c: '#ff8a70', life: 6 }); yield* wait(3); },
+  *windThrust(U, T, u) { Sound.sfx('wind'); yield* this.lunge(u, 20, 2); this.spawn({ k: 'line', x1: U.x, y1: U.y - 8, x2: T.x + 30, y2: T.y, c: '#5cd0a0', w: 4, grow: 3, life: 12 }); this.spawn({ k: 'line', x1: U.x, y1: U.y - 8, x2: T.x + 30, y2: T.y, c: '#ffffff', w: 1, grow: 3, life: 12 });
+    for (let i = 0; i < 3; i++) { this.spawn({ k: 'ring', x: T.x - i * 14, y: T.y + i * 10, r0: 4, r1: 16 - i * 2, c: '#9ae8c0', w: 2, life: 12 + i * 2 }); } yield* wait(10); },
+  *cleave(U, T, u) { this.spawn({ k: 'flash', c: '#05060c', a: 0.35, life: 16 }); yield* wait(8); yield* this.lunge(u, 14, 2); Sound.sfx('crit');
+    this.spawn({ k: 'line', x1: T.x, y1: T.y - 50, x2: T.x, y2: T.y + 34, c: '#ffb040', w: 5, grow: 3, life: 14 }); this.spawn({ k: 'line', x1: T.x, y1: T.y - 50, x2: T.x, y2: T.y + 34, c: '#ffffff', w: 2, grow: 3, life: 16 }); yield* wait(4);
+    for (let i = 0; i < 10; i++) { const s = i % 2 ? 1 : -1; this.spawn({ k: 'shard', x: T.x + s * 3, y: T.y - 30 + i * 6, vx: s * (1 + Math.random() * 1.6), vy: rnd(-10, 6) / 10, s: 5, spin: 0.4, c: i % 3 ? '#c8c8d8' : '#ffd070', life: 20 }); }
+    this.sparks(T.x, T.y, 16, ['#ffd070', '#ffffff', '#ff8a30'], 2.8, 16, 0.1); this.shake = 10; yield* wait(10); },
+  *shieldImprint(U, T, u) { yield* this.lunge(u, 16, 3); Sound.sfx('hit'); this.spawn({ k: 'hex', x: T.x, y: T.y, r0: 6, r1: 24, c: '#86b4ff', life: 16 }); this.spawn({ k: 'hex', x: T.x, y: T.y, r0: 4, r1: 16, c: '#e8f4ff', life: 12 }); this.spawn({ k: 'glow', x: T.x, y: T.y, r: 18, c: '#86b4ff', life: 10 }); yield* wait(8); },
+  *groundBash(U, T, u) { this.spawn({ k: 'hex', x: U.x, y: U.y, r0: 20, r1: 14, c: '#c8d8ff', life: 12 }); yield* wait(6); yield* this.lunge(u, 22, 2); Sound.sfx('rock'); this.shake = 12;
+    for (let i = 0; i < 3; i++) this.spawn({ k: 'shock', x: T.x, y: T.y + 26, r0: 6 + i * 6, r1: 50 + i * 12, c: i % 2 ? '#e8d8b0' : '#b89060', life: 14 + i * 4 });
+    for (let i = 0; i < 12; i++) this.spawn({ k: 'dot', x: T.x + rnd(-30, 30), y: T.y + 24, vx: rnd(-12, 12) / 10, vy: -rnd(4, 14) / 10, g: 0.06, c: i % 2 ? '#a88860' : '#d8c098', s: 3, life: 20 }); yield* wait(10); },
+});
+const SLASH_REDO = { doubleSlash: ['swallowCut', 'swallowHit', ['draw', 'none', 'steel', 'slash']], twinStrike: ['twinDagger', 'twinDaggerHit', ['dash', 'none', 'leaf', 'slash']], crossSlash: ['bigCross', null, ['draw', 'none', 'steel', 'crit']],
+  whirlSlash: ['whirlRing', 'whirlHit', ['dash', 'none', 'wind', 'wind']], bladeStorm: ['bladeTornado', null, ['dash', 'none', 'wind', 'slash']], bladeDance: ['shadowDance', 'shadowDanceHit', ['dash', 'none', 'void', 'slash']],
+  flurry: ['redFlurry', 'redFlurryHit', ['dash', 'none', 'blood', 'hit']], gale: ['windThrust', null, ['dash', 'none', 'wind', 'wind']], zantetsu: ['cleave', null, ['still', 'none', 'gold', 'crit']],
+  guardStrike: ['shieldImprint', null, ['hex', 'none', 'guard', 'hit']], shieldBash: ['groundBash', null, ['hex', 'none', 'rock', 'rock']] };
+for (const k in SLASH_REDO) { const [fx, hit, style] = SLASH_REDO[k]; if (!MOVES[k]) continue; MOVES[k].fx = fx; if (hit) MOVES[k].hitFx = hit; SKILL_STYLE[k] = style; }

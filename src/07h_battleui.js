@@ -68,16 +68,22 @@ Battle.prototype.chooseMove = function* () { // v20.7: a small pop-up (list + de
   const VIS = Math.min(list.length, 4), X = 8, w = W - 16, Y = 58, rowH = 14, h = 18 + VIS * rowH + 4, DY = Y + h + 2, DH = BH - 18 - DY; // v20.7b: taller detail box (4 lines) so long descriptions stay inside the frame
   const info = (x, m) => {
     Font.drawR(x, 'MP ' + st.mp + '/' + (this.H.maxmp || st.mp), X + w - 8, Y + 2, '#8ab8ff', UIC.textSh, 9);
+    // v22d: three tidy rows — ① type · kind · Lv | MP cost  ② 物攻×% + scaling attribute | 預估  ③ description (auto-shrinks)
     const id = list[m.i], mv = skillMove(id), c = TYPE_COL[mv.t]; drawWin(x, X, DY, w, DH, 'menu');
-    const t1 = mv.t === '一般' ? '無屬性' : mv.t + '屬性', t2 = '・' + (mv.cat === '變' ? '輔助' : mv.cat === '物' ? '物理' : '魔法') + (mv.pow ? '・' + (typeof powTxt === 'function' ? powTxt(mv) : '威力' + mv.pow) : '') + '・Lv' + skillLv(id), lack = skillMP(id) > st.mp, est = !lack && mv.pow && this.estimateDamage ? this.estimateDamage(id) : 0;
-    let tz = 9; while (tz > 7 && Font.width(t1 + t2, tz) + (lack ? Font.width('MP不足', tz) + 6 : est ? Font.width('預估≈' + est, tz) + 6 : 0) > w - 23) tz--;
-    x.fillStyle = c; x.fillRect(X + 8, DY + 7, 4, 4); const ex = Font.draw(x, t1, X + 15, DY + 1, mv.t === '一般' ? '#c9cfe4' : c, UIC.textSh, tz); Font.draw(x, t2, ex + 1, DY + 1, '#c9cfe4', UIC.textSh, tz);
-    if (lack) Font.drawR(x, 'MP不足', X + w - 8, DY + 1, UIC.bad, UIC.textSh, tz); else if (est) Font.drawR(x, '預估≈' + est, X + w - 8, DY + 1, UIC.warm, UIC.textSh, tz);
+    const fit = (t, sz, maxW) => { let z = sz; while (z > 7 && Font.width(t, z) > maxW) z--; return z; };
+    const lack = skillMP(id) > st.mp, est = !lack && mv.pow && this.estimateDamage ? this.estimateDamage(id) : 0, L = X + 8, R = X + w - 8;
+    const t1 = (mv.t === '一般' ? '無屬性' : mv.t + '屬性') + '・' + (mv.cat === '變' ? '輔助' : mv.cat === '物' ? '物理' : '魔法') + '・Lv' + skillLv(id) + (mv.scale && mv.pow ? '・' + ATTR_NAMES[mv.scale[0]] + '加成' : ''), mpT = lack ? 'MP不足' : 'MP' + skillMP(id);
+    x.fillStyle = c; x.fillRect(L, DY + 6, 4, 4); Font.draw(x, t1, L + 7, DY + 1, '#c9cfe4', UIC.textSh, fit(t1, 9, w - 30 - Font.width(mpT, 9))); Font.drawR(x, mpT, R, DY + 1, lack ? UIC.bad : '#8ab8ff', UIC.textSh, 9);
+    let y = DY + 14;
+    if (mv.pow) { const pw = typeof powTxt === 'function' ? powTxt(mv) : '威力' + mv.pow, sc = '', eT = est ? '預估≈' + est : '';
+      x.fillStyle = 'rgba(200,160,80,0.35)'; x.fillRect(L, DY + 13, w - 16, 1);
+      const pz = fit(pw + (sc ? '　' + sc : ''), 10, w - 22 - (eT ? Font.width(eT, 9) : 0)); const pe = Font.draw(x, pw, L, y, UIC.accent, UIC.textSh, pz); if (sc) Font.draw(x, sc, pe + 5, y + 1, UIC.muted, UIC.textSh, Math.max(7, pz - 2));
+      if (eT) Font.drawR(x, eT, R, y + 1, UIC.warm, UIC.textSh, 9); y += 13; }
     Font.drawC(x, 'A：使用　B：返回', W / 2, BB_Y + 11, UIC.muted, UIC.textSh, 9);
-    const room = DH - 17; const dtx = (mv.d || '') + (mv.scale ? '【' + ATTR_NAMES[mv.scale[0]] + '越高，傷害越高】' : ''); let z = 9, lh = 11, Ls = Font.wrap(dtx, w - 16, z); // shrink the text until it fits the box
+    const room = DY + DH - 5 - y, dtx = mv.d || ''; let z = 9, lh = 11, Ls = Font.wrap(dtx, w - 16, z);
     while (Ls.length * lh > room && z > 7) { z--; lh = z + 2; Ls = Font.wrap(dtx, w - 16, z); }
-    const maxL = Math.floor(room / lh); if (Ls.length > maxL) { Ls = Ls.slice(0, maxL); Ls[maxL - 1] = Ls[maxL - 1].slice(0, -1) + '…'; }
-    Ls.forEach((l, n) => Font.draw(x, l, X + 8, DY + 13 + n * lh, UIC.text, UIC.textSh, z));
+    const maxL = Math.max(1, Math.floor(room / lh)); if (Ls.length > maxL) { Ls = Ls.slice(0, maxL); Ls[maxL - 1] = Ls[maxL - 1].slice(0, -1) + '…'; }
+    Ls.forEach((l, n) => Font.draw(x, l, L, y + n * lh, UIC.text, UIC.textSh, z));
   };
   while (true) {
     const r = yield* choose(list.map(id => ({ t: MOVES[id].n, r: 'MP' + skillMP(id), col: skillMP(id) > st.mp ? UIC.dis : undefined })), { x: X, y: Y, w, h, rowH, fs: 10, ox: 12, oy: 17, visible: VIS, title: '選擇技能', index: cur, onMove: i => cur = i, drawExtra: info });
