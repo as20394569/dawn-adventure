@@ -4882,7 +4882,7 @@ function* dexScreen() {
       if (seen) Font.drawR(x, '擊敗 ' + (e.won || 0), 164, Y, e.won ? UIC.text : UIC.muted, UIC.textSh); });
     if (top > 0) x.drawImage(UPARROW, 86, 26); if (top + VIS < list.length) x.drawImage(DOWNARROW, 86, 24 + VIS * 18 + 3);
     drawWin(x, 4, 164, 168, 88, 'menu'); const k = list[idx], e = dex[k];
-    if (e && e.seen) { const im = battleSprite(k); x.drawImage(im, 0, 0, im.width, im.height, 8, 172, 72, 72); const sp = SPECIES[k];
+    if (e && e.seen) { const cp = typeof dexPortrait === 'function' && dexPortrait(k); if (cp) { const q = Math.min(1, 72 / cp.width, 72 / cp.height), pw = Math.round(cp.width * q), ph = Math.round(cp.height * q); x.imageSmoothingEnabled = false; x.drawImage(cp, Math.round(44 - pw / 2), 244 - ph, pw, ph); } else { const im = battleSprite(k); x.drawImage(im, 0, 0, im.width, im.height, 8, 172, 72, 72); } const sp = SPECIES[k];
       famBadge(x, sp.fam, 86, 170, 38); Font.draw(x, sp.rare ? '稀有' : sp.elite ? '精英' : sp.boss ? '頭目' : '野生', 128, 168, sp.rare ? '#ffd84a' : sp.boss ? UIC.bad : sp.elite ? UIC.warm : UIC.muted, UIC.textSh);
       if (view) { const P = MON_PANEL[k]; Font.draw(x, 'Lv' + P.lv + ' 能力', 86, 184, UIC.muted, UIC.textSh, 10); [['HP', P.hp], ['物攻', P.atk], ['物防', P.def], ['魔攻', P.spa], ['魔防', P.spd], ['速度', P.spe]].forEach(([a, b], i) => { Font.draw(x, a, 86, 197 + i * 9, UIC.muted, UIC.textSh, 9); Font.drawR(x, String(b), 164, 197 + i * 9, UIC.text, UIC.textSh, 9); }); }
       else { Font.draw(x, famLine(sp.fam), 86, 184, UIC.warm, UIC.textSh, 10); Font.wrap(sp.dex || '', 80, 11).slice(0, 3).forEach((l, i) => Font.draw(x, l, 86, 198 + i * 13, UIC.text, UIC.textSh, 11)); } Font.drawR(x, 'A：' + (view ? '介紹' : '能力'), 166, 238, UIC.accent, UIC.textSh, 9); }
@@ -9416,5 +9416,34 @@ classTalk = function* () { // same rules as before (08_main), the text menu is r
   if (!C[k].from && C[k].tier === 1) { st.skills = st.skills || {}; for (const id of CLASS_FREE[k]) grantSkill(id, st); } else { const first = (SKILL_TREES[k] || [])[0]; if (first) { grantSkill(first[0], st); yield* say('學會了職業技能「' + MOVES[first[0]].n + '」！更多' + C[k].n + '的技能可以在「技能」選單學習。'); } }
   return true;
 };
+
+/* ===================== v20.7 monster portraits follow the battle look (playtest: the elite card still showed the old art) =====================
+   With 怪物造型 = Q版 (default) the elite / boss encounter card and the bestiary picture use the same chibi as the battle
+   (idle frame 1, trimmed to its pixels, drawn on the pixel grid); with 寫實 the old realistic strip is kept. */
+const CHIBI_PORT = {};
+function chibiPortrait(sp) {
+  if (typeof chibiOn !== 'function' || !chibiOn() || !chibiBase(sp)) return null; if (CHIBI_PORT[sp]) return CHIBI_PORT[sp];
+  const im = chibiImage(sp), M = BATTLE_PXC_META[chibiBase(sp)]; if (!im || (im.ok === false) || !M) return null;
+  const f = M.frames.idle[0], t = mkCanvas(M.w, M.h), tx = t.getContext('2d'); tx.drawImage(im, f * M.w, 0, M.w, M.h, 0, 0, M.w, M.h);
+  const d = tx.getImageData(0, 0, M.w, M.h).data; let x0 = M.w, x1 = -1, y0 = M.h, y1 = -1;
+  for (let y = 0; y < M.h; y++) for (let x = 0; x < M.w; x++) if (d[(y * M.w + x) * 4 + 3]) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+  if (x1 < 0) return null; const c = mkCanvas(x1 - x0 + 1, y1 - y0 + 1); c.getContext('2d').drawImage(t, x0, y0, c.width, c.height, 0, 0, c.width, c.height); c.chibi = true;
+  return CHIBI_PORT[sp] = c;
+}
+{ const _bp = battlePortrait; battlePortrait = function (sp) { return chibiPortrait(sp) || _bp(sp); }; }
+encounterCard = function (sp, lv, key, kind, extra) { // same card, the picture area grows with the chibi (max 80px, so the 迎戰/撤退 menu stays clear)
+  const pic = battlePortrait(sp), stars = dangerStars(lv), hint = lootHint(key, sp);
+  const s = pic ? Math.min(1, 80 / pic.height, 120 / pic.width) : 1, PH = pic ? clamp(Math.round(pic.height * s), 56, 80) : 70;
+  return { draw(x) {
+    const X = 8, Y = 18, w = W - 16, h = PH + 55; drawPanel(x, X, Y, w, h, kind === 'boss' ? '#ff6b7a' : '#ffc46b');
+    Font.drawC(x, (kind === 'boss' ? '頭目' : '菁英魔物') + (extra ? '・' + extra : ''), W / 2, Y + 3, kind === 'boss' ? '#ff9aa4' : '#ffd890', UIC.textSh, 9);
+    if (pic) { const pw = Math.round(pic.width * s), ph = Math.round(pic.height * s), fy = Y + 15 + PH; x.fillStyle = 'rgba(0,0,0,0.3)'; x.beginPath(); x.ellipse(W / 2, fy - 1, Math.max(10, pw * 0.36), 3, 0, 0, 7); x.fill();
+      x.imageSmoothingEnabled = false; x.drawImage(pic, Math.round(W / 2 - pw / 2), fy - ph, pw, ph); }
+    Font.drawC(x, SPECIES[sp].n + '　Lv' + lv, W / 2, Y + PH + 16, UIC.text, UIC.textSh, 11);
+    let st = ''; for (let i = 0; i < 5; i++) st += i < stars ? '★' : '☆'; Font.drawC(x, '危險度 ' + st, W / 2, Y + PH + 29, stars >= 4 ? '#ff7a7a' : stars === 3 ? '#ffd070' : '#9ad890', UIC.textSh, 9);
+    if (hint) { let z = 8; while (z > 7 && Font.width(hint, z) > w - 8) z--; const hs = Font.width(hint, z) > w - 8 ? hint.slice(0, 23) + '…' : hint; Font.drawC(x, hs, W / 2, Y + PH + 40, '#c8b0ff', UIC.textSh, z); }
+  } };
+};
+function dexPortrait(sp) { return chibiPortrait(sp); }
 
 </script>
