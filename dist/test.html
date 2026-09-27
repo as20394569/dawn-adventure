@@ -5976,7 +5976,7 @@ function hdAnim(b, who, state, dur, hold) { const A = b.hd && b.hd[who]; if (!A)
 function hdInit(b) {
   b.hd = { F: { state: 'idle', t: 0, dur: 1, phase: 0 }, H: { state: 'idle', t: 0, dur: 1, phase: 29 }, hpF: b.F.hp, hpH: b.H.hp, ok: false };
   try { b.hd.specF = hdFoeSpec(b.F.sp); b.hd.look = heroLookOf(Game.st); b.hd.oldF = b.imgF; b.hd.oldShadow = b.shadowF; b.hd.oldH = [b.imgH, b.imgH2];
-    if (pxReady(b.F.sp)) b.hd.pxF = pxSpec(b.F.sp); if (pxReady('hero')) b.hd.pxH = pxSpec('hero');
+    if (pxReady(b.F.sp)) b.hd.pxF = pxSpec(b.F.sp); b.hd.pxH = HD_HERO_DOLL ? dollSpec() : null; // hero keeps the paper-doll look (shows equipment)
     b.imgF = hdRenderFoe(b.hd.F, b.hd.specF, b.t); b.imgH = b.imgH2 = hdRenderHero(b.hd.H, b.hd.look, b.t); b.shadowF = buildShadow(Math.round((b.hd.pxF ? b.hd.pxF.bb : b.hd.specF.bb).w * 0.38), 4); b.hd.ok = true; }
   catch (e) { console.error('hdArt fallback', e); b.hd.ok = false; }
 }
@@ -6026,7 +6026,7 @@ function hdStep(b, A, who) {
     const redraw = A => !(A.cv || A.pcv) || A.state !== 'idle' || (this.t & 1) === 0 || A.lastT === undefined || A.cvD !== hdD();
     let im = D.F.pcv && D.pxF ? D.F.pcv : D.F.cv, hi = D.H.pcv && D.pxH ? D.H.pcv : D.H.cv;
     if (redraw(D.F)) { im = D.pxF ? pxRender(D.F, D.pxF, this.t) : hdRenderFoe(D.F, D.specF, this.t); hd2dLightActor(im, LK); D.F.lastT = this.t; }
-    if (redraw(D.H)) { hi = D.pxH ? pxRender(D.H, D.pxH, this.t) : hdRenderHero(D.H, D.look, this.t); hd2dLightActor(hi, LK); D.H.lastT = this.t; }
+    if (redraw(D.H)) { hi = D.pxH ? dollRender(this, D.H, D.pxH, this.t) : hdRenderHero(D.H, D.look, this.t); hd2dLightActor(hi, LK); D.H.lastT = this.t; }
     this.imgF = im; this.imgH = this.imgH2 = hi;
     const sx = this.shake > 0 ? rnd(-3, 3) : 0, sy = this.shake > 0 ? rnd(-2, 2) : 0;
     x.save(); x.translate(sx, sy); x.imageSmoothingEnabled = true; x.drawImage(hd2dStageFor(this), 0, 0, W, BH); x.imageSmoothingEnabled = false; hd2dMotes(this, x, false);
@@ -6043,7 +6043,7 @@ function hdStep(b, A, who) {
     if (!(this.blinkH > 0 && Math.floor(this.blinkH / 3) % 2)) {
       const hx0 = this.heroX + HD_HERO_OX; x.save(); hd2dSoftShadow(x, hx0 + 28 + this.offH.x, HERO_Y + 72, 26, 6, 0.4); x.globalAlpha = Math.max(0, 1 - this.sinkH / 70);
       const hx = (hi.px ? hx0 + 28 - hi.bb.cx : hx0) + this.offH.x, hy = (hi.px ? HERO_Y + 76 - hi.bb.bot : HERO_Y) + this.offH.y + this.sinkH * 0.25, hw = hi.width * hi.ds, hh = hi.height * hi.ds;
-      blit(hi, hx, hy); if (this.tintH) { x.globalAlpha = this.tintH.a; blit(D.pxH ? pxRender(D.H, D.pxH, this.t, this.tintH.c) : hdRenderHero(D.H, D.look, this.t, this.tintH.c), hx, hy, hw, hh); }
+      blit(hi, hx, hy); if (this.tintH) { x.globalAlpha = this.tintH.a; blit(D.pxH ? dollRender(this, D.H, D.pxH, this.t, this.tintH.c) : hdRenderHero(D.H, D.look, this.t, this.tintH.c), hx, hy, hw, hh); }
       x.restore();
     }
     for (const p of this.fx) drawParticle(x, p);
@@ -6054,6 +6054,23 @@ function hdStep(b, A, who) {
     if (this.cover > 0) { x.fillStyle = '#000'; const h = Math.round(this.cover * (H / 2 + 1)); x.fillRect(0, 0, W, h); x.fillRect(0, H - h, W, h); }
     hdQualityTick(performance.now() - tStart);
   };
+}
+
+/* ---------- hero: the paper-doll sprite (same look as on the field, reflects equipment), drawn on the pixel grid ---------- */
+const HD_HERO_DOLL = true;
+const DOLL_SCALE = 2; // field doll pixels shown at 2x (the old battle view used 3x)
+const dollNative = {};
+function dollImg(frame, L) { const key = frame + lookKey(L); if (dollNative[key]) return dollNative[key]; const big = heroBattleImgLook(frame, L), w = big.width / 3, h = big.height / 3, c = mkCanvas(w * DOLL_SCALE, h * DOLL_SCALE), x = c.getContext('2d'), n = mkCanvas(w, h); n.getContext('2d').drawImage(big, 0, 0, w, h); x.imageSmoothingEnabled = false; x.drawImage(n, 0, 0, w * DOLL_SCALE, h * DOLL_SCALE); return dollNative[key] = c; }
+function dollSpec() { const im = dollImg(0, heroLookOf(Game.st)); return { doll: true, w: im.width, h: im.height, cw: im.width, ch: im.height + 2, bb: { cx: Math.round(im.width * 0.43), top: 0, bot: im.height, w: im.width, h: im.height } }; }
+function dollRender(b, A, S, T, tint) {
+  if (!A.pcv || A.pcv.width !== S.cw) { A.pcv = mkCanvas(S.cw, S.ch); A.pcvT = mkCanvas(S.cw, S.ch); }
+  const cv = tint ? A.pcvT : A.pcv, x = cv.getContext('2d'), [st] = hdPhase(A, T), L = b.hd.look;
+  const moving = st === 'attack' || b.offH.x || b.offH.y, img = dollImg(moving ? 1 : 0, L);
+  const bob = st === 'idle' && Math.floor((T + A.phase) / 18) % 2 ? 1 : 0, back = st === 'hurt' ? 2 : 0;
+  x.setTransform(1, 0, 0, 1, 0, 0); x.globalCompositeOperation = 'source-over'; x.clearRect(0, 0, cv.width, cv.height); x.imageSmoothingEnabled = false;
+  x.drawImage(img, 0, bob + back);
+  if (tint) { x.globalCompositeOperation = 'source-in'; x.fillStyle = tint; x.fillRect(0, 0, cv.width, cv.height); x.globalCompositeOperation = 'source-over'; }
+  cv.ds = 1; cv.bb = S.bb; cv.px = true; return cv;
 }
 
 /* ===================== VECTOR RENDERER for battle sprites (smooth, anti-aliased, drawn live every frame) =====================
