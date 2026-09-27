@@ -32,7 +32,7 @@ const chibiReady = k => !!chibiBase(k);
 /* v20.6 idle: the Codex idle2 frames only shifted the upper body 1px over fixed feet, which read as a twitching head (playtest).
    Idle now uses frame 1 only: grounded monsters breathe (the whole body squashes 0–2px toward the feet, nearest-neighbour so the
    drop is spread over the body); floaters (wings / flames / ghosts / orbs) bob up and down as one piece above their shadow. */
-const CHIBI_FLOAT = new Set(['duskMoth', 'moonSprite', 'voidEye']);
+const CHIBI_FLOAT = new Set(['duskMoth', 'moonSprite', 'voidEye', 'mineBat', 'caveBat', 'crystalBat']);
 const chibiFloats = k => CHIBI_FLOAT.has(k) || ['buzz', 'flame', 'lamp', 'ghost'].includes(hdRig(k).kind);
 { const _pr = pxRender; pxRender = function (A, S, T, tint) {
     if (!S.chibi || !S.meta || A.state !== 'idle') return _pr(A, S, T, tint);
