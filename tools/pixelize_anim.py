@@ -21,6 +21,14 @@ def foot(mask):
     ys, xs = np.nonzero(mask); bot = ys.max(); top = ys.min(); band = ys >= bot - max(2, int((bot - top) * 0.12))
     return bot, xs[band].mean()
 
+def despeck(m):
+    # drop tiny detached specks (AI debris / dust) — keep blobs >= 3% of the largest one
+    import cv2
+    n, lab, st, _ = cv2.connectedComponentsWithStats(m.astype(np.uint8), 8)
+    if n <= 2: return m
+    big = st[1:, cv2.CC_STAT_AREA].max(); keep = np.zeros(n, bool); keep[1:] = st[1:, cv2.CC_STAT_AREA] >= max(12, big * 0.03)
+    return keep[lab]
+
 def process(key, colors=40):
     files = sorted(glob.glob(os.path.join(ROOT, 'anim', key + '_*.png')))
     frames = {}
@@ -49,7 +57,7 @@ def process(key, colors=40):
         pm = Image.fromarray(arr.clip(0, 255).astype(np.uint8), 'RGBA').resize((W2, H2), Image.BOX)
         o = np.array(pm).astype(np.float32); A = o[:, :, 3:4] / 255
         rgb = np.where(A > 0.01, o[:, :, :3] / np.maximum(A, 0.01), 0).clip(0, 255)
-        outs.append((Image.fromarray(rgb.astype(np.uint8), 'RGB').filter(ImageFilter.UnsharpMask(radius=1, percent=60, threshold=2)), o[:, :, 3] > 110))
+        outs.append((Image.fromarray(rgb.astype(np.uint8), 'RGB').filter(ImageFilter.UnsharpMask(radius=1, percent=60, threshold=2)), despeck(o[:, :, 3] > 110)))
     # one shared palette for all frames (no colour flicker between frames)
     strip = Image.new('RGB', (W2 * len(outs), H2))
     for i, (rgb, _) in enumerate(outs): strip.paste(rgb, (i * W2, 0))
