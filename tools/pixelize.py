@@ -4,12 +4,14 @@ import sys, os
 from PIL import Image, ImageFilter
 import numpy as np
 ROOT = os.path.join(os.path.dirname(__file__), '..', 'art', 'battle')
-HEIGHT = {'hero': 72, 'wolf': 74, 'bandit': 86, 'mush': 66, 'bird': 62, 'pebble': 66, 'slime': 60, 'fox': 70, 'bee': 70, 'frog': 60, 'flower': 82}
+HEIGHT = {'hero': 72, 'wolf': 74, 'bandit': 86, 'mush': 66, 'bird': 62, 'pebble': 66, 'slime': 60, 'fox': 70, 'bee': 70, 'frog': 60, 'flower': 82, 'croc': 58, 'golem': 90, 'thunderBeetle': 66, 'emberSpirit': 74, 'skeleton': 82, 'ghostLamp': 78, 'caveSpider': 62, 'wraith': 86, 'boneHound': 68, 'boneKnight': 90, 'banditBoss': 90}
+MAX_W = 136
 DEFAULT_H, BIG_H = 78, 90
 def pixelize(key, h=None, colors=40):
     im = Image.open(os.path.join(ROOT, key + '_raw.png')).convert('RGBA')
     a = np.array(im)[:, :, 3]; ys, xs = np.nonzero(a > 40); im = im.crop((xs.min(), ys.min(), xs.max() + 1, ys.max() + 1))
     h = h or HEIGHT.get(key, DEFAULT_H); w = max(1, round(im.width * h / im.height))
+    if w > MAX_W: h = max(1, round(h * MAX_W / w)); w = MAX_W
     # premultiplied downscale so transparent edges do not bleed dark
     arr = np.array(im).astype(np.float32); al = arr[:, :, 3:4] / 255; arr[:, :, :3] *= al
     pm = Image.fromarray(arr.clip(0, 255).astype(np.uint8), 'RGBA').resize((w, h), Image.BOX)
