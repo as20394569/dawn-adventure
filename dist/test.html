@@ -3926,6 +3926,42 @@ Object.assign(COMMISSIONS, {
   c17: { n: '湖蜥的騷動', from: '萌芽鎮的漁夫', d: '湖蜥戰士把漁網都弄壞了。接下委託後，擊敗湖蜥戰士×4。', kill: ['lizardman', 4], reward: { gold: 2200, items: { tpBook: 1 } }, open: st => st.vis && st.vis.lake },
 });
 
+/* ===================== v19.2 skill & talent rework (player feedback: some skills / talents were never picked) =====================
+   Every weak pick gets a job in the new break / AI system instead of just bigger numbers:
+   - 破盾 (shieldHit): chips an extra point off a break shield on hit — 疾風刺・破甲斬・重盾衝撞・撕裂
+   - 集氣: the next attack is a guaranteed critical hit (crits chip shields too)
+   - 血怒 / 煙幕彈 / 幻影步: effects that the monsters' 威壓 can't wipe (not stat stages)
+   - 獵人印記: the target takes +20% damage for 3 turns
+   - early elemental skills are cheaper / stronger so they're worth taking before Lv8 */
+Object.assign(MOVES.flameSlash, { pow: 50, eff: { st: 'brn', p: 20 }, d: '以燃燒的劍刃砍擊。有時會讓對手灼傷。' });
+Object.assign(MOVES.fireBolt, { pow: 50, eff: { st: 'brn', p: 20 }, d: '射出一顆火球。有時會造成灼傷。' });
+Object.assign(MOVES.aquaBlade, { pow: 55, d: '揮出激流般的水刃。會讓對手全身濕透（濕透時被雷擊會感電）。' });
+Object.assign(MOVES.gale, { pow: 50, shieldHit: 1, d: '以疾風般的速度刺擊。必定先出手，【破盾】額外削減1點護盾。' });
+Object.assign(MOVES.armorBreak, { pow: 55, shieldHit: 1, d: '瞄準護甲縫隙的一擊。降低對手的物防，【破盾】額外削減1點護盾。' });
+Object.assign(MOVES.shieldBash, { eff: { flinch: 1, p: 50 }, shieldHit: 1, d: '用盾牌全力衝撞。50%讓對手退縮，【破盾】額外削減1點護盾。' });
+Object.assign(MOVES.lacerate, { shieldHit: 1, d: '撕開護甲的一刀。有時會降低對手的物防，【破盾】額外削減1點護盾。' });
+Object.assign(MOVES.focus, { stat: null, critNext: 1, d: '集中精神。下一次攻擊必定會心（會心也能削減護盾）。效果不會被魔物的威壓消除。' });
+Object.assign(MOVES.ironWill, { stat: { who: 'self', def: 2, spd: 2 }, d: '穩住架勢，大幅提升物防和魔防。' });
+Object.assign(MOVES.bloodRage, { hpCost: 0.1, stat: null, rage: 3, d: '燃燒自己的血。消耗10%HP，3回合內傷害+30%、速度提升。（不會被魔物的威壓消除）' });
+Object.assign(MOVES.smokeBomb, { stat: null, smoke: 3, d: '在煙幕中移動。3回合內迴避+30%。（不會被魔物的威壓消除）' });
+Object.assign(MOVES.hunterMark, { stat: { who: 'foe', def: -1 }, mark: 3, d: '在對手身上刻下印記。降低物防，3回合內受到的傷害+20%。' });
+Object.assign(MOVES.mirage, { d: '留下幻影護身。3回合內受到的傷害減少，並且迴避+30%。' });
+MOVES.mirage.smoke = 3;
+Object.assign(SKILL_MP, { flameSlash: 3, fireBolt: 3, gale: 4, armorBreak: 5, focus: 4, bloodRage: 6 });
+// move up the rarely-taken trees: the break tools come earlier
+for (const t of [SKILL_TREES.swordsman, SKILL_TREES.guardian]) for (const n of t) if (n[0] === 'armorBreak') { n[1] = 8; n[2] = t === SKILL_TREES.guardian ? 'guardStrike' : 'powerSlash'; n[3] = 1; }
+
+/* ---------- talents v2: same ids where the idea stayed, new jobs for the weak ones, one capstone per line ---------- */
+Object.assign(TALENTS.find(t => t.id === 'breaker'), { n: '碎盾之心', d: '物理攻擊無視對手10%的物防，並有35%機率額外削減1點護盾。', st: { shieldChip: 35, pierceT: 10 }, lbl: ['碎盾', '%'] });
+Object.assign(TALENTS.find(t => t.id === 'agile'), { n: '鋼鐵意志', d: '更不容易陷入中毒、麻痺、睡眠、灼傷。', st: { statusRes: 15 }, lbl: ['抗異常', '%'] });
+TALENTS.push(
+  { id: 'chase', n: '追擊', line: 0, max: 1, d: '攻擊破防中的魔物時，傷害再提高25%。', st: { brkBonus: 25 }, req: 'vital', lbl: ['追擊', '%'] },
+  { id: 'resonance', n: '元素共鳴', line: 1, max: 1, d: '打中弱點時回復5點MP。', st: { weakMp: 5 }, req: 'elem', lbl: ['弱點回魔', ''] },
+  { id: 'steadfast', n: '不動如山', line: 2, max: 1, d: '選擇「防禦」時，受到的傷害再減少30%。', st: { guardPlus: 1 }, req: 'agile', on: '防禦減傷' },
+);
+TALENTS.sort((a, b) => a.line - b.line);
+const TALENT_VERSION = 2;
+
 /* ===================== v19 catalog pass: categories for everything added by the chapter-1 expansion ===================== */
 for (const k in ITEMS) if (!ITEMS[k].cat) ITEMS[k].cat = itemCatOf(k);
 Object.assign(SPECIALS.predator, { cat: '攻擊' }); Object.assign(SPECIALS.breaker, { cat: '攻擊' }); Object.assign(SPECIALS.poisonEdge, { cat: '攻擊' }); Object.assign(SPECIALS.spellblade, { cat: '攻擊' });
@@ -4487,30 +4523,33 @@ function* talentScreen() {
   const locked = t => t.req && (st.tal[t.req] || 0) < 2;
   const talBlock = t => { const rk = st.tal[t.id] || 0; if (!rk) return '還沒有投入點數'; if (rk - 1 < 2 && TALENTS.some(q => q.req === t.id && (st.tal[q.id] || 0) > 0)) return '「' + TALENTS.find(q => q.req === t.id && (st.tal[q.id] || 0) > 0).n + '」需要它'; return null; };
   const LBL = { atk: ['物攻', ''], crit: ['會心率', '%'], pierceT: ['破防', '%'], spa: ['魔攻', ''], elem: ['屬性傷害', '%'], mpRegen: ['每回合回MP', '%'], hp: ['最大HP', ''], eva: ['迴避率', '%'], counter: ['防禦反擊', ''] };
-  const val = (t, n) => { const k = Object.keys(t.st)[0], L = LBL[k] || [k, '']; return n <= 0 ? '—' : k === 'counter' ? '啟用' : L[0] + '+' + t.st[k] * n + L[1]; };
+  const val = (t, n) => { const k = Object.keys(t.st)[0], L = t.lbl || LBL[k] || [k, '']; return n <= 0 ? '—' : t.on ? t.on : k === 'counter' ? '啟用' : L[0] + '+' + t.st[k] * n + L[1]; };
+  const rows = () => Math.max(...TALENT_LINES.map((_, ci) => TALENTS.filter(t => t.line === ci).length)), RP = () => rows() > 3 ? 32 : 38, RH = () => rows() > 3 ? 30 : 34, DY = () => rows() > 3 ? 178 : 166;
+  const fitC = (x, s, cx, y, col, sz) => { let z = sz; while (z > 7 && Font.width(s, z) > 52) z--; Font.drawC(x, s, cx, y, col, UIC.textSh, z); };
   const scr = { draw(x) {
     screenBG(x); headerBar(x, '天賦'); Font.drawR(x, '天賦點 ' + (st.tp || 0), W - 6, 2, st.tp ? UIC.warm : UIC.muted, UIC.textSh);
     Font.drawC(x, '永久的被動加成・Lv6起每升1級+1點', W / 2, 21, UIC.muted, UIC.textSh, 10);
     TALENT_LINES.forEach((ln, ci) => {
       const X = 4 + ci * 57; Font.drawC(x, ln, X + 27, 34, UIC.accent, UIC.textSh);
-      TALENTS.filter(t => t.line === ci).forEach((t, ri) => { const Y = 50 + ri * 38, rk = st.tal[t.id] || 0, on = ci === c && ri === r, lk = locked(t);
-        drawBtn(x, X, Y, 54, 34, on); Font.drawC(x, t.n, X + 27, Y + 1, lk ? UIC.dis : rk ? UIC.text : '#c9cfe4', UIC.textSh, 11);
-        Font.drawC(x, rk ? val(t, rk) : (lk ? '未解鎖' : '未學習'), X + 27, Y + 14, rk ? UIC.good : UIC.dis, UIC.textSh, 9);
-        for (let k = 0; k < t.max; k++) { x.fillStyle = k < rk ? UIC.warm : '#30375a'; x.fillRect(X + 27 - t.max * 4 + k * 8 + 1, Y + 27, 6, 4); } });
-      if (ci < 3) { x.fillStyle = '#30375a'; for (let ri = 0; ri < 2; ri++) x.fillRect(X + 26, 84 + ri * 38, 2, 4); }
+      const rp = RP(), rh = RH(), cmp = rh < 34, n = TALENTS.filter(t => t.line === ci).length;
+      TALENTS.filter(t => t.line === ci).forEach((t, ri) => { const Y = 50 + ri * rp, rk = st.tal[t.id] || 0, on = ci === c && ri === r, lk = locked(t);
+        drawBtn(x, X, Y, 54, rh, on); fitC(x, t.n, X + 27, Y + (cmp ? -1 : 1), lk ? UIC.dis : rk ? UIC.text : '#c9cfe4', 11);
+        fitC(x, rk ? val(t, rk) : (lk ? '未解鎖' : '未學習'), X + 27, Y + (cmp ? 10 : 14), rk ? UIC.good : UIC.dis, 9);
+        for (let k = 0; k < t.max; k++) { x.fillStyle = k < rk ? UIC.warm : '#30375a'; x.fillRect(X + 27 - t.max * 4 + k * 8 + 1, Y + rh - (cmp ? 5 : 7), 6, cmp ? 3 : 4); } });
+      x.fillStyle = '#30375a'; for (let ri = 0; ri < n - 1; ri++) x.fillRect(X + 26, 50 + ri * rp + rh, 2, rp - rh);
     });
-    const t = T(), rk = st.tal[t.id] || 0; drawWin(x, 4, 166, 168, 86, 'menu');
-    Font.draw(x, t.n, 12, 169, UIC.text, UIC.textSh); Font.drawR(x, '等級 ' + rk + '/' + t.max, 164, 170, UIC.muted, UIC.textSh, 10);
-    Font.wrap(t.d, 152, 11).slice(0, 2).forEach((l, i) => Font.draw(x, l, 12, 185 + i * 13, UIC.text, UIC.textSh, 11));
-    Font.draw(x, '目前：' + val(t, rk), 12, 211, UIC.accent, UIC.textSh, 10); if (rk < t.max) Font.draw(x, '下一級：' + val(t, rk + 1), 90, 211, UIC.warm, UIC.textSh, 10);
-    Font.draw(x, locked(t) ? '需要先把「' + TALENTS.find(q => q.id === t.req).n + '」點到2級' : rk >= t.max ? '已達最高等級' : st.tp ? 'A：投入1點天賦點' : '天賦點不足（升級時獲得）', 12, 232, locked(t) ? UIC.bad : st.tp && rk < t.max ? UIC.warm : UIC.muted, UIC.textSh, 11);
+    const t = T(), rk = st.tal[t.id] || 0, dy = DY(), dd = dy - 166; drawWin(x, 4, dy, 168, 252 - dy, 'menu');
+    Font.draw(x, t.n, 12, dy + (dd ? 1 : 3), UIC.text, UIC.textSh); Font.drawR(x, '等級 ' + rk + '/' + t.max, 164, dy + (dd ? 3 : 4), UIC.muted, UIC.textSh, 10);
+    Font.wrap(t.d, 152, 11).slice(0, 2).forEach((l, i) => Font.draw(x, l, 12, dd ? dy + 15 + i * 12 : 185 + i * 13, UIC.text, UIC.textSh, 11));
+    Font.draw(x, '目前：' + val(t, rk), 12, dd ? dy + 40 : 211, UIC.accent, UIC.textSh, 10); if (rk < t.max) { const nx = '下一級：' + val(t, rk + 1); let z = 10; while (z > 7 && Font.width(nx, z) > 80) z--; Font.drawR(x, nx, 166, (dd ? dy + 40 : 211) + (10 - z), UIC.warm, UIC.textSh, z); }
+    Font.draw(x, locked(t) ? '需要先把「' + TALENTS.find(q => q.id === t.req).n + '」點到2級' : rk >= t.max ? '已達最高等級' : st.tp ? 'A：投入1點天賦點' : '天賦點不足（升級時獲得）', 12, dd ? 235 : 232, locked(t) ? UIC.bad : st.tp && rk < t.max ? UIC.warm : UIC.muted, UIC.textSh, 11);
     if (rk) { drawBtn(x, 124, 230, 44, 16, false); Font.drawC(x, '↩退點', 146, 230, talBlock(t) ? UIC.dis : UIC.warm, UIC.textSh, 9); touchRegion(124, 230, 44, 16, () => tapKey('select')); }
-    TALENT_LINES.forEach((ln, ci) => TALENTS.filter(q => q.line === ci).forEach((q, ri) => touchRegion(4 + ci * 57, 50 + ri * 38, 54, 34, () => { if (c === ci && r === ri) tapKey('a'); else { c = ci; r = ri; } })));
+    TALENT_LINES.forEach((ln, ci) => TALENTS.filter(q => q.line === ci).forEach((q, ri) => touchRegion(4 + ci * 57, 50 + ri * RP(), 54, RH(), () => { if (c === ci && r === ri) tapKey('a'); else { c = ci; r = ri; } })));
   } };
   UI.push(scr);
   while (true) {
     if (Input.repeat('left')) { c = (c + 2) % 3; Sound.sfx('cursor'); } if (Input.repeat('right')) { c = (c + 1) % 3; Sound.sfx('cursor'); }
-    if (Input.repeat('up')) { r = (r + 2) % 3; Sound.sfx('cursor'); } if (Input.repeat('down')) { r = (r + 1) % 3; Sound.sfx('cursor'); }
+    const nR = TALENTS.filter(t => t.line === c).length; if (r >= nR) r = nR - 1; if (Input.repeat('up')) { r = (r + nR - 1) % nR; Sound.sfx('cursor'); } if (Input.repeat('down')) { r = (r + 1) % nR; Sound.sfx('cursor'); }
     if (Input.pressed('b')) { Input.consume('b'); Sound.sfx('cancel'); break; }
     if (Input.pressed('select')) { Input.consume('select'); const t = T(), bl = talBlock(t); if (bl) { Sound.sfx('bump'); UI.remove(scr); yield* say('不能退回：' + bl + '。'); UI.push(scr); } else { st.tal[t.id]--; if (!st.tal[t.id]) delete st.tal[t.id]; st.tp = (st.tp || 0) + 1; clampHP(); Sound.sfx('cancel'); } }
     if (Input.pressed('a')) {
@@ -7083,6 +7122,63 @@ const chibiReady = k => !!chibiBase(k);
   };
 }
 
+/* ===================== v19.2 battle side of the skill / talent rework (04q) ===================== */
+{ const _hc = heroCast; heroCast = function* (u, mv, id, t) { this._castId = id; yield* _hc.call(this, u, mv, id, t); }; }
+{ const _um = Battle.prototype.useMove; Battle.prototype.useMove = function* (u, t, id) {
+    this._castId = null; const hp0 = u.hp, mv = u.hero && MOVES[id] ? skillMove(id) : null;
+    if (mv && u.hero) this._shieldHit = mv.shieldHit || 0;
+    yield* _um.call(this, u, t, id); this._shieldHit = 0;
+    if (!mv || this._castId !== id || u.hp <= 0) return;
+    const lv = mv.lv || 1;
+    if (mv.critNext) { u.critNext = true; yield* this.msg(u.n + '集中了精神！下一次攻擊必定會心。', { hold: 20 }); }
+    if (mv.rage && u.hp < hp0) { u.rageT = mv.rage + lv - 1; u.rageAt = this.turn; u.stages.spe = Math.min(3, u.stages.spe + 1); (u.stageT || (u.stageT = {})).spe = u.rageT; this.tintH = { c: '#ff3020', a: 0.45 }; yield* wait(10); this.tintH = null; yield* this.msg(u.n + '陷入了血怒！' + u.rageT + '回合內傷害+30%。', { hold: 22 }); }
+    if (mv.smoke) { u.smokeT = mv.smoke + lv - 1; u.smokeAt = this.turn; yield* this.msg(u.n + '的身影變得模糊！' + u.smokeT + '回合內迴避+30%。', { hold: 22 }); }
+    if (mv.mark && t.hp > 0) { t.markT = mv.mark + lv - 1; t.markAt = this.turn; Sound.sfx('statDown'); yield* this.msg(t.n + '被刻上了獵人印記！' + t.markT + '回合內受到的傷害+20%。', { hold: 22 }); }
+  };
+}
+{ const _cd = Battle.prototype.calcDamage; Battle.prototype.calcDamage = function (u, t, mv) {
+    const r = _cd.call(this, u, t, mv); if (!mv || !mv.pow) return r; let m = 1;
+    if (u.hero && u.critNext && !this._estimating) { u.critNext = false; if (!r.crit) { r.crit = true; m *= 1.5; } }
+    if (u.hero && u.rageT > 0) m *= 1.3;
+    if (!t.hero && t.markT > 0) m *= 1.2;
+    if (u.hero && !t.hero && t.broken > 0 && u.stats.brkBonus) m *= 1 + u.stats.brkBonus / 100;
+    if (t.hero && t.defending && t.stats.guardPlus) m *= 0.7;
+    if (m !== 1) r.dmg = Math.max(1, Math.floor(r.dmg * m)); return r;
+  };
+}
+{ const _hit = hitChance; hitChance = function (u, t, mv) { let h = _hit(u, t, mv); if (t.hero && t.smokeT > 0 && mv.acc) h = Math.max(0.05, h - 0.3); return h; }; }
+// 破盾 skills and the 碎盾之心 talent: extra shield chip on the first hit of a move
+{ const _im = Battle.prototype.impact; Battle.prototype.impact = function* (b, power) {
+    const F = this.F, H = this.H;
+    if (!b.hero && F.brkMax && !F.broken && F.brk > 0) {
+      let chip = this._shieldHit || 0; this._shieldHit = 0;
+      if (H.stats.shieldChip && this._lastHitPhys && chance(H.stats.shieldChip / 100)) chip++;
+      if (chip) { F.brk = Math.max(0, F.brk - chip); if (this.tac) this.tac.brkFlash = 12; if (!F.brk) this._brkPending = true; }
+    }
+    const weak = !b.hero && this._lastHit && this._lastHit.mult > 1;
+    yield* _im.call(this, b, power);
+    if (weak && H.stats.weakMp && H.mp < H.maxmp) { H.mp = Math.min(H.maxmp, H.mp + H.stats.weakMp); }
+  };
+}
+// ailment resistance (鋼鐵意志)
+{ const _inf = Battle.prototype.inflict; Battle.prototype.inflict = function* (b, s, secondary) {
+    if (b.hero && !b.status && b.stats.statusRes && chance(b.stats.statusRes / 100)) { yield* this.msg(b.n + '憑著意志力撐住了！（' + STATUS_NAME[s] + '無效）', { hold: 20 }); return; }
+    yield* _inf.call(this, b, s, secondary);
+  };
+}
+// timers
+{ const _et = Battle.prototype.endTurn; Battle.prototype.endTurn = function* () {
+    yield* _et.call(this); const H = this.H, F = this.F;
+    if (H.rageT > 0 && H.rageAt !== this.turn && --H.rageT === 0) yield* this.msg(H.n + '的血怒平息了。', { hold: 16 });
+    if (H.smokeT > 0 && H.smokeAt !== this.turn && --H.smokeT === 0) yield* this.msg('煙幕散去了。', { hold: 16 });
+    if (F.markT > 0 && F.markAt !== this.turn && --F.markT === 0) yield* this.msg(F.n + '身上的印記消失了。', { hold: 16 });
+  };
+}
+// existing saves: talents changed → refund every talent point once
+function talentRefund(st) { if (!st || (st.talV || 1) >= TALENT_VERSION) return false; let n = 0; for (const k in st.tal || {}) n += st.tal[k] || 0; st.tal = {}; st.tp = (st.tp || 0) + n; st.talV = TALENT_VERSION; return n > 0; }
+{ const _so = startOverworld; startOverworld = function (...a) { const r = _so.apply(this, a); const st = Game.st; if (st && !st.talV) { const had = talentRefund(st); if (had && r && r.run) r.run((function* () { yield* wait(20); yield* say('【系統更新】天賦改版了！\n「破甲之心」「身手矯健」換成了新的效果，並新增了三個天賦。'); yield* say('已經投入的天賦點全部退回了，打開選單的「天賦」重新分配吧。'); })()); else st.talV = TALENT_VERSION; } return r; }; }
+{ const _ng = newGameState; newGameState = function (...a) { const st = _ng.apply(this, a); if (st) st.talV = TALENT_VERSION; return st; }; }
+
 /* ===================== EVENTS (異世界篇) ===================== */
 function* healRitual(text) {
   yield* fadeOut(10); healHero(); const fr = Sound.jingle('heal'); yield* wait(Math.max(40, fr)); yield* fadeIn(10);
@@ -7406,7 +7502,7 @@ class TitleScene {
     x.drawImage(this.logo, Math.round(W / 2 - this.logo.width / 2), 6 + bob);
     Font.drawC(x, '～異世界冒險RPG～', W / 2, 52 + bob, '#ffe0a0', '#3a1428');
     if (this.stage === 'press' && Math.floor(this.t / 30) % 2 === 0) Font.drawC(x, '按 A 鍵開始', W / 2, 232, '#ffffff', '#1a1024');
-    Font.draw(x, 'v5.0', W - 26, H - 13, '#b890b0', null);
+    Font.draw(x, 'v5.1', W - 26, H - 13, '#b890b0', null);
   }
 }
 
