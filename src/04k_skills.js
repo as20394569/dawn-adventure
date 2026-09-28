@@ -62,19 +62,20 @@ function* skillUpdateNote(st) {
 /* ---------- Skill tree screen ---------- */
 function* skillTreeScreen() {
   const st = Game.st; st.skills = st.skills || {}; let idx = 0, top = 0; const COLS = 3, VIS = 4;
-  const nodes = () => skillTreeOf(st.cls);
+  const nodes = () => { const T = skillTreeOf(st.cls); return T.length && typeof classPassiveNode === 'function' ? [classPassiveNode()].concat(T) : T; }; /* v24.2: tile 0 = 職業被動 */
   const scr = { draw(x) {
     const N = nodes(); screenBG(x); headerBar(x, '技能'); Font.drawR(x, '技能點 ' + (st.skp || 0), W - 6, 2, st.skp ? UIC.warm : UIC.muted, UIC.textSh);
     if (!N.length) { Font.draw(x, '還沒有選擇職業。', 12, 30, UIC.muted, UIC.textSh); return; }
     const rows = Math.ceil(N.length / COLS);
     for (let k = 0; k < N.length; k++) {
-      const r = Math.floor(k / COLS) - top, c = k % COLS; if (r < 0 || r >= VIS) continue; const n = N[k], mv = MOVES[n.id], lv = skillLv(n.id), s = nodeState(n), X = 4 + c * 57, Y = 24 + r * 34, on = k === idx;
+      const r = Math.floor(k / COLS) - top, c = k % COLS; if (r < 0 || r >= VIS) continue; if (N[k].passive) { drawPassiveTile(x, st, 4 + c * 57, 24 + r * 34, k === idx); continue; } const n = N[k], mv = MOVES[n.id], lv = skillLv(n.id), s = nodeState(n), X = 4 + c * 57, Y = 24 + r * 34, on = k === idx;
       drawBtn(x, X, Y, 54, 31, on, TYPE_COL[mv.t]); if (n.adv) { x.fillStyle = UIC.warm; x.fillRect(X + 49, Y + 2, 3, 3); }
       Font.drawC(x, mv.n, X + 28, Y + 1, s.startsWith('locked') ? UIC.dis : lv ? UIC.text : '#c9cfe4', UIC.textSh, 11);
       for (let q = 0; q < SKILL_MAX; q++) { x.fillStyle = q < lv ? UIC.warm : '#30375a'; x.fillRect(X + 16 + q * 8, Y + 21, 6, 5); }
       if (s === 'learn' && st.skp) { x.fillStyle = UIC.accent; x.fillRect(X + 3, Y + 22, 3, 3); }
     }
     if (top > 0) x.drawImage(UPARROW, 86, 21); if (top + VIS < rows) x.drawImage(DOWNARROW, 86, 24 + VIS * 34 - 2);
+    if (N[idx].passive) { drawWin(x, 4, 162, 168, 90, 'menu'); drawPassiveInfo(x, st, 10, 165, 156); } else {
     const n = N[idx], mv = MOVES[n.id], lv = skillLv(n.id), s = nodeState(n), cur = skillMove(n.id), nx = { ...Game.st, skills: { ...st.skills, [n.id]: Math.min(SKILL_MAX, lv + 1) } }, nxt = skillMove(n.id, nx);
     drawWin(x, 4, 162, 168, 90, 'menu');
     typeBadge(x, mv.t, 10, 166, 24); Font.draw(x, mv.n + '　Lv' + lv + '/' + SKILL_MAX, 38, 164, UIC.text, UIC.textSh); if (mv.scale) Font.drawR(x, ATTR_NAMES[mv.scale[0]] + '加成', 166, 167, UIC.muted, UIC.textSh, 9);
@@ -85,6 +86,7 @@ function* skillTreeScreen() {
     Font.wrap(mv.d, 152, 10).slice(0, 2).forEach((l, i) => Font.draw(x, l, 10, (lv && lv < SKILL_MAX ? 206 : 196) + i * 12, UIC.text, UIC.textSh, 10));
     Font.draw(x, s === 'max' ? '已達最高等級' : s.startsWith('locked') ? s.slice(7) : st.skp ? 'A：' + (lv ? '升級' : '學習') + '（消耗1點）' : '升級時可以獲得技能點', 10, 236, s.startsWith('locked') ? UIC.bad : UIC.muted, UIC.textSh, 10);
     if (lv) { const rb = refundBlock(n.id); drawBtn(x, 124, 232, 44, 16, false); Font.drawC(x, '↩退點', 146, 232, rb ? UIC.dis : UIC.warm, UIC.textSh, 9); if (typeof touchRegion === 'function') touchRegion(124, 232, 44, 16, () => tapKey('select')); }
+    }
     if (typeof touchRegion === 'function') for (let k = 0; k < N.length; k++) { const r = Math.floor(k / COLS) - top, c = k % COLS; if (r < 0 || r >= VIS) continue; touchRegion(4 + c * 57, 24 + r * 34, 54, 31, () => { if (idx === k) tapKey('a'); else idx = k; }); }
   } };
   UI.push(scr);
@@ -93,8 +95,8 @@ function* skillTreeScreen() {
     let ni = idx; if (Input.repeat('left') && idx % COLS > 0) ni--; if (Input.repeat('right') && idx % COLS < COLS - 1 && idx + 1 < n) ni++; if (Input.repeat('up') && idx >= COLS) ni -= COLS; if (Input.repeat('down') && idx + COLS < n) ni += COLS;
     if (ni !== idx) { idx = ni; Sound.sfx('cursor'); const r = Math.floor(idx / COLS); if (r < top) top = r; if (r >= top + VIS) top = r - VIS + 1; }
     if (Input.pressed('b')) { Input.consume('b'); Sound.sfx('cancel'); break; }
-    if (Input.pressed('select')) { Input.consume('select'); const node = N[idx], rb = refundBlock(node.id); if (rb) { Sound.sfx('bump'); UI.remove(scr); yield* say('不能退回：' + rb + '。'); UI.push(scr); } else { st.skills[node.id]--; if (!st.skills[node.id]) delete st.skills[node.id]; st.skp = (st.skp || 0) + 1; Sound.sfx('cancel'); } }
-    if (Input.pressed('a')) { Input.consume('a'); const node = N[idx], s = nodeState(node); if (!st.skp || s === 'max' || s.startsWith('locked')) { Sound.sfx('bump'); } else { st.skp--; st.skills[node.id] = skillLv(node.id) + 1; Sound.sfx('statUp'); } }
+    if (Input.pressed('select')) { Input.consume('select'); const node = N[idx], rb = node.passive ? '職業被動不是技能' : refundBlock(node.id); if (rb) { Sound.sfx('bump'); UI.remove(scr); yield* say('不能退回：' + rb + '。'); UI.push(scr); } else { st.skills[node.id]--; if (!st.skills[node.id]) delete st.skills[node.id]; st.skp = (st.skp || 0) + 1; Sound.sfx('cancel'); } }
+    if (Input.pressed('a')) { Input.consume('a'); const node = N[idx], s = node.passive ? 'max' : nodeState(node); if (!st.skp || s === 'max' || s.startsWith('locked')) { Sound.sfx('bump'); } else { st.skp--; st.skills[node.id] = skillLv(node.id) + 1; Sound.sfx('statUp'); } }
     yield;
   }
   UI.remove(scr);

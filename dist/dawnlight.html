@@ -3417,19 +3417,20 @@ function* skillUpdateNote(st) {
 /* ---------- Skill tree screen ---------- */
 function* skillTreeScreen() {
   const st = Game.st; st.skills = st.skills || {}; let idx = 0, top = 0; const COLS = 3, VIS = 4;
-  const nodes = () => skillTreeOf(st.cls);
+  const nodes = () => { const T = skillTreeOf(st.cls); return T.length && typeof classPassiveNode === 'function' ? [classPassiveNode()].concat(T) : T; }; /* v24.2: tile 0 = 職業被動 */
   const scr = { draw(x) {
     const N = nodes(); screenBG(x); headerBar(x, '技能'); Font.drawR(x, '技能點 ' + (st.skp || 0), W - 6, 2, st.skp ? UIC.warm : UIC.muted, UIC.textSh);
     if (!N.length) { Font.draw(x, '還沒有選擇職業。', 12, 30, UIC.muted, UIC.textSh); return; }
     const rows = Math.ceil(N.length / COLS);
     for (let k = 0; k < N.length; k++) {
-      const r = Math.floor(k / COLS) - top, c = k % COLS; if (r < 0 || r >= VIS) continue; const n = N[k], mv = MOVES[n.id], lv = skillLv(n.id), s = nodeState(n), X = 4 + c * 57, Y = 24 + r * 34, on = k === idx;
+      const r = Math.floor(k / COLS) - top, c = k % COLS; if (r < 0 || r >= VIS) continue; if (N[k].passive) { drawPassiveTile(x, st, 4 + c * 57, 24 + r * 34, k === idx); continue; } const n = N[k], mv = MOVES[n.id], lv = skillLv(n.id), s = nodeState(n), X = 4 + c * 57, Y = 24 + r * 34, on = k === idx;
       drawBtn(x, X, Y, 54, 31, on, TYPE_COL[mv.t]); if (n.adv) { x.fillStyle = UIC.warm; x.fillRect(X + 49, Y + 2, 3, 3); }
       Font.drawC(x, mv.n, X + 28, Y + 1, s.startsWith('locked') ? UIC.dis : lv ? UIC.text : '#c9cfe4', UIC.textSh, 11);
       for (let q = 0; q < SKILL_MAX; q++) { x.fillStyle = q < lv ? UIC.warm : '#30375a'; x.fillRect(X + 16 + q * 8, Y + 21, 6, 5); }
       if (s === 'learn' && st.skp) { x.fillStyle = UIC.accent; x.fillRect(X + 3, Y + 22, 3, 3); }
     }
     if (top > 0) x.drawImage(UPARROW, 86, 21); if (top + VIS < rows) x.drawImage(DOWNARROW, 86, 24 + VIS * 34 - 2);
+    if (N[idx].passive) { drawWin(x, 4, 162, 168, 90, 'menu'); drawPassiveInfo(x, st, 10, 165, 156); } else {
     const n = N[idx], mv = MOVES[n.id], lv = skillLv(n.id), s = nodeState(n), cur = skillMove(n.id), nx = { ...Game.st, skills: { ...st.skills, [n.id]: Math.min(SKILL_MAX, lv + 1) } }, nxt = skillMove(n.id, nx);
     drawWin(x, 4, 162, 168, 90, 'menu');
     typeBadge(x, mv.t, 10, 166, 24); Font.draw(x, mv.n + '　Lv' + lv + '/' + SKILL_MAX, 38, 164, UIC.text, UIC.textSh); if (mv.scale) Font.drawR(x, ATTR_NAMES[mv.scale[0]] + '加成', 166, 167, UIC.muted, UIC.textSh, 9);
@@ -3440,6 +3441,7 @@ function* skillTreeScreen() {
     Font.wrap(mv.d, 152, 10).slice(0, 2).forEach((l, i) => Font.draw(x, l, 10, (lv && lv < SKILL_MAX ? 206 : 196) + i * 12, UIC.text, UIC.textSh, 10));
     Font.draw(x, s === 'max' ? '已達最高等級' : s.startsWith('locked') ? s.slice(7) : st.skp ? 'A：' + (lv ? '升級' : '學習') + '（消耗1點）' : '升級時可以獲得技能點', 10, 236, s.startsWith('locked') ? UIC.bad : UIC.muted, UIC.textSh, 10);
     if (lv) { const rb = refundBlock(n.id); drawBtn(x, 124, 232, 44, 16, false); Font.drawC(x, '↩退點', 146, 232, rb ? UIC.dis : UIC.warm, UIC.textSh, 9); if (typeof touchRegion === 'function') touchRegion(124, 232, 44, 16, () => tapKey('select')); }
+    }
     if (typeof touchRegion === 'function') for (let k = 0; k < N.length; k++) { const r = Math.floor(k / COLS) - top, c = k % COLS; if (r < 0 || r >= VIS) continue; touchRegion(4 + c * 57, 24 + r * 34, 54, 31, () => { if (idx === k) tapKey('a'); else idx = k; }); }
   } };
   UI.push(scr);
@@ -3448,8 +3450,8 @@ function* skillTreeScreen() {
     let ni = idx; if (Input.repeat('left') && idx % COLS > 0) ni--; if (Input.repeat('right') && idx % COLS < COLS - 1 && idx + 1 < n) ni++; if (Input.repeat('up') && idx >= COLS) ni -= COLS; if (Input.repeat('down') && idx + COLS < n) ni += COLS;
     if (ni !== idx) { idx = ni; Sound.sfx('cursor'); const r = Math.floor(idx / COLS); if (r < top) top = r; if (r >= top + VIS) top = r - VIS + 1; }
     if (Input.pressed('b')) { Input.consume('b'); Sound.sfx('cancel'); break; }
-    if (Input.pressed('select')) { Input.consume('select'); const node = N[idx], rb = refundBlock(node.id); if (rb) { Sound.sfx('bump'); UI.remove(scr); yield* say('不能退回：' + rb + '。'); UI.push(scr); } else { st.skills[node.id]--; if (!st.skills[node.id]) delete st.skills[node.id]; st.skp = (st.skp || 0) + 1; Sound.sfx('cancel'); } }
-    if (Input.pressed('a')) { Input.consume('a'); const node = N[idx], s = nodeState(node); if (!st.skp || s === 'max' || s.startsWith('locked')) { Sound.sfx('bump'); } else { st.skp--; st.skills[node.id] = skillLv(node.id) + 1; Sound.sfx('statUp'); } }
+    if (Input.pressed('select')) { Input.consume('select'); const node = N[idx], rb = node.passive ? '職業被動不是技能' : refundBlock(node.id); if (rb) { Sound.sfx('bump'); UI.remove(scr); yield* say('不能退回：' + rb + '。'); UI.push(scr); } else { st.skills[node.id]--; if (!st.skills[node.id]) delete st.skills[node.id]; st.skp = (st.skp || 0) + 1; Sound.sfx('cancel'); } }
+    if (Input.pressed('a')) { Input.consume('a'); const node = N[idx], s = node.passive ? 'max' : nodeState(node); if (!st.skp || s === 'max' || s.startsWith('locked')) { Sound.sfx('bump'); } else { st.skp--; st.skills[node.id] = skillLv(node.id) + 1; Sound.sfx('statUp'); } }
     yield;
   }
   UI.remove(scr);
@@ -4673,11 +4675,12 @@ function* summaryScreen() {
       const rowsD = [['HP', st.hp + '/' + s.hp], ['MP', (st.mp ?? s.mp) + '/' + s.mp], ['物攻', s.atk, 'atk'], ['物防', s.def, 'def'], ['魔攻', s.spa, 'spa'], ['魔防', s.spd, 'spd'], ['速度', s.spe, 'spe'], ['會心', s.crit.toFixed(1) + '%']];
       rowsD.forEach(([n, v, k], i) => { const X = 12 + (i % 2) * 80, Y = 166 + Math.floor(i / 2) * 20; Font.draw(x, n, X, Y, UIC.muted, UIC.textSh); Font.drawR(x, String(v), X + 70, Y, k && eqB[k] ? UIC.accent : UIC.text, UIC.textSh); });
     } else {
-      const SK = typeof summarySkills === 'function' ? summarySkills(st) : learnedSkills(st), US = typeof usableSkills === 'function' ? usableSkills(st) : SK, VIS = 7; drawWin(x, 4, 24, 168, VIS * 19 + 8, 'menu'); const t0 = clamp(mi - 3, 0, Math.max(0, SK.length - VIS));
+      const SK = (st.cls && typeof classPassiveNode === 'function' ? ['_passive'] : []).concat(typeof summarySkills === 'function' ? summarySkills(st) : learnedSkills(st)), US = typeof usableSkills === 'function' ? usableSkills(st) : SK, VIS = 7; drawWin(x, 4, 24, 168, VIS * 19 + 8, 'menu'); const t0 = clamp(mi - 3, 0, Math.max(0, SK.length - VIS));
       if (!SK.length) Font.draw(x, '還沒有學會技能。（選單→技能）', 12, 30, UIC.muted, UIC.textSh, 11);
-      SK.slice(t0, t0 + VIS).forEach((id, k) => { const i = t0 + k, mv = MOVES[id], Y = 28 + k * 19; if (i === mi) selBar(x, 6, Y, 164, 17); typeBadge(x, mv.t, 14, Y + 2, 30); const use = US.includes(id); Font.draw(x, mv.n + ' Lv' + skillLv(id), 52, Y, use ? UIC.text : UIC.dis, UIC.textSh); Font.drawR(x, use ? 'MP ' + skillMP(id) : '未繼承', 164, Y, use ? UIC.accent : UIC.muted, UIC.textSh); });
+      SK.slice(t0, t0 + VIS).forEach((id, k) => { const i = t0 + k, mv = MOVES[id], Y = 28 + k * 19; if (i === mi) selBar(x, 6, Y, 164, 17); if (id === '_passive') { const pn = classPassives(st.cls).length; x.fillStyle = shade(UIC.warm, -0.45); x.fillRect(14, Y + 2, 30, 13); Font.drawC(x, '被動', 29, Y + 1, '#ffffff', UIC.textSh, 10); Font.draw(x, '職業被動', 52, Y, UIC.warm, UIC.textSh); Font.drawR(x, pn ? pn + '項' : '無', 164, Y, pn ? UIC.text : UIC.muted, UIC.textSh); return; } typeBadge(x, mv.t, 14, Y + 2, 30); const use = US.includes(id); Font.draw(x, mv.n + ' Lv' + skillLv(id), 52, Y, use ? UIC.text : UIC.dis, UIC.textSh); Font.drawR(x, use ? 'MP ' + skillMP(id) : '未繼承', 164, Y, use ? UIC.accent : UIC.muted, UIC.textSh); });
       if (t0 > 0) x.drawImage(UPARROW, 86, 25); if (t0 + VIS < SK.length) x.drawImage(DOWNARROW, 86, 24 + VIS * 19 + 3);
-      if (SK.length) { const id = SK[Math.min(mi, SK.length - 1)], mv = MOVES[id], m2 = skillMove(id); drawWin(x, 4, 168, 168, 84, 'menu');
+      if (SK[Math.min(mi, SK.length - 1)] === '_passive') { drawWin(x, 4, 168, 168, 84, 'menu'); drawPassiveInfo(x, st, 12, 171, 152, true); }
+      else if (SK.length) { const id = SK[Math.min(mi, SK.length - 1)], mv = MOVES[id], m2 = skillMove(id); drawWin(x, 4, 168, 168, 84, 'menu');
         Font.draw(x, (mv.cat === '變' ? '輔助' : mv.cat === '物' ? '物理' : '魔法') + (m2.pow ? '　' + (typeof powTxt === 'function' ? powTxt(m2) : '威力' + m2.pow) : '') + '　消耗MP ' + skillMP(id), 12, 171, UIC.accent, UIC.textSh, 11);
         Font.wrap(mv.d, 152, 11).slice(0, 4).forEach((l, i) => Font.draw(x, l, 12, 188 + i * 15, UIC.text, UIC.textSh, 11)); }
     }
@@ -4686,7 +4689,7 @@ function* summaryScreen() {
   while (true) {
     if (Input.pressed('left') || Input.pressed('right')) { page = (page + (Input.pressed('left') ? 2 : 1)) % 3; Sound.sfx('cursor'); }
     if (page === 2) { const n = questList().length; if (Input.repeat('up') && qTop > 0) { qTop--; Sound.sfx('cursor'); } if (Input.repeat('down') && qTop < n - 1) { qTop++; Sound.sfx('cursor'); } }
-    if (page === 1) { const n = Math.max(1, (typeof summarySkills === 'function' ? summarySkills(Game.st) : learnedSkills()).length); if (Input.repeat('up')) { mi = (mi + n - 1) % n; Sound.sfx('cursor'); } if (Input.repeat('down')) { mi = (mi + 1) % n; Sound.sfx('cursor'); } }
+    if (page === 1) { const n = Math.max(1, (typeof summarySkills === 'function' ? summarySkills(Game.st) : learnedSkills()).length + (Game.st.cls && typeof classPassiveNode === 'function' ? 1 : 0)); if (Input.repeat('up')) { mi = (mi + n - 1) % n; Sound.sfx('cursor'); } if (Input.repeat('down')) { mi = (mi + 1) % n; Sound.sfx('cursor'); } }
     if (Input.pressed('a') && page === 2 && questList().length && typeof questDetailScreen === 'function') { Input.consume('a'); Sound.sfx('select'); const QL = questList(); UI.remove(scr); yield* questDetailScreen(QL[Math.min(qTop, QL.length - 1)]); UI.push(scr); }
     else if (Input.pressed('a') && page !== 1) { Input.consume('a'); page = (page + 1) % 3; Sound.sfx('cursor'); }
     else if (Input.pressed('b')) { Input.consume('a', 'b'); Sound.sfx('cancel'); break; }
@@ -12020,5 +12023,52 @@ Object.assign(ITEMS.megaPotion, { cat: '回復' }); Object.assign(ITEMS.megaEthe
 NPC_ROLES.情報.push('gateGuardS', 'gateGuardN', 'capKid', 'capWoman', 'capOld', 'capMerchant', 'capBard', 'chancellor', 'castleGuard1', 'castleGuard2', 'liaCastle', 'nun', 'guildAdv1', 'guildAdv2', 'hallGuest', 'capInnGuest', 'capResident', 'windmill', 'dawnBell', 'iceWall', 'iceWall2', 'frostKid', 'monkPupil', 'liaRoad');
 NPC_ROLES.任務.push('royalKnight', 'king');
 NPC_ROLES.情報.push('coachT', 'coachN', 'coachC', 'coachF', 'manhole', 'starGate', 'iceCaveDoor', 'lavaDoor');
+
+/* ===================== v24.2 class passives shown in the menus =====================
+   Playtest: "the class passives can't be seen in the skill menu, so players can't tell whether they have one".
+   The first tile of the skill tree (選單→技能) and the first row of 狀態→技能 are now 「職業被動」: the passives the current class
+   gives (read from CLASSES[cls].st, the same keys the battle code uses), the class stat bonus, and the gear specials in effect.
+   A class without passives says so, so "none" is also an answer. */
+const CLASS_PASSIVE_INFO = {
+  venomEdge: ['毒刃', (v, S) => '物理攻擊' + (S && S.fx && S.fx.poisonEdge ? 35 : 20) + '%機率讓對手中毒'],
+  assassin: ['暗殺', () => '第1回合的攻擊必定會心'],
+  venomous: ['追擊毒傷', v => '對中毒的對手傷害+' + v + '%'],
+  shadowStep: ['殘影', () => '閃過攻擊後立刻反擊（70%傷害）'],
+  rage: ['狂怒', () => 'HP低於一半時傷害+30%'],
+  spellblade: ['魔劍共鳴', () => '物攻與魔攻互相加成45%'],
+  elem: ['元素親和', v => '屬性技能傷害+' + v + '%'],
+  fireUp: ['火焰專精', v => '火系技能傷害+' + v + '%'],
+  boltUp: ['雷霆專精', v => '雷系技能傷害+' + v + '%'],
+};
+const CLASS_BONUS_TXT = { hp: ['HP', ''], mp: ['MP', ''], atk: ['物攻', ''], def: ['物防', ''], spa: ['魔攻', ''], spd: ['魔防', ''], spe: ['速度', ''], crit: ['會心', '%'], eva: ['迴避', '%'] };
+function classPassives(cls, S) {
+  const C = CLASSES[cls]; if (!C) return [];
+  return Object.keys(C.st).filter(k => CLASS_PASSIVE_INFO[k] && C.st[k]).map(k => ({ k, n: CLASS_PASSIVE_INFO[k][0], d: CLASS_PASSIVE_INFO[k][1](C.st[k], S) }));
+}
+function classBonusText(cls) {
+  const C = CLASSES[cls]; if (!C) return '';
+  return Object.keys(CLASS_BONUS_TXT).filter(k => C.st[k]).map(k => CLASS_BONUS_TXT[k][0] + '+' + C.st[k] + CLASS_BONUS_TXT[k][1]).join(' ');
+}
+function gearSpecialNames() { let S; try { S = heroStats(); } catch (e) { return []; } const fx = (S && S.fx) || {}; return Object.keys(fx).filter(k => fx[k] && SPECIALS[k]).map(k => SPECIALS[k].n); }
+const classPassiveNode = () => ({ id: '_passive', passive: 1 });
+// the detail block: title, one line per passive (shrunk to fit), class bonus, gear specials
+function drawPassiveInfo(x, st, X, Y, w, big) {
+  const C = CLASSES[st.cls]; let S = null; try { S = heroStats(); } catch (e) { }
+  const P = classPassives(st.cls, S), L = [];
+  if (!P.length) L.push(['這個職業沒有被動效果。', UIC.muted]);
+  for (const p of P) L.push(['「' + p.n + '」' + p.d, UIC.text]);
+  const bt = classBonusText(st.cls); if (bt) { const t = '加成：' + bt + (C && C.tier === 1 && st.lv < 10 ? '（Lv10前逐步提升）' : '');
+    if (Font.width(t, 8) <= w) L.push([t, UIC.accent]); else { const parts = t.split(' '), half = Math.ceil(parts.length / 2); L.push([parts.slice(0, half).join(' '), UIC.accent], ['　　　' + parts.slice(half).join(' '), UIC.accent]); } }
+  const G = gearSpecialNames(); L.push(['裝備特效：' + (G.length ? G.join('、') : '沒有'), G.length ? '#c9cfe4' : UIC.muted]);
+  const base = big && L.length <= 4 ? 11 : 10, fit = (t, y, col, z0 = base) => { let z = z0; while (z > 7 && Font.width(t, z) > w) z--; Font.draw(x, t, X, y + (z0 - z) / 2, col, UIC.textSh, z); };
+  fit('職業被動　' + (C ? C.n : '—'), Y, UIC.warm, 11);
+  const avail = (big ? 78 : 84) - 16, lh = Math.min(big ? 15 : 13, Math.floor(avail / L.length));
+  L.forEach(([t, col], i) => fit(t, Y + 16 + i * lh, col));
+}
+// the tile at the front of the skill tree grid
+function drawPassiveTile(x, st, X, Y, on) {
+  const n = classPassives(st.cls).length; drawBtn(x, X, Y, 54, 31, on, UIC.warm);
+  Font.drawC(x, '職業被動', X + 28, Y + 1, UIC.warm, UIC.textSh, 11); Font.drawC(x, n ? n + '項' : '無', X + 28, Y + 16, n ? UIC.text : UIC.muted, UIC.textSh, 9);
+}
 
 </script>
