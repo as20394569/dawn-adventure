@@ -223,7 +223,7 @@ function* summaryScreen() {
       if (SK[Math.min(mi, SK.length - 1)] === '_passive') { drawWin(x, 4, 168, 168, 84, 'menu'); drawPassiveInfo(x, st, 12, 171, 152, true); }
       else if (SK.length) { const id = SK[Math.min(mi, SK.length - 1)], mv = MOVES[id], m2 = skillMove(id); drawWin(x, 4, 168, 168, 84, 'menu');
         Font.draw(x, (mv.cat === '變' ? '輔助' : mv.cat === '物' ? '物理' : '魔法') + (m2.pow ? '　' + (typeof powTxt === 'function' ? powTxt(m2) : '威力' + m2.pow) : '') + '　消耗MP ' + skillMP(id), 12, 171, UIC.accent, UIC.textSh, 11);
-        Font.wrap(mv.d, 152, 11).slice(0, 4).forEach((l, i) => Font.draw(x, l, 12, 188 + i * 15, UIC.text, UIC.textSh, 11)); }
+        drawFitText(x, mv.d || '', 12, 188, 152, 62, 11); }
     }
   } };
   UI.push(scr);
@@ -248,7 +248,7 @@ function* pickMoveToForget(newId) {
     list.forEach((id, i) => { const mv = MOVES[id]; const Y = 28 + i * 19; if (i === mi) selBar(x, 6, Y, 164, 17); typeBadge(x, mv.t, 14, Y + 2, 30); Font.draw(x, mv.n, 52, Y, i === 4 ? UIC.accent : UIC.text, UIC.textSh); Font.drawR(x, i === 4 ? '新技能' : 'PP ' + Game.st.moves[i].pp, 164, Y, i === 4 ? UIC.accent : UIC.muted, UIC.textSh); });
     const mv = MOVES[list[mi]]; drawWin(x, 4, 132, 168, 80, 'menu');
     Font.draw(x, (mv.cat === '變' ? '變化' : mv.cat === '物' ? '物理' : '魔法') + ' 威力' + (mv.pow || '—') + ' PP' + mv.pp, 12, 134, UIC.accent, UIC.textSh);
-    Font.wrap(mv.d, 152).slice(0, 4).forEach((l, i) => Font.draw(x, l, 12, 150 + i * 15, UIC.text, UIC.textSh));
+    drawFitText(x, mv.d || '', 12, 150, 152, 60, 12);
     drawWin(x, 4, 216, 168, 36, 'menu'); Font.draw(x, 'A：忘記這招', 14, 218, UIC.text, UIC.textSh); Font.draw(x, 'B：不學新技能', 14, 234, UIC.muted, UIC.textSh);
   } };
   UI.push(scr); let res = -1;

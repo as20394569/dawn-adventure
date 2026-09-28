@@ -59,6 +59,12 @@ function* skillUpdateNote(st) {
   yield* say('打開選單的「技能」就能學新技能或升級。\n技能點用來學技能，天賦點用來點被動加成。');
 }
 
+/* v24.9 draw a text block that always fits: the largest font 10→7 whose wrapped lines fit the room (… only as a last resort) */
+function drawFitText(x, t, X, Y, w, room, zmax = 10, col = UIC.text) {
+  let z = zmax, L = Font.wrap(t, w, z); while (z > 7 && L.length * (z + 2) > room) { z--; L = Font.wrap(t, w, z); }
+  const n = Math.max(1, Math.floor(room / (z + 2))); if (L.length > n) { L = L.slice(0, n); L[n - 1] = L[n - 1].slice(0, -1) + '…'; }
+  L.forEach((l, i) => Font.draw(x, l, X, Y + i * (z + 2), col, UIC.textSh, z));
+}
 /* ---------- Skill tree screen ---------- */
 function* skillTreeScreen() {
   const st = Game.st; st.skills = st.skills || {}; let idx = 0, top = 0; const COLS = 3, VIS = 4;
@@ -83,7 +89,7 @@ function* skillTreeScreen() {
     const stat = m => (m.pow ? (typeof powTxt === 'function' ? powTxt(m) : '威力' + m.pow) + ' ' : '') + (m.heal ? '回復' + Math.round(m.heal * 100) + '% ' : '') + (m.shield ? '護盾' + m.shield + '回合 ' : '') + (m.dur ? '持續' + m.dur + '回合 ' : '') + 'MP' + Math.round(SKILL_MP[n.id] * (1 + 0.15 * ((m.lv || 1) - 1)));
     fitL((mv.cat === '變' ? '輔助' : mv.cat === '物' ? '物理' : '魔法') + '　' + (lv ? stat(cur) : stat(nxt)), 180, UIC.accent);
     if (lv && lv < SKILL_MAX) fitL('下一級：' + stat(nxt), 193, UIC.warm);
-    Font.wrap(mv.d, 152, 10).slice(0, 2).forEach((l, i) => Font.draw(x, l, 10, (lv && lv < SKILL_MAX ? 206 : 196) + i * 12, UIC.text, UIC.textSh, 10));
+    { const y0 = lv && lv < SKILL_MAX ? 206 : 196; drawFitText(x, mv.d || '', 10, y0, 152, 234 - y0, 10); } /* v24.9: the whole description, shrunk to fit (was cut after 2 lines) */
     Font.draw(x, s === 'max' ? '已達最高等級' : s.startsWith('locked') ? s.slice(7) : st.skp ? 'A：' + (lv ? '升級' : '學習') + '（消耗1點）' : '升級時可以獲得技能點', 10, 236, s.startsWith('locked') ? UIC.bad : UIC.muted, UIC.textSh, 10);
     if (lv) { const rb = refundBlock(n.id); drawBtn(x, 124, 232, 44, 16, false); Font.drawC(x, '↩退點', 146, 232, rb ? UIC.dis : UIC.warm, UIC.textSh, 9); if (typeof touchRegion === 'function') touchRegion(124, 232, 44, 16, () => tapKey('select')); }
     }

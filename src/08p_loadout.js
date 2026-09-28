@@ -39,7 +39,7 @@ function* inheritScreen() {
     if (top > 0) x.drawImage(UPARROW, 86, Y0 - 4); if (top + VIS < L.length) x.drawImage(DOWNARROW, 86, Y0 + VIS * RH + 1);
     const id = L[Math.min(idx, L.length - 1)], mv = skillMove(id), DY = Y0 + VIS * RH + 8; drawWin(x, 4, DY, 168, H - DY - 4, 'menu');
     const t1 = (mv.cat === '變' ? '輔助' : mv.cat === '物' ? '物理' : '魔法') + (mv.pow ? '　' + powTxt(mv) : '') + '　MP' + skillMP(id); let z = 10; while (z > 7 && Font.width(t1, z) > 156) z--; Font.draw(x, t1, 10, DY + 3, UIC.accent, UIC.textSh, z);
-    Font.wrap(mv.d || '', 154, 9).slice(0, 3).forEach((l, i) => Font.draw(x, l, 10, DY + 17 + i * 11, UIC.text, UIC.textSh, 9));
+    drawFitText(x, mv.d || '', 10, DY + 17, 154, H - 22 - (DY + 17), 9);
     Font.draw(x, 'A：放入／取下', 10, H - 20, UIC.muted, UIC.textSh, 9);
     drawBtn(x, 120, H - 22, 48, 16, false); Font.drawC(x, '↩遺忘', 144, H - 22, UIC.warm, UIC.textSh, 9); if (typeof touchRegion === 'function') touchRegion(120, H - 22, 48, 16, () => tapKey('select'));
   } };
