@@ -320,10 +320,14 @@ class Battle {
       Sound.sfx(r.mult > 1 ? 'hitSuper' : r.mult < 1 ? 'hitWeak' : 'hit'); if (r.crit) Sound.sfx('crit');
       yield* this.impact(t, r.mult > 1 || r.crit ? 2 : r.mult < 1 ? 0 : 1);
       yield* this.animHP(t);
+      /* v24.5 multi-hit skills land every hit right here, before any message / break / phase reaction of the monster
+         (playtest: the animation showed all hits but the later damage numbers only appeared after the monster's reactions) */
+      let hitN = 1, hitTotal = dmg; if (u.hero && t.hp > 0 && u.hp > 0 && MOVES[id] && MOVES[id].hits > 1 && this.extraHits) { const e = yield* this.extraHits(u, t, id, mv); hitN += e.n; hitTotal += e.total; }
       if (r.crit) yield* this.msg('擊中要害！');
       if (r.mult > 1) yield* this.msg('打中弱點！'); else if (r.mult < 1) yield* this.msg('被抵抗了……');
       if (t.defending) yield* this.msg(t.n + '的防禦擋下了一半的傷害！');
       if (endured) yield* this.msg(t.n + '咬緊牙關撐住了！（不屈）');
+      if (hitN > 1) yield* this.msg(hitN + '連擊！合計' + hitTotal + '點傷害！', { hold: 22 });
       if (mirrored && u.hp > 0) { const rf = Math.min(u.hp - 1 > 0 ? u.hp - 1 : u.hp, Math.max(1, Math.floor(dmg * 0.6))); u.hp -= rf; this.blinkH = 12; this.spawn({ k: 'line', x1: T0.x, y1: T0.y, x2: U0.x, y2: U0.y, c: '#c8f4ff', w: 3, grow: 3, life: 12 }); yield* this.animHP(u); yield* this.msg('魔法被鏡面反射了！' + u.n + '受到了' + rf + '點傷害！'); }
       if (this.cg && !t.hero && this.cg.shards > 0 && dmg > 0) { this.cg.shards = Math.max(0, this.cg.shards - (mv.cat === '物' ? 2 : 1)); Sound.sfx('rock'); this.sparks(T0.x, T0.y, 10, ['#c8f4ff', '#80c0ff'], 2.5); yield* this.msg(this.cg.shards ? '擊碎了一塊水晶碎片！（剩下' + this.cg.shards + '塊）' : '水晶碎片全部被擊碎了！'); }
       if (this.cg && !t.hero && t.hp > 0) { const c = this.cg; if (c.stage < 1 && t.hp < t.maxhp * 0.7) { c.stage = 1; c.shards = 2; Sound.sfx('charge'); yield* this.msg('水晶碎片浮了起來，環繞著' + t.n + '！'); yield* this.msg('（碎片還在時，傷害會被減弱，而且它會回復。攻擊它就能擊碎碎片，物理攻擊一次能打碎兩塊！）'); } if (c.stage < 2 && t.hp < t.maxhp * 0.35) { c.stage = 2; c.flood = true; Sound.sfx('water'); this.shake = 30; yield* this.msg('水道的牆壁裂開，大水湧了進來！'); yield* this.msg('（每回合都會全身濕透……小心雷擊！）'); } }

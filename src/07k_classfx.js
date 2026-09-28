@@ -29,19 +29,14 @@ Object.assign(FX, {
   *arcaneEdge(U, T) { Sound.sfx('charge'); for (let i = 0; i < 3; i++) { const sx = T.x + (i - 1) * 22; this.spawn({ k: 'line', x1: sx, y1: T.y - 60, x2: sx + 4, y2: T.y + 6, c: '#c8a8ff', w: 3, grow: 5, life: 12 }); this.spawn({ k: 'line', x1: sx, y1: T.y - 60, x2: sx + 4, y2: T.y + 6, c: '#ffffff', w: 1, grow: 5, life: 14 }); yield* wait(5); } this.sparks(T.x, T.y, 14, ['#a070ff', '#ffffff'], 2.8); yield* wait(10); },
 });
 
-/* ---------- multi-hit: extra hits after the first one landed ---------- */
-{ const _um = Battle.prototype.useMove; Battle.prototype.useMove = function* (u, t, id) {
-    const hp0 = t.hp; yield* _um.call(this, u, t, id);
-    if (!u.hero || !MOVES[id] || !MOVES[id].hits || t.hp <= 0 || u.hp <= 0 || t.hp >= hp0) return;
-    let mv = skillMove(id); if (u.stats.welem && mv.t === '一般' && mv.cat === (isMagicKind(u.stats.wkind) ? '特' : '物')) mv = { ...mv, t: u.stats.welem };
-    let n = 1, total = hp0 - t.hp;
-    for (let i = 1; i < mv.hits && t.hp > 0; i++) {
-      if (!chance(Math.min(1, hitChance(u, t, mv)))) continue;
-      const T0 = this.center(t), r = this.calcDamage(u, t, mv); let d = r.dmg; if (t.shield > 0) d = Math.max(1, Math.floor(d * 0.6)); d = Math.min(d, t.hp);
-      if (mv.hitFx && FX[mv.hitFx]) yield* FX[mv.hitFx].call(this, this.center(u), T0, u, i, mv.hits); /* v22c: per-hit animation */ else this.spawn({ k: 'line', x1: T0.x - 18 + i * 5, y1: T0.y - 16, x2: T0.x + 14 - i * 3, y2: T0.y + 16, c: '#ffffff', w: 2, grow: 2, life: 8 }); Sound.sfx(r.crit ? 'crit' : 'hit');
-      t.hp -= d; total += d; n++; yield* this.impact(t, r.mult > 1 || r.crit ? 2 : 1); yield* this.animHP(t); yield* wait(3);
-    }
-    if (n > 1) yield* this.msg(n + '連擊！合計' + total + '點傷害！', { hold: 22 });
-    if (this._brkPending && this.F.hp > 0) { this._brkPending = false; yield* this.doBreak(); }
-  };
-}
+/* ---------- multi-hit: extra hits right after the first one landed (called from the base useMove, v24.5) ---------- */
+Battle.prototype.extraHits = function* (u, t, id, mv0) {
+  let mv = mv0 || skillMove(id); const hits = (MOVES[id] && MOVES[id].hits) || mv.hits || 1; let n = 0, total = 0;
+  for (let i = 1; i < hits && t.hp > 0; i++) {
+    if (!chance(Math.min(1, hitChance(u, t, mv)))) continue;
+    const T0 = this.center(t), r = this.calcDamage(u, t, mv); let d = r.dmg; if (t.shield > 0) d = Math.max(1, Math.floor(d * 0.6)); d = Math.min(d, t.hp);
+    if (mv.hitFx && FX[mv.hitFx]) yield* FX[mv.hitFx].call(this, this.center(u), T0, u, i, hits); /* v22c: per-hit animation */ else this.spawn({ k: 'line', x1: T0.x - 18 + i * 5, y1: T0.y - 16, x2: T0.x + 14 - i * 3, y2: T0.y + 16, c: '#ffffff', w: 2, grow: 2, life: 8 }); Sound.sfx(r.crit ? 'crit' : 'hit');
+    t.hp -= d; total += d; n++; this._lastHit = r; yield* this.impact(t, r.mult > 1 || r.crit ? 2 : 1); yield* this.animHP(t); yield* wait(3);
+  }
+  return { n, total };
+};
