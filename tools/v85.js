@@ -1,0 +1,1 @@
+module.exports = async g => g.log(await g.ev(() => ['town', 'route', 'ruins'].map(m => m + ' top: ' + MAPS[m].rows[0] + ' | ' + MAPS[m].rows[1] + '  bottom: ' + MAPS[m].rows[MAPS[m].rows.length - 1]).join('\n')));

@@ -8384,8 +8384,9 @@ Object.assign(FX, {
   *bladeTornado(U, T, u) { Sound.sfx('wind'); for (let i = 0; i < 22; i++) { const an = i * 0.9, h = i * 3; this.spawn({ k: 'shard', x: T.x + Math.cos(an) * (10 + i), y: T.y + 26 - h, vx: -Math.sin(an) * 1.8, vy: -0.8, s: 5, spin: 0.5, c: i % 3 ? '#c8d8f0' : '#ffffff', life: 24 }); }
     for (let k = 0; k < 3; k++) { arcCut(this, { x: T.x, y: T.y + 20 - k * 18 }, { r: 20 + k * 6, a0: 0, a1: Math.PI * 2, tail: 2.6, grow: 10, c: '#9ab8e8', w: 2, life: 22 }); yield* wait(4); Sound.sfx('slash'); } yield* wait(10); },
   *shadowDance(U, T, u) { Sound.sfx('wind'); this.spawn({ k: 'dark', a: 0.35, life: 30 }); yield* this.lunge(u, 14, 2);
-    this.spawn({ k: 'slit', x: T.x - 24, y: T.y, ang: -0.9, w: 3, h: 22, c: '#a070ff', life: 12 }); yield* wait(6); },
-  *shadowDanceHit(U, T, u, i) { const an = [-0.9, 0.9, 0, 1.6, -1.6][i % 5], ox = [24, -20, 0, 18, -18][i % 5]; Sound.sfx('slash'); this.spawn({ k: 'slit', x: T.x + ox, y: T.y, ang: an, w: 3, h: 22, c: i % 2 ? '#d8b0ff' : '#8a3aff', life: 12 }); slashBeat(this, T, 4, '#c8a0ff'); yield* wait(5); },
+    const k = this.foeHalfW ? Math.min(1, this.foeHalfW() * 0.55 / 24) : 1; /* v24.13: slashes stay on the foe's body (small foes got hit beside them) */
+    this.spawn({ k: 'slit', x: T.x - 24 * k, y: T.y, ang: -0.9, w: 3, h: 22, c: '#a070ff', life: 12 }); yield* wait(6); },
+  *shadowDanceHit(U, T, u, i) { const an = [-0.9, 0.9, 0, 1.6, -1.6][i % 5], k = this.foeHalfW ? Math.min(1, this.foeHalfW() * 0.55 / 24) : 1, ox = [24, -20, 0, 18, -18][i % 5] * k; Sound.sfx('slash'); this.spawn({ k: 'slit', x: T.x + ox, y: T.y, ang: an, w: 3, h: 22, c: i % 2 ? '#d8b0ff' : '#8a3aff', life: 12 }); slashBeat(this, T, 4, '#c8a0ff'); yield* wait(5); },
   *redFlurry(U, T, u) { yield* this.lunge(u, 8, 2); Sound.sfx('slash'); for (let i = 0; i < 4; i++) { const an = rnd(0, 628) / 100; this.spawn({ k: 'line', x1: T.x + Math.cos(an) * 16, y1: T.y + Math.sin(an) * 14, x2: T.x - Math.cos(an) * 6, y2: T.y - Math.sin(an) * 5, c: '#ff6a5a', w: 2, grow: 2, life: 7 }); } yield* wait(4); },
   *redFlurryHit(U, T, u, i) { Sound.sfx('hit'); for (let k = 0; k < 3; k++) { const an = rnd(0, 628) / 100; this.spawn({ k: 'line', x1: T.x + Math.cos(an) * 16, y1: T.y + Math.sin(an) * 14, x2: T.x - Math.cos(an) * 6, y2: T.y - Math.sin(an) * 5, c: k % 2 ? '#ffffff' : '#ff6a5a', w: 2, grow: 2, life: 7 }); } this.spawn({ k: 'glow', x: T.x, y: T.y, r: 10, c: '#ff8a70', life: 6 }); yield* wait(3); },
   *windThrust(U, T, u) { Sound.sfx('wind'); yield* this.lunge(u, 20, 2); this.spawn({ k: 'line', x1: U.x, y1: U.y - 8, x2: T.x + 30, y2: T.y, c: '#5cd0a0', w: 4, grow: 3, life: 12 }); this.spawn({ k: 'line', x1: U.x, y1: U.y - 8, x2: T.x + 30, y2: T.y, c: '#ffffff', w: 1, grow: 3, life: 12 });
@@ -11769,14 +11770,15 @@ function ch2ChibiFrame(sp, size, step, flip) {
    big bosses (影將 / 熔岩巨人 / 九頭蛇 …) stand in the lower part of a tall frame, so their middle was up near the head or above it.
    The box now starts at the first visible row of the idle frame (feet / drawing position unchanged). */
 { const VIS = {};
-  const visTop = base => { if (base in VIS) return VIS[base]; const im = BATTLE_PXC[base], M = typeof BATTLE_PXC_META !== 'undefined' && BATTLE_PXC_META[base]; if (!im || !im.ok || !M) return null;
+  const visBox = base => { if (base in VIS) return VIS[base]; const im = BATTLE_PXC[base], M = typeof BATTLE_PXC_META !== 'undefined' && BATTLE_PXC_META[base]; if (!im || !im.ok || !M) return null;
     const fi = (M.frames.idle || [0])[0], c = mkCanvas(M.w, M.h), x = c.getContext('2d'); x.drawImage(im, fi * M.w, 0, M.w, M.h, 0, 0, M.w, M.h);
-    const d = x.getImageData(0, 0, M.w, M.h).data; let t = -1; for (let y = 0; y < M.h && t < 0; y++) for (let xx = 0; xx < M.w; xx++) if (d[(y * M.w + xx) * 4 + 3]) { t = y; break; }
-    return VIS[base] = t < 0 ? null : t; };
+    const d = x.getImageData(0, 0, M.w, M.h).data; let t = -1, l = M.w, r = -1; for (let y = 0; y < M.h; y++) for (let xx = 0; xx < M.w; xx++) if (d[(y * M.w + xx) * 4 + 3]) { if (t < 0) t = y; if (xx < l) l = xx; if (xx > r) r = xx; }
+    return VIS[base] = t < 0 ? null : { t, l, r }; };
   const _ps = pxSpec; pxSpec = function (key) {
     const S = _ps(key); if (!S || !S.chibi || !S.bb || typeof chibiBase !== 'function') return S;
-    const t = visTop(chibiBase(key)); if (t === null || t === undefined) return S;
-    const top = PX_PAD + t; if (top > S.bb.top && top < S.bb.bot) S.bb = { ...S.bb, top, h: S.bb.bot - top + 1 };
+    const v = visBox(chibiBase(key)); if (!v) return S;
+    const top = PX_PAD + v.t; if (top > S.bb.top && top < S.bb.bot) S.bb = { ...S.bb, top, h: S.bb.bot - top + 1 };
+    S.bb = { ...S.bb, vw: v.r - v.l + 1 }; /* visible width: effects spread their slashes inside it */
     return S;
   };
 }
@@ -11791,6 +11793,9 @@ function ch2ChibiFrame(sp, size, step, flip) {
   wrap('m_chirp', waveAt('#f0d060')); wrap('m_screech', waveAt('#e04050')); wrap('m_wail', waveAt('#8a78b0'));
   wrap('m_rumble', function* (U, T) { mSpawn(this, 'mcrack', { x: T.x, y: T.y + 24, n: 3, c: '#2a1a10', life: 26 }); this.shake = Math.max(this.shake, 8); yield* wait(10); });
 }
+
+/* half of the foe's visible width (chibis know it exactly; other sprites: a fair guess) */
+Battle.prototype.foeHalfW = function () { const bb = this.imgF && this.imgF.bb; return bb ? (bb.vw ? bb.vw / 2 : bb.w * 0.35) : 20; };
 
 /* ===================== CHAPTER 2 — four new 上級職業 (tier 3, unlocked by trials, changed at the 王都冒險者公會) =====================
    吟遊詩人 bard      歌與增益：勇氣之歌・安眠曲・不協和音，增益越多「英雄終曲」越強（魔攻系）      試煉：找回失落的樂譜（地下水道）
@@ -12226,6 +12231,49 @@ const STORY_MARKS = {
     const m = _nq(id, st); if (m === '?' || !STORY_MARKS[id] || !st || !st.flags) return m;
     let s = null; try { s = STORY_MARKS[id](st); } catch (e) { s = null; }
     return s === '?' ? '?' : (m || s);
+  };
+}
+
+/* ===================== v24.13 small markers on entrances and passages to other maps =====================
+   Playtest: "mark the entrances and passages that lead to other maps".
+   · map-edge passages (edgeWarps, north / south warps, seamless connections): a gold chevron on the edge tile, pointing out of the map
+     (grey when the way is still closed: a missing key / flag)
+   · exit mats of interiors and dungeons, stair / gate triggers: a chevron on the tile
+   · doors that lead to a dungeon (not to a room) and warp props (manhole, cave doors, the star gate): a chevron bobbing above them
+   Drawn on the ground layer (right after the tile), so characters still walk over them. */
+const WARP_TRIGS = new Set(['towerUp', 'toFort', 'fortUp']);
+const WARP_PROPS = new Set(['manhole', 'iceCaveDoor', 'lavaDoor', 'starGate']);
+function passMarks(ow) {
+  const m = ow.map; if (m._pm) return m._pm; const d = m.d, L = {}, walk = (x, y) => !SOLID.has(ow.tileAt(x, y));
+  const add = (x, y, dir, need) => { L[x + ',' + y] = { x, y, dir, need }; };
+  for (const w of d.edgeWarps || []) for (const a of w.at) add(w.dir === 'left' ? 0 : w.dir === 'right' ? m.w - 1 : a, w.dir === 'up' ? 0 : w.dir === 'down' ? m.h - 1 : a, w.dir, w.need);
+  if (d.northWarp) for (const a of d.northWarp.x) add(a, 0, 'up');
+  if (d.southWarp) for (let x = 0; x < m.w; x++) if (walk(x, m.h - 1)) add(x, m.h - 1, 'down');
+  for (const k in d.connect || {}) { const up = k === 'n', y = up ? 0 : m.h - 1; for (let x = 0; x < m.w; x++) if (walk(x, y)) add(x, y, up ? 'up' : 'down'); }
+  if (d.exit) add(d.exit.x, d.exit.y, 'down');
+  for (const t of d.triggers || []) if (WARP_TRIGS.has(t.id)) add(t.x, t.y, 'up');
+  const above = [];
+  for (const k in m.doors) { const b = m.doors[k], to = b.to && b.to[0]; if (to && typeof MAP_TYPES !== 'undefined' && MAP_TYPES[to] && MAP_TYPES[to] !== '室內') { const [x, y] = k.split(',').map(Number); above.push({ x, y }); } }
+  return m._pm = { tiles: L, above };
+}
+function drawChevron(x, cx, cy, dir, col) {
+  const P = { up: [[0, -2], [-3, 1], [3, 1]], down: [[0, 2], [-3, -1], [3, -1]], left: [[-2, 0], [1, -3], [1, 3]], right: [[2, 0], [-1, -3], [-1, 3]] }[dir];
+  const tri = (dx, dy, c, g) => { x.fillStyle = c; x.beginPath(); P.forEach(([a, b], i) => { const X = cx + dx + a * g, Y = cy + dy + b * g; i ? x.lineTo(X, Y) : x.moveTo(X, Y); }); x.closePath(); x.fill(); };
+  tri(0, 0, 'rgba(16,18,30,0.75)', 1.45); tri(0, 0, col, 1);
+}
+{ const _dt = Overworld.prototype.drawTile; Overworld.prototype.drawTile = function (x, c, tx, ty, sx, sy, f, f2) {
+    _dt.call(this, x, c, tx, ty, sx, sy, f, f2);
+    if (Game.settings.passMarks === false || !this.map) return;
+    const M = passMarks(this), mk = M.tiles[tx + ',' + ty]; if (!mk) return;
+    const locked = mk.need && !this.st.flags[mk.need], bob = Math.round(Math.sin(this.t / 12 + tx) * 1), [dx, dy] = DIRS[mk.dir];
+    const cx = sx + 8 + dx * 4 + (mk.dir === 'left' || mk.dir === 'right' ? bob * dx : 0), cy = sy + 8 + dy * 4 + (mk.dir === 'up' || mk.dir === 'down' ? bob * dy : 0);
+    x.globalAlpha = locked ? 0.55 : 0.9; drawChevron(x, cx, cy, mk.dir, locked ? '#9aa0b0' : '#ffd860'); x.globalAlpha = 1;
+  };
+  const _dr = Overworld.prototype.draw; Overworld.prototype.draw = function (x) {
+    _dr.call(this, x); if (Game.settings.passMarks === false || !this.map) return;
+    const M = passMarks(this), camX = this.camX, camY = this.camY, bob = Math.round(Math.sin(this.t / 10) * 1.5);
+    const pts = M.above.map(q => [q.x, q.y - 1]).concat(this.npcs.filter(n => WARP_PROPS.has(n.id)).map(n => [n.x, n.y - 1]));
+    for (const [tx, ty] of pts) { const X = tx * 16 - camX + 8, Y = ty * 16 - camY + 10 + bob; if (X < -8 || Y < -8 || X > W + 8 || Y > H) continue; x.globalAlpha = 0.9; drawChevron(x, X, Y, 'down', '#ffd860'); x.globalAlpha = 1; }
   };
 }
 
