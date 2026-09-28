@@ -89,7 +89,6 @@ MOVES.fullBurst.hitsUpTurret = 1;
     if (!u.hero && H && H.charging && MOVES[H.charging] && MOVES[H.charging].jump && MOVES[id] && MOVES[id].pow && id !== '__frozen' && !u._frozenNow && u.status !== 'slp' && !u.flinched && !(MOVES[id].charge && u.charging !== id)) {
       if (u.charging === id) u.charging = null; yield* this.msg(u.n + '使用了' + MOVES[id].n + '！'); yield* this.msg('但是' + H.n + '在空中，攻擊落空了！'); return; }
     if (!u.hero || !base) return yield* _um.call(this, u, t, id);
-    if (base.jump && u.charging === id && this.offH) this.offH.y = 0;
     const lv = skillLv(id) || 1, chi = u.chi || 0, upHits = base.chiHits && chi ? Math.min(5, chi) : 0;
     if (upHits) base.hits += upHits;
     let r; try { r = yield* _um.call(this, u, t, id); } finally { if (upHits) base.hits -= upHits; }
@@ -127,10 +126,11 @@ MOVES.fullBurst.hitsUpTurret = 1;
     const C = this.center(H), ox = this.offH ? this.offH.x : 0, oy = this.offH ? this.offH.y : 0;
     if (H.turretT > 0) { const X = Math.round(C.x + 30 + ox), Y = Math.round(HERO_FOOT - 18 + oy); x.fillStyle = '#10121e'; x.fillRect(X - 1, Y - 1, 14, 12); x.fillStyle = '#8a6a2a'; x.fillRect(X, Y + 5, 12, 5); x.fillStyle = '#c8a050'; x.fillRect(X + 2, Y + 1, 7, 5); x.fillStyle = '#4ac0c0'; x.fillRect(X + 4, Y + 2, 2, 2); x.fillStyle = '#6a6a74'; x.fillRect(X + 8, Y + 2, 6, 2); Font.draw(x, String(H.turretT), X + 13, Y + 2, '#ffe070', '#000', 7); }
     if (H.chi > 0) { const X = Math.round(C.x - 14 + ox), Y = Math.round(C.y - 34 + oy); for (let i = 0; i < 5; i++) { x.fillStyle = '#10121e'; x.fillRect(X + i * 6 - 1, Y - 1, 5, 5); x.fillStyle = i < H.chi ? (H.chi >= 5 ? '#ff6040' : '#ffc040') : '#3a3a4a'; x.fillRect(X + i * 6, Y, 3, 3); } }
-    if (H.charging && MOVES[H.charging] && MOVES[H.charging].jump) this.offH && (this.offH.y = -60);
+    if (H.charging && MOVES[H.charging] && MOVES[H.charging].jump && !this._jumpAnim) this.offH && (this.offH.y = -320);
+    if (this.offH && this.offH.y <= -200) { const r = 6 + (Math.floor(this.t / 8) % 2); x.fillStyle = 'rgba(10,12,24,0.35)'; x.beginPath(); x.ellipse(Math.round(C.x), HERO_FOOT - 2, r * 2, r * 0.5, 0, 0, 7); x.fill(); } /* the shadow stays on the ground while airborne */ /* v24.16: up out of view (at -60 the hero hung in front of the monster's face) */
   };
 }
-{ const _es = Battle.prototype.endTurn; Battle.prototype.endTurn = function* () { const r = yield* _es.call(this); const H = this.H; if (H && this.offH && !(H.charging && MOVES[H.charging] && MOVES[H.charging].jump) && this.offH.y === -60) this.offH.y = 0; return r; }; }
+{ const _es = Battle.prototype.endTurn; Battle.prototype.endTurn = function* () { const r = yield* _es.call(this); const H = this.H; if (H && this.offH && !(H.charging && MOVES[H.charging] && MOVES[H.charging].jump) && this.offH.y < -100) this.offH.y = 0; return r; }; }
 
 /* ---------- animations ---------- */
 const note = (b, X, Y, c, vy = -0.8) => b.spawn({ k: 'txt', s: '♪', x: X, y: Y, c, sh: '#101020', vy, vx: rnd(-6, 6) / 10, fade: 1, life: 26 });
@@ -253,5 +253,18 @@ Object.assign(Events, {
       if ((st.bag.spring || 0) >= 3 && (st.bag.brassGear || 0) >= 3 && (yield* yesNo('要把發條×3和黃銅齒輪×3交給艾德嗎？'))) { st.bag.spring -= 3; st.bag.brassGear -= 3; f.clsMachinist = 1; Sound.jingle('item'); yield* sayAll(['好！等我一下……', '（叮叮噹噹……）', '完成了！機工士的工具組！', '到冒險者公會轉職吧。砲台的用法……用了就懂了！']); yield* itemGet('解鎖了上級職業「機工士」！'); return; }
     }
     yield* _cm(ow);
+  };
+}
+
+/* v24.16 龍騎士's jump: leap up out of the screen (the monster stands right above the hero, so hanging at -60 put the hero on its face),
+   stay out of view while airborne (the shadow stays on the ground), then dive down onto the monster and land back in place */
+{ const _um = Battle.prototype.useMove; Battle.prototype.useMove = function* (u, t, id) {
+    const base = MOVES[id]; if (!u || !u.hero || !base || !base.jump || !this.offH) return yield* _um.call(this, u, t, id);
+    const o = this.offH, landing = u.charging === id;
+    if (landing) { this._jumpAnim = true; Sound.sfx('wind'); yield* tween(10, q => { o.x = 0; o.y = Math.round(-320 + 280 * q * q); }); this.shake = Math.max(this.shake || 0, 6); }
+    let r; try { r = yield* _um.call(this, u, t, id); } finally { this._jumpAnim = false; }
+    if (landing) { const y0 = o.y; if (y0) yield* tween(8, q => { o.y = Math.round(y0 * (1 - q)); }); o.y = 0; }
+    else if (u.charging === id) { this._jumpAnim = true; Sound.sfx('wind'); yield* tween(14, q => { o.y = -Math.round(320 * q * q); }); this._jumpAnim = false; o.y = -320; }
+    return r;
   };
 }
