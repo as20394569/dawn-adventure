@@ -1,8 +1,8 @@
 /* ===================== v24.5 unique armour looks + item icons (Codex task M: art/battle/armor) =====================
    Player request: every piece of gear gets its own pixel look, used on the hero and in the loot showcase, at the right size.
-   - <key>_back  (16×22): back-view overlay for the battle doll, aligned to doll frame 0; head / body overlays are reused 1 px higher for frame 1,
-     feet have their own frame-1 overlay <key>_back2. Order: base doll → feet → body → head → weapon.
-   - <key>_icon  (16×16): the item alone, shown at 2× in the loot showcase and the equipment picker (accessories too).
+   - KEY_back  (16×22): back-view overlay for the battle doll, aligned to doll frame 0; head / body overlays are reused 1 px higher for frame 1,
+     feet have their own frame-1 overlay KEY_back2. Order: base doll → feet → body → head → weapon.
+   - KEY_icon  (16×16): the item alone, shown at 2× in the loot showcase and the equipment picker (accessories too).
    The field walking doll keeps its current look (field art stays unchanged). Items without art keep the old recolour. */
 const ARMOR_PX = {};
 for (const k in (typeof ARMOR_PX_SRC !== 'undefined' ? ARMOR_PX_SRC : {})) { const im = new Image(); im.onload = () => { im.ok = true; }; im.src = ARMOR_PX_SRC[k]; ARMOR_PX[k] = im; }

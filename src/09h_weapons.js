@@ -1,4 +1,4 @@
-/* ===================== v24.4 unique weapon sprites (Codex task L: art/battle/weapons/<key>.png) =====================
+/* ===================== v24.4 unique weapon sprites (Codex task L: art/battle/weapons/KEY.png) =====================
    Player request: every weapon gets its own pixel look, used on the hero and in the loot showcase, at the right size.
    Each sprite is 16×22 and is pasted onto the 28×24 battle doll at (12,1); the hand / grip anchor is sprite pixel (2,17).
    The same sprite is shown alone at 2× when a weapon drops (the doll is also shown at 2× in battle, so both read the same size).

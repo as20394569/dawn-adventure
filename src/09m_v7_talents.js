@@ -5,9 +5,9 @@
    rows 4–5 are the deep talents: Lv14 + 「天賦覺醒」 at the village elder. 1 point per level (+2 on awakening, + books).
    Changing class or resetting refunds everything for free. Many talents boost one weapon kind, so the weapon you pick
    decides which talents you want. */
-// branch icons (Codex task N: art/battle/talents/<cls>_<b>.png, 12×12)
-const TALENT_PX = {}; for (const k in (typeof TALENT_PX_SRC !== 'undefined' ? TALENT_PX_SRC : {})) { const im = new Image(); im.onload = () => { im.ok = true; }; im.src = TALENT_PX_SRC[k]; TALENT_PX[k] = im; }
-const branchIcon = (c, b) => { const im = TALENT_PX[c + '_' + b]; return im && im.ok ? im : null; };
+// branch icons (Codex task N: art/battle/talents/CLASS_BRANCH.png, 12×12)
+const TALENT_PX = {}; for (const k in (typeof TALENT_PX_ROWS !== 'undefined' ? TALENT_PX_ROWS : {})) { const [cols, rows] = TALENT_PX_ROWS[k], pal = {}; cols.forEach((c, i) => pal['abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'[i]] = c); TALENT_PX[k] = spriteFrom(rows, pal); }
+const branchIcon = (c, b) => TALENT_PX[c + '_' + b] || null;
 const ROW_OF = [0, 0, 1, 1, 2, 3, 4], ROW_REQ = [0, 3, 6, 9, 12], ROW_SLOTS = [[0, 1], [2, 3], [4], [5], [6]];
 // node: 'name|key|value per rank|max rank'
 const CLASS_V7 = {

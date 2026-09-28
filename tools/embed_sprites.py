@@ -82,8 +82,19 @@ tl = {}
 for f in sorted(glob.glob(os.path.join(root, 'art', 'battle', 'talents', '*.png'))):
     k = os.path.basename(f)[:-4]
     if 'preview' in k: continue
-    tl[k] = b64png(f)
-js += 'const TALENT_PX_SRC = ' + json.dumps(tl, separators=(',', ':')) + ';\n'
+    im = Image.open(f).convert('RGBA'); cols = []; rows = []
+    for y in range(im.height):
+        r = ''
+        for x in range(im.width):
+            q = im.getpixel((x, y))
+            if q[3] < 128: r += '.'; continue
+            hx = '#%02x%02x%02x' % q[:3]
+            if hx not in cols: cols.append(hx)
+            r += 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'[cols.index(hx)]
+        rows.append(r)
+    tl[k] = [cols, rows]
+# v7.0.1: the branch icons go in as palette rows, not base64 PNGs (the base64 icon data made the claude.ai link fail to load)
+js += 'const TALENT_PX_ROWS = ' + json.dumps(tl, separators=(',', ':')) + ';\n'
 print('talents', len(tl))
 open(os.path.join(root, 'src', '07id_sprites.js'), 'w').write(js)
 print('embedded', len(d), 'sprites', sum(len(v) for v in d.values()) // 1024, 'KB')
