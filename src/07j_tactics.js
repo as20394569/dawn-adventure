@@ -250,7 +250,8 @@ function drawShieldBadge(x, X, Y, n, broken, flash) {
     yield* _um.call(this, u, t, id);
     if (!mv || !mv.pow || u.hp <= 0 || t.hp <= 0) return;
     const S = this.H.stats, fx = S.fx || {};
-    if (u.hero && mv.cat === '物' && !t.status && (fx.poisonEdge || S.venomEdge) && chance(fx.poisonEdge && S.venomEdge ? 0.35 : 0.2)) yield* this.inflict(t, 'psn', true);
+    if (u.hero && mv.cat === '物' && !t.status && (fx.poisonEdge || S.venomEdge) && chance(fx.poisonEdge && S.venomEdge ? 0.35 : 0.2)) { yield* this.inflict(t, 'psn', true); /* v24.1: players didn't know where the poison came from — explain once */
+      const f = Game.st.flags; if (t.status === 'psn' && !f.tutVenom) { f.tutVenom = 1; yield* this.msg(S.venomEdge ? '（遊俠系的被動「毒刃」：物理攻擊有' + (fx.poisonEdge ? 35 : 20) + '%機率讓對手中毒。）' : '（裝備的「淬毒」效果：物理攻擊有20%機率讓對手中毒。）'); } }
     if (!u.hero && t.hero && t.hp === hp0 && (fx.shadowStep || S.shadowStep) && !(u.status === 'slp') && !u.flinched) {
       const c2 = this.calcDamage(t, u, t.stats.welem ? { ...MOVES.slash, t: t.stats.welem } : MOVES.slash), cd = Math.min(u.hp, Math.max(1, Math.floor(c2.dmg * 0.7)));
       yield* this.lunge(t, 10, 3); u.hp -= cd; Sound.sfx('slash'); yield* this.impact(u, 1); yield* this.animHP(u); yield* this.msg('殘影！' + t.n + '閃過攻擊並反擊！');

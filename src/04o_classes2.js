@@ -34,6 +34,6 @@ Object.assign(SKILL_TREES, {
   spellblade: [['eclipseSlash', 18], ['arcaneEdge', 20, 'eclipseSlash', 1]],
 });
 CLASS_FREE.ranger = ['twinStrike', 'venomFang'];
-CLASS_START.ranger = { moves: ['slash', 'twinStrike', 'venomFang'], gear: ['huntKnife', 'guardBadge'], tag: '迅捷連擊', bars: { 物攻: 3, 魔攻: 1, 防禦: 2, HP: 3 }, pitch: '在森林長大般的敏捷身手。連擊能快速削減魔物的護盾，還會用毒慢慢折磨對手。' };
+CLASS_START.ranger = { moves: ['slash', 'twinStrike', 'venomFang'], gear: ['huntKnife', 'guardBadge'], tag: '迅捷連擊', bars: { 物攻: 3, 魔攻: 1, 防禦: 2, HP: 3 }, pitch: '敏捷的獵人，連擊能快速削減魔物的護盾。被動「毒刃」：物理攻擊有20%機率讓對手中毒。' };
 CLASS_LINE.ranger = [[7, 'quickDraw'], [9, 'lacerate'], [11, 'flurry'], [13, 'hunterMark'], [15, 'smokeBomb'], [17, 'toxicBlade']];
 const CLASS_COL = { swordsman: '#ff9a50', mage: '#b080ff', guardian: '#6ec8ff', ranger: '#7ae070' };
