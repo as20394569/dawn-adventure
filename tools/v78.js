@@ -1,0 +1,3 @@
+module.exports = async (g) => g.log(await g.ev(() => { const giv = new Set(Object.values(COM_GIVER)); const deliv = new Set(Object.values(COMMISSIONS).filter(c => c.deliver).map(c => c.deliver[1]));
+  const where = {}; for (const m in MAPS) for (const n of MAPS[m].npcs || []) where[n.id] = (where[n.id] || '') + m + ' ';
+  const Q = [...new Set(NPC_ROLES.任務 || [])]; return 'quest NPCs ' + Q.length + '\nwithout commission marker: ' + Q.filter(id => !giv.has(id) && !deliv.has(id)).map(id => id + '@' + (where[id] || '?').trim() + (Events[id] ? '' : '(noEvent)')).join('  ') + '\ncommission givers: ' + [...giv].join(','); }));
