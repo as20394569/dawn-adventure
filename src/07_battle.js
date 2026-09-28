@@ -344,8 +344,8 @@ class Battle {
       if (ignite) { t.tangle = 0; Sound.sfx('fire'); yield* this.msg('纏繞的藤蔓燒了起來！燎原！'); if (t.hp > 0) yield* this.inflict(t, 'brn', true); }
       else if (mv.t === '草' && t.hp > 0 && !t.tangle) { t.tangle = 3; yield* this.msg(t.n + '被藤蔓纏住了！（怕火）', { hold: 24 }); }
       if (steam) { if (t.status === 'brn') t.status = null; yield* this.msg('水碰到火焰，蒸氣爆發了！'); }
-      if (u.hero && u.stats.drain && dmg > 0 && u.hp > 0 && u.hp < u.maxhp) { const hv = Math.max(1, Math.floor(dmg * u.stats.drain / 100)); u.hp = Math.min(u.maxhp, u.hp + hv); yield* this.animHP(u); yield* this.msg('荊棘吸取了' + hv + '點HP！', { hold: 24 }); }
-      if (mv.drain && dmg > 0 && u.hp < u.maxhp) { u.hp = Math.min(u.maxhp, u.hp + Math.max(1, Math.floor(dmg * mv.drain))); yield* FX.drainBack.call(this, this.center(t), this.center(u)); yield* this.animHP(u); yield* this.msg('從' + t.n + '身上吸取了養分！'); }
+      if (u.hero && u.stats.drain && hitTotal > 0 && u.hp > 0 && u.hp < u.maxhp) { const hv = Math.max(1, Math.floor(hitTotal * u.stats.drain / 100)); /* v24.8: every hit of a multi-hit skill counts */ u.hp = Math.min(u.maxhp, u.hp + hv); yield* this.animHP(u); yield* this.msg('吸血！回復了' + hv + '點HP。', { hold: 24 }); }
+      if (mv.drain && hitTotal > 0 && u.hp < u.maxhp) { u.hp = Math.min(u.maxhp, u.hp + Math.max(1, Math.floor(hitTotal * mv.drain))); yield* FX.drainBack.call(this, this.center(t), this.center(u)); yield* this.animHP(u); yield* this.msg('從' + t.n + '身上吸取了養分！'); }
       if (mv.recoil) { u.hp = Math.max(0, u.hp - Math.max(1, Math.floor(dmg * mv.recoil))); yield* this.animHP(u); yield* this.msg(u.n + '受到了反作用力的傷害！'); }
       if (t.hp > 0 && mv.eff && chance(mv.eff.p / 100)) {
         if (mv.eff.st) yield* this.inflict(t, mv.eff.st, true);
