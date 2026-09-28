@@ -79,14 +79,14 @@ Battle.prototype.chooseMove = function* () { // v20.7: a small pop-up (list + de
       x.fillStyle = 'rgba(200,160,80,0.35)'; x.fillRect(L, DY + 13, w - 16, 1);
       const pz = fit(pw + (sc ? '　' + sc : ''), 10, w - 22 - (eT ? Font.width(eT, 9) : 0)); const pe = Font.draw(x, pw, L, y, UIC.accent, UIC.textSh, pz); if (sc) Font.draw(x, sc, pe + 5, y + 1, UIC.muted, UIC.textSh, Math.max(7, pz - 2));
       if (eT) Font.drawR(x, eT, R, y + 1, UIC.warm, UIC.textSh, 9); y += 13; }
-    Font.drawC(x, 'A：使用　B：返回', W / 2, BB_Y + 11, UIC.muted, UIC.textSh, 9);
+    Font.drawC(x, Game.touchUI ? (m.tapSel === m.i ? '再點一次：使用　點外面：返回' : '點技能看說明・再點一次使用') : 'A：使用　B：返回', W / 2, BB_Y + 11, Game.touchUI && m.tapSel === m.i ? UIC.warm : UIC.muted, UIC.textSh, 9);
     const room = DY + DH - 5 - y, dtx = mv.d || ''; let z = 9, lh = 11, Ls = Font.wrap(dtx, w - 16, z);
     while (Ls.length * lh > room && z > 7) { z--; lh = z + 2; Ls = Font.wrap(dtx, w - 16, z); }
     const maxL = Math.max(1, Math.floor(room / lh)); if (Ls.length > maxL) { Ls = Ls.slice(0, maxL); Ls[maxL - 1] = Ls[maxL - 1].slice(0, -1) + '…'; }
     Ls.forEach((l, n) => Font.draw(x, l, L, y + n * lh, UIC.text, UIC.textSh, z));
   };
   while (true) {
-    const r = yield* choose(list.map(id => ({ t: MOVES[id].n, r: (typeof isInherited === 'function' && isInherited(id) ? '繼 ' : '') + 'MP' + skillMP(id), col: skillMP(id) > st.mp || (typeof hpCostBlocked === 'function' && hpCostBlocked(id)) ? UIC.dis : undefined })), { x: X, y: Y, w, h, rowH, fs: 10, ox: 12, oy: 17, visible: VIS, title: '選擇技能', index: cur, onMove: i => cur = i, drawExtra: info });
+    const r = yield* choose(list.map(id => ({ t: MOVES[id].n, r: (typeof isInherited === 'function' && isInherited(id) ? '繼 ' : '') + 'MP' + skillMP(id), col: skillMP(id) > st.mp || (typeof hpCostBlocked === 'function' && hpCostBlocked(id)) ? UIC.dis : undefined })), { x: X, y: Y, w, h, rowH, fs: 10, ox: 12, oy: 17, visible: VIS, title: '選擇技能', index: cur, onMove: i => cur = i, drawExtra: info, twoTap: true });
     if (r < 0) { this.idle = false; return null; }
     if (skillMP(list[r]) > st.mp) { yield* this.msg('MP不夠！'); continue; }
     this.idle = false; this.moveIdx = r; return list[r];

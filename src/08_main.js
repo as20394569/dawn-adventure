@@ -416,7 +416,7 @@ function loop(now) { accT += Math.min(120, now - lastT); lastT = now; let n = 0;
 
 // ---- input bindings ----
 const KEYMAP = { ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'left', ArrowRight: 'right', KeyW: 'up', KeyS: 'down', KeyA: 'left', KeyD: 'right', KeyZ: 'a', KeyJ: 'a', Space: 'a', KeyX: 'b', KeyK: 'b', Escape: 'b', ShiftLeft: 'b', Backspace: 'b', Enter: 'start', KeyM: 'start', ShiftRight: 'select' };
-window.addEventListener('keydown', e => { if (e.target && e.target.tagName === 'INPUT') return; const k = KEYMAP[e.code]; if (k) { e.preventDefault(); if (!e.repeat) Input.set(k, true); } });
+window.addEventListener('keydown', e => { if (e.target && e.target.tagName === 'INPUT') return; const k = KEYMAP[e.code]; if (k) { e.preventDefault(); Game.touchUI = false; if (!e.repeat) Input.set(k, true); } });
 window.addEventListener('keyup', e => { if (e.target && e.target.tagName === 'INPUT') return; const k = KEYMAP[e.code]; if (k) { e.preventDefault(); Input.set(k, false); } });
 window.addEventListener('blur', () => Input.clearAll());
 function bindButtons() {
