@@ -6,7 +6,10 @@ function inhSlots(st = Game.st) { const C = CLASSES[st.cls]; return !C ? 0 : C.t
 const treeIdSet = (st = Game.st) => new Set(skillTreeOf(st.cls).map(n => n.id));
 function inheritables(st = Game.st) { const T = treeIdSet(st); return learnedSkills(st).filter(id => id !== 'attack' && !T.has(id)); }
 function autoInherit(st, pool, n) {
-  const score = id => { const m = MOVES[id]; return (m.pow ? m.pow * (m.hits || 1) : 45) * skillPow(skillLv(id, st)); };
+  /* v24.15 prefer skills that fit the new class: a physical class (monk, dragoon …) no longer auto-picks old spells and vice versa */
+  const tree = skillTreeOf(st.cls).map(nd => MOVES[nd.id]).filter(m => m && m.pow), phys = tree.filter(m => m.cat === '物').length, mag = tree.filter(m => m.cat === '特').length, main = phys >= mag ? '物' : '特';
+  const fit = m => !m.pow || m.cat === main || (typeof st.cls === 'string' && st.cls === 'spellblade') ? 1 : 0.35;
+  const score = id => { const m = MOVES[id]; return (m.pow ? m.pow * (m.hits || 1) : 45) * skillPow(skillLv(id, st)) * fit(m); };
   const out = [], hasHeal = skillTreeOf(st.cls).some(nd => MOVES[nd.id].heal), heal = pool.filter(id => MOVES[id].heal).sort((a, b) => score(b) - score(a))[0];
   if (n && heal && !hasHeal) out.push(heal);
   for (const id of pool.filter(k => MOVES[k].pow).sort((a, b) => score(b) - score(a))) if (out.length < n && !out.includes(id)) out.push(id);
@@ -19,7 +22,7 @@ function fixInherit(st = Game.st) {
   st.inh = st.inh.filter((k, i) => pool.includes(k) && st.inh.indexOf(k) === i).slice(0, n); return st.inh;
 }
 function usableSkills(st = Game.st) { const L = learnedSkills(st), T = skillTreeOf(st.cls).map(n => n.id).filter(id => L.includes(id)); return T.concat(fixInherit(st).filter(id => !T.includes(id))); }
-function summarySkills(st = Game.st) { const U = usableSkills(st); return U.concat(learnedSkills(st).filter(id => !U.includes(id))); }
+function summarySkills(st = Game.st) { return usableSkills(st); } /* v24.15: 技能一覽 lists what this class can use (tree + 繼承); old classes' other skills are managed in 技能→繼承 */
 const isInherited = (id, st = Game.st) => !treeIdSet(st).has(id);
 const hpCostBlocked = (id, st = Game.st) => { const m = MOVES[id]; return !!(m && m.hpCost && m.pow && st.hp <= Math.floor(heroStats(st).hp * m.hpCost)); };
 
