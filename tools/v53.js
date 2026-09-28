@@ -1,0 +1,1 @@
+module.exports = async g => g.log(await g.ev(() => ['fox','bird','slime'].map(k => k + ':' + SPECIES[k].n).join(' ') + ' | ' + Object.keys(SPECIES).filter(k => k !== 'slime' && (HD_RIG_OF[k] === 'slime' || chibiBase(k) === 'slime')).map(k => k + ':' + SPECIES[k].n).join(' ')));
