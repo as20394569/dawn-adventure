@@ -11240,6 +11240,19 @@ const CAP_SHOP = ['superPotion', 'megaPotion', 'hiEther', 'megaEther', 'elixir',
 const armoryStock = st => ['royalSword', 'royalDagger', 'courtStaff', 'royalTome', 'royalHelm', 'royalMail', 'courtRobe', 'royalGreaves', 'royalBadge']
   .concat(st.flags.colossus ? ['brassSword', 'gearStaff', 'clockMail', 'springBoots'] : [], st.flags.frostQueen ? ['frostBrand', 'glacierStaff', 'yetiFur', 'snowBoots'] : [], st.flags.lavaGiant ? ['flameBrand', 'volcanoStaff', 'magmaPlate', 'lavaBoots'] : []);
 const FROST_SHOP = ['megaPotion', 'megaEther', 'elixir', 'antidote', 'awakening', 'parlyzHeal', 'burnHeal', 'frostHood', 'snowBoots', 'iceCharm'].filter(k => ITEMS[k] || GEAR[k]);
+/* v24.7 the chapter-2 gear sold in shops had no price (the shop showed NaN and nothing could be bought) */
+{ const T = { 5: 4200, 6: 6500, 7: 9500 }, S = { weapon: 1.25, body: 1.15, head: 0.9, feet: 0.85, acc: 1 };
+  for (const k of new Set([...FROST_SHOP, ...armoryStock({ flags: { colossus: 1, frostQueen: 1, lavaGiant: 1 } })])) { const G = GEAR[k]; if (G && !G.price) G.price = Math.round((T[G.t] || G.t * 1000) * (S[G.slot] || 1) / 100) * 100; } }
+/* v24.7 the well in 霜語村 used the 萌芽鎮 well event (rope → the old sewer → back to 萌芽鎮); it is its own frozen well now */
+{ const _well = Events.well; Events.well = function* (ow) {
+    const st = Game.st; if (st.map !== 'frostVillage') return yield* _well.call(this, ow);
+    if (st.flags.frostWell) { yield* say('結了冰的井。敲開的洞又凍起來了。'); return; }
+    yield* say('一口結了冰的井。井口的冰很厚，底下什麼也看不到。');
+    if (!(yield* yesNo('要把冰面敲開看看嗎？'))) return;
+    st.flags.frostWell = 1; Sound.sfx('rock'); st.bag.iceCrystal = (st.bag.iceCrystal || 0) + 2; yield* itemGet(st.name + '敲下了冰晶×2！');
+    yield* say('冰底下只有更多的冰……看來這口井已經凍到底了。');
+  };
+}
 function syncRecipesCh2(st = Game.st) { for (const R of RECIPES_CH2) { const i = RECIPES.indexOf(R); if (i >= 0) RECIPES.splice(i, 1); } if (st && ch2(st) >= 2) RECIPES.push(...RECIPES_CH2); }
 { const _so = startOverworld; startOverworld = function (...a) { syncRecipesCh2(Game.st); return _so.apply(this, a); }; }
 // buildings that need a key (the clock tower)

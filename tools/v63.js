@@ -1,0 +1,1 @@
+module.exports = async g => g.log(await g.ev(() => Object.keys(MAPS).filter(k => (MAPS[k].rows || []).some(r => r.includes('U'))).map(k => k + ':' + MAPS[k].rows.map((r, y) => r.includes('U') ? y + '/' + r.indexOf('U') : '').filter(Boolean).join(',')).join(' ') + ' | ow.mapId? ' + Object.keys(__game.Game.scene || {}).slice(0, 30).join(',')));
