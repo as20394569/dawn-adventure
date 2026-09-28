@@ -106,7 +106,7 @@ function* equipPick(sl) {
       Font.draw(x, o.g ? GEAR[o.g.b].n + (o.g.e ? ' +' + o.g.e : '') : '卸下', 14, Y, o.g ? gCol(o.g) : UIC.muted, UIC.textSh, 11); if (o.g === cur && cur) Font.drawR(x, '裝備中', 164, Y + 1, UIC.accent, UIC.textSh, 9); else if (o.g && (GEAR[o.g.b].fx || []).length) Font.drawR(x, '★', 164, Y, UIC.warm, UIC.textSh, 10);
       touchRegion(6, Y - 1, 164, 17, () => { if (hi === i) tapKey('a'); else hi = i; }); });
     if (top > 0) x.drawImage(UPARROW, 86, 23); if (top + VIS < opts.length) x.drawImage(DOWNARROW, 86, 22 + VIS * 18 + 3);
-    const o = opts[hi], Y0 = 22 + VIS * 18 + 12; drawWin(x, 4, Y0, 168, H - Y0 - 4, 'menu'); dollPreview(x, heroLookOf(st, { [sl]: o.g ? o.g.u : null }), 138, Y0 + 4, 1);
+    const o = opts[hi], Y0 = 22 + VIS * 18 + 12; drawWin(x, 4, Y0, 168, H - Y0 - 4, 'menu'); { const wim = sl === 'weapon' && o.g && typeof weaponPx === 'function' ? weaponPx(o.g.b) : null; if (wim) drawWeaponIcon(x, wim, 154, Y0 + 26, 2); else dollPreview(x, heroLookOf(st, { [sl]: o.g ? o.g.u : null }), 138, Y0 + 4, 1); } /* v24.4 weapon sprite */
     // comparison with what's equipped now
     const before = heroStats(), sv = st.equip[sl]; st.equip[sl] = o.g ? o.g.u : null; const after = heroStats(); st.equip[sl] = sv;
     const d = ['hp', 'mp', 'atk', 'def', 'spa', 'spd', 'spe', 'crit'].map(k => [k, Math.round((after[k] - before[k]) * 10) / 10]).filter(([, v]) => v);

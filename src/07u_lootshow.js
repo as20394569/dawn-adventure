@@ -35,7 +35,7 @@ Battle.prototype.lootShow = function* (g, head) {
     for (let i = 0; i < nR; i++) { x.rotate(Math.PI * 2 / nR); const gr = x.createLinearGradient(0, 0, 0, -34); gr.addColorStop(0, `rgba(${cr},${cg2},${cb},${q >= 3 ? 0.55 : 0.32})`); gr.addColorStop(1, `rgba(${cr},${cg2},${cb},0)`); x.fillStyle = gr; x.beginPath(); x.moveTo(-3, 0); x.lineTo(3, 0); x.lineTo(7, -34); x.lineTo(-7, -34); x.closePath(); x.fill(); }
     x.restore(); const glow = x.createRadialGradient(cx, cy, 0, cx, cy, 22); glow.addColorStop(0, `rgba(${cr},${cg2},${cb},0.45)`); glow.addColorStop(1, `rgba(${cr},${cg2},${cb},0)`); x.fillStyle = glow; x.fillRect(cx - 24, cy - 24, 48, 48);
     const bob = Math.round(Math.sin(s.t / 14) * 2);
-    if (icon && icon.doll) { x.imageSmoothingEnabled = false; x.drawImage(icon.doll, 0, 0, 16, 22, cx - 16, cy - 24 + bob, 32, 44); } else drawCharm(x, cx, cy + bob, col, s.t);
+    if (icon && icon.doll) { x.imageSmoothingEnabled = false; x.drawImage(icon.doll, 0, 0, 16, 22, cx - 16, cy - 24 + bob, 32, 44); } else if (icon && icon.wpn) drawWeaponIcon(x, icon.wpn, cx, cy + bob, 2); else drawCharm(x, cx, cy + bob, col, s.t);
     for (let i = 0; i < 4; i++) { const an = s.t / 30 + i * 1.57, rr = 24 + Math.sin(s.t / 11 + i) * 4; x.fillStyle = i % 2 ? '#ffffff' : col; x.fillRect(Math.round(cx + Math.cos(an) * rr), Math.round(cy + Math.sin(an) * rr * 0.7), 2, 2); }
     // name + details
     let y = Y + 70; { const nm = gearName(g); let z = 12; while (z > 9 && Font.width(nm, z) > w - 16) z--; Font.drawC(x, nm, W / 2, y, col, UIC.textSh, z); } y += 15; Font.drawC(x, kind, W / 2, y - 1, UIC.muted, UIC.textSh, 8); y += 11;

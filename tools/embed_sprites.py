@@ -42,6 +42,13 @@ for f in sorted(glob.glob(os.path.join(root, 'art', 'hero', 'px', '*.png'))):
 hm = os.path.join(root, 'art', 'hero', 'px', 'meta.json')
 js += 'const HERO_PX_SRC = ' + json.dumps(hr, separators=(',', ':')) + ';\n'
 js += 'const HERO_PX_META = ' + (open(hm).read() if os.path.exists(hm) else 'null') + ';\n'
+wp = {}
+for f in sorted(glob.glob(os.path.join(root, 'art', 'battle', 'weapons', '*.png'))):
+    k = os.path.basename(f)[:-4]
+    if '_' in k or k.startswith('weapons'): continue  # previews
+    wp[k] = 'data:image/png;base64,' + base64.b64encode(open(f, 'rb').read()).decode()
+js += 'const WEAPON_PX_SRC = ' + json.dumps(wp, separators=(',', ':')) + ';\n'
+print('weapons', len(wp))
 print('animated', len(a), 'field', len(fd), 'ui', len(ui), 'chibi', len(pc), 'skin', len(sk), 'hero', len(hr))
 open(os.path.join(root, 'src', '07id_sprites.js'), 'w').write(js)
 print('embedded', len(d), 'sprites', sum(len(v) for v in d.values()) // 1024, 'KB')
