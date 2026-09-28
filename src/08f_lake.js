@@ -49,8 +49,8 @@ Object.assign(Events, {
     yield* sayAll(['……好劍。', '你的劍裡，有魔力的流動。和我年輕的時候一樣。', '魔劍之道，就是讓劍與魔法合而為一。這三頁劍譜，就是它的全部。', '我已經老了。這條路，就交給你吧。']);
     st.flags.spellbladeOk = 1;
     if (st.cls !== 'spellblade' && (yield* yesNo('要繼承「魔劍士」的道路嗎？\n（隨時也能找村長轉職）'))) {
-      if (st.cls && CLASSES[st.cls] && CLASSES[st.cls].tier < 3) st.baseCls = baseClassOf(st.cls); st.cls = 'spellblade'; clampHP();
-      yield* itemGet(st.name + '成為了魔劍士！'); grantSkill('eclipseSlash', st); yield* say('學會了「月蝕斬」！物攻和魔攻會互相加成（魔劍共鳴）。');
+      yield* changeClass('spellblade');
+      yield* say('魔劍士的天賦能讓物攻與魔攻互相加成（魔劍共鳴）。試著配一把劍和一本魔導書吧。');
     } else yield* say('……想好了再去找村長吧。');
   },
 });

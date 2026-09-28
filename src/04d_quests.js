@@ -65,7 +65,7 @@ const ACHIEVEMENTS = [
   { id: 'gold', n: '金色傳說', d: '得到一件金色品質的裝備。', ok: st => (st.gear || []).some(g => g.q === 4) },
   { id: 'com', n: '萌芽鎮的好幫手', d: '完成告示板上的所有委託。', ok: st => Object.keys(COMMISSIONS).every(k => (comState(k, st) || {}).s === 'done') },
   { id: 'story', n: '故事的見證人', d: '完成所有支線故事。', ok: st => st.flags.q1done && st.flags.q2done && st.flags.q3res && st.flags.caravan === 'saved' },
-  { id: 'cls2', n: '更高的道路', d: '轉職為進階職業。', ok: st => st.cls && CLASSES[st.cls] && CLASSES[st.cls].tier >= 2 },
+  { id: 'cls2', n: '更高的道路', d: '完成天賦覺醒（Lv14找村長）。', ok: st => !!(st.flags && st.flags.deep) },
   { id: 'lv20', n: '異界的強者', d: '等級達到20。', ok: st => st.lv >= 20 },
 ];
 function checkAch() {
@@ -141,14 +141,14 @@ const QUEST_EVENTS = {
     if (f.q2 && !f.q2res) { yield* say('提姆應該在迷霧森林西南邊的水池附近……拜託你了。'); return; }
     if (f.q2res === 'home' && !f.q2done) {
       f.q2done = 1; yield* sayAll(['提姆回來了！雖然被我罵了一頓，但他說下次會等變強了再去。', '這是我當衛兵時用的頭盔，請收下。']);
-      st.money += 1000; const g = makeGear('guardHelm', 2); yield* itemGet(st.name + '得到了1000 G和' + gearName(g) + '！'); return;
+      st.money += 1000; const g = bpGift('guardHelm', 2); yield* itemGet(st.name + '得到了1000 G和' + g.txt + '！'); return;
     }
     if (f.q2res === 'stay' && f.q2done && !f.q2thx) { f.q2thx = 1; yield* sayAll(['提姆都跟我說了。你們一起打倒了苔石巨人！', '……那傢伙已經是獨當一面的獵人了。謝謝你相信他。']); return; }
     yield* sayAll(f.golem ? ['你打倒了魔像！……魔王要復活的傳聞，是真的嗎？'] : ['前方就是古岩遺跡。魔像被瘴氣侵蝕，越來越凶暴了。', '魔像非常強大。先在泉水恢復體力，準備好道具再進去吧。', '也別忘了記錄進度！']);
   },
   *tim(ow, ent) {
     const st = Game.st, f = st.flags;
-    const oath = function* () { f.q2done = 1; const g = makeGear('hunterOath', 4); yield* sayAll(['我們真的打倒它了！', '……剛才我一個人的時候，其實怕得要命。', '這是獵人出師時才能拿到的誓約之證。我想把它交給你。']); yield* itemGet(st.name + '得到了' + gearName(g) + '！'); yield* say('我要回去告訴哥哥了。下次見！'); if (ow && ent) ow.npcs = ow.npcs.filter(n => n !== ent); };
+    const oath = function* () { f.q2done = 1; const g = bpGift('hunterOath', 4); yield* sayAll(['我們真的打倒它了！', '……剛才我一個人的時候，其實怕得要命。', '這是獵人出師時才能拿到的誓約之證。我想把它交給你。']); yield* itemGet(st.name + '得到了' + g.txt + '！'); yield* say('我要回去告訴哥哥了。下次見！'); if (ow && ent) ow.npcs = ow.npcs.filter(n => n !== ent); };
     if (f.q2res === 'stay') { if (f.mossGiant) yield* oath(); else yield* say('我會在後面用弓箭掩護你！準備好就上吧！'); return; }
     yield* sayAll(['……！是、是誰？', '哥哥叫你來的？……我才不回去。', '只要打倒那尊苔石巨人，大家就會承認我是真正的獵人了。', '……雖然剛才被它一拳打飛，腳也扭到了。']);
     const r = yield* ask('要怎麼做？', ['帶他回去', '讓他留下'], { cancel: false });
@@ -167,7 +167,7 @@ const QUEST_EVENTS = {
       const mg = classGear('masterBlade') !== 'masterBlade', wn = GEAR[classGear('masterBlade')].n;
       yield* sayAll(mg ? ['……完成了。不過你是魔導士吧？', '師父的箱子底下還壓著一根沒完成的法杖，我用同樣的水晶把它也完成了。', '師父的另一件遺作「' + wn + '」。你來決定吧。'] : ['……完成了。師父的遺作「名匠遺作」。', '說實話……我很想把它留在鋪子裡，當作師父的紀念。', '但這把劍是為了真正的戰士打造的。你來決定吧。']);
       const r = yield* ask('要怎麼做？', ['收下' + wn, '讓鐵匠留著'], { cancel: false });
-      if (r === 0) { f.q3res = 'take'; const g = makeGear(classGear('masterBlade'), 4); yield* itemGet(st.name + '得到了' + gearName(g) + '！'); yield* say('師父一定也會很高興。好好使用它！'); }
+      if (r === 0) { f.q3res = 'take'; const g = bpGift(classGear('masterBlade'), 4); yield* itemGet(st.name + '得到了' + g.txt + '！'); yield* say('師父一定也會很高興。好好使用它！'); }
       else { f.q3res = 'keep'; f.smithDisc = 1; st.bag.tpBook = (st.bag.tpBook || 0) + 1; yield* sayAll(['……謝謝你。', '這是師父留下的修練書，送給你吧。以後強化的費用，我只收一半！']); yield* itemGet(st.name + '得到了天賦之書！強化費用永久半價！'); }
     } else yield* say(f.q3 === 1 ? '水晶碎片的事就拜託了。聽說在老井的地底下。' : f.smith ? '有素材就拿來吧！' : '我是鎮上的鐵匠。把魔物身上的素材帶來，我就幫你打造好東西！');
     f.smith = 1;

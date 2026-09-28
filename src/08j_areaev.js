@@ -116,8 +116,8 @@ function* aevTalk(ow, e) {
     if (!A.met) { A.met = 1; st.aevMet = (st.aevMet || 0) + 1; }
     if (!f.qMerchant) { f.qMerchant = 1; yield* sayAll(['嘿，冒險者！我是四處旅行的行商人。', '我在收集一種東西——「星之碎片」。流星掉下來的時候，偶爾撿得到。', '要是湊齊三個帶來給我，我就把公會的寶貝徽章讓給你！']); yield* say('（任務「行商人的收藏」開始了。）'); }
     else if (f.qMerchant === 1 && (st.bag.starShard || 0) >= 3 && (yield* yesNo('要把星之碎片×3交給行商人嗎？'))) {
-      st.bag.starShard -= 3; if (!st.bag.starShard) delete st.bag.starShard; f.qMerchant = 2; const g = makeGear('merchantBadge', 4);
-      yield* sayAll(['哇……三個都是上等貨！', '說好的，這個徽章給你。帶著它，好東西會自己找上門喔！']); yield* itemGet(st.name + '得到了' + gearName(g) + '！');
+      st.bag.starShard -= 3; if (!st.bag.starShard) delete st.bag.starShard; f.qMerchant = 2; const g = bpGift('merchantBadge', 4);
+      yield* sayAll(['哇……三個都是上等貨！', '說好的，這個徽章給你。帶著它，好東西會自己找上門喔！']); yield* itemGet(st.name + '得到了' + g.txt + '！');
     }
     else yield* say(f.qMerchant === 2 ? '又見面了！今天也帶了好東西喔。' : '星之碎片還在收集嗎？湊齊三個再來找我！');
     yield* shopFlow(A.stock || MERCHANT_POOL.slice(0, 5)); return;
@@ -149,7 +149,7 @@ function* aevTalk(ow, e) {
     const res = yield* ow.battleScript({ sp: 'mimic', lv: A.lv + 2, kind: 'elite', id: 'aevMimic', aevKind: 'mimic', aevLoot: 2 });
     if (res !== 'win') { yield* say('寶箱怪跳著逃走了……'); A.done = 1; aevEnd(ow, true); return; }
     A.done = 1; aevEnd(ow, true);
-    if (wonOf('mimic', st) >= 5 && !f.mimicHunter) { f.mimicHunter = 1; const g = makeGear('mimicTooth', 4); Sound.jingle('item'); yield* sayAll(['寶箱怪的嘴裡掉出了一顆發光的牙齒……', '這是打倒了五隻寶箱怪的證明！']); yield* itemGet(st.name + '得到了' + gearName(g) + '！'); }
+    if (wonOf('mimic', st) >= 5 && !f.mimicHunter) { f.mimicHunter = 1; const g = bpGift('mimicTooth', 4); Sound.jingle('item'); yield* sayAll(['寶箱怪的嘴裡掉出了一顆發光的牙齒……', '這是打倒了五隻寶箱怪的證明！']); yield* itemGet(st.name + '得到了' + g.txt + '！'); }
   }
 }
 // the golden monster hops around; the rampaging one glows red

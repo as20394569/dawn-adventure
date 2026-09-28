@@ -100,7 +100,7 @@ Object.assign(Events, {
     const r = yield* ask('要怎麼處置魔女？', ['放過她', '交給鎮上的守衛'], { cancel: false });
     if (r === 0) {
       f.witchFate = 'spare'; yield* sayAll(['「……你這個人，真是奇怪。」', '「好吧。這本咒書送你。以後需要藥的話，來找我吧。」']);
-      const g = makeGear(classGear('witchTome'), 4); yield* itemGet(st.name + '得到了' + gearName(g) + '！'); yield* say('（魔女薇奧拉會在沼澤裡開店了。）');
+      const g = bpGift(classGear('witchTome'), 4); yield* itemGet(st.name + '得到了' + g.txt + '！'); yield* say('（魔女薇奧拉會在沼澤裡開店了。）');
     } else {
       f.witchFate = 'turnin'; yield* sayAll(['「……是嗎。這也是報應吧。」', '（把魔女帶回萌芽鎮，交給了守衛。）', '守衛：「沼澤的魔女！？真是大功一件！這是懸賞金。」']);
       st.money += 3000; st.bag.tpBook = (st.bag.tpBook || 0) + 1; yield* itemGet(st.name + '得到了3000 G和天賦之書！');
@@ -126,7 +126,7 @@ function* lampEv(ow, i) {
     if (st.vis && st.vis.canyon && !f.qHorn) { f.qHorn = 1; yield* sayAll(['你去過落日峽谷了？那裡有一種叫「岩角犀」的魔物。', '牠的角比鐵還硬，是打造沙漠裝備的最好材料。', '要是能弄到「岩角」，我就能打造一整套峽谷的裝備！']); yield* say('（任務「犀角工匠」開始了。）'); }
     else if (f.qHorn === 1 && st.bag.rhinoHorn) {
       delete st.bag.rhinoHorn; f.qHorn = 2; syncRecipes(st); yield* sayAll(['這就是岩角！……好重，好硬！', '等我一下！']); yield* fadeOut(16); for (let i = 0; i < 3; i++) { Sound.sfx('rock'); yield* wait(24); } yield* fadeIn(16);
-      const g = makeGear(classGear('sandSaber'), 3); yield* sayAll(['第一把試作品。這把送你！', '以後帶素材來，峽谷和沼澤的裝備我都能打了。']); yield* itemGet(st.name + '得到了' + gearName(g) + '！'); yield* say('（打造清單增加了峽谷、沼澤的裝備和「星辰護符」。）');
+      const g = bpGift(classGear('sandSaber'), 3); yield* sayAll(['第一把試作品。這把送你！', '以後帶素材來，峽谷和沼澤的裝備我都能打了。']); yield* itemGet(st.name + '得到了' + g.txt + '！'); yield* say('（打造清單增加了峽谷、沼澤的裝備和「星辰護符」。）');
     }
     yield* _sm.call(this, ow, ent);
   };

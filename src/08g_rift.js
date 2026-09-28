@@ -73,7 +73,7 @@ Object.assign(Events, {
       const tok = st.bag.riftToken || 0, list = TOWER_SHOP.map(([k, c]) => (ITEMS[k] || GEAR[k]).n + '　' + c + '枚');
       const r = yield* ask('要用迴廊徽章交換什麼嗎？（持有' + tok + '枚）', [...list, '不用了']); if (r < 0 || r >= TOWER_SHOP.length) return;
       const [k, c] = TOWER_SHOP[r]; if (tok < c) { yield* say('徽章不夠喔。'); continue; }
-      st.bag.riftToken -= c; if (GEAR[k]) yield* itemGet('換到了' + gearName(makeGear(classGear(k), 3)) + '！'); else { st.bag[k] = (st.bag[k] || 0) + 1; yield* itemGet('換到了' + ITEMS[k].n + '！'); }
+      st.bag.riftToken -= c; if (GEAR[k]) yield* itemGet('換到了' + bpGift(classGear(k), 3).txt + '！'); else { st.bag[k] = (st.bag[k] || 0) + 1; yield* itemGet('換到了' + ITEMS[k].n + '！'); }
     }
   },
 });

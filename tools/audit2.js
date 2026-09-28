@@ -42,7 +42,7 @@ module.exports = async (g) => {
       if (s.trait && !['swift', 'healer', 'berserk'].includes(s.trait)) bad('魔物', k, '特性無效', s.trait);
       if ((s.elite || s.boss) && !s.drop && k !== 'bandit') warn('魔物', k, '精英/頭目沒有專屬掉落'); }
     // ---------- MOVES ----------
-    const heroMoves = new Set(['attack', ...Object.values(SKILL_TREES).flat().map(n => n[0]), ...Object.values(CLASS_LINE).flat().map(x => x[1]), ...Object.values(CLASS_START).flatMap(c => c.moves), ...Object.values(CLASSES).flatMap(c => [c.move, c.move2]).filter(Boolean), 'struggle', 'armorBreak', 'barrier', 'glare']);
+    const heroMoves = new Set(['attack', ...Object.values(SKILL_TREES).flat().map(n => n[0]), ...Object.values(CLASS_LINE).flat().map(x => x[1]), ...Object.values(CLASS_START).flatMap(c => c.moves), ...Object.values(CLASSES).flatMap(c => [c.move, c.move2]).filter(Boolean), 'struggle', 'armorBreak', 'barrier', 'glare', ...Object.keys(typeof WMOVE !== 'undefined' ? WMOVE : {}), ...Object.values(MOVES).map(m => m.tpl).filter(Boolean)]);
     for (const k in MOVES) { const m = MOVES[k];
       if (!ELEM.includes(m.t)) bad('技能', k, '屬性無效', m.t); if (!['物', '特', '變'].includes(m.cat)) bad('技能', k, '類別無效', m.cat); if (!m.cls) bad('技能', k, '缺內部分類');
       if (m.foe) { if (!MFX[m.fx]) bad('技能', k, '怪物特效不存在', m.fx); if (heroMoves.has(k)) bad('技能', k, '怪物技能被主角使用'); }
@@ -51,11 +51,11 @@ module.exports = async (g) => {
     for (const c in CLASS_LINE) for (const [lv, m] of CLASS_LINE[c]) if (!MOVES[m]) bad('職業技能表', c, m, '不存在'); for (const c in CLASS_START) { for (const m of CLASS_START[c].moves) if (!MOVES[m]) bad('起始技能', c, m); for (const b of CLASS_START[c].gear) if (!GEAR[b]) bad('起始裝備', c, b); }
     for (const c in CLASSES) { const C = CLASSES[c]; for (const m of [C.move, C.move2]) if (m && !MOVES[m]) bad('職業', c, '技能不存在', m); if (C.from && !CLASSES[C.from]) bad('職業', c, '前置職業無效'); }
     // hero FX uniqueness (different moves sharing the exact same effect)
-    const fxUse = {}; for (const k in MOVES) if (!MOVES[k].foe) (fxUse[MOVES[k].fx] = fxUse[MOVES[k].fx] || []).push(MOVES[k].n); for (const f in fxUse) if (fxUse[f].length > 1 && !(f === 'slash' && fxUse[f].includes('攻擊'))) warn('主角特效重複使用', f, fxUse[f].join('、'));
+    const fxUse = {}; for (const k in MOVES) if (!MOVES[k].foe && !MOVES[k].tpl) (fxUse[MOVES[k].fx] = fxUse[MOVES[k].fx] || []).push(MOVES[k].n); for (const f in fxUse) if (fxUse[f].length > 1 && !(f === 'slash' && fxUse[f].includes('攻擊'))) warn('主角特效重複使用', f, fxUse[f].join('、'));
     // ---------- GEAR ----------
     for (const k in GEAR) { const e = GEAR[k];
       if (!['weapon', 'head', 'body', 'feet', 'acc'].includes(e.slot)) bad('裝備', k, '部位無效'); if (!(e.t >= 1 && e.t <= 7)) bad('裝備', k, '階級無效');
-      for (const s in e.st || {}) if (!STATS.includes(s) && !(s === 'mp' && e.kind === '魔導書')) bad('裝備', k, '數值欄位無效', s);
+      for (const s in e.st || {}) if (!STATS.includes(s) && !(s === 'mp' && (e.kind === '魔導書' || e.kind === '樂器'))) bad('裝備', k, '數值欄位無效', s);
       for (const s in e.sp || {}) { if (!SPK.includes(s)) bad('裝備', k, '特殊欄位無效', s); }
       if (e.sp && e.sp.vs && !FAMILIES[e.sp.vs[0]]) bad('裝備', k, '對種族無效', e.sp.vs[0]); if (e.sp && e.sp.resist && !ELEM.includes(e.sp.resist[0])) bad('裝備', k, '抗性屬性無效');
       for (const f of e.fx || []) if (!SPECIALS[f]) bad('裝備', k, '特效不存在', f);

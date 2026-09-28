@@ -183,7 +183,7 @@ Object.assign(Events, {
   *princess() {
     const st = Game.st, f = st.flags;
     if (!f.princessQ && ch2() >= 5) { f.princessQ = 1; yield* sayAll(['你要去北方嗎？', '我從來沒有看過雪……', '北方的冰晶，是不是像星星一樣閃閃發光？', '如果可以的話……能帶兩顆冰晶回來給我看看嗎？']); return; }
-    if (f.princessQ === 1 && (st.bag.iceCrystal || 0) >= 2 && (yield* yesNo('要把冰晶×2送給公主嗎？'))) { st.bag.iceCrystal -= 2; f.princessQ = 2; yield* sayAll(['好漂亮……像是把冬天關在裡面一樣。', '謝謝你！這是我的護身符，送給你。']); const g = makeGear('royalBadge', 4); yield* itemGet(st.name + '得到了' + gearName(g) + '！'); return; }
+    if (f.princessQ === 1 && (st.bag.iceCrystal || 0) >= 2 && (yield* yesNo('要把冰晶×2送給公主嗎？'))) { st.bag.iceCrystal -= 2; f.princessQ = 2; yield* sayAll(['好漂亮……像是把冬天關在裡面一樣。', '謝謝你！這是我的護身符，送給你。']); const g = bpGift('royalBadge', 4); yield* itemGet(st.name + '得到了' + g.txt + '！'); return; }
     yield* say(f.princessQ === 2 ? '冰晶放在窗邊，晚上會發光喔。' : '父王最近總是很累的樣子……'); },
   *chancellor() { yield* say(ch2() < 4 ? '……異界之人啊。齒輪的事，就麻煩你了。（……他的眼神好冷。）' : '……鐘塔的事，辛苦你了。'); },
   *castleGuard1() { yield* say('國王陛下就在前面。'); },
@@ -199,7 +199,7 @@ Object.assign(Events, {
   *clockmaker(ow) {
     const st = Game.st, f = st.flags, n = ch2(), c4 = comState('c4', st) || {};
     if (!f.watchQ && c4.res === 'returned') { f.watchQ = 1; }
-    if (f.watchQ === 1) { f.watchQ = 2; yield* sayAll(['……你就是找回懷錶的那位旅人！', '那只懷錶是鐘塔的鑰匙錶。多虧了你，我才能打開鐘塔的機關室。', '這是謝禮。鐘塔裡找到的古代懷錶——它走得比別的錶快一點。']); const g = makeGear('ancientWatch', 4); yield* itemGet(st.name + '得到了' + gearName(g) + '！'); }
+    if (f.watchQ === 1) { f.watchQ = 2; yield* sayAll(['……你就是找回懷錶的那位旅人！', '那只懷錶是鐘塔的鑰匙錶。多虧了你，我才能打開鐘塔的機關室。', '這是謝禮。鐘塔裡找到的古代懷錶——它走得比別的錶快一點。']); const g = bpGift('ancientWatch', 4); yield* itemGet(st.name + '得到了' + g.txt + '！'); }
     if (n <= 2) { yield* say('我是鐘錶師艾德。……你是？國王陛下還沒見過你吧？先去王城吧。'); return; }
     if (n === 3) {
       if (gearCount(st) < 2) { yield* sayAll(['曙光鐘塔的升降機需要兩個「時之齒輪」才能動。', '一個被地下水道的溝鼠王偷走了，另一個在金穗平原的風車小屋……', '（時之齒輪 ' + gearCount(st) + '/2）']); return; }

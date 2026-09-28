@@ -170,11 +170,11 @@ function questList(st = Game.st) {
   const f = st.flags, L = [];
   L.push({ main: 1, n: '曙光的冒險者', t: !f.license ? '去村長家，問問自己為什麼會來到這個世界。' : !f.golem ? '古岩遺跡的魔像被魔王的瘴氣侵蝕而暴走。前往北方的遺跡平息它。' : '黯滅之王札爾格斯正在甦醒。鍛鍊力量，準備踏上討伐魔王的旅程。（第一章完）', done: !!f.golem, rw: '故事推進（第一章）・曙光之印' });
   if (f.q1) L.push({ n: '失蹤的弟弟', t: !f.q1res ? '花店姊姊的弟弟「小麥」去晨霧道路後沒回來。' : !f.q1done ? '回萌芽鎮告訴花店的姊姊。' : f.q1res === 'home' ? '完成：勸小麥回家了。' : '完成：替小麥保守了秘密。', done: !!f.q1done, rw: '勸他回家：好傷藥×2、300 G／保守秘密：好傷藥×1、200 G' });
-  if (st.lv >= 8 && !st.cls) L.push({ n: '力量的覺醒', t: '村長好像有話要跟你說。（選擇職業）', done: false, rw: '職業與起始技能' });
-  else if (st.cls && CLASSES[st.cls].tier === 1 && st.lv >= 14) L.push({ n: '更高的道路', t: '已經可以進階職業了。去找村長吧。', done: false, rw: '進階職業與專屬技能' });
+  if (st.lv >= 8 && !st.cls) L.push({ n: '力量的覺醒', t: '村長好像有話要跟你說。（選擇職業）', done: false, rw: '職業與起始武器' });
+  else if (st.cls && st.lv >= 14) L.push({ n: '更高的道路', t: f.deep ? '完成：完成了天賦覺醒。之後也能找村長轉職。' : '到達Lv14了。去找萌芽鎮的村長進行「天賦覺醒」吧。', done: !!f.deep, rw: '深層天賦・天賦點+2・可以轉職' });
   if (f.caravanMet || f.caravan) L.push({ n: '商隊的危機', t: !f.caravan ? '晨霧道路上的商隊被魔物包圍了！' : f.caravan === 'saved' ? '完成：擊退了魔物，行商在萌芽鎮擺攤。' : '失敗：商隊沒能抵達萌芽鎮。', done: !!f.caravan, rw: '行商在萌芽鎮開店（商品9折）' });
   if (f.wellCharm) L.push({ n: '井底更深處', t: f.crystalBoss ? '完成：擊敗了水晶魔像，覺醒了隱藏職業。' : (st.bag.rope ? '帶著繩索，從鎮上的井往下探索。' : '井底似乎還有更深的通道……需要繩索。'), done: !!f.crystalBoss, rw: '水晶之心、隱藏職業' });
-  if (f.herb) L.push({ n: '會讓路的樹', t: f.f6 ? '完成：在迷霧森林深處找到了晨曦之劍。' : '藥草師說，迷霧森林西北角有一棵「會讓路的樹」。', done: !!f.f6, rw: '晨曦之劍（魔導士：晨曦之杖）' });
+  if (f.herb) L.push({ n: '會讓路的樹', t: f.f6 ? '完成：在迷霧森林深處找到了晨曦之劍。' : '藥草師說，迷霧森林西北角有一棵「會讓路的樹」。', done: !!f.f6, rw: '晨曦之劍的設計圖' });
   if (f.wellCharm) L.push({ n: '井底的月光', t: '完成：從老井撈起了月光護符。', done: true, rw: '月光護符' });
   extraQuests(st, L);
   for (const q of L) q.cat = questCatOf(q) || (q.main ? '主線' : '支線');
@@ -218,7 +218,7 @@ function* summaryScreen() {
     } else {
       const SK = (st.cls && typeof classPassiveNode === 'function' ? ['_passive'] : []).concat(typeof summarySkills === 'function' ? summarySkills(st) : learnedSkills(st)), US = typeof usableSkills === 'function' ? usableSkills(st) : SK, VIS = 7; drawWin(x, 4, 24, 168, VIS * 19 + 8, 'menu'); const t0 = clamp(mi - 3, 0, Math.max(0, SK.length - VIS));
       if (!SK.length) Font.draw(x, '還沒有學會技能。（選單→技能）', 12, 30, UIC.muted, UIC.textSh, 11);
-      SK.slice(t0, t0 + VIS).forEach((id, k) => { const i = t0 + k, mv = MOVES[id], Y = 28 + k * 19; if (i === mi) selBar(x, 6, Y, 164, 17); if (id === '_passive') { const pn = classPassives(st.cls).length; x.fillStyle = shade(UIC.warm, -0.45); x.fillRect(14, Y + 2, 30, 13); Font.drawC(x, '被動', 29, Y + 1, '#ffffff', UIC.textSh, 10); Font.draw(x, '職業被動', 52, Y, UIC.warm, UIC.textSh); Font.drawR(x, pn ? pn + '項' : '無', 164, Y, pn ? UIC.text : UIC.muted, UIC.textSh); return; } typeBadge(x, mv.t, 14, Y + 2, 30); const use = US.includes(id); Font.draw(x, mv.n + ' Lv' + skillLv(id), 52, Y, use ? UIC.text : UIC.dis, UIC.textSh); Font.drawR(x, use ? 'MP ' + skillMP(id) : '未繼承', 164, Y, use ? UIC.accent : UIC.muted, UIC.textSh); });
+      SK.slice(t0, t0 + VIS).forEach((id, k) => { const i = t0 + k, mv = MOVES[id], Y = 28 + k * 19; if (i === mi) selBar(x, 6, Y, 164, 17); if (id === '_passive') { const pn = classPassives(st.cls).length; x.fillStyle = shade(UIC.warm, -0.45); x.fillRect(14, Y + 2, 30, 13); Font.drawC(x, '被動', 29, Y + 1, '#ffffff', UIC.textSh, 10); Font.draw(x, '職業・武器被動', 52, Y, UIC.warm, UIC.textSh); Font.drawR(x, (pn ? pn + '＋' : '') + (typeof mainWKey === 'function' && mainWKey(st) ? '武器' : ''), 164, Y, UIC.muted, UIC.textSh, 10); return; } typeBadge(x, mv.t, 14, Y + 2, 30); const use = US.includes(id); { const nm = mv.n + ' Lv' + (skillLv(id) || 1), rt = use ? 'MP ' + skillMP(id) : '未繼承'; let z = 12; while (z > 8 && Font.width(nm, z) > 150 - 52 - Font.width(rt, 11)) z--; Font.draw(x, nm, 52, Y + (12 - z) / 2, use ? UIC.text : UIC.dis, UIC.textSh, z); Font.drawR(x, rt, 164, Y, use ? UIC.accent : UIC.muted, UIC.textSh, 11); } });
       if (t0 > 0) x.drawImage(UPARROW, 86, 25); if (t0 + VIS < SK.length) x.drawImage(DOWNARROW, 86, 24 + VIS * 19 + 3);
       if (SK[Math.min(mi, SK.length - 1)] === '_passive') { drawWin(x, 4, 168, 168, 84, 'menu'); drawPassiveInfo(x, st, 12, 171, 152, true); }
       else if (SK.length) { const id = SK[Math.min(mi, SK.length - 1)], mv = MOVES[id], m2 = skillMove(id); drawWin(x, 4, 168, 168, 84, 'menu');
@@ -404,7 +404,7 @@ function moneyWin(x) { drawWin(x, 2, 2, 86, 30, 'menu'); Font.draw(x, '金錢', 
 function* shopFlow(stock) {
   const mw = { draw: moneyWin }; UI.push(mw);
   if (!stock && Game.st.flags.caravan === 'lost' && !Game.st.flags.shopLost) { Game.st.flags.shopLost = 1; yield* say('商隊沒能抵達……好傷藥進不了貨了。'); }
-  if (Game.st.flags.croc && !Game.st.flags.shopNew) { Game.st.flags.shopNew = 1; yield* say('橋通了之後，王都的商人送來了新貨！騎士長劍和鎖子甲，要看看嗎？'); }
+  if (Game.st.flags.croc && !Game.st.flags.shopNew) { Game.st.flags.shopNew = 1; yield* say('橋通了之後，王都的商人送來了新貨！（裝備請找鐵匠打造喔）'); }
   while (true) {
     const r = yield* ask('歡迎光臨！請問需要什麼呢？', ['購買', '賣出', '離開']);
     if (r === 0) yield* shopBuy(stock); else if (r === 1) yield* shopSell(); else break;

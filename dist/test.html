@@ -2294,7 +2294,7 @@ const ACHIEVEMENTS = [
   { id: 'gold', n: '金色傳說', d: '得到一件金色品質的裝備。', ok: st => (st.gear || []).some(g => g.q === 4) },
   { id: 'com', n: '萌芽鎮的好幫手', d: '完成告示板上的所有委託。', ok: st => Object.keys(COMMISSIONS).every(k => (comState(k, st) || {}).s === 'done') },
   { id: 'story', n: '故事的見證人', d: '完成所有支線故事。', ok: st => st.flags.q1done && st.flags.q2done && st.flags.q3res && st.flags.caravan === 'saved' },
-  { id: 'cls2', n: '更高的道路', d: '轉職為進階職業。', ok: st => st.cls && CLASSES[st.cls] && CLASSES[st.cls].tier >= 2 },
+  { id: 'cls2', n: '更高的道路', d: '完成天賦覺醒（Lv14找村長）。', ok: st => !!(st.flags && st.flags.deep) },
   { id: 'lv20', n: '異界的強者', d: '等級達到20。', ok: st => st.lv >= 20 },
 ];
 function checkAch() {
@@ -2370,14 +2370,14 @@ const QUEST_EVENTS = {
     if (f.q2 && !f.q2res) { yield* say('提姆應該在迷霧森林西南邊的水池附近……拜託你了。'); return; }
     if (f.q2res === 'home' && !f.q2done) {
       f.q2done = 1; yield* sayAll(['提姆回來了！雖然被我罵了一頓，但他說下次會等變強了再去。', '這是我當衛兵時用的頭盔，請收下。']);
-      st.money += 1000; const g = makeGear('guardHelm', 2); yield* itemGet(st.name + '得到了1000 G和' + gearName(g) + '！'); return;
+      st.money += 1000; const g = bpGift('guardHelm', 2); yield* itemGet(st.name + '得到了1000 G和' + g.txt + '！'); return;
     }
     if (f.q2res === 'stay' && f.q2done && !f.q2thx) { f.q2thx = 1; yield* sayAll(['提姆都跟我說了。你們一起打倒了苔石巨人！', '……那傢伙已經是獨當一面的獵人了。謝謝你相信他。']); return; }
     yield* sayAll(f.golem ? ['你打倒了魔像！……魔王要復活的傳聞，是真的嗎？'] : ['前方就是古岩遺跡。魔像被瘴氣侵蝕，越來越凶暴了。', '魔像非常強大。先在泉水恢復體力，準備好道具再進去吧。', '也別忘了記錄進度！']);
   },
   *tim(ow, ent) {
     const st = Game.st, f = st.flags;
-    const oath = function* () { f.q2done = 1; const g = makeGear('hunterOath', 4); yield* sayAll(['我們真的打倒它了！', '……剛才我一個人的時候，其實怕得要命。', '這是獵人出師時才能拿到的誓約之證。我想把它交給你。']); yield* itemGet(st.name + '得到了' + gearName(g) + '！'); yield* say('我要回去告訴哥哥了。下次見！'); if (ow && ent) ow.npcs = ow.npcs.filter(n => n !== ent); };
+    const oath = function* () { f.q2done = 1; const g = bpGift('hunterOath', 4); yield* sayAll(['我們真的打倒它了！', '……剛才我一個人的時候，其實怕得要命。', '這是獵人出師時才能拿到的誓約之證。我想把它交給你。']); yield* itemGet(st.name + '得到了' + g.txt + '！'); yield* say('我要回去告訴哥哥了。下次見！'); if (ow && ent) ow.npcs = ow.npcs.filter(n => n !== ent); };
     if (f.q2res === 'stay') { if (f.mossGiant) yield* oath(); else yield* say('我會在後面用弓箭掩護你！準備好就上吧！'); return; }
     yield* sayAll(['……！是、是誰？', '哥哥叫你來的？……我才不回去。', '只要打倒那尊苔石巨人，大家就會承認我是真正的獵人了。', '……雖然剛才被它一拳打飛，腳也扭到了。']);
     const r = yield* ask('要怎麼做？', ['帶他回去', '讓他留下'], { cancel: false });
@@ -2396,7 +2396,7 @@ const QUEST_EVENTS = {
       const mg = classGear('masterBlade') !== 'masterBlade', wn = GEAR[classGear('masterBlade')].n;
       yield* sayAll(mg ? ['……完成了。不過你是魔導士吧？', '師父的箱子底下還壓著一根沒完成的法杖，我用同樣的水晶把它也完成了。', '師父的另一件遺作「' + wn + '」。你來決定吧。'] : ['……完成了。師父的遺作「名匠遺作」。', '說實話……我很想把它留在鋪子裡，當作師父的紀念。', '但這把劍是為了真正的戰士打造的。你來決定吧。']);
       const r = yield* ask('要怎麼做？', ['收下' + wn, '讓鐵匠留著'], { cancel: false });
-      if (r === 0) { f.q3res = 'take'; const g = makeGear(classGear('masterBlade'), 4); yield* itemGet(st.name + '得到了' + gearName(g) + '！'); yield* say('師父一定也會很高興。好好使用它！'); }
+      if (r === 0) { f.q3res = 'take'; const g = bpGift(classGear('masterBlade'), 4); yield* itemGet(st.name + '得到了' + g.txt + '！'); yield* say('師父一定也會很高興。好好使用它！'); }
       else { f.q3res = 'keep'; f.smithDisc = 1; st.bag.tpBook = (st.bag.tpBook || 0) + 1; yield* sayAll(['……謝謝你。', '這是師父留下的修練書，送給你吧。以後強化的費用，我只收一半！']); yield* itemGet(st.name + '得到了天賦之書！強化費用永久半價！'); }
     } else yield* say(f.q3 === 1 ? '水晶碎片的事就拜託了。聽說在老井的地底下。' : f.smith ? '有素材就拿來吧！' : '我是鎮上的鐵匠。把魔物身上的素材帶來，我就幫你打造好東西！');
     f.smith = 1;
@@ -4635,11 +4635,11 @@ function questList(st = Game.st) {
   const f = st.flags, L = [];
   L.push({ main: 1, n: '曙光的冒險者', t: !f.license ? '去村長家，問問自己為什麼會來到這個世界。' : !f.golem ? '古岩遺跡的魔像被魔王的瘴氣侵蝕而暴走。前往北方的遺跡平息它。' : '黯滅之王札爾格斯正在甦醒。鍛鍊力量，準備踏上討伐魔王的旅程。（第一章完）', done: !!f.golem, rw: '故事推進（第一章）・曙光之印' });
   if (f.q1) L.push({ n: '失蹤的弟弟', t: !f.q1res ? '花店姊姊的弟弟「小麥」去晨霧道路後沒回來。' : !f.q1done ? '回萌芽鎮告訴花店的姊姊。' : f.q1res === 'home' ? '完成：勸小麥回家了。' : '完成：替小麥保守了秘密。', done: !!f.q1done, rw: '勸他回家：好傷藥×2、300 G／保守秘密：好傷藥×1、200 G' });
-  if (st.lv >= 8 && !st.cls) L.push({ n: '力量的覺醒', t: '村長好像有話要跟你說。（選擇職業）', done: false, rw: '職業與起始技能' });
-  else if (st.cls && CLASSES[st.cls].tier === 1 && st.lv >= 14) L.push({ n: '更高的道路', t: '已經可以進階職業了。去找村長吧。', done: false, rw: '進階職業與專屬技能' });
+  if (st.lv >= 8 && !st.cls) L.push({ n: '力量的覺醒', t: '村長好像有話要跟你說。（選擇職業）', done: false, rw: '職業與起始武器' });
+  else if (st.cls && st.lv >= 14) L.push({ n: '更高的道路', t: f.deep ? '完成：完成了天賦覺醒。之後也能找村長轉職。' : '到達Lv14了。去找萌芽鎮的村長進行「天賦覺醒」吧。', done: !!f.deep, rw: '深層天賦・天賦點+2・可以轉職' });
   if (f.caravanMet || f.caravan) L.push({ n: '商隊的危機', t: !f.caravan ? '晨霧道路上的商隊被魔物包圍了！' : f.caravan === 'saved' ? '完成：擊退了魔物，行商在萌芽鎮擺攤。' : '失敗：商隊沒能抵達萌芽鎮。', done: !!f.caravan, rw: '行商在萌芽鎮開店（商品9折）' });
   if (f.wellCharm) L.push({ n: '井底更深處', t: f.crystalBoss ? '完成：擊敗了水晶魔像，覺醒了隱藏職業。' : (st.bag.rope ? '帶著繩索，從鎮上的井往下探索。' : '井底似乎還有更深的通道……需要繩索。'), done: !!f.crystalBoss, rw: '水晶之心、隱藏職業' });
-  if (f.herb) L.push({ n: '會讓路的樹', t: f.f6 ? '完成：在迷霧森林深處找到了晨曦之劍。' : '藥草師說，迷霧森林西北角有一棵「會讓路的樹」。', done: !!f.f6, rw: '晨曦之劍（魔導士：晨曦之杖）' });
+  if (f.herb) L.push({ n: '會讓路的樹', t: f.f6 ? '完成：在迷霧森林深處找到了晨曦之劍。' : '藥草師說，迷霧森林西北角有一棵「會讓路的樹」。', done: !!f.f6, rw: '晨曦之劍的設計圖' });
   if (f.wellCharm) L.push({ n: '井底的月光', t: '完成：從老井撈起了月光護符。', done: true, rw: '月光護符' });
   extraQuests(st, L);
   for (const q of L) q.cat = questCatOf(q) || (q.main ? '主線' : '支線');
@@ -4683,7 +4683,7 @@ function* summaryScreen() {
     } else {
       const SK = (st.cls && typeof classPassiveNode === 'function' ? ['_passive'] : []).concat(typeof summarySkills === 'function' ? summarySkills(st) : learnedSkills(st)), US = typeof usableSkills === 'function' ? usableSkills(st) : SK, VIS = 7; drawWin(x, 4, 24, 168, VIS * 19 + 8, 'menu'); const t0 = clamp(mi - 3, 0, Math.max(0, SK.length - VIS));
       if (!SK.length) Font.draw(x, '還沒有學會技能。（選單→技能）', 12, 30, UIC.muted, UIC.textSh, 11);
-      SK.slice(t0, t0 + VIS).forEach((id, k) => { const i = t0 + k, mv = MOVES[id], Y = 28 + k * 19; if (i === mi) selBar(x, 6, Y, 164, 17); if (id === '_passive') { const pn = classPassives(st.cls).length; x.fillStyle = shade(UIC.warm, -0.45); x.fillRect(14, Y + 2, 30, 13); Font.drawC(x, '被動', 29, Y + 1, '#ffffff', UIC.textSh, 10); Font.draw(x, '職業被動', 52, Y, UIC.warm, UIC.textSh); Font.drawR(x, pn ? pn + '項' : '無', 164, Y, pn ? UIC.text : UIC.muted, UIC.textSh); return; } typeBadge(x, mv.t, 14, Y + 2, 30); const use = US.includes(id); Font.draw(x, mv.n + ' Lv' + skillLv(id), 52, Y, use ? UIC.text : UIC.dis, UIC.textSh); Font.drawR(x, use ? 'MP ' + skillMP(id) : '未繼承', 164, Y, use ? UIC.accent : UIC.muted, UIC.textSh); });
+      SK.slice(t0, t0 + VIS).forEach((id, k) => { const i = t0 + k, mv = MOVES[id], Y = 28 + k * 19; if (i === mi) selBar(x, 6, Y, 164, 17); if (id === '_passive') { const pn = classPassives(st.cls).length; x.fillStyle = shade(UIC.warm, -0.45); x.fillRect(14, Y + 2, 30, 13); Font.drawC(x, '被動', 29, Y + 1, '#ffffff', UIC.textSh, 10); Font.draw(x, '職業・武器被動', 52, Y, UIC.warm, UIC.textSh); Font.drawR(x, (pn ? pn + '＋' : '') + (typeof mainWKey === 'function' && mainWKey(st) ? '武器' : ''), 164, Y, UIC.muted, UIC.textSh, 10); return; } typeBadge(x, mv.t, 14, Y + 2, 30); const use = US.includes(id); { const nm = mv.n + ' Lv' + (skillLv(id) || 1), rt = use ? 'MP ' + skillMP(id) : '未繼承'; let z = 12; while (z > 8 && Font.width(nm, z) > 150 - 52 - Font.width(rt, 11)) z--; Font.draw(x, nm, 52, Y + (12 - z) / 2, use ? UIC.text : UIC.dis, UIC.textSh, z); Font.drawR(x, rt, 164, Y, use ? UIC.accent : UIC.muted, UIC.textSh, 11); } });
       if (t0 > 0) x.drawImage(UPARROW, 86, 25); if (t0 + VIS < SK.length) x.drawImage(DOWNARROW, 86, 24 + VIS * 19 + 3);
       if (SK[Math.min(mi, SK.length - 1)] === '_passive') { drawWin(x, 4, 168, 168, 84, 'menu'); drawPassiveInfo(x, st, 12, 171, 152, true); }
       else if (SK.length) { const id = SK[Math.min(mi, SK.length - 1)], mv = MOVES[id], m2 = skillMove(id); drawWin(x, 4, 168, 168, 84, 'menu');
@@ -4869,7 +4869,7 @@ function moneyWin(x) { drawWin(x, 2, 2, 86, 30, 'menu'); Font.draw(x, '金錢', 
 function* shopFlow(stock) {
   const mw = { draw: moneyWin }; UI.push(mw);
   if (!stock && Game.st.flags.caravan === 'lost' && !Game.st.flags.shopLost) { Game.st.flags.shopLost = 1; yield* say('商隊沒能抵達……好傷藥進不了貨了。'); }
-  if (Game.st.flags.croc && !Game.st.flags.shopNew) { Game.st.flags.shopNew = 1; yield* say('橋通了之後，王都的商人送來了新貨！騎士長劍和鎖子甲，要看看嗎？'); }
+  if (Game.st.flags.croc && !Game.st.flags.shopNew) { Game.st.flags.shopNew = 1; yield* say('橋通了之後，王都的商人送來了新貨！（裝備請找鐵匠打造喔）'); }
   while (true) {
     const r = yield* ask('歡迎光臨！請問需要什麼呢？', ['購買', '賣出', '離開']);
     if (r === 0) yield* shopBuy(stock); else if (r === 1) yield* shopSell(); else break;
@@ -8689,7 +8689,7 @@ const Events = {
       yield* say({ swordsman: '劍士的道路啊……這把練習木劍就交給你了。', mage: '魔導士的道路啊……這把魔杖是我年輕時用的，交給你了。', guardian: '守護者的道路啊……這把木劍和布帽給你，別逞強喔。', ranger: '遊俠的道路啊……這把獵刀是村裡獵人送的，拿去吧。' }[k]);
       st.flags.license = 1; st.bag.license = 1; yield* itemGet('得到了' + S.gear.filter(b => b !== 'guardBadge').map(b => GEAR[b].n).join('和') + '、護身符和冒險者證！');
       yield* say('還有這些傷藥，帶在身上吧。'); st.bag.potion = (st.bag.potion || 0) + 5; yield* itemGet('得到了傷藥×5！');
-      yield* sayAll(['你已經會「' + learnedSkills(st).map(id => MOVES[id].n).join('」和「') + '」。', '另外還有2點技能點，打開選單的「技能」，可以自己決定要學什麼、要強化哪一招。', '每次升級都會得到技能點（Lv6起還有天賦點）。技能點用來學技能；天賦點用來點永久的被動加成。', '技能要消耗MP，MP不夠時就用普通「攻擊」。', '到了Lv14，還能走上更高的道路，學到更強的技能。', '魔物分成好幾個種族，各有害怕的屬性。善用屬性技能，戰鬥會輕鬆很多。', '按START可以打開選單，查看狀態、技能和背包，也能記錄進度。']);
+      yield* sayAll(['技能是跟著武器走的。你手上的武器有兩招「主動技能」、一個「被動」，還有攻擊累積到一定次數會自動發動的「特技」。', '普通攻擊不花MP，還會回復一點MP；把MP用在武器技能上吧。', '每次升級會得到1點「天賦點」。打開選單的「天賦」，就能點' + CLASSES[k].n + '的三條天賦分支。', '新的裝備都要靠鐵匠打造。撿到的設計圖和素材，記得拿去給他看看。', '到了Lv14再來找我，我會幫你進行「天賦覺醒」。', '魔物分成好幾個種族，各有害怕的屬性。善用屬性技能，戰鬥會輕鬆很多。', '按START可以打開選單，查看狀態、技能和背包，也能記錄進度。']);
       const ap = ow && ow.npcs.find(n => n.id === 'apprentice');
       if (ap) { ap.dir = 'left'; yield* say('學徒：「村長爺爺！讓我幫忙！我在院子裡養了一隻練習用的泡泡姆！」');
         if (yield* yesNo('要和泡泡姆練習一場嗎？')) { const res = yield* ow.battleScript({ sp: 'slime', lv: 1, kind: 'wild' }); if (res === 'win') yield* say('學徒：「好厲害！這就是異界人之力！」'); else yield* say('學徒：「泡、泡泡姆，下手輕一點啦！」'); healHero(); }
@@ -8718,7 +8718,7 @@ const Events = {
     if (!st.flags.golem) { yield* say('一口很深的井。往下看，只有一片漆黑。'); return; }
     yield* say('……井底好像有什麼東西，正發出淡淡的月光。');
     if (!(yield* yesNo('要把水桶放下去撈撈看嗎？'))) return;
-    st.flags.wellCharm = 1; yield* itemGet(st.name + '撈起了' + gearName(makeGear('moonCharm', 4)) + '！');
+    st.flags.wellCharm = 1; yield* itemGet(st.name + '撈起了' + bpGift('moonCharm', 4).txt + '！');
     yield* say('古老的護符……說不定和異界之門有關。可以在背包裡裝備。');
   },
   *peddler() { const f = Game.st.flags; if (f.bandit && !f.peddlerThx) { f.peddlerThx = 1; Game.st.bag.luckClover = (Game.st.bag.luckClover || 0) + 1; yield* sayAll(['你從格倫手上把貨搶回來了！？', '這是我珍藏的幸運草，請收下！']); yield* itemGet(Game.st.name + '得到了幸運草！'); } yield* say(f.bandit ? '貨都回來了！今天的商品特別齊全喔。' : '多虧了你，商隊才平安抵達！算你便宜一點。'); yield* shopFlow(PEDDLER_LIST); },
@@ -9415,8 +9415,8 @@ Object.assign(Events, {
     yield* sayAll(['……好劍。', '你的劍裡，有魔力的流動。和我年輕的時候一樣。', '魔劍之道，就是讓劍與魔法合而為一。這三頁劍譜，就是它的全部。', '我已經老了。這條路，就交給你吧。']);
     st.flags.spellbladeOk = 1;
     if (st.cls !== 'spellblade' && (yield* yesNo('要繼承「魔劍士」的道路嗎？\n（隨時也能找村長轉職）'))) {
-      if (st.cls && CLASSES[st.cls] && CLASSES[st.cls].tier < 3) st.baseCls = baseClassOf(st.cls); st.cls = 'spellblade'; clampHP();
-      yield* itemGet(st.name + '成為了魔劍士！'); grantSkill('eclipseSlash', st); yield* say('學會了「月蝕斬」！物攻和魔攻會互相加成（魔劍共鳴）。');
+      yield* changeClass('spellblade');
+      yield* say('魔劍士的天賦能讓物攻與魔攻互相加成（魔劍共鳴）。試著配一把劍和一本魔導書吧。');
     } else yield* say('……想好了再去找村長吧。');
   },
 });
@@ -9502,7 +9502,7 @@ Object.assign(Events, {
       const tok = st.bag.riftToken || 0, list = TOWER_SHOP.map(([k, c]) => (ITEMS[k] || GEAR[k]).n + '　' + c + '枚');
       const r = yield* ask('要用迴廊徽章交換什麼嗎？（持有' + tok + '枚）', [...list, '不用了']); if (r < 0 || r >= TOWER_SHOP.length) return;
       const [k, c] = TOWER_SHOP[r]; if (tok < c) { yield* say('徽章不夠喔。'); continue; }
-      st.bag.riftToken -= c; if (GEAR[k]) yield* itemGet('換到了' + gearName(makeGear(classGear(k), 3)) + '！'); else { st.bag[k] = (st.bag[k] || 0) + 1; yield* itemGet('換到了' + ITEMS[k].n + '！'); }
+      st.bag.riftToken -= c; if (GEAR[k]) yield* itemGet('換到了' + bpGift(classGear(k), 3).txt + '！'); else { st.bag[k] = (st.bag[k] || 0) + 1; yield* itemGet('換到了' + ITEMS[k].n + '！'); }
     }
   },
 });
@@ -9722,7 +9722,7 @@ Object.assign(Events, {
     const r = yield* ask('要怎麼處置魔女？', ['放過她', '交給鎮上的守衛'], { cancel: false });
     if (r === 0) {
       f.witchFate = 'spare'; yield* sayAll(['「……你這個人，真是奇怪。」', '「好吧。這本咒書送你。以後需要藥的話，來找我吧。」']);
-      const g = makeGear(classGear('witchTome'), 4); yield* itemGet(st.name + '得到了' + gearName(g) + '！'); yield* say('（魔女薇奧拉會在沼澤裡開店了。）');
+      const g = bpGift(classGear('witchTome'), 4); yield* itemGet(st.name + '得到了' + g.txt + '！'); yield* say('（魔女薇奧拉會在沼澤裡開店了。）');
     } else {
       f.witchFate = 'turnin'; yield* sayAll(['「……是嗎。這也是報應吧。」', '（把魔女帶回萌芽鎮，交給了守衛。）', '守衛：「沼澤的魔女！？真是大功一件！這是懸賞金。」']);
       st.money += 3000; st.bag.tpBook = (st.bag.tpBook || 0) + 1; yield* itemGet(st.name + '得到了3000 G和天賦之書！');
@@ -9748,7 +9748,7 @@ function* lampEv(ow, i) {
     if (st.vis && st.vis.canyon && !f.qHorn) { f.qHorn = 1; yield* sayAll(['你去過落日峽谷了？那裡有一種叫「岩角犀」的魔物。', '牠的角比鐵還硬，是打造沙漠裝備的最好材料。', '要是能弄到「岩角」，我就能打造一整套峽谷的裝備！']); yield* say('（任務「犀角工匠」開始了。）'); }
     else if (f.qHorn === 1 && st.bag.rhinoHorn) {
       delete st.bag.rhinoHorn; f.qHorn = 2; syncRecipes(st); yield* sayAll(['這就是岩角！……好重，好硬！', '等我一下！']); yield* fadeOut(16); for (let i = 0; i < 3; i++) { Sound.sfx('rock'); yield* wait(24); } yield* fadeIn(16);
-      const g = makeGear(classGear('sandSaber'), 3); yield* sayAll(['第一把試作品。這把送你！', '以後帶素材來，峽谷和沼澤的裝備我都能打了。']); yield* itemGet(st.name + '得到了' + gearName(g) + '！'); yield* say('（打造清單增加了峽谷、沼澤的裝備和「星辰護符」。）');
+      const g = bpGift(classGear('sandSaber'), 3); yield* sayAll(['第一把試作品。這把送你！', '以後帶素材來，峽谷和沼澤的裝備我都能打了。']); yield* itemGet(st.name + '得到了' + g.txt + '！'); yield* say('（打造清單增加了峽谷、沼澤的裝備和「星辰護符」。）');
     }
     yield* _sm.call(this, ow, ent);
   };
@@ -9896,8 +9896,8 @@ function* aevTalk(ow, e) {
     if (!A.met) { A.met = 1; st.aevMet = (st.aevMet || 0) + 1; }
     if (!f.qMerchant) { f.qMerchant = 1; yield* sayAll(['嘿，冒險者！我是四處旅行的行商人。', '我在收集一種東西——「星之碎片」。流星掉下來的時候，偶爾撿得到。', '要是湊齊三個帶來給我，我就把公會的寶貝徽章讓給你！']); yield* say('（任務「行商人的收藏」開始了。）'); }
     else if (f.qMerchant === 1 && (st.bag.starShard || 0) >= 3 && (yield* yesNo('要把星之碎片×3交給行商人嗎？'))) {
-      st.bag.starShard -= 3; if (!st.bag.starShard) delete st.bag.starShard; f.qMerchant = 2; const g = makeGear('merchantBadge', 4);
-      yield* sayAll(['哇……三個都是上等貨！', '說好的，這個徽章給你。帶著它，好東西會自己找上門喔！']); yield* itemGet(st.name + '得到了' + gearName(g) + '！');
+      st.bag.starShard -= 3; if (!st.bag.starShard) delete st.bag.starShard; f.qMerchant = 2; const g = bpGift('merchantBadge', 4);
+      yield* sayAll(['哇……三個都是上等貨！', '說好的，這個徽章給你。帶著它，好東西會自己找上門喔！']); yield* itemGet(st.name + '得到了' + g.txt + '！');
     }
     else yield* say(f.qMerchant === 2 ? '又見面了！今天也帶了好東西喔。' : '星之碎片還在收集嗎？湊齊三個再來找我！');
     yield* shopFlow(A.stock || MERCHANT_POOL.slice(0, 5)); return;
@@ -9929,7 +9929,7 @@ function* aevTalk(ow, e) {
     const res = yield* ow.battleScript({ sp: 'mimic', lv: A.lv + 2, kind: 'elite', id: 'aevMimic', aevKind: 'mimic', aevLoot: 2 });
     if (res !== 'win') { yield* say('寶箱怪跳著逃走了……'); A.done = 1; aevEnd(ow, true); return; }
     A.done = 1; aevEnd(ow, true);
-    if (wonOf('mimic', st) >= 5 && !f.mimicHunter) { f.mimicHunter = 1; const g = makeGear('mimicTooth', 4); Sound.jingle('item'); yield* sayAll(['寶箱怪的嘴裡掉出了一顆發光的牙齒……', '這是打倒了五隻寶箱怪的證明！']); yield* itemGet(st.name + '得到了' + gearName(g) + '！'); }
+    if (wonOf('mimic', st) >= 5 && !f.mimicHunter) { f.mimicHunter = 1; const g = bpGift('mimicTooth', 4); Sound.jingle('item'); yield* sayAll(['寶箱怪的嘴裡掉出了一顆發光的牙齒……', '這是打倒了五隻寶箱怪的證明！']); yield* itemGet(st.name + '得到了' + g.txt + '！'); }
   }
 }
 // the golden monster hops around; the rampaging one glows red
@@ -11363,7 +11363,7 @@ Object.assign(Events, {
   *princess() {
     const st = Game.st, f = st.flags;
     if (!f.princessQ && ch2() >= 5) { f.princessQ = 1; yield* sayAll(['你要去北方嗎？', '我從來沒有看過雪……', '北方的冰晶，是不是像星星一樣閃閃發光？', '如果可以的話……能帶兩顆冰晶回來給我看看嗎？']); return; }
-    if (f.princessQ === 1 && (st.bag.iceCrystal || 0) >= 2 && (yield* yesNo('要把冰晶×2送給公主嗎？'))) { st.bag.iceCrystal -= 2; f.princessQ = 2; yield* sayAll(['好漂亮……像是把冬天關在裡面一樣。', '謝謝你！這是我的護身符，送給你。']); const g = makeGear('royalBadge', 4); yield* itemGet(st.name + '得到了' + gearName(g) + '！'); return; }
+    if (f.princessQ === 1 && (st.bag.iceCrystal || 0) >= 2 && (yield* yesNo('要把冰晶×2送給公主嗎？'))) { st.bag.iceCrystal -= 2; f.princessQ = 2; yield* sayAll(['好漂亮……像是把冬天關在裡面一樣。', '謝謝你！這是我的護身符，送給你。']); const g = bpGift('royalBadge', 4); yield* itemGet(st.name + '得到了' + g.txt + '！'); return; }
     yield* say(f.princessQ === 2 ? '冰晶放在窗邊，晚上會發光喔。' : '父王最近總是很累的樣子……'); },
   *chancellor() { yield* say(ch2() < 4 ? '……異界之人啊。齒輪的事，就麻煩你了。（……他的眼神好冷。）' : '……鐘塔的事，辛苦你了。'); },
   *castleGuard1() { yield* say('國王陛下就在前面。'); },
@@ -11379,7 +11379,7 @@ Object.assign(Events, {
   *clockmaker(ow) {
     const st = Game.st, f = st.flags, n = ch2(), c4 = comState('c4', st) || {};
     if (!f.watchQ && c4.res === 'returned') { f.watchQ = 1; }
-    if (f.watchQ === 1) { f.watchQ = 2; yield* sayAll(['……你就是找回懷錶的那位旅人！', '那只懷錶是鐘塔的鑰匙錶。多虧了你，我才能打開鐘塔的機關室。', '這是謝禮。鐘塔裡找到的古代懷錶——它走得比別的錶快一點。']); const g = makeGear('ancientWatch', 4); yield* itemGet(st.name + '得到了' + gearName(g) + '！'); }
+    if (f.watchQ === 1) { f.watchQ = 2; yield* sayAll(['……你就是找回懷錶的那位旅人！', '那只懷錶是鐘塔的鑰匙錶。多虧了你，我才能打開鐘塔的機關室。', '這是謝禮。鐘塔裡找到的古代懷錶——它走得比別的錶快一點。']); const g = bpGift('ancientWatch', 4); yield* itemGet(st.name + '得到了' + g.txt + '！'); }
     if (n <= 2) { yield* say('我是鐘錶師艾德。……你是？國王陛下還沒見過你吧？先去王城吧。'); return; }
     if (n === 3) {
       if (gearCount(st) < 2) { yield* sayAll(['曙光鐘塔的升降機需要兩個「時之齒輪」才能動。', '一個被地下水道的溝鼠王偷走了，另一個在金穗平原的風車小屋……', '（時之齒輪 ' + gearCount(st) + '/2）']); return; }
@@ -12300,6 +12300,785 @@ function drawChevron(x, cx, cy, dir, col) {
     const M = passMarks(this), camX = this.camX, camY = this.camY, bob = Math.round(Math.sin(this.t / 10) * 1.5);
     const pts = M.above.map(q => [q.x, q.y - 1]).concat(this.npcs.filter(n => WARP_PROPS.has(n.id)).map(n => [n.x, n.y - 1]));
     for (const [tx, ty] of pts) { const X = tx * 16 - camX + 8, Y = ty * 16 - camY + 10 + bob; if (X < -8 || Y < -8 || X > W + 8 || Y > H) continue; x.globalAlpha = 0.9; drawChevron(x, X, Y, 'down', '#ffd860'); x.globalAlpha = 1; }
+  };
+}
+
+/* ===================== v7.0 ① weapon skills (Farever-style) =====================
+   Playtest: "the weapon is so strong that the other skills are useless; only a few skills of the whole tree are ever used".
+   Skills now live on the weapon. Every weapon has its own set:
+     普通攻擊 (named after the kind, weaker than before, restores a little MP)
+     主動技能 ×2 (built from the existing moves: their animation / mechanics, renamed and tuned for this weapon)
+     被動 ×1 (active while it is the main weapon)
+     特技 (fires by itself on every N-th attack of the battle)
+   A second weapon can be set as 副武器: it gives no stats, only lends ONE of its two actives (90% power).
+   Actives rank up with use (熟練度 Lv1→3). Class talents (09m) boost weapon kinds / play styles. */
+
+/* ---------- new weapon kinds + more axes (art by Codex later; until then they borrow the old shapes) ---------- */
+const NEW_WEAPONS = {
+  hatchet: ['伐木斧', '斧', 1, { atk: 6 }, {}, null, '樵夫用的小斧頭。又重又鈍，但砍下去很有份量。'],
+  boarAxe: ['野豬戰斧', '斧', 2, { atk: 8 }, { crit: 2 }, null, '用野豬獠牙鑲邊的戰斧。'],
+  rockAxe: ['岩角戰斧', '斧', 4, { atk: 14 }, { crit: 3 }, null, '以岩角犀的角打磨的巨斧，能砸碎盔甲。'],
+  crescentAxe: ['新月斧', '斧', 5, { atk: 17 }, { crit: 4 }, null, '刃口彎成新月的雙手斧。'],
+  glacierAxe: ['霜嶺巨斧', '斧', 6, { atk: 20 }, { crit: 4 }, '水', '凍結在冰河裡的古斧，斧刃永遠冰冷。'],
+  titanAxe: ['泰坦巨斧', '斧', 7, { atk: 24 }, { crit: 5 }, null, '傳說中巨人使用的斧頭，一般人連舉都舉不起來。'],
+  trainSpear: ['見習長槍', '長槍', 1, { atk: 4 }, { hit: 4 }, null, '衛兵訓練用的長槍，攻擊距離很長。'],
+  ironSpear: ['鐵頭長槍', '長槍', 2, { atk: 7 }, { hit: 4 }, null, '槍頭包著鐵的長槍。'],
+  galeLance: ['疾風槍', '長槍', 3, { atk: 10 }, { hit: 5 }, null, '輕巧的騎槍，刺出時帶著風聲。'],
+  scaleSpear: ['龍鱗槍', '長槍', 4, { atk: 12 }, { hit: 5 }, null, '槍桿纏著龍鱗，握起來出奇地溫暖。'],
+  azureSpear: ['蒼龍槍', '長槍', 5, { atk: 15 }, { crit: 3 }, null, '刻著蒼龍的名槍，龍騎士代代相傳。'],
+  frostSpear: ['霜牙槍', '長槍', 6, { atk: 18 }, { hit: 6 }, '水', '以雪原巨狼的獠牙為槍尖。'],
+  skySpear: ['天龍槍', '長槍', 7, { atk: 21 }, { crit: 4 }, null, '據說能刺穿天空的神槍。'],
+  wrapFist: ['布纏拳套', '拳套', 1, { atk: 3, spe: 2 }, {}, null, '用布條纏住拳頭，武僧入門的第一課。'],
+  ironKnuckle: ['鐵指虎', '拳套', 2, { atk: 6, spe: 2 }, {}, null, '套在指節上的鐵環。'],
+  rockFist: ['岩拳套', '拳套', 3, { atk: 8, spe: 3 }, { crit: 3 }, null, '嵌著礦石的厚重拳套。'],
+  chiFist: ['氣功拳套', '拳套', 4, { atk: 10, spe: 3 }, { crit: 4 }, null, '能讓氣更容易流動的拳套。'],
+  tigerClaw: ['虎爪', '拳套', 5, { atk: 13, spe: 4 }, { crit: 4 }, null, '三道利爪的格鬥武器。'],
+  magmaFist: ['熔拳套', '拳套', 6, { atk: 15, spe: 4 }, { crit: 5 }, '火', '以熔岩石鍛造，打出去會冒煙。'],
+  starFist: ['星辰拳套', '拳套', 7, { atk: 18, spe: 5 }, { crit: 6 }, null, '拳頭上閃著星光的神器。'],
+  woodFlute: ['木笛', '樂器', 1, { spa: 3, mp: 6 }, {}, null, '村裡的孩子也會吹的木笛。'],
+  travelLute: ['旅人魯特琴', '樂器', 2, { spa: 5, mp: 10 }, {}, null, '吟遊詩人最愛的魯特琴。'],
+  forestHarp: ['翠之豎琴', '樂器', 3, { spa: 8, mp: 12 }, {}, '草', '以翠風原野的古木製成的豎琴。'],
+  moonLyre: ['月光琴', '樂器', 4, { spa: 10, mp: 16 }, {}, null, '在月夜下會自己發出聲音的琴。'],
+  windHorn: ['風之號角', '樂器', 5, { spa: 13, mp: 18 }, {}, null, '吹響時會捲起風的號角。'],
+  iceHarp: ['冰弦豎琴', '樂器', 6, { spa: 16, mp: 20 }, {}, '水', '琴弦是冰晶拉成的細絲。'],
+  starLyre: ['星詠之琴', '樂器', 7, { spa: 19, mp: 24 }, {}, null, '傳說中歌頌星辰的神琴。'],
+  corkGun: ['軟木塞槍', '火槍', 1, { atk: 4 }, { hit: 6 }, null, '機工士的玩具……威力其實不小。'],
+  brassPistol: ['黃銅短銃', '火槍', 2, { atk: 6 }, { hit: 6 }, null, '黃銅打造的短槍。'],
+  steamRifle: ['蒸汽步槍', '火槍', 3, { atk: 9 }, { hit: 6, crit: 2 }, '水', '靠蒸汽壓力射出子彈的長槍。'],
+  gearRepeater: ['連發齒輪槍', '火槍', 4, { atk: 11 }, { crit: 4 }, null, '轉動齒輪就能連續射擊。'],
+  boltCannon: ['雷管砲', '火槍', 5, { atk: 14 }, { crit: 4 }, '雷', '能射出雷電的手持砲。'],
+  frostMusket: ['霜火槍', '火槍', 6, { atk: 17 }, { crit: 5 }, '水', '子彈會在命中時結霜。'],
+  starBlaster: ['星爆砲', '火槍', 7, { atk: 20 }, { crit: 6 }, null, '把星之碎片當成子彈的終極兵器。'],
+};
+const V7_LOOK = { 斧: ['axe', 'grey'], 長槍: ['staff', 'wandS'], 拳套: ['dagger', 'grey'], 樂器: ['staff', 'wandW'], 火槍: ['dagger', 'grey'] };
+for (const k in NEW_WEAPONS) { const [n, kind, t, stt, sp, elem, d] = NEW_WEAPONS[k]; GEAR[k] = { n, slot: 'weapon', t, st: stt, sp, kind, d }; if (elem) GEAR[k].elem = elem; if (V7_LOOK[kind]) GEAR[k].look = V7_LOOK[kind]; (WEAPON_KINDS[kind] || (WEAPON_KINDS[kind] = [])).push(k); }
+const isMagicW = k => k === '法杖' || k === '魔導書' || k === '樂器';
+const WKIND_ORDER = ['劍', '短刀', '斧', '長槍', '拳套', '法杖', '魔導書', '樂器', '火槍'];
+
+/* ---------- the weapon table: stem, active A, active B, passive key:value, special:N ---------- */
+const WS_TABLE = {
+  woodSword: '木劍,powerSlash,parry,hit:6,power:3', ironSword: '鐵劍,gale,armorBreak,crit:4,burst:4', knightSword: '騎士,crossSlash,parry,counter:1,guard:3',
+  foxBlade: '狐火,powerSlash,doubleSlash,fireUp:12,brn:4', crystalBlade: '水晶,whirlSlash,focus,elem:8,mana:3', dawnSword: '晨曦,dawnBreak,crossSlash,drain:5,burst:4',
+  masterBlade: '名匠,zantetsu,meikyo,critDmg:15,crit:3', kingsBlade: '古王,bladeStorm,braveOath,bigUp:10,power:4', voltSword: '雷角,gale,doubleSlash,boltUp:12,par:4',
+  boneSaber: '骸骨,lastStand,armorBreak,pierceT:10,break:3', graveBlade: '冥騎,bloodBlade,warCry,drain:6,drain:4', eclipseBlade: '月蝕,eclipseSlash,manaSlash,mpRegen:4,burst:4',
+  voidBlade: '虛空,riftBlade,focus,critDmg:20,execute:4', moonBlade: '月光,crossSlash,meikyo,crit:6,multi:4', riftSword: '裂界,riftBlade,flashStep,weakUp:10,break:3',
+  sandSaber: '砂漠,doubleSlash,lacerate,spe:4,haste:3', toadBlade: '蟾毒,toxicBlade,whirlSlash,venomEdge:1,psn:4', verdantBlade: '翠葉,whirlSlash,powerSlash,regen:1,heal:4',
+  royalSword: '王國,iaiSlash,braveOath,guardPlus:1,guard:3', hornSpear: '甲蟲,zantetsu,armorBreak,pierceT:15,burst:5', brassSword: '發條,flashStep,whirlSlash,double:1,multi:4',
+  frostBrand: '霜之,iaiSlash,focus,elem:10,weaken:4', flameBrand: '炎之,bladeStorm,recklessSlash,fireUp:15,brn:3', duskSword: '黯滅,mushin,meikyo,critDmg:20,burst:5',
+  starSword: '星辰,heroSoul,bladeStorm,bigUp:15,burst:4', harvestScythe: '收穫,asura,frenzy,drain:8,execute:4', chronoLance: '時計,timeStop,gale,first:1,haste:3',
+  duskBlade: '黑劍,recklessSlash,iaiSlash,critDmg:15,drain:4', moldBlade: '影將,asura,bloodRage,atkP:8,burst:5',
+  huntKnife: '獵刀,twinStrike,quickDraw,spe:3,multi:4', mistDagger: '晨霧,twinStrike,smokeBomb,eva:5,haste:3', fangDagger: '狼牙,venomFang,lacerate,weakUp:8,break:3',
+  emberKnife: '燼火,quickDraw,twinStrike,fireUp:10,brn:4', banditKnife: '盜賊,venomFang,smokeBomb,venomEdge:1,psn:3', stingerDagger: '蠍尾,toxicBlade,quickDraw,crit:5,psn:4',
+  moonDagger: '月牙,moonDance,backstab,crit:6,multi:4', wyrmFang: '龍牙,shadowStab,lacerate,critDmg:15,burst:4', riftDagger: '裂刃,bladeDance,hunterMark,weakUp:10,crit:3',
+  duneFang: '沙海,assassinate,flurry,bigUp:10,execute:4', hydraFang: '蛇牙,deathMark,toxicBlade,drain:5,psn:3', royalDagger: '宮廷,backstab,hunterMark,hit:8,break:3',
+  wolfFang2: '灰狼,flurry,twinStrike,double:1,multi:4', iceDagger: '冰晶,bladeDance,afterimage,eva:6,weaken:4', magmaDagger: '熔岩,flurry,quickDraw,fireUp:12,brn:3',
+  shadowDagger: '暗影,oboro,mirage,eva:8,execute:4', cometDagger: '彗星,shadowStab,bladeDance,critDmg:20,multi:4',
+  practiceWand: '練習,fireBolt,heal,mpRegen:3,mana:3', apprenticeStaff: '見習,manaBurst,aquaBlade,elem:5,burst:4', oakStaff: '橡木,leafStorm,heal,healUp:15,heal:4',
+  thornStaff: '荊棘,leafStorm,barrier,thorns:1,psn:4', emberRod: '燼杖,kindle,fireBolt,fireUp:12,brn:3', voltRod: '雷杖,quickBolt,thunder,boltUp:12,par:4',
+  quartzWand: '礦晶,manaBurst,barrier,magCrit:6,crit:3', fangWand: '牙杖,manaBurst,quickBolt,spe:3,mana:3', ruinStaff: '符文,chainBolt,barrier,mpSave:12,burst:4',
+  tideStaff: '潮汐,aquaBlade,aquaBurst,elem:8,heal:4', magusStaff: '宮廷,manaBurst,staticField,magCrit:6,power:4', foxfireStaff: '狐杖,flameWave,kindle,fireUp:12,brn:4',
+  harpyStaff: '鷹羽,chainBolt,quickBolt,spe:4,haste:3', stormStaff: '雷鳴,chainBolt,overload,boltUp:15,par:3', crystalStaff: '晶杖,aquaBurst,barrier,elem:10,mana:3',
+  dawnStaff: '曙杖,flameWave,holyLight,healUp:20,burst:4', masterStaff: '匠杖,combust,flameWall,critDmg:15,crit:3', lakeStaff: '湖霧,aquaBurst,sanctuary,mpRegen:4,heal:4',
+  bogStaff: '沼澤,leafStorm,discord,drain:5,psn:3', wyrmStaff: '潮龍,aquaBurst,thunderstorm,elem:12,burst:4', riftStaff: '界杖,meteor,timeStop,weakUp:10,burst:5',
+  hydraStaff: '蛇杖,inferno,combust,drain:6,brn:3', courtStaff: '王宮,skyJudge,barrier,magCrit:8,power:4', windStaff: '風鳴,thunderstorm,quickBolt,spe:5,haste:3',
+  gearStaff: '齒輪,overload,staticField,mpSave:15,multi:4', glacierStaff: '冰河,aquaBurst,sanctuary,elem:12,weaken:4', volcanoStaff: '火山,meteor,flameWall,fireUp:18,brn:3',
+  voidStaff: '虛杖,raijin,overload,critDmg:20,execute:4', starStaff: '星見,skyJudge,phoenix,magCrit:10,burst:5',
+  primerTome: '入門,manaBurst,heal,mpRegen:3,mana:3', herbalTome: '森之,leafStorm,heal,healUp:15,heal:4', ancientTome: '古岩,arcaneEdge,barrier,mpSave:12,burst:4',
+  stolenTome: '盜書,arcaneEdge,lullabyH,magCrit:6,crit:3', deathTome: '亡者,arcaneEdge,discord,drain:6,drain:4', lakeTome: '湖之,aquaBurst,barrier,mpRegen:4,heal:3',
+  riftTome: '界書,timeStop,arcaneEdge,weakUp:10,burst:4', sandTome: '沙書,manaBurst,lullabyH,spe:4,weaken:4', witchTome: '魔女,kindle,combust,fireUp:12,brn:3',
+  royalTome: '王立,skyJudge,holyLight,healUp:20,guard:3', lichTome: '巫妖,aquaBurst,timeStop,elem:12,weaken:3', voidTome: '虛書,arcaneEdge,enchant,critDmg:20,execute:4',
+  grenAxe: '格倫,recklessSlash,warCry,critDmg:10,break:3', hatchet: '伐木,powerSlash,warCry,crit:3,burst:4', boarAxe: '野豬,recklessSlash,guardStrike,hpP:6,break:3',
+  rockAxe: '岩角,shieldBash,armorBreak,pierceT:12,burst:4', crescentAxe: '新月,frenzy,bloodRage,drain:6,multi:4', glacierAxe: '霜嶺,zantetsu,ironWill,defP:8,weaken:4', titanAxe: '泰坦,asura,lastStand,atkP:10,burst:5',
+  trainSpear: '槍兵,dragonLance,gale,hit:6,burst:4', ironSpear: '鐵槍,pierceLance,jump,pierceT:8,break:3', galeLance: '疾風,gale,twinDragon,spe:4,haste:3',
+  scaleSpear: '龍鱗,dragonBlood,dragonLance,hpP:8,heal:4', azureSpear: '蒼龍,twinDragon,jump,weakUp:10,multi:4', frostSpear: '霜牙,pierceLance,armorBreak,elem:10,weaken:4', skySpear: '天龍,dragonDive,dragonBlood,critDmg:15,burst:5',
+  wrapFist: '布拳,comboPunch,meditate,eva:4,multi:4', ironKnuckle: '鐵拳,comboPunch,hakkei,crit:4,burst:4', rockFist: '岩拳,whirlKick,ironBody,defP:6,guard:3',
+  chiFist: '氣功,chiBlast,hakkei,mpRegen:4,mana:3', tigerClaw: '虎爪,comboPunch,hundredFists,critDmg:15,multi:4', magmaFist: '熔拳,whirlKick,hakkei,fireUp:12,brn:3', starFist: '星拳,whirlKick,heavenFist,double:1,burst:5',
+  woodFlute: '木笛,soundBlast,healSong,healUp:15,heal:4', travelLute: '旅人,soundBlast,battleSong,spe:3,power:4', forestHarp: '翠琴,echoBlast,lullabyH,regen:1,heal:4',
+  moonLyre: '月琴,echoBlast,discord,magCrit:6,weaken:4', windHorn: '風之,heroicFinale,battleSong,spe:5,haste:3', iceHarp: '冰弦,echoBlast,healSong,elem:10,weaken:3', starLyre: '星詠,heroicFinale,lullabyH,mpRegen:5,burst:5',
+  corkGun: '軟木,quickDraw,repair,hit:6,burst:4', brassPistol: '黃銅,taser,quickDraw,crit:4,par:4', steamRifle: '蒸汽,steamJet,overdrive,spe:4,multi:4',
+  gearRepeater: '連發,fullBurst,turret,double:1,multi:4', boltCannon: '雷管,clockBomb,taser,boltUp:12,par:3', frostMusket: '霜火,megaCannon,repair,elem:10,burst:5', starBlaster: '星爆,megaCannon,fullBurst,critDmg:20,burst:5',
+};
+// hand-named showpieces (story / boss weapons)
+const WS_NAMES = { dawnSword: ['曙光斬', '晨曦十字', null, '初代勇者之光'], eclipseBlade: [null, null, null, '月蝕・魔劍解放'], starSword: [null, null, null, '星辰一閃'], masterBlade: [null, null, null, '名匠的呼吸'], voidTome: [null, null, null, '虛無之頁'] };
+const WPASS = { // passive keys: name suffix + text
+  crit: ['鋒芒', v => '會心率+' + v + '%'], hit: ['精準', v => '命中+' + v + '%'], eva: ['輕盈', v => '迴避+' + v + '%'], drain: ['嗜血', v => '造成傷害的' + v + '%回復HP'],
+  elem: ['元素', v => '屬性攻擊傷害+' + v + '%'], fireUp: ['炎心', v => '火屬性傷害+' + v + '%'], boltUp: ['雷心', v => '雷屬性傷害+' + v + '%'], spe: ['疾行', v => '速度+' + v],
+  mpRegen: ['魔泉', v => '每回合回復' + v + '%最大MP'], regen: ['生機', () => '每回合回復6%最大HP'], venomEdge: ['毒牙', () => '物理攻擊20%機率讓對手中毒'], pierceT: ['破甲', v => '物理攻擊無視對手' + v + '%的物防'],
+  weakUp: ['看破', v => '打中弱點時傷害+' + v + '%'], bigUp: ['屠巨', v => '對精英・頭目傷害+' + v + '%'], mpSave: ['節能', v => '技能有' + v + '%機率不消耗MP'], magCrit: ['奧秘', v => '魔法攻擊會心率+' + v + '%'],
+  counter: ['反擊', () => '選擇防禦時被攻擊會立刻反擊'], guardPlus: ['堅守', () => '選擇防禦時再減傷30%'], statusRes: ['淨心', v => '更不容易陷入異常狀態（' + v + '%）'], first: ['先制', () => '每場戰鬥第一回合必定先出手'],
+  double: ['連擊', () => '物理攻擊25%機率追加一擊'], thorns: ['荊棘', () => '受到攻擊時反彈25%傷害'], atkMp: ['汲魔', v => '普通攻擊多回復' + v + '點MP'], chargeCut: ['蓄勢', v => '特技所需攻擊次數-' + v],
+  healUp: ['慈光', v => '治癒效果+' + v + '%'], critDmg: ['致命', v => '會心傷害+' + v + '%'], hpP: ['強健', v => '最大HP+' + v + '%'], defP: ['堅甲', v => '物防+' + v + '%'], atkP: ['剛力', v => '物攻+' + v + '%'], spaP: ['靈力', v => '魔攻+' + v + '%'],
+};
+const WPASS_FX = new Set(['regen', 'first', 'double', 'thorns']);
+const WSPEC = { // special: name suffix, text(power)
+  burst: ['怒濤', p => '追加一次強力攻擊（威力' + p + '）'], multi: ['連舞', p => '追加3段連擊（每段威力' + p + '）'], heal: ['癒光', () => '回復15%最大HP'], mana: ['魔湧', () => '回復20%最大MP'],
+  guard: ['守護', () => '展開2回合護盾（受到傷害-40%）'], power: ['昂揚', () => '物攻・魔攻各提升1階'], break: ['碎甲', p => '追加攻擊（威力' + p + '），降低對手物防・魔防'], crit: ['凝神', () => '下一次攻擊必定會心'],
+  drain: ['吸命', p => '追加攻擊（威力' + p + '），回復傷害50%的HP'], psn: ['毒霧', p => '追加攻擊（威力' + p + '），60%讓對手中毒'], brn: ['烈焰', p => '追加攻擊（威力' + p + '），60%讓對手灼傷'],
+  par: ['雷擊', p => '追加攻擊（威力' + p + '），60%讓對手麻痺'], execute: ['斷罪', p => '追加攻擊（威力' + p + '）；對手HP低於35%時威力×2.5'], weaken: ['威壓', () => '降低對手物攻・魔攻各1階'], haste: ['疾風', () => '速度提升1階，回復10%最大MP'],
+};
+const specPow = (type, t) => ({ burst: 40 + 10 * t, multi: 14 + 4 * t, drain: 30 + 8 * t, break: 25 + 6 * t, psn: 25 + 6 * t, brn: 25 + 6 * t, par: 25 + 6 * t, execute: 30 + 6 * t })[type] || 0;
+const KIND_ATK = { 劍: ['斬擊', 'slash'], 短刀: ['疾刺', 'slash'], 斧: ['劈砍', 'slash'], 長槍: ['突刺', 'windThrust'], 拳套: ['拳擊', 'slash'], 法杖: ['魔彈', 'magicBolt'], 魔導書: ['魔力彈', 'magicBolt'], 樂器: ['音擊', 'soundBlast'], 火槍: ['射擊', 'quickDraw'] };
+const KIND_SPFX = { 劍: 'bigCross', 短刀: 'redFlurry', 斧: 'groundBash', 長槍: 'dragonLance', 拳套: 'hakkei', 法杖: 'manaBurst', 魔導書: 'arcaneEdge', 樂器: 'soundBlast', 火槍: 'clockBomb' };
+const WSK = {}, WMOVE = {};
+MOVES.attack.pow = 40; MOVES.attack.d = '用主武器攻擊。不消耗MP，還會回復少量MP；每次攻擊都會累積特技。';
+for (const key in WS_TABLE) {
+  const B = GEAR[key]; if (!B) continue; const [stem, ta, tb, ps, sp] = WS_TABLE[key].split(','), nm = WS_NAMES[key] || [], [pk, pv] = ps.split(':'), [sk, sn] = sp.split(':');
+  const mk = (tpl, i) => { const T = MOVES[tpl]; if (!T) return null; const id = 'w_' + key + '_' + i, m = { ...T, n: nm[i] || stem + T.n, tpl, ws: key };
+    if (m.pow) m.pow = Math.round(T.pow * (1.15 + 0.03 * (B.t - 1))); MOVES[id] = m; SKILL_MP[id] = SKILL_MP[tpl] ?? 4; WMOVE[id] = key;
+    if (typeof SKILL_STYLE !== 'undefined' && SKILL_STYLE[tpl]) SKILL_STYLE[id] = SKILL_STYLE[tpl]; if (typeof SKILL_SCALE !== 'undefined' && SKILL_SCALE[tpl]) m.scale = SKILL_SCALE[tpl]; return id; };
+  const a = [mk(ta, 0), mk(tb, 1)].filter(Boolean), pw = specPow(sk, B.t);
+  WSK[key] = { a, p: { k: pk, v: +pv, n: (nm[2] || stem + WPASS[pk][0]) }, s: { k: sk, N: +sn, pow: pw, n: nm[3] || stem + WSPEC[sk][0] } };
+}
+const wpassText = p => WPASS[p.k] ? WPASS[p.k][1](p.v) : '';
+const wspecText = (s, st) => '每' + wsN(s, st) + '次攻擊自動發動：' + WSPEC[s.k][1](s.pow);
+
+/* ---------- which weapons the hero holds ---------- */
+const mainWeapon = (st = Game.st) => gearBy(st.equip && st.equip.weapon, st);
+const mainWKey = (st = Game.st) => { const g = mainWeapon(st); return g && WSK[g.b] ? g.b : null; };
+function subWeapon(st = Game.st) { const s = st.sub; if (!s) return null; const g = gearBy(s.u, st); if (!g || !WSK[g.b] || (st.equip && st.equip.weapon === g.u)) return null; return g; }
+function borrowedSkill(st = Game.st) { const g = subWeapon(st); if (!g) return null; const A = WSK[g.b].a; return A[Math.min(st.sub.i || 0, A.length - 1)] || null; }
+const wsN = (s, st = Game.st) => Math.max(2, s.N - (typeof talentSum === 'function' ? talentSum('chargeCut', st) : 0));
+function wsList(st = Game.st) {
+  const k = mainWKey(st), out = k ? WSK[k].a.slice() : [], b = borrowedSkill(st); if (b && !out.includes(b)) out.push(b);
+  st.skills = st.skills || {}; for (const id of out) if (!st.skills[id]) st.skills[id] = 1; return out;
+}
+const isBorrowed = (id, st = Game.st) => !!id && id === borrowedSkill(st) && WMOVE[id] !== mainWKey(st);
+learnedSkills = function (st = Game.st) { return wsList(st); };
+usableSkills = function (st = Game.st) { return wsList(st); };
+summarySkills = function (st = Game.st) { return wsList(st); };
+fixInherit = function (st = Game.st) { st.inh = []; return st.inh; };
+inhSlots = function () { return 0; };
+inheritables = function () { return []; };
+// 熟練度: every use counts; Lv2 after 12 uses, Lv3 after 36
+const WS_MASTER = [0, 12, 36];
+function wsUse(id, st = Game.st) { const X = st.skx || (st.skx = {}); X[id] = (X[id] || 0) + 1; const lv0 = (st.skills || {})[id] || 1, lv = X[id] >= WS_MASTER[2] ? 3 : X[id] >= WS_MASTER[1] ? 2 : 1; st.skills[id] = Math.max(lv0, lv); return st.skills[id] > lv0 ? st.skills[id] : 0; }
+function wsAttackMove(st = Game.st) {
+  const g = mainWeapon(st), B = g && GEAR[g.b], kind = B ? B.kind : null, K = KIND_ATK[kind] || ['攻擊', 'slash'], mag = isMagicW(kind);
+  return { ...MOVES.attack, n: K[0], fx: FX[K[1]] ? K[1] : mag ? 'magicBolt' : 'slash', cat: mag ? '特' : '物', t: (B && B.elem) || '一般', basic: 1 };
+}
+{ const _sm = skillMove; skillMove = function (id, st = Game.st) {
+    if (id === 'attack') return wsAttackMove(st);
+    const m = _sm(id, st); if (!WMOVE[id]) return m; const o = { ...m };
+    if (isBorrowed(id, st)) o.sub = 1;
+    if (o.heal && typeof talentSum === 'function') { const h = talentSum('healUp', st) + (mainWKey(st) && WSK[mainWKey(st)].p.k === 'healUp' ? WSK[mainWKey(st)].p.v : 0); if (h) o.heal = +(o.heal * (1 + h / 100)).toFixed(2); }
+    return o;
+  };
+}
+
+/* ---------- stats: the main weapon's passive ---------- */
+{ const _hs = heroStats; heroStats = function (st = Game.st) {
+    const s = _hs(st), k = mainWKey(st); if (!k) return s; const p = WSK[k].p;
+    if (WPASS_FX.has(p.k)) s.fx[p.k] = 1; else if (p.k === 'hpP' || p.k === 'defP' || p.k === 'atkP' || p.k === 'spaP') { const sk = p.k.slice(0, -1); s[sk] = Math.floor(s[sk] * (1 + p.v / 100)); }
+    else s[p.k] = (s[p.k] || 0) + p.v;
+    return s;
+  };
+}
+
+/* ---------- damage: basic attack / actives / borrowed / kind & crit bonuses ---------- */
+{ const _cd = Battle.prototype.calcDamage; Battle.prototype.calcDamage = function (u, t, mv) {
+    const r = _cd.call(this, u, t, mv); if (!u || !u.hero || !mv || !mv.pow) return r; const S = u.stats || {}; let m = 1;
+    if (mv.basic) m *= 1 + (S.atkUp || 0) / 100;
+    if (mv.ws) m *= 1 + (S.actUp || 0) / 100;
+    if (mv.sub) m *= 0.9 + (S.subUp || 0) / 100;
+    if (mv.wsp) m *= 1 + (S.spcUp || 0) / 100;
+    if (S.kindUp && S.wkind && S.kindUp[S.wkind]) m *= 1 + S.kindUp[S.wkind] / 100;
+    if (S.typeUp && S.typeUp[mv.t]) m *= 1 + S.typeUp[mv.t] / 100;
+    if (r.crit && S.critDmg) m *= 1 + S.critDmg / 100;
+    if (m !== 1) r.dmg = Math.max(1, Math.floor(r.dmg * m)); return r;
+  };
+}
+{ const _ed = Battle.prototype.estimateDamage; Battle.prototype.estimateDamage = function (id) {
+    if (id !== 'attack') return _ed.call(this, id); const A = MOVES.attack; MOVES.attack = wsAttackMove(); try { return _ed.call(this, id); } finally { MOVES.attack = A; }
+  };
+}
+
+/* ---------- battle: MP from basic attacks, 熟練度, the special counter ---------- */
+{ const _um = Battle.prototype.useMove; Battle.prototype.useMove = function* (u, t, id) {
+    if (!u || !u.hero) return yield* _um.call(this, u, t, id);
+    const fhp = t ? t.hp : 0, r = yield* _um.call(this, u, t, id); if (u.hp <= 0 || !t) return r;
+    const st = Game.st, key = mainWKey(st), base = MOVES[id];
+    const basic = id === 'attack' && t.hp < fhp, cast = id !== 'attack' && this._castId === id;
+    if (!basic && !cast) return r;
+    if (basic) { const g = 2 + Math.floor((u.maxmp || 0) / 25) + (u.stats.atkMp || 0); if (u.mp < u.maxmp) { u.mp = Math.min(u.maxmp, u.mp + g); st.mp = u.mp; } }
+    if (cast && WMOVE[id]) { const up = wsUse(id, st); if (up) { Sound.sfx('statUp'); yield* this.msg('「' + base.n + '」的熟練度升到了Lv' + up + '！', { hold: 24 }); } }
+    if (!key || !(basic || (base && base.pow))) return r;
+    const S = WSK[key].s, N = wsN(S, st); this.H.wc = (this.H.wc || 0) + 1; this.H.wcN = N;
+    if (this.H.wc >= N && t.hp > 0 && this.F && this.F.hp > 0) { this.H.wc = 0; yield* this.wSpecial(u, t, key); }
+    return r;
+  };
+}
+Battle.prototype.wHit = function* (u, t, S, pow, fx, mul = 1) {
+  const B = GEAR[mainWKey()], mag = isMagicW(B.kind), mv = { n: S.n, t: B.elem || '一般', cat: mag ? '特' : '物', pow, acc: 100, fx, wsp: 1 };
+  const r = this.calcDamage(u, t, mv); if (t.shield > 0) r.dmg = Math.floor(r.dmg * 0.6); const d = Math.min(t.hp, Math.max(1, Math.floor(r.dmg * mul)));
+  yield* this.playFx(FX[fx] ? fx : 'hit', u, t); t.hp -= d; Sound.sfx(r.mult > 1 ? 'hitSuper' : 'hit'); if (r.crit) Sound.sfx('crit'); yield* this.impact(t, r.crit || r.mult > 1 ? 2 : 1); yield* this.animHP(t); return d;
+};
+Battle.prototype.wSpecial = function* (u, t, key) {
+  const S = WSK[key].s, B = GEAR[key], mag = isMagicW(B.kind), fx = KIND_SPFX[B.kind] || 'hit', C = this.center(u);
+  Sound.sfx('charge'); this.spawn({ k: 'flash', c: '#ffe8a0', a: 0.35, life: 8 }); for (let i = 0; i < 10; i++) this.spawn({ k: 'mote', x: C.x + rnd(-18, 18), y: C.y + rnd(-14, 14), vy: -1.2, s: 2, c: i % 2 ? '#ffd860' : '#ffffff', life: 18 });
+  yield* this.msg('特技「' + S.n + '」發動！', { hold: 20 });
+  const hurt = ['burst', 'multi', 'drain', 'break', 'psn', 'brn', 'par', 'execute'].includes(S.k);
+  if (hurt) {
+    let total = 0;
+    if (S.k === 'multi') { for (let i = 0; i < 3 && t.hp > 0; i++) total += yield* this.wHit(u, t, S, S.pow, i ? 'hit' : fx); yield* this.msg('3連擊！合計' + total + '點傷害！', { hold: 18 }); }
+    else { const ex = S.k === 'execute' && t.hp < t.maxhp * 0.35; total = yield* this.wHit(u, t, S, S.pow, fx, ex ? 2.5 : 1); yield* this.msg((ex ? '斷罪！' : '') + '造成了' + total + '點傷害！', { hold: 18 }); }
+    if (S.k === 'drain' && u.hp < u.maxhp) { const h = Math.min(u.maxhp - u.hp, Math.max(1, Math.floor(total * 0.5))); u.hp += h; Game.st.hp = u.hp; Sound.sfx('heal'); yield* this.animHP(u); yield* this.msg('吸取了' + h + '點HP！', { hold: 16 }); }
+    if (S.k === 'break' && t.hp > 0) yield* this.statChange(t, { def: -1, spd: -1 });
+    if ((S.k === 'psn' || S.k === 'brn' || S.k === 'par') && t.hp > 0 && !t.status && chance(0.6)) yield* this.inflict(t, S.k, true);
+    return;
+  }
+  if (S.k === 'heal') { const h = Math.min(u.maxhp - u.hp, Math.ceil(u.maxhp * 0.15)); if (h > 0) { u.hp += h; Game.st.hp = u.hp; Sound.sfx('heal'); yield* this.animHP(u); } yield* this.msg('回復了' + h + '點HP！', { hold: 16 }); }
+  else if (S.k === 'mana' || S.k === 'haste') { if (S.k === 'haste') yield* this.statChange(u, { spe: 1 }); const g = Math.min(u.maxmp - u.mp, Math.ceil(u.maxmp * (S.k === 'mana' ? 0.2 : 0.1))); u.mp += g; Game.st.mp = u.mp; Sound.sfx('heal'); yield* this.msg('回復了' + g + '點MP！', { hold: 16 }); }
+  else if (S.k === 'guard') { u.shield = Math.max(u.shield || 0, 2); Sound.sfx('shield'); yield* this.msg(u.n + '被護盾包圍了！（2回合）', { hold: 18 }); }
+  else if (S.k === 'power') yield* this.statChange(u, { atk: 1, spa: 1 });
+  else if (S.k === 'weaken') yield* this.statChange(t, { atk: -1, spa: -1 });
+  else if (S.k === 'crit') { u.critNext = true; yield* this.msg('下一次攻擊必定會心！', { hold: 16 }); }
+};
+// the counter beside the HUD: 特技 ◆◆◇◇
+{ const _bh = Battle.prototype.drawBoxH; Battle.prototype.drawBoxH = function (x) {
+    _bh.call(this, x); const H = this.H, Y = Math.round(this.boxH), k = mainWKey(); if (!H || !k || Y >= BH || Game.scene !== this) return;
+    const N = H.wcN || wsN(WSK[k].s), n = Math.min(N, H.wc || 0), full = n >= N - 1, w = N * 7 + 22, X = W - w - 3, yy = Y - 11;
+    x.fillStyle = 'rgba(10,10,22,0.72)'; x.fillRect(X - 2, yy - 1, w + 4, 10); Font.draw(x, '特技', X, yy - 1, full ? '#ffd860' : UIC.muted, UIC.textSh, 7);
+    for (let i = 0; i < N; i++) { const cx = X + 22 + i * 7, on = i < n; x.fillStyle = '#10121e'; x.fillRect(cx - 1, yy + 1, 6, 6); x.fillStyle = on ? (full && Math.floor(this.t / 8) % 2 ? '#ffffff' : '#ffc040') : '#3a3a4a'; x.fillRect(cx, yy + 2, 4, 4); }
+  };
+}
+
+/* ---------- the battle skill pop-up: 2 main-weapon actives + the borrowed one ---------- */
+Battle.prototype.chooseMove = function* () {
+  const st = Game.st, list = wsList(st);
+  if (!list.length) { yield* this.msg('這把武器沒有技能！（選單→裝備 換一把武器）'); return null; }
+  let cur = Math.min(this.moveIdx || 0, list.length - 1); this.idle = true;
+  const VIS = list.length, X = 8, w = W - 16, Y = 58, rowH = 14, h = 18 + VIS * rowH + 4, DY = Y + h + 2, DH = BH - 18 - DY;
+  const info = (x, m) => {
+    Font.drawR(x, 'MP ' + st.mp + '/' + (this.H.maxmp || st.mp), X + w - 8, Y + 2, '#8ab8ff', UIC.textSh, 9);
+    const id = list[m.i], mv = skillMove(id), c = TYPE_COL[mv.t]; drawWin(x, X, DY, w, DH, 'menu');
+    const fit = (t, sz, maxW) => { let z = sz; while (z > 7 && Font.width(t, z) > maxW) z--; return z; };
+    const lack = skillMP(id) > st.mp, est = !lack && mv.pow && this.estimateDamage ? this.estimateDamage(id) : 0, L = X + 8, R = X + w - 8;
+    const t1 = (isBorrowed(id) ? '副武器・' : '') + (mv.t === '一般' ? '無屬性' : mv.t + '屬性') + '・' + (mv.cat === '變' ? '輔助' : mv.cat === '物' ? '物理' : '魔法') + '・熟練Lv' + (skillLv(id) || 1), mpT = lack ? 'MP不足' : 'MP' + skillMP(id);
+    x.fillStyle = c; x.fillRect(L, DY + 6, 4, 4); Font.draw(x, t1, L + 7, DY + 1, '#c9cfe4', UIC.textSh, fit(t1, 9, w - 30 - Font.width(mpT, 9))); Font.drawR(x, mpT, R, DY + 1, lack ? UIC.bad : '#8ab8ff', UIC.textSh, 9);
+    let y = DY + 14;
+    if (mv.pow) { const pw = powTxt(mv), eT = est ? '預估≈' + est : ''; x.fillStyle = 'rgba(200,160,80,0.35)'; x.fillRect(L, DY + 13, w - 16, 1);
+      Font.draw(x, pw, L, y, UIC.accent, UIC.textSh, fit(pw, 10, w - 22 - (eT ? Font.width(eT, 9) : 0))); if (eT) Font.drawR(x, eT, R, y + 1, UIC.warm, UIC.textSh, 9); y += 13; }
+    Font.drawC(x, Game.touchUI ? (m.tapSel === m.i ? '再點一次：使用　點外面：返回' : '點技能看說明・再點一次使用') : 'A：使用　B：返回', W / 2, BB_Y + 11, Game.touchUI && m.tapSel === m.i ? UIC.warm : UIC.muted, UIC.textSh, 9);
+    drawFitText(x, mv.d || '', L, y, w - 16, DY + DH - 5 - y, 9);
+  };
+  while (true) {
+    const r = yield* choose(list.map(id => ({ t: MOVES[id].n, r: (isBorrowed(id) ? '副 ' : '') + 'MP' + skillMP(id), col: skillMP(id) > st.mp || hpCostBlocked(id) ? UIC.dis : undefined })), { x: X, y: Y, w, h, rowH, fs: 10, ox: 12, oy: 17, visible: VIS, title: '武器技能', index: cur, onMove: i => cur = i, drawExtra: info, twoTap: true });
+    if (r < 0) { this.idle = false; return null; }
+    if (skillMP(list[r]) > st.mp) { yield* this.msg('MP不夠！'); continue; }
+    if (hpCostBlocked(list[r])) { yield* this.msg('HP不夠，無法使用' + MOVES[list[r]].n + '！'); continue; }
+    this.idle = false; this.moveIdx = r; return list[r];
+  }
+};
+
+/* ===================== v7.0 ② class talents: each class has 3 branches, points can be mixed freely =====================
+   Playtest: "talents were independent of the class, so changing class still used the same talents — no fun".
+   Talents now belong to the class. The old advanced classes became branches (劍士＝劍聖／狂戰士／決鬥者 …).
+   Each branch has 5 rows (7 nodes). A row opens once enough points sit in the rows below it (same branch);
+   rows 4–5 are the deep talents: Lv14 + 「天賦覺醒」 at the village elder. 1 point per level (+2 on awakening, + books).
+   Changing class or resetting refunds everything for free. Many talents boost one weapon kind, so the weapon you pick
+   decides which talents you want. */
+const ROW_OF = [0, 0, 1, 1, 2, 3, 4], ROW_REQ = [0, 3, 6, 9, 12], ROW_SLOTS = [[0, 1], [2, 3], [4], [5], [6]];
+// node: 'name|key|value per rank|max rank'
+const CLASS_V7 = {
+  swordsman: { tag: '近身武技', w: ['劍', '斧', '長槍'], pitch: '以近身武器戰鬥的戰士。劍聖追求會心與居合，狂戰士以血換力，決鬥者擅長長槍、先制與反擊。', br: [
+    ['劍聖', '會心與居合，劍的極致。', '劍術精通|kind:劍|6|3;明鏡|crit|3|3;居合|actUp|5|3;見切|eva|3|3;無想|chargeCut|1|1;一閃|critDmg|10|3;劍聖之境|spcUp|40|1'],
+    ['狂戰士', '以血換力的斧頭猛攻。', '戰斧精通|kind:斧|6|3;蠻力|atkP|3|3;嗜血|drain|3|3;鐵骨|hpP|4|3;狂怒|rage|1|1;破甲|pierceT|6|3;背水之陣|fx.lastStand|1|1'],
+    ['決鬥者', '長槍、先制與反擊。', '長槍精通|kind:長槍|6|3;迅捷|speP|4|3;碎盾|shieldChip|15|3;反擊架勢|counter|1|1;先發制人|fx.first|1|1;弱點看破|weakUp|6|3;決鬥之王|bigUp|20|1']] },
+  mage: { tag: '四系魔法', w: ['法杖', '魔導書', '樂器'], pitch: '操控魔力的術士。炎術士燒盡一切，雷術士以速度與麻痺壓制，奧術師精通魔導書與MP運用。', br: [
+    ['炎術士', '火焰與爆發傷害。', '炎之心|fireUp|8|3;魔力親和|spaP|3|3;法杖精通|kind:法杖|6|3;元素掌握|elem|5|3;奧術湧動|fx.arcaneSurge|1|1;爆炎|critDmg|10|3;業火之主|fireUp|25|1'],
+    ['雷術士', '雷電、速度與會心。', '雷之心|boltUp|8|3;迅雷|speP|4|3;奧術洞察|magCrit|4|3;雷紋|fx.stormMark|1|1;連鎖|chargeCut|1|1;雷霆|critDmg|10|3;雷神降臨|actUp|25|1'],
+    ['奧術師', '魔導書與MP運用。', '魔導書精通|kind:魔導書|6|3;魔力泉湧|mpRegen|2|3;魔力擴充|mpP|8|3;節能|mpSave|6|3;魔力循環|fx.freeCast|1|1;元素掌握|elem|6|3;萬象借法|subUp|30|1']] },
+  guardian: { tag: '堅守反擊', w: ['斧', '劍', '拳套'], pitch: '站在最前線的守護者。聖騎士治癒與不屈，鐵壁把防禦練到極致，復仇者用斧頭加倍奉還。', br: [
+    ['聖騎士', '治癒、再生與不屈。', '神聖加護|healUp|10|3;堅韌|hpP|4|3;元素護體|elemRes|6|3;信念|defP|4|3;守護之心|fx.guardHeal|1|1;再生|fx.regen|1|1;不屈之魂|endureT|1|1'],
+    ['鐵壁', '物防魔防與防禦。', '鐵壁|defP|5|3;魔法抵抗|spdP|5|3;強健|hpP|5|3;不動如山|guardPlus|1|1;荊棘之甲|fx.thorns|1|1;鋼鐵意志|statusRes|10|3;要塞|defP|20|1'],
+    ['復仇者', '斧頭與反擊。', '重擊|kind:斧|6|3;怒火|atkP|3|3;反擊架勢|counter|1|1;以牙還牙|drain|3|3;背水|rage|1|1;復仇之刃|critDmg|10|3;審判之時|fx.lastStand|1|1']] },
+  ranger: { tag: '迅捷連擊', w: ['短刀', '火槍', '拳套'], pitch: '敏捷的獵人。刺客一擊致命，影舞者以迴避與連擊周旋，獵人用火槍與毒看破弱點。', br: [
+    ['刺客', '會心與致命一擊。', '短刀精通|kind:短刀|6|3;要害|crit|3|3;追擊毒傷|venomous|10|3;致命|critDmg|8|3;暗殺|assassin|1|1;巨獸殺手|bigUp|6|3;暗殺術|actUp|25|1'],
+    ['影舞者', '迴避、連擊與反擊。', '身輕如燕|eva|3|3;疾風|speP|4|3;亂舞|atkUp|10|3;連擊|fx.double|1|1;殘影|shadowStep|1|1;蓄勢|atkMp|1|3;無影|chargeCut|1|1'],
+    ['獵人', '火槍、毒與弱點。', '火槍精通|kind:火槍|6|3;精準|hit|4|3;毒刃|venomEdge|1|1;弱點獵手|weakUp|6|3;先發制人|fx.first|1|1;穿甲彈|pierceT|8|3;狩獵本能|bigUp|20|1']] },
+  bard: { tag: '歌聲支援', w: ['樂器', '魔導書', '短刀'], pitch: '以歌聲戰鬥的旅人。戰歌激昂作戰，安魂守護生命，詩刃讓短刀與副武器發揮到極致。', br: [
+    ['戰歌', '激昂的歌聲與特技。', '樂器精通|kind:樂器|6|3;魔力親和|spaP|3|3;激昂|actUp|5|3;輕快|speP|4|3;狂熱|fx.fervor|1|1;高音|critDmg|10|3;英雄讚歌|spcUp|40|1'],
+    ['安魂', '治癒、MP與不屈。', '慈悲|healUp|10|3;魔力泉湧|mpRegen|2|3;堅韌|hpP|4|3;淨化|statusRes|10|3;再生|fx.regen|1|1;節能|mpSave|6|3;安魂曲|endureT|1|1'],
+    ['詩刃', '短刀、普攻與副武器。', '短刀精通|kind:短刀|6|3;要害|crit|3|3;舞步|atkUp|10|3;閃避|eva|3|3;連擊|fx.double|1|1;雙持|subUp|10|3;終曲|chargeCut|1|1']] },
+  machinist: { tag: '機關火力', w: ['火槍', '斧', '長槍'], pitch: '操縱機關的工匠。砲術專精火槍，機關讓特技不停運轉，工程師又硬又能自我修復。', br: [
+    ['砲術', '火槍與會心。', '火槍精通|kind:火槍|6|3;精準|hit|4|3;致命|critDmg|8|3;穿甲|pierceT|6|3;破甲彈|fx.pierce|1|1;火力全開|actUp|8|3;終極砲擊|spcUp|40|1'],
+    ['機關', '特技與MP循環。', '齒輪|spcUp|10|3;發電|atkMp|1|3;電容|mpP|8|3;雷紋|fx.stormMark|1|1;連動|chargeCut|1|1;超頻|atkUp|10|3;永動機關|actUp|25|1'],
+    ['工程', '防禦與修復。', '裝甲|defP|5|3;強化外殼|hpP|4|3;維修|healUp|10|3;絕緣|elemRes|6|3;反應裝甲|fx.thorns|1|1;防鏽|statusRes|10|3;緊急修復|fx.regen|1|1']] },
+  monk: { tag: '拳與氣', w: ['拳套', '法杖', '長槍'], pitch: '鍛鍊身心的武僧。剛拳以拳頭打穿一切，氣功運用魔力與MP，禪定讓身體不受動搖。', br: [
+    ['剛拳', '拳套與連擊。', '拳套精通|kind:拳套|6|3;剛力|atkP|3|3;要害|crit|3|3;連擊|fx.double|1|1;崩拳|pierceT|20|1;致命|critDmg|8|3;天崩|spcUp|40|1'],
+    ['氣功', '魔力與MP。', '內功|spaP|3|3;調息|mpRegen|2|3;法杖精通|kind:法杖|6|3;吐納|atkMp|1|3;氣循環|fx.freeCast|1|1;奧術洞察|magCrit|4|3;周天|chargeCut|1|1'],
+    ['禪定', '迴避與耐久。', '無我|eva|3|3;身法|speP|4|3;金剛|hpP|4|3;明鏡|statusRes|10|3;再生|fx.regen|1|1;不動|guardPlus|1|1;不壞之身|endureT|1|1']] },
+  dragoon: { tag: '長槍跳躍', w: ['長槍', '劍', '斧'], pitch: '與龍締約的騎士。龍槍貫穿一切，龍血讓身體更強韌，天躍把普攻與特技連成一氣。', br: [
+    ['龍槍', '長槍與穿透。', '長槍精通|kind:長槍|6|3;剛力|atkP|3|3;穿透|pierceT|6|3;屠龍|bigUp|6|3;先發制人|fx.first|1|1;致命|critDmg|10|3;龍神之槍|actUp|25|1'],
+    ['龍血', '耐久與吸血。', '龍血|hpP|4|3;嗜血|drain|3|3;龍鱗|defP|4|3;龍息|fireUp|8|3;再生|fx.regen|1|1;元素護體|elemRes|6|3;龍之心|endureT|1|1'],
+    ['天躍', '速度、普攻與特技。', '身輕|speP|4|3;躍步|eva|3|3;突刺|atkUp|10|3;要害|crit|3|3;天躍|chargeCut|1|1;高空|spcUp|10|3;流星|spcUp|30|1']] },
+  otherworlder: { tag: '全能', w: ['劍', '法杖', '長槍'], pitch: '來自異界的勇者。什麼武器都能用：勇者全面強化，異界善用弱點與借用技能，時空掌握先機。', br: [
+    ['勇者', '全面強化。', '勇氣|atkP|3|3;智慧|spaP|3|3;體魄|hpP|4|3;守護|defP|4|3;異界共鳴|fx.wisdom|1|1;必殺|critDmg|8|3;勇者之魂|actUp|25|1'],
+    ['異界', '弱點與借用技能。', '元素|elem|5|3;看破|weakUp|6|3;借力|subUp|10|3;魔力|mpP|8|3;異界之力|chargeCut|1|1;屠巨|bigUp|8|3;異界共鳴|spcUp|40|1'],
+    ['時空', '速度與先機。', '加速|speP|4|3;殘影|eva|3|3;節能|mpSave|6|3;魔泉|mpRegen|2|3;先機|fx.first|1|1;淨心|statusRes|10|3;時之守護|endureT|1|1']] },
+  spellblade: { tag: '魔劍合一', w: ['劍', '魔導書', '法杖'], pitch: '讓劍與魔法合而為一的魔劍士。魔劍共鳴攻魔，月蝕追求會心與特技，元素讓每一種屬性都更強。', br: [
+    ['魔劍', '劍與魔力共鳴。', '劍術精通|kind:劍|6|3;魔力親和|spaP|3|3;剛力|atkP|3|3;魔劍共鳴|spellblade|1|1;奧術湧動|fx.arcaneSurge|1|1;致命|critDmg|8|3;魔劍解放|actUp|25|1'],
+    ['月蝕', '會心與特技。', '奧術洞察|magCrit|4|3;要害|crit|3|3;元素|elem|5|3;魔泉|mpRegen|2|3;月蝕|chargeCut|1|1;看破|weakUp|6|3;月蝕之刻|spcUp|40|1'],
+    ['元素', '四系屬性。', '炎|fireUp|6|3;雷|boltUp|6|3;水|type:水|6|3;草|type:草|6|3;雷紋|fx.stormMark|1|1;元素護體|elemRes|6|3;元素之主|elem|20|1']] },
+};
+const V7_CLASSES = ['swordsman', 'mage', 'guardian', 'ranger', 'bard', 'machinist', 'monk', 'dragoon', 'otherworlder', 'spellblade'];
+const CT = {}; // cls → [ [ {id,b,i,row,n,key,v,max} ×7 ] ×3 ]
+for (const c in CLASS_V7) CT[c] = CLASS_V7[c].br.map(([bn, bd, s], b) => s.split(';').map((q, i) => { const [n, key, v, max] = q.split('|'); return { id: c + '.' + b + '.' + i, b, i, row: ROW_OF[i], n, key, v: +v, max: +max }; }));
+const V7_OLD = { swordmaster: 'swordsman', berserker: 'swordsman', pyromancer: 'mage', stormcaller: 'mage', paladin: 'guardian', assassin: 'ranger', shadowdancer: 'ranger' };
+const clsV7 = c => V7_OLD[c] || (CT[c] ? c : 'swordsman');
+const FX_TXT = { first: '每場戰鬥第一回合必定先出手', regen: '每回合回復6%最大HP', double: '物理攻擊25%機率追加一擊', thorns: '受到攻擊時反彈25%傷害', guardHeal: '選擇防禦時回復15%最大HP', lastStand: 'HP越低傷害越高（最多+50%）', freeCast: '技能有30%機率不消耗MP', stormMark: '攻擊時15%機率讓對手麻痺', arcaneSurge: 'MP在一半以上時魔法傷害+15%', fervor: '每次攻擊物攻或魔攻提升1階（每場最多3次）', pierce: '物理攻擊無視對手30%的物防', wisdom: '獲得的經驗值+50%' };
+const TK_TXT = { hpP: v => '最大HP+' + v + '%', atkP: v => '物攻+' + v + '%', defP: v => '物防+' + v + '%', spaP: v => '魔攻+' + v + '%', spdP: v => '魔防+' + v + '%', speP: v => '速度+' + v + '%', mpP: v => '最大MP+' + v + '%',
+  crit: v => '會心率+' + v + '%', eva: v => '迴避+' + v + '%', hit: v => '命中+' + v + '%', drain: v => '造成傷害的' + v + '%回復HP', elem: v => '屬性攻擊傷害+' + v + '%', fireUp: v => '火屬性傷害+' + v + '%', boltUp: v => '雷屬性傷害+' + v + '%',
+  pierceT: v => '物理攻擊無視' + v + '%物防', shieldChip: v => v + '%機率額外削減1點護盾', statusRes: v => '異常狀態抗性+' + v + '%', guardPlus: () => '選擇防禦時再減傷30%', weakUp: v => '打中弱點傷害+' + v + '%', bigUp: v => '對精英・頭目傷害+' + v + '%',
+  mpSave: v => '技能' + v + '%機率不消耗MP', magCrit: v => '魔法攻擊會心率+' + v + '%', elemRes: v => '受到的屬性傷害-' + v + '%', endureT: () => '每場戰鬥一次，受到致命傷害時保留1HP', mpRegen: v => '每回合回復' + v + '%最大MP',
+  venomEdge: () => '物理攻擊20%機率讓對手中毒', venomous: v => '對中毒的對手傷害+' + v + '%', assassin: () => '每場戰鬥第1回合的攻擊必定會心', shadowStep: () => '閃過攻擊後立刻反擊（70%傷害）', rage: () => 'HP低於一半時傷害+30%',
+  spellblade: () => '物攻與魔攻互相加成45%', counter: () => '選擇防禦時被攻擊會立刻反擊', atkUp: v => '普通攻擊傷害+' + v + '%', actUp: v => '武器主動技能傷害+' + v + '%', subUp: v => '副武器借用技能傷害+' + v + '%', spcUp: v => '特技傷害+' + v + '%',
+  critDmg: v => '會心傷害+' + v + '%', chargeCut: v => '特技所需攻擊次數-' + v, atkMp: v => '普通攻擊多回復' + v + '點MP', healUp: v => '治癒效果+' + v + '%' };
+function tDesc(key, v) {
+  if (key.startsWith('kind:')) return '裝備' + key.slice(5) + '時傷害+' + v + '%'; if (key.startsWith('type:')) return key.slice(5) + '屬性傷害+' + v + '%';
+  if (key.startsWith('fx.')) return FX_TXT[key.slice(3)] || (SPECIALS[key.slice(3)] || {}).d || key; return TK_TXT[key] ? TK_TXT[key](v) : key + '+' + v;
+}
+const ctOf = (st = Game.st) => st.ct || (st.ct = {});
+const ctRank = (n, st = Game.st) => ctOf(st)[n.id] || 0;
+function talentSum(key, st = Game.st) { const T = CT[st.cls]; if (!T) return 0; let s = 0; for (const B of T) for (const n of B) if (n.key === key) s += n.v * ctRank(n, st); return s; }
+const deepOk = (st = Game.st) => st.lv >= 14 && !!(st.flags && st.flags.deep);
+const tpTotal = (st = Game.st) => (st.cls ? st.lv : 0) + (st.tpRead || 0) + (st.flags && st.flags.deep ? 2 : 0);
+function tpSpent(st = Game.st) { let s = 0; const T = CT[st.cls]; if (T) for (const B of T) for (const n of B) s += ctRank(n, st); return s; }
+const tpAvail = (st = Game.st) => Math.max(0, tpTotal(st) - tpSpent(st));
+const brBelow = (b, row, st = Game.st) => { let s = 0; for (const n of CT[st.cls][b]) if (n.row < row) s += ctRank(n, st); return s; };
+const brPts = (b, st = Game.st) => CT[st.cls][b].reduce((a, n) => a + ctRank(n, st), 0);
+function nodeBlock(n, st = Game.st) { // why a point can't be added (null = ok)
+  if (ctRank(n, st) >= n.max) return '已達最高等級'; if (n.row >= 3 && !deepOk(st)) return st.lv < 14 ? 'Lv14後找村長進行「天賦覺醒」' : '找萌芽鎮的村長進行「天賦覺醒」';
+  const need = ROW_REQ[n.row], have = brBelow(n.b, n.row, st); if (have < need) return '這條分支前面的天賦要先投入' + need + '點（目前' + have + '點）';
+  if (!tpAvail(st)) return '天賦點不足（升級時獲得）'; return null;
+}
+function refundBlock7(n, st = Game.st) {
+  if (!ctRank(n, st)) return '還沒有投入點數'; const C = ctOf(st); C[n.id]--;
+  let bad = null; for (const m of CT[st.cls][n.b]) if (ctRank(m, st) > 0 && m.row > n.row && brBelow(n.b, m.row, st) < ROW_REQ[m.row]) { bad = m; break; }
+  C[n.id]++; return bad ? '「' + bad.n + '」需要它' : null;
+}
+function applyTalents(s, st = Game.st) {
+  const T = CT[st.cls]; if (!T) return s; const pct = {}; s.kindUp = s.kindUp || {}; s.typeUp = s.typeUp || {};
+  for (const B of T) for (const n of B) { const r = ctRank(n, st); if (!r) continue; const v = n.v * r, k = n.key;
+    if (k.startsWith('kind:')) s.kindUp[k.slice(5)] = (s.kindUp[k.slice(5)] || 0) + v; else if (k.startsWith('type:')) s.typeUp[k.slice(5)] = (s.typeUp[k.slice(5)] || 0) + v;
+    else if (k.startsWith('fx.')) s.fx[k.slice(3)] = 1; else if (/^(hp|atk|def|spa|spd|spe|mp)P$/.test(k)) pct[k.slice(0, -1)] = (pct[k.slice(0, -1)] || 0) + v; else s[k] = (s[k] || 0) + v; }
+  for (const k in pct) s[k] = Math.floor(s[k] * (1 + pct[k] / 100)); if (s.endureT) s.fx.endure = 1; if (s.fireUp && s.typeUp) { } return s;
+}
+{ const _hs = heroStats; heroStats = function (st = Game.st) { return applyTalents(_hs(st), st); }; }
+
+/* ---------- the talent screen ---------- */
+function* talentScreen() {
+  const st = Game.st; if (!CT[st.cls]) { yield* say('先在萌芽鎮的村長那裡完成覺醒的儀式吧。'); return; }
+  let row = 0, slot = 0, msg = '', msgT = 0; const T = CT[st.cls], C = CLASS_V7[st.cls];
+  const slots = r => ROW_SLOTS[r].length * 3, nodeAt = (r, s) => { const per = ROW_SLOTS[r].length; return T[Math.floor(s / per)][ROW_SLOTS[r][s % per]]; };
+  const RY = r => 44 + r * 25, colX = b => 4 + b * 57;
+  const tile = (n, r, s) => { const per = ROW_SLOTS[r].length, b = Math.floor(s / per), k = s % per, X = per === 2 ? colX(b) + k * 28 : colX(b) + 7, w = per === 2 ? 26 : 40; return { X, Y: RY(r), w, h: 21 }; };
+  const scr = { draw(x) {
+    screenBG(x); headerBar(x, '天賦・' + CLASSES[st.cls].n); const av = tpAvail(st); Font.drawR(x, '天賦點 ' + av, W - 6, 2, av ? UIC.warm : UIC.muted, UIC.textSh);
+    const col = classColOf(st.cls);
+    C.br.forEach(([bn], b) => { const X = colX(b); drawBtn(x, X, 22, 54, 17, false, col); Font.drawC(x, bn, X + 27, 21, shade(col, 0.35), UIC.textSh, 10); Font.drawR(x, String(brPts(b, st)), X + 52, 29, UIC.muted, UIC.textSh, 7); });
+    for (let r = 0; r < 5; r++) {
+      if (r === 3) { x.fillStyle = deepOk(st) ? 'rgba(255,200,100,0.35)' : 'rgba(120,120,150,0.35)'; x.fillRect(4, RY(3) - 3, 168, 1); if (!deepOk(st)) Font.drawR(x, '深層（天賦覺醒）', 170, RY(3) - 10, UIC.dis, UIC.textSh, 7); }
+      for (let s = 0; s < slots(r); s++) { const n = nodeAt(r, s), g = tile(n, r, s), rk = ctRank(n, st), on = r === row && s === slot, blk = nodeBlock(n, st), lock = blk && !rk && blk !== '天賦點不足（升級時獲得）';
+        drawBtn(x, g.X, g.Y, g.w, g.h, on, rk ? col : null); let nm = g.w < 30 ? n.n.slice(0, 2) : n.n.slice(0, 4), z = 9; while (z > 7 && Font.width(nm, z) > g.w - 3) z--;
+        Font.drawC(x, nm, g.X + g.w / 2, g.Y, lock ? UIC.dis : rk ? UIC.text : '#c9cfe4', UIC.textSh, z);
+        for (let q = 0; q < n.max; q++) { x.fillStyle = q < rk ? UIC.warm : '#30375a'; x.fillRect(g.X + g.w / 2 - n.max * 3 + q * 6 + 1, g.Y + g.h - 5, 4, 2); }
+        if (typeof touchRegion === 'function') touchRegion(g.X, g.Y, g.w, g.h, () => { if (row === r && slot === s) tapKey('a'); else { row = r; slot = s; Sound.sfx('cursor'); } }); }
+    }
+    const n = nodeAt(row, slot), rk = ctRank(n, st), blk = nodeBlock(n, st), DY = 170; drawWin(x, 4, DY, 168, 82, 'menu');
+    Font.draw(x, n.n, 12, DY + 2, shade(col, 0.35), UIC.textSh, 11); Font.drawR(x, C.br[n.b][0] + '・第' + (n.row + 1) + '層　' + rk + '/' + n.max, 164, DY + 4, UIC.muted, UIC.textSh, 8);
+    const cur = rk ? '目前：' + tDesc(n.key, n.v * rk) : '每級：' + tDesc(n.key, n.v); drawFitText(x, cur, 12, DY + 17, 152, 24, 10, rk ? UIC.accent : UIC.text);
+    if (rk && rk < n.max) drawFitText(x, '下一級：' + tDesc(n.key, n.v * (rk + 1)), 12, DY + 41, 152, 12, 9, '#c9cfe4');
+    Font.draw(x, msgT > 0 ? msg : blk || 'A：投入1點', 12, DY + 54, msgT > 0 ? UIC.warm : blk ? UIC.bad : UIC.good, UIC.textSh, 9);
+    drawBtn(x, 12, DY + 66, 60, 13, false); Font.drawC(x, '↩退回1點', 42, DY + 65, rk ? UIC.warm : UIC.dis, UIC.textSh, 8); drawBtn(x, 100, DY + 66, 64, 13, false); Font.drawC(x, '全部重置', 132, DY + 65, tpSpent(st) ? UIC.warm : UIC.dis, UIC.textSh, 8);
+    if (typeof touchRegion === 'function') { touchRegion(12, DY + 66, 60, 13, () => tapKey('select')); touchRegion(100, DY + 66, 64, 13, () => tapKey('start')); }
+    if (msgT > 0) msgT--;
+  }, touchBack: true };
+  UI.push(scr);
+  while (true) {
+    if (Input.repeat('left')) { slot = (slot + slots(row) - 1) % slots(row); Sound.sfx('cursor'); } if (Input.repeat('right')) { slot = (slot + 1) % slots(row); Sound.sfx('cursor'); }
+    if (Input.repeat('up') || Input.repeat('down')) { const r2 = (row + (Input.repeat('up') ? 4 : 1)) % 5, a = slots(row), b2 = slots(r2); slot = Math.min(b2 - 1, Math.floor((slot + 0.5) * b2 / a)); row = r2; Sound.sfx('cursor'); }
+    if (Input.pressed('b')) { Input.consume('b'); Sound.sfx('cancel'); break; }
+    const n = nodeAt(row, slot);
+    if (Input.pressed('a')) { Input.consume('a'); const blk = nodeBlock(n, st); if (blk) { Sound.sfx('bump'); msg = blk; msgT = 60; } else { ctOf(st)[n.id] = ctRank(n, st) + 1; Sound.sfx('statUp'); clampHP(); msg = '「' + n.n + '」升到了' + ctRank(n, st) + '級！'; msgT = 50; } }
+    if (Input.pressed('select')) { Input.consume('select'); const blk = refundBlock7(n, st); if (blk) { Sound.sfx('bump'); msg = blk; msgT = 60; } else { ctOf(st)[n.id]--; if (!ctOf(st)[n.id]) delete ctOf(st)[n.id]; Sound.sfx('cancel'); clampHP(); msg = '退回了1點。'; msgT = 40; } }
+    if (Input.pressed('start')) { Input.consume('start'); if (tpSpent(st)) { UI.remove(scr); if (yield* yesNo('要把' + CLASSES[st.cls].n + '的天賦全部重置嗎？\n（點數全部退回，不用花錢）')) { st.ct = {}; clampHP(); Sound.sfx('heal'); } UI.push(scr); } }
+    yield;
+  }
+  UI.remove(scr);
+}
+
+/* ---------- classes: cards, the unlocked list, changing class ---------- */
+function classCard(k) { const C = CLASSES[k], V = CLASS_V7[k] || {}; return { k, n: C.n, col: classColOf(k), tag: (C.tier >= 3 ? (k === 'otherworlder' || k === 'spellblade' ? '隱藏職業' : '上級職業') : '基本職業') + '・' + (V.tag || ''), text: V.pitch || C.d || '', glyph: CLASS_EMBLEM[k] ? k : k === 'spellblade' ? 'spell' : 'star', br: V.br || [], w: V.w || [] }; }
+function* classCardScreen(keys, o = {}) {
+  let i = 0, t = 0; const cards = keys.map(classCard), look = o.look || null;
+  const scr = { draw(x) {
+    t++; const c = cards[i], col = c.col, [r, gg, b] = hex2rgb(col);
+    x.fillStyle = '#0a0c18'; x.fillRect(0, 0, W, H);
+    const g = x.createRadialGradient(W / 2, 64, 4, W / 2, 64, 64); g.addColorStop(0, `rgba(${r},${gg},${b},0.45)`); g.addColorStop(1, `rgba(${r},${gg},${b},0)`); x.fillStyle = g; x.fillRect(0, 0, W, 128);
+    for (let n = 0; n < 10; n++) { const a = t / 40 + n * 0.63, R = 38 + Math.sin(t / 30 + n) * 6; x.fillStyle = n % 2 ? col : '#ffffff'; x.fillRect(Math.round(W / 2 + Math.cos(a) * R), Math.round(62 + Math.sin(a) * R * 0.5), 2, 2); }
+    headerBar(x, o.title || '覺醒的儀式'); Font.drawR(x, (i + 1) + '/' + keys.length, W - 6, 2, UIC.muted, UIC.textSh);
+    const S = CLASS_START[c.k], L = look || { head: c.k === 'guardian' ? GEAR.clothCap.look : null, body: 'uniform', feet: 'school', weapon: S ? GEAR[S.gear[0]].look : null };
+    const bob = Math.round(Math.sin(t / 20) * 2), fr = heroFramesLook(L).down[0];
+    x.fillStyle = 'rgba(0,0,0,0.35)'; x.beginPath(); x.ellipse(W / 2 - 14, 92, 18, 5, 0, 0, 7); x.fill(); x.drawImage(fr, 0, 0, 16, 22, W / 2 - 38, 26 + bob, 48, 66);
+    classGlyph(x, c.glyph, W / 2 + 34, 58 - bob, col);
+    if (keys.length > 1) { Font.drawC(x, '◀', 14, 52, i > 0 ? UIC.text : UIC.dis, UIC.textSh); Font.drawC(x, '▶', W - 14, 52, i < keys.length - 1 ? UIC.text : UIC.dis, UIC.textSh);
+      if (typeof touchRegion === 'function') { touchRegion(0, 28, 30, 60, () => tapKey('left')); touchRegion(W - 30, 28, 30, 60, () => tapKey('right')); } }
+    drawWin(x, 4, 98, 168, 156, 'menu');
+    Font.draw(x, c.n, 12, 100, col, UIC.textSh, 13); { let z = 9; while (z > 7 && Font.width(c.tag, z) > 92) z--; Font.drawR(x, c.tag, 164, 103, UIC.muted, UIC.textSh, z); }
+    x.fillStyle = `rgba(${r},${gg},${b},0.5)`; x.fillRect(12, 117, 152, 1);
+    drawFitText(x, c.text, 12, 119, 152, 36, 10);
+    Font.draw(x, '擅長武器：' + c.w.join('・'), 12, 156, UIC.accent, UIC.textSh, 9); const pas = classPassives(c.k);
+    Font.draw(x, pas.length ? '職業被動：' + pas.map(p => p.n).join('・') : '天賦分支', 12, 167, pas.length ? UIC.warm : UIC.muted, UIC.textSh, 8); Font.drawR(x, '天賦可自由混點', 164, 167, UIC.muted, UIC.textSh, 8);
+    c.br.forEach(([bn, bd], n) => { const Y = 180 + n * 19; x.fillStyle = shade(col, -0.35); x.fillRect(12, Y + 1, 44, 14); Font.drawC(x, bn, 34, Y, '#ffffff', UIC.textSh, bn.length > 3 ? 9 : 10); let z = 9; while (z > 7 && Font.width(bd, z) > 104) z--; Font.draw(x, bd, 60, Y + 1, UIC.text, UIC.textSh, z); });
+    Font.drawR(x, (o.cancel ? 'B：返回　' : '') + 'A：選擇' + (keys.length > 1 ? '　◀▶：切換' : ''), 164, 241, UIC.muted, UIC.textSh, 8);
+  } };
+  UI.push(scr);
+  while (true) {
+    if (Input.repeat('left') && i > 0) { i--; Sound.sfx('cursor'); } if (Input.repeat('right') && i < keys.length - 1) { i++; Sound.sfx('cursor'); }
+    if (o.cancel && Input.pressed('b')) { Input.consume('b'); Sound.sfx('cancel'); UI.remove(scr); return null; }
+    if (Input.pressed('a')) { Input.consume('a'); Sound.sfx('select'); const k = keys[i]; UI.remove(scr); if (yield* yesNo(o.confirm ? o.confirm(k) : '要走上「' + CLASSES[k].n + '」的道路嗎？')) return k; UI.push(scr); }
+    yield;
+  }
+}
+classSelectScreen = function* () { return yield* classCardScreen(['swordsman', 'mage', 'guardian', 'ranger'], { title: '覺醒的儀式', confirm: k => '要走上「' + CLASSES[k].n + '」的道路嗎？\n（Lv14之後可以找村長轉職）' }); };
+function unlockedClasses(st = Game.st) {
+  const f = st.flags || {}, L = ['swordsman', 'mage', 'guardian', 'ranger'];
+  for (const [k, fl] of CH2_CLS) if (f[fl]) L.push(k); if (f.hiddenCls) L.push('otherworlder'); if (f.spellbladeOk) L.push('spellblade'); return L;
+}
+function* changeClass(k, quiet) {
+  const st = Game.st, had = tpSpent(st); st.cls = k; st.ct = {}; if (CLASSES[k].tier === 1) st.baseCls = k;
+  if (CLASSES[k].tier >= 3 && st.lv >= 14) st.flags.deep = 1; clampHP();
+  yield* itemGet(st.name + '成為了' + CLASSES[k].n + '！');
+  if (!quiet) yield* say((had ? '之前的天賦點全部退回了。' : '') + '打開選單的「天賦」，就能點' + CLASSES[k].n + '的三條天賦分支（' + CLASS_V7[k].br.map(b => b[0]).join('・') + '）。');
+}
+function* v7ClassChange(title) {
+  const st = Game.st, opts = unlockedClasses(st).filter(k => k !== st.cls);
+  if (!opts.length) { yield* say('現在沒有其他可以轉的職業。'); return false; }
+  const k = yield* classCardScreen(opts, { title: title || '轉職', cancel: true, look: heroLookOf(st), confirm: k => '確定要成為' + CLASSES[k].n + '嗎？\n（目前：' + (CLASSES[st.cls] || { n: '—' }).n + '・天賦會重置）' });
+  if (!k) { yield* say('想好了再來吧。'); return true; }
+  yield* changeClass(k); return true;
+}
+classTalk = function* () {
+  const st = Game.st; if (!st.cls) { const k = yield* classSelectScreen(); applyStartClass(k); yield* itemGet(st.name + '覺醒成為了' + CLASSES[k].n + '！'); return true; }
+  if (st.lv < 14) return false;
+  if (!st.flags.deep) {
+    yield* sayAll(['……你的力量又成長了呢。', '讓我看看……嗯，你身上的「' + CLASSES[st.cls].n + '」之力已經穩定下來了。', '把手放在石板上吧。更深的天賦會回應你。']);
+    Sound.sfx('charge'); st.flags.deep = 1; Game.fadeColor = '#ffffff'; yield* fadeOut(12, '#ffffff'); Game.fade = 1; Sound.jingle('levelup'); yield* fadeIn(24); Game.fadeColor = '#000';
+    yield* itemGet('天賦覺醒！第4・5層的深層天賦解鎖了，另外獲得2點天賦點！');
+    yield* say('從今以後，你也可以在我這裡轉換職業。換了職業，天賦就會換成那個職業的三條分支，點數會全部退回。'); return true;
+  }
+  const r = yield* ask('要做什麼？', ['轉職', '聊天']); if (r !== 0) return false; yield* v7ClassChange('轉職的儀式'); return true;
+};
+ch2ClassTalk = function* () {
+  const st = Game.st, f = st.flags, ok = CH2_CLS.filter(([k, fl]) => f[fl]).map(([k]) => k);
+  if (!ok.length) { yield* say('完成導師的試煉，就能在這裡轉職成「上級職業」。\n（吟遊詩人・機工士・武僧・龍騎士）'); return; }
+  yield* v7ClassChange('上級職業');
+};
+{ const _as = applyStartClass; applyStartClass = function (k) { _as(k); const st = Game.st; st.skills = {}; st.skp = 0; st.tp = 0; st.ct = {}; st.baseCls = k; }; }
+
+/* ---------- level-up: 1 talent point (the old skill-point / tree texts are replaced) ---------- */
+{ const _lu = Battle.prototype.levelUp; Battle.prototype.levelUp = function* () {
+    const st = Game.st, self = this, _msg = Battle.prototype.msg;
+    this.msg = function* (t, o) { if (typeof t === 'string') { if (t.startsWith('可以學習新技能了')) return; if (t.includes('點技能點')) t = '獲得了1點天賦點！MP也全部恢復了。（選單→天賦）'; } return yield* _msg.call(self, t, o); };
+    let r; try { r = yield* _lu.call(this); } finally { delete this.msg; }
+    st.skp = 0; st.tp = 0;
+    if (st.lv === 14 && !(st.flags && st.flags.deep)) yield* this.msg('到達Lv14了！去找萌芽鎮的村長，進行「天賦覺醒」吧。', { hold: 40 });
+    return r;
+  };
+}
+
+/* ===================== v7.0 ③ the blacksmith makes every piece of gear =====================
+   Request: "shops, the smith and gear found on the road → everything is forged by the smith, so the smith matters".
+   · Shops no longer sell gear (the capital armorer sells 設計圖 instead).
+   · Gear found on the road, quest gear and monster drops become 設計圖 (blueprints). A blueprint you already know turns into
+     materials; what used to be a 紅／金 reward also gives an 打造券 (next craft of it is free, quality guaranteed).
+   · The smith knows ordinary designs by itself (more as you level up); rare / boss gear needs its blueprint.
+   · Forging: random quality; 精心打造 (materials ×2) and 極致打造 (×3) raise the odds. 重鑄: affixes (as before) or quality (never down).
+   · Field monsters drop more materials; elites / bosses drop a pile of their materials. */
+const TIER_POOL = { 1: ['stone', 'gel', 'feather', 'shroomCap'], 2: ['foxfire', 'stinger', 'frogSkin', 'spore', 'leaf', 'beetleShell'], 3: ['crystal', 'emberCore', 'boneShard', 'ectoplasm', 'silk'],
+  4: ['moonDew', 'lizardScale', 'mothDust', 'scorpTail', 'harpyFeather', 'sandCrystal', 'bogMoss'], 5: ['riftShard', 'starShard', 'wispFlame', 'rotWood', 'batWing'],
+  6: ['spring', 'brassGear', 'snowPelt', 'iceCrystal', 'salamanderScale', 'magmaStone', 'windStone'], 7: ['dragonScale', 'shadowCloth', 'voidShard', 'starDust'] };
+const ELEM_MAT = { 火: { 2: 'foxfire', 3: 'emberCore', 6: 'magmaStone' }, 水: { 3: 'crystal', 4: 'moonDew', 6: 'iceCrystal' }, 草: { 2: 'leaf', 4: 'bogMoss' }, 雷: { 6: 'spring' } };
+for (const t in TIER_POOL) TIER_POOL[t] = TIER_POOL[t].filter(k => ITEMS[k]);
+const bpGold = t => 120 * t * t + 100;
+const hashK = s => { let h = 7; for (const c of s) h = (h * 31 + c.charCodeAt(0)) >>> 0; return h; };
+const GEAR_RECIPE = {};
+{ const all = [...RECIPES, ...(typeof RECIPES_V20 !== 'undefined' ? RECIPES_V20 : []), ...(typeof RECIPES_CH2 !== 'undefined' ? RECIPES_CH2 : [])].filter(R => GEAR[R.out]);
+  for (const R of all) if (!GEAR_RECIPE[R.out]) GEAR_RECIPE[R.out] = { mats: { ...R.mats }, gold: R.gold || bpGold(GEAR[R.out].t) };
+  for (const k in GEAR) { if (GEAR_RECIPE[k]) continue; const B = GEAR[k], t = clamp(B.t || 1, 1, 7), h = hashK(k), P = TIER_POOL[t], P2 = TIER_POOL[Math.max(1, t - 1)];
+    let a = (B.elem && ELEM_MAT[B.elem] && ELEM_MAT[B.elem][t]) || P[h % P.length], b = P2[(h >> 5) % P2.length]; if (b === a) b = P2[(h >> 9) % P2.length] === a ? P[(h >> 3) % P.length] : P2[(h >> 9) % P2.length];
+    const m = {}; m[a] = 2 + Math.floor(t / 2); if (b && b !== a) m[b] = 1 + Math.floor(t / 3); GEAR_RECIPE[k] = { mats: m, gold: Math.round(bpGold(t) * (B.slot === 'weapon' ? 1.2 : B.slot === 'acc' ? 0.9 : 1) / 10) * 10 }; }
+}
+// rare designs: need a blueprint (boss / elite loot, pickups, quest rewards, the rift, the royal armory); story sets unlock by themselves
+const BP_RARE = new Set(['guardHelm', 'hunterOath', 'masterBlade', 'moonCharm', 'witchTome', 'sandSaber', 'merchantBadge', 'mimicTooth', 'royalBadge', 'ancientWatch', 'dawnSword', ...TOWER_LOOT]);
+for (const k in LOOT) for (const g of LOOT[k]) BP_RARE.add(g);
+for (const k in SPECIES) if (SPECIES[k].drop && GEAR[SPECIES[k].drop]) BP_RARE.add(SPECIES[k].drop);
+for (const m in MAPS) for (const it of MAPS[m].items || []) if (it.item && GEAR[it.item]) BP_RARE.add(it.item);
+for (const k of armoryStock({ flags: { colossus: 1, frostQueen: 1, lavaGiant: 1 } })) BP_RARE.add(k);
+const BP_STORY = [[st => (st.flags.qHorn || 0) >= 2, new Set((typeof RECIPES_V20 !== 'undefined' ? RECIPES_V20 : []).map(R => R.out))], [st => ch2(st) >= 2, new Set((typeof RECIPES_CH2 !== 'undefined' ? RECIPES_CH2 : []).map(R => R.out))]];
+for (const [, S] of BP_STORY) for (const k of S) BP_RARE.delete(k);
+for (const k of ['uniform', 'schoolShoes']) BP_RARE.add(k);
+const smithRank = (st = Game.st) => Math.min(7, 2 + Math.floor(Math.max(0, (st.lv || 1) - 4) / 6));
+function bpKnown(k, st = Game.st) {
+  if (!GEAR[k] || !GEAR_RECIPE[k]) return false; if (st.bp && st.bp[k]) return true;
+  for (const [f, S] of BP_STORY) if (S.has(k)) return f(st) && GEAR[k].t <= smithRank(st) + 1;
+  return !BP_RARE.has(k) && GEAR[k].t <= smithRank(st);
+}
+const qName = q => (GQ[q] || GQ[1])[0];
+// learn a blueprint (+ a ticket for 紅 and better); returns the text of what was gained
+function gainBP(k, q = 1, st = Game.st) {
+  const had = bpKnown(k, st); (st.bp || (st.bp = {}))[k] = 1; let txt = '「' + GEAR[k].n + '」的設計圖';
+  if (q >= 3) { const T = st.bpT || (st.bpT = {}); T[k] = Math.max(T[k] || 0, q); txt += (had ? '的' : '和') + '打造券（品質保底：' + qName(q) + '）'; if (had) txt = '「' + GEAR[k].n + '」的打造券（品質保底：' + qName(q) + '）'; }
+  else if (had) { const mats = bpMats(GEAR[k].t, 1 + q); txt = matsText(mats) + '（設計圖已經學會了）'; }
+  return txt;
+}
+function bpMats(t, n, st = Game.st) { const P = TIER_POOL[clamp(t, 1, 7)], got = {}; for (let i = 0; i < n; i++) { const k = pick(P); got[k] = (got[k] || 0) + 1; st.bag[k] = (st.bag[k] || 0) + 1; } return got; }
+const matsText = got => Object.entries(got).map(([k, v]) => ITEMS[k].n + '×' + v).join('、');
+function bpTut() { const st = Game.st; if (st.flags.bpTut) return null; st.flags.bpTut = 1; return '（設計圖拿去給鐵匠，就能打造那件裝備。武器店不再賣裝備了！）'; }
+
+/* ---------- drops: every gear drop becomes a blueprint / ticket / materials ---------- */
+{ const _ls = Battle.prototype.lootShow; Battle.prototype.lootShow = function* (g, head) {
+    const st = Game.st; if (!g || !GEAR[g.b]) return yield* _ls.call(this, g, head);
+    st.gear = (st.gear || []).filter(x => x !== g); const k = g.b, q = g.q || 1, known = bpKnown(k, st);
+    if (known && q < 3) { const got = bpMats(GEAR[k].t, 1 + q); Sound.sfx('item'); yield* this.msg((this.F ? this.F.n + '掉落了' : '得到了') + '素材：' + matsText(got) + '！', { hold: 36 }); return; }
+    const txt = gainBP(k, q, st), card = { b: k, q: Math.max(1, q), r: 1, a: [], _bp: 1 };
+    yield* _ls.call(this, card, known ? '獲得了打造券！' : q >= 3 ? '獲得了設計圖＋打造券！' : '獲得了設計圖！');
+    yield* this.msg('得到了' + txt + '！', { hold: 30 }); const tut = bpTut(); if (tut) yield* this.msg(tut, { wait: true });
+  };
+}
+{ const _v = Battle.prototype.victory; Battle.prototype.victory = function* () {
+    const r = yield* _v.call(this), st = Game.st, F = this.F, sp = SPECIES[F.sp] || {};
+    if (!F.elite && !F.boss && sp.mat && chance(0.35)) { st.bag[sp.mat] = (st.bag[sp.mat] || 0) + 1; yield* this.msg('又撿到了素材「' + ITEMS[sp.mat].n + '」！', { hold: 24 }); }
+    if ((F.elite || F.boss) && !this.cfg.noMats) { const n = F.boss ? 3 : 2, got = {}; if (sp.mat && ITEMS[sp.mat]) { got[sp.mat] = n; st.bag[sp.mat] = (st.bag[sp.mat] || 0) + n; } const ex = bpMats(clamp(Math.ceil(F.lv / 6), 1, 7), n + 2); for (const k in ex) got[k] = (got[k] || 0) + ex[k];
+      Sound.sfx('item'); yield* this.msg((F.boss ? '頭目' : '精英') + '留下了素材：' + matsText(got) + '！', { hold: 36 }); }
+    return r;
+  };
+}
+// pickups on the road
+{ const _pi = Overworld.prototype.pickItem; Overworld.prototype.pickItem = function* (it) {
+    if (!it || it.gather || it.gold || !GEAR[it.item]) return yield* _pi.call(this, it);
+    const st = this.st; this.items = this.items.filter(i => i !== it); st.flags[it.id] = 1;
+    const txt = gainBP(it.item, it.q || 1, st); Sound.jingle('item'); yield* say(st.name + '撿到了' + txt + '！'); const tut = bpTut(); if (tut) yield* say(tut);
+  };
+}
+// shops: no gear
+{ const _sb = shopBuy; shopBuy = function* (stock) { return yield* _sb((stock || shopList()).filter(k => !GEAR[k])); }; }
+function* bpShop(list, title = '設計圖') {
+  const st = Game.st; let idx = 0;
+  while (true) {
+    const L = list.filter(k => GEAR[k]), price = k => Math.round((GEAR[k].price || GEAR[k].t * 900) * 0.45 / 10) * 10;
+    const items = L.map(k => ({ t: GEAR[k].n, r: bpKnown(k) ? '已學會' : price(k) + 'G', col: bpKnown(k) ? UIC.dis : st.money < price(k) ? UIC.bad : undefined })); if (!items.length) { yield* say('今天沒有可以賣的設計圖。'); return; }
+    const mw = { draw: moneyWin }; UI.push(mw);
+    const r = yield* choose(items, { x: 8, y: 40, w: 160, h: 18 + Math.min(8, items.length) * 14 + 4, rowH: 14, fs: 10, ox: 12, oy: 17, visible: Math.min(8, items.length), title, index: idx });
+    UI.remove(mw); if (r < 0) return; idx = r; const k = L[r];
+    if (bpKnown(k)) { yield* say('這張設計圖已經學會了。拿去給鐵匠就能打造。'); continue; }
+    if (st.money < price(k)) { yield* say('錢不夠喔。'); continue; }
+    if (!(yield* yesNo('要用' + price(k) + ' G買下「' + GEAR[k].n + '」的設計圖嗎？'))) continue;
+    st.money -= price(k); gainBP(k, 1); Sound.jingle('item'); yield* say('學會了「' + GEAR[k].n + '」的設計圖！去找鐵匠打造吧。');
+  }
+}
+Events.armorer = function* () { yield* say('王國的裝備現在都交給鐵匠打造了。我這裡改賣騎士團裝備的「設計圖」。'); yield* bpShop(armoryStock(Game.st), '騎士團設計圖'); };
+
+/* ---------- forging ---------- */
+const BP_ODDS = [[55, 33, 10, 2, 0], [25, 42, 25, 8, 0], [5, 35, 40, 17, 3]], BP_LV = ['普通打造', '精心打造', '極致打造'];
+function bpOdds(lv) { const o = BP_ODDS[lv].slice(), d = (typeof diffOf === 'function' ? diffOf().drop : 0) + (typeof ngOf === 'function' && ngOf() ? 1 : 0); if (d > 0) { const m = Math.min(o[0] + o[1] - 10, d * 4); o[3] += m; if (o[0] >= m) o[0] -= m; else { o[1] -= m - o[0]; o[0] = 0; } } return o; }
+function bpRoll(lv) { const o = bpOdds(lv); let r = Math.random() * 100; for (let q = 0; q < 5; q++) { r -= o[q]; if (r < 0) return q + 1; } return 1; }
+const bpCost = (k, lv) => { const R = GEAR_RECIPE[k], m = {}; for (const i in R.mats) m[i] = R.mats[i] * (lv + 1); return { mats: m, gold: R.gold }; };
+const bpCan = (k, lv, st = Game.st) => { const c = bpCost(k, lv); return st.money >= c.gold && Object.entries(c.mats).every(([i, n]) => (st.bag[i] || 0) >= n); };
+const BP_TABS = ['武器', '防具', '飾品', '道具'], bpTabOf = k => GEAR[k].slot === 'weapon' ? 0 : GEAR[k].slot === 'acc' ? 2 : 1;
+function bpList(tab, st = Game.st) {
+  if (tab === 3) return RECIPES.filter(R => !GEAR[R.out]).map(R => ({ R }));
+  return Object.keys(GEAR_RECIPE).filter(k => bpTabOf(k) === tab && bpKnown(k, st)).sort((a, b) => (st.bpT && st.bpT[b] ? 1 : 0) - (st.bpT && st.bpT[a] ? 1 : 0) || GEAR[b].t - GEAR[a].t || (WKIND_ORDER.indexOf(GEAR[a].kind) - WKIND_ORDER.indexOf(GEAR[b].kind)) || (a < b ? -1 : 1)).map(k => ({ k }));
+}
+function* craftScreen() {
+  const st = Game.st; let tab = 0, idx = 0; const have = k => st.bag[k] || 0, VIS = 7;
+  const canR = R => Object.entries(R.mats).every(([k, n]) => have(k) >= n) && st.money >= (R.gold || 0) && !(ITEMS[R.out] && ITEMS[R.out].once && have(R.out));
+  const ok = e => e.R ? canR(e.R) : (st.bpT && st.bpT[e.k]) || bpCan(e.k, 0);
+  const scr = { draw(x) {
+    screenBG(x); headerBar(x, '鐵匠工房'); Font.drawR(x, st.money + ' G', W - 6, 2, UIC.warm, UIC.textSh);
+    BP_TABS.forEach((n, i) => { const X = 4 + i * 42; drawBtn(x, X, 21, 40, 14, i === tab); Font.drawC(x, n, X + 20, 21, i === tab ? UIC.warm : UIC.muted, UIC.textSh, 9); if (typeof touchRegion === 'function') touchRegion(X, 21, 40, 14, () => { tab = i; idx = 0; Sound.sfx('cursor'); }); });
+    const L = bpList(tab); if (idx >= L.length) idx = Math.max(0, L.length - 1); const T = clamp(idx - 3, 0, Math.max(0, L.length - VIS));
+    drawWin(x, 4, 37, 168, VIS * 16 + 8, 'menu'); if (!L.length) Font.draw(x, '（還沒有設計圖）', 14, 43, UIC.muted, UIC.textSh, 10);
+    L.slice(T, T + VIS).forEach((e, i) => { const Y = 41 + i * 16, on = T + i === idx; if (on) selBar(x, 6, Y - 1, 164, 15);
+      const nm = e.R ? (ITEMS[e.R.out] || GEAR[e.R.out]).n + (e.R.n > 1 ? '×' + e.R.n : '') : GEAR[e.k].n; let z = 11; while (z > 8 && Font.width(nm, z) > 96) z--;
+      Font.draw(x, nm, 14, Y, ok(e) ? UIC.text : UIC.dis, UIC.textSh, z);
+      const tag = e.R ? (canR(e.R) ? '可製作' : '素材不足') : (st.bpT && st.bpT[e.k] ? '券' : '') + 'T' + GEAR[e.k].t + (GEAR[e.k].kind && tab === 0 ? '・' + GEAR[e.k].kind : '');
+      Font.drawR(x, tag, 164, Y + 1, e.R ? (canR(e.R) ? UIC.accent : UIC.dis) : st.bpT && st.bpT[e.k] ? UIC.warm : UIC.muted, UIC.textSh, 9);
+      if (typeof touchRegion === 'function') touchRegion(6, Y - 1, 164, 15, () => { if (idx === T + i) tapKey('a'); else { idx = T + i; Sound.sfx('cursor'); } }); });
+    if (T > 0) x.drawImage(UPARROW, 86, 38); if (T + VIS < L.length) x.drawImage(DOWNARROW, 86, 37 + VIS * 16 + 3);
+    const e = L[idx], Y0 = 37 + VIS * 16 + 10; drawWin(x, 4, Y0, 168, H - Y0 - 4, 'menu'); if (!e) return; let y = Y0 + 3;
+    if (e.R) { const it = ITEMS[e.R.out]; drawFitText(x, it.d || '', 10, y, 152, 24, 10); y += 26; }
+    else { const B = GEAR[e.k], g0 = { b: e.k, q: 1, r: 1, a: [] }; drawFitText(x, gearLines(g0)[0] || B.d || '', 10, y, 152, 22, 10, GQ[1][1]); y += 23;
+      if (WSK[e.k]) { const S = WSK[e.k]; drawFitText(x, '技能：' + S.a.map(id => MOVES[id].n).join('・') + '　特技：' + S.s.n, 10, y, 152, 11, 9, UIC.accent); y += 12; } }
+    const mats = e.R ? e.R.mats : GEAR_RECIPE[e.k].mats, gold = e.R ? e.R.gold || 0 : GEAR_RECIPE[e.k].gold;
+    Font.draw(x, e.R ? '需要的素材' : '需要的素材（普通打造）', 10, y, UIC.muted, UIC.textSh, 9); if (gold) Font.drawR(x, gold + ' G', 164, y, st.money >= gold ? UIC.warm : UIC.bad, UIC.textSh, 9); y += 11;
+    for (const [k, n] of Object.entries(mats)) { let z = 10; while (z > 8 && Font.width('・' + ITEMS[k].n, z) > 110) z--; Font.draw(x, '・' + ITEMS[k].n, 12, y, UIC.text, UIC.textSh, z); Font.drawR(x, have(k) + ' / ' + n, 164, y, have(k) >= n ? UIC.good : UIC.bad, UIC.textSh, 10); y += 11; }
+    if (!e.R && st.bpT && st.bpT[e.k]) Font.draw(x, '持有打造券：免費打造，品質保底' + qName(st.bpT[e.k]), 10, y + 1, UIC.warm, UIC.textSh, 9);
+  }, touchBack: true };
+  UI.push(scr);
+  while (true) {
+    const L = bpList(tab);
+    if (Input.repeat('left') || Input.repeat('right')) { tab = (tab + (Input.repeat('left') ? 3 : 1)) % 4; idx = 0; Sound.sfx('cursor'); }
+    if (Input.repeat('up') && L.length) { idx = (idx + L.length - 1) % L.length; Sound.sfx('cursor'); } if (Input.repeat('down') && L.length) { idx = (idx + 1) % L.length; Sound.sfx('cursor'); }
+    if (Input.pressed('b')) { Input.consume('b'); Sound.sfx('cancel'); break; }
+    if (Input.pressed('a') && L[idx]) { Input.consume('a'); const e = L[idx]; UI.remove(scr);
+      if (e.R) { if (!canR(e.R)) Sound.sfx('bump'); else { for (const [k, n] of Object.entries(e.R.mats)) st.bag[k] -= n; st.money -= e.R.gold || 0; st.bag[e.R.out] = (st.bag[e.R.out] || 0) + (e.R.n || 1); yield* itemGet('鐵匠做好了' + ITEMS[e.R.out].n + '！'); } }
+      else yield* forgeFlow(e.k);
+      UI.push(scr); }
+    yield;
+  }
+  UI.remove(scr);
+}
+function* forgeFlow(k) {
+  const st = Game.st, B = GEAR[k], tk = st.bpT && st.bpT[k];
+  const oddsT = lv => bpOdds(lv).map((p, q) => p && q >= 2 ? qName(q + 1) + p : '').filter(Boolean).join(' ');
+  const opts = [], acts = [];
+  if (tk) { opts.push('打造券（保底' + qName(tk) + '）'); acts.push(-1); }
+  for (let lv = 0; lv < 3; lv++) { opts.push(BP_LV[lv].slice(0, 2) + '×' + (lv + 1) + ' ' + oddsT(lv) + (bpCan(k, lv) ? '' : '✕')); acts.push(lv); }
+  opts.push('取消'); acts.push(null);
+  const r = yield* ask('要怎麼打造「' + B.n + '」？\n素材投入越多，紅金的機率(%)越高。', opts); const lv = acts[r];
+  if (lv === null || lv === undefined || r < 0) return;
+  let q;
+  if (lv === -1) { q = Math.max(tk, bpRoll(2)); delete st.bpT[k]; }
+  else { if (!bpCan(k, lv)) { Sound.sfx('bump'); yield* say('素材或金錢不夠喔。'); return; } const c = bpCost(k, lv); st.money -= c.gold; for (const i in c.mats) st.bag[i] -= c.mats[i]; q = bpRoll(lv); }
+  Sound.sfx('rock'); yield* say('鏘！鏘！鏘！'); const g = makeGear(k, q); Sound.jingle(q >= 3 ? 'levelup' : 'item');
+  yield* itemGet('鐵匠打造了' + gearName(g) + '！（品質：' + qName(q) + '）');
+  if (B.slot === 'weapon' && WSK[k] && !st.flags.wsTut) { st.flags.wsTut = 1; yield* say('每把武器都有自己的技能。換上新武器，戰鬥中的技能就會跟著改變。\n（選單→技能 可以查看，也能設定「副武器」借用一招）'); }
+}
+// 重鑄: affixes (the old flow) or quality (pay the recipe ×2 again; the quality never goes down)
+{ const _rf = reforgeFlow; reforgeFlow = function* () {
+    const r = yield* ask('要重鑄什麼？', ['詞綴重鑄（重新隨機詞綴）', '品質重鑄（品質只升不降）', '取消']); if (r === 0) return yield* _rf(); if (r !== 1) return;
+    const st = Game.st, have = k => st.bag[k] || 0;
+    while (true) {
+      const g = yield* gearPicker('品質重鑄', () => gearSort().filter(q => q.q < 5 && GEAR_RECIPE[q.b]), (x, g, Y) => { const c = bpCost(g.b, 1); Font.draw(x, qName(g.q) + ' → ？（提升機率' + bpOdds(2).slice(g.q).reduce((a, b) => a + b, 0) + '%）', 12, Y, UIC.accent, UIC.textSh, 10); Font.draw(x, Object.entries(c.mats).map(([k, n]) => ITEMS[k].n + '×' + n + '（有' + have(k) + '）').join(' '), 12, Y + 13, UIC.text, UIC.textSh, 9); Font.drawR(x, c.gold + ' G', 164, Y + 26, st.money >= c.gold ? UIC.warm : UIC.bad, UIC.textSh, 10); });
+      if (!g) return; if (!bpCan(g.b, 1)) { yield* say('素材或金錢不夠喔。'); continue; }
+      if (!(yield* yesNo('要重鑄' + gearShort(g) + '的品質嗎？\n（失敗時品質不變，素材會用掉）'))) continue;
+      const c = bpCost(g.b, 1); st.money -= c.gold; for (const i in c.mats) st.bag[i] -= c.mats[i]; const q = bpRoll(2); Sound.sfx('rock'); yield* say('鏘！鏘！鏘！');
+      if (q > g.q) { const B = GEAR[g.b], R = GQ_ROLL[q]; g.q = q; g.r = Math.round((R[0] + Math.random() * (R[1] - R[0])) * 100) / 100; g.a = scaleAffixes(rollAffixes(AFFIX_COUNT[q], B.slot, B.t), q); if (q === 5 && typeof RAINBOW_FX !== 'undefined') g.x = pick(RAINBOW_FX); clampHP(); Sound.jingle('levelup'); yield* say('成功了！品質提升為「' + qName(q) + '」！\n' + gearName(g)); }
+      else { Sound.sfx('bump'); yield* say('……這次品質沒有提升。'); }
+    }
+  };
+}
+// quest / event rewards that used to be gear: the blueprint (+ ticket) instead; .txt is what the dialogue shows
+function bpGift(k, q = 1) { return { b: k, q, txt: gainBP(k, q) }; }
+
+/* ===================== v7.0 ④ menus, help texts and the save conversion =====================
+   選單→技能 is now the weapon-skill screen (main weapon, 副武器 and the borrowed skill); 選單→天賦 the class tree (09m).
+   Saves from before v7 (skV < 5): advanced classes go back to their base class (the old class is now a branch of it),
+   skill points / old talents / 繼承 are cleared, talent points are recounted from the level, and every piece of gear
+   the hero owns teaches its blueprint. Lv14+ heroes that had advanced already get 天賦覺醒 for free. */
+
+/* ---------- 選單→技能: the weapon-skill screen ---------- */
+function* skillTreeScreen() {
+  const st = Game.st; let row = 1;
+  const rowsOf = () => { const k = mainWKey(st), S = k && WSK[k], sub = subWeapon(st), bor = borrowedSkill(st);
+    return [
+      { lbl: '普攻', col: '#c9cfe4', n: skillMove('attack', st).n, r: 'MP回復', d: () => MOVES.attack.d },
+      ...(S ? S.a.map((id, i) => ({ lbl: '主動', col: UIC.accent, id, n: MOVES[id].n, r: '熟練Lv' + (skillLv(id, st) || 1) + '・MP' + skillMP(id, st), d: () => mvInfo(id) })) : []),
+      ...(S ? [{ lbl: '被動', col: UIC.warm, n: S.p.n, r: '', d: () => wpassText(S.p) + '（裝備為主武器時生效）' }, { lbl: '特技', col: '#ffd860', n: S.s.n, r: '每' + wsN(S.s, st) + '次攻擊', d: () => wspecText(S.s, st) + '。普通攻擊和傷害技能都會累積次數。' }] : []),
+      { lbl: '副武器', col: '#b8a0ff', n: sub ? gearShort(sub) : '（未設定）', r: 'A：更換', sub: 1, d: () => '再帶一把武器當「副武器」：不加能力值，只借用它的1招主動技能（威力90%）。' + (sub ? '' : '\n目前沒有設定副武器。') },
+      { lbl: '借用', col: '#b8a0ff', id: bor, n: bor ? MOVES[bor].n : '—', r: sub ? 'A：切換' : '', bor: 1, d: () => bor ? mvInfo(bor) : '設定副武器後，可以從它的兩招主動技能中選一招帶進戰鬥。' },
+    ]; };
+  const mvInfo = id => { const m = skillMove(id, st), X = (st.skx || {})[id] || 0, lv = skillLv(id, st) || 1; return (m.pow ? powTxt(m) + '　' : '') + (m.t === '一般' ? '' : m.t + '屬性　') + '熟練度' + X + (lv < 3 ? '／' + WS_MASTER[lv] : '（最高）') + '\n' + (m.d || ''); };
+  const scr = { draw(x) {
+    screenBG(x); headerBar(x, '武器技能'); Font.drawR(x, 'MP ' + st.mp + '/' + heroStats(st).mp, W - 6, 2, UIC.blue, UIC.textSh, 10);
+    const g = mainWeapon(st), B = g && GEAR[g.b]; drawWin(x, 4, 22, 168, 38, 'menu');
+    if (g) { const im = typeof weaponPx === 'function' && weaponPx(g.b); if (im) drawWeaponIcon(x, im, 24, 41, 1); Font.draw(x, gearShort(g), 42, 24, gCol(g), UIC.textSh, 11); Font.draw(x, '主武器・' + (B.kind || '') + '・T' + B.t + (B.elem ? '・' + B.elem + '屬性' : ''), 42, 40, UIC.muted, UIC.textSh, 9); }
+    else Font.draw(x, '沒有裝備武器（選單→裝備）', 14, 32, UIC.muted, UIC.textSh, 10);
+    const R = rowsOf(); if (row >= R.length) row = R.length - 1;
+    drawWin(x, 4, 62, 168, R.length * 17 + 8, 'menu');
+    R.forEach((q, i) => { const Y = 66 + i * 17; if (i === row) selBar(x, 6, Y - 1, 164, 16); x.fillStyle = shade(q.col, -0.5); x.fillRect(10, Y + 1, 28, 13); Font.drawC(x, q.lbl, 24, Y, '#ffffff', UIC.textSh, 9);
+      let z = 11; while (z > 8 && Font.width(q.n, z) > 78) z--; Font.draw(x, q.n, 42, Y, q.n === '—' || q.n === '（未設定）' ? UIC.muted : UIC.text, UIC.textSh, z); if (q.r) Font.drawR(x, q.r, 164, Y + 1, UIC.muted, UIC.textSh, 8);
+      if (typeof touchRegion === 'function') touchRegion(6, Y - 1, 164, 16, () => { if (row === i) tapKey('a'); else { row = i; Sound.sfx('cursor'); } }); });
+    const DY = 66 + R.length * 17 + 8; drawWin(x, 4, DY, 168, H - DY - 4, 'menu'); drawFitText(x, R[row].d(), 12, DY + 3, 152, H - DY - 12, 10);
+  }, touchBack: true };
+  UI.push(scr);
+  while (true) {
+    const R = rowsOf();
+    if (Input.repeat('up')) { row = (row + R.length - 1) % R.length; Sound.sfx('cursor'); } if (Input.repeat('down')) { row = (row + 1) % R.length; Sound.sfx('cursor'); }
+    if (Input.pressed('b')) { Input.consume('b'); Sound.sfx('cancel'); break; }
+    if (Input.pressed('a')) { Input.consume('a'); const q = R[row];
+      if (q.sub) { UI.remove(scr); const main = st.equip && st.equip.weapon;
+        const pk = yield* gearPicker('選擇副武器', () => gearSort().filter(w => GEAR[w.b].slot === 'weapon' && w.u !== main && WSK[w.b]), (x, w, Y) => { const S = WSK[w.b]; Font.draw(x, '可借用：' + S.a.map(id => MOVES[id].n).join('・'), 12, Y, UIC.accent, UIC.textSh, 9); Font.draw(x, '（副武器不加能力值）', 12, Y + 13, UIC.muted, UIC.textSh, 9); });
+        if (pk) { st.sub = { u: pk.u, i: 0 }; Sound.sfx('select'); } else if (st.sub && (yield* yesNo('要取消副武器嗎？'))) st.sub = null;
+        UI.push(scr); }
+      else if (q.bor) { const sub = subWeapon(st); if (sub) { st.sub.i = (st.sub.i + 1) % WSK[sub.b].a.length; Sound.sfx('select'); } else Sound.sfx('bump'); }
+      else Sound.sfx('cursor'); }
+    yield;
+  }
+  UI.remove(scr);
+}
+
+/* ---------- the main menu: 技能 = weapon skills, 天賦 = class talents (dot when points are waiting) ---------- */
+{ const TILES = [['狀態', '能力・任務'], ['屬性', '自由加點'], ['技能', '武器技能'], ['天賦', '職業天賦'], ['背包', '道具・素材'], ['裝備', '更換・詳情'], ['圖鑑', '魔物資料'], ['紀錄', '地圖・成就'], ['存檔', '記錄進度'], ['設定', '音量・速度'], ['關閉', '回到遊戲']];
+  startMenu = function* () {
+    Sound.sfx('menu'); let idx = Game.menuIdx || 0;
+    while (true) {
+      const st = Game.st, s = heroStats();
+      const hdr = { draw(x) { x.fillStyle = 'rgba(8,10,20,0.78)'; x.fillRect(0, 0, W, H); drawWin(x, 4, 4, 168, 40, 'menu'); x.drawImage(heroFramesFor(st).down[0], 0, 0, 16, 22, 10, 8, 24, 33);
+        const nx = Font.draw(x, st.name, 40, 6, UIC.text, UIC.textSh); if (CLASSES[st.cls]) Font.draw(x, CLASSES[st.cls].n, nx + 4, 7, UIC.warm, UIC.textSh, 10); Font.drawR(x, 'Lv' + st.lv, 166, 6, UIC.accent, UIC.textSh);
+        Font.draw(x, 'HP ' + st.hp + '/' + s.hp, 40, 22, UIC.good, UIC.textSh, 10); Font.draw(x, 'MP ' + (st.mp ?? s.mp) + '/' + s.mp, 96, 22, '#86b4ff', UIC.textSh, 10); Font.drawR(x, st.money + ' G', 166, 32, UIC.warm, UIC.textSh, 10);
+        Font.draw(x, MAPS[st.map] ? MAPS[st.map].name || '' : '', 40, 32, UIC.muted, UIC.textSh, 9); } };
+      UI.push(hdr);
+      const items = TILES.map(([t, sub]) => ({ t: '', name: t, dot: (t === '天賦' && st.cls && tpAvail(st) > 0) || (t === '屬性' && attrAvail(st) > 0), sub }));
+      const r = yield* choose(items, { x: 4, y: 48, w: 168, h: 204, cols: 2, colW: 82, rowH: 33, ox: 4, oy: 3, buttons: true, style: 'menu', index: Math.min(idx, items.length - 1), drawExtra: (x, m) => { for (let k = 0; k < items.length; k++) { const c = k % 2, rr = Math.floor(k / 2), X = m.x + m.ox + c * m.colW, Y = m.y + m.oy + rr * m.rowH, on = k === m.i; Font.drawC(x, items[k].name, X + 39, Y + 1, on ? UIC.text : '#c9cfe4', UIC.textSh, 12); Font.drawC(x, items[k].sub, X + 39, Y + 16, on ? UIC.accent : UIC.muted, UIC.textSh, 8); if (items[k].dot) { x.fillStyle = UIC.warm; x.fillRect(X + 70, Y + 4, 4, 4); } } } });
+      UI.remove(hdr);
+      const name = r >= 0 ? TILES[r][0] : '關閉'; if (name === '關閉') break; idx = r; Game.menuIdx = r;
+      if (name === '狀態') yield* summaryScreen(); if (name === '屬性') yield* attrScreen(); if (name === '技能') yield* skillTreeScreen(); if (name === '天賦') yield* talentScreen();
+      if (name === '背包') { yield* bagScreen('field'); if (Game.homeWarp) break; }
+      if (name === '裝備') yield* equipScreen(); if (name === '圖鑑') yield* dexScreen(); if (name === '紀錄') yield* recordScreen();
+      if (name === '存檔') { const ok = yield* yesNo('要記錄目前的冒險進度嗎？'); if (ok) { const good = saveGame(); if (good) { Sound.sfx('save'); yield* say(Game.st.name + '把冒險記錄了下來！'); } else yield* say('無法存檔……這個瀏覽器可能不允許儲存資料。'); } }
+      if (name === '設定') yield* optionsScreen();
+    }
+    if (Game.homeWarp && Game.ow) { Game.homeWarp = 0; yield* Game.ow.homeWarp(); }
+  };
+}
+
+/* ---------- 狀態→技能一覽: the first row also lists the weapon passive / special and the talents ---------- */
+{ const _dp = drawPassiveInfo; drawPassiveInfo = function (x, st, X, Y, w, big) {
+    const k = mainWKey(st); if (!k) return _dp(x, st, X, Y, w, big); const S = WSK[k], C = CLASSES[st.cls];
+    const L = [['職業被動　' + (C ? C.n : '—'), UIC.warm, 11]]; const P = classPassives(st.cls); L.push([P.length ? P.map(p => '「' + p.n + '」' + p.d).join(' ') : '職業本身沒有被動（看天賦）', P.length ? UIC.text : UIC.muted, 9]);
+    L.push(['武器被動「' + S.p.n + '」' + wpassText(S.p), UIC.accent, 9], ['特技「' + S.s.n + '」每' + wsN(S.s, st) + '次攻擊', '#ffd860', 9]);
+    const n = tpSpent(st); L.push(['天賦：已投入' + n + '點' + (tpAvail(st) ? '（還有' + tpAvail(st) + '點）' : ''), n ? '#c9cfe4' : UIC.muted, 9]);
+    L.forEach(([t, col, z0], i) => { let z = z0; while (z > 7 && Font.width(t, z) > w) z--; Font.draw(x, t, X, Y + i * 15 + (i ? 1 : 0), col, UIC.textSh, z); });
+  };
+}
+{ const _pt = drawPassiveTile; drawPassiveTile = function (x, st, X, Y, on) { _pt(x, st, X, Y, on); }; }
+
+/* ---------- battle help: a page about weapon skills first ---------- */
+BATTLE_HELP.unshift(['武器技能', ['技能跟著武器走：每把武器有2招主動、1個被動，和攻擊累積到N次時自動發動的「特技」（戰鬥畫面右下角的◆）。',
+  '普通攻擊不花MP，還會回復少量MP；主動技能越常用，熟練度越高、威力越強。',
+  '副武器：再帶一把武器，借用它的1招主動技能（選單→技能）。',
+  '職業天賦會強化某些武器或玩法，換了武器也可以重點天賦。']]);
+
+/* ---------- saves ---------- */
+{ const _ng = newGameState; newGameState = function (...a) { const st = _ng.apply(this, a); if (st) { st.skV = 5; st.ct = {}; st.bp = {}; st.bpT = {}; st.skills = {}; st.skp = 0; st.tp = 0; } return st; }; }
+function v7Migrate(st) {
+  if (!st || (st.skV || 1) >= 5) return false; const old = st.cls, lv = st.lv || 1;
+  if (st.cls && V7_OLD[st.cls]) { st.cls = V7_OLD[st.cls]; if (lv >= 14) st.flags.deep = 1; }
+  if (st.cls && CLASSES[st.cls] && CLASSES[st.cls].tier >= 3 && lv >= 14) st.flags.deep = 1;
+  st.skills = {}; st.skFree = {}; st.skp = 0; st.tp = 0; st.inh = []; st.tal = {}; st.ct = {}; st.talV = Math.max(st.talV || 0, 3);
+  st.bp = st.bp || {}; for (const g of st.gear || []) if (GEAR[g.b] && GEAR_RECIPE[g.b]) st.bp[g.b] = 1;
+  st.skV = 5; st.v7note = old || 1; return true;
+}
+{ const _so = startOverworld; startOverworld = function (...a) {
+    const st = Game.st, mig = v7Migrate(st), ow = _so.apply(this, a);
+    if (Game.st && Game.st.v7note && ow && ow.run) { const was = Game.st.v7note; delete Game.st.v7note; if (Game.st.cls) ow.run((function* () { yield* wait(30);
+      yield* say('【v7.0 大改版】技能改成跟著武器走了！每把武器都有自己的主動技能、被動和「特技」。（選單→技能）');
+      yield* say('天賦改成職業專屬的三條分支，點數依等級重新計算，已經全部退回。' + (typeof was === 'string' && V7_OLD[was] ? '\n' + CLASSES[was].n + '變成了' + CLASSES[Game.st.cls].n + '的一條天賦分支。' : ''));
+      yield* say('另外，裝備改由鐵匠打造：商店不再賣裝備，撿到的裝備會變成設計圖。你目前持有的裝備都保留了，也學會了它們的設計圖。'); })()); }
+    return ow;
+  };
+}
+// the elder shows "!" when the Lv14 天賦覺醒 is waiting
+STORY_MARKS.elder = st => st.flags.license && st.lv >= 14 && !st.flags.deep ? '!' : null;
+// gear pages (equip picker, bag, smith, loot card): a weapon lists its skills
+{ const _gi = gearInfoLines; gearInfoLines = function (g, wrapW = 150) {
+    const L = _gi(g, wrapW), S = WSK[g.b]; if (!S) return L; const X = [], add = (t, c, s, ind) => { for (const l of Font.wrap(t, wrapW - ind, s)) X.push([l, c, s, ind]); };
+    X.push(['【武器技能】', UIC.accent, 10, 0]); add('主動：' + S.a.map(id => MOVES[id].n).join('・'), '#c8f0ff', 11, 4);
+    add('被動「' + S.p.n + '」' + wpassText(S.p), UIC.warm, 10, 4); add('特技「' + S.s.n + '」每' + wsN(S.s) + '次攻擊', '#ffd860', 10, 4);
+    const i = L.findIndex(l => l[0] === '' && l[2] === 6); L.splice(i < 0 ? L.length : i, 0, ...X); return L;
   };
 }
 
