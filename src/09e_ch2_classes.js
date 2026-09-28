@@ -238,9 +238,11 @@ Object.assign(Events, {
   *dragonElder() {
     const st = Game.st, f = st.flags;
     if (f.clsDragoon) { yield* say('龍會回應你的呼喚。去吧，龍騎士。'); return; }
-    if (!f.dragoonQ) { f.dragoonQ = 1; yield* sayAll(['……年輕人，你的眼神很像當年的我。', '我是最後的龍騎士。和龍締結契約，就能借用龍的力量。', '去山道南邊的岩漿湖，打倒那隻火龍幼體，帶回牠的「龍之火種」。', '那是和龍締結契約的證明。']); return; }
+    if (!f.dragoonQ) { f.dragoonQ = 1; yield* sayAll(['……年輕人，你的眼神很像當年的我。', '我是最後的龍騎士。和龍締結契約，就能借用龍的力量。', '去山道南邊的岩漿湖，打倒那隻火龍幼體，帶回牠的「龍之火種」。', '那是和龍締結契約的證明。']); if (!f.youngDragon) return; }
+    /* v24.14 the flame only dropped if the trial was accepted BEFORE the first win (rematches never gave it) — a hero who already beat the whelp gets it here */
+    if (f.youngDragon && !st.bag.dragonFlame) { yield* sayAll(['……等等。你身上有龍的氣息。', '你已經打倒過火龍幼體了？……牠的火種，一直跟著你呢。']); st.bag.dragonFlame = 1; yield* itemGet(st.name + '得到了「龍之火種」！'); }
     if (st.bag.dragonFlame) { delete st.bag.dragonFlame; f.clsDragoon = 1; Sound.jingle('item'); yield* sayAll(['龍之火種……火燒得很旺。', '牠承認你了。', '到王都的冒險者公會轉職吧。龍騎士的跳躍，會帶你飛到任何地方。']); yield* itemGet('解鎖了上級職業「龍騎士」！'); return; }
-    yield* say(f.youngDragon ? '火種……你沒有拿到嗎？牠應該會再出現的。' : '火龍幼體就在山道的岩漿湖邊。');
+    yield* say('火龍幼體就在山道的岩漿湖邊。');
   },
 });
 // 機工士: the clockmaker's second request (after the colossus)

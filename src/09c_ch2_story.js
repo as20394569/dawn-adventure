@@ -307,7 +307,7 @@ Object.assign(Events, {
   *eliteWin_frostLich() { if (Game.st.flags.lichQ === 1) yield* say('（回霜語村告訴村長婆婆吧。）'); },
   /* ----- 赤焰山道・熔岩坑道 ----- */
   *lavaDoor(ow) { if (yield* yesNo('熔岩坑道的入口。熱風從裡面吹出來……要進去嗎？')) yield* ow.warp('lavaTunnel', 10, 22, 'up'); },
-  *eliteWin_youngDragon() { const st = Game.st, f = st.flags; st.bag.dragonScale = (st.bag.dragonScale || 0) + 3; yield* itemGet(st.name + '得到了龍鱗×3！'); if (f.dragoonQ === 1) { st.bag.dragonFlame = 1; yield* itemGet(st.name + '得到了「龍之火種」！（回去找龍騎士老人）'); } },
+  *eliteWin_youngDragon() { const st = Game.st, f = st.flags; st.bag.dragonScale = (st.bag.dragonScale || 0) + 3; yield* itemGet(st.name + '得到了龍鱗×3！'); if (f.dragoonQ === 1 && !f.clsDragoon) { st.bag.dragonFlame = 1; yield* itemGet(st.name + '得到了「龍之火種」！（回去找龍騎士老人）'); } },
   *giantBoss(ow) {
     const st = Game.st, f = st.flags; if (f.lavaGiant) return;
     yield* sayAll(['岩漿湖的中央，一個巨人緩緩站了起來。', '牠的胸口，嵌著一枚燃燒的印章——火之印。', '「……黑袍的男人……說……燒掉……所有人……」']);
@@ -377,4 +377,12 @@ class Ch2EndingScene extends EndingScene {
       Font.drawC(x, s, W / 2, yy, k === 'sub' ? '#ffe0a0' : '#ffffff', '#2a1a08'); yy += 18;
     }
   }
+}
+
+{ const _bs = Overworld.prototype.battleScript; Overworld.prototype.battleScript = function (cfg, nr) {
+    const self = this, g = _bs.call(this, cfg, nr); if (!cfg || cfg.id !== 'youngDragon' || !cfg.rematch) return g;
+    return (function* () { const res = yield* g; const st = Game.st, f = st.flags;
+      if (res === 'win' && f.dragoonQ === 1 && !f.clsDragoon && !st.bag.dragonFlame) { st.bag.dragonFlame = 1; yield* itemGet(st.name + '得到了「龍之火種」！（回去找龍騎士老人）'); }
+      return res; })();
+  };
 }
