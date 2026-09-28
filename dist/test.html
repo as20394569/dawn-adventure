@@ -11781,6 +11781,17 @@ function ch2ChibiFrame(sp, size, step, flip) {
   };
 }
 
+/* ---------- v24.12 monster shouts / quakes now visibly reach the hero ----------
+   Playtest: "check that the normal monsters' skill effects hit too". An audit of every monster move (tools/v81.js) found the
+   shout-type moves (鳴叫 / 尖嘯 / 哀嚎 and their aliases) and 地鳴 only drew rings / cracks around the monster itself.
+   They now end with the wave arriving on the hero (rings at the hero) / cracks opening under the hero's feet. */
+{ const wrap = (k, after) => { const orig = MFX[k]; if (!orig) return; const w = function* (U, T, u, t) { yield* orig.call(this, U, T, u, t); yield* after.call(this, U, T); };
+    for (const key in MFX) if (MFX[key] === orig) MFX[key] = w; };
+  const waveAt = c => function* (U, T) { for (let i = 0; i < 2; i++) { mSpawn(this, 'mjag', { x: T.x, y: T.y, r0: 4, r1: 20 + i * 8, c, n: 12, life: 12, rot: i * 0.5 }); yield* wait(4); } yield* wait(6); };
+  wrap('m_chirp', waveAt('#f0d060')); wrap('m_screech', waveAt('#e04050')); wrap('m_wail', waveAt('#8a78b0'));
+  wrap('m_rumble', function* (U, T) { mSpawn(this, 'mcrack', { x: T.x, y: T.y + 24, n: 3, c: '#2a1a10', life: 26 }); this.shake = Math.max(this.shake, 8); yield* wait(10); });
+}
+
 /* ===================== CHAPTER 2 — four new 上級職業 (tier 3, unlocked by trials, changed at the 王都冒險者公會) =====================
    吟遊詩人 bard      歌與增益：勇氣之歌・安眠曲・不協和音，增益越多「英雄終曲」越強（魔攻系）      試煉：找回失落的樂譜（地下水道）
    機工士 machinist   砲台與機關：設置砲台每回合自動射擊，全彈發射、超級大砲（物攻系）               試煉：發條×3＋黃銅齒輪×3（鐘錶師艾德）
