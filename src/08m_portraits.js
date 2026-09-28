@@ -14,15 +14,16 @@ function chibiPortrait(sp) {
 { const _bp = battlePortrait; battlePortrait = function (sp) { return chibiPortrait(sp) || _bp(sp); }; }
 encounterCard = function (sp, lv, key, kind, extra) { // same card, the picture area grows with the chibi (max 80px, so the 迎戰/撤退 menu stays clear)
   const pic = battlePortrait(sp), stars = dangerStars(lv), hint = lootHint(key, sp);
-  const s = pic ? Math.min(1, 80 / pic.height, 120 / pic.width) : 1, PH = pic ? clamp(Math.round(pic.height * s), 56, 80) : 70;
+  let hz = 8; while (hz > 7 && Font.width(hint, hz) > W - 28) hz--; const HL = hint ? Font.wrap(hint, W - 28, hz).slice(0, 2) : [], ex = HL.length > 1 ? 11 : 0; // a long drop hint wraps to 2 lines; the picture gives up the room
+  const s = pic ? Math.min(1, (80 - ex) / pic.height, 120 / pic.width) : 1, PH = pic ? clamp(Math.round(pic.height * s), 56 - ex, 80 - ex) : 70 - ex;
   return { draw(x) {
-    const X = 8, Y = 18, w = W - 16, h = PH + 55; drawPanel(x, X, Y, w, h, kind === 'boss' ? '#ff6b7a' : '#ffc46b');
+    const X = 8, Y = 18, w = W - 16, h = PH + 55 + ex; drawPanel(x, X, Y, w, h, kind === 'boss' ? '#ff6b7a' : '#ffc46b');
     Font.drawC(x, (kind === 'boss' ? '頭目' : '菁英魔物') + (extra ? '・' + extra : ''), W / 2, Y + 3, kind === 'boss' ? '#ff9aa4' : '#ffd890', UIC.textSh, 9);
     if (pic) { const pw = Math.round(pic.width * s), ph = Math.round(pic.height * s), fy = Y + 15 + PH; x.fillStyle = 'rgba(0,0,0,0.3)'; x.beginPath(); x.ellipse(W / 2, fy - 1, Math.max(10, pw * 0.36), 3, 0, 0, 7); x.fill();
       x.imageSmoothingEnabled = false; x.drawImage(pic, Math.round(W / 2 - pw / 2), fy - ph, pw, ph); }
     Font.drawC(x, SPECIES[sp].n + '　Lv' + lv, W / 2, Y + PH + 16, UIC.text, UIC.textSh, 11);
     let st = ''; for (let i = 0; i < 5; i++) st += i < stars ? '★' : '☆'; Font.drawC(x, '危險度 ' + st, W / 2, Y + PH + 29, stars >= 4 ? '#ff7a7a' : stars === 3 ? '#ffd070' : '#9ad890', UIC.textSh, 9);
-    if (hint) { let z = 8; while (z > 7 && Font.width(hint, z) > w - 8) z--; const hs = Font.width(hint, z) > w - 8 ? hint.slice(0, 23) + '…' : hint; Font.drawC(x, hs, W / 2, Y + PH + 40, '#c8b0ff', UIC.textSh, z); }
+    HL.forEach((l, i) => Font.drawC(x, l, W / 2, Y + PH + 40 + i * 11, '#c8b0ff', UIC.textSh, hz));
   } };
 };
 function dexPortrait(sp) { return chibiPortrait(sp); }

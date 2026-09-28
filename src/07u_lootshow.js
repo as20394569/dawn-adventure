@@ -24,11 +24,13 @@ Battle.prototype.lootShow = function* (g, head) {
   UI.remove(u); this.sparks(T.x, T.y, 18 + q * 8, [col, '#ffffff', shade(col, 0.4)], 2.6, 24, 0.06); this.spawn({ k: 'flash', c: col, a: q >= 3 ? 0.45 : 0.3, life: 8 }); if (q >= 3) { this.shake = 8; Sound.sfx('crit'); }
   Sound.jingle('item');
   // 2) the showcase card
-  const icon = lootIcon(g), B = GEAR[g.b], info = gearInfoLines(g, 128).filter(l => l[2] !== 9 && l[1] !== UIC.muted && l[1] !== UIC.accent && l[0] !== ''), kind = EQUIP_SLOTS[B.slot === 'acc' ? 'acc1' : B.slot] + (B.kind && B.kind !== '飾品' ? '・' + B.kind : '');
+  const icon = lootIcon(g), B = GEAR[g.b], CW = 160, info = [];
+  for (const [t, c2, sz, ind] of gearInfoLines(g, 9999).filter(l => l[2] !== 9 && l[1] !== UIC.muted && l[1] !== UIC.accent && l[0] !== '')) { const i2 = Math.min(ind, 6); for (const l of Font.wrap(t, CW - 20 - i2, 10)) info.push([l, c2, 10, i2]); }
+  const CH = Math.min(H - 8, 99 + info.length * 12 + 22), CY = CH <= BH - 8 ? Math.max(6, Math.round((BH - CH) / 2)) : Math.round((H - CH) / 2), kind = EQUIP_SLOTS[B.slot === 'acc' ? 'acc1' : B.slot] + (B.kind && B.kind !== '飾品' ? '・' + B.kind : '');
   const s = { t: 0, out: 0, draw(x) {
     s.t++; const a = s.out ? Math.max(0, 1 - s.out / 6) : Math.min(1, s.t / 8), slide = Math.round((1 - Math.min(1, s.t / 8)) * 18);
-    x.save(); x.globalAlpha = a; x.fillStyle = 'rgba(4,4,12,0.55)'; x.fillRect(0, 0, W, BH);
-    const X = 14, Y = 14 + slide, w = 148, h = 180; drawWin(x, X, Y, w, h, 'menu');
+    x.save(); x.globalAlpha = a; x.fillStyle = 'rgba(4,4,12,0.55)'; x.fillRect(0, 0, W, CH > BH - 8 ? H : BH);
+    const X = (W - CW) / 2, Y = CY + slide, w = CW, h = CH; drawWin(x, X, Y, w, h, 'menu');
     Font.drawC(x, head || '獲得了裝備！', W / 2, Y + 4, col, UIC.textSh, 10);
     // rays + icon
     const cx = W / 2, cy = Y + 44; x.save(); x.translate(cx, cy); x.rotate(s.t / 90); const nR = q >= 3 ? 12 : 8;
@@ -41,8 +43,8 @@ Battle.prototype.lootShow = function* (g, head) {
     let y = Y + 70; { const nm = gearName(g); let z = 12; while (z > 9 && Font.width(nm, z) > w - 16) z--; Font.drawC(x, nm, W / 2, y, col, UIC.textSh, z); } y += 15; Font.drawC(x, kind, W / 2, y - 1, UIC.muted, UIC.textSh, 8); y += 11;
     x.fillStyle = `rgba(${cr},${cg2},${cb},0.5)`; x.fillRect(X + 10, y, w - 20, 1); y += 3;
     const maxY = Y + h - 20; let shown = 0;
-    for (const [t, c2, sz, ind] of info) { const lh = lineH(sz); if (y + lh > maxY) break; Font.draw(x, t, X + 10 + Math.min(ind, 6), y, c2, UIC.textSh, Math.min(sz, 10)); y += Math.min(lh, 12); shown++; }
-    const blink = Math.floor(s.t / 20) % 2; Font.drawR(x, 'A：繼續', X + w - 10, Y + h - 13, blink ? UIC.accent : '#ffffff', UIC.textSh, 9); Font.draw(x, shown < info.length ? '▼更多詳情見裝備畫面' : '可在裝備畫面裝備', X + 10, Y + h - 13, UIC.muted, UIC.textSh, 8);
+    for (const [t, c2, sz, ind] of info) { if (y + 12 > maxY + 2) break; Font.draw(x, t, X + 10 + ind, y, c2, UIC.textSh, sz); y += 12; shown++; }
+    const blink = Math.floor(s.t / 20) % 2; Font.drawR(x, 'A：繼續', X + w - 10, Y + h - 13, blink ? UIC.accent : '#ffffff', UIC.textSh, 9); Font.draw(x, shown < info.length ? '▼更多詳情見裝備畫面' : (g._bp ? '拿去給鐵匠打造' : '可在裝備畫面裝備'), X + 10, Y + h - 13, UIC.muted, UIC.textSh, 8);
     x.restore();
   } };
   UI.push(s); for (let i = 0; i < 10; i++) yield; Input.consume('a', 'b');

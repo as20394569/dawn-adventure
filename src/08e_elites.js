@@ -51,13 +51,14 @@ function dangerStars(lv) { const d = lv - Game.st.lv; return d <= -4 ? 1 : d <= 
 function lootHint(key, sp) { const first = !((Game.st.kills || {})[key]), sig = (LOOT[key] || [])[0] || (SPECIES[sp] || {}).drop; if (first && sig) return '首次擊敗：必定掉落金色「' + GEAR[classGear(sig)].n + '」'; if (LOOT[key]) return '重戰掉落：' + LOOT[key].map(k => GEAR[classGear(k)].n).slice(0, 3).join('、') + '…'; return ''; }
 function encounterCard(sp, lv, key, kind, extra) {
   const pic = battlePortrait(sp), stars = dangerStars(lv), hint = lootHint(key, sp);
+  let hz = 8; while (hz > 7 && Font.width(hint, hz) > W - 30) hz--; const hl = hint ? Font.wrap(hint, W - 30, hz).slice(0, 2) : [];
   return { draw(x) {
-    const X = 8, Y = 18, w = W - 16, h = 118; drawPanel(x, X, Y, w, h, kind === 'boss' ? '#ff6b7a' : '#ffc46b');
+    const X = 8, Y = 18, w = W - 16, h = 110 + hl.length * 10; drawPanel(x, X, Y, w, h, kind === 'boss' ? '#ff6b7a' : '#ffc46b');
     Font.drawC(x, (kind === 'boss' ? '頭目' : '菁英魔物') + (extra ? '・' + extra : ''), W / 2, Y + 3, kind === 'boss' ? '#ff9aa4' : '#ffd890', UIC.textSh, 9);
     if (pic) { const s = Math.min(1, 70 / pic.height, 100 / pic.width); x.imageSmoothingEnabled = false; x.drawImage(pic, Math.round(W / 2 - pic.width * s / 2), Math.round(Y + 15 + 70 - pic.height * s), Math.round(pic.width * s), Math.round(pic.height * s)); }
     Font.drawC(x, SPECIES[sp].n + '　Lv' + lv, W / 2, Y + 86, UIC.text, UIC.textSh, 11);
     let s = ''; for (let i = 0; i < 5; i++) s += i < stars ? '★' : '☆'; Font.drawC(x, '危險度 ' + s, W / 2, Y + 99, stars >= 4 ? '#ff7a7a' : stars === 3 ? '#ffd070' : '#9ad890', UIC.textSh, 9);
-    if (hint) Font.drawC(x, hint.length > 24 ? hint.slice(0, 23) + '…' : hint, W / 2, Y + 108, '#c8b0ff', UIC.textSh, 8);
+    hl.forEach((l, i) => Font.drawC(x, l, W / 2, Y + 108 + i * 10, '#c8b0ff', UIC.textSh, hz));
   } };
 }
 function* askFight(sp, lv, key, kind, extra) {
@@ -87,8 +88,9 @@ Overworld.prototype.eliteTalk = function* (e) {
   const lvShown = e.lv + ngOf() * NG_LV;
   if (!(yield* askFight(e.sp, lvShown, e.id, 'elite', e.rematch ? '再戰' : ''))) { yield* this.retreatFrom(e); return; }
   const res = yield* this.battleScript({ sp: e.sp, lv: e.lv, kind: 'elite', id: e.id, drop: e.rematch ? null : e.drop, rematch: e.rematch }, true);
+  { const i = this.elites.findIndex(q => q !== e && q.id === e.id); if (i >= 0) this.elites[i] = e; } // the post-battle map reload rebuilt this elite as a new entity: keep the one we fought
   if (res === 'win') {
-    const firstWin = !st.flags[e.id]; st.flags[e.id] = 1; (st.eliteDown || (st.eliteDown = {}))[e.id] = st.steps || 0; this.elites = this.elites.filter(x => x !== e);
+    const firstWin = !st.flags[e.id]; st.flags[e.id] = 1; (st.eliteDown || (st.eliteDown = {}))[e.id] = st.steps || 0; this.elites = this.elites.filter(x => x !== e && x.id !== e.id);
     if (firstWin && e.id === 'boneKnight') { yield* say('骸骨騎士倒下後，身後的石棺打開了……'); st.money += 2000; st.bag.powerFruit = (st.bag.powerFruit || 0) + 1; yield* itemGet(st.name + '找到了古王的寶藏：2000 G和力量果實！'); }
     if (firstWin && Events['eliteWin_' + e.id]) yield* Events['eliteWin_' + e.id](this, e);
     if (firstWin) yield* say('（打倒的菁英魔物，過一段時間會再出現。再戰時會掉落不同的裝備。）');
