@@ -206,3 +206,20 @@ function ch2ChibiFrame(sp, size, step, flip) {
     return miniCache[k] = { c, flip: flipCanvas(c) };
   };
 }
+
+/* ---------- v24.10 skills aimed at the visible body of big monsters ----------
+   Playtest: "some skills don't hit the boss". Effects aim at the middle of the foe's box, and a chibi's box was its whole frame —
+   big bosses (影將 / 熔岩巨人 / 九頭蛇 …) stand in the lower part of a tall frame, so their middle was up near the head or above it.
+   The box now starts at the first visible row of the idle frame (feet / drawing position unchanged). */
+{ const VIS = {};
+  const visTop = base => { if (base in VIS) return VIS[base]; const im = BATTLE_PXC[base], M = typeof BATTLE_PXC_META !== 'undefined' && BATTLE_PXC_META[base]; if (!im || !im.ok || !M) return null;
+    const fi = (M.frames.idle || [0])[0], c = mkCanvas(M.w, M.h), x = c.getContext('2d'); x.drawImage(im, fi * M.w, 0, M.w, M.h, 0, 0, M.w, M.h);
+    const d = x.getImageData(0, 0, M.w, M.h).data; let t = -1; for (let y = 0; y < M.h && t < 0; y++) for (let xx = 0; xx < M.w; xx++) if (d[(y * M.w + xx) * 4 + 3]) { t = y; break; }
+    return VIS[base] = t < 0 ? null : t; };
+  const _ps = pxSpec; pxSpec = function (key) {
+    const S = _ps(key); if (!S || !S.chibi || !S.bb || typeof chibiBase !== 'function') return S;
+    const t = visTop(chibiBase(key)); if (t === null || t === undefined) return S;
+    const top = PX_PAD + t; if (top > S.bb.top && top < S.bb.bot) S.bb = { ...S.bb, top, h: S.bb.bot - top + 1 };
+    return S;
+  };
+}

@@ -1,0 +1,1 @@
+module.exports = async (g) => { g.log(await g.ev(() => Object.keys(MOVES).filter(id => { const m = MOVES[id]; return !id.startsWith('m_') && ((m.eff && m.eff.st === 'psn') || m.st === 'psn'); }).map(id => id + ':' + MOVES[id].n + ' pow' + (MOVES[id].pow || 0) + ' acc' + MOVES[id].acc + ' ' + JSON.stringify(MOVES[id].eff || MOVES[id].st)).join('\n'))); };
