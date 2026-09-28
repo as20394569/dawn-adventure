@@ -5,6 +5,9 @@
    rows 4–5 are the deep talents: Lv14 + 「天賦覺醒」 at the village elder. 1 point per level (+2 on awakening, + books).
    Changing class or resetting refunds everything for free. Many talents boost one weapon kind, so the weapon you pick
    decides which talents you want. */
+// branch icons (Codex task N: art/battle/talents/<cls>_<b>.png, 12×12)
+const TALENT_PX = {}; for (const k in (typeof TALENT_PX_SRC !== 'undefined' ? TALENT_PX_SRC : {})) { const im = new Image(); im.onload = () => { im.ok = true; }; im.src = TALENT_PX_SRC[k]; TALENT_PX[k] = im; }
+const branchIcon = (c, b) => { const im = TALENT_PX[c + '_' + b]; return im && im.ok ? im : null; };
 const ROW_OF = [0, 0, 1, 1, 2, 3, 4], ROW_REQ = [0, 3, 6, 9, 12], ROW_SLOTS = [[0, 1], [2, 3], [4], [5], [6]];
 // node: 'name|key|value per rank|max rank'
 const CLASS_V7 = {
@@ -104,7 +107,7 @@ function* talentScreen() {
   const scr = { draw(x) {
     screenBG(x); headerBar(x, '天賦・' + CLASSES[st.cls].n); const av = tpAvail(st); Font.drawR(x, '天賦點 ' + av, W - 6, 2, av ? UIC.warm : UIC.muted, UIC.textSh);
     const col = classColOf(st.cls);
-    C.br.forEach(([bn], b) => { const X = colX(b); drawBtn(x, X, 22, 54, 17, false, col); Font.drawC(x, bn, X + 27, 21, shade(col, 0.35), UIC.textSh, 10); Font.drawR(x, String(brPts(b, st)), X + 52, 29, UIC.muted, UIC.textSh, 7); });
+    C.br.forEach(([bn], b) => { const X = colX(b), ic = branchIcon(st.cls, b); drawBtn(x, X, 22, 54, 17, false, col); if (ic) x.drawImage(ic, X + 2, 24); Font.drawC(x, bn, X + (ic ? 31 : 27), 21, shade(col, 0.35), UIC.textSh, bn.length > 3 && ic ? 8 : 10); Font.drawR(x, String(brPts(b, st)), X + 52, 29, UIC.muted, UIC.textSh, 7); });
     for (let r = 0; r < 5; r++) {
       if (r === 3) { x.fillStyle = deepOk(st) ? 'rgba(255,200,100,0.35)' : 'rgba(120,120,150,0.35)'; x.fillRect(4, RY(3) - 3, 168, 1); if (!deepOk(st)) Font.drawR(x, '深層（天賦覺醒）', 170, RY(3) - 10, UIC.dis, UIC.textSh, 7); }
       for (let s = 0; s < slots(r); s++) { const n = nodeAt(r, s), g = tile(n, r, s), rk = ctRank(n, st), on = r === row && s === slot, blk = nodeBlock(n, st), lock = blk && !rk && blk !== '天賦點不足（升級時獲得）';
@@ -158,7 +161,7 @@ function* classCardScreen(keys, o = {}) {
     drawFitText(x, c.text, 12, 119, 152, 36, 10);
     Font.draw(x, '擅長武器：' + c.w.join('・'), 12, 156, UIC.accent, UIC.textSh, 9); const pas = classPassives(c.k);
     Font.draw(x, pas.length ? '職業被動：' + pas.map(p => p.n).join('・') : '天賦分支', 12, 167, pas.length ? UIC.warm : UIC.muted, UIC.textSh, 8); Font.drawR(x, '天賦可自由混點', 164, 167, UIC.muted, UIC.textSh, 8);
-    c.br.forEach(([bn, bd], n) => { const Y = 180 + n * 19; x.fillStyle = shade(col, -0.35); x.fillRect(12, Y + 1, 44, 14); Font.drawC(x, bn, 34, Y, '#ffffff', UIC.textSh, bn.length > 3 ? 9 : 10); let z = 9; while (z > 7 && Font.width(bd, z) > 104) z--; Font.draw(x, bd, 60, Y + 1, UIC.text, UIC.textSh, z); });
+    c.br.forEach(([bn, bd], n) => { const Y = 180 + n * 19, ic = branchIcon(c.k, n); x.fillStyle = shade(col, -0.35); x.fillRect(12, Y + 1, 44, 14); if (ic) x.drawImage(ic, 13, Y + 2); Font.drawC(x, bn, ic ? 40 : 34, Y, '#ffffff', UIC.textSh, bn.length > 3 ? (ic ? 8 : 9) : 10); let z = 9; while (z > 7 && Font.width(bd, z) > 104) z--; Font.draw(x, bd, 60, Y + 1, UIC.text, UIC.textSh, z); });
     Font.drawR(x, (o.cancel ? 'B：返回　' : '') + 'A：選擇' + (keys.length > 1 ? '　◀▶：切換' : ''), 164, 241, UIC.muted, UIC.textSh, 8);
   } };
   UI.push(scr);

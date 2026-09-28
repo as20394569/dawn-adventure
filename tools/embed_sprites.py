@@ -57,5 +57,12 @@ for f in sorted(glob.glob(os.path.join(root, 'art', 'battle', 'armor', '*.png'))
 js += 'const ARMOR_PX_SRC = ' + json.dumps(ar, separators=(',', ':')) + ';\n'
 print('armor', len(ar))
 print('animated', len(a), 'field', len(fd), 'ui', len(ui), 'chibi', len(pc), 'skin', len(sk), 'hero', len(hr))
+tl = {}
+for f in sorted(glob.glob(os.path.join(root, 'art', 'battle', 'talents', '*.png'))):
+    k = os.path.basename(f)[:-4]
+    if 'preview' in k: continue
+    tl[k] = 'data:image/png;base64,' + base64.b64encode(open(f, 'rb').read()).decode()
+js += 'const TALENT_PX_SRC = ' + json.dumps(tl, separators=(',', ':')) + ';\n'
+print('talents', len(tl))
 open(os.path.join(root, 'src', '07id_sprites.js'), 'w').write(js)
 print('embedded', len(d), 'sprites', sum(len(v) for v in d.values()) // 1024, 'KB')
