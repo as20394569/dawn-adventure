@@ -10,55 +10,55 @@
 
 /* ---------- data: [branch name, blurb, [[optA, optB] ×5]] ; option = [name, 'key:v,key:v'] ---------- */
 const T9 = {
-  swordsman: { pitch: '以近身武器戰鬥的戰士。疾風劍靠會心和連段連斬，血戰斧以血換力，銀槍術擅長長槍、先制與反擊。', br: [
-    ['疾風劍', '劍、會心與連段。', [[['劍心', 'kind:劍:12'], ['銳眼', 'crit:6']], [['連刃', 'actUp:15'], ['鋼身', 'hpP:8,defP:5']], [['流水', 'comboKeep:1'], ['燕返', 'fx.double:1']], [['破綻', 'critDmg:30,crit:3'], ['斷鋼', 'pierceT:20']], [['劍舞', 'comboMax:2'], ['一刀', 'spcUp:50,chargeCut:1']]]],
-    ['血戰斧', '以血換力的斧頭猛攻。', [[['重斧', 'kind:斧:12'], ['蠻勁', 'atkP:6']], [['飲血', 'drain:5'], ['厚皮', 'hpP:10']], [['怒吼', 'rage:1'], ['劈裂', 'fx.cleave:1']], [['死鬥', 'fx.lastStand:1'], ['不倒', 'endureT:1,hpP:5']], [['狂嵐', 'atkP:10,actUp:20'], ['血祭', 'drain:8,fx.predator:1']]]],
-    ['銀槍術', '長槍、先制與反擊。', [[['槍意', 'kind:長槍:12'], ['踏步', 'speP:8']], [['搶攻', 'fx.first:1'], ['架槍', 'guardPlus:1']], [['回馬', 'counter:1'], ['穿心', 'pierceT:15']], [['看穿', 'weakUp:20'], ['破盾', 'fx.breaker:1,shieldChip:30']], [['槍王', 'bigUp:20,actUp:15'], ['百鍊', 'comboStep:3,comboStart:1']]]],
+  swordsman: { pitch: '身經百戰的戰士。疾風靠會心和連段連斬，血戰以血換力，對決擅長先制、反擊與看破。', br: [
+    ['疾風', '會心與連段，出手越快越強。', [[['凝神', 'dmgUp:10'], ['銳眼', 'crit:6']], [['連勢', 'actUp:15'], ['鋼身', 'hpP:8,defP:5']], [['流水', 'comboKeep:1'], ['燕返', 'fx.double:1']], [['破綻', 'critDmg:30,crit:3'], ['斷鋼', 'pierceT:20']], [['風舞', 'comboMax:2'], ['斷空', 'spcUp:50,chargeCut:1']]]],
+    ['血戰', '以血換力，越戰越勇。', [[['戰意', 'dmgUp:10'], ['蠻勁', 'atkP:6']], [['飲血', 'drain:5'], ['厚皮', 'hpP:10']], [['怒吼', 'rage:1'], ['劈裂', 'fx.cleave:1']], [['死鬥', 'fx.lastStand:1'], ['不倒', 'endureT:1,hpP:5']], [['狂嵐', 'atkP:10,actUp:20'], ['血祭', 'drain:8,fx.predator:1']]]],
+    ['對決', '先制、反擊與看破。', [[['氣魄', 'dmgUp:10'], ['踏步', 'speP:8']], [['搶攻', 'fx.first:1'], ['架勢', 'guardPlus:1']], [['回身', 'counter:1'], ['穿心', 'pierceT:15']], [['看穿', 'weakUp:20'], ['破盾', 'fx.breaker:1,shieldChip:30']], [['霸者', 'bigUp:20,actUp:15'], ['百鍊', 'comboStep:3,comboStart:1']]]],
   ] },
-  mage: { pitch: '操控魔力的術士。紅蓮以火焰爆發，蒼雷用速度與麻痺壓制，秘典精通魔導書與MP運用。', br: [
-    ['紅蓮', '火焰與爆發傷害。', [[['火種', 'fireUp:12'], ['杖術', 'kind:法杖:12']], [['灼心', 'spaP:7'], ['餘燼', 'magCrit:6']], [['魔潮', 'fx.arcaneSurge:1'], ['烈陣', 'actUp:15']], [['炎爆', 'critDmg:30'], ['元素鎖', 'elem:15']], [['劫火', 'fireUp:30,spaP:5'], ['焚天', 'spcUp:50,chargeCut:1']]]],
+  mage: { pitch: '操控魔力的術士。紅蓮以火焰爆發，蒼雷用速度與麻痺壓制，秘法精通MP的運用。', br: [
+    ['紅蓮', '火焰與爆發傷害。', [[['火種', 'fireUp:12'], ['咒力', 'dmgUp:10']], [['灼心', 'spaP:7'], ['餘燼', 'magCrit:6']], [['魔潮', 'fx.arcaneSurge:1'], ['烈陣', 'actUp:15']], [['炎爆', 'critDmg:30'], ['元素鎖', 'elem:15']], [['劫火', 'fireUp:30,spaP:5'], ['焚天', 'spcUp:50,chargeCut:1']]]],
     ['蒼雷', '雷電、速度與麻痺。', [[['雷種', 'boltUp:12'], ['疾電', 'speP:8']], [['雷痕', 'fx.stormMark:1'], ['靜電', 'magCrit:6']], [['迴路', 'comboKeep:1'], ['導雷', 'chargeCut:1']], [['落雷', 'boltUp:20,critDmg:15'], ['疾走', 'fx.first:1,speP:6']], [['雷帝', 'boltUp:25,comboStep:3'], ['天雷', 'actUp:30']]]],
-    ['秘典', '魔導書與MP運用。', [[['書頁', 'kind:魔導書:12'], ['魔庫', 'mpP:15']], [['冥想', 'mpRegen:3'], ['節流', 'mpSave:10']], [['循環', 'fx.freeCast:1'], ['借法', 'subUp:25']], [['萬象', 'elem:15,mpP:10'], ['靜思', 'fx.mpGuard:1,spdP:8']], [['賢者', 'spaP:10,mpRegen:3'], ['禁書', 'actUp:20,comboStep:3']]]],
+    ['秘法', 'MP的運用與借用技能。', [[['咒文', 'dmgUp:10'], ['魔庫', 'mpP:15']], [['冥想', 'mpRegen:3'], ['節流', 'mpSave:10']], [['循環', 'fx.freeCast:1'], ['借法', 'subUp:25']], [['萬象', 'elem:15,mpP:10'], ['靜思', 'fx.mpGuard:1,spdP:8']], [['賢者', 'spaP:10,mpRegen:3'], ['禁咒', 'actUp:20,comboStep:3']]]],
   ] },
-  guardian: { pitch: '站在最前線的守護者。聖盾治癒與不屈，磐石把防禦練到極致，報復用斧頭加倍奉還。', br: [
+  guardian: { pitch: '站在最前線的守護者。聖盾治癒與不屈，磐石把防禦練到極致，報復把傷害加倍奉還。', br: [
     ['聖盾', '治癒、再生與夥伴。', [[['祈禱', 'healUp:15'], ['堅忍', 'hpP:8']], [['聖光', 'fx.guardHeal:1'], ['淨身', 'statusRes:20']], [['復甦', 'fx.regen:1'], ['屏障', 'openShield:2']], [['護體', 'elemRes:15,defP:6'], ['不屈', 'endureT:1']], [['聖域', 'healUp:25,winHeal:15'], ['守誓', 'allyUp:50,allyMore:1']]]],
     ['磐石', '物防魔防與防禦。', [[['鐵甲', 'defP:8'], ['符甲', 'spdP:8']], [['定樁', 'guardPlus:1'], ['厚實', 'hpP:10']], [['荊甲', 'fx.thorns:1'], ['靜守', 'comboGuard:1,fx.mpGuard:1']], [['堅城', 'defP:12,spdP:12'], ['亡者盾', 'fx.deathWard:1']], [['城牆', 'defP:15,hpP:10'], ['反擊壁', 'counter:1,atkP:8']]]],
-    ['報復', '斧頭與反擊。', [[['沉斧', 'kind:斧:12'], ['怒意', 'atkP:6']], [['還擊', 'counter:1'], ['嗜戰', 'drain:5']], [['逆境', 'rage:1'], ['碎甲', 'fx.cleave:1']], [['審判', 'fx.lastStand:1'], ['以牙', 'critDmg:25,crit:4']], [['清算', 'actUp:25,atkP:6'], ['怒濤', 'spcUp:50,chargeCut:1']]]],
+    ['報復', '反擊與復仇。', [[['沉重', 'dmgUp:10'], ['怒意', 'atkP:6']], [['還擊', 'counter:1'], ['嗜戰', 'drain:5']], [['逆境', 'rage:1'], ['碎甲', 'fx.cleave:1']], [['審判', 'fx.lastStand:1'], ['以牙', 'critDmg:25,crit:4']], [['清算', 'actUp:25,atkP:6'], ['怒濤', 'spcUp:50,chargeCut:1']]]],
   ] },
-  ranger: { pitch: '敏捷的獵人。影刃一擊致命，風行以迴避與連擊周旋，神射用火槍看破弱點。', br: [
-    ['影刃', '短刀、會心與毒。', [[['短刃', 'kind:短刀:12'], ['弱穴', 'crit:6']], [['淬毒', 'fx.poisonEdge:1'], ['獵眼', 'weakUp:12']], [['無聲', 'assassin:1'], ['毒噬', 'venomous:25']], [['割喉', 'critDmg:30'], ['獵殺', 'fx.predator:1']], [['絕影', 'crit:8,critDmg:20,actUp:15'], ['千刃', 'fx.double:1,atkUp:20,bigUp:10']]]],
+  ranger: { pitch: '敏捷的獵人。影殺一擊致命，風行以迴避與連段周旋，鷹眼看破弱點。', br: [
+    ['影殺', '會心、毒與致命一擊。', [[['殺意', 'dmgUp:10'], ['弱穴', 'crit:6']], [['淬毒', 'fx.poisonEdge:1'], ['獵眼', 'weakUp:12']], [['無聲', 'assassin:1'], ['毒噬', 'venomous:25']], [['割喉', 'critDmg:30'], ['獵殺', 'fx.predator:1']], [['絕影', 'crit:8,critDmg:20,actUp:15'], ['千擊', 'fx.double:1,atkUp:20,bigUp:10']]]],
     ['風行', '迴避、連段與反擊。', [[['輕身', 'eva:5'], ['疾足', 'speP:8']], [['旋舞', 'atkUp:20'], ['連步', 'comboStart:1']], [['幻步', 'shadowStep:1'], ['雙擊', 'fx.double:1']], [['流轉', 'comboKeep:1,comboGuard:1'], ['伏擊', 'atkMp:3,specStart:2']], [['追風', 'fx.swift:1,eva:5'], ['虛影', 'comboMax:1,chargeCut:1']]]],
-    ['神射', '火槍、弱點與先制。', [[['槍法', 'kind:火槍:12'], ['瞄準', 'hit:10']], [['先制', 'fx.first:1'], ['貫甲', 'pierceT:15']], [['獵印', 'weakUp:20'], ['裝填', 'specStart:2']], [['狙擊', 'critDmg:25,crit:4'], ['巨獵', 'bigUp:15']], [['魔彈', 'actUp:30'], ['獵王', 'bigUp:15,fx.predator:1']]]],
+    ['鷹眼', '弱點、先制與屠巨。', [[['專注', 'dmgUp:10'], ['瞄準', 'hit:10']], [['先制', 'fx.first:1'], ['貫甲', 'pierceT:15']], [['獵印', 'weakUp:20'], ['裝填', 'specStart:2']], [['狙擊', 'critDmg:25,crit:4'], ['巨獵', 'bigUp:15']], [['必中', 'actUp:30'], ['獵王', 'bigUp:15,fx.predator:1']]]],
   ] },
-  bard: { pitch: '以歌聲戰鬥的旅人。凱歌激昂作戰，聖詠守護生命與夥伴，吟刃讓短刀與副武器發揮到極致。', br: [
-    ['凱歌', '樂器、特技與夥伴。', [[['音律', 'kind:樂器:12'], ['高亢', 'spaP:6']], [['高揚', 'actUp:15'], ['節拍', 'comboStart:1']], [['狂想', 'fx.fervor:1'], ['合奏', 'allyUp:40']], [['破音', 'critDmg:25,magCrit:5'], ['間奏', 'chargeCut:1']], [['英雄頌', 'spcUp:50,specStart:2'], ['終章', 'comboMax:1,comboStep:3']]]],
+  bard: { pitch: '以歌聲戰鬥的旅人。凱歌激昂作戰，聖詠守護生命與夥伴，舞步讓普攻與借用技能發揮到極致。', br: [
+    ['凱歌', '特技與夥伴。', [[['音感', 'dmgUp:10'], ['高亢', 'spaP:6']], [['高揚', 'actUp:15'], ['節拍', 'comboStart:1']], [['狂想', 'fx.fervor:1'], ['合奏', 'allyUp:40']], [['破音', 'critDmg:25,magCrit:5'], ['間奏', 'chargeCut:1']], [['英雄頌', 'spcUp:50,specStart:2'], ['終章', 'comboMax:1,comboStep:3']]]],
     ['聖詠', '治癒、MP與不屈。', [[['慈歌', 'healUp:15'], ['清泉', 'mpRegen:3']], [['搖籃', 'fx.regen:1'], ['淨音', 'statusRes:20']], [['和聲', 'mpSave:12,mpP:10'], ['餘韻', 'winHeal:15']], [['安息', 'endureT:1,hpP:6'], ['共鳴', 'allyMore:1']], [['鎮魂', 'healUp:30,hpP:10'], ['天籟', 'fx.freeCast:1,spaP:8']]]],
-    ['吟刃', '短刀、普攻與副武器。', [[['舞刃', 'kind:短刀:12'], ['輕步', 'eva:5']], [['踏歌', 'atkUp:20'], ['雙刀', 'subUp:25']], [['迴旋', 'fx.double:1'], ['韻律', 'comboKeep:1']], [['刃歌', 'critDmg:25,crit:4'], ['吸音', 'fx.manaSiphon:1,atkMp:2']], [['謝幕', 'chargeCut:1,spcUp:30'], ['劍詩', 'fx.spellblade:1']]]],
+    ['舞步', '普攻、迴避與借用技能。', [[['律動', 'dmgUp:10'], ['輕步', 'eva:5']], [['踏歌', 'atkUp:20'], ['借曲', 'subUp:25']], [['迴旋', 'fx.double:1'], ['韻律', 'comboKeep:1']], [['強音', 'critDmg:25,crit:4'], ['吸音', 'fx.manaSiphon:1,atkMp:2']], [['謝幕', 'chargeCut:1,spcUp:30'], ['魔詩', 'fx.spellblade:1']]]],
   ] },
-  machinist: { pitch: '操縱機關的工匠。重砲專精火槍，齒輪讓特技不停運轉，修械又硬又能自我修復。', br: [
-    ['重砲', '火槍與會心。', [[['砲身', 'kind:火槍:12'], ['準星', 'hit:10']], [['炸裂', 'critDmg:15'], ['徹甲彈', 'fx.pierce:1']], [['連射', 'fx.double:1'], ['彈匣', 'specStart:2']], [['巨砲', 'bigUp:15,atkP:5'], ['集火', 'weakUp:20']], [['全火力', 'actUp:30'], ['終極砲', 'spcUp:50,chargeCut:1']]]],
+  machinist: { pitch: '操縱機關的工匠。火力追求會心與爆發，齒輪讓特技不停運轉，修械又硬又能自我修復。', br: [
+    ['火力', '會心與爆發。', [[['火藥', 'dmgUp:10'], ['準星', 'hit:10']], [['炸裂', 'critDmg:15'], ['徹甲', 'fx.pierce:1']], [['連射', 'fx.double:1'], ['蓄能', 'specStart:2']], [['強襲', 'bigUp:15,atkP:5'], ['集火', 'weakUp:20']], [['全火力', 'actUp:30'], ['終焉', 'spcUp:50,chargeCut:1']]]],
     ['齒輪', '特技與MP循環。', [[['發條', 'spcUp:15'], ['蓄電', 'mpP:15']], [['充能', 'atkMp:2'], ['預熱', 'specStart:1']], [['傳動', 'chargeCut:1'], ['增壓', 'atkUp:20']], [['永動', 'comboKeep:1,mpRegen:3'], ['電擊', 'fx.stormMark:1,boltUp:15']], [['機關城', 'spcUp:40,specStart:2'], ['超載', 'comboMax:1,comboStep:3']]]],
     ['修械', '防禦與修復。', [[['鋼板', 'defP:8'], ['外殼', 'hpP:8']], [['保養', 'healUp:20'], ['防電', 'elemRes:12']], [['自修', 'fx.regen:1'], ['反應甲', 'fx.thorns:1']], [['塗層', 'statusRes:25,defP:6'], ['護盾機', 'openShield:2']], [['堡壘', 'defP:12,hpP:12'], ['急救包', 'endureT:1,winHeal:15']]]],
   ] },
-  monk: { pitch: '鍛鍊身心的武僧。鐵拳以拳頭打穿一切，內功運用魔力與MP，坐忘讓身體不受動搖。', br: [
-    ['鐵拳', '拳套與連段。', [[['拳意', 'kind:拳套:12'], ['虎力', 'atkP:6']], [['連環', 'fx.double:1'], ['崩勁', 'pierceT:15']], [['氣勢', 'comboStart:1,comboStep:2'], ['要穴', 'crit:6']], [['百裂', 'comboMax:1'], ['發勁', 'critDmg:30']], [['碎山', 'spcUp:50,chargeCut:1'], ['羅漢', 'atkUp:30,atkP:6']]]],
-    ['內功', '氣、魔力與MP。', [[['運氣', 'mpRegen:3'], ['內勁', 'spaP:6']], [['聚氣', 'atkMp:2'], ['杖法', 'kind:法杖:12']], [['行氣', 'fx.freeCast:1'], ['氣海', 'mpP:20']], [['真氣', 'magCrit:6,spaP:6'], ['氣牆', 'fx.mpGuard:1,comboGuard:1']], [['化勁', 'fx.spellblade:1'], ['天人合一', 'chargeCut:1,actUp:20']]]],
+  monk: { pitch: '鍛鍊身心的武僧。剛勁以普攻與連段打穿一切，內功運用魔力與MP，坐忘讓身體不受動搖。', br: [
+    ['剛勁', '普攻與連段。', [[['發力', 'dmgUp:10'], ['虎力', 'atkP:6']], [['連環', 'fx.double:1'], ['崩勁', 'pierceT:15']], [['氣勢', 'comboStart:1,comboStep:2'], ['要穴', 'crit:6']], [['百裂', 'comboMax:1'], ['發勁', 'critDmg:30']], [['碎山', 'spcUp:50,chargeCut:1'], ['羅漢', 'atkUp:30,atkP:6']]]],
+    ['內功', '氣、魔力與MP。', [[['運氣', 'mpRegen:3'], ['內勁', 'spaP:6']], [['聚氣', 'atkMp:2'], ['凝氣', 'dmgUp:10']], [['行氣', 'fx.freeCast:1'], ['氣海', 'mpP:20']], [['真氣', 'magCrit:6,spaP:6'], ['氣牆', 'fx.mpGuard:1,comboGuard:1']], [['化勁', 'fx.spellblade:1'], ['天人合一', 'chargeCut:1,actUp:20']]]],
     ['坐忘', '迴避與耐久。', [[['忘我', 'eva:5'], ['鋼骨', 'hpP:8']], [['游身', 'speP:8'], ['明心', 'statusRes:20']], [['不動心', 'guardPlus:1'], ['空身', 'shadowStep:1']], [['回春', 'fx.regen:1'], ['禪心', 'endureT:1,defP:6']], [['金身', 'hpP:12,defP:10,spdP:10'], ['涅槃', 'winHeal:20,healUp:20']]]],
   ] },
   dragoon: { pitch: '與龍締約的騎士。蒼龍貫穿一切，龍裔讓身體更強韌，翔空把普攻與特技連成一氣。', br: [
-    ['蒼龍', '長槍與穿透。', [[['龍牙', 'kind:長槍:12'], ['剛腕', 'atkP:6']], [['貫穿', 'pierceT:15'], ['斬龍', 'bigUp:10']], [['先鋒', 'fx.first:1'], ['龍擊', 'actUp:15']], [['逆鱗', 'critDmg:30'], ['裂天', 'weakUp:20']], [['龍神槍', 'actUp:25,bigUp:8'], ['天墜', 'spcUp:50,chargeCut:1']]]],
+    ['蒼龍', '穿透與屠龍。', [[['龍威', 'dmgUp:10'], ['剛腕', 'atkP:6']], [['貫穿', 'pierceT:15'], ['斬龍', 'bigUp:10']], [['先鋒', 'fx.first:1'], ['龍擊', 'actUp:15']], [['逆鱗', 'critDmg:30'], ['裂天', 'weakUp:20']], [['龍神', 'actUp:25,bigUp:8'], ['天墜', 'spcUp:50,chargeCut:1']]]],
     ['龍裔', '耐久與吸血。', [[['龍甲', 'defP:8'], ['龍心', 'hpP:8']], [['渴血', 'drain:5'], ['龍焰', 'fireUp:15']], [['龍脈', 'fx.regen:1'], ['逆火', 'fx.thorns:1']], [['鱗護', 'elemRes:15,defP:6'], ['不滅', 'endureT:1']], [['龍王', 'hpP:12,drain:5'], ['焚身', 'fx.lastStand:1,fireUp:15']]]],
     ['翔空', '速度、普攻與特技。', [[['騰躍', 'speP:8'], ['輕翼', 'eva:5']], [['急刺', 'atkUp:20'], ['凌空', 'specStart:1']], [['天梯', 'chargeCut:1'], ['俯衝', 'comboKeep:1']], [['隕落', 'spcUp:30'], ['連躍', 'comboStart:1,comboStep:2']], [['星墜', 'comboMax:1,atkUp:15'], ['蒼天', 'fx.swift:1,atkUp:20']]]],
   ] },
   otherworlder: { pitch: '來自異界的勇者。什麼武器都能用：曙光和夥伴一起變強，越界善用弱點與借用技能，時律掌握先機。', br: [
-    ['曙光', '全面強化與夥伴。', [[['奮起', 'atkP:5,spaP:5'], ['強身', 'hpP:8']], [['庇護', 'defP:6,spdP:6'], ['求知', 'fx.wisdom:1']], [['羈絆', 'allyUp:50'], ['覺悟', 'endureT:1']], [['決勝', 'critDmg:25,crit:4'], ['初心', 'winHeal:15,statusRes:15']], [['勇者魂', 'allyMore:1,actUp:15'], ['光之劍', 'actUp:25,spcUp:25']]]],
+    ['曙光', '全面強化與夥伴。', [[['奮起', 'atkP:5,spaP:5'], ['強身', 'hpP:8']], [['庇護', 'defP:6,spdP:6'], ['求知', 'fx.wisdom:1']], [['羈絆', 'allyUp:50'], ['覺悟', 'endureT:1']], [['決勝', 'critDmg:25,crit:4'], ['初心', 'winHeal:15,statusRes:15']], [['勇者魂', 'allyMore:1,actUp:15'], ['光輝', 'actUp:25,spcUp:25']]]],
     ['越界', '弱點與借用技能。', [[['洞察', 'weakUp:12'], ['靈素', 'elem:10']], [['借勢', 'subUp:25'], ['魔源', 'mpP:15']], [['異能', 'chargeCut:1'], ['淘金', 'fx.fortune:1']], [['斬巨', 'bigUp:15'], ['異界流', 'comboKeep:1,comboStart:1']], [['萬能', 'weakUp:20,elem:15'], ['超越', 'comboMax:2']]]],
     ['時律', '速度與先機。', [[['倍速', 'speP:8'], ['殘像', 'eva:5']], [['省力', 'mpSave:10'], ['靈泉', 'mpRegen:3']], [['預判', 'fx.first:1'], ['預知', 'specStart:2']], [['時停', 'fx.swift:1'], ['逆轉', 'fx.deathWard:1']], [['時之王', 'speP:10,comboStep:3'], ['永劫', 'endureT:1,fx.regen:1']]]],
   ] },
-  spellblade: { pitch: '讓劍與魔法合而為一的魔劍士。劍魔共鳴攻魔，闇月追求會心與特技，四象讓每一種屬性都更強。', br: [
-    ['劍魔', '劍與魔力共鳴。', [[['劍氣', 'kind:劍:12'], ['魔親', 'spaP:6']], [['剛柔', 'atkP:5,spaP:5'], ['湧泉', 'fx.arcaneSurge:1']], [['合一', 'spellblade:1'], ['刃雷', 'fx.stormMark:1']], [['魔刃', 'critDmg:25,magCrit:5'], ['雙極', 'comboStart:1,comboStep:2']], [['解放', 'actUp:30'], ['魔劍王', 'comboMax:1,actUp:10']]]],
+  spellblade: { pitch: '讓劍與魔法合而為一的魔劍士。魔紋讓攻魔共鳴，闇月追求會心與特技，四象讓每一種屬性都更強。', br: [
+    ['魔紋', '物攻與魔攻共鳴。', [[['靈壓', 'dmgUp:10'], ['魔親', 'spaP:6']], [['剛柔', 'atkP:5,spaP:5'], ['湧泉', 'fx.arcaneSurge:1']], [['合一', 'spellblade:1'], ['纏雷', 'fx.stormMark:1']], [['魔晶', 'critDmg:25,magCrit:5'], ['雙極', 'comboStart:1,comboStep:2']], [['解放', 'actUp:30'], ['魔導王', 'comboMax:1,actUp:10']]]],
     ['闇月', '會心與特技。', [[['月眼', 'crit:6'], ['奧秘', 'magCrit:6']], [['月泉', 'mpRegen:3'], ['缺月', 'weakUp:12']], [['蝕刻', 'chargeCut:1'], ['蝕月', 'specStart:2']], [['暗月', 'critDmg:30'], ['朔夜', 'fx.predator:1']], [['月蝕刻', 'spcUp:50,chargeCut:1'], ['新月', 'crit:8,critDmg:20']]]],
-    ['四象', '四系屬性。', [[['炎符', 'fireUp:12'], ['雷符', 'boltUp:12']], [['水符', 'type:水:12'], ['草符', 'type:草:12']], [['元素流', 'elem:12'], ['元素盾', 'elemRes:15']], [['四元', 'elem:10,fireUp:10,boltUp:10'], ['魔書', 'kind:魔導書:15']], [['元素王', 'elem:25'], ['萬象歸一', 'actUp:20,elem:10']]]],
+    ['四象', '四系屬性。', [[['炎符', 'fireUp:12'], ['雷符', 'boltUp:12']], [['水符', 'type:水:12'], ['草符', 'type:草:12']], [['元素流', 'elem:12'], ['元素盾', 'elemRes:15']], [['四元', 'elem:10,fireUp:10,boltUp:10'], ['共振', 'dmgUp:12']], [['元素王', 'elem:25'], ['萬象歸一', 'actUp:20,elem:10']]]],
   ] },
 };
 const T9C = {}; // cls → [ { n, d, tiers: [[{n, fx, b, t, o}, …] ×5] } ×3 ]
@@ -70,7 +70,7 @@ for (const c in T9) { T9C[c] = T9[c].br.map(([n, d, tiers], b) => ({ n, d, tiers
 Object.assign(TK_TXT, {
   comboMax: v => '連段上限+' + v, comboKeep: () => '重複同一招時，連段不會中斷', comboStart: v => '每場戰鬥開場就有' + v + '段連段', comboStep: v => '每段連段的傷害加成+' + v + '%',
   comboGuard: () => '防禦和使用道具時，連段不會中斷', allyUp: v => '夥伴援護的效果+' + v + '%', allyMore: v => '夥伴援護每場多' + v + '次（格倫：對手HP30%以下；莉婭：你的HP再次低於40%）',
-  specStart: v => '每場戰鬥開場，特技就累積' + v + '層', openShield: v => '每場戰鬥開場展開' + v + '回合護盾（傷害-40%）', winHeal: v => '戰鬥勝利後回復' + v + '%最大HP',
+  dmgUp: v => '造成的傷害+' + v + '%', specStart: v => '每場戰鬥開場，特技就累積' + v + '層', openShield: v => '每場戰鬥開場展開' + v + '回合護盾（傷害-40%）', winHeal: v => '戰鬥勝利後回復' + v + '%最大HP',
 });
 const optDesc9 = O => O.fx.map(([k, v]) => tDesc(k, v)).join('、');
 
@@ -103,7 +103,10 @@ function tierRefundBlock9(b, t, st = Game.st) { if (!tcHas(b, t, st)) return '�
 // tests / 推薦: fill the branches in order, taking option `pick` (0 or 1) in every tier
 function tcAuto(st = Game.st, pick = 0) { const P = tcOf(st); for (let b = 0; b < 3; b++) for (let t = 0; t < 5; t++) { if (tcHas(b, t, st)) continue; if (tierBlock9(b, t, st)) break; P[b + '.' + t] = typeof pick === 'function' ? pick(b, t) : pick; } }
 
-/* ---------- battle hooks: opening combo / special / shield, and the 戰後回復 ---------- */
+/* ---------- battle hooks: 傷害加成, opening combo / special / shield, and the 戰後回復 ---------- */
+{ const _cd = Battle.prototype.calcDamage; Battle.prototype.calcDamage = function (u, t, mv) { const r = _cd.call(this, u, t, mv); if (u && u.hero && mv && mv.pow && r && r.dmg > 0) { const d = talentSum('dmgUp'); if (d) r.dmg = Math.round(r.dmg * (1 + d / 100)); } return r; }; }
+// v9.2.1 talents are not tied to weapons any more: the weapon-shaped branch icons are hidden until the new ones are drawn
+for (const k of ['swordsman_0', 'swordsman_1', 'swordsman_2', 'guardian_2', 'ranger_0', 'bard_2', 'machinist_0', 'dragoon_0', 'spellblade_0']) delete TALENT_PX[k];
 { const _ca = Battle.prototype.chooseAction; Battle.prototype.chooseAction = function* () {
     if (!this._t9 && this.H) { this._t9 = 1; const c0 = talentSum('comboStart'), s0 = talentSum('specStart'), sh = talentSum('openShield');
       if (c0) this.combo = Math.max(this.combo || 0, c0); if (s0) this.H.wc = Math.max(this.H.wc || 0, s0); if (sh) this.H.shield = Math.max(this.H.shield || 0, sh); }
