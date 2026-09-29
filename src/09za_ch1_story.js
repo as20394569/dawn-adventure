@@ -2,7 +2,7 @@
    Playtest: "the story doesn't help growth — players rush the bosses". Chapter 1 now leads the hero through areas whose
    monsters match the level, with a region boss at the end of each step:
      覺醒 (Lv1–3) → 【新】風車丘陵的異變 (Lv4–8, 磨石魔像) → 【新】碧溪谷的黑水 (Lv8–11, 瘴氣大鯰)
-     → 北方的橋（沼澤鱷 Lv12）→ 三枚古印 (Lv13–16) → 古岩魔像 (Lv17)
+     → 北方的橋（沼澤鱷 Lv13）→ 三枚古印 (Lv13–16) → 古岩魔像 (Lv17)
    Two new maps (風車丘陵 east of 萌芽鎮, 碧溪谷 west of 晨霧道路), eight new monsters (Codex task P chibis; the
    placeholder recolours remain for the 寫實 look), a recurring pair of characters (the miller 漢斯 and his daughter 諾拉), full story events with
    choices. New games are held at the ledge on 晨霧道路 until the hills are done; older saves get the new areas as extra
@@ -295,7 +295,7 @@ function* creekCure() {
   gainBP('qNoraRibbon', 3); Sound.jingle('item'); yield* itemGet('得到了「諾拉的緞帶」的設計圖和打造券！（鐵匠可以打造）');
   yield* sayAll(['漢斯：「對了，北邊橋頭的沼澤鱷……牠原本就住在碧溪谷的上游。」', '漢斯：「被黑水趕下山之後，牠就一直待在橋頭，誰靠近就咬誰。水變乾淨了，可是牠已經被瘴氣迷了心……」', '漢斯：「要過橋去北邊的森林，恐怕只能打倒牠了。」']);
   f.creekQ = 3; st.money += 800; yield* itemGet('也得到了謝禮800 G！');
-  yield* say('（目標：打倒北方橋頭的沼澤鱷。推薦Lv12）');
+  yield* say('（目標：打倒北方橋頭的沼澤鱷。推薦Lv13）');
 }
 
 /* ---------- quest log: the chapter 1 steps with a recommended level ---------- */
@@ -307,7 +307,7 @@ function* creekCure() {
       else if (f.hillsQ === 2) M.t = '把黑色結晶拿給村長看。';
       else if (f.creekQ === 1) M.t = '【推薦Lv8〜11】到晨霧道路西側的碧溪谷，找到源頭的清泉草。';
       else if (f.creekQ === 2) M.t = '把清泉草帶回風車丘陵的漢斯家。';
-      else if (!f.croc) M.t = '【推薦Lv12】打倒佔據北方橋頭的沼澤鱷，前往迷霧森林。';
+      else if (!f.croc) M.t = '【推薦Lv13】打倒佔據北方橋頭的沼澤鱷，前往迷霧森林。';
       else if (!f.golem) M.t = '【推薦Lv13〜17】' + M.t;
     }
     if (f.hillsQ) L.push({ n: '風車丘陵的異變', cat: '主線', t: (f.hillsQ || 0) >= 3 ? '完成：打倒了磨石魔像，救出了漢斯。' : f.hillsQ === 2 ? '把黑色結晶拿給村長看。' : '登上風車丘陵山頂的大風車，找到失蹤的漢斯。', done: (f.hillsQ || 0) >= 3, rw: '500 G、傷藥、漢斯家可以便宜休息' });

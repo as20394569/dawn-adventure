@@ -4691,7 +4691,7 @@ function* summaryScreen() {
     } else {
       const SK = (st.cls && typeof classPassiveNode === 'function' ? ['_passive'] : []).concat(typeof summarySkills === 'function' ? summarySkills(st) : learnedSkills(st)), US = typeof usableSkills === 'function' ? usableSkills(st) : SK, VIS = 7; drawWin(x, 4, 24, 168, VIS * 19 + 8, 'menu'); const t0 = clamp(mi - 3, 0, Math.max(0, SK.length - VIS));
       if (!SK.length) Font.draw(x, '還沒有學會技能。（選單→技能）', 12, 30, UIC.muted, UIC.textSh, 11);
-      SK.slice(t0, t0 + VIS).forEach((id, k) => { const i = t0 + k, mv = MOVES[id], Y = 28 + k * 19; if (i === mi) selBar(x, 6, Y, 164, 17); if (id === '_passive') { const pn = classPassives(st.cls).length; x.fillStyle = shade(UIC.warm, -0.45); x.fillRect(14, Y + 2, 30, 13); Font.drawC(x, '被動', 29, Y + 1, '#ffffff', UIC.textSh, 10); Font.draw(x, '職業・武器被動', 52, Y, UIC.warm, UIC.textSh); Font.drawR(x, (pn ? pn + '＋' : '') + (typeof mainWKey === 'function' && mainWKey(st) ? '武器' : ''), 164, Y, UIC.muted, UIC.textSh, 10); return; } typeBadge(x, mv.t, 14, Y + 2, 30); const use = US.includes(id); { const nm = mv.n + ' Lv' + (skillLv(id) || 1), rt = use ? 'MP ' + skillMP(id) : '未繼承'; let z = 12; while (z > 8 && Font.width(nm, z) > 150 - 52 - Font.width(rt, 11)) z--; Font.draw(x, nm, 52, Y + (12 - z) / 2, use ? UIC.text : UIC.dis, UIC.textSh, z); Font.drawR(x, rt, 164, Y, use ? UIC.accent : UIC.muted, UIC.textSh, 11); } });
+      SK.slice(t0, t0 + VIS).forEach((id, k) => { const i = t0 + k, mv = MOVES[id], Y = 28 + k * 19; if (i === mi) selBar(x, 6, Y, 164, 17); if (id === '_passive') { const pn = classPassives(st.cls).length; x.fillStyle = shade(UIC.warm, -0.45); x.fillRect(14, Y + 2, 30, 13); Font.drawC(x, '被動', 29, Y + 1, '#ffffff', UIC.textSh, 10); Font.draw(x, '職業・武器被動', 52, Y, UIC.warm, UIC.textSh); Font.drawR(x, (pn ? pn + '＋' : '') + (typeof mainWKey === 'function' && mainWKey(st) ? '武器' : ''), 164, Y, UIC.muted, UIC.textSh, 10); return; } if (typeof mainWKey === 'function' && mainWKey(st)) { const bor = isBorrowed(id, st); x.fillStyle = shade(bor ? '#8a7cff' : UIC.accent, -0.45); x.fillRect(14, Y + 2, 30, 13); Font.drawC(x, bor ? '借用' : '主動', 29, Y + 1, '#ffffff', UIC.textSh, 10); } else typeBadge(x, mv.t, 14, Y + 2, 30); /* v8.0.1: weapon skills are tagged 主動/借用 like the 技能 screen */ const use = US.includes(id); { const nm = mv.n + ' Lv' + (skillLv(id) || 1), rt = use ? 'MP ' + skillMP(id) : '未繼承'; let z = 12; while (z > 8 && Font.width(nm, z) > 150 - 52 - Font.width(rt, 11)) z--; Font.draw(x, nm, 52, Y + (12 - z) / 2, use ? UIC.text : UIC.dis, UIC.textSh, z); Font.drawR(x, rt, 164, Y, use ? UIC.accent : UIC.muted, UIC.textSh, 11); } });
       if (t0 > 0) x.drawImage(UPARROW, 86, 25); if (t0 + VIS < SK.length) x.drawImage(DOWNARROW, 86, 24 + VIS * 19 + 3);
       if (SK[Math.min(mi, SK.length - 1)] === '_passive') { drawWin(x, 4, 168, 168, 84, 'menu'); drawPassiveInfo(x, st, 12, 171, 152, true); }
       else if (SK.length) { const id = SK[Math.min(mi, SK.length - 1)], mv = MOVES[id], m2 = skillMove(id); drawWin(x, 4, 168, 168, 84, 'menu');
@@ -8968,7 +8968,7 @@ class TitleScene {
     x.drawImage(this.logo, Math.round(W / 2 - this.logo.width / 2), 6 + bob);
     Font.drawC(x, '～異世界冒險RPG～', W / 2, 52 + bob, '#ffe0a0', '#3a1428');
     if (this.stage === 'press' && Math.floor(this.t / 30) % 2 === 0) Font.drawC(x, '按 A 鍵開始', W / 2, 232, '#ffffff', '#1a1024');
-    Font.draw(x, 'v8.0', W - 26, H - 13, '#b890b0', null);
+    Font.draw(x, 'v8.0.1', W - 34, H - 13, '#b890b0', null);
   }
 }
 
@@ -12718,14 +12718,14 @@ function* talentScreen() {
   const st = Game.st; if (!CT[st.cls]) { yield* say('先在萌芽鎮的村長那裡完成覺醒的儀式吧。'); return; }
   let row = 0, slot = 0, msg = '', msgT = 0; const T = CT[st.cls], C = CLASS_V7[st.cls];
   const slots = r => ROW_SLOTS[r].length * 3, nodeAt = (r, s) => { const per = ROW_SLOTS[r].length; return T[Math.floor(s / per)][ROW_SLOTS[r][s % per]]; };
-  const RY = r => 44 + r * 25, colX = b => 4 + b * 57;
+  const RY = r => 44 + r * 24 + (r >= 3 ? 8 : 0), colX = b => 4 + b * 57; // v8.0.1: a gap above the deep rows so the 天賦覺醒 label doesn't sit on the tiles
   const tile = (n, r, s) => { const per = ROW_SLOTS[r].length, b = Math.floor(s / per), k = s % per, X = per === 2 ? colX(b) + k * 28 : colX(b) + 7, w = per === 2 ? 26 : 40; return { X, Y: RY(r), w, h: 21 }; };
   const scr = { draw(x) {
     screenBG(x); headerBar(x, '天賦・' + CLASSES[st.cls].n); const av = tpAvail(st); Font.drawR(x, '天賦點 ' + av, W - 6, 2, av ? UIC.warm : UIC.muted, UIC.textSh);
     const col = classColOf(st.cls);
     C.br.forEach(([bn], b) => { const X = colX(b), ic = branchIcon(st.cls, b); drawBtn(x, X, 22, 54, 17, false, col); if (ic) x.drawImage(ic, X + 2, 24); Font.drawC(x, bn, X + (ic ? 31 : 27), 21, shade(col, 0.35), UIC.textSh, bn.length > 3 && ic ? 8 : 10); Font.drawR(x, String(brPts(b, st)), X + 52, 29, UIC.muted, UIC.textSh, 7); });
     for (let r = 0; r < 5; r++) {
-      if (r === 3) { x.fillStyle = deepOk(st) ? 'rgba(255,200,100,0.35)' : 'rgba(120,120,150,0.35)'; x.fillRect(4, RY(3) - 3, 168, 1); if (!deepOk(st)) Font.drawR(x, '深層（天賦覺醒）', 170, RY(3) - 10, UIC.dis, UIC.textSh, 7); }
+      if (r === 3) { x.fillStyle = deepOk(st) ? 'rgba(255,200,100,0.35)' : 'rgba(120,120,150,0.35)'; x.fillRect(4, RY(3) - 3, 168, 1); if (!deepOk(st)) Font.drawR(x, '深層（天賦覺醒後開放）', 170, RY(3) - 12, UIC.dis, UIC.textSh, 7); }
       for (let s = 0; s < slots(r); s++) { const n = nodeAt(r, s), g = tile(n, r, s), rk = ctRank(n, st), on = r === row && s === slot, blk = nodeBlock(n, st), lock = blk && !rk && blk !== '天賦點不足（升級時獲得）';
         drawBtn(x, g.X, g.Y, g.w, g.h, on, rk ? col : null); let nm = g.w < 30 ? n.n.slice(0, 2) : n.n.slice(0, 4), z = 9; while (z > 7 && Font.width(nm, z) > g.w - 3) z--;
         Font.drawC(x, nm, g.X + g.w / 2, g.Y, lock ? UIC.dis : rk ? UIC.text : '#c9cfe4', UIC.textSh, z);
@@ -12942,7 +12942,8 @@ const bpCan = (k, lv, st = Game.st) => { const c = bpCost(k, lv); return st.mone
 const BP_TABS = ['武器', '防具', '飾品', '道具'], bpTabOf = k => GEAR[k].slot === 'weapon' ? 0 : GEAR[k].slot === 'acc' ? 2 : 1;
 function bpList(tab, st = Game.st) {
   if (tab === 3) return RECIPES.filter(R => !GEAR[R.out]).map(R => ({ R }));
-  return Object.keys(GEAR_RECIPE).filter(k => bpTabOf(k) === tab && bpKnown(k, st)).sort((a, b) => (st.bpT && st.bpT[b] ? 1 : 0) - (st.bpT && st.bpT[a] ? 1 : 0) || GEAR[b].t - GEAR[a].t || (WKIND_ORDER.indexOf(GEAR[a].kind) - WKIND_ORDER.indexOf(GEAR[b].kind)) || (a < b ? -1 : 1)).map(k => ({ k }));
+  const can = k => (st.bpT && st.bpT[k]) || bpCan(k, 0, st) ? 1 : 0; // v8.0.1: what you can forge right now comes first
+  return Object.keys(GEAR_RECIPE).filter(k => bpTabOf(k) === tab && bpKnown(k, st)).sort((a, b) => (st.bpT && st.bpT[b] ? 1 : 0) - (st.bpT && st.bpT[a] ? 1 : 0) || can(b) - can(a) || GEAR[b].t - GEAR[a].t || (WKIND_ORDER.indexOf(GEAR[a].kind) - WKIND_ORDER.indexOf(GEAR[b].kind)) || (a < b ? -1 : 1)).map(k => ({ k }));
 }
 function* craftScreen() {
   const st = Game.st; let tab = 0, idx = 0; const have = k => st.bag[k] || 0, VIS = 7;
@@ -13826,7 +13827,7 @@ if (MAPS.smithy) { MAP_TYPES.smithy = '室內'; MAPS.smithy.type = '室內'; }
    Playtest: "the story doesn't help growth — players rush the bosses". Chapter 1 now leads the hero through areas whose
    monsters match the level, with a region boss at the end of each step:
      覺醒 (Lv1–3) → 【新】風車丘陵的異變 (Lv4–8, 磨石魔像) → 【新】碧溪谷的黑水 (Lv8–11, 瘴氣大鯰)
-     → 北方的橋（沼澤鱷 Lv12）→ 三枚古印 (Lv13–16) → 古岩魔像 (Lv17)
+     → 北方的橋（沼澤鱷 Lv13）→ 三枚古印 (Lv13–16) → 古岩魔像 (Lv17)
    Two new maps (風車丘陵 east of 萌芽鎮, 碧溪谷 west of 晨霧道路), eight new monsters (Codex task P chibis; the
    placeholder recolours remain for the 寫實 look), a recurring pair of characters (the miller 漢斯 and his daughter 諾拉), full story events with
    choices. New games are held at the ledge on 晨霧道路 until the hills are done; older saves get the new areas as extra
@@ -14119,7 +14120,7 @@ function* creekCure() {
   gainBP('qNoraRibbon', 3); Sound.jingle('item'); yield* itemGet('得到了「諾拉的緞帶」的設計圖和打造券！（鐵匠可以打造）');
   yield* sayAll(['漢斯：「對了，北邊橋頭的沼澤鱷……牠原本就住在碧溪谷的上游。」', '漢斯：「被黑水趕下山之後，牠就一直待在橋頭，誰靠近就咬誰。水變乾淨了，可是牠已經被瘴氣迷了心……」', '漢斯：「要過橋去北邊的森林，恐怕只能打倒牠了。」']);
   f.creekQ = 3; st.money += 800; yield* itemGet('也得到了謝禮800 G！');
-  yield* say('（目標：打倒北方橋頭的沼澤鱷。推薦Lv12）');
+  yield* say('（目標：打倒北方橋頭的沼澤鱷。推薦Lv13）');
 }
 
 /* ---------- quest log: the chapter 1 steps with a recommended level ---------- */
@@ -14131,7 +14132,7 @@ function* creekCure() {
       else if (f.hillsQ === 2) M.t = '把黑色結晶拿給村長看。';
       else if (f.creekQ === 1) M.t = '【推薦Lv8〜11】到晨霧道路西側的碧溪谷，找到源頭的清泉草。';
       else if (f.creekQ === 2) M.t = '把清泉草帶回風車丘陵的漢斯家。';
-      else if (!f.croc) M.t = '【推薦Lv12】打倒佔據北方橋頭的沼澤鱷，前往迷霧森林。';
+      else if (!f.croc) M.t = '【推薦Lv13】打倒佔據北方橋頭的沼澤鱷，前往迷霧森林。';
       else if (!f.golem) M.t = '【推薦Lv13〜17】' + M.t;
     }
     if (f.hillsQ) L.push({ n: '風車丘陵的異變', cat: '主線', t: (f.hillsQ || 0) >= 3 ? '完成：打倒了磨石魔像，救出了漢斯。' : f.hillsQ === 2 ? '把黑色結晶拿給村長看。' : '登上風車丘陵山頂的大風車，找到失蹤的漢斯。', done: (f.hillsQ || 0) >= 3, rw: '500 G、傷藥、漢斯家可以便宜休息' });

@@ -105,7 +105,8 @@ const bpCan = (k, lv, st = Game.st) => { const c = bpCost(k, lv); return st.mone
 const BP_TABS = ['武器', '防具', '飾品', '道具'], bpTabOf = k => GEAR[k].slot === 'weapon' ? 0 : GEAR[k].slot === 'acc' ? 2 : 1;
 function bpList(tab, st = Game.st) {
   if (tab === 3) return RECIPES.filter(R => !GEAR[R.out]).map(R => ({ R }));
-  return Object.keys(GEAR_RECIPE).filter(k => bpTabOf(k) === tab && bpKnown(k, st)).sort((a, b) => (st.bpT && st.bpT[b] ? 1 : 0) - (st.bpT && st.bpT[a] ? 1 : 0) || GEAR[b].t - GEAR[a].t || (WKIND_ORDER.indexOf(GEAR[a].kind) - WKIND_ORDER.indexOf(GEAR[b].kind)) || (a < b ? -1 : 1)).map(k => ({ k }));
+  const can = k => (st.bpT && st.bpT[k]) || bpCan(k, 0, st) ? 1 : 0; // v8.0.1: what you can forge right now comes first
+  return Object.keys(GEAR_RECIPE).filter(k => bpTabOf(k) === tab && bpKnown(k, st)).sort((a, b) => (st.bpT && st.bpT[b] ? 1 : 0) - (st.bpT && st.bpT[a] ? 1 : 0) || can(b) - can(a) || GEAR[b].t - GEAR[a].t || (WKIND_ORDER.indexOf(GEAR[a].kind) - WKIND_ORDER.indexOf(GEAR[b].kind)) || (a < b ? -1 : 1)).map(k => ({ k }));
 }
 function* craftScreen() {
   const st = Game.st; let tab = 0, idx = 0; const have = k => st.bag[k] || 0, VIS = 7;

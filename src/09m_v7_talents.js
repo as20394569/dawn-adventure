@@ -102,14 +102,14 @@ function* talentScreen() {
   const st = Game.st; if (!CT[st.cls]) { yield* say('先在萌芽鎮的村長那裡完成覺醒的儀式吧。'); return; }
   let row = 0, slot = 0, msg = '', msgT = 0; const T = CT[st.cls], C = CLASS_V7[st.cls];
   const slots = r => ROW_SLOTS[r].length * 3, nodeAt = (r, s) => { const per = ROW_SLOTS[r].length; return T[Math.floor(s / per)][ROW_SLOTS[r][s % per]]; };
-  const RY = r => 44 + r * 25, colX = b => 4 + b * 57;
+  const RY = r => 44 + r * 24 + (r >= 3 ? 8 : 0), colX = b => 4 + b * 57; // v8.0.1: a gap above the deep rows so the 天賦覺醒 label doesn't sit on the tiles
   const tile = (n, r, s) => { const per = ROW_SLOTS[r].length, b = Math.floor(s / per), k = s % per, X = per === 2 ? colX(b) + k * 28 : colX(b) + 7, w = per === 2 ? 26 : 40; return { X, Y: RY(r), w, h: 21 }; };
   const scr = { draw(x) {
     screenBG(x); headerBar(x, '天賦・' + CLASSES[st.cls].n); const av = tpAvail(st); Font.drawR(x, '天賦點 ' + av, W - 6, 2, av ? UIC.warm : UIC.muted, UIC.textSh);
     const col = classColOf(st.cls);
     C.br.forEach(([bn], b) => { const X = colX(b), ic = branchIcon(st.cls, b); drawBtn(x, X, 22, 54, 17, false, col); if (ic) x.drawImage(ic, X + 2, 24); Font.drawC(x, bn, X + (ic ? 31 : 27), 21, shade(col, 0.35), UIC.textSh, bn.length > 3 && ic ? 8 : 10); Font.drawR(x, String(brPts(b, st)), X + 52, 29, UIC.muted, UIC.textSh, 7); });
     for (let r = 0; r < 5; r++) {
-      if (r === 3) { x.fillStyle = deepOk(st) ? 'rgba(255,200,100,0.35)' : 'rgba(120,120,150,0.35)'; x.fillRect(4, RY(3) - 3, 168, 1); if (!deepOk(st)) Font.drawR(x, '深層（天賦覺醒）', 170, RY(3) - 10, UIC.dis, UIC.textSh, 7); }
+      if (r === 3) { x.fillStyle = deepOk(st) ? 'rgba(255,200,100,0.35)' : 'rgba(120,120,150,0.35)'; x.fillRect(4, RY(3) - 3, 168, 1); if (!deepOk(st)) Font.drawR(x, '深層（天賦覺醒後開放）', 170, RY(3) - 12, UIC.dis, UIC.textSh, 7); }
       for (let s = 0; s < slots(r); s++) { const n = nodeAt(r, s), g = tile(n, r, s), rk = ctRank(n, st), on = r === row && s === slot, blk = nodeBlock(n, st), lock = blk && !rk && blk !== '天賦點不足（升級時獲得）';
         drawBtn(x, g.X, g.Y, g.w, g.h, on, rk ? col : null); let nm = g.w < 30 ? n.n.slice(0, 2) : n.n.slice(0, 4), z = 9; while (z > 7 && Font.width(nm, z) > g.w - 3) z--;
         Font.drawC(x, nm, g.X + g.w / 2, g.Y, lock ? UIC.dis : rk ? UIC.text : '#c9cfe4', UIC.textSh, z);
