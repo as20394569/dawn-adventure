@@ -1,0 +1,62 @@
+art/battle/chibi/hornHare_idle1.png PASS | 32x32 RGBA; alpha=0/255; colours=11/12 including transparent; bbox=[6, 2, 29, 31]; unique pose; visual=reviewed
+art/battle/chibi/hornHare_idle2.png PASS | 32x32 RGBA; alpha=0/255; colours=11/12 including transparent; bbox=[6, 1, 29, 31]; unique pose; visual=reviewed
+art/battle/chibi/hornHare_attack1.png PASS | 32x32 RGBA; alpha=0/255; colours=11/12 including transparent; bbox=[4, 3, 29, 31]; unique pose; visual=reviewed
+art/battle/chibi/hornHare_attack2.png PASS | 32x32 RGBA; alpha=0/255; colours=11/12 including transparent; bbox=[3, 5, 29, 31]; unique pose; visual=reviewed
+art/battle/chibi/hornHare_hurt1.png PASS | 32x32 RGBA; alpha=0/255; colours=9/12 including transparent; bbox=[7, 2, 30, 31]; unique pose; visual=reviewed
+art/battle/chibi/strawCrow_idle1.png PASS | 32x32 RGBA; alpha=0/255; colours=10/12 including transparent; bbox=[6, 4, 30, 31]; unique pose; visual=reviewed; nightBird reference absent, used bird + O style sheet
+art/battle/chibi/strawCrow_idle2.png PASS | 32x32 RGBA; alpha=0/255; colours=10/12 including transparent; bbox=[6, 3, 30, 31]; unique pose; visual=reviewed; nightBird reference absent, used bird + O style sheet
+art/battle/chibi/strawCrow_attack1.png PASS | 32x32 RGBA; alpha=0/255; colours=10/12 including transparent; bbox=[2, 3, 31, 31]; unique pose; visual=reviewed; nightBird reference absent, used bird + O style sheet
+art/battle/chibi/strawCrow_attack2.png PASS | 32x32 RGBA; alpha=0/255; colours=10/12 including transparent; bbox=[2, 7, 31, 31]; unique pose; visual=reviewed; nightBird reference absent, used bird + O style sheet
+art/battle/chibi/strawCrow_hurt1.png PASS | 32x32 RGBA; alpha=0/255; colours=8/12 including transparent; bbox=[3, 4, 31, 31]; unique pose; visual=reviewed; nightBird reference absent, used bird + O style sheet
+art/battle/chibi/gustSprite_idle1.png PASS | 32x32 RGBA; alpha=0/255; colours=9/12 including transparent; bbox=[3, 3, 30, 31]; unique pose; visual=reviewed
+art/battle/chibi/gustSprite_idle2.png PASS | 32x32 RGBA; alpha=0/255; colours=9/12 including transparent; bbox=[3, 2, 30, 31]; unique pose; visual=reviewed
+art/battle/chibi/gustSprite_attack1.png PASS | 32x32 RGBA; alpha=0/255; colours=8/12 including transparent; bbox=[5, 3, 27, 31]; unique pose; visual=reviewed
+art/battle/chibi/gustSprite_attack2.png PASS | 32x32 RGBA; alpha=0/255; colours=9/12 including transparent; bbox=[2, 3, 31, 31]; unique pose; visual=reviewed
+art/battle/chibi/gustSprite_hurt1.png PASS | 32x32 RGBA; alpha=0/255; colours=9/12 including transparent; bbox=[4, 3, 31, 31]; unique pose; visual=reviewed
+art/battle/chibi/gustSprite_cast1.png PASS | 32x32 RGBA; alpha=0/255; colours=9/12 including transparent; bbox=[2, 1, 30, 31]; unique pose; visual=reviewed
+art/battle/chibi/millGolem_idle1.png PASS | 48x48 RGBA; alpha=0/255; colours=12/12 including transparent; bbox=[3, 5, 45, 47]; unique pose; visual=reviewed
+art/battle/chibi/millGolem_idle2.png PASS | 48x48 RGBA; alpha=0/255; colours=12/12 including transparent; bbox=[3, 4, 45, 47]; unique pose; visual=reviewed
+art/battle/chibi/millGolem_attack1.png PASS | 48x48 RGBA; alpha=0/255; colours=12/12 including transparent; bbox=[3, 5, 45, 47]; unique pose; visual=reviewed
+art/battle/chibi/millGolem_attack2.png PASS | 48x48 RGBA; alpha=0/255; colours=12/12 including transparent; bbox=[2, 5, 46, 47]; unique pose; visual=reviewed
+art/battle/chibi/millGolem_hurt1.png PASS | 48x48 RGBA; alpha=0/255; colours=12/12 including transparent; bbox=[3, 5, 46, 47]; unique pose; visual=reviewed
+art/battle/field/millGolem_down1.png PASS | 32x32 RGBA; alpha=0/255; colours=11/12 including transparent; bbox=[2, 2, 30, 31]; unique pose; visual=reviewed
+art/battle/field/millGolem_down2.png PASS | 32x32 RGBA; alpha=0/255; colours=11/12 including transparent; bbox=[2, 1, 30, 31]; unique pose; visual=reviewed
+art/battle/field/millGolem_left1.png PASS | 32x32 RGBA; alpha=0/255; colours=10/12 including transparent; bbox=[6, 3, 27, 31]; unique pose; visual=reviewed
+art/battle/field/millGolem_left2.png PASS | 32x32 RGBA; alpha=0/255; colours=10/12 including transparent; bbox=[6, 2, 27, 31]; unique pose; visual=reviewed
+art/battle/field/millGolem_right1.png PASS | 32x32 RGBA; alpha=0/255; colours=10/12 including transparent; bbox=[5, 3, 26, 31]; unique pose; visual=reviewed
+art/battle/field/millGolem_right2.png PASS | 32x32 RGBA; alpha=0/255; colours=10/12 including transparent; bbox=[5, 2, 26, 31]; unique pose; visual=reviewed
+art/battle/field/millGolem_up1.png PASS | 32x32 RGBA; alpha=0/255; colours=9/12 including transparent; bbox=[2, 2, 30, 31]; unique pose; visual=reviewed
+art/battle/field/millGolem_up2.png PASS | 32x32 RGBA; alpha=0/255; colours=9/12 including transparent; bbox=[2, 1, 30, 31]; unique pose; visual=reviewed
+art/battle/chibi/mossTurtle_idle1.png PASS | 32x32 RGBA; alpha=0/255; colours=10/12 including transparent; bbox=[3, 6, 31, 31]; unique pose; visual=reviewed
+art/battle/chibi/mossTurtle_idle2.png PASS | 32x32 RGBA; alpha=0/255; colours=10/12 including transparent; bbox=[3, 5, 31, 31]; unique pose; visual=reviewed
+art/battle/chibi/mossTurtle_attack1.png PASS | 32x32 RGBA; alpha=0/255; colours=10/12 including transparent; bbox=[3, 7, 31, 31]; unique pose; visual=reviewed
+art/battle/chibi/mossTurtle_attack2.png PASS | 32x32 RGBA; alpha=0/255; colours=12/12 including transparent; bbox=[3, 6, 31, 31]; unique pose; visual=reviewed
+art/battle/chibi/mossTurtle_hurt1.png PASS | 32x32 RGBA; alpha=0/255; colours=10/12 including transparent; bbox=[4, 6, 31, 31]; unique pose; visual=reviewed
+art/battle/chibi/streamSnake_idle1.png PASS | 32x32 RGBA; alpha=0/255; colours=12/12 including transparent; bbox=[4, 6, 30, 31]; unique pose; visual=reviewed
+art/battle/chibi/streamSnake_idle2.png PASS | 32x32 RGBA; alpha=0/255; colours=12/12 including transparent; bbox=[4, 5, 30, 31]; unique pose; visual=reviewed
+art/battle/chibi/streamSnake_attack1.png PASS | 32x32 RGBA; alpha=0/255; colours=12/12 including transparent; bbox=[4, 4, 30, 31]; unique pose; visual=reviewed
+art/battle/chibi/streamSnake_attack2.png PASS | 32x32 RGBA; alpha=0/255; colours=12/12 including transparent; bbox=[4, 9, 30, 31]; unique pose; visual=reviewed
+art/battle/chibi/streamSnake_hurt1.png PASS | 32x32 RGBA; alpha=0/255; colours=11/12 including transparent; bbox=[4, 6, 31, 31]; unique pose; visual=reviewed
+art/battle/chibi/mireFly_idle1.png PASS | 32x32 RGBA; alpha=0/255; colours=10/12 including transparent; bbox=[2, 4, 30, 31]; unique pose; visual=reviewed
+art/battle/chibi/mireFly_idle2.png PASS | 32x32 RGBA; alpha=0/255; colours=10/12 including transparent; bbox=[2, 3, 30, 31]; unique pose; visual=reviewed
+art/battle/chibi/mireFly_attack1.png PASS | 32x32 RGBA; alpha=0/255; colours=10/12 including transparent; bbox=[3, 4, 30, 31]; unique pose; visual=reviewed
+art/battle/chibi/mireFly_attack2.png PASS | 32x32 RGBA; alpha=0/255; colours=10/12 including transparent; bbox=[1, 4, 31, 31]; unique pose; visual=reviewed
+art/battle/chibi/mireFly_hurt1.png PASS | 32x32 RGBA; alpha=0/255; colours=10/12 including transparent; bbox=[3, 4, 31, 31]; unique pose; visual=reviewed
+art/battle/chibi/blackCatfish_idle1.png PASS | 48x48 RGBA; alpha=0/255; colours=12/12 including transparent; bbox=[2, 5, 46, 47]; unique pose; visual=reviewed
+art/battle/chibi/blackCatfish_idle2.png PASS | 48x48 RGBA; alpha=0/255; colours=12/12 including transparent; bbox=[2, 4, 46, 47]; unique pose; visual=reviewed
+art/battle/chibi/blackCatfish_attack1.png PASS | 48x48 RGBA; alpha=0/255; colours=12/12 including transparent; bbox=[2, 6, 46, 47]; unique pose; visual=reviewed
+art/battle/chibi/blackCatfish_attack2.png PASS | 48x48 RGBA; alpha=0/255; colours=12/12 including transparent; bbox=[2, 5, 46, 47]; unique pose; visual=reviewed
+art/battle/chibi/blackCatfish_hurt1.png PASS | 48x48 RGBA; alpha=0/255; colours=11/12 including transparent; bbox=[3, 5, 47, 47]; unique pose; visual=reviewed
+art/battle/field/blackCatfish_down1.png PASS | 32x32 RGBA; alpha=0/255; colours=12/12 including transparent; bbox=[2, 5, 31, 31]; unique pose; visual=reviewed
+art/battle/field/blackCatfish_down2.png PASS | 32x32 RGBA; alpha=0/255; colours=12/12 including transparent; bbox=[2, 4, 31, 31]; unique pose; visual=reviewed
+art/battle/field/blackCatfish_left1.png PASS | 32x32 RGBA; alpha=0/255; colours=12/12 including transparent; bbox=[1, 8, 30, 31]; unique pose; visual=reviewed
+art/battle/field/blackCatfish_left2.png PASS | 32x32 RGBA; alpha=0/255; colours=12/12 including transparent; bbox=[1, 7, 30, 31]; unique pose; visual=reviewed
+art/battle/field/blackCatfish_right1.png PASS | 32x32 RGBA; alpha=0/255; colours=12/12 including transparent; bbox=[2, 8, 31, 31]; unique pose; visual=reviewed
+art/battle/field/blackCatfish_right2.png PASS | 32x32 RGBA; alpha=0/255; colours=12/12 including transparent; bbox=[2, 7, 31, 31]; unique pose; visual=reviewed
+art/battle/field/blackCatfish_up1.png PASS | 32x32 RGBA; alpha=0/255; colours=11/12 including transparent; bbox=[2, 8, 30, 31]; unique pose; visual=reviewed
+art/battle/field/blackCatfish_up2.png PASS | 32x32 RGBA; alpha=0/255; colours=11/12 including transparent; bbox=[2, 7, 30, 31]; unique pose; visual=reviewed
+art/battle/chibi/gen_ch1_mon.py PASS | deterministic editable pixel-art source; Python 3 + Pillow
+art/battle/chibi/ch1_preview.png PASS | all 41 battle frames; nearest-neighbour 4x; labels
+art/battle/field/ch1_field_preview.png PASS | all 16 map frames; nearest-neighbour 4x; labels
+art/battle/chibi/ch1_motion_preview.gif PASS | 8 monsters animation contact sheet
+art/battle/tasks/O_qc.json PASS | 57 individual validation records and SHA-256
