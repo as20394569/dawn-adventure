@@ -1,0 +1,1 @@
+module.exports = async (g) => { g.log(await g.ev(() => Object.entries(ITEMS).filter(([k, i]) => i.mat).map(([k, i]) => k + ':' + i.n).join(' '))); g.log(await g.ev(() => JSON.stringify(CH2_ROLE))); g.log(await g.ev(() => typeof markVis + ' ' + JSON.stringify(Object.keys(__game.Game.st ? __game.Game.st.vis || {} : {})))); };

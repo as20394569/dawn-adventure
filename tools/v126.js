@@ -1,0 +1,1 @@
+module.exports = async (g) => { g.log(await g.ev(() => Object.entries(MOVES).filter(([k, m]) => k.startsWith('m_') && m.foe).map(([k, m]) => k + ':' + m.n + '/' + m.t + '/' + m.cat + (m.pow ? m.pow : '') + (m.charge ? 'C' : '')).join(' '))); };
