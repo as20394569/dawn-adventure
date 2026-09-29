@@ -107,7 +107,7 @@ function* talentScreen() {
   const scr = { draw(x) {
     screenBG(x); headerBar(x, '天賦・' + CLASSES[st.cls].n); const av = tpAvail(st); Font.drawR(x, '天賦點 ' + av, W - 6, 2, av ? UIC.warm : UIC.muted, UIC.textSh);
     const col = classColOf(st.cls);
-    C.br.forEach(([bn], b) => { const X = colX(b), ic = branchIcon(st.cls, b); drawBtn(x, X, 22, 54, 17, false, col); if (ic) x.drawImage(ic, X + 2, 24); Font.drawC(x, bn, X + (ic ? 31 : 27), 21, shade(col, 0.35), UIC.textSh, bn.length > 3 && ic ? 8 : 10); Font.drawR(x, String(brPts(b, st)), X + 52, 29, UIC.muted, UIC.textSh, 7); });
+    C.br.forEach(([bn], b) => { const X = colX(b), ic = branchIcon(st.cls, b); drawBtn(x, X, 22, 54, 17, false, col); if (ic) x.drawImage(ic, X + 2, 24); Font.drawC(x, bn, X + (ic ? 31 : 27), 21, shade(col, 0.35), UIC.textSh, bn.length > 3 && ic ? 8 : 10); Font.drawR(x, String(brPts(b, st)), X + 52, 29, UIC.muted, UIC.textSh, 7); if (typeof RES_AT !== 'undefined') RES_AT.forEach((t, i) => { x.fillStyle = brPts(b, st) >= t ? '#ffd860' : '#3a3f5c'; x.fillRect(X + 3 + i * 5, 36, 3, 2); }); });
     for (let r = 0; r < 5; r++) {
       if (r === 3) { x.fillStyle = deepOk(st) ? 'rgba(255,200,100,0.35)' : 'rgba(120,120,150,0.35)'; x.fillRect(4, RY(3) - 3, 168, 1); if (!deepOk(st)) Font.drawR(x, '深層（天賦覺醒後開放）', 170, RY(3) - 12, UIC.dis, UIC.textSh, 7); }
       for (let s = 0; s < slots(r); s++) { const n = nodeAt(r, s), g = tile(n, r, s), rk = ctRank(n, st), on = r === row && s === slot, blk = nodeBlock(n, st), lock = blk && !rk && blk !== '天賦點不足（升級時獲得）';
@@ -118,8 +118,8 @@ function* talentScreen() {
     }
     const n = nodeAt(row, slot), rk = ctRank(n, st), blk = nodeBlock(n, st), DY = 170; drawWin(x, 4, DY, 168, 82, 'menu');
     Font.draw(x, n.n, 12, DY + 2, shade(col, 0.35), UIC.textSh, 11); Font.drawR(x, C.br[n.b][0] + '・第' + (n.row + 1) + '層　' + rk + '/' + n.max, 164, DY + 4, UIC.muted, UIC.textSh, 8);
-    const cur = rk ? '目前：' + tDesc(n.key, n.v * rk) : '每級：' + tDesc(n.key, n.v); drawFitText(x, cur, 12, DY + 17, 152, 24, 10, rk ? UIC.accent : UIC.text);
-    if (rk && rk < n.max) drawFitText(x, '下一級：' + tDesc(n.key, n.v * (rk + 1)), 12, DY + 41, 152, 12, 9, '#c9cfe4');
+    const cur = rk ? '目前：' + tDesc(n.key, n.v * rk) + (rk < n.max ? '（下一級：' + tDesc(n.key, n.v * (rk + 1)) + '）' : '') : '每級：' + tDesc(n.key, n.v); drawFitText(x, cur, 12, DY + 17, 152, 24, 10, rk ? UIC.accent : UIC.text);
+    if (typeof RESONANCE !== 'undefined' && RESONANCE[st.cls]) { const bp = brPts(n.b, st); const R3 = RESONANCE[st.cls][n.b], got = RES_AT.filter(t => bp >= t).length, nx = got < 3 ? R3[got] : null; drawFitText(x, '分支共鳴 ' + got + '/3　' + (nx ? '下一個（' + RES_AT[got] + '點）：' + shortDesc(nx[0], nx[1]) : '全部達成！'), 12, DY + 41, 152, 12, 9, '#ffd860'); }
     Font.draw(x, msgT > 0 ? msg : blk || 'A：投入1點', 12, DY + 54, msgT > 0 ? UIC.warm : blk ? UIC.bad : UIC.good, UIC.textSh, 9);
     drawBtn(x, 12, DY + 66, 60, 13, false); Font.drawC(x, '↩退回1點', 42, DY + 65, rk ? UIC.warm : UIC.dis, UIC.textSh, 8); drawBtn(x, 100, DY + 66, 64, 13, false); Font.drawC(x, '全部重置', 132, DY + 65, tpSpent(st) ? UIC.warm : UIC.dis, UIC.textSh, 8);
     if (typeof touchRegion === 'function') { touchRegion(12, DY + 66, 60, 13, () => tapKey('select')); touchRegion(100, DY + 66, 64, 13, () => tapKey('start')); }
