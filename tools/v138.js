@@ -1,0 +1,1 @@
+module.exports = async (g) => { g.log(await g.ev(() => { const by = {}; for (const k in GEAR) { const G = GEAR[k]; if (G.t > 4 || !G.slot) continue; (by['T' + G.t + ' ' + G.slot] = by['T' + G.t + ' ' + G.slot] || []).push(k + ':' + G.n + (BP_RARE.has(k) ? '*' : '')); } return Object.entries(by).sort().map(([k, v]) => k + ' ' + v.join(' ')).join('\n'); })); };
