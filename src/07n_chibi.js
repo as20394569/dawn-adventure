@@ -5,6 +5,12 @@
    Settings → 怪物造型: Q版 / 寫實. */
 const BATTLE_PXC = {};
 for (const k in (typeof BATTLE_PXC_SRC !== 'undefined' ? BATTLE_PXC_SRC : {})) { const im = new Image(); im.onload = () => { im.ok = true; }; im.src = BATTLE_PXC_SRC[k]; BATTLE_PXC[k] = im; }
+// v9.2.2: strips stored as run-length palette rows [w, h, colours, rows] are drawn straight into a canvas
+for (const k in (typeof BATTLE_PXC_ROWS !== 'undefined' ? BATTLE_PXC_ROWS : {})) {
+  const [w, h, cols, rows] = BATTLE_PXC_ROWS[k], c = mkCanvas(w, h), x = c.getContext('2d'), CH = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  rows.forEach((r, y) => { let X = 0; for (const [, n, ch] of r.matchAll(/(\d*)(.)/g)) { const len = n ? +n : 1; if (ch !== '.') { x.fillStyle = cols[CH.indexOf(ch)]; x.fillRect(X, y, len, 1); } X += len; } });
+  c.ok = true; BATTLE_PXC[k] = c;
+}
 const chibiOn = () => Game.settings.chibi !== false;
 const chibiOwn = k => BATTLE_PXC[k] && BATTLE_PXC[k].ok;
 const chibiBase = k => chibiOwn(k) ? k : (HD_RIG_OF[k] && chibiOwn(HD_RIG_OF[k]) && ART[k] && ART[HD_RIG_OF[k]] ? HD_RIG_OF[k] : null);

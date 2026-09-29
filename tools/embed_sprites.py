@@ -21,6 +21,28 @@ def _small(raw):
         if len(o) < len(best) and [q if q[3] else (0, 0, 0, 0) for q in Image.open(io.BytesIO(o)).convert('RGBA').getdata()] == px: best = o
     open(cp, 'wb').write(best); return best
 def b64png(f): return 'data:image/png;base64,' + base64.b64encode(_small(open(f, 'rb').read())).decode()
+# v9.2.2: these chibi strips go in as run-length palette rows instead of base64 PNGs — with their base64 data inside,
+# the claude.ai link showed "Couldn't load this Artifact" (same failure as the v7.0.1 talent icons)
+PXC_AS_ROWS = {'mapleSprite', 'crimsonStag', 'barkBeetle', 'stagLord', 'fallenSoldier', 'battleWisp', 'carrionVulture', 'wraithGeneral'}
+PAL_CH = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
+def rle_rows(f):
+    im = Image.open(f).convert('RGBA'); cols = []; rows = []
+    for y in range(im.height):
+        cs = []
+        for x in range(im.width):
+            q = im.getpixel((x, y))
+            if q[3] < 128: cs.append('.'); continue
+            hx = '#%02x%02x%02x' % q[:3]
+            if hx not in cols: cols.append(hx)
+            cs.append(PAL_CH[cols.index(hx)])
+        r, i = '', 0
+        while i < len(cs):
+            j = i
+            while j < len(cs) and cs[j] == cs[i]: j += 1
+            r += (str(j - i) if j - i > 1 else '') + cs[i]; i = j
+        rows.append(r)
+    assert len(cols) <= len(PAL_CH), f
+    return [im.width, im.height, cols, rows]
 root = os.path.join(os.path.dirname(__file__), '..')
 d = {}
 SKIP = {'hero'}  # the hero keeps the field paper doll in battle (HD_HERO_DOLL), its Codex sprites stay in art/ only
@@ -41,10 +63,13 @@ fd = {}
 for f in sorted(glob.glob(os.path.join(root, 'art', 'battle', 'fieldpx', '*.png'))):
     fd[os.path.basename(f)[:-4]] = b64png(f)
 js += 'const BATTLE_FIELD_SRC = ' + json.dumps(fd, separators=(',', ':')) + ';\n'
-pc, pcm = {}, {}
+pc, pcm, pcr = {}, {}, {}
 for f in sorted(glob.glob(os.path.join(root, 'art', 'battle', 'chibipx', '*.png'))):
-    k = os.path.basename(f)[:-4]; pc[k] = b64png(f); pcm[k] = json.load(open(f[:-4] + '.json'))
+    k = os.path.basename(f)[:-4]; pcm[k] = json.load(open(f[:-4] + '.json'))
+    if k in PXC_AS_ROWS: pcr[k] = rle_rows(f)
+    else: pc[k] = b64png(f)
 js += 'const BATTLE_PXC_SRC = ' + json.dumps(pc, separators=(',', ':')) + ';\n'
+js += 'const BATTLE_PXC_ROWS = ' + json.dumps(pcr, separators=(',', ':')) + ';\n'
 js += 'const BATTLE_PXC_META = ' + json.dumps(pcm, separators=(',', ':')) + ';\n'
 ui = {}
 for f in sorted(glob.glob(os.path.join(root, 'art', 'ui', 'px', '*.png'))):
