@@ -71,7 +71,7 @@ const gearBy = (u, st = Game.st) => (st.gear || []).find(g => g.u === u);
 const equippedGear = (st = Game.st) => Object.values(st.equip || {}).map(u => gearBy(u, st)).filter(Boolean);
 const isEquipped = (g, st = Game.st) => Object.values(st.equip || {}).includes(g.u);
 function gearStats(g) {
-  const B = GEAR[g.b], m = GQ[g.q][2] * g.r * (1 + 0.08 * (g.e || 0)), o = { st: {}, sp: { vs: [], resist: {} }, fx: B.fx || [] };
+  const B = GEAR[g.b], m = GQ[g.q][2] * g.r * (1 + 0.08 * Math.min(5, g.e || 0) + 0.05 * Math.max(0, (g.e || 0) - 5)) * (1 + 0.06 * (g.s || 0)), o = { st: {}, sp: { vs: [], resist: {} }, fx: B.fx || [] };
   for (const k in B.st) o.st[k] = Math.max(1, Math.round(B.st[k] * m));
   const add = (k, v, t) => { if (k === 'vs') o.sp.vs.push([t, v]); else if (k === 'resist') o.sp.resist[t] = (o.sp.resist[t] || 0) + v; else if (STATK.includes(k)) o.st[k] = (o.st[k] || 0) + v; else o.sp[k] = (o.sp[k] || 0) + v; };
   for (const k in B.sp || {}) { const v = B.sp[k]; if (Array.isArray(v)) add(k, v[1], v[0]); else add(k, v); }
@@ -87,9 +87,9 @@ function gearLines(g) { // [base stats text, special text]
   return [p.join(' '), s.join(' ')];
 }
 const gearText = g => gearLines(g).filter(Boolean).join(' ');
-const gearName = g => '【' + GQ[g.q][0] + '】' + GEAR[g.b].n + (g.e ? ' +' + g.e : '');
-const gearShort = g => GEAR[g.b].n + (g.e ? ' +' + g.e : '');
-const enhanceCost = g => { const e = (g.e || 0) + 1, t = GEAR[g.b].t; return { gold: e * 150 * t * (Game.st.flags.smithDisc ? 0.5 : 1), mats: t <= 2 ? { stone: e } : t === 3 ? { stone: e, gel: e } : { crystal: e }, rate: e <= 3 ? 1 : e === 4 ? 0.75 : 0.5 }; };
+const gearName = g => '【' + GQ[g.q][0] + '】' + GEAR[g.b].n + (g.s ? '★' + g.s : '') + (g.e ? ' +' + g.e : '');
+const gearShort = g => GEAR[g.b].n + (g.s ? '★' + g.s : '') + (g.e ? ' +' + g.e : '');
+const enhanceCost = g => { const e = (g.e || 0) + 1, t = GEAR[g.b].t; if (e > 5) { const R = typeof GEAR_RECIPE !== 'undefined' && GEAR_RECIPE[g.b], mk = R ? Object.keys(R.mats)[0] : 'crystal'; return { gold: 400 * t * e * (Game.st.flags.smithDisc ? 0.5 : 1), mats: { [mk]: e - 3 }, rate: [0.45, 0.4, 0.35, 0.3, 0.25][e - 6] }; } return { gold: e * 150 * t * (Game.st.flags.smithDisc ? 0.5 : 1), mats: t <= 2 ? { stone: e } : t === 3 ? { stone: e, gel: e } : { crystal: e }, rate: e <= 3 ? 1 : e === 4 ? 0.75 : 0.5 }; };
 const SALVAGE = { weapon: ['stone'], head: ['stone', 'gel'], body: ['stone', 'gel', 'frogSkin'], feet: ['feather', 'gel'], acc: ['feather', 'spore', 'leaf'] };
 const gCol = g => GQ[g.q][1];
 const gearSell = g => Math.round((GEAR[g.b].price || GEAR[g.b].t * 400) * 0.3 * GQ[g.q][2] * g.r);

@@ -62,7 +62,7 @@ function* ch2Coach(ow, here) {
   st.money -= 200; const [, m, x, y] = opt[r]; Sound.sfx('run'); yield* fadeOut(20); ow.load(m, x, y, 'down'); yield* wait(10); yield* fadeIn(20);
 }
 function* ch2Inn(name, respawn) {
-  const st = Game.st, cost = st.lv * 10; const ok = yield* yesNo('歡迎來到' + name + '！住一晚是' + cost + ' G，要休息嗎？');
+  const st = Game.st, cost = st.lv * 15; const ok = yield* yesNo('歡迎來到' + name + '！住一晚是' + cost + ' G，要休息嗎？');
   if (ok && st.money < cost) { yield* say('哎呀，錢好像不太夠呢……'); return false; }
   if (ok) { st.money -= cost; st.respawn = respawn; yield* say('好的，請好好休息。'); yield* healRitual(); yield* say('早安！體力都恢復了吧？'); return true; }
   yield* say('歡迎再來。'); return false;

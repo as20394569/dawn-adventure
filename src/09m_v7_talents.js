@@ -73,7 +73,7 @@ const ctOf = (st = Game.st) => st.ct || (st.ct = {});
 const ctRank = (n, st = Game.st) => ctOf(st)[n.id] || 0;
 function talentSum(key, st = Game.st) { const T = CT[st.cls]; if (!T) return 0; let s = 0; for (const B of T) for (const n of B) if (n.key === key) s += n.v * ctRank(n, st); return s; }
 const deepOk = (st = Game.st) => st.lv >= 14 && !!(st.flags && st.flags.deep);
-const tpTotal = (st = Game.st) => (st.cls ? st.lv : 0) + (st.tpRead || 0) + (st.flags && st.flags.deep ? 2 : 0);
+const tpTotal = (st = Game.st) => (st.cls ? Math.floor(st.lv / 2) + 1 : 0) + (st.tpRead || 0) + (st.flags && st.flags.deep ? 2 : 0);
 function tpSpent(st = Game.st) { let s = 0; const T = CT[st.cls]; if (T) for (const B of T) for (const n of B) s += ctRank(n, st); return s; }
 const tpAvail = (st = Game.st) => Math.max(0, tpTotal(st) - tpSpent(st));
 const brBelow = (b, row, st = Game.st) => { let s = 0; for (const n of CT[st.cls][b]) if (n.row < row) s += ctRank(n, st); return s; };
@@ -211,7 +211,7 @@ ch2ClassTalk = function* () {
 /* ---------- level-up: 1 talent point (the old skill-point / tree texts are replaced) ---------- */
 { const _lu = Battle.prototype.levelUp; Battle.prototype.levelUp = function* () {
     const st = Game.st, self = this, _msg = Battle.prototype.msg;
-    this.msg = function* (t, o) { if (typeof t === 'string') { if (t.startsWith('可以學習新技能了')) return; if (t.includes('點技能點')) t = '獲得了1點天賦點！MP也全部恢復了。（選單→天賦）'; } return yield* _msg.call(self, t, o); };
+    this.msg = function* (t, o) { if (typeof t === 'string') { if (t.startsWith('可以學習新技能了')) return; if (t.includes('點技能點')) t = st.lv % 2 === 0 ? '獲得了1點天賦點！MP也全部恢復了。（選單→天賦）' : 'MP全部恢復了。（下一級會得到天賦點）'; } return yield* _msg.call(self, t, o); };
     let r; try { r = yield* _lu.call(this); } finally { delete this.msg; }
     st.skp = 0; st.tp = 0;
     if (st.lv === 14 && !(st.flags && st.flags.deep)) yield* this.msg('到達Lv14了！去找萌芽鎮的村長，進行「天賦覺醒」吧。', { hold: 40 });

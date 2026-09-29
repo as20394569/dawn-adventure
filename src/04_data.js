@@ -134,7 +134,7 @@ const ITEMS = {
 };
 const shopList = () => { const f = Game.st.flags; return SHOP_LIST.filter(k => !(k === 'superPotion' && f.caravan === 'lost' && !f.bandit)).concat(f.croc ? ['hiEther', 'knightSword', 'magusStaff', 'guardHelm', 'chainMail'] : [], f.golem ? ['elixir', 'tpBook'] : [], f.caravan === 'lost' && f.golem ? ['rope'] : []); };
 const PEDDLER_LIST = ['rope', 'superPotion', 'elixir', 'ether', 'hiEther', 'powerFruit', 'tpBook', 'knightHelm', 'knightGreaves'];
-const priceOf = (k, n = 0) => Math.round(((ITEMS[k] || GEAR[k]).price + (k === 'tpBook' ? 1500 * ((Game.st.tpBought || 0) + n) : 0)) * (Game.st.flags.caravan === 'saved' ? 0.9 : Game.st.flags.caravan === 'lost' && k === 'rope' ? 3 : 1));
+const priceOf = (k, n = 0) => Math.round(((ITEMS[k] || GEAR[k]).price + (k === 'tpBook' ? 1500 * ((Game.st.tpBought || 0) + n) : 0) + (ITEMS[k] && ITEMS[k].use === 'boost' ? 1500 * ((Game.st.fruitBought || 0) + n) : 0)) * (Game.st.flags.caravan === 'saved' ? 0.9 : Game.st.flags.caravan === 'lost' && k === 'rope' ? 3 : 1));
 const priceFor = (k, q) => { let t = 0; for (let i = 0; i < q; i++) t += priceOf(k, i); return t; }; // v20.7: bulk buys pay each book's rising price (天賦之書 +1500 G per book)
 const RECIPES = [
   { out: 'potion', n: 2, mats: { herb: 2 } }, { out: 'superPotion', mats: { herb: 3, gel: 1 } },

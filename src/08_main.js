@@ -53,7 +53,7 @@ const Events = {
       yield* say({ swordsman: '劍士的道路啊……這把練習木劍就交給你了。', mage: '魔導士的道路啊……這把魔杖是我年輕時用的，交給你了。', guardian: '守護者的道路啊……這把木劍和布帽給你，別逞強喔。', ranger: '遊俠的道路啊……這把獵刀是村裡獵人送的，拿去吧。' }[k]);
       st.flags.license = 1; st.bag.license = 1; yield* itemGet('得到了' + S.gear.filter(b => b !== 'guardBadge').map(b => GEAR[b].n).join('和') + '、護身符和冒險者證！');
       yield* say('還有這些傷藥，帶在身上吧。'); st.bag.potion = (st.bag.potion || 0) + 5; yield* itemGet('得到了傷藥×5！');
-      yield* sayAll(['技能是跟著武器走的。你手上的武器有兩招「主動技能」、一個「被動」，還有攻擊累積到一定次數會自動發動的「特技」。', '普通攻擊不花MP，還會回復一點MP；把MP用在武器技能上吧。', '每次升級會得到1點「天賦點」。打開選單的「天賦」，就能點' + CLASSES[k].n + '的三條天賦分支。', '新的裝備都要靠鐵匠打造。撿到的設計圖和素材，記得拿去給他看看。', '到了Lv14再來找我，我會幫你進行「天賦覺醒」。', '魔物分成好幾個種族，各有害怕的屬性。善用屬性技能，戰鬥會輕鬆很多。', '按START可以打開選單，查看狀態、技能和背包，也能記錄進度。']);
+      yield* sayAll(['技能是跟著武器走的。你手上的武器有兩招「主動技能」、一個「被動」，還有攻擊累積到一定次數會自動發動的「特技」。', '普通攻擊不花MP，還會回復一點MP；把MP用在武器技能上吧。', '每升2級會得到1點「天賦點」。打開選單的「天賦」，就能點' + CLASSES[k].n + '的三條天賦分支。', '新的裝備都要靠鐵匠打造。撿到的設計圖和素材，記得拿去給他看看。', '到了Lv14再來找我，我會幫你進行「天賦覺醒」。', '魔物分成好幾個種族，各有害怕的屬性。善用屬性技能，戰鬥會輕鬆很多。', '按START可以打開選單，查看狀態、技能和背包，也能記錄進度。']);
       const ap = ow && ow.npcs.find(n => n.id === 'apprentice');
       if (ap) { ap.dir = 'left'; yield* say('學徒：「村長爺爺！讓我幫忙！我在院子裡養了一隻練習用的泡泡姆！」');
         if (yield* yesNo('要和泡泡姆練習一場嗎？')) { const res = yield* ow.battleScript({ sp: 'slime', lv: 1, kind: 'wild' }); if (res === 'win') yield* say('學徒：「好厲害！這就是異界人之力！」'); else yield* say('學徒：「泡、泡泡姆，下手輕一點啦！」'); healHero(); }
@@ -134,7 +134,7 @@ const Events = {
     else { f.q1res = 'secret'; st.bag.ether = (st.bag.ether || 0) + 1; yield* say('真的嗎！謝謝你！這個給你，是我在草叢裡撿到的。'); yield* itemGet(st.name + '得到了活力茶！'); yield* say('記得回去跟姊姊說我沒事喔！'); }
   },
   *healer() {
-    const st = Game.st, cost = st.lv * 10; const ok = yield* yesNo('歡迎來到旅店！住一晚是' + cost + ' G，要休息嗎？');
+    const st = Game.st, cost = st.lv * 15; const ok = yield* yesNo('歡迎來到旅店！住一晚是' + cost + ' G，要休息嗎？');
     if (ok && st.money < cost) { yield* say('哎呀，錢好像不太夠呢……'); return; }
     if (ok) { st.money -= cost; st.respawn = { map: 'inn', x: 4, y: 4, dir: 'up' }; yield* say('好的，請稍等一下。'); yield* healRitual(); yield* sayAll(['讓你久等了！你的體力已經完全恢復了。', '歡迎再來喔！']); }
     else yield* say('歡迎再來喔！');

@@ -9,7 +9,7 @@
 const ATTR_BASE = { str: 4, agi: 4, vit: 4, int: 4, dex: 4, luk: 3 };
 const ATTR_HELP = { str: '物攻+1　（重擊技能加成）', agi: '速度+1.5、迴避+0.4%、物防+0.3　（連擊技能加成）', vit: '最大HP+1.6、物防+1、魔防+0.6', int: '魔攻+1.2、最大MP+1.5、魔防+0.6　（魔法加成）', dex: '命中+0.5%、物攻+0.5、魔攻+0.3　（精準技能加成）', luk: '會心率+0.6%、迴避+0.1%　（暗殺技能加成）' };
 const ATTR_TEMPLATE = { swordsman: { str: 3, vit: 2, dex: 2, agi: 1, luk: 1 }, mage: { int: 4, dex: 2, vit: 2, agi: 1 }, guardian: { vit: 4, str: 2, dex: 1, int: 1 }, ranger: { agi: 3, dex: 2, str: 2, vit: 2, luk: 1 }, _: { str: 2, int: 2, vit: 2, agi: 1, dex: 1 } };
-const attrPointsFor = lv => Math.max(0, lv - 1) * 2; // 2 per level: free allocation already wastes nothing, so this keeps builds close to the old balance
+const attrPointsFor = lv => Math.max(0, lv - 1); /* v7.1: 1 per level (was 2): the hero grew too fast */ // 2 per level: free allocation already wastes nothing, so this keeps builds close to the old balance
 const attrCost = v => v < 20 ? 1 : v < 30 ? 2 : 3;
 function attrSpent(st) { let n = 0; for (const k of ATTRS) { const b = ATTR_BASE[k], a = (st.attr || {})[k] || 0; for (let v = b; v < b + a; v++) n += attrCost(v); } return n; }
 const attrAvail = (st = Game.st) => st && st.attr ? attrPointsFor(st.lv) + (st.attrBonus || 0) - attrSpent(st) : 0;

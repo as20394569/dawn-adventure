@@ -438,8 +438,8 @@ function* shopBuy(stock) {
         UI.remove(q); if (!ok) continue;
       }
       UI.remove(scr);
-      const yes = yield* yesNo(it.n + (isG || it.once ? '' : '×' + qty) + '，一共是' + priceFor(k, qty) + 'G，可以嗎？' + (k === 'tpBook' && qty > 1 ? '\n（已含每本+1500G的漲價）' : ''));
-      if (yes) { Game.st.money -= priceFor(k, qty); if (isG) makeGear(k, 1, 0.8); else Game.st.bag[k] = (Game.st.bag[k] || 0) + qty; if (k === 'tpBook') Game.st.tpBought = (Game.st.tpBought || 0) + qty; Sound.sfx('save'); yield* say('好的！這是您的' + it.n + '。' + (isG ? '記得到裝備畫面裝備喔！' : '')); }
+      const yes = yield* yesNo(it.n + (isG || it.once ? '' : '×' + qty) + '，一共是' + priceFor(k, qty) + 'G，可以嗎？' + (k === 'tpBook' && qty > 1 ? '\n（已含每本+1500G的漲價）' : ITEMS[k] && ITEMS[k].use === 'boost' && qty > 1 ? '\n（已含每顆+1500G的漲價）' : ''));
+      if (yes) { Game.st.money -= priceFor(k, qty); if (isG) makeGear(k, 1, 0.8); else Game.st.bag[k] = (Game.st.bag[k] || 0) + qty; if (k === 'tpBook') Game.st.tpBought = (Game.st.tpBought || 0) + qty; if (ITEMS[k] && ITEMS[k].use === 'boost') Game.st.fruitBought = (Game.st.fruitBought || 0) + qty; Sound.sfx('save'); yield* say('好的！這是您的' + it.n + '。' + (isG ? '記得到裝備畫面裝備喔！' : '')); }
       UI.push(scr);
     }
     yield;
@@ -499,7 +499,7 @@ function* gearPicker(title, getList, extra) { // returns a gear instance or null
 function* enhanceFlow() {
   const st = Game.st, matTxt = m => Object.entries(m).map(([k, n]) => ITEMS[k].n + '×' + n + '（有' + (st.bag[k] || 0) + '）').join(' ');
   while (true) {
-    const g = yield* gearPicker('裝備強化', () => gearSort().filter(q => (q.e || 0) < 5), (x, g, Y) => { const c = enhanceCost(g); Font.draw(x, '+' + (g.e || 0) + ' → +' + ((g.e || 0) + 1) + '　成功率' + Math.round(c.rate * 100) + '%', 12, Y, UIC.accent, UIC.textSh, 11); Font.draw(x, matTxt(c.mats), 12, Y + 13, UIC.text, UIC.textSh, 10); Font.drawR(x, c.gold + ' G', 164, Y + 26, st.money >= c.gold ? UIC.warm : UIC.bad, UIC.textSh, 11); });
+    const g = yield* gearPicker('裝備強化', () => gearSort().filter(q => (q.e || 0) < 10), (x, g, Y) => { const c = enhanceCost(g); Font.draw(x, '+' + (g.e || 0) + ' → +' + ((g.e || 0) + 1) + '　成功率' + Math.round(c.rate * 100) + '%', 12, Y, UIC.accent, UIC.textSh, 11); Font.draw(x, matTxt(c.mats), 12, Y + 13, UIC.text, UIC.textSh, 10); Font.drawR(x, c.gold + ' G', 164, Y + 26, st.money >= c.gold ? UIC.warm : UIC.bad, UIC.textSh, 11); });
     if (!g) return;
     const c = enhanceCost(g), ok = st.money >= c.gold && Object.entries(c.mats).every(([k, n]) => (st.bag[k] || 0) >= n);
     if (!ok) { yield* say('素材或金錢不夠喔。'); continue; }

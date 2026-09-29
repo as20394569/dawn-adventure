@@ -1723,7 +1723,7 @@ const ITEMS = {
 };
 const shopList = () => { const f = Game.st.flags; return SHOP_LIST.filter(k => !(k === 'superPotion' && f.caravan === 'lost' && !f.bandit)).concat(f.croc ? ['hiEther', 'knightSword', 'magusStaff', 'guardHelm', 'chainMail'] : [], f.golem ? ['elixir', 'tpBook'] : [], f.caravan === 'lost' && f.golem ? ['rope'] : []); };
 const PEDDLER_LIST = ['rope', 'superPotion', 'elixir', 'ether', 'hiEther', 'powerFruit', 'tpBook', 'knightHelm', 'knightGreaves'];
-const priceOf = (k, n = 0) => Math.round(((ITEMS[k] || GEAR[k]).price + (k === 'tpBook' ? 1500 * ((Game.st.tpBought || 0) + n) : 0)) * (Game.st.flags.caravan === 'saved' ? 0.9 : Game.st.flags.caravan === 'lost' && k === 'rope' ? 3 : 1));
+const priceOf = (k, n = 0) => Math.round(((ITEMS[k] || GEAR[k]).price + (k === 'tpBook' ? 1500 * ((Game.st.tpBought || 0) + n) : 0) + (ITEMS[k] && ITEMS[k].use === 'boost' ? 1500 * ((Game.st.fruitBought || 0) + n) : 0)) * (Game.st.flags.caravan === 'saved' ? 0.9 : Game.st.flags.caravan === 'lost' && k === 'rope' ? 3 : 1));
 const priceFor = (k, q) => { let t = 0; for (let i = 0; i < q; i++) t += priceOf(k, i); return t; }; // v20.7: bulk buys pay each book's rising price (天賦之書 +1500 G per book)
 const RECIPES = [
   { out: 'potion', n: 2, mats: { herb: 2 } }, { out: 'superPotion', mats: { herb: 3, gel: 1 } },
@@ -2106,7 +2106,7 @@ const gearBy = (u, st = Game.st) => (st.gear || []).find(g => g.u === u);
 const equippedGear = (st = Game.st) => Object.values(st.equip || {}).map(u => gearBy(u, st)).filter(Boolean);
 const isEquipped = (g, st = Game.st) => Object.values(st.equip || {}).includes(g.u);
 function gearStats(g) {
-  const B = GEAR[g.b], m = GQ[g.q][2] * g.r * (1 + 0.08 * (g.e || 0)), o = { st: {}, sp: { vs: [], resist: {} }, fx: B.fx || [] };
+  const B = GEAR[g.b], m = GQ[g.q][2] * g.r * (1 + 0.08 * Math.min(5, g.e || 0) + 0.05 * Math.max(0, (g.e || 0) - 5)) * (1 + 0.06 * (g.s || 0)), o = { st: {}, sp: { vs: [], resist: {} }, fx: B.fx || [] };
   for (const k in B.st) o.st[k] = Math.max(1, Math.round(B.st[k] * m));
   const add = (k, v, t) => { if (k === 'vs') o.sp.vs.push([t, v]); else if (k === 'resist') o.sp.resist[t] = (o.sp.resist[t] || 0) + v; else if (STATK.includes(k)) o.st[k] = (o.st[k] || 0) + v; else o.sp[k] = (o.sp[k] || 0) + v; };
   for (const k in B.sp || {}) { const v = B.sp[k]; if (Array.isArray(v)) add(k, v[1], v[0]); else add(k, v); }
@@ -2122,9 +2122,9 @@ function gearLines(g) { // [base stats text, special text]
   return [p.join(' '), s.join(' ')];
 }
 const gearText = g => gearLines(g).filter(Boolean).join(' ');
-const gearName = g => '【' + GQ[g.q][0] + '】' + GEAR[g.b].n + (g.e ? ' +' + g.e : '');
-const gearShort = g => GEAR[g.b].n + (g.e ? ' +' + g.e : '');
-const enhanceCost = g => { const e = (g.e || 0) + 1, t = GEAR[g.b].t; return { gold: e * 150 * t * (Game.st.flags.smithDisc ? 0.5 : 1), mats: t <= 2 ? { stone: e } : t === 3 ? { stone: e, gel: e } : { crystal: e }, rate: e <= 3 ? 1 : e === 4 ? 0.75 : 0.5 }; };
+const gearName = g => '【' + GQ[g.q][0] + '】' + GEAR[g.b].n + (g.s ? '★' + g.s : '') + (g.e ? ' +' + g.e : '');
+const gearShort = g => GEAR[g.b].n + (g.s ? '★' + g.s : '') + (g.e ? ' +' + g.e : '');
+const enhanceCost = g => { const e = (g.e || 0) + 1, t = GEAR[g.b].t; if (e > 5) { const R = typeof GEAR_RECIPE !== 'undefined' && GEAR_RECIPE[g.b], mk = R ? Object.keys(R.mats)[0] : 'crystal'; return { gold: 400 * t * e * (Game.st.flags.smithDisc ? 0.5 : 1), mats: { [mk]: e - 3 }, rate: [0.45, 0.4, 0.35, 0.3, 0.25][e - 6] }; } return { gold: e * 150 * t * (Game.st.flags.smithDisc ? 0.5 : 1), mats: t <= 2 ? { stone: e } : t === 3 ? { stone: e, gel: e } : { crystal: e }, rate: e <= 3 ? 1 : e === 4 ? 0.75 : 0.5 }; };
 const SALVAGE = { weapon: ['stone'], head: ['stone', 'gel'], body: ['stone', 'gel', 'frogSkin'], feet: ['feather', 'gel'], acc: ['feather', 'spore', 'leaf'] };
 const gCol = g => GQ[g.q][1];
 const gearSell = g => Math.round((GEAR[g.b].price || GEAR[g.b].t * 400) * 0.3 * GQ[g.q][2] * g.r);
@@ -4903,8 +4903,8 @@ function* shopBuy(stock) {
         UI.remove(q); if (!ok) continue;
       }
       UI.remove(scr);
-      const yes = yield* yesNo(it.n + (isG || it.once ? '' : '×' + qty) + '，一共是' + priceFor(k, qty) + 'G，可以嗎？' + (k === 'tpBook' && qty > 1 ? '\n（已含每本+1500G的漲價）' : ''));
-      if (yes) { Game.st.money -= priceFor(k, qty); if (isG) makeGear(k, 1, 0.8); else Game.st.bag[k] = (Game.st.bag[k] || 0) + qty; if (k === 'tpBook') Game.st.tpBought = (Game.st.tpBought || 0) + qty; Sound.sfx('save'); yield* say('好的！這是您的' + it.n + '。' + (isG ? '記得到裝備畫面裝備喔！' : '')); }
+      const yes = yield* yesNo(it.n + (isG || it.once ? '' : '×' + qty) + '，一共是' + priceFor(k, qty) + 'G，可以嗎？' + (k === 'tpBook' && qty > 1 ? '\n（已含每本+1500G的漲價）' : ITEMS[k] && ITEMS[k].use === 'boost' && qty > 1 ? '\n（已含每顆+1500G的漲價）' : ''));
+      if (yes) { Game.st.money -= priceFor(k, qty); if (isG) makeGear(k, 1, 0.8); else Game.st.bag[k] = (Game.st.bag[k] || 0) + qty; if (k === 'tpBook') Game.st.tpBought = (Game.st.tpBought || 0) + qty; if (ITEMS[k] && ITEMS[k].use === 'boost') Game.st.fruitBought = (Game.st.fruitBought || 0) + qty; Sound.sfx('save'); yield* say('好的！這是您的' + it.n + '。' + (isG ? '記得到裝備畫面裝備喔！' : '')); }
       UI.push(scr);
     }
     yield;
@@ -4964,7 +4964,7 @@ function* gearPicker(title, getList, extra) { // returns a gear instance or null
 function* enhanceFlow() {
   const st = Game.st, matTxt = m => Object.entries(m).map(([k, n]) => ITEMS[k].n + '×' + n + '（有' + (st.bag[k] || 0) + '）').join(' ');
   while (true) {
-    const g = yield* gearPicker('裝備強化', () => gearSort().filter(q => (q.e || 0) < 5), (x, g, Y) => { const c = enhanceCost(g); Font.draw(x, '+' + (g.e || 0) + ' → +' + ((g.e || 0) + 1) + '　成功率' + Math.round(c.rate * 100) + '%', 12, Y, UIC.accent, UIC.textSh, 11); Font.draw(x, matTxt(c.mats), 12, Y + 13, UIC.text, UIC.textSh, 10); Font.drawR(x, c.gold + ' G', 164, Y + 26, st.money >= c.gold ? UIC.warm : UIC.bad, UIC.textSh, 11); });
+    const g = yield* gearPicker('裝備強化', () => gearSort().filter(q => (q.e || 0) < 10), (x, g, Y) => { const c = enhanceCost(g); Font.draw(x, '+' + (g.e || 0) + ' → +' + ((g.e || 0) + 1) + '　成功率' + Math.round(c.rate * 100) + '%', 12, Y, UIC.accent, UIC.textSh, 11); Font.draw(x, matTxt(c.mats), 12, Y + 13, UIC.text, UIC.textSh, 10); Font.drawR(x, c.gold + ' G', 164, Y + 26, st.money >= c.gold ? UIC.warm : UIC.bad, UIC.textSh, 11); });
     if (!g) return;
     const c = enhanceCost(g), ok = st.money >= c.gold && Object.entries(c.mats).every(([k, n]) => (st.bag[k] || 0) >= n);
     if (!ok) { yield* say('素材或金錢不夠喔。'); continue; }
@@ -6090,7 +6090,7 @@ class Battle {
     yield* this.gainExp(exp);
     const gold = Math.floor((F.boss ? 1000 : sp.gold * F.lv) * (this.H.stats.fx.fortune ? 1.5 : 1));
     if (gold) { st.money += gold; yield* this.msg(st.name + '得到了' + gold + ' G！'); }
-    { const H = this.H, r = F.elite || F.boss ? 0.3 : 0.15, dh = Math.min(H.maxhp - H.hp, Math.ceil(H.maxhp * r)), dm = Math.min(H.maxmp - H.mp, Math.ceil(H.maxmp * r)); if (H.hp > 0 && (dh > 0 || dm > 0)) { H.hp += dh; H.mp += dm; yield* this.animHP(H); Sound.sfx('heal'); yield* this.msg('戰鬥結束，調整了呼吸。' + (dh ? 'HP+' + dh + ' ' : '') + (dm ? 'MP+' + dm : ''), { hold: 30 }); } }
+    /* v7.1: no automatic HP / MP recovery after a battle any more (players just walked home instead of using potions) */
     if (sp.mat && !F.elite && !F.boss && chance(0.5)) { st.bag[sp.mat] = (st.bag[sp.mat] || 0) + 1; yield* this.msg('得到了素材「' + ITEMS[sp.mat].n + '」！', { hold: 30 }); }
     const rpool = Game.ow && Game.ow.map && Game.ow.map.d.gearPool; if (F.rare && rpool) { const g = makeGear(pick(rpool), 3); yield* this.lootShow(g, F.n + '掉落了裝備！'); }
     for (const g of lootDrops(this)) yield* this.lootShow(g, F.n + '掉落了裝備！');
@@ -8692,7 +8692,7 @@ const Events = {
       yield* say({ swordsman: '劍士的道路啊……這把練習木劍就交給你了。', mage: '魔導士的道路啊……這把魔杖是我年輕時用的，交給你了。', guardian: '守護者的道路啊……這把木劍和布帽給你，別逞強喔。', ranger: '遊俠的道路啊……這把獵刀是村裡獵人送的，拿去吧。' }[k]);
       st.flags.license = 1; st.bag.license = 1; yield* itemGet('得到了' + S.gear.filter(b => b !== 'guardBadge').map(b => GEAR[b].n).join('和') + '、護身符和冒險者證！');
       yield* say('還有這些傷藥，帶在身上吧。'); st.bag.potion = (st.bag.potion || 0) + 5; yield* itemGet('得到了傷藥×5！');
-      yield* sayAll(['技能是跟著武器走的。你手上的武器有兩招「主動技能」、一個「被動」，還有攻擊累積到一定次數會自動發動的「特技」。', '普通攻擊不花MP，還會回復一點MP；把MP用在武器技能上吧。', '每次升級會得到1點「天賦點」。打開選單的「天賦」，就能點' + CLASSES[k].n + '的三條天賦分支。', '新的裝備都要靠鐵匠打造。撿到的設計圖和素材，記得拿去給他看看。', '到了Lv14再來找我，我會幫你進行「天賦覺醒」。', '魔物分成好幾個種族，各有害怕的屬性。善用屬性技能，戰鬥會輕鬆很多。', '按START可以打開選單，查看狀態、技能和背包，也能記錄進度。']);
+      yield* sayAll(['技能是跟著武器走的。你手上的武器有兩招「主動技能」、一個「被動」，還有攻擊累積到一定次數會自動發動的「特技」。', '普通攻擊不花MP，還會回復一點MP；把MP用在武器技能上吧。', '每升2級會得到1點「天賦點」。打開選單的「天賦」，就能點' + CLASSES[k].n + '的三條天賦分支。', '新的裝備都要靠鐵匠打造。撿到的設計圖和素材，記得拿去給他看看。', '到了Lv14再來找我，我會幫你進行「天賦覺醒」。', '魔物分成好幾個種族，各有害怕的屬性。善用屬性技能，戰鬥會輕鬆很多。', '按START可以打開選單，查看狀態、技能和背包，也能記錄進度。']);
       const ap = ow && ow.npcs.find(n => n.id === 'apprentice');
       if (ap) { ap.dir = 'left'; yield* say('學徒：「村長爺爺！讓我幫忙！我在院子裡養了一隻練習用的泡泡姆！」');
         if (yield* yesNo('要和泡泡姆練習一場嗎？')) { const res = yield* ow.battleScript({ sp: 'slime', lv: 1, kind: 'wild' }); if (res === 'win') yield* say('學徒：「好厲害！這就是異界人之力！」'); else yield* say('學徒：「泡、泡泡姆，下手輕一點啦！」'); healHero(); }
@@ -8773,7 +8773,7 @@ const Events = {
     else { f.q1res = 'secret'; st.bag.ether = (st.bag.ether || 0) + 1; yield* say('真的嗎！謝謝你！這個給你，是我在草叢裡撿到的。'); yield* itemGet(st.name + '得到了活力茶！'); yield* say('記得回去跟姊姊說我沒事喔！'); }
   },
   *healer() {
-    const st = Game.st, cost = st.lv * 10; const ok = yield* yesNo('歡迎來到旅店！住一晚是' + cost + ' G，要休息嗎？');
+    const st = Game.st, cost = st.lv * 15; const ok = yield* yesNo('歡迎來到旅店！住一晚是' + cost + ' G，要休息嗎？');
     if (ok && st.money < cost) { yield* say('哎呀，錢好像不太夠呢……'); return; }
     if (ok) { st.money -= cost; st.respawn = { map: 'inn', x: 4, y: 4, dir: 'up' }; yield* say('好的，請稍等一下。'); yield* healRitual(); yield* sayAll(['讓你久等了！你的體力已經完全恢復了。', '歡迎再來喔！']); }
     else yield* say('歡迎再來喔！');
@@ -10260,7 +10260,7 @@ function* questDetailScreen(q) {
 const ATTR_BASE = { str: 4, agi: 4, vit: 4, int: 4, dex: 4, luk: 3 };
 const ATTR_HELP = { str: '物攻+1　（重擊技能加成）', agi: '速度+1.5、迴避+0.4%、物防+0.3　（連擊技能加成）', vit: '最大HP+1.6、物防+1、魔防+0.6', int: '魔攻+1.2、最大MP+1.5、魔防+0.6　（魔法加成）', dex: '命中+0.5%、物攻+0.5、魔攻+0.3　（精準技能加成）', luk: '會心率+0.6%、迴避+0.1%　（暗殺技能加成）' };
 const ATTR_TEMPLATE = { swordsman: { str: 3, vit: 2, dex: 2, agi: 1, luk: 1 }, mage: { int: 4, dex: 2, vit: 2, agi: 1 }, guardian: { vit: 4, str: 2, dex: 1, int: 1 }, ranger: { agi: 3, dex: 2, str: 2, vit: 2, luk: 1 }, _: { str: 2, int: 2, vit: 2, agi: 1, dex: 1 } };
-const attrPointsFor = lv => Math.max(0, lv - 1) * 2; // 2 per level: free allocation already wastes nothing, so this keeps builds close to the old balance
+const attrPointsFor = lv => Math.max(0, lv - 1); /* v7.1: 1 per level (was 2): the hero grew too fast */ // 2 per level: free allocation already wastes nothing, so this keeps builds close to the old balance
 const attrCost = v => v < 20 ? 1 : v < 30 ? 2 : 3;
 function attrSpent(st) { let n = 0; for (const k of ATTRS) { const b = ATTR_BASE[k], a = (st.attr || {})[k] || 0; for (let v = b; v < b + a; v++) n += attrCost(v); } return n; }
 const attrAvail = (st = Game.st) => st && st.attr ? attrPointsFor(st.lv) + (st.attrBonus || 0) - attrSpent(st) : 0;
@@ -11248,7 +11248,7 @@ function* ch2Coach(ow, here) {
   st.money -= 200; const [, m, x, y] = opt[r]; Sound.sfx('run'); yield* fadeOut(20); ow.load(m, x, y, 'down'); yield* wait(10); yield* fadeIn(20);
 }
 function* ch2Inn(name, respawn) {
-  const st = Game.st, cost = st.lv * 10; const ok = yield* yesNo('歡迎來到' + name + '！住一晚是' + cost + ' G，要休息嗎？');
+  const st = Game.st, cost = st.lv * 15; const ok = yield* yesNo('歡迎來到' + name + '！住一晚是' + cost + ' G，要休息嗎？');
   if (ok && st.money < cost) { yield* say('哎呀，錢好像不太夠呢……'); return false; }
   if (ok) { st.money -= cost; st.respawn = respawn; yield* say('好的，請好好休息。'); yield* healRitual(); yield* say('早安！體力都恢復了吧？'); return true; }
   yield* say('歡迎再來。'); return false;
@@ -12651,7 +12651,7 @@ const ctOf = (st = Game.st) => st.ct || (st.ct = {});
 const ctRank = (n, st = Game.st) => ctOf(st)[n.id] || 0;
 function talentSum(key, st = Game.st) { const T = CT[st.cls]; if (!T) return 0; let s = 0; for (const B of T) for (const n of B) if (n.key === key) s += n.v * ctRank(n, st); return s; }
 const deepOk = (st = Game.st) => st.lv >= 14 && !!(st.flags && st.flags.deep);
-const tpTotal = (st = Game.st) => (st.cls ? st.lv : 0) + (st.tpRead || 0) + (st.flags && st.flags.deep ? 2 : 0);
+const tpTotal = (st = Game.st) => (st.cls ? Math.floor(st.lv / 2) + 1 : 0) + (st.tpRead || 0) + (st.flags && st.flags.deep ? 2 : 0);
 function tpSpent(st = Game.st) { let s = 0; const T = CT[st.cls]; if (T) for (const B of T) for (const n of B) s += ctRank(n, st); return s; }
 const tpAvail = (st = Game.st) => Math.max(0, tpTotal(st) - tpSpent(st));
 const brBelow = (b, row, st = Game.st) => { let s = 0; for (const n of CT[st.cls][b]) if (n.row < row) s += ctRank(n, st); return s; };
@@ -12789,7 +12789,7 @@ ch2ClassTalk = function* () {
 /* ---------- level-up: 1 talent point (the old skill-point / tree texts are replaced) ---------- */
 { const _lu = Battle.prototype.levelUp; Battle.prototype.levelUp = function* () {
     const st = Game.st, self = this, _msg = Battle.prototype.msg;
-    this.msg = function* (t, o) { if (typeof t === 'string') { if (t.startsWith('可以學習新技能了')) return; if (t.includes('點技能點')) t = '獲得了1點天賦點！MP也全部恢復了。（選單→天賦）'; } return yield* _msg.call(self, t, o); };
+    this.msg = function* (t, o) { if (typeof t === 'string') { if (t.startsWith('可以學習新技能了')) return; if (t.includes('點技能點')) t = st.lv % 2 === 0 ? '獲得了1點天賦點！MP也全部恢復了。（選單→天賦）' : 'MP全部恢復了。（下一級會得到天賦點）'; } return yield* _msg.call(self, t, o); };
     let r; try { r = yield* _lu.call(this); } finally { delete this.msg; }
     st.skp = 0; st.tp = 0;
     if (st.lv === 14 && !(st.flags && st.flags.deep)) yield* this.msg('到達Lv14了！去找萌芽鎮的村長，進行「天賦覺醒」吧。', { hold: 40 });
@@ -13088,6 +13088,140 @@ STORY_MARKS.elder = st => st.flags.license && st.lv >= 14 && !st.flags.deep ? '!
     X.push(['【武器技能】', UIC.accent, 10, 0]); add('主動：' + S.a.map(id => MOVES[id].n).join('・'), '#c8f0ff', 11, 4);
     add('被動「' + S.p.n + '」' + wpassText(S.p), UIC.warm, 10, 4); add('特技「' + S.s.n + '」每' + wsN(S.s) + '次攻擊', '#ffd860', 10, 4);
     const i = L.findIndex(l => l[0] === '' && l[2] === 6); L.splice(i < 0 ? L.length : i, 0, ...X); return L;
+  };
+}
+
+/* ===================== v7.1 pacing & economy (player feedback after v7.0) =====================
+   Feedback: levelling was so fast that players only rushed the bosses; home was so close that nobody bought potions;
+   fruits were cheap and only covered three attributes; gold was useless late; quests felt optional; after the first drop
+   nobody needed a second copy of a piece of gear.
+   · EXP −40%; attribute points 1 per level (was 2, 08o); talent points every 2 levels (09m).
+   · No automatic recovery after battles (07_battle); resting costs money (home 伙食費, inns ×1.5, the church asks a
+     donation), the roadside spring only restores half; potions are cheaper.
+   · Six fruits (體力・敏捷・靈巧 added), 3000 G each, +1500 G for every fruit bought (04_data / 05_ui).
+   · Gold sinks: enhancement up to +10 (04b), 升星 with 精煉石, quality reforging.
+   · Every commission also gives an exclusive reward: a quest-only accessory design, a fruit or a talent book.
+   · A second drop of a design you already know becomes 精煉石 for that item: the smith raises its star (★1–★5, +6% each). */
+
+BALANCE.exp = 0.3; // was 0.5
+
+/* ---------- consumables & fruits ---------- */
+Object.assign(ITEMS.potion, { price: 50 }); Object.assign(ITEMS.superPotion, { price: 200 }); Object.assign(ITEMS.ether, { price: 180 }); Object.assign(ITEMS.hiEther, { price: 450 });
+if (ITEMS.megaPotion) ITEMS.megaPotion.price = 600;
+Object.assign(ITEMS, {
+  vitFruit: { n: '體力果實', price: 3000, sell: 500, use: 'boost', v: { vit: 1 }, cat: ITEMS.powerFruit.cat },
+  agiFruit: { n: '迅捷果實', price: 3000, sell: 500, use: 'boost', v: { agi: 1 }, cat: ITEMS.powerFruit.cat },
+  dexFruit: { n: '靈巧果實', price: 3000, sell: 500, use: 'boost', v: { dex: 1 }, cat: ITEMS.powerFruit.cat },
+});
+for (const [k, nm] of [['powerFruit', '力量'], ['wisdomFruit', '智力'], ['luckClover', '幸運'], ['vitFruit', '體力'], ['agiFruit', '敏捷'], ['dexFruit', '靈巧']]) {
+  const it = ITEMS[k]; it.price = 3000; it.d = (k === 'luckClover' ? '四片葉子的幸運草。使用後' : '神奇的果實。吃下後') + nm + '永久+1。（每買一顆，所有果實都會漲價1500 G；果實加成上限：每5級+1）';
+}
+for (const L of [PEDDLER_LIST, WITCH_SHOP, CAP_SHOP]) for (const k of ['vitFruit', 'agiFruit', 'dexFruit', 'wisdomFruit', 'luckClover']) if (!L.includes(k)) L.push(k);
+for (const k of ['vitFruit', 'agiFruit', 'dexFruit']) { if (!MERCHANT_POOL.includes(k)) MERCHANT_POOL.push(k); if (!AEV_TREASURE.includes(k)) AEV_TREASURE.push(k); }
+TOWER_SHOP.push(['vitFruit', 8], ['agiFruit', 8], ['dexFruit', 8]);
+
+/* ---------- resting costs money ---------- */
+const restCost = (st = Game.st, per = 8) => Math.max(10, st.lv * per);
+function* paidRest(text, per, respawn, heal = true) {
+  const st = Game.st, c = restCost(st, per), pay = Math.min(c, st.money);
+  if (!(yield* yesNo(text + '（' + c + ' G）'))) return false;
+  if (pay < c) yield* say('錢不太夠……先付' + pay + ' G吧。');
+  st.money -= pay; if (respawn) st.respawn = respawn; if (heal) yield* healRitual(); return true;
+}
+{ const _mom = Events.mom; Events.mom = function* (ow) {
+    const st = Game.st; if (!st.flags.license) return yield* _mom(ow);
+    if ((st.flags.golem && !st.flags.momEnd) || !st.flags.momAfter) { const _hr = healRitual; healRitual = function* () { }; try { yield* _mom(ow); } finally { healRitual = _hr; } }
+    else yield* say('歡迎回來！要吃晚飯嗎？');
+    if (yield* paidRest('要吃飯休息嗎？伙食費', 8, { map: 'home', x: 6, y: 5, dir: 'up' })) yield* say(st.name + '的體力完全恢復了！'); else yield* say('路上小心喔。');
+  };
+}
+Events.bed = function* () { if (yield* paidRest('要在床上休息嗎？伙食費', 8, { map: 'home', x: 1, y: 4, dir: 'up' })) yield* say('睡得好飽！體力完全恢復了！'); };
+Events.spring = function* () {
+  if (!(yield* yesNo('清澈的泉水閃閃發亮……要喝一口嗎？'))) return; const st = Game.st, s = heroStats();
+  st.respawn = { map: 'route', x: 7, y: 4, dir: 'left' }; yield* fadeOut(8); st.hp = Math.max(st.hp, Math.ceil(s.hp / 2)); st.mp = Math.max(st.mp ?? 0, Math.ceil(s.mp / 2)); Sound.jingle('heal'); yield* wait(30); yield* fadeIn(8);
+  yield* say('好甜的泉水！體力恢復到一半了。');
+};
+if (Events.priest) { const _pr = Events.priest; Events.priest = function* (ow) {
+    const _yn = yesNo; let asked = false; yesNo = function* (t, o) { if (!asked && t.startsWith('要接受祝福')) { asked = true; yesNo = _yn; const st = Game.st, c = restCost(st, 10); if (!(yield* _yn('要接受祝福（恢復HP、MP並記錄）嗎？\n（奉獻' + c + ' G）', o))) return false; st.money -= Math.min(c, st.money); return true; } return yield* _yn(t, o); };
+    try { return yield* _pr(ow); } finally { yesNo = _yn; }
+  };
+}
+
+/* ---------- quest-only accessories + exclusive commission rewards ---------- */
+const QUEST_GEAR = {
+  qTravelCharm: ['旅人護符', 1, { hp: 6, def: 1 }, {}, ['guardHeal'], '寄信的謝禮。讓人想起回家的路。'],
+  qHerbPouch: ['藥師香囊', 2, { hp: 10, spd: 2 }, {}, ['regen'], '裝滿藥草的香囊，聞了就覺得傷口不痛了。'],
+  qHunterEye: ['獵人之眼', 3, { spe: 2 }, { crit: 6 }, ['first'], '老練獵人傳下來的琥珀墜飾。'],
+  qMinerLamp: ['礦工的提燈', 3, { def: 4 }, { hit: 6 }, ['pierce'], '照亮坑道每一道縫隙的提燈。'],
+  qScholarLens: ['學者的單片眼鏡', 4, { spa: 6, spd: 4 }, {}, ['freeCast'], '看得見魔力流動的古董眼鏡。'],
+  qGraveBell: ['鎮魂鈴', 4, { hp: 12, spd: 6 }, {}, ['endure'], '讓亡魂安息的小鈴鐺。'],
+  qLakeScale: ['湖神鱗片', 5, { hp: 18, def: 4 }, {}, ['thorns'], '銀月湖守護神脫落的鱗片。'],
+  qDesertRose: ['沙漠玫瑰', 5, { atk: 6, spe: 3 }, {}, ['double'], '只在砂漠深處綻放的石之花。'],
+  qGuildSeal: ['公會的印信', 6, { hp: 15, atk: 5, spa: 5 }, {}, ['fervor'], '冒險者公會認可的證明。'],
+  qSnowFang: ['雪狼之牙', 6, { atk: 8 }, { crit: 5 }, ['lastStand'], '雪原狼王的獠牙，握著就熱血沸騰。'],
+  qStarCompass: ['星之羅盤', 7, { spe: 6, spa: 6, spd: 5 }, {}, ['fortune'], '指針永遠指向星墜之地。'],
+  qHeroCrest: ['冒險王之證', 7, { hp: 25, atk: 6, spa: 6, def: 4, spd: 4 }, {}, ['deathWard'], '公會最高的榮譽。'],
+};
+for (const k in QUEST_GEAR) { const [n, t, s, sp, fx, d] = QUEST_GEAR[k]; GEAR[k] = { n, slot: 'acc', t, st: s, sp, fx, d: d + '（委託的獨家報酬）', kind: '飾品' }; BP_RARE.add(k);
+  const P = TIER_POOL[t], h = hashK(k); GEAR_RECIPE[k] = { mats: { [P[h % P.length]]: 2 + Math.floor(t / 2), [TIER_POOL[Math.max(1, t - 1)][(h >> 4) % TIER_POOL[Math.max(1, t - 1)].length]]: 1 + Math.floor(t / 3) }, gold: Math.round(bpGold(t) * 0.9 / 10) * 10 }; }
+const COM_EX = {
+  c13: { bp: 'qTravelCharm' }, c1: { items: { vitFruit: 1 } }, c14: { bp: 'qHerbPouch' }, c15: { items: { agiFruit: 1 } }, c2: { items: { dexFruit: 1 } }, c3: { items: { vitFruit: 1 } },
+  c5: { items: { agiFruit: 1 } }, c6: { items: { wisdomFruit: 1 } }, c7: { bp: 'qHunterEye' }, c8: { items: { dexFruit: 1 } }, c9: { items: { powerFruit: 1 } }, c10: { bp: 'qMinerLamp' },
+  c11: { bp: 'qScholarLens' }, c12: { bp: 'qGraveBell' }, c16: { items: { vitFruit: 1 } }, c17: { bp: 'qLakeScale' }, c18: { items: { dexFruit: 1 } }, c19: { bp: 'qDesertRose' },
+  c20: { items: { agiFruit: 1 } }, c21: { items: { tpBook: 1 } }, c22: { items: { vitFruit: 1 } }, c23: { bp: 'qGuildSeal' }, c24: { items: { tpBook: 1 } }, c25: { items: { powerFruit: 1 } },
+  c26: { items: { agiFruit: 1 } }, c27: { items: { wisdomFruit: 1 } }, c28: { items: { dexFruit: 1 } }, c29: { bp: 'qSnowFang' }, c30: { items: { vitFruit: 1 } }, c31: { items: { luckClover: 1 } },
+  c32: { items: { tpBook: 1 } }, c33: { items: { powerFruit: 1 } }, c34: { bp: 'qStarCompass' }, c35: { bp: 'qHeroCrest' }, c4: { items: { luckClover: 1 } },
+};
+for (const k in COM_EX) { const c = COMMISSIONS[k]; if (!c) continue; const E = COM_EX[k]; c.reward = { ...c.reward, items: { ...(c.reward.items || {}), ...(E.items || {}) } }; if (E.bp) c.reward.bp = E.bp; c.reward.ex = 1; }
+{ const _rt = rewardText; rewardText = function (r) { const t = _rt(r); return r && r.bp ? (t ? t + '、' : '') + '【獨家】' + GEAR[r.bp].n + '的設計圖' : t; }; }
+{ const _gr = giveReward; giveReward = function* (r) {
+    const bp = r && r.bp; if (!bp) return yield* _gr(r);
+    yield* _gr({ ...r, bp: undefined }); gainBP(bp, 1); Sound.jingle('item'); yield* itemGet('獲得了獨家報酬「' + GEAR[bp].n + '」的設計圖！（只有這個委託拿得到）');
+  };
+}
+
+/* ---------- duplicate drops → 精煉石 → 升星 ---------- */
+const STAR_MAX = 5, starStones = s => s + 1, starGold = (g, s) => 500 * GEAR[g.b].t * (s + 1);
+{ const _ls = Battle.prototype.lootShow; Battle.prototype.lootShow = function* (g, head) {
+    const st = Game.st; if (!g || !GEAR[g.b] || !bpKnown(g.b, st) || (g.q || 1) < 2) return yield* _ls.call(this, g, head);
+    st.gear = (st.gear || []).filter(x => x !== g); const n = g.q >= 5 ? 3 : g.q >= 4 ? 2 : 1, R = st.refine || (st.refine = {}); R[g.b] = (R[g.b] || 0) + n;
+    Sound.sfx('item'); yield* this.msg('得到了「' + GEAR[g.b].n + '」的精煉石×' + n + '！（持有' + R[g.b] + '）', { hold: 30 });
+    if (!st.flags.starTut) { st.flags.starTut = 1; yield* this.msg('（精煉石拿去給鐵匠，可以讓同名的裝備「升星」變強。）', { wait: true }); }
+  };
+}
+function* starFlow() {
+  const st = Game.st, R = st.refine || (st.refine = {});
+  while (true) {
+    const g = yield* gearPicker('升星（精煉石）', () => gearSort().filter(q => (q.s || 0) < STAR_MAX && (R[q.b] || 0) > 0), (x, g, Y) => { const s = g.s || 0, need = starStones(s), c = starGold(g, s);
+      Font.draw(x, '★' + s + ' → ★' + (s + 1) + '　能力+6%', 12, Y, UIC.accent, UIC.textSh, 11); Font.draw(x, '精煉石 ' + (R[g.b] || 0) + ' / ' + need, 12, Y + 13, (R[g.b] || 0) >= need ? UIC.good : UIC.bad, UIC.textSh, 10); Font.drawR(x, c + ' G', 164, Y + 26, st.money >= c ? UIC.warm : UIC.bad, UIC.textSh, 11); });
+    if (!g) return; const s = g.s || 0, need = starStones(s), c = starGold(g, s);
+    if ((R[g.b] || 0) < need || st.money < c) { yield* say('精煉石或金錢不夠喔。（再打倒掉落這件裝備的魔物，就能拿到精煉石）'); continue; }
+    if (!(yield* yesNo('要讓' + gearShort(g) + '升星嗎？\n（精煉石×' + need + '、' + c + ' G，一定成功）'))) continue;
+    R[g.b] -= need; st.money -= c; g.s = s + 1; clampHP(); Sound.sfx('rock'); yield* say('鏘！鏘！鏘！'); Sound.jingle('levelup'); yield* say('升星成功！' + gearName(g) + '！');
+  }
+}
+{ const _ef = enhanceFlow; enhanceFlow = function* () {
+    const r = yield* ask('要做什麼？', ['強化（最高+10）', '升星（精煉石）', '取消']); if (r === 0) return yield* _ef(); if (r === 1) return yield* starFlow();
+  };
+}
+// the bag's material tab also lists the stones (read-only)
+{ const _gi = gearInfoLines; gearInfoLines = function (g, w = 150) { const L = _gi(g, w), n = (Game.st && Game.st.refine || {})[g.b] || 0; if (g.s || n) L.splice(1, 0, ['★' + (g.s || 0) + '／' + STAR_MAX + '　精煉石' + n + '顆', '#ffd860', 10, 0]); return L; }; }
+
+/* ---------- saves ---------- */
+{ const _ng = newGameState; newGameState = function (...a) { const st = _ng.apply(this, a); if (st) { st.balV = 1; st.refine = {}; } return st; }; }
+function v71Migrate(st) {
+  if (!st || (st.balV || 0) >= 1) return false; st.balV = 1; let note = [];
+  if (st.attr) { for (const k in st.attr) st.attr[k] = Math.floor(st.attr[k] / 2); for (let g = 0; g < 200 && attrAvail(st) < 0; g++) { const k = Object.keys(st.attr).sort((a, b) => st.attr[b] - st.attr[a])[0]; if (!k || !st.attr[k]) break; st.attr[k]--; } note.push('屬性點改成每級1點，原本的分配減半了'); }
+  if (st.cls && tpSpent(st) > tpTotal(st)) { st.ct = {}; note.push('天賦點改成每2級1點，天賦已經全部退回'); }
+  st.v71note = note.join('；') || 1; return true;
+}
+{ const _so = startOverworld; startOverworld = function (...a) {
+    v71Migrate(Game.st); const ow = _so.apply(this, a), st = Game.st;
+    if (st && st.v71note && st.cls && ow && ow.run) { const n = st.v71note; delete st.v71note; ow.run((function* () { yield* wait(40);
+      yield* say('【v7.1 節奏調整】升級變慢了，戰鬥後也不會自動回復，回家和住宿都要付錢；傷藥降價了。' + (typeof n === 'string' ? '\n' + n + '。' : ''));
+      yield* say('委託會給獨家報酬；重複打倒頭目拿到的裝備會變成「精煉石」，可以在鐵匠讓裝備升星。強化最高到+10。'); })()); }
+    else if (st) delete st.v71note;
+    clampHP(); return ow;
   };
 }
 
