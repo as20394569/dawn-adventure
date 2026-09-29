@@ -160,7 +160,7 @@ function* classCardScreen(keys, o = {}) {
     x.fillStyle = `rgba(${r},${gg},${b},0.5)`; x.fillRect(12, 117, 152, 1);
     drawFitText(x, c.text, 12, 119, 152, 36, 10);
     Font.draw(x, '擅長武器：' + c.w.join('・'), 12, 156, UIC.accent, UIC.textSh, 9); const pas = classPassives(c.k);
-    Font.draw(x, pas.length ? '職業被動：' + pas.map(p => p.n).join('・') : '天賦分支', 12, 167, pas.length ? UIC.warm : UIC.muted, UIC.textSh, 8); Font.drawR(x, '天賦可自由混點', 164, 167, UIC.muted, UIC.textSh, 8);
+    Font.draw(x, pas.length ? '職業被動：' + pas.map(p => p.n).join('・') : '天賦分支', 12, 167, pas.length ? UIC.warm : UIC.muted, UIC.textSh, 8); Font.drawR(x, '天賦每層二選一', 164, 167, UIC.muted, UIC.textSh, 8);
     c.br.forEach(([bn, bd], n) => { const Y = 180 + n * 19, ic = branchIcon(c.k, n); x.fillStyle = shade(col, -0.35); x.fillRect(12, Y + 1, 44, 14); if (ic) x.drawImage(ic, 13, Y + 2); Font.drawC(x, bn, ic ? 40 : 34, Y, '#ffffff', UIC.textSh, bn.length > 3 ? (ic ? 8 : 9) : 10); let z = 9; while (z > 7 && Font.width(bd, z) > 104) z--; Font.draw(x, bd, 60, Y + 1, UIC.text, UIC.textSh, z); });
     Font.drawR(x, (o.cancel ? 'B：返回　' : '') + 'A：選擇' + (keys.length > 1 ? '　◀▶：切換' : ''), 164, 241, UIC.muted, UIC.textSh, 8);
   } };
