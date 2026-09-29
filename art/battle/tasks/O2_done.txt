@@ -1,0 +1,80 @@
+art/battle/chibi/hornHare_idle1.png PASS | 32x32; RGBA alpha=0/255; opaque_colours=23; total_with_transparency=24<=24; bbox=[6, 6, 26, 31]; side_margin>=4px; visual_checked; new image_gen illustration + pixel finish
+art/battle/chibi/hornHare_idle2.png PASS | 32x32; RGBA alpha=0/255; opaque_colours=23; total_with_transparency=24<=24; bbox=[6, 6, 26, 31]; side_margin>=4px; visual_checked; new image_gen illustration + pixel finish
+art/battle/chibi/hornHare_attack1.png PASS | 32x32; RGBA alpha=0/255; opaque_colours=23; total_with_transparency=24<=24; bbox=[5, 12, 26, 31]; side_margin>=4px; visual_checked; new image_gen illustration + pixel finish
+art/battle/chibi/hornHare_attack2.png PASS | 32x32; RGBA alpha=0/255; opaque_colours=23; total_with_transparency=24<=24; bbox=[4, 9, 27, 31]; side_margin>=4px; visual_checked; new image_gen illustration + pixel finish
+art/battle/chibi/hornHare_hurt1.png PASS | 32x32; RGBA alpha=0/255; opaque_colours=23; total_with_transparency=24<=24; bbox=[4, 9, 28, 31]; side_margin>=4px; visual_checked; new image_gen illustration + pixel finish
+art/battle/chibi/strawCrow_idle1.png PASS | 32x32; RGBA alpha=0/255; opaque_colours=21; total_with_transparency=22<=24; bbox=[6, 9, 26, 31]; side_margin>=4px; visual_checked; new image_gen illustration + pixel finish
+art/battle/chibi/strawCrow_idle2.png PASS | 32x32; RGBA alpha=0/255; opaque_colours=21; total_with_transparency=22<=24; bbox=[6, 10, 26, 31]; side_margin>=4px; visual_checked; new image_gen illustration + pixel finish
+art/battle/chibi/strawCrow_attack1.png PASS | 32x32; RGBA alpha=0/255; opaque_colours=21; total_with_transparency=22<=24; bbox=[4, 11, 28, 31]; side_margin>=4px; visual_checked; new image_gen illustration + pixel finish
+art/battle/chibi/strawCrow_attack2.png PASS | 32x32; RGBA alpha=0/255; opaque_colours=21; total_with_transparency=22<=24; bbox=[4, 12, 27, 31]; side_margin>=4px; visual_checked; new image_gen illustration + pixel finish
+art/battle/chibi/strawCrow_hurt1.png PASS | 32x32; RGBA alpha=0/255; opaque_colours=21; total_with_transparency=22<=24; bbox=[6, 11, 25, 31]; side_margin>=4px; visual_checked; new image_gen illustration + pixel finish
+art/battle/chibi/gustSprite_idle1.png PASS | 32x32; RGBA alpha=0/255; opaque_colours=20; total_with_transparency=21<=24; bbox=[6, 7, 25, 31]; side_margin>=4px; visual_checked; new image_gen illustration + pixel finish
+art/battle/chibi/gustSprite_idle2.png PASS | 32x32; RGBA alpha=0/255; opaque_colours=22; total_with_transparency=23<=24; bbox=[4, 7, 28, 31]; side_margin>=4px; visual_checked; new image_gen illustration + pixel finish
+art/battle/chibi/gustSprite_attack1.png PASS | 32x32; RGBA alpha=0/255; opaque_colours=20; total_with_transparency=21<=24; bbox=[7, 7, 24, 31]; side_margin>=4px; visual_checked; new image_gen illustration + pixel finish
+art/battle/chibi/gustSprite_attack2.png PASS | 32x32; RGBA alpha=0/255; opaque_colours=19; total_with_transparency=20<=24; bbox=[7, 7, 25, 31]; side_margin>=4px; visual_checked; new image_gen illustration + pixel finish
+art/battle/chibi/gustSprite_hurt1.png PASS | 32x32; RGBA alpha=0/255; opaque_colours=20; total_with_transparency=21<=24; bbox=[6, 7, 26, 31]; side_margin>=4px; visual_checked; new image_gen illustration + pixel finish
+art/battle/chibi/gustSprite_cast1.png PASS | 32x32; RGBA alpha=0/255; opaque_colours=20; total_with_transparency=21<=24; bbox=[6, 5, 25, 31]; side_margin>=4px; visual_checked; new image_gen illustration + pixel finish
+art/battle/chibi/millGolem_idle1.png PASS | 48x48; RGBA alpha=0/255; opaque_colours=22; total_with_transparency=23<=24; bbox=[4, 15, 43, 47]; side_margin>=4px; visual_checked; new image_gen illustration + pixel finish
+art/battle/chibi/millGolem_idle2.png PASS | 48x48; RGBA alpha=0/255; opaque_colours=22; total_with_transparency=23<=24; bbox=[4, 14, 44, 47]; side_margin>=4px; visual_checked; new image_gen illustration + pixel finish
+art/battle/chibi/millGolem_attack1.png PASS | 48x48; RGBA alpha=0/255; opaque_colours=22; total_with_transparency=23<=24; bbox=[4, 15, 44, 47]; side_margin>=4px; visual_checked; new image_gen illustration + pixel finish
+art/battle/chibi/millGolem_attack2.png PASS | 48x48; RGBA alpha=0/255; opaque_colours=22; total_with_transparency=23<=24; bbox=[4, 16, 43, 47]; side_margin>=4px; visual_checked; new image_gen illustration + pixel finish
+art/battle/chibi/millGolem_hurt1.png PASS | 48x48; RGBA alpha=0/255; opaque_colours=22; total_with_transparency=23<=24; bbox=[7, 13, 41, 47]; side_margin>=4px; visual_checked; new image_gen illustration + pixel finish
+art/battle/field/millGolem_down1.png PASS | 32x32; RGBA alpha=0/255; opaque_colours=21; total_with_transparency=22<=24; bbox=[4, 11, 28, 31]; side_margin>=4px; visual_checked; new image_gen illustration + pixel finish
+art/battle/field/millGolem_down2.png PASS | 32x32; RGBA alpha=0/255; opaque_colours=21; total_with_transparency=22<=24; bbox=[4, 11, 28, 31]; side_margin>=4px; visual_checked; new image_gen illustration + pixel finish
+art/battle/field/millGolem_left1.png PASS | 32x32; RGBA alpha=0/255; opaque_colours=21; total_with_transparency=22<=24; bbox=[7, 9, 25, 31]; side_margin>=4px; visual_checked; new image_gen illustration + pixel finish
+art/battle/field/millGolem_left2.png PASS | 32x32; RGBA alpha=0/255; opaque_colours=21; total_with_transparency=22<=24; bbox=[6, 11, 25, 31]; side_margin>=4px; visual_checked; new image_gen illustration + pixel finish
+art/battle/field/millGolem_right1.png PASS | 32x32; RGBA alpha=0/255; opaque_colours=22; total_with_transparency=23<=24; bbox=[5, 10, 26, 31]; side_margin>=4px; visual_checked; new image_gen illustration + pixel finish
+art/battle/field/millGolem_right2.png PASS | 32x32; RGBA alpha=0/255; opaque_colours=21; total_with_transparency=22<=24; bbox=[6, 10, 25, 31]; side_margin>=4px; visual_checked; new image_gen illustration + pixel finish
+art/battle/field/millGolem_up1.png PASS | 32x32; RGBA alpha=0/255; opaque_colours=17; total_with_transparency=18<=24; bbox=[4, 11, 28, 31]; side_margin>=4px; visual_checked; new image_gen illustration + pixel finish
+art/battle/field/millGolem_up2.png PASS | 32x32; RGBA alpha=0/255; opaque_colours=18; total_with_transparency=19<=24; bbox=[4, 11, 28, 31]; side_margin>=4px; visual_checked; new image_gen illustration + pixel finish
+art/battle/chibi/mossTurtle_idle1.png PASS | 32x32; RGBA alpha=0/255; opaque_colours=22; total_with_transparency=23<=24; bbox=[4, 10, 27, 31]; side_margin>=4px; visual_checked; new image_gen illustration + pixel finish
+art/battle/chibi/mossTurtle_idle2.png PASS | 32x32; RGBA alpha=0/255; opaque_colours=22; total_with_transparency=23<=24; bbox=[4, 10, 27, 31]; side_margin>=4px; visual_checked; new image_gen illustration + pixel finish
+art/battle/chibi/mossTurtle_attack1.png PASS | 32x32; RGBA alpha=0/255; opaque_colours=23; total_with_transparency=24<=24; bbox=[4, 11, 27, 31]; side_margin>=4px; visual_checked; new image_gen illustration + pixel finish
+art/battle/chibi/mossTurtle_attack2.png PASS | 32x32; RGBA alpha=0/255; opaque_colours=23; total_with_transparency=24<=24; bbox=[4, 9, 28, 31]; side_margin>=4px; visual_checked; new image_gen illustration + pixel finish
+art/battle/chibi/mossTurtle_hurt1.png PASS | 32x32; RGBA alpha=0/255; opaque_colours=23; total_with_transparency=24<=24; bbox=[5, 9, 27, 31]; side_margin>=4px; visual_checked; new image_gen illustration + pixel finish
+art/battle/chibi/streamSnake_idle1.png PASS | 32x32; RGBA alpha=0/255; opaque_colours=23; total_with_transparency=24<=24; bbox=[5, 8, 26, 31]; side_margin>=4px; visual_checked; new image_gen illustration + pixel finish
+art/battle/chibi/streamSnake_idle2.png PASS | 32x32; RGBA alpha=0/255; opaque_colours=23; total_with_transparency=24<=24; bbox=[6, 9, 26, 31]; side_margin>=4px; visual_checked; new image_gen illustration + pixel finish
+art/battle/chibi/streamSnake_attack1.png PASS | 32x32; RGBA alpha=0/255; opaque_colours=23; total_with_transparency=24<=24; bbox=[5, 5, 26, 31]; side_margin>=4px; visual_checked; new image_gen illustration + pixel finish
+art/battle/chibi/streamSnake_attack2.png PASS | 32x32; RGBA alpha=0/255; opaque_colours=23; total_with_transparency=24<=24; bbox=[4, 8, 28, 31]; side_margin>=4px; visual_checked; new image_gen illustration + pixel finish
+art/battle/chibi/streamSnake_hurt1.png PASS | 32x32; RGBA alpha=0/255; opaque_colours=22; total_with_transparency=23<=24; bbox=[5, 7, 26, 31]; side_margin>=4px; visual_checked; new image_gen illustration + pixel finish
+art/battle/chibi/mireFly_idle1.png PASS | 32x32; RGBA alpha=0/255; opaque_colours=22; total_with_transparency=23<=24; bbox=[4, 8, 28, 31]; side_margin>=4px; visual_checked; new image_gen illustration + pixel finish
+art/battle/chibi/mireFly_idle2.png PASS | 32x32; RGBA alpha=0/255; opaque_colours=22; total_with_transparency=23<=24; bbox=[4, 8, 28, 31]; side_margin>=4px; visual_checked; new image_gen illustration + pixel finish
+art/battle/chibi/mireFly_attack1.png PASS | 32x32; RGBA alpha=0/255; opaque_colours=23; total_with_transparency=24<=24; bbox=[5, 8, 27, 31]; side_margin>=4px; visual_checked; new image_gen illustration + pixel finish
+art/battle/chibi/mireFly_attack2.png PASS | 32x32; RGBA alpha=0/255; opaque_colours=23; total_with_transparency=24<=24; bbox=[4, 8, 27, 31]; side_margin>=4px; visual_checked; new image_gen illustration + pixel finish
+art/battle/chibi/mireFly_hurt1.png PASS | 32x32; RGBA alpha=0/255; opaque_colours=21; total_with_transparency=22<=24; bbox=[4, 9, 27, 31]; side_margin>=4px; visual_checked; new image_gen illustration + pixel finish
+art/battle/chibi/blackCatfish_idle1.png PASS | 48x48; RGBA alpha=0/255; opaque_colours=23; total_with_transparency=24<=24; bbox=[6, 11, 42, 47]; side_margin>=4px; visual_checked; new image_gen illustration + pixel finish
+art/battle/chibi/blackCatfish_idle2.png PASS | 48x48; RGBA alpha=0/255; opaque_colours=23; total_with_transparency=24<=24; bbox=[5, 9, 43, 47]; side_margin>=4px; visual_checked; new image_gen illustration + pixel finish
+art/battle/chibi/blackCatfish_attack1.png PASS | 48x48; RGBA alpha=0/255; opaque_colours=23; total_with_transparency=24<=24; bbox=[4, 10, 44, 47]; side_margin>=4px; visual_checked; new image_gen illustration + pixel finish
+art/battle/chibi/blackCatfish_attack2.png PASS | 48x48; RGBA alpha=0/255; opaque_colours=23; total_with_transparency=24<=24; bbox=[4, 11, 44, 47]; side_margin>=4px; visual_checked; new image_gen illustration + pixel finish
+art/battle/chibi/blackCatfish_hurt1.png PASS | 48x48; RGBA alpha=0/255; opaque_colours=22; total_with_transparency=23<=24; bbox=[7, 13, 41, 47]; side_margin>=4px; visual_checked; new image_gen illustration + pixel finish
+art/battle/field/blackCatfish_down1.png PASS | 32x32; RGBA alpha=0/255; opaque_colours=23; total_with_transparency=24<=24; bbox=[5, 9, 26, 31]; side_margin>=4px; visual_checked; new image_gen illustration + pixel finish
+art/battle/field/blackCatfish_down2.png PASS | 32x32; RGBA alpha=0/255; opaque_colours=23; total_with_transparency=24<=24; bbox=[5, 9, 26, 31]; side_margin>=4px; visual_checked; new image_gen illustration + pixel finish
+art/battle/field/blackCatfish_left1.png PASS | 32x32; RGBA alpha=0/255; opaque_colours=22; total_with_transparency=23<=24; bbox=[4, 10, 28, 31]; side_margin>=4px; visual_checked; new image_gen illustration + pixel finish
+art/battle/field/blackCatfish_left2.png PASS | 32x32; RGBA alpha=0/255; opaque_colours=23; total_with_transparency=24<=24; bbox=[4, 11, 27, 31]; side_margin>=4px; visual_checked; new image_gen illustration + pixel finish
+art/battle/field/blackCatfish_right1.png PASS | 32x32; RGBA alpha=0/255; opaque_colours=22; total_with_transparency=23<=24; bbox=[4, 11, 28, 31]; side_margin>=4px; visual_checked; new image_gen illustration + pixel finish
+art/battle/field/blackCatfish_right2.png PASS | 32x32; RGBA alpha=0/255; opaque_colours=23; total_with_transparency=24<=24; bbox=[4, 11, 28, 31]; side_margin>=4px; visual_checked; new image_gen illustration + pixel finish
+art/battle/field/blackCatfish_up1.png PASS | 32x32; RGBA alpha=0/255; opaque_colours=18; total_with_transparency=19<=24; bbox=[5, 11, 27, 31]; side_margin>=4px; visual_checked; new image_gen illustration + pixel finish
+art/battle/field/blackCatfish_up2.png PASS | 32x32; RGBA alpha=0/255; opaque_colours=18; total_with_transparency=19<=24; bbox=[4, 10, 27, 31]; side_margin>=4px; visual_checked; new image_gen illustration + pixel finish
+art/battle/chibi/ch1_motion_preview.gif PASS | updated O2 frame/animation contact sheet; preview excluded from sprite colour limit
+art/battle/chibi/ch1_preview.png PASS | updated O2 frame/animation contact sheet; preview excluded from sprite colour limit
+art/battle/chibi/ch1_v2_compare.png PASS | 4x reference directly above O2 redraw, rejected O1 third row; reviewed brightness/shading/saturation/proportion
+art/battle/chibi/ch1_v2_preview.png PASS | updated O2 frame/animation contact sheet; preview excluded from sprite colour limit
+art/battle/field/ch1_field_preview.png PASS | updated O2 frame/animation contact sheet; preview excluded from sprite colour limit
+art/battle/field/ch1_v2_field_preview.png PASS | updated O2 frame/animation contact sheet; preview excluded from sprite colour limit
+art/battle/tasks/O2_qc.json PASS | supporting delivery file verified
+art/battle/tasks/O2_sources/generation_briefs.md PASS | supporting delivery file verified
+art/battle/tasks/O2_sources/process_o2.py PASS | supporting delivery file verified
+art/battle/tasks/O2_sources/README.md PASS | supporting delivery file verified
+art/battle/tasks/O2_sources/source_manifest.json PASS | supporting delivery file verified
+art/battle/tasks/O2_sources/sources/blackCatfish.png PASS | accepted high-resolution image_gen source sheet; runtime size/colour limits apply to extracted sprites
+art/battle/tasks/O2_sources/sources/blackCatfish_field.png PASS | accepted high-resolution image_gen source sheet; runtime size/colour limits apply to extracted sprites
+art/battle/tasks/O2_sources/sources/gustSprite.png PASS | accepted high-resolution image_gen source sheet; runtime size/colour limits apply to extracted sprites
+art/battle/tasks/O2_sources/sources/hornHare.png PASS | accepted high-resolution image_gen source sheet; runtime size/colour limits apply to extracted sprites
+art/battle/tasks/O2_sources/sources/millGolem.png PASS | accepted high-resolution image_gen source sheet; runtime size/colour limits apply to extracted sprites
+art/battle/tasks/O2_sources/sources/millGolem_field.png PASS | accepted high-resolution image_gen source sheet; runtime size/colour limits apply to extracted sprites
+art/battle/tasks/O2_sources/sources/mireFly.png PASS | accepted high-resolution image_gen source sheet; runtime size/colour limits apply to extracted sprites
+art/battle/tasks/O2_sources/sources/mossTurtle.png PASS | accepted high-resolution image_gen source sheet; runtime size/colour limits apply to extracted sprites
+art/battle/tasks/O2_sources/sources/strawCrow.png PASS | accepted high-resolution image_gen source sheet; runtime size/colour limits apply to extracted sprites
+art/battle/tasks/O2_sources/sources/streamSnake.png PASS | accepted high-resolution image_gen source sheet; runtime size/colour limits apply to extracted sprites
+art/battle/tasks/O2_sources/target_style.png PASS | supporting delivery file verified
+art/battle/tasks/O2_sources/v1_rejected_backup.zip PASS | historical rejected O1 backup only; not approved new sprite art
