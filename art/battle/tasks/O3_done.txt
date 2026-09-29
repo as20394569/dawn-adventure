@@ -1,0 +1,77 @@
+art/battle/chibi/hornHare_idle1.png | PASS | 32x32；23 不透明色；含透明≤24色；O2原色盤；正面雙眼／朝玩家攻擊；逐格視覺自檢
+art/battle/chibi/hornHare_idle2.png | PASS | 32x32；23 不透明色；含透明≤24色；O2原色盤；正面雙眼／朝玩家攻擊；逐格視覺自檢
+art/battle/chibi/hornHare_attack1.png | PASS | 32x32；23 不透明色；含透明≤24色；O2原色盤；正面雙眼／朝玩家攻擊；逐格視覺自檢
+art/battle/chibi/hornHare_attack2.png | PASS | 32x32；22 不透明色；含透明≤24色；O2原色盤；正面雙眼／朝玩家攻擊；逐格視覺自檢
+art/battle/chibi/hornHare_hurt1.png | PASS | 32x32；23 不透明色；含透明≤24色；O2原色盤；正面雙眼／朝玩家攻擊；逐格視覺自檢
+art/battle/chibi/strawCrow_idle1.png | PASS | 32x32；21 不透明色；含透明≤24色；O2原色盤；正面雙眼／朝玩家攻擊；逐格視覺自檢
+art/battle/chibi/strawCrow_idle2.png | PASS | 32x32；22 不透明色；含透明≤24色；O2原色盤；正面雙眼／朝玩家攻擊；逐格視覺自檢
+art/battle/chibi/strawCrow_attack1.png | PASS | 32x32；21 不透明色；含透明≤24色；O2原色盤；正面雙眼／朝玩家攻擊；逐格視覺自檢
+art/battle/chibi/strawCrow_attack2.png | PASS | 32x32；21 不透明色；含透明≤24色；O2原色盤；正面雙眼／朝玩家攻擊；逐格視覺自檢
+art/battle/chibi/strawCrow_hurt1.png | PASS | 32x32；22 不透明色；含透明≤24色；O2原色盤；正面雙眼／朝玩家攻擊；逐格視覺自檢
+art/battle/chibi/gustSprite_idle1.png | PASS | 32x32；20 不透明色；含透明≤24色；O2原色盤；正面雙眼／朝玩家攻擊；逐格視覺自檢
+art/battle/chibi/gustSprite_idle2.png | PASS | 32x32；22 不透明色；含透明≤24色；O2原色盤；正面雙眼／朝玩家攻擊；逐格視覺自檢
+art/battle/chibi/gustSprite_attack1.png | PASS | 32x32；20 不透明色；含透明≤24色；O2原色盤；正面雙眼／朝玩家攻擊；逐格視覺自檢
+art/battle/chibi/gustSprite_attack2.png | PASS | 32x32；19 不透明色；含透明≤24色；O2原色盤；正面雙眼／朝玩家攻擊；逐格視覺自檢
+art/battle/chibi/gustSprite_hurt1.png | PASS | 32x32；20 不透明色；含透明≤24色；O2原色盤；正面雙眼／朝玩家攻擊；逐格視覺自檢
+art/battle/chibi/gustSprite_cast1.png | PASS | 32x32；20 不透明色；含透明≤24色；O2原色盤；正面雙眼／朝玩家攻擊；逐格視覺自檢
+art/battle/chibi/millGolem_idle1.png | PASS | 48x48；22 不透明色；含透明≤24色；O2原色盤；正面雙眼／朝玩家攻擊；逐格視覺自檢
+art/battle/chibi/millGolem_idle2.png | PASS | 48x48；22 不透明色；含透明≤24色；O2原色盤；正面雙眼／朝玩家攻擊；逐格視覺自檢
+art/battle/chibi/millGolem_attack1.png | PASS | 48x48；22 不透明色；含透明≤24色；O2原色盤；正面雙眼／朝玩家攻擊；逐格視覺自檢
+art/battle/chibi/millGolem_attack2.png | PASS | 48x48；22 不透明色；含透明≤24色；O2原色盤；正面雙眼／朝玩家攻擊；逐格視覺自檢
+art/battle/chibi/millGolem_hurt1.png | PASS | 48x48；22 不透明色；含透明≤24色；O2原色盤；正面雙眼／朝玩家攻擊；逐格視覺自檢
+art/battle/field/millGolem_down1.png | PASS | 32x32；21 不透明色；含透明≤24色；O2原色盤；磨石魔像可見方向補眼；四方向保留
+art/battle/field/millGolem_down2.png | PASS | 32x32；22 不透明色；含透明≤24色；O2原色盤；磨石魔像可見方向補眼；四方向保留
+art/battle/field/millGolem_left1.png | PASS | 32x32；21 不透明色；含透明≤24色；O2原色盤；磨石魔像可見方向補眼；四方向保留
+art/battle/field/millGolem_left2.png | PASS | 32x32；21 不透明色；含透明≤24色；O2原色盤；磨石魔像可見方向補眼；四方向保留
+art/battle/field/millGolem_right1.png | PASS | 32x32；22 不透明色；含透明≤24色；O2原色盤；磨石魔像可見方向補眼；四方向保留
+art/battle/field/millGolem_right2.png | PASS | 32x32；21 不透明色；含透明≤24色；O2原色盤；磨石魔像可見方向補眼；四方向保留
+art/battle/field/millGolem_up1.png | PASS | 32x32；17 不透明色；含透明≤24色；O2原色盤；沿用 O2；外觀與方向符合，像素未改
+art/battle/field/millGolem_up2.png | PASS | 32x32；18 不透明色；含透明≤24色；O2原色盤；沿用 O2；外觀與方向符合，像素未改
+art/battle/chibi/mossTurtle_idle1.png | PASS | 32x32；23 不透明色；含透明≤24色；O2原色盤；正面雙眼／朝玩家攻擊；逐格視覺自檢
+art/battle/chibi/mossTurtle_idle2.png | PASS | 32x32；23 不透明色；含透明≤24色；O2原色盤；正面雙眼／朝玩家攻擊；逐格視覺自檢
+art/battle/chibi/mossTurtle_attack1.png | PASS | 32x32；23 不透明色；含透明≤24色；O2原色盤；正面雙眼／朝玩家攻擊；逐格視覺自檢
+art/battle/chibi/mossTurtle_attack2.png | PASS | 32x32；23 不透明色；含透明≤24色；O2原色盤；正面雙眼／朝玩家攻擊；逐格視覺自檢
+art/battle/chibi/mossTurtle_hurt1.png | PASS | 32x32；23 不透明色；含透明≤24色；O2原色盤；正面雙眼／朝玩家攻擊；逐格視覺自檢
+art/battle/chibi/streamSnake_idle1.png | PASS | 32x32；23 不透明色；含透明≤24色；O2原色盤；正面雙眼／朝玩家攻擊；逐格視覺自檢
+art/battle/chibi/streamSnake_idle2.png | PASS | 32x32；23 不透明色；含透明≤24色；O2原色盤；正面雙眼／朝玩家攻擊；逐格視覺自檢
+art/battle/chibi/streamSnake_attack1.png | PASS | 32x32；23 不透明色；含透明≤24色；O2原色盤；正面雙眼／朝玩家攻擊；逐格視覺自檢
+art/battle/chibi/streamSnake_attack2.png | PASS | 32x32；23 不透明色；含透明≤24色；O2原色盤；正面雙眼／朝玩家攻擊；逐格視覺自檢
+art/battle/chibi/streamSnake_hurt1.png | PASS | 32x32；23 不透明色；含透明≤24色；O2原色盤；正面雙眼／朝玩家攻擊；逐格視覺自檢
+art/battle/chibi/mireFly_idle1.png | PASS | 32x32；22 不透明色；含透明≤24色；O2原色盤；正面雙眼／朝玩家攻擊；逐格視覺自檢
+art/battle/chibi/mireFly_idle2.png | PASS | 32x32；22 不透明色；含透明≤24色；O2原色盤；正面雙眼／朝玩家攻擊；逐格視覺自檢
+art/battle/chibi/mireFly_attack1.png | PASS | 32x32；23 不透明色；含透明≤24色；O2原色盤；正面雙眼／朝玩家攻擊；逐格視覺自檢
+art/battle/chibi/mireFly_attack2.png | PASS | 32x32；23 不透明色；含透明≤24色；O2原色盤；正面雙眼／朝玩家攻擊；逐格視覺自檢
+art/battle/chibi/mireFly_hurt1.png | PASS | 32x32；22 不透明色；含透明≤24色；O2原色盤；正面雙眼／朝玩家攻擊；逐格視覺自檢
+art/battle/chibi/blackCatfish_idle1.png | PASS | 48x48；23 不透明色；含透明≤24色；O2原色盤；正面雙眼／朝玩家攻擊；逐格視覺自檢
+art/battle/chibi/blackCatfish_idle2.png | PASS | 48x48；23 不透明色；含透明≤24色；O2原色盤；正面雙眼／朝玩家攻擊；逐格視覺自檢
+art/battle/chibi/blackCatfish_attack1.png | PASS | 48x48；23 不透明色；含透明≤24色；O2原色盤；正面雙眼／朝玩家攻擊；逐格視覺自檢
+art/battle/chibi/blackCatfish_attack2.png | PASS | 48x48；23 不透明色；含透明≤24色；O2原色盤；正面雙眼／朝玩家攻擊；逐格視覺自檢
+art/battle/chibi/blackCatfish_hurt1.png | PASS | 48x48；23 不透明色；含透明≤24色；O2原色盤；正面雙眼／朝玩家攻擊；逐格視覺自檢
+art/battle/field/blackCatfish_down1.png | PASS | 32x32；23 不透明色；含透明≤24色；O2原色盤；沿用 O2；外觀與方向符合，像素未改
+art/battle/field/blackCatfish_down2.png | PASS | 32x32；23 不透明色；含透明≤24色；O2原色盤；沿用 O2；外觀與方向符合，像素未改
+art/battle/field/blackCatfish_left1.png | PASS | 32x32；22 不透明色；含透明≤24色；O2原色盤；沿用 O2；外觀與方向符合，像素未改
+art/battle/field/blackCatfish_left2.png | PASS | 32x32；23 不透明色；含透明≤24色；O2原色盤；沿用 O2；外觀與方向符合，像素未改
+art/battle/field/blackCatfish_right1.png | PASS | 32x32；22 不透明色；含透明≤24色；O2原色盤；沿用 O2；外觀與方向符合，像素未改
+art/battle/field/blackCatfish_right2.png | PASS | 32x32；23 不透明色；含透明≤24色；O2原色盤；沿用 O2；外觀與方向符合，像素未改
+art/battle/field/blackCatfish_up1.png | PASS | 32x32；18 不透明色；含透明≤24色；O2原色盤；沿用 O2；外觀與方向符合，像素未改
+art/battle/field/blackCatfish_up2.png | PASS | 32x32；18 不透明色；含透明≤24色；O2原色盤；沿用 O2；外觀與方向符合，像素未改
+art/battle/chibi/ch1_motion_preview.gif | PASS | O3 對照、檢查證據、重製來源或 O2 原檔備份
+art/battle/chibi/ch1_preview.png | PASS | O3 對照、檢查證據、重製來源或 O2 原檔備份
+art/battle/chibi/ch1_v3_compare.png | PASS | O3 對照、檢查證據、重製來源或 O2 原檔備份
+art/battle/chibi/ch1_v3_face_audit.png | PASS | O3 對照、檢查證據、重製來源或 O2 原檔備份
+art/battle/chibi/ch1_v3_preview.png | PASS | O3 對照、檢查證據、重製來源或 O2 原檔備份
+art/battle/field/ch1_field_preview.png | PASS | O3 對照、檢查證據、重製來源或 O2 原檔備份
+art/battle/field/ch1_v3_field_preview.png | PASS | O3 對照、檢查證據、重製來源或 O2 原檔備份
+art/battle/tasks/O3_qc.json | PASS | O3 對照、檢查證據、重製來源或 O2 原檔備份
+art/battle/tasks/O3_sources/finish_o3.py | PASS | O3 對照、檢查證據、重製來源或 O2 原檔備份
+art/battle/tasks/O3_sources/front_reference.png | PASS | O3 對照、檢查證據、重製來源或 O2 原檔備份
+art/battle/tasks/O3_sources/generation_briefs.md | PASS | O3 對照、檢查證據、重製來源或 O2 原檔備份
+art/battle/tasks/O3_sources/o2_before_o3.zip | PASS | O3 對照、檢查證據、重製來源或 O2 原檔備份
+art/battle/tasks/O3_sources/README.md | PASS | O3 對照、檢查證據、重製來源或 O2 原檔備份
+art/battle/tasks/O3_sources/source_ids.json | PASS | O3 對照、檢查證據、重製來源或 O2 原檔備份
+art/battle/tasks/O3_sources/source_manifest.json | PASS | O3 對照、檢查證據、重製來源或 O2 原檔備份
+art/battle/tasks/O3_sources/sources/blackCatfish.png | PASS | O3 對照、檢查證據、重製來源或 O2 原檔備份
+art/battle/tasks/O3_sources/sources/hornHare.png | PASS | O3 對照、檢查證據、重製來源或 O2 原檔備份
+art/battle/tasks/O3_sources/sources/mossTurtle.png | PASS | O3 對照、檢查證據、重製來源或 O2 原檔備份
+art/battle/tasks/O3_sources/sources/strawCrow.png | PASS | O3 對照、檢查證據、重製來源或 O2 原檔備份
+art/battle/tasks/O3_sources/sources/streamSnake.png | PASS | O3 對照、檢查證據、重製來源或 O2 原檔備份

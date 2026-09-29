@@ -3,7 +3,7 @@
    monsters match the level, with a region boss at the end of each step:
      覺醒 (Lv1–3) → 【新】風車丘陵的異變 (Lv4–8, 磨石魔像) → 【新】碧溪谷的黑水 (Lv8–11, 瘴氣大鯰)
      → 北方的橋（沼澤鱷 Lv12）→ 三枚古印 (Lv13–16) → 古岩魔像 (Lv17)
-   Two new maps (風車丘陵 east of 萌芽鎮, 碧溪谷 west of 晨霧道路), eight new monsters (Codex task O2 chibis; the
+   Two new maps (風車丘陵 east of 萌芽鎮, 碧溪谷 west of 晨霧道路), eight new monsters (Codex task O2/O3 chibis; the
    placeholder recolours remain for the 寫實 look), a recurring pair of characters (the miller 漢斯 and his daughter 諾拉), full story events with
    choices. New games are held at the ledge on 晨霧道路 until the hills are done; older saves get the new areas as extra
    content without being blocked. */
