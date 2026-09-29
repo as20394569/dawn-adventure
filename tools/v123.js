@@ -1,0 +1,1 @@
+module.exports = async (g) => { g.log(await g.ev(() => ['w_titanAxe_0', 'w_titanAxe_1', 'w_crescentAxe_0', 'w_glacierAxe_0', 'm_quake', 'm_magmaFist', 'm_heatHaze'].map(id => id + ' ' + JSON.stringify(MOVES[id]).slice(0, 260)).join('\n'))); };
