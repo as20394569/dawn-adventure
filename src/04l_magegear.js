@@ -24,9 +24,13 @@ Object.assign(GEAR, {
   ancientTome: { n: '古岩魔導書', slot: 'weapon', t: 3, st: { spa: 7, mp: 16 }, sp: { elem: 6 }, kind: '魔導書', d: '石板裝訂成的古代魔導書。重得要用兩手捧著。' },
   stolenTome: { n: '被搶走的魔導書', slot: 'weapon', t: 3, st: { spa: 8, mp: 14 }, sp: { crit: 4 }, fx: ['arcaneSurge'], kind: '魔導書', d: '格倫從商隊搶來的魔導書。他根本看不懂。' },
   deathTome: { n: '亡者之書', slot: 'weapon', t: 4, st: { spa: 10, mp: 20 }, sp: { drain: 6, elem: 4 }, kind: '魔導書', d: '墓穴深處的黑色魔導書。書頁會吸走傷口的生命。' },
+  // v9: forgeable tomes for the later tiers (before, the best forgeable tome stopped at 亡者之書)
+  sageTome: { n: '賢者之書', slot: 'weapon', t: 5, st: { spa: 13, mp: 24 }, sp: { crit: 4 }, kind: '魔導書', d: '王都魔導院代代相傳的教本。每一頁的邊角都被翻得發亮。' },
+  frostTome: { n: '霜語之書', slot: 'weapon', t: 6, st: { spa: 16, mp: 28 }, sp: { elem: 6 }, elem: '水', kind: '魔導書', d: '用冰晶當書籤的魔導書。翻開時會吐出白色的寒氣。' },
+  starTome: { n: '星典', slot: 'weapon', t: 7, st: { spa: 19, mp: 32 }, sp: { elem: 8 }, kind: '魔導書', d: '記載著星辰運行的古老典籍。書頁上的星座會慢慢移動。' },
 });
 WEAPON_KINDS.法杖.push('emberRod', 'voltRod', 'quartzWand', 'fangWand', 'magusStaff', 'foxfireStaff', 'crystalStaff', 'dawnStaff', 'masterStaff');
-WEAPON_KINDS.魔導書 = ['primerTome', 'herbalTome', 'ancientTome', 'stolenTome', 'deathTome'];
+WEAPON_KINDS.魔導書 = ['primerTome', 'herbalTome', 'ancientTome', 'stolenTome', 'deathTome', 'sageTome', 'frostTome', 'starTome'];
 const isMagicKind = k => k === '法杖' || k === '魔導書';
 
 // where they come from
@@ -48,11 +52,13 @@ Object.assign(WPN_PAL, {
   wandM: { T: '#3a2a5a', V: '#c890ff' }, wandO: { T: '#6a3a1a', V: '#ffa040' }, wandC: { T: '#4a6a8a', V: '#a0f8ff' }, wandD: { T: '#b08830', V: '#fff0a0' }, wandMs: { T: '#3a3a5a', V: '#e0f0ff' },
   tomeBr: { T: '#8a5a30', U: '#e8c048', V: '#f0e8d0' }, tomeG: { T: '#3e7a34', U: '#c8e070', V: '#f0f0d0' }, tomeS: { T: '#8a8070', U: '#60d0c8', V: '#e8e0c8' },
   tomeR: { T: '#8a2a2a', U: '#e8c048', V: '#f0e0d0' }, tomeK: { T: '#2e2440', U: '#b060ff', V: '#d8c8e8' },
+  tomeSg: { T: '#2a5a4a', U: '#f0d060', V: '#f0ecd8' }, tomeF: { T: '#3a6a9a', U: '#c0f0ff', V: '#e8f4ff' }, tomeSt: { T: '#1e2450', U: '#ffe070', V: '#e0e4ff' },
 });
 Object.assign(GEAR_LOOK, {
   emberRod: ['staff', 'wandR'], voltRod: ['staff', 'wandV'], quartzWand: ['staff', 'wandQ'], fangWand: ['staff', 'wandF'], magusStaff: ['staff', 'wandM'], foxfireStaff: ['staff', 'wandO'],
   crystalStaff: ['staff', 'wandC'], dawnStaff: ['staff', 'wandD'], masterStaff: ['staff', 'wandMs'],
   primerTome: ['tome', 'tomeBr'], herbalTome: ['tome', 'tomeG'], ancientTome: ['tome', 'tomeS'], stolenTome: ['tome', 'tomeR'], deathTome: ['tome', 'tomeK'],
+  sageTome: ['tome', 'tomeSg'], frostTome: ['tome', 'tomeF'], starTome: ['tome', 'tomeSt'],
 });
 for (const k in GEAR_LOOK) if (GEAR[k]) GEAR[k].look = GEAR_LOOK[k];
 MOVES.attack.d = '用武器攻擊。不消耗MP。裝備法杖或魔導書時改用魔攻。';

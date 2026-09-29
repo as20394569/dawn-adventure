@@ -42,11 +42,11 @@ function resOn(st = Game.st) { const c = st.cls, R = RESONANCE[c], out = []; if 
 /* ---------- 3) gear sets ---------- */
 const GEAR_SETS = [
   ['王國騎士', ['royalSword', 'royalDagger', 'courtStaff', 'royalTome', 'royalHelm', 'royalMail', 'courtRobe', 'royalGreaves', 'royalBadge'], [['defP', 5]], [['hpP', 6]], [['actUp', 10]]],
-  ['霜嶺', ['frostBrand', 'glacierStaff', 'glacierAxe', 'iceDagger', 'frostSpear', 'iceHarp', 'frostMusket', 'yetiFur', 'snowBoots', 'frostHood', 'iceCharm'], [['elemRes', 8]], [['spdP', 6]], [['crit', 5]]],
+  ['霜嶺', ['frostBrand', 'glacierStaff', 'glacierAxe', 'iceDagger', 'frostSpear', 'iceHarp', 'frostTome', 'frostMusket', 'yetiFur', 'snowBoots', 'frostHood', 'iceCharm'], [['elemRes', 8]], [['spdP', 6]], [['crit', 5]]],
   ['熔岩', ['flameBrand', 'volcanoStaff', 'magmaDagger', 'magmaFist', 'magmaPlate', 'lavaBoots', 'emberCharm', 'lavaHeart', 'salamanderHelm'], [['fireUp', 10]], [['atkP', 5]], [['critDmg', 15]]],
   ['黃銅發條', ['brassSword', 'gearStaff', 'gearRepeater', 'brassPistol', 'clockMail', 'springBoots'], [['speP', 5]], [['spcUp', 15]], [['actUp', 10]]],
   ['黯滅', ['duskSword', 'duskBlade', 'duskHelm', 'shadowRobe', 'shadowDagger', 'voidRing', 'voidStaff'], [['atkP', 4]], [['drain', 4]], [['bigUp', 12]]],
-  ['星辰', ['starSword', 'starStaff', 'starLyre', 'starFist', 'starBlaster', 'starCrown', 'starBoots', 'starCharm', 'cometDagger', 'skySpear'], [['spaP', 4], ['atkP', 4]], [['mpRegen', 2]], [['actUp', 12]]],
+  ['星辰', ['starSword', 'starStaff', 'starLyre', 'starTome', 'starFist', 'starBlaster', 'starCrown', 'starBoots', 'starCharm', 'cometDagger', 'skySpear'], [['spaP', 4], ['atkP', 4]], [['mpRegen', 2]], [['actUp', 12]]],
   ['灰狼', ['wolfHood', 'wolfNecklace', 'wolfFang2', 'hunterCap', 'hunterLeather', 'tigerClaw'], [['speP', 4]], [['critDmg', 10]], [['crit', 4]]],
 ].map(([n, keys, b2, b3, b4]) => ({ n, keys: new Set(keys.filter(k => GEAR[k])), b: { 2: b2, 3: b3, 4: b4 } }));
 const setOf = k => GEAR_SETS.find(S => S.keys.has(k));

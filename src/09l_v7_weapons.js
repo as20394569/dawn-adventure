@@ -82,6 +82,7 @@ const WS_TABLE = {
   stolenTome: '盜書,arcaneEdge,lullabyH,magCrit:6,crit:3', deathTome: '亡者,arcaneEdge,discord,drain:6,drain:4', lakeTome: '湖之,aquaBurst,barrier,mpRegen:4,heal:3',
   riftTome: '界書,timeStop,arcaneEdge,weakUp:10,burst:4', sandTome: '沙書,manaBurst,lullabyH,spe:4,weaken:4', witchTome: '魔女,kindle,combust,fireUp:12,brn:3',
   royalTome: '王立,skyJudge,holyLight,healUp:20,guard:3', lichTome: '巫妖,aquaBurst,timeStop,elem:12,weaken:3', voidTome: '虛書,arcaneEdge,enchant,critDmg:20,execute:4',
+  sageTome: '賢者,arcaneEdge,skyJudge,magCrit:8,burst:4', frostTome: '霜語,arcaneEdge,aquaBurst,elem:12,weaken:4', starTome: '星典,arcaneEdge,meteor,mpRegen:5,burst:5',
   grenAxe: '格倫,recklessSlash,warCry,critDmg:10,break:3', hatchet: '伐木,powerSlash,warCry,crit:3,burst:4', boarAxe: '野豬,recklessSlash,guardStrike,hpP:6,break:3',
   rockAxe: '岩角,shieldBash,armorBreak,pierceT:12,burst:4', crescentAxe: '新月,frenzy,bloodRage,drain:6,multi:4', glacierAxe: '霜嶺,zantetsu,ironWill,defP:8,weaken:4', titanAxe: '泰坦,asura,lastStand,atkP:10,burst:5',
   trainSpear: '槍兵,dragonLance,gale,hit:6,burst:4', ironSpear: '鐵槍,pierceLance,jump,pierceT:8,break:3', galeLance: '疾風,gale,twinDragon,spe:4,haste:3',
