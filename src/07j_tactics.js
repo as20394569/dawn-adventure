@@ -8,8 +8,8 @@
      big damage numbers, a countdown + danger ring while a monster is charging. */
 const DIFF = [
   { n: '普通', d: '標準的冒險。', hp: 1, pow: 1, brk: 0, ai: 0, drop: 0 },
-  { n: '困難', d: '魔物HP+20%、攻擊+15%，更聰明、護盾+1。掉落品質提升。', hp: 1.2, pow: 1.15, brk: 1, ai: 1, drop: 1 },
-  { n: '異界', d: '魔物HP+40%、攻擊+30%，最聰明、護盾+1。掉落品質大幅提升。', hp: 1.4, pow: 1.3, brk: 1, ai: 2, drop: 2 },
+  { n: '困難', d: '魔物HP+20%、攻擊+15%，更聰明、護盾+1。掉落品質稍微提升。', hp: 1.2, pow: 1.15, brk: 1, ai: 1, drop: 0.5 },
+  { n: '異界', d: '魔物HP+40%、攻擊+30%，最聰明、護盾+1。掉落品質提升。', hp: 1.4, pow: 1.3, brk: 1, ai: 2, drop: 1 },
 ];
 const diffOf = (st = Game.st) => DIFF[(st && st.diff) || 0];
 const ngOf = (st = Game.st) => (st && st.ng) || 0;
@@ -206,7 +206,7 @@ function drawShieldBadge(x, X, Y, n, broken, flash) {
     if (F.brkMax) { drawShieldBadge(x, X - 16, py + 9, F.brk, F.broken > 0, T.brkFlash > 0 && Math.floor(T.brkFlash / 3) % 2); }
     // weakness strip below the plate: hidden until the hero has hit a weakness of this species once
     const fam = FAMILIES[F.fam];
-    if (fam && fam.weak.length) { const s = '弱 ' + (T.rev ? fam.weak.join('・') : '？'); const pe = plateExtra(); x.fillStyle = 'rgba(10,8,20,0.7)'; const tw = Font.width(s, 8) + 8; x.fillRect(X + 4, py + 33 + pe, tw, 11); Font.draw(x, s, X + 8, py + 32 + pe, T.rev ? '#ffd070' : UIC.muted, UIC.textSh, 8); }
+    if (fam && fam.weak.length) { const s = '弱 ' + (T.rev ? fam.weak.join('・') : '？'); const pe = plateExtra(); x.fillStyle = 'rgba(10,8,20,0.7)'; const tw = Font.width(s, 8) + 8; x.fillRect(X + 4, py + 33 + pe, tw, 11); Font.draw(x, s, X + 8, py + 30.5 + pe, T.rev ? '#ffd070' : UIC.muted, UIC.textSh, 8); }
     if (F.broken > 0) { const bl = Math.floor(this.t / 6) % 2; Font.drawC(x, '— 破防中 —', W / 2, py + 45 + plateExtra(), bl ? '#ffd040' : '#ff8a50', '#000000', 10); }
     else if (F.charging) { const bl = Math.floor(this.t / 8) % 2; Font.drawC(x, '蓄力中！下回合發動', W / 2, py + 45 + plateExtra(), bl ? '#ff5a5a' : '#ffb0a0', '#000000', 10); }
     x.globalAlpha = 1;
@@ -252,7 +252,7 @@ function drawShieldBadge(x, X, Y, n, broken, flash) {
     const S = this.H.stats, fx = S.fx || {};
     const physHit = mv.cat === '物' && !(id === 'attack' && isMagicKind(u.stats.wkind)) && t.hp < hp0; /* v24.10: only a physical attack that actually hit (misses / blocked attacks used to poison too) */
     if (u.hero && physHit && !t.status && (fx.poisonEdge || S.venomEdge) && chance(fx.poisonEdge && S.venomEdge ? 0.35 : 0.2)) { yield* this.inflict(t, 'psn', true); /* v24.1: players didn't know where the poison came from — explain once */
-      const f = Game.st.flags; if (t.status === 'psn' && !f.tutVenom) { f.tutVenom = 1; yield* this.msg(S.venomEdge ? '（遊俠系的被動「毒刃」：物理攻擊有' + (fx.poisonEdge ? 35 : 20) + '%機率讓對手中毒。）' : '（裝備的「淬毒」效果：物理攻擊有20%機率讓對手中毒。）'); } }
+      const f = Game.st.flags; if (t.status === 'psn' && !f.tutVenom) { f.tutVenom = 1; yield* this.msg(S.venomEdge ? '（「毒刃」：物理攻擊有' + (fx.poisonEdge ? 35 : 20) + '%機率讓對手中毒。）' : '（裝備的「淬毒」效果：物理攻擊有20%機率讓對手中毒。）'); } }
     if (!u.hero && t.hero && t.hp === hp0 && (fx.shadowStep || S.shadowStep) && !(u.status === 'slp') && !u.flinched) {
       const c2 = this.calcDamage(t, u, t.stats.welem ? { ...MOVES.slash, t: t.stats.welem } : MOVES.slash), cd = Math.min(u.hp, Math.max(1, Math.floor(c2.dmg * 0.7)));
       yield* this.lunge(t, 10, 3); u.hp -= cd; Sound.sfx('slash'); yield* this.impact(u, 1); yield* this.animHP(u); yield* this.msg('殘影！' + t.n + '閃過攻擊並反擊！');

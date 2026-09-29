@@ -224,7 +224,7 @@ Object.assign(Events, {
   *armorer() { yield* say('王國騎士團的裝備，這裡都有。'); yield* shopFlow(armoryStock(Game.st)); },
   *capSmith() {
     yield* say('我是王都的鐵匠。北方的素材，我都打得出來。');
-    while (true) { const r = yield* ask('要做什麼？', ['打造', '強化', '重鑄詞綴', '分解', '離開']); if (r === 0) yield* craftScreen(); else if (r === 1) yield* enhanceFlow(); else if (r === 2) yield* reforgeFlow(); else if (r === 3) yield* salvageFlow(); else break; }
+    while (true) { const r = yield* ask('要做什麼？', ['打造', '強化', '重鑄詞綴', '武器繼承', '分解', '離開']); if (r === 0) yield* craftScreen(); else if (r === 1) yield* enhanceFlow(); else if (r === 2) yield* reforgeFlow(); else if (r === 3) yield* inheritFlow(); else if (r === 4) yield* salvageFlow(); else break; }
     yield* say('隨時再來！');
   },
   *capResident() { yield* say('我年輕的時候，鐘塔每天早上都會響……真懷念。'); },

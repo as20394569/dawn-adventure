@@ -293,7 +293,7 @@ class Battle {
     return { dmg: Math.max(1, Math.floor(base * m)), mult, crit };
   }
   *useMove(u, t, id) {
-    let mv = u.hero ? skillMove(id) : MOVES[id]; if (u.hero && id === 'attack' && isMagicKind(u.stats.wkind)) mv = { ...mv, cat: '特', fx: 'magicBolt' };
+    let mv = u.hero ? skillMove(id) : MOVES[id]; if (u.hero && id === 'attack' && isMagicKind(u.stats.wkind)) mv = { ...mv, cat: '特', fx: mv.fx === 'wAtk' ? 'wAtk' : 'magicBolt' };
     if (u.hero && u.stats.welem && mv.t === '一般' && mv.pow && mv.cat === (isMagicKind(u.stats.wkind) ? '特' : '物')) mv = { ...mv, t: u.stats.welem };
     // can the user act?
     if (u.status === 'slp') {

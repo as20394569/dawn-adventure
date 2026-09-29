@@ -4,10 +4,10 @@
    影舞者: big evasion, counter-attacks after dodging (殘影).
    魔劍士 (hidden, 「流浪的魔劍士」 quest at 銀月湖畔): physical and magic attack feed each other (魔劍共鳴 ×1.5). */
 Object.assign(CLASSES, {
-  ranger: { n: '遊俠', tier: 1, st: { atk: 2, spe: 3, crit: 4, eva: 3, venomEdge: 1 }, move: 'twinStrike', d: '身手敏捷的獵人。速度、會心、迴避提升，物理攻擊有機率讓對手中毒。' },
-  assassin: { n: '刺客', tier: 2, from: 'ranger', st: { atk: 6, spe: 4, crit: 8, eva: 3, venomEdge: 1, assassin: 1, venomous: 30 }, move: 'shadowStab', move2: 'deathMark', lv2: 18, d: '暗殺的專家。第一回合的攻擊必定會心，對中毒的對手傷害+30%。' },
-  shadowdancer: { n: '影舞者', tier: 2, from: 'ranger', st: { atk: 4, spe: 6, crit: 4, eva: 10, venomEdge: 1, shadowStep: 1 }, move: 'bladeDance', move2: 'mirage', lv2: 18, d: '如影般起舞的劍士。迴避大幅提升，閃過攻擊後會立刻反擊。' },
-  spellblade: { n: '魔劍士', tier: 3, st: { hp: 8, atk: 5, spa: 5, spd: 3, spe: 3, crit: 4, spellblade: 1 }, move: 'eclipseSlash', move2: 'arcaneEdge', lv2: 20, d: '隱藏職業。物攻與魔攻互相加成（魔劍共鳴），技能會帶有武器的屬性。' },
+  ranger: { n: '遊俠', tier: 1, st: { atk: 2, spe: 3, crit: 4, eva: 3 }, move: 'twinStrike', d: '身手敏捷的獵人。速度、會心、迴避提升。' },
+  assassin: { n: '刺客', tier: 2, from: 'ranger', st: { atk: 6, spe: 4, crit: 8, eva: 3, assassin: 1, venomous: 30 }, move: 'shadowStab', move2: 'deathMark', lv2: 18, d: '暗殺的專家。第一回合的攻擊必定會心，對中毒的對手傷害+30%。' },
+  shadowdancer: { n: '影舞者', tier: 2, from: 'ranger', st: { atk: 4, spe: 6, crit: 4, eva: 10, shadowStep: 1 }, move: 'bladeDance', move2: 'mirage', lv2: 18, d: '如影般起舞的劍士。迴避大幅提升，閃過攻擊後會立刻反擊。' },
+  spellblade: { n: '魔劍士', tier: 3, st: { hp: 8, atk: 5, spa: 5, spd: 3, spe: 3, crit: 4 }, move: 'eclipseSlash', move2: 'arcaneEdge', lv2: 20, d: '隱藏職業。技能會帶有武器的屬性；「魔劍」天賦的魔劍共鳴能讓物攻與魔攻互相加成。' },
 });
 Object.assign(MOVES, {
   twinStrike: { n: '雙刃連擊', t: '一般', cat: '物', pow: 30, acc: 100, pp: 25, hits: 2, d: '左右手交錯的兩連擊。每一下都能削減護盾。' },
@@ -34,6 +34,6 @@ Object.assign(SKILL_TREES, {
   spellblade: [['eclipseSlash', 18], ['arcaneEdge', 20, 'eclipseSlash', 1]],
 });
 CLASS_FREE.ranger = ['twinStrike', 'venomFang'];
-CLASS_START.ranger = { moves: ['slash', 'twinStrike', 'venomFang'], gear: ['huntKnife', 'guardBadge'], tag: '迅捷連擊', bars: { 物攻: 3, 魔攻: 1, 防禦: 2, HP: 3 }, pitch: '敏捷的獵人，連擊能快速削減魔物的護盾。被動「毒刃」：物理攻擊有20%機率讓對手中毒。' };
+CLASS_START.ranger = { moves: ['slash', 'twinStrike', 'venomFang'], gear: ['huntKnife', 'guardBadge'], tag: '迅捷連擊', bars: { 物攻: 3, 魔攻: 1, 防禦: 2, HP: 3 }, pitch: '敏捷的獵人，連擊能快速削減魔物的護盾。' };
 CLASS_LINE.ranger = [[7, 'quickDraw'], [9, 'lacerate'], [11, 'flurry'], [13, 'hunterMark'], [15, 'smokeBomb'], [17, 'toxicBlade']];
 const CLASS_COL = { swordsman: '#ff9a50', mage: '#b080ff', guardian: '#6ec8ff', ranger: '#7ae070' };

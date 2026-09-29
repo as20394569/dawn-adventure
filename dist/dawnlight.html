@@ -80,6 +80,14 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 body.battle #pad,body.battle #dpad,body.battle #ab,body.battle #mid{display:none}
 body.battle #shell{--padh:0px}
 @media (prefers-reduced-motion:reduce){ #ab .round.on,#mid button.on{transform:none} }
+/* v27c phones held upright: thinner frame and a slightly smaller pad, so the game screen gets the room (playtest: S25+, "about 1 cm bigger") */
+@media (pointer:coarse) and (orientation:portrait){
+  #app{padding:2px 0;gap:0}
+  #shell{--s:min(25vw,94px);--b:min(11.5vw,44px);--padh:calc(var(--s) + 6px);width:min(100%,560px,calc((100dvh - var(--padh) - 12px) * 0.6875 + 4px));border-radius:8px;padding:1px 1px 2px;gap:3px;border-width:0}
+  #bezel{padding:1px;border-radius:5px}
+  #pad{padding-inline:6px}
+}
+@media (pointer:coarse) and (orientation:portrait) and (max-height:640px){ #shell{--s:min(22vw,82px);--b:min(10vw,40px)} }
 </style>
 <main id="app">
   <div id="shell">
@@ -2122,7 +2130,7 @@ function gearLines(g) { // [base stats text, special text]
   return [p.join(' '), s.join(' ')];
 }
 const gearText = g => gearLines(g).filter(Boolean).join(' ');
-const gearName = g => '【' + GQ[g.q][0] + '】' + GEAR[g.b].n + (g.s ? '★' + g.s : '') + (g.e ? ' +' + g.e : '');
+const gearName = g => g._bp === 2 ? '「' + GEAR[g.b].n + '」的設計圖' : '【' + GQ[g.q][0] + '】' + GEAR[g.b].n + (g.s ? '★' + g.s : '') + (g.e ? ' +' + g.e : '');
 const gearShort = g => GEAR[g.b].n + (g.s ? '★' + g.s : '') + (g.e ? ' +' + g.e : '');
 const enhanceCost = g => { const e = (g.e || 0) + 1, t = GEAR[g.b].t; if (e > 5) { const R = typeof GEAR_RECIPE !== 'undefined' && GEAR_RECIPE[g.b], mk = R ? Object.keys(R.mats)[0] : 'crystal'; return { gold: 400 * t * e * (Game.st.flags.smithDisc ? 0.5 : 1), mats: { [mk]: e - 3 }, rate: [0.45, 0.4, 0.35, 0.3, 0.25][e - 6] }; } return { gold: e * 150 * t * (Game.st.flags.smithDisc ? 0.5 : 1), mats: t <= 2 ? { stone: e } : t === 3 ? { stone: e, gel: e } : { crystal: e }, rate: e <= 3 ? 1 : e === 4 ? 0.75 : 0.5 }; };
 const SALVAGE = { weapon: ['stone'], head: ['stone', 'gel'], body: ['stone', 'gel', 'frogSkin'], feet: ['feather', 'gel'], acc: ['feather', 'spore', 'leaf'] };
@@ -2400,7 +2408,7 @@ const QUEST_EVENTS = {
       else { f.q3res = 'keep'; f.smithDisc = 1; st.bag.tpBook = (st.bag.tpBook || 0) + 1; yield* sayAll(['……謝謝你。', '這是師父留下的修練書，送給你吧。以後強化的費用，我只收一半！']); yield* itemGet(st.name + '得到了天賦之書！強化費用永久半價！'); }
     } else yield* say(f.q3 === 1 ? '水晶碎片的事就拜託了。聽說在老井的地底下。' : f.smith ? '有素材就拿來吧！' : '我是鎮上的鐵匠。把魔物身上的素材帶來，我就幫你打造好東西！');
     f.smith = 1;
-    while (true) { const r = yield* ask('要做什麼？', ['打造', '強化' + (f.smithDisc ? '（半價）' : ''), '重鑄詞綴', '分解', '離開']); if (r === 0) yield* craftScreen(); else if (r === 1) yield* enhanceFlow(); else if (r === 2) yield* reforgeFlow(); else if (r === 3) yield* salvageFlow(); else break; }
+    while (true) { const r = yield* ask('要做什麼？', ['打造', '強化' + (f.smithDisc ? '（半價）' : ''), '重鑄詞綴', '武器繼承', '分解', '離開']); if (r === 0) yield* craftScreen(); else if (r === 1) yield* enhanceFlow(); else if (r === 2) yield* reforgeFlow(); else if (r === 3) yield* inheritFlow(); else if (r === 4) yield* salvageFlow(); else break; }
     yield* say('隨時再來！');
   },
 };
@@ -3738,7 +3746,7 @@ function lootDrops(b) {
   const F = b.F, st = Game.st, key = b.cfg.id || F.sp, sp = SPECIES[F.sp] || {}, kills = st.kills || (st.kills = {}), first = !kills[key];
   kills[key] = (kills[key] || 0) + 1; const out = [];
   const sig = b.cfg.drop || sp.drop || (LOOT[key] || [])[0];
-  if (first && sig && !b.cfg.rematch) out.push(makeGear(classGear(sig), 4));
+  if (first && sig && !b.cfg.rematch) out.push(makeGear(classGear(sig), 3)); // v27: first kill gives 紅 (was 金) — playtest: too strong
   else if ((F.elite || F.boss) && LOOT[key]) out.push(makeGear(classGear(pick(LOOT[key])), rollLootQuality(F.boss)));
   if (b.cfg.rematch && F.boss && chance(0.35) && LOOT[key]) out.push(makeGear(classGear(pick(LOOT[key])), rollLootQuality(false)));
   return out;
@@ -3781,10 +3789,10 @@ RECIPES.push(
    影舞者: big evasion, counter-attacks after dodging (殘影).
    魔劍士 (hidden, 「流浪的魔劍士」 quest at 銀月湖畔): physical and magic attack feed each other (魔劍共鳴 ×1.5). */
 Object.assign(CLASSES, {
-  ranger: { n: '遊俠', tier: 1, st: { atk: 2, spe: 3, crit: 4, eva: 3, venomEdge: 1 }, move: 'twinStrike', d: '身手敏捷的獵人。速度、會心、迴避提升，物理攻擊有機率讓對手中毒。' },
-  assassin: { n: '刺客', tier: 2, from: 'ranger', st: { atk: 6, spe: 4, crit: 8, eva: 3, venomEdge: 1, assassin: 1, venomous: 30 }, move: 'shadowStab', move2: 'deathMark', lv2: 18, d: '暗殺的專家。第一回合的攻擊必定會心，對中毒的對手傷害+30%。' },
-  shadowdancer: { n: '影舞者', tier: 2, from: 'ranger', st: { atk: 4, spe: 6, crit: 4, eva: 10, venomEdge: 1, shadowStep: 1 }, move: 'bladeDance', move2: 'mirage', lv2: 18, d: '如影般起舞的劍士。迴避大幅提升，閃過攻擊後會立刻反擊。' },
-  spellblade: { n: '魔劍士', tier: 3, st: { hp: 8, atk: 5, spa: 5, spd: 3, spe: 3, crit: 4, spellblade: 1 }, move: 'eclipseSlash', move2: 'arcaneEdge', lv2: 20, d: '隱藏職業。物攻與魔攻互相加成（魔劍共鳴），技能會帶有武器的屬性。' },
+  ranger: { n: '遊俠', tier: 1, st: { atk: 2, spe: 3, crit: 4, eva: 3 }, move: 'twinStrike', d: '身手敏捷的獵人。速度、會心、迴避提升。' },
+  assassin: { n: '刺客', tier: 2, from: 'ranger', st: { atk: 6, spe: 4, crit: 8, eva: 3, assassin: 1, venomous: 30 }, move: 'shadowStab', move2: 'deathMark', lv2: 18, d: '暗殺的專家。第一回合的攻擊必定會心，對中毒的對手傷害+30%。' },
+  shadowdancer: { n: '影舞者', tier: 2, from: 'ranger', st: { atk: 4, spe: 6, crit: 4, eva: 10, shadowStep: 1 }, move: 'bladeDance', move2: 'mirage', lv2: 18, d: '如影般起舞的劍士。迴避大幅提升，閃過攻擊後會立刻反擊。' },
+  spellblade: { n: '魔劍士', tier: 3, st: { hp: 8, atk: 5, spa: 5, spd: 3, spe: 3, crit: 4 }, move: 'eclipseSlash', move2: 'arcaneEdge', lv2: 20, d: '隱藏職業。技能會帶有武器的屬性；「魔劍」天賦的魔劍共鳴能讓物攻與魔攻互相加成。' },
 });
 Object.assign(MOVES, {
   twinStrike: { n: '雙刃連擊', t: '一般', cat: '物', pow: 30, acc: 100, pp: 25, hits: 2, d: '左右手交錯的兩連擊。每一下都能削減護盾。' },
@@ -3811,7 +3819,7 @@ Object.assign(SKILL_TREES, {
   spellblade: [['eclipseSlash', 18], ['arcaneEdge', 20, 'eclipseSlash', 1]],
 });
 CLASS_FREE.ranger = ['twinStrike', 'venomFang'];
-CLASS_START.ranger = { moves: ['slash', 'twinStrike', 'venomFang'], gear: ['huntKnife', 'guardBadge'], tag: '迅捷連擊', bars: { 物攻: 3, 魔攻: 1, 防禦: 2, HP: 3 }, pitch: '敏捷的獵人，連擊能快速削減魔物的護盾。被動「毒刃」：物理攻擊有20%機率讓對手中毒。' };
+CLASS_START.ranger = { moves: ['slash', 'twinStrike', 'venomFang'], gear: ['huntKnife', 'guardBadge'], tag: '迅捷連擊', bars: { 物攻: 3, 魔攻: 1, 防禦: 2, HP: 3 }, pitch: '敏捷的獵人，連擊能快速削減魔物的護盾。' };
 CLASS_LINE.ranger = [[7, 'quickDraw'], [9, 'lacerate'], [11, 'flurry'], [13, 'hunterMark'], [15, 'smokeBomb'], [17, 'toxicBlade']];
 const CLASS_COL = { swordsman: '#ff9a50', mage: '#b080ff', guardian: '#6ec8ff', ranger: '#7ae070' };
 
@@ -5926,7 +5934,7 @@ class Battle {
     return { dmg: Math.max(1, Math.floor(base * m)), mult, crit };
   }
   *useMove(u, t, id) {
-    let mv = u.hero ? skillMove(id) : MOVES[id]; if (u.hero && id === 'attack' && isMagicKind(u.stats.wkind)) mv = { ...mv, cat: '特', fx: 'magicBolt' };
+    let mv = u.hero ? skillMove(id) : MOVES[id]; if (u.hero && id === 'attack' && isMagicKind(u.stats.wkind)) mv = { ...mv, cat: '特', fx: mv.fx === 'wAtk' ? 'wAtk' : 'magicBolt' };
     if (u.hero && u.stats.welem && mv.t === '一般' && mv.pow && mv.cat === (isMagicKind(u.stats.wkind) ? '特' : '物')) mv = { ...mv, t: u.stats.welem };
     // can the user act?
     if (u.status === 'slp') {
@@ -7222,8 +7230,8 @@ function pxRender(A, S, T, tint) {
      big damage numbers, a countdown + danger ring while a monster is charging. */
 const DIFF = [
   { n: '普通', d: '標準的冒險。', hp: 1, pow: 1, brk: 0, ai: 0, drop: 0 },
-  { n: '困難', d: '魔物HP+20%、攻擊+15%，更聰明、護盾+1。掉落品質提升。', hp: 1.2, pow: 1.15, brk: 1, ai: 1, drop: 1 },
-  { n: '異界', d: '魔物HP+40%、攻擊+30%，最聰明、護盾+1。掉落品質大幅提升。', hp: 1.4, pow: 1.3, brk: 1, ai: 2, drop: 2 },
+  { n: '困難', d: '魔物HP+20%、攻擊+15%，更聰明、護盾+1。掉落品質稍微提升。', hp: 1.2, pow: 1.15, brk: 1, ai: 1, drop: 0.5 },
+  { n: '異界', d: '魔物HP+40%、攻擊+30%，最聰明、護盾+1。掉落品質提升。', hp: 1.4, pow: 1.3, brk: 1, ai: 2, drop: 1 },
 ];
 const diffOf = (st = Game.st) => DIFF[(st && st.diff) || 0];
 const ngOf = (st = Game.st) => (st && st.ng) || 0;
@@ -7420,7 +7428,7 @@ function drawShieldBadge(x, X, Y, n, broken, flash) {
     if (F.brkMax) { drawShieldBadge(x, X - 16, py + 9, F.brk, F.broken > 0, T.brkFlash > 0 && Math.floor(T.brkFlash / 3) % 2); }
     // weakness strip below the plate: hidden until the hero has hit a weakness of this species once
     const fam = FAMILIES[F.fam];
-    if (fam && fam.weak.length) { const s = '弱 ' + (T.rev ? fam.weak.join('・') : '？'); const pe = plateExtra(); x.fillStyle = 'rgba(10,8,20,0.7)'; const tw = Font.width(s, 8) + 8; x.fillRect(X + 4, py + 33 + pe, tw, 11); Font.draw(x, s, X + 8, py + 32 + pe, T.rev ? '#ffd070' : UIC.muted, UIC.textSh, 8); }
+    if (fam && fam.weak.length) { const s = '弱 ' + (T.rev ? fam.weak.join('・') : '？'); const pe = plateExtra(); x.fillStyle = 'rgba(10,8,20,0.7)'; const tw = Font.width(s, 8) + 8; x.fillRect(X + 4, py + 33 + pe, tw, 11); Font.draw(x, s, X + 8, py + 30.5 + pe, T.rev ? '#ffd070' : UIC.muted, UIC.textSh, 8); }
     if (F.broken > 0) { const bl = Math.floor(this.t / 6) % 2; Font.drawC(x, '— 破防中 —', W / 2, py + 45 + plateExtra(), bl ? '#ffd040' : '#ff8a50', '#000000', 10); }
     else if (F.charging) { const bl = Math.floor(this.t / 8) % 2; Font.drawC(x, '蓄力中！下回合發動', W / 2, py + 45 + plateExtra(), bl ? '#ff5a5a' : '#ffb0a0', '#000000', 10); }
     x.globalAlpha = 1;
@@ -7466,7 +7474,7 @@ function drawShieldBadge(x, X, Y, n, broken, flash) {
     const S = this.H.stats, fx = S.fx || {};
     const physHit = mv.cat === '物' && !(id === 'attack' && isMagicKind(u.stats.wkind)) && t.hp < hp0; /* v24.10: only a physical attack that actually hit (misses / blocked attacks used to poison too) */
     if (u.hero && physHit && !t.status && (fx.poisonEdge || S.venomEdge) && chance(fx.poisonEdge && S.venomEdge ? 0.35 : 0.2)) { yield* this.inflict(t, 'psn', true); /* v24.1: players didn't know where the poison came from — explain once */
-      const f = Game.st.flags; if (t.status === 'psn' && !f.tutVenom) { f.tutVenom = 1; yield* this.msg(S.venomEdge ? '（遊俠系的被動「毒刃」：物理攻擊有' + (fx.poisonEdge ? 35 : 20) + '%機率讓對手中毒。）' : '（裝備的「淬毒」效果：物理攻擊有20%機率讓對手中毒。）'); } }
+      const f = Game.st.flags; if (t.status === 'psn' && !f.tutVenom) { f.tutVenom = 1; yield* this.msg(S.venomEdge ? '（「毒刃」：物理攻擊有' + (fx.poisonEdge ? 35 : 20) + '%機率讓對手中毒。）' : '（裝備的「淬毒」效果：物理攻擊有20%機率讓對手中毒。）'); } }
     if (!u.hero && t.hero && t.hp === hp0 && (fx.shadowStep || S.shadowStep) && !(u.status === 'slp') && !u.flinched) {
       const c2 = this.calcDamage(t, u, t.stats.welem ? { ...MOVES.slash, t: t.stats.welem } : MOVES.slash), cd = Math.min(u.hp, Math.max(1, Math.floor(c2.dmg * 0.7)));
       yield* this.lunge(t, 10, 3); u.hp -= cd; Sound.sfx('slash'); yield* this.impact(u, 1); yield* this.animHP(u); yield* this.msg('殘影！' + t.n + '閃過攻擊並反擊！');
@@ -8185,7 +8193,7 @@ Battle.prototype.lootShow = function* (g, head) {
     s.t++; const a = s.out ? Math.max(0, 1 - s.out / 6) : Math.min(1, s.t / 8), slide = Math.round((1 - Math.min(1, s.t / 8)) * 18);
     x.save(); x.globalAlpha = a; x.fillStyle = 'rgba(4,4,12,0.55)'; x.fillRect(0, 0, W, CH > BH - 8 ? H : BH);
     const X = (W - CW) / 2, Y = CY + slide, w = CW, h = CH; drawWin(x, X, Y, w, h, 'menu');
-    Font.drawC(x, head || '獲得了裝備！', W / 2, Y + 4, col, UIC.textSh, 10);
+    { const hd = head || '獲得了裝備！'; let z = 10; while (z > 7 && Font.width(hd, z) > w - 12) z--; Font.drawC(x, hd, W / 2, Y + 4 + (10 - z) / 2, col, UIC.textSh, z); }
     // rays + icon
     const cx = W / 2, cy = Y + 44; x.save(); x.translate(cx, cy); x.rotate(s.t / 90); const nR = q >= 3 ? 12 : 8;
     for (let i = 0; i < nR; i++) { x.rotate(Math.PI * 2 / nR); const gr = x.createLinearGradient(0, 0, 0, -34); gr.addColorStop(0, `rgba(${cr},${cg2},${cb},${q >= 3 ? 0.55 : 0.32})`); gr.addColorStop(1, `rgba(${cr},${cg2},${cb},0)`); x.fillStyle = gr; x.beginPath(); x.moveTo(-3, 0); x.lineTo(3, 0); x.lineTo(7, -34); x.lineTo(-7, -34); x.closePath(); x.fill(); }
@@ -8692,7 +8700,7 @@ const Events = {
       yield* say({ swordsman: '劍士的道路啊……這把練習木劍就交給你了。', mage: '魔導士的道路啊……這把魔杖是我年輕時用的，交給你了。', guardian: '守護者的道路啊……這把木劍和布帽給你，別逞強喔。', ranger: '遊俠的道路啊……這把獵刀是村裡獵人送的，拿去吧。' }[k]);
       st.flags.license = 1; st.bag.license = 1; yield* itemGet('得到了' + S.gear.filter(b => b !== 'guardBadge').map(b => GEAR[b].n).join('和') + '、護身符和冒險者證！');
       yield* say('還有這些傷藥，帶在身上吧。'); st.bag.potion = (st.bag.potion || 0) + 5; yield* itemGet('得到了傷藥×5！');
-      yield* sayAll(['技能是跟著武器走的。你手上的武器有兩招「主動技能」、一個「被動」，還有攻擊累積到一定次數會自動發動的「特技」。', '普通攻擊不花MP，還會回復一點MP；把MP用在武器技能上吧。', '每升2級會得到1點「天賦點」。打開選單的「天賦」，就能點' + CLASSES[k].n + '的三條天賦分支。', '新的裝備都要靠鐵匠打造。撿到的設計圖和素材，記得拿去給他看看。', '到了Lv14再來找我，我會幫你進行「天賦覺醒」。', '魔物分成好幾個種族，各有害怕的屬性。善用屬性技能，戰鬥會輕鬆很多。', '按START可以打開選單，查看狀態、技能和背包，也能記錄進度。']);
+      yield* sayAll(['技能是跟著武器走的。你手上的武器有兩招「主動技能」、一個「被動」，還有攻擊累積3層後、在下一次攻擊或技能時發動的「特技」。', '普通攻擊不花MP，還會回復一點MP；把MP用在武器技能上吧。', '每升2級會得到1點「天賦點」。打開選單的「天賦」，就能點' + CLASSES[k].n + '的三條天賦分支。', '新的裝備都要靠鐵匠打造。撿到的設計圖和素材，記得拿去給他看看。', '到了Lv14再來找我，我會幫你進行「天賦覺醒」。', '魔物分成好幾個種族，各有害怕的屬性。善用屬性技能，戰鬥會輕鬆很多。', '按START可以打開選單，查看狀態、技能和背包，也能記錄進度。']);
       const ap = ow && ow.npcs.find(n => n.id === 'apprentice');
       if (ap) { ap.dir = 'left'; yield* say('學徒：「村長爺爺！讓我幫忙！我在院子裡養了一隻練習用的泡泡姆！」');
         if (yield* yesNo('要和泡泡姆練習一場嗎？')) { const res = yield* ow.battleScript({ sp: 'slime', lv: 1, kind: 'wild' }); if (res === 'win') yield* say('學徒：「好厲害！這就是異界人之力！」'); else yield* say('學徒：「泡、泡泡姆，下手輕一點啦！」'); healHero(); }
@@ -9292,7 +9300,7 @@ function battlePortrait(sp) { // idle frame 1 of the battle strip, or null
   if (!m) return im; const c = mkCanvas(m.w, m.h); c.getContext('2d').drawImage(im, 0, 0, m.w, m.h, 0, 0, m.w, m.h); return c;
 }
 function dangerStars(lv) { const d = lv - Game.st.lv; return d <= -4 ? 1 : d <= -1 ? 2 : d <= 1 ? 3 : d <= 3 ? 4 : 5; }
-function lootHint(key, sp) { const first = !((Game.st.kills || {})[key]), sig = (LOOT[key] || [])[0] || (SPECIES[sp] || {}).drop; if (first && sig) return '首次擊敗：必定掉落金色「' + GEAR[classGear(sig)].n + '」'; if (LOOT[key]) return '重戰掉落：' + LOOT[key].map(k => GEAR[classGear(k)].n).slice(0, 3).join('、') + '…'; return ''; }
+function lootHint(key, sp) { const first = !((Game.st.kills || {})[key]), sig = (LOOT[key] || [])[0] || (SPECIES[sp] || {}).drop; if (first && sig) return '首次擊敗：必定掉落紅色「' + GEAR[classGear(sig)].n + '」'; if (LOOT[key]) return '重戰掉落：' + LOOT[key].map(k => GEAR[classGear(k)].n).slice(0, 3).join('、') + '…'; return ''; }
 function encounterCard(sp, lv, key, kind, extra) {
   const pic = battlePortrait(sp), stars = dangerStars(lv), hint = lootHint(key, sp);
   let hz = 8; while (hz > 7 && Font.width(hint, hz) > W - 30) hz--; const hl = hint ? Font.wrap(hint, W - 30, hz).slice(0, 2) : [];
@@ -9442,7 +9450,7 @@ const RIFT_BOSS = { 5: ['banditBoss', 'golem'], 10: ['crystalGolem', 'silverWyrm
 MAPS.rift = { name: '異界迴廊', music: 'ruins', border: 'X', battleBg: 'rift', encAll: 1, popup: 1, rows: Array.from({ length: RIFT_H }, (_, y) => y === 0 || y === RIFT_H - 1 ? 'X'.repeat(RIFT_W) : 'X' + 's'.repeat(RIFT_W - 2) + 'X'), gearPool: TOWER_LOOT, encounters: [{ y0: 0, y1: 99, rate: 0.09, table: [['voidEye', 20, 22, 10], ['riftKnight', 20, 22, 10]] }], items: [], npcs: [], boss: { sp: 'gatekeeper', lv: 40, x: 7, y: 3, flag: 'riftBoss20', ev: 'riftBoss' } };
 MAP_TYPES.rift = '迷宮'; MAPS.rift.type = '迷宮';
 const riftSt = (st = Game.st) => st.rift || (st.rift = { best: 0, cp: 0, run: 0, floor: 0, tokens: 0 });
-function riftLv(fl) { return 18 + fl; } // New Game+ levels are added in makeFoe
+function riftLv(fl) { return Math.max(18 + fl, ((Game.st && Game.st.lv) || 1) - 3 + Math.ceil(fl / 2)); } // v25: never far below the hero // New Game+ levels are added in makeFoe
 function genRiftFloor(fl) {
   const R = srand((Game.st.rift.run * 97 + fl * 13) | 0), g = [...Array(RIFT_H)].map(() => Array(RIFT_W).fill('X')), boss = fl % 5 === 0;
   const set = (x, y, c) => { if (x > 0 && y > 0 && x < RIFT_W - 1 && y < RIFT_H - 1) g[y][x] = c; };
@@ -9468,8 +9476,8 @@ function genRiftFloor(fl) {
 }
 function riftChest(fl, i, x, y, R) {
   const id = 'rift' + fl + '_' + i, r = R();
-  if (r < 0.3) { const q = fl >= 15 && R() < 0.08 ? 5 : fl >= 12 && R() < 0.25 ? 4 : fl >= 6 ? 3 : 2; return { id, x, y, item: TOWER_LOOT[Math.floor(R() * TOWER_LOOT.length)], q }; }
-  if (r < 0.5) return { id, x, y, item: 'riftShard', n: 1 + Math.floor(fl / 6) };
+  if (r < 0.22) { const u = R(), q = fl >= 18 && u < 0.03 ? 5 : fl >= 14 && u < 0.15 ? 4 : fl >= 14 ? 3 : fl >= 8 && u < 0.35 ? 3 : 2; return { id, x, y, item: TOWER_LOOT[Math.floor(R() * TOWER_LOOT.length)], q }; } // v25: 紫 early, 紅 from 8F, 金 only 14F+
+  if (r < 0.46) return { id, x, y, item: 'riftShard', n: 1 + Math.floor(fl / 6) };
   if (r < 0.7) return { id, x, y, item: pick(['superPotion', 'hiEther', 'elixir']), n: 1 };
   return { id, x, y, gold: 300 * fl };
 }
@@ -9507,7 +9515,7 @@ Object.assign(Events, {
       const tok = st.bag.riftToken || 0, list = TOWER_SHOP.map(([k, c]) => (ITEMS[k] || GEAR[k]).n + '　' + c + '枚');
       const r = yield* ask('要用迴廊徽章交換什麼嗎？（持有' + tok + '枚）', [...list, '不用了']); if (r < 0 || r >= TOWER_SHOP.length) return;
       const [k, c] = TOWER_SHOP[r]; if (tok < c) { yield* say('徽章不夠喔。'); continue; }
-      st.bag.riftToken -= c; if (GEAR[k]) yield* itemGet('換到了' + bpGift(classGear(k), 3).txt + '！'); else { st.bag[k] = (st.bag[k] || 0) + 1; yield* itemGet('換到了' + ITEMS[k].n + '！'); }
+      st.bag.riftToken -= c; if (GEAR[k]) yield* itemGet('換到了' + gainBP(classGear(k), 2, Game.st, 2) + '！'); else { st.bag[k] = (st.bag[k] || 0) + 1; yield* itemGet('換到了' + ITEMS[k].n + '！'); }
     }
   },
 });
@@ -11410,7 +11418,7 @@ Object.assign(Events, {
   *armorer() { yield* say('王國騎士團的裝備，這裡都有。'); yield* shopFlow(armoryStock(Game.st)); },
   *capSmith() {
     yield* say('我是王都的鐵匠。北方的素材，我都打得出來。');
-    while (true) { const r = yield* ask('要做什麼？', ['打造', '強化', '重鑄詞綴', '分解', '離開']); if (r === 0) yield* craftScreen(); else if (r === 1) yield* enhanceFlow(); else if (r === 2) yield* reforgeFlow(); else if (r === 3) yield* salvageFlow(); else break; }
+    while (true) { const r = yield* ask('要做什麼？', ['打造', '強化', '重鑄詞綴', '武器繼承', '分解', '離開']); if (r === 0) yield* craftScreen(); else if (r === 1) yield* enhanceFlow(); else if (r === 2) yield* reforgeFlow(); else if (r === 3) yield* inheritFlow(); else if (r === 4) yield* salvageFlow(); else break; }
     yield* say('隨時再來！');
   },
   *capResident() { yield* say('我年輕的時候，鐘塔每天早上都會響……真懷念。'); },
@@ -12412,7 +12420,7 @@ const WPASS = { // passive keys: name suffix + text
   mpRegen: ['魔泉', v => '每回合回復' + v + '%最大MP'], regen: ['生機', () => '每回合回復6%最大HP'], venomEdge: ['毒牙', () => '物理攻擊20%機率讓對手中毒'], pierceT: ['破甲', v => '物理攻擊無視對手' + v + '%的物防'],
   weakUp: ['看破', v => '打中弱點時傷害+' + v + '%'], bigUp: ['屠巨', v => '對精英・頭目傷害+' + v + '%'], mpSave: ['節能', v => '技能有' + v + '%機率不消耗MP'], magCrit: ['奧秘', v => '魔法攻擊會心率+' + v + '%'],
   counter: ['反擊', () => '選擇防禦時被攻擊會立刻反擊'], guardPlus: ['堅守', () => '選擇防禦時再減傷30%'], statusRes: ['淨心', v => '更不容易陷入異常狀態（' + v + '%）'], first: ['先制', () => '每場戰鬥第一回合必定先出手'],
-  double: ['連擊', () => '物理攻擊25%機率追加一擊'], thorns: ['荊棘', () => '受到攻擊時反彈25%傷害'], atkMp: ['汲魔', v => '普通攻擊多回復' + v + '點MP'], chargeCut: ['蓄勢', v => '特技所需攻擊次數-' + v],
+  double: ['連擊', () => '物理攻擊25%機率追加一擊'], thorns: ['荊棘', () => '受到攻擊時反彈25%傷害'], atkMp: ['汲魔', v => '普通攻擊多回復' + v + '點MP'], chargeCut: ['蓄勢', v => '特技所需層數-' + v],
   healUp: ['慈光', v => '治癒效果+' + v + '%'], critDmg: ['致命', v => '會心傷害+' + v + '%'], hpP: ['強健', v => '最大HP+' + v + '%'], defP: ['堅甲', v => '物防+' + v + '%'], atkP: ['剛力', v => '物攻+' + v + '%'], spaP: ['靈力', v => '魔攻+' + v + '%'],
 };
 const WPASS_FX = new Set(['regen', 'first', 'double', 'thorns']);
@@ -12429,21 +12437,23 @@ const WSK = {}, WMOVE = {};
 MOVES.attack.pow = 40; MOVES.attack.d = '用主武器攻擊。不消耗MP，還會回復少量MP；每次攻擊都會累積特技。';
 for (const key in WS_TABLE) {
   const B = GEAR[key]; if (!B) continue; const [stem, ta, tb, ps, sp] = WS_TABLE[key].split(','), nm = WS_NAMES[key] || [], [pk, pv] = ps.split(':'), [sk, sn] = sp.split(':');
-  const mk = (tpl, i) => { const T = MOVES[tpl]; if (!T) return null; const id = 'w_' + key + '_' + i, m = { ...T, n: nm[i] || stem + T.n, tpl, ws: key };
+  const mk = (tpl, i) => { const T = MOVES[tpl]; if (!T) return null; const id = 'w_' + key + '_' + i, m = { ...T, n: nm[i] || T.n, tpl, ws: key }; // v25: no weapon prefix on actives (playtest: 「獵刀雙刃連擊」「疾風疾風刺」 were a mouthful)
     if (m.pow) m.pow = Math.round(T.pow * (1.15 + 0.03 * (B.t - 1))); MOVES[id] = m; SKILL_MP[id] = SKILL_MP[tpl] ?? 4; WMOVE[id] = key;
     if (typeof SKILL_STYLE !== 'undefined' && SKILL_STYLE[tpl]) SKILL_STYLE[id] = SKILL_STYLE[tpl]; if (typeof SKILL_SCALE !== 'undefined' && SKILL_SCALE[tpl]) m.scale = SKILL_SCALE[tpl]; return id; };
   const a = [mk(ta, 0), mk(tb, 1)].filter(Boolean), pw = specPow(sk, B.t);
-  WSK[key] = { a, p: { k: pk, v: +pv, n: (nm[2] || stem + WPASS[pk][0]) }, s: { k: sk, N: +sn, pow: pw, n: nm[3] || stem + WSPEC[sk][0] } };
+  const pre = t => [...t].some(ch => stem.includes(ch)) ? t : stem + t; // no 「疾風疾風」「雷角雷擊」: drop the prefix when it repeats the word
+  WSK[key] = { a, p: { k: pk, v: +pv, n: (nm[2] || pre(WPASS[pk][0])) }, s: { k: sk, N: +sn, pow: pw, n: nm[3] || pre(WSPEC[sk][0]) } };
 }
 const wpassText = p => WPASS[p.k] ? WPASS[p.k][1](p.v) : '';
-const wspecText = (s, st) => '每' + wsN(s, st) + '次攻擊自動發動：' + WSPEC[s.k][1](s.pow);
+const wspecText = (s, st) => '累積' + wsN(s, st) + '層後，下一次攻擊或技能時發動：' + WSPEC[s.k][1](s.pow);
 
 /* ---------- which weapons the hero holds ---------- */
 const mainWeapon = (st = Game.st) => gearBy(st.equip && st.equip.weapon, st);
 const mainWKey = (st = Game.st) => { const g = mainWeapon(st); return g && WSK[g.b] ? g.b : null; };
 function subWeapon(st = Game.st) { const s = st.sub; if (!s) return null; const g = gearBy(s.u, st); if (!g || !WSK[g.b] || (st.equip && st.equip.weapon === g.u)) return null; return g; }
 function borrowedSkill(st = Game.st) { const g = subWeapon(st); if (!g) return null; const A = WSK[g.b].a; return A[Math.min(st.sub.i || 0, A.length - 1)] || null; }
-const wsN = (s, st = Game.st) => Math.max(2, s.N - (typeof talentSum === 'function' ? talentSum('chargeCut', st) : 0));
+const WS_LAYERS = 3; // v27: every weapon's 特技 needs 3 layers (was 3–5 attacks per weapon)
+const wsN = (s, st = Game.st) => Math.max(2, WS_LAYERS - (typeof talentSum === 'function' ? talentSum('chargeCut', st) : 0));
 function wsList(st = Game.st) {
   const k = mainWKey(st), out = k ? WSK[k].a.slice() : [], b = borrowedSkill(st); if (b && !out.includes(b)) out.push(b);
   st.skills = st.skills || {}; for (const id of out) if (!st.skills[id]) st.skills[id] = 1; return out;
@@ -12504,12 +12514,14 @@ function wsAttackMove(st = Game.st) {
     const fhp = t ? t.hp : 0, r = yield* _um.call(this, u, t, id); if (u.hp <= 0 || !t) return r;
     const st = Game.st, key = mainWKey(st), base = MOVES[id];
     const basic = id === 'attack' && t.hp < fhp, cast = id !== 'attack' && this._castId === id;
+    if (key && (this.H.wc || 0) >= wsN(WSK[key].s, st) && (id === 'attack' || cast)) { // v27: a full gauge (3 layers) fires on the NEXT attack or skill
+      if (t.hp > 0 && this.F && this.F.hp > 0) { this.H.wc = 0; yield* this.wSpecial(u, t, key); } return r; }
     if (!basic && !cast) return r;
     if (basic) { const g = 2 + Math.floor((u.maxmp || 0) / 25) + (u.stats.atkMp || 0); if (u.mp < u.maxmp) { u.mp = Math.min(u.maxmp, u.mp + g); st.mp = u.mp; } }
     if (cast && WMOVE[id]) { const up = wsUse(id, st); if (up) { Sound.sfx('statUp'); yield* this.msg('「' + base.n + '」的熟練度升到了Lv' + up + '！', { hold: 24 }); } }
     if (!key || !(basic || (base && base.pow))) return r;
-    const S = WSK[key].s, N = wsN(S, st); this.H.wc = (this.H.wc || 0) + 1; this.H.wcN = N;
-    if (this.H.wc >= N && t.hp > 0 && this.F && this.F.hp > 0) { this.H.wc = 0; yield* this.wSpecial(u, t, key); }
+    const S = WSK[key].s, N = wsN(S, st); this.H.wc = Math.min(N, (this.H.wc || 0) + 1); this.H.wcN = N;
+    if (this.H.wc >= N && u.hp > 0) { Sound.sfx('statUp'); yield* this.msg('特技「' + S.n + '」準備完成！下一次攻擊或技能時發動。', { hold: 16 }); }
     return r;
   };
 }
@@ -12542,9 +12554,9 @@ Battle.prototype.wSpecial = function* (u, t, key) {
 // the counter beside the HUD: 特技 ◆◆◇◇
 { const _bh = Battle.prototype.drawBoxH; Battle.prototype.drawBoxH = function (x) {
     _bh.call(this, x); const H = this.H, Y = Math.round(this.boxH), k = mainWKey(); if (!H || !k || Y >= BH || Game.scene !== this) return;
-    const N = H.wcN || wsN(WSK[k].s), n = Math.min(N, H.wc || 0), full = n >= N - 1, w = N * 7 + 22, X = W - w - 3, yy = Y - 11;
-    x.fillStyle = 'rgba(10,10,22,0.72)'; x.fillRect(X - 2, yy - 1, w + 4, 10); Font.draw(x, '特技', X, yy - 1, full ? '#ffd860' : UIC.muted, UIC.textSh, 7);
-    for (let i = 0; i < N; i++) { const cx = X + 22 + i * 7, on = i < n; x.fillStyle = '#10121e'; x.fillRect(cx - 1, yy + 1, 6, 6); x.fillStyle = on ? (full && Math.floor(this.t / 8) % 2 ? '#ffffff' : '#ffc040') : '#3a3a4a'; x.fillRect(cx, yy + 2, 4, 4); }
+    const N = H.wcN || wsN(WSK[k].s), n = Math.min(N, H.wc || 0), full = n >= N, lw = Math.ceil(Font.width('特技', 7)) + 4, w = N * 7 + lw, X = W - w - 3, yy = Y - 11;
+    x.fillStyle = 'rgba(10,10,22,0.72)'; x.fillRect(X - 2, yy - 1, w + 4, 10); Font.draw(x, '特技', X, yy - 4, full ? '#ffd860' : UIC.muted, UIC.textSh, 7); // text middle = squares' middle (yy+4)
+    for (let i = 0; i < N; i++) { const cx = X + lw + i * 7, on = i < n; x.fillStyle = '#10121e'; x.fillRect(cx - 1, yy + 1, 6, 6); x.fillStyle = on ? (full && Math.floor(this.t / 8) % 2 ? '#ffffff' : '#ffc040') : '#3a3a4a'; x.fillRect(cx, yy + 2, 4, 4); }
   };
 }
 
@@ -12575,6 +12587,32 @@ Battle.prototype.chooseMove = function* () {
     this.idle = false; this.moveIdx = r; return list[r];
   }
 };
+
+/* ===================== v25 skill spotlight (playtest: on some stages — snow, meadow, canyon, tower… — skill effects were hard to see) =====================
+   While a hero skill, a weapon 特技 or a strong monster skill plays, the stage BEHIND the fighters dims; the fighters and the
+   effects stay at full brightness, and the light shafts fade out. Bright stages dim more than dark ones (measured once per battle). */
+function stageLum(b) {
+  const S = b.hd2d; if (!S) return 0.5; if (S.lum !== undefined) return S.lum;
+  try { const c = mkCanvas(22, 27), x = c.getContext('2d'); x.drawImage(hd2dStageFor(b), 0, 0, 22, 27); const d = x.getImageData(0, 0, 22, 27).data; let s = 0; for (let i = 0; i < d.length; i += 4) s += (0.2126 * d[i] + 0.7152 * d[i + 1] + 0.0722 * d[i + 2]) / 255; S.lum = s / (d.length / 4); } catch (e) { S.lum = 0.5; }
+  return S.lum;
+}
+const spotTarget = b => clamp(0.24 + (stageLum(b) - 0.35) * 0.9, 0.24, 0.55);
+function spotStrongFoe(u, id) { const mv = MOVES[id] || {}; return (mv.pow || 0) >= 75 || ((u.boss || u.elite) && (mv.pow || 0) >= 60) || u.charging === id || id === 'm_dominate'; }
+{ const _um = Battle.prototype.useMove; Battle.prototype.useMove = function* (u, t, id) {
+    const on = id !== 'attack' && MOVES[id] && u && (u.hero || spotStrongFoe(u, id)); if (!on) return yield* _um.call(this, u, t, id);
+    this.spotOn = (this.spotOn || 0) + 1; try { return yield* _um.call(this, u, t, id); } finally { this.spotOn--; }
+  };
+  const _ws = Battle.prototype.wSpecial; Battle.prototype.wSpecial = function* (u, t, key) {
+    this.spotOn = (this.spotOn || 0) + 1; try { return yield* _ws.call(this, u, t, key); } finally { this.spotOn--; }
+  };
+  // hd2dMotes(b, x, false) runs right after the stage is painted and before the fighters: dim there
+  const _hm = hd2dMotes; hd2dMotes = function (b, x, near) {
+    _hm(b, x, near); if (near || !(b instanceof Battle)) return;
+    const tgt = b.spotOn > 0 ? spotTarget(b) : 0; b.spotA = (b.spotA || 0) + (tgt - (b.spotA || 0)) * (tgt ? 0.16 : 0.08); if (b.spotA < 0.005) { b.spotA = 0; return; }
+    x.fillStyle = 'rgba(6,8,20,' + b.spotA.toFixed(3) + ')'; x.fillRect(-4, -4, W + 8, BH + 8);
+  };
+  const _hs = hd2dShafts; hd2dShafts = function (b, x) { const k = 1 - Math.min(1, (b.spotA || 0) * 2); if (k <= 0.02) return; const a = x.globalAlpha; x.globalAlpha = a * k; _hs(b, x); x.globalAlpha = a; };
+}
 
 /* ===================== v7.0 ② class talents: each class has 3 branches, points can be mixed freely =====================
    Playtest: "talents were independent of the class, so changing class still used the same talents — no fun".
@@ -12642,7 +12680,7 @@ const TK_TXT = { hpP: v => '最大HP+' + v + '%', atkP: v => '物攻+' + v + '%'
   mpSave: v => '技能' + v + '%機率不消耗MP', magCrit: v => '魔法攻擊會心率+' + v + '%', elemRes: v => '受到的屬性傷害-' + v + '%', endureT: () => '每場戰鬥一次，受到致命傷害時保留1HP', mpRegen: v => '每回合回復' + v + '%最大MP',
   venomEdge: () => '物理攻擊20%機率讓對手中毒', venomous: v => '對中毒的對手傷害+' + v + '%', assassin: () => '每場戰鬥第1回合的攻擊必定會心', shadowStep: () => '閃過攻擊後立刻反擊（70%傷害）', rage: () => 'HP低於一半時傷害+30%',
   spellblade: () => '物攻與魔攻互相加成45%', counter: () => '選擇防禦時被攻擊會立刻反擊', atkUp: v => '普通攻擊傷害+' + v + '%', actUp: v => '武器主動技能傷害+' + v + '%', subUp: v => '副武器借用技能傷害+' + v + '%', spcUp: v => '特技傷害+' + v + '%',
-  critDmg: v => '會心傷害+' + v + '%', chargeCut: v => '特技所需攻擊次數-' + v, atkMp: v => '普通攻擊多回復' + v + '點MP', healUp: v => '治癒效果+' + v + '%' };
+  critDmg: v => '會心傷害+' + v + '%', chargeCut: v => '特技所需層數-' + v, atkMp: v => '普通攻擊多回復' + v + '點MP', healUp: v => '治癒效果+' + v + '%' };
 function tDesc(key, v) {
   if (key.startsWith('kind:')) return '裝備' + key.slice(5) + '時傷害+' + v + '%'; if (key.startsWith('type:')) return key.slice(5) + '屬性傷害+' + v + '%';
   if (key.startsWith('fx.')) return FX_TXT[key.slice(3)] || (SPECIALS[key.slice(3)] || {}).d || key; return TK_TXT[key] ? TK_TXT[key](v) : key + '+' + v;
@@ -12806,8 +12844,8 @@ ch2ClassTalk = function* () {
    · Forging: random quality; 精心打造 (materials ×2) and 極致打造 (×3) raise the odds. 重鑄: affixes (as before) or quality (never down).
    · Field monsters drop more materials; elites / bosses drop a pile of their materials. */
 const TIER_POOL = { 1: ['stone', 'gel', 'feather', 'shroomCap'], 2: ['foxfire', 'stinger', 'frogSkin', 'spore', 'leaf', 'beetleShell'], 3: ['crystal', 'emberCore', 'boneShard', 'ectoplasm', 'silk'],
-  4: ['moonDew', 'lizardScale', 'mothDust', 'scorpTail', 'harpyFeather', 'sandCrystal', 'bogMoss'], 5: ['riftShard', 'starShard', 'wispFlame', 'rotWood', 'batWing'],
-  6: ['spring', 'brassGear', 'snowPelt', 'iceCrystal', 'salamanderScale', 'magmaStone', 'windStone'], 7: ['dragonScale', 'shadowCloth', 'voidShard', 'starDust'] };
+  4: ['moonDew', 'lizardScale', 'mothDust', 'scorpTail', 'harpyFeather', 'sandCrystal', 'bogMoss'], 5: ['wolfPelt', 'beetleHorn', 'rustScrap', 'crocHide', 'boarTusk', 'wispFlame', 'rotWood', 'batWing'],
+  6: ['spring', 'brassGear', 'snowPelt', 'iceCrystal', 'salamanderScale', 'magmaStone', 'windStone'], 7: ['shadowCloth', 'voidShard', 'starDust', 'starShard'] };
 const ELEM_MAT = { 火: { 2: 'foxfire', 3: 'emberCore', 6: 'magmaStone' }, 水: { 3: 'crystal', 4: 'moonDew', 6: 'iceCrystal' }, 草: { 2: 'leaf', 4: 'bogMoss' }, 雷: { 6: 'spring' } };
 for (const t in TIER_POOL) TIER_POOL[t] = TIER_POOL[t].filter(k => ITEMS[k]);
 const bpGold = t => 120 * t * t + 100;
@@ -12836,9 +12874,14 @@ function bpKnown(k, st = Game.st) {
 }
 const qName = q => (GQ[q] || GQ[1])[0];
 // learn a blueprint (+ a ticket for 紅 and better); returns the text of what was gained
-function gainBP(k, q = 1, st = Game.st) {
+// v25 tickets stack: st.bpN[k] = qualities of every ticket held; st.bpT[k] = the best one (what the screens show)
+function tkList(k, st = Game.st) { const N = st.bpN || (st.bpN = {}); if (!N[k]) N[k] = st.bpT && st.bpT[k] ? [st.bpT[k]] : []; return N[k]; }
+const tkCount = (k, st = Game.st) => tkList(k, st).length;
+function tkSync(k, st = Game.st) { const L = tkList(k, st), T = st.bpT || (st.bpT = {}); if (L.length) T[k] = Math.max(...L); else { delete T[k]; delete st.bpN[k]; } }
+function tkUse(k, st = Game.st) { const L = tkList(k, st); if (!L.length) return 0; const q = Math.max(...L); L.splice(L.indexOf(q), 1); tkSync(k, st); return q; }
+function gainBP(k, q = 1, st = Game.st, tMin = 3) {
   const had = bpKnown(k, st); (st.bp || (st.bp = {}))[k] = 1; let txt = '「' + GEAR[k].n + '」的設計圖';
-  if (q >= 3) { const T = st.bpT || (st.bpT = {}); T[k] = Math.max(T[k] || 0, q); txt += (had ? '的' : '和') + '打造券（品質保底：' + qName(q) + '）'; if (had) txt = '「' + GEAR[k].n + '」的打造券（品質保底：' + qName(q) + '）'; }
+  if (q >= tMin) { tkList(k, st).push(q); tkSync(k, st); txt += (had ? '的' : '和') + '打造券（品質保底：' + qName(q) + '）'; if (had) txt = '「' + GEAR[k].n + '」的打造券（品質保底：' + qName(q) + '）'; }
   else if (had) { const mats = bpMats(GEAR[k].t, 1 + q); txt = matsText(mats) + '（設計圖已經學會了）'; }
   return txt;
 }
@@ -12849,17 +12892,18 @@ function bpTut() { const st = Game.st; if (st.flags.bpTut) return null; st.flags
 /* ---------- drops: every gear drop becomes a blueprint / ticket / materials ---------- */
 { const _ls = Battle.prototype.lootShow; Battle.prototype.lootShow = function* (g, head) {
     const st = Game.st; if (!g || !GEAR[g.b]) return yield* _ls.call(this, g, head);
+    const tMin = this.F && this.F.boss ? 2 : 3; // v26: bosses give a ticket from 紫, everything else from 紅; the card always shows what you really get
     st.gear = (st.gear || []).filter(x => x !== g); const k = g.b, q = g.q || 1, known = bpKnown(k, st);
-    if (known && q < 3) { const got = bpMats(GEAR[k].t, 1 + q); Sound.sfx('item'); yield* this.msg((this.F ? this.F.n + '掉落了' : '得到了') + '素材：' + matsText(got) + '！', { hold: 36 }); return; }
-    const txt = gainBP(k, q, st), card = { b: k, q: Math.max(1, q), r: 1, a: [], _bp: 1 };
-    yield* _ls.call(this, card, known ? '獲得了打造券！' : q >= 3 ? '獲得了設計圖＋打造券！' : '獲得了設計圖！');
+    if (known && q < tMin) { const got = recipeMats(k, 1 + q); Sound.sfx('item'); yield* this.msg((this.F ? this.F.n + '掉落了' : '得到了') + '「' + GEAR[k].n + '」的素材：' + matsText(got) + '！（設計圖已經學會了）', { hold: 40 }); return; }
+    const txt = gainBP(k, q, st, tMin), card = { b: k, q: Math.max(1, q), r: 1, a: [], _bp: q >= tMin ? 1 : 2 };
+    yield* _ls.call(this, card, known ? '獲得了打造券（保底' + qName(q) + '）！' : q >= tMin ? '獲得了設計圖＋打造券（保底' + qName(q) + '）！' : '獲得了設計圖！');
     yield* this.msg('得到了' + txt + '！', { hold: 30 }); const tut = bpTut(); if (tut) yield* this.msg(tut, { wait: true });
   };
 }
 { const _v = Battle.prototype.victory; Battle.prototype.victory = function* () {
     const r = yield* _v.call(this), st = Game.st, F = this.F, sp = SPECIES[F.sp] || {};
     if (!F.elite && !F.boss && sp.mat && chance(0.35)) { st.bag[sp.mat] = (st.bag[sp.mat] || 0) + 1; yield* this.msg('又撿到了素材「' + ITEMS[sp.mat].n + '」！', { hold: 24 }); }
-    if ((F.elite || F.boss) && !this.cfg.noMats) { const n = F.boss ? 3 : 2, got = {}; if (sp.mat && ITEMS[sp.mat]) { got[sp.mat] = n; st.bag[sp.mat] = (st.bag[sp.mat] || 0) + n; } const ex = bpMats(clamp(Math.ceil(F.lv / 6), 1, 7), n + 2); for (const k in ex) got[k] = (got[k] || 0) + ex[k];
+    if ((F.elite || F.boss) && !this.cfg.noMats) { const n = F.boss ? 3 : 2, got = {}, sig = sp.mat && ITEMS[sp.mat] ? sp.mat : null; if (sig) { got[sig] = n; st.bag[sig] = (st.bag[sig] || 0) + n; } const ex = areaMats(Game.ow && Game.ow.map && Game.ow.map.id, n, F.lv); for (const k in ex) got[k] = (got[k] || 0) + ex[k];
       Sound.sfx('item'); yield* this.msg((F.boss ? '頭目' : '精英') + '留下了素材：' + matsText(got) + '！', { hold: 36 }); }
     return r;
   };
@@ -12891,7 +12935,7 @@ Events.armorer = function* () { yield* say('王國的裝備現在都交給鐵匠
 
 /* ---------- forging ---------- */
 const BP_ODDS = [[55, 33, 10, 2, 0], [25, 42, 25, 8, 0], [5, 35, 40, 17, 3]], BP_LV = ['普通打造', '精心打造', '極致打造'];
-function bpOdds(lv) { const o = BP_ODDS[lv].slice(), d = (typeof diffOf === 'function' ? diffOf().drop : 0) + (typeof ngOf === 'function' && ngOf() ? 1 : 0); if (d > 0) { const m = Math.min(o[0] + o[1] - 10, d * 4); o[3] += m; if (o[0] >= m) o[0] -= m; else { o[1] -= m - o[0]; o[0] = 0; } } return o; }
+function bpOdds(lv) { const o = BP_ODDS[lv].slice(), d = (typeof ngOf === 'function' && ngOf() ? 1 : 0); if (d > 0) { const m = Math.min(o[0] + o[1] - 10, d * 4); o[3] += m; if (o[0] >= m) o[0] -= m; else { o[1] -= m - o[0]; o[0] = 0; } } return o; }
 function bpRoll(lv) { const o = bpOdds(lv); let r = Math.random() * 100; for (let q = 0; q < 5; q++) { r -= o[q]; if (r < 0) return q + 1; } return 1; }
 const bpCost = (k, lv) => { const R = GEAR_RECIPE[k], m = {}; for (const i in R.mats) m[i] = R.mats[i] * (lv + 1); return { mats: m, gold: R.gold }; };
 const bpCan = (k, lv, st = Game.st) => { const c = bpCost(k, lv); return st.money >= c.gold && Object.entries(c.mats).every(([i, n]) => (st.bag[i] || 0) >= n); };
@@ -12912,7 +12956,7 @@ function* craftScreen() {
     L.slice(T, T + VIS).forEach((e, i) => { const Y = 41 + i * 16, on = T + i === idx; if (on) selBar(x, 6, Y - 1, 164, 15);
       const nm = e.R ? (ITEMS[e.R.out] || GEAR[e.R.out]).n + (e.R.n > 1 ? '×' + e.R.n : '') : GEAR[e.k].n; let z = 11; while (z > 8 && Font.width(nm, z) > 96) z--;
       Font.draw(x, nm, 14, Y, ok(e) ? UIC.text : UIC.dis, UIC.textSh, z);
-      const tag = e.R ? (canR(e.R) ? '可製作' : '素材不足') : (st.bpT && st.bpT[e.k] ? '券' : '') + 'T' + GEAR[e.k].t + (GEAR[e.k].kind && tab === 0 ? '・' + GEAR[e.k].kind : '');
+      const tag = e.R ? (canR(e.R) ? '可製作' : '素材不足') : (st.bpT && st.bpT[e.k] ? (tkCount(e.k) > 1 ? '券×' + tkCount(e.k) + ' ' : '券') : '') + 'T' + GEAR[e.k].t + (GEAR[e.k].kind && tab === 0 ? '・' + GEAR[e.k].kind : '');
       Font.drawR(x, tag, 164, Y + 1, e.R ? (canR(e.R) ? UIC.accent : UIC.dis) : st.bpT && st.bpT[e.k] ? UIC.warm : UIC.muted, UIC.textSh, 9);
       if (typeof touchRegion === 'function') touchRegion(6, Y - 1, 164, 15, () => { if (idx === T + i) tapKey('a'); else { idx = T + i; Sound.sfx('cursor'); } }); });
     if (T > 0) x.drawImage(UPARROW, 86, 38); if (T + VIS < L.length) x.drawImage(DOWNARROW, 86, 37 + VIS * 16 + 3);
@@ -12923,7 +12967,7 @@ function* craftScreen() {
     const mats = e.R ? e.R.mats : GEAR_RECIPE[e.k].mats, gold = e.R ? e.R.gold || 0 : GEAR_RECIPE[e.k].gold;
     Font.draw(x, e.R ? '需要的素材' : '需要的素材（普通打造）', 10, y, UIC.muted, UIC.textSh, 9); if (gold) Font.drawR(x, gold + ' G', 164, y, st.money >= gold ? UIC.warm : UIC.bad, UIC.textSh, 9); y += 11;
     for (const [k, n] of Object.entries(mats)) { let z = 10; while (z > 8 && Font.width('・' + ITEMS[k].n, z) > 110) z--; Font.draw(x, '・' + ITEMS[k].n, 12, y, UIC.text, UIC.textSh, z); Font.drawR(x, have(k) + ' / ' + n, 164, y, have(k) >= n ? UIC.good : UIC.bad, UIC.textSh, 10); y += 11; }
-    if (!e.R && st.bpT && st.bpT[e.k]) Font.draw(x, '持有打造券：免費打造，品質保底' + qName(st.bpT[e.k]), 10, y + 1, UIC.warm, UIC.textSh, 9);
+    if (!e.R && st.bpT && st.bpT[e.k]) Font.draw(x, '持有打造券' + (tkCount(e.k) > 1 ? '×' + tkCount(e.k) : '') + '：免費打造，品質保底' + qName(st.bpT[e.k]), 10, y + 1, UIC.warm, UIC.textSh, 9);
   }, touchBack: true };
   UI.push(scr);
   while (true) {
@@ -12940,17 +12984,20 @@ function* craftScreen() {
   UI.remove(scr);
 }
 function* forgeFlow(k) {
-  const st = Game.st, B = GEAR[k], tk = st.bpT && st.bpT[k];
+  const st = Game.st, B = GEAR[k], tk = tkList(k, st).length ? Math.max(...tkList(k, st)) : 0, tn = tkCount(k, st);
+  if (tk) { // v25: with a ticket the smith always uses it — free, quality at least the ticket's
+    const r = yield* ask('要用打造券打造「' + B.n + '」嗎？\n（免費・品質保底「' + qName(tk) + '」' + (tn > 1 ? '・共有' + tn + '張' : '') + '）', ['使用打造券', '取消']); if (r !== 0) return;
+    const q = Math.max(tkUse(k, st), bpRoll(2)); Sound.sfx('rock'); yield* say('鏘！鏘！鏘！'); const g = makeGear(k, q); Sound.jingle(q >= 3 ? 'levelup' : 'item');
+    yield* itemGet('鐵匠打造了' + gearName(g) + '！（品質：' + qName(q) + '）'); return;
+  }
   const oddsT = lv => bpOdds(lv).map((p, q) => p && q >= 2 ? qName(q + 1) + p : '').filter(Boolean).join(' ');
   const opts = [], acts = [];
-  if (tk) { opts.push('打造券（保底' + qName(tk) + '）'); acts.push(-1); }
   for (let lv = 0; lv < 3; lv++) { opts.push(BP_LV[lv].slice(0, 2) + '×' + (lv + 1) + ' ' + oddsT(lv) + (bpCan(k, lv) ? '' : '✕')); acts.push(lv); }
   opts.push('取消'); acts.push(null);
   const r = yield* ask('要怎麼打造「' + B.n + '」？\n素材投入越多，紅金的機率(%)越高。', opts); const lv = acts[r];
   if (lv === null || lv === undefined || r < 0) return;
   let q;
-  if (lv === -1) { q = Math.max(tk, bpRoll(2)); delete st.bpT[k]; }
-  else { if (!bpCan(k, lv)) { Sound.sfx('bump'); yield* say('素材或金錢不夠喔。'); return; } const c = bpCost(k, lv); st.money -= c.gold; for (const i in c.mats) st.bag[i] -= c.mats[i]; q = bpRoll(lv); }
+  { if (!bpCan(k, lv)) { Sound.sfx('bump'); yield* say(missingText(bpCost(k, lv))); return; } const c = bpCost(k, lv); st.money -= c.gold; for (const i in c.mats) st.bag[i] -= c.mats[i]; q = bpRoll(lv); }
   Sound.sfx('rock'); yield* say('鏘！鏘！鏘！'); const g = makeGear(k, q); Sound.jingle(q >= 3 ? 'levelup' : 'item');
   yield* itemGet('鐵匠打造了' + gearName(g) + '！（品質：' + qName(q) + '）');
   if (B.slot === 'weapon' && WSK[k] && !st.flags.wsTut) { st.flags.wsTut = 1; yield* say('每把武器都有自己的技能。換上新武器，戰鬥中的技能就會跟著改變。\n（選單→技能 可以查看，也能設定「副武器」借用一招）'); }
@@ -12985,7 +13032,7 @@ function* skillTreeScreen() {
     return [
       { lbl: '普攻', col: '#c9cfe4', n: skillMove('attack', st).n, r: 'MP回復', d: () => MOVES.attack.d },
       ...(S ? S.a.map((id, i) => ({ lbl: '主動', col: UIC.accent, id, n: MOVES[id].n, r: '熟練Lv' + (skillLv(id, st) || 1) + '・MP' + skillMP(id, st), d: () => mvInfo(id) })) : []),
-      ...(S ? [{ lbl: '被動', col: UIC.warm, n: S.p.n, r: '', d: () => wpassText(S.p) + '（裝備為主武器時生效）' }, { lbl: '特技', col: '#ffd860', n: S.s.n, r: '每' + wsN(S.s, st) + '次攻擊', d: () => wspecText(S.s, st) + '。普通攻擊和傷害技能都會累積次數。' }] : []),
+      ...(S ? [{ lbl: '被動', col: UIC.warm, n: S.p.n, r: '', d: () => wpassText(S.p) + '（裝備為主武器時生效）' }, { lbl: '特技', col: '#ffd860', n: S.s.n, r: '累積' + wsN(S.s, st) + '層', d: () => wspecText(S.s, st) + '。普通攻擊和傷害技能各累積1層。' }] : []),
       { lbl: '副武器', col: '#b8a0ff', n: sub ? gearShort(sub) : '（未設定）', r: 'A：更換', sub: 1, d: () => '再帶一把武器當「副武器」：不加能力值，只借用它的1招主動技能（威力90%）。' + (sub ? '' : '\n目前沒有設定副武器。') },
       { lbl: '借用', col: '#b8a0ff', id: bor, n: bor ? MOVES[bor].n : '—', r: sub ? 'A：切換' : '', bor: 1, d: () => bor ? mvInfo(bor) : '設定副武器後，可以從它的兩招主動技能中選一招帶進戰鬥。' },
     ]; };
@@ -13048,7 +13095,7 @@ function* skillTreeScreen() {
 { const _dp = drawPassiveInfo; drawPassiveInfo = function (x, st, X, Y, w, big) {
     const k = mainWKey(st); if (!k) return _dp(x, st, X, Y, w, big); const S = WSK[k], C = CLASSES[st.cls];
     const L = [['職業被動　' + (C ? C.n : '—'), UIC.warm, 11]]; const P = classPassives(st.cls); L.push([P.length ? P.map(p => '「' + p.n + '」' + p.d).join(' ') : '職業本身沒有被動（看天賦）', P.length ? UIC.text : UIC.muted, 9]);
-    L.push(['武器被動「' + S.p.n + '」' + wpassText(S.p), UIC.accent, 9], ['特技「' + S.s.n + '」每' + wsN(S.s, st) + '次攻擊', '#ffd860', 9]);
+    L.push(['武器被動「' + S.p.n + '」' + wpassText(S.p), UIC.accent, 9], ['特技「' + S.s.n + '」累積' + wsN(S.s, st) + '層後發動', '#ffd860', 9]);
     const n = tpSpent(st); L.push(['天賦：已投入' + n + '點' + (tpAvail(st) ? '（還有' + tpAvail(st) + '點）' : ''), n ? '#c9cfe4' : UIC.muted, 9]);
     L.forEach(([t, col, z0], i) => { let z = z0; while (z > 7 && Font.width(t, z) > w) z--; Font.draw(x, t, X, Y + i * 15 + (i ? 1 : 0), col, UIC.textSh, z); });
   };
@@ -13056,7 +13103,7 @@ function* skillTreeScreen() {
 { const _pt = drawPassiveTile; drawPassiveTile = function (x, st, X, Y, on) { _pt(x, st, X, Y, on); }; }
 
 /* ---------- battle help: a page about weapon skills first ---------- */
-BATTLE_HELP.unshift(['武器技能', ['技能跟著武器走：每把武器有2招主動、1個被動，和攻擊累積到N次時自動發動的「特技」（戰鬥畫面右下角的◆）。',
+BATTLE_HELP.unshift(['武器技能', ['技能跟著武器走：每把武器有2招主動、1個被動，和累積3層後在下一次攻擊或技能時發動的「特技」（戰鬥畫面右下角的◆）。',
   '普通攻擊不花MP，還會回復少量MP；主動技能越常用，熟練度越高、威力越強。',
   '副武器：再帶一把武器，借用它的1招主動技能（選單→技能）。',
   '職業天賦會強化某些武器或玩法，換了武器也可以重點天賦。']]);
@@ -13086,10 +13133,555 @@ STORY_MARKS.elder = st => st.flags.license && st.lv >= 14 && !st.flags.deep ? '!
 { const _gi = gearInfoLines; gearInfoLines = function (g, wrapW = 150) {
     const L = _gi(g, wrapW), S = WSK[g.b]; if (!S) return L; const X = [], add = (t, c, s, ind) => { for (const l of Font.wrap(t, wrapW - ind, s)) X.push([l, c, s, ind]); };
     X.push(['【武器技能】', UIC.accent, 10, 0]); add('主動：' + S.a.map(id => MOVES[id].n).join('・'), '#c8f0ff', 11, 4);
-    add('被動「' + S.p.n + '」' + wpassText(S.p), UIC.warm, 10, 4); add('特技「' + S.s.n + '」每' + wsN(S.s) + '次攻擊', '#ffd860', 10, 4);
+    add('被動「' + S.p.n + '」' + wpassText(S.p), UIC.warm, 10, 4); add('特技「' + S.s.n + '」累積' + wsN(S.s) + '層後發動', '#ffd860', 10, 4);
     const i = L.findIndex(l => l[0] === '' && l[2] === 6); L.splice(i < 0 ? L.length : i, 0, ...X); return L;
   };
 }
+
+/* ===================== v25 萌芽鎮的鐵匠舖 (request: "the smith should have his own smithy") =====================
+   The town grows south by 5 rows; a stone smithy stands at the bottom right (door at 15,22). Inside: the smith at his
+   anvil, a two-tile forge against the back wall, weapon racks and a quench tub. */
+const SMITHY_ART = (() => {
+  const mk = (w, h, f) => { const c = mkCanvas(w, h), x = c.getContext('2d'); f(x); return c; }, R = (x, c, X, Y, w, h) => { x.fillStyle = c; x.fillRect(X, Y, w, h); };
+  const forge = mk(32, 22, x => {
+    R(x, '#1a1418', 3, 0, 26, 5); R(x, '#3e3a44', 4, 1, 24, 3); R(x, '#5a5662', 4, 1, 24, 1);            // hood
+    R(x, '#1a1418', 1, 4, 30, 18); R(x, '#6a6470', 2, 5, 28, 16);                                         // stone body
+    for (let y = 5, row = 0; y < 21; y += 4, row++) { R(x, '#4e4854', 2, y + 3, 28, 1); for (let i = (row % 2) * 4 + 2; i < 30; i += 8) R(x, '#4e4854', i, y, 1, 3); }
+    R(x, '#8a8490', 2, 5, 28, 1);
+    R(x, '#1a1418', 6, 9, 20, 11); R(x, '#2a0c08', 7, 10, 18, 9);                                         // mouth
+    const g = x.createRadialGradient(16, 17, 1, 16, 17, 11); g.addColorStop(0, 'rgba(255,200,90,0.95)'); g.addColorStop(0.5, 'rgba(255,110,30,0.7)'); g.addColorStop(1, 'rgba(120,20,0,0)'); x.fillStyle = g; x.fillRect(7, 10, 18, 9);
+    R(x, '#ff6020', 8, 16, 16, 3); R(x, '#ffb040', 10, 15, 12, 2); R(x, '#fff0a0', 13, 14, 6, 2); R(x, '#fff8d8', 15, 13, 2, 1);
+    for (const [a, b] of [[10, 13], [12, 12], [19, 12], [21, 13], [16, 11]]) R(x, '#ffd060', a, b, 1, 1);
+    R(x, '#1a1418', 5, 20, 22, 2); R(x, '#3a3640', 6, 20, 20, 1);                                         // sill
+  });
+  const half = i => mk(16, 22, x => x.drawImage(forge, i * 16, 0, 16, 22, 0, 0, 16, 22));
+  const anvil = mk(16, 16, x => {
+    R(x, '#1a1418', 4, 12, 8, 4); R(x, '#3a3a44', 5, 12, 6, 3);
+    R(x, '#1a1418', 6, 8, 4, 5); R(x, '#4a4a56', 7, 8, 2, 4);
+    R(x, '#1a1418', 1, 5, 14, 4); R(x, '#5a5a66', 2, 6, 12, 2); R(x, '#9a9ea8', 2, 6, 12, 1); R(x, '#1a1418', 0, 6, 2, 2); R(x, '#5a5a66', 1, 6, 1, 1);
+    R(x, '#1a1418', 6, 3, 6, 3); R(x, '#ff8030', 7, 4, 4, 1); R(x, '#fff0a0', 8, 4, 2, 1);               // a glowing blank
+  });
+  const rack = (blade, extra) => mk(16, 22, x => {
+    R(x, '#1a1418', 0, 3, 16, 3); R(x, '#6a4428', 1, 4, 14, 1); R(x, '#1a1418', 0, 17, 16, 4); R(x, '#6a4428', 1, 18, 14, 2);
+    R(x, '#1a1418', 1, 3, 3, 19); R(x, '#5a3a24', 2, 4, 1, 17); R(x, '#1a1418', 12, 3, 3, 19); R(x, '#5a3a24', 13, 4, 1, 17);
+    for (const X of [5, 9]) { R(x, '#1a1418', X - 1, 1, 3, 16); R(x, blade, X, 2, 1, 14); R(x, '#ffffff', X, 2, 1, 3); R(x, '#1a1418', X - 2, 12, 5, 2); R(x, '#c8a040', X - 1, 12, 3, 1); R(x, '#4a2a1a', X, 14, 1, 3); }
+    if (extra) extra(x);
+  });
+  const tub = mk(16, 16, x => { R(x, '#1a1418', 2, 4, 12, 12); R(x, '#7a4a2a', 3, 5, 10, 10); R(x, '#5a3420', 3, 10, 10, 5); R(x, '#3a3a44', 3, 8, 10, 1); R(x, '#3a3a44', 3, 13, 10, 1); R(x, '#2a5a9a', 3, 5, 10, 2); R(x, '#8ac8ff', 5, 5, 3, 1); });
+  return { forgeL: half(0), forgeR: half(1), anvil, rackA: rack('#c8d0dc'), rackB: rack('#9ab8e8'), tub };
+})();
+{ const _nf = npcFrames; npcFrames = function (look) { const im = SMITHY_ART[look]; if (im) return propFrames(im, im.height >= 22 ? 0 : 6); return _nf(look); }; }
+BUILD_STYLE.smithy = { roof: '#4a4650', roofT: 'slate', wall: '#cfc4ae', beam: '#3a2a22', shut: '#8a3a24' };
+{ const _bb = buildBuilding; buildBuilding = function (b) {
+    const c = _bb(b); if (b.kind !== 'smithy') return c; const x = c.getContext('2d'), Wd = b.w * 16, Hd = b.h * 16, wy = Hd - 34;
+    const winCols = []; for (let i = 0; i < b.w; i++) if (i !== b.door && (b.w <= 4 ? i === (b.door === 0 ? b.w - 1 : 0) || i === b.w - 1 && b.door !== b.w - 1 : (i === 1 || i === b.w - 2))) winCols.push(i);
+    for (const i of winCols) { const gx = i * 16 + 4, Y = wy + 5, g = x.createLinearGradient(0, Y + 10, 0, Y); g.addColorStop(0, 'rgba(255,150,50,0.85)'); g.addColorStop(1, 'rgba(255,90,20,0.35)'); x.fillStyle = g; x.fillRect(gx, Y, 8, 10); }
+    // the hanging sign: an anvil on the board (same spot the base code picks)
+    const cands = [...Array(b.w).keys()].filter(i => i !== b.door && !winCols.includes(i)).sort((p, q) => Math.abs(p - b.door) - Math.abs(q - b.door) || q - p);
+    const col = cands[0], sx = col * 16 + (col === 0 ? 4 : 1) + 1, sy = wy + 4 + 3, P = (X, Y, w, h, cc) => { x.fillStyle = cc; x.fillRect(sx + X, sy + Y, w, h); };
+    P(1, 2, 8, 2, '#2e3038'); P(1, 2, 8, 1, '#9aa0aa'); P(0, 2, 1, 1, '#2e3038'); P(4, 4, 2, 2, '#2e3038'); P(2, 6, 6, 2, '#2e3038');
+    return c;
+  };
+}
+{ const T = MAPS.town; if (T.rows.length === 20) {
+    T.rows = T.rows.slice(0, 19).concat([
+      'TT.......y::........TT',
+      'TT..f.b...::........TT',
+      'TT....y...::........TT',
+      'TT........::........TT',
+      'TT.f......::::::....TT',
+      'TTTTTTTTTTTTTTTTTTTTTT']);
+    T.buildings.push({ kind: 'smithy', x: 13, y: 19, w: 5, h: 4, door: 2, to: ['smithy', 4, 6], sign: 1 });
+    T.npcs = T.npcs.filter(n => n.id !== 'smith');
+  }
+  MAPS.smithy = { name: '鐵匠舖', music: 'town', wallPal: 'g',
+    rows: ['xxxxxxxxxx', 'xkkxwwxxxx', 'nnnnnnnnnn', 'nnnnnnnnnn', 'nnnnnnnnnn', 'nnnnnnnnnn', 'pnnnnnnnnp', 'nnnnDnnnnn'],
+    exit: { x: 4, y: 7, to: ['town', 15, 23] },
+    npcs: [
+      { id: 'smith', x: 6, y: 3, dir: 'left', look: 'man', name: '鐵匠' },
+      { id: 'smForgeL', x: 7, y: 2, dir: 'down', look: 'forgeL' }, { id: 'smForgeR', x: 8, y: 2, dir: 'down', look: 'forgeR' },
+      { id: 'smAnvil', x: 5, y: 3, dir: 'down', look: 'anvil' }, { id: 'smTub', x: 8, y: 4, dir: 'down', look: 'tub' },
+      { id: 'smRackA', x: 0, y: 2, dir: 'down', look: 'rackA' }, { id: 'smRackB', x: 1, y: 2, dir: 'down', look: 'rackB' },
+    ] };
+  for (const k of ['town', 'smithy']) delete mapCache[k];
+}
+Object.assign(Events, {
+  *smForgeL() { yield* say('爐火燒得正旺。靠近就覺得臉頰發燙。'); }, *smForgeR() { yield* say('爐火燒得正旺。靠近就覺得臉頰發燙。'); },
+  *smAnvil() { yield* say('沉甸甸的鐵砧。上面放著一塊還在發紅的鐵胚。'); }, *smTub() { yield* say('淬火用的水桶。水面上還飄著一點白煙。'); },
+  *smRackA() { yield* say('架上掛著鐵匠打好的劍。每一把都磨得發亮。'); }, *smRackB() { yield* say('架上掛著鐵匠打好的劍。刃上刻著小小的鐵鎚記號。'); },
+});
+if (typeof NPC_WHERE !== 'undefined') NPC_WHERE.smith = '萌芽鎮・鐵匠舖';
+// quest markers: someone inside the smithy also marks its door on the town map
+{ const _qm = questMarks; questMarks = function (st = Game.st) { const M = _qm(st).map(m => m[0] === 'town' && m[1] === 13 && m[2] === 16 ? ['town', 15, 22] : m); if (M.some(m => m[0] === 'smithy')) M.push(['town', 15, 22]); return M; }; }
+
+/* ===================== v25 異界迴廊 difficulty (playtest: too easy because the rift gear came in too high a quality) =====================
+   Chests: 紫 early, 紅 from 8F, 金 only 14F+ (see riftChest). Badge shop: 紫 ticket. Foes never fall far below the hero's level
+   (riftLv) and are a little tougher; rift bosses roll the elite loot table (fewer 金). */
+const RIFT_TOUGH = { hp: 1.15, pow: 1.1, bossHp: 1.1 };
+const inRift = () => !!(Game.ow && Game.ow.map && Game.ow.map.id === 'rift');
+{ const _mf = makeFoe; makeFoe = function (sp, lv, kind) {
+    const f = _mf(sp, lv, kind); if (!inRift()) return f; const s = f.stats, kh = RIFT_TOUGH.hp * (kind === 'boss' ? RIFT_TOUGH.bossHp : 1);
+    s.hp = Math.round(s.hp * kh); f.hp = f.maxhp = s.hp; for (const k of ['atk', 'spa']) s[k] = Math.round(s[k] * RIFT_TOUGH.pow); return f;
+  };
+  const _rq = rollLootQuality; rollLootQuality = function (boss) { return _rq(inRift() ? false : boss); };
+}
+
+/* ===================== v25 blade shapes for slash skills (playtest: 「斬」 skills looked like squares — use flattened diamonds) =====================
+   While a hero skill whose name has 斬／刃／閃 (or a sword / dagger / axe 特技) plays, its particles are drawn as blades:
+   slash lines become tapered lozenges with a white edge and a fading after-image, crosses become two lozenges, and the
+   square sparks / shards / motes become small flat diamonds pointing where they fly. */
+const isSlashName = n => /斬|刃|閃/.test(n || '');
+{ const _um = Battle.prototype.useMove; Battle.prototype.useMove = function* (u, t, id) {
+    let on = false; try { on = !!(u && u.hero && isSlashName(skillMove(id).n)); } catch (e) { }
+    if (!on) return yield* _um.call(this, u, t, id);
+    this.slashOn = (this.slashOn || 0) + 1; try { return yield* _um.call(this, u, t, id); } finally { this.slashOn--; }
+  };
+  const _ws = Battle.prototype.wSpecial; Battle.prototype.wSpecial = function* (u, t, key) {
+    const on = ['劍', '短刀', '斧'].includes((GEAR[key] || {}).kind); if (on) this.slashOn = (this.slashOn || 0) + 1;
+    try { return yield* _ws.call(this, u, t, key); } finally { if (on) this.slashOn--; }
+  };
+  const _sp = Battle.prototype.spawn; Battle.prototype.spawn = function (p) { const r = _sp.call(this, p); if (this.slashOn > 0 && r) r.sl = 1; return r; };
+}
+function lozenge(x, x1, y1, x2, y2, w) {
+  const dx = x2 - x1, dy = y2 - y1, L = Math.hypot(dx, dy) || 1, nx = -dy / L * w / 2, ny = dx / L * w / 2, mx = (x1 + x2) / 2, my = (y1 + y2) / 2;
+  x.beginPath(); x.moveTo(x1, y1); x.lineTo(mx + nx, my + ny); x.lineTo(x2, y2); x.lineTo(mx - nx, my - ny); x.closePath(); x.fill();
+}
+function bladeStroke(x, x1, y1, x2, y2, w, c, a) {
+  const dx = x2 - x1, dy = y2 - y1, L = Math.hypot(dx, dy) || 1, ox = -dy / L, oy = dx / L;
+  x.fillStyle = c; x.globalAlpha = a * 0.3; lozenge(x, x1 + ox * w * 0.9, y1 + oy * w * 0.9, x2 + ox * w * 0.9, y2 + oy * w * 0.9, w * 0.7); // after-image
+  x.globalAlpha = a; lozenge(x, x1, y1, x2, y2, w);
+  x.fillStyle = '#ffffff'; x.globalAlpha = Math.min(1, a * 1.3); lozenge(x, lerp(x1, x2, 0.08), lerp(y1, y2, 0.08), lerp(x1, x2, 0.92), lerp(y1, y2, 0.92), Math.max(1, w * 0.36));
+}
+{ const _dp = drawParticle; drawParticle = function (x, p) {
+    if (!p.sl || p.hidden) return _dp(x, p);
+    const a = 1 - p.t / p.life;
+    if (p.k === 'line') { const g = clamp(p.t / (p.grow || 1), 0, 1); x.save(); bladeStroke(x, p.x1, p.y1, lerp(p.x1, p.x2, g), lerp(p.y1, p.y2, g), Math.max(4, (p.w || 2) * 1.9), p.c, a); x.restore(); return; }
+    if (p.k === 'xcut') { const g = Math.min(1, p.t / 4), L = p.r * g, A = Math.min(1, a * 1.5), w = 9 * (0.6 + a / 2); x.save(); bladeStroke(x, p.x - L, p.y - L, p.x + L, p.y + L, w, p.c, A); bladeStroke(x, p.x + L, p.y - L, p.x - L, p.y + L, w, p.c, A); x.restore(); return; }
+    const flat = p.k === 'dot' || p.k === 'shard' || p.k === 'streak' || (p.k === 'mote' && !p.to);
+    if (flat) {
+      const s = p.k === 'streak' ? Math.max(2, (p.len || 4) / 2) : (p.s || 2), ang = p.k === 'shard' ? p.t * (p.spin || 0.3) : (p.vx || p.vy) ? Math.atan2(p.vy || 0, p.vx || 0) : -0.8;
+      const L = Math.max(4, s * 2.6), wd = Math.max(1.4, s * 0.75);
+      x.save(); x.translate(p.x + (p.k === 'streak' ? (p.len || 4) / 2 : s / 2), p.y + s / 2); x.rotate(ang); x.globalAlpha = p.k === 'dot' ? 1 : Math.max(0, a);
+      x.fillStyle = p.c; lozenge(x, -L / 2, 0, L / 2, 0, wd); if (s >= 2) { x.fillStyle = '#ffffff'; lozenge(x, -L / 5, 0, L / 3, 0, wd * 0.45); } x.restore(); return;
+    }
+    return _dp(x, p);
+  };
+}
+
+/* ===================== v25 疾風刺 redone (playtest: "the effect is unclear" — one thin green line, invisible on grass) =====================
+   Wind gathers round the hero, a spear-point of wind (dark rim so it reads on grass and snow) shoots at the foe trailing two
+   twisting wind ribbons, then pierces: a shock ring, lines bursting out the far side, flat wind shards and a light flash.
+   The spear's normal attack (突刺) keeps its short thrust, now with a dark under-stroke so it stays visible. */
+Object.assign(HERO_PK, {
+  galeTip(x, p, a) { const A = Math.min(1, a * 2); x.translate(p.x, p.y); x.rotate(p.ang); const L = p.len, w = p.w;
+    const g = x.createLinearGradient(-L * 1.6, 0, 0, 0); g.addColorStop(0, 'rgba(110,240,208,0)'); g.addColorStop(1, 'rgba(110,240,208,0.75)'); x.globalAlpha = A; x.fillStyle = g; lozenge(x, -L * 1.7, 0, 0, 0, w * 0.9);
+    x.fillStyle = 'rgba(8,30,34,0.8)'; lozenge(x, -L / 2 - 3, 0, L / 2 + 4, 0, w + 4);
+    x.fillStyle = '#3ad8b8'; lozenge(x, -L / 2, 0, L / 2, 0, w);
+    x.fillStyle = '#ffffff'; lozenge(x, -L / 6, 0, L / 2 - 1, 0, w * 0.42); },
+  galeRibbon(x, p, a) { const tp = p.tip, ex = tp ? tp.x : p.x1, ey = tp ? tp.y : p.y1, dx = ex - p.x0, dy = ey - p.y0, L = Math.hypot(dx, dy); if (L < 4) return;
+    const nx = -dy / L, ny = dx / L, n = Math.max(6, Math.floor(L / 5)); x.globalAlpha = Math.min(1, a * 1.6); x.lineCap = 'round';
+    for (const [c, lw] of [['rgba(8,30,34,0.55)', 4], [p.c, 2]]) { x.strokeStyle = c; x.lineWidth = lw; x.beginPath();
+      for (let i = 0; i <= n; i++) { const t = i / n, amp = 7 * Math.sin(t * Math.PI) * (0.4 + 0.6 * t), o = Math.sin(t * 9 + p.ph + p.t * 0.5) * amp; const X = p.x0 + dx * t + nx * o, Y = p.y0 + dy * t + ny * o; if (i) x.lineTo(X, Y); else x.moveTo(X, Y); } x.stroke(); } },
+});
+FX.galeThrust = function* (U, T, u, t) {
+  Sound.sfx('wind'); const Y0 = U.y - 6, dx = T.x - U.x, dy = T.y - Y0, L = Math.hypot(dx, dy) || 1, ux = dx / L, uy = dy / L;
+  // 1) wind gathers
+  for (let i = 0; i < 10; i++) { const an = i / 10 * Math.PI * 2, r = 28; this.spawn({ k: 'line', x1: U.x + Math.cos(an) * r, y1: Y0 + Math.sin(an) * r * 0.6, x2: U.x + Math.cos(an) * 5, y2: Y0 + Math.sin(an) * 3, c: i % 2 ? '#ffffff' : '#6ef0d0', w: 2, grow: 5, life: 9 }); }
+  this.spawn({ k: 'glow', x: U.x, y: Y0, r: 20, c: '#6ef0d0', life: 14 }); yield* wait(7);
+  // 2) the thrust
+  yield* this.lunge(u, 16, 2); Sound.sfx('slash');
+  const F = 6, tip = this.spawn({ k: 'galeTip', x: U.x, y: Y0, ang: Math.atan2(dy, dx), len: 30, w: 9, life: F + 4, upd: p => { if (p.t <= F) { p.x = U.x + dx * p.t / F; p.y = Y0 + dy * p.t / F; } } });
+  for (const [c, ph] of [['#ffffff', 0], ['#6ef0d0', Math.PI]]) this.spawn({ k: 'galeRibbon', x0: U.x, y0: Y0, tip, c, ph, life: F + 10, upd: () => {} });
+  yield* wait(F);
+  // 3) pierce
+  Sound.sfx('hitSuper'); this.shake = Math.max(this.shake || 0, 6);
+  this.spawn({ k: 'flash', c: '#e8fff8', a: 0.28, life: 6 });
+  this.spawn({ k: 'shock', x: T.x, y: T.y, r0: 4, r1: 30, c: '#e8fff8', life: 14 }); this.spawn({ k: 'shock', x: T.x, y: T.y, r0: 2, r1: 18, c: '#6ef0d0', life: 10 });
+  for (let i = -2; i <= 2; i++) { const an = Math.atan2(uy, ux) + i * 0.22, len = 34 + (2 - Math.abs(i)) * 10, x2 = T.x + Math.cos(an) * len, y2 = T.y + Math.sin(an) * len;
+    this.spawn({ k: 'line', x1: T.x, y1: T.y, x2, y2, c: 'rgba(8,30,34,0.6)', w: 4, grow: 3, life: 11 }); this.spawn({ k: 'line', x1: T.x, y1: T.y, x2, y2, c: i ? '#bff8ea' : '#ffffff', w: 2, grow: 3, life: 11 }); }
+  for (let i = 0; i < 14; i++) { const an = Math.atan2(uy, ux) + rnd(-60, 60) / 100, v = rnd(15, 35) / 10; this.spawn({ k: 'dot', sl: 1, x: T.x, y: T.y, vx: Math.cos(an) * v, vy: Math.sin(an) * v, c: i % 3 ? '#6ef0d0' : '#ffffff', s: 2, life: 16 + rnd(0, 6) }); }
+  yield* this.shakeB(t, 8, 3);
+};
+MOVES.gale.fx = 'galeThrust'; for (const id in WMOVE) if (MOVES[id].tpl === 'gale') MOVES[id].fx = 'galeThrust';
+// the spear's plain thrust: same shape as before, drawn over a dark under-stroke
+{ const _wt = FX.windThrust; FX.windThrust = function* (U, T, u, t) {
+    const n0 = this.fx.length; const g = _wt.call(this, U, T, u, t); let r = g.next(), added = false;
+    while (!r.done) { if (!added && this.fx.length > n0) { added = true; for (const p of this.fx.slice(n0)) if (p.k === 'line' && p.w >= 4) { const q = this.spawn({ ...p, c: 'rgba(8,30,34,0.6)', w: p.w + 3 }); this.fx.splice(this.fx.indexOf(q), 1); this.fx.splice(this.fx.indexOf(p), 0, q); } } yield r.value; r = g.next(); }
+  };
+}
+
+/* ===================== v26 武器繼承 (request: weapons get replaced too fast — let a favourite weapon take over another weapon's power) =====================
+   At the smith: pick the weapon to keep, then any other weapon as the donor. The kept weapon keeps its name, look, element,
+   skills, passive and 特技, and takes over the donor's base stats, quality, roll, affixes (and a 虹 special); the higher
+   enhancement of the two stays. The donor is used up. A donor of the other kind of power (物攻 ↔ 魔攻) is converted, so a
+   strong axe can feed a favourite staff. g.sb = the base whose numbers the weapon now uses. */
+const weaponMainStat = b => { const s = (GEAR[b] || {}).st || {}; return (s.spa || 0) > (s.atk || 0) ? 'spa' : 'atk'; };
+{ const _gs = gearStats; gearStats = function (g) {
+    if (!g || !g.sb || !GEAR[g.sb] || g.sb === g.b) return _gs(g);
+    const o = _gs({ ...g, b: g.sb }), mine = weaponMainStat(g.b), theirs = weaponMainStat(g.sb);
+    if (mine !== theirs) { const a = o.st.atk || 0, s = o.st.spa || 0; o.st.atk = s; o.st.spa = a; if (!o.st.atk) delete o.st.atk; if (!o.st.spa) delete o.st.spa; }
+    o.fx = [...(GEAR[g.b].fx || []), ...(g.x ? [g.x] : [])]; return o;
+  };
+}
+{ const _gi = gearInfoLines; gearInfoLines = function (g, wrapW = 150) { const L = _gi(g, wrapW); if (g && g.sb && GEAR[g.sb] && g.sb !== g.b) L.splice(1, 0, ['【繼承】能力來自「' + GEAR[g.sb].n + '」', '#c8b0ff', 10, 0]); return L; }; }
+const inheritCost = d => Math.round(((GEAR[d.sb || d.b] || {}).t || 1) * 120 + (d.q || 1) * 80 + (d.e || 0) * 60);
+function inheritResult(t, d) { return { ...t, sb: d.sb || d.b, q: d.q, r: d.r, a: (d.a || []).map(a => a.slice()), x: d.x, e: Math.max(t.e || 0, d.e || 0) }; }
+const mainStatTxt = g => { const k = weaponMainStat(g.b), v = gearStats(g).st[k] || 0; return (k === 'spa' ? '魔攻' : '物攻') + v; };
+function* inheritFlow() {
+  const st = Game.st, weapons = () => gearSort().filter(g => GEAR[g.b].slot === 'weapon');
+  if (!st.flags.inhTut) { st.flags.inhTut = 1; yield* sayAll(['喜歡的武器捨不得換掉？那就讓它繼承別把武器的力量吧。', '留下來的武器，名字、外觀和技能都不變；能力、品質和詞綴會換成素材武器的。', '素材武器會熔掉消失。物攻和魔攻的武器也能互相繼承，我會幫你換算。']); }
+  while (true) {
+    const tgt = yield* gearPicker('繼承：要留下哪一把？', weapons, (x, g, Y) => { Font.draw(x, '這把的名字、外觀、技能會保留', 12, Y, UIC.accent, UIC.textSh, 10); });
+    if (!tgt) return;
+    if (!weapons().some(g => g !== tgt && !isEquipped(g))) { yield* say('沒有其他可以當素材的武器。（裝備中的武器不能當素材）'); continue; }
+    const don = yield* gearPicker('繼承：吸收哪一把的能力？', () => weapons().filter(g => g !== tgt && !isEquipped(g)), (x, g, Y) => {
+      const after = inheritResult(tgt, g), c = inheritCost(g);
+      Font.draw(x, gearShort(tgt) + '：' + mainStatTxt(tgt) + ' → ' + mainStatTxt(after), 12, Y, UIC.accent, UIC.textSh, 9);
+      Font.draw(x, '品質：' + qName(tgt.q) + ' → ' + qName(g.q) + '　詞綴' + (g.a || []).length + '條', 12, Y + 12, UIC.text, UIC.textSh, 9);
+      Font.drawR(x, c + ' G', 164, Y + 26, st.money >= c ? UIC.warm : UIC.bad, UIC.textSh, 10); });
+    if (!don) continue;
+    const c = inheritCost(don); if (st.money < c) { yield* say('錢不夠喔。'); continue; }
+    if (!(yield* yesNo('要把「' + gearShort(don) + '」的能力繼承給「' + gearShort(tgt) + '」嗎？\n（' + gearShort(don) + '會消失・' + c + ' G）'))) continue;
+    st.money -= c; Object.assign(tgt, inheritResult(tgt, don)); if (!tgt.x) delete tgt.x;
+    st.gear = st.gear.filter(g => g !== don); if (st.sub && st.sub.u === don.u) st.sub = null; clampHP();
+    Sound.sfx('rock'); yield* say('鏘！鏘！鏘！'); Sound.jingle('levelup'); yield* itemGet(gearName(tgt) + '繼承了新的力量！（' + mainStatTxt(tgt) + '）');
+  }
+}
+
+/* ===================== v26 drops that match (playtest: tickets / materials didn't match what was written or what the monster is) =====================
+   · Every elite and boss has its own fitting material; a few odd pairs are fixed (the crab no longer drops lizard scales,
+     the hellhound drops a fire core). 星之碎片 and 龍鱗 finally have a source (彗星鳥・星之守護者 / 火龍幼體).
+   · Elites / bosses leave their own material + materials of the area they live in (no random pile from far regions).
+   · A known blueprint dropping again turns into that gear's own materials.
+   · The encounter card says what really drops (blueprint / ticket). Forging without materials says where to get them. */
+Object.assign(SPECIES.reedCrab, { mat: 'beetleShell' }); Object.assign(SPECIES.hellHound, { mat: 'emberCore' }); Object.assign(SPECIES.cometBird, { mat: 'starShard' });
+const BOSS_MAT = { wolf: 'wolfPelt', flower: 'leaf', croc: 'crocHide', mossGiant: 'stone', crystalGolem: 'crystal', golem: 'stone', bandit: 'banditCloth', banditBoss: 'banditCloth',
+  boneKnight: 'boneShard', lizardChief: 'lizardScale', rogueBlade: 'moonDew', silverWyrm: 'moonDew', gatekeeper: 'riftShard', rockRhino: 'sandCrystal', duneWorm: 'sandCrystal',
+  bogWitch: 'bogMoss', hydra: 'bogMoss', blackFeather: 'banditCloth', ratKing: 'ratTail', boarKing: 'boarTusk', harvestGolem: 'wheat', clockKnight: 'spring', clockColossus: 'brassGear',
+  snowBear: 'snowPelt', frostLich: 'iceCrystal', frostQueen: 'iceCrystal', youngDragon: 'dragonScale', lavaGiant: 'magmaStone', duskCaptain: 'shadowCloth', victorDemon: 'voidShard',
+  shadowGeneral: 'shadowCloth', starGuardian: 'starShard' };
+for (const k in BOSS_MAT) if (SPECIES[k] && ITEMS[BOSS_MAT[k]] && !SPECIES[k].mat) SPECIES[k].mat = BOSS_MAT[k];
+Object.assign(ITEMS.stone, { d: '堅硬的石塊。石頭類的魔物身上常有。' }); Object.assign(ITEMS.crystal, { d: '透明的水晶碎片。地下的洞窟和水道裡找得到。' });
+Object.assign(ITEMS.beetleShell, { d: '硬邦邦的甲殼碎片。甲蟲和螃蟹身上都有。' }); Object.assign(ITEMS.wolfPelt, { d: '狼的毛皮。又厚又暖。' });
+Object.assign(ITEMS.snowPelt, { d: '雪白的厚毛皮。雪原的野獸身上都有，穿上就不怕冷。' }); Object.assign(ITEMS.emberCore, { d: '火焰魔物留下的小火核。摸起來暖暖的。' });
+Object.assign(ITEMS.starShard, { d: '流星掉下來的碎片。星見神殿的彗星鳥偶爾會帶著。' }); Object.assign(ITEMS.dragonScale, { d: '火龍幼體身上的鱗片。傳說中的鍛造材料。' });
+// where each material comes from: [[species, map], …] and gathering maps
+const MAT_SRC = (() => { const S = {}, mapN = m => (MAPS[m] && MAPS[m].name || m).replace(/ \d+F$/, ''), add = (k, t) => { (S[k] = S[k] || []).includes(t) || S[k].push(t); };
+  for (const m in MAPS) { const d = MAPS[m];
+    for (const e of d.encounters || []) for (const r of e.table || []) { const sp = SPECIES[r[0]]; if (sp && sp.mat) add(sp.mat, sp.n + '・' + mapN(m)); }
+    for (const e of d.elites || []) { const sp = SPECIES[e.sp]; if (sp && sp.mat) add(sp.mat, sp.n + '・' + mapN(m)); }
+    if (d.boss && SPECIES[d.boss.sp] && SPECIES[d.boss.sp].mat) add(SPECIES[d.boss.sp].mat, SPECIES[d.boss.sp].n + '・' + mapN(m));
+    for (const g of d.gathers || []) if (g.mat) add(g.mat, '採集・' + mapN(m)); }
+  return S; })();
+const matSource = k => (MAT_SRC[k] || []).slice(0, 2).join('、') || '（還沒有發現）';
+function missingText(c) { const st = Game.st, L = Object.entries(c.mats).filter(([k, n]) => (st.bag[k] || 0) < n).map(([k, n]) => ITEMS[k].n + '×' + (n - (st.bag[k] || 0)) + '（' + matSource(k) + '）');
+  return (L.length ? '素材不夠喔。還缺：\n' + L.slice(0, 3).join('\n') : '') + (st.money < c.gold ? (L.length ? '\n' : '') + '金錢不夠（需要' + c.gold + ' G）' : '') || '素材或金錢不夠喔。'; }
+// the area's own materials (monsters there + gathering), falling back to the tier pool
+function areaMats(mapId, n, lv) { const d = mapId && MAPS[mapId], P = [];
+  if (d) { for (const e of d.encounters || []) for (const r of e.table || []) { const sp = SPECIES[r[0]]; if (sp && sp.mat && ITEMS[sp.mat] && !P.includes(sp.mat)) P.push(sp.mat); } for (const g of d.gathers || []) if (g.mat && ITEMS[g.mat] && !P.includes(g.mat)) P.push(g.mat); }
+  const pool = P.length ? P : TIER_POOL[clamp(Math.ceil((lv || 6) / 6), 1, 7)], st = Game.st, got = {};
+  for (let i = 0; i < n; i++) { const k = pick(pool); got[k] = (got[k] || 0) + 1; st.bag[k] = (st.bag[k] || 0) + 1; } return got; }
+function recipeMats(k, n) { const R = GEAR_RECIPE[k], st = Game.st, keys = R ? Object.keys(R.mats) : TIER_POOL[clamp(GEAR[k].t || 1, 1, 7)], got = {};
+  for (let i = 0; i < n; i++) { const m = pick(keys); got[m] = (got[m] || 0) + 1; st.bag[m] = (st.bag[m] || 0) + 1; } return got; }
+// the encounter card tells the truth: blueprint + ticket on the first kill, blueprints / tickets / materials after that
+lootHint = function (key, sp) { const first = !((Game.st.kills || {})[key]), sig = (LOOT[key] || [])[0] || (SPECIES[sp] || {}).drop, mat = (SPECIES[sp] || {}).mat;
+  if (first && sig && GEAR[classGear(sig)]) return '首次：「' + GEAR[classGear(sig)].n + '」設計圖＋紅色打造券';
+  if (LOOT[key]) return '再戰：' + LOOT[key].slice(0, 2).map(k => GEAR[classGear(k)].n).join('、') + '等的設計圖／打造券' + (mat && ITEMS[mat] ? '、' + ITEMS[mat].n : '');
+  return mat && ITEMS[mat] ? '素材：' + ITEMS[mat].n : ''; };
+
+// rift gear is forged from rift shards
+for (const k of TOWER_LOOT) if (GEAR_RECIPE[k]) { const m = Object.keys(GEAR_RECIPE[k].mats).filter(i => i !== 'riftShard')[0]; GEAR_RECIPE[k].mats = { riftShard: 3, ...(m ? { [m]: 2 } : {}) }; }
+
+/* ===================== v26c 招式對齊名稱 (playtest: "skill names / effects / text don't match; normal attacks should look like the weapon") =====================
+   1) every weapon gets a look from its element, then its name (火・冰・水・雷・葉・毒・月・星・虛・聖・血・機械・風・沙・龍・岩・氣・音・魔);
+      its normal attack is drawn per weapon kind in those colours, and every hit it lands (normal, skill, 特技) ends in that look's burst
+   2) pictures that didn't match the name: 見切 (was a hex shield), 水流刃 (bubbles), 疾射飛刀 (a ring; on guns it is now 「快速射擊」),
+      龍槍・貫穿・雙龍突・跳躍・龍神降臨 (small hits), 時空凍結 (faint)
+   3) the text tells the whole truth: element side effects and the elemental-weapon conversion are written into each skill */
+{
+  const WTHEME = {
+    steel: ['#a8d8ff', '#ffffff', 'rgba(10,20,40,0.6)'], fire: ['#ff7a30', '#fff0a0', 'rgba(70,14,0,0.6)'], water: ['#3c9cf0', '#e8f8ff', 'rgba(0,20,60,0.6)'],
+    ice: ['#8ad8ff', '#ffffff', 'rgba(0,30,60,0.6)'], volt: ['#f8d030', '#fffbe0', 'rgba(50,40,0,0.6)'], leaf: ['#58d060', '#e8ffd0', 'rgba(0,40,10,0.6)'],
+    venom: ['#b060e0', '#f0d8ff', 'rgba(30,0,40,0.6)'], moon: ['#b8c8ff', '#ffffff', 'rgba(10,10,50,0.6)'], star: ['#ffd860', '#ffffff', 'rgba(30,20,60,0.6)'],
+    void: ['#9a5ae0', '#f0e0ff', 'rgba(20,0,40,0.7)'], holy: ['#ffc850', '#fffbe8', 'rgba(60,40,0,0.5)'], blood: ['#e03848', '#ffd0d0', 'rgba(50,0,0,0.6)'],
+    brass: ['#e0a840', '#fff0c0', 'rgba(40,25,0,0.6)'], wind: ['#6ef0d0', '#ffffff', 'rgba(8,30,34,0.6)'], sand: ['#e0c080', '#fff4d8', 'rgba(50,35,10,0.6)'],
+    dragon: ['#ff5a4a', '#ffe0c0', 'rgba(60,0,0,0.6)'], rock: ['#c09060', '#f8e8d0', 'rgba(40,25,10,0.6)'], chi: ['#ffc040', '#ffffff', 'rgba(50,30,0,0.5)'],
+    sound: ['#c8b0ff', '#ffffff', 'rgba(20,10,40,0.5)'], arcane: ['#c890ff', '#f8f0ff', 'rgba(25,0,45,0.6)'],
+  };
+  const KW = [['ice', '冰霜雪'], ['fire', '炎火燼熔'], ['volt', '雷電'], ['leaf', '翠森荊橡葉'], ['venom', '毒蠍蛇蟾沼'], ['water', '水潮湖汐'], ['moon', '月'], ['star', '星彗'], ['dragon', '龍'],
+    ['void', '虛界影暗黯冥亡黑'], ['holy', '曙晨聖王宮'], ['blood', '血修骸收'], ['brass', '銅發條齒輪蒸汽時計'], ['wind', '風鷹疾'], ['sand', '沙砂漠'], ['rock', '岩泰坦甲'], ['chi', '氣']];
+  const FIX = { mistDagger: 'wind', fangWand: 'arcane', quartzWand: 'arcane', ruinStaff: 'arcane', ancientTome: 'arcane', hydraStaff: 'fire', witchTome: 'fire', wolfFang2: 'steel', fangDagger: 'blood', tigerClaw: 'blood', crystalBlade: 'ice' };
+  const BYKIND = { 拳套: 'chi', 法杖: 'arcane', 魔導書: 'arcane', 樂器: 'sound', 火槍: 'brass' }, BYELEM = { 火: 'fire', 雷: 'volt', 草: 'leaf', 毒: 'venom' };
+  const themeOf = k => { const B = GEAR[k]; if (!B) return 'steel'; if (FIX[k]) return FIX[k];
+    if (B.elem === '水') return /[冰霜雪晶]/.test(B.n) ? 'ice' : 'water'; if (BYELEM[B.elem]) return BYELEM[B.elem];
+    for (const [t, s] of KW) if ([...s].some(ch => B.n.includes(ch))) return t; return BYKIND[B.kind] || 'steel'; };
+  const TH = {}; for (const k in WSK) TH[k] = themeOf(k);
+  const R = (a, b) => a + Math.random() * (b - a);
+
+  Object.assign(HERO_PK, {
+    wLeaf(x, p, a) { x.globalAlpha = Math.min(1, a * 1.5); x.translate(p.x, p.y); x.rotate(p.ang + p.t * p.spin); x.fillStyle = 'rgba(0,40,10,0.6)'; lozenge(x, -p.s / 2 - 1, 0, p.s / 2 + 1, 0, p.s * 0.6 + 2); x.fillStyle = p.c; lozenge(x, -p.s / 2, 0, p.s / 2, 0, p.s * 0.6); },
+    wOrb(x, p, a) { x.globalAlpha = Math.min(1, a * 1.4); x.fillStyle = p.c; x.beginPath(); x.arc(p.x, p.y, p.r, 0, 7); x.fill(); x.fillStyle = 'rgba(255,255,255,0.8)'; x.fillRect(Math.round(p.x - p.r / 2), Math.round(p.y - p.r / 2), 1, 1); },
+    wMoon(x, p, a) { x.globalAlpha = Math.min(1, a * 1.5); x.translate(p.x, p.y); x.rotate(p.ang); x.fillStyle = p.c; x.beginPath(); x.arc(0, 0, p.r, -1.3, 1.3); x.arc(-p.r * 0.5, 0, p.r * 0.9, 1.2, -1.2, true); x.closePath(); x.fill(); },
+    wCog(x, p, a) { x.globalAlpha = Math.min(1, a * 1.5); x.translate(p.x, p.y); x.rotate(p.t * 0.3); x.fillStyle = p.c; for (let i = 0; i < 6; i++) { x.rotate(Math.PI / 3); x.fillRect(-1, -p.r - 1.5, 2, 2); } x.beginPath(); x.arc(0, 0, p.r, 0, 7); x.fill(); x.fillStyle = 'rgba(40,25,0,0.8)'; x.fillRect(-1, -1, 2, 2); },
+    wSwirl(x, p, a) { x.globalAlpha = a; x.strokeStyle = p.c; x.lineWidth = 2; x.lineCap = 'round'; x.beginPath(); x.arc(p.x, p.y, p.r * (0.5 + 0.5 * p.t / p.life), p.ph + p.t * 0.35, p.ph + p.t * 0.35 + 2.2); x.stroke(); },
+    wNote(x, p, a) { x.globalAlpha = Math.min(1, a * 1.5); x.fillStyle = 'rgba(20,10,40,0.6)'; x.beginPath(); x.ellipse(p.x, p.y, 3.2, 2.6, -0.4, 0, 7); x.fill(); x.fillRect(Math.round(p.x), Math.round(p.y - 8), 3, 9); x.fillStyle = p.c; x.beginPath(); x.ellipse(p.x, p.y, 2.2, 1.6, -0.4, 0, 7); x.fill(); x.fillRect(Math.round(p.x + 1), Math.round(p.y - 7), 1, 7); x.fillRect(Math.round(p.x + 1), Math.round(p.y - 7), 3, 1); },
+    thrTip(x, p, a) { const A = Math.min(1, a * 2), L = p.len, w = p.w; x.translate(p.x, p.y); x.rotate(p.ang);
+      x.globalAlpha = A * 0.55; x.fillStyle = p.c; lozenge(x, -L * 1.6, 0, 0, 0, w * 0.8);
+      x.globalAlpha = A; x.fillStyle = p.d; lozenge(x, -L / 2 - 3, 0, L / 2 + 4, 0, w + 4); x.fillStyle = p.c; lozenge(x, -L / 2, 0, L / 2, 0, w); x.fillStyle = p.h; lozenge(x, -L / 6, 0, L / 2 - 1, 0, w * 0.42); },
+    flyBlade(x, p, a) { x.globalAlpha = Math.min(1, a * 2); x.translate(p.x, p.y); x.rotate(p.ang); const r = p.r, W = p.w;
+      const C = (rr, w, col) => { x.fillStyle = col; x.beginPath(); x.arc(0, 0, rr, -1.15, 1.15); x.arc(-w, 0, rr * 1.04, 1.12, -1.12, true); x.closePath(); x.fill(); };
+      C(r + 2, W + 3, p.d); C(r, W, p.c); C(r - 1, W * 0.35, p.h); },
+    wGlint(x, p, a) { const g = Math.sin(Math.min(1, p.t / p.life) * Math.PI), L = p.r * g; x.globalAlpha = 1; x.fillStyle = p.c; lozenge(x, p.x - L, p.y, p.x + L, p.y, 3 * g + 1); lozenge(x, p.x, p.y - L * 0.5, p.x, p.y + L * 0.5, 2 * g + 1); x.fillStyle = '#ffffff'; lozenge(x, p.x - L * 0.6, p.y, p.x + L * 0.6, p.y, 1.4); },
+  });
+
+  // the look's burst on the foe
+  function burst(T, tk, big) { const [c, h, d] = WTHEME[tk] || WTHEME.steel, n = big ? 14 : 9, S = this;
+    const ring = (r1, col, w = 2, life = 12) => S.spawn({ k: 'ring', x: T.x, y: T.y, r0: 3, r1, c: col, w, life });
+    const out = (k, o) => { for (let i = 0; i < n; i++) { const an = Math.random() * 6.283, v = R(1, 2.6) * (o.sp || 1); S.spawn({ k, x: T.x + Math.cos(an) * 4, y: T.y + Math.sin(an) * 4, vx: Math.cos(an) * v, vy: Math.sin(an) * v + (o.vy || 0), g: o.g || 0, c: i % 3 ? c : h, s: o.s || 2, r: o.r, ang: an, spin: R(-0.4, 0.4), life: (o.life || 16) + rnd(-3, 3) }); } };
+    switch (tk) {
+      case 'fire': case 'dragon': for (let i = 0; i < n; i++) S.spawn({ k: 'flame', x: T.x + rnd(-12, 12), y: T.y + rnd(-8, 10), vy: -R(0.6, 1.4), s: rnd(3, 5), life: 14 + rnd(0, 6) }); S.spawn({ k: 'glow', x: T.x, y: T.y, r: 18, c, life: 12 }); break;
+      case 'water': out('dot', { g: 0.18, vy: -1.2 }); ring(26, h); break;
+      case 'ice': out('shard', { s: 4, sp: 0.8 }); ring(22, h); break;
+      case 'volt': for (let j = 0; j < 3; j++) { const an = Math.random() * 6.283, pts = [[T.x, T.y]]; let px = T.x, py = T.y; for (let q = 0; q < 4; q++) { px += Math.cos(an) * 7 + rnd(-4, 4); py += Math.sin(an) * 7 + rnd(-4, 4); pts.push([px, py]); } S.spawn({ k: 'bolt', pts, w: 2, life: 8 }); } out('dot', { s: 1, sp: 1.4, life: 10 }); break;
+      case 'leaf': out('wLeaf', { s: 5, sp: 0.9, vy: -0.4, g: 0.04, life: 20 }); break;
+      case 'venom': for (let i = 0; i < n; i++) S.spawn({ k: 'wOrb', x: T.x + rnd(-12, 12), y: T.y + rnd(-6, 10), vx: R(-0.3, 0.3), vy: -R(0.5, 1.2), r: R(1.5, 3.5), c: i % 3 ? c : h, life: 18 + rnd(0, 6) }); break;
+      case 'moon': out('wMoon', { r: 5, sp: 0.8, life: 18 }); ring(24, c); break;
+      case 'star': for (let i = 0; i < 5 + (big ? 3 : 0); i++) S.spawn({ k: 'star', x: T.x + rnd(-16, 16), y: T.y + rnd(-14, 14), c: i % 2 ? c : h, life: 8 + rnd(0, 8) }); out('dot', { s: 1, life: 14 }); break;
+      case 'void': for (let i = 0; i < n; i++) { const an = Math.random() * 6.283, r = R(14, 24); S.spawn({ k: 'wOrb', x: T.x + Math.cos(an) * r, y: T.y + Math.sin(an) * r, vx: -Math.cos(an) * r / 14, vy: -Math.sin(an) * r / 14, r: R(1.5, 3), c: i % 3 ? c : '#3a1060', life: 14 }); } ring(20, c, 3); break;
+      case 'holy': for (let i = 0; i < 8; i++) { const an = i / 8 * 6.283; S.spawn({ k: 'line', x1: T.x + Math.cos(an) * 6, y1: T.y + Math.sin(an) * 6, x2: T.x + Math.cos(an) * 26, y2: T.y + Math.sin(an) * 26, c: i % 2 ? c : h, w: 2, grow: 3, life: 10 }); } S.spawn({ k: 'glow', x: T.x, y: T.y, r: 16, c: h, life: 10 }); break;
+      case 'blood': out('dot', { g: 0.2, vy: -1 }); S.spawn({ k: 'line', sl: 1, x1: T.x - 14, y1: T.y + 8, x2: T.x + 14, y2: T.y - 8, c, w: 3, grow: 2, life: 10 }); break;
+      case 'brass': out('wCog', { r: 3, sp: 0.9, g: 0.08, life: 18 }); break;
+      case 'wind': for (let i = 0; i < 4; i++) S.spawn({ k: 'wSwirl', x: T.x + rnd(-10, 10), y: T.y + rnd(-10, 10), r: R(8, 14), c: i % 2 ? c : h, ph: Math.random() * 6, life: 14 }); break;
+      case 'sand': out('dot', { g: 0.12, sp: 1.3 }); break;
+      case 'rock': out('shard', { g: 0.15, s: 4, vy: -1.5 }); break;
+      case 'chi': ring(22, c, 3); ring(14, h, 2, 9); out('dot', { life: 12 }); break;
+      case 'sound': for (let i = 0; i < 4; i++) S.spawn({ k: 'wNote', x: T.x + rnd(-14, 14), y: T.y + rnd(-6, 8), vx: R(-0.4, 0.4), vy: -R(0.6, 1.1), c: i % 2 ? c : h, life: 20 }); ring(20, c); break;
+      case 'arcane': ring(20, c); for (let i = 0; i < 6; i++) S.spawn({ k: 'star', x: T.x + rnd(-14, 14), y: T.y + rnd(-12, 12), c: i % 2 ? c : h, life: 6 + rnd(0, 8) }); break;
+      default: out('dot', { sp: 1.3, life: 12 }); S.star(T.x, T.y, h);
+    }
+  }
+
+  // a travelling tip (spear point, knife, bullet)
+  const tipTo = (S, x0, y0, x1, y1, F, len, w, col, life) => S.spawn({ k: 'thrTip', x: x0, y: y0, ang: Math.atan2(y1 - y0, x1 - x0), len, w, c: col[0], h: col[1], d: col[2], life: life || F + 3, upd: p => { const k = Math.min(1, p.t / F); p.x = x0 + (x1 - x0) * k; p.y = y0 + (y1 - y0) * k; } });
+  function* thrust(S, U, T, o) {
+    const x0 = U.x + (o.ox || 0), y0 = U.y - 6 + (o.oy || 0), tx = T.x + (o.tox || 0), ty = T.y + (o.toy || 0), dx = tx - x0, dy = ty - y0, L = Math.hypot(dx, dy) || 1, ux = dx / L, uy = dy / L, F = o.F || 5;
+    const ex = o.through ? tx + ux * 70 : tx, ey = o.through ? ty + uy * 70 : ty, tip = tipTo(S, x0, y0, ex, ey, F, o.len || 28, o.w || 9, o.col, F + 4);
+    if (o.rib) for (const [c, ph] of o.rib) S.spawn({ k: 'galeRibbon', x0, y0, tip, c, ph, life: F + 10, upd: () => {} });
+    yield* wait(o.through ? Math.max(2, Math.round(F * L / (L + 70))) : F);
+    S.shake = Math.max(S.shake || 0, o.shake || 6); S.spawn({ k: 'shock', x: tx, y: ty, r0: 4, r1: o.ring || 28, c: o.col[1], life: 13 }); S.spawn({ k: 'shock', x: tx, y: ty, r0: 2, r1: (o.ring || 28) * 0.6, c: o.col[0], life: 10 });
+    for (let i = -2; i <= 2; i++) { const an = Math.atan2(uy, ux) + i * 0.24, len = 30 + (2 - Math.abs(i)) * 9; S.spawn({ k: 'line', x1: tx, y1: ty, x2: tx + Math.cos(an) * len, y2: ty + Math.sin(an) * len, c: i ? o.col[0] : o.col[1], w: 2, grow: 3, life: 10 }); }
+    return { ux, uy };
+  }
+  const RED = ['#ff5a4a', '#ffe0c0', 'rgba(60,0,0,0.7)'], GOLD = ['#ffb040', '#fff0c0', 'rgba(60,30,0,0.7)'], STEEL = ['#c8d8f0', '#ffffff', 'rgba(10,20,40,0.75)'], SHOT = ['#ffd040', '#ffffff', 'rgba(60,40,0,0.7)'];
+
+  // ---------- normal attacks, one per weapon kind, in the weapon's colours ----------
+  FX.wAtk = function* (U, T, u) {
+    const col = WTHEME[this._thT] || WTHEME.steel, [c, h, d] = col, kind = this._thKind || '劍', dx = T.x - U.x, dy = T.y - U.y, L = Math.hypot(dx, dy) || 1, ux = dx / L, uy = dy / L, px = -uy, py = ux;
+    const blade = (x1, y1, x2, y2, w, life = 12) => { this.spawn({ k: 'line', sl: 1, x1, y1, x2, y2, c: d, w: w + 2, grow: 3, life }); this.spawn({ k: 'line', sl: 1, x1, y1, x2, y2, c, w, grow: 3, life }); };
+    switch (kind) {
+      case '短刀': yield* this.lunge(u, 12, 2); for (let i = 0; i < 2; i++) { Sound.sfx('slash'); const o = i ? 7 : -7; tipTo(this, T.x - ux * 26 + px * o, T.y - uy * 26 + py * o, T.x + ux * 4 + px * o * 0.3, T.y + uy * 4 + py * o * 0.3, 3, 12, 4, col, 7); yield* wait(4); } this.star(T.x, T.y, h); yield* wait(4); break;
+      case '斧': yield* this.lunge(u, 10, 4); Sound.sfx('slash'); blade(T.x + 10, T.y - 30, T.x - 6, T.y + 24, 9, 14); yield* wait(4); Sound.sfx('rock'); this.shake = Math.max(this.shake || 0, 6);
+        this.spawn({ k: 'shock', x: T.x, y: T.y + 18, r0: 4, r1: 30, c: h, life: 12 }); for (let i = 0; i < 8; i++) this.spawn({ k: 'dot', x: T.x + rnd(-14, 14), y: T.y + 18, vx: R(-1.2, 1.2), vy: -R(1, 2.4), g: 0.2, c: i % 2 ? '#a89070' : c, s: 2, life: 16 }); yield* wait(6); break;
+      case '長槍': Sound.sfx('wind'); yield* this.lunge(u, 20, 2); Sound.sfx('slash'); this.spawn({ k: 'line', x1: U.x, y1: U.y - 6, x2: T.x, y2: T.y, c, w: 2, grow: 5, life: 9 }); yield* thrust(this, U, T, { col, F: 5, len: 24, w: 7, ring: 20, shake: 3 }); yield* wait(5); break;
+      case '拳套': yield* this.lunge(u, 14, 2); Sound.sfx('hit'); this.shake = Math.max(this.shake || 0, 4); this.spawn({ k: 'ring', x: T.x, y: T.y, r0: 2, r1: 18, c: d, w: 5, life: 9 }); this.spawn({ k: 'ring', x: T.x, y: T.y, r0: 2, r1: 16, c, w: 3, life: 9 });
+        for (let i = 0; i < 6; i++) { const an = i / 6 * 6.283 + 0.3; this.spawn({ k: 'line', x1: T.x + Math.cos(an) * 8, y1: T.y + Math.sin(an) * 8, x2: T.x + Math.cos(an) * 20, y2: T.y + Math.sin(an) * 20, c: i % 2 ? c : h, w: 2, grow: 2, life: 8 }); } this.star(T.x, T.y, h); yield* wait(8); break;
+      case '法杖': case '魔導書': { Sound.sfx('charge'); const n = kind === '魔導書' ? 3 : 1, S0 = { x: U.x, y: U.y - 6 }; this.spawn({ k: 'glow', x: S0.x, y: S0.y, r: 14, c, life: 12 }); if (n > 1) this.spawn({ k: 'ring', x: U.x, y: U.y + 4, r0: 6, r1: 16, c, w: 1, life: 14 });
+        yield* wait(6); for (let j = 0; j < n; j++) { const oy = (j - (n - 1) / 2) * 7, t0 = j * 3, F = 10; for (const [rr, cc] of [[7, d], [5, c], [2.2, h]]) this.spawn({ k: 'wOrb', x: S0.x, y: S0.y, r: n > 1 ? rr * 0.8 : rr, c: cc, life: t0 + F + 1, upd: p => { const k = clamp((p.t - t0) / F, 0, 1); p.hidden = p.t < t0; p.x = lerp(S0.x, T.x, k) + Math.sin(k * Math.PI) * oy; p.y = lerp(S0.y, T.y, k); if (cc === c && p.t % 2 === 0 && k > 0 && k < 1) this.spawn({ k: 'dot', x: p.x + rnd(-2, 2), y: p.y + rnd(-2, 2), c: h, s: 1, life: 8 }); } }); }
+        yield* wait(11 + (n - 1) * 3); Sound.sfx('hit'); this.spawn({ k: 'ring', x: T.x, y: T.y, r0: 3, r1: 18, c: h, w: 2, life: 10 }); this.star(T.x, T.y, h, 10); yield* wait(8); break; }
+      case '樂器': Sound.sfx('charge'); for (let i = 0; i < 3; i++) { const o = (i - 1) * 8, x0 = U.x + o, y0 = U.y - 8; this.spawn({ k: 'wNote', x: x0, y: y0, c: i % 2 ? h : c, life: 14, upd: p => { const k = Math.min(1, p.t / 10); p.x = x0 + (T.x - x0) * k; p.y = y0 + (T.y - y0) * k - Math.sin(k * Math.PI) * 10; } }); yield* wait(2); }
+        yield* wait(9); Sound.sfx('hit'); for (let i = 0; i < 2; i++) this.spawn({ k: 'ring', x: T.x, y: T.y, r0: 4 + i * 4, r1: 22 + i * 8, c: i ? c : h, w: 2, life: 12 }); yield* wait(8); break;
+      case '火槍': { const mx = U.x + ux * 12, my = U.y - 6 + uy * 12; Sound.sfx('crit'); this.spawn({ k: 'glow', x: mx, y: my, r: 10, c: '#fff0a0', life: 6 }); this.star(mx, my, '#fff8d0', 6); tipTo(this, mx, my, T.x, T.y, 3, 14, 3, SHOT, 5); yield* wait(3);
+        Sound.sfx('hit'); this.spawn({ k: 'ring', x: T.x, y: T.y, r0: 2, r1: 14, c: h, w: 2, life: 8 }); this.sparks(T.x, T.y, 8, [c, h, '#fff0a0'], 2.4, 12); yield* wait(8); break; }
+      default: yield* this.lunge(u, 8, 3); for (let i = 0; i < 2; i++) { Sound.sfx('slash'); const o = i * 12 - 6; if (i) blade(T.x + 18 + o, T.y - 20, T.x - 16 + o, T.y + 18, 5); else blade(T.x - 20 + o, T.y - 20, T.x + 14 + o, T.y + 18, 5); yield* wait(4); } this.star(T.x, T.y, h); yield* wait(6);
+    }
+  };
+
+  // ---------- skills whose picture didn't match the name ----------
+  FX.mikiri = function* (U) { // 見切: the eyes flash and the blade is drawn, ready to cut back
+    Sound.sfx('tick'); this.spawn({ k: 'dark', a: 0.35, life: 24 }); yield* wait(5); Sound.sfx('crit');
+    this.spawn({ k: 'glow', x: U.x + 3, y: U.y - 12, r: 16, c: '#a8d8ff', life: 12 }); this.spawn({ k: 'wGlint', x: U.x + 3, y: U.y - 12, r: 28, c: '#a8d8ff', life: 16 });
+    for (let i = 0; i < 3; i++) this.spawn({ k: 'line', sl: 1, x1: U.x - 28, y1: U.y - 2 + i * 6, x2: U.x + 28, y2: U.y - 6 + i * 6, c: i === 1 ? '#ffffff' : '#a8d8ff', w: i === 1 ? 4 : 3, grow: 3, life: 12 });
+    this.spawn({ k: 'ring', x: U.x, y: U.y, r0: 28, r1: 12, c: '#a8d8ff', w: 1, life: 14 }); yield* wait(14); };
+  FX.aquaBlade = function* (U, T) { // 水流刃: a crescent of water flies and cuts
+    Sound.sfx('water'); const x0 = U.x, y0 = U.y - 6, F = 8, col = WTHEME.water; this.spawn({ k: 'ring', x: x0, y: y0, r0: 18, r1: 6, c: '#88c8ff', w: 2, life: 8 }); yield* wait(5);
+    this.spawn({ k: 'flyBlade', x: x0, y: y0, ang: Math.atan2(T.y - y0, T.x - x0), r: 14, w: 5, c: col[0], h: col[1], d: col[2], life: F + 2, upd: p => { const k = Math.min(1, p.t / F); p.x = x0 + (T.x - x0) * k; p.y = y0 + (T.y - y0) * k; if (p.t % 2 === 0) this.spawn({ k: 'dot', x: p.x + rnd(-4, 4), y: p.y + rnd(-4, 4), vy: 0.4, g: 0.1, c: '#88c8ff', s: 2, life: 10 }); } });
+    yield* wait(F); Sound.sfx('slash');
+    this.spawn({ k: 'line', sl: 1, x1: T.x - 18, y1: T.y - 16, x2: T.x + 16, y2: T.y + 16, c: '#3c9cf0', w: 5, grow: 3, life: 12 }); this.spawn({ k: 'line', sl: 1, x1: T.x + 18, y1: T.y - 16, x2: T.x - 16, y2: T.y + 16, c: '#58a8f8', w: 4, grow: 3, life: 12 });
+    this.spawn({ k: 'ring', x: T.x, y: T.y + 6, r0: 6, r1: 32, c: '#a8e0ff', w: 3, life: 14 }); this.sparks(T.x, T.y, 16, ['#88c8ff', '#ffffff', '#58a8f8'], 3, 22, 0.18); yield* wait(10); };
+  FX.throwKnives = function* (U, T) { // 疾射飛刀: three knives thrown in a fan
+    Sound.sfx('wind'); const x0 = U.x + 6, y0 = U.y - 8;
+    for (let i = 0; i < 3; i++) { const tx = T.x + (i - 1) * 6, ty = T.y + (i - 1) * 3; tipTo(this, x0, y0, tx, ty, 5, 11, 4, STEEL, 12); this.spawn({ k: 'line', x1: x0, y1: y0, x2: tx, y2: ty, c: 'rgba(232,240,255,0.7)', w: 1, grow: 5, life: 8 }); Sound.sfx('slash'); yield* wait(2); }
+    yield* wait(4); Sound.sfx('hit'); this.sparks(T.x, T.y, 10, ['#ffffff', '#c8d8f0'], 2.2); this.star(T.x, T.y); yield* wait(8); };
+  FX.gunDraw = function* (U, T) { // 快速射擊 (guns): draw and fire twice
+    const x0 = U.x + 8, y0 = U.y - 8;
+    for (let i = 0; i < 2; i++) { Sound.sfx('crit'); this.spawn({ k: 'glow', x: x0, y: y0, r: 11, c: '#fff0a0', life: 6 }); this.star(x0, y0, '#fff8d0', 6); const tx = T.x + (i ? 5 : -5), ty = T.y + (i ? 3 : -3);
+      tipTo(this, x0, y0, tx, ty, 3, 16, 3, SHOT, 5); yield* wait(3); Sound.sfx('hit'); this.spawn({ k: 'ring', x: tx, y: ty, r0: 2, r1: 14, c: '#fff0a0', w: 2, life: 8 }); this.sparks(tx, ty, 7, ['#fff0a0', '#ffffff', '#e0a840'], 2.4, 12); yield* wait(4); }
+    yield* wait(6); };
+  FX.dragonLance = function* (U, T, u) { // 龍槍: dragon fire gathers, a red spear point with twin dragon ribbons
+    Sound.sfx('fire'); for (let i = 0; i < 8; i++) this.spawn({ k: 'flame', x: U.x + rnd(-14, 14), y: U.y + rnd(-6, 10), vy: -1.2, s: rnd(2, 4), life: 12 }); yield* wait(5);
+    yield* this.lunge(u, 22, 2); Sound.sfx('slash'); yield* thrust(this, U, T, { col: RED, rib: [['#ff5a4a', 0], ['#ffb040', Math.PI]], len: 30, w: 10 });
+    Sound.sfx('hitSuper'); this.spawn({ k: 'flash', c: '#ffb080', a: 0.25, life: 6 }); for (let i = 0; i < 10; i++) this.spawn({ k: 'flame', x: T.x + rnd(-10, 10), y: T.y + rnd(-8, 8), vy: -R(0.8, 1.6), s: rnd(3, 5), life: 14 + rnd(0, 6) }); yield* wait(10); };
+  FX.pierceLance = function* (U, T, u) { // 貫穿: the point goes straight through and out the other side
+    yield* this.lunge(u, 26, 1); Sound.sfx('crit'); const r = yield* thrust(this, U, T, { col: STEEL, through: 1, F: 7, len: 32, w: 8, ring: 22 });
+    Sound.sfx('hitSuper'); for (let i = 0; i < 10; i++) this.spawn({ k: 'shard', x: T.x + r.ux * 8, y: T.y + r.uy * 8, vx: r.ux * R(1.5, 3) + R(-0.8, 0.8), vy: r.uy * R(1.5, 3) + R(-0.8, 0.8), s: 4, c: i % 2 ? '#a8b0c0' : '#e8e8ff', life: 16 });
+    this.spawn({ k: 'line', x1: T.x - r.ux * 30, y1: T.y - r.uy * 30, x2: T.x + r.ux * 60, y2: T.y + r.uy * 60, c: '#ffffff', w: 2, grow: 2, life: 10 }); yield* wait(10); };
+  FX.twinDragonHit = function* (U, T, u, i) { // 雙龍突: a red dragon, then a gold one
+    Sound.sfx('slash'); const s = i % 2 ? 1 : -1, col = i % 2 ? GOLD : RED;
+    yield* thrust(this, U, T, { col, ox: s * 10, tox: s * 6, toy: s * 4, F: 4, len: 24, w: 8, ring: 20, shake: 4, rib: [[col[0], i ? Math.PI : 0]] }); this.spawn({ k: 'star', x: T.x + s * 6, y: T.y + s * 4, c: '#ffffff', life: 10 }); yield* wait(4); };
+  FX.jumpFx = function* (U, T) { // 跳躍: the spear falls from the sky
+    Sound.sfx('wind'); const x0 = T.x + 6, y0 = -30, F = 5; tipTo(this, x0, y0, T.x, T.y, F, 34, 10, STEEL, F + 6); this.spawn({ k: 'line', x1: x0, y1: y0, x2: T.x, y2: T.y, c: '#ffffff', w: 3, grow: F, life: F + 6 }); yield* wait(F);
+    Sound.sfx('quake'); this.spawn({ k: 'shock', x: T.x, y: T.y + 22, r0: 4, r1: 54, c: '#e0e8ff', life: 16 }); this.spawn({ k: 'shock', x: T.x, y: T.y + 22, r0: 2, r1: 34, c: '#a8b8d8', life: 12 }); this.spawn({ k: 'flash', c: '#ffffff', a: 0.4, life: 6 });
+    for (let i = 0; i < 12; i++) this.spawn({ k: 'shard', x: T.x + rnd(-10, 10), y: T.y + 20, vx: R(-2.2, 2.2), vy: -R(1.5, 3.2), g: 0.2, s: 4, c: i % 2 ? '#a89070' : '#d8d0c0', life: 18 }); this.shake = 16; yield* wait(12); };
+  { const _dd = FX.dragonDiveFx; FX.dragonDiveFx = function* (U, T, u, t) { // 龍神降臨: a burning spear point with dragon ribbons, then the meteor
+      Sound.sfx('wind'); const x0 = T.x + 30, y0 = -40, F = 6, tip = tipTo(this, x0, y0, T.x, T.y, F, 44, 14, RED, F + 6);
+      for (const [c, ph] of [['#ff5a4a', 0], ['#ffe070', Math.PI]]) this.spawn({ k: 'galeRibbon', x0, y0, tip, c, ph, life: F + 10, upd: () => {} });
+      yield* wait(F); yield* _dd.call(this, U, T, u, t); }; }
+  { const _tf = FX.timeFreeze; FX.timeFreeze = function* (U, T, u, t) { // 時空凍結: a flash, time rings close in and frozen shards hang in the air
+      Sound.sfx('charge'); this.spawn({ k: 'flash', c: '#c8ecff', a: 0.35, life: 10 }); this.spawn({ k: 'ring', x: T.x, y: T.y, r0: 50, r1: 10, c: '#c8ecff', w: 2, life: 16 }); this.spawn({ k: 'ring', x: T.x, y: T.y, r0: 4, r1: 40, c: '#8ad8ff', w: 3, life: 20 });
+      for (let i = 0; i < 10; i++) { const an = i / 10 * 6.283; this.spawn({ k: 'shard', x: T.x + Math.cos(an) * 22, y: T.y + Math.sin(an) * 18, s: 4, c: i % 2 ? '#c8ecff' : '#ffffff', spin: 0.05, life: 34 }); }
+      yield* _tf.call(this, U, T, u, t); }; }
+
+  const REDIR = { parry: 'mikiri', aquaBlade: 'aquaBlade', quickDraw: 'throwKnives' };
+  for (const k in REDIR) if (MOVES[k]) MOVES[k].fx = REDIR[k];
+  if (typeof SKILL_STYLE !== 'undefined' && SKILL_STYLE.parry) { SKILL_STYLE.parry = ['still', null, 'steel']; for (const id in WMOVE) if (MOVES[id].tpl === 'parry') SKILL_STYLE[id] = SKILL_STYLE.parry; } // 見切 was cast with a hex shield
+
+  // ---------- truthful text ----------
+  const ELEM_NOTE = { 水: [['濕', '會讓對手全身濕透。'], ['蒸氣', '對灼傷的對手會蒸氣爆發（傷害×1.3）。']], 雷: [['感電', '對濕透的對手會感電（傷害×1.5並麻痺）。']], 火: [['燎原', '對被藤蔓纏住的對手會燎原（傷害×1.5並灼傷）。']], 草: [['藤蔓', '會讓對手被藤蔓纏住（怕火）。']] };
+  const elemText = (t, d = '') => (ELEM_NOTE[t] || []).filter(([kw]) => !d.includes(kw)).map(p => p[1]).join('');
+  for (const id in WMOVE) { const m = MOVES[id], B = GEAR[WMOVE[id]]; if (!m || !B) continue;
+    if (REDIR[m.tpl]) m.fx = REDIR[m.tpl];
+    if (m.tpl === 'quickDraw' && B.kind === '火槍') { m.n = '快速射擊'; m.fx = 'gunDraw'; m.d = '比對手更快拔槍射擊。必定先出手。'; }
+    let d = m.d || ''; if (m.pow) d += elemText(m.t, d);
+    if (B.elem && m.t === '一般' && m.pow && m.cat === (isMagicW(B.kind) ? '特' : '物')) d += '（' + B.elem + '屬性武器：這招以' + B.elem + '屬性計算傷害）';
+    m.d = d;
+  }
+  { const _wa = wsAttackMove; wsAttackMove = function (st = Game.st) { const m = _wa(st); m.fx = 'wAtk'; if (m.t && m.t !== '一般') m.d = MOVES.attack.d + m.t + '屬性：' + (elemText(m.t) || '可以打弱點。'); return m; }; }
+
+  // ---------- which look is playing: set per hero action, the burst lands after the move's own picture ----------
+  { const _um = Battle.prototype.useMove; Battle.prototype.useMove = function* (u, t, id) {
+      if (!u || !u.hero) return yield* _um.call(this, u, t, id);
+      const sv = [this._thT, this._thKind, this._thPow], k = WMOVE[id] || mainWKey(), m = id === 'attack' ? { pow: 1 } : MOVES[id];
+      this._thT = k ? TH[k] : 'steel'; this._thKind = k ? GEAR[k].kind : null; this._thPow = m && m.pow ? m.pow : 0;
+      try { return yield* _um.call(this, u, t, id); } finally { this._thT = sv[0]; this._thKind = sv[1]; this._thPow = sv[2]; }
+    }; }
+  { const _wh = Battle.prototype.wHit; Battle.prototype.wHit = function* (u, t, S, pow, fx, mul) { const k = mainWKey(); this._thT = k ? TH[k] : 'steel'; this._thPow = pow || 1; return yield* _wh.call(this, u, t, S, pow, fx, mul); }; }
+  { const _p = Battle.prototype.playFx; Battle.prototype.playFx = function* (name, u, t) {
+      yield* _p.call(this, name, u, t);
+      if (u && u.hero && t && !t.hero && this._thT && this._thPow && t.hp > 0) { burst.call(this, this.center(t), this._thT, this._thPow >= 90); this._thPow = 0; }
+    }; }
+}
+
+/* ===================== v27b quest givers that had no mark over their heads (playtest: "some NPCs' quests have no ?") =====================
+   村長 (license), 花店 (小麥), 守衛 (提姆), 鐵匠 (犀角), 藥師 (米拉), 信差 (峽谷鷹妖), 守燈人 (霧), 行商 (盜賊的謝禮) */
+{ const add = (id, fn) => { const old = STORY_MARKS[id]; STORY_MARKS[id] = old ? st => { const a = fn(st), b = old(st); return a === '?' || b === '?' ? '?' : a || b; } : fn; };
+  add('elder', st => !st.flags.license ? '!' : null);
+  add('florist', st => { const f = st.flags; return !f.q1 ? '!' : f.q1res && !f.q1done ? '?' : null; });
+  add('guard', st => { const f = st.flags; return f.croc && !f.q2 ? '!' : (f.q2res === 'home' && !f.q2done) || (f.q2res === 'stay' && f.q2done && !f.q2thx) ? '?' : null; });
+  add('smith', st => { const f = st.flags; return st.vis && st.vis.canyon && !f.qHorn ? '!' : f.qHorn === 1 && (st.bag.rhinoHorn || 0) > 0 ? '?' : null; });
+  add('herbalist', st => { const f = st.flags; return st.vis && st.vis.lake && !f.qMira ? '!' : f.qMira === 2 ? '?' : null; });
+  add('courier', st => { const f = st.flags; if (!f.qCourier) return '!'; return f.qCourier === 1 && typeof wonOf === 'function' && wonOf('harpy') - ((st.qBase || {}).harpy || 0) >= 3 ? '?' : null; });
+  add('lampKeeper', st => { const f = st.flags; return !f.qLamp ? '!' : f.hydra && f.qLamp < 3 ? '?' : null; });
+  add('peddler', st => st.flags.bandit && !st.flags.peddlerThx ? '?' : null);
+}
+
+/* ===================== v27d 魔物圖鑑: every monster gets its own page (playtest: "tapping a monster should open a page with its drops and stats") =====================
+   list: tap a row to pick it, tap it again (or A) to open · page: 介紹 / 能力 / 掉落 tabs (←→ or tap), ↑↓ or ◀▶ = previous / next monster seen */
+function dexInfo(k) {
+  const sp = SPECIES[k] || {}, st = Game.st, places = [], elites = [];
+  for (const m in MAPS) { const d = MAPS[m], nm = String(d.name || m).replace(/ ?\d+F$/, '');
+    const enc = (d.encounters || []).some(e => (e.table || []).some(r => r[0] === k)), el = (d.elites || []).filter(e => e.sp === k), bs = d.boss && d.boss.sp === k;
+    elites.push(...el); if ((enc || el.length || bs) && !places.includes(nm)) places.push(nm); }
+  const keys = [k, ...elites.map(e => e.id).filter(Boolean)], sigs = [], re = [], kills = st.kills || {};
+  const sigOf = (key, drop) => drop || (key === k ? sp.drop : null) || sp.drop || (LOOT[key] || [])[0];
+  for (const key of new Set(keys)) { const e = elites.find(q => q.id === key), s = sigOf(key, e && e.drop);
+    if ((sp.elite || sp.boss || e) && s && GEAR[classGear(s)] && !sigs.some(q => q.g === classGear(s))) sigs.push({ g: classGear(s), got: !!kills[key] });
+    for (const g of LOOT[key] || []) { const c = classGear(g); if (GEAR[c] && !re.includes(c)) re.push(c); } }
+  return { places, sigs, re, big: !!(sp.elite || sp.boss) };
+}
+let DEX_MAX = null; // bars compare each stat with the strongest monster (square-root scale so early monsters still show)
+const dexStatMax = () => DEX_MAX || (DEX_MAX = ['hp', 'atk', 'def', 'spa', 'spd', 'spe'].map(k => Math.max(1, ...Object.values(MON_PANEL).map(p => +p[k] || 0))));
+function* dexDetail(list, idx) {
+  let tab = 1; const TABS = ['介紹', '能力', '掉落'], dex = () => Game.st.dex || {};
+  const step = d => { let i = idx; for (let n = 0; n < list.length; n++) { i = (i + d + list.length) % list.length; if ((dex()[list[i]] || {}).seen) return i; } return idx; };
+  let info = dexInfo(list[idx]), infoK = list[idx];
+  const scr = { draw(x) {
+    const k = list[idx], sp = SPECIES[k], e = dex()[k] || {}, P = MON_PANEL[k]; if (infoK !== k) { info = dexInfo(k); infoK = k; }
+    touchRegion(0, 0, W, H, () => {}); // this page covers the list below it
+    screenBG(x); headerBar(x, 'No.' + String(idx + 1).padStart(2, '0') + ' ' + sp.n);
+    for (const [s, X, d] of [['◀', W - 34, -1], ['▶', W - 16, 1]]) { drawBtn(x, X, 2, 15, 15, false); Font.drawC(x, s, X + 7, 2, UIC.accent, UIC.textSh, 9); touchRegion(X - 2, 0, 19, 20, () => { const n = step(d); if (n !== idx) { idx = n; Sound.sfx('cursor'); } }); }
+    // portrait + quick facts
+    drawWin(x, 4, 23, 72, 76, 'menu');
+    const cp = typeof dexPortrait === 'function' && dexPortrait(k); x.imageSmoothingEnabled = false;
+    if (cp) { const q = Math.min(1, 64 / cp.width, 64 / cp.height), pw = Math.round(cp.width * q), ph = Math.round(cp.height * q); x.drawImage(cp, Math.round(40 - pw / 2), 94 - ph, pw, ph); }
+    else { const im = battleSprite(k); x.drawImage(im, 0, 0, im.width, im.height, 8, 27, 64, 64); }
+    famBadge(x, sp.fam, 82, 26, 38); Font.draw(x, sp.rare ? '稀有' : sp.boss ? '頭目' : sp.elite ? '精英' : '野生', 124, 24, sp.rare ? '#ffd84a' : sp.boss ? UIC.bad : sp.elite ? UIC.warm : UIC.muted, UIC.textSh, 10);
+    Font.draw(x, famLine(sp.fam), 82, 40, UIC.warm, UIC.textSh, 9);
+    Font.draw(x, '擊敗 ' + (e.won || 0) + ' 次', 82, 52, UIC.text, UIC.textSh, 9);
+    Font.wrap('出沒：' + (info.places.length ? info.places.slice(0, 3).join('、') : '—'), 90, 9).slice(0, 3).forEach((l, i) => Font.draw(x, l, 82, 64 + i * 11, UIC.muted, UIC.textSh, 9));
+    // tabs
+    TABS.forEach((t, i) => { const X = 4 + i * 57; drawBtn(x, X, 103, 54, 16, tab === i); Font.drawC(x, t, X + 27, 103, tab === i ? UIC.accent : UIC.text, UIC.textSh, 9); touchRegion(X, 101, 54, 20, () => { if (tab !== i) { tab = i; Sound.sfx('cursor'); } }); });
+    drawWin(x, 4, 122, 168, 112, 'menu'); const L = [];
+    if (tab === 0) Font.wrap(sp.dex || '（沒有記載）', 156, 11).slice(0, 8).forEach((l, i) => Font.draw(x, l, 10, 127 + i * 13, UIC.text, UIC.textSh, 11));
+    else if (tab === 1) {
+      if (P) { Font.draw(x, '參考等級 Lv' + P.lv, 10, 126, UIC.muted, UIC.textSh, 9); const S = [['HP', P.hp, '#7fd88a'], ['物攻', P.atk, '#ff9a6a'], ['物防', P.def, '#e8c86a'], ['魔攻', P.spa, '#b890ff'], ['魔防', P.spd, '#7ab8ff'], ['速度', P.spe, '#6ee7d2']], MX = dexStatMax();
+        S.forEach(([a, v, c], i) => { const Y = 139 + i * 11; Font.draw(x, a, 10, Y, UIC.muted, UIC.textSh, 9); x.fillStyle = '#10121e'; x.fillRect(38, Y + 4, 100, 5); x.fillStyle = c; x.fillRect(38, Y + 4, Math.max(2, Math.round(100 * Math.sqrt(Math.min(1, v / MX[i])))), 5); Font.drawR(x, String(v), 166, Y, UIC.text, UIC.textSh, 9); }); }
+      const mv = [...new Set((sp.learn || []).map(l => MOVES[l[1]] && MOVES[l[1]].n).filter(Boolean))];
+      Font.wrap('招式：' + (mv.join('、') || '—'), 156, 9).slice(0, 3).forEach((l, i) => Font.draw(x, l, 10, 208 + i * 10, UIC.text, UIC.textSh, 9));
+    } else {
+      L.push(['經驗值 ' + (sp.exp || 0) + '　金錢 ' + (sp.gold || 0) + ' G', UIC.text]);
+      const mat = sp.mat && ITEMS[sp.mat] ? ITEMS[sp.mat].n : null;
+      if (info.big) L.push(['素材：' + (mat ? mat + '×' + (sp.boss ? 3 : 2) + '＋' : '') + '當地素材×' + (sp.boss ? 3 : 2) + '（每次必定）', UIC.text]);
+      else L.push(['素材：' + (mat ? mat + '（35%）' : '—'), UIC.text]);
+      for (const s of info.sigs) L.push(['首次擊敗：「' + GEAR[s.g].n + '」設計圖＋紅色打造券' + (s.got ? '（已取得）' : ''), s.got ? UIC.muted : UIC.warm]);
+      if (info.re.length) L.push(['再戰掉落（設計圖或打造券，隨機一種）：' + info.re.map(g => GEAR[g].n).join('、'), '#c8b0ff']);
+      if (!info.big && !info.re.length) L.push(['普通魔物不會掉裝備。裝備靠精英・頭目的設計圖打造。', UIC.muted]);
+      let Y = 127; for (const [t, c] of L) for (const l of Font.wrap(t, 156, 9)) { if (Y > 222) break; Font.draw(x, l, 10, Y, c, UIC.textSh, 9); Y += 11; }
+    }
+    Font.draw(x, '←→分頁　↑↓換魔物', 6, 239, UIC.muted, UIC.textSh, 9);
+    drawBtn(x, 124, 236, 48, 16, false); Font.drawC(x, '↩返回', 148, 236, UIC.warm, UIC.textSh, 9); touchRegion(122, 234, 52, 20, () => tapKey('b'));
+  } };
+  UI.push(scr);
+  while (true) {
+    if (Input.repeat('left')) { tab = (tab + 2) % 3; Sound.sfx('cursor'); } if (Input.repeat('right') || Input.pressed('a')) { Input.consume('a'); tab = (tab + 1) % 3; Sound.sfx('cursor'); }
+    if (Input.repeat('up')) { const n = step(-1); if (n !== idx) { idx = n; Sound.sfx('cursor'); } } if (Input.repeat('down')) { const n = step(1); if (n !== idx) { idx = n; Sound.sfx('cursor'); } }
+    if (Input.pressed('b')) { Input.consume('b'); Sound.sfx('cancel'); break; }
+    yield;
+  }
+  UI.remove(scr); return idx;
+}
+dexScreen = function* () {
+  const list = Object.keys(SPECIES), VIS = 7; let idx = 0;
+  const seen = k => ((Game.st.dex || {})[k] || {}).seen;
+  const scr = { draw(x) {
+    const dex = Game.st.dex || {}, seenN = list.filter(seen).length;
+    touchRegion(0, 0, W, H, () => tapKey('b')); // tapping outside the list = back
+    screenBG(x); headerBar(x, '魔物圖鑑'); Font.drawR(x, '收集率 ' + Math.round(seenN / list.length * 100) + '%', W - 6, 2, UIC.accent, UIC.textSh);
+    drawWin(x, 4, 24, 168, VIS * 18 + 8, 'menu'); const top = Math.max(0, Math.min(idx - 3, list.length - VIS));
+    list.slice(top, top + VIS).forEach((k, i) => { const Y = 28 + i * 18, e = dex[k], sn = e && e.seen; if (top + i === idx) selBar(x, 6, Y - 1, 164, 17);
+      const m = monsterMini(k, 16); x.drawImage(sn ? m.c : tinted(m.c, '#2a3150'), 10, Y);
+      Font.draw(x, 'No.' + String(top + i + 1).padStart(2, '0'), 30, Y, UIC.muted, UIC.textSh); Font.draw(x, sn ? SPECIES[k].n : '？？？', 70, Y, sn ? UIC.text : UIC.dis, UIC.textSh);
+      if (sn) Font.drawR(x, '擊敗 ' + (e.won || 0), 164, Y, e.won ? UIC.text : UIC.muted, UIC.textSh);
+      touchRegion(6, Y - 1, 164, 18, () => { if (idx === top + i) tapKey('a'); else { idx = top + i; Sound.sfx('cursor'); } }); });
+    if (top > 0) { x.drawImage(UPARROW, 86, 26); touchRegion(60, 21, 56, 8, () => { idx = Math.max(0, idx - VIS); Sound.sfx('cursor'); }); }
+    if (top + VIS < list.length) { x.drawImage(DOWNARROW, 86, 24 + VIS * 18 + 3); touchRegion(60, 24 + VIS * 18, 56, 10, () => { idx = Math.min(list.length - 1, idx + VIS); Sound.sfx('cursor'); }); }
+    drawWin(x, 4, 164, 168, 88, 'menu'); const k = list[idx];
+    if (seen(k)) { const cp = typeof dexPortrait === 'function' && dexPortrait(k); x.imageSmoothingEnabled = false;
+      if (cp) { const q = Math.min(1, 72 / cp.width, 72 / cp.height), pw = Math.round(cp.width * q), ph = Math.round(cp.height * q); x.drawImage(cp, Math.round(44 - pw / 2), 244 - ph, pw, ph); } else { const im = battleSprite(k); x.drawImage(im, 0, 0, im.width, im.height, 8, 172, 72, 72); }
+      const sp = SPECIES[k]; famBadge(x, sp.fam, 86, 170, 38); Font.draw(x, sp.rare ? '稀有' : sp.elite ? '精英' : sp.boss ? '頭目' : '野生', 128, 168, sp.rare ? '#ffd84a' : sp.boss ? UIC.bad : sp.elite ? UIC.warm : UIC.muted, UIC.textSh);
+      Font.draw(x, famLine(sp.fam), 86, 184, UIC.warm, UIC.textSh, 10); Font.wrap(sp.dex || '', 80, 11).slice(0, 2).forEach((l, i) => Font.draw(x, l, 86, 198 + i * 13, UIC.text, UIC.textSh, 11));
+      drawBtn(x, 106, 230, 62, 16, true); Font.drawC(x, 'A：詳細資料', 137, 230, UIC.accent, UIC.textSh, 9); touchRegion(4, 164, 168, 88, () => tapKey('a')); }
+    else Font.draw(x, '還沒有遇見過這種魔物。', 14, 170, UIC.muted, UIC.textSh);
+  } };
+  UI.push(scr);
+  while (true) {
+    if (Input.repeat('up')) { idx = (idx + list.length - 1) % list.length; Sound.sfx('cursor'); } if (Input.repeat('down')) { idx = (idx + 1) % list.length; Sound.sfx('cursor'); }
+    if (Input.repeat('left')) { idx = Math.max(0, idx - VIS); Sound.sfx('cursor'); } if (Input.repeat('right')) { idx = Math.min(list.length - 1, idx + VIS); Sound.sfx('cursor'); }
+    if (Input.pressed('a')) { Input.consume('a'); if (seen(list[idx])) { Sound.sfx('select'); idx = yield* dexDetail(list, idx); } else Sound.sfx('buzz'); }
+    if (Input.pressed('b')) { Input.consume('b'); Sound.sfx('cancel'); break; }
+    yield;
+  }
+  UI.remove(scr);
+};
 
 /* ===================== v7.1 pacing & economy (player feedback after v7.0) =====================
    Feedback: levelling was so fast that players only rushed the bosses; home was so close that nobody bought potions;
@@ -13224,5 +13816,10 @@ function v71Migrate(st) {
     clampHP(); return ow;
   };
 }
+// the encounter card: a known design dropping again now gives 精煉石
+{ const _lh = lootHint; lootHint = function (key, sp) { const t = _lh(key, sp); return typeof t === 'string' ? t.replace('設計圖／打造券', '設計圖／精煉石') : t; }; }
+// catalogue entries for the v25 smithy (map type, the forge / anvil props)
+if (MAPS.smithy) { MAP_TYPES.smithy = '室內'; MAPS.smithy.type = '室內'; }
+(NPC_ROLES.情報 || (NPC_ROLES.情報 = [])).push('smForgeL', 'smForgeR', 'smAnvil', 'smTub', 'smRackA', 'smRackB');
 
 </script>

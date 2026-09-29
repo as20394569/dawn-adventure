@@ -7,8 +7,8 @@
    · Forging: random quality; 精心打造 (materials ×2) and 極致打造 (×3) raise the odds. 重鑄: affixes (as before) or quality (never down).
    · Field monsters drop more materials; elites / bosses drop a pile of their materials. */
 const TIER_POOL = { 1: ['stone', 'gel', 'feather', 'shroomCap'], 2: ['foxfire', 'stinger', 'frogSkin', 'spore', 'leaf', 'beetleShell'], 3: ['crystal', 'emberCore', 'boneShard', 'ectoplasm', 'silk'],
-  4: ['moonDew', 'lizardScale', 'mothDust', 'scorpTail', 'harpyFeather', 'sandCrystal', 'bogMoss'], 5: ['riftShard', 'starShard', 'wispFlame', 'rotWood', 'batWing'],
-  6: ['spring', 'brassGear', 'snowPelt', 'iceCrystal', 'salamanderScale', 'magmaStone', 'windStone'], 7: ['dragonScale', 'shadowCloth', 'voidShard', 'starDust'] };
+  4: ['moonDew', 'lizardScale', 'mothDust', 'scorpTail', 'harpyFeather', 'sandCrystal', 'bogMoss'], 5: ['wolfPelt', 'beetleHorn', 'rustScrap', 'crocHide', 'boarTusk', 'wispFlame', 'rotWood', 'batWing'],
+  6: ['spring', 'brassGear', 'snowPelt', 'iceCrystal', 'salamanderScale', 'magmaStone', 'windStone'], 7: ['shadowCloth', 'voidShard', 'starDust', 'starShard'] };
 const ELEM_MAT = { 火: { 2: 'foxfire', 3: 'emberCore', 6: 'magmaStone' }, 水: { 3: 'crystal', 4: 'moonDew', 6: 'iceCrystal' }, 草: { 2: 'leaf', 4: 'bogMoss' }, 雷: { 6: 'spring' } };
 for (const t in TIER_POOL) TIER_POOL[t] = TIER_POOL[t].filter(k => ITEMS[k]);
 const bpGold = t => 120 * t * t + 100;
@@ -37,9 +37,14 @@ function bpKnown(k, st = Game.st) {
 }
 const qName = q => (GQ[q] || GQ[1])[0];
 // learn a blueprint (+ a ticket for 紅 and better); returns the text of what was gained
-function gainBP(k, q = 1, st = Game.st) {
+// v25 tickets stack: st.bpN[k] = qualities of every ticket held; st.bpT[k] = the best one (what the screens show)
+function tkList(k, st = Game.st) { const N = st.bpN || (st.bpN = {}); if (!N[k]) N[k] = st.bpT && st.bpT[k] ? [st.bpT[k]] : []; return N[k]; }
+const tkCount = (k, st = Game.st) => tkList(k, st).length;
+function tkSync(k, st = Game.st) { const L = tkList(k, st), T = st.bpT || (st.bpT = {}); if (L.length) T[k] = Math.max(...L); else { delete T[k]; delete st.bpN[k]; } }
+function tkUse(k, st = Game.st) { const L = tkList(k, st); if (!L.length) return 0; const q = Math.max(...L); L.splice(L.indexOf(q), 1); tkSync(k, st); return q; }
+function gainBP(k, q = 1, st = Game.st, tMin = 3) {
   const had = bpKnown(k, st); (st.bp || (st.bp = {}))[k] = 1; let txt = '「' + GEAR[k].n + '」的設計圖';
-  if (q >= 3) { const T = st.bpT || (st.bpT = {}); T[k] = Math.max(T[k] || 0, q); txt += (had ? '的' : '和') + '打造券（品質保底：' + qName(q) + '）'; if (had) txt = '「' + GEAR[k].n + '」的打造券（品質保底：' + qName(q) + '）'; }
+  if (q >= tMin) { tkList(k, st).push(q); tkSync(k, st); txt += (had ? '的' : '和') + '打造券（品質保底：' + qName(q) + '）'; if (had) txt = '「' + GEAR[k].n + '」的打造券（品質保底：' + qName(q) + '）'; }
   else if (had) { const mats = bpMats(GEAR[k].t, 1 + q); txt = matsText(mats) + '（設計圖已經學會了）'; }
   return txt;
 }
@@ -50,17 +55,18 @@ function bpTut() { const st = Game.st; if (st.flags.bpTut) return null; st.flags
 /* ---------- drops: every gear drop becomes a blueprint / ticket / materials ---------- */
 { const _ls = Battle.prototype.lootShow; Battle.prototype.lootShow = function* (g, head) {
     const st = Game.st; if (!g || !GEAR[g.b]) return yield* _ls.call(this, g, head);
+    const tMin = this.F && this.F.boss ? 2 : 3; // v26: bosses give a ticket from 紫, everything else from 紅; the card always shows what you really get
     st.gear = (st.gear || []).filter(x => x !== g); const k = g.b, q = g.q || 1, known = bpKnown(k, st);
-    if (known && q < 3) { const got = bpMats(GEAR[k].t, 1 + q); Sound.sfx('item'); yield* this.msg((this.F ? this.F.n + '掉落了' : '得到了') + '素材：' + matsText(got) + '！', { hold: 36 }); return; }
-    const txt = gainBP(k, q, st), card = { b: k, q: Math.max(1, q), r: 1, a: [], _bp: 1 };
-    yield* _ls.call(this, card, known ? '獲得了打造券！' : q >= 3 ? '獲得了設計圖＋打造券！' : '獲得了設計圖！');
+    if (known && q < tMin) { const got = recipeMats(k, 1 + q); Sound.sfx('item'); yield* this.msg((this.F ? this.F.n + '掉落了' : '得到了') + '「' + GEAR[k].n + '」的素材：' + matsText(got) + '！（設計圖已經學會了）', { hold: 40 }); return; }
+    const txt = gainBP(k, q, st, tMin), card = { b: k, q: Math.max(1, q), r: 1, a: [], _bp: q >= tMin ? 1 : 2 };
+    yield* _ls.call(this, card, known ? '獲得了打造券（保底' + qName(q) + '）！' : q >= tMin ? '獲得了設計圖＋打造券（保底' + qName(q) + '）！' : '獲得了設計圖！');
     yield* this.msg('得到了' + txt + '！', { hold: 30 }); const tut = bpTut(); if (tut) yield* this.msg(tut, { wait: true });
   };
 }
 { const _v = Battle.prototype.victory; Battle.prototype.victory = function* () {
     const r = yield* _v.call(this), st = Game.st, F = this.F, sp = SPECIES[F.sp] || {};
     if (!F.elite && !F.boss && sp.mat && chance(0.35)) { st.bag[sp.mat] = (st.bag[sp.mat] || 0) + 1; yield* this.msg('又撿到了素材「' + ITEMS[sp.mat].n + '」！', { hold: 24 }); }
-    if ((F.elite || F.boss) && !this.cfg.noMats) { const n = F.boss ? 3 : 2, got = {}; if (sp.mat && ITEMS[sp.mat]) { got[sp.mat] = n; st.bag[sp.mat] = (st.bag[sp.mat] || 0) + n; } const ex = bpMats(clamp(Math.ceil(F.lv / 6), 1, 7), n + 2); for (const k in ex) got[k] = (got[k] || 0) + ex[k];
+    if ((F.elite || F.boss) && !this.cfg.noMats) { const n = F.boss ? 3 : 2, got = {}, sig = sp.mat && ITEMS[sp.mat] ? sp.mat : null; if (sig) { got[sig] = n; st.bag[sig] = (st.bag[sig] || 0) + n; } const ex = areaMats(Game.ow && Game.ow.map && Game.ow.map.id, n, F.lv); for (const k in ex) got[k] = (got[k] || 0) + ex[k];
       Sound.sfx('item'); yield* this.msg((F.boss ? '頭目' : '精英') + '留下了素材：' + matsText(got) + '！', { hold: 36 }); }
     return r;
   };
@@ -92,7 +98,7 @@ Events.armorer = function* () { yield* say('王國的裝備現在都交給鐵匠
 
 /* ---------- forging ---------- */
 const BP_ODDS = [[55, 33, 10, 2, 0], [25, 42, 25, 8, 0], [5, 35, 40, 17, 3]], BP_LV = ['普通打造', '精心打造', '極致打造'];
-function bpOdds(lv) { const o = BP_ODDS[lv].slice(), d = (typeof diffOf === 'function' ? diffOf().drop : 0) + (typeof ngOf === 'function' && ngOf() ? 1 : 0); if (d > 0) { const m = Math.min(o[0] + o[1] - 10, d * 4); o[3] += m; if (o[0] >= m) o[0] -= m; else { o[1] -= m - o[0]; o[0] = 0; } } return o; }
+function bpOdds(lv) { const o = BP_ODDS[lv].slice(), d = (typeof ngOf === 'function' && ngOf() ? 1 : 0); if (d > 0) { const m = Math.min(o[0] + o[1] - 10, d * 4); o[3] += m; if (o[0] >= m) o[0] -= m; else { o[1] -= m - o[0]; o[0] = 0; } } return o; }
 function bpRoll(lv) { const o = bpOdds(lv); let r = Math.random() * 100; for (let q = 0; q < 5; q++) { r -= o[q]; if (r < 0) return q + 1; } return 1; }
 const bpCost = (k, lv) => { const R = GEAR_RECIPE[k], m = {}; for (const i in R.mats) m[i] = R.mats[i] * (lv + 1); return { mats: m, gold: R.gold }; };
 const bpCan = (k, lv, st = Game.st) => { const c = bpCost(k, lv); return st.money >= c.gold && Object.entries(c.mats).every(([i, n]) => (st.bag[i] || 0) >= n); };
@@ -113,7 +119,7 @@ function* craftScreen() {
     L.slice(T, T + VIS).forEach((e, i) => { const Y = 41 + i * 16, on = T + i === idx; if (on) selBar(x, 6, Y - 1, 164, 15);
       const nm = e.R ? (ITEMS[e.R.out] || GEAR[e.R.out]).n + (e.R.n > 1 ? '×' + e.R.n : '') : GEAR[e.k].n; let z = 11; while (z > 8 && Font.width(nm, z) > 96) z--;
       Font.draw(x, nm, 14, Y, ok(e) ? UIC.text : UIC.dis, UIC.textSh, z);
-      const tag = e.R ? (canR(e.R) ? '可製作' : '素材不足') : (st.bpT && st.bpT[e.k] ? '券' : '') + 'T' + GEAR[e.k].t + (GEAR[e.k].kind && tab === 0 ? '・' + GEAR[e.k].kind : '');
+      const tag = e.R ? (canR(e.R) ? '可製作' : '素材不足') : (st.bpT && st.bpT[e.k] ? (tkCount(e.k) > 1 ? '券×' + tkCount(e.k) + ' ' : '券') : '') + 'T' + GEAR[e.k].t + (GEAR[e.k].kind && tab === 0 ? '・' + GEAR[e.k].kind : '');
       Font.drawR(x, tag, 164, Y + 1, e.R ? (canR(e.R) ? UIC.accent : UIC.dis) : st.bpT && st.bpT[e.k] ? UIC.warm : UIC.muted, UIC.textSh, 9);
       if (typeof touchRegion === 'function') touchRegion(6, Y - 1, 164, 15, () => { if (idx === T + i) tapKey('a'); else { idx = T + i; Sound.sfx('cursor'); } }); });
     if (T > 0) x.drawImage(UPARROW, 86, 38); if (T + VIS < L.length) x.drawImage(DOWNARROW, 86, 37 + VIS * 16 + 3);
@@ -124,7 +130,7 @@ function* craftScreen() {
     const mats = e.R ? e.R.mats : GEAR_RECIPE[e.k].mats, gold = e.R ? e.R.gold || 0 : GEAR_RECIPE[e.k].gold;
     Font.draw(x, e.R ? '需要的素材' : '需要的素材（普通打造）', 10, y, UIC.muted, UIC.textSh, 9); if (gold) Font.drawR(x, gold + ' G', 164, y, st.money >= gold ? UIC.warm : UIC.bad, UIC.textSh, 9); y += 11;
     for (const [k, n] of Object.entries(mats)) { let z = 10; while (z > 8 && Font.width('・' + ITEMS[k].n, z) > 110) z--; Font.draw(x, '・' + ITEMS[k].n, 12, y, UIC.text, UIC.textSh, z); Font.drawR(x, have(k) + ' / ' + n, 164, y, have(k) >= n ? UIC.good : UIC.bad, UIC.textSh, 10); y += 11; }
-    if (!e.R && st.bpT && st.bpT[e.k]) Font.draw(x, '持有打造券：免費打造，品質保底' + qName(st.bpT[e.k]), 10, y + 1, UIC.warm, UIC.textSh, 9);
+    if (!e.R && st.bpT && st.bpT[e.k]) Font.draw(x, '持有打造券' + (tkCount(e.k) > 1 ? '×' + tkCount(e.k) : '') + '：免費打造，品質保底' + qName(st.bpT[e.k]), 10, y + 1, UIC.warm, UIC.textSh, 9);
   }, touchBack: true };
   UI.push(scr);
   while (true) {
@@ -141,17 +147,20 @@ function* craftScreen() {
   UI.remove(scr);
 }
 function* forgeFlow(k) {
-  const st = Game.st, B = GEAR[k], tk = st.bpT && st.bpT[k];
+  const st = Game.st, B = GEAR[k], tk = tkList(k, st).length ? Math.max(...tkList(k, st)) : 0, tn = tkCount(k, st);
+  if (tk) { // v25: with a ticket the smith always uses it — free, quality at least the ticket's
+    const r = yield* ask('要用打造券打造「' + B.n + '」嗎？\n（免費・品質保底「' + qName(tk) + '」' + (tn > 1 ? '・共有' + tn + '張' : '') + '）', ['使用打造券', '取消']); if (r !== 0) return;
+    const q = Math.max(tkUse(k, st), bpRoll(2)); Sound.sfx('rock'); yield* say('鏘！鏘！鏘！'); const g = makeGear(k, q); Sound.jingle(q >= 3 ? 'levelup' : 'item');
+    yield* itemGet('鐵匠打造了' + gearName(g) + '！（品質：' + qName(q) + '）'); return;
+  }
   const oddsT = lv => bpOdds(lv).map((p, q) => p && q >= 2 ? qName(q + 1) + p : '').filter(Boolean).join(' ');
   const opts = [], acts = [];
-  if (tk) { opts.push('打造券（保底' + qName(tk) + '）'); acts.push(-1); }
   for (let lv = 0; lv < 3; lv++) { opts.push(BP_LV[lv].slice(0, 2) + '×' + (lv + 1) + ' ' + oddsT(lv) + (bpCan(k, lv) ? '' : '✕')); acts.push(lv); }
   opts.push('取消'); acts.push(null);
   const r = yield* ask('要怎麼打造「' + B.n + '」？\n素材投入越多，紅金的機率(%)越高。', opts); const lv = acts[r];
   if (lv === null || lv === undefined || r < 0) return;
   let q;
-  if (lv === -1) { q = Math.max(tk, bpRoll(2)); delete st.bpT[k]; }
-  else { if (!bpCan(k, lv)) { Sound.sfx('bump'); yield* say('素材或金錢不夠喔。'); return; } const c = bpCost(k, lv); st.money -= c.gold; for (const i in c.mats) st.bag[i] -= c.mats[i]; q = bpRoll(lv); }
+  { if (!bpCan(k, lv)) { Sound.sfx('bump'); yield* say(missingText(bpCost(k, lv))); return; } const c = bpCost(k, lv); st.money -= c.gold; for (const i in c.mats) st.bag[i] -= c.mats[i]; q = bpRoll(lv); }
   Sound.sfx('rock'); yield* say('鏘！鏘！鏘！'); const g = makeGear(k, q); Sound.jingle(q >= 3 ? 'levelup' : 'item');
   yield* itemGet('鐵匠打造了' + gearName(g) + '！（品質：' + qName(q) + '）');
   if (B.slot === 'weapon' && WSK[k] && !st.flags.wsTut) { st.flags.wsTut = 1; yield* say('每把武器都有自己的技能。換上新武器，戰鬥中的技能就會跟著改變。\n（選單→技能 可以查看，也能設定「副武器」借用一招）'); }

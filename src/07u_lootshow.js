@@ -31,7 +31,7 @@ Battle.prototype.lootShow = function* (g, head) {
     s.t++; const a = s.out ? Math.max(0, 1 - s.out / 6) : Math.min(1, s.t / 8), slide = Math.round((1 - Math.min(1, s.t / 8)) * 18);
     x.save(); x.globalAlpha = a; x.fillStyle = 'rgba(4,4,12,0.55)'; x.fillRect(0, 0, W, CH > BH - 8 ? H : BH);
     const X = (W - CW) / 2, Y = CY + slide, w = CW, h = CH; drawWin(x, X, Y, w, h, 'menu');
-    Font.drawC(x, head || '獲得了裝備！', W / 2, Y + 4, col, UIC.textSh, 10);
+    { const hd = head || '獲得了裝備！'; let z = 10; while (z > 7 && Font.width(hd, z) > w - 12) z--; Font.drawC(x, hd, W / 2, Y + 4 + (10 - z) / 2, col, UIC.textSh, z); }
     // rays + icon
     const cx = W / 2, cy = Y + 44; x.save(); x.translate(cx, cy); x.rotate(s.t / 90); const nR = q >= 3 ? 12 : 8;
     for (let i = 0; i < nR; i++) { x.rotate(Math.PI * 2 / nR); const gr = x.createLinearGradient(0, 0, 0, -34); gr.addColorStop(0, `rgba(${cr},${cg2},${cb},${q >= 3 ? 0.55 : 0.32})`); gr.addColorStop(1, `rgba(${cr},${cg2},${cb},0)`); x.fillStyle = gr; x.beginPath(); x.moveTo(-3, 0); x.lineTo(3, 0); x.lineTo(7, -34); x.lineTo(-7, -34); x.closePath(); x.fill(); }

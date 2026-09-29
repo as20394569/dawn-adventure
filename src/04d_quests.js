@@ -171,7 +171,7 @@ const QUEST_EVENTS = {
       else { f.q3res = 'keep'; f.smithDisc = 1; st.bag.tpBook = (st.bag.tpBook || 0) + 1; yield* sayAll(['……謝謝你。', '這是師父留下的修練書，送給你吧。以後強化的費用，我只收一半！']); yield* itemGet(st.name + '得到了天賦之書！強化費用永久半價！'); }
     } else yield* say(f.q3 === 1 ? '水晶碎片的事就拜託了。聽說在老井的地底下。' : f.smith ? '有素材就拿來吧！' : '我是鎮上的鐵匠。把魔物身上的素材帶來，我就幫你打造好東西！');
     f.smith = 1;
-    while (true) { const r = yield* ask('要做什麼？', ['打造', '強化' + (f.smithDisc ? '（半價）' : ''), '重鑄詞綴', '分解', '離開']); if (r === 0) yield* craftScreen(); else if (r === 1) yield* enhanceFlow(); else if (r === 2) yield* reforgeFlow(); else if (r === 3) yield* salvageFlow(); else break; }
+    while (true) { const r = yield* ask('要做什麼？', ['打造', '強化' + (f.smithDisc ? '（半價）' : ''), '重鑄詞綴', '武器繼承', '分解', '離開']); if (r === 0) yield* craftScreen(); else if (r === 1) yield* enhanceFlow(); else if (r === 2) yield* reforgeFlow(); else if (r === 3) yield* inheritFlow(); else if (r === 4) yield* salvageFlow(); else break; }
     yield* say('隨時再來！');
   },
 };

@@ -64,7 +64,7 @@ const TK_TXT = { hpP: v => '最大HP+' + v + '%', atkP: v => '物攻+' + v + '%'
   mpSave: v => '技能' + v + '%機率不消耗MP', magCrit: v => '魔法攻擊會心率+' + v + '%', elemRes: v => '受到的屬性傷害-' + v + '%', endureT: () => '每場戰鬥一次，受到致命傷害時保留1HP', mpRegen: v => '每回合回復' + v + '%最大MP',
   venomEdge: () => '物理攻擊20%機率讓對手中毒', venomous: v => '對中毒的對手傷害+' + v + '%', assassin: () => '每場戰鬥第1回合的攻擊必定會心', shadowStep: () => '閃過攻擊後立刻反擊（70%傷害）', rage: () => 'HP低於一半時傷害+30%',
   spellblade: () => '物攻與魔攻互相加成45%', counter: () => '選擇防禦時被攻擊會立刻反擊', atkUp: v => '普通攻擊傷害+' + v + '%', actUp: v => '武器主動技能傷害+' + v + '%', subUp: v => '副武器借用技能傷害+' + v + '%', spcUp: v => '特技傷害+' + v + '%',
-  critDmg: v => '會心傷害+' + v + '%', chargeCut: v => '特技所需攻擊次數-' + v, atkMp: v => '普通攻擊多回復' + v + '點MP', healUp: v => '治癒效果+' + v + '%' };
+  critDmg: v => '會心傷害+' + v + '%', chargeCut: v => '特技所需層數-' + v, atkMp: v => '普通攻擊多回復' + v + '點MP', healUp: v => '治癒效果+' + v + '%' };
 function tDesc(key, v) {
   if (key.startsWith('kind:')) return '裝備' + key.slice(5) + '時傷害+' + v + '%'; if (key.startsWith('type:')) return key.slice(5) + '屬性傷害+' + v + '%';
   if (key.startsWith('fx.')) return FX_TXT[key.slice(3)] || (SPECIALS[key.slice(3)] || {}).d || key; return TK_TXT[key] ? TK_TXT[key](v) : key + '+' + v;

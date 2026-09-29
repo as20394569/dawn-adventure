@@ -11,7 +11,7 @@ function* skillTreeScreen() {
     return [
       { lbl: '普攻', col: '#c9cfe4', n: skillMove('attack', st).n, r: 'MP回復', d: () => MOVES.attack.d },
       ...(S ? S.a.map((id, i) => ({ lbl: '主動', col: UIC.accent, id, n: MOVES[id].n, r: '熟練Lv' + (skillLv(id, st) || 1) + '・MP' + skillMP(id, st), d: () => mvInfo(id) })) : []),
-      ...(S ? [{ lbl: '被動', col: UIC.warm, n: S.p.n, r: '', d: () => wpassText(S.p) + '（裝備為主武器時生效）' }, { lbl: '特技', col: '#ffd860', n: S.s.n, r: '每' + wsN(S.s, st) + '次攻擊', d: () => wspecText(S.s, st) + '。普通攻擊和傷害技能都會累積次數。' }] : []),
+      ...(S ? [{ lbl: '被動', col: UIC.warm, n: S.p.n, r: '', d: () => wpassText(S.p) + '（裝備為主武器時生效）' }, { lbl: '特技', col: '#ffd860', n: S.s.n, r: '累積' + wsN(S.s, st) + '層', d: () => wspecText(S.s, st) + '。普通攻擊和傷害技能各累積1層。' }] : []),
       { lbl: '副武器', col: '#b8a0ff', n: sub ? gearShort(sub) : '（未設定）', r: 'A：更換', sub: 1, d: () => '再帶一把武器當「副武器」：不加能力值，只借用它的1招主動技能（威力90%）。' + (sub ? '' : '\n目前沒有設定副武器。') },
       { lbl: '借用', col: '#b8a0ff', id: bor, n: bor ? MOVES[bor].n : '—', r: sub ? 'A：切換' : '', bor: 1, d: () => bor ? mvInfo(bor) : '設定副武器後，可以從它的兩招主動技能中選一招帶進戰鬥。' },
     ]; };
@@ -74,7 +74,7 @@ function* skillTreeScreen() {
 { const _dp = drawPassiveInfo; drawPassiveInfo = function (x, st, X, Y, w, big) {
     const k = mainWKey(st); if (!k) return _dp(x, st, X, Y, w, big); const S = WSK[k], C = CLASSES[st.cls];
     const L = [['職業被動　' + (C ? C.n : '—'), UIC.warm, 11]]; const P = classPassives(st.cls); L.push([P.length ? P.map(p => '「' + p.n + '」' + p.d).join(' ') : '職業本身沒有被動（看天賦）', P.length ? UIC.text : UIC.muted, 9]);
-    L.push(['武器被動「' + S.p.n + '」' + wpassText(S.p), UIC.accent, 9], ['特技「' + S.s.n + '」每' + wsN(S.s, st) + '次攻擊', '#ffd860', 9]);
+    L.push(['武器被動「' + S.p.n + '」' + wpassText(S.p), UIC.accent, 9], ['特技「' + S.s.n + '」累積' + wsN(S.s, st) + '層後發動', '#ffd860', 9]);
     const n = tpSpent(st); L.push(['天賦：已投入' + n + '點' + (tpAvail(st) ? '（還有' + tpAvail(st) + '點）' : ''), n ? '#c9cfe4' : UIC.muted, 9]);
     L.forEach(([t, col, z0], i) => { let z = z0; while (z > 7 && Font.width(t, z) > w) z--; Font.draw(x, t, X, Y + i * 15 + (i ? 1 : 0), col, UIC.textSh, z); });
   };
@@ -82,7 +82,7 @@ function* skillTreeScreen() {
 { const _pt = drawPassiveTile; drawPassiveTile = function (x, st, X, Y, on) { _pt(x, st, X, Y, on); }; }
 
 /* ---------- battle help: a page about weapon skills first ---------- */
-BATTLE_HELP.unshift(['武器技能', ['技能跟著武器走：每把武器有2招主動、1個被動，和攻擊累積到N次時自動發動的「特技」（戰鬥畫面右下角的◆）。',
+BATTLE_HELP.unshift(['武器技能', ['技能跟著武器走：每把武器有2招主動、1個被動，和累積3層後在下一次攻擊或技能時發動的「特技」（戰鬥畫面右下角的◆）。',
   '普通攻擊不花MP，還會回復少量MP；主動技能越常用，熟練度越高、威力越強。',
   '副武器：再帶一把武器，借用它的1招主動技能（選單→技能）。',
   '職業天賦會強化某些武器或玩法，換了武器也可以重點天賦。']]);
@@ -112,7 +112,7 @@ STORY_MARKS.elder = st => st.flags.license && st.lv >= 14 && !st.flags.deep ? '!
 { const _gi = gearInfoLines; gearInfoLines = function (g, wrapW = 150) {
     const L = _gi(g, wrapW), S = WSK[g.b]; if (!S) return L; const X = [], add = (t, c, s, ind) => { for (const l of Font.wrap(t, wrapW - ind, s)) X.push([l, c, s, ind]); };
     X.push(['【武器技能】', UIC.accent, 10, 0]); add('主動：' + S.a.map(id => MOVES[id].n).join('・'), '#c8f0ff', 11, 4);
-    add('被動「' + S.p.n + '」' + wpassText(S.p), UIC.warm, 10, 4); add('特技「' + S.s.n + '」每' + wsN(S.s) + '次攻擊', '#ffd860', 10, 4);
+    add('被動「' + S.p.n + '」' + wpassText(S.p), UIC.warm, 10, 4); add('特技「' + S.s.n + '」累積' + wsN(S.s) + '層後發動', '#ffd860', 10, 4);
     const i = L.findIndex(l => l[0] === '' && l[2] === 6); L.splice(i < 0 ? L.length : i, 0, ...X); return L;
   };
 }

@@ -131,3 +131,8 @@ function v71Migrate(st) {
     clampHP(); return ow;
   };
 }
+// the encounter card: a known design dropping again now gives 精煉石
+{ const _lh = lootHint; lootHint = function (key, sp) { const t = _lh(key, sp); return typeof t === 'string' ? t.replace('設計圖／打造券', '設計圖／精煉石') : t; }; }
+// catalogue entries for the v25 smithy (map type, the forge / anvil props)
+if (MAPS.smithy) { MAP_TYPES.smithy = '室內'; MAPS.smithy.type = '室內'; }
+(NPC_ROLES.情報 || (NPC_ROLES.情報 = [])).push('smForgeL', 'smForgeR', 'smAnvil', 'smTub', 'smRackA', 'smRackB');

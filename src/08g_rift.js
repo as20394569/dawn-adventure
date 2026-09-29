@@ -8,7 +8,7 @@ const RIFT_BOSS = { 5: ['banditBoss', 'golem'], 10: ['crystalGolem', 'silverWyrm
 MAPS.rift = { name: '異界迴廊', music: 'ruins', border: 'X', battleBg: 'rift', encAll: 1, popup: 1, rows: Array.from({ length: RIFT_H }, (_, y) => y === 0 || y === RIFT_H - 1 ? 'X'.repeat(RIFT_W) : 'X' + 's'.repeat(RIFT_W - 2) + 'X'), gearPool: TOWER_LOOT, encounters: [{ y0: 0, y1: 99, rate: 0.09, table: [['voidEye', 20, 22, 10], ['riftKnight', 20, 22, 10]] }], items: [], npcs: [], boss: { sp: 'gatekeeper', lv: 40, x: 7, y: 3, flag: 'riftBoss20', ev: 'riftBoss' } };
 MAP_TYPES.rift = '迷宮'; MAPS.rift.type = '迷宮';
 const riftSt = (st = Game.st) => st.rift || (st.rift = { best: 0, cp: 0, run: 0, floor: 0, tokens: 0 });
-function riftLv(fl) { return 18 + fl; } // New Game+ levels are added in makeFoe
+function riftLv(fl) { return Math.max(18 + fl, ((Game.st && Game.st.lv) || 1) - 3 + Math.ceil(fl / 2)); } // v25: never far below the hero // New Game+ levels are added in makeFoe
 function genRiftFloor(fl) {
   const R = srand((Game.st.rift.run * 97 + fl * 13) | 0), g = [...Array(RIFT_H)].map(() => Array(RIFT_W).fill('X')), boss = fl % 5 === 0;
   const set = (x, y, c) => { if (x > 0 && y > 0 && x < RIFT_W - 1 && y < RIFT_H - 1) g[y][x] = c; };
@@ -34,8 +34,8 @@ function genRiftFloor(fl) {
 }
 function riftChest(fl, i, x, y, R) {
   const id = 'rift' + fl + '_' + i, r = R();
-  if (r < 0.3) { const q = fl >= 15 && R() < 0.08 ? 5 : fl >= 12 && R() < 0.25 ? 4 : fl >= 6 ? 3 : 2; return { id, x, y, item: TOWER_LOOT[Math.floor(R() * TOWER_LOOT.length)], q }; }
-  if (r < 0.5) return { id, x, y, item: 'riftShard', n: 1 + Math.floor(fl / 6) };
+  if (r < 0.22) { const u = R(), q = fl >= 18 && u < 0.03 ? 5 : fl >= 14 && u < 0.15 ? 4 : fl >= 14 ? 3 : fl >= 8 && u < 0.35 ? 3 : 2; return { id, x, y, item: TOWER_LOOT[Math.floor(R() * TOWER_LOOT.length)], q }; } // v25: 紫 early, 紅 from 8F, 金 only 14F+
+  if (r < 0.46) return { id, x, y, item: 'riftShard', n: 1 + Math.floor(fl / 6) };
   if (r < 0.7) return { id, x, y, item: pick(['superPotion', 'hiEther', 'elixir']), n: 1 };
   return { id, x, y, gold: 300 * fl };
 }
@@ -73,7 +73,7 @@ Object.assign(Events, {
       const tok = st.bag.riftToken || 0, list = TOWER_SHOP.map(([k, c]) => (ITEMS[k] || GEAR[k]).n + '　' + c + '枚');
       const r = yield* ask('要用迴廊徽章交換什麼嗎？（持有' + tok + '枚）', [...list, '不用了']); if (r < 0 || r >= TOWER_SHOP.length) return;
       const [k, c] = TOWER_SHOP[r]; if (tok < c) { yield* say('徽章不夠喔。'); continue; }
-      st.bag.riftToken -= c; if (GEAR[k]) yield* itemGet('換到了' + bpGift(classGear(k), 3).txt + '！'); else { st.bag[k] = (st.bag[k] || 0) + 1; yield* itemGet('換到了' + ITEMS[k].n + '！'); }
+      st.bag.riftToken -= c; if (GEAR[k]) yield* itemGet('換到了' + gainBP(classGear(k), 2, Game.st, 2) + '！'); else { st.bag[k] = (st.bag[k] || 0) + 1; yield* itemGet('換到了' + ITEMS[k].n + '！'); }
     }
   },
 });

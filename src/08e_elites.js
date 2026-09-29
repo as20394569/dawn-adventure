@@ -48,7 +48,7 @@ function battlePortrait(sp) { // idle frame 1 of the battle strip, or null
   if (!m) return im; const c = mkCanvas(m.w, m.h); c.getContext('2d').drawImage(im, 0, 0, m.w, m.h, 0, 0, m.w, m.h); return c;
 }
 function dangerStars(lv) { const d = lv - Game.st.lv; return d <= -4 ? 1 : d <= -1 ? 2 : d <= 1 ? 3 : d <= 3 ? 4 : 5; }
-function lootHint(key, sp) { const first = !((Game.st.kills || {})[key]), sig = (LOOT[key] || [])[0] || (SPECIES[sp] || {}).drop; if (first && sig) return '首次擊敗：必定掉落金色「' + GEAR[classGear(sig)].n + '」'; if (LOOT[key]) return '重戰掉落：' + LOOT[key].map(k => GEAR[classGear(k)].n).slice(0, 3).join('、') + '…'; return ''; }
+function lootHint(key, sp) { const first = !((Game.st.kills || {})[key]), sig = (LOOT[key] || [])[0] || (SPECIES[sp] || {}).drop; if (first && sig) return '首次擊敗：必定掉落紅色「' + GEAR[classGear(sig)].n + '」'; if (LOOT[key]) return '重戰掉落：' + LOOT[key].map(k => GEAR[classGear(k)].n).slice(0, 3).join('、') + '…'; return ''; }
 function encounterCard(sp, lv, key, kind, extra) {
   const pic = battlePortrait(sp), stars = dangerStars(lv), hint = lootHint(key, sp);
   let hz = 8; while (hz > 7 && Font.width(hint, hz) > W - 30) hz--; const hl = hint ? Font.wrap(hint, W - 30, hz).slice(0, 2) : [];

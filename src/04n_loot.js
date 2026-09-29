@@ -141,7 +141,7 @@ function lootDrops(b) {
   const F = b.F, st = Game.st, key = b.cfg.id || F.sp, sp = SPECIES[F.sp] || {}, kills = st.kills || (st.kills = {}), first = !kills[key];
   kills[key] = (kills[key] || 0) + 1; const out = [];
   const sig = b.cfg.drop || sp.drop || (LOOT[key] || [])[0];
-  if (first && sig && !b.cfg.rematch) out.push(makeGear(classGear(sig), 4));
+  if (first && sig && !b.cfg.rematch) out.push(makeGear(classGear(sig), 3)); // v27: first kill gives 紅 (was 金) — playtest: too strong
   else if ((F.elite || F.boss) && LOOT[key]) out.push(makeGear(classGear(pick(LOOT[key])), rollLootQuality(F.boss)));
   if (b.cfg.rematch && F.boss && chance(0.35) && LOOT[key]) out.push(makeGear(classGear(pick(LOOT[key])), rollLootQuality(false)));
   return out;

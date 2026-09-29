@@ -101,7 +101,7 @@ const WPASS = { // passive keys: name suffix + text
   mpRegen: ['魔泉', v => '每回合回復' + v + '%最大MP'], regen: ['生機', () => '每回合回復6%最大HP'], venomEdge: ['毒牙', () => '物理攻擊20%機率讓對手中毒'], pierceT: ['破甲', v => '物理攻擊無視對手' + v + '%的物防'],
   weakUp: ['看破', v => '打中弱點時傷害+' + v + '%'], bigUp: ['屠巨', v => '對精英・頭目傷害+' + v + '%'], mpSave: ['節能', v => '技能有' + v + '%機率不消耗MP'], magCrit: ['奧秘', v => '魔法攻擊會心率+' + v + '%'],
   counter: ['反擊', () => '選擇防禦時被攻擊會立刻反擊'], guardPlus: ['堅守', () => '選擇防禦時再減傷30%'], statusRes: ['淨心', v => '更不容易陷入異常狀態（' + v + '%）'], first: ['先制', () => '每場戰鬥第一回合必定先出手'],
-  double: ['連擊', () => '物理攻擊25%機率追加一擊'], thorns: ['荊棘', () => '受到攻擊時反彈25%傷害'], atkMp: ['汲魔', v => '普通攻擊多回復' + v + '點MP'], chargeCut: ['蓄勢', v => '特技所需攻擊次數-' + v],
+  double: ['連擊', () => '物理攻擊25%機率追加一擊'], thorns: ['荊棘', () => '受到攻擊時反彈25%傷害'], atkMp: ['汲魔', v => '普通攻擊多回復' + v + '點MP'], chargeCut: ['蓄勢', v => '特技所需層數-' + v],
   healUp: ['慈光', v => '治癒效果+' + v + '%'], critDmg: ['致命', v => '會心傷害+' + v + '%'], hpP: ['強健', v => '最大HP+' + v + '%'], defP: ['堅甲', v => '物防+' + v + '%'], atkP: ['剛力', v => '物攻+' + v + '%'], spaP: ['靈力', v => '魔攻+' + v + '%'],
 };
 const WPASS_FX = new Set(['regen', 'first', 'double', 'thorns']);
@@ -118,21 +118,23 @@ const WSK = {}, WMOVE = {};
 MOVES.attack.pow = 40; MOVES.attack.d = '用主武器攻擊。不消耗MP，還會回復少量MP；每次攻擊都會累積特技。';
 for (const key in WS_TABLE) {
   const B = GEAR[key]; if (!B) continue; const [stem, ta, tb, ps, sp] = WS_TABLE[key].split(','), nm = WS_NAMES[key] || [], [pk, pv] = ps.split(':'), [sk, sn] = sp.split(':');
-  const mk = (tpl, i) => { const T = MOVES[tpl]; if (!T) return null; const id = 'w_' + key + '_' + i, m = { ...T, n: nm[i] || stem + T.n, tpl, ws: key };
+  const mk = (tpl, i) => { const T = MOVES[tpl]; if (!T) return null; const id = 'w_' + key + '_' + i, m = { ...T, n: nm[i] || T.n, tpl, ws: key }; // v25: no weapon prefix on actives (playtest: 「獵刀雙刃連擊」「疾風疾風刺」 were a mouthful)
     if (m.pow) m.pow = Math.round(T.pow * (1.15 + 0.03 * (B.t - 1))); MOVES[id] = m; SKILL_MP[id] = SKILL_MP[tpl] ?? 4; WMOVE[id] = key;
     if (typeof SKILL_STYLE !== 'undefined' && SKILL_STYLE[tpl]) SKILL_STYLE[id] = SKILL_STYLE[tpl]; if (typeof SKILL_SCALE !== 'undefined' && SKILL_SCALE[tpl]) m.scale = SKILL_SCALE[tpl]; return id; };
   const a = [mk(ta, 0), mk(tb, 1)].filter(Boolean), pw = specPow(sk, B.t);
-  WSK[key] = { a, p: { k: pk, v: +pv, n: (nm[2] || stem + WPASS[pk][0]) }, s: { k: sk, N: +sn, pow: pw, n: nm[3] || stem + WSPEC[sk][0] } };
+  const pre = t => [...t].some(ch => stem.includes(ch)) ? t : stem + t; // no 「疾風疾風」「雷角雷擊」: drop the prefix when it repeats the word
+  WSK[key] = { a, p: { k: pk, v: +pv, n: (nm[2] || pre(WPASS[pk][0])) }, s: { k: sk, N: +sn, pow: pw, n: nm[3] || pre(WSPEC[sk][0]) } };
 }
 const wpassText = p => WPASS[p.k] ? WPASS[p.k][1](p.v) : '';
-const wspecText = (s, st) => '每' + wsN(s, st) + '次攻擊自動發動：' + WSPEC[s.k][1](s.pow);
+const wspecText = (s, st) => '累積' + wsN(s, st) + '層後，下一次攻擊或技能時發動：' + WSPEC[s.k][1](s.pow);
 
 /* ---------- which weapons the hero holds ---------- */
 const mainWeapon = (st = Game.st) => gearBy(st.equip && st.equip.weapon, st);
 const mainWKey = (st = Game.st) => { const g = mainWeapon(st); return g && WSK[g.b] ? g.b : null; };
 function subWeapon(st = Game.st) { const s = st.sub; if (!s) return null; const g = gearBy(s.u, st); if (!g || !WSK[g.b] || (st.equip && st.equip.weapon === g.u)) return null; return g; }
 function borrowedSkill(st = Game.st) { const g = subWeapon(st); if (!g) return null; const A = WSK[g.b].a; return A[Math.min(st.sub.i || 0, A.length - 1)] || null; }
-const wsN = (s, st = Game.st) => Math.max(2, s.N - (typeof talentSum === 'function' ? talentSum('chargeCut', st) : 0));
+const WS_LAYERS = 3; // v27: every weapon's 特技 needs 3 layers (was 3–5 attacks per weapon)
+const wsN = (s, st = Game.st) => Math.max(2, WS_LAYERS - (typeof talentSum === 'function' ? talentSum('chargeCut', st) : 0));
 function wsList(st = Game.st) {
   const k = mainWKey(st), out = k ? WSK[k].a.slice() : [], b = borrowedSkill(st); if (b && !out.includes(b)) out.push(b);
   st.skills = st.skills || {}; for (const id of out) if (!st.skills[id]) st.skills[id] = 1; return out;
@@ -193,12 +195,14 @@ function wsAttackMove(st = Game.st) {
     const fhp = t ? t.hp : 0, r = yield* _um.call(this, u, t, id); if (u.hp <= 0 || !t) return r;
     const st = Game.st, key = mainWKey(st), base = MOVES[id];
     const basic = id === 'attack' && t.hp < fhp, cast = id !== 'attack' && this._castId === id;
+    if (key && (this.H.wc || 0) >= wsN(WSK[key].s, st) && (id === 'attack' || cast)) { // v27: a full gauge (3 layers) fires on the NEXT attack or skill
+      if (t.hp > 0 && this.F && this.F.hp > 0) { this.H.wc = 0; yield* this.wSpecial(u, t, key); } return r; }
     if (!basic && !cast) return r;
     if (basic) { const g = 2 + Math.floor((u.maxmp || 0) / 25) + (u.stats.atkMp || 0); if (u.mp < u.maxmp) { u.mp = Math.min(u.maxmp, u.mp + g); st.mp = u.mp; } }
     if (cast && WMOVE[id]) { const up = wsUse(id, st); if (up) { Sound.sfx('statUp'); yield* this.msg('「' + base.n + '」的熟練度升到了Lv' + up + '！', { hold: 24 }); } }
     if (!key || !(basic || (base && base.pow))) return r;
-    const S = WSK[key].s, N = wsN(S, st); this.H.wc = (this.H.wc || 0) + 1; this.H.wcN = N;
-    if (this.H.wc >= N && t.hp > 0 && this.F && this.F.hp > 0) { this.H.wc = 0; yield* this.wSpecial(u, t, key); }
+    const S = WSK[key].s, N = wsN(S, st); this.H.wc = Math.min(N, (this.H.wc || 0) + 1); this.H.wcN = N;
+    if (this.H.wc >= N && u.hp > 0) { Sound.sfx('statUp'); yield* this.msg('特技「' + S.n + '」準備完成！下一次攻擊或技能時發動。', { hold: 16 }); }
     return r;
   };
 }
@@ -231,9 +235,9 @@ Battle.prototype.wSpecial = function* (u, t, key) {
 // the counter beside the HUD: 特技 ◆◆◇◇
 { const _bh = Battle.prototype.drawBoxH; Battle.prototype.drawBoxH = function (x) {
     _bh.call(this, x); const H = this.H, Y = Math.round(this.boxH), k = mainWKey(); if (!H || !k || Y >= BH || Game.scene !== this) return;
-    const N = H.wcN || wsN(WSK[k].s), n = Math.min(N, H.wc || 0), full = n >= N - 1, w = N * 7 + 22, X = W - w - 3, yy = Y - 11;
-    x.fillStyle = 'rgba(10,10,22,0.72)'; x.fillRect(X - 2, yy - 1, w + 4, 10); Font.draw(x, '特技', X, yy - 1, full ? '#ffd860' : UIC.muted, UIC.textSh, 7);
-    for (let i = 0; i < N; i++) { const cx = X + 22 + i * 7, on = i < n; x.fillStyle = '#10121e'; x.fillRect(cx - 1, yy + 1, 6, 6); x.fillStyle = on ? (full && Math.floor(this.t / 8) % 2 ? '#ffffff' : '#ffc040') : '#3a3a4a'; x.fillRect(cx, yy + 2, 4, 4); }
+    const N = H.wcN || wsN(WSK[k].s), n = Math.min(N, H.wc || 0), full = n >= N, lw = Math.ceil(Font.width('特技', 7)) + 4, w = N * 7 + lw, X = W - w - 3, yy = Y - 11;
+    x.fillStyle = 'rgba(10,10,22,0.72)'; x.fillRect(X - 2, yy - 1, w + 4, 10); Font.draw(x, '特技', X, yy - 4, full ? '#ffd860' : UIC.muted, UIC.textSh, 7); // text middle = squares' middle (yy+4)
+    for (let i = 0; i < N; i++) { const cx = X + lw + i * 7, on = i < n; x.fillStyle = '#10121e'; x.fillRect(cx - 1, yy + 1, 6, 6); x.fillStyle = on ? (full && Math.floor(this.t / 8) % 2 ? '#ffffff' : '#ffc040') : '#3a3a4a'; x.fillRect(cx, yy + 2, 4, 4); }
   };
 }
 
@@ -264,3 +268,29 @@ Battle.prototype.chooseMove = function* () {
     this.idle = false; this.moveIdx = r; return list[r];
   }
 };
+
+/* ===================== v25 skill spotlight (playtest: on some stages — snow, meadow, canyon, tower… — skill effects were hard to see) =====================
+   While a hero skill, a weapon 特技 or a strong monster skill plays, the stage BEHIND the fighters dims; the fighters and the
+   effects stay at full brightness, and the light shafts fade out. Bright stages dim more than dark ones (measured once per battle). */
+function stageLum(b) {
+  const S = b.hd2d; if (!S) return 0.5; if (S.lum !== undefined) return S.lum;
+  try { const c = mkCanvas(22, 27), x = c.getContext('2d'); x.drawImage(hd2dStageFor(b), 0, 0, 22, 27); const d = x.getImageData(0, 0, 22, 27).data; let s = 0; for (let i = 0; i < d.length; i += 4) s += (0.2126 * d[i] + 0.7152 * d[i + 1] + 0.0722 * d[i + 2]) / 255; S.lum = s / (d.length / 4); } catch (e) { S.lum = 0.5; }
+  return S.lum;
+}
+const spotTarget = b => clamp(0.24 + (stageLum(b) - 0.35) * 0.9, 0.24, 0.55);
+function spotStrongFoe(u, id) { const mv = MOVES[id] || {}; return (mv.pow || 0) >= 75 || ((u.boss || u.elite) && (mv.pow || 0) >= 60) || u.charging === id || id === 'm_dominate'; }
+{ const _um = Battle.prototype.useMove; Battle.prototype.useMove = function* (u, t, id) {
+    const on = id !== 'attack' && MOVES[id] && u && (u.hero || spotStrongFoe(u, id)); if (!on) return yield* _um.call(this, u, t, id);
+    this.spotOn = (this.spotOn || 0) + 1; try { return yield* _um.call(this, u, t, id); } finally { this.spotOn--; }
+  };
+  const _ws = Battle.prototype.wSpecial; Battle.prototype.wSpecial = function* (u, t, key) {
+    this.spotOn = (this.spotOn || 0) + 1; try { return yield* _ws.call(this, u, t, key); } finally { this.spotOn--; }
+  };
+  // hd2dMotes(b, x, false) runs right after the stage is painted and before the fighters: dim there
+  const _hm = hd2dMotes; hd2dMotes = function (b, x, near) {
+    _hm(b, x, near); if (near || !(b instanceof Battle)) return;
+    const tgt = b.spotOn > 0 ? spotTarget(b) : 0; b.spotA = (b.spotA || 0) + (tgt - (b.spotA || 0)) * (tgt ? 0.16 : 0.08); if (b.spotA < 0.005) { b.spotA = 0; return; }
+    x.fillStyle = 'rgba(6,8,20,' + b.spotA.toFixed(3) + ')'; x.fillRect(-4, -4, W + 8, BH + 8);
+  };
+  const _hs = hd2dShafts; hd2dShafts = function (b, x) { const k = 1 - Math.min(1, (b.spotA || 0) * 2); if (k <= 0.02) return; const a = x.globalAlpha; x.globalAlpha = a * k; _hs(b, x); x.globalAlpha = a; };
+}
