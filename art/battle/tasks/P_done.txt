@@ -1,0 +1,8 @@
+hornHare: PASS; battle=5 frames 32x32, 8x preview; binary alpha, <=20 colors, fixed bottom; frontal battle eyes visually checked; no unresolved concerns.
+strawCrow: PASS; battle=5 frames 32x32, 8x preview; binary alpha, <=20 colors, fixed bottom; frontal battle eyes visually checked; no unresolved concerns.
+gustSprite: PASS; battle=6 frames 32x32, 8x preview; binary alpha, <=20 colors, fixed bottom; frontal battle eyes visually checked; no unresolved concerns.
+mossTurtle: PASS; battle=5 frames 32x32, 8x preview; binary alpha, <=20 colors, fixed bottom; frontal battle eyes visually checked; no unresolved concerns.
+streamSnake: PASS; battle=5 frames 32x32, 8x preview; binary alpha, <=20 colors, fixed bottom; frontal battle eyes visually checked; no unresolved concerns.
+mireFly: PASS; battle=5 frames 32x32, 8x preview; binary alpha, <=20 colors, fixed bottom; frontal battle eyes visually checked; no unresolved concerns.
+millGolem: PASS; battle=5 frames 48x48, 8x preview; field=8 frames 32x32, 4 directions, 8x preview; binary alpha, <=20 colors, fixed bottom; frontal battle eyes visually checked; no unresolved concerns.
+blackCatfish: PASS; battle=5 frames 48x48, 8x preview; field=8 frames 32x32, 4 directions, 8x preview; binary alpha, <=20 colors, fixed bottom; frontal battle eyes visually checked; no unresolved concerns.
