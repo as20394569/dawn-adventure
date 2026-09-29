@@ -1,15 +1,15 @@
 // v9 real-battle class probe: all 10 classes (first weapon kind, best forgeable weapon at tier 紫+2, talents spent,
 // 3 megaPotion + 2 hiEther) vs 1 elite + 4 bosses with the smart AI. Prints win / hp% left / hero turns.
 module.exports = async (g) => {
-  const FIGHTS = [['wraithGeneral', 23, 'elite'], ['ratKing', 27, 'boss'], ['clockColossus', 31, 'boss'], ['frostQueen', 34, 'boss'], ['shadowGeneral', 40, 'boss']];
+  const FIGHTS = process.env.SET === 'ch1' ? [['millGolem', 8, 'boss'], ['blackCatfish', 11, 'boss'], ['croc', 13, 'boss'], ['golem', 17, 'boss']] : [['wraithGeneral', 23, 'elite'], ['ratKing', 27, 'boss'], ['clockColossus', 31, 'boss'], ['frostQueen', 34, 'boss'], ['shadowGeneral', 40, 'boss']];
   const only = process.env.CLS ? process.env.CLS.split(',') : null;
   const rows = [];
   const classes = await g.ev(() => V7_CLASSES);
   for (const cls of classes) { if (only && !only.includes(cls)) continue; for (const [sp, blv, kd] of FIGHTS) {
     await g.ev(([cls, sp, blv, kd, Q, E]) => {
       const pick = (pred, t, score) => { let best = null, bs = -1; for (const k in GEAR) { const G = GEAR[k]; if (!pred(G, k) || BP_RARE.has(k) || G.t > t) continue; const v = G.t * 1000 + score(gearStats({ b: k, q: 2, r: 1, a: [], e: 0 }).st); if (v > bs) { bs = v; best = k; } } return best; };
-      const G = __game, lv = blv - 1; G.newGameState('小晨'); const st = G.Game.st; Object.assign(st.flags, { license: 1, woke: 1, deep: 1, golem: 1, ch2: 5 }); st.lv = lv; st.exp = expForLevel(lv); st.map = 'capital'; st.x = 10; st.y = 20; startOverworld(); G.Game.fade = 0; G.Game.noEnc = 1;
-      if (CLASS_FREE[cls]) applyStartClass(cls); else { applyStartClass('swordsman'); st.cls = cls; } st.flags.deep = 1;
+      const G = __game, lv = blv - 1; G.newGameState('小晨'); const st = G.Game.st; Object.assign(st.flags, blv < 18 ? { license: 1, woke: 1, deep: lv >= 14 ? 1 : 0 } : { license: 1, woke: 1, deep: 1, golem: 1, ch2: 5 }); st.lv = lv; st.exp = expForLevel(lv); st.map = 'capital'; st.x = 10; st.y = 20; startOverworld(); G.Game.fade = 0; G.Game.noEnc = 1;
+      if (CLASS_FREE[cls]) applyStartClass(cls); else { applyStartClass('swordsman'); st.cls = cls; } st.flags.deep = lv >= 14 ? 1 : 0;
       attrAuto(st); for (const B of CT[cls]) for (const n of B) while (!nodeBlock(n, st)) st.ct[n.id] = (st.ct[n.id] || 0) + 1;
       const t = clamp(smithRank({ lv }), 1, 7), kind = CLASS_V7[cls].w[0];
       const wk = pick(G2 => G2.slot === 'weapon' && G2.kind === kind, t, s => Math.max(s.atk || 0, s.spa || 0)); const wg = makeGear(wk, Q); wg.e = E; st.equip.weapon = wg.u;
