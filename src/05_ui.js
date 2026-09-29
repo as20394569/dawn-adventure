@@ -479,10 +479,13 @@ const sellPrice = k => ITEMS[k].sell ?? Math.floor(ITEMS[k].price / 2);
 function* gearPicker(title, getList, extra) { // returns a gear instance or null
   let idx = 0; const VIS = 7;
   const scr = { draw(x) {
-    screenBG(x); headerBar(x, title); Font.drawR(x, Game.st.money + ' G', W - 6, 2, UIC.warm, UIC.textSh);
+    const T = typeof touchRegion === 'function'; if (T) touchRegion(0, 0, W, H, () => {}); // v27e: the picker covers whatever is below it
+    screenBG(x); headerBar(x, title); Font.drawR(x, Game.st.money + ' G', W - 38, 2, UIC.warm, UIC.textSh);
+    drawBtn(x, W - 34, 2, 30, 16, false); Font.drawC(x, '↩', W - 19, 2, UIC.warm, UIC.textSh, 9); if (T) touchRegion(W - 36, 0, 36, 21, () => tapKey('b'));
     const list = getList(); drawWin(x, 4, 24, 168, VIS * 18 + 10, 'menu'); if (!list.length) Font.draw(x, '（沒有可以選的裝備）', 14, 30, UIC.muted, UIC.textSh);
     const top = Math.max(0, Math.min(idx - 3, list.length - VIS));
-    list.slice(top, top + VIS).forEach((g, i) => { const Y = 28 + i * 18; if (top + i === idx) selBar(x, 6, Y - 1, 164, 17); const e = Font.draw(x, gearShort(g), 14, Y, gCol(g), UIC.textSh); if (isEquipped(g)) Font.draw(x, 'E', e + 2, Y, UIC.accent, UIC.textSh); });
+    list.slice(top, top + VIS).forEach((g, i) => { const Y = 28 + i * 18; if (top + i === idx) selBar(x, 6, Y - 1, 164, 17); const e = Font.draw(x, gearShort(g), 14, Y, gCol(g), UIC.textSh); if (isEquipped(g)) Font.draw(x, 'E', e + 2, Y, UIC.accent, UIC.textSh);
+      if (T) touchRegion(6, Y - 1, 164, 18, () => { if (idx === top + i) tapKey('a'); else { idx = top + i; Sound.sfx('cursor'); } }); }); // v27e: tap = pick, tap again = confirm
     if (top > 0) x.drawImage(UPARROW, 85, 25); if (top + VIS < list.length) x.drawImage(DOWNARROW, 85, 24 + VIS * 18 + 4);
     drawWin(x, 4, 164, 168, 88, 'menu'); const g = list[idx]; if (g) { drawGearDetail(x, g, 166, 44); extra(x, g, 212); }
   } };

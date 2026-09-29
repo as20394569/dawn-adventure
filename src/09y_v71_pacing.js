@@ -70,7 +70,7 @@ const QUEST_GEAR = {
   qHeroCrest: ['冒險王之證', 7, { hp: 25, atk: 6, spa: 6, def: 4, spd: 4 }, {}, ['deathWard'], '公會最高的榮譽。'],
 };
 for (const k in QUEST_GEAR) { const [n, t, s, sp, fx, d] = QUEST_GEAR[k]; GEAR[k] = { n, slot: 'acc', t, st: s, sp, fx, d: d + '（委託的獨家報酬）', kind: '飾品' }; BP_RARE.add(k);
-  const P = TIER_POOL[t], h = hashK(k); GEAR_RECIPE[k] = { mats: { [P[h % P.length]]: 2 + Math.floor(t / 2), [TIER_POOL[Math.max(1, t - 1)][(h >> 4) % TIER_POOL[Math.max(1, t - 1)].length]]: 1 + Math.floor(t / 3) }, gold: Math.round(bpGold(t) * 0.9 / 10) * 10 }; }
+  const P = TIER_POOL[t], h = hashK(k); GEAR_RECIPE[k] = { mats: { [P[h % P.length]]: 2 + Math.floor(t / 2), [TIER_POOL[Math.max(1, t - 1)][(h >>> 4) % TIER_POOL[Math.max(1, t - 1)].length]]: 1 + Math.floor(t / 3) }, gold: Math.round(bpGold(t) * 0.9 / 10) * 10 }; }
 const COM_EX = {
   c13: { bp: 'qTravelCharm' }, c1: { items: { vitFruit: 1 } }, c14: { bp: 'qHerbPouch' }, c15: { items: { agiFruit: 1 } }, c2: { items: { dexFruit: 1 } }, c3: { items: { vitFruit: 1 } },
   c5: { items: { agiFruit: 1 } }, c6: { items: { wisdomFruit: 1 } }, c7: { bp: 'qHunterEye' }, c8: { items: { dexFruit: 1 } }, c9: { items: { powerFruit: 1 } }, c10: { bp: 'qMinerLamp' },
