@@ -1,0 +1,1 @@
+module.exports = async (g) => { g.log(await g.ev(() => { const M = MAPS.ruins; return M.rows.map((r, i) => String(i).padStart(2) + ' ' + r).join('\n') + '\nboss ' + JSON.stringify(M.boss) + ' npcs ' + JSON.stringify((M.npcs || []).map(n => [n.id, n.x, n.y])) + ' items ' + JSON.stringify((M.items || []).map(n => [n.x, n.y])) + ' gate ' + JSON.stringify(M.gate); })); };

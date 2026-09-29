@@ -1,0 +1,1 @@
+module.exports = async (g) => { await g.ev(() => { const G = __game; G.newGameState('小晨'); G.Game.setScene(new EndingScene()); }); await g.step(3); g.log(await g.ev(() => { const s = __game.Game.scene; const y0 = s.y; s.update(); return 'y0 ' + y0 + ' y1 ' + s.y + ' maxY ' + s.maxY + ' ' + String(s.update).slice(0, 200); })); };

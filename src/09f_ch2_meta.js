@@ -9,7 +9,7 @@ ACHIEVEMENTS.push(
   { id: 'starGuardian', n: '星圖', d: '打倒星之守護者。', ok: st => st.flags.starGuardian },
   { id: 'master', n: '上級職業', d: '解鎖一個上級職業（吟遊詩人・機工士・武僧・龍騎士）。', ok: st => st.flags.clsBard || st.flags.clsMachinist || st.flags.clsMonk || st.flags.clsDragoon },
   { id: 'allMaster', n: '萬能的旅人', d: '解鎖全部四個上級職業。', ok: st => st.flags.clsBard && st.flags.clsMachinist && st.flags.clsMonk && st.flags.clsDragoon },
-  { id: 'ch2elite', n: '北境的獵人', d: '打倒第二章的7隻菁英魔物。', ok: st => ['blackFeather', 'boarKing', 'clockKnight', 'snowBear', 'frostLich', 'youngDragon', 'duskCaptain'].every(k => st.flags[k]) },
+  { id: 'ch2elite', n: '北境的獵人', d: '打倒北境的7隻菁英魔物。', ok: st => ['blackFeather', 'boarKing', 'clockKnight', 'snowBear', 'frostLich', 'youngDragon', 'duskCaptain'].every(k => st.flags[k]) },
 );
 for (const [id, c] of [['ch2start', '故事'], ['gears', '故事'], ['colossus', '戰鬥'], ['frostQueen', '戰鬥'], ['lavaGiant', '戰鬥'], ['ch2clear', '故事'], ['starGuardian', '戰鬥'], ['master', '成長'], ['allMaster', '成長'], ['ch2elite', '戰鬥']]) { const a = ACHIEVEMENTS.find(x => x.id === id); if (a) a.cat = c; }
 TITLES.push(
