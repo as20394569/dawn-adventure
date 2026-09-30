@@ -8261,7 +8261,7 @@ class TitleScene {
     x.drawImage(this.logo, Math.round(W / 2 - this.logo.width / 2), 6 + bob);
     Font.drawC(x, '～異世界冒險RPG～', W / 2, 52 + bob, '#ffe0a0', '#3a1428');
     if (this.stage === 'press' && Math.floor(this.t / 30) % 2 === 0) Font.drawC(x, '按 A 鍵開始', W / 2, 232, '#ffffff', '#1a1024');
-    Font.drawR(x, 'v10.6.3', W - 3, H - 13, '#b890b0', null);
+    Font.drawR(x, 'v10.6.4', W - 3, H - 13, '#b890b0', null);
   }
 }
 class IntroScene {
@@ -11913,7 +11913,7 @@ function* skillTreeScreen() {
     return [
       { lbl: '普攻', col: '#c9cfe4', n: skillMove('attack', st).n, r: 'MP回復', d: () => MOVES.attack.d },
       ...(S ? S.a.map((id, i) => ({ lbl: '主動', col: UIC.accent, id, n: MOVES[id].n, r: '熟練Lv' + (skillLv(id, st) || 1) + '・MP' + skillMP(id, st), d: () => mvInfo(id) })) : []),
-      ...(S ? [{ lbl: '被動', col: UIC.warm, n: S.p.n, r: '', d: () => wpassText(S.p) + '（裝備為主武器時生效）' }, { lbl: '特技', col: '#ffd860', n: S.s.n, r: '累積' + wsN(S.s, st) + '層', d: () => wspecText(S.s, st) + '。普通攻擊和傷害技能各累積1層。' }] : []),
+      ...(S ? [{ lbl: '被動', col: UIC.warm, n: S.p.n, r: '', d: () => wpassText(S.p) + '（裝備為主武器時生效）' }, { lbl: '特技', col: '#ffd860', n: S.s.n, r: '累積' + wsN(S.s, st) + '層', d: () => wspecText(S.s, st) + '。普通攻擊打中累積1層，集滿自動發動，下一場戰鬥會保留。' }] : []),
       { lbl: '副武器', col: '#b8a0ff', n: sub ? gearShort(sub) : '（未設定）', r: 'A：更換', sub: 1, d: () => '再帶一把武器當「副武器」：不加能力值，只借用它的1招主動技能（威力90%）。' + (sub ? '' : '\n目前沒有設定副武器。') },
       { lbl: '借用', col: '#b8a0ff', id: bor, n: bor ? MOVES[bor].n : '—', r: sub ? 'A：切換' : '', bor: 1, d: () => bor ? mvInfo(bor) : '設定副武器後，可以從它的兩招主動技能中選一招帶進戰鬥。' },
     ]; };
@@ -13989,10 +13989,13 @@ let __qhud = { f: -99, v: null };
 { const _d = Overworld.prototype.draw; Overworld.prototype.draw = function (x) {
     _d.call(this, x); const st = this.st; if (!st || !st.cls && !st.flags.license || this.script || UI.stack.length || (this.popup && this.popup.t < 160) || Game.trans || Game.settings.questHud === false) return;
     if (Game.frame - __qhud.f > 20) { const q = questTracked(st); __qhud = { f: Game.frame, v: q ? { q, G: questGuide(q, st, this) } : null }; }
-    const v = __qhud.v; if (!v || !v.G) return; let s = (v.G.next ? v.G.next : v.G.text); while (Font.width(s, 9) > 96 && s.length > 2) s = s.slice(0, -2) + '…';
-    const a = v.G.arrow || '', w = Math.ceil(Font.width(s, 9) + (a ? Font.width(a, 11) + 4 : 0)) + 16, X = W - w - 3;
-    x.fillStyle = 'rgba(10,14,28,0.72)'; x.fillRect(X, 3, w, 14); x.fillStyle = UIC.warm; x.fillRect(X, 3, 2, 14);
-    Font.draw(x, '★', X + 4, 1, UIC.warm, null, 8); Font.draw(x, s, X + 13, 1, '#e8f4ff', UIC.textSh, 9); if (a) Font.drawR(x, a, X + w - 3, 0, '#8ad0ff', UIC.textSh, 11);
+    const v = __qhud.v; if (!v || !v.G) return; const G = v.G, FS = 7, a = G.arrow || '', aw = a ? Math.ceil(Font.width(a, 9)) + 3 : 0;
+    const full = G.next && G.next !== G.text ? G.text + '→' + G.next : (G.next || G.text), k = typeof wxNow === 'function' && wxNow(st);
+    const left = k ? 3 + Math.ceil(Font.width(WEATHER[k].n + (st.rainbowUntil > (st.steps || 0) ? '・彩虹' : ''), 9)) + 20 + 4 : 3, maxT = W - 3 - left - 14 - aw;
+    let L = Font.wrap(full, maxT, FS); if (L.length > 2) { L = L.slice(0, 2); let t = L[1]; while (Font.width(t + '…', FS) > maxT && t.length > 1) t = t.slice(0, -1); L[1] = t + '…'; }
+    const tw = Math.ceil(Math.max(...L.map(l => Font.width(l, FS)))), w = tw + 14 + aw, h = L.length > 1 ? 21 : 14, X = W - w - 3;
+    x.fillStyle = 'rgba(10,14,28,0.72)'; x.fillRect(X, 3, w, h); x.fillStyle = UIC.warm; x.fillRect(X, 3, 2, h);
+    Font.draw(x, '★', X + 4, 1, UIC.warm, null, 8); L.forEach((l, i) => Font.draw(x, l, X + 12, 2 + i * 8, '#e8f4ff', UIC.textSh, FS)); if (a) Font.drawR(x, a, X + w - 3, 0, '#8ad0ff', UIC.textSh, 9);
   }; }
 const ORB_A = {
   galeCut: { n: '裂風斬', tpl: 'gale', pow: 55, mp: 3, d: '先制突進，削減護盾。', B: ['spe+1', 'hit+1'] },
@@ -15232,5 +15235,13 @@ function phaseLabel(b) { const p = b._phase; return p === 'H' ? Game.st.name + '
     const col = PHASE_COL[this._ph], lab = this._lab; if (!col) return; const [r, g, bl] = hex2rgb(col);
     x.fillStyle = `rgba(${r},${g},${bl},0.10)`; x.fillRect(this.x + 3, this.y + 3, this.w - 6, this.h - 6); x.fillStyle = col; x.fillRect(this.x + 3, this.y + 3, 2, this.h - 6);
     const lw = Font.width(lab, 7), first = this.lines && this.lines[0] ? Font.width(this.lines[0], this.fs) : 0; if (this.pad + first + lw + 10 < this.w) Font.drawR(x, lab, this.x + this.w - 6, this.y + 2, col, UIC.textSh, 7); }; }
+{ const _m = Battle.prototype.main; Battle.prototype.main = function* (...a) {
+    const st = Game.st, H = this.H;
+    if (st && H) { if (st.sgpKeep && typeof sigId === 'function' && sigId(st)) H.sgp = Math.min(SIG_MAX, st.sgpKeep);
+      const k = typeof mainWKey === 'function' && mainWKey(st); if (st.wcKeep && k) H.wc = Math.min(wsN(WSK[k].s, st), st.wcKeep); }
+    return yield* _m.apply(this, a); }; }
+{ const _e = Battle.prototype.end; Battle.prototype.end = function* (res, ...a) {
+    const st = Game.st, H = this.H; if (st && H) { st.sgpKeep = H.sgp || 0; st.wcKeep = H.wc || 0; }
+    return yield* _e.call(this, res, ...a); }; }
 for (const k in GEAR_RECIPE) { const M = GEAR_RECIPE[k].mats || (GEAR_RECIPE[k].mats = {}); for (const i in M) if (!ITEMS[i]) delete M[i]; if (!Object.keys(M).length) M.stone = 2; }
 </script>

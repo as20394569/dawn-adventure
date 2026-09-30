@@ -209,8 +209,13 @@ let __qhud = { f: -99, v: null };
 { const _d = Overworld.prototype.draw; Overworld.prototype.draw = function (x) {
     _d.call(this, x); const st = this.st; if (!st || !st.cls && !st.flags.license || this.script || UI.stack.length || (this.popup && this.popup.t < 160) || Game.trans || Game.settings.questHud === false) return;
     if (Game.frame - __qhud.f > 20) { const q = questTracked(st); __qhud = { f: Game.frame, v: q ? { q, G: questGuide(q, st, this) } : null }; }
-    const v = __qhud.v; if (!v || !v.G) return; let s = (v.G.next ? v.G.next : v.G.text); while (Font.width(s, 9) > 96 && s.length > 2) s = s.slice(0, -2) + '…';
-    const a = v.G.arrow || '', w = Math.ceil(Font.width(s, 9) + (a ? Font.width(a, 11) + 4 : 0)) + 16, X = W - w - 3;
-    x.fillStyle = 'rgba(10,14,28,0.72)'; x.fillRect(X, 3, w, 14); x.fillStyle = UIC.warm; x.fillRect(X, 3, 2, 14);
-    Font.draw(x, '★', X + 4, 1, UIC.warm, null, 8); Font.draw(x, s, X + 13, 1, '#e8f4ff', UIC.textSh, 9); if (a) Font.drawR(x, a, X + w - 3, 0, '#8ad0ff', UIC.textSh, 11);
+    // v10.6.4 (player: 「追蹤的提示任務欄文字拉長，字小一點」): size 7, the goal and where to go, as wide as the weather box
+    // allows and on up to two lines, so it is no longer cut to a few characters
+    const v = __qhud.v; if (!v || !v.G) return; const G = v.G, FS = 7, a = G.arrow || '', aw = a ? Math.ceil(Font.width(a, 9)) + 3 : 0;
+    const full = G.next && G.next !== G.text ? G.text + '→' + G.next : (G.next || G.text), k = typeof wxNow === 'function' && wxNow(st);
+    const left = k ? 3 + Math.ceil(Font.width(WEATHER[k].n + (st.rainbowUntil > (st.steps || 0) ? '・彩虹' : ''), 9)) + 20 + 4 : 3, maxT = W - 3 - left - 14 - aw;
+    let L = Font.wrap(full, maxT, FS); if (L.length > 2) { L = L.slice(0, 2); let t = L[1]; while (Font.width(t + '…', FS) > maxT && t.length > 1) t = t.slice(0, -1); L[1] = t + '…'; }
+    const tw = Math.ceil(Math.max(...L.map(l => Font.width(l, FS)))), w = tw + 14 + aw, h = L.length > 1 ? 21 : 14, X = W - w - 3;
+    x.fillStyle = 'rgba(10,14,28,0.72)'; x.fillRect(X, 3, w, h); x.fillStyle = UIC.warm; x.fillRect(X, 3, 2, h);
+    Font.draw(x, '★', X + 4, 1, UIC.warm, null, 8); L.forEach((l, i) => Font.draw(x, l, X + 12, 2 + i * 8, '#e8f4ff', UIC.textSh, FS)); if (a) Font.drawR(x, a, X + w - 3, 0, '#8ad0ff', UIC.textSh, 9);
   }; }
