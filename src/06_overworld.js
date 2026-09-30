@@ -78,7 +78,7 @@ class Overworld {
     if (d) {
       if (d !== this.p.dir && Input.t[d] <= 1 && !this.p.walkedLast) { this.p.dir = d; this.p.turnT = 5; return; }
       if (this.p.turnT > 0) { this.p.turnT--; if (Input.t[d] < 6) return; }
-      this.tryMove(d, Input.held('b'));
+      this.tryMove(d, Input.held('b') || (Game.settings.autoRun !== false && Input.t[d] > 10)); // v10: keep holding a direction to run
     } else { this.p.walkedLast = false; this.p.turnT = 0; }
   }
   run(gen) { this.script = gen; const r = gen.next(); if (r.done) this.script = null; }
@@ -170,7 +170,7 @@ class Overworld {
     const p = this.p; const [dx, dy] = DIRS[p.dir]; let x = p.x + dx, y = p.y + dy;
     let ent = this.entityAt(x, y, p); let c = this.tileAt(x, y);
     if (!ent && c === 'C') { ent = this.entityAt(x + dx, y + dy, p); }
-    if (ent && ent.frames) { if (!ent.moving) { ent.dir = OPP[p.dir]; } const ev = Events[ent.id], cq = npcCommission(ent.id, this, ent); this.run(cq || (ev ? ev(this, ent) : say('……'))); return true; }
+    if (ent && ent.frames) { if (!ent.moving) { ent.dir = OPP[p.dir]; } const ev = Events[ent.id], cq = npcCommission(ent.id, this, ent); this.run(talkAs(ent, cq || (ev ? ev(this, ent) : say('……')))); return true; }
     if (ent && ent.sp && ent !== this.boss) { this.run(this.eliteTalk(ent)); return true; }
     if (ent && ent === this.boss) { const g = Events[this.map.d.boss.ev || 'bossLine'](this); if (g) this.run(g); return true; }
     if (ent && (ent.item || ent.gold || ent.gather)) { this.run(this.pickItem(ent)); return true; }
@@ -230,7 +230,7 @@ class Overworld {
   *eliteTalk(e) {
     const p = this.p; p.dir = e.x < p.x ? 'left' : e.x > p.x ? 'right' : e.y < p.y ? 'up' : 'down'; e.dir = OPP[p.dir];
     Sound.cry(Object.keys(SPECIES).indexOf(e.sp) + 1);
-    yield* sayAll(ELITE_TEXT[e.id] || ['……！']);
+    Game.talker = { name: SPECIES[e.sp].n, sp: e.sp }; yield* sayAll(ELITE_TEXT[e.id] || ['……！']); Game.talker = null;
     const res = yield* this.battleScript({ sp: e.sp, lv: e.lv, kind: 'elite', id: e.id, drop: e.drop }, true);
     if (res === 'win') { this.st.flags[e.id] = 1; this.elites = this.elites.filter(x => x !== e); if (e.id === 'boneKnight') { const st = this.st; yield* say('骸骨騎士倒下後，身後的石棺打開了……'); st.money += 2000; st.bag.powerFruit = (st.bag.powerFruit || 0) + 1; yield* itemGet(st.name + '找到了古王的寶藏：2000 G和力量果實！'); } }
     else { const [hx, hy, hd] = e.home; e.x = e.tx = hx; e.y = e.ty = hy; e.px = hx * TS; e.py = hy * TS; e.dir = hd; e.moving = false; e.calmUntil = (this.st.steps || 0) + 40; if (res === 'run' && this.elites.includes(e)) yield* say(SPECIES[e.sp].n + '回到了原本的地方，暫時不會再追過來了。'); }

@@ -46,7 +46,7 @@ function* skillTreeScreen() {
 }
 
 /* ---------- the main menu: 技能 = weapon skills, 天賦 = class talents (dot when points are waiting) ---------- */
-{ const TILES = [['狀態', '能力・任務'], ['屬性', '自由加點'], ['技能', '武器技能'], ['天賦', '職業天賦'], ['背包', '道具・素材'], ['裝備', '更換・詳情'], ['圖鑑', '魔物資料'], ['紀錄', '地圖・成就'], ['存檔', '記錄進度'], ['設定', '音量・速度'], ['關閉', '回到遊戲']];
+{ const TILES = [['狀態', '能力・技能'], ['任務', '進度・追蹤'], ['屬性', '自由加點'], ['技能', '武器技能'], ['天賦', '職業天賦'], ['背包', '道具・素材'], ['裝備', '更換・詳情'], ['圖鑑', '魔物資料'], ['紀錄', '地圖・成就'], ['存檔', '記錄進度'], ['設定', '音量・速度'], ['關閉', '回到遊戲']];
   startMenu = function* () {
     Sound.sfx('menu'); let idx = Game.menuIdx || 0;
     while (true) {
@@ -60,7 +60,7 @@ function* skillTreeScreen() {
       const r = yield* choose(items, { x: 4, y: 48, w: 168, h: 204, cols: 2, colW: 82, rowH: 33, ox: 4, oy: 3, buttons: true, style: 'menu', index: Math.min(idx, items.length - 1), drawExtra: (x, m) => { for (let k = 0; k < items.length; k++) { const c = k % 2, rr = Math.floor(k / 2), X = m.x + m.ox + c * m.colW, Y = m.y + m.oy + rr * m.rowH, on = k === m.i; Font.drawC(x, items[k].name, X + 39, Y + 1, on ? UIC.text : '#c9cfe4', UIC.textSh, 12); Font.drawC(x, items[k].sub, X + 39, Y + 16, on ? UIC.accent : UIC.muted, UIC.textSh, 8); if (items[k].dot) { x.fillStyle = UIC.warm; x.fillRect(X + 70, Y + 4, 4, 4); } } } });
       UI.remove(hdr);
       const name = r >= 0 ? TILES[r][0] : '關閉'; if (name === '關閉') break; idx = r; Game.menuIdx = r;
-      if (name === '狀態') yield* summaryScreen(); if (name === '屬性') yield* attrScreen(); if (name === '技能') yield* skillTreeScreen(); if (name === '天賦') yield* talentScreen();
+      if (name === '狀態') yield* summaryScreen(); if (name === '任務') yield* questScreen(); if (name === '屬性') yield* attrScreen(); if (name === '技能') yield* skillTreeScreen(); if (name === '天賦') yield* talentScreen();
       if (name === '背包') { yield* bagScreen('field'); if (Game.homeWarp) break; }
       if (name === '裝備') yield* equipScreen(); if (name === '圖鑑') yield* dexScreen(); if (name === '紀錄') yield* recordScreen();
       if (name === '存檔') { const ok = yield* yesNo('要記錄目前的冒險進度嗎？'); if (ok) { const good = saveGame(); if (good) { Sound.sfx('save'); yield* say(Game.st.name + '把冒險記錄了下來！'); } else yield* say('無法存檔……這個瀏覽器可能不允許儲存資料。'); } }

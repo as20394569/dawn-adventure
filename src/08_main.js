@@ -108,7 +108,7 @@ const Events = {
     if (!f.herb) { f.herb = 1; st.bag.superPotion = (st.bag.superPotion || 0) + 1; yield* sayAll(['哦？這麼深的森林裡，居然有客人。', '我是採藥的老頭子。這個給你，路上小心。']); yield* itemGet(st.name + '得到了好傷藥！'); }
     yield* sayAll([f.mossGiant ? '苔石巨人倒下了啊……森林的空氣都變輕了。' : '西南邊的水池旁，住著一尊苔石巨人。它身上的青苔最怕火。', '對了……森林西北角有一棵「會讓路的樹」。聽說要等遺跡的魔像倒下，森林才會醒來。']);
   },
-  *grandpa() { yield* sayAll(['年輕人，按住B鍵就可以跑步喔。', '你說你們那邊有不用馬就能跑的鐵箱子？……真是難以想像啊。', Game.st.flags.golem ? '聽說魔像倒下的那晚，鎮上那口老井發出了光。' : '鎮上那口老井，據說跟遺跡是連在一起的。']); },
+  *grandpa() { yield* sayAll(['年輕人，一直按著方向走，就會自己跑起來喔。（想慢慢走的話，在「設定→跑步」改成按住B鍵。）', '你說你們那邊有不用馬就能跑的鐵箱子？……真是難以想像啊。', Game.st.flags.golem ? '聽說魔像倒下的那晚，鎮上那口老井發出了光。' : '鎮上那口老井，據說跟遺跡是連在一起的。']); },
   *florist() {
     const f = Game.st.flags, st = Game.st;
     if (!f.q1) {
@@ -321,7 +321,7 @@ class TitleScene {
     x.drawImage(this.logo, Math.round(W / 2 - this.logo.width / 2), 6 + bob);
     Font.drawC(x, '～異世界冒險RPG～', W / 2, 52 + bob, '#ffe0a0', '#3a1428');
     if (this.stage === 'press' && Math.floor(this.t / 30) % 2 === 0) Font.drawC(x, '按 A 鍵開始', W / 2, 232, '#ffffff', '#1a1024');
-    Font.drawR(x, 'v9.4', W - 3, H - 13, '#b890b0', null);
+    Font.drawR(x, 'v10.0', W - 3, H - 13, '#b890b0', null);
   }
 }
 

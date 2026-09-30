@@ -8,6 +8,8 @@ class TextBox {
   constructor(text, o = {}) {
     this.style = o.style || 'ow'; const bb = this.style === 'battle' && typeof BB_Y !== 'undefined'; this.x = o.x ?? 4; this.y = o.y ?? (bb ? BB_Y + 1 : TB_Y + 1); this.w = o.w ?? W - 8; this.h = o.h ?? (bb ? BB_H - 2 : TB_H - 2);
     this.fs = o.fs ?? (bb ? 9 : undefined); this.lh = o.lh ?? (bb ? 12 : 16);
+    // v10: the default dialogue box — smaller text (4 lines), speaker portrait + name plate, dialogue log
+    if (this.style === 'ow' && o.fs === undefined && o.lh === undefined && o.y === undefined && o.h === undefined && typeof dlgSetup === 'function') { const r = dlgSetup(String(text), o); text = r.text; this.spk = r.spk; this.fs = r.fs; this.lh = r.lh; }
     this.pad = o.pad ?? 8; this.rows = Math.max(1, Math.floor((this.h - 10) / this.lh));
     this.lines = Font.wrap(text, this.w - this.pad * 2 - 2, this.fs);
     this.li = 0; this.ci = 0; this.top = 0; this.scroll = 0; this.state = 'type'; this.t = 0; this.hold = 0;
@@ -21,7 +23,9 @@ class TextBox {
     else { this.state = this.keep ? 'done' : 'end'; if (this.keep) this.done = true; }
   }
   update() {
-    this.t++;
+    this.t++; const ff = this.style === 'ow' && typeof dlgFF === 'function' && dlgFF(); // v10: hold B to fast-forward
+    if (ff && this.state === 'type') this.ci = [...this.lines[this.li]].length;
+    if (ff && (this.state === 'wait' || (this.state === 'end' && !this.keep)) && this.t % 3 === 0) { if (this.state === 'wait') { this.state = 'scroll'; this.scroll = 0; } else { this.done = true; } return; }
     if (this.state === 'type') {
       this.acc = (this.acc || 0) + this.speed();
       const L = [...this.lines[this.li]].length;
@@ -40,6 +44,7 @@ class TextBox {
   }
   draw(x) {
     drawWin(x, this.x, this.y, this.w, this.h, this.style);
+    if (this.spk && typeof drawSpeaker === 'function') drawSpeaker(x, this);
     x.save(); x.beginPath(); x.rect(this.x + 4, this.y + 4, this.w - 8, this.h - 8); x.clip();
     const ty = this.y + (this.lh < 16 ? 5 : 6);
     for (let i = this.top; i <= Math.min(this.li, this.top + this.rows); i++) {
@@ -381,8 +386,8 @@ function* equipScreen() {
 }
 /* ---------- Options ---------- */
 function* optionsScreen() {
-  let idx = 0; const labels = ['文字速度', '背景音樂', '音效', '自動存檔', '戰鬥美術', '怪物造型', '戰鬥說明', '關閉'], N = labels.length, HELP = N - 2, TOG = ['music', 'sfx', 'autosave', 'hdArt', 'chibi'];
-  const val = i => i === 0 ? ['慢', '普通', '快'][Game.settings.text] : TOG[i - 1] === 'hdArt' ? (Game.settings.hdArt !== false ? '新版' : '舊版') : TOG[i - 1] === 'chibi' ? (Game.settings.chibi !== false ? 'Q版' : '寫實') : TOG[i - 1] === 'chibiHero' ? (Game.settings.chibiHero !== false ? 'Q版' : '原版') : i < N - 1 ? (Game.settings[TOG[i - 1]] ? '開' : '關') : '';
+  let idx = 0; const labels = ['文字速度', '背景音樂', '音效', '自動存檔', '戰鬥美術', '怪物造型', '對話文字', '跑步', '戰鬥說明', '關閉'], N = labels.length, HELP = N - 2, TOG = ['music', 'sfx', 'autosave', 'hdArt', 'chibi', 'bigText', 'autoRun'];
+  const val = i => i === 0 ? ['慢', '普通', '快'][Game.settings.text] : TOG[i - 1] === 'hdArt' ? (Game.settings.hdArt !== false ? '新版' : '舊版') : TOG[i - 1] === 'chibi' ? (Game.settings.chibi !== false ? 'Q版' : '寫實') : TOG[i - 1] === 'chibiHero' ? (Game.settings.chibiHero !== false ? 'Q版' : '原版') : TOG[i - 1] === 'bigText' ? (Game.settings.bigText ? '大' : '標準') : TOG[i - 1] === 'autoRun' ? (Game.settings.autoRun !== false ? '按住方向鍵' : '按住B鍵') : i < N - 1 ? (Game.settings[TOG[i - 1]] ? '開' : '關') : '';
   const scr = { draw(x) {
     screenBG(x); headerBar(x, '設定');
     drawWin(x, 4, 30, 168, N * 18 + 12, 'menu');
@@ -396,7 +401,7 @@ function* optionsScreen() {
     if (idx === HELP && Input.pressed('a')) { Input.consume('a'); Sound.sfx('select'); UI.remove(scr); yield* battleHelpScreen(); UI.push(scr); yield; continue; }
     let d = idx === HELP ? 0 : Input.pressed('left') ? -1 : Input.pressed('right') ? 1 : 0;
     if (!d && Input.pressed('a') && idx < N - 1) { Input.consume('a'); d = 1; if (idx === 0 && Game.settings.text === 2) d = -2; }
-    if (d) { if (idx === 0) Game.settings.text = clamp(Game.settings.text + d, 0, 2); else Game.settings[TOG[idx - 1]] = TOG[idx - 1] === 'hdArt' ? Game.settings.hdArt === false : TOG[idx - 1] === 'chibi' ? Game.settings.chibi === false : TOG[idx - 1] === 'chibiHero' ? Game.settings.chibiHero === false : !Game.settings[TOG[idx - 1]]; Sound.applySettings(); Sound.sfx('cursor'); saveSettings(); }
+    if (d) { if (idx === 0) Game.settings.text = clamp(Game.settings.text + d, 0, 2); else Game.settings[TOG[idx - 1]] = TOG[idx - 1] === 'hdArt' ? Game.settings.hdArt === false : TOG[idx - 1] === 'chibi' ? Game.settings.chibi === false : TOG[idx - 1] === 'chibiHero' ? Game.settings.chibiHero === false : TOG[idx - 1] === 'autoRun' ? Game.settings.autoRun === false : !Game.settings[TOG[idx - 1]]; Sound.applySettings(); Sound.sfx('cursor'); saveSettings(); }
     if (Input.pressed('b') || (Input.pressed('a') && idx === N - 1)) { Input.consume('a', 'b'); Sound.sfx('cancel'); break; }
     yield;
   }

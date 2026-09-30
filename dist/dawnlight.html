@@ -4134,6 +4134,7 @@ class TextBox {
   constructor(text, o = {}) {
     this.style = o.style || 'ow'; const bb = this.style === 'battle' && typeof BB_Y !== 'undefined'; this.x = o.x ?? 4; this.y = o.y ?? (bb ? BB_Y + 1 : TB_Y + 1); this.w = o.w ?? W - 8; this.h = o.h ?? (bb ? BB_H - 2 : TB_H - 2);
     this.fs = o.fs ?? (bb ? 9 : undefined); this.lh = o.lh ?? (bb ? 12 : 16);
+    if (this.style === 'ow' && o.fs === undefined && o.lh === undefined && o.y === undefined && o.h === undefined && typeof dlgSetup === 'function') { const r = dlgSetup(String(text), o); text = r.text; this.spk = r.spk; this.fs = r.fs; this.lh = r.lh; }
     this.pad = o.pad ?? 8; this.rows = Math.max(1, Math.floor((this.h - 10) / this.lh));
     this.lines = Font.wrap(text, this.w - this.pad * 2 - 2, this.fs);
     this.li = 0; this.ci = 0; this.top = 0; this.scroll = 0; this.state = 'type'; this.t = 0; this.hold = 0;
@@ -4147,7 +4148,9 @@ class TextBox {
     else { this.state = this.keep ? 'done' : 'end'; if (this.keep) this.done = true; }
   }
   update() {
-    this.t++;
+    this.t++; const ff = this.style === 'ow' && typeof dlgFF === 'function' && dlgFF(); // v10: hold B to fast-forward
+    if (ff && this.state === 'type') this.ci = [...this.lines[this.li]].length;
+    if (ff && (this.state === 'wait' || (this.state === 'end' && !this.keep)) && this.t % 3 === 0) { if (this.state === 'wait') { this.state = 'scroll'; this.scroll = 0; } else { this.done = true; } return; }
     if (this.state === 'type') {
       this.acc = (this.acc || 0) + this.speed();
       const L = [...this.lines[this.li]].length;
@@ -4166,6 +4169,7 @@ class TextBox {
   }
   draw(x) {
     drawWin(x, this.x, this.y, this.w, this.h, this.style);
+    if (this.spk && typeof drawSpeaker === 'function') drawSpeaker(x, this);
     x.save(); x.beginPath(); x.rect(this.x + 4, this.y + 4, this.w - 8, this.h - 8); x.clip();
     const ty = this.y + (this.lh < 16 ? 5 : 6);
     for (let i = this.top; i <= Math.min(this.li, this.top + this.rows); i++) {
@@ -4486,8 +4490,8 @@ function* equipScreen() {
   UI.remove(scr);
 }
 function* optionsScreen() {
-  let idx = 0; const labels = ['文字速度', '背景音樂', '音效', '自動存檔', '戰鬥美術', '怪物造型', '戰鬥說明', '關閉'], N = labels.length, HELP = N - 2, TOG = ['music', 'sfx', 'autosave', 'hdArt', 'chibi'];
-  const val = i => i === 0 ? ['慢', '普通', '快'][Game.settings.text] : TOG[i - 1] === 'hdArt' ? (Game.settings.hdArt !== false ? '新版' : '舊版') : TOG[i - 1] === 'chibi' ? (Game.settings.chibi !== false ? 'Q版' : '寫實') : TOG[i - 1] === 'chibiHero' ? (Game.settings.chibiHero !== false ? 'Q版' : '原版') : i < N - 1 ? (Game.settings[TOG[i - 1]] ? '開' : '關') : '';
+  let idx = 0; const labels = ['文字速度', '背景音樂', '音效', '自動存檔', '戰鬥美術', '怪物造型', '對話文字', '跑步', '戰鬥說明', '關閉'], N = labels.length, HELP = N - 2, TOG = ['music', 'sfx', 'autosave', 'hdArt', 'chibi', 'bigText', 'autoRun'];
+  const val = i => i === 0 ? ['慢', '普通', '快'][Game.settings.text] : TOG[i - 1] === 'hdArt' ? (Game.settings.hdArt !== false ? '新版' : '舊版') : TOG[i - 1] === 'chibi' ? (Game.settings.chibi !== false ? 'Q版' : '寫實') : TOG[i - 1] === 'chibiHero' ? (Game.settings.chibiHero !== false ? 'Q版' : '原版') : TOG[i - 1] === 'bigText' ? (Game.settings.bigText ? '大' : '標準') : TOG[i - 1] === 'autoRun' ? (Game.settings.autoRun !== false ? '按住方向鍵' : '按住B鍵') : i < N - 1 ? (Game.settings[TOG[i - 1]] ? '開' : '關') : '';
   const scr = { draw(x) {
     screenBG(x); headerBar(x, '設定');
     drawWin(x, 4, 30, 168, N * 18 + 12, 'menu');
@@ -4501,7 +4505,7 @@ function* optionsScreen() {
     if (idx === HELP && Input.pressed('a')) { Input.consume('a'); Sound.sfx('select'); UI.remove(scr); yield* battleHelpScreen(); UI.push(scr); yield; continue; }
     let d = idx === HELP ? 0 : Input.pressed('left') ? -1 : Input.pressed('right') ? 1 : 0;
     if (!d && Input.pressed('a') && idx < N - 1) { Input.consume('a'); d = 1; if (idx === 0 && Game.settings.text === 2) d = -2; }
-    if (d) { if (idx === 0) Game.settings.text = clamp(Game.settings.text + d, 0, 2); else Game.settings[TOG[idx - 1]] = TOG[idx - 1] === 'hdArt' ? Game.settings.hdArt === false : TOG[idx - 1] === 'chibi' ? Game.settings.chibi === false : TOG[idx - 1] === 'chibiHero' ? Game.settings.chibiHero === false : !Game.settings[TOG[idx - 1]]; Sound.applySettings(); Sound.sfx('cursor'); saveSettings(); }
+    if (d) { if (idx === 0) Game.settings.text = clamp(Game.settings.text + d, 0, 2); else Game.settings[TOG[idx - 1]] = TOG[idx - 1] === 'hdArt' ? Game.settings.hdArt === false : TOG[idx - 1] === 'chibi' ? Game.settings.chibi === false : TOG[idx - 1] === 'chibiHero' ? Game.settings.chibiHero === false : TOG[idx - 1] === 'autoRun' ? Game.settings.autoRun === false : !Game.settings[TOG[idx - 1]]; Sound.applySettings(); Sound.sfx('cursor'); saveSettings(); }
     if (Input.pressed('b') || (Input.pressed('a') && idx === N - 1)) { Input.consume('a', 'b'); Sound.sfx('cancel'); break; }
     yield;
   }
@@ -4939,7 +4943,7 @@ class Overworld {
     if (d) {
       if (d !== this.p.dir && Input.t[d] <= 1 && !this.p.walkedLast) { this.p.dir = d; this.p.turnT = 5; return; }
       if (this.p.turnT > 0) { this.p.turnT--; if (Input.t[d] < 6) return; }
-      this.tryMove(d, Input.held('b'));
+      this.tryMove(d, Input.held('b') || (Game.settings.autoRun !== false && Input.t[d] > 10)); // v10: keep holding a direction to run
     } else { this.p.walkedLast = false; this.p.turnT = 0; }
   }
   run(gen) { this.script = gen; const r = gen.next(); if (r.done) this.script = null; }
@@ -5025,7 +5029,7 @@ class Overworld {
     const p = this.p; const [dx, dy] = DIRS[p.dir]; let x = p.x + dx, y = p.y + dy;
     let ent = this.entityAt(x, y, p); let c = this.tileAt(x, y);
     if (!ent && c === 'C') { ent = this.entityAt(x + dx, y + dy, p); }
-    if (ent && ent.frames) { if (!ent.moving) { ent.dir = OPP[p.dir]; } const ev = Events[ent.id], cq = npcCommission(ent.id, this, ent); this.run(cq || (ev ? ev(this, ent) : say('……'))); return true; }
+    if (ent && ent.frames) { if (!ent.moving) { ent.dir = OPP[p.dir]; } const ev = Events[ent.id], cq = npcCommission(ent.id, this, ent); this.run(talkAs(ent, cq || (ev ? ev(this, ent) : say('……')))); return true; }
     if (ent && ent.sp && ent !== this.boss) { this.run(this.eliteTalk(ent)); return true; }
     if (ent && ent === this.boss) { const g = Events[this.map.d.boss.ev || 'bossLine'](this); if (g) this.run(g); return true; }
     if (ent && (ent.item || ent.gold || ent.gather)) { this.run(this.pickItem(ent)); return true; }
@@ -5085,7 +5089,7 @@ class Overworld {
   *eliteTalk(e) {
     const p = this.p; p.dir = e.x < p.x ? 'left' : e.x > p.x ? 'right' : e.y < p.y ? 'up' : 'down'; e.dir = OPP[p.dir];
     Sound.cry(Object.keys(SPECIES).indexOf(e.sp) + 1);
-    yield* sayAll(ELITE_TEXT[e.id] || ['……！']);
+    Game.talker = { name: SPECIES[e.sp].n, sp: e.sp }; yield* sayAll(ELITE_TEXT[e.id] || ['……！']); Game.talker = null;
     const res = yield* this.battleScript({ sp: e.sp, lv: e.lv, kind: 'elite', id: e.id, drop: e.drop }, true);
     if (res === 'win') { this.st.flags[e.id] = 1; this.elites = this.elites.filter(x => x !== e); if (e.id === 'boneKnight') { const st = this.st; yield* say('骸骨騎士倒下後，身後的石棺打開了……'); st.money += 2000; st.bag.powerFruit = (st.bag.powerFruit || 0) + 1; yield* itemGet(st.name + '找到了古王的寶藏：2000 G和力量果實！'); } }
     else { const [hx, hy, hd] = e.home; e.x = e.tx = hx; e.y = e.ty = hy; e.px = hx * TS; e.py = hy * TS; e.dir = hd; e.moving = false; e.calmUntil = (this.st.steps || 0) + 40; if (res === 'run' && this.elites.includes(e)) yield* say(SPECIES[e.sp].n + '回到了原本的地方，暫時不會再追過來了。'); }
@@ -8048,7 +8052,7 @@ const Events = {
     if (!f.herb) { f.herb = 1; st.bag.superPotion = (st.bag.superPotion || 0) + 1; yield* sayAll(['哦？這麼深的森林裡，居然有客人。', '我是採藥的老頭子。這個給你，路上小心。']); yield* itemGet(st.name + '得到了好傷藥！'); }
     yield* sayAll([f.mossGiant ? '苔石巨人倒下了啊……森林的空氣都變輕了。' : '西南邊的水池旁，住著一尊苔石巨人。它身上的青苔最怕火。', '對了……森林西北角有一棵「會讓路的樹」。聽說要等遺跡的魔像倒下，森林才會醒來。']);
   },
-  *grandpa() { yield* sayAll(['年輕人，按住B鍵就可以跑步喔。', '你說你們那邊有不用馬就能跑的鐵箱子？……真是難以想像啊。', Game.st.flags.golem ? '聽說魔像倒下的那晚，鎮上那口老井發出了光。' : '鎮上那口老井，據說跟遺跡是連在一起的。']); },
+  *grandpa() { yield* sayAll(['年輕人，一直按著方向走，就會自己跑起來喔。（想慢慢走的話，在「設定→跑步」改成按住B鍵。）', '你說你們那邊有不用馬就能跑的鐵箱子？……真是難以想像啊。', Game.st.flags.golem ? '聽說魔像倒下的那晚，鎮上那口老井發出了光。' : '鎮上那口老井，據說跟遺跡是連在一起的。']); },
   *florist() {
     const f = Game.st.flags, st = Game.st;
     if (!f.q1) {
@@ -8250,7 +8254,7 @@ class TitleScene {
     x.drawImage(this.logo, Math.round(W / 2 - this.logo.width / 2), 6 + bob);
     Font.drawC(x, '～異世界冒險RPG～', W / 2, 52 + bob, '#ffe0a0', '#3a1428');
     if (this.stage === 'press' && Math.floor(this.t / 30) % 2 === 0) Font.drawC(x, '按 A 鍵開始', W / 2, 232, '#ffffff', '#1a1024');
-    Font.drawR(x, 'v9.4', W - 3, H - 13, '#b890b0', null);
+    Font.drawR(x, 'v10.0', W - 3, H - 13, '#b890b0', null);
   }
 }
 class IntroScene {
@@ -11922,7 +11926,7 @@ function* skillTreeScreen() {
   }
   UI.remove(scr);
 }
-{ const TILES = [['狀態', '能力・任務'], ['屬性', '自由加點'], ['技能', '武器技能'], ['天賦', '職業天賦'], ['背包', '道具・素材'], ['裝備', '更換・詳情'], ['圖鑑', '魔物資料'], ['紀錄', '地圖・成就'], ['存檔', '記錄進度'], ['設定', '音量・速度'], ['關閉', '回到遊戲']];
+{ const TILES = [['狀態', '能力・技能'], ['任務', '進度・追蹤'], ['屬性', '自由加點'], ['技能', '武器技能'], ['天賦', '職業天賦'], ['背包', '道具・素材'], ['裝備', '更換・詳情'], ['圖鑑', '魔物資料'], ['紀錄', '地圖・成就'], ['存檔', '記錄進度'], ['設定', '音量・速度'], ['關閉', '回到遊戲']];
   startMenu = function* () {
     Sound.sfx('menu'); let idx = Game.menuIdx || 0;
     while (true) {
@@ -11936,7 +11940,7 @@ function* skillTreeScreen() {
       const r = yield* choose(items, { x: 4, y: 48, w: 168, h: 204, cols: 2, colW: 82, rowH: 33, ox: 4, oy: 3, buttons: true, style: 'menu', index: Math.min(idx, items.length - 1), drawExtra: (x, m) => { for (let k = 0; k < items.length; k++) { const c = k % 2, rr = Math.floor(k / 2), X = m.x + m.ox + c * m.colW, Y = m.y + m.oy + rr * m.rowH, on = k === m.i; Font.drawC(x, items[k].name, X + 39, Y + 1, on ? UIC.text : '#c9cfe4', UIC.textSh, 12); Font.drawC(x, items[k].sub, X + 39, Y + 16, on ? UIC.accent : UIC.muted, UIC.textSh, 8); if (items[k].dot) { x.fillStyle = UIC.warm; x.fillRect(X + 70, Y + 4, 4, 4); } } } });
       UI.remove(hdr);
       const name = r >= 0 ? TILES[r][0] : '關閉'; if (name === '關閉') break; idx = r; Game.menuIdx = r;
-      if (name === '狀態') yield* summaryScreen(); if (name === '屬性') yield* attrScreen(); if (name === '技能') yield* skillTreeScreen(); if (name === '天賦') yield* talentScreen();
+      if (name === '狀態') yield* summaryScreen(); if (name === '任務') yield* questScreen(); if (name === '屬性') yield* attrScreen(); if (name === '技能') yield* skillTreeScreen(); if (name === '天賦') yield* talentScreen();
       if (name === '背包') { yield* bagScreen('field'); if (Game.homeWarp) break; }
       if (name === '裝備') yield* equipScreen(); if (name === '圖鑑') yield* dexScreen(); if (name === '紀錄') yield* recordScreen();
       if (name === '存檔') { const ok = yield* yesNo('要記錄目前的冒險進度嗎？'); if (ok) { const good = saveGame(); if (good) { Sound.sfx('save'); yield* say(Game.st.name + '把冒險記錄了下來！'); } else yield* say('無法存檔……這個瀏覽器可能不允許儲存資料。'); } }
@@ -13219,7 +13223,7 @@ function* loreScreen() {
     yield* sayAll(LORE[have[r]][2]);
   }
 }
-{ const _rs = recordScreen; recordScreen = function* () { const r = yield* ask('要看什麼？', ['地圖・成就・稱號', '世界的記載']); if (r === 0) yield* _rs(); else if (r === 1) yield* loreScreen(); }; }
+{ const _rs = recordScreen; recordScreen = function* () { const r = yield* ask('要看什麼？', ['地圖・成就・稱號', '世界的記載', '對話紀錄']); if (r === 0) yield* _rs(); else if (r === 1) yield* loreScreen(); else if (r === 2) yield* dlgLogScreen(); }; }
 if (typeof ACHIEVEMENTS !== 'undefined') ACHIEVEMENTS.push({ id: 'loreAll', n: '世界的記錄者', d: '讀完所有的「記載之石」。', cat: '探索', ok: st => loreCount(st) >= LORE.length });
 { const _k = Events.king; Events.king = function* (ow) {
     const st = Game.st, f = st.flags, n0 = ch2(), pass0 = !!f.northPass;
@@ -13783,5 +13787,183 @@ let __battleCfg = null;
       if (name === 'boss' && FINAL_SONG[c.sp]) name = FINAL_SONG[c.sp];
       else if (name === 'battle' && Game.st && BATTLE2_MAPS.has(Game.st.map)) name = 'battle2'; }
     return _pl.call(this, name); }; }
+const PORTRAIT_PROPS = new Set(['bell', 'lamp', 'lampLit', 'altar', 'loreStone', 'windmill', 'starGate', 'caveDoor', 'iceWall', 'forgeL', 'forgeR', 'anvil', 'tub', 'rackA', 'rackB', 'manhole', 'miasma', 'warden']);
+const PORTRAIT_ART = {}; // key → 32×32 canvas (Codex portraits; keys are PORTRAIT_NAME values or field looks)
+const PORTRAIT_NAME = { 格倫: 'gren', 鐵斧格倫: 'gren', 莉婭: 'lia', 見習騎士莉婭: 'lia', 諾拉: 'nora', 瑪莎: 'martha', 村長: 'elder', 村長婆婆: 'frostElder', 國王: 'king', 國王阿爾德里克: 'king', 公主艾莉西亞: 'princess', 宰相維克托: 'chancellor', 大主教: 'priest', 鐘錶師艾德: 'clockmaker', 公會長葛倫德: 'guildMaster', 詩人公會長蕾菈: 'laila', 魔女薇奧拉: 'witch', 學徒米拉: 'mira', 信差露卡: 'luka', 提姆: 'tim', 小麥: 'mai', 小芽: 'sprout', 守燈人: 'keeper', 龍騎士老人: 'dragonElder', 武僧長老: 'monk', 迴廊看守人: 'warden' };
+let SPK_INDEX = null;
+function spkIndex() { if (SPK_INDEX) return SPK_INDEX; const L = []; for (const k in MAPS) for (const n of MAPS[k].npcs || []) if (n.name && n.look && !PORTRAIT_PROPS.has(n.look)) L.push({ name: n.name, look: n.look, map: k, id: n.id, x: n.x, y: n.y }); return (SPK_INDEX = L); }
+function speakerFor(name) {
+  if (Game.st && name === Game.st.name) return { name, hero: 1 };
+  const L = spkIndex(), e = L.find(x => x.name === name) || L.find(x => x.name.endsWith(name)) || L.find(x => x.name.includes(name));
+  return { name, look: e ? e.look : null };
+}
+const PORT_AUTO = new WeakMap();
+function autoPortrait(src, cropY = 0) { // head and shoulders of a 16×22 field sprite, ×2
+  let c = PORT_AUTO.get(src); if (c) return c; c = mkCanvas(32, 32); const x = c.getContext('2d'); x.imageSmoothingEnabled = false;
+  x.drawImage(src, 0, cropY, 16, 16, 0, 1, 32, 32); PORT_AUTO.set(src, c); return c;
+}
+function portraitOf(w) {
+  const nk = w.name && PORTRAIT_NAME[w.name];
+  if (nk && PORTRAIT_ART[nk]) return PORTRAIT_ART[nk];
+  if (w.hero) { if (PORTRAIT_ART.hero) return PORTRAIT_ART.hero; const f = heroFramesFor(Game.st); return f && f.down ? autoPortrait(f.down[0]) : null; }
+  if (w.sp) { const im = typeof chibiPortrait === 'function' ? chibiPortrait(w.sp) : null; if (!im) return null; const c = mkCanvas(32, 32), x = c.getContext('2d'); x.imageSmoothingEnabled = false; x.drawImage(im, Math.round((32 - im.width) / 2), 1); return c; }
+  if (!w.look || PORTRAIT_PROPS.has(w.look)) return null; if (PORTRAIT_ART[w.look]) return PORTRAIT_ART[w.look];
+  const f = npcFrames(w.look), c0 = f && f.down && f.down[0]; return c0 && c0.width === 16 && c0.height >= 20 ? autoPortrait(c0) : null;
+}
+function* talkAs(ent, g) { const prev = Game.talker; Game.talker = ent; try { if (g) yield* g; } finally { Game.talker = prev || null; } }
+function dlgSetup(text, o) {
+  const big = !!Game.settings.bigText, r = { text, fs: big ? 12 : 10, lh: big ? 16 : 12, spk: null };
+  let who = null; const m = text.match(/^([^：「」\n（【。！？，]{1,10})：(?=「)/);
+  if (m) { who = speakerFor(m[1]); r.text = text.slice(m[0].length); }
+  else if (o.spk) who = o.spk;
+  else if (Game.talker && !/^[（【]/.test(text) && !(Game.st && text.startsWith(Game.st.name))) { const T = Game.talker; who = { name: T.name && !/^[a-z]/.test(T.name) ? T.name : null, look: T.look, sp: T.sp }; }
+  if (who) { who.img = portraitOf(who); if (who.img || who.name) r.spk = who; }
+  dlgLogPush(r.spk && r.spk.name, r.text);
+  return r;
+}
+function drawSpeaker(x, tb) {
+  const s = tb.spk; if (tb.y < 60) return; const px = tb.x + 2;
+  if (s.img) { drawWin(x, px, tb.y - 37, 38, 39, 'ow'); x.fillStyle = '#141a30'; x.fillRect(px + 3, tb.y - 34, 32, 32); x.drawImage(s.img, px + 3, tb.y - 34); }
+  if (s.name) { const nx = s.img ? px + 39 : px, w = Math.ceil(Font.width(s.name, 10)) + 14; drawWin(x, nx, tb.y - 16, w, 17, 'ow'); Font.draw(x, s.name, nx + 7, tb.y - 15, UIC.warm, UIC.textSh, 10); }
+}
+let __ffArm = false, __ffT = 0, __ffF = -1;
+function dlgFF() {
+  if (__ffF !== Game.frame) { __ffF = Game.frame; if (Input.held('b')) { if (Input.pressed('b')) __ffArm = true; __ffT++; } else { __ffArm = false; __ffT = 0; } }
+  return __ffArm && __ffT > 18;
+}
+const DLG_LOG = [];
+function dlgLogPush(name, text) { const t = String(text).trim(); if (!t) return; const L = DLG_LOG[DLG_LOG.length - 1]; if (L && L.t === t && L.n === (name || '')) return; DLG_LOG.push({ n: name || '', t }); if (DLG_LOG.length > 120) DLG_LOG.shift(); }
+function* dlgLogScreen() {
+  const L = []; for (const e of DLG_LOG) { if (e.n) L.push([e.n, UIC.warm, 10, 0]); for (const l of Font.wrap(e.t, 150, 10)) L.push([l, UIC.text, 10, 4]); L.push(['', UIC.text, 5, 0]); }
+  if (!L.length) L.push(['（還沒有對話紀錄）', UIC.muted, 10, 0]);
+  const per = 17; let top = Math.max(0, L.length - per);
+  const scr = { draw(x) { screenBG(x); headerBar(x, '對話紀錄'); drawWin(x, 4, 22, 168, 230, 'menu'); const end = drawInfoLines(x, L, 10, 26, 236, top); scr.more = end < L.length;
+    if (top > 0) x.drawImage(UPARROW, 86, 23); if (scr.more) x.drawImage(DOWNARROW, 86, 237); Font.drawR(x, '↑↓捲動　B返回', 166, 240, UIC.muted, UIC.textSh, 9); } };
+  UI.push(scr);
+  while (true) { if (Input.repeat('up') && top > 0) { top--; Sound.sfx('cursor'); } if (Input.repeat('down') && scr.more) { top++; Sound.sfx('cursor'); } if (Input.pressed('b') || Input.pressed('a')) { Input.consume('a', 'b'); Sound.sfx('cancel'); break; } yield; }
+  UI.remove(scr);
+}
+{ const _u = Overworld.prototype.update; Overworld.prototype.update = function (...a) { if (!this.script && Game.talker && !UI.stack.length) Game.talker = null; return _u.apply(this, a); }; }
+let MAP_G = null;
+function mapGraph() {
+  if (MAP_G) return MAP_G; const G = {};
+  const add = (a, b, via) => { if (a === b || !MAPS[a] || !MAPS[b]) return; (G[a] = G[a] || {}); if (!G[a][b]) G[a][b] = via; };
+  for (const id in MAPS) { const d = MAPS[id];
+    for (const k in d.connect || {}) { const c = d.connect[k]; if (c && c.map) { add(id, c.map, { dir: { n: 'up', s: 'down', e: 'right', w: 'left' }[k] || k }); add(c.map, id, null); } }
+    for (const b of (d.buildings || []).concat(d.doors || [])) if (b.to) { add(id, b.to[0], { x: b.x + (b.door || 0), y: b.y + (b.h || 1) - 1 }); add(b.to[0], id, null); }
+    for (const e of d.edgeWarps || []) if (e.to) { add(id, e.to[0], { dir: e.dir, x: e.at && e.dir && (e.dir === 'left' || e.dir === 'right') ? null : e.at && e.at[0] }); add(e.to[0], id, null); }
+    if (d.exit && d.exit.to) { add(id, d.exit.to[0], { x: d.exit.x, y: d.exit.y }); add(d.exit.to[0], id, null); }
+    for (const k of ['northWarp', 'southWarp']) { const w = d[k]; if (w && w.to) { add(id, w.to[0], { dir: k === 'northWarp' ? 'up' : 'down' }); add(w.to[0], id, null); } }
+    for (const k of ['gate', 'back']) { const w = d[k]; const to = w && (w.to || (Array.isArray(w) ? w : null)); if (to && typeof to[0] === 'string') { add(id, to[0], w.x !== undefined ? { x: w.x, y: w.y } : null); add(to[0], id, null); } }
+  }
+  return (MAP_G = G);
+}
+function mapRoute(from, to) { // [from, …, to] or null
+  if (from === to) return [from]; const G = mapGraph(), prev = { [from]: null }, q = [from];
+  while (q.length) { const a = q.shift(); for (const b in G[a] || {}) { if (b in prev) continue; prev[b] = a; if (b === to) { const P = [to]; let c = a; while (c) { P.unshift(c); c = prev[c]; } return P; } q.push(b); } }
+  return null;
+}
+const mapDist = (a, b) => { const r = mapRoute(a, b); return r ? r.length - 1 : 99; };
+function mapIdByName(nm) { const hit = Object.keys(MAPS).filter(k => MAPS[k].name === nm); return hit.find(k => MAPS[k].outdoor) || hit[0] || null; }
+function npcSpot(id) { for (const k in MAPS) { const n = (MAPS[k].npcs || []).find(n => n.id === id); if (n) return { map: k, x: n.x, y: n.y, name: n.name }; } return null; }
+function mapLevel(id) { const d = MAPS[id]; let lo = 99, hi = 0; for (const e of d.encounters || []) for (const r of e.table || []) { if (typeof r[1] === 'number') { lo = Math.min(lo, r[1]); hi = Math.max(hi, r[2] || r[1]); } } for (const e of d.elites || []) if (e.lv) hi = Math.max(hi, e.lv); if (d.boss && d.boss.lv) hi = Math.max(hi, d.boss.lv); return hi ? [lo === 99 ? hi : lo, hi] : null; }
+function nearestMap(ids, st = Game.st) { let best = null, bd = 1e9; for (const id of ids) { const d = mapDist(st.map, id); if (d < bd) { bd = d; best = id; } } return best; }
+function questCom(q) { if (!q.n.startsWith('委託：')) return null; const cid = Object.keys(COMMISSIONS).find(k => '委託：' + COMMISSIONS[k].n === q.n); return cid ? { cid, c: COMMISSIONS[cid] } : null; }
+function speciesMaps(sp) { return Object.keys(MAPS).filter(id => id !== 'rift' && ((MAPS[id].encounters || []).some(e => (e.table || []).some(r => r[0] === sp)) || (MAPS[id].elites || []).some(e => e.sp === sp) || (MAPS[id].boss && MAPS[id].boss.sp === sp))); }
+function itemMaps(k) { const out = new Set(); for (const s in SPECIES) if (SPECIES[s].mat === k) speciesMaps(s).forEach(m => out.add(m));
+  for (const id in MAPS) for (const g of MAPS[id].gathers || []) { const G = GATHER_KINDS[g.kind]; if (G && (G[1] === k || (G[3] || []).some(([m]) => m === k))) out.add(id); } return [...out]; }
+function questDest(q, st = Game.st) {
+  if (!q || q.done) return null; const qc = questCom(q);
+  if (qc) { const { cid, c } = qc, p = comProgress(cid, st), giver = typeof COM_GIVER !== 'undefined' && COM_GIVER[cid] && npcSpot(COM_GIVER[cid]);
+    if (p.ready && giver) return { map: giver.map, spot: giver, what: '回報' + (giver.name || c.from) };
+    if (c.kill) { const m = nearestMap(speciesMaps(c.kill[0]), st); if (m) return { map: m, what: '打倒' + SPECIES[c.kill[0]].n }; }
+    if (c.need) for (const k in c.need) if ((st.bag[k] || 0) < c.need[k]) { const m = nearestMap(itemMaps(k), st); if (m) return { map: m, what: '收集' + ITEMS[k].n }; }
+    return null; }
+  const t = q.t || ''; let best = null, bi = 1e9;
+  for (const id in MAPS) { const nm = MAPS[id].name; if (!nm || nm.length < 2) continue; const i = t.indexOf(nm); if (i >= 0 && (i < bi || (i === bi && nm.length > MAPS[best.map].name.length))) { bi = i; best = { map: mapIdByName(nm) || id, what: '前往' + nm }; } }
+  for (const e of spkIndex()) { const short = e.name.length > 3 ? e.name.slice(-2) : e.name, i = t.indexOf(e.name) >= 0 ? t.indexOf(e.name) : t.indexOf(short); if (i >= 0 && i < bi) { bi = i; best = { map: e.map, spot: e, what: '找' + e.name }; } }
+  return best;
+}
+function questTracked(st = Game.st) { const L = questList(st).filter(q => !q.done); return L.find(q => q.n === st.track) || L.find(q => q.main) || L[0] || null; }
+{ const _u = Overworld.prototype.update; Overworld.prototype.update = function (...a) {
+    const st = this.st; if (st && st.com) { const seen = st.comSeen || (st.comSeen = {}); for (const k in st.com) if (!seen[k]) { seen[k] = 1; if (st.com[k].s === 'on' && COMMISSIONS[k]) { st.track = '委託：' + COMMISSIONS[k].n; if (typeof toast === 'function') toast('★ 開始追蹤：' + COMMISSIONS[k].n); } } }
+    return _u.apply(this, a); }; }
+function dirArrow(dx, dy) { if (!dx && !dy) return '●'; const a = Math.atan2(dy, dx), k = Math.round(a / (Math.PI / 4)); return ['→', '↘', '↓', '↙', '←', '↖', '↑', '↗'][(k + 8) % 8]; }
+function questGuide(q, st = Game.st, ow = Game.ow) {
+  const D = questDest(q, st); if (!D) return null; const here = st.map;
+  if (D.map === here) { if (D.spot && ow && ow.p) return { text: D.what, arrow: dirArrow(D.spot.x - ow.p.x, D.spot.y - ow.p.y), D }; return { text: D.what + '（就在這裡）', arrow: '●', D }; }
+  const R = mapRoute(here, D.map); if (!R) return { text: D.what, arrow: '', D, far: 1 };
+  const next = R[1], via = (mapGraph()[here] || {})[next]; let arrow = '';
+  if (via && ow && ow.p) { if (via.x !== undefined && via.x !== null && via.y !== undefined) arrow = dirArrow(via.x - ow.p.x, via.y - ow.p.y); else if (via.dir) arrow = { up: '↑', down: '↓', left: '←', right: '→' }[via.dir] || ''; }
+  return { text: D.what, next: MAPS[next].name, arrow, D, route: R };
+}
+function questTips(q, st = Game.st) { // suggested level and a nudge
+  const D = questDest(q, st), T = []; if (!D) return T; const lv = mapLevel(D.map);
+  if (lv) { const rec = lv[1]; T.push('建議等級：Lv' + rec + (st.lv + 2 < rec ? '（你現在Lv' + st.lv + '，有點危險，先在附近練等或準備好傷藥）' : st.lv >= rec + 6 ? '（對你來說很輕鬆）' : '')); }
+  const R = mapRoute(st.map, D.map); if (R && R.length > 2) T.push('路線：' + R.map(id => MAPS[id].name).join(' → '));
+  return T;
+}
+function questDetailLines(q, st = Game.st) {
+  const L = [], add = (t, c = UIC.text, s = 10, ind = 0) => { for (const l of Font.wrap(t, 150 - ind, s)) L.push([l, c, s, ind]); }, gap = () => L.push(['', UIC.text, 5, 0]);
+  L.push([q.done ? '【結果】' : '【目前進度】', UIC.accent, 10, 0]); add(q.t, q.done ? UIC.muted : UIC.text, 10, 2);
+  if (!q.done) { const G = questGuide(q, st); if (G) { gap(); L.push(['【下一步】', UIC.accent, 10, 0]); add(G.text + (G.next ? '　→ 先往「' + G.next + '」' + (G.arrow ? ' ' + G.arrow : '') : G.arrow ? '　' + G.arrow : ''), '#c8f0ff', 10, 2); for (const t of questTips(q, st)) add(t, UIC.muted, 9, 2); } }
+  const old = typeof questDetail === 'function' ? questDetail(q, st).slice(Font.wrap(q.t, 150, 10).length) : []; // targets / giver / reward from the existing page
+  for (const l of old) L.push(l);
+  return L;
+}
+function* questScreen() {
+  const st = Game.st; let tab = 0, sel = 0; const VIS = 8;
+  const lists = () => { const L = questList(st); return [L.filter(q => !q.done), L.filter(q => q.done)]; };
+  const scr = { draw(x) {
+    const [A, B] = lists(), QL = tab ? B : A, i = Math.min(sel, Math.max(0, QL.length - 1)), t0 = clamp(i - 3, 0, Math.max(0, QL.length - VIS)), tr = questTracked(st);
+    screenBG(x); headerBar(x, '任務'); Font.drawR(x, (tab ? '已完成 ' + B.length : '進行中 ' + A.length) + '　← →', W - 6, 3, UIC.muted, UIC.textSh, 10);
+    drawWin(x, 4, 22, 168, VIS * 16 + 8, 'menu'); if (!QL.length) Font.draw(x, tab ? '還沒有完成的任務。' : '目前沒有任務。', 14, 28, UIC.muted, UIC.textSh, 10);
+    QL.slice(t0, t0 + VIS).forEach((q, k) => { const j = t0 + k, Y = 26 + k * 16; if (j === i) selBar(x, 6, Y - 1, 164, 15); const col = q.done ? UIC.dis : QUEST_CAT_COL[q.cat] || UIC.warm;
+      Font.draw(x, q.cat, 10, Y, col, UIC.textSh, 8); let nm = q.n.replace(/^委託：/, ''); while (Font.width(nm, 10) > 118 && nm.length > 2) nm = nm.slice(0, -2) + '…'; Font.draw(x, nm, 36, Y - 1, q.done ? UIC.dis : UIC.text, UIC.textSh, 10); if (!tab && tr && q.n === tr.n) Font.drawR(x, '★', 166, Y - 1, UIC.warm, UIC.textSh, 10); });
+    if (t0 > 0) x.drawImage(UPARROW, 86, 23); if (t0 + VIS < QL.length) x.drawImage(DOWNARROW, 86, 22 + VIS * 16 + 3);
+    const q = QL[i], Y0 = 22 + VIS * 16 + 12; drawWin(x, 4, Y0, 168, 252 - Y0, 'menu');
+    if (q) { let y = Y0 + 3; Font.draw(x, q.n.replace(/^委託：/, ''), 10, y, QUEST_CAT_COL[q.cat] || UIC.warm, UIC.textSh, 10); Font.drawR(x, 'A 詳情', 166, y + 1, UIC.accent, UIC.textSh, 9); y += 15;
+      const G = !q.done && questGuide(q, st); const body = Font.wrap(q.t, 150, 9).slice(0, G ? 3 : 5); body.forEach((l, k) => Font.draw(x, l, 10, y + k * 11, q.done ? UIC.muted : UIC.text, UIC.textSh, 9)); y += body.length * 11 + 3;
+      if (G) { const s = '▶ ' + G.text + (G.next ? '（先往' + G.next + '）' : '') + (G.arrow ? ' ' + G.arrow : ''); Font.wrap(s, 150, 9).slice(0, 2).forEach((l, k) => Font.draw(x, l, 10, y + k * 11, '#c8f0ff', UIC.textSh, 9)); }
+      if (!tab) Font.draw(x, tr && q.n === tr.n ? '★ 追蹤中' : 'SELECT／長按A：設為追蹤', 10, 238, tr && q.n === tr.n ? UIC.warm : UIC.muted, UIC.textSh, 8); }
+  } };
+  UI.push(scr);
+  while (true) {
+    const [A, B] = lists(), QL = tab ? B : A;
+    if (Input.pressed('left') || Input.pressed('right')) { tab = 1 - tab; sel = 0; Sound.sfx('cursor'); }
+    if (Input.repeat('up') && sel > 0) { sel--; Sound.sfx('cursor'); } if (Input.repeat('down') && sel < QL.length - 1) { sel++; Sound.sfx('cursor'); }
+    if ((Input.pressed('select') || (Input.held('a') && Input.t.a === 30)) && !tab && QL[sel]) { st.track = QL[sel].n; Sound.sfx('select'); Input.consume('a'); }
+    else if (Input.pressed('a') && QL[sel]) { Input.consume('a'); Sound.sfx('select'); UI.remove(scr); const r = yield* questDetailPage(QL[sel]); UI.push(scr); if (r === 'track') st.track = QL[sel].n; yield; continue; }
+    if (Input.pressed('b')) { Input.consume('a', 'b'); Sound.sfx('cancel'); break; }
+    yield;
+  }
+  UI.remove(scr);
+}
+function* questDetailPage(q) {
+  const st = Game.st; let top = 0; const L = questDetailLines(q, st); const canTrack = !q.done;
+  const scr = { draw(x) {
+    screenBG(x); headerBar(x, '任務詳情'); drawWin(x, 4, 22, 168, 230, 'menu');
+    Font.draw(x, q.n.replace(/^委託：/, ''), 10, 25, QUEST_CAT_COL[q.cat] || UIC.warm, UIC.textSh); Font.drawR(x, q.cat, 166, 27, UIC.muted, UIC.textSh, 9); x.fillStyle = UIC.accent; x.globalAlpha = 0.4; x.fillRect(10, 41, 156, 1); x.globalAlpha = 1;
+    const end = drawInfoLines(x, L, 10, 45, 234, top); scr.more = end < L.length;
+    if (top > 0) x.drawImage(UPARROW, 86, 42); if (scr.more) x.drawImage(DOWNARROW, 86, 235);
+    const tr = questTracked(st); Font.draw(x, canTrack ? (tr && tr.n === q.n ? '★ 追蹤中' : 'A 設為追蹤') : '', 10, 240, tr && tr.n === q.n ? UIC.warm : UIC.accent, UIC.textSh, 9);
+    Font.drawR(x, (scr.more || top > 0 ? '↑↓捲動　' : '') + 'B返回', 166, 240, UIC.muted, UIC.textSh, 9);
+  } };
+  UI.push(scr); let r = null;
+  while (true) { if (Input.repeat('up') && top > 0) { top--; Sound.sfx('cursor'); } if (Input.repeat('down') && scr.more) { top++; Sound.sfx('cursor'); }
+    if (Input.pressed('a') && canTrack) { Input.consume('a'); st.track = q.n; r = 'track'; Sound.sfx('select'); }
+    if (Input.pressed('b')) { Input.consume('a', 'b'); Sound.sfx('cancel'); break; } yield; }
+  UI.remove(scr); return r;
+}
+questDetailScreen = function* (q) { yield* questDetailPage(q); };
+let __qhud = { f: -99, v: null };
+{ const _d = Overworld.prototype.draw; Overworld.prototype.draw = function (x) {
+    _d.call(this, x); const st = this.st; if (!st || !st.cls && !st.flags.license || this.script || UI.stack.length || (this.popup && this.popup.t < 160) || Game.trans || Game.settings.questHud === false) return;
+    if (Game.frame - __qhud.f > 20) { const q = questTracked(st); __qhud = { f: Game.frame, v: q ? { q, G: questGuide(q, st, this) } : null }; }
+    const v = __qhud.v; if (!v || !v.G) return; let s = (v.G.next ? v.G.next : v.G.text); while (Font.width(s, 9) > 96 && s.length > 2) s = s.slice(0, -2) + '…';
+    const a = v.G.arrow || '', w = Math.ceil(Font.width(s, 9) + (a ? Font.width(a, 11) + 4 : 0)) + 16, X = W - w - 3;
+    x.fillStyle = 'rgba(10,14,28,0.72)'; x.fillRect(X, 3, w, 14); x.fillStyle = UIC.warm; x.fillRect(X, 3, 2, 14);
+    Font.draw(x, '★', X + 4, 1, UIC.warm, null, 8); Font.draw(x, s, X + 13, 1, '#e8f4ff', UIC.textSh, 9); if (a) Font.drawR(x, a, X + w - 3, 0, '#8ad0ff', UIC.textSh, 11);
+  }; }
 for (const k in GEAR_RECIPE) { const M = GEAR_RECIPE[k].mats || (GEAR_RECIPE[k].mats = {}); for (const i in M) if (!ITEMS[i]) delete M[i]; if (!Object.keys(M).length) M.stone = 2; }
 </script>
