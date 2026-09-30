@@ -45,7 +45,7 @@ const CLASS_V7 = {
     ['天躍', '速度、普攻與特技。', '身輕|speP|4|3;躍步|eva|3|3;突刺|atkUp|10|3;要害|crit|3|3;天躍|chargeCut|1|1;高空|spcUp|10|3;流星|spcUp|30|1']] },
   otherworlder: { tag: '全能', w: ['劍', '法杖', '長槍'], pitch: '來自異界的勇者。什麼武器都能用：勇者全面強化，異界善用弱點與借用技能，時空掌握先機。', br: [
     ['勇者', '全面強化。', '勇氣|atkP|3|3;智慧|spaP|3|3;體魄|hpP|4|3;守護|defP|4|3;異界共鳴|fx.wisdom|1|1;必殺|critDmg|8|3;勇者之魂|actUp|25|1'],
-    ['異界', '弱點與借用技能。', '元素|elem|5|3;看破|weakUp|6|3;借力|subUp|10|3;魔力|mpP|8|3;異界之力|chargeCut|1|1;屠巨|bigUp|8|3;異界共鳴|spcUp|40|1'],
+    ['異界', '弱點與借用技能。', '元素|elem|5|3;看破|weakUp|6|3;借力|subUp|10|3;魔力|mpP|8|3;異界之力|chargeCut|1|1;屠巨|bigUp|8|3;越界奧義|spcUp|40|1'],
     ['時空', '速度與先機。', '加速|speP|4|3;殘影|eva|3|3;節能|mpSave|6|3;魔泉|mpRegen|2|3;先機|fx.first|1|1;淨心|statusRes|10|3;時之守護|endureT|1|1']] },
   spellblade: { tag: '魔劍合一', w: ['劍', '魔導書', '法杖'], pitch: '讓劍與魔法合而為一的魔劍士。魔劍共鳴攻魔，月蝕追求會心與特技，元素讓每一種屬性都更強。', br: [
     ['魔劍', '劍與魔力共鳴。', '劍術精通|kind:劍|6|3;魔力親和|spaP|3|3;剛力|atkP|3|3;魔劍共鳴|spellblade|1|1;奧術湧動|fx.arcaneSurge|1|1;致命|critDmg|8|3;魔劍解放|actUp|25|1'],
