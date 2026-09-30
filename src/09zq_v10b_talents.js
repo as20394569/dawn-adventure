@@ -68,3 +68,7 @@ function* sigAfter(b, u, t, dealt, mv) {
   const tw = tsum('sigTwice', st); if (tw && foe && dealt > 0 && !b._sigTwice && chance(tw / 100)) { b._sigTwice = 1; const d = Math.min(t.hp, Math.max(1, Math.floor(dealt * 0.5)));
     yield* b.msg('「' + mv.n + '」再次發動！', { hold: 10 }); yield* b.playFx(mv.fx || 'hit', u, t); t.hp -= d; Sound.sfx('hitSuper'); yield* b.animHP(t); yield* b.msg('追加' + d + '點傷害！', { hold: 10 }); b._sigTwice = 0; }
 }
+// branch icons follow their branch: the kept branches keep their own icon; branch 1 (the signature) shows the dropped
+// branch's icon until its own is drawn (TALENT_SIG_PX, Codex task T)
+{ const old = {}; for (const c in KEEP_BR) for (let b = 0; b < 3; b++) old[c + '_' + b] = TALENT_PX[c + '_' + b];
+  for (const c in KEEP_BR) { const K = KEEP_BR[c], drop = [0, 1, 2].find(i => !K.includes(i)); TALENT_PX[c + '_0'] = (typeof TALENT_SIG_PX !== 'undefined' && TALENT_SIG_PX[c]) || old[c + '_' + drop]; TALENT_PX[c + '_1'] = old[c + '_' + K[0]]; TALENT_PX[c + '_2'] = old[c + '_' + K[1]]; } }

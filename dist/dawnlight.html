@@ -14403,6 +14403,8 @@ function* sigAfter(b, u, t, dealt, mv) {
   const tw = tsum('sigTwice', st); if (tw && foe && dealt > 0 && !b._sigTwice && chance(tw / 100)) { b._sigTwice = 1; const d = Math.min(t.hp, Math.max(1, Math.floor(dealt * 0.5)));
     yield* b.msg('「' + mv.n + '」再次發動！', { hold: 10 }); yield* b.playFx(mv.fx || 'hit', u, t); t.hp -= d; Sound.sfx('hitSuper'); yield* b.animHP(t); yield* b.msg('追加' + d + '點傷害！', { hold: 10 }); b._sigTwice = 0; }
 }
+{ const old = {}; for (const c in KEEP_BR) for (let b = 0; b < 3; b++) old[c + '_' + b] = TALENT_PX[c + '_' + b];
+  for (const c in KEEP_BR) { const K = KEEP_BR[c], drop = [0, 1, 2].find(i => !K.includes(i)); TALENT_PX[c + '_0'] = (typeof TALENT_SIG_PX !== 'undefined' && TALENT_SIG_PX[c]) || old[c + '_' + drop]; TALENT_PX[c + '_1'] = old[c + '_' + K[0]]; TALENT_PX[c + '_2'] = old[c + '_' + K[1]]; } }
 { const _ng = newGameState; newGameState = function (...a) { const st = _ng.apply(this, a); if (st) { st.diff = 2; st.v10 = 1; st.orbs = st.orbs || []; } return st; }; }
 { const _d = TitleScene.prototype.draw; TitleScene.prototype.draw = function (x) {
     _d.call(this, x); if (this._old === undefined) { try { this._old = !this.hasSave && !!localStorage.getItem('dawnlight_save_v2'); } catch (e) { this._old = false; } }
