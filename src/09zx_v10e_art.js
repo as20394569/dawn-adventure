@@ -36,7 +36,7 @@ function orbIconKey(k) {
 function orbIcon(k) { const ik = orbIconKey(k); return (ik && ITEM_ICON[ik]) || null; }
 
 /* ---------- portraits: the v10.3 story characters share a field look but get their own face ---------- */
-Object.assign(PORTRAIT_NAME, { 畫家艾琳: 'painter', 艾琳: 'painter', 老礦工巴爾: 'oldBarr', 巴爾: 'oldBarr', 露比: 'ruby', 小風: 'kiteKid', 老兵杜克: 'oldDuke', 杜克: 'oldDuke' });
+Object.assign(PORTRAIT_NAME, { 鐵匠: 'smith', 畫家艾琳: 'painter', 艾琳: 'painter', 老礦工巴爾: 'oldBarr', 巴爾: 'oldBarr', 露比: 'ruby', 小風: 'kiteKid', 老兵杜克: 'oldDuke', 杜克: 'oldDuke' });
 
 /* ---------- v10.4.1 portraits from Codex's original large images (player: 「原始大圖直接拿來用」) ----------
    The 32×32 portraits were shrunk with nearest-neighbour and looked speckled (some faces read as scary). The originals are

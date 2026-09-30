@@ -209,7 +209,7 @@ const MAPS = {
       { id: 'gatekeeper', x: 12, y: 1, dir: 'down', look: 'girl', name: '小芽' },
       { id: 'kid', x: 8, y: 9, dir: 'down', look: 'kid', walk: 2 },
       { id: 'grandpa', x: 7, y: 16, dir: 'left', look: 'old' },
-      { id: 'florist', x: 16, y: 16, dir: 'down', look: 'woman', walk: 1 },
+      { id: 'florist', x: 16, y: 16, dir: 'down', look: 'woman2', walk: 1 },
       { id: 'smith', x: 13, y: 16, dir: 'down', look: 'man', name: '鐵匠' },
       { id: 'peddler', x: 8, y: 12, dir: 'down', look: 'clerk', name: '行商', show: st => st.flags.caravan === 'saved' },
     ],
