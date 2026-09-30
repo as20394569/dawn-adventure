@@ -163,5 +163,9 @@ print('gloves', len(gl), 'icons', len(iu))
 sd = {os.path.basename(f)[:-4]: pal_rows(f) for f in sorted(glob.glob(os.path.join(root, 'art', 'battle', 'shields', '*.png'))) if 'preview' not in f}
 js += 'const SHIELD_PX_ROWS = ' + json.dumps(sd, separators=(',', ':')) + ';\n'
 print('shields', len(sd))
+# v10.6.1 (Codex task Y): side-view shields for the battle doll (7×12); the task X front views stay the menu icons
+ss = {os.path.basename(f)[:-4]: pal_rows(f) for f in sorted(glob.glob(os.path.join(root, 'art', 'battle', 'shields_side', '*.png'))) if 'preview' not in f}
+js += 'const SHIELD_SIDE_ROWS = ' + json.dumps(ss, separators=(',', ':')) + ';\n'
+print('side shields', len(ss))
 open(os.path.join(root, 'src', '07id_sprites.js'), 'w').write(js)
 print('embedded', len(d), 'sprites', sum(len(v) for v in d.values()) // 1024, 'KB')

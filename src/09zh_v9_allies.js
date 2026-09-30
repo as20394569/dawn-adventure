@@ -26,7 +26,7 @@ Battle.prototype.allyTurn = function* () {
       yield* this.msg(['莉婭趕到了！「撐住——騎士團的急救術！」', '莉婭：「我來掩護你！先把傷口包好！」', '莉婭：「勇者可不能在這裡倒下！」'][rnd(0, 2)], { hold: 22 });
       const h = Math.min(H.maxhp - H.hp, Math.ceil(H.maxhp * 0.35 * up)); if (h > 0) { H.hp += h; Game.st.hp = H.hp; Sound.sfx('heal'); yield* this.animHP(H); }
       let cured = false; if (H.status) { H.status = null; cured = true; }
-      yield* this.msg('回復了' + h + '點HP！' + (cured ? '異常狀態也消除了。' : ''), { hold: 18 });
+      yield* this.msg(Game.st.name + '回復了' + h + '點HP！' + (cured ? '異常狀態也消除了。' : ''), { hold: 18 });
     }
   }
 };

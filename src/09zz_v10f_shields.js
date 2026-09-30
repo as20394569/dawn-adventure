@@ -68,11 +68,16 @@ function shieldSprite(k) { // Codex art (SHIELD_PX_ROWS, 10×12) or a drawn heat
     c = spriteFrom(rows, { o, r: rim, f: face, e: emb }); }
   c.ok = true; return (SHIELD_PX[k] = c);
 }
+// v10.6.1 (Codex task Y): the hero is seen from behind in battle, so the doll holds a side view of the shield (7×12);
+// menus and the loot card keep the front view above
+const SHIELD_SIDE = {};
+function shieldSide(k) { if (k in SHIELD_SIDE) return SHIELD_SIDE[k]; const R = typeof SHIELD_SIDE_ROWS !== 'undefined' && SHIELD_SIDE_ROWS[k]; if (!R) return (SHIELD_SIDE[k] = null);
+  const [cols, rows] = R, pal = {}; cols.forEach((h, i) => pal['abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'[i]] = h); const c = spriteFrom(rows, pal); c.ok = true; return (SHIELD_SIDE[k] = c); }
 { const _hl = heroLookOf; heroLookOf = function (st = Game.st, over = {}) {
     const L = _hl(st, over), eq = { ...(st.equip || {}), ...over }, g = gearBy(eq.shield, st), w = gearBy(eq.weapon, st);
     if (g && (!w || ONE_HAND.has(GEAR[w.b].kind))) L.skey = g.b; return L; }; }
 { const _hb = heroBattleImgLook, cache = {}; heroBattleImgLook = function (frame, L) {
-    const im = L && L.skey && shieldSprite(L.skey); if (!im) return _hb(frame, L);
+    const im = L && L.skey && (shieldSide(L.skey) || shieldSprite(L.skey)); if (!im) return _hb(frame, L);
     const key = frame + lookKey(L); if (cache[key]) return cache[key];
     const base = _hb(frame, { ...L, skey: undefined }), c = mkCanvas(base.width, base.height), x = c.getContext('2d');
     x.imageSmoothingEnabled = false; x.drawImage(base, 0, 0); x.drawImage(im, 0, (11 - (frame ? 1 : 0)) * 3, im.width * 3, im.height * 3); // left hand ≈ doll (2,17)

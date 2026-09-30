@@ -217,13 +217,13 @@ Battle.prototype.wSpecial = function* (u, t, key) {
     let total = 0;
     if (S.k === 'multi') { for (let i = 0; i < 3 && t.hp > 0; i++) total += yield* this.wHit(u, t, S, S.pow, i ? 'hit' : fx); yield* this.msg('3連擊！合計' + total + '點傷害！', { hold: 18 }); }
     else { const ex = S.k === 'execute' && t.hp < t.maxhp * 0.35; total = yield* this.wHit(u, t, S, S.pow, fx, ex ? 2.5 : 1); yield* this.msg((ex ? '斷罪！' : '') + '造成了' + total + '點傷害！', { hold: 18 }); }
-    if (S.k === 'drain' && u.hp < u.maxhp) { const h = Math.min(u.maxhp - u.hp, Math.max(1, Math.floor(total * 0.5))); u.hp += h; Game.st.hp = u.hp; Sound.sfx('heal'); yield* this.animHP(u); yield* this.msg('吸取了' + h + '點HP！', { hold: 16 }); }
+    if (S.k === 'drain' && u.hp < u.maxhp) { const h = Math.min(u.maxhp - u.hp, Math.max(1, Math.floor(total * 0.5))); u.hp += h; Game.st.hp = u.hp; Sound.sfx('heal'); yield* this.animHP(u); yield* this.msg(u.n + '吸取了' + h + '點HP！', { hold: 16 }); }
     if (S.k === 'break' && t.hp > 0) yield* this.statChange(t, { def: -1, spd: -1 });
     if ((S.k === 'psn' || S.k === 'brn' || S.k === 'par') && t.hp > 0 && !t.status && chance(0.6)) yield* this.inflict(t, S.k, true);
     return;
   }
-  if (S.k === 'heal') { const h = Math.min(u.maxhp - u.hp, Math.ceil(u.maxhp * 0.15)); if (h > 0) { u.hp += h; Game.st.hp = u.hp; Sound.sfx('heal'); yield* this.animHP(u); } yield* this.msg('回復了' + h + '點HP！', { hold: 16 }); }
-  else if (S.k === 'mana' || S.k === 'haste') { if (S.k === 'haste') yield* this.statChange(u, { spe: 1 }); const g = Math.min(u.maxmp - u.mp, Math.ceil(u.maxmp * (S.k === 'mana' ? 0.2 : 0.1))); u.mp += g; Game.st.mp = u.mp; Sound.sfx('heal'); yield* this.msg('回復了' + g + '點MP！', { hold: 16 }); }
+  if (S.k === 'heal') { const h = Math.min(u.maxhp - u.hp, Math.ceil(u.maxhp * 0.15)); if (h > 0) { u.hp += h; Game.st.hp = u.hp; Sound.sfx('heal'); yield* this.animHP(u); } yield* this.msg(u.n + '回復了' + h + '點HP！', { hold: 16 }); }
+  else if (S.k === 'mana' || S.k === 'haste') { if (S.k === 'haste') yield* this.statChange(u, { spe: 1 }); const g = Math.min(u.maxmp - u.mp, Math.ceil(u.maxmp * (S.k === 'mana' ? 0.2 : 0.1))); u.mp += g; Game.st.mp = u.mp; Sound.sfx('heal'); yield* this.msg(u.n + '回復了' + g + '點MP！', { hold: 16 }); }
   else if (S.k === 'guard') { u.shield = Math.max(u.shield || 0, 2); Sound.sfx('shield'); yield* this.msg(u.n + '被護盾包圍了！（2回合）', { hold: 18 }); }
   else if (S.k === 'power') yield* this.statChange(u, { atk: 1, spa: 1 });
   else if (S.k === 'weaken') yield* this.statChange(t, { atk: -1, spa: -1 });

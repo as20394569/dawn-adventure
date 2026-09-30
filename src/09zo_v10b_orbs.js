@@ -177,10 +177,10 @@ function* evoApply(b, u, t, c, dealt, mv) {
   else if (/^(atk|spa|def|spd|spe)\+1$/.test(k)) yield* b.statChange(u, { [k.slice(0, 3)]: 1 });
   else if (/^f(atk|def|spe|spd)-1$/.test(k)) { if (foe && dealt > 0) yield* b.statChange(t, { [k.slice(1, 4)]: -1 }); }
   else if (k === 'wet' && foe && dealt > 0) { t.wet = 3; } else if (k === 'tangle' && foe && dealt > 0) { t.tangle = 3; }
-  else if (k === 'cure' && u.status) { u.status = null; if (Game.st) Game.st.status = null; yield* b.msg('異常狀態消除了！', { hold: 10 }); }
+  else if (k === 'cure' && u.status) { u.status = null; if (Game.st) Game.st.status = null; yield* b.msg(u.n + '的異常狀態消除了！', { hold: 10 }); }
   else if (k === 'heal+15') { const h = Math.min(u.maxhp - u.hp, Math.ceil(u.maxhp * 0.15)); if (h > 0) { u.hp += h; Game.st.hp = u.hp; yield* b.animHP(u); } }
   else if (k === 'spec+1' && typeof mainWKey === 'function' && mainWKey()) { b.H.wc = Math.min((b.H.wcN || wsN(WSK[mainWKey()].s)), (b.H.wc || 0) + 1); }
-  else if (k === 'hit+1' && !mv.hits && foe && dealt > 0) { const d = Math.min(t.hp, Math.max(1, Math.floor(dealt * 0.4))); yield* b.playFx('hit', u, t); t.hp -= d; Sound.sfx('hit'); yield* b.animHP(t); yield* b.msg('追擊！造成' + d + '點傷害！', { hold: 10 }); }
+  else if (k === 'hit+1' && !mv.hits && foe && dealt > 0) { const d = Math.min(t.hp, Math.max(1, Math.floor(dealt * 0.4))); yield* b.playFx('hit', u, t); t.hp -= d; Sound.sfx('hit'); yield* b.animHP(t); yield* b.msg(u.n + '追擊！造成' + d + '點傷害！', { hold: 10 }); }
 }
 // after a battle: evolve the orbs that are ready (one prompt each)
 function* orbEvolveFlow(o) {

@@ -80,7 +80,7 @@ function* sigAfter(b, u, t, dealt, mv) {
   if (foe && dealt > 0 && tsum('sigFdef', st)) yield* b.statChange(t, { def: -1 }); if (foe && dealt > 0 && tsum('sigFatk', st)) yield* b.statChange(t, { atk: -1 });
   const bu = tsumPre('sigBuff.', st); if (Object.keys(bu).length) yield* b.statChange(u, bu);
   const dr = tsum('sigDrain', st); if (dr && dealt > 0) { const h = Math.min(u.maxhp - u.hp, Math.ceil(dealt * dr / 100)); if (h > 0) { u.hp += h; st.hp = u.hp; yield* b.animHP(u); } }
-  const hl = tsum('sigHeal', st) + (D.healAfter || 0); if (hl) { const h = Math.min(u.maxhp - u.hp, Math.ceil(u.maxhp * hl / 100)); if (h > 0) { u.hp += h; st.hp = u.hp; Sound.sfx('heal'); yield* b.animHP(u); yield* b.msg('回復了' + h + '點HP！', { hold: 10 }); } }
+  const hl = tsum('sigHeal', st) + (D.healAfter || 0); if (hl) { const h = Math.min(u.maxhp - u.hp, Math.ceil(u.maxhp * hl / 100)); if (h > 0) { u.hp += h; st.hp = u.hp; Sound.sfx('heal'); yield* b.animHP(u); yield* b.msg(u.n + '回復了' + h + '點HP！', { hold: 10 }); } }
   if (tsum('sigCure', st) && u.status) { u.status = null; st.status = null; }
   const sh = tsum('sigShield', st) + (D.shieldAfter || 0); if (sh) { u.shield = Math.max(u.shield || 0, sh); yield* b.msg(u.n + '展開了護盾！', { hold: 10 }); }
   const mb = tsum('sigMpBack', st); if (mb) { u.mp = Math.min(u.maxmp, u.mp + mb); st.mp = u.mp; }
