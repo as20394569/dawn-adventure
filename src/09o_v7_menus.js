@@ -75,7 +75,7 @@ function* skillTreeScreen() {
     const k = mainWKey(st); if (!k) return _dp(x, st, X, Y, w, big); const S = WSK[k], C = CLASSES[st.cls];
     const L = [['職業被動　' + (C ? C.n : '—'), UIC.warm, 11]]; const P = classPassives(st.cls); L.push([P.length ? P.map(p => '「' + p.n + '」' + p.d).join(' ') : '職業本身沒有被動（看天賦）', P.length ? UIC.text : UIC.muted, 9]);
     L.push(['武器被動「' + S.p.n + '」' + wpassText(S.p), UIC.accent, 9], ['特技「' + S.s.n + '」累積' + wsN(S.s, st) + '層後發動', '#ffd860', 9]);
-    const n = tpSpent(st); L.push(['天賦：已投入' + n + '點' + (tpAvail(st) ? '（還有' + tpAvail(st) + '點）' : ''), n ? '#c9cfe4' : UIC.muted, 9]);
+    const n = tpSpent(st); L.push(['天賦：已投入' + n + '／' + TP_CAP + '點' + (tpAvail(st) ? '（還有' + tpAvail(st) + '點）' : ''), n ? '#c9cfe4' : UIC.muted, 9]);
     L.forEach(([t, col, z0], i) => { let z = z0; while (z > 7 && Font.width(t, z) > w) z--; Font.draw(x, t, X, Y + i * 15 + (i ? 1 : 0), col, UIC.textSh, z); });
   };
 }

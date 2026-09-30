@@ -402,6 +402,7 @@ function* optionsScreen() {
 
 function moneyWin(x) { drawWin(x, 2, 2, 86, 30, 'menu'); Font.draw(x, '金錢', 10, 3, UIC.muted, UIC.textSh); Font.drawR(x, Game.st.money + ' G', 80, 15, UIC.warm, UIC.textSh); }
 function* shopFlow(stock) {
+  if (typeof tpRaw === 'function' && Game.st && tpRaw(Game.st) >= TP_CAP) stock = stock.filter(k => k !== 'tpBook'); // v9.2.4: no books past the talent cap
   const mw = { draw: moneyWin }; UI.push(mw);
   if (!stock && Game.st.flags.caravan === 'lost' && !Game.st.flags.shopLost) { Game.st.flags.shopLost = 1; yield* say('商隊沒能抵達……好傷藥進不了貨了。'); }
   if (Game.st.flags.croc && !Game.st.flags.shopNew) { Game.st.flags.shopNew = 1; yield* say('橋通了之後，王都的商人送來了新貨！（裝備請找鐵匠打造喔）'); }

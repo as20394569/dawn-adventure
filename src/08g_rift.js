@@ -70,9 +70,10 @@ Object.assign(Events, {
     const st = Game.st, S = riftSt(st);
     yield* say('我是迴廊的看守人。異界之門的另一邊，是每次都會改變形狀的「迴廊」。\n最深處是第' + RIFT_TOP + '層。你的最高紀錄：' + (S.best || 0) + '層。');
     while (true) {
-      const tok = st.bag.riftToken || 0, list = TOWER_SHOP.map(([k, c]) => (ITEMS[k] || GEAR[k]).n + '　' + c + '枚');
-      const r = yield* ask('要用迴廊徽章交換什麼嗎？（持有' + tok + '枚）', [...list, '不用了']); if (r < 0 || r >= TOWER_SHOP.length) return;
-      const [k, c] = TOWER_SHOP[r]; if (tok < c) { yield* say('徽章不夠喔。'); continue; }
+      const TS = TOWER_SHOP.filter(([k]) => !(k === 'tpBook' && typeof tpRaw === 'function' && tpRaw(st) >= TP_CAP)); // v9.2.4 talent cap
+      const tok = st.bag.riftToken || 0, list = TS.map(([k, c]) => (ITEMS[k] || GEAR[k]).n + '　' + c + '枚');
+      const r = yield* ask('要用迴廊徽章交換什麼嗎？（持有' + tok + '枚）', [...list, '不用了']); if (r < 0 || r >= TS.length) return;
+      const [k, c] = TS[r]; if (tok < c) { yield* say('徽章不夠喔。'); continue; }
       st.bag.riftToken -= c; if (GEAR[k]) yield* itemGet('換到了' + gainBP(classGear(k), 2, Game.st, 2) + '！'); else { st.bag[k] = (st.bag[k] || 0) + 1; yield* itemGet('換到了' + ITEMS[k].n + '！'); }
     }
   },

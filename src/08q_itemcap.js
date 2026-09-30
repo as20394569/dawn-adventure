@@ -10,6 +10,7 @@ function itemBlockMsg(k, st = Game.st) {
   const it = ITEMS[k]; if (!it) return null;
   if (it.use === 'boost') { const q = Object.keys(it.v)[0], cur = (st.boost || {})[q] || 0, cap = fruitCap(st); if (cur + it.v[q] <= cap) return null;
     return '身體還承受不了更多果實的力量。\n（' + (ATTR_NAMES[q] || q) + '的果實加成 +' + cur + '／上限 +' + cap + '；Lv' + (Math.floor(st.lv / 5) + 1) * 5 + '可以再吃）'; }
+  if (it.use === 'tp' && typeof tpRaw === 'function' && tpRaw(st) >= TP_CAP) return '天賦點已經達到上限（' + TP_CAP + '點）。\n天賦最多只能點滿兩個流派，好好選擇吧。';
   if (it.use === 'tp') { const n = st.tpRead || 0, cap = bookCap(st); if (n < cap) return null;
     return '現在的修為還讀不懂更深的內容。\n（已讀' + n + '本／目前上限' + cap + '本；Lv' + (cap + 1) * 8 + '可以再讀）'; }
   return null;

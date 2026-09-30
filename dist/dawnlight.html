@@ -4477,6 +4477,7 @@ function* optionsScreen() {
 }
 function moneyWin(x) { drawWin(x, 2, 2, 86, 30, 'menu'); Font.draw(x, '金錢', 10, 3, UIC.muted, UIC.textSh); Font.drawR(x, Game.st.money + ' G', 80, 15, UIC.warm, UIC.textSh); }
 function* shopFlow(stock) {
+  if (typeof tpRaw === 'function' && Game.st && tpRaw(Game.st) >= TP_CAP) stock = stock.filter(k => k !== 'tpBook'); // v9.2.4: no books past the talent cap
   const mw = { draw: moneyWin }; UI.push(mw);
   if (!stock && Game.st.flags.caravan === 'lost' && !Game.st.flags.shopLost) { Game.st.flags.shopLost = 1; yield* say('商隊沒能抵達……好傷藥進不了貨了。'); }
   if (Game.st.flags.croc && !Game.st.flags.shopNew) { Game.st.flags.shopNew = 1; yield* say('橋通了之後，王都的商人送來了新貨！（裝備請找鐵匠打造喔）'); }
@@ -8217,7 +8218,7 @@ class TitleScene {
     x.drawImage(this.logo, Math.round(W / 2 - this.logo.width / 2), 6 + bob);
     Font.drawC(x, '～異世界冒險RPG～', W / 2, 52 + bob, '#ffe0a0', '#3a1428');
     if (this.stage === 'press' && Math.floor(this.t / 30) % 2 === 0) Font.drawC(x, '按 A 鍵開始', W / 2, 232, '#ffffff', '#1a1024');
-    Font.drawR(x, 'v9.2.3', W - 3, H - 13, '#b890b0', null);
+    Font.drawR(x, 'v9.2.4', W - 3, H - 13, '#b890b0', null);
   }
 }
 class IntroScene {
@@ -8703,9 +8704,10 @@ Object.assign(Events, {
     const st = Game.st, S = riftSt(st);
     yield* say('我是迴廊的看守人。異界之門的另一邊，是每次都會改變形狀的「迴廊」。\n最深處是第' + RIFT_TOP + '層。你的最高紀錄：' + (S.best || 0) + '層。');
     while (true) {
-      const tok = st.bag.riftToken || 0, list = TOWER_SHOP.map(([k, c]) => (ITEMS[k] || GEAR[k]).n + '　' + c + '枚');
-      const r = yield* ask('要用迴廊徽章交換什麼嗎？（持有' + tok + '枚）', [...list, '不用了']); if (r < 0 || r >= TOWER_SHOP.length) return;
-      const [k, c] = TOWER_SHOP[r]; if (tok < c) { yield* say('徽章不夠喔。'); continue; }
+      const TS = TOWER_SHOP.filter(([k]) => !(k === 'tpBook' && typeof tpRaw === 'function' && tpRaw(st) >= TP_CAP)); // v9.2.4 talent cap
+      const tok = st.bag.riftToken || 0, list = TS.map(([k, c]) => (ITEMS[k] || GEAR[k]).n + '　' + c + '枚');
+      const r = yield* ask('要用迴廊徽章交換什麼嗎？（持有' + tok + '枚）', [...list, '不用了']); if (r < 0 || r >= TS.length) return;
+      const [k, c] = TS[r]; if (tok < c) { yield* say('徽章不夠喔。'); continue; }
       st.bag.riftToken -= c; if (GEAR[k]) yield* itemGet('換到了' + gainBP(classGear(k), 2, Game.st, 2) + '！'); else { st.bag[k] = (st.bag[k] || 0) + 1; yield* itemGet('換到了' + ITEMS[k].n + '！'); }
     }
   },
@@ -9625,6 +9627,7 @@ function itemBlockMsg(k, st = Game.st) {
   const it = ITEMS[k]; if (!it) return null;
   if (it.use === 'boost') { const q = Object.keys(it.v)[0], cur = (st.boost || {})[q] || 0, cap = fruitCap(st); if (cur + it.v[q] <= cap) return null;
     return '身體還承受不了更多果實的力量。\n（' + (ATTR_NAMES[q] || q) + '的果實加成 +' + cur + '／上限 +' + cap + '；Lv' + (Math.floor(st.lv / 5) + 1) * 5 + '可以再吃）'; }
+  if (it.use === 'tp' && typeof tpRaw === 'function' && tpRaw(st) >= TP_CAP) return '天賦點已經達到上限（' + TP_CAP + '點）。\n天賦最多只能點滿兩個流派，好好選擇吧。';
   if (it.use === 'tp') { const n = st.tpRead || 0, cap = bookCap(st); if (n < cap) return null;
     return '現在的修為還讀不懂更深的內容。\n（已讀' + n + '本／目前上限' + cap + '本；Lv' + (cap + 1) * 8 + '可以再讀）'; }
   return null;
@@ -11538,7 +11541,9 @@ const ctOf = (st = Game.st) => st.ct || (st.ct = {});
 const ctRank = (n, st = Game.st) => ctOf(st)[n.id] || 0;
 function talentSum(key, st = Game.st) { const T = CT[st.cls]; if (!T) return 0; let s = 0; for (const B of T) for (const n of B) if (n.key === key) s += n.v * ctRank(n, st); return s; }
 const deepOk = (st = Game.st) => st.lv >= 14 && !!(st.flags && st.flags.deep);
-const tpTotal = (st = Game.st) => (st.cls ? Math.floor(st.lv / 2) + 1 : 0) + (st.tpRead || 0) + (st.flags && st.flags.deep ? 2 : 0);
+const TP_CAP = 30;
+function tpRaw(st = Game.st) { return (st.cls ? Math.floor(st.lv / 2) + 1 : 0) + (st.tpRead || 0) + (st.flags && st.flags.deep ? 2 : 0); }
+const tpTotal = (st = Game.st) => Math.min(TP_CAP, tpRaw(st));
 function tpSpent(st = Game.st) { let s = 0; const T = CT[st.cls]; if (T) for (const B of T) for (const n of B) s += ctRank(n, st); return s; }
 const tpAvail = (st = Game.st) => Math.max(0, tpTotal(st) - tpSpent(st));
 const brBelow = (b, row, st = Game.st) => { let s = 0; for (const n of CT[st.cls][b]) if (n.row < row) s += ctRank(n, st); return s; };
@@ -11670,7 +11675,7 @@ ch2ClassTalk = function* () {
 { const _as = applyStartClass; applyStartClass = function (k) { _as(k); const st = Game.st; st.skills = {}; st.skp = 0; st.tp = 0; st.ct = {}; st.baseCls = k; }; }
 { const _lu = Battle.prototype.levelUp; Battle.prototype.levelUp = function* () {
     const st = Game.st, self = this, _msg = Battle.prototype.msg;
-    this.msg = function* (t, o) { if (typeof t === 'string') { if (t.startsWith('可以學習新技能了')) return; if (t.includes('點技能點')) t = st.lv % 2 === 0 ? '獲得了1點天賦點！MP也全部恢復了。（選單→天賦）' : 'MP全部恢復了。（下一級會得到天賦點）'; } return yield* _msg.call(self, t, o); };
+    this.msg = function* (t, o) { if (typeof t === 'string') { if (t.startsWith('可以學習新技能了')) return; if (t.includes('點技能點')) t = tpRaw(st) > TP_CAP ? 'MP全部恢復了。（天賦點已達上限' + TP_CAP + '點）' : st.lv % 2 === 0 ? '獲得了1點天賦點！MP也全部恢復了。（選單→天賦）' : 'MP全部恢復了。（下一級會得到天賦點）'; } return yield* _msg.call(self, t, o); };
     let r; try { r = yield* _lu.call(this); } finally { delete this.msg; }
     st.skp = 0; st.tp = 0;
     if (st.lv === 14 && !(st.flags && st.flags.deep)) yield* this.msg('到達Lv14了！去找萌芽鎮的村長，進行「天賦覺醒」吧。', { hold: 40 });
@@ -11908,7 +11913,7 @@ function* skillTreeScreen() {
     const k = mainWKey(st); if (!k) return _dp(x, st, X, Y, w, big); const S = WSK[k], C = CLASSES[st.cls];
     const L = [['職業被動　' + (C ? C.n : '—'), UIC.warm, 11]]; const P = classPassives(st.cls); L.push([P.length ? P.map(p => '「' + p.n + '」' + p.d).join(' ') : '職業本身沒有被動（看天賦）', P.length ? UIC.text : UIC.muted, 9]);
     L.push(['武器被動「' + S.p.n + '」' + wpassText(S.p), UIC.accent, 9], ['特技「' + S.s.n + '」累積' + wsN(S.s, st) + '層後發動', '#ffd860', 9]);
-    const n = tpSpent(st); L.push(['天賦：已投入' + n + '點' + (tpAvail(st) ? '（還有' + tpAvail(st) + '點）' : ''), n ? '#c9cfe4' : UIC.muted, 9]);
+    const n = tpSpent(st); L.push(['天賦：已投入' + n + '／' + TP_CAP + '點' + (tpAvail(st) ? '（還有' + tpAvail(st) + '點）' : ''), n ? '#c9cfe4' : UIC.muted, 9]);
     L.forEach(([t, col, z0], i) => { let z = z0; while (z > 7 && Font.width(t, z) > w) z--; Font.draw(x, t, X, Y + i * 15 + (i ? 1 : 0), col, UIC.textSh, z); });
   };
 }
@@ -13570,7 +13575,7 @@ talentScreen = function* () {
       if (t < 4) { x.fillStyle = has ? shade(ccol, -0.1) : '#30375a'; x.fillRect(100, Y + 21, 2, 3); } }
     const DY = 172; drawWin(x, 4, DY, 168, 80, 'menu');
     if (row < 0) { const B = T[br]; Font.draw(x, B.n, 12, DY + 2, shade(ccol, 0.35), UIC.textSh, 11); Font.drawR(x, '已投入' + brPts9(br, st) + '／15點', 164, DY + 4, UIC.muted, UIC.textSh, 8);
-      drawFitText(x, B.d + '每層從兩個天賦中選一個；已選的層可以免費換成另一個。', 12, DY + 17, 152, 24, 10, UIC.text); }
+      drawFitText(x, B.d + '每層二選一，已選的層可以免費換。天賦最多' + TP_CAP + '點（總共已投入' + tpSpent(st) + '點），最多點滿兩個流派。', 12, DY + 17, 152, 24, 10, UIC.text); }
     else { const O = T[br].tiers[row][col], has = tcHas(br, row, st), chosen = has && tcOf(st)[br + '.' + row] === col, blk = tierBlock9(br, row, st);
       Font.draw(x, O.n, 12, DY + 2, shade(ccol, 0.35), UIC.textSh, 11); Font.drawR(x, T[br].n + '・第' + RN[row] + '層　' + tierCost9(row) + '點', 164, DY + 4, UIC.muted, UIC.textSh, 8);
       drawFitText(x, optDesc9(O), 12, DY + 17, 152, 24, 10, chosen ? UIC.accent : UIC.text);
@@ -13595,6 +13600,10 @@ talentScreen = function* () {
   }
   UI.remove(scr);
 };
+function tcFitCap(st = Game.st) { if (!st || !st.cls || !T9C[st.cls]) return 0; let n = 0;
+  while (tpSpent(st) > tpTotal(st)) { let bb = -1, bt = -1; for (let b = 0; b < 3; b++) for (let t = 4; t >= 0; t--) if (tcHas(b, t, st)) { if (t > bt) { bt = t; bb = b; } break; } if (bb < 0) break; delete tcOf(st)[bb + '.' + bt]; n++; }
+  return n; }
+{ const _so = startOverworld; startOverworld = function (...a) { tcFitCap(Game.st); return _so.apply(this, a); }; }
 { const _ng = newGameState; newGameState = function (...a) { const st = _ng.apply(this, a); if (st) st.talV9 = 1; return st; }; }
 { const _so = startOverworld; startOverworld = function (...a) {
     const st = Game.st; let note = false;
