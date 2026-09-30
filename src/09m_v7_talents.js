@@ -184,12 +184,12 @@ function* changeClass(k, quiet) {
   const st = Game.st, had = tpSpent(st); st.cls = k; st.ct = {}; if (CLASSES[k].tier === 1) st.baseCls = k;
   if (CLASSES[k].tier >= 3 && st.lv >= 14) st.flags.deep = 1; clampHP();
   yield* itemGet(st.name + '成為了' + CLASSES[k].n + '！');
-  if (!quiet) yield* say((had ? '之前的天賦點全部退回了。' : '') + '打開選單的「天賦」，就能點' + CLASSES[k].n + '的三條天賦分支（' + CLASS_V7[k].br.map(b => b[0]).join('・') + '）。');
+  if (!quiet) yield* say((had ? '（每個職業的天賦分開保存，換回原本的職業時會恢復。）' : '') + '打開選單的「天賦」，就能點' + CLASSES[k].n + '的三條天賦分支（' + CLASS_V7[k].br.map(b => b[0]).join('・') + '）。');
 }
 function* v7ClassChange(title) {
   const st = Game.st, opts = unlockedClasses(st).filter(k => k !== st.cls);
   if (!opts.length) { yield* say('現在沒有其他可以轉的職業。'); return false; }
-  const k = yield* classCardScreen(opts, { title: title || '轉職', cancel: true, look: heroLookOf(st), confirm: k => '確定要成為' + CLASSES[k].n + '嗎？\n（目前：' + (CLASSES[st.cls] || { n: '—' }).n + '・天賦會重置）' });
+  const k = yield* classCardScreen(opts, { title: title || '轉職', cancel: true, look: heroLookOf(st), confirm: k => '確定要成為' + CLASSES[k].n + '嗎？\n（目前：' + (CLASSES[st.cls] || { n: '—' }).n + '・各職業的天賦分開保存）' });
   if (!k) { yield* say('想好了再來吧。'); return true; }
   yield* changeClass(k); return true;
 }
@@ -200,7 +200,7 @@ classTalk = function* () {
     yield* sayAll(['……你的力量又成長了呢。', '讓我看看……嗯，你身上的「' + CLASSES[st.cls].n + '」之力已經穩定下來了。', '把手放在石板上吧。更深的天賦會回應你。']);
     Sound.sfx('charge'); st.flags.deep = 1; Game.fadeColor = '#ffffff'; yield* fadeOut(12, '#ffffff'); Game.fade = 1; Sound.jingle('levelup'); yield* fadeIn(24); Game.fadeColor = '#000';
     yield* itemGet('天賦覺醒！第4・5層的深層天賦解鎖了，另外獲得2點天賦點！');
-    yield* say('從今以後，你也可以在我這裡轉換職業。換了職業，天賦就會換成那個職業的三條分支，點數會全部退回。'); return true;
+    yield* say('從今以後，你也可以在我這裡轉換職業。換了職業，天賦會換成那個職業的三條分支（原本職業點的天賦會保留）。'); return true;
   }
   const r = yield* ask('要做什麼？', ['轉職', '聊天']); if (r !== 0) return false; yield* v7ClassChange('轉職的儀式'); return true;
 };

@@ -4212,18 +4212,20 @@ function* ask(text, opts = ['是', '否'], o = {}) {
 function* yesNo(text, o = {}) { const r = yield* ask(text, ['是', '否'], o); return r === 0; }
 function statCalc(base, lv, iv = 15, isHP = false) { return isHP ? Math.floor((2 * base + iv) * lv / 100) + lv + 10 : Math.floor((2 * base + iv) * lv / 100) + 5; }
 function heroAttr(st = Game.st) { const a = {}; for (const k of ATTRS) a[k] = HERO_ATTR_INIT[k] + Math.floor(HERO_GROWTH_OFS[k] + HERO_GROWTH[k] * (st.lv - 5)) + ((st.boost || {})[k] || 0); return a; }
+const LV_GROW = { hp: 1.8, st: 0.6, mp: 1.3 };
+const DEF_PER = { vit: 1, agi: 1 / 3, spd: 0.6 }; // v9.3: defences per attribute point (raised when levels stopped adding them)
 function heroStats(st = Game.st) {
-  const a = heroAttr(st), L = st.lv;
+  const a = heroAttr(st), L = st.lv, G = LV_GROW.st;
   const s = {
-    hp: 6 + L * 1.8 + a.vit * 1.6,                  // 最大HP = 6 + 等級×1.8 + 體力×1.6 (v22: 體力 matters with free allocation)
-    atk: a.str + a.dex / 2 + L * 0.6,               // 物攻 = 力量 + 靈巧÷2 + 等級×0.6
-    def: a.vit + a.agi / 3 + L * 0.6,               // 物防 = 體力 + 敏捷÷3 + 等級×0.6
-    spa: a.int * 1.2 + a.dex / 3 + L * 0.6,         // 魔攻 = 智力×1.2 + 靈巧÷3 + 等級×0.6
-    spd: a.int * 0.6 + a.vit * 0.6 + L * 0.6,       // 魔防 = 智力×0.6 + 體力×0.6 + 等級×0.6
-    spe: a.agi * 1.5 + L * 0.6,                     // 速度 = 敏捷×1.5 + 等級×0.6
+    hp: 6 + L * LV_GROW.hp + a.vit * 1.6,                  // 最大HP = 6 + 等級×1.8 + 體力×1.6 (v22: 體力 matters with free allocation)
+    atk: a.str + a.dex / 2 + L * G,               // 物攻 = 力量 + 靈巧÷2 + 等級×0.6
+    def: a.vit * DEF_PER.vit + a.agi * DEF_PER.agi + L * G,               // 物防 = 體力 + 敏捷÷3 + 等級×0.6
+    spa: a.int * 1.2 + a.dex / 3 + L * G,         // 魔攻 = 智力×1.2 + 靈巧÷3 + 等級×0.6
+    spd: a.int * DEF_PER.spd + a.vit * DEF_PER.spd + L * G,       // 魔防 = 智力×0.6 + 體力×0.6 + 等級×0.6
+    spe: a.agi * 1.5 + L * G,                     // 速度 = 敏捷×1.5 + 等級×0.6
   };
   for (const k in s) s[k] = Math.floor(s[k]);
-  s.mp = Math.floor(8 + L * 1.3 + a.int * 1.5);      // 最大MP = 8 + 等級×1.3 + 智力×1.5
+  s.mp = Math.floor(8 + L * LV_GROW.mp + a.int * 1.5);      // 最大MP = 8 + 等級×1.3 + 智力×1.5
   for (const k in st.boost || {}) if (s[k] !== undefined) s[k] += st.boost[k]; // legacy saves
   for (const g of equippedGear(st)) { const o = gearStats(g).st; for (const k in o) s[k] += o[k]; }
   s.crit = 3 + a.luk * 0.6;   // 會心率% = 3 + 幸運×0.6
@@ -8218,7 +8220,7 @@ class TitleScene {
     x.drawImage(this.logo, Math.round(W / 2 - this.logo.width / 2), 6 + bob);
     Font.drawC(x, '～異世界冒險RPG～', W / 2, 52 + bob, '#ffe0a0', '#3a1428');
     if (this.stage === 'press' && Math.floor(this.t / 30) % 2 === 0) Font.drawC(x, '按 A 鍵開始', W / 2, 232, '#ffffff', '#1a1024');
-    Font.drawR(x, 'v9.2.4', W - 3, H - 13, '#b890b0', null);
+    Font.drawR(x, 'v9.3', W - 3, H - 13, '#b890b0', null);
   }
 }
 class IntroScene {
@@ -9392,9 +9394,13 @@ function* questDetailScreen(q) {
 }
 const ATTR_BASE = { str: 4, agi: 4, vit: 4, int: 4, dex: 4, luk: 3 };
 const ATTR_HELP = { str: '物攻+1　（重擊技能加成）', agi: '速度+1.5、迴避+0.4%、物防+0.3　（連擊技能加成）', vit: '最大HP+1.6、物防+1、魔防+0.6', int: '魔攻+1.2、最大MP+1.5、魔防+0.6　（魔法加成）', dex: '命中+0.5%、物攻+0.5、魔攻+0.3　（精準技能加成）', luk: '會心率+0.6%、迴避+0.1%　（暗殺技能加成）' };
-const ATTR_TEMPLATE = { swordsman: { str: 3, vit: 2, dex: 2, agi: 1, luk: 1 }, mage: { int: 4, dex: 2, vit: 2, agi: 1 }, guardian: { vit: 4, str: 2, dex: 1, int: 1 }, ranger: { agi: 3, dex: 2, str: 2, vit: 2, luk: 1 }, _: { str: 2, int: 2, vit: 2, agi: 1, dex: 1 } };
-const attrPointsFor = lv => Math.max(0, lv - 1); /* v7.1: 1 per level (was 2): the hero grew too fast */ // 2 per level: free allocation already wastes nothing, so this keeps builds close to the old balance
-const attrCost = v => v < 20 ? 1 : v < 30 ? 2 : 3;
+const ATTR_TEMPLATE = { swordsman: { str: 3, vit: 2, dex: 2, agi: 1, luk: 1 }, mage: { int: 4, dex: 1, vit: 2, agi: 1 }, guardian: { vit: 3, str: 3, dex: 1 }, ranger: { agi: 3, str: 3, dex: 2, vit: 1, luk: 1 },
+  bard: { int: 3, vit: 2, agi: 2, dex: 1 }, machinist: { str: 3, dex: 3, vit: 2, luk: 1 }, monk: { str: 3, agi: 2, vit: 2, dex: 1 }, dragoon: { str: 3, vit: 2, dex: 2, agi: 1 },
+  otherworlder: { str: 2, int: 2, vit: 2, dex: 1, agi: 1 }, spellblade: { str: 2, int: 2, dex: 2, vit: 2 }, _: { str: 2, int: 2, vit: 2, agi: 1, dex: 1 } };
+const ATTR_GROW = { perLv: 1 }; // v9.3: 屬性點 per level (see 09zl)
+const attrPointsFor = lv => Math.max(0, lv - 1) * ATTR_GROW.perLv; /* v7.1: 1 per level (was 2): the hero grew too fast */ // 2 per level: free allocation already wastes nothing, so this keeps builds close to the old balance
+const attrCost = v => v < 20 ? 1 : v < 30 ? 2 : v < 40 ? 3 : 4; // v9.3: 4 points each past 40
+const attrMax = (st = Game.st) => 10 + (st ? st.lv : 1); // v9.3: no attribute above 10 + level (a little limit on one-stat builds)
 function attrSpent(st) { let n = 0; for (const k of ATTRS) { const b = ATTR_BASE[k], a = (st.attr || {})[k] || 0; for (let v = b; v < b + a; v++) n += attrCost(v); } return n; }
 const attrAvail = (st = Game.st) => st && st.attr ? attrPointsFor(st.lv) + (st.attrBonus || 0) - attrSpent(st) : 0;
 { const _ha = heroAttr; heroAttr = function (st = Game.st) {
@@ -9403,10 +9409,10 @@ const attrAvail = (st = Game.st) => st && st.attr ? attrPointsFor(st.lv) + (st.a
   };
 }
 function attrAuto(st = Game.st) { // spend the remaining points by the class template (cheapest-ratio first)
-  const T = ATTR_TEMPLATE[baseClassOf(st.cls)] || ATTR_TEMPLATE._; st.attr = st.attr || {};
+  const T = ATTR_TEMPLATE[st.cls] || ATTR_TEMPLATE[baseClassOf(st.cls)] || ATTR_TEMPLATE._; st.attr = st.attr || {};
   for (let guard = 0; guard < 400; guard++) {
     const left = attrAvail(st); let best = null, br = 1e9;
-    for (const k in T) { const cur = ATTR_BASE[k] + (st.attr[k] || 0), c = attrCost(cur); if (c > left) continue; const r = ((st.attr[k] || 0) + 1) / T[k]; if (r < br) { br = r; best = k; } }
+    for (const k in T) { const cur = ATTR_BASE[k] + (st.attr[k] || 0), c = attrCost(cur); if (c > left || cur >= attrMax(st)) continue; const r = ((st.attr[k] || 0) + 1) / T[k]; if (r < br) { br = r; best = k; } }
     if (!best) break; st.attr[best] = (st.attr[best] || 0) + 1;
   }
 }
@@ -9444,11 +9450,11 @@ function* attrScreen() {
     ATTRS.forEach((k, r) => { const Y = 26 + r * 15, on = i === r; if (on) selBar(x, 6, Y - 1, 164, 14);
       Font.draw(x, ATTR_NAMES[k], 12, Y - 1, on ? UIC.text : '#c9cfe4', UIC.textSh, 11); Font.drawR(x, String(a[k]), 74, Y - 1, add[k] ? UIC.good : UIC.text, UIC.textSh, 11);
       if ((st.boost || {})[k]) Font.draw(x, '(+' + st.boost[k] + ')', 77, Y, UIC.accent, UIC.textSh, 8);
-      const c = attrCost(ATTR_BASE[k] + (st.attr[k] || 0)); Font.drawR(x, (add[k] ? '◀ ' : '') + '▶ ' + c + '點', 164, Y, c <= av ? UIC.warm : UIC.dis, UIC.textSh, 9);
+      const c = attrCost(ATTR_BASE[k] + (st.attr[k] || 0)), mx = ATTR_BASE[k] + (st.attr[k] || 0) >= attrMax(st); Font.drawR(x, mx ? (add[k] ? '◀ ' : '') + '上限' + attrMax(st) : (add[k] ? '◀ ' : '') + '▶ ' + c + '點', 164, Y, !mx && c <= av ? UIC.warm : UIC.dis, UIC.textSh, 9);
       touchRegion(4, Y - 1, 168, 14, () => { if (i === r) tapKey('right'); else i = r; }); });
-    const Y2 = 26 + ATTRS.length * 15 + 1; [['推薦配點', av > 0], ['重置屬性' + (resetCost() ? '（' + resetCost() + 'G）' : '（免費）'), attrSpent(st) > 0]].forEach(([t, ok], n) => { const X = 8 + n * 82, on = i === ATTRS.length + n; drawBtn(x, X, Y2, 78, 16, on); Font.drawC(x, t, X + 39, Y2, ok ? (on ? UIC.text : '#c9cfe4') : UIC.dis, UIC.textSh, 9); touchRegion(X, Y2, 78, 16, () => { i = ATTRS.length + n; tapKey('a'); }); });
+    const Y2 = 26 + ATTRS.length * 15 + 1; [['推薦配點', av > 0], ['重置（重生之水' + ((st.bag && st.bag.attrReset) || 0) + '）', attrSpent(st) > 0 && (st.bag && st.bag.attrReset) > 0]].forEach(([t, ok], n) => { const X = 8 + n * 82, on = i === ATTRS.length + n; drawBtn(x, X, Y2, 78, 16, on); Font.drawC(x, t, X + 39, Y2, ok ? (on ? UIC.text : '#c9cfe4') : UIC.dis, UIC.textSh, 9); touchRegion(X, Y2, 78, 16, () => { i = ATTRS.length + n; tapKey('a'); }); });
     const k = ATTRS[i]; drawWin(x, 4, 142, 168, 110, 'menu');
-    Font.draw(x, k ? ATTR_NAMES[k] + '：' : (i === ATTRS.length ? '依職業的推薦比例分配剩下的點數。' : '把所有屬性點收回來重新分配。'), 12, 144, UIC.accent, UIC.textSh, 10);
+    Font.draw(x, k ? ATTR_NAMES[k] + '：' : (i === ATTRS.length ? '依職業的推薦比例分配剩下的點數。' : '用重生之水把所有屬性點收回來重新分配。'), 12, 144, UIC.accent, UIC.textSh, 10);
     if (k) Font.wrap(ATTR_HELP[k], 118, 9).slice(0, 2).forEach((l, n) => Font.draw(x, l, 48, 145 + n * 11, UIC.text, UIC.textSh, 9));
     const s = heroStats(st); DER.forEach(([n, key, u], r) => { const X = 12 + (r % 2) * 80, Y = 170 + Math.floor(r / 2) * 13, v = s[key], d = Math.round((v - s0[key]) * 10) / 10;
       Font.draw(x, n, X, Y, UIC.muted, UIC.textSh, 10); Font.drawR(x, (u ? (Math.round(v * 10) / 10) : v) + (u || ''), X + 52, Y, UIC.text, UIC.textSh, 10); if (d) Font.draw(x, (d > 0 ? '+' : '') + d, X + 55, Y + 1, d > 0 ? UIC.good : UIC.bad, UIC.textSh, 8); });
@@ -9458,11 +9464,11 @@ function* attrScreen() {
   while (true) {
     if (Input.repeat('up')) { i = (i + N - 1) % N; Sound.sfx('cursor'); } if (Input.repeat('down')) { i = (i + 1) % N; Sound.sfx('cursor'); }
     const k = ATTRS[i];
-    if (k && (Input.repeat('right') || Input.pressed('a'))) { Input.consume('a'); const c = attrCost(ATTR_BASE[k] + (st.attr[k] || 0)); if (c <= attrAvail(st)) { st.attr[k] = (st.attr[k] || 0) + 1; add[k] = (add[k] || 0) + 1; Sound.sfx('statUp'); clampHP(); } else Sound.sfx('bump'); }
+    if (k && (Input.repeat('right') || Input.pressed('a'))) { Input.consume('a'); const c = attrCost(ATTR_BASE[k] + (st.attr[k] || 0)); if (c <= attrAvail(st) && ATTR_BASE[k] + (st.attr[k] || 0) < attrMax(st)) { st.attr[k] = (st.attr[k] || 0) + 1; add[k] = (add[k] || 0) + 1; Sound.sfx('statUp'); clampHP(); } else Sound.sfx('bump'); }
     if (k && Input.repeat('left')) { if (add[k] > 0) { add[k]--; st.attr[k]--; Sound.sfx('cancel'); clampHP(); } else Sound.sfx('bump'); }
     if (!k && Input.pressed('a')) { Input.consume('a');
       if (i === ATTRS.length) { if (attrAvail(st) > 0) { const b4 = { ...st.attr }; attrAuto(st); for (const q of ATTRS) { const dq = (st.attr[q] || 0) - (b4[q] || 0); if (dq) add[q] = (add[q] || 0) + dq; } Sound.sfx('statUp'); clampHP(); } else Sound.sfx('bump'); }
-      else { const cost = resetCost(); if (!attrSpent(st)) { Sound.sfx('bump'); } else { UI.remove(scr); const ok = yield* yesNo('要把所有屬性點收回來重新分配嗎？' + (cost ? '\n（費用 ' + cost + ' G）' : '\n（這次免費）')); if (ok) { if (cost && st.money < cost) yield* say('錢不夠喔。'); else { st.money -= cost; st.attrFreeReset = 0; st.attr = {}; for (const q of ATTRS) delete add[q]; Sound.sfx('cancel'); clampHP(); } } UI.push(scr); } } }
+      else { const have = (st.bag && st.bag.attrReset) || 0; if (!attrSpent(st)) { Sound.sfx('bump'); } else if (!have) { UI.remove(scr); yield* say('重置屬性需要「重生之水」。\n（萌芽鎮和王都的道具店有賣）'); UI.push(scr); } else { UI.remove(scr); const ok = yield* yesNo('要喝下重生之水，把所有屬性點收回來重新分配嗎？\n（持有' + have + '瓶，會用掉1瓶）'); if (ok) { st.bag.attrReset--; st.attrFreeReset = 0; st.attr = {}; for (const q of ATTRS) delete add[q]; Sound.sfx('cancel'); clampHP(); } UI.push(scr); } } }
     if (Input.pressed('b')) { Input.consume('b'); Sound.sfx('cancel'); break; }
     yield;
   }
@@ -11647,12 +11653,12 @@ function* changeClass(k, quiet) {
   const st = Game.st, had = tpSpent(st); st.cls = k; st.ct = {}; if (CLASSES[k].tier === 1) st.baseCls = k;
   if (CLASSES[k].tier >= 3 && st.lv >= 14) st.flags.deep = 1; clampHP();
   yield* itemGet(st.name + '成為了' + CLASSES[k].n + '！');
-  if (!quiet) yield* say((had ? '之前的天賦點全部退回了。' : '') + '打開選單的「天賦」，就能點' + CLASSES[k].n + '的三條天賦分支（' + CLASS_V7[k].br.map(b => b[0]).join('・') + '）。');
+  if (!quiet) yield* say((had ? '（每個職業的天賦分開保存，換回原本的職業時會恢復。）' : '') + '打開選單的「天賦」，就能點' + CLASSES[k].n + '的三條天賦分支（' + CLASS_V7[k].br.map(b => b[0]).join('・') + '）。');
 }
 function* v7ClassChange(title) {
   const st = Game.st, opts = unlockedClasses(st).filter(k => k !== st.cls);
   if (!opts.length) { yield* say('現在沒有其他可以轉的職業。'); return false; }
-  const k = yield* classCardScreen(opts, { title: title || '轉職', cancel: true, look: heroLookOf(st), confirm: k => '確定要成為' + CLASSES[k].n + '嗎？\n（目前：' + (CLASSES[st.cls] || { n: '—' }).n + '・天賦會重置）' });
+  const k = yield* classCardScreen(opts, { title: title || '轉職', cancel: true, look: heroLookOf(st), confirm: k => '確定要成為' + CLASSES[k].n + '嗎？\n（目前：' + (CLASSES[st.cls] || { n: '—' }).n + '・各職業的天賦分開保存）' });
   if (!k) { yield* say('想好了再來吧。'); return true; }
   yield* changeClass(k); return true;
 }
@@ -11663,7 +11669,7 @@ classTalk = function* () {
     yield* sayAll(['……你的力量又成長了呢。', '讓我看看……嗯，你身上的「' + CLASSES[st.cls].n + '」之力已經穩定下來了。', '把手放在石板上吧。更深的天賦會回應你。']);
     Sound.sfx('charge'); st.flags.deep = 1; Game.fadeColor = '#ffffff'; yield* fadeOut(12, '#ffffff'); Game.fade = 1; Sound.jingle('levelup'); yield* fadeIn(24); Game.fadeColor = '#000';
     yield* itemGet('天賦覺醒！第4・5層的深層天賦解鎖了，另外獲得2點天賦點！');
-    yield* say('從今以後，你也可以在我這裡轉換職業。換了職業，天賦就會換成那個職業的三條分支，點數會全部退回。'); return true;
+    yield* say('從今以後，你也可以在我這裡轉換職業。換了職業，天賦會換成那個職業的三條分支（原本職業點的天賦會保留）。'); return true;
   }
   const r = yield* ask('要做什麼？', ['轉職', '聊天']); if (r !== 0) return false; yield* v7ClassChange('轉職的儀式'); return true;
 };
@@ -13511,7 +13517,7 @@ Object.assign(TK_TXT, {
   dmgUp: v => '造成的傷害+' + v + '%', specStart: v => '每場戰鬥開場，特技就累積' + v + '層', openShield: v => '每場戰鬥開場展開' + v + '回合護盾（傷害-40%）', winHeal: v => '戰鬥勝利後回復' + v + '%最大HP',
 });
 const optDesc9 = O => O.fx.map(([k, v]) => tDesc(k, v)).join('、');
-const tcOf = (st = Game.st) => { if (!st.tc || st.tc.cls !== st.cls) st.tc = { cls: st.cls, p: {} }; return st.tc.p; };
+const tcOf = (st = Game.st) => { const A = st.tcAll || (st.tcAll = {}); if (st.tc && st.tc.cls && st.tc.p) { if (!A[st.tc.cls]) A[st.tc.cls] = st.tc.p; } delete st.tc; return A[st.cls] || (A[st.cls] = {}); };
 const tierCost9 = t => t + 1;
 const tcHas = (b, t, st = Game.st) => tcOf(st)[b + '.' + t] !== undefined;
 const brPts9 = (b, st = Game.st) => { let s = 0; for (let t = 0; t < 5; t++) if (tcHas(b, t, st)) s += tierCost9(t); return s; };
@@ -13549,13 +13555,13 @@ function tcAuto(st = Game.st, pick = 0) { const P = tcOf(st); for (let b = 0; b 
   }; }
 talentScreen = function* () {
   const st = Game.st, T = T9C[st.cls]; if (!T) { yield* say('先在萌芽鎮的村長那裡完成覺醒的儀式吧。'); return; }
-  let br = 0, row = 0, col = 0, msg = '', msgT = 0; const ccol = classColOf(st.cls), RN = ['一', '二', '三', '四', '五'];
+  let br = 0, row = 0, col = 0, msg = '', msgT = 0; const ccol = classColOf(st.cls), RN = ['一', '二', '三', '四', '五'], fresh = new Set(); // v9.3: tiers learned in this visit
   const RY = t => 46 + t * 24 + (t >= 3 ? 8 : 0), OX = o => 28 + o * 73, OW = 71;
   const act = () => { if (row < 0) { row = 0; return; } const O = T[br].tiers[row][col], key = br + '.' + row, P = tcOf(st);
-    if (tcHas(br, row, st)) { if (P[key] === col) { msg = '已經選擇了「' + O.n + '」'; msgT = 40; Sound.sfx('bump'); return; } P[key] = col; clampHP(); Sound.sfx('select'); msg = '換成了「' + O.n + '」（免費）'; msgT = 50; return; }
+    if (tcHas(br, row, st)) { if (P[key] === col) { msg = '已經選擇了「' + O.n + '」'; msgT = 40; Sound.sfx('bump'); return; } if (!fresh.has(key)) { msg = '已確定的天賦要用「遺忘之書」重置才能改'; msgT = 70; Sound.sfx('bump'); return; } P[key] = col; clampHP(); Sound.sfx('select'); msg = '換成了「' + O.n + '」'; msgT = 50; return; }
     const blk = tierBlock9(br, row, st); if (blk) { Sound.sfx('bump'); msg = blk; msgT = 60; return; }
-    P[key] = col; clampHP(); Sound.sfx('statUp'); msg = '學會了「' + O.n + '」！'; msgT = 50; };
-  const refund = () => { if (row < 0) return; const blk = tierRefundBlock9(br, row, st); if (blk) { Sound.sfx('bump'); msg = blk; msgT = 60; return; } delete tcOf(st)[br + '.' + row]; clampHP(); Sound.sfx('cancel'); msg = '退回了' + tierCost9(row) + '點。'; msgT = 40; };
+    P[key] = col; fresh.add(key); clampHP(); Sound.sfx('statUp'); msg = '學會了「' + O.n + '」！（離開畫面前還能改）'; msgT = 60; };
+  const refund = () => { if (row < 0) return; const blk = tierRefundBlock9(br, row, st) || (fresh.has(br + '.' + row) ? null : '已確定的天賦要用「遺忘之書」重置'); if (blk) { Sound.sfx('bump'); msg = blk; msgT = 60; return; } fresh.delete(br + '.' + row); delete tcOf(st)[br + '.' + row]; clampHP(); Sound.sfx('cancel'); msg = '退回了' + tierCost9(row) + '點。'; msgT = 40; };
   const scr = { draw(x) {
     const TR = typeof touchRegion === 'function';
     screenBG(x); headerBar(x, '天賦・' + CLASSES[st.cls].n); const av = tpAvail(st); Font.drawR(x, '天賦點 ' + av, W - 6, 2, av ? UIC.warm : UIC.muted, UIC.textSh);
@@ -13575,15 +13581,16 @@ talentScreen = function* () {
       if (t < 4) { x.fillStyle = has ? shade(ccol, -0.1) : '#30375a'; x.fillRect(100, Y + 21, 2, 3); } }
     const DY = 172; drawWin(x, 4, DY, 168, 80, 'menu');
     if (row < 0) { const B = T[br]; Font.draw(x, B.n, 12, DY + 2, shade(ccol, 0.35), UIC.textSh, 11); Font.drawR(x, '已投入' + brPts9(br, st) + '／15點', 164, DY + 4, UIC.muted, UIC.textSh, 8);
-      drawFitText(x, B.d + '每層二選一，已選的層可以免費換。天賦最多' + TP_CAP + '點（總共已投入' + tpSpent(st) + '點），最多點滿兩個流派。', 12, DY + 17, 152, 24, 10, UIC.text); }
+      drawFitText(x, B.d + '每層二選一，離開畫面後就確定，之後要改需要「遺忘之書」。天賦最多' + TP_CAP + '點（已投入' + tpSpent(st) + '點）。', 12, DY + 17, 152, 24, 10, UIC.text); }
     else { const O = T[br].tiers[row][col], has = tcHas(br, row, st), chosen = has && tcOf(st)[br + '.' + row] === col, blk = tierBlock9(br, row, st);
       Font.draw(x, O.n, 12, DY + 2, shade(ccol, 0.35), UIC.textSh, 11); Font.drawR(x, T[br].n + '・第' + RN[row] + '層　' + tierCost9(row) + '點', 164, DY + 4, UIC.muted, UIC.textSh, 8);
       drawFitText(x, optDesc9(O), 12, DY + 17, 152, 24, 10, chosen ? UIC.accent : UIC.text);
-      Font.draw(x, msgT > 0 ? msg : chosen ? '選擇中' : has ? 'A：換成這個（免費）' : blk || 'A：選擇（花費' + tierCost9(row) + '點）', 12, DY + 52, msgT > 0 ? UIC.warm : chosen ? UIC.good : has ? UIC.good : blk ? UIC.bad : UIC.good, UIC.textSh, 9); }
+      const fr = fresh.has(br + '.' + row);
+      Font.draw(x, msgT > 0 ? msg : chosen ? (fr ? '選擇中（離開前還能改）' : '已確定') : has ? (fr ? 'A：換成這個' : '要改需要遺忘之書') : blk || 'A：選擇（花費' + tierCost9(row) + '點）', 12, DY + 52, msgT > 0 ? UIC.warm : chosen ? UIC.good : has ? UIC.good : blk ? UIC.bad : UIC.good, UIC.textSh, 9); }
     if (RESONANCE[st.cls]) { const bp = brPts9(br, st), R3 = RESONANCE[st.cls][br], got = RES_AT.filter(q => bp >= q).length, nx = got < 3 ? R3[got] : null;
       drawFitText(x, '分支共鳴 ' + got + '/3　' + (nx ? '下一個（' + RES_AT[got] + '點）：' + shortDesc(nx[0], nx[1]) : '全部達成！'), 12, DY + 41, 152, 12, 9, '#ffd860'); }
-    drawBtn(x, 12, DY + 64, 60, 13, false); Font.drawC(x, '↩退回此層', 42, DY + 63, row >= 0 && !tierRefundBlock9(br, row, st) ? UIC.warm : UIC.dis, UIC.textSh, 8);
-    drawBtn(x, 100, DY + 64, 64, 13, false); Font.drawC(x, '全部重置', 132, DY + 63, tpSpent(st) ? UIC.warm : UIC.dis, UIC.textSh, 8);
+    drawBtn(x, 12, DY + 64, 60, 13, false); Font.drawC(x, '↩退回此層', 42, DY + 63, row >= 0 && fresh.has(br + '.' + row) && !tierRefundBlock9(br, row, st) ? UIC.warm : UIC.dis, UIC.textSh, 8);
+    drawBtn(x, 100, DY + 64, 64, 13, false); Font.drawC(x, '重置（遺忘之書' + ((st.bag && st.bag.talentReset) || 0) + '）', 132, DY + 63, tpSpent(st) && (st.bag && st.bag.talentReset) > 0 ? UIC.warm : UIC.dis, UIC.textSh, 7);
     if (TR) { touchRegion(12, DY + 64, 60, 13, () => tapKey('select')); touchRegion(100, DY + 64, 64, 13, () => tapKey('start')); }
     if (msgT > 0) msgT--;
   }, touchBack: true };
@@ -13595,7 +13602,10 @@ talentScreen = function* () {
     if (Input.pressed('b')) { Input.consume('b'); Sound.sfx('cancel'); break; }
     if (Input.pressed('a')) { Input.consume('a'); act(); }
     if (Input.pressed('select')) { Input.consume('select'); refund(); }
-    if (Input.pressed('start')) { Input.consume('start'); if (tpSpent(st)) { UI.remove(scr); if (yield* yesNo('要把' + CLASSES[st.cls].n + '的天賦全部重置嗎？\n（點數全部退回，不用花錢）')) { tcOf(st); st.tc.p = {}; clampHP(); Sound.sfx('heal'); } UI.push(scr); } }
+    if (Input.pressed('start')) { Input.consume('start'); if (tpSpent(st)) { UI.remove(scr); const have = (st.bag && st.bag.talentReset) || 0;
+        if (!have) yield* say('重置天賦需要「遺忘之書」。\n（萌芽鎮和王都的道具店有賣）');
+        else if (yield* yesNo('要讀遺忘之書，把' + CLASSES[st.cls].n + '的天賦全部重置嗎？\n（點數全部退回；持有' + have + '本，會用掉1本）')) { st.bag.talentReset--; tcOf(st); st.tcAll[st.cls] = {}; fresh.clear(); clampHP(); Sound.sfx('heal'); }
+        UI.push(scr); } }
     yield;
   }
   UI.remove(scr);
@@ -13612,5 +13622,26 @@ function tcFitCap(st = Game.st) { if (!st || !st.cls || !T9C[st.cls]) return 0; 
     if (note && ow && ow.run) ow.run((function* () { yield* wait(40); yield* say('【v9.2 天賦重做】天賦改成「每層二選一」，所有名稱和效果都換新了。舊的天賦點已經全部退回。（選單→天賦）'); })());
     return ow;
   }; }
+LV_GROW.hp = 1.8; LV_GROW.st = 0; LV_GROW.mp = 1.0; ATTR_GROW.perLv = 3;
+DEF_PER.vit = 1.5; DEF_PER.agi = 0.5; DEF_PER.spd = 0.8;
+Object.assign(ATTR_HELP, { agi: '速度+1.5、迴避+0.4%、物防+0.5　（連擊技能加成）', vit: '最大HP+1.6、物防+1.5、魔防+0.8', int: '魔攻+1.2、最大MP+1.5、魔防+0.8　（魔法加成）' });
+Object.assign(ITEMS, {
+  attrReset: { n: '重生之水', price: 3000, cat: '永久強化', use: 'reset', d: '喝下後，可以把所有屬性點收回來重新分配。（在選單→屬性使用）' },
+  talentReset: { n: '遺忘之書', price: 4000, cat: '永久強化', use: 'reset', d: '讀完後，可以把目前職業的天賦全部收回來重新選。（在選單→天賦使用）' },
+});
+SHOP_LIST.push('attrReset', 'talentReset'); if (typeof CAP_SHOP !== 'undefined') CAP_SHOP.push('attrReset', 'talentReset');
+{ const _ng = newGameState; newGameState = function (...a) { const st = _ng.apply(this, a); if (st) { st.growV93 = 1; st.bag.attrReset = 1; } return st; }; }
+{ const _ct = classTalk; classTalk = function* (...a) {
+    const st = Game.st, had = !!(st.flags && st.flags.deep); const r = yield* _ct.apply(this, a);
+    if (!had && st.flags && st.flags.deep && !st.flags.gotForget) { st.flags.gotForget = 1; st.bag.talentReset = (st.bag.talentReset || 0) + 1; yield* itemGet('村長給了你一本遺忘之書。（想重新選天賦的時候使用）'); }
+    return r; }; }
+{ const _so = startOverworld; startOverworld = function (...a) {
+    const st = Game.st; let note = false;
+    if (st && !st.growV93) { st.growV93 = 1; if (st.cls && st.lv > 1) { note = true; st.bag.attrReset = (st.bag.attrReset || 0) + 1; st.bag.talentReset = (st.bag.talentReset || 0) + 1; } }
+    const ow = _so.apply(this, a);
+    if (note && ow && ow.run) { const prev = ow.script; ow.run((function* () { if (prev) yield* prev; yield* wait(50);
+      yield* say('【v9.3 成長改版】升級時，物攻・物防・魔攻・魔防・速度不會再自己成長，改成每級給3點屬性點。\n（你現在有' + attrAvail(st) + '點可以分配：選單→屬性，也可以按「推薦配點」）');
+      yield* say('重置屬性要用「重生之水」，重置天賦要用「遺忘之書」（道具店有賣）。\n這次改版送你各1個。'); })()); }
+    return ow; }; }
 for (const k in GEAR_RECIPE) { const M = GEAR_RECIPE[k].mats || (GEAR_RECIPE[k].mats = {}); for (const i in M) if (!ITEMS[i]) delete M[i]; if (!Object.keys(M).length) M.stone = 2; }
 </script>

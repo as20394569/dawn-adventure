@@ -8,9 +8,13 @@
    - Old saves keep exactly the attributes they had (converted to allocated points) and get one free reset. */
 const ATTR_BASE = { str: 4, agi: 4, vit: 4, int: 4, dex: 4, luk: 3 };
 const ATTR_HELP = { str: '物攻+1　（重擊技能加成）', agi: '速度+1.5、迴避+0.4%、物防+0.3　（連擊技能加成）', vit: '最大HP+1.6、物防+1、魔防+0.6', int: '魔攻+1.2、最大MP+1.5、魔防+0.6　（魔法加成）', dex: '命中+0.5%、物攻+0.5、魔攻+0.3　（精準技能加成）', luk: '會心率+0.6%、迴避+0.1%　（暗殺技能加成）' };
-const ATTR_TEMPLATE = { swordsman: { str: 3, vit: 2, dex: 2, agi: 1, luk: 1 }, mage: { int: 4, dex: 2, vit: 2, agi: 1 }, guardian: { vit: 4, str: 2, dex: 1, int: 1 }, ranger: { agi: 3, dex: 2, str: 2, vit: 2, luk: 1 }, _: { str: 2, int: 2, vit: 2, agi: 1, dex: 1 } };
-const attrPointsFor = lv => Math.max(0, lv - 1); /* v7.1: 1 per level (was 2): the hero grew too fast */ // 2 per level: free allocation already wastes nothing, so this keeps builds close to the old balance
-const attrCost = v => v < 20 ? 1 : v < 30 ? 2 : 3;
+const ATTR_TEMPLATE = { swordsman: { str: 3, vit: 2, dex: 2, agi: 1, luk: 1 }, mage: { int: 4, dex: 1, vit: 2, agi: 1 }, guardian: { vit: 3, str: 3, dex: 1 }, ranger: { agi: 3, str: 3, dex: 2, vit: 1, luk: 1 },
+  bard: { int: 3, vit: 2, agi: 2, dex: 1 }, machinist: { str: 3, dex: 3, vit: 2, luk: 1 }, monk: { str: 3, agi: 2, vit: 2, dex: 1 }, dragoon: { str: 3, vit: 2, dex: 2, agi: 1 },
+  otherworlder: { str: 2, int: 2, vit: 2, dex: 1, agi: 1 }, spellblade: { str: 2, int: 2, dex: 2, vit: 2 }, _: { str: 2, int: 2, vit: 2, agi: 1, dex: 1 } };
+const ATTR_GROW = { perLv: 1 }; // v9.3: 屬性點 per level (see 09zl)
+const attrPointsFor = lv => Math.max(0, lv - 1) * ATTR_GROW.perLv; /* v7.1: 1 per level (was 2): the hero grew too fast */ // 2 per level: free allocation already wastes nothing, so this keeps builds close to the old balance
+const attrCost = v => v < 20 ? 1 : v < 30 ? 2 : v < 40 ? 3 : 4; // v9.3: 4 points each past 40
+const attrMax = (st = Game.st) => 10 + (st ? st.lv : 1); // v9.3: no attribute above 10 + level (a little limit on one-stat builds)
 function attrSpent(st) { let n = 0; for (const k of ATTRS) { const b = ATTR_BASE[k], a = (st.attr || {})[k] || 0; for (let v = b; v < b + a; v++) n += attrCost(v); } return n; }
 const attrAvail = (st = Game.st) => st && st.attr ? attrPointsFor(st.lv) + (st.attrBonus || 0) - attrSpent(st) : 0;
 { const _ha = heroAttr; heroAttr = function (st = Game.st) {
@@ -19,10 +23,10 @@ const attrAvail = (st = Game.st) => st && st.attr ? attrPointsFor(st.lv) + (st.a
   };
 }
 function attrAuto(st = Game.st) { // spend the remaining points by the class template (cheapest-ratio first)
-  const T = ATTR_TEMPLATE[baseClassOf(st.cls)] || ATTR_TEMPLATE._; st.attr = st.attr || {};
+  const T = ATTR_TEMPLATE[st.cls] || ATTR_TEMPLATE[baseClassOf(st.cls)] || ATTR_TEMPLATE._; st.attr = st.attr || {};
   for (let guard = 0; guard < 400; guard++) {
     const left = attrAvail(st); let best = null, br = 1e9;
-    for (const k in T) { const cur = ATTR_BASE[k] + (st.attr[k] || 0), c = attrCost(cur); if (c > left) continue; const r = ((st.attr[k] || 0) + 1) / T[k]; if (r < br) { br = r; best = k; } }
+    for (const k in T) { const cur = ATTR_BASE[k] + (st.attr[k] || 0), c = attrCost(cur); if (c > left || cur >= attrMax(st)) continue; const r = ((st.attr[k] || 0) + 1) / T[k]; if (r < br) { br = r; best = k; } }
     if (!best) break; st.attr[best] = (st.attr[best] || 0) + 1;
   }
 }
@@ -64,11 +68,11 @@ function* attrScreen() {
     ATTRS.forEach((k, r) => { const Y = 26 + r * 15, on = i === r; if (on) selBar(x, 6, Y - 1, 164, 14);
       Font.draw(x, ATTR_NAMES[k], 12, Y - 1, on ? UIC.text : '#c9cfe4', UIC.textSh, 11); Font.drawR(x, String(a[k]), 74, Y - 1, add[k] ? UIC.good : UIC.text, UIC.textSh, 11);
       if ((st.boost || {})[k]) Font.draw(x, '(+' + st.boost[k] + ')', 77, Y, UIC.accent, UIC.textSh, 8);
-      const c = attrCost(ATTR_BASE[k] + (st.attr[k] || 0)); Font.drawR(x, (add[k] ? '◀ ' : '') + '▶ ' + c + '點', 164, Y, c <= av ? UIC.warm : UIC.dis, UIC.textSh, 9);
+      const c = attrCost(ATTR_BASE[k] + (st.attr[k] || 0)), mx = ATTR_BASE[k] + (st.attr[k] || 0) >= attrMax(st); Font.drawR(x, mx ? (add[k] ? '◀ ' : '') + '上限' + attrMax(st) : (add[k] ? '◀ ' : '') + '▶ ' + c + '點', 164, Y, !mx && c <= av ? UIC.warm : UIC.dis, UIC.textSh, 9);
       touchRegion(4, Y - 1, 168, 14, () => { if (i === r) tapKey('right'); else i = r; }); });
-    const Y2 = 26 + ATTRS.length * 15 + 1; [['推薦配點', av > 0], ['重置屬性' + (resetCost() ? '（' + resetCost() + 'G）' : '（免費）'), attrSpent(st) > 0]].forEach(([t, ok], n) => { const X = 8 + n * 82, on = i === ATTRS.length + n; drawBtn(x, X, Y2, 78, 16, on); Font.drawC(x, t, X + 39, Y2, ok ? (on ? UIC.text : '#c9cfe4') : UIC.dis, UIC.textSh, 9); touchRegion(X, Y2, 78, 16, () => { i = ATTRS.length + n; tapKey('a'); }); });
+    const Y2 = 26 + ATTRS.length * 15 + 1; [['推薦配點', av > 0], ['重置（重生之水' + ((st.bag && st.bag.attrReset) || 0) + '）', attrSpent(st) > 0 && (st.bag && st.bag.attrReset) > 0]].forEach(([t, ok], n) => { const X = 8 + n * 82, on = i === ATTRS.length + n; drawBtn(x, X, Y2, 78, 16, on); Font.drawC(x, t, X + 39, Y2, ok ? (on ? UIC.text : '#c9cfe4') : UIC.dis, UIC.textSh, 9); touchRegion(X, Y2, 78, 16, () => { i = ATTRS.length + n; tapKey('a'); }); });
     const k = ATTRS[i]; drawWin(x, 4, 142, 168, 110, 'menu');
-    Font.draw(x, k ? ATTR_NAMES[k] + '：' : (i === ATTRS.length ? '依職業的推薦比例分配剩下的點數。' : '把所有屬性點收回來重新分配。'), 12, 144, UIC.accent, UIC.textSh, 10);
+    Font.draw(x, k ? ATTR_NAMES[k] + '：' : (i === ATTRS.length ? '依職業的推薦比例分配剩下的點數。' : '用重生之水把所有屬性點收回來重新分配。'), 12, 144, UIC.accent, UIC.textSh, 10);
     if (k) Font.wrap(ATTR_HELP[k], 118, 9).slice(0, 2).forEach((l, n) => Font.draw(x, l, 48, 145 + n * 11, UIC.text, UIC.textSh, 9));
     const s = heroStats(st); DER.forEach(([n, key, u], r) => { const X = 12 + (r % 2) * 80, Y = 170 + Math.floor(r / 2) * 13, v = s[key], d = Math.round((v - s0[key]) * 10) / 10;
       Font.draw(x, n, X, Y, UIC.muted, UIC.textSh, 10); Font.drawR(x, (u ? (Math.round(v * 10) / 10) : v) + (u || ''), X + 52, Y, UIC.text, UIC.textSh, 10); if (d) Font.draw(x, (d > 0 ? '+' : '') + d, X + 55, Y + 1, d > 0 ? UIC.good : UIC.bad, UIC.textSh, 8); });
@@ -78,11 +82,11 @@ function* attrScreen() {
   while (true) {
     if (Input.repeat('up')) { i = (i + N - 1) % N; Sound.sfx('cursor'); } if (Input.repeat('down')) { i = (i + 1) % N; Sound.sfx('cursor'); }
     const k = ATTRS[i];
-    if (k && (Input.repeat('right') || Input.pressed('a'))) { Input.consume('a'); const c = attrCost(ATTR_BASE[k] + (st.attr[k] || 0)); if (c <= attrAvail(st)) { st.attr[k] = (st.attr[k] || 0) + 1; add[k] = (add[k] || 0) + 1; Sound.sfx('statUp'); clampHP(); } else Sound.sfx('bump'); }
+    if (k && (Input.repeat('right') || Input.pressed('a'))) { Input.consume('a'); const c = attrCost(ATTR_BASE[k] + (st.attr[k] || 0)); if (c <= attrAvail(st) && ATTR_BASE[k] + (st.attr[k] || 0) < attrMax(st)) { st.attr[k] = (st.attr[k] || 0) + 1; add[k] = (add[k] || 0) + 1; Sound.sfx('statUp'); clampHP(); } else Sound.sfx('bump'); }
     if (k && Input.repeat('left')) { if (add[k] > 0) { add[k]--; st.attr[k]--; Sound.sfx('cancel'); clampHP(); } else Sound.sfx('bump'); }
     if (!k && Input.pressed('a')) { Input.consume('a');
       if (i === ATTRS.length) { if (attrAvail(st) > 0) { const b4 = { ...st.attr }; attrAuto(st); for (const q of ATTRS) { const dq = (st.attr[q] || 0) - (b4[q] || 0); if (dq) add[q] = (add[q] || 0) + dq; } Sound.sfx('statUp'); clampHP(); } else Sound.sfx('bump'); }
-      else { const cost = resetCost(); if (!attrSpent(st)) { Sound.sfx('bump'); } else { UI.remove(scr); const ok = yield* yesNo('要把所有屬性點收回來重新分配嗎？' + (cost ? '\n（費用 ' + cost + ' G）' : '\n（這次免費）')); if (ok) { if (cost && st.money < cost) yield* say('錢不夠喔。'); else { st.money -= cost; st.attrFreeReset = 0; st.attr = {}; for (const q of ATTRS) delete add[q]; Sound.sfx('cancel'); clampHP(); } } UI.push(scr); } } }
+      else { const have = (st.bag && st.bag.attrReset) || 0; if (!attrSpent(st)) { Sound.sfx('bump'); } else if (!have) { UI.remove(scr); yield* say('重置屬性需要「重生之水」。\n（萌芽鎮和王都的道具店有賣）'); UI.push(scr); } else { UI.remove(scr); const ok = yield* yesNo('要喝下重生之水，把所有屬性點收回來重新分配嗎？\n（持有' + have + '瓶，會用掉1瓶）'); if (ok) { st.bag.attrReset--; st.attrFreeReset = 0; st.attr = {}; for (const q of ATTRS) delete add[q]; Sound.sfx('cancel'); clampHP(); } UI.push(scr); } } }
     if (Input.pressed('b')) { Input.consume('b'); Sound.sfx('cancel'); break; }
     yield;
   }

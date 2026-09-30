@@ -75,7 +75,8 @@ Object.assign(TK_TXT, {
 const optDesc9 = O => O.fx.map(([k, v]) => tDesc(k, v)).join('、');
 
 /* ---------- state: st.tc = { cls, p: { 'b.t': option } } — a different class starts empty ---------- */
-const tcOf = (st = Game.st) => { if (!st.tc || st.tc.cls !== st.cls) st.tc = { cls: st.cls, p: {} }; return st.tc.p; };
+// v9.3: every class keeps its own picks (changing class and back is no longer a free reset)
+const tcOf = (st = Game.st) => { const A = st.tcAll || (st.tcAll = {}); if (st.tc && st.tc.cls && st.tc.p) { if (!A[st.tc.cls]) A[st.tc.cls] = st.tc.p; } delete st.tc; return A[st.cls] || (A[st.cls] = {}); };
 const tierCost9 = t => t + 1;
 const tcHas = (b, t, st = Game.st) => tcOf(st)[b + '.' + t] !== undefined;
 const brPts9 = (b, st = Game.st) => { let s = 0; for (let t = 0; t < 5; t++) if (tcHas(b, t, st)) s += tierCost9(t); return s; };
@@ -119,13 +120,13 @@ function tcAuto(st = Game.st, pick = 0) { const P = tcOf(st); for (let b = 0; b 
 /* ---------- the talent screen ---------- */
 talentScreen = function* () {
   const st = Game.st, T = T9C[st.cls]; if (!T) { yield* say('先在萌芽鎮的村長那裡完成覺醒的儀式吧。'); return; }
-  let br = 0, row = 0, col = 0, msg = '', msgT = 0; const ccol = classColOf(st.cls), RN = ['一', '二', '三', '四', '五'];
+  let br = 0, row = 0, col = 0, msg = '', msgT = 0; const ccol = classColOf(st.cls), RN = ['一', '二', '三', '四', '五'], fresh = new Set(); // v9.3: tiers learned in this visit
   const RY = t => 46 + t * 24 + (t >= 3 ? 8 : 0), OX = o => 28 + o * 73, OW = 71;
   const act = () => { if (row < 0) { row = 0; return; } const O = T[br].tiers[row][col], key = br + '.' + row, P = tcOf(st);
-    if (tcHas(br, row, st)) { if (P[key] === col) { msg = '已經選擇了「' + O.n + '」'; msgT = 40; Sound.sfx('bump'); return; } P[key] = col; clampHP(); Sound.sfx('select'); msg = '換成了「' + O.n + '」（免費）'; msgT = 50; return; }
+    if (tcHas(br, row, st)) { if (P[key] === col) { msg = '已經選擇了「' + O.n + '」'; msgT = 40; Sound.sfx('bump'); return; } if (!fresh.has(key)) { msg = '已確定的天賦要用「遺忘之書」重置才能改'; msgT = 70; Sound.sfx('bump'); return; } P[key] = col; clampHP(); Sound.sfx('select'); msg = '換成了「' + O.n + '」'; msgT = 50; return; }
     const blk = tierBlock9(br, row, st); if (blk) { Sound.sfx('bump'); msg = blk; msgT = 60; return; }
-    P[key] = col; clampHP(); Sound.sfx('statUp'); msg = '學會了「' + O.n + '」！'; msgT = 50; };
-  const refund = () => { if (row < 0) return; const blk = tierRefundBlock9(br, row, st); if (blk) { Sound.sfx('bump'); msg = blk; msgT = 60; return; } delete tcOf(st)[br + '.' + row]; clampHP(); Sound.sfx('cancel'); msg = '退回了' + tierCost9(row) + '點。'; msgT = 40; };
+    P[key] = col; fresh.add(key); clampHP(); Sound.sfx('statUp'); msg = '學會了「' + O.n + '」！（離開畫面前還能改）'; msgT = 60; };
+  const refund = () => { if (row < 0) return; const blk = tierRefundBlock9(br, row, st) || (fresh.has(br + '.' + row) ? null : '已確定的天賦要用「遺忘之書」重置'); if (blk) { Sound.sfx('bump'); msg = blk; msgT = 60; return; } fresh.delete(br + '.' + row); delete tcOf(st)[br + '.' + row]; clampHP(); Sound.sfx('cancel'); msg = '退回了' + tierCost9(row) + '點。'; msgT = 40; };
   const scr = { draw(x) {
     const TR = typeof touchRegion === 'function';
     screenBG(x); headerBar(x, '天賦・' + CLASSES[st.cls].n); const av = tpAvail(st); Font.drawR(x, '天賦點 ' + av, W - 6, 2, av ? UIC.warm : UIC.muted, UIC.textSh);
@@ -145,15 +146,16 @@ talentScreen = function* () {
       if (t < 4) { x.fillStyle = has ? shade(ccol, -0.1) : '#30375a'; x.fillRect(100, Y + 21, 2, 3); } }
     const DY = 172; drawWin(x, 4, DY, 168, 80, 'menu');
     if (row < 0) { const B = T[br]; Font.draw(x, B.n, 12, DY + 2, shade(ccol, 0.35), UIC.textSh, 11); Font.drawR(x, '已投入' + brPts9(br, st) + '／15點', 164, DY + 4, UIC.muted, UIC.textSh, 8);
-      drawFitText(x, B.d + '每層二選一，已選的層可以免費換。天賦最多' + TP_CAP + '點（總共已投入' + tpSpent(st) + '點），最多點滿兩個流派。', 12, DY + 17, 152, 24, 10, UIC.text); }
+      drawFitText(x, B.d + '每層二選一，離開畫面後就確定，之後要改需要「遺忘之書」。天賦最多' + TP_CAP + '點（已投入' + tpSpent(st) + '點）。', 12, DY + 17, 152, 24, 10, UIC.text); }
     else { const O = T[br].tiers[row][col], has = tcHas(br, row, st), chosen = has && tcOf(st)[br + '.' + row] === col, blk = tierBlock9(br, row, st);
       Font.draw(x, O.n, 12, DY + 2, shade(ccol, 0.35), UIC.textSh, 11); Font.drawR(x, T[br].n + '・第' + RN[row] + '層　' + tierCost9(row) + '點', 164, DY + 4, UIC.muted, UIC.textSh, 8);
       drawFitText(x, optDesc9(O), 12, DY + 17, 152, 24, 10, chosen ? UIC.accent : UIC.text);
-      Font.draw(x, msgT > 0 ? msg : chosen ? '選擇中' : has ? 'A：換成這個（免費）' : blk || 'A：選擇（花費' + tierCost9(row) + '點）', 12, DY + 52, msgT > 0 ? UIC.warm : chosen ? UIC.good : has ? UIC.good : blk ? UIC.bad : UIC.good, UIC.textSh, 9); }
+      const fr = fresh.has(br + '.' + row);
+      Font.draw(x, msgT > 0 ? msg : chosen ? (fr ? '選擇中（離開前還能改）' : '已確定') : has ? (fr ? 'A：換成這個' : '要改需要遺忘之書') : blk || 'A：選擇（花費' + tierCost9(row) + '點）', 12, DY + 52, msgT > 0 ? UIC.warm : chosen ? UIC.good : has ? UIC.good : blk ? UIC.bad : UIC.good, UIC.textSh, 9); }
     if (RESONANCE[st.cls]) { const bp = brPts9(br, st), R3 = RESONANCE[st.cls][br], got = RES_AT.filter(q => bp >= q).length, nx = got < 3 ? R3[got] : null;
       drawFitText(x, '分支共鳴 ' + got + '/3　' + (nx ? '下一個（' + RES_AT[got] + '點）：' + shortDesc(nx[0], nx[1]) : '全部達成！'), 12, DY + 41, 152, 12, 9, '#ffd860'); }
-    drawBtn(x, 12, DY + 64, 60, 13, false); Font.drawC(x, '↩退回此層', 42, DY + 63, row >= 0 && !tierRefundBlock9(br, row, st) ? UIC.warm : UIC.dis, UIC.textSh, 8);
-    drawBtn(x, 100, DY + 64, 64, 13, false); Font.drawC(x, '全部重置', 132, DY + 63, tpSpent(st) ? UIC.warm : UIC.dis, UIC.textSh, 8);
+    drawBtn(x, 12, DY + 64, 60, 13, false); Font.drawC(x, '↩退回此層', 42, DY + 63, row >= 0 && fresh.has(br + '.' + row) && !tierRefundBlock9(br, row, st) ? UIC.warm : UIC.dis, UIC.textSh, 8);
+    drawBtn(x, 100, DY + 64, 64, 13, false); Font.drawC(x, '重置（遺忘之書' + ((st.bag && st.bag.talentReset) || 0) + '）', 132, DY + 63, tpSpent(st) && (st.bag && st.bag.talentReset) > 0 ? UIC.warm : UIC.dis, UIC.textSh, 7);
     if (TR) { touchRegion(12, DY + 64, 60, 13, () => tapKey('select')); touchRegion(100, DY + 64, 64, 13, () => tapKey('start')); }
     if (msgT > 0) msgT--;
   }, touchBack: true };
@@ -165,7 +167,10 @@ talentScreen = function* () {
     if (Input.pressed('b')) { Input.consume('b'); Sound.sfx('cancel'); break; }
     if (Input.pressed('a')) { Input.consume('a'); act(); }
     if (Input.pressed('select')) { Input.consume('select'); refund(); }
-    if (Input.pressed('start')) { Input.consume('start'); if (tpSpent(st)) { UI.remove(scr); if (yield* yesNo('要把' + CLASSES[st.cls].n + '的天賦全部重置嗎？\n（點數全部退回，不用花錢）')) { tcOf(st); st.tc.p = {}; clampHP(); Sound.sfx('heal'); } UI.push(scr); } }
+    if (Input.pressed('start')) { Input.consume('start'); if (tpSpent(st)) { UI.remove(scr); const have = (st.bag && st.bag.talentReset) || 0;
+        if (!have) yield* say('重置天賦需要「遺忘之書」。\n（萌芽鎮和王都的道具店有賣）');
+        else if (yield* yesNo('要讀遺忘之書，把' + CLASSES[st.cls].n + '的天賦全部重置嗎？\n（點數全部退回；持有' + have + '本，會用掉1本）')) { st.bag.talentReset--; tcOf(st); st.tcAll[st.cls] = {}; fresh.clear(); clampHP(); Sound.sfx('heal'); }
+        UI.push(scr); } }
     yield;
   }
   UI.remove(scr);

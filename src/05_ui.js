@@ -121,18 +121,21 @@ function* yesNo(text, o = {}) { const r = yield* ask(text, ['是', '否'], o); r
 function statCalc(base, lv, iv = 15, isHP = false) { return isHP ? Math.floor((2 * base + iv) * lv / 100) + lv + 10 : Math.floor((2 * base + iv) * lv / 100) + 5; }
 // Six attributes grow slowly and deterministically: init + floor(offset + rate × (Lv − 5)) + permanent boosts
 function heroAttr(st = Game.st) { const a = {}; for (const k of ATTRS) a[k] = HERO_ATTR_INIT[k] + Math.floor(HERO_GROWTH_OFS[k] + HERO_GROWTH[k] * (st.lv - 5)) + ((st.boost || {})[k] || 0); return a; }
+// v9.3: how much of the growth comes by itself with the level (the rest comes from the free 屬性點)
+const LV_GROW = { hp: 1.8, st: 0.6, mp: 1.3 };
+const DEF_PER = { vit: 1, agi: 1 / 3, spd: 0.6 }; // v9.3: defences per attribute point (raised when levels stopped adding them)
 function heroStats(st = Game.st) {
-  const a = heroAttr(st), L = st.lv;
+  const a = heroAttr(st), L = st.lv, G = LV_GROW.st;
   const s = {
-    hp: 6 + L * 1.8 + a.vit * 1.6,                  // 最大HP = 6 + 等級×1.8 + 體力×1.6 (v22: 體力 matters with free allocation)
-    atk: a.str + a.dex / 2 + L * 0.6,               // 物攻 = 力量 + 靈巧÷2 + 等級×0.6
-    def: a.vit + a.agi / 3 + L * 0.6,               // 物防 = 體力 + 敏捷÷3 + 等級×0.6
-    spa: a.int * 1.2 + a.dex / 3 + L * 0.6,         // 魔攻 = 智力×1.2 + 靈巧÷3 + 等級×0.6
-    spd: a.int * 0.6 + a.vit * 0.6 + L * 0.6,       // 魔防 = 智力×0.6 + 體力×0.6 + 等級×0.6
-    spe: a.agi * 1.5 + L * 0.6,                     // 速度 = 敏捷×1.5 + 等級×0.6
+    hp: 6 + L * LV_GROW.hp + a.vit * 1.6,                  // 最大HP = 6 + 等級×1.8 + 體力×1.6 (v22: 體力 matters with free allocation)
+    atk: a.str + a.dex / 2 + L * G,               // 物攻 = 力量 + 靈巧÷2 + 等級×0.6
+    def: a.vit * DEF_PER.vit + a.agi * DEF_PER.agi + L * G,               // 物防 = 體力 + 敏捷÷3 + 等級×0.6
+    spa: a.int * 1.2 + a.dex / 3 + L * G,         // 魔攻 = 智力×1.2 + 靈巧÷3 + 等級×0.6
+    spd: a.int * DEF_PER.spd + a.vit * DEF_PER.spd + L * G,       // 魔防 = 智力×0.6 + 體力×0.6 + 等級×0.6
+    spe: a.agi * 1.5 + L * G,                     // 速度 = 敏捷×1.5 + 等級×0.6
   };
   for (const k in s) s[k] = Math.floor(s[k]);
-  s.mp = Math.floor(8 + L * 1.3 + a.int * 1.5);      // 最大MP = 8 + 等級×1.3 + 智力×1.5
+  s.mp = Math.floor(8 + L * LV_GROW.mp + a.int * 1.5);      // 最大MP = 8 + 等級×1.3 + 智力×1.5
   for (const k in st.boost || {}) if (s[k] !== undefined) s[k] += st.boost[k]; // legacy saves
   for (const g of equippedGear(st)) { const o = gearStats(g).st; for (const k in o) s[k] += o[k]; }
   s.crit = 3 + a.luk * 0.6;   // 會心率% = 3 + 幸運×0.6
