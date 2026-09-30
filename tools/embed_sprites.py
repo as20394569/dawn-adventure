@@ -88,10 +88,24 @@ for f in sorted(glob.glob(os.path.join(root, 'art', 'hero', 'px', '*.png'))):
 hm = os.path.join(root, 'art', 'hero', 'px', 'meta.json')
 js += 'const HERO_PX_SRC = ' + json.dumps(hr, separators=(',', ':')) + ';\n'
 js += 'const HERO_PX_META = ' + (open(hm).read() if os.path.exists(hm) else 'null') + ';\n'
+def pal_rows(f):
+    im = Image.open(f).convert('RGBA'); cols = []; rows = []
+    for y in range(im.height):
+        r = ''
+        for x in range(im.width):
+            q = im.getpixel((x, y))
+            if q[3] < 128: r += '.'; continue
+            hx = '#%02x%02x%02x' % q[:3]
+            if hx not in cols: cols.append(hx)
+            r += 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'[cols.index(hx)]
+        rows.append(r)
+    return [cols, rows]
+UNIQUE_KEYS = ['quakeAxe', 'tideRapier', 'wolfTwin', 'coreStaff', 'fallenLance', 'thunderFist', 'frostTome', 'gearRifle', 'boneGreatsword', 'moonHarp']
 wp = {}
 for f in sorted(glob.glob(os.path.join(root, 'art', 'battle', 'weapons', '*.png'))):
     k = os.path.basename(f)[:-4]
     if '_' in k or k.startswith('weapons'): continue  # previews
+    if k in UNIQUE_KEYS: continue  # v10 unique weapons go in as palette rows (below)
     wp[k] = b64png(f)
 js += 'const WEAPON_PX_SRC = ' + json.dumps(wp, separators=(',', ':')) + ';\n'
 print('weapons', len(wp))
@@ -120,6 +134,12 @@ for f in sorted(glob.glob(os.path.join(root, 'art', 'battle', 'talents', '*.png'
     tl[k] = [cols, rows]
 # v7.0.1: the branch icons go in as palette rows, not base64 PNGs (the base64 icon data made the claude.ai link fail to load)
 js += 'const TALENT_PX_ROWS = ' + json.dumps(tl, separators=(',', ':')) + ';\n'
+# v10 (Codex task T): signature talent-branch icons and the 10 unique boss weapons, as palette rows
+ts = {os.path.basename(f)[:-8]: pal_rows(f) for f in sorted(glob.glob(os.path.join(root, 'art', 'battle', 'talents_t', '*_sig.png')))}
+js += 'const TALENT_SIG_ROWS = ' + json.dumps(ts, separators=(',', ':')) + ';\n'
+wu = {k: pal_rows(os.path.join(root, 'art', 'battle', 'weapons', k + '.png')) for k in UNIQUE_KEYS if os.path.exists(os.path.join(root, 'art', 'battle', 'weapons', k + '.png'))}
+js += 'const WEAPON_PX_ROWS = ' + json.dumps(wu, separators=(',', ':')) + ';\n'
+print('sig icons', len(ts), 'unique weapons', len(wu))
 print('talents', len(tl))
 # v10: dialogue portraits (Codex task S), palette rows like the talent icons
 po = {}

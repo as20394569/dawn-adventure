@@ -32,6 +32,7 @@ for (const c in T9) { T9C[c] = T9[c].br.map(([n, d, tiers], b) => ({ n, d, tiers
 // resonance: branch 1 → the signature skill; the kept branches keep theirs (fire / bolt / borrow keys replaced)
 { const FIX = { fireUp: ['magCrit', 3], boltUp: ['speP', 3], subUp: ['atkUp', 8], elem: ['spaP', 3] };
   for (const c in RESONANCE) { const old = RESONANCE[c]; RESONANCE[c] = [[['sigPow', 5], ['sigPow', 5], ['sigPow', 10]], ...KEEP_BR[c].map(i => old[i].map(([k, v]) => FIX[k] ? FIX[k] : [k, v]))]; } }
+SHORT.sigPow = '職業招式威力'; // the resonance line read 「sigPow+5%」
 if (typeof V9_SUM_KEYS !== 'undefined') for (const k of ['sigPow', 'sigMp', 'sigCrit', 'sigHit', 'sigSpec', 'sigShield', 'sigHeal', 'sigDrain', 'sigMpBack', 'sigTwice', 'sigWeak', 'sigVsSt', 'sigFdef', 'sigFatk', 'sigCure']) V9_SUM_KEYS.add(k);
 const ST_NM = { brn: '灼傷', psn: '中毒', par: '麻痺', slp: '睡眠' }, BUFF_NM = { atk: '物攻', spa: '魔攻', def: '物防', spd: '魔防', spe: '速度' };
 Object.assign(TK_TXT, {
@@ -70,5 +71,6 @@ function* sigAfter(b, u, t, dealt, mv) {
 }
 // branch icons follow their branch: the kept branches keep their own icon; branch 1 (the signature) shows the dropped
 // branch's icon until its own is drawn (TALENT_SIG_PX, Codex task T)
+const TALENT_SIG_PX = {}; for (const c in (typeof TALENT_SIG_ROWS !== 'undefined' ? TALENT_SIG_ROWS : {})) { const [cols, rows] = TALENT_SIG_ROWS[c], pal = {}; cols.forEach((h, i) => pal['abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'[i]] = h); TALENT_SIG_PX[c] = spriteFrom(rows, pal); }
 { const old = {}; for (const c in KEEP_BR) for (let b = 0; b < 3; b++) old[c + '_' + b] = TALENT_PX[c + '_' + b];
   for (const c in KEEP_BR) { const K = KEEP_BR[c], drop = [0, 1, 2].find(i => !K.includes(i)); TALENT_PX[c + '_0'] = (typeof TALENT_SIG_PX !== 'undefined' && TALENT_SIG_PX[c]) || old[c + '_' + drop]; TALENT_PX[c + '_1'] = old[c + '_' + K[0]]; TALENT_PX[c + '_2'] = old[c + '_' + K[1]]; } }

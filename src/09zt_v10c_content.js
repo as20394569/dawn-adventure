@@ -82,3 +82,6 @@ Object.assign(CLASS_SIG, {
 });
 // v9's extra toughness for chapter-2 bosses was tuned for 普通; with 異界 as the base it goes almost away
 Object.assign(V9_TOUGH, { boss: 1.0, elite: 1.0 });
+
+// Codex task T: the unique weapons' own sprites (palette rows → canvas, same 16×22 format as WEAPON_PX)
+for (const k in (typeof WEAPON_PX_ROWS !== 'undefined' ? WEAPON_PX_ROWS : {})) { const [cols, rows] = WEAPON_PX_ROWS[k], pal = {}; cols.forEach((h, i) => pal['abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'[i]] = h); const c = spriteFrom(rows, pal); c.ok = true; WEAPON_PX[k] = c; }
