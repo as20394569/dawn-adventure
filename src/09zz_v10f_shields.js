@@ -76,12 +76,18 @@ function shieldSide(k) { if (k in SHIELD_SIDE) return SHIELD_SIDE[k]; const R = 
 { const _hl = heroLookOf; heroLookOf = function (st = Game.st, over = {}) {
     const L = _hl(st, over), eq = { ...(st.equip || {}), ...over }, g = gearBy(eq.shield, st), w = gearBy(eq.weapon, st);
     if (g && (!w || ONE_HAND.has(GEAR[w.b].kind))) L.skey = g.b; return L; }; }
+const SHIELD_PADL = 3, SIDE_DX = -2;
 { const _hb = heroBattleImgLook, cache = {}; heroBattleImgLook = function (frame, L) {
     const im = L && L.skey && (shieldSide(L.skey) || shieldSprite(L.skey)); if (!im) return _hb(frame, L);
     const key = frame + lookKey(L); if (cache[key]) return cache[key];
-    const base = _hb(frame, { ...L, skey: undefined }), c = mkCanvas(base.width, base.height), x = c.getContext('2d');
-    x.imageSmoothingEnabled = false; x.drawImage(base, 0, 0); x.drawImage(im, 0, (11 - (frame ? 1 : 0)) * 3, im.width * 3, im.height * 3); // left hand ≈ doll (2,17)
-    return (cache[key] = c); }; }
+    // v10.6.3 (player: 「側面盾牌稍微移動左邊一點，感覺卡住身體了」): the side view hangs SIDE_DX px left of the doll, so the canvas
+    // gets SHIELD_PADL doll px of room on the left; c.padL (canvas px) tells the battle to draw it that much further left
+    const side = im === shieldSide(L.skey), pad = side ? SHIELD_PADL : 0, base = _hb(frame, { ...L, skey: undefined }), c = mkCanvas(base.width + pad * 3, base.height), x = c.getContext('2d');
+    x.imageSmoothingEnabled = false; x.drawImage(base, pad * 3, 0); x.drawImage(im, (pad + (side ? SIDE_DX : 0)) * 3, (11 - (frame ? 1 : 0)) * 3, im.width * 3, im.height * 3); // left hand ≈ doll (2,17)
+    c.padL = pad * 3; return (cache[key] = c); }; }
+// keep the hero standing in the same place: the paper-doll spec's body centre and the classic draw skip the padding
+{ const _ds = dollSpec; dollSpec = function () { const S = _ds(), big = heroBattleImgLook(0, heroLookOf(Game.st)), p = (big.padL || 0) / 3 * DOLL_SCALE;
+    if (p) S.bb.cx = Math.round((S.w - p) * 0.29) + p; return S; }; }
 for (const k in SHIELDS) Object.defineProperty(ARMOR_PX, k + '_icon', { configurable: true, enumerable: true, get: () => shieldSprite(k) });
 // 守護者 starts with a wooden shield; a 守護者 save from before v10.5 gets one once
 { const _as = applyStartClass; applyStartClass = function (k) { _as(k); const st = Game.st; if (k === 'guardian' && st && !st.equip.shield) { const g = makeGear('woodShield', 1); if (shieldOk(st)) st.equip.shield = g.u; } }; }

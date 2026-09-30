@@ -129,8 +129,8 @@ class Battle {
     if (!(this.blinkH > 0 && Math.floor(this.blinkH / 3) % 2)) {
       x.save(); x.globalAlpha = 0.25; x.drawImage(this.shadowH, Math.round(this.heroX + 24 + this.offH.x - this.shadowH.width / 2), HERO_Y + 64); x.globalAlpha = Math.max(0, 1 - this.sinkH / 70);
       const hi = (this.offH.x || this.offH.y) ? this.imgH2 : this.imgH; const hx = Math.round(this.heroX + this.offH.x), hy = Math.round(HERO_Y + this.offH.y + this.sinkH * 0.25 + bobH);
-      x.drawImage(hi, hx, hy);
-      if (this.tintH) { x.globalAlpha = this.tintH.a; x.drawImage(tinted(hi, this.tintH.c), hx, hy); }
+      x.drawImage(hi, hx - (hi.padL || 0), hy);
+      if (this.tintH) { x.globalAlpha = this.tintH.a; x.drawImage(tinted(hi, this.tintH.c), hx - (hi.padL || 0), hy); }
       x.restore();
     }
     for (const p of this.fx) drawParticle(x, p);

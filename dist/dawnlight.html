@@ -5356,8 +5356,8 @@ class Battle {
     if (!(this.blinkH > 0 && Math.floor(this.blinkH / 3) % 2)) {
       x.save(); x.globalAlpha = 0.25; x.drawImage(this.shadowH, Math.round(this.heroX + 24 + this.offH.x - this.shadowH.width / 2), HERO_Y + 64); x.globalAlpha = Math.max(0, 1 - this.sinkH / 70);
       const hi = (this.offH.x || this.offH.y) ? this.imgH2 : this.imgH; const hx = Math.round(this.heroX + this.offH.x), hy = Math.round(HERO_Y + this.offH.y + this.sinkH * 0.25 + bobH);
-      x.drawImage(hi, hx, hy);
-      if (this.tintH) { x.globalAlpha = this.tintH.a; x.drawImage(tinted(hi, this.tintH.c), hx, hy); }
+      x.drawImage(hi, hx - (hi.padL || 0), hy);
+      if (this.tintH) { x.globalAlpha = this.tintH.a; x.drawImage(tinted(hi, this.tintH.c), hx - (hi.padL || 0), hy); }
       x.restore();
     }
     for (const p of this.fx) drawParticle(x, p);
@@ -8261,7 +8261,7 @@ class TitleScene {
     x.drawImage(this.logo, Math.round(W / 2 - this.logo.width / 2), 6 + bob);
     Font.drawC(x, '～異世界冒險RPG～', W / 2, 52 + bob, '#ffe0a0', '#3a1428');
     if (this.stage === 'press' && Math.floor(this.t / 30) % 2 === 0) Font.drawC(x, '按 A 鍵開始', W / 2, 232, '#ffffff', '#1a1024');
-    Font.drawR(x, 'v10.6.2', W - 3, H - 13, '#b890b0', null);
+    Font.drawR(x, 'v10.6.3', W - 3, H - 13, '#b890b0', null);
   }
 }
 class IntroScene {
@@ -15136,12 +15136,15 @@ function shieldSide(k) { if (k in SHIELD_SIDE) return SHIELD_SIDE[k]; const R = 
 { const _hl = heroLookOf; heroLookOf = function (st = Game.st, over = {}) {
     const L = _hl(st, over), eq = { ...(st.equip || {}), ...over }, g = gearBy(eq.shield, st), w = gearBy(eq.weapon, st);
     if (g && (!w || ONE_HAND.has(GEAR[w.b].kind))) L.skey = g.b; return L; }; }
+const SHIELD_PADL = 3, SIDE_DX = -2;
 { const _hb = heroBattleImgLook, cache = {}; heroBattleImgLook = function (frame, L) {
     const im = L && L.skey && (shieldSide(L.skey) || shieldSprite(L.skey)); if (!im) return _hb(frame, L);
     const key = frame + lookKey(L); if (cache[key]) return cache[key];
-    const base = _hb(frame, { ...L, skey: undefined }), c = mkCanvas(base.width, base.height), x = c.getContext('2d');
-    x.imageSmoothingEnabled = false; x.drawImage(base, 0, 0); x.drawImage(im, 0, (11 - (frame ? 1 : 0)) * 3, im.width * 3, im.height * 3); // left hand ≈ doll (2,17)
-    return (cache[key] = c); }; }
+    const side = im === shieldSide(L.skey), pad = side ? SHIELD_PADL : 0, base = _hb(frame, { ...L, skey: undefined }), c = mkCanvas(base.width + pad * 3, base.height), x = c.getContext('2d');
+    x.imageSmoothingEnabled = false; x.drawImage(base, pad * 3, 0); x.drawImage(im, (pad + (side ? SIDE_DX : 0)) * 3, (11 - (frame ? 1 : 0)) * 3, im.width * 3, im.height * 3); // left hand ≈ doll (2,17)
+    c.padL = pad * 3; return (cache[key] = c); }; }
+{ const _ds = dollSpec; dollSpec = function () { const S = _ds(), big = heroBattleImgLook(0, heroLookOf(Game.st)), p = (big.padL || 0) / 3 * DOLL_SCALE;
+    if (p) S.bb.cx = Math.round((S.w - p) * 0.29) + p; return S; }; }
 for (const k in SHIELDS) Object.defineProperty(ARMOR_PX, k + '_icon', { configurable: true, enumerable: true, get: () => shieldSprite(k) });
 { const _as = applyStartClass; applyStartClass = function (k) { _as(k); const st = Game.st; if (k === 'guardian' && st && !st.equip.shield) { const g = makeGear('woodShield', 1); if (shieldOk(st)) st.equip.shield = g.u; } }; }
 { const _so = startOverworld; startOverworld = function (...a) {
