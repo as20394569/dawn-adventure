@@ -961,6 +961,42 @@
   ]
  },
  "item": {
+  "luckClover": [
+   "town寶箱",
+   "forest寶箱",
+   "行商",
+   "迴廊兌換",
+   "委託獎勵",
+   "委託獎勵",
+   "委託獎勵",
+   "委託獎勵",
+   "委託獎勵"
+  ],
+  "herb": [
+   "town採集",
+   "route採集",
+   "route採集",
+   "route採集",
+   "route採集",
+   "route採集",
+   "forest採集",
+   "forest採集",
+   "lake採集",
+   "canyon採集",
+   "northRoad採集",
+   "northRoad採集",
+   "capital採集",
+   "goldPlains採集",
+   "goldPlains採集",
+   "windHills採集",
+   "windHills採集",
+   "windHills採集",
+   "jadeCreek採集",
+   "jadeCreek採集",
+   "maplePass採集",
+   "maplePass採集",
+   "oldField採集"
+  ],
   "superPotion": [
    "route寶箱",
    "forest寶箱",
@@ -969,6 +1005,7 @@
    "catacomb寶箱",
    "canyon寶箱",
    "northRoad寶箱",
+   "jadeCreek寶箱",
    "jadeCreek寶箱",
    "maplePass寶箱",
    "道具店",
@@ -984,6 +1021,7 @@
    "sewer寶箱",
    "mine寶箱",
    "catacomb寶箱",
+   "oldField寶箱",
    "行商",
    "迴廊兌換",
    "委託獎勵",
@@ -1018,37 +1056,22 @@
    "route寶箱",
    "道具店"
   ],
-  "herb": [
-   "route採集",
-   "route採集",
-   "route採集",
-   "route採集",
-   "route採集",
-   "forest採集",
-   "forest採集",
-   "lake採集",
-   "canyon採集",
-   "northRoad採集",
-   "goldPlains採集",
-   "windHills採集",
-   "windHills採集",
-   "jadeCreek採集",
-   "maplePass採集",
-   "oldField採集"
-  ],
   "manaHerb": [
    "route採集",
    "forest採集",
    "sewer採集",
    "ruins採集",
    "lake採集",
+   "lake採集",
    "swamp採集",
    "northRoad採集",
    "frostField採集",
+   "starShrine採集",
    "jadeCreek採集",
    "maplePass採集"
   ],
   "wisdomFruit": [
+   "forest寶箱",
    "forest寶箱",
    "swamp寶箱",
    "行商",
@@ -1056,18 +1079,14 @@
    "委託獎勵",
    "委託獎勵"
   ],
-  "luckClover": [
-   "forest寶箱",
-   "行商",
-   "迴廊兌換",
-   "委託獎勵",
-   "委託獎勵",
-   "委託獎勵",
-   "委託獎勵",
-   "委託獎勵"
-  ],
   "pocketWatch": [
    "forest寶箱"
+  ],
+  "spore": [
+   "forest採集",
+   "swamp採集",
+   "魔物:毒孢菇",
+   "分解"
   ],
   "crystal": [
    "sewer採集",
@@ -1099,11 +1118,14 @@
    "mine採集",
    "mine採集",
    "canyon採集",
+   "canyon採集",
    "northRoad採集",
    "capSewer採集",
    "clockTower1採集",
+   "emberPass採集",
    "lavaTunnel採集",
    "jadeCreek採集",
+   "oldField採集",
    "oldField採集",
    "魔物:石丸",
    "魔物:苔石巨人",
@@ -1139,6 +1161,7 @@
    "lavaTunnel寶箱",
    "duskFort1寶箱",
    "starShrine寶箱",
+   "starShrine寶箱",
    "heroTomb寶箱",
    "行商",
    "道具店(魔像後)",
@@ -1163,6 +1186,7 @@
    "canyon寶箱",
    "swamp寶箱",
    "northRoad寶箱",
+   "capital寶箱",
    "capSewer寶箱",
    "goldPlains寶箱",
    "maplePass寶箱",
@@ -1178,6 +1202,9 @@
   "swordPage": [
    "lake寶箱"
   ],
+  "enWater": [
+   "lake寶箱"
+  ],
   "moonDew": [
    "lake採集",
    "lake採集",
@@ -1188,10 +1215,16 @@
   "bellShard": [
    "canyon寶箱"
   ],
+  "enRock": [
+   "canyon寶箱"
+  ],
   "cactusFruit": [
    "canyon採集",
    "canyon採集",
    "魔物:仙人掌怪"
+  ],
+  "enVenom": [
+   "swamp寶箱"
   ],
   "bogMoss": [
    "swamp採集",
@@ -1220,6 +1253,9 @@
   "lostScore": [
    "capSewer寶箱"
   ],
+  "enLeaf": [
+   "goldPlains寶箱"
+  ],
   "wheat": [
    "goldPlains採集",
    "goldPlains採集",
@@ -1242,12 +1278,19 @@
   "iceCrystal": [
    "frostField採集",
    "frostField採集",
+   "frostVillage採集",
    "iceCave採集",
    "魔物:霜精",
    "魔物:冰晶蝠",
    "魔物:冰晶石怪",
    "魔物:冰霜巫妖",
    "魔物:霜之女王"
+  ],
+  "enWater2": [
+   "frostVillage寶箱"
+  ],
+  "enFire2": [
+   "emberPass寶箱"
   ],
   "magmaStone": [
    "emberPass採集",
@@ -1290,6 +1333,9 @@
    "委託獎勵",
    "委託獎勵"
   ],
+  "enBolt": [
+   "windHills寶箱"
+  ],
   "agiFruit": [
    "jadeCreek寶箱",
    "行商",
@@ -1312,6 +1358,9 @@
    "委託獎勵",
    "委託獎勵",
    "委託獎勵"
+  ],
+  "enFire": [
+   "maplePass寶箱"
   ],
   "leaf": [
    "maplePass採集",
@@ -1386,10 +1435,6 @@
   "crocHide": [
    "魔物:沼澤鱷",
    "魔物:水道鱷"
-  ],
-  "spore": [
-   "魔物:毒孢菇",
-   "分解"
   ],
   "batWing": [
    "魔物:洞窟飛影",
@@ -1548,6 +1593,18 @@
    "劇情/任務"
   ],
   "noraBread": [
+   "劇情/任務"
+  ],
+  "enBolt2": [
+   "劇情/任務"
+  ],
+  "enVenom2": [
+   "劇情/任務"
+  ],
+  "enRock2": [
+   "劇情/任務"
+  ],
+  "silverPin": [
    "劇情/任務"
   ]
  },

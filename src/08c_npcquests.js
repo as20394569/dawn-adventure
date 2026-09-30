@@ -50,7 +50,7 @@ function npcCommission(id, ow, ent) {
     return (function* () {
       if (k === 'c4') { delete st.bag.pocketWatch; s.s = 'done'; s.res = 'returned'; yield* sayAll(['這是……我的懷錶！', '它是鐘塔的鑰匙錶，停在三點十分——異界之門開啟的那一刻。', '若你來到王都，請到鐘塔找我。我叫艾德。']); yield* giveReward(c.reward); return; }
       if (c.need) for (const i in c.need) st.bag[i] -= c.need[i];
-      s.s = 'done'; Sound.sfx('select'); yield* say(COM_THANKS[k] || '謝謝你！'); yield* say('完成了委託「' + c.n + '」！'); yield* giveReward(c.reward); })();
+      s.s = 'done'; Sound.sfx('select'); yield* sayAll([].concat(COM_THANKS[k] || '謝謝你！')); yield* say('完成了委託「' + c.n + '」！'); yield* giveReward(c.reward); })();
   }
   // offer a new request
   const k = mine.find(q => comAvail(q, st)); if (!k) return null; const c = COMMISSIONS[k];

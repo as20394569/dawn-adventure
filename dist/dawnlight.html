@@ -4490,8 +4490,8 @@ function* equipScreen() {
   UI.remove(scr);
 }
 function* optionsScreen() {
-  let idx = 0; const labels = ['文字速度', '背景音樂', '音效', '自動存檔', '戰鬥美術', '怪物造型', '對話文字', '跑步', '戰鬥說明', '關閉'], N = labels.length, HELP = N - 2, TOG = ['music', 'sfx', 'autosave', 'hdArt', 'chibi', 'bigText', 'autoRun'];
-  const val = i => i === 0 ? ['慢', '普通', '快'][Game.settings.text] : TOG[i - 1] === 'hdArt' ? (Game.settings.hdArt !== false ? '新版' : '舊版') : TOG[i - 1] === 'chibi' ? (Game.settings.chibi !== false ? 'Q版' : '寫實') : TOG[i - 1] === 'chibiHero' ? (Game.settings.chibiHero !== false ? 'Q版' : '原版') : TOG[i - 1] === 'bigText' ? (Game.settings.bigText ? '大' : '標準') : TOG[i - 1] === 'autoRun' ? (Game.settings.autoRun !== false ? '按住方向鍵' : '按住B鍵') : i < N - 1 ? (Game.settings[TOG[i - 1]] ? '開' : '關') : '';
+  let idx = 0; const labels = ['文字速度', '背景音樂', '音效', '自動存檔', '戰鬥美術', '怪物造型', '對話文字', '跑步', '畫面', '戰鬥說明', '關閉'], N = labels.length, HELP = N - 2, TOG = ['music', 'sfx', 'autosave', 'hdArt', 'chibi', 'bigText', 'autoRun', 'zoom'];
+  const val = i => i === 0 ? ['慢', '普通', '快'][Game.settings.text] : TOG[i - 1] === 'hdArt' ? (Game.settings.hdArt !== false ? '新版' : '舊版') : TOG[i - 1] === 'chibi' ? (Game.settings.chibi !== false ? 'Q版' : '寫實') : TOG[i - 1] === 'chibiHero' ? (Game.settings.chibiHero !== false ? 'Q版' : '原版') : TOG[i - 1] === 'bigText' ? (Game.settings.bigText ? '大' : '標準') : TOG[i - 1] === 'autoRun' ? (Game.settings.autoRun !== false ? '按住方向鍵' : '按住B鍵') : TOG[i - 1] === 'zoom' ? (Game.settings.zoom !== false ? '放大' : '標準') : i < N - 1 ? (Game.settings[TOG[i - 1]] ? '開' : '關') : '';
   const scr = { draw(x) {
     screenBG(x); headerBar(x, '設定');
     drawWin(x, 4, 30, 168, N * 18 + 12, 'menu');
@@ -4505,7 +4505,7 @@ function* optionsScreen() {
     if (idx === HELP && Input.pressed('a')) { Input.consume('a'); Sound.sfx('select'); UI.remove(scr); yield* battleHelpScreen(); UI.push(scr); yield; continue; }
     let d = idx === HELP ? 0 : Input.pressed('left') ? -1 : Input.pressed('right') ? 1 : 0;
     if (!d && Input.pressed('a') && idx < N - 1) { Input.consume('a'); d = 1; if (idx === 0 && Game.settings.text === 2) d = -2; }
-    if (d) { if (idx === 0) Game.settings.text = clamp(Game.settings.text + d, 0, 2); else Game.settings[TOG[idx - 1]] = TOG[idx - 1] === 'hdArt' ? Game.settings.hdArt === false : TOG[idx - 1] === 'chibi' ? Game.settings.chibi === false : TOG[idx - 1] === 'chibiHero' ? Game.settings.chibiHero === false : TOG[idx - 1] === 'autoRun' ? Game.settings.autoRun === false : !Game.settings[TOG[idx - 1]]; Sound.applySettings(); Sound.sfx('cursor'); saveSettings(); }
+    if (d) { if (idx === 0) Game.settings.text = clamp(Game.settings.text + d, 0, 2); else Game.settings[TOG[idx - 1]] = TOG[idx - 1] === 'hdArt' ? Game.settings.hdArt === false : TOG[idx - 1] === 'chibi' ? Game.settings.chibi === false : TOG[idx - 1] === 'chibiHero' ? Game.settings.chibiHero === false : TOG[idx - 1] === 'autoRun' ? Game.settings.autoRun === false : TOG[idx - 1] === 'zoom' ? Game.settings.zoom === false : !Game.settings[TOG[idx - 1]]; if (TOG[idx - 1] === 'zoom' && typeof fitScreen === 'function') { SCALE = 0; fitScreen(); } Sound.applySettings(); Sound.sfx('cursor'); saveSettings(); }
     if (Input.pressed('b') || (Input.pressed('a') && idx === N - 1)) { Input.consume('a', 'b'); Sound.sfx('cancel'); break; }
     yield;
   }
@@ -8254,7 +8254,7 @@ class TitleScene {
     x.drawImage(this.logo, Math.round(W / 2 - this.logo.width / 2), 6 + bob);
     Font.drawC(x, '～異世界冒險RPG～', W / 2, 52 + bob, '#ffe0a0', '#3a1428');
     if (this.stage === 'press' && Math.floor(this.t / 30) % 2 === 0) Font.drawC(x, '按 A 鍵開始', W / 2, 232, '#ffffff', '#1a1024');
-    Font.drawR(x, 'v10.2', W - 3, H - 13, '#b890b0', null);
+    Font.drawR(x, 'v10.3', W - 3, H - 13, '#b890b0', null);
   }
 }
 class IntroScene {
@@ -8377,6 +8377,21 @@ function boot(data) {
 }
 window.__fx = () => FX; window.__game = { setScale: S => { Game.fixedScale = 1; setScale(S); render(); }, Game, Input, Events, MAPS, shopFlow, SPECIES, Battle, Overworld, heroStats, newGameState, startOverworld, UI, say, yesNo, startMenu, summaryScreen, bagScreen, equipScreen, optionsScreen, shopFlow, pickMoveToForget, blackText, dexScreen, talentScreen, craftScreen, enhanceFlow, salvageFlow, recordScreen, checkAch, markVis, mapPct, totalPct, questMarks, Events, step(n = 1) { for (let i = 0; i < n; i++) tick(); render(); }, press(k, hold = 2, after = 6) { Input.set(k, true); for (let i = 0; i < hold; i++) tick(); Input.set(k, false); for (let i = 0; i < after; i++) tick(); render(); } };
 try { if (window.claude && window.claude.hot && window.claude.hot.ready) window.claude.hot.ready(boot); else boot((window.claude && window.claude.hot && window.claude.hot.data) || {}); } catch (e) { boot({}); }
+const ZOOM_F = 1.5;
+const zoomOn = () => Game.settings.zoom !== false;
+{ const _ss = setScale; setScale = function (S) { if (zoomOn() && !Game.fixedScale) S = Math.min(6, Math.ceil((S | 0) / 2) * 2); return _ss(S); }; }
+function owZoomAt(ow) { // the hero's spot on the unzoomed screen (same camera as Overworld.draw)
+  const p = ow.p, m = ow.map; let camX = Math.round(p.px) - CAM_X, camY = Math.round(p.py) - CAM_Y + Math.round(ow.camDY || 0);
+  if (!m.d.outdoor && m.w * 16 <= W) camX = Math.round((m.w * 16 - W) / 2); if (!m.d.outdoor && m.h * 16 <= H - TB_H) camY = Math.round((m.h * 16 - (H - TB_H)) / 2) - 8;
+  return [Math.round(p.px - camX + 8), Math.round(p.py - camY + 8)];
+}
+function applyZoom(x, ow) { const [cx, cy] = ow._zc; x.translate(cx, cy); x.scale(ZOOM_F, ZOOM_F); x.translate(-cx, -cy); }
+{ const _dr = Overworld.prototype.draw; Overworld.prototype.draw = function (x) {
+    if (!zoomOn() || !this.p || !this.map) { this._zc = null; return _dr.call(this, x); }
+    this._zc = owZoomAt(this); const pop = this.popup; this.popup = null;
+    x.save(); applyZoom(x, this); try { _dr.call(this, x); } finally { x.restore(); this.popup = pop; }
+    if (pop) { const t = pop.t; const px = t < 12 ? -90 + t * 7.8 : t > 150 ? 4 - (t - 150) * 3 : 4; const w = Font.width(pop.name) + 22; const X = Math.round(px); drawPanel(x, X, 4, w, 20, null); x.fillStyle = UIC.accent; x.fillRect(X + 5, 9, 2, 10); Font.draw(x, pop.name, X + 11, 5, UIC.text, UIC.textSh); }
+  }; }
 Game.settings.autosave = true; // default (loadSettings() at boot keeps the player's choice)
 Game.autoDirty = false; Game.autoSaveT = 0;
 const AUTO_STEPS = 100;
@@ -8439,7 +8454,7 @@ function npcCommission(id, ow, ent) {
     return (function* () {
       if (k === 'c4') { delete st.bag.pocketWatch; s.s = 'done'; s.res = 'returned'; yield* sayAll(['這是……我的懷錶！', '它是鐘塔的鑰匙錶，停在三點十分——異界之門開啟的那一刻。', '若你來到王都，請到鐘塔找我。我叫艾德。']); yield* giveReward(c.reward); return; }
       if (c.need) for (const i in c.need) st.bag[i] -= c.need[i];
-      s.s = 'done'; Sound.sfx('select'); yield* say(COM_THANKS[k] || '謝謝你！'); yield* say('完成了委託「' + c.n + '」！'); yield* giveReward(c.reward); })();
+      s.s = 'done'; Sound.sfx('select'); yield* sayAll([].concat(COM_THANKS[k] || '謝謝你！')); yield* say('完成了委託「' + c.n + '」！'); yield* giveReward(c.reward); })();
   }
   const k = mine.find(q => comAvail(q, st)); if (!k) return null; const c = COMMISSIONS[k];
   return (function* () {
@@ -11246,7 +11261,9 @@ function drawChevron(x, cx, cy, dir, col) {
     _dr.call(this, x); if (Game.settings.passMarks === false || !this.map) return;
     const M = passMarks(this), camX = this.camX, camY = this.camY, bob = Math.round(Math.sin(this.t / 10) * 1.5);
     const pts = M.above.map(q => [q.x, q.y - 1]).concat(this.npcs.filter(n => WARP_PROPS.has(n.id)).map(n => [n.x, n.y - 1]));
+    x.save(); if (this._zc && typeof applyZoom === 'function') applyZoom(x, this); // v10: the marks follow the zoomed field
     for (const [tx, ty] of pts) { const X = tx * 16 - camX + 8, Y = ty * 16 - camY + 10 + bob; if (X < -8 || Y < -8 || X > W + 8 || Y > H) continue; x.globalAlpha = 0.9; drawChevron(x, X, Y, 'down', '#ffd860'); x.globalAlpha = 1; }
+    x.restore();
   };
 }
 const NEW_WEAPONS = {
@@ -14559,5 +14576,297 @@ Object.assign(CLASS_SIG, {
   spellblade: ['魔劍', [['elem', 10], ['actUp', 10], ['atkP', 4], ['spaP', 4], ['hpP', 6]]],
 });
 Object.assign(V9_TOUGH, { boss: 1.0, elite: 1.0 });
+const MAP_EXT = {
+  town: ['bottom', 7, '萌芽鎮郊外花田', '鎮民在這裡種花。春天會開滿一整片。', { item: 'luckClover', n: 1 }, 'herb'],
+  forest: ['bottom', 9, '森之深處', '陽光幾乎照不進來的森林最深處。', { item: 'wisdomFruit' }, 'shroom'],
+  lake: ['right', 10, '湖畔東岸', '湖水拍著岸邊的石頭，對岸就是王都的方向。', { item: 'enWater' }, 'mana', { id: 'painter', look: 'woman2', name: '畫家艾琳' }],
+  canyon: ['right', 10, '赤岩祕谷', '被紅色岩壁包圍的小山谷。風吹過會發出笛聲。', { item: 'enRock' }, 'ore', { id: 'oldBarr', look: 'old', name: '老礦工巴爾' }],
+  swamp: ['right', 10, '螢光沼地', '沼澤的水面浮著會發光的小蟲。', { item: 'enVenom' }, 'shroom', { id: 'ruby', look: 'girl', name: '露比' }],
+  northRoad: ['right', 10, '北方林道', '旅人不常走的小徑，林子裡很安靜。', { gold: 1500 }, 'herb'],
+  capital: ['right', 8, '王都外郭花園', '城牆外的花園，貴族以前常來這裡散步。', { item: 'hiEther', n: 2 }, 'herb'],
+  goldPlains: ['bottom', 9, '金穗南坡', '麥田一路延伸到山坡上。', { item: 'enLeaf' }, 'herb'],
+  frostVillage: ['right', 8, '冰湖', '結冰的湖面。村裡的孩子冬天會來這裡溜冰。', { item: 'enWater2' }, 'ice'],
+  emberPass: ['right', 10, '熔岩溫泉', '地底的熱氣把雪融成了溫泉。', { item: 'enFire2' }, 'ore'],
+  starShrine: ['right', 8, '星見台', '神殿旁的高台。晚上能看到整片星空。', { item: 'elixir' }, 'mana'],
+  windHills: ['right', 10, '風之丘頂', '風車丘陵最高的地方，風從來沒停過。', { item: 'enBolt' }, 'herb', { id: 'kiteKid', look: 'kid', name: '小風' }],
+  jadeCreek: ['bottom', 8, '碧溪下游', '溪水在這裡變寬，水邊長滿了草藥。', { item: 'superPotion', n: 3 }, 'herb'],
+  maplePass: ['right', 10, '紅葉谷', '整座山谷都被楓葉染紅了。', { item: 'enFire' }, 'herb'],
+  oldField: ['right', 10, '英靈之丘', '古戰場旁的小丘，插滿了無名戰士的劍。', { item: 'powerFruit' }, 'ore', { id: 'oldDuke', look: 'guard', name: '老兵杜克' }],
+};
+const EXT_AREA = {}; // map → { side, from, name }
+function extendMap(id, side, size, name, desc, loot, gkind, npc) {
+  const d = MAPS[id]; if (!d || !d.rows || EXT_AREA[id]) return; const rng = srand(hashK(id) + 77), R = d.rows.map(r => r.split('')), h = R.length, w = R[0].length;
+  const solid = c => SOLID.has(c), tall = (d.rows.join('').match(/#/g) || []).length > 20 ? '#' : ',', grass = d.rows.join('').includes(',') && !d.rows.join('').includes('#') ? ',' : '.';
+  const water = side === 'bottom' ? R[h - 1].map((c, x) => c === 'W' ? x : -1).filter(x => x >= 0) : [];
+  const NW = side === 'right' ? size : w, NH = side === 'right' ? h : size, G = [];
+  for (let y = 0; y < NH; y++) { G.push([]); for (let x = 0; x < NW; x++) { const edge = side === 'right' ? (x === NW - 1 || y === 0 || y === NH - 1) : (x === 0 || x === NW - 1 || y === NH - 1); G[y].push(edge ? 'T' : grass); } }
+  const blob = (ch, n, rMax) => { for (let i = 0; i < n; i++) { const cx = 1 + Math.floor(rng() * (NW - 2)), cy = 1 + Math.floor(rng() * (NH - 2)), r = 1 + Math.floor(rng() * rMax); for (let y = cy - r; y <= cy + r; y++) for (let x = cx - r; x <= cx + r; x++) if (x > 0 && y > 0 && x < NW - 1 && y < NH - 1 && (x - cx) ** 2 + (y - cy) ** 2 <= r * r + 0.5 && rng() < 0.85) G[y][x] = ch; } };
+  blob(tall, Math.ceil(NW * NH / 40), 2); blob('T', Math.ceil(NW * NH / 55), 1); for (let i = 0; i < NW * NH / 30; i++) { const x = 1 + Math.floor(rng() * (NW - 2)), y = 1 + Math.floor(rng() * (NH - 2)); G[y][x] = rng() < 0.4 ? 'o' : 'f'; }
+  for (const x of water) for (let y = 0; y < NH; y++) G[y][x] = 'W';
+  let o = -1; const L = side === 'right' ? h : w, mid = Math.floor(L / 2);
+  const inside = i => side === 'right' ? !solid(R[i][w - 2]) && !solid(R[i + 1][w - 2]) : !solid(R[h - 2][i]) && !solid(R[h - 2][i + 1]) && !water.includes(i) && !water.includes(i + 1);
+  for (let k = 0; k < mid && o < 0; k++) for (const i of [mid + k, mid - k]) if (o < 0 && i > 1 && i < L - 3 && inside(i)) o = i;
+  if (o < 0) o = mid;
+  for (const i of [o, o + 1]) { if (side === 'right') { R[i][w - 1] = ':'; if (solid(R[i][w - 2])) R[i][w - 2] = ':'; } else { R[h - 1][i] = ':'; if (solid(R[h - 2][i])) R[h - 2][i] = ':'; } }
+  const cM = side === 'right' ? Math.floor(NW / 2) : Math.floor(NH / 2), cL = side === 'right' ? Math.floor(NH / 2) : Math.floor(NW / 2);
+  const setP = (a, b) => { const [x, y] = side === 'right' ? [a, b] : [b, a]; if (x > 0 && y >= 0 && x < NW && y < NH && G[y][x] !== 'W' && !(side === 'right' ? x === NW - 1 || y === 0 || y === NH - 1 : x === 0 || x === NW - 1 || y === NH - 1)) G[y][x] = ':'; };
+  for (let a = 0; a <= cM; a++) { setP(a, o); setP(a, o + 1); } for (let b = Math.min(o, cL); b <= Math.max(o + 1, cL); b++) setP(cM, b);
+  if (side === 'right') for (let y = 0; y < h; y++) R[y].push(...G[y]); else for (const row of G) R.push(row);
+  const W2 = R[0].length, H2 = R.length, inNew = (x, y) => side === 'right' ? x >= w : y >= h, key = (x, y) => x + ',' + y;
+  const start = side === 'right' ? [w, o] : [o, h], dist = { [key(...start)]: 0 }, q = [start];
+  while (q.length) { const [x, y] = q.shift(); for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const nx = x + dx, ny = y + dy; if (nx < 0 || ny < 0 || nx >= W2 || ny >= H2 || !inNew(nx, ny) || solid(R[ny][nx]) || dist[key(nx, ny)] !== undefined) continue; dist[key(nx, ny)] = dist[key(x, y)] + 1; q.push([nx, ny]); } }
+  const cells = Object.entries(dist).map(([k, v]) => [...k.split(',').map(Number), v]).sort((a, b) => b[2] - a[2]), used = new Set(), free = (x, y) => !used.has(key(x, y)) && R[y][x] !== ':';
+  const take = (pred) => { const c = cells.find(([x, y, v]) => free(x, y) && pred(x, y, v)); if (c) { used.add(key(c[0], c[1])); for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) used.add(key(c[0] + dx, c[1] + dy)); } return c; };
+  const open4 = (x, y) => [[1, 0], [-1, 0], [0, 1], [0, -1]].filter(([dx, dy]) => dist[key(x + dx, y + dy)] !== undefined).length >= 2;
+  const chest = take((x, y, v) => v >= 4), shrine = take((x, y, v) => v >= 3 && open4(x, y)), gat = take((x, y, v) => v >= 2), who = npc && take((x, y, v) => v >= 2 && v <= 8 && open4(x, y));
+  const sg = side === 'right' ? [w + 1, o - 1] : [o - 1, h + 1]; if (R[sg[1]] && !solid(R[sg[1]][sg[0]]) && R[sg[1]][sg[0]] !== ':') R[sg[1]][sg[0]] = 'S';
+  d.rows = R.map(r => r.join('')); d.signs = d.signs || {}; if (R[sg[1]] && R[sg[1]][sg[0]] === 'S') d.signs[sg[0] + ',' + sg[1]] = '「' + name + '」\n' + desc;
+  if (chest) (d.items = d.items || []).push({ id: 'x' + id, x: chest[0], y: chest[1], ...loot });
+  if (gat && GATHER_KINDS[gkind]) (d.gathers = d.gathers || []).push({ id: 'gx' + id, x: gat[0], y: gat[1], kind: gkind, mat: GATHER_KINDS[gkind][1] });
+  if (shrine) (d.npcs = d.npcs || []).push({ id: 'wshrine_' + id, x: shrine[0], y: shrine[1], dir: 'down', look: 'altar', name: '天氣祠' });
+  if (who) (d.npcs = d.npcs || []).push({ ...npc, x: who[0], y: who[1], dir: 'left' });
+  if (side === 'bottom' && d.encounters && d.encounters.length) { const last = d.encounters.reduce((a, e) => e.y1 > a.y1 ? e : a, d.encounters[0]); d.encounters.push({ ...last, y0: h, y1: h + size }); }
+  EXT_AREA[id] = { side, from: side === 'right' ? w : h, name, shrine: shrine ? [shrine[0], shrine[1]] : null };
+}
+for (const id in MAP_EXT) extendMap(id, ...MAP_EXT[id]);
+{ const _u = Overworld.prototype.update; Overworld.prototype.update = function (...a) {
+    const st = this.st, E = st && EXT_AREA[st.map], p = this.p;
+    if (E && p && !this.script && (E.side === 'right' ? p.x >= E.from : p.y >= E.from)) { const seen = st.extSeen || (st.extSeen = {}); if (!seen[st.map]) { seen[st.map] = 1; this.popup = { name: '祕境發現：' + E.name, t: 0 }; Sound.sfx('save'); } }
+    return _u.apply(this, a); }; }
+if (typeof ACHIEVEMENTS !== 'undefined') ACHIEVEMENTS.push({ id: 'extAll', n: '祕境探險家', d: '走遍15處祕境（地圖邊緣新開的區域）。', cat: '探索', ok: st => Object.keys(st.extSeen || {}).length >= Object.keys(MAP_EXT).length });
+const WEATHER = {
+  clear: { n: '晴', col: '#ffd060', d: '火屬性+15%、水屬性-10%', mul: { 火: 1.15, 水: 0.9 } },
+  rain: { n: '雨', col: '#80b8ff', d: '水・雷屬性+20%、火屬性-20%', mul: { 水: 1.2, 雷: 1.2, 火: 0.8 } },
+  storm: { n: '雷雨', col: '#ffe060', d: '雷屬性+30%、水屬性+10%、火屬性-20%', mul: { 雷: 1.3, 水: 1.1, 火: 0.8 } },
+  fog: { n: '霧', col: '#c8d0e0', d: '雙方命中-10%、毒屬性+15%', acc: 10, mul: { 毒: 1.15 } },
+  snow: { n: '雪', col: '#e8f4ff', d: '水屬性+15%、火屬性-10%、雙方速度-10%', spe: 0.9, mul: { 水: 1.15, 火: 0.9 } },
+  sand: { n: '沙塵', col: '#e0b070', d: '岩屬性+20%、雙方命中-5%', acc: 5, mul: { 岩: 1.2 } },
+};
+const WX_TABLE = {
+  base: { clear: 50, rain: 25, fog: 15, storm: 10 }, north: { snow: 55, clear: 20, fog: 15, storm: 10 }, canyon: { clear: 50, sand: 40, storm: 10 },
+  volcano: { clear: 60, sand: 25, fog: 15 }, swamp: { fog: 45, rain: 35, clear: 20 }, lake: { clear: 40, rain: 30, fog: 25, storm: 5 }, star: { clear: 75, fog: 25 },
+};
+const WX_MAP = { frostField: 'north', frostVillage: 'north', canyon: 'canyon', emberPass: 'volcano', swamp: 'swamp', lake: 'lake', jadeCreek: 'lake', starShrine: 'star' };
+const wxTableOf = id => MAPS[id] && MAPS[id].outdoor ? WX_TABLE[WX_MAP[id] || 'base'] : null;
+function wxRoll(T) { let s = 0; for (const k in T) s += T[k]; let r = Math.random() * s; for (const k in T) { r -= T[k]; if (r < 0) return k; } return 'clear'; }
+function wxNow(st = Game.st, id = st && st.map) { if (!st || !id) return null; const T = wxTableOf(id); if (!T) return null; const W0 = st.wx || (st.wx = {}); const w = W0[id]; return w ? w.k : null; }
+function wxTick(ow) {
+  const st = ow.st, id = st.map, T = wxTableOf(id); if (!T) return; const W0 = st.wx || (st.wx = {}), w = W0[id], steps = st.steps || 0;
+  if (!w) { W0[id] = { k: wxRoll(T), until: steps + 120 + Math.floor(Math.random() * 140) }; Game.wxBanner = { k: W0[id].k, t: 0 }; return; }
+  if (steps < w.until) return; const old = w.k; let k = wxRoll(T); if (k === old) k = wxRoll(T);
+  W0[id] = { k, until: steps + 120 + Math.floor(Math.random() * 140) }; if (k === old) return; Game.wxBanner = { k, t: 0 };
+  if ((old === 'rain' || old === 'storm') && k === 'clear' && chance(0.35)) { st.rainbowUntil = steps + 100; Game.wxBanner.rainbow = 1; Sound.sfx('levelUp'); }
+}
+{ const _u = Overworld.prototype.update; Overworld.prototype.update = function (...a) { if (this.st && this.map && !this.script) wxTick(this); return _u.apply(this, a); }; }
+{ const _ld = Overworld.prototype.load; Overworld.prototype.load = function (...a) { const r = _ld.apply(this, a); const st = this.st, w = st && st.wx && st.wx[st.map]; if (w && wxTableOf(st.map)) Game.wxBanner = { k: w.k, t: 0 }; return r; }; }
+function wxIcon(x, k, X, Y) { const c = WEATHER[k].col; x.fillStyle = c;
+  if (k === 'clear') { x.fillRect(X + 3, Y + 3, 5, 5); x.fillRect(X + 5, Y, 1, 2); x.fillRect(X + 5, Y + 9, 1, 2); x.fillRect(X, Y + 5, 2, 1); x.fillRect(X + 9, Y + 5, 2, 1); }
+  else if (k === 'rain' || k === 'storm') { x.fillStyle = '#c8d0e0'; x.fillRect(X + 1, Y + 2, 9, 3); x.fillRect(X + 3, Y + 1, 5, 1); x.fillStyle = c; if (k === 'storm') { x.fillRect(X + 5, Y + 5, 2, 2); x.fillRect(X + 4, Y + 7, 2, 2); x.fillRect(X + 5, Y + 9, 1, 2); } else for (const q of [2, 5, 8]) x.fillRect(X + q, Y + 6 + (q % 2), 1, 3); }
+  else if (k === 'fog') { for (const [q, w] of [[2, 9], [5, 7], [8, 9]]) x.fillRect(X + 1 + (q % 3), Y + q, w, 1); }
+  else if (k === 'snow') { x.fillRect(X + 5, Y + 1, 1, 9); x.fillRect(X + 1, Y + 5, 9, 1); x.fillRect(X + 3, Y + 3, 1, 1); x.fillRect(X + 7, Y + 3, 1, 1); x.fillRect(X + 3, Y + 7, 1, 1); x.fillRect(X + 7, Y + 7, 1, 1); }
+  else { for (let i = 0; i < 5; i++) x.fillRect(X + 1 + i * 2, Y + 3 + (i % 3) * 2, 2, 1); } }
+function wxOverlay(x, k, t, w, h) {
+  if (k === 'rain' || k === 'storm') { const n = k === 'storm' ? 70 : 45; x.strokeStyle = k === 'storm' ? 'rgba(190,210,255,0.55)' : 'rgba(170,200,255,0.45)'; x.lineWidth = 1; x.beginPath();
+    for (let i = 0; i < n; i++) { const px = (i * 47 + t * 3) % (w + 30) - 15, py = (i * 83 + t * 9) % (h + 20) - 10; x.moveTo(px, py); x.lineTo(px - 3, py + 8); } x.stroke();
+    x.fillStyle = 'rgba(20,30,60,0.12)'; x.fillRect(0, 0, w, h); if (k === 'storm' && t % 280 < 6) { x.fillStyle = 'rgba(255,255,240,' + (t % 280 < 3 ? 0.5 : 0.25) + ')'; x.fillRect(0, 0, w, h); if (t % 280 === 0 && Game.scene instanceof Overworld) Sound.sfx('thunder'); } }
+  else if (k === 'snow') { x.fillStyle = 'rgba(255,255,255,0.85)'; for (let i = 0; i < 40; i++) { const px = (i * 53 + Math.sin((t + i * 20) / 30) * 12 + t * 0.4) % w, py = (i * 71 + t * 0.9) % h; x.fillRect(Math.round(px), Math.round(py), i % 3 ? 1 : 2, i % 3 ? 1 : 2); } x.fillStyle = 'rgba(220,235,255,0.08)'; x.fillRect(0, 0, w, h); }
+  else if (k === 'fog') { x.fillStyle = 'rgba(225,230,240,0.2)'; x.fillRect(0, 0, w, h); for (let i = 0; i < 5; i++) { const y = ((i * 61 + t * 0.25) % (h + 40)) - 20; x.fillStyle = 'rgba(255,255,255,0.1)'; x.fillRect(0, Math.round(y), w, 16); } }
+  else if (k === 'sand') { x.fillStyle = 'rgba(200,150,80,0.2)'; x.fillRect(0, 0, w, h); x.fillStyle = 'rgba(240,210,150,0.55)'; for (let i = 0; i < 40; i++) { const px = (i * 37 + t * 4) % (w + 20) - 10, py = (i * 53 + t * 1.5) % h; x.fillRect(Math.round(px), Math.round(py), 4, 1); } }
+  else if (k === 'clear') { x.fillStyle = 'rgba(255,230,160,0.05)'; x.fillRect(0, 0, w, h); }
+}
+{ const _d = Overworld.prototype.draw; Overworld.prototype.draw = function (x) {
+    _d.call(this, x); const st = this.st, k = wxNow(st); if (!k) return; wxOverlay(x, k, this.t, W, H);
+    if (!this.popup && !UI.stack.length) { const s = WEATHER[k].n + (st.rainbowUntil > (st.steps || 0) ? '・彩虹' : ''), w = Math.ceil(Font.width(s, 9)) + 20; x.fillStyle = 'rgba(10,14,28,0.7)'; x.fillRect(3, 3, w, 14); wxIcon(x, k, 5, 4); Font.draw(x, s, 17, 1, WEATHER[k].col, UIC.textSh, 9); }
+    const B = Game.wxBanner; if (B && !UI.stack.length && !this.popup) { B.t++; if (B.t > 150) Game.wxBanner = null; else { const a = B.t < 10 ? B.t / 10 : B.t > 130 ? (150 - B.t) / 20 : 1, s1 = B.rainbow ? '雨停了，天空出現了彩虹！' : '天氣：' + WEATHER[B.k].n, s2 = B.rainbow ? '接下來100步，戰鬥經驗值+20%' : WEATHER[B.k].d, w = Math.max(Font.width(s1, 10), Font.width(s2, 9)) + 20;
+      x.globalAlpha = a; drawPanel(x, (W - w) / 2, 22, w, 30, null); Font.drawC(x, s1, W / 2, 23, B.rainbow ? '#ffb0e0' : WEATHER[B.k].col, UIC.textSh, 10); Font.drawC(x, s2, W / 2, 36, UIC.text, UIC.textSh, 9); x.globalAlpha = 1; } }
+  }; }
+{ const _bs = Overworld.prototype.battleScript; Overworld.prototype.battleScript = function* (cfg, ...a) {
+    const st = this.st, k = wxNow(st); if (!cfg) return yield* _bs.call(this, cfg, ...a);
+    let c = { ...cfg, wx: k }; if (st.rainbowUntil > (st.steps || 0) && cfg.kind === 'wild') c.aevExp = (c.aevExp || 1) * 1.2;
+    if (k && cfg.kind === 'wild' && WX_MON[k] && chance(0.25)) c = { ...c, sp: WX_MON[k][0], wxMon: 1 };
+    return yield* _bs.call(this, c, ...a);
+  }; }
+{ const _cd = Battle.prototype.calcDamage; Battle.prototype.calcDamage = function (u, t, mv) {
+    const r = _cd.call(this, u, t, mv), k = this.cfg && this.cfg.wx, M = k && WEATHER[k].mul; if (M && mv && mv.pow && r && r.dmg > 0 && M[mv.t]) r.dmg = Math.max(1, Math.round(r.dmg * M[mv.t])); return r; }; }
+{ const _hit = hitChance; hitChance = function (u, t, mv) { let h = _hit(u, t, mv); const b = Game.scene, k = b && b.cfg && b.cfg.wx; if (k && WEATHER[k].acc && mv && mv.acc) h = Math.max(0.05, h - WEATHER[k].acc / 100); return h; }; }
+{ const _es = Battle.prototype.effSpe; Battle.prototype.effSpe = function (b) { const v = _es.call(this, b), k = this.cfg && this.cfg.wx; return k && WEATHER[k].spe ? v * WEATHER[k].spe : v; }; }
+{ const _in = Battle.prototype.intro; Battle.prototype.intro = function* (...a) { const r = yield* _in.apply(this, a); const k = this.cfg && this.cfg.wx, st = Game.st;
+    if (k && st && st.wxTold !== k + (st.wx[st.map] || {}).until) { st.wxTold = k + (st.wx[st.map] || {}).until; yield* this.msg('【' + WEATHER[k].n + '】' + WEATHER[k].d, { hold: 30 }); } return r; }; }
+{ const _d = Battle.prototype.draw; Battle.prototype.draw = function (x) { _d.call(this, x); const k = this.cfg && this.cfg.wx; if (!k) return; x.save(); x.beginPath(); x.rect(0, 0, W, BH); x.clip(); wxOverlay(x, k, this.t || 0, W, BH); x.restore(); wxIcon(x, k, W - 13, 3); }; }
+const WX_MON = {
+  rain: ['rainFrog', '雨蛙精', 'aquatic', 20, 'mage', ['m_goo', 'm_whirlpool', 'm_tidalCrush', 'm_bite'], ['frog', 190, 1.1, 1.05], '只在下雨天出現的大青蛙。叫聲會引來更多雨。', '水'],
+  storm: ['stormHawk', '雷鷹', 'bird', 22, 'fast', ['m_bite', 'm_feint', 'm_static', 'm_diveBomb'], ['bird', 45, 1.2, 1.15], '雷雨中盤旋的猛禽，羽毛帶著靜電。', '雷'],
+  fog: ['mistWisp', '霧靈', 'spirit', 21, 'mage', ['m_soulSip', 'm_hex', 'm_frostNova', 'm_curseGrip'], ['ghostLamp', 200, 0.3, 1.35], '在濃霧裡飄盪的靈魂，看不清楚牠的臉。', '毒'],
+  snow: ['snowball', '雪團怪', 'ooze', 24, 'tank', ['m_goo', 'm_frostNova', 'm_bite', 'm_acidSpit'], ['slime', 200, 0.15, 1.5], '雪地裡滾來滾去的雪團。被打散了還會自己黏回去。', '水'],
+  sand: ['dustScorpion', '沙塵蠍', 'insect', 18, 'phys', ['m_bite', 'm_acidSpit', 'm_swarm', 'm_sporeBurst'], ['sandScorpion', -20, 0.8, 0.85], '趁沙塵暴出來狩獵的蠍子。', '岩'],
+  clear: ['sunFox', '陽炎狐', 'beast', 16, 'fast', ['m_bite', 'm_rend', 'm_scorch', 'm_warRoar'], ['fox', -10, 1.3, 1.15], '晴天時在草原上奔跑的紅狐，尾巴像火一樣。', '火'],
+};
+for (const k in WX_MON) { const [sp, n, fam, lv, role, moves, look, dex, el] = WX_MON[k]; if (SPECIES[sp]) continue;
+  SPECIES[sp] = { n, fam, base: CH2_ROLE[role].map(v => Math.round(v * 80)), exp: Math.round((5 * lv + 28) * 1.3), gold: Math.round(lv * 1.6), learn: moves.map((m, i) => [i === 3 ? 12 : 1, m]).filter(([, m]) => MOVES[m]), dex, wxOnly: k };
+  MON_PANEL[sp] = ch2Panel(lv, role, 'wild'); const [b, dh, ks, kl] = look; PLACEHOLDER[sp] = look; HD_RIG_OF[sp] = HD_RIG_OF[b] || b; const base = ART[b] ? b : PLACEHOLDER[b] && PLACEHOLDER[b][0]; if (ART[base]) ART[sp] = artRecolor(ART[base], dh, ks, kl); SP_EL[sp] = el; }
+{ const _v = Battle.prototype.victory; Battle.prototype.victory = function* () { const r = yield* _v.call(this); const c = this.cfg, st = Game.st;
+    if (c && c.wxMon && chance(0.2)) { const el = SP_EL[c.sp], k = el && 'en' + EN_KEY[el]; if (k && ITEMS[k]) { st.bag[k] = (st.bag[k] || 0) + 1; yield* this.msg('得到了' + ITEMS[k].n + '！', { hold: 30 }); } } return r; }; }
+function* wshrineEvent(ow, ent) {
+  const st = ow.st, id = st.map, k = wxNow(st) || 'clear', w = (st.wx || {})[id] || {}, done = st.wsh || (st.wsh = {}), stamp = k + w.until;
+  yield* say('古老的「天氣祠」。祠上刻著太陽、雨雲和雪花的圖案。\n現在的天氣是「' + WEATHER[k].n + '」。');
+  if (done[id] === stamp) { yield* say('祠堂很安靜。等天氣變了再來看看吧。'); return; }
+  if (k === 'clear') { if (yield* yesNo('陽光照在祠上。要祈求好運嗎？')) { done[id] = stamp; st.bless = 3; Sound.jingle('item'); yield* say('身體暖了起來！接下來3場戰鬥，一開始物攻和魔攻就提升一級。'); } }
+  else if (k === 'rain') { done[id] = stamp; st.bag.enWater = (st.bag.enWater || 0) + 1; yield* itemGet('祠前的石盆積滿了雨水，水底沉著一顆發光的石頭。得到了流水附魔石！'); }
+  else if (k === 'storm') { yield* say('轟隆——！閃電打在祠頂上，一隻雷鷹被引了過來！'); const res = yield* ow.battleScript({ sp: 'stormHawk', lv: (mapLevel(id) || [20, 20])[1] + 2, kind: 'elite', id: 'wxStorm' + id, noCard: 1 });
+    if (res === 'win') { done[id] = stamp; st.bag.enBolt2 = (st.bag.enBolt2 || 0) + 1; yield* itemGet('雷鷹掉下了一顆帶電的石頭。得到了上級雷鳴附魔石！'); } }
+  else if (k === 'fog') { done[id] = stamp; yield* say('霧裡走出一個戴著斗篷的商人。「……只在起霧的時候做生意。」'); yield* shopFlow(['enFire', 'enWater', 'enBolt', 'enLeaf', 'enVenom', 'enRock', 'attrReset', 'talentReset'].filter(q => ITEMS[q])); }
+  else if (k === 'snow') { if (yield* yesNo('祠前積了厚厚的雪。要堆一個雪人嗎？')) { done[id] = stamp; for (let i = 0; i < 3; i++) { Sound.sfx('step'); yield* wait(14); } const it = pick(['hiEther', 'superPotion', 'elixir'].filter(q => ITEMS[q])); st.bag[it] = (st.bag[it] || 0) + 1; yield* itemGet('雪人堆好了！雪人的肚子裡藏著' + ITEMS[it].n + '。'); } }
+  else if (k === 'sand') { if (yield* yesNo('沙塵在祠邊堆成了小丘，好像埋著什麼。要挖挖看嗎？')) { done[id] = stamp; const roll = Math.random(); if (roll < 0.4) { const g = 300 + Math.floor(Math.random() * 700); st.money += g; yield* itemGet('挖到了古代的錢幣，價值' + g + ' G！'); } else if (roll < 0.8) { st.bag.enRock = (st.bag.enRock || 0) + 1; yield* itemGet('挖到了岩石附魔石！'); } else { yield* orbGet(pick(['keenEye', 'haste', 'vigor'])); } } }
+}
+for (const id in EXT_AREA) Events['wshrine_' + id] = wshrineEvent;
+{ const _ca = Battle.prototype.chooseAction; Battle.prototype.chooseAction = function* () {
+    const st = Game.st; if (!this._bless && st && st.bless > 0 && this.H) { this._bless = 1; st.bless--; this.H.stages.atk = Math.min(6, this.H.stages.atk + 1); this.H.stages.spa = Math.min(6, this.H.stages.spa + 1); yield* this.msg('（天氣祠的祝福）物攻和魔攻提升了！', { hold: 16 }); }
+    return yield* _ca.call(this); }; }
+Object.assign(COM_TALK, {
+  c1: ['啊，你是新來的冒險者吧？歡迎、歡迎。', '最近路上魔物變多了，受傷的客人一個接一個……', '我丈夫以前是採藥的，他走了以後，傷藥都得自己想辦法。', '能幫我採5株藥草回來嗎？晨霧道路上就有。'],
+  c2: ['唉，你看我這手……又腫起來了。', '電電蜂在道路北邊築了巢，果園的工人被螫到都不敢來上工。', '再這樣下去，今年的果子要爛在樹上了。', '能幫我打倒4隻電電蜂嗎？'],
+  c3: ['你還記得地下水道的那些水晶嗎？', '我年輕時讀過一本古書，說魔王的封印是「用光凝成的石頭」鎖住的。', '要是那些水晶跟封印有關……我想親眼確認。', '能幫我帶3塊水晶碎片回來嗎？'],
+  c4: ['……不好意思，能打擾一下嗎？', '我在迷霧森林東邊弄丟了一只銀懷錶。', '那是我在這個世界唯一留下來的東西……背面刻著王都鐘塔的紋章。', '如果你撿到了，請還給我，或放進委託箱。'],
+  c5: ['年輕人！你來得正好！', '嘟嘟菇又把我的高麗菜啃成蕾絲了！', '這片菜園是我跟老伴一起開的，他腰不好，現在只剩我一個人顧。', '幫我打倒5隻嘟嘟菇，我請你吃高麗菜捲！'],
+  c6: ['嘿，你看過會發光的草嗎？', '師父說我只會背咒文、不會做研究……我想證明給他看。', '魔力草在晚上會發出藍色的光，我想知道光是從哪裡來的。', '能幫我找3株魔力草嗎？道路北邊、森林和水道都有。'],
+  c7: ['……這片森林，我走了四十年了。', '最近毒孢菇的孢子飄得到處都是，連最耐活的藥草都枯了。', '藥草沒了，鎮上的傷藥就沒了。', '年輕人，幫我打倒4隻毒孢菇吧。'],
+  c8: ['你知道嗎，我們旅店以前有一道招牌菜。', '菇菇燉湯——是我先生教我的。他走了以後，我一直沒有勇氣再煮。', '……可是最近，我好想再嚐一次那個味道。', '能幫我帶毒孢子3個和蕈傘2個來嗎？放心，毒會煮掉的。'],
+  c9: ['硬石不夠了。', '……沒有好石頭，就打不出好刀。這是師父教我的第一件事。', '廢棄礦坑的礦脈最多，就是魔物有點煩人。', '幫我帶6塊硬石來。報酬我不會虧待你。'],
+  c10: ['咳咳……你是冒險者？', '我在這礦坑挖了三十年，從來沒怕過黑。', '可是最近坑道蝠一大群一大群地飛，年輕的礦工都嚇跑了。', '幫我打倒5隻坑道蝠吧，讓那些小伙子敢回來上工。'],
+  c11: ['喔喔，冒險者！你身上有沒有……骨頭？', '別那樣看我，我是收藏家。古代人會把骨頭刻成護身符。', '每一片骨片上都有它主人的故事，我想把那些故事留下來。', '帶5塊骨片來，我付好價錢。'],
+  c12: ['……墓穴那邊，晚上會傳出哭聲。', '那裡葬著這個鎮的祖先。他們不該被怨靈打擾。', '我年紀大了，下不去。', '拜託你，打倒4隻怨靈，讓他們好好安息。'],
+  c13: ['那、那個……你要去晨霧道路北邊嗎？', '這封信……能幫我交給守衛嗎？', '他每天都會經過花店，買一朵白色的雛菊，可是從來不說是要送誰……', '我自己不太敢去。拜、拜託了！'],
+  c14: ['唉喲、唉喲……年輕人，扶我一下。', '年紀大了，腰痛又犯了。以前我孫子會幫我去採藥，現在他去王都當學徒了。', '能幫我帶藥草3株和魔力草1株來嗎？'],
+  c15: ['你看你看，莉婭姊姊的頭盔上有羽毛喔！好帥！', '我也想要一個羽毛髮飾……這樣我也能跟她一樣勇敢。', '可以幫我找3根羽毛嗎？路上的鳥型魔物會掉。'],
+  c16: ['……月露，你見過嗎？', '滿月的晚上，湖邊的月露草會結出像眼淚一樣的露水。', '我年輕時為了一個人，在這裡等了一整個月的滿月。現在只剩我一個人等了。', '能幫我帶5滴月露來嗎？我想調一瓶藥——給還在等的人。'],
+  c17: ['冒險者！拜託你，看看這張網！', '全被湖蜥戰士撕爛了！這可是我女兒一針一線幫我補的。', '再不出海，這個月就沒錢買她的藥了。', '幫我打倒4隻湖蜥戰士吧！'],
+  c18: ['你好，我是旅店的藥師。', '峽谷那邊常有旅人被砂鉗蠍螫傷，送來時腳都腫成兩倍大。', '我想用蠍子自己的毒針做解毒劑——以毒攻毒。', '能幫我帶4根蠍尾針來嗎？'],
+  c19: ['唉——又被搶了！第三次了！', '峽谷鷹妖好像把信差的包裹當成獵物，專門從天上搶。', '包裹裡有很多人的家書……有些人等了半年。', '幫我打倒5隻峽谷鷹妖吧！我會準時把信送到的！'],
+  c20: ['沼苔啊……是好東西。', '味道很臭，可是能治好很多傷。沼澤邊的人都靠它過冬。', '我老了，進不了沼澤了。', '幫我帶5把沼苔來，我來做成藥膏分給大家。'],
+  c21: ['……燈塔的路，被樹妖堵住了。', '我每天晚上都要點燈，讓迷路的人找到回家的方向。', '可是現在，連我自己都過不去。', '請你打倒4隻枯木樹妖。'],
+  c22: ['歡迎來到冒險者公會！', '冬天快到了，北方街道會冷到骨頭裡。', '公會想做一批防寒斗篷，送給沒錢買衣服的新人冒險者。', '能幫我們帶4張灰狼皮來嗎？'],
+  c23: ['北方街道的商人，這個月已經被搶了七次。', '有個賣藥草的老太太，連回家的車錢都被搶走了……', '公會出面，懸賞討伐盜賊。', '擊敗5個街道盜賊。拜託你了。'],
+  c24: ['……這個委託，沒什麼人想接。', '地下水道的汙泥姆把排水口堵住了，一下雨，下城區就淹水。', '住在那裡的，都是付不起房租的人家。', '擊敗4隻汙泥姆，讓水流通吧。'],
+  c25: ['鐵這種東西，就算生鏽了也不是垃圾。', '熔掉，敲打，它還能變回一把好刀。……人也是一樣。', '水道和鐘塔裡有很多鏽鐵片，能帶4片來嗎？'],
+  c26: ['你吃過金穗平原的野蜂蜜嗎？', '我女兒生日快到了。她最喜歡的，就是用那種蜂蜜烤的蛋糕。', '可是今年平原的蜂變得好兇，採蜜人都不敢去。', '能幫我帶3罐野蜂蜜來嗎？'],
+  c27: ['……你相信嗎？稻草人會自己走路。', '每天晚上，它們都走進麥田，把快熟的麥穗踩爛。', '那些稻草人是我爺爺做的……我實在下不了手。', '拜託你，幫我擊敗5個稻草人。'],
+  c28: ['啊！你是師父說的那個冒險者吧！', '師父要修鐘塔的零件，可是他的手最近一直在抖……', '我想趕快把零件湊齊，讓他不用再親自爬上鐘塔。', '能幫我帶發條3個和黃銅齒輪2個來嗎？'],
+  c29: ['……雪狼的群又下山了。', '我們打獵，只拿需要的份。可是牠們連小鹿都不放過。', '村子的冬糧快撐不下去了。', '幫我擊敗5隻雪狼吧。'],
+  c30: ['冷吧？來，先烤烤火。', '這座暖爐是村子的心臟，晚上大家都擠在這裡。', '可是今年的柴火不夠……聽說熔岩石可以燒一整個冬天。', '能幫我帶3塊熔岩石來嗎？'],
+  c31: ['願曙光與你同在，旅人。', '冰晶洞窟裡，有被凍在時間裡的亡魂。', '他們不是壞人，只是找不到回去的路。', '請你擊敗4個霜之魂，讓他們安息。'],
+  c32: ['你知道黯滅要塞的「虛空碎片」嗎？', '那是空間裂開時留下的東西。我想弄清楚，魔王的力量到底是從哪裡來的。', '……不是為了研究，是為了下一代不要再經歷這些。', '能幫我帶3塊虛空碎片來嗎？'],
+  c33: ['火蜥鱗！我需要火蜥鱗！', '騎士團的新兵下個月要去赤焰山道，他們的盾擋不住火。', '我兒子也在裡面。', '能幫我帶5片火蜥鱗來嗎？'],
+  c34: ['傳說星見神殿的星塵，記錄著初代勇者的旅程。', '我這一生都在追那個人的足跡……', '如果星塵裡真的有他的記憶，我想在死前看一眼。', '能幫我帶4顆星塵來嗎？'],
+  c35: ['……你就是最近傳聞中的那個冒險者？', '公會長的工作，就是不讓年輕人白白送死。', '黯滅騎士不是鬧著玩的。擊敗4個給我看看。', '做得到，我就承認你是公會最強的冒險者。'],
+});
+const COM_THANKS2 = {
+  c1: ['真的採到了！太好了……', '這些夠做好幾天的傷藥了。我先生以前也是這樣，一大早出門，帶著一籃藥草回來。', '……謝謝你。'],
+  c2: ['你看！工人們回來了！', '今年的果子一定很甜。收成的時候，我留一籃給你！'],
+  c3: ['……果然在發光。跟古書上畫的一模一樣。', '如果封印真的是用這種石頭做的……', '謝謝你。這件事，我會繼續查下去。'],
+  c5: ['我的菜園得救了！', '老伴聽到一定會笑出來的。來來來，高麗菜捲剛好出爐！'],
+  c6: ['好漂亮……你看，連在我手上都還在發光。', '我要拿去給師父看！這次他一定會說「不錯」！'],
+  c7: ['森林的空氣……好像乾淨一點了。', '藥草會慢慢長回來的。它們比人還要堅強。'],
+  c8: ['……就是這個味道。', '（老闆娘一口一口喝著湯，眼眶紅了。）', '謝謝你。下次來，我請你喝一大碗。'],
+  c9: ['好石頭。', '……你挑的都是好石頭。有天分。'],
+  c10: ['那群蝙蝠終於散了！', '年輕人們說明天就回來上工。……這座礦坑，又能熱鬧起來了。'],
+  c11: ['喔喔喔！這片上面刻著狼！這片是鳥！', '古代人真是浪漫啊。我會把它們好好保存下來的。'],
+  c12: ['……今晚，好安靜。', '祖先們應該睡得很好。謝謝你。'],
+  c14: ['喔喔，這個藥草好新鮮！', '我孫子寫信來說，他在王都過得很好。……你要是遇到他，幫我跟他說，爺爺的腰好多了。'],
+  c15: ['哇啊——好漂亮的羽毛！', '我要做成髮飾，然後……然後我也要變得跟莉婭姊姊一樣勇敢！'],
+  c16: ['……月露。你真的帶來了。', '（隱士把露水倒進小瓶子裡，看了很久。）', '她說過，會在滿月的晚上回來。……也許今晚就是。謝謝你。'],
+  c17: ['湖蜥不敢靠近了！', '我明天就出海。女兒補的網，這次一定要撈到最大的魚給她看！'],
+  c18: ['太好了，有了這些，解毒劑就做得出來了。', '峽谷的旅人不用再怕了。謝謝你。'],
+  c19: ['天空終於乾淨了！', '我現在就去送信。有個老奶奶在等她兒子的信，等了整整一個夏天呢。'],
+  c20: ['嗯……就是這個臭味。好沼苔。', '這個冬天，沼澤邊的人家會好過一點。'],
+  c21: ['路……通了。', '今晚，燈會準時亮起來。謝謝你。'],
+  c22: ['4張灰狼皮！這樣可以做十件斗篷了！', '新人們這個冬天不會冷了。謝謝你，前輩。'],
+  c23: ['商人們說，這幾天路上安全多了。', '那個老太太也回家了。……做得很好。'],
+  c24: ['下城區的水退了。', '有個小孩跑來公會，送了一幅畫給接委託的人。……畫的是你喔。'],
+  c25: ['好。這些鐵還有救。', '……謝謝你把它們帶回來。'],
+  c26: ['野蜂蜜！而且是最上等的！', '女兒的生日蛋糕有著落了。到時候你也來吃一塊吧！'],
+  c27: ['稻草人……終於不動了。', '我會把它們好好燒掉，跟爺爺道個歉。謝謝你。'],
+  c28: ['零件齊了！', '師父一定會很開心……不對，他一定會說「太慢了」。嘿嘿。'],
+  c29: ['狼群退回山上了。', '今年冬天，村子撐得過去了。謝謝你，獵人。'],
+  c30: ['這就是熔岩石……好燙！', '暖爐今年冬天都不會熄了。大家可以一起過冬了。'],
+  c31: ['……他們走了嗎？', '願他們在曙光中找到回家的路。也願你平安，旅人。'],
+  c32: ['這就是虛空碎片……裡面好像什麼都沒有，又好像什麼都有。', '謝謝你。這份研究，我會留給下一代。'],
+  c33: ['火蜥鱗，5片！', '新兵的盾有救了。我兒子……也會平安回來的。'],
+  c34: ['……星塵在發光。', '（學者把星塵捧在手心，像是在聽什麼人說話。）', '初代勇者，原來也曾經害怕過啊。……謝謝你。'],
+  c35: ['……好。', '從今天起，你就是公會最強的冒險者。別讓我失望。'],
+};
+for (const k in COM_THANKS2) COM_THANKS[k] = COM_THANKS2[k];
+const COM_AFTER = {
+  c1: ['客人都說我的傷藥變好了。……其實是你採的藥草好。'], c2: ['今年的果子真的很甜！你要吃一顆嗎？'], c3: ['那些水晶，我還在研究。總覺得……它們在等什麼人。'],
+  c5: ['老伴說要當面謝你，可是他腰還沒好。下次再介紹給你認識！'], c6: ['師父真的說「不錯」了！雖然只有兩個字……'], c7: ['森林的藥草長回來了。你看，這片葉子多綠。'],
+  c8: ['那鍋湯，我每個月都會煮一次了。'], c9: ['你帶來的石頭，打出了我這輩子最好的一把刀。'], c10: ['小伙子們都回來了。坑道又熱鬧起來了。'],
+  c11: ['你的骨片裡，有一片刻著一對手牽手的人。我最喜歡那一片。'], c12: ['墓穴變得好安靜。我昨天去掃墓，還看到一朵新開的花。'],
+  c14: ['我的腰好多了！昨天還走到湖邊去釣魚呢。'], c15: ['你看，羽毛髮飾！我現在每天都戴著。'], c16: ['……她還沒回來。不過我不急，我已經習慣等了。'],
+  c17: ['撈到大魚了！女兒說那是湖裡的王。'], c18: ['解毒劑做好了，已經救了三個旅人。'], c19: ['那個老奶奶收到信，哭了一整個下午。是好的那種哭喔。'],
+  c20: ['藥膏做好了，分給了沼澤邊的七戶人家。'], c21: ['每天晚上，燈都準時亮著。你迷路的時候，就看看那道光吧。'],
+  c22: ['新人們都穿著你帶來的斗篷。有人說，斗篷上有前輩的味道。'], c23: ['北方街道現在安全多了。商人們都在傳你的名字。'], c24: ['那幅畫還掛在公會。畫得不太像，可是很有精神。'],
+  c26: ['女兒說那是她吃過最好吃的蛋糕！'], c27: ['我自己做了一個新的稻草人。這個不會亂走。……大概。'], c28: ['師父爬上鐘塔修好了鐘。他說……謝謝你。'],
+  c29: ['村子撐過了冬天。春天來的時候，我們會辦一場祭典。'], c30: ['暖爐一直燒著。晚上大家會在這裡講你的故事。'], c33: ['我兒子從赤焰山道平安回來了。他說，盾一點都沒燒壞。'],
+  c34: ['我每天晚上都看著那些星塵。好像能聽到遠方的腳步聲。'], c35: ['公會最強的冒險者，今天也要平安回來喔。'],
+};
+{ const _nc = npcCommission; npcCommission = function (id, ow, ent) {
+    const g = _nc(id, ow, ent); if (g) return g; const st = Game.st; if (!st || !st.flags || !st.flags.license) return null;
+    const ep = EPILOGUES.find(E => E.npc === id && !(st.ep || {})[E.key] && E.when(st)); if (ep) return (function* () { (st.ep || (st.ep = {}))[ep.key] = 1; yield* sayAll(typeof ep.lines === 'function' ? ep.lines(st) : ep.lines); if (ep.gift) yield* ep.gift(st); })();
+    const k = Object.keys(COM_GIVER).find(q => COM_GIVER[q] === id && COM_AFTER[q] && (comState(q, st) || {}).s === 'done' && !(st.comAfter || {})[q]);
+    if (k) return (function* () { (st.comAfter || (st.comAfter = {}))[k] = 1; yield* sayAll(COM_AFTER[k]); })();
+    return null;
+  }; }
+const ch2p = st => typeof ch2 === 'function' ? ch2(st) : 0;
+const EPILOGUES = [
+  { npc: 'florist', key: 'florist1', when: st => st.flags.q1done && st.flags.golem, lines: st => st.flags.q1res === 'home' ? ['小麥每天早上都在鎮外練劍，天還沒亮就出門了。', '我每天都在擔心……可是看他那麼認真，我也只能幫他縫護膝了。', '他說，總有一天要跟你一起去冒險。……到時候，就拜託你了。'] : ['小麥昨天終於跟我坦白了……原來他一直在偷偷練劍。', '我哭了一場，然後去鐵匠那裡買了一把木劍給他。', '是你幫他保密的吧？……謝謝你陪著他。'] },
+  { npc: 'guard', key: 'guard1', when: st => (comState('c13', st) || {}).s === 'done' && st.flags.golem, lines: ['……那個，花店的她。', '約我這週末一起去看郊外的花田。', '你、你別跟別人說喔。……尤其是小麥。'] },
+  { npc: 'guard', key: 'guard2', when: st => st.flags.q2done && ch2p(st) >= 1, lines: ['提姆寄信回來了。他在北方的雪原當獵人，上個月獵到了第一頭鹿。', '信裡還夾了一包肉乾，說一半要給你。……拿去吧。'], gift: function* (st) { st.bag.superPotion = (st.bag.superPotion || 0) + 2; yield* itemGet(st.name + '得到了提姆的肉乾……換成了好傷藥×2！'); } },
+  { npc: 'smith', key: 'smith1', when: st => st.flags.q3res && ch2p(st) >= 1, lines: st => st.flags.q3res === 'take' ? ['師父的遺作，你還帶在身上嗎？', '……師父一輩子都想打出一把「能保護別人的劍」。', '它在異界的勇者手上，師父一定很驕傲。'] : ['師父的劍，我放在店裡最顯眼的地方了。', '每天早上擦一次，就像跟師父說早安。', '……謝謝你讓它留在這裡。'] },
+  { npc: 'healer', key: 'healer1', when: st => (comState('c8', st) || {}).s === 'done' && st.flags.wolf, lines: ['上次那鍋燉湯……其實那天，是我先生的忌日。', '好久沒有在這一天笑出來了。', '……旅店的門永遠為你開著。累了就回來吧。'] },
+  { npc: 'healer', key: 'healer2', when: st => (st.ev || {}).painter >= 2, lines: ['湖邊那位畫家，送了一幅畫給旅店。', '是湖上的彩虹喔。我把它掛在大廳了。聽說……是你幫她等到的？'] },
+  { npc: 'grandpa', key: 'grandpa1', when: st => (comState('c14', st) || {}).s === 'done' && ch2p(st) >= 1, lines: ['我孫子從王都寄信回來了！他在鐘錶店當學徒。', '……你在王都有遇到他嗎？那孩子，從小就喜歡拆東西。'] },
+];
+const evOf = (st = Game.st) => st.ev || (st.ev = {});
+const onMap = id => Game.st.map === id;
+Object.assign(Events, {
+  *painter() { const st = Game.st, E = evOf(st), rb = st.rainbowUntil > (st.steps || 0) && onMap('lake');
+    if (!E.painter) { yield* sayAll(['啊……不好意思，我在畫湖。', '我叫艾琳。小時候，媽媽常帶我來這裡。', '有一次下完雨，湖上出現了好大的彩虹。媽媽說，那是天空在笑。', '媽媽走了以後，我每年都來，想把那道彩虹畫下來……可是一直等不到。', '雨停的時候偶爾才會有彩虹。如果你看到了，能告訴我嗎？']); E.painter = 1; return; }
+    if (E.painter === 1 && !rb) { yield* say(wxNow() === 'rain' || wxNow() === 'storm' ? '在下雨呢……雨停之後，說不定會有彩虹。' : '今天也沒有彩虹……不過，我會繼續等的。'); return; }
+    if (E.painter === 1 && rb) { E.painter = 2; yield* sayAll(['……你看！彩虹！', '（艾琳拿起畫筆，一句話也沒說，畫了很久很久。）', '……畫好了。', '媽媽，你看，天空在笑。', '謝謝你陪我等。這個給你——是媽媽留給我的護身符。它會保護你，就像保護過我一樣。']); yield* orbGet('renew'); return; }
+    yield* say('那幅畫，我送給萌芽鎮的旅店了。希望更多人能看到天空在笑。'); },
+  *oldBarr() { const st = Game.st, E = evOf(st);
+    if (!E.barr) { yield* sayAll(['……你也是來看這座山谷的？', '四十年前，我跟我老婆來這裡度蜜月。', '那天刮起了沙塵暴，她最寶貝的銀髮簪不見了。她到死都還在念。', '聽說只有沙塵暴的時候，谷裡的沙才會被翻開……', '可惜我這把老骨頭，挖不動了。']); E.barr = 1; return; }
+    if (E.barr === 1 && st.bag.silverPin) { delete st.bag.silverPin; E.barr = 2; yield* sayAll(['這是……！', '（老礦工的手在發抖。）', '……就是這支。上面還刻著我們兩個人的名字。', '四十年了……你終於回家了。', '年輕人，謝謝你。這是我當礦工時的護身石，帶著吧。']); st.bag.enRock2 = (st.bag.enRock2 || 0) + 1; st.money += 1500; yield* itemGet(st.name + '得到了上級岩石附魔石和1500 G！'); return; }
+    yield* say(E.barr === 2 ? '我每天都來這裡坐一下。……她應該也在這裡吧。' : '沙塵暴的時候，去祠堂那邊挖挖看吧……拜託你了。'); },
+  *ruby() { const st = Game.st, E = evOf(st), fog = wxNow() === 'fog';
+    if (!E.ruby) { yield* sayAll(['……！你、你不是魔物吧？', '我叫露比。我在抓螢火蟲。', '我弟弟很怕黑。爸爸在霧裡走丟以後，他晚上就一直哭……', '我想做一個螢火蟲燈籠給他。可是螢火蟲要吃沼苔才會一直發光。', '你能幫我找3把沼苔嗎？']); E.ruby = 1; return; }
+    if (E.ruby === 1 && (st.bag.bogMoss || 0) >= 3) { st.bag.bogMoss -= 3; E.ruby = 2; yield* sayAll(['沼苔！謝謝你！', '（露比把沼苔放進玻璃瓶，螢火蟲一隻一隻亮了起來。）', '好漂亮……弟弟一定會喜歡的。', '……可是，我好像不知道回家的路了。', '起霧的時候，燈籠的光可以指路……等起霧了，你能陪我走回去嗎？']); return; }
+    if (E.ruby === 2 && fog) { E.ruby = 3; yield* sayAll(['起霧了！你看，燈籠的光可以穿過霧！', '（你牽著露比，跟著燈籠的光，一步一步走出沼澤。）', '……看到家了！弟弟在窗邊！', '謝謝你。爸爸以前也是這樣，牽著我的手走過霧。', '這個給你。是爸爸留下來的東西，他說能讓人在黑暗裡看清楚。']); st.bag.enVenom2 = (st.bag.enVenom2 || 0) + 1; yield* itemGet(st.name + '得到了上級劇毒附魔石！'); return; }
+    yield* say(E.ruby === 3 ? '弟弟現在晚上都抱著燈籠睡覺。他說，燈籠裡住著爸爸。' : E.ruby === 2 ? '等起霧的時候，再陪我走回家好嗎？' : '沼苔在沼澤裡的苔蘚上採得到……拜託你了。'); },
+  *kiteKid() { const st = Game.st, E = evOf(st), w = wxNow();
+    if (!E.kite && w !== 'storm') { yield* sayAll(['你看你看！我的風箏飛得好高！', '這裡的風最棒了。我叫小風，因為我是在起大風的那天出生的！']); E.kite = 1; return; }
+    if ((E.kite || 0) < 2 && w === 'storm') { E.kite = 2; yield* sayAll(['嗚嗚……我的風箏……', '雷雨一來，線就斷了。風箏卡在丘頂那棵最高的樹上……', '那是爸爸做給我的最後一個風箏……等風停了，你能幫我拿下來嗎？']); return; }
+    if (E.kite === 2 && w !== 'storm') { E.kite = 3; yield* sayAll(['（你爬上樹，把風箏拿了下來。有一點破，但還能飛。）', '風箏！謝謝你！', '爸爸說，風箏最厲害的地方，是越逆風飛得越高。', '這個給你！是我在丘頂撿到的，跑步的時候好像會變快喔！']); yield* orbGet('haste'); return; }
+    yield* say(E.kite === 3 ? '你看，風箏又飛起來了！逆風的時候，飛得最高！' : '今天的風好舒服喔！'); },
+  *oldDuke() { const st = Game.st, E = evOf(st), n = E.duke || 0, ok = (st.steps || 0) - (E.dukeT || -999) >= 80;
+    const T = [['……你也是來掃墓的？', '這些劍，都是我的戰友。三十年前，我們在這裡擋住了魔王軍。', '我是唯一活下來的。……所以我每天都來，跟他們說說話。'],
+      ['又見面了。', '左邊第三把劍，是我最好的朋友的。他說打完仗要回家娶老婆，結果……', '我後來去見了他的未婚妻。她一直等著，等到頭髮都白了。'],
+      ['……你來了啊。', '我想了很久，為什麼只有我活下來。', '也許，是要我記住他們吧。記住他們笑過、哭過、害怕過……然後還是往前衝。', '年輕人，這個給你。是我們部隊的徽章——「不屈」。帶著它，連同他們的份一起活下去。']];
+    if (n < 3 && (n === 0 || ok)) { yield* sayAll(T[n]); E.duke = n + 1; E.dukeT = st.steps || 0; if (n === 2) yield* orbGet('undying'); return; }
+    yield* say(n >= 3 ? '我今天也跟他們說了你的事。他們一定很高興。' : '（老兵閉著眼睛，靜靜地站在劍前。改天再來吧。）'); },
+});
+ITEMS.silverPin = { n: '銀髮簪', key: 1, cat: '重要物品', d: '刻著兩個名字的銀髮簪。埋在沙裡四十年了。' };
+{ const _w = wshrineEvent; wshrineEvent = function* (ow, ent) {
+    const st = ow.st, E = evOf(st); if (st.map === 'canyon' && wxNow(st) === 'sand' && E.barr === 1 && !st.bag.silverPin) { yield* say('沙塵暴翻開了祠邊的沙……有什麼東西在發光。'); st.bag.silverPin = 1; yield* itemGet(st.name + '找到了「銀髮簪」！'); return; }
+    return yield* _w(ow, ent); };
+  for (const id in EXT_AREA) Events['wshrine_' + id] = wshrineEvent; }
+{ const _eq = extraQuests; extraQuests = function (st, L) { _eq(st, L); const E = evOf(st);
+    if (E.painter) L.push({ n: '湖上的彩虹', t: E.painter >= 2 ? '完成：艾琳畫下了湖上的彩虹。' : '畫家艾琳想畫下銀月湖畔的彩虹。雨停之後偶爾會出現彩虹，看到了就去湖畔東岸告訴她。', done: E.painter >= 2, rw: '寶珠「再生」' });
+    if (E.barr) L.push({ n: '沙中的銀髮簪', t: E.barr >= 2 ? '完成：銀髮簪回到了巴爾的手上。' : st.bag.silverPin ? '找到了銀髮簪！拿去赤岩祕谷給老礦工巴爾。' : '老礦工巴爾的妻子四十年前在落日峽谷弄丟了銀髮簪。沙塵暴的時候，到赤岩祕谷的天氣祠挖挖看。', done: E.barr >= 2, rw: '上級岩石附魔石・1500 G' });
+    if (E.ruby) L.push({ n: '螢火蟲燈籠', t: E.ruby >= 3 ? '完成：露比帶著燈籠回到了家。' : E.ruby === 2 ? '等幽光沼澤起霧的時候，去螢光沼地陪露比走回家。' : '露比想做螢火蟲燈籠給怕黑的弟弟。帶3把沼苔去幽光沼澤的螢光沼地給她。', done: E.ruby >= 3, rw: '上級劇毒附魔石' });
+    if (E.kite >= 2) L.push({ n: '逆風的風箏', t: E.kite >= 3 ? '完成：小風的風箏又飛起來了。' : '小風的風箏在雷雨中卡在樹上了。等雷雨停了，去風車丘陵的風之丘頂找他。', done: E.kite >= 3, rw: '寶珠「迅捷」' });
+    if (E.duke) L.push({ n: '英靈之丘的老兵', t: E.duke >= 3 ? '完成：老兵杜克把部隊的徽章交給了你。' : '老兵杜克每天都在古戰場的英靈之丘陪戰友說話。過一陣子再去看看他。（' + E.duke + '/3）', done: E.duke >= 3, rw: '寶珠「不屈」' });
+  }; }
+NPC_ROLES.任務.push('painter', 'oldBarr', 'ruby', 'kiteKid', 'oldDuke');
+(NPC_ROLES.事件 || NPC_ROLES.情報).push(...Object.keys(EXT_AREA).map(id => 'wshrine_' + id));
 for (const k in GEAR_RECIPE) { const M = GEAR_RECIPE[k].mats || (GEAR_RECIPE[k].mats = {}); for (const i in M) if (!ITEMS[i]) delete M[i]; if (!Object.keys(M).length) M.stone = 2; }
 </script>

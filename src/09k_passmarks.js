@@ -37,6 +37,8 @@ function drawChevron(x, cx, cy, dir, col) {
     _dr.call(this, x); if (Game.settings.passMarks === false || !this.map) return;
     const M = passMarks(this), camX = this.camX, camY = this.camY, bob = Math.round(Math.sin(this.t / 10) * 1.5);
     const pts = M.above.map(q => [q.x, q.y - 1]).concat(this.npcs.filter(n => WARP_PROPS.has(n.id)).map(n => [n.x, n.y - 1]));
+    x.save(); if (this._zc && typeof applyZoom === 'function') applyZoom(x, this); // v10: the marks follow the zoomed field
     for (const [tx, ty] of pts) { const X = tx * 16 - camX + 8, Y = ty * 16 - camY + 10 + bob; if (X < -8 || Y < -8 || X > W + 8 || Y > H) continue; x.globalAlpha = 0.9; drawChevron(x, X, Y, 'down', '#ffd860'); x.globalAlpha = 1; }
+    x.restore();
   };
 }
