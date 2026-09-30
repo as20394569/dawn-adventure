@@ -317,7 +317,7 @@ class Battle {
       yield* this.playFx(mv.fx, u, t); if (flourish) yield* heroImpact.call(this, T0, mv, r, id, u); UI.remove(utb);
       let dmg = r.dmg; if (shock || ignite) dmg = Math.floor(dmg * 1.5); if (steam) dmg = Math.floor(dmg * 1.3); if (ignite || steam) yield* FX[ignite ? 'ignite' : 'steam'].call(this, U0, T0); if (this.cg && !t.hero && this.cg.shards > 0) dmg = Math.max(1, Math.floor(dmg * 0.6)); const mirrored = this.cg && !t.hero && this.cg.mirror && mv.cat === '特'; if (mirrored) dmg = Math.max(1, Math.floor(dmg * 0.5)); if (t.shield > 0) dmg = Math.max(1, Math.floor(dmg * 0.6)); if (t.defending) dmg = Math.max(1, Math.floor(dmg / 2));
       dmg = Math.min(dmg, t.hp); let endured = false; if (t.hero && t.stats.fx.endure && !this.endured && dmg >= t.hp && t.hp > 1) { dmg = t.hp - 1; this.endured = endured = true; } t.hp -= dmg;
-      Sound.sfx(r.mult > 1 ? 'hitSuper' : r.mult < 1 ? 'hitWeak' : 'hit'); if (r.crit) Sound.sfx('crit');
+      Sound.sfx(r.mult > 1 ? 'hitSuper' : r.mult < 1 ? 'hitWeak' : 'hit'); if (r.crit) Sound.sfx('crit'); if (t.hero && dmg >= t.maxhp * 0.25) Sound.sfx('heavy');
       yield* this.impact(t, r.mult > 1 || r.crit ? 2 : r.mult < 1 ? 0 : 1);
       yield* this.animHP(t);
       /* v24.5 multi-hit skills land every hit right here, before any message / break / phase reaction of the monster
@@ -440,7 +440,7 @@ class Battle {
   *foeFaint() {
     Sound.cry(Object.keys(SPECIES).indexOf(this.cfg.sp) + 1, 0.6, 1.2); yield* wait(20);
     if (this.F.boss) { Sound.sfx('quake'); this.shake = 50; for (let i = 0; i < 30; i++) { if (i % 3 === 0) this.sparks(this.foeTX + 32 + rnd(-26, 26), FOE_FOOT - 34 + rnd(-26, 26), 3, ['#8a8272', '#a09884', '#ff8040'], 2.5, 26, 0.15); yield; } }
-    Sound.sfx('faint'); yield* tween(this.F.boss ? 40 : 22, t => { this.sinkF = t * this.imgF.bb.h; this.alphaF = 1 - t * 0.3; }); this.alphaF = 0;
+    Sound.sfx(this.F.boss ? 'bossDown' : 'foeDown'); yield* tween(this.F.boss ? 40 : 22, t => { this.sinkF = t * this.imgF.bb.h; this.alphaF = 1 - t * 0.3; }); this.alphaF = 0;
     yield* tween(10, t => this.boxF = lerp(4, -30, t));
     yield* this.msg((this.F.boss ? '' : this.F.elite ? '精英魔物' : '野生的') + this.F.n + '倒下了！', { hold: 40 });
   }

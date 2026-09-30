@@ -454,7 +454,7 @@ function compileSong(def) {
     for (const tok of c.notes.split(/\s+/)) {
       if (!tok || tok === '|') continue;
       if (tok === 'L') { loopT = t; continue; }
-      const m = tok.match(/^([A-G][#b]?\d|r|k|s|h|o)(?:\.(\d+))?$/); if (!m) { console.warn('bad token', tok); continue; }
+      const m = tok.match(/^([A-G][#b]?\d|r|k|s|h|o|c|t)(?:\.(\d+))?$/); if (!m) { console.warn('bad token', tok); continue; }
       if (m[2]) len = +m[2];
       const d = len * sp16;
       if (m[1] !== 'r') ev.push({ t, d, n: m[1] });
@@ -465,14 +465,18 @@ function compileSong(def) {
   return { def, chans, end: Math.max(...chans.map(c => c.end)) };
 }
 const Sound = (() => {
-  let ac = null, master, musG, sfxG, noiseBuf, waves = {};
+  let ac = null, master, musG, sfxG, crunch, noiseBuf, waves = {};
   const compiled = {}; let cur = null, curName = null, resumeName = null, timer = null;
   function init() {
     if (ac) { if (ac.state === 'suspended') ac.resume(); return; }
     try { ac = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { ac = null; return; }
     master = ac.createGain(); master.gain.value = 0.55; master.connect(ac.destination);
     musG = ac.createGain(); musG.gain.value = Game.settings.music ? 0.6 : 0; musG.connect(master);
-    sfxG = ac.createGain(); sfxG.gain.value = Game.settings.sfx ? 0.75 : 0; sfxG.connect(master);
+    sfxG = ac.createGain(); sfxG.gain.value = Game.settings.sfx ? 0.75 : 0;
+    const comp = ac.createDynamicsCompressor(); comp.threshold.value = -15; comp.knee.value = 6; comp.ratio.value = 4; comp.attack.value = 0.002; comp.release.value = 0.14;
+    const mk = ac.createGain(); mk.gain.value = 1.35; sfxG.connect(comp); comp.connect(mk); mk.connect(master);
+    crunch = ac.createWaveShaper(); const cv = new Float32Array(1024); for (let i = 0; i < 1024; i++) { const x = i / 511.5 - 1; cv[i] = Math.tanh(3.5 * x); } crunch.curve = cv; crunch.oversample = '2x';
+    const cg = ac.createGain(); cg.gain.value = 0.62; crunch.connect(cg); cg.connect(sfxG);
     for (const d of [0.125, 0.25, 0.5]) {
       const n = 48, re = new Float32Array(n), im = new Float32Array(n);
       for (let k = 1; k < n; k++) re[k] = 2 * Math.sin(Math.PI * k * d) / (Math.PI * k);
@@ -482,14 +486,27 @@ const Sound = (() => {
     timer = setInterval(tick, 25);
     if (resumeName) { const n = resumeName; resumeName = null; play(n); }
   }
-  function applySettings() { if (!ac) return; musG.gain.value = Game.settings.music ? 0.6 : 0; sfxG.gain.value = Game.settings.sfx ? 0.75 : 0; }
-  function tone(dest, t, d, f, kind, duty, vol, gate = 0.92) {
+  function applySettings() { if (!ac) return; musG.gain.cancelScheduledValues(ac.currentTime); musG.gain.value = Game.settings.music ? 0.6 : 0; sfxG.gain.value = Game.settings.sfx ? 0.75 : 0; }
+  function tone(dest, t, d, f, kind, duty, vol, gate = 0.92, ch = null, echo = null) {
     const o = ac.createOscillator(); if (kind === 'p') o.setPeriodicWave(waves[duty] || waves[0.5]); else o.type = kind === 't' ? 'triangle' : kind;
-    o.frequency.setValueAtTime(f, t); const g = ac.createGain(); const e = t + d * gate;
-    g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(vol, t + 0.006); g.gain.linearRampToValueAtTime(vol * 0.72, t + Math.min(0.12, d * 0.5)); g.gain.setValueAtTime(vol * 0.72, Math.max(t + 0.01, e - 0.02)); g.gain.linearRampToValueAtTime(0, e);
-    o.connect(g); g.connect(dest); o.start(t); o.stop(e + 0.02);
+    o.frequency.setValueAtTime(f, t); const g = ac.createGain(); let e = t + d * gate;
+    if (ch && ch.env === 'pl') { e = t + Math.max(0.3, d * 1.5); g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(vol, t + 0.004); g.gain.exponentialRampToValueAtTime(0.001, e); }
+    else { g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(vol, t + 0.006); g.gain.linearRampToValueAtTime(vol * 0.72, t + Math.min(0.12, d * 0.5)); g.gain.setValueAtTime(vol * 0.72, Math.max(t + 0.01, e - 0.02)); g.gain.linearRampToValueAtTime(0, e); }
+    if (ch && ch.vib && d > 0.2) { const l = ac.createOscillator(); l.frequency.value = 5.5; const lg = ac.createGain(); lg.gain.setValueAtTime(0, t); lg.gain.setValueAtTime(0, t + 0.12); lg.gain.linearRampToValueAtTime(f * 0.01 * ch.vib, t + Math.min(0.35, d * 0.7)); l.connect(lg); lg.connect(o.frequency); l.start(t); l.stop(e + 0.02); }
+    o.connect(g); g.connect(dest); if (echo && ch && ch.e) g.connect(echo); o.start(t); o.stop(e + 0.02);
   }
-  function drum(dest, t, n, vol) {
+  function drum(dest, t, n, vol, heavy) {
+    if (n === 'k' && heavy) { // v9.4 battle kick: deeper drop + click
+      const o = ac.createOscillator(); o.type = 'sine'; o.frequency.setValueAtTime(200, t); o.frequency.exponentialRampToValueAtTime(38, t + 0.15);
+      const g = ac.createGain(); g.gain.setValueAtTime(vol * 1.9, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.24); o.connect(g); g.connect(dest); o.start(t); o.stop(t + 0.26);
+      n = 'x'; vol *= 0.5;
+    } else if (n === 't') {
+      const o = ac.createOscillator(); o.type = 'triangle'; o.frequency.setValueAtTime(210, t); o.frequency.exponentialRampToValueAtTime(90, t + 0.16);
+      const g = ac.createGain(); g.gain.setValueAtTime(vol * 1.3, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.18); o.connect(g); g.connect(dest); o.start(t); o.stop(t + 0.2); return;
+    } else if (n === 's' && heavy) {
+      const o = ac.createOscillator(); o.type = 'triangle'; o.frequency.setValueAtTime(230, t); o.frequency.exponentialRampToValueAtTime(140, t + 0.08);
+      const g = ac.createGain(); g.gain.setValueAtTime(vol * 0.8, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.1); o.connect(g); g.connect(dest); o.start(t); o.stop(t + 0.12);
+    }
     if (n === 'k') {
       const o = ac.createOscillator(); o.type = 'sine'; o.frequency.setValueAtTime(160, t); o.frequency.exponentialRampToValueAtTime(42, t + 0.12);
       const g = ac.createGain(); g.gain.setValueAtTime(vol * 1.4, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.16); o.connect(g); g.connect(dest); o.start(t); o.stop(t + 0.18); return;
@@ -498,6 +515,8 @@ const Sound = (() => {
     let dur = 0.05;
     if (n === 's') { f.type = 'bandpass'; f.frequency.value = 1800; f.Q.value = 0.7; dur = 0.13; vol *= 1.1; }
     else if (n === 'h') { f.type = 'highpass'; f.frequency.value = 7000; dur = 0.035; vol *= 0.5; }
+    else if (n === 'x') { f.type = 'highpass'; f.frequency.value = 3500; dur = 0.018; }
+    else if (n === 'c') { f.type = 'highpass'; f.frequency.value = 4500; dur = 0.8; vol *= 0.5; }
     else { f.type = 'highpass'; f.frequency.value = 6000; dur = 0.16; vol *= 0.45; }
     g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.001, t + dur);
     s.connect(f); f.connect(g); g.connect(dest); s.start(t, Math.random() * 0.5); s.stop(t + dur + 0.01);
@@ -511,8 +530,8 @@ const Sound = (() => {
         const e = c.ch.ev[c.i]; const t = cur.t0 + c.off + e.t;
         if (t > horizon) break;
         if (t >= ac.currentTime - 0.05) {
-          if (c.ch.k === 'n') drum(cur.bus, t, e.n, c.ch.vol);
-          else tone(cur.bus, t, e.d, mtof(noteMidi(e.n)), c.ch.k, c.ch.duty, c.ch.vol);
+          if (c.ch.k === 'n') drum(cur.bus, t, e.n, c.ch.vol, cur.song.def.heavy);
+          else tone(cur.bus, t, e.d, mtof(noteMidi(e.n)), c.ch.k, c.ch.duty, c.ch.vol, 0.92, c.ch, cur.echoIn);
         }
         c.i++;
       }
@@ -525,7 +544,8 @@ const Sound = (() => {
     if (!compiled[name]) compiled[name] = compileSong(def);
     const bus = ac.createGain(); bus.gain.value = 1; bus.connect(musG);
     const song = compiled[name];
-    cur = { name, song, bus, t0: ac.currentTime + 0.06, once: once || def.once, onEnd, state: song.chans.map(ch => ({ ch, i: 0, off: 0 })) };
+    let echoIn = null; if (def.echo) { const d = ac.createDelay(1.5); d.delayTime.value = def.echo; const fb = ac.createGain(); fb.gain.value = 0.38; const wet = ac.createGain(); wet.gain.value = 0.45; d.connect(fb); fb.connect(d); d.connect(wet); wet.connect(bus); echoIn = d; }
+    cur = { name, song, bus, echoIn, t0: ac.currentTime + 0.06, once: once || def.once, onEnd, state: song.chans.map(ch => ({ ch, i: 0, off: 0 })) };
     tick();
   }
   function play(name) {
@@ -543,17 +563,23 @@ const Sound = (() => {
     start(name, true, () => { if (curName === back && back) start(back); });
     return Math.ceil(dur * 60) + 8;
   }
-  function sweep(f0, f1, dur, kind = 'p', duty = 0.5, vol = 0.18, t = 0) {
+  function sweep(f0, f1, dur, kind = 'p', duty = 0.5, vol = 0.18, t = 0, dest = sfxG) {
     if (!ac) return; const T = ac.currentTime + t; const o = ac.createOscillator();
     if (kind === 'p') o.setPeriodicWave(waves[duty]); else o.type = kind;
     o.frequency.setValueAtTime(f0, T); o.frequency.exponentialRampToValueAtTime(Math.max(20, f1), T + dur);
     const g = ac.createGain(); g.gain.setValueAtTime(vol, T); g.gain.linearRampToValueAtTime(vol * 0.8, T + dur * 0.7); g.gain.linearRampToValueAtTime(0, T + dur);
-    o.connect(g); g.connect(sfxG); o.start(T); o.stop(T + dur + 0.02);
+    o.connect(g); g.connect(dest); o.start(T); o.stop(T + dur + 0.02);
   }
-  function noise(dur, vol = 0.25, ftype = 'lowpass', f0 = 3000, f1 = null, t = 0) {
+  function noise(dur, vol = 0.25, ftype = 'lowpass', f0 = 3000, f1 = null, t = 0, dest = sfxG) {
     if (!ac) return; const T = ac.currentTime + t; const s = ac.createBufferSource(); s.buffer = noiseBuf; const f = ac.createBiquadFilter(); f.type = ftype; f.frequency.setValueAtTime(f0, T); if (f1) f.frequency.exponentialRampToValueAtTime(f1, T + dur);
-    const g = ac.createGain(); g.gain.setValueAtTime(vol, T); g.gain.exponentialRampToValueAtTime(0.001, T + dur); s.connect(f); f.connect(g); g.connect(sfxG); s.start(T, Math.random() * 0.4); s.stop(T + dur + 0.02);
+    const g = ac.createGain(); g.gain.setValueAtTime(vol, T); g.gain.exponentialRampToValueAtTime(0.001, T + dur); s.connect(f); f.connect(g); g.connect(dest); s.start(T, Math.random() * 0.4); s.stop(T + dur + 0.02);
   }
+  function thump(f0, f1, dur, vol, t = 0) { if (!ac) return; const T = ac.currentTime + t; const o = ac.createOscillator(); o.type = 'sine'; o.frequency.setValueAtTime(f0, T); o.frequency.exponentialRampToValueAtTime(f1, T + dur);
+    const g = ac.createGain(); g.gain.setValueAtTime(vol, T); g.gain.exponentialRampToValueAtTime(0.001, T + dur); o.connect(g); g.connect(sfxG); o.start(T); o.stop(T + dur + 0.02); }
+  const snap = (vol = 0.3, t = 0) => noise(0.025, vol, 'highpass', 2500, null, t);
+  function ring(f, dur, vol, t = 0) { if (!ac) return; const T = ac.currentTime + t;
+    for (const [m, v, k] of [[1, 1, 'triangle'], [2.76, 0.5, 'sine'], [5.4, 0.3, 'sine']]) { const o = ac.createOscillator(); o.type = k; o.frequency.value = f * m; const g = ac.createGain(); g.gain.setValueAtTime(vol * v, T); g.gain.exponentialRampToValueAtTime(0.001, T + dur / m * 1.6); o.connect(g); g.connect(sfxG); o.start(T); o.stop(T + dur * 1.6 + 0.02); } }
+  function duck(depth, hold) { if (!ac || !Game.settings.music) return; const T = ac.currentTime, g = musG.gain; g.cancelScheduledValues(T); g.setValueAtTime(g.value, T); g.linearRampToValueAtTime(0.6 * depth, T + 0.02); g.setValueAtTime(0.6 * depth, T + hold); g.linearRampToValueAtTime(0.6, T + hold + 0.35); }
   let lastBump = 0;
   const SFX = {
     cursor: () => sweep(1400, 1400, 0.03, 'p', 0.5, 0.08),
@@ -567,11 +593,15 @@ const Sound = (() => {
     step: () => noise(0.03, 0.05, 'highpass', 3000),
     grass: () => noise(0.07, 0.07, 'bandpass', 4000),
     exclaim: () => { sweep(1320, 1320, 0.05, 'p', .5, .12); sweep(1760, 1760, 0.08, 'p', .5, .12, 0.06); },
-    encounter: () => { for (let i = 0; i < 6; i++) sweep(400 + i * 180, 500 + i * 180, 0.05, 'p', .25, .09, i * 0.05); },
-    hit: () => { noise(0.14, 0.4, 'lowpass', 2400, 400); sweep(160, 60, 0.12, 'triangle', .5, .35); },
-    hitSuper: () => { noise(0.24, 0.5, 'lowpass', 5000, 300); sweep(220, 50, 0.2, 'triangle', .5, .45); sweep(900, 300, 0.12, 'p', .5, .08, 0.02); },
-    hitWeak: () => { noise(0.08, 0.2, 'lowpass', 1200, 400); },
-    crit: () => { sweep(1800, 2400, 0.08, 'p', .125, .1); },
+    encounter: () => { for (let i = 0; i < 6; i++) sweep(400 + i * 180, 500 + i * 180, 0.05, 'p', .25, .09, i * 0.05); noise(0.3, 0.28, 'highpass', 800, 6000, 0.04); snap(0.35, 0.32); thump(160, 40, 0.3, 0.7, 0.32); },
+    hit: () => { snap(0.3); noise(0.16, 0.45, 'lowpass', 3200, 300, 0, crunch); thump(150, 45, 0.2, 0.7); duck(0.6, 0.08); },
+    hitSuper: () => { snap(0.4); noise(0.3, 0.55, 'lowpass', 6000, 180, 0, crunch); thump(200, 32, 0.38, 0.9); sweep(1100, 240, 0.14, 'p', .5, .09); noise(0.6, 0.18, 'lowpass', 900, 80, 0.08); duck(0.35, 0.2); },
+    hitWeak: () => { noise(0.1, 0.25, 'lowpass', 1000, 300); thump(110, 60, 0.1, 0.3); },
+    crit: () => { ring(1900, 0.45, 0.12, 0.01); noise(0.12, 0.25, 'highpass', 3000, 9000); thump(90, 30, 0.3, 0.5, 0.03); duck(0.3, 0.25); },
+    heavy: () => { noise(0.5, 0.4, 'lowpass', 1800, 60, 0.02, crunch); thump(120, 26, 0.55, 0.85, 0.02); duck(0.3, 0.3); },
+    foeDown: () => { sweep(700, 60, 0.5, 'p', .5, .12); noise(0.6, 0.4, 'lowpass', 2400, 90, 0, crunch); thump(130, 30, 0.5, 0.7); },
+    bossDown: () => { for (let i = 0; i < 4; i++) { noise(0.5, 0.45, 'lowpass', 3000, 80, i * 0.22, crunch); thump(150, 28, 0.5, 0.8, i * 0.22); } noise(1.6, 0.35, 'lowpass', 600, 40, 0.9); sweep(900, 50, 1.2, 'p', .5, .1); duck(0.2, 1.4); },
+    shield: () => { ring(1300, 0.3, 0.1); snap(0.25); thump(120, 60, 0.12, 0.35); },
     statUp: () => { [0, 1, 2, 3].forEach(i => sweep(520 * Math.pow(1.26, i), 560 * Math.pow(1.26, i), 0.06, 'p', .25, .1, i * 0.06)); },
     statDown: () => { [0, 1, 2, 3].forEach(i => sweep(1000 / Math.pow(1.26, i), 950 / Math.pow(1.26, i), 0.06, 'p', .25, .1, i * 0.06)); },
     heal: () => { [0, 1, 2, 3, 4].forEach(i => sweep(880 * Math.pow(1.19, i), 900 * Math.pow(1.19, i), 0.07, 'triangle', .5, .2, i * 0.05)); },
@@ -582,16 +612,16 @@ const Sound = (() => {
       sweep(1568, 1568, 0.42, 'p', .5, .1, 0.3); sweep(1976, 1976, 0.36, 'p', .25, .06, 0.34); [0, 1, 2, 3, 4, 5].forEach(i => sweep(2400 + i * 180, 2600 + i * 180, 0.04, 'p', .5, .05, 0.34 + i * 0.05)); },
     poison: () => { [0, 1, 2].forEach(i => sweep(300 + i * 60, 200, 0.08, 'p', .25, .12, i * 0.07)); },
     save: () => { [0, 1, 2].forEach(i => sweep(660 * Math.pow(1.335, i), 660 * Math.pow(1.335, i), 0.09, 'p', .5, .1, i * 0.09)); },
-    slash: () => { noise(0.12, 0.35, 'highpass', 2000, 6000); },
-    fire: () => { noise(0.4, 0.3, 'bandpass', 600, 2400); },
+    slash: () => { noise(0.16, 0.38, 'bandpass', 700, 5200); snap(0.22, 0.1); ring(2600, 0.16, 0.05, 0.1); },
+    fire: () => { noise(0.5, 0.35, 'bandpass', 300, 2200, 0, crunch); thump(95, 40, 0.35, 0.4); for (let i = 0; i < 6; i++) noise(0.02, 0.2, 'highpass', 4000, null, 0.05 + Math.random() * 0.4); },
     water: () => { [0, 1, 2, 3].forEach(i => sweep(500 + i * 90, 1200 + i * 90, 0.06, 'triangle', .5, .15, i * 0.06)); noise(0.2, .15, 'bandpass', 1200, 500, .1); },
-    thunder: () => { noise(0.5, 0.45, 'lowpass', 8000, 200); sweep(80, 40, 0.4, 'sawtooth', .5, .12); },
+    thunder: () => { snap(0.5); noise(0.08, 0.5, 'highpass', 1500, null, 0, crunch); noise(0.9, 0.5, 'lowpass', 4000, 70, 0.04, crunch); sweep(75, 30, 0.7, 'sawtooth', .5, .12); thump(70, 28, 0.6, 0.6, 0.03); duck(0.35, 0.35); },
     leaf: () => { [0, 1, 2, 3, 4].forEach(i => noise(0.05, 0.15, 'highpass', 5000, null, i * 0.05)); },
-    rock: () => { [0, 1, 2].forEach(i => { noise(0.18, 0.4, 'lowpass', 900, 200, i * 0.12); sweep(120, 50, 0.15, 'triangle', .5, .3, i * .12); }); },
+    rock: () => { [0, 1, 2].forEach(i => { noise(0.2, 0.45, 'lowpass', 1000, 150, i * 0.11, crunch); thump(130, 40, 0.18, 0.55, i * 0.11); }); },
     wind: () => noise(0.5, 0.25, 'bandpass', 500, 3000),
     buzz: () => sweep(180, 200, 0.4, 'sawtooth', .5, .08),
-    quake: () => { noise(0.9, 0.5, 'lowpass', 400, 60); sweep(60, 30, 0.8, 'triangle', .5, .4); },
-    charge: () => sweep(100, 900, 0.8, 'p', .125, .1),
+    quake: () => { noise(1.1, 0.5, 'lowpass', 500, 45, 0, crunch); thump(60, 26, 1.0, 0.85); sweep(55, 28, 0.9, 'triangle', .5, .35); duck(0.4, 0.6); },
+    charge: () => { sweep(100, 900, 0.8, 'p', .125, .1); sweep(55, 110, 0.8, 'sawtooth', .5, .05); noise(0.8, 0.12, 'bandpass', 300, 3000); },
     tick: () => sweep(1500, 1500, 0.02, 'p', .5, .05),
   };
   function sfx(name) { if (!ac || !Game.settings.sfx) return; const f = SFX[name]; if (f) f(); }
@@ -5505,7 +5535,7 @@ class Battle {
       yield* this.playFx(mv.fx, u, t); if (flourish) yield* heroImpact.call(this, T0, mv, r, id, u); UI.remove(utb);
       let dmg = r.dmg; if (shock || ignite) dmg = Math.floor(dmg * 1.5); if (steam) dmg = Math.floor(dmg * 1.3); if (ignite || steam) yield* FX[ignite ? 'ignite' : 'steam'].call(this, U0, T0); if (this.cg && !t.hero && this.cg.shards > 0) dmg = Math.max(1, Math.floor(dmg * 0.6)); const mirrored = this.cg && !t.hero && this.cg.mirror && mv.cat === '特'; if (mirrored) dmg = Math.max(1, Math.floor(dmg * 0.5)); if (t.shield > 0) dmg = Math.max(1, Math.floor(dmg * 0.6)); if (t.defending) dmg = Math.max(1, Math.floor(dmg / 2));
       dmg = Math.min(dmg, t.hp); let endured = false; if (t.hero && t.stats.fx.endure && !this.endured && dmg >= t.hp && t.hp > 1) { dmg = t.hp - 1; this.endured = endured = true; } t.hp -= dmg;
-      Sound.sfx(r.mult > 1 ? 'hitSuper' : r.mult < 1 ? 'hitWeak' : 'hit'); if (r.crit) Sound.sfx('crit');
+      Sound.sfx(r.mult > 1 ? 'hitSuper' : r.mult < 1 ? 'hitWeak' : 'hit'); if (r.crit) Sound.sfx('crit'); if (t.hero && dmg >= t.maxhp * 0.25) Sound.sfx('heavy');
       yield* this.impact(t, r.mult > 1 || r.crit ? 2 : r.mult < 1 ? 0 : 1);
       yield* this.animHP(t);
       let hitN = 1, hitTotal = dmg; if (u.hero && t.hp > 0 && u.hp > 0 && MOVES[id] && MOVES[id].hits > 1 && this.extraHits) { const e = yield* this.extraHits(u, t, id, mv); hitN += e.n; hitTotal += e.total; }
@@ -5624,7 +5654,7 @@ class Battle {
   *foeFaint() {
     Sound.cry(Object.keys(SPECIES).indexOf(this.cfg.sp) + 1, 0.6, 1.2); yield* wait(20);
     if (this.F.boss) { Sound.sfx('quake'); this.shake = 50; for (let i = 0; i < 30; i++) { if (i % 3 === 0) this.sparks(this.foeTX + 32 + rnd(-26, 26), FOE_FOOT - 34 + rnd(-26, 26), 3, ['#8a8272', '#a09884', '#ff8040'], 2.5, 26, 0.15); yield; } }
-    Sound.sfx('faint'); yield* tween(this.F.boss ? 40 : 22, t => { this.sinkF = t * this.imgF.bb.h; this.alphaF = 1 - t * 0.3; }); this.alphaF = 0;
+    Sound.sfx(this.F.boss ? 'bossDown' : 'foeDown'); yield* tween(this.F.boss ? 40 : 22, t => { this.sinkF = t * this.imgF.bb.h; this.alphaF = 1 - t * 0.3; }); this.alphaF = 0;
     yield* tween(10, t => this.boxF = lerp(4, -30, t));
     yield* this.msg((this.F.boss ? '' : this.F.elite ? '精英魔物' : '野生的') + this.F.n + '倒下了！', { hold: 40 });
   }
@@ -8220,7 +8250,7 @@ class TitleScene {
     x.drawImage(this.logo, Math.round(W / 2 - this.logo.width / 2), 6 + bob);
     Font.drawC(x, '～異世界冒險RPG～', W / 2, 52 + bob, '#ffe0a0', '#3a1428');
     if (this.stage === 'press' && Math.floor(this.t / 30) % 2 === 0) Font.drawC(x, '按 A 鍵開始', W / 2, 232, '#ffffff', '#1a1024');
-    Font.drawR(x, 'v9.3', W - 3, H - 13, '#b890b0', null);
+    Font.drawR(x, 'v9.4', W - 3, H - 13, '#b890b0', null);
   }
 }
 class IntroScene {
@@ -13643,5 +13673,115 @@ SHOP_LIST.push('attrReset', 'talentReset'); if (typeof CAP_SHOP !== 'undefined')
       yield* say('【v9.3 成長改版】升級時，物攻・物防・魔攻・魔防・速度不會再自己成長，改成每級給3點屬性點。\n（你現在有' + attrAvail(st) + '點可以分配：選單→屬性，也可以按「推薦配點」）');
       yield* say('重置屬性要用「重生之水」，重置天賦要用「遺忘之書」（道具店有賣）。\n這次改版送你各1個。'); })()); }
     return ow; }; }
+(() => {
+  const P = (duty, vol, notes, o) => Object.assign({ k: 'p', duty, vol, notes }, o);
+  const T = (vol, notes, o) => Object.assign({ k: 't', vol, notes }, o);
+  const N = (vol, notes) => ({ k: 'n', vol, notes });
+  const Q = (vol, notes, o) => Object.assign({ k: 'sine', vol, notes, env: 'pl' }, o); // bell / harp
+  const SAW = (vol, notes) => ({ k: 'sawtooth', vol, notes });
+  const S = SONG_DEFS; let ch;
+  ch = 'Em C Am B Em C D B'; // 迷霧森林: hushed, thin lead with echo
+  S.forest = { bpm: 92, echo: 0.33, ch: [
+    P(.125, .11, 'L B4.4 E5.4 G5.6 F#5.2 | E5.8 G5.4 C6.4 | B5.6 A5.2 E5.8 | D#5.12 r.4 | G5.4 B5.4 E6.6 D6.2 | C6.4 B5.4 G5.8 | A5.4 F#5.4 D5.4 F#5.4 | B4.8 D#5.4 F#5.4', { vib: 1, e: 1 }),
+    P(.25, .04, 'L ' + arpLine(ch, [0, 1, 2, 1, 2, 1, 0, 2], 4, 2), { e: 1 }),
+    T(.18, 'L ' + bassLine(ch, 'h')),
+    N(.12, 'L ' + drumLine('k.....h...k.h...', 8))] };
+  ch = 'F C Dm Bb F C Bb C'; // 湖畔・碧溪谷: calm, harp arpeggios
+  S.lake = { bpm: 84, echo: 0.36, ch: [
+    P(.25, .09, 'L A5.6 G5.2 F5.8 | G5.4 E5.4 C5.8 | D5.4 F5.4 A5.6 G5.2 | F5.12 r.4 | C6.6 Bb5.2 A5.8 | G5.4 A5.2 G5.2 E5.8 | D5.4 F5.4 Bb5.6 A5.2 | G5.12 r.4', { vib: 1 }),
+    Q(.07, 'L ' + arpLine(ch, [0, 1, 2, 3, 4, 3, 2, 1], 4, 2), { e: 1 }),
+    T(.17, 'L ' + bassLine(ch, 'w'))] };
+  ch = 'Dmaj7 Em7 Gmaj7 A Dmaj7 Bm7 Gmaj7 A'; // 星見神殿: slow bells
+  S.star = { bpm: 72, echo: 0.42, ch: [
+    Q(.12, 'L F#6.4 A6.4 C#6.8 | B5.4 D6.4 G6.8 | F#6.6 E6.2 D6.8 | C#6.4 E6.4 A5.8 | F#6.4 A6.4 D7.8 | C#7.6 B6.2 F#6.8 | G6.4 F#6.4 D6.8 | E6.12 r.4', { e: 1 }),
+    T(.08, 'L ' + arpLine(ch, [0, 1, 2, 3], 3, 4)),
+    T(.15, 'L ' + bassLine(ch, 'w'))] };
+  ch = 'G D Em C G D C D Em Bm C G Am D G G'; // 平原・丘陵・楓紅關道: bright, pastoral
+  S.plains = { bpm: 112, ch: [
+    P(.5, .11, 'L D5.4 G5.4 B5.6 A5.2 | A5.4 F#5.4 D5.8 | E5.4 G5.4 B5.4 E6.4 | D6.6 C6.2 G5.8 | B5.4 D6.4 G6.6 F#6.2 | E6.4 D6.4 A5.8 | G5.4 A5.4 B5.4 C6.4 | D6.12 r.4 | B5.6 C6.2 B5.4 G5.4 | F#5.6 G5.2 F#5.4 D5.4 | E5.4 G5.4 C6.6 B5.2 | B5.8 G5.8 | A5.4 C6.4 E6.6 D6.2 | C6.4 A5.4 F#5.4 A5.4 | G5.4 B5.4 D6.4 B5.4 | G5.12 r.4'),
+    P(.125, .05, 'L ' + arpLine(ch, [0, 1, 2, 1], 4, 2)),
+    T(.2, 'L ' + bassLine(ch, 'q')),
+    N(.22, 'L ' + drumLine('k...h.h.k.k.h.h.', 16))] };
+  ch = 'Dm Dm C C Bb Bb A A Dm F C G Bb Gm A A'; // 落日峽谷: western gallop
+  S.canyon = { bpm: 124, echo: 0.24, ch: [
+    P(.25, .11, 'L D5.4 A5.8 F5.2 E5.2 | D5.12 A4.4 | C5.4 G5.8 E5.2 D5.2 | C5.12 G4.4 | Bb4.4 F5.8 D5.2 C5.2 | Bb4.8 D5.4 F5.4 | E5.4 A5.4 C#6.4 E6.4 | A5.12 r.4 | D6.6 C6.2 A5.8 | F5.4 A5.4 C6.8 | G5.6 E5.2 C5.8 | D5.4 G5.4 B5.8 | Bb5.6 A5.2 F5.8 | G5.4 Bb5.4 D6.8 | C#6.4 A5.4 E5.4 G5.4 | A5.12 r.4', { vib: 1.2, e: 1 }),
+    P(.125, .045, 'L ' + arpLine(ch, [0, 2, 1, 2], 4, 2)),
+    T(.22, 'L ' + bassLine(ch, 'pump')),
+    N(.25, 'L ' + drumLine('k..hk.h.k..hk.hs', 16))] };
+  ch = 'Dm Bb Gm A Dm Bb Gm A'; // 地下水道・礦坑: water drips
+  S.cave = { bpm: 88, echo: 0.34, ch: [
+    Q(.12, 'L D6.2 r.6 A5.2 r.6 | F6.2 r.6 D6.2 r.2 Bb5.4 | G5.2 r.6 Bb5.2 r.6 | C#6.2 r.2 E6.2 r.2 A5.8 | F5.4 E5.4 D5.4 A5.4 | F5.8 D5.8 | G5.4 A5.4 Bb5.4 D6.4 | C#6.12 r.4', { e: 1 }),
+    P(.125, .04, 'L ' + arpLine(ch, [0, 2], 3, 8)),
+    T(.18, 'L ' + bassLine(ch, 'w')),
+    N(.1, 'L ' + drumLine('k.........h.....', 8))] };
+  ch = 'Cm Cm Ab Ab Fm G Cm G'; // 墓穴・勇者之墓・古戰場: solemn
+  S.crypt = { bpm: 70, echo: 0.4, ch: [
+    P(.25, .1, 'L C5.8 Eb5.4 G5.4 | F5.6 Eb5.2 D5.8 | C5.8 Eb5.4 Ab5.4 | G5.16 | F5.4 Ab5.4 C6.8 | B5.8 D6.4 G5.4 | Eb5.6 D5.2 C5.8 | B4.8 D5.8', { vib: 1, e: 1 }),
+    P(.5, .045, 'L ' + arpLine(ch, [0, 1, 2, 1], 3, 4)),
+    T(.2, 'L ' + bassLine(ch, 'w')),
+    N(.1, 'L ' + drumLine('k.......t.......', 8))] };
+  ch = 'Em F Em F Dm Eb Dm E'; // 幽光沼澤: eerie
+  S.swamp = { bpm: 96, echo: 0.3, ch: [
+    P(.125, .1, 'L E5.4 G5.2 F#5.2 E5.8 | F5.4 A5.2 G5.2 F5.8 | B5.6 A#5.2 B5.8 | C6.6 B5.2 A5.8 | D5.4 F5.4 A5.6 G#5.2 | G5.6 F5.2 Eb5.8 | D5.4 F5.4 A5.4 C6.4 | B5.4 G#5.4 E5.8', { vib: 1.5, e: 1 }),
+    P(.25, .045, 'L ' + arpLine(ch, [0, 2, 1, 2], 4, 2)),
+    T(.18, 'L ' + bassLine(ch, 'h')),
+    N(.14, 'L ' + drumLine('k..h..k.....h...', 8))] };
+  ch = 'Am E Am E F C Dm E'; // 曙光鐘塔: clockwork
+  S.tower = { bpm: 132, ch: [
+    P(.25, .11, 'L A5.2 r.2 E5.2 r.2 A5.2 r.2 C6.2 B5.2 | G#5.2 r.2 E5.2 r.2 B5.4 G#5.4 | A5.2 r.2 C6.2 r.2 E6.2 r.2 D6.2 C6.2 | B5.8 E5.8 | F5.2 A5.2 C6.2 F6.2 E6.4 C6.4 | G5.2 C6.2 E6.2 G6.2 F6.4 E6.4 | D6.2 C6.2 A5.2 F5.2 D5.4 F5.4 | E5.4 G#5.4 B5.4 D6.4'),
+    P(.125, .04, 'L ' + arpLine(ch, [0, 1, 2, 1], 4, 1)),
+    T(.2, 'L ' + bassLine(ch, 'q')),
+    N(.2, 'L ' + drumLine('k.h.o.h.k.h.o.h.', 8))] };
+  ch = 'Bm G D A Bm G Em F#'; // 冰晶洞窟: crystal
+  S.ice = { bpm: 80, echo: 0.38, ch: [
+    P(.125, .09, 'L F#5.8 B5.4 D6.4 | D6.6 C#6.2 B5.8 | A5.8 F#5.8 | E5.6 F#5.2 A5.8 | B5.4 D6.4 F#6.8 | G6.6 F#6.2 D6.8 | E6.4 D6.4 B5.4 G5.4 | A#5.12 r.4', { vib: 1, e: 1 }),
+    Q(.06, 'L ' + arpLine(ch, [0, 1, 2, 3, 4, 3, 2, 1], 5, 2), { e: 1 }),
+    T(.16, 'L ' + bassLine(ch, 'w'))] };
+  ch = 'Gm Gm Eb D Gm Gm Cm D Eb F D Gm Cm D Gm D'; // 黯滅要塞: dark march
+  S.fortress = { bpm: 108, heavy: 1, ch: [
+    P(.5, .11, 'L G4.4 G4.2 G4.2 Bb4.4 D5.4 | G5.6 F5.2 D5.8 | Eb5.4 Eb5.2 Eb5.2 G5.4 Bb5.4 | A5.12 F#5.4 | G5.4 G5.2 G5.2 Bb5.4 D6.4 | G6.6 F6.2 D6.8 | Eb6.6 D6.2 C6.4 G5.4 | F#5.12 r.4 | G5.6 Bb5.2 Eb6.8 | F6.6 Eb6.2 C6.8 | D6.4 C6.4 A5.4 F#5.4 | G5.12 r.4 | C6.4 Eb6.4 G6.6 F6.2 | F#6.4 A6.4 D6.8 | Bb5.4 A5.4 G5.4 Bb5.4 | A5.8 F#5.4 D5.4'),
+    P(.25, .05, 'L ' + arpLine(ch, [0, 2, 0, 2], 3, 2)),
+    T(.22, 'L ' + bassLine(ch, 'e8')),
+    N(.3, 'L ' + drumLine('k...s...k.k.s.ss', 16))] };
+  ch = 'Cm Db Cm Db Bbm C Bbm C'; // 異界迴廊: strange
+  S.rift = { bpm: 100, echo: 0.3, ch: [
+    SAW(.045, 'L C5.2 G5.2 Eb5.2 C6.2 G5.8 | Db5.2 Ab5.2 F5.2 Db6.2 Ab5.8 | G5.4 Eb6.4 D6.8 | C6.4 Ab5.4 F5.8 | Bb4.2 F5.2 Db5.2 Bb5.2 F5.8 | C5.2 G5.2 E5.2 C6.2 G5.8 | F5.4 Db6.4 C6.8 | B5.4 G5.4 E5.8'),
+    P(.25, .04, 'L ' + arpLine(ch, [0, 1, 2, 3, 2, 1], 4, 1), { e: 1 }),
+    T(.2, 'L ' + bassLine(ch, 'h')),
+    N(.16, 'L ' + drumLine('k.....k...h.k...', 8))] };
+  ch = 'C Am F G C Am Dm G'; // 旅店: lullaby
+  S.inn = { bpm: 76, echo: 0.3, ch: [
+    T(.15, 'L E5.6 D5.2 C5.8 | E5.4 A5.4 G5.8 | F5.6 E5.2 D5.4 C5.4 | D5.12 r.4 | E5.6 G5.2 C6.8 | B5.4 A5.4 E5.8 | F5.4 A5.4 D5.4 F5.4 | D5.8 B4.8', { vib: 1 }),
+    Q(.07, 'L ' + arpLine(ch, [0, 1, 2, 1], 4, 4), { e: 1 }),
+    T(.13, 'L ' + bassLine(ch, 'w'))] };
+  ch = 'Cm Cm Ab Bb Cm Cm Ab G Fm Fm Cm Cm Ab Bb G G'; // 第二章一般戰鬥
+  { const bass = 'C2.2 r.2 C2.2 r.2 C2.2 r.2 Bb1.2 B1.2 L ' + bassLine(ch, 'e8');
+    S.battle2 = { bpm: 172, heavy: 1, ch: [
+      P(.5, .12, 'C5.2 r.2 C5.2 r.2 C5.2 r.2 Bb4.2 B4.2 L C5.2 Eb5.2 G5.2 C6.2 Eb6.4 D6.4 | C6.2 G5.2 Eb5.2 G5.2 C6.8 | Ab5.4 C6.4 Eb6.6 C6.2 | D6.4 Bb5.4 F5.4 D6.4 | G6.4 F6.2 Eb6.2 D6.4 C6.4 | Eb6.2 D6.2 C6.2 Bb5.2 C6.8 | Ab5.2 C6.2 Eb6.2 Ab6.2 G6.4 Eb6.4 | D6.8 B5.4 G5.4 | F5.4 Ab5.4 C6.6 Bb5.2 | Ab5.4 G5.4 F5.8 | G5.4 C6.4 Eb6.6 D6.2 | C6.12 r.4 | Eb6.4 C6.4 Ab5.4 C6.4 | F6.4 D6.4 Bb5.4 D6.4 | G6.4 F6.4 D6.4 B5.4 | G5.2 B5.2 D6.2 F6.2 G6.8'),
+      P(.25, .05, 'r.16 L ' + arpLine(ch, [0, 1, 2, 1], 4, 1)),
+      T(.24, bass), SAW(.035, bass),
+      N(.38, drumLine('k.k.k.k.s.s.ssss', 1) + ' L ' + drumLine('k.hsk.hsk.hsk.hs', 16))] }; }
+  ch = 'Fm Db Eb C Fm Db Bbm C Db Eb Fm Fm Bbm C Fm C'; // 最終決戰・暗影將軍
+  { const bass = 'F2.4 r.4 F2.4 r.4 | F2.2 F2 F2 F2 E2.2 E2 E2 E2 L ' + bassLine(ch, 'e8');
+    S.final = { bpm: 184, heavy: 1, ch: [
+      P(.5, .12, 'F4.4 r.4 F4.4 r.4 | F4.2 Ab4 C5 F5 Ab5 C6 E6 F6 L F5.4 Ab5.4 C6.6 Bb5.2 | Ab5.4 F5.4 Db6.8 | Eb6.4 Db6.2 C6.2 Bb5.4 G5.4 | E6.8 C6.4 G5.4 | F6.6 Eb6.2 C6.4 Ab5.4 | Db6.4 F6.4 Ab6.8 | Bb6.4 Ab6.2 F6.2 Db6.4 Bb5.4 | C6.4 E6.4 G6.4 Bb6.4 | Ab6.6 F6.2 Db6.8 | G6.6 Eb6.2 Bb5.8 | C6.4 F6.4 Ab6.4 G6.4 | F6.12 r.4 | Db6.4 F6.4 Bb6.6 Ab6.2 | G6.4 E6.4 C6.4 G5.4 | Ab5.4 C6.4 F6.4 Ab6.4 | G6.2 F6.2 E6.2 D6.2 C6.8'),
+      P(.25, .055, 'r.16 r.16 L ' + arpLine(ch, [0, 2, 1, 2, 0, 2, 3, 2], 4, 1)),
+      T(.26, bass), SAW(.04, bass),
+      N(.42, drumLine('k...k...k...k...', 1) + ' ' + drumLine('k.k.k.k.s.s.ssss', 1) + ' L ' + drumLine('c.hsk.hsk.hsksss', 1) + ' ' + drumLine('k.hsk.hsk.hsk.hs', 15))] }; }
+  for (const k of ['battle', 'elite', 'boss']) { const d = S[k]; d.heavy = 1; const b = d.ch.find(c => c.k === 't'); if (b) d.ch.push(SAW(.035, b.notes)); }
+  const AREA = { forest: 'forest', lake: 'lake', jadeCreek: 'lake', starShrine: 'star', goldPlains: 'plains', windHills: 'plains', maplePass: 'plains', canyon: 'canyon',
+    sewer: 'cave', mine: 'cave', capSewer: 'cave', catacomb: 'crypt', heroTomb: 'crypt', oldField: 'crypt', swamp: 'swamp', clockTower1: 'tower', clockTower2: 'tower',
+    iceCave: 'ice', lavaTunnel: 'volcano', duskFort1: 'fortress', duskFort2: 'fortress', rift: 'rift', inn: 'inn', capInn: 'inn', frostInn: 'inn' };
+  for (const k in AREA) if (MAPS[k]) MAPS[k].music = AREA[k];
+})();
+const BATTLE2_MAPS = new Set(['northRoad', 'maplePass', 'oldField', 'heroTomb', 'capSewer', 'goldPlains', 'clockTower1', 'clockTower2', 'frostField', 'iceCave', 'emberPass', 'lavaTunnel', 'duskFort1', 'duskFort2', 'starShrine', 'rift']);
+const FINAL_SONG = { shadowGeneral: 'final' };
+let __battleCfg = null;
+{ const _bs = Overworld.prototype.battleScript; Overworld.prototype.battleScript = function* (cfg, ...a) { __battleCfg = cfg; return yield* _bs.call(this, cfg, ...a); }; }
+{ const _pl = Sound.play; Sound.play = function (name) {
+    if ((name === 'battle' || name === 'boss') && __battleCfg) { const c = __battleCfg; __battleCfg = null;
+      if (name === 'boss' && FINAL_SONG[c.sp]) name = FINAL_SONG[c.sp];
+      else if (name === 'battle' && Game.st && BATTLE2_MAPS.has(Game.st.map)) name = 'battle2'; }
+    return _pl.call(this, name); }; }
 for (const k in GEAR_RECIPE) { const M = GEAR_RECIPE[k].mats || (GEAR_RECIPE[k].mats = {}); for (const i in M) if (!ITEMS[i]) delete M[i]; if (!Object.keys(M).length) M.stone = 2; }
 </script>
