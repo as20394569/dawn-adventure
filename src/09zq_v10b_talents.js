@@ -6,15 +6,15 @@
    - The talent tree has its three v9.2 branches again. Element, weapon and borrowed-skill options (火種 / 雷種 / 四象 /
      借用技能…) are replaced by class ones. */
 const SIG_BR = {
-  swordsman: ['一閃', '一刀決勝負。', [[['鋒利', 'sigPow:15'], ['輕刃', 'sigMp:2']], [['看破', 'sigCrit:15'], ['破綻', 'sigFdef:1']], [['迅斬', 'sigSpec:1'], ['殘心', 'sigShield:1']], [['一刀', 'sigPow:25'], ['燕回', 'sigHit:1']], [['無想', 'sigPow:20,sigCrit:25'], ['劍聖', 'sigTwice:30']]]],
-  mage: ['奔流', '魔力化為奔流。', [[['咒力', 'sigPow:15'], ['節流', 'sigMp:2']], [['灼痕', 'sigSt.brn:20'], ['雷痕', 'sigSt.par:15']], [['魔潮', 'sigMpBack:3'], ['共鳴', 'sigBuff.spa:1']], [['洪流', 'sigPow:25'], ['重唱', 'sigTwice:25']], [['元素王', 'sigPow:20,sigWeak:25'], ['賢者', 'sigMp:3,sigMpBack:4']]]],
+  swordsman: ['一閃', '一刀決勝負。', [[['鋒利', 'sigPow:15'], ['先手', 'sigStart:1']], [['看破', 'sigCrit:15'], ['破綻', 'sigFdef:1']], [['迅斬', 'sigSpec:1'], ['殘心', 'sigShield:1']], [['一刀', 'sigPow:25'], ['燕回', 'sigHit:1']], [['無想', 'sigPow:20,sigCrit:25'], ['劍聖', 'sigTwice:30']]]],
+  mage: ['奔流', '魔力化為奔流。', [[['咒力', 'sigPow:15'], ['蓄勢', 'sigStart:1']], [['灼痕', 'sigSt.brn:20'], ['雷痕', 'sigSt.par:15']], [['魔潮', 'sigMpBack:3'], ['共鳴', 'sigBuff.spa:1']], [['洪流', 'sigPow:25'], ['重唱', 'sigTwice:25']], [['元素王', 'sigPow:20,sigWeak:25'], ['賢者', 'sigStart:1,sigMpBack:4']]]],
   guardian: ['盾擊', '攻守一體的盾擊。', [[['重盾', 'sigPow:15'], ['厚盾', 'sigShield:1']], [['盾震', 'sigFdef:1'], ['光盾', 'sigHeal:8']], [['威嚇', 'sigFatk:1'], ['反震', 'sigSpec:1']], [['城塞', 'sigShield:1,sigPow:10'], ['聖光', 'sigHeal:12']], [['不落', 'sigShield:2,sigHeal:10'], ['審判', 'sigPow:40']]]],
-  ranger: ['影牙', '越打越準。', [[['鋒牙', 'sigPow:15'], ['輕巧', 'sigMp:2']], [['淬毒', 'sigSt.psn:30'], ['獵印', 'sigSpec:1']], [['連牙', 'sigHit:1'], ['疾影', 'sigBuff.spe:1']], [['穿心', 'sigCrit:20'], ['毒爆', 'sigVsSt:30']], [['萬箭', 'sigHit:1,sigPow:15'], ['必殺', 'sigCrit:25,sigPow:15']]]],
-  bard: ['共鳴', '鼓舞與治癒。', [[['高歌', 'sigHeal:8'], ['輕唱', 'sigMp:2']], [['疾曲', 'sigBuff.spe:1'], ['護曲', 'sigBuff.def:1']], [['淨化', 'sigCure:1'], ['餘韻', 'sigSpec:1']], [['聖詠', 'sigHeal:12'], ['狂想', 'sigBuff.atk:1,sigBuff.spa:1']], [['英雄詩', 'sigShield:2,sigHeal:10'], ['終章', 'sigTwice:30']]]],
-  machinist: ['砲擊', '火力與改造。', [[['火藥', 'sigPow:15'], ['省料', 'sigMp:2']], [['燒夷彈', 'sigSt.brn:25'], ['電擊彈', 'sigSt.par:20']], [['連發', 'sigHit:1'], ['裝填', 'sigSpec:1']], [['徹甲彈', 'sigFdef:1,sigPow:10'], ['集束', 'sigCrit:20']], [['全彈', 'sigPow:40'], ['連環', 'sigTwice:30']]]],
+  ranger: ['影牙', '越打越準。', [[['鋒牙', 'sigPow:15'], ['先手', 'sigStart:1']], [['淬毒', 'sigSt.psn:30'], ['獵印', 'sigSpec:1']], [['連牙', 'sigHit:1'], ['疾影', 'sigBuff.spe:1']], [['穿心', 'sigCrit:20'], ['毒爆', 'sigVsSt:30']], [['萬箭', 'sigHit:1,sigPow:15'], ['必殺', 'sigCrit:25,sigPow:15']]]],
+  bard: ['共鳴', '鼓舞與治癒。', [[['高歌', 'sigHeal:8'], ['前奏', 'sigStart:1']], [['疾曲', 'sigBuff.spe:1'], ['護曲', 'sigBuff.def:1']], [['淨化', 'sigCure:1'], ['餘韻', 'sigSpec:1']], [['聖詠', 'sigHeal:12'], ['狂想', 'sigBuff.atk:1,sigBuff.spa:1']], [['英雄詩', 'sigShield:2,sigHeal:10'], ['終章', 'sigTwice:30']]]],
+  machinist: ['砲擊', '火力與改造。', [[['火藥', 'sigPow:15'], ['預裝', 'sigStart:1']], [['燒夷彈', 'sigSt.brn:25'], ['電擊彈', 'sigSt.par:20']], [['連發', 'sigHit:1'], ['裝填', 'sigSpec:1']], [['徹甲彈', 'sigFdef:1,sigPow:10'], ['集束', 'sigCrit:20']], [['全彈', 'sigPow:40'], ['連環', 'sigTwice:30']]]],
   monk: ['寸勁', '連拳與內勁。', [[['發力', 'sigPow:15'], ['調息', 'sigMpBack:3']], [['連拳', 'sigHit:1'], ['點穴', 'sigSt.par:15']], [['氣勢', 'sigBuff.atk:1'], ['蓄勁', 'sigSpec:1']], [['崩拳', 'sigPow:25'], ['要穴', 'sigCrit:20']], [['百烈', 'sigHit:2'], ['金剛', 'sigShield:2,sigPow:15']]]],
-  dragoon: ['龍騰', '全力落下。', [[['龍威', 'sigPow:15'], ['輕身', 'sigMp:2']], [['穿甲', 'sigFdef:1'], ['龍血', 'sigDrain:15']], [['衝擊', 'sigSpec:1'], ['鱗甲', 'sigShield:1']], [['隕龍', 'sigPow:25'], ['逆鱗', 'sigCrit:20']], [['天墜', 'sigPow:40'], ['龍王', 'sigDrain:20,sigShield:1']]]],
-  otherworlder: ['光刃', '異界之光。', [[['光輝', 'sigPow:15'], ['輕盈', 'sigMp:2']], [['聖光', 'sigDrain:15'], ['破邪', 'sigWeak:20']], [['加速', 'sigBuff.spe:1'], ['共鳴', 'sigSpec:1']], [['黎明', 'sigPow:25'], ['決意', 'sigCrit:20']], [['曙光', 'sigPow:25,sigDrain:10'], ['時空', 'sigTwice:30']]]],
+  dragoon: ['龍騰', '全力落下。', [[['龍威', 'sigPow:15'], ['蓄勢', 'sigStart:1']], [['穿甲', 'sigFdef:1'], ['龍血', 'sigDrain:15']], [['衝擊', 'sigSpec:1'], ['鱗甲', 'sigShield:1']], [['隕龍', 'sigPow:25'], ['逆鱗', 'sigCrit:20']], [['天墜', 'sigPow:40'], ['龍王', 'sigDrain:20,sigShield:1']]]],
+  otherworlder: ['光刃', '異界之光。', [[['光輝', 'sigPow:15'], ['先機', 'sigStart:1']], [['聖光', 'sigDrain:15'], ['破邪', 'sigWeak:20']], [['加速', 'sigBuff.spe:1'], ['共鳴', 'sigSpec:1']], [['黎明', 'sigPow:25'], ['決意', 'sigCrit:20']], [['曙光', 'sigPow:25,sigDrain:10'], ['時空', 'sigTwice:30']]]],
   spellblade: ['魔劍', '奪取魔力。', [[['魔刃', 'sigPow:15'], ['吸魔', 'sigMpBack:3']], [['雷紋', 'sigSt.par:15'], ['炎紋', 'sigSt.brn:20']], [['共振', 'sigBuff.spa:1'], ['刻印', 'sigSpec:1']], [['解放', 'sigPow:25'], ['魔晶', 'sigCrit:20']], [['魔劍王', 'sigPow:40'], ['雙極', 'sigTwice:30']]]],
 };
 // v10.1 kept two branches per class (KEEP_BR); v10.4.2 brings the third back. Saves made in between are moved over once (below).
@@ -52,10 +52,10 @@ function tcMigrateV104(st) { if (!st || st.talV104) return; st.talV104 = 1; cons
 { const FIX = { fireUp: ['magCrit', 3], boltUp: ['speP', 3], subUp: ['atkUp', 8], elem: ['spaP', 3] };
   for (const c in RESONANCE) { const old = RESONANCE[c]; RESONANCE[c] = [...old.slice(0, 3).map(r => r.map(([k, v]) => FIX[k] ? FIX[k] : [k, v])), [['sigPow', 5], ['sigPow', 5], ['sigPow', 10]]]; } }
 SHORT.sigPow = '招式威力'; // the resonance line read 「sigPow+5%」
-if (typeof V9_SUM_KEYS !== 'undefined') for (const k of ['sigPow', 'sigMp', 'sigCrit', 'sigHit', 'sigSpec', 'sigShield', 'sigHeal', 'sigDrain', 'sigMpBack', 'sigTwice', 'sigWeak', 'sigVsSt', 'sigFdef', 'sigFatk', 'sigCure']) V9_SUM_KEYS.add(k);
+if (typeof V9_SUM_KEYS !== 'undefined') for (const k of ['sigPow', 'sigMp', 'sigStart', 'sigCrit', 'sigHit', 'sigSpec', 'sigShield', 'sigHeal', 'sigDrain', 'sigMpBack', 'sigTwice', 'sigWeak', 'sigVsSt', 'sigFdef', 'sigFatk', 'sigCure']) V9_SUM_KEYS.add(k);
 const ST_NM = { brn: '灼傷', psn: '中毒', par: '麻痺', slp: '睡眠' }, BUFF_NM = { atk: '物攻', spa: '魔攻', def: '物防', spd: '魔防', spe: '速度' };
 Object.assign(TK_TXT, { // the signature page shows these; short on purpose (player: 「玩家玩遊戲不是來看規則的」)
-  sigPow: v => '威力+' + v + '%', sigMp: v => 'MP-' + v, sigCrit: v => '會心率+' + v + '%', sigHit: v => '攻擊+' + v + '次',
+  sigPow: v => '威力+' + v + '%', sigMp: v => 'MP-' + v, sigStart: v => '開場招式點+' + v, sigCrit: v => '會心率+' + v + '%', sigHit: v => '攻擊+' + v + '次',
   sigSpec: v => '特技+' + v + '層', sigShield: v => '護盾' + v + '回合', sigHeal: v => '回復' + v + '%HP', sigDrain: v => '吸血' + v + '%',
   sigMpBack: v => '回復' + v + 'MP', sigTwice: v => v + '%機率再發動', sigWeak: v => '打弱點+' + v + '%', sigVsSt: v => '對異常+' + v + '%',
   sigFdef: () => '降低物防', sigFatk: () => '降低物攻', sigCure: () => '消除異常',
@@ -106,7 +106,7 @@ function* sigScreen() {
     const TR = typeof touchRegion === 'function', m = skillMove(id, st);
     screenBG(x); headerBar(x, '職業招式'); const av = tpAvail(st); Font.drawR(x, '天賦點 ' + av, W - 6, 2, av ? UIC.warm : UIC.muted, UIC.textSh);
     drawWin(x, 4, 22, 168, 28, 'menu'); const ic = TALENT_SIG_PX[c]; if (ic) x.drawImage(ic, 10, 30);
-    Font.draw(x, m.n, 26, 24, '#ffd860', UIC.textSh, 11); Font.drawR(x, (m.pow ? '威力' + m.pow + '　' : '') + 'MP' + skillMP(id, st), 166, 26, UIC.muted, UIC.textSh, 8);
+    Font.draw(x, m.n, 26, 24, '#ffd860', UIC.textSh, 11); Font.drawR(x, (m.pow ? '威力' + m.pow + '　' : '') + '招式點' + SIG_COST, 166, 26, UIC.muted, UIC.textSh, 8);
     drawFitText(x, SIG[c].d, 26, 37, 140, 11, 8, UIC.text);
     if (!deepOk(st)) Font.drawR(x, '深層（天賦覺醒後開放）', 172, RY(3) - 12, UIC.dis, UIC.textSh, 7);
     x.fillStyle = deepOk(st) ? 'rgba(255,200,100,0.35)' : 'rgba(120,120,150,0.35)'; x.fillRect(4, RY(3) - 3, 168, 1);

@@ -62,5 +62,5 @@ const FAM_TECH = { beast: ['m_warRoar', 'm_rampage'], plant: ['m_vineLash', 'm_s
 /* ---------- the first orb, with the adventurer's license ---------- */
 { const _u = Overworld.prototype.update; Overworld.prototype.update = function (...a) {
     const st = this.st; if (st && st.v10 && st.flags.license && !st.flags.orbStart && !this.script && !UI.stack.length && !Game.trans) { st.flags.orbStart = 1;
-      this.run((function* () { yield* say('村長：「對了，這個給你。」'); yield* orbGet('galeCut', ''); yield* sayAll(['村長：「這是「技能寶珠」。鐵匠會幫你把它鑲進武器，戰鬥中就能使出裡面封著的招式。」', '村長：「強大的魔物身上也會帶著寶珠。打倒牠們，你就會越來越強。」']); })()); return; }
+      this.run((function* () { yield* say('村長：「對了，這個給你。」'); yield* orbGet(starterOrb(), ''); yield* sayAll(['村長：「這是「技能寶珠」。鐵匠會幫你把它鑲進武器，戰鬥中就能使出裡面封著的招式。」', '村長：「強大的魔物身上也會帶著寶珠。打倒牠們，你就會越來越強。」']); })()); return; }
     return _u.apply(this, a); }; }
