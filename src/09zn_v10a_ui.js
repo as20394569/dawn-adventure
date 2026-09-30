@@ -11,7 +11,12 @@
 
 /* ---------- speakers & portraits ---------- */
 const PORTRAIT_PROPS = new Set(['bell', 'lamp', 'lampLit', 'altar', 'loreStone', 'windmill', 'starGate', 'caveDoor', 'iceWall', 'forgeL', 'forgeR', 'anvil', 'tub', 'rackA', 'rackB', 'manhole', 'miasma', 'warden']);
-const PORTRAIT_ART = {}; // key → 32×32 canvas (Codex portraits; keys are PORTRAIT_NAME values or field looks)
+const PORTRAIT_ART = {}; // key → 32×32 canvas (Codex portraits, task S; keys are PORTRAIT_NAME values or field looks)
+for (const k in (typeof PORTRAIT_PX_ROWS !== 'undefined' ? PORTRAIT_PX_ROWS : {})) {
+  const [w, h, cols, rows] = PORTRAIT_PX_ROWS[k], c = mkCanvas(w, h), x = c.getContext('2d'), CH = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  rows.forEach((r, y) => { let X = 0; for (const [, n, ch] of r.matchAll(/(\d*)(.)/g)) { const len = n ? +n : 1; if (ch !== '.') { x.fillStyle = cols[CH.indexOf(ch)]; x.fillRect(X, y, len, 1); } X += len; } });
+  PORTRAIT_ART[k] = c;
+}
 const PORTRAIT_NAME = { 格倫: 'gren', 鐵斧格倫: 'gren', 諾拉: 'nora', 村長婆婆: 'frostElder', 提姆: 'tim', 小麥: 'mai' }; // characters who share a field look but get their own portrait
 let SPK_INDEX = null;
 function spkIndex() { if (SPK_INDEX) return SPK_INDEX; const L = []; for (const k in MAPS) for (const n of MAPS[k].npcs || []) if (n.name && n.look && !PORTRAIT_PROPS.has(n.look)) L.push({ name: n.name, look: n.look, map: k, id: n.id, x: n.x, y: n.y }); return (SPK_INDEX = L); }
