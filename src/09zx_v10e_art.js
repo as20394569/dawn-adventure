@@ -40,8 +40,8 @@ Object.assign(PORTRAIT_NAME, { 畫家艾琳: 'painter', 艾琳: 'painter', 老�
 
 /* ---------- v10.4.1 portraits from Codex's original large images (player: 「原始大圖直接拿來用」) ----------
    The 32×32 portraits were shrunk with nearest-neighbour and looked speckled (some faces read as scary). The originals are
-   embedded at 192×192 (tools/portrait_hd.py) and drawn smoothly into the same 32×32 frame, so on a phone (scale 6) every
-   pixel of the original shows. They are decoded the first time a character speaks. */
+   embedded at 288×288 (tools/portrait_hd.py) and drawn into the 48-unit portrait frame (v27f), so on a phone (scale 6)
+   every pixel of the original shows (smaller scales shrink it smoothly; the contrast boost is only for the 32×32 fallback). They are decoded the first time a character speaks. */
 const PORTRAIT_HD = {};
 function portraitHD(k) {
   if (k in PORTRAIT_HD) return PORTRAIT_HD[k]; const R = typeof PORTRAIT_HD_ROWS !== 'undefined' && PORTRAIT_HD_ROWS[k]; if (!R) return (PORTRAIT_HD[k] = null);
@@ -55,5 +55,5 @@ function portraitHD(k) {
   drawSpeaker = function (x, tb) {
     const s = tb.spk, im = s && s.img; if (!im || !im.hd || tb.y < 60) return _ds(x, tb);
     s.img = BLANK; try { _ds(x, tb); } finally { s.img = im; }
-    const px = tb.x + 2; x.save(); x.imageSmoothingEnabled = true; x.imageSmoothingQuality = 'high'; x.drawImage(im, px + 3, tb.y - 34, 32, 32); x.restore();
+    const px = tb.x + 2, P = 48; x.save(); x.imageSmoothingEnabled = true; x.imageSmoothingQuality = 'high'; x.drawImage(im, px + 3, tb.y - P - 2, P, P); x.restore();
   }; }

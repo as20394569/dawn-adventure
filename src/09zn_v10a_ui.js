@@ -50,10 +50,14 @@ function dlgSetup(text, o) {
   dlgLogPush(r.spk && r.spk.name, r.text);
   return r;
 }
+const PORT_CRISP = new WeakMap(); // portraits with a touch more contrast and colour, so the small faces read clearly on phones
+function crispPortrait(src) { let c = PORT_CRISP.get(src); if (c) return c; const w = src.width, h = src.height; c = mkCanvas(w, h); const x = c.getContext('2d'); x.drawImage(src, 0, 0);
+  try { const D = x.getImageData(0, 0, w, h), a = D.data; for (let i = 0; i < a.length; i += 4) { if (a[i + 3] < 8) continue; for (let k = 0; k < 3; k++) a[i + k] = (a[i + k] - 128) * 1.12 + 128; const L = 0.3 * a[i] + 0.59 * a[i + 1] + 0.11 * a[i + 2]; for (let k = 0; k < 3; k++) a[i + k] = L + (a[i + k] - L) * 1.12; } x.putImageData(D, 0, 0); } catch (e) { }
+  PORT_CRISP.set(src, c); return c; }
 function drawSpeaker(x, tb) {
   const s = tb.spk; if (tb.y < 60) return; const px = tb.x + 2;
-  if (s.img) { drawWin(x, px, tb.y - 37, 38, 39, 'ow'); x.fillStyle = '#141a30'; x.fillRect(px + 3, tb.y - 34, 32, 32); x.drawImage(s.img, px + 3, tb.y - 34); }
-  if (s.name) { const nx = s.img ? px + 39 : px, w = Math.ceil(Font.width(s.name, 10)) + 14; drawWin(x, nx, tb.y - 16, w, 17, 'ow'); Font.draw(x, s.name, nx + 7, tb.y - 15, UIC.warm, UIC.textSh, 10); }
+  if (s.img) { const P = 48; drawWin(x, px, tb.y - P - 5, P + 6, P + 7, 'ow'); x.fillStyle = '#141a30'; x.fillRect(px + 3, tb.y - P - 2, P, P); const sm = x.imageSmoothingEnabled; x.imageSmoothingEnabled = false; x.drawImage(crispPortrait(s.img), px + 3, tb.y - P - 2, P, P); x.imageSmoothingEnabled = sm; } // v27f: portrait 1.5× (48px), a little more contrast, no smoothing
+  if (s.name) { const nx = s.img ? px + 55 : px, w = Math.ceil(Font.width(s.name, 10)) + 14; drawWin(x, nx, tb.y - 16, w, 17, 'ow'); Font.draw(x, s.name, nx + 7, tb.y - 15, UIC.warm, UIC.textSh, 10); }
 }
 // hold B to fast-forward (only once B was pressed inside a dialogue, so running with B doesn't skip talks)
 let __ffArm = false, __ffT = 0, __ffF = -1;

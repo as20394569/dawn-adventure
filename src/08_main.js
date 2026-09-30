@@ -441,6 +441,7 @@ function fitScreen() {
   const s = Math.min(r.width / W, r.height / H);
   cv.style.width = Math.floor(W * s) + 'px'; cv.style.height = Math.floor(H * s) + 'px';
   if (!Game.fixedScale) setScale(Math.ceil(s * (window.devicePixelRatio || 1)));
+  cv.style.imageRendering = cv.width < W * s * (window.devicePixelRatio || 1) - 0.5 ? 'pixelated' : 'auto'; // v27f: upscaling (phones) → hard pixel edges; downscaling keeps smooth
 }
 function boot(data) {
   try { document.fonts && document.fonts.load('500 12px "Noto Sans TC"'); } catch (e) { }

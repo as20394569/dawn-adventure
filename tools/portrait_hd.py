@@ -5,7 +5,7 @@ proper filter to N×N and reduced to ≤52 colours so it can be embedded as pale
 import sys, os, glob
 import numpy as np
 from PIL import Image
-N = int(os.environ.get('PORTRAIT_N', 128))
+N = int(os.environ.get('PORTRAIT_N', 288))  # 48-unit portrait frame × scale 6 (phones) = 288 px
 def hd(path, n=N):
     im = Image.open(path).convert('RGBA'); a = np.array(im)
     a[:, :, 3] = np.where(a[:, :, 3] >= 180, 255, 0); a[a[:, :, 3] == 0] = 0; im = Image.fromarray(a); im = im.crop(im.getbbox())

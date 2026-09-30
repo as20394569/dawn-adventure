@@ -149,7 +149,7 @@ for f in sorted(glob.glob(os.path.join(root, 'art', 'battle', 'portraits', '*.pn
     po[k] = rle_rows(f)
 js += 'const PORTRAIT_PX_ROWS = ' + json.dumps(po, separators=(',', ':'), ensure_ascii=False) + ';\n'
 print('portraits', len(po))
-# v10.4.1: the dialogue portraits from Codex's original large images (tools/portrait_hd.py, 192×192), drawn smoothly at 32×32
+# v10.4.1: the dialogue portraits from Codex's original large images (tools/portrait_hd.py, 288×288), drawn in the 48-unit frame
 ph = {os.path.basename(f)[:-4]: rle_rows(f) for f in sorted(glob.glob(os.path.join(root, 'art', 'battle', 'portraits_hd', '*.png')))}
 js += 'const PORTRAIT_HD_ROWS = ' + json.dumps(ph, separators=(',', ':')) + ';\n'
 print('hd portraits', len(ph))
