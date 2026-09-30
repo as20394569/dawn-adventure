@@ -35,7 +35,7 @@ function recipeMats(k, n) { const R = GEAR_RECIPE[k], st = Game.st, keys = R ? O
   for (let i = 0; i < n; i++) { const m = pick(keys); got[m] = (got[m] || 0) + 1; st.bag[m] = (st.bag[m] || 0) + 1; } return got; }
 // the encounter card tells the truth: blueprint + ticket on the first kill, blueprints / tickets / materials after that
 lootHint = function (key, sp) { const first = !((Game.st.kills || {})[key]), sig = (LOOT[key] || [])[0] || (SPECIES[sp] || {}).drop, mat = (SPECIES[sp] || {}).mat;
-  if (first && sig && GEAR[classGear(sig)]) return '首次：「' + GEAR[classGear(sig)].n + '」設計圖＋紅色打造券';
+  if (first && sig && GEAR[classGear(sig)]) return '首次：隨機設計圖＋藍色打造券';
   if (LOOT[key]) return '再戰：' + LOOT[key].slice(0, 2).map(k => GEAR[classGear(k)].n).join('、') + '等的設計圖／打造券' + (mat && ITEMS[mat] ? '、' + ITEMS[mat].n : '');
   return mat && ITEMS[mat] ? '素材：' + ITEMS[mat].n : ''; };
 

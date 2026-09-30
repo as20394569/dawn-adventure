@@ -8,9 +8,9 @@ const FOE_SPOTS = (() => { const L = []; for (const id in MAPS) { const d = MAPS
 function foeMoves(sp, lv, kind) { try { const f = makeFoe(sp, lv, kind); const L = f.moves.map(m => m.id); const ex = PHASE_MOVES[sp]; if (ex && !L.includes(ex)) L.push(ex); return L; } catch (e) { return []; } }
 function foeDropLines(sp, key, kind) {
   const L = [], st = Game.st, O = ORB_DROP[sp];
-  if (O) { const got = (st.orbGot || {})[sp]; L.push('寶珠：' + O.map((k, i) => '「' + (ORB_A[k] || ORB_P[k]).n + '」' + (i === 0 && !got ? '(首殺必得)' : '')).join('') + (got ? '（再戰機率掉落）' : '')); }
+  if (O) L.push('寶珠（機率）：' + O.map(k => '「' + (ORB_A[k] || ORB_P[k]).n + '」').join(''));
   const h = typeof lootHint === 'function' ? lootHint(key, sp) : ''; if (h) L.push(h.replace('首次擊敗：必定掉落紅色', '裝備：首殺').replace('重戰掉落：', '裝備：'));
-  const el = monsterElem(sp); L.push((kind === 'boss' ? '上級' : '') + (el ? el + '屬性' : '') + '附魔石' + (kind === 'boss' ? '（必得）' : '（40%）') ); if (BOSS_MAT[sp] && ITEMS[BOSS_MAT[sp]]) L.push('素材：' + ITEMS[BOSS_MAT[sp]].n);
+  const el = monsterElem(sp); L.push((kind === 'boss' ? '上級' : '') + (el ? el : '') + '附魔石' + (kind === 'boss' ? '（必得）' : '（40%）') + (BOSS_MAT[sp] && ITEMS[BOSS_MAT[sp]] ? '・素材：' + ITEMS[BOSS_MAT[sp]].n : ''));
   return L;
 }
 function famText(sp) { const F = FAMILIES[SPECIES[sp].fam] || {}; return (F.weak && F.weak.length ? '弱：' + F.weak.join('') : '') + (F.resist && F.resist.length ? '　抗：' + F.resist.join('') : '') + (F.immune && F.immune.length ? '　免疫' + F.immune.map(q => ({ psn: '毒', par: '麻', slp: '眠', brn: '燒' })[q] || q).join('') : ''); }
@@ -18,7 +18,7 @@ encounterCard = function (sp, lv, key, kind, extra) {
   const pic = typeof chibiPortrait === 'function' && chibiPortrait(sp) || battlePortrait(sp), stars = dangerStars(lv), mv = foeMoves(sp, lv, kind).map(id => MOVES[id]).filter(Boolean);
   const mvTxt = mv.map(m => (m.charge ? '⚠' : '') + m.n).join('・'), mvL = Font.wrap(mvTxt, W - 36, 9).slice(0, 3), dropL = foeDropLines(sp, key, kind).flatMap(t => Font.wrap(t, W - 36, 8)).slice(0, 6);
   return { draw(x) {
-    const X = 6, Y = 4, w = W - 12, h = 66 + 12 + mvL.length * 11 + 14 + dropL.length * 10; drawPanel(x, X, Y, w, h, kind === 'boss' ? '#ff6b7a' : '#ffc46b');
+    const X = 6, Y = 4, w = W - 12, h = 70 + 12 + mvL.length * 11 + 13 + dropL.length * 10 + 5; drawPanel(x, X, Y, w, h, kind === 'boss' ? '#ff6b7a' : '#ffc46b'); // v10.5: the last drop line fits inside
     Font.drawC(x, (kind === 'boss' ? '頭目' : '菁英魔物') + (extra ? '・' + extra : ''), W / 2, Y + 2, kind === 'boss' ? '#ff9aa4' : '#ffd890', UIC.textSh, 9);
     x.fillStyle = 'rgba(10,12,24,0.7)'; x.fillRect(X + 6, Y + 16, 50, 50);
     if (pic) { const s = Math.min(1, 48 / pic.height, 48 / pic.width); x.imageSmoothingEnabled = false; x.drawImage(pic, Math.round(X + 31 - pic.width * s / 2), Math.round(Y + 65 - pic.height * s), Math.round(pic.width * s), Math.round(pic.height * s)); }

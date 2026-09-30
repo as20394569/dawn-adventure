@@ -6,7 +6,7 @@ const famName = t => FAMILIES[t] ? FAMILIES[t].n : t + '系';
 // every line of information about one piece of gear: [text, color, size, indent]
 function gearInfoLines(g, wrapW = 150) {
   const B = GEAR[g.b], o = gearStats(g), L = [], add = (t, c = UIC.text, s = 11, ind = 0) => { for (const l of Font.wrap(t, wrapW - ind, s)) L.push([l, c, s, ind]); };
-  add((EQUIP_SLOTS[B.slot === 'acc' ? 'acc1' : B.slot]) + (B.kind && B.kind !== '飾品' ? '・' + B.kind : '') + '　品相' + Math.round(g.r * 100) + '%' + (g.e ? '　強化+' + g.e : ''), UIC.muted, 10);
+  add((EQUIP_SLOTS[B.slot === 'acc' ? 'acc1' : B.slot]) + (B.kind && B.kind !== '飾品' ? '・' + B.kind + (typeof handTag === 'function' ? handTag(B) : '') : '') + '　品相' + Math.round(g.r * 100) + '%' + (g.e ? '　強化+' + g.e : ''), UIC.muted, 10);
   L.push(['【基本能力】', UIC.accent, 10, 0]);
   const stl = [...STATK, 'mp'].filter(k => o.st[k]).map(k => (k === 'mp' ? 'MP' : STAT_NAMES[k]) + ' +' + o.st[k]);
   if (stl.length) add(stl.join('　'), UIC.text, 11, 4); else add('（無）', UIC.dis, 10, 4);

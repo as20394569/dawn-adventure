@@ -3,7 +3,7 @@ module.exports = async (g) => {
   const out = await g.ev(() => {
     const G = __game, P = [], W = [], I = [], bad = (...a) => P.push(a.join(' ')), warn = (...a) => W.push(a.join(' ')), info = (...a) => I.push(a.join(' '));
     G.newGameState('測'); const st = G.Game.st; st.flags.license = 1;
-    const SPECIALS_KEYS = Object.keys(SPECIALS), ELEM = ['一般', '火', '水', '草', '雷', '岩', '毒', '飛'], STATS = ['hp', 'atk', 'def', 'spa', 'spd', 'spe'], SPK = ['crit', 'hit', 'eva', 'drain', 'elem', 'vs', 'resist'];
+    const SPECIALS_KEYS = Object.keys(SPECIALS), ELEM = ['一般', '火', '水', '草', '雷', '岩', '毒', '飛'], STATS = ['hp', 'atk', 'def', 'spa', 'spd', 'spe'], SPK = ['crit', 'hit', 'eva', 'drain', 'elem', 'vs', 'resist', 'block'];
     const SRC = document.querySelector('script:not([src])') ? [...document.querySelectorAll('script')].map(s => s.textContent).join('\n') : '';
     // ---------- where things appear ----------
     const seenSp = {}, gearSrc = {}, itemSrc = {}, matUse = {};
@@ -54,7 +54,7 @@ module.exports = async (g) => {
     const fxUse = {}; for (const k in MOVES) if (!MOVES[k].foe && !MOVES[k].tpl) (fxUse[MOVES[k].fx] = fxUse[MOVES[k].fx] || []).push(MOVES[k].n); for (const f in fxUse) if (fxUse[f].length > 1 && !(f === 'slash' && fxUse[f].includes('攻擊'))) warn('主角特效重複使用', f, fxUse[f].join('、'));
     // ---------- GEAR ----------
     for (const k in GEAR) { const e = GEAR[k];
-      if (!['weapon', 'head', 'body', 'feet', 'acc'].includes(e.slot)) bad('裝備', k, '部位無效'); if (!(e.t >= 1 && e.t <= 7)) bad('裝備', k, '階級無效');
+      if (!['weapon', 'shield', 'head', 'body', 'feet', 'acc'].includes(e.slot)) bad('裝備', k, '部位無效'); if (!(e.t >= 1 && e.t <= 7)) bad('裝備', k, '階級無效');
       for (const s in e.st || {}) if (!STATS.includes(s) && !(s === 'mp' && (e.kind === '魔導書' || e.kind === '樂器'))) bad('裝備', k, '數值欄位無效', s);
       for (const s in e.sp || {}) { if (!SPK.includes(s)) bad('裝備', k, '特殊欄位無效', s); }
       if (e.sp && e.sp.vs && !FAMILIES[e.sp.vs[0]]) bad('裝備', k, '對種族無效', e.sp.vs[0]); if (e.sp && e.sp.resist && !ELEM.includes(e.sp.resist[0])) bad('裝備', k, '抗性屬性無效');
@@ -67,7 +67,7 @@ module.exports = async (g) => {
     // ---------- SPECIALS ----------
     for (const f of SPECIALS_KEYS) { const used = new RegExp('fx\\.' + f + '\\b').test(SRC); if (!used) bad('特效', f, '戰鬥程式沒有實作'); if (!Object.values(GEAR).some(e => (e.fx || []).includes(f))) warn('特效', f, SPECIALS[f].n, '沒有任何裝備使用（備用）'); }
     // ---------- AFFIX ----------
-    for (const a in AFFIX_TABLE) for (const s of AFFIX_TABLE[a].slots) if (!['weapon', 'head', 'body', 'feet', 'acc'].includes(s)) bad('詞綴', a, '部位無效', s);
+    for (const a in AFFIX_TABLE) for (const s of AFFIX_TABLE[a].slots) if (!['weapon', 'shield', 'head', 'body', 'feet', 'acc'].includes(s)) bad('詞綴', a, '部位無效', s);
     // ---------- ITEMS ----------
     for (const k in ITEMS) { const it = ITEMS[k];
       if (!it.mat && !it.key && !['heal', 'cure', 'pp', 'mp', 'escape', 'home', 'boost', 'full', 'tp', 'reset', 'enchant'].includes(it.use)) bad('道具', k, '沒有用途');
@@ -122,7 +122,7 @@ module.exports = async (g) => {
     miss('NPC', [...new Set(Object.values(MAPS).flatMap(d => (d.npcs || []).map(n => n.id)))].filter(id => !npcRoleOf(id)));
     miss('主角技能分類', Object.keys(MOVES).filter(k => !MOVES[k].foe && !SKILL_CLASS[MOVES[k].cls]));
     miss('怪物技能分類', Object.keys(MOVES).filter(k => MOVES[k].foe && !MON_CLASS[MOVES[k].cls]));
-    miss('紙娃娃外觀', Object.keys(GEAR).filter(k => GEAR[k].slot !== 'acc' && !GEAR[k].look));
+    miss('紙娃娃外觀', Object.keys(GEAR).filter(k => GEAR[k].slot !== 'acc' && GEAR[k].slot !== 'shield' && !GEAR[k].look)); // v10.5: shields are battle-only (left arm)
     for (const k in GEAR) { const L = GEAR[k].look; if (!L) continue; if (GEAR[k].slot === 'head' && !(DOLL_HEAD[L[0]] && HEAD_PAL[L[1]] && (!L[2] || DOLL_DECO[L[2]]))) bad('紙娃娃', k, '頭部外觀無效'); if (GEAR[k].slot === 'body' && L !== 'uniform' && !BODY_LOOKS[L]) bad('紙娃娃', k, '身體外觀無效'); if (GEAR[k].slot === 'feet' && !FEET_PAL[L]) bad('紙娃娃', k, '腳部外觀無效'); if (GEAR[k].slot === 'weapon' && !(['sword', 'dagger', 'staff', 'axe', 'tome'].includes(L[0]) && WPN_PAL[L[1]])) bad('紙娃娃', k, '武器外觀無效'); }
     miss('魔物種族', Object.keys(SPECIES).filter(k => !FAMILIES[SPECIES[k].fam]));
     // ---------- summary ----------

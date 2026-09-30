@@ -645,6 +645,12 @@
   "windHorn": [
    "oldField掉落池"
   ],
+  "woodShield": [
+   "道具店"
+  ],
+  "ironBuckler": [
+   "道具店"
+  ],
   "magusStaff": [
    "道具店(沼澤鱷後)"
   ],
@@ -696,6 +702,9 @@
    "古岩魔像掉落"
   ],
   "golemFist": [
+   "重戰掉落:golem"
+  ],
+  "golemShield": [
    "重戰掉落:golem"
   ],
   "grenAxe": [
@@ -754,6 +763,9 @@
    "重戰掉落:silverWyrm(魔導士)"
   ],
   "moonHarp": [
+   "重戰掉落:silverWyrm"
+  ],
+  "wyrmShield": [
    "重戰掉落:silverWyrm"
   ],
   "gateKey": [
@@ -849,6 +861,9 @@
   "gearRifle": [
    "重戰掉落:lavaGiant"
   ],
+  "lavaShield": [
+   "重戰掉落:lavaGiant"
+  ],
   "duskBlade": [
    "重戰掉落:duskCaptain",
    "黯滅騎士長掉落"
@@ -862,6 +877,9 @@
    "影將莫爾德掉落"
   ],
   "boneGreatsword": [
+   "重戰掉落:shadowGeneral"
+  ],
+  "shadowShield": [
    "重戰掉落:shadowGeneral"
   ],
   "starLance": [

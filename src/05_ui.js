@@ -276,7 +276,7 @@ function gearSort(st = Game.st) { const order = ['weapon', 'head', 'body', 'feet
 function drawGearDetail(x, g, Y, h, cmp) { // quality, roll, stats, specials, story text
   const B = GEAR[g.b], [a, b] = gearLines(g);
   Font.draw(x, gearName(g), 10, Y, gCol(g), UIC.textSh); Font.drawR(x, '品相' + Math.round(g.r * 100) + '%', 166, Y + 1, UIC.muted, UIC.textSh, 10);
-  let y = Y + 17; Font.draw(x, EQUIP_SLOTS[B.slot === 'acc' ? 'acc1' : B.slot] + (B.kind && B.kind !== '飾品' ? '・' + B.kind : '') + '｜' + a, 12, y, UIC.text, UIC.textSh, 11); y += 14;
+  let y = Y + 17; Font.draw(x, EQUIP_SLOTS[B.slot === 'acc' ? 'acc1' : B.slot] + (B.kind && B.kind !== '飾品' ? '・' + B.kind + (typeof handTag === 'function' ? handTag(B) : '') : '') + '｜' + a, 12, y, UIC.text, UIC.textSh, 11); y += 14;
   if (b) for (const l of Font.wrap(b, 150, 11).slice(0, 2)) { Font.draw(x, l, 12, y, UIC.accent, UIC.textSh, 11); y += 13; }
   if (cmp) { Font.draw(x, cmp, 12, y, UIC.warm, UIC.textSh, 11); y += 13; }
   for (const f of B.fx || []) if (y + 12 < Y + h) for (const l of Font.wrap(SPECIALS[f].n + '：' + SPECIALS[f].d, 150, 10).slice(0, 2)) { if (y + 11 > Y + h) break; Font.draw(x, l, 12, y, UIC.warm, UIC.textSh, 10); y += 12; }

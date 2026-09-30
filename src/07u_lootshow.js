@@ -26,7 +26,7 @@ Battle.prototype.lootShow = function* (g, head) {
   // 2) the showcase card
   const icon = lootIcon(g), B = GEAR[g.b], CW = 160, info = [];
   for (const [t, c2, sz, ind] of gearInfoLines(g, 9999).filter(l => l[2] !== 9 && l[1] !== UIC.muted && l[1] !== UIC.accent && l[0] !== '')) { const i2 = Math.min(ind, 6); for (const l of Font.wrap(t, CW - 20 - i2, 10)) info.push([l, c2, 10, i2]); }
-  const CH = Math.min(H - 8, 99 + info.length * 12 + 22), CY = CH <= BH - 8 ? Math.max(6, Math.round((BH - CH) / 2)) : Math.round((H - CH) / 2), kind = EQUIP_SLOTS[B.slot === 'acc' ? 'acc1' : B.slot] + (B.kind && B.kind !== '飾品' ? '・' + B.kind : '');
+  const CH = Math.min(H - 8, 99 + info.length * 12 + 22), CY = CH <= BH - 8 ? Math.max(6, Math.round((BH - CH) / 2)) : Math.round((H - CH) / 2), kind = EQUIP_SLOTS[B.slot === 'acc' ? 'acc1' : B.slot] + (B.kind && B.kind !== '飾品' ? '・' + B.kind + (typeof handTag === 'function' ? handTag(B) : '') : '');
   const s = { t: 0, out: 0, draw(x) {
     s.t++; const a = s.out ? Math.max(0, 1 - s.out / 6) : Math.min(1, s.t / 8), slide = Math.round((1 - Math.min(1, s.t / 8)) * 18);
     x.save(); x.globalAlpha = a; x.fillStyle = 'rgba(4,4,12,0.55)'; x.fillRect(0, 0, W, CH > BH - 8 ? H : BH);

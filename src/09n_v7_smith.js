@@ -55,7 +55,7 @@ function bpTut() { const st = Game.st; if (st.flags.bpTut) return null; st.flags
 /* ---------- drops: every gear drop becomes a blueprint / ticket / materials ---------- */
 { const _ls = Battle.prototype.lootShow; Battle.prototype.lootShow = function* (g, head) {
     const st = Game.st; if (!g || !GEAR[g.b]) return yield* _ls.call(this, g, head);
-    const tMin = this.F && this.F.boss ? 2 : 3; // v26: bosses give a ticket from 紫, everything else from 紅; the card always shows what you really get
+    const tMin = g._first ? 1 : this.F && this.F.boss ? 2 : 3; // v26: bosses give a ticket from 紫, everything else from 紅; the card always shows what you really get
     st.gear = (st.gear || []).filter(x => x !== g); const k = g.b, q = g.q || 1, known = bpKnown(k, st);
     if (known && q < tMin) { const got = recipeMats(k, 1 + q); Sound.sfx('item'); yield* this.msg((this.F ? this.F.n + '掉落了' : '得到了') + '「' + GEAR[k].n + '」的素材：' + matsText(got) + '！（設計圖已經學會了）', { hold: 40 }); return; }
     const txt = gainBP(k, q, st, tMin), card = { b: k, q: Math.max(1, q), r: 1, a: [], _bp: q >= tMin ? 1 : 2 };
@@ -79,7 +79,7 @@ function bpTut() { const st = Game.st; if (st.flags.bpTut) return null; st.flags
   };
 }
 // shops: no gear
-{ const _sb = shopBuy; shopBuy = function* (stock) { return yield* _sb((stock || shopList()).filter(k => !GEAR[k])); }; }
+{ const _sb = shopBuy; shopBuy = function* (stock) { return yield* _sb((stock || shopList()).filter(k => !GEAR[k] || GEAR[k].slot === 'shield')); }; } // v10.5: the two cheapest shields are sold in shops
 function* bpShop(list, title = '設計圖') {
   const st = Game.st; let idx = 0;
   while (true) {

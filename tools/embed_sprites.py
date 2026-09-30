@@ -159,5 +159,9 @@ js += 'const GLOVE_PX_ROWS = ' + json.dumps(gl, separators=(',', ':')) + ';\n'
 iu = {os.path.basename(f)[:-4]: pal_rows(f) for f in sorted(glob.glob(os.path.join(root, 'art', 'battle', 'icons_u', '*.png'))) if 'preview' not in f}
 js += 'const ICON_U_ROWS = ' + json.dumps(iu, separators=(',', ':')) + ';\n'
 print('gloves', len(gl), 'icons', len(iu))
+# v10.5 (Codex task X): shields on the left arm (10×12), palette rows
+sd = {os.path.basename(f)[:-4]: pal_rows(f) for f in sorted(glob.glob(os.path.join(root, 'art', 'battle', 'shields', '*.png'))) if 'preview' not in f}
+js += 'const SHIELD_PX_ROWS = ' + json.dumps(sd, separators=(',', ':')) + ';\n'
+print('shields', len(sd))
 open(os.path.join(root, 'src', '07id_sprites.js'), 'w').write(js)
 print('embedded', len(d), 'sprites', sum(len(v) for v in d.values()) // 1024, 'KB')

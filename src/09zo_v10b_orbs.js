@@ -209,7 +209,7 @@ const ORB_DROP = {
 { const _v = Battle.prototype.victory; Battle.prototype.victory = function* () {
     const r = yield* _v.call(this); const F = this.F, st = Game.st, L = F && ORB_DROP[this.cfg.sp];
     if (L && (F.elite || F.boss || this.kind === 'boss' || this.kind === 'elite')) { const got = st.orbGot || (st.orbGot = {}); let k = null;
-      if (!got[this.cfg.sp] && !this.cfg.rematch) { k = L[0]; got[this.cfg.sp] = 1; } else if (chance(F.boss || this.kind === 'boss' ? 0.45 : 0.3)) k = pick(L);
+      if (chance(F.boss || this.kind === 'boss' ? 0.45 : 0.3)) { k = pick(L); got[this.cfg.sp] = 1; } // v10.5: never guaranteed (was: the first kill always gave the first orb)
       if (k) { const o = newOrb(k); Sound.jingle('item'); yield* this.msg('得到了技能寶珠「' + orbDef(o).n + '」！', { hold: 40 }); } }
     return r;
   }; }
