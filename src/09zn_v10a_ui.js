@@ -12,7 +12,7 @@
 /* ---------- speakers & portraits ---------- */
 const PORTRAIT_PROPS = new Set(['bell', 'lamp', 'lampLit', 'altar', 'loreStone', 'windmill', 'starGate', 'caveDoor', 'iceWall', 'forgeL', 'forgeR', 'anvil', 'tub', 'rackA', 'rackB', 'manhole', 'miasma', 'warden']);
 const PORTRAIT_ART = {}; // key → 32×32 canvas (Codex portraits; keys are PORTRAIT_NAME values or field looks)
-const PORTRAIT_NAME = { 格倫: 'gren', 鐵斧格倫: 'gren', 莉婭: 'lia', 見習騎士莉婭: 'lia', 諾拉: 'nora', 瑪莎: 'martha', 村長: 'elder', 村長婆婆: 'frostElder', 國王: 'king', 國王阿爾德里克: 'king', 公主艾莉西亞: 'princess', 宰相維克托: 'chancellor', 大主教: 'priest', 鐘錶師艾德: 'clockmaker', 公會長葛倫德: 'guildMaster', 詩人公會長蕾菈: 'laila', 魔女薇奧拉: 'witch', 學徒米拉: 'mira', 信差露卡: 'luka', 提姆: 'tim', 小麥: 'mai', 小芽: 'sprout', 守燈人: 'keeper', 龍騎士老人: 'dragonElder', 武僧長老: 'monk', 迴廊看守人: 'warden' };
+const PORTRAIT_NAME = { 格倫: 'gren', 鐵斧格倫: 'gren', 諾拉: 'nora', 村長婆婆: 'frostElder', 提姆: 'tim', 小麥: 'mai' }; // characters who share a field look but get their own portrait
 let SPK_INDEX = null;
 function spkIndex() { if (SPK_INDEX) return SPK_INDEX; const L = []; for (const k in MAPS) for (const n of MAPS[k].npcs || []) if (n.name && n.look && !PORTRAIT_PROPS.has(n.look)) L.push({ name: n.name, look: n.look, map: k, id: n.id, x: n.x, y: n.y }); return (SPK_INDEX = L); }
 function speakerFor(name) {

@@ -80,7 +80,7 @@ TitleScene.prototype.menu = function* () {
     if (o === '新的冒險' || o === '二周目') {
       if (o === '新的冒險' && this.hasSave) { const ok = yield* yesNo('開始新的冒險後，舊的記錄會在下次存檔時被覆蓋。確定嗎？'); if (!ok) continue; }
       if (o === '二周目') { yield* say('二周目：帶著一半的等級、全部裝備、一半的金錢、圖鑑和稱號重新開始。\n魔物會+' + NG_LV + '級、HP+25%。可以重新選擇職業。'); if (!(yield* yesNo('要開始二周目嗎？'))) continue; }
-      const dr = yield* ask('要選擇哪個難度？\n' + DIFF.map(d => d.n + '：' + d.d).join('\n'), DIFF.map(d => d.n), { cancel: true }); if (dr < 0) continue;
+      const dr = 2; // v10: 異界 is the only difficulty
       Game.pendingNew = { diff: dr, carry: o === '二周目' ? save : null };
       yield* fadeOut(24); Game.setScene(new IntroScene()); return;
     }

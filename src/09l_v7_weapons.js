@@ -127,7 +127,7 @@ for (const key in WS_TABLE) {
   WSK[key] = { a, p: { k: pk, v: +pv, n: (nm[2] || pre(WPASS[pk][0])) }, s: { k: sk, N: +sn, pow: pw, n: nm[3] || pre(WSPEC[sk][0]) } };
 }
 const wpassText = p => WPASS[p.k] ? WPASS[p.k][1](p.v) : '';
-const wspecText = (s, st) => '累積' + wsN(s, st) + '層後，下一次攻擊或技能時發動：' + WSPEC[s.k][1](s.pow);
+const wspecText = (s, st) => '普通攻擊每累積' + wsN(s, st) + '層，自動追加發動：' + WSPEC[s.k][1](s.pow);
 
 /* ---------- which weapons the hero holds ---------- */
 const mainWeapon = (st = Game.st) => gearBy(st.equip && st.equip.weapon, st);
@@ -165,7 +165,7 @@ function wsAttackMove(st = Game.st) {
 
 /* ---------- stats: the main weapon's passive ---------- */
 { const _hs = heroStats; heroStats = function (st = Game.st) {
-    const s = _hs(st), k = mainWKey(st); if (!k) return s; const p = WSK[k].p;
+    const s = _hs(st), k = mainWKey(st); if (!k || typeof ORB_A !== 'undefined') return s; const p = WSK[k].p; // v10: weapons no longer carry a passive
     if (WPASS_FX.has(p.k)) s.fx[p.k] = 1; else if (p.k === 'hpP' || p.k === 'defP' || p.k === 'atkP' || p.k === 'spaP') { const sk = p.k.slice(0, -1); s[sk] = Math.floor(s[sk] * (1 + p.v / 100)); }
     else s[p.k] = (s[p.k] || 0) + p.v;
     return s;
@@ -190,20 +190,16 @@ function wsAttackMove(st = Game.st) {
   };
 }
 
-/* ---------- battle: MP from basic attacks, 熟練度, the special counter ---------- */
+/* ---------- battle: MP from basic attacks and the special counter ---------- */
+// v10: the 特技 is driven by normal attacks only — every basic hit adds a layer, and the hit that fills the gauge fires it at once
 { const _um = Battle.prototype.useMove; Battle.prototype.useMove = function* (u, t, id) {
     if (!u || !u.hero) return yield* _um.call(this, u, t, id);
     const fhp = t ? t.hp : 0, r = yield* _um.call(this, u, t, id); if (u.hp <= 0 || !t) return r;
-    const st = Game.st, key = mainWKey(st), base = MOVES[id];
-    const basic = id === 'attack' && t.hp < fhp, cast = id !== 'attack' && this._castId === id;
-    if (key && (this.H.wc || 0) >= wsN(WSK[key].s, st) && (id === 'attack' || cast)) { // v27: a full gauge (3 layers) fires on the NEXT attack or skill
-      if (t.hp > 0 && this.F && this.F.hp > 0) { this.H.wc = 0; yield* this.wSpecial(u, t, key); } return r; }
-    if (!basic && !cast) return r;
-    if (basic) { const g = 2 + Math.floor((u.maxmp || 0) / 25) + (u.stats.atkMp || 0); if (u.mp < u.maxmp) { u.mp = Math.min(u.maxmp, u.mp + g); st.mp = u.mp; } }
-    if (cast && WMOVE[id]) { const up = wsUse(id, st); if (up) { Sound.sfx('statUp'); yield* this.msg('「' + base.n + '」的熟練度升到了Lv' + up + '！', { hold: 24 }); } }
-    if (!key || !(basic || (base && base.pow))) return r;
+    const st = Game.st, key = mainWKey(st), basic = id === 'attack' && t.hp < fhp; if (!basic) return r;
+    { const g = 2 + Math.floor((u.maxmp || 0) / 25) + (u.stats.atkMp || 0); if (u.mp < u.maxmp) { u.mp = Math.min(u.maxmp, u.mp + g); st.mp = u.mp; } }
+    if (!key) return r;
     const S = WSK[key].s, N = wsN(S, st); this.H.wc = Math.min(N, (this.H.wc || 0) + 1); this.H.wcN = N;
-    if (this.H.wc >= N && u.hp > 0) { Sound.sfx('statUp'); yield* this.msg('特技「' + S.n + '」準備完成！下一次攻擊或技能時發動。', { hold: 16 }); }
+    if (this.H.wc >= N && t.hp > 0 && this.F && this.F.hp > 0) { this.H.wc = 0; yield* this.wSpecial(u, t, key); }
     return r;
   };
 }

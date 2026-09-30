@@ -163,7 +163,7 @@ function tacAI(b, base) {
   if (H.hp < H.maxhp * 0.35 && dmgMoves.length && chance(0.25 + 0.5 * smart)) return { type: 'move', id: best() };
   // 2) wipe stacked hero buffs
   const up = Object.values(H.stages).reduce((a, v) => a + Math.max(0, v), 0);
-  if ((F.elite || F.boss) && up >= 2 && !T.dispelCD && chance(0.35 + 0.4 * smart)) { T.dispelCD = 3; return { type: 'move', id: 'm_dominate' }; }
+  // v10: no longer forced — 威壓 only lowers attack now (09zr), and elites / bosses got more techniques instead
   // 3) the hero is turtling this turn: don't waste a big hit on the guard
   if (heroDef && chance(0.6 * smart)) {
     if (charges.length && !F.charging) return { type: 'move', id: pick(charges) };

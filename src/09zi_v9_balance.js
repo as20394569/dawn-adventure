@@ -14,7 +14,7 @@
 Object.assign(CLASS_SIG, {
   ranger: ['獵人直覺', [['speP', 8], ['eva', 4], ['hpP', 6], ['critDmg', 10]]],
   bard: ['旋律', [['chargeCut', 1], ['healUp', 10], ['spaP', 6], ['hpP', 5]]],
-  monk: ['氣', [['atkUp', 15], ['atkMp', 2], ['hpP', 6]]],
+  monk: ['氣', [['atkUp', 20], ['atkMp', 2], ['hpP', 10], ['defP', 6]]], // v10: monks fell behind once skills moved to orbs
   dragoon: ['龍之血脈', [['bigUp', 4], ['hpP', 5]]],
   machinist: ['精密機關', [['spcUp', 12], ['atkMp', 1]]],
 });

@@ -206,7 +206,7 @@ function* classTalk() {
 }
 
 /* ===================== SAVE ===================== */
-const SAVE_KEY = 'dawnlight_save_v2', SET_KEY = 'dawnlight_settings_v1';
+const SAVE_KEY = 'dawnlight_save_v10', SET_KEY = 'dawnlight_settings_v1';
 function saveGame() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(Game.st)); return true; } catch (e) { return false; } }
 function loadGame() { try { const s = localStorage.getItem(SAVE_KEY); return s ? JSON.parse(s) : null; } catch (e) { return null; } }
 function saveSettings() { try { localStorage.setItem(SET_KEY, JSON.stringify(Game.settings)); } catch (e) { } }
@@ -321,7 +321,7 @@ class TitleScene {
     x.drawImage(this.logo, Math.round(W / 2 - this.logo.width / 2), 6 + bob);
     Font.drawC(x, '～異世界冒險RPG～', W / 2, 52 + bob, '#ffe0a0', '#3a1428');
     if (this.stage === 'press' && Math.floor(this.t / 30) % 2 === 0) Font.drawC(x, '按 A 鍵開始', W / 2, 232, '#ffffff', '#1a1024');
-    Font.drawR(x, 'v10.0', W - 3, H - 13, '#b890b0', null);
+    Font.drawR(x, 'v10.1', W - 3, H - 13, '#b890b0', null);
   }
 }
 

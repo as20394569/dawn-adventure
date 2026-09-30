@@ -19,8 +19,8 @@ const SKILL_TREES = {
 };
 const CLASS_FREE = { swordsman: ['powerSlash', 'flameSlash'], mage: ['fireBolt', 'manaBurst'], guardian: ['guardStrike', 'ironWill'] };
 function skillTreeOf(cls) { const base = baseClassOf(cls); const L = (SKILL_TREES[base] || []).map(n => ({ id: n[0], clv: n[1], req: n[2], rl: n[3] || 1 })); if (cls && cls !== base && SKILL_TREES[cls]) L.push(...SKILL_TREES[cls].map(n => ({ id: n[0], clv: n[1], req: n[2], rl: n[3] || 1, adv: 1 }))); return L; }
-const skillLv = (id, st = Game.st) => (st.skills || {})[id] || 0;
-const skillMP = (id, st = Game.st) => { const b = SKILL_MP[id]; if (b === undefined) return 0; return Math.round(b * (1 + 0.15 * (Math.max(1, skillLv(id, st)) - 1))); };
+let skillLv = (id, st = Game.st) => (st.skills || {})[id] || 0;
+let skillMP = (id, st = Game.st) => { const b = SKILL_MP[id]; if (b === undefined) return 0; return Math.round(b * (1 + 0.15 * (Math.max(1, skillLv(id, st)) - 1))); };
 const skillPow = lv => 1 + 0.15 * (Math.max(1, lv) - 1);
 function learnedSkills(st = Game.st) { return Object.keys(st.skills || {}).filter(k => st.skills[k] > 0 && MOVES[k]); }
 // effective move with skill-level scaling (power, status chance, heal, shield/buff duration)
