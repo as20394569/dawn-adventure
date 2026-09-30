@@ -490,7 +490,8 @@
   ],
   "frostTome": [
    "frostField掉落池",
-   "iceCave掉落池"
+   "iceCave掉落池",
+   "重戰掉落:frostQueen"
   ],
   "flameBrand": [
    "emberPass掉落池",
@@ -752,6 +753,9 @@
    "亡靈戰將掉落(魔導士)",
    "重戰掉落:silverWyrm(魔導士)"
   ],
+  "moonHarp": [
+   "重戰掉落:silverWyrm"
+  ],
   "gateKey": [
    "重戰掉落:gatekeeper",
    "異界守門者掉落"
@@ -816,6 +820,9 @@
    "重戰掉落:clockColossus",
    "時計巨像掉落"
   ],
+  "thunderFist": [
+   "重戰掉落:clockColossus"
+  ],
   "bearMantle": [
    "重戰掉落:snowBear",
    "雪原巨熊掉落"
@@ -839,6 +846,9 @@
    "重戰掉落:lavaGiant",
    "熔岩巨人掉落"
   ],
+  "gearRifle": [
+   "重戰掉落:lavaGiant"
+  ],
   "duskBlade": [
    "重戰掉落:duskCaptain",
    "黯滅騎士長掉落"
@@ -851,6 +861,9 @@
    "重戰掉落:shadowGeneral",
    "影將莫爾德掉落"
   ],
+  "boneGreatsword": [
+   "重戰掉落:shadowGeneral"
+  ],
   "starLance": [
    "重戰掉落:starGuardian",
    "星之守護者掉落"
@@ -858,6 +871,26 @@
   "azureSpear": [
    "重戰掉落:stagLord",
    "楓林鹿王掉落"
+  ],
+  "tideRapier": [
+   "重戰掉落:crystalCroc",
+   "晶甲巨鱷掉落"
+  ],
+  "quakeAxe": [
+   "重戰掉落:ruinWarden",
+   "遺跡守衛掉落"
+  ],
+  "wolfTwin": [
+   "重戰掉落:miasmaWolf",
+   "瘴氣狼王掉落"
+  ],
+  "coreStaff": [
+   "重戰掉落:lavaKnight",
+   "熔岩騎士掉落"
+  ],
+  "fallenLance": [
+   "重戰掉落:fallenStar",
+   "墮星騎士掉落"
   ],
   "woodSword": [
    "職業起始",

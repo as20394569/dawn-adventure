@@ -232,7 +232,7 @@ function drawShieldBadge(x, X, Y, n, broken, flash) {
 /* ---------- v19 gear specials (04n) + class passives (04o) in battle ---------- */
 { const _cd = Battle.prototype.calcDamage; Battle.prototype.calcDamage = function (u, t, mv) {
     const r = _cd.call(this, u, t, mv); if (!u.hero || !mv || !mv.pow) return r; const S = u.stats, fx = S.fx || {}, phys = mv.cat === '物'; let m = 1;
-    if (fx.predator && t.hp < t.maxhp * 0.3) m *= 1.3;
+    if (fx.predator && t.hp < t.maxhp * 0.3) m *= 1.2;
     if (fx.spellblade || S.spellblade) { const k = (S.spellblade ? 0.45 : 0.3); m *= phys ? (S.atk + S.spa * k) / Math.max(1, S.atk) : (S.spa + S.atk * k) / Math.max(1, S.spa); }
     if (S.assassin && this.turn === 1 && !r.crit) { r.crit = true; m *= 1.5; }
     if (S.venomous && t.status === 'psn') m *= 1 + S.venomous / 100;

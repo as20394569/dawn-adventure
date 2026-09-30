@@ -1,0 +1,4 @@
+module.exports = async (g) => { await g.ev(() => { const G = __game; G.newGameState('小晨'); const st = G.Game.st; st.diff = 2; Object.assign(st.flags, { license: 1, woke: 1, orbStart: 1 }); st.lv = 15; st.map = 'ruins'; st.x = 7; st.y = 12; startOverworld(); G.Game.fade = 0; G.Game.noEnc = 1;
+  const ow = G.Game.scene; ow.run((function* () { yield* askFight('golem', 17, 'golem', 'boss', ''); })()); }); await g.step(30); await g.shot('v153_card');
+  await g.press('b'); await g.step(10); await g.ev(() => { UI.clear(); Game.scene.script = null; Game.scene.run(bossDexScreen()); }); await g.step(10); await g.shot('v153_bossdex');
+  await g.press('b'); await g.step(5); await g.ev(() => { UI.clear(); Game.scene.script = null; Game.scene.run(orbDexScreen()); }); await g.step(10); await g.shot('v153_orbdex'); };

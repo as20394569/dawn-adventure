@@ -54,7 +54,7 @@ function* smithMenu(f) {
 }
 const gearTier = g => (GEAR[g.b] && GEAR[g.b].t) || 1;
 function orbLine(o) { const D = orbDef(o), a = isActiveOrb(o); return (a ? '◆' : '◇') + orbName(o) + (a ? (orbStage(o) < 2 ? '（進化 ' + Math.min(o.x || 0, ORB_EVO[orbStage(o)]) + '/' + ORB_EVO[orbStage(o)] + '）' : '（最終）') : ''); }
-function orbInfo(o) { if (isActiveOrb(o)) { const m = MOVES['o_' + o.k], D = ORB_A[o.k]; return (m.cat === '變' ? '輔助' : m.cat === '物' ? '物理' : '魔法') + (m.t !== '一般' ? '・' + m.t : '') + (D.pow ? '・威力' + D.pow : '') + '・MP' + D.mp + '　' + D.d + (o.e.length ? '　進化：' + o.e.map((b, s) => (b === 'A' ? '⚔' : '✦') + evoOptText(o, s, b)).join('、') : ''); }
+function orbInfo(o) { if (isActiveOrb(o)) { const m = MOVES['o_' + o.k], D = ORB_A[o.k]; return (m.cat === '變' ? '輔助' : m.cat === '物' ? '物理' : '魔法') + (m.t !== '一般' ? '・' + m.t : '') + (D.pow ? '・威力' + D.pow : '') + '・MP' + D.mp + '　' + D.d + (o.e.length ? '　進化：' + o.e.map((b, s) => (b === 'A' ? '強攻' : '附加') + evoOptText(o, s, b)).join('、') : ''); }
   return '被動：' + orbFxText(o); }
 function* orbPicker(title, getList, note) {
   let idx = 0; const VIS = 8;
@@ -175,7 +175,7 @@ Battle.prototype.chooseMove = function* () {
     if (mv.pow) { const pw = powTxt(mv), eT = est ? '預估≈' + est : ''; x.fillStyle = 'rgba(200,160,80,0.35)'; x.fillRect(L, DY + 13, w - 16, 1);
       Font.draw(x, pw, L, y, UIC.accent, UIC.textSh, fit(pw, 10, w - 22 - (eT ? Font.width(eT, 9) : 0))); if (eT) Font.drawR(x, eT, R, y + 1, UIC.warm, UIC.textSh, 9); y += 13; }
     Font.drawC(x, Game.touchUI ? (m.tapSel === m.i ? '再點一次：使用　點外面：返回' : '點技能看說明・再點一次使用') : 'A：使用　B：返回', W / 2, BB_Y + 11, Game.touchUI && m.tapSel === m.i ? UIC.warm : UIC.muted, UIC.textSh, 9);
-    const extra = ob && ob.e.length ? '　【進化】' + ob.e.map((b, s) => (b === 'A' ? '⚔' : '✦') + evoOptText(ob, s, b)).join('、') : MOVES[id].sig && typeof sigTalentText === 'function' ? sigTalentText(st) : '';
+    const extra = ob && ob.e.length ? '　【進化】' + ob.e.map((b, s) => (b === 'A' ? '強攻' : '附加') + evoOptText(ob, s, b)).join('、') : MOVES[id].sig && typeof sigTalentText === 'function' ? sigTalentText(st) : '';
     drawFitText(x, (mv.d || '') + extra, L, y, w - 16, DY + DH - 5 - y, 9);
   };
   while (true) {

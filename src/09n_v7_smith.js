@@ -130,7 +130,7 @@ function* craftScreen() {
       if (WSK[e.k]) { const S = WSK[e.k]; drawFitText(x, '特技：' + S.s.n + '　寶珠孔：1〜3（依品質）', 10, y, 152, 11, 9, UIC.accent); y += 12; } }
     const mats = e.R ? e.R.mats : GEAR_RECIPE[e.k].mats, gold = e.R ? e.R.gold || 0 : GEAR_RECIPE[e.k].gold;
     Font.draw(x, e.R ? '需要的素材' : '需要的素材（普通打造）', 10, y, UIC.muted, UIC.textSh, 9); if (gold) Font.drawR(x, gold + ' G', 164, y, st.money >= gold ? UIC.warm : UIC.bad, UIC.textSh, 9); y += 11;
-    for (const [k, n] of Object.entries(mats)) { let z = 10; while (z > 8 && Font.width('・' + ITEMS[k].n, z) > 110) z--; Font.draw(x, '・' + ITEMS[k].n, 12, y, UIC.text, UIC.textSh, z); Font.drawR(x, have(k) + ' / ' + n, 164, y, have(k) >= n ? UIC.good : UIC.bad, UIC.textSh, 10); y += 11; }
+    for (const [k, n] of Object.entries(mats)) { let z = 10; while (z > 8 && Font.width('・' + ITEMS[k].n, z) > 110) z--; const ex = Font.draw(x, '・' + ITEMS[k].n, 12, y, UIC.text, UIC.textSh, z); if (have(k) < n && typeof matSrc === 'function') { const src = matSrc(k); if (src) Font.draw(x, '（' + src + '）', ex + 1, y + 1, UIC.muted, UIC.textSh, 8); } Font.drawR(x, have(k) + ' / ' + n, 164, y, have(k) >= n ? UIC.good : UIC.bad, UIC.textSh, 10); y += 11; }
     if (!e.R && st.bpT && st.bpT[e.k]) Font.draw(x, '持有打造券' + (tkCount(e.k) > 1 ? '×' + tkCount(e.k) : '') + '：免費打造，品質保底' + qName(st.bpT[e.k]), 10, y + 1, UIC.warm, UIC.textSh, 9);
   }, touchBack: true };
   UI.push(scr);

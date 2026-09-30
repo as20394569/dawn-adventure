@@ -25,11 +25,11 @@ const FOE_NEW = {
   m_rampage: { n: '暴衝', t: '一般', cat: '物', pow: 90, acc: 90, pp: 10, eff: { flinch: 1, p: 20 }, cls: 'strike', fx: 'm_hornCharge', d: '不顧一切地撞過來。' },
   m_vineLash: { n: '荊鞭', t: '草', cat: '物', pow: 72, acc: 95, pp: 10, eff: { stat: { def: -1 }, p: 35 }, cls: 'strike', fx: 'm_rootCrush', d: '長滿尖刺的藤鞭。有時會降低物防。' },
   m_sporeBurst: { n: '孢子爆散', t: '毒', cat: '特', pow: 55, acc: 95, pp: 10, eff: { st: 'psn', p: 40 }, cls: 'powder', fx: 'm_poisonSpore', d: '炸開一大團毒孢子。' },
-  m_sunder: { n: '碎甲重擊', t: '一般', cat: '物', pow: 78, acc: 95, pp: 10, eff: { stat: { def: -1 }, p: 60 }, cls: 'strike', fx: 'm_hornCharge', d: '瞄準鎧甲縫隙的重擊。常常降低物防。' },
-  m_overheat: { n: '過熱衝擊', t: '火', cat: '特', pow: 105, acc: 100, pp: 5, charge: 1, chargeMsg: '身體開始發紅發燙！', warn: '（下一擊非常危險……選擇「防禦」！）', cls: 'charge', fx: 'm_golemFist', d: '蓄熱後的爆炸衝擊。' },
+  m_sunder: { n: '碎甲重擊', t: '一般', cat: '物', pow: 70, acc: 95, pp: 10, eff: { stat: { def: -1 }, p: 60 }, cls: 'strike', fx: 'm_hornCharge', d: '瞄準鎧甲縫隙的重擊。常常降低物防。' },
+  m_overheat: { n: '過熱衝擊', t: '火', cat: '特', pow: 95, acc: 100, pp: 5, charge: 1, chargeMsg: '身體開始發紅發燙！', warn: '（下一擊非常危險……選擇「防禦」！）', cls: 'charge', fx: 'm_golemFist', d: '蓄熱後的爆炸衝擊。' },
   m_feint: { n: '虛招', t: '一般', cat: '物', pow: 55, acc: 100, pp: 15, prio: 1, eff: { stat: { spe: -1 }, p: 50 }, cls: 'slash', fx: 'm_darkSlash', d: '先制的假動作。有時會降低速度。' },
   m_curseGrip: { n: '詛咒之握', t: '一般', cat: '特', pow: 60, acc: 100, pp: 10, drain: 0.5, cls: 'drain', fx: 'm_soulSip', d: '冰冷的手抓住靈魂，吸取生命。' },
-  m_soulRend: { n: '裂魂斬', t: '一般', cat: '物', pow: 118, acc: 100, pp: 5, charge: 1, chargeMsg: '周圍的空氣變得冰冷……', warn: '（下一擊會撕裂靈魂……防禦！）', cls: 'charge', fx: 'm_darkSlash', d: '蓄力後撕裂靈魂的一斬。' },
+  m_soulRend: { n: '裂魂斬', t: '一般', cat: '物', pow: 105, acc: 100, pp: 5, charge: 1, chargeMsg: '周圍的空氣變得冰冷……', warn: '（下一擊會撕裂靈魂……防禦！）', cls: 'charge', fx: 'm_darkSlash', d: '蓄力後撕裂靈魂的一斬。' },
   m_tidalCrush: { n: '怒潮壓', t: '水', cat: '物', pow: 85, acc: 95, pp: 10, eff: { flinch: 1, p: 20 }, cls: 'strike', fx: 'm_tailSlam', d: '挾著浪濤壓下來。' },
   m_whirlpool: { n: '漩渦', t: '水', cat: '特', pow: 62, acc: 95, pp: 10, eff: { stat: { spe: -1 }, p: 50 }, cls: 'area', fx: 'm_tailSlam', d: '把對手捲進漩渦。有時會降低速度。' },
   m_hex: { n: '咒縛', t: '一般', cat: '變', acc: 80, pp: 10, st: 'par', cls: 'debuff', fx: 'm_soulSip', d: '用咒語綁住對手的身體，讓牠麻痺。' },
@@ -37,7 +37,7 @@ const FOE_NEW = {
   m_dragonRoar: { n: '龍威', t: '一般', cat: '變', acc: 100, pp: 10, stat: { who: 'foe', atk: -1, spa: -1 }, cls: 'debuff', fx: 'm_rumble', d: '龍的咆哮讓人喪失鬥志。' },
   m_scorch: { n: '灼熱吐息', t: '火', cat: '特', pow: 82, acc: 95, pp: 10, eff: { st: 'brn', p: 30 }, cls: 'proj', fx: 'm_flare', d: '噴出灼熱的火焰。有時會灼傷。' },
   m_swarm: { n: '蟲群', t: '一般', cat: '物', pow: 22, acc: 95, pp: 10, hits: [2, 5], cls: 'bite', fx: 'm_bite', d: '成群的小蟲一起咬過來。' },
-  m_diveBomb: { n: '俯衝轟擊', t: '飛', cat: '物', pow: 108, acc: 100, pp: 5, charge: 1, chargeMsg: '飛上了高空！', warn: '（牠要俯衝下來了……防禦！）', cls: 'charge', fx: 'm_rend', d: '從高空俯衝撞擊。' },
+  m_diveBomb: { n: '俯衝轟擊', t: '飛', cat: '物', pow: 98, acc: 100, pp: 5, charge: 1, chargeMsg: '飛上了高空！', warn: '（牠要俯衝下來了……防禦！）', cls: 'charge', fx: 'm_rend', d: '從高空俯衝撞擊。' },
   m_acidSpit: { n: '酸液', t: '毒', cat: '特', pow: 55, acc: 95, pp: 10, eff: { stat: { def: -1 }, p: 40 }, cls: 'proj', fx: 'm_engulf', d: '會腐蝕鎧甲的酸液。有時會降低物防。' },
 };
 for (const k in FOE_NEW) { MOVES[k] = { ...FOE_NEW[k], foe: 1 }; const C = MON_CLASS[FOE_NEW[k].cls]; if (C && !C.includes(k)) C.push(k); if (!MFX[k] && MFX[FOE_NEW[k].fx]) MFX[k] = MFX[FOE_NEW[k].fx]; }

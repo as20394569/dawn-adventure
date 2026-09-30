@@ -6,7 +6,7 @@
    - Orbs drop from elites and bosses (first kill always, rematches sometimes), and come from story events and requests.
    - Every class keeps ONE signature skill of its own (no orb); its talent branch 0 strengthens it (09zq).
    - 熟練度 is replaced by 技能進化: an active orb evolves after 12 and 36 uses (a duplicate orb fused at the smith adds 12).
-     Each evolution picks a path — ⚔ 強攻 (power) or ✦ 附加 (an extra effect of that skill); evolved skills get a new name
+     Each evolution picks a path — 強攻 (power) or 附加 (an extra effect of that skill); evolved skills get a new name
      suffix (・改 / ・極) and an extra flash on hit. Passive orbs level up to Lv3 by fusing duplicates. */
 
 /* ---------- active orbs: { n, tpl (animation & mechanics), pow, mp, d, B: [1st ✦, 2nd ✦], A? (support: custom ⚔) } ---------- */
@@ -186,7 +186,7 @@ function* evoApply(b, u, t, c, dealt, mv) {
 function* orbEvolveFlow(o) {
   const s = orbStage(o), D = ORB_A[o.k];
   yield* say('「' + orbName(o) + '」可以進化了！選擇進化的方向：');
-  const r = yield* ask('「' + D.n + ORB_STAGE[s + 1] + '」', ['⚔ 強攻：' + evoOptText(o, s, 'A'), '✦ 附加：' + evoOptText(o, s, 'B'), '之後再說'], { cancel: false });
+  const r = yield* ask('「' + D.n + ORB_STAGE[s + 1] + '」', ['強攻：' + evoOptText(o, s, 'A'), '附加：' + evoOptText(o, s, 'B'), '之後再說'], { cancel: false });
   if (r > 1) { o.told = 0; return false; }
   o.e = (o.e || []).concat(r === 0 ? 'A' : 'B'); o.told = 0; Sound.jingle('levelup'); yield* itemGet('「' + orbName(o) + '」進化了！'); return true;
 }

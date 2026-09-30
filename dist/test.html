@@ -5418,7 +5418,7 @@ class Battle {
         if (u.hp <= 0 || tg.hp <= 0) continue;
         if (!u.hero && u.broken > 0) a = { type: 'move', id: '__stun' }; // v19 break: a broken monster loses its action
         if (a.type === 'move') yield* this.useMove(u, tg, a.id);
-        else if (a.type === 'defend') { yield* this.msg(u.n + '擺出了防禦的架勢！'); if (u.hero && u.mp < u.maxmp) { const g = Math.max(1, Math.round(u.maxmp * 0.12)); u.mp += g; yield* this.msg('調整呼吸，恢復了' + g + '點MP。', { hold: 18 }); } yield* FX.guard.call(this, this.center(u)); if (u.stats.fx.guardHeal && u.hp < u.maxhp) { u.hp = Math.min(u.maxhp, u.hp + Math.ceil(u.maxhp * 0.15)); yield* this.animHP(u); yield* this.msg('守護之心回復了HP！', { hold: 20 }); } }
+        else if (a.type === 'defend') { yield* this.msg(u.n + '擺出了防禦的架勢！'); if (u.hero && u.mp < u.maxmp) { const g = Math.max(1, Math.round(u.maxmp * 0.12)); u.mp += g; yield* this.msg('調整呼吸，恢復了' + g + '點MP。', { hold: 18 }); } yield* FX.guard.call(this, this.center(u)); if (u.stats.fx.guardHeal && u.hp < u.maxhp) { u.hp = Math.min(u.maxhp, u.hp + Math.ceil(u.maxhp * 0.1)); yield* this.animHP(u); yield* this.msg('守護之心回復了HP！', { hold: 20 }); } }
         else if (a.type === 'item') { const r = yield* this.useItemAct(a.id); if (r === 'escaped') return yield* this.end('run'); }
         else if (a.type === 'mirror') { this.cg.mirror = 2; Sound.sfx('charge'); this.tintF = { c: '#c8f4ff', a: 0.6 }; yield* wait(14); this.tintF = null; yield* this.msg(u.n + '的表面變得像鏡子一樣！'); yield* this.msg('（下一回合的魔法攻擊會被反射回來！用物理攻擊或防禦吧。）'); }
         else if (a.type === 'steal') { const st = Game.st, g = Math.min(st.money, Math.max(50, Math.floor(st.money * 0.1))); this.bb.steals++; yield* MFX.steal.call(this, this.center(u), this.center(this.H), u); st.money -= g; this.bb.stolen += g; yield* this.msg(u.n + '搶走了' + g + ' G！'); if (this.bb.steals === 1) yield* this.msg('（打倒他就能把錢搶回來！）'); }
@@ -5512,7 +5512,7 @@ class Battle {
     let D = (phys ? t.stats.def : t.stats.spd) * stageMul(crit ? Math.min(0, ds) : ds); if (u.hero && phys && u.stats.fx.pierce) D *= 0.7; if (u.hero && phys && u.stats.pierceT) D *= 1 - u.stats.pierceT / 100;
     if (phys && u.status === 'brn') A *= 0.5;
     const base = Math.floor(Math.floor(Math.floor(2 * u.lv / 5 + 2) * mv.pow * A / D) / 50) + 2;
-    const mult = t.hero ? 1 : famMult(mv.t, t); let m = mult * (rnd(85, 100) / 100); if (crit) m *= 1.5; if (!u.hero) m *= FOE_POWER; if (u.hero) { m *= HERO_POWER; const S = u.stats; if (S.elem && mv.t !== '一般') m *= 1 + S.elem / 100; if (S.fireUp && mv.t === '火') m *= 1 + S.fireUp / 100; if (S.boltUp && mv.t === '雷') m *= 1 + S.boltUp / 100; if (S.rage && u.hp < u.maxhp / 2) m *= 1.3; if (S.fx && S.fx.arcaneSurge && !phys && u.mp >= u.maxmp / 2) m *= 1.15; if (S.fx.lastStand) m *= 1 + 0.5 * (1 - u.hp / u.maxhp); for (const [ty, p] of u.stats.vs || []) if (t.fam === ty) m *= 1 + p / 100; }
+    const mult = t.hero ? 1 : famMult(mv.t, t); let m = mult * (rnd(85, 100) / 100); if (crit) m *= 1.5; if (!u.hero) m *= FOE_POWER; if (u.hero) { m *= HERO_POWER; const S = u.stats; if (S.elem && mv.t !== '一般') m *= 1 + S.elem / 100; if (S.fireUp && mv.t === '火') m *= 1 + S.fireUp / 100; if (S.boltUp && mv.t === '雷') m *= 1 + S.boltUp / 100; if (S.rage && u.hp < u.maxhp / 2) m *= 1.3; if (S.fx && S.fx.arcaneSurge && !phys && u.mp >= u.maxmp / 2) m *= 1.15; if (S.fx.lastStand) m *= 1 + 0.35 * (1 - u.hp / u.maxhp); for (const [ty, p] of u.stats.vs || []) if (t.fam === ty) m *= 1 + p / 100; }
     if (t.hero && t.stats.resist && t.stats.resist[mv.t]) m *= 1 - t.stats.resist[mv.t] / 100;
     return { dmg: Math.max(1, Math.floor(base * m)), mult, crit };
   }
@@ -5551,10 +5551,10 @@ class Battle {
       if (mirrored && u.hp > 0) { const rf = Math.min(u.hp - 1 > 0 ? u.hp - 1 : u.hp, Math.max(1, Math.floor(dmg * 0.6))); u.hp -= rf; this.blinkH = 12; this.spawn({ k: 'line', x1: T0.x, y1: T0.y, x2: U0.x, y2: U0.y, c: '#c8f4ff', w: 3, grow: 3, life: 12 }); yield* this.animHP(u); yield* this.msg('魔法被鏡面反射了！' + u.n + '受到了' + rf + '點傷害！'); }
       if (this.cg && !t.hero && this.cg.shards > 0 && dmg > 0) { this.cg.shards = Math.max(0, this.cg.shards - (mv.cat === '物' ? 2 : 1)); Sound.sfx('rock'); this.sparks(T0.x, T0.y, 10, ['#c8f4ff', '#80c0ff'], 2.5); yield* this.msg(this.cg.shards ? '擊碎了一塊水晶碎片！（剩下' + this.cg.shards + '塊）' : '水晶碎片全部被擊碎了！'); }
       if (this.cg && !t.hero && t.hp > 0) { const c = this.cg; if (c.stage < 1 && t.hp < t.maxhp * 0.7) { c.stage = 1; c.shards = 2; Sound.sfx('charge'); yield* this.msg('水晶碎片浮了起來，環繞著' + t.n + '！'); yield* this.msg('（碎片還在時，傷害會被減弱，而且它會回復。攻擊它就能擊碎碎片，物理攻擊一次能打碎兩塊！）'); } if (c.stage < 2 && t.hp < t.maxhp * 0.35) { c.stage = 2; c.flood = true; Sound.sfx('water'); this.shake = 30; yield* this.msg('水道的牆壁裂開，大水湧了進來！'); yield* this.msg('（每回合都會全身濕透……小心雷擊！）'); } }
-      if (u.hero && t.hp > 0 && u.stats.fx.double && mv.cat === '物' && chance(0.25)) { const d2 = Math.min(t.hp, Math.max(1, Math.floor(dmg * 0.5))); yield* this.lunge(u, 8, 2); t.hp -= d2; Sound.sfx('hit'); yield* this.impact(t, 0); yield* this.animHP(t); yield* this.msg('連擊！追加了' + d2 + '點傷害！', { hold: 24 }); }
-      if (t.hero && !u.hero && t.stats.fx.thorns && u.hp > 0 && dmg > 0) { const d3 = Math.min(u.hp, Math.max(1, Math.floor(dmg * 0.25))); u.hp -= d3; this.blinkF = 12; yield* this.animHP(u); yield* this.msg('荊棘反彈了' + d3 + '點傷害！', { hold: 24 }); }
+      if (u.hero && t.hp > 0 && u.stats.fx.double && mv.cat === '物' && chance(0.2)) { const d2 = Math.min(t.hp, Math.max(1, Math.floor(dmg * 0.5))); yield* this.lunge(u, 8, 2); t.hp -= d2; Sound.sfx('hit'); yield* this.impact(t, 0); yield* this.animHP(t); yield* this.msg('連擊！追加了' + d2 + '點傷害！', { hold: 24 }); }
+      if (t.hero && !u.hero && t.stats.fx.thorns && u.hp > 0 && dmg > 0) { const d3 = Math.min(u.hp, Math.max(1, Math.floor(dmg * (u.boss ? 0.12 : 0.2)))); u.hp -= d3; this.blinkF = 12; yield* this.animHP(u); yield* this.msg('荊棘反彈了' + d3 + '點傷害！', { hold: 24 }); }
       if (u.hero && u.stats.fx.cleave && mv.cat === '物' && t.hp > 0 && chance(0.3)) { yield* this.msg('劈裂！', { hold: 16 }); yield* this.statChange(t, { def: -1 }); }
-      if (u.hero && u.stats.fx.fervor && (this.fervor || 0) < 3) { this.fervor = (this.fervor || 0) + 1; const fk = mv.cat === '物' ? 'atk' : 'spa'; u.stages[fk] = Math.min(3, u.stages[fk] + 1); yield* this.msg('狂熱！' + (fk === 'atk' ? '物攻' : '魔攻') + '提升了！', { hold: 20 }); }
+      if (u.hero && u.stats.fx.fervor && (this.fervor || 0) < 2) { this.fervor = (this.fervor || 0) + 1; const fk = mv.cat === '物' ? 'atk' : 'spa'; u.stages[fk] = Math.min(3, u.stages[fk] + 1); yield* this.msg('狂熱！' + (fk === 'atk' ? '物攻' : '魔攻') + '提升了！', { hold: 20 }); }
       if (u.hero && id === 'attack' && u.stats.fx.manaSiphon && u.mp < u.maxmp) { u.mp = Math.min(u.maxmp, u.mp + 4); yield* this.msg('吸魔！回復了4點MP。', { hold: 16 }); }
       if (u.hero && u.stats.fx.stormMark && t.hp > 0 && chance(0.15)) yield* this.inflict(t, 'par', true);
       if (t.hero && t.defending && t.stats.counter && t.hp > 0 && u.hp > 0) { const c2 = this.calcDamage(t, u, t.stats.welem ? { ...MOVES.slash, t: t.stats.welem } : MOVES.slash), cd = Math.min(u.hp, Math.max(1, Math.floor(c2.dmg * 0.7))); yield* this.lunge(t, 10, 3); u.hp -= cd; Sound.sfx('hit'); yield* this.impact(u, 1); yield* this.animHP(u); yield* this.msg(t.n + '趁勢反擊！'); }
@@ -5564,7 +5564,7 @@ class Battle {
       if (ignite) { t.tangle = 0; Sound.sfx('fire'); yield* this.msg('纏繞的藤蔓燒了起來！燎原！'); if (t.hp > 0) yield* this.inflict(t, 'brn', true); }
       else if (mv.t === '草' && t.hp > 0 && !t.tangle) { t.tangle = 3; yield* this.msg(t.n + '被藤蔓纏住了！（怕火）', { hold: 24 }); }
       if (steam) { if (t.status === 'brn') t.status = null; yield* this.msg('水碰到火焰，蒸氣爆發了！'); }
-      if (u.hero && u.stats.drain && hitTotal > 0 && u.hp > 0 && u.hp < u.maxhp) { const hv = Math.max(1, Math.floor(hitTotal * u.stats.drain / 100)); /* v24.8: every hit of a multi-hit skill counts */ u.hp = Math.min(u.maxhp, u.hp + hv); yield* this.animHP(u); yield* this.msg('吸血！回復了' + hv + '點HP。', { hold: 24 }); }
+      if (u.hero && u.stats.drain && hitTotal > 0 && u.hp > 0 && u.hp < u.maxhp) { const hv = Math.max(1, Math.floor(hitTotal * Math.min(15, u.stats.drain) / 100)); /* v10: drain caps at 15% */ /* v24.8: every hit of a multi-hit skill counts */ u.hp = Math.min(u.maxhp, u.hp + hv); yield* this.animHP(u); yield* this.msg('吸血！回復了' + hv + '點HP。', { hold: 24 }); }
       if (mv.drain && hitTotal > 0 && u.hp < u.maxhp) { u.hp = Math.min(u.maxhp, u.hp + Math.max(1, Math.floor(hitTotal * mv.drain))); yield* FX.drainBack.call(this, this.center(t), this.center(u)); yield* this.animHP(u); yield* this.msg('從' + t.n + '身上吸取了養分！'); }
       if (mv.recoil) { u.hp = Math.max(0, u.hp - Math.max(1, Math.floor(dmg * mv.recoil))); yield* this.animHP(u); yield* this.msg(u.n + '受到了反作用力的傷害！'); }
       if (t.hp > 0 && mv.eff && chance(mv.eff.p / 100)) {
@@ -5613,9 +5613,9 @@ class Battle {
   *endTurn() {
     if (this.cg && this.F.hp > 0) { const c = this.cg; if (c.mirror) c.mirror--; if (c.shards > 0 && this.F.hp < this.F.maxhp) { this.F.hp = Math.min(this.F.maxhp, this.F.hp + Math.ceil(this.F.maxhp * 0.03)); yield* this.animHP(this.F); yield* this.msg('水晶碎片讓' + this.F.n + '回復了！', { hold: 20 }); } if (c.flood && this.H.hp > 0) { this.H.wet = 2; Sound.sfx('water'); yield* this.msg(this.H.n + '被大水淋得全身濕透！', { hold: 20 }); } }
     if (this.cfg.id === 'mossGiant' && Game.st.flags.q2res === 'stay' && !Game.st.flags.q2done && this.F.hp > 0 && this.H.hp > 0) { yield* FX.sting.call(this, this.center(this.H), this.center(this.F)); const d = Math.ceil(this.F.maxhp * 0.06); this.F.hp = Math.max(0, this.F.hp - d); this.blinkF = 12; yield* this.animHP(this.F); yield* this.msg('提姆射出了箭！造成' + d + '點傷害！', { hold: 24 }); }
-    if (this.H.stats.fx.deathWard && !this.dwUsed && this.H.hp > 0 && this.H.hp < this.H.maxhp * 0.3) { this.dwUsed = true; this.H.shield = 3; yield* FX.barrier.call(this, this.center(this.H)); yield* this.msg('亡者守護發動了！獲得了護盾！', { hold: 24 }); }
+    if (this.H.stats.fx.deathWard && !this.dwUsed && this.H.hp > 0 && this.H.hp < this.H.maxhp * 0.3) { this.dwUsed = true; this.H.shield = 2; yield* FX.barrier.call(this, this.center(this.H)); yield* this.msg('亡者守護發動了！獲得了護盾！', { hold: 24 }); }
     if (this.H.stats.mpRegen && this.H.hp > 0 && this.H.mp < this.H.maxmp) this.H.mp = Math.min(this.H.maxmp, this.H.mp + Math.max(1, Math.ceil(this.H.maxmp * this.H.stats.mpRegen / 100)));
-    if (this.H.stats.fx.regen && this.H.hp > 0 && this.H.hp < this.H.maxhp) { this.H.hp = Math.min(this.H.maxhp, this.H.hp + Math.ceil(this.H.maxhp * 0.06)); yield* this.animHP(this.H); }
+    if (this.H.stats.fx.regen && this.H.hp > 0 && this.H.hp < this.H.maxhp) { this.H.hp = Math.min(this.H.maxhp, this.H.hp + Math.ceil(this.H.maxhp * (this.F && this.F.boss ? 0.03 : 0.045))); yield* this.animHP(this.H); } // v10: regen 6% → 4.5% (bosses 3%)
     if (this.bb && this.bb.gang > 0 && this.H.hp > 0 && this.F.hp > 0) { this.bb.gang--; yield* MFX.knives.call(this, this.center(this.F), this.center(this.H)); if (this.H.defending) yield* this.msg(this.H.n + '擋開了手下的飛刀！', { hold: 20 }); else { const d = Math.max(1, Math.floor(this.H.maxhp * BALANCE.gangKnife)); this.H.hp = Math.max(0, this.H.hp - d); this.blinkH = 12; yield* this.animHP(this.H); yield* this.msg('手下丟出了飛刀！受到' + d + '點傷害！', { hold: 20 }); if (this.H.hp <= 0) return; } if (!this.bb.gang) yield* this.msg('手下們見苗頭不對，逃走了。', { hold: 20 }); }
     for (const b of [this.H, this.F]) for (const k in b.stageT || {}) if (b.stageT[k] > 0 && --b.stageT[k] === 0 && b.stages[k]) { b.stages[k] = 0; yield* this.msg(b.n + '的' + STAT_NAMES[k] + '恢復原狀了。', { hold: 18 }); }
     for (const b of [this.H, this.F]) { if (b.tangle > 0) b.tangle--; if (b.wet > 0) b.wet--; if (b.shield > 0 && !--b.shield) yield* this.msg(b.n + '的魔法護盾消失了。', { hold: 24 }); }
@@ -6879,7 +6879,7 @@ function drawShieldBadge(x, X, Y, n, broken, flash) {
 }
 { const _cd = Battle.prototype.calcDamage; Battle.prototype.calcDamage = function (u, t, mv) {
     const r = _cd.call(this, u, t, mv); if (!u.hero || !mv || !mv.pow) return r; const S = u.stats, fx = S.fx || {}, phys = mv.cat === '物'; let m = 1;
-    if (fx.predator && t.hp < t.maxhp * 0.3) m *= 1.3;
+    if (fx.predator && t.hp < t.maxhp * 0.3) m *= 1.2;
     if (fx.spellblade || S.spellblade) { const k = (S.spellblade ? 0.45 : 0.3); m *= phys ? (S.atk + S.spa * k) / Math.max(1, S.atk) : (S.spa + S.atk * k) / Math.max(1, S.spa); }
     if (S.assassin && this.turn === 1 && !r.crit) { r.crit = true; m *= 1.5; }
     if (S.venomous && t.status === 'psn') m *= 1 + S.venomous / 100;
@@ -8253,7 +8253,7 @@ class TitleScene {
     x.drawImage(this.logo, Math.round(W / 2 - this.logo.width / 2), 6 + bob);
     Font.drawC(x, '～異世界冒險RPG～', W / 2, 52 + bob, '#ffe0a0', '#3a1428');
     if (this.stage === 'press' && Math.floor(this.t / 30) % 2 === 0) Font.drawC(x, '按 A 鍵開始', W / 2, 232, '#ffffff', '#1a1024');
-    Font.drawR(x, 'v10.1', W - 3, H - 13, '#b890b0', null);
+    Font.drawR(x, 'v10.2', W - 3, H - 13, '#b890b0', null);
   }
 }
 class IntroScene {
@@ -11831,7 +11831,7 @@ function* craftScreen() {
       if (WSK[e.k]) { const S = WSK[e.k]; drawFitText(x, '特技：' + S.s.n + '　寶珠孔：1〜3（依品質）', 10, y, 152, 11, 9, UIC.accent); y += 12; } }
     const mats = e.R ? e.R.mats : GEAR_RECIPE[e.k].mats, gold = e.R ? e.R.gold || 0 : GEAR_RECIPE[e.k].gold;
     Font.draw(x, e.R ? '需要的素材' : '需要的素材（普通打造）', 10, y, UIC.muted, UIC.textSh, 9); if (gold) Font.drawR(x, gold + ' G', 164, y, st.money >= gold ? UIC.warm : UIC.bad, UIC.textSh, 9); y += 11;
-    for (const [k, n] of Object.entries(mats)) { let z = 10; while (z > 8 && Font.width('・' + ITEMS[k].n, z) > 110) z--; Font.draw(x, '・' + ITEMS[k].n, 12, y, UIC.text, UIC.textSh, z); Font.drawR(x, have(k) + ' / ' + n, 164, y, have(k) >= n ? UIC.good : UIC.bad, UIC.textSh, 10); y += 11; }
+    for (const [k, n] of Object.entries(mats)) { let z = 10; while (z > 8 && Font.width('・' + ITEMS[k].n, z) > 110) z--; const ex = Font.draw(x, '・' + ITEMS[k].n, 12, y, UIC.text, UIC.textSh, z); if (have(k) < n && typeof matSrc === 'function') { const src = matSrc(k); if (src) Font.draw(x, '（' + src + '）', ex + 1, y + 1, UIC.muted, UIC.textSh, 8); } Font.drawR(x, have(k) + ' / ' + n, 164, y, have(k) >= n ? UIC.good : UIC.bad, UIC.textSh, 10); y += 11; }
     if (!e.R && st.bpT && st.bpT[e.k]) Font.draw(x, '持有打造券' + (tkCount(e.k) > 1 ? '×' + tkCount(e.k) : '') + '：免費打造，品質保底' + qName(st.bpT[e.k]), 10, y + 1, UIC.warm, UIC.textSh, 9);
   }, touchBack: true };
   UI.push(scr);
@@ -14122,7 +14122,7 @@ function* evoApply(b, u, t, c, dealt, mv) {
 function* orbEvolveFlow(o) {
   const s = orbStage(o), D = ORB_A[o.k];
   yield* say('「' + orbName(o) + '」可以進化了！選擇進化的方向：');
-  const r = yield* ask('「' + D.n + ORB_STAGE[s + 1] + '」', ['⚔ 強攻：' + evoOptText(o, s, 'A'), '✦ 附加：' + evoOptText(o, s, 'B'), '之後再說'], { cancel: false });
+  const r = yield* ask('「' + D.n + ORB_STAGE[s + 1] + '」', ['強攻：' + evoOptText(o, s, 'A'), '附加：' + evoOptText(o, s, 'B'), '之後再說'], { cancel: false });
   if (r > 1) { o.told = 0; return false; }
   o.e = (o.e || []).concat(r === 0 ? 'A' : 'B'); o.told = 0; Sound.jingle('levelup'); yield* itemGet('「' + orbName(o) + '」進化了！'); return true;
 }
@@ -14195,7 +14195,7 @@ function* smithMenu(f) {
 }
 const gearTier = g => (GEAR[g.b] && GEAR[g.b].t) || 1;
 function orbLine(o) { const D = orbDef(o), a = isActiveOrb(o); return (a ? '◆' : '◇') + orbName(o) + (a ? (orbStage(o) < 2 ? '（進化 ' + Math.min(o.x || 0, ORB_EVO[orbStage(o)]) + '/' + ORB_EVO[orbStage(o)] + '）' : '（最終）') : ''); }
-function orbInfo(o) { if (isActiveOrb(o)) { const m = MOVES['o_' + o.k], D = ORB_A[o.k]; return (m.cat === '變' ? '輔助' : m.cat === '物' ? '物理' : '魔法') + (m.t !== '一般' ? '・' + m.t : '') + (D.pow ? '・威力' + D.pow : '') + '・MP' + D.mp + '　' + D.d + (o.e.length ? '　進化：' + o.e.map((b, s) => (b === 'A' ? '⚔' : '✦') + evoOptText(o, s, b)).join('、') : ''); }
+function orbInfo(o) { if (isActiveOrb(o)) { const m = MOVES['o_' + o.k], D = ORB_A[o.k]; return (m.cat === '變' ? '輔助' : m.cat === '物' ? '物理' : '魔法') + (m.t !== '一般' ? '・' + m.t : '') + (D.pow ? '・威力' + D.pow : '') + '・MP' + D.mp + '　' + D.d + (o.e.length ? '　進化：' + o.e.map((b, s) => (b === 'A' ? '強攻' : '附加') + evoOptText(o, s, b)).join('、') : ''); }
   return '被動：' + orbFxText(o); }
 function* orbPicker(title, getList, note) {
   let idx = 0; const VIS = 8;
@@ -14309,7 +14309,7 @@ Battle.prototype.chooseMove = function* () {
     if (mv.pow) { const pw = powTxt(mv), eT = est ? '預估≈' + est : ''; x.fillStyle = 'rgba(200,160,80,0.35)'; x.fillRect(L, DY + 13, w - 16, 1);
       Font.draw(x, pw, L, y, UIC.accent, UIC.textSh, fit(pw, 10, w - 22 - (eT ? Font.width(eT, 9) : 0))); if (eT) Font.drawR(x, eT, R, y + 1, UIC.warm, UIC.textSh, 9); y += 13; }
     Font.drawC(x, Game.touchUI ? (m.tapSel === m.i ? '再點一次：使用　點外面：返回' : '點技能看說明・再點一次使用') : 'A：使用　B：返回', W / 2, BB_Y + 11, Game.touchUI && m.tapSel === m.i ? UIC.warm : UIC.muted, UIC.textSh, 9);
-    const extra = ob && ob.e.length ? '　【進化】' + ob.e.map((b, s) => (b === 'A' ? '⚔' : '✦') + evoOptText(ob, s, b)).join('、') : MOVES[id].sig && typeof sigTalentText === 'function' ? sigTalentText(st) : '';
+    const extra = ob && ob.e.length ? '　【進化】' + ob.e.map((b, s) => (b === 'A' ? '強攻' : '附加') + evoOptText(ob, s, b)).join('、') : MOVES[id].sig && typeof sigTalentText === 'function' ? sigTalentText(st) : '';
     drawFitText(x, (mv.d || '') + extra, L, y, w - 16, DY + DH - 5 - y, 9);
   };
   while (true) {
@@ -14395,11 +14395,11 @@ const FOE_NEW = {
   m_rampage: { n: '暴衝', t: '一般', cat: '物', pow: 90, acc: 90, pp: 10, eff: { flinch: 1, p: 20 }, cls: 'strike', fx: 'm_hornCharge', d: '不顧一切地撞過來。' },
   m_vineLash: { n: '荊鞭', t: '草', cat: '物', pow: 72, acc: 95, pp: 10, eff: { stat: { def: -1 }, p: 35 }, cls: 'strike', fx: 'm_rootCrush', d: '長滿尖刺的藤鞭。有時會降低物防。' },
   m_sporeBurst: { n: '孢子爆散', t: '毒', cat: '特', pow: 55, acc: 95, pp: 10, eff: { st: 'psn', p: 40 }, cls: 'powder', fx: 'm_poisonSpore', d: '炸開一大團毒孢子。' },
-  m_sunder: { n: '碎甲重擊', t: '一般', cat: '物', pow: 78, acc: 95, pp: 10, eff: { stat: { def: -1 }, p: 60 }, cls: 'strike', fx: 'm_hornCharge', d: '瞄準鎧甲縫隙的重擊。常常降低物防。' },
-  m_overheat: { n: '過熱衝擊', t: '火', cat: '特', pow: 105, acc: 100, pp: 5, charge: 1, chargeMsg: '身體開始發紅發燙！', warn: '（下一擊非常危險……選擇「防禦」！）', cls: 'charge', fx: 'm_golemFist', d: '蓄熱後的爆炸衝擊。' },
+  m_sunder: { n: '碎甲重擊', t: '一般', cat: '物', pow: 70, acc: 95, pp: 10, eff: { stat: { def: -1 }, p: 60 }, cls: 'strike', fx: 'm_hornCharge', d: '瞄準鎧甲縫隙的重擊。常常降低物防。' },
+  m_overheat: { n: '過熱衝擊', t: '火', cat: '特', pow: 95, acc: 100, pp: 5, charge: 1, chargeMsg: '身體開始發紅發燙！', warn: '（下一擊非常危險……選擇「防禦」！）', cls: 'charge', fx: 'm_golemFist', d: '蓄熱後的爆炸衝擊。' },
   m_feint: { n: '虛招', t: '一般', cat: '物', pow: 55, acc: 100, pp: 15, prio: 1, eff: { stat: { spe: -1 }, p: 50 }, cls: 'slash', fx: 'm_darkSlash', d: '先制的假動作。有時會降低速度。' },
   m_curseGrip: { n: '詛咒之握', t: '一般', cat: '特', pow: 60, acc: 100, pp: 10, drain: 0.5, cls: 'drain', fx: 'm_soulSip', d: '冰冷的手抓住靈魂，吸取生命。' },
-  m_soulRend: { n: '裂魂斬', t: '一般', cat: '物', pow: 118, acc: 100, pp: 5, charge: 1, chargeMsg: '周圍的空氣變得冰冷……', warn: '（下一擊會撕裂靈魂……防禦！）', cls: 'charge', fx: 'm_darkSlash', d: '蓄力後撕裂靈魂的一斬。' },
+  m_soulRend: { n: '裂魂斬', t: '一般', cat: '物', pow: 105, acc: 100, pp: 5, charge: 1, chargeMsg: '周圍的空氣變得冰冷……', warn: '（下一擊會撕裂靈魂……防禦！）', cls: 'charge', fx: 'm_darkSlash', d: '蓄力後撕裂靈魂的一斬。' },
   m_tidalCrush: { n: '怒潮壓', t: '水', cat: '物', pow: 85, acc: 95, pp: 10, eff: { flinch: 1, p: 20 }, cls: 'strike', fx: 'm_tailSlam', d: '挾著浪濤壓下來。' },
   m_whirlpool: { n: '漩渦', t: '水', cat: '特', pow: 62, acc: 95, pp: 10, eff: { stat: { spe: -1 }, p: 50 }, cls: 'area', fx: 'm_tailSlam', d: '把對手捲進漩渦。有時會降低速度。' },
   m_hex: { n: '咒縛', t: '一般', cat: '變', acc: 80, pp: 10, st: 'par', cls: 'debuff', fx: 'm_soulSip', d: '用咒語綁住對手的身體，讓牠麻痺。' },
@@ -14407,7 +14407,7 @@ const FOE_NEW = {
   m_dragonRoar: { n: '龍威', t: '一般', cat: '變', acc: 100, pp: 10, stat: { who: 'foe', atk: -1, spa: -1 }, cls: 'debuff', fx: 'm_rumble', d: '龍的咆哮讓人喪失鬥志。' },
   m_scorch: { n: '灼熱吐息', t: '火', cat: '特', pow: 82, acc: 95, pp: 10, eff: { st: 'brn', p: 30 }, cls: 'proj', fx: 'm_flare', d: '噴出灼熱的火焰。有時會灼傷。' },
   m_swarm: { n: '蟲群', t: '一般', cat: '物', pow: 22, acc: 95, pp: 10, hits: [2, 5], cls: 'bite', fx: 'm_bite', d: '成群的小蟲一起咬過來。' },
-  m_diveBomb: { n: '俯衝轟擊', t: '飛', cat: '物', pow: 108, acc: 100, pp: 5, charge: 1, chargeMsg: '飛上了高空！', warn: '（牠要俯衝下來了……防禦！）', cls: 'charge', fx: 'm_rend', d: '從高空俯衝撞擊。' },
+  m_diveBomb: { n: '俯衝轟擊', t: '飛', cat: '物', pow: 98, acc: 100, pp: 5, charge: 1, chargeMsg: '飛上了高空！', warn: '（牠要俯衝下來了……防禦！）', cls: 'charge', fx: 'm_rend', d: '從高空俯衝撞擊。' },
   m_acidSpit: { n: '酸液', t: '毒', cat: '特', pow: 55, acc: 95, pp: 10, eff: { stat: { def: -1 }, p: 40 }, cls: 'proj', fx: 'm_engulf', d: '會腐蝕鎧甲的酸液。有時會降低物防。' },
 };
 for (const k in FOE_NEW) { MOVES[k] = { ...FOE_NEW[k], foe: 1 }; const C = MON_CLASS[FOE_NEW[k].cls]; if (C && !C.includes(k)) C.push(k); if (!MFX[k] && MFX[FOE_NEW[k].fx]) MFX[k] = MFX[FOE_NEW[k].fx]; }
@@ -14430,6 +14430,129 @@ const FAM_TECH = { beast: ['m_warRoar', 'm_rampage'], plant: ['m_vineLash', 'm_s
     const st = this.st; if (st && st.v10 && st.flags.license && !st.flags.orbStart && !this.script && !UI.stack.length && !Game.trans) { st.flags.orbStart = 1;
       this.run((function* () { yield* say('村長：「對了，這個給你。」'); yield* orbGet('galeCut', ''); yield* sayAll(['村長：「這是「技能寶珠」。鐵匠會幫你把它鑲進武器，戰鬥中就能使出裡面封著的招式。」', '村長：「強大的魔物身上也會帶著寶珠。打倒牠們，你就會越來越強。」']); })()); return; }
     return _u.apply(this, a); }; }
+const FOE_SPOTS = (() => { const L = []; for (const id in MAPS) { const d = MAPS[id]; for (const e of d.elites || []) L.push({ sp: e.sp, lv: e.lv, map: id, kind: 'elite', key: e.id }); if (d.boss && id !== 'rift') L.push({ sp: d.boss.sp, lv: d.boss.lv, map: id, kind: 'boss', key: d.boss.sp }); }
+  const seen = new Set(); return L.filter(e => { const k = e.sp + e.kind; if (seen.has(k)) return false; seen.add(k); return true; }).sort((a, b) => a.lv - b.lv); })();
+function foeMoves(sp, lv, kind) { try { const f = makeFoe(sp, lv, kind); const L = f.moves.map(m => m.id); const ex = PHASE_MOVES[sp]; if (ex && !L.includes(ex)) L.push(ex); return L; } catch (e) { return []; } }
+function foeDropLines(sp, key, kind) {
+  const L = [], st = Game.st, O = ORB_DROP[sp];
+  if (O) { const got = (st.orbGot || {})[sp]; L.push('寶珠：' + O.map((k, i) => '「' + (ORB_A[k] || ORB_P[k]).n + '」' + (i === 0 && !got ? '(首殺必得)' : '')).join('') + (got ? '（再戰機率掉落）' : '')); }
+  const h = typeof lootHint === 'function' ? lootHint(key, sp) : ''; if (h) L.push(h.replace('首次擊敗：必定掉落紅色', '裝備：首殺').replace('重戰掉落：', '裝備：'));
+  const el = monsterElem(sp); L.push((kind === 'boss' ? '上級' : '') + (el ? el + '屬性' : '') + '附魔石' + (kind === 'boss' ? '（必得）' : '（40%）') ); if (BOSS_MAT[sp] && ITEMS[BOSS_MAT[sp]]) L.push('素材：' + ITEMS[BOSS_MAT[sp]].n);
+  return L;
+}
+function famText(sp) { const F = FAMILIES[SPECIES[sp].fam] || {}; return (F.weak && F.weak.length ? '弱：' + F.weak.join('') : '') + (F.resist && F.resist.length ? '　抗：' + F.resist.join('') : '') + (F.immune && F.immune.length ? '　免疫' + F.immune.map(q => ({ psn: '毒', par: '麻', slp: '眠', brn: '燒' })[q] || q).join('') : ''); }
+encounterCard = function (sp, lv, key, kind, extra) {
+  const pic = typeof chibiPortrait === 'function' && chibiPortrait(sp) || battlePortrait(sp), stars = dangerStars(lv), mv = foeMoves(sp, lv, kind).map(id => MOVES[id]).filter(Boolean);
+  const mvTxt = mv.map(m => (m.charge ? '⚠' : '') + m.n).join('・'), mvL = Font.wrap(mvTxt, W - 36, 9).slice(0, 3), dropL = foeDropLines(sp, key, kind).flatMap(t => Font.wrap(t, W - 36, 8)).slice(0, 6);
+  return { draw(x) {
+    const X = 6, Y = 4, w = W - 12, h = 66 + 12 + mvL.length * 11 + 14 + dropL.length * 10; drawPanel(x, X, Y, w, h, kind === 'boss' ? '#ff6b7a' : '#ffc46b');
+    Font.drawC(x, (kind === 'boss' ? '頭目' : '菁英魔物') + (extra ? '・' + extra : ''), W / 2, Y + 2, kind === 'boss' ? '#ff9aa4' : '#ffd890', UIC.textSh, 9);
+    x.fillStyle = 'rgba(10,12,24,0.7)'; x.fillRect(X + 6, Y + 16, 50, 50);
+    if (pic) { const s = Math.min(1, 48 / pic.height, 48 / pic.width); x.imageSmoothingEnabled = false; x.drawImage(pic, Math.round(X + 31 - pic.width * s / 2), Math.round(Y + 65 - pic.height * s), Math.round(pic.width * s), Math.round(pic.height * s)); }
+    const tx = X + 62; Font.draw(x, SPECIES[sp].n, tx, Y + 15, UIC.text, UIC.textSh, 11); Font.draw(x, 'Lv' + lv + '・' + famName(SPECIES[sp].fam), tx, Y + 29, UIC.muted, UIC.textSh, 9);
+    let s = ''; for (let i = 0; i < 5; i++) s += i < stars ? '★' : '☆'; Font.draw(x, '危險度 ' + s, tx, Y + 41, stars >= 4 ? '#ff7a7a' : stars === 3 ? '#ffd070' : '#9ad890', UIC.textSh, 9);
+    { const ft = famText(sp) || '沒有明顯弱點'; let fz = 9; while (fz > 7 && Font.width(ft, fz) > W - tx - 10) fz--; Font.draw(x, ft, tx, Y + 53, '#8ad0ff', UIC.textSh, fz); }
+    let y = Y + 70; Font.draw(x, '【招式】' + (mv.some(m => m.charge) ? '　⚠＝蓄力大招，記得防禦' : ''), X + 8, y, UIC.accent, UIC.textSh, 9); y += 12;
+    mvL.forEach(l => { Font.draw(x, l, X + 12, y, '#e8f0ff', UIC.textSh, 9); y += 11; });
+    Font.draw(x, '【掉落】', X + 8, y + 1, UIC.accent, UIC.textSh, 9); y += 13; dropL.forEach(l => { Font.draw(x, l, X + 12, y, '#c8b0ff', UIC.textSh, 8); y += 10; });
+  } };
+};
+{ const _bs = Overworld.prototype.battleScript; Overworld.prototype.battleScript = function* (cfg, ...a) {
+    if (cfg && cfg.kind === 'boss' && !cfg.rematch && !cfg.noCard && this.st.map !== 'rift') { const card = encounterCard(cfg.sp, cfg.lv, cfg.id || cfg.sp, 'boss', ''); UI.push(card); yield* ask('準備好了嗎？', ['迎戰'], { cancel: false, mx: W - 72, my: TB_Y + 6 }); UI.remove(card); }
+    return yield* _bs.call(this, cfg, ...a);
+  }; }
+function* listScreen(title, rows, detail) { // rows: [{ t, r, col }], detail(i) → [lines]
+  let sel = 0; const VIS = 9;
+  const scr = { draw(x) { screenBG(x); headerBar(x, title); const R = rows(), i = Math.min(sel, Math.max(0, R.length - 1)), top = clamp(i - 4, 0, Math.max(0, R.length - VIS));
+    drawWin(x, 4, 22, 168, VIS * 15 + 8, 'menu'); R.slice(top, top + VIS).forEach((r, k) => { const Y = 26 + k * 15; if (top + k === i) selBar(x, 6, Y - 1, 164, 14); Font.draw(x, r.t, 11, Y - 2, r.col || UIC.text, UIC.textSh, 9); if (r.r) Font.drawR(x, r.r, 166, Y - 1, UIC.muted, UIC.textSh, 8); });
+    if (top > 0) x.drawImage(UPARROW, 86, 23); if (top + VIS < R.length) x.drawImage(DOWNARROW, 86, 22 + VIS * 15 + 3);
+    const Y0 = 22 + VIS * 15 + 12; drawWin(x, 4, Y0, 168, 252 - Y0, 'menu'); let y = Y0 + 3; for (const [t, c, z] of detail(i)) for (const l of Font.wrap(t, 152, z || 9)) { if (y > 240) break; Font.draw(x, l, 10, y, c || UIC.text, UIC.textSh, z || 9); y += (z || 9) + 2; } } };
+  UI.push(scr); while (true) { const n = rows().length; if (Input.repeat('up') && sel > 0) { sel--; Sound.sfx('cursor'); } if (Input.repeat('down') && sel < n - 1) { sel++; Sound.sfx('cursor'); } if (Input.pressed('b') || Input.pressed('a')) { Input.consume('a', 'b'); Sound.sfx('cancel'); break; } yield; } UI.remove(scr);
+}
+function* bossDexScreen() {
+  const st = Game.st, won = e => ((st.dex || {})[e.sp] || {}).won > 0;
+  yield* listScreen('頭目・精英', () => FOE_SPOTS.map(e => ({ t: (won(e) ? '✓ ' : '　 ') + (e.kind === 'boss' ? '【頭目】' : '') + SPECIES[e.sp].n, r: 'Lv' + e.lv, col: won(e) ? UIC.text : e.kind === 'boss' ? '#ff9aa4' : '#ffd890' })),
+    i => { const e = FOE_SPOTS[i]; if (!e) return []; return [[(MAPS[e.map].name || '') + '　Lv' + e.lv + '　' + famText(e.sp), UIC.accent], ...foeDropLines(e.sp, e.key, e.kind).map(t => [t, '#c8b0ff', 8]), [won(e) ? '已擊敗' + (e.kind === 'boss' ? '（回憶石碑可以再戰）' : '（一段時間後會再出現）') : '尚未擊敗', won(e) ? UIC.good : UIC.muted, 8]]; });
+}
+const ORB_SRC = (() => { const S = {}; const add = (k, t) => (S[k] = S[k] || []).push(t); for (const sp in ORB_DROP) ORB_DROP[sp].forEach((k, i) => add(k, SPECIES[sp].n + (i === 0 ? '（首殺）' : ''))); for (const c in COMMISSIONS) if (COMMISSIONS[c].reward && COMMISSIONS[c].reward.orb) add(COMMISSIONS[c].reward.orb, '委託「' + COMMISSIONS[c].n + '」'); add('galeCut', '村長（冒險者許可）'); return S; })();
+function* orbDexScreen() {
+  const st = Game.st, keys = [...Object.keys(ORB_A), ...Object.keys(ORB_P)], seen = k => (st.orbSeen || {})[k];
+  yield* listScreen('寶珠圖鑑　' + keys.filter(seen).length + '/' + keys.length, () => keys.map(k => ({ t: (ORB_A[k] ? '◆' : '◇') + (ORB_A[k] || ORB_P[k]).n, r: seen(k) ? '已取得' : '', col: seen(k) ? (ORB_A[k] ? '#c8f0ff' : UIC.warm) : UIC.dis })),
+    i => { const k = keys[i]; if (!k) return []; const o = { k, x: 0, e: [], lv: 1 }; return [[orbInfo(o), UIC.text], ['取得：' + ((ORB_SRC[k] || []).join('、') || '？？？'), '#c8b0ff', 8], ...(ORB_A[k] ? [['進化：強攻 ' + evoOptText(o, 0, 'A') + '→' + evoOptText(o, 1, 'A') + '／附加 ' + evoOptText(o, 0, 'B') + '→' + evoOptText(o, 1, 'B'), UIC.muted, 8]] : [])]; });
+}
+{ const _dx = dexScreen; dexScreen = function* () { const r = yield* ask('要看什麼？', ['魔物圖鑑', '頭目・精英', '寶珠圖鑑']); if (r === 0) yield* _dx(); else if (r === 1) yield* bossDexScreen(); else if (r === 2) yield* orbDexScreen(); }; }
+function matSrc(k) { const B = FOE_SPOTS.find(e => BOSS_MAT[e.sp] === k); if (B) return SPECIES[B.sp].n; for (const s in SPECIES) if (SPECIES[s].mat === k) { const m = typeof spawnMaps === 'function' ? spawnMaps(s) : []; if (m.length) return SPECIES[s].n; } return ''; }
+askFight = function* (sp, lv, key, kind, extra) { // the choice sits inside the message box, so the card can use the whole upper screen
+  const card = encounterCard(sp, lv, key, kind, extra); UI.push(card);
+  const r = yield* ask('要迎戰嗎？', ['迎戰', '撤退'], { cancel: false, mx: W - 72, my: TB_Y + 4 }); UI.remove(card); return r === 0;
+};
+Object.assign(SPECIALS.double || {}, { d: '物理攻擊後有20%機率追加一次50%傷害的攻擊。' });
+Object.assign(SPECIALS.thorns || {}, { d: '受到攻擊時反彈20%傷害（頭目12%）。' });
+Object.assign(SPECIALS.guardHeal || {}, { d: '防禦時回復10%最大HP。' });
+Object.assign(SPECIALS.regen || {}, { d: '每回合結束時回復4.5%最大HP（頭目戰3%）。' });
+Object.assign(SPECIALS.deathWard || {}, { d: '每場戰鬥一次：回合結束時HP低於30%，獲得2回合護盾。' });
+Object.assign(SPECIALS.fervor || {}, { d: '每次攻擊後物攻（魔法攻擊則是魔攻）提升1階，最多2次。' });
+Object.assign(SPECIALS.lastStand || {}, { d: 'HP越低傷害越高，最多+35%。' });
+Object.assign(SPECIALS.predator || {}, { d: '對HP低於30%的對手傷害+20%。' });
+const UNIQUE_W = {
+  quakeAxe: { n: '裂地戰斧', kind: '斧', t: 4, st: { atk: 15 }, sp: { crit: 3 }, d: '遺跡守衛背上的巨斧。一斧下去，地面跟著裂開。', skill: ['裂地斬', 'shieldBash', 92, 6, '劈開地面的重擊，降低對手物防。', ['fdef-1']] },
+  tideRapier: { n: '潮鳴細劍', kind: '劍', t: 4, st: { atk: 13 }, sp: { hit: 5 }, elem: '水', d: '劍身會發出潮水聲的細劍。', skill: ['潮鳴突', 'gale', 62, 4, '先制的水之突刺，讓對手潮濕。', ['wet']] },
+  wolfTwin: { n: '狼王雙刃', kind: '短刀', t: 5, st: { atk: 15 }, sp: { crit: 5 }, d: '瘴氣狼王的獠牙打成的雙刃。', skill: ['狼牙亂舞', 'bladeDance', 26, 6, '亂舞般的連續斬擊。', ['psn:30']] },
+  coreStaff: { n: '熔核魔杖', kind: '法杖', t: 6, st: { spa: 19 }, sp: {}, elem: '火', d: '杖頭嵌著還在發燙的熔岩核心。', skill: ['熔核爆', 'combust', 82, 7, '對異常狀態的對手威力大增，有機率灼傷。', ['brn:30']] },
+  fallenLance: { n: '墮星長槍', kind: '長槍', t: 7, st: { atk: 22 }, sp: { crit: 4 }, d: '從天空墜落的星辰鍛成的長槍。', skill: ['墮星突', 'dragonLance', 96, 8, '穿透一切的突刺，會心率加倍。', ['crit']] },
+  thunderFist: { n: '雷鳴拳套', kind: '拳套', t: 5, st: { atk: 13, spe: 4 }, sp: { crit: 3 }, elem: '雷', d: '時計巨像的線圈做成的拳套，打出去會劈啪作響。', skill: ['雷鳴掌', 'taser', 66, 5, '雷電之掌，有機率麻痺。', ['par:25']] },
+  frostTome: { n: '霜華魔導書', kind: '魔導書', t: 6, st: { spa: 18, mp: 10 }, sp: {}, elem: '水', d: '霜之女王的冰花夾在書頁之間。', skill: ['霜華詠唱', 'aquaBurst', 86, 8, '冰霜之浪，降低對手速度。', ['fspe-1']] },
+  gearRifle: { n: '機巧火槍', kind: '火槍', t: 6, st: { atk: 19 }, sp: { hit: 6 }, d: '熔岩巨人的裝甲片改造的連發火槍。', skill: ['連裝彈', 'fullBurst', 24, 7, '連續發射的彈幕。', ['spec+1']] },
+  boneGreatsword: { n: '龍骨巨劍', kind: '劍', t: 7, st: { atk: 24 }, sp: { crit: 4 }, d: '影將莫爾德佩帶的古龍骨大劍。', skill: ['龍骨斬', 'eclipseSlash', 104, 8, '吞噬光芒的一斬，吸取生命。', ['drain:20']] },
+  moonHarp: { n: '月光豎琴', kind: '樂器', t: 5, st: { spa: 14, mp: 16 }, sp: {}, d: '銀鱗水龍守護的湖底豎琴。', skill: ['月光奏鳴', 'healSong', 0, 7, '回復HP並消除異常狀態，展開護盾。', ['shield:1']] },
+};
+for (const k in UNIQUE_W) { const U = UNIQUE_W[k], [sn, tpl, pow, mp, sd, eff] = U.skill;
+  GEAR[k] = { n: U.n, slot: 'weapon', t: U.t, st: U.st, sp: U.sp, kind: U.kind, d: U.d + '（專屬技「' + sn + '」）', ...(U.elem ? { elem: U.elem } : {}), skill: 'u_' + k };
+  MOVES['u_' + k] = { ...MOVES[tpl], n: sn, d: sd, uniq: k, ws: 1, ueff: eff, ...(pow ? { pow } : {}) }; SKILL_MP['u_' + k] = mp;
+  const tm = Object.keys(WSK).find(q => GEAR[q] && GEAR[q].kind === U.kind && GEAR[q].t === U.t) || Object.keys(WSK).find(q => GEAR[q] && GEAR[q].kind === U.kind);
+  if (tm) { WSK[k] = { a: [], p: { k: 'hpP', v: 0, n: '' }, s: { ...WSK[tm].s } }; if (GEAR[tm].look) GEAR[k].look = GEAR[tm].look; } BP_RARE.add(k);
+  const t = U.t, P = TIER_POOL[t] || TIER_POOL[7]; GEAR_RECIPE[k] = { mats: { [P[hashK(k) % P.length]]: 2 + Math.floor(t / 2), [(TIER_POOL[t - 1] || P)[hashK(k) >> 4 & 3] || P[0]]: 1 + Math.floor(t / 3) }, gold: Math.round(bpGold(t) * 1.3 / 10) * 10 }; }
+for (const [boss, k] of [['clockColossus', 'thunderFist'], ['frostQueen', 'frostTome'], ['lavaGiant', 'gearRifle'], ['shadowGeneral', 'boneGreatsword'], ['silverWyrm', 'moonHarp']]) { LOOT[boss] = LOOT[boss] || []; if (!LOOT[boss].includes(k)) LOOT[boss].push(k); }
+{ const _wl = wsList; wsList = function (st = Game.st) { const L = _wl(st), w = mainWeapon(st), s = w && GEAR[w.b] && GEAR[w.b].skill; if (s && MOVES[s]) L.splice(sigId(st) ? 1 : 0, 0, s); return L; }; }
+learnedSkills = function (st = Game.st) { return wsList(st); }; usableSkills = function (st = Game.st) { return wsList(st); }; summarySkills = function (st = Game.st) { return wsList(st); };
+{ const _sm = skillMove; skillMove = function (id, st = Game.st) { const b = MOVES[id]; if (b && b.uniq) return { ...b }; return _sm(id, st); }; }
+{ const _um = Battle.prototype.useMove; Battle.prototype.useMove = function* (u, t, id) {
+    const b = MOVES[id]; if (!u || !u.hero || !b || !b.uniq) return yield* _um.call(this, u, t, id);
+    const fhp = t ? t.hp : 0, r = yield* _um.call(this, u, t, id); if (u.hp <= 0 || this._castId !== id) return r; const dealt = t ? Math.max(0, fhp - t.hp) : 0;
+    if (t && t !== u && dealt > 0) evoFlash(this, t, 'B'); for (const c of b.ueff || []) yield* evoApply(this, u, t, c, dealt, b); return r;
+  }; }
+{ const _gi = gearInfoLines; gearInfoLines = function (g, wrapW = 150) { const L = _gi(g, wrapW), G = GEAR[g.b]; if (!G || !G.skill || !MOVES[G.skill]) return L; const m = MOVES[G.skill];
+    const i = L.findIndex(l => l[0] === '【武器】'); const X = Font.wrap('專屬技「' + m.n + '」' + (m.pow ? '威力' + m.pow + '・' : '') + 'MP' + SKILL_MP[G.skill] + '　' + m.d, wrapW - 4, 10).map(l => [l, '#ffb0e0', 10, 4]);
+    L.splice(i < 0 ? L.length : i + 1, 0, ...X); return L; }; }
+const ROAM = {
+  sewer: ['crystalCroc', '晶甲巨鱷', 'aquatic', 19, 'tank', ['m_tailSlam', 'm_crabHammer', 'm_bite', 'm_goo'], ['croc', 170, 0.9, 1.2], '在地下水道深處長大的巨鱷，背上長滿了水晶。', 'tideRapier', ['aquaEdge', 'prism'], ['……水面下有什麼東西在發光。', '晶甲巨鱷從水裡浮了上來！']],
+  ruins: ['ruinWarden', '遺跡守衛', 'construct', 18, 'tank', ['m_golemFist', 'm_quake', 'm_stoneWall', 'm_rumble'], ['golem', -40, 0.7, 0.9], '守護遺跡入口的小型魔像。背上插著一把巨斧。', 'quakeAxe', ['focusMind', 'bulwark'], ['石柱之間的石像動了起來……', '遺跡守衛擋住了去路！']],
+  capSewer: ['miasmaWolf', '瘴氣狼王', 'beast', 27, 'fast', ['m_bite', 'm_rend', 'm_howl', 'm_pounce'], ['wolf', 95, 0.9, 0.9], '吸了下水道的瘴氣而變異的狼王，眼睛發著綠光。', 'wolfTwin', ['songOfValor', 'haste'], ['黑暗中有一雙綠色的眼睛……', '瘴氣狼王撲了過來！']],
+  lavaTunnel: ['lavaKnight', '熔岩騎士', 'undead', 37, 'phys', ['m_darkSlash', 'm_axeSpin', 'm_rend', 'm_soulSip'], ['boneKnight', 20, 1.2, 1.1], '死後仍在熔岩中巡邏的騎士。鎧甲縫隙透出火光。', 'coreStaff', ['flameVortex', 'lastStand'], ['熔岩裡站起了一個燃燒的身影……', '熔岩騎士舉起了劍！']],
+  starShrine: ['fallenStar', '墮星騎士', 'human', 44, 'phys', ['m_riftCharge', 'm_darkSlash', 'm_eclipse', 'm_soulSip'], ['riftKnight', 230, 0.8, 1.1], '被星之門的力量吞噬的騎士。已經分不清敵我。', 'fallenLance', ['thorHammer', 'shadowStep'], ['星光突然暗了下來……', '墮星騎士從星之門的方向走來！']],
+};
+for (const map in ROAM) { const [k, n, fam, lv, role, moves, look, dex, drop, orbs, lines] = ROAM[map];
+  SPECIES[k] = { n, fam, base: CH2_ROLE[role].map(v => Math.round(v * 80)), exp: Math.round((5 * lv + 28) * 2.3), gold: 0, learn: moves.map(m => [1, m]), dex, elite: 1, drop };
+  MON_PANEL[k] = ch2Panel(lv, role, 'elite'); const [b, dh, ks, kl] = look; PLACEHOLDER[k] = look; HD_RIG_OF[k] = HD_RIG_OF[b] || b; const base = ART[b] ? b : PLACEHOLDER[b] && PLACEHOLDER[b][0]; if (ART[base]) ART[k] = artRecolor(ART[base], dh, ks, kl);
+  ORB_DROP[k] = orbs; LOOT[k] = [drop]; BOSS_MAT[k] = BOSS_MAT[b] || null; ELITE_TEXT[k] = lines; FOE_SPOTS.push({ sp: k, lv, map, kind: 'elite', key: k, roam: 1 }); }
+FOE_SPOTS.sort((a, b) => a.lv - b.lv);
+for (const sp in ORB_DROP) ORB_DROP[sp].forEach((k, i) => { if (!ORB_SRC[k]) ORB_SRC[k] = []; const t = SPECIES[sp].n + (i === 0 ? '（首殺）' : ''); if (!ORB_SRC[k].includes(t)) ORB_SRC[k].push(t); });
+const ROAM_BACK = 200;
+{ const _bs = Overworld.prototype.battleScript; Overworld.prototype.battleScript = function* (cfg, ...a) {
+    const st = this.st, R = cfg && cfg.kind === 'wild' && ROAM[st.map]; const down = st.roamDown || (st.roamDown = {});
+    if (R && (Game.forceRoam || chance(0.07)) && (down[R[0]] === undefined || (st.steps || 0) - down[R[0]] >= ROAM_BACK)) {
+      Game.forceRoam = 0; const [k, , , lv] = R, again = down[R[0]] !== undefined, L = again ? lv + 3 : lv; Sound.sfx('exclaim'); this.p.excl = 30; yield* sayAll(again ? [SPECIES[k].n + '又出現了！看起來比上次更兇猛……'] : ELITE_TEXT[k]);
+      if (!(yield* askFight(k, L, k, 'elite', again ? '再戰' : '出沒'))) { yield* say('悄悄地退開了。'); return 'run'; }
+      const res = yield* _bs.call(this, { sp: k, lv: L, kind: 'elite', id: k, rematch: again, drop: again ? null : R[8] }, ...a); if (res === 'win') down[k] = st.steps || 0; return res;
+    }
+    return yield* _bs.call(this, cfg, ...a);
+  }; }
+Object.assign(CLASS_SIG, {
+  ranger: ['獵人直覺', [['speP', 8], ['eva', 4], ['hpP', 10], ['critDmg', 15], ['atkP', 6]]],
+  monk: ['氣', [['atkUp', 20], ['atkMp', 2], ['hpP', 12], ['defP', 8], ['atkP', 6]]],
+  spellblade: ['魔劍', [['elem', 10], ['actUp', 10], ['atkP', 4], ['spaP', 4], ['hpP', 6]]],
+});
+Object.assign(V9_TOUGH, { boss: 1.0, elite: 1.0 });
 for (const k in GEAR_RECIPE) { const M = GEAR_RECIPE[k].mats || (GEAR_RECIPE[k].mats = {}); for (const i in M) if (!ITEMS[i]) delete M[i]; if (!Object.keys(M).length) M.stone = 2; }
 </script>
 </body></html>
