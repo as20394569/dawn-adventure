@@ -23,7 +23,7 @@ def _small(raw):
 def b64png(f): return 'data:image/png;base64,' + base64.b64encode(_small(open(f, 'rb').read())).decode()
 # v9.2.2: these chibi strips go in as run-length palette rows instead of base64 PNGs — with their base64 data inside,
 # the claude.ai link showed "Couldn't load this Artifact" (same failure as the v7.0.1 talent icons)
-PXC_AS_ROWS = {'mapleSprite', 'crimsonStag', 'barkBeetle', 'stagLord', 'fallenSoldier', 'battleWisp', 'carrionVulture', 'wraithGeneral'}
+PXC_AS_ROWS = {'mapleSprite', 'crimsonStag', 'barkBeetle', 'stagLord', 'fallenSoldier', 'battleWisp', 'carrionVulture', 'wraithGeneral', 'rainFrog', 'stormHawk', 'mistWisp', 'snowball', 'dustScorpion', 'sunFox'}  # + v10.4 weather monsters (Codex task U)
 PAL_CH = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
 def rle_rows(f):
     im = Image.open(f).convert('RGBA'); cols = []; rows = []
@@ -149,5 +149,11 @@ for f in sorted(glob.glob(os.path.join(root, 'art', 'battle', 'portraits', '*.pn
     po[k] = rle_rows(f)
 js += 'const PORTRAIT_PX_ROWS = ' + json.dumps(po, separators=(',', ':'), ensure_ascii=False) + ';\n'
 print('portraits', len(po))
+# v10.4 (Codex task U): fist gloves (right glove, 7×9) and item icons (orbs, enchant stones), palette rows
+gl = {os.path.basename(f)[:-4]: pal_rows(f) for f in sorted(glob.glob(os.path.join(root, 'art', 'battle', 'gloves', '*.png'))) if 'preview' not in f}
+js += 'const GLOVE_PX_ROWS = ' + json.dumps(gl, separators=(',', ':')) + ';\n'
+iu = {os.path.basename(f)[:-4]: pal_rows(f) for f in sorted(glob.glob(os.path.join(root, 'art', 'battle', 'icons_u', '*.png'))) if 'preview' not in f}
+js += 'const ICON_U_ROWS = ' + json.dumps(iu, separators=(',', ':')) + ';\n'
+print('gloves', len(gl), 'icons', len(iu))
 open(os.path.join(root, 'src', '07id_sprites.js'), 'w').write(js)
 print('embedded', len(d), 'sprites', sum(len(v) for v in d.values()) // 1024, 'KB')

@@ -54,13 +54,16 @@ function* smithMenu(f) {
 }
 const gearTier = g => (GEAR[g.b] && GEAR[g.b].t) || 1;
 function orbLine(o) { const D = orbDef(o), a = isActiveOrb(o); return (a ? '◆' : '◇') + orbName(o) + (a ? (orbStage(o) < 2 ? '（進化 ' + Math.min(o.x || 0, ORB_EVO[orbStage(o)]) + '/' + ORB_EVO[orbStage(o)] + '）' : '（最終）') : ''); }
+// v10 (Codex task U): orb rows show the orb's icon instead of the ◆／◇ glyph when the icon exists
+function drawOrbLine(x, o, X, Y, col, extra = '') { const ic = typeof orbIcon === 'function' ? orbIcon(o.k) : null;
+  if (!ic) return Font.draw(x, orbLine(o) + extra, X, Y, col, UIC.textSh, 10); x.drawImage(ic, X - 1, Y + 1); return Font.draw(x, orbLine(o).slice(1) + extra, X + 13, Y, col, UIC.textSh, 10); }
 function orbInfo(o) { if (isActiveOrb(o)) { const m = MOVES['o_' + o.k], D = ORB_A[o.k]; return (m.cat === '變' ? '輔助' : m.cat === '物' ? '物理' : '魔法') + (m.t !== '一般' ? '・' + m.t : '') + (D.pow ? '・威力' + D.pow : '') + '・MP' + D.mp + '　' + D.d + (o.e.length ? '　進化：' + o.e.map((b, s) => (b === 'A' ? '強攻' : '附加') + evoOptText(o, s, b)).join('、') : ''); }
   return '被動：' + orbFxText(o); }
 function* orbPicker(title, getList, note) {
   let idx = 0; const VIS = 8;
   const scr = { draw(x) { screenBG(x); headerBar(x, title); Font.drawR(x, Game.st.money + ' G', W - 6, 3, UIC.warm, UIC.textSh, 10); const L = getList();
     drawWin(x, 4, 22, 168, VIS * 16 + 8, 'menu'); if (!L.length) Font.draw(x, '（沒有可以選的寶珠）', 14, 28, UIC.muted, UIC.textSh, 10);
-    const top = Math.max(0, Math.min(idx - 3, L.length - VIS)); L.slice(top, top + VIS).forEach((o, i) => { const Y = 26 + i * 16; if (top + i === idx) selBar(x, 6, Y - 1, 164, 15); Font.draw(x, orbLine(o), 12, Y - 1, isActiveOrb(o) ? '#c8f0ff' : UIC.warm, UIC.textSh, 10); const h = orbHost(o); if (h) Font.drawR(x, '鑲在' + GEAR[h.b].n.slice(0, 5), 166, Y, UIC.muted, UIC.textSh, 8); });
+    const top = Math.max(0, Math.min(idx - 3, L.length - VIS)); L.slice(top, top + VIS).forEach((o, i) => { const Y = 26 + i * 16; if (top + i === idx) selBar(x, 6, Y - 1, 164, 15); drawOrbLine(x, o, 12, Y - 1, isActiveOrb(o) ? '#c8f0ff' : UIC.warm); const h = orbHost(o); if (h) Font.drawR(x, '鑲在' + GEAR[h.b].n.slice(0, 5), 166, Y, UIC.muted, UIC.textSh, 8); });
     if (top > 0) x.drawImage(UPARROW, 86, 23); if (top + VIS < L.length) x.drawImage(DOWNARROW, 86, 22 + VIS * 16 + 3);
     const Y0 = 22 + VIS * 16 + 12; drawWin(x, 4, Y0, 168, 252 - Y0, 'menu'); const o = L[idx]; if (o) drawFitText(x, orbInfo(o), 10, Y0 + 4, 152, 252 - Y0 - 22, 10); if (note) Font.draw(x, note, 10, 238, UIC.muted, UIC.textSh, 8); } };
   UI.push(scr); let res = null;
@@ -128,9 +131,9 @@ skillTreeScreen = function* () {
     const L = tab ? bag() : rows(), VIS = 9, i = Math.min(sel, Math.max(0, L.length - 1)), top = clamp(i - 4, 0, Math.max(0, L.length - VIS));
     drawWin(x, 4, 22, 168, VIS * 16 + 8, 'menu'); if (!L.length) Font.draw(x, tab ? '還沒有寶珠。打倒精英和頭目吧！' : '還沒有技能。', 12, 28, UIC.muted, UIC.textSh, 10);
     L.slice(top, top + VIS).forEach((R, k) => { const Y = 26 + k * 16; if (top + k === i) selBar(x, 6, Y - 1, 164, 15);
-      if (tab) { Font.draw(x, orbLine(R), 12, Y - 1, isActiveOrb(R) ? '#c8f0ff' : UIC.warm, UIC.textSh, 10); const h = orbHost(R); if (h) Font.drawR(x, 'E', 166, Y - 1, UIC.accent, UIC.textSh, 10); return; }
+      if (tab) { drawOrbLine(x, R, 12, Y - 1, isActiveOrb(R) ? '#c8f0ff' : UIC.warm); const h = orbHost(R); if (h) Font.drawR(x, 'E', 166, Y - 1, UIC.accent, UIC.textSh, 10); return; }
       if (R.sig) { Font.draw(x, '★' + skillMove(R.sig).n, 12, Y - 1, '#ffd860', UIC.textSh, 10); Font.drawR(x, '職業招式 MP' + skillMP(R.sig), 166, Y, UIC.muted, UIC.textSh, 8); }
-      else if (R.orb) { Font.draw(x, orbLine(R.orb) + (orbPending(R.orb) ? ' ！' : ''), 12, Y - 1, isActiveOrb(R.orb) ? '#c8f0ff' : UIC.warm, UIC.textSh, 10); if (R.g) Font.drawR(x, GEAR[R.g.b].n.slice(0, 4), 166, Y, UIC.muted, UIC.textSh, 8); }
+      else if (R.orb) { drawOrbLine(x, R.orb, 12, Y - 1, isActiveOrb(R.orb) ? '#c8f0ff' : UIC.warm, orbPending(R.orb) ? ' ！' : ''); if (R.g) Font.drawR(x, GEAR[R.g.b].n.slice(0, 4), 166, Y, UIC.muted, UIC.textSh, 8); }
       else Font.draw(x, R.empty === 'a' ? '◆（空的技能孔）' : '◇（' + GEAR[R.g.b].n.slice(0, 6) + '的空孔）', 12, Y - 1, UIC.dis, UIC.textSh, 10); });
     if (top > 0) x.drawImage(UPARROW, 86, 23); if (top + VIS < L.length) x.drawImage(DOWNARROW, 86, 22 + VIS * 16 + 3);
     const Y0 = 22 + VIS * 16 + 12, R = L[i]; drawWin(x, 4, Y0, 168, 252 - Y0, 'menu');

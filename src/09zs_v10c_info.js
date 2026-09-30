@@ -40,7 +40,7 @@ encounterCard = function (sp, lv, key, kind, extra) {
 function* listScreen(title, rows, detail) { // rows: [{ t, r, col }], detail(i) → [lines]
   let sel = 0; const VIS = 9;
   const scr = { draw(x) { screenBG(x); headerBar(x, title); const R = rows(), i = Math.min(sel, Math.max(0, R.length - 1)), top = clamp(i - 4, 0, Math.max(0, R.length - VIS));
-    drawWin(x, 4, 22, 168, VIS * 15 + 8, 'menu'); R.slice(top, top + VIS).forEach((r, k) => { const Y = 26 + k * 15; if (top + k === i) selBar(x, 6, Y - 1, 164, 14); Font.draw(x, r.t, 11, Y - 2, r.col || UIC.text, UIC.textSh, 9); if (r.r) Font.drawR(x, r.r, 166, Y - 1, UIC.muted, UIC.textSh, 8); });
+    drawWin(x, 4, 22, 168, VIS * 15 + 8, 'menu'); R.slice(top, top + VIS).forEach((r, k) => { const Y = 26 + k * 15; if (top + k === i) selBar(x, 6, Y - 1, 164, 14); if (r.ic) { x.drawImage(r.ic, 10, Y - 1); Font.draw(x, r.t, 24, Y - 2, r.col || UIC.text, UIC.textSh, 9); } else Font.draw(x, r.t, 11, Y - 2, r.col || UIC.text, UIC.textSh, 9); if (r.r) Font.drawR(x, r.r, 166, Y - 1, UIC.muted, UIC.textSh, 8); });
     if (top > 0) x.drawImage(UPARROW, 86, 23); if (top + VIS < R.length) x.drawImage(DOWNARROW, 86, 22 + VIS * 15 + 3);
     const Y0 = 22 + VIS * 15 + 12; drawWin(x, 4, Y0, 168, 252 - Y0, 'menu'); let y = Y0 + 3; for (const [t, c, z] of detail(i)) for (const l of Font.wrap(t, 152, z || 9)) { if (y > 240) break; Font.draw(x, l, 10, y, c || UIC.text, UIC.textSh, z || 9); y += (z || 9) + 2; } } };
   UI.push(scr); while (true) { const n = rows().length; if (Input.repeat('up') && sel > 0) { sel--; Sound.sfx('cursor'); } if (Input.repeat('down') && sel < n - 1) { sel++; Sound.sfx('cursor'); } if (Input.pressed('b') || Input.pressed('a')) { Input.consume('a', 'b'); Sound.sfx('cancel'); break; } yield; } UI.remove(scr);
@@ -53,7 +53,7 @@ function* bossDexScreen() {
 const ORB_SRC = (() => { const S = {}; const add = (k, t) => (S[k] = S[k] || []).push(t); for (const sp in ORB_DROP) ORB_DROP[sp].forEach((k, i) => add(k, SPECIES[sp].n + (i === 0 ? '（首殺）' : ''))); for (const c in COMMISSIONS) if (COMMISSIONS[c].reward && COMMISSIONS[c].reward.orb) add(COMMISSIONS[c].reward.orb, '委託「' + COMMISSIONS[c].n + '」'); add('galeCut', '村長（冒險者許可）'); return S; })();
 function* orbDexScreen() {
   const st = Game.st, keys = [...Object.keys(ORB_A), ...Object.keys(ORB_P)], seen = k => (st.orbSeen || {})[k];
-  yield* listScreen('寶珠圖鑑　' + keys.filter(seen).length + '/' + keys.length, () => keys.map(k => ({ t: (ORB_A[k] ? '◆' : '◇') + (ORB_A[k] || ORB_P[k]).n, r: seen(k) ? '已取得' : '', col: seen(k) ? (ORB_A[k] ? '#c8f0ff' : UIC.warm) : UIC.dis })),
+  yield* listScreen('寶珠圖鑑　' + keys.filter(seen).length + '/' + keys.length, () => keys.map(k => ({ ic: typeof orbIcon === 'function' ? orbIcon(k) : null, t: (typeof orbIcon === 'function' && orbIcon(k) ? '' : ORB_A[k] ? '◆' : '◇') + (ORB_A[k] || ORB_P[k]).n, r: seen(k) ? '已取得' : '', col: seen(k) ? (ORB_A[k] ? '#c8f0ff' : UIC.warm) : UIC.dis })),
     i => { const k = keys[i]; if (!k) return []; const o = { k, x: 0, e: [], lv: 1 }; return [[orbInfo(o), UIC.text], ['取得：' + ((ORB_SRC[k] || []).join('、') || '？？？'), '#c8b0ff', 8], ...(ORB_A[k] ? [['進化：強攻 ' + evoOptText(o, 0, 'A') + '→' + evoOptText(o, 1, 'A') + '／附加 ' + evoOptText(o, 0, 'B') + '→' + evoOptText(o, 1, 'B'), UIC.muted, 8]] : [])]; });
 }
 { const _dx = dexScreen; dexScreen = function* () { const r = yield* ask('要看什麼？', ['魔物圖鑑', '頭目・精英', '寶珠圖鑑']); if (r === 0) yield* _dx(); else if (r === 1) yield* bossDexScreen(); else if (r === 2) yield* orbDexScreen(); }; }
