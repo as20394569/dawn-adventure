@@ -132,13 +132,13 @@ skillTreeScreen = function* () {
     drawWin(x, 4, 22, 168, VIS * 16 + 8, 'menu'); if (!L.length) Font.draw(x, tab ? '還沒有寶珠。打倒精英和頭目吧！' : '還沒有技能。', 12, 28, UIC.muted, UIC.textSh, 10);
     L.slice(top, top + VIS).forEach((R, k) => { const Y = 26 + k * 16; if (top + k === i) selBar(x, 6, Y - 1, 164, 15);
       if (tab) { drawOrbLine(x, R, 12, Y - 1, isActiveOrb(R) ? '#c8f0ff' : UIC.warm); const h = orbHost(R); if (h) Font.drawR(x, 'E', 166, Y - 1, UIC.accent, UIC.textSh, 10); return; }
-      if (R.sig) { Font.draw(x, '★' + skillMove(R.sig).n, 12, Y - 1, '#ffd860', UIC.textSh, 10); Font.drawR(x, '職業招式 MP' + skillMP(R.sig), 166, Y, UIC.muted, UIC.textSh, 8); }
+      if (R.sig) { Font.draw(x, '★' + skillMove(R.sig).n, 12, Y - 1, '#ffd860', UIC.textSh, 10); Font.drawR(x, 'MP' + skillMP(R.sig) + (tpAvail(st) > 0 ? '　A強化' : ''), 166, Y, tpAvail(st) > 0 ? UIC.warm : UIC.muted, UIC.textSh, 8); }
       else if (R.orb) { drawOrbLine(x, R.orb, 12, Y - 1, isActiveOrb(R.orb) ? '#c8f0ff' : UIC.warm, orbPending(R.orb) ? ' ！' : ''); if (R.g) Font.drawR(x, GEAR[R.g.b].n.slice(0, 4), 166, Y, UIC.muted, UIC.textSh, 8); }
       else Font.draw(x, R.empty === 'a' ? '◆（空的技能孔）' : '◇（' + GEAR[R.g.b].n.slice(0, 6) + '的空孔）', 12, Y - 1, UIC.dis, UIC.textSh, 10); });
     if (top > 0) x.drawImage(UPARROW, 86, 23); if (top + VIS < L.length) x.drawImage(DOWNARROW, 86, 22 + VIS * 16 + 3);
     const Y0 = 22 + VIS * 16 + 12, R = L[i]; drawWin(x, 4, Y0, 168, 252 - Y0, 'menu');
     let txt = ''; if (tab && R) txt = orbInfo(R) + (orbHost(R) ? '（鑲在' + GEAR[orbHost(R).b].n + '）' : '');
-    else if (R && R.sig) { const m = skillMove(R.sig); txt = (m.pow ? '威力' + m.pow + '　' : '') + m.d + sigTalentText(st); }
+    else if (R && R.sig) { const m = skillMove(R.sig); txt = '職業招式　' + (m.pow ? '威力' + m.pow + '　' : '') + m.d + sigTalentText(st) + '\nA：用天賦點強化'; }
     else if (R && R.orb) txt = orbInfo(R.orb) + (orbPending(R.orb) ? '　按A進化！' : '');
     else if (R) txt = R.empty === 'a' ? '到鐵匠舖把主動技能寶珠鑲進武器，就能在戰鬥中使用。（武器品質越高，孔越多）' : '到鐵匠舖把被動寶珠鑲進這件裝備。';
     drawFitText(x, txt, 10, Y0 + 4, 152, 252 - Y0 - 20, 10); Font.draw(x, '鑲嵌・拆卸・融合：鐵匠舖', 10, 238, UIC.muted, UIC.textSh, 8);
@@ -147,7 +147,7 @@ skillTreeScreen = function* () {
   while (true) { const L = tab ? bag() : rows();
     if (Input.pressed('left') || Input.pressed('right')) { tab = 1 - tab; sel = 0; Sound.sfx('cursor'); }
     if (Input.repeat('up') && sel > 0) { sel--; Sound.sfx('cursor'); } if (Input.repeat('down') && sel < L.length - 1) { sel++; Sound.sfx('cursor'); }
-    if (Input.pressed('a')) { Input.consume('a'); const R = L[sel], o = tab ? R : R && R.orb; if (o && orbPending(o)) { UI.remove(scr); yield* orbEvolveFlow(o); UI.push(scr); } else Sound.sfx('bump'); }
+    if (Input.pressed('a')) { Input.consume('a'); const R = L[sel], o = tab ? R : R && R.orb; if (!tab && R && R.sig) { UI.remove(scr); yield* sigScreen(); UI.push(scr); } else if (o && orbPending(o)) { UI.remove(scr); yield* orbEvolveFlow(o); UI.push(scr); } else Sound.sfx('bump'); }
     if (Input.pressed('b')) { Input.consume('b'); Sound.sfx('cancel'); break; } yield; }
   UI.remove(scr);
 };

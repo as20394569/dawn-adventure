@@ -71,16 +71,16 @@ const ORB_EVO = [12, 36];
 const ORB_STAGE = ['', '・改', '・極'];
 /* ---------- class signature skills (branch 0 of the talents strengthens them) ---------- */
 const SIG = {
-  swordsman: { n: '武者一閃', tpl: 'iaiSlash', pow: 88, mp: 5, d: '劍士的招牌居合。先制出手，容易會心。' },
-  mage: { n: '元素奔流', tpl: 'manaBurst', pow: 82, mp: 6, d: '魔導士的招牌魔法。屬性跟著武器與附魔。' },
-  guardian: { n: '聖盾衝擊', tpl: 'guardStrike', pow: 64, mp: 4, d: '守護者的招牌盾擊。攻擊後展開1回合護盾。', shieldAfter: 1 },
-  ranger: { n: '影牙連射', tpl: 'twinStrike', pow: 36, mp: 4, d: '遊俠的招牌連射。先制的兩段攻擊。', prio: 1 },
-  bard: { n: '共鳴旋律', tpl: 'battleSong', mp: 5, d: '吟遊詩人的招牌歌曲。物攻、魔攻提升一級，回復12%最大HP，特技+1層。', healAfter: 12, specAfter: 1 },
-  machinist: { n: '機關砲擊', tpl: 'clockBomb', pow: 84, mp: 5, d: '機工士的招牌砲擊。削減護盾。' },
-  monk: { n: '連環寸勁', tpl: 'comboPunch', pow: 30, mp: 4, d: '武僧的招牌連拳。多段攻擊並累積氣。' },
-  dragoon: { n: '龍騰擊', tpl: 'jump', pow: 132, mp: 6, d: '龍騎士的招牌跳躍。跳上高空避開攻擊，下回合落下。' },
-  otherworlder: { n: '曙光之刃', tpl: 'dawnBreak', pow: 86, mp: 6, d: '異界勇者的招牌斬擊。吸取生命，容易會心。' },
-  spellblade: { n: '魔劍解放', tpl: 'manaSlash', pow: 68, mp: 3, d: '魔劍士的招牌魔劍。奪取對手的MP。' },
+  swordsman: { n: '武者一閃', tpl: 'iaiSlash', pow: 88, mp: 5, d: '先制居合，容易會心。' },
+  mage: { n: '元素奔流', tpl: 'manaBurst', pow: 82, mp: 6, d: '屬性跟著武器與附魔。' },
+  guardian: { n: '聖盾衝擊', tpl: 'guardStrike', pow: 64, mp: 4, d: '盾擊後展開護盾。', shieldAfter: 1 },
+  ranger: { n: '影牙連射', tpl: 'twinStrike', pow: 36, mp: 4, d: '先制兩連射。', prio: 1 },
+  bard: { n: '共鳴旋律', tpl: 'battleSong', mp: 5, d: '攻魔提升，回復HP，特技+1。', healAfter: 12, specAfter: 1 },
+  machinist: { n: '機關砲擊', tpl: 'clockBomb', pow: 84, mp: 5, d: '削減護盾的砲擊。' },
+  monk: { n: '連環寸勁', tpl: 'comboPunch', pow: 30, mp: 4, d: '多段連拳，累積氣。' },
+  dragoon: { n: '龍騰擊', tpl: 'jump', pow: 132, mp: 6, d: '躍上高空，下回合落下。' },
+  otherworlder: { n: '曙光之刃', tpl: 'dawnBreak', pow: 86, mp: 6, d: '吸取生命，容易會心。' },
+  spellblade: { n: '魔劍解放', tpl: 'manaSlash', pow: 68, mp: 3, d: '奪取對手MP。' },
 };
 const sigId = (st = Game.st) => st && st.cls && SIG[clsV7(st.cls)] ? 'sig_' + clsV7(st.cls) : null;
 // MOVES entries: animation / mechanics from the template, new names and power

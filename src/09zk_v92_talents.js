@@ -146,7 +146,7 @@ talentScreen = function* () {
       if (t < 4) { x.fillStyle = has ? shade(ccol, -0.1) : '#30375a'; x.fillRect(100, Y + 21, 2, 3); } }
     const DY = 172; drawWin(x, 4, DY, 168, 80, 'menu');
     if (row < 0) { const B = T[br]; Font.draw(x, B.n, 12, DY + 2, shade(ccol, 0.35), UIC.textSh, 11); Font.drawR(x, '已投入' + brPts9(br, st) + '／15點', 164, DY + 4, UIC.muted, UIC.textSh, 8);
-      drawFitText(x, B.d + '每層二選一，離開畫面後就確定，之後要改需要「遺忘之書」。天賦最多' + TP_CAP + '點（已投入' + tpSpent(st) + '點）。', 12, DY + 17, 152, 24, 10, UIC.text); }
+      drawFitText(x, B.d + '每層二選一。', 12, DY + 17, 152, 24, 10, UIC.text); }
     else { const O = T[br].tiers[row][col], has = tcHas(br, row, st), chosen = has && tcOf(st)[br + '.' + row] === col, blk = tierBlock9(br, row, st);
       Font.draw(x, O.n, 12, DY + 2, shade(ccol, 0.35), UIC.textSh, 11); Font.drawR(x, T[br].n + '・第' + RN[row] + '層　' + tierCost9(row) + '點', 164, DY + 4, UIC.muted, UIC.textSh, 8);
       drawFitText(x, optDesc9(O), 12, DY + 17, 152, 24, 10, chosen ? UIC.accent : UIC.text);
