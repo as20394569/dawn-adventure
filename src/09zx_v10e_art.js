@@ -37,3 +37,23 @@ function orbIcon(k) { const ik = orbIconKey(k); return (ik && ITEM_ICON[ik]) || 
 
 /* ---------- portraits: the v10.3 story characters share a field look but get their own face ---------- */
 Object.assign(PORTRAIT_NAME, { 畫家艾琳: 'painter', 艾琳: 'painter', 老礦工巴爾: 'oldBarr', 巴爾: 'oldBarr', 露比: 'ruby', 小風: 'kiteKid', 老兵杜克: 'oldDuke', 杜克: 'oldDuke' });
+
+/* ---------- v10.4.1 portraits from Codex's original large images (player: 「原始大圖直接拿來用」) ----------
+   The 32×32 portraits were shrunk with nearest-neighbour and looked speckled (some faces read as scary). The originals are
+   embedded at 192×192 (tools/portrait_hd.py) and drawn smoothly into the same 32×32 frame, so on a phone (scale 6) every
+   pixel of the original shows. They are decoded the first time a character speaks. */
+const PORTRAIT_HD = {};
+function portraitHD(k) {
+  if (k in PORTRAIT_HD) return PORTRAIT_HD[k]; const R = typeof PORTRAIT_HD_ROWS !== 'undefined' && PORTRAIT_HD_ROWS[k]; if (!R) return (PORTRAIT_HD[k] = null);
+  const [w, h, cols, rows] = R, c = mkCanvas(w, h), x = c.getContext('2d'), CH = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  rows.forEach((r, y) => { let X = 0; for (const [, n, ch] of r.matchAll(/(\d*)(.)/g)) { const len = n ? +n : 1; if (ch !== '.') { x.fillStyle = cols[CH.indexOf(ch)]; x.fillRect(X, y, len, 1); } X += len; } });
+  c.hd = 1; return (PORTRAIT_HD[k] = c);
+}
+{ const KEY = new Map(Object.entries(PORTRAIT_ART).map(([k, c]) => [c, k])), _po = portraitOf;
+  portraitOf = function (w) { const im = _po(w), k = im && KEY.get(im); return (k && portraitHD(k)) || im; }; }
+{ const _ds = drawSpeaker, BLANK = mkCanvas(32, 32);
+  drawSpeaker = function (x, tb) {
+    const s = tb.spk, im = s && s.img; if (!im || !im.hd || tb.y < 60) return _ds(x, tb);
+    s.img = BLANK; try { _ds(x, tb); } finally { s.img = im; }
+    const px = tb.x + 2; x.save(); x.imageSmoothingEnabled = true; x.imageSmoothingQuality = 'high'; x.drawImage(im, px + 3, tb.y - 34, 32, 32); x.restore();
+  }; }

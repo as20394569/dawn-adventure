@@ -149,6 +149,10 @@ for f in sorted(glob.glob(os.path.join(root, 'art', 'battle', 'portraits', '*.pn
     po[k] = rle_rows(f)
 js += 'const PORTRAIT_PX_ROWS = ' + json.dumps(po, separators=(',', ':'), ensure_ascii=False) + ';\n'
 print('portraits', len(po))
+# v10.4.1: the dialogue portraits from Codex's original large images (tools/portrait_hd.py, 192×192), drawn smoothly at 32×32
+ph = {os.path.basename(f)[:-4]: rle_rows(f) for f in sorted(glob.glob(os.path.join(root, 'art', 'battle', 'portraits_hd', '*.png')))}
+js += 'const PORTRAIT_HD_ROWS = ' + json.dumps(ph, separators=(',', ':')) + ';\n'
+print('hd portraits', len(ph))
 # v10.4 (Codex task U): fist gloves (right glove, 7×9) and item icons (orbs, enchant stones), palette rows
 gl = {os.path.basename(f)[:-4]: pal_rows(f) for f in sorted(glob.glob(os.path.join(root, 'art', 'battle', 'gloves', '*.png'))) if 'preview' not in f}
 js += 'const GLOVE_PX_ROWS = ' + json.dumps(gl, separators=(',', ':')) + ';\n'
