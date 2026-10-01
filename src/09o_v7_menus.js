@@ -46,7 +46,7 @@ function* skillTreeScreen() {
 }
 
 /* ---------- the main menu: 技能 = weapon skills, 天賦 = class talents (dot when points are waiting) ---------- */
-{ const TILES = [['狀態', '能力・技能'], ['任務', '進度・追蹤'], ['屬性', '自由加點'], ['技能', '招式・寶珠'], ['天賦', '職業天賦'], ['背包', '道具・素材'], ['裝備', '更換・詳情'], ['圖鑑', '魔物資料'], ['紀錄', '地圖・成就'], ['存檔', '記錄進度'], ['設定', '音量・速度'], ['關閉', '回到遊戲']];
+{ const TILES = [['狀態', '能力・技能'], ['任務', '進度・追蹤'], ['屬性', '自由加點'], ['技能', '技能・編排'], ['天賦', '職業天賦'], ['背包', '道具・素材'], ['裝備', '更換・詳情'], ['圖鑑', '魔物資料'], ['紀錄', '地圖・成就'], ['存檔', '記錄進度'], ['設定', '音量・速度'], ['關閉', '回到遊戲']];
   startMenu = function* () {
     Sound.sfx('menu'); let idx = Game.menuIdx || 0;
     while (true) {
@@ -82,10 +82,10 @@ function* skillTreeScreen() {
 { const _pt = drawPassiveTile; drawPassiveTile = function (x, st, X, Y, on) { _pt(x, st, X, Y, on); }; }
 
 /* ---------- battle help: a page about weapon skills first ---------- */
-BATTLE_HELP.unshift(['武器技能', ['技能跟著武器走：每把武器有2招主動、1個被動，和累積3層後在下一次攻擊或技能時發動的「特技」（戰鬥畫面右下角的◆）。',
-  '普通攻擊不花MP，還會回復少量MP；主動技能越常用，熟練度越高、威力越強。',
-  '副武器：再帶一把武器，借用它的1招主動技能（選單→技能）。',
-  '職業天賦會強化某些武器或玩法，換了武器也可以重點天賦。']]);
+BATTLE_HELP.unshift(['武器技能', ['每把武器帶著1個技能：裝備就能用，用滿 6／10／14 次（看冷卻長短）就永久學會，換了武器也能用。',
+  '武器還有被動和「特技」：普通攻擊累積層數，滿了就在下一次攻擊或技能時發動（戰鬥畫面右下角的◆）。',
+  '普通攻擊不花MP，還會回復少量MP。短刀、拳套的普攻是 2 段；每種武器的普攻各有特色（裝備的詳情會寫）。',
+  '職業有擅長的武器種類：普攻和特技威力 +10%。']]);
 
 /* ---------- saves ---------- */
 { const _ng = newGameState; newGameState = function (...a) { const st = _ng.apply(this, a); if (st) { st.skV = 5; st.ct = {}; st.bp = {}; st.bpT = {}; st.skills = {}; st.skp = 0; st.tp = 0; } return st; }; }

@@ -127,7 +127,7 @@ function* craftScreen() {
     const e = L[idx], Y0 = 37 + VIS * 16 + 10; drawWin(x, 4, Y0, 168, H - Y0 - 4, 'menu'); if (!e) return; let y = Y0 + 3;
     if (e.R) { const it = ITEMS[e.R.out]; drawFitText(x, it.d || '', 10, y, 152, 24, 10); y += 26; }
     else { const B = GEAR[e.k], g0 = { b: e.k, q: 1, r: 1, a: [] }; drawFitText(x, gearLines(g0)[0] || B.d || '', 10, y, 152, 22, 10, GQ[1][1]); y += 23;
-      if (WSK[e.k]) { const S = WSK[e.k]; drawFitText(x, '特技：' + S.s.n + '　寶珠孔：1〜3（依品質）', 10, y, 152, 11, 9, UIC.accent); y += 12; } }
+      if (WSK[e.k]) { const S = WSK[e.k]; const sk = typeof weaponSkill12 === 'function' && weaponSkill12(e.k); drawFitText(x, '特技：' + S.s.n + (sk && DEF.skills[sk] ? '　技能：' + DEF.skills[sk].name : ''), 10, y, 152, 11, 9, UIC.accent); y += 12; } }
     const mats = e.R ? e.R.mats : GEAR_RECIPE[e.k].mats, gold = e.R ? e.R.gold || 0 : GEAR_RECIPE[e.k].gold;
     Font.draw(x, e.R ? '需要的素材' : '需要的素材（普通打造）', 10, y, UIC.muted, UIC.textSh, 9); if (gold) Font.drawR(x, gold + ' G', 164, y, st.money >= gold ? UIC.warm : UIC.bad, UIC.textSh, 9); y += 11;
     for (const [k, n] of Object.entries(mats)) { let z = 10; while (z > 8 && Font.width('・' + ITEMS[k].n, z) > 110) z--; const ex = Font.draw(x, '・' + ITEMS[k].n, 12, y, UIC.text, UIC.textSh, z); if (have(k) < n && typeof matSrc === 'function') { const src = matSrc(k); if (src) Font.draw(x, '（' + src + '）', ex + 1, y + 1, UIC.muted, UIC.textSh, 8); } Font.drawR(x, have(k) + ' / ' + n, 164, y, have(k) >= n ? UIC.good : UIC.bad, UIC.textSh, 10); y += 11; }
@@ -164,7 +164,7 @@ function* forgeFlow(k) {
   { if (!bpCan(k, lv)) { Sound.sfx('bump'); yield* say(missingText(bpCost(k, lv))); return; } const c = bpCost(k, lv); st.money -= c.gold; for (const i in c.mats) st.bag[i] -= c.mats[i]; q = bpRoll(lv); }
   Sound.sfx('rock'); yield* say('鏘！鏘！鏘！'); const g = makeGear(k, q); Sound.jingle(q >= 3 ? 'levelup' : 'item');
   yield* itemGet('鐵匠打造了' + gearName(g) + '！（品質：' + qName(q) + '）');
-  if (B.slot === 'weapon' && WSK[k] && !st.flags.wsTut) { st.flags.wsTut = 1; yield* say('每把武器都有自己的「特技」，普通攻擊累積到一定層數就會自動發動。\n技能要靠「技能寶珠」：在鐵匠舖把寶珠鑲進武器。'); }
+  if (B.slot === 'weapon' && WSK[k] && !st.flags.wsTut) { st.flags.wsTut = 1; yield* say('每把武器都有自己的「特技」，普通攻擊累積到一定層數就會自動發動。\n每把武器也帶著一個技能：裝備就能用，用熟了就會永久學會。'); }
 }
 // 重鑄: affixes (the old flow) or quality (pay the recipe ×2 again; the quality never goes down)
 { const _rf = reforgeFlow; reforgeFlow = function* () {

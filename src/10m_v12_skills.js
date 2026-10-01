@@ -13,6 +13,7 @@ for (const k in SKILL12) { const D = DEF.skills['o_' + k]; if (!D) { bvErr('v12'
   D.cooldown = cd; D.prio = prio || 0; D.tags = D.tags.filter(t => t !== 'priority').concat(prio ? ['priority'] : []); D.metadata = { ...D.metadata, learn }; }
 // §5.3 unique weapon skills: cooldown by power (≤65: 0, 66–95: 1, ≥96: 2), learned like the others
 for (const id in DEF.skills) if (id.startsWith('u_')) { const D = DEF.skills[id], p = D.power || 0, cd = p >= 96 ? 2 : p >= 66 ? 1 : 0; D.cooldown = cd; D.metadata = { ...D.metadata, learn: LEARN_OF_CD[cd] }; }
+{ const D = DEF.skills.u_moonHarp; if (D && !D.effects.some(e => e && e.type === 'cleanse')) D.effects.push({ type: 'cleanse', target: 'self' }); } // 月光奏鳴：「消除異常狀態」 (MOVES.cure had no v12 effect)
 for (const id in DEF.skills) if (DEF.skills[id].cooldown == null) DEF.skills[id].cooldown = 0; // basic attack, weapon specials, monster moves: no cooldown
 // evolutions: 「MP−40%」 becomes 「冷卻−1」 on a skill that has a cooldown (draft §2.5); 「先制」 is 搶先 (core: prioSkill)
 { const P = DEF.passives.evo, mk = P.make; P.make = v => { const [k] = evoCode(v.code), sk = DEF.skills[v.skill]; if (k === 'cheap' && sk && sk.cooldown > 0) return { mods: [{ stage: 'skill', cdAdd: -1, cond: { skillIs: v.skill } }] }; return mk(v); }; }

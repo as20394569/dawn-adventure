@@ -180,7 +180,7 @@ Battle.prototype.finish = function* () {
 };
 Battle.prototype.skillNotes = function* (notes) {
   for (const n of notes) { const nm = BB.nameOf(Game.st, n.id);
-    if (n.k === 'learned') { Sound.jingle('item'); yield* this.msg('「' + nm + '」用熟了，永久學會了！（卸下寶珠也能使用，選單→技能編排）', { wait: true }); }
+    if (n.k === 'learned') { Sound.jingle('item'); yield* this.msg('「' + nm + '」用熟了，永久學會了！（換了武器也能使用，選單→技能編排）', { wait: true }); }
     else if (n.k === 'evolve') { Sound.sfx('charge'); yield* this.msg('「' + nm + '」可以進化了！（選單→技能）', { wait: true }); } }
 };
 Battle.prototype.heroFaint = function* () { yield* this.msg(Game.st.name + '倒下了……', { wait: true }); };

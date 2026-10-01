@@ -33,7 +33,7 @@ Battle.prototype.drawClassRes = function (x, gauge, gy) {
   const core = this.core, u = core.byId.H, Hv = this.H; if (!u) return; const C = DEF.classes[u.cls]; if (!C) return;
   const tgt = () => { const v = this.pickV || (u.data.lastTarget && this.views[u.data.lastTarget]); const t = v && core.byId[v.id]; return t && core.isUp(t) ? t : core.alive('B')[0]; };
   if (u.cls === 'ranger') { const t = tgt(), n = t ? BV12.markOf(core, u, t) : 0, N = BV12.markMax(core, u); gauge('獵印', n, N, gy, n >= N, n >= N); return; }
-  if (u.cls === 'machinist') { const s = core.statusOf(u, 'turret'), N = BV12.turretMax(core, u); gauge('砲台', s ? s.stacks : 0, N, gy, !!s, false); return; }
+  if (u.cls === 'machinist') { const n = Math.max(0, Hv.st.turret || 0), N = BV12.turretMax(core, u); gauge('砲台', n, N, gy, n > 0, false); return; } // the played-back ammo (core is a step ahead)
   if (u.cls === 'otherworlder') { const t = tgt(), n = t ? BV12.insightOf(core, u, t) : 0, N = BV12.insightMax(core, u); gauge('看破', n, N, gy, n >= N, n >= N); return; }
   if (!C.res || !(C.res in Hv.max)) return; const n = Hv.res[C.res] || 0, N = Hv.max[C.res] || 0;
   if (u.cls === 'mage') { const L = u.data.sigils || [], lw = Math.ceil(Font.width('咒印', 7)) + 4, w = N * 7 + lw, X = W - w - 3, burst = core.hasStatus(u, 'elem_burst');
@@ -153,18 +153,29 @@ talentScreen = function* () {
       if (typeof touchRegion === 'function') touchRegion(P.X, P.Y, P.w, P.h, () => { if (b === k && r === q) tapKey('a'); else { b = k; r = q; Sound.sfx('cursor'); } }); }
     const T = at(b, r), t = tierOf(r), pk = picked(b, r), blk = pk ? null : TAL12.block(b, t, st); drawWin(x, 4, 176, 168, 76, 'menu');
     if (T) { Font.draw(x, T.name, 10, 178, '#ffd860', UIC.textSh, 10); Font.drawR(x, '〔' + T.kind + '〕' + (t < 0 ? '4 點' : (t + 1) + ' 點'), 166, 179, UIC.muted, UIC.textSh, 8);
-      drawFitText(x, T.desc, 10, 192, 152, 36, 10); Font.draw(x, msgT > 0 ? msg : pk ? 'A：退回這個天賦' : blk ? blk : (t >= 0 && TAL12.has(b, t, st) ? 'A：改選這個（退回另一個）' : 'A：選擇'), 10, 236, msgT > 0 ? UIC.warm : pk ? UIC.accent : blk ? UIC.bad : UIC.text, UIC.textSh, 8); }
+      drawFitText(x, T.desc, 10, 192, 152, 36, 10); const fr = fresh.has(t < 0 ? 'k' : b + '.' + t), other = t >= 0 && TAL12.has(b, t, st);
+      const line = msgT > 0 ? msg : pk ? (fr ? 'A：退回（離開前還能改）' : '已確定・改要用遺忘之書') : other ? (fr ? 'A：改選這個' : '已選另一個・改要用遺忘之書') : blk ? blk : 'A：選擇';
+      let z = 8; while (z > 6 && Font.width(line, z) > 112) z--; Font.draw(x, line, 10, 237 + (8 - z), msgT > 0 ? UIC.warm : pk ? (fr ? UIC.accent : UIC.good) : other && !fr ? UIC.dis : blk ? UIC.bad : UIC.text, UIC.textSh, z); }
+    const have = (st.bag && st.bag.talentReset) || 0; drawBtn(x, 124, 236, 44, 13, false); Font.drawC(x, '重置' + (have ? '×' + have : ''), 146, 236, TAL12.spent(st) && have ? UIC.warm : UIC.dis, UIC.textSh, 8);
+    if (typeof touchRegion === 'function') touchRegion(124, 236, 44, 13, () => tapKey('start'));
     if (msgT > 0) msgT--;
   } };
+  const fresh = new Set(); // picks made during this visit can be undone or switched freely; after leaving, only 遺忘之書 resets them
   const say2 = s => { msg = s; msgT = 90; };
   UI.push(scr);
   while (true) {
     if (Input.repeat('left')) { b = (b + 2) % 3; Sound.sfx('cursor'); } if (Input.repeat('right')) { b = (b + 1) % 3; Sound.sfx('cursor'); }
     if (Input.repeat('up') && r > 0) { r--; Sound.sfx('cursor'); } if (Input.repeat('down') && r < 6) { r++; Sound.sfx('cursor'); }
-    if (Input.pressed('a')) { Input.consume('a'); const t = tierOf(r), o = optOf(r), T = at(b, r);
-      if (picked(b, r)) { const why = TAL12.refundBlock(b, t, st); if (why) { Sound.sfx('bump'); say2(why); } else { TAL12.refund(b, t, st); Sound.sfx('cancel'); clampHP(); say2('退回了「' + T.name + '」。'); } }
-      else if (t >= 0 && TAL12.has(b, t, st)) { const why = TAL12.refundBlock(b, t, st); if (why) { Sound.sfx('bump'); say2(why); } else { TAL12.refund(b, t, st); TAL12.pick(b, t, o, st); Sound.sfx('select'); clampHP(); say2('改選了「' + T.name + '」。'); } }
-      else { const why = TAL12.block(b, t, st); if (why) { Sound.sfx('bump'); say2(why); } else { TAL12.pick(b, t, o, st); Sound.sfx('statUp'); clampHP(); say2('學會了「' + T.name + '」！'); } } }
+    if (Input.pressed('a')) { Input.consume('a'); const t = tierOf(r), o = optOf(r), T = at(b, r), fk = t < 0 ? 'k' : b + '.' + t;
+      if (picked(b, r) || (t >= 0 && TAL12.has(b, t, st))) { const why = !fresh.has(fk) ? '已確定的天賦要用遺忘之書重置（START）' : TAL12.refundBlock(b, t, st);
+        if (why) { Sound.sfx('bump'); say2(why); }
+        else if (picked(b, r)) { TAL12.refund(b, t, st); fresh.delete(fk); Sound.sfx('cancel'); clampHP(); say2('退回了「' + T.name + '」。'); }
+        else { TAL12.refund(b, t, st); TAL12.pick(b, t, o, st); Sound.sfx('select'); clampHP(); say2('改選了「' + T.name + '」。'); } }
+      else { const why = TAL12.block(b, t, st); if (why) { Sound.sfx('bump'); say2(why); } else { TAL12.pick(b, t, o, st); fresh.add(fk); Sound.sfx('statUp'); clampHP(); say2('學會了「' + T.name + '」！'); } } }
+    if (Input.pressed('start')) { Input.consume('start'); if (!TAL12.spent(st)) { Sound.sfx('bump'); say2('還沒有選任何天賦'); } else { UI.remove(scr); const have = (st.bag && st.bag.talentReset) || 0;
+        if (!have) yield* say('重置天賦需要「遺忘之書」。\n（道具店有賣）');
+        else if (yield* yesNo('要讀遺忘之書，把' + ((CLASSES[st.cls] || {}).n || '') + '的天賦全部重置嗎？\n（點數全部退回；持有' + have + '本，會用掉1本）')) { st.bag.talentReset--; st.tal12[c] = {}; fresh.clear(); clampHP(); Sound.sfx('heal'); }
+        UI.push(scr); } }
     if (Input.pressed('b')) { Input.consume('b'); Sound.sfx('cancel'); break; } yield; }
   UI.remove(scr);
 };

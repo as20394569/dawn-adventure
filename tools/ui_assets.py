@@ -5,7 +5,8 @@ import numpy as np
 from PIL import Image
 ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'art', 'ui')
 ICONS = ['psn', 'par', 'slp', 'brn', 'wet', 'shield', 'tangle', 'atk_up', 'atk_down', 'def_up', 'def_down', 'spa_up', 'spa_down', 'spd_up', 'spd_down', 'spe_up', 'spe_down',
-         'rage', 'smoke', 'mark', 'focus', 'crit', 'wall', 'static', 'after', 'ench', 'aegis', 'frozen', 'parry']  # v23: Codex task J, native 14x14 pixel art in art/ui/icons14
+         'rage', 'smoke', 'mark', 'focus', 'crit', 'wall', 'static', 'after', 'ench', 'aegis', 'frozen', 'parry',
+         'first', 'burst', 'overdrive', 'initiative', 'turret']  # v23: Codex task J, v12: task AC — native 14x14 pixel art in art/ui/icons14
 ICON, FX = 14, 64
 def shrink(im, s):
     im = im.convert('RGBA'); a = np.array(im).astype(np.float32); al = a[:, :, 3:4] / 255; a[:, :, :3] *= al
