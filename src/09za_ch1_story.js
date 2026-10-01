@@ -292,7 +292,7 @@ function* creekCure() {
   yield* fadeOut(16); Sound.jingle('heal'); yield* wait(50); yield* fadeIn(16);
   yield* sayAll(['漢斯手臂上的黑斑，慢慢地淡了下去。', '漢斯：「……身體好輕。這陣子像被什麼東西壓著一樣。」', '漢斯：「你救了我兩次了。我們一家欠你一輩子。」',
     '諾拉：「這個……給你。是我繡的緞帶，會保佑你平安。」']);
-  gainBP('qNoraRibbon', 3); Sound.jingle('item'); yield* itemGet('得到了「諾拉的緞帶」的設計圖和打造券！（鐵匠可以打造）');
+  gainBP('qNoraRibbon', 3); Sound.jingle('item'); yield* itemGet('得到了「諾拉的緞帶」的設計圖和打造券！');
   yield* sayAll(['漢斯：「對了，北邊橋頭的沼澤鱷……牠原本就住在碧溪谷的上游。」', '漢斯：「被黑水趕下山之後，牠就一直待在橋頭，誰靠近就咬誰。水變乾淨了，可是牠已經被瘴氣迷了心……」', '漢斯：「要過橋去北邊的森林，恐怕只能打倒牠了。」']);
   f.creekQ = 3; st.money += 800; yield* itemGet('也得到了謝禮800 G！');
   yield* say('（目標：打倒北方橋頭的沼澤鱷。推薦Lv13）');

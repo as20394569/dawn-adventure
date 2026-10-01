@@ -139,23 +139,25 @@ talentScreen = function* () {
   const at = (b, r) => r < 6 ? DEF.talents[c + '.' + b + '.' + Math.floor(r / 2) + '.' + (r % 2)] : DEF.talents[c + '.k' + b];
   const tierOf = r => r < 6 ? Math.floor(r / 2) : -1, optOf = r => r < 6 ? r % 2 : 0;
   const picked = (b, r) => r < 6 ? TAL12.of(st)[b + '.' + tierOf(r)] === optOf(r) : TAL12.key(st) === b;
-  const tile = (b, r) => r < 6 ? { X: 4 + b * 57, Y: 46 + Math.floor(r / 2) * 31 + (r % 2) * 14 + (r >= 4 ? 4 : 0), w: 55, h: 13 } : { X: 4 + b * 57, Y: 156, w: 55, h: 15 };
+  const CX = k => 12 + k * 55, CW = 52, tierY = t => 46 + t * 31 + (t >= 2 ? 4 : 0); // a gutter on the left for the tier numbers
+  const tile = (b, r) => r < 6 ? { X: CX(b), Y: tierY(Math.floor(r / 2)) + (r % 2) * 14, w: CW, h: 13 } : { X: CX(b), Y: 156, w: CW, h: 15 };
   const scr = { draw(x) {
     screenBG(x); headerBar(x, '天賦・' + ((CLASSES[st.cls] || CLASSES[c] || {}).n || '')); const av = tpAvail(st); Font.drawR(x, '天賦點 ' + av + '／' + tpTotal(st), W - 6, 2, av ? UIC.warm : UIC.muted, UIC.textSh);
-    for (let k = 0; k < 3; k++) { const X = 4 + k * 57; Font.drawC(x, TR.br[k][0], X + 27, 22, UIC.warm, UIC.textSh, 10); Font.drawC(x, TR.br[k][1] + '・' + TAL12.brPts(k, st) + '點', X + 27, 33, UIC.muted, UIC.textSh, 7); }
-    Font.draw(x, '1', 0, 49, UIC.dis, null, 7); Font.draw(x, '2', 0, 80, UIC.dis, null, 7); Font.draw(x, '3', 0, 115, UIC.dis, null, 7);
-    if (!deepOk(st)) Font.drawC(x, '— 第 3 層與核心天賦：天賦覺醒後開放 —', W / 2, 106, UIC.dis, UIC.textSh, 7);
-    Font.drawC(x, '核心天賦（三選一・4 點）', W / 2, 143, '#ffd860', UIC.textSh, 8);
+    for (let k = 0; k < 3; k++) { const X = CX(k); Font.drawC(x, TR.br[k][0], X + CW / 2, 21, UIC.warm, UIC.textSh, 10); Font.drawR(x, TAL12.brPts(k, st) + '點', X + CW, 24, TAL12.brPts(k, st) ? '#ffd860' : UIC.muted, UIC.textSh, 7);
+      const d = TR.br[k][1]; let z = 7; while (z > 6 && Font.width(d, z) > CW) z--; Font.drawC(x, d, X + CW / 2, 33, UIC.muted, UIC.textSh, z); }
+    for (let t = 0; t < 3; t++) Font.drawC(x, String(t + 1), 6, tierY(t) + 8, UIC.dis, UIC.textSh, 8);
+    if (!deepOk(st)) Font.drawC(x, '— 第 3 層與核心天賦：天賦覺醒後開放 —', W / 2 + 4, 106, UIC.dis, UIC.textSh, 7);
+    Font.drawC(x, '核心天賦（三選一・4 點）', W / 2 + 4, 143, '#ffd860', UIC.textSh, 8);
     for (let k = 0; k < 3; k++) for (let q = 0; q < 7; q++) { const T = at(k, q); if (!T) continue; const P = tile(k, q), on = k === b && q === r, pk = picked(k, q), t = tierOf(q), blk = pk ? null : TAL12.block(k, t, st), other = q < 6 && TAL12.has(k, t, st) && !pk;
-      x.fillStyle = pk ? 'rgba(200,160,80,0.55)' : other ? 'rgba(40,40,56,0.6)' : blk ? 'rgba(20,22,34,0.8)' : 'rgba(40,60,90,0.7)'; x.fillRect(P.X, P.Y, P.w, P.h);
-      if (on) { x.fillStyle = '#ffd860'; x.fillRect(P.X, P.Y, P.w, 1); x.fillRect(P.X, P.Y + P.h - 1, P.w, 1); x.fillRect(P.X, P.Y, 1, P.h); x.fillRect(P.X + P.w - 1, P.Y, 1, P.h); }
+      x.fillStyle = pk ? 'rgba(200,160,80,0.55)' : other ? 'rgba(34,36,50,0.85)' : blk ? 'rgba(24,26,40,0.9)' : 'rgba(40,60,90,0.75)'; x.fillRect(P.X, P.Y, P.w, P.h);
+      const edge = on ? '#ffd860' : pk ? '#c8a050' : blk || other ? '#2e3348' : '#4a6a98'; x.fillStyle = edge; x.fillRect(P.X, P.Y, P.w, 1); x.fillRect(P.X, P.Y + P.h - 1, P.w, 1); x.fillRect(P.X, P.Y, 1, P.h); x.fillRect(P.X + P.w - 1, P.Y, 1, P.h);
       let z = 9; while (z > 7 && Font.width(T.name, z) > P.w - 6) z--; Font.drawC(x, T.name, P.X + P.w / 2, P.Y + (P.h - 13) / 2 + (9 - z) / 2, pk ? '#fff4d0' : other || blk ? UIC.dis : UIC.text, UIC.textSh, z);
       if (typeof touchRegion === 'function') touchRegion(P.X, P.Y, P.w, P.h, () => { if (b === k && r === q) tapKey('a'); else { b = k; r = q; Sound.sfx('cursor'); } }); }
     const T = at(b, r), t = tierOf(r), pk = picked(b, r), blk = pk ? null : TAL12.block(b, t, st); drawWin(x, 4, 176, 168, 76, 'menu');
     if (T) { Font.draw(x, T.name, 10, 178, '#ffd860', UIC.textSh, 10); Font.drawR(x, '〔' + T.kind + '〕' + (t < 0 ? '4 點' : (t + 1) + ' 點'), 166, 179, UIC.muted, UIC.textSh, 8);
       drawFitText(x, T.desc, 10, 192, 152, 36, 10); const fr = fresh.has(t < 0 ? 'k' : b + '.' + t), other = t >= 0 && TAL12.has(b, t, st);
-      const line = msgT > 0 ? msg : pk ? (fr ? 'A：退回（離開前還能改）' : '已確定・改要用遺忘之書') : other ? (fr ? 'A：改選這個' : '已選另一個・改要用遺忘之書') : blk ? blk : 'A：選擇';
-      let z = 8; while (z > 6 && Font.width(line, z) > 112) z--; Font.draw(x, line, 10, 237 + (8 - z), msgT > 0 ? UIC.warm : pk ? (fr ? UIC.accent : UIC.good) : other && !fr ? UIC.dis : blk ? UIC.bad : UIC.text, UIC.textSh, z); }
+      const line = msgT > 0 ? msg : pk ? (fr ? 'A：退回（離開前可改）' : '已確定・改要用遺忘之書') : other ? (fr ? 'A：改選這個' : '已選另一個・要用遺忘之書') : blk ? blk : 'A：選擇';
+      let z = 8; while (z > 7 && Font.width(line, z) > 112) z--; Font.draw(x, line, 10, 237 + (8 - z), msgT > 0 ? UIC.warm : pk ? (fr ? UIC.accent : UIC.good) : other && !fr ? UIC.dis : blk ? UIC.bad : UIC.text, UIC.textSh, z); }
     const have = (st.bag && st.bag.talentReset) || 0; drawBtn(x, 124, 236, 44, 13, false); Font.drawC(x, '重置' + (have ? '×' + have : ''), 146, 236, TAL12.spent(st) && have ? UIC.warm : UIC.dis, UIC.textSh, 8);
     if (typeof touchRegion === 'function') touchRegion(124, 236, 44, 13, () => tapKey('start'));
     if (msgT > 0) msgT--;
@@ -167,7 +169,7 @@ talentScreen = function* () {
     if (Input.repeat('left')) { b = (b + 2) % 3; Sound.sfx('cursor'); } if (Input.repeat('right')) { b = (b + 1) % 3; Sound.sfx('cursor'); }
     if (Input.repeat('up') && r > 0) { r--; Sound.sfx('cursor'); } if (Input.repeat('down') && r < 6) { r++; Sound.sfx('cursor'); }
     if (Input.pressed('a')) { Input.consume('a'); const t = tierOf(r), o = optOf(r), T = at(b, r), fk = t < 0 ? 'k' : b + '.' + t;
-      if (picked(b, r) || (t >= 0 && TAL12.has(b, t, st))) { const why = !fresh.has(fk) ? '已確定的天賦要用遺忘之書重置（START）' : TAL12.refundBlock(b, t, st);
+      if (picked(b, r) || (t >= 0 && TAL12.has(b, t, st))) { const why = !fresh.has(fk) ? '已確定・用遺忘之書重置' : TAL12.refundBlock(b, t, st);
         if (why) { Sound.sfx('bump'); say2(why); }
         else if (picked(b, r)) { TAL12.refund(b, t, st); fresh.delete(fk); Sound.sfx('cancel'); clampHP(); say2('退回了「' + T.name + '」。'); }
         else { TAL12.refund(b, t, st); TAL12.pick(b, t, o, st); Sound.sfx('select'); clampHP(); say2('改選了「' + T.name + '」。'); } }

@@ -49,14 +49,14 @@ drawPassiveInfo = function (x, st, X, Y, w) {
     c.res12 = Z.res ? RES12_NAME(Z.res) : Z.turret ? '砲台' : '獵印'; c.sig12 = (DEF.skills[Z.sig] || {}).name || '';
     const T = TAL12_TREE[clsV7(k)]; if (T && T.br) c.br = T.br; return c; }; }
 
-/* ---------- status badges for the v12 statuses (native 14px icons from Codex task AC; text badges if the strip is missing) ---------- */
-Object.assign(BADGE_OF, { first_next: 'first', elem_burst: 'burst', evade_up: 'after', overdrive: 'overdrive', first_strike: 'initiative', sure_crit: 'focus', turret: 'turret', hunt_mark: 'mark' });
+/* ---------- status badges for the v12 statuses (smooth HD icons, v12.0.1; text badges if the strips are missing) ---------- */
+Object.assign(BADGE_OF, { guard: 'wall', frenzy: 'rage', mirror: 'aegis', airborne: 'air', delay: 'delay', first_next: 'first', elem_burst: 'burst', evade_up: 'after', overdrive: 'overdrive', first_strike: 'initiative', sure_crit: 'focus', turret: 'turret', hunt_mark: 'mark' });
 for (const [k, n, c] of [['first', '搶', '#2a9aa4'], ['burst', '爆', '#8a4ad0'], ['overdrive', '載', '#d0641e'], ['initiative', '機', '#b08a20'], ['turret', '砲', '#66788a'],
-  ['mark', '印', '#c84848'], ['focus', '集', '#c89a30'], ['after', '影', '#5a78c0']]) if (!STATUS_INFO[k]) STATUS_INFO[k] = [n, c];
+  ['mark', '印', '#c84848'], ['wall', '防', '#6a7a90'], ['rage', '怒', '#c03030'], ['aegis', '鏡', '#3a98b0'], ['air', '空', '#4a88c8'], ['delay', '延', '#707884'], ['focus', '集', '#c89a30'], ['after', '影', '#5a78c0']]) if (!STATUS_INFO[k]) STATUS_INFO[k] = [n, c];
 // 獵印 and the turret's ammo show their count on the badge
 { const _b = Battle.prototype.badges; Battle.prototype.badges = function (v) { return _b.call(this, v).map(b => b === 'mark' && v.st.hunt_mark > 0 ? 'mark#' + v.st.hunt_mark : b === 'turret' && v.st.turret > 0 ? 'turret#' + v.st.turret : b); }; }
 { const _br = badgeRow; badgeRow = function (x, list, X, Y) {
-    for (const b of list) { if (!b) continue; const [k, n] = String(b).split('#'), icon = typeof ICON_IDX !== 'undefined' && ICON_IDX[k] !== undefined && UI_PX.icons && UI_PX.icons.ok;
+    for (const b of list) { if (!b) continue; const [k, n] = String(b).split('#'), icon = iconOk(k);
       _br(x, [k], X, Y); if (n) { const cx = X + (icon ? ICON_SZ : 16) - 3; x.fillStyle = '#10121e'; x.fillRect(cx - 2, Y + 5, 7, 8); Font.drawC(x, n, cx + 1, Y + 2, '#ffffff', null, 7); }
       X += icon ? ICON_SZ + 2 : 18; } }; }
 

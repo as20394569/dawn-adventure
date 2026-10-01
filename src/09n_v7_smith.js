@@ -152,7 +152,7 @@ function* forgeFlow(k) {
   if (tk) { // v25: with a ticket the smith always uses it — free, quality at least the ticket's
     const r = yield* ask('要用打造券打造「' + B.n + '」嗎？\n（免費・品質保底「' + qName(tk) + '」' + (tn > 1 ? '・共有' + tn + '張' : '') + '）', ['使用打造券', '取消']); if (r !== 0) return;
     const q = Math.max(tkUse(k, st), bpRoll(2)); Sound.sfx('rock'); yield* say('鏘！鏘！鏘！'); const g = makeGear(k, q); Sound.jingle(q >= 3 ? 'levelup' : 'item');
-    yield* itemGet('鐵匠打造了' + gearName(g) + '！（品質：' + qName(q) + '）'); return;
+    yield* itemGet('鐵匠打造了' + gearName(g) + '！'); // the 【品質】 tag in front already says it return;
   }
   const oddsT = lv => bpOdds(lv).map((p, q) => p && q >= 2 ? qName(q + 1) + p : '').filter(Boolean).join(' ');
   const opts = [], acts = [];
@@ -163,7 +163,7 @@ function* forgeFlow(k) {
   let q;
   { if (!bpCan(k, lv)) { Sound.sfx('bump'); yield* say(missingText(bpCost(k, lv))); return; } const c = bpCost(k, lv); st.money -= c.gold; for (const i in c.mats) st.bag[i] -= c.mats[i]; q = bpRoll(lv); }
   Sound.sfx('rock'); yield* say('鏘！鏘！鏘！'); const g = makeGear(k, q); Sound.jingle(q >= 3 ? 'levelup' : 'item');
-  yield* itemGet('鐵匠打造了' + gearName(g) + '！（品質：' + qName(q) + '）');
+  yield* itemGet('鐵匠打造了' + gearName(g) + '！'); // the 【品質】 tag in front already says it
   if (B.slot === 'weapon' && WSK[k] && !st.flags.wsTut) { st.flags.wsTut = 1; yield* say('每把武器都有自己的「特技」，普通攻擊累積到一定層數就會自動發動。\n每把武器也帶著一個技能：裝備就能用，用熟了就會永久學會。'); }
 }
 // 重鑄: affixes (the old flow) or quality (pay the recipe ×2 again; the quality never goes down)

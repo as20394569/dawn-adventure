@@ -29,12 +29,12 @@ function weaponPath(type, dir) {
   const P = [], line = (x0, y0, x1, y1, c, c2) => { const n = Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0)); for (let t = 0; t <= n; t++) { const x = Math.round(x0 + (x1 - x0) * t / n), y = Math.round(y0 + (y1 - y0) * t / n); P.push([x, y, c]); if (c2) P.push([x + 1, y, c2]); } };
   if (type === 'sword') {
     if (dir === 'down') { P.push([15, 3, 'T'], [15, 4, 'T'], [14, 5, 'U'], [15, 5, 'U'], [13, 5, 'U']); line(14, 6, 1, 19, 'I', 'i'); }
-    if (dir === 'up') { P.push([13, 8, 'T'], [12, 9, 'T'], [11, 9, 'U'], [12, 10, 'U'], [13, 10, 'U']); line(11, 11, 4, 18, 'I', 'i'); }
+    if (dir === 'up') { P.push([15, 6, 'T'], [14, 7, 'T'], [13, 7, 'U'], [14, 8, 'U'], [15, 8, 'U']); line(13, 9, 3, 19, 'I', 'i'); } // v12.0.1: as long as the front / side sword
     if (dir === 'left') { P.push([13, 6, 'T'], [13, 7, 'T'], [12, 8, 'U'], [13, 8, 'U'], [14, 8, 'U']); line(13, 9, 13, 20, 'I', 'i'); }
   }
   if (type === 'axe') {
     if (dir === 'down') { line(15, 4, 3, 19, 'T'); P.push([13, 3, 'I'], [14, 3, 'I'], [15, 2, 'I'], [14, 2, 'i'], [13, 4, 'i'], [12, 4, 'I']); }
-    if (dir === 'up') { line(12, 8, 4, 17, 'T'); P.push([12, 6, 'I'], [13, 6, 'I'], [13, 7, 'i'], [14, 7, 'I'], [11, 7, 'i'], [14, 6, 'i']); }
+    if (dir === 'up') { line(13, 5, 4, 18, 'T'); P.push([13, 3, 'I'], [14, 3, 'I'], [14, 4, 'i'], [15, 4, 'I'], [12, 4, 'i'], [15, 3, 'i']); } // v12.0.1: as long as the front / side axe
     if (dir === 'left') { line(13, 6, 13, 19, 'T'); P.push([12, 5, 'I'], [13, 4, 'I'], [14, 4, 'i'], [14, 5, 'I'], [12, 4, 'i']); }
   }
   if (type === 'staff') {

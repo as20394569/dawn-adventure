@@ -27,4 +27,9 @@ for k in kinds:
     s = Image.new('RGBA', (FX * len(fr), FX))
     for i, f in enumerate(fr): s.alpha_composite(shrink(Image.open(f), FX), (i * FX, 0))
     s.save(os.path.join(ROOT, 'px', 'fx_' + k + '.png')); print(k, len(fr))
-json.dump({'icons': ICONS, 'icon': ICON, 'fx': FX}, open(os.path.join(ROOT, 'px', 'meta.json'), 'w'))
+# v12.0.1: smooth high-resolution icons (tools/draw_hd_icons.py → art/ui/icons_hd), drawn smoothly into the 14 px slot
+import sys; sys.path.insert(0, os.path.dirname(os.path.abspath(__file__))); from draw_hd_icons import HD_ICONS, OUT as HD
+hd = Image.new('RGBA', (HD * len(HD_ICONS), HD))
+for i, k in enumerate(HD_ICONS): hd.alpha_composite(Image.open(os.path.join(ROOT, 'icons_hd', 'icon_' + k + '.png')).convert('RGBA'), (i * HD, 0))
+hd.save(os.path.join(ROOT, 'px', 'icons_hd.png'), optimize=True)
+json.dump({'icons': ICONS, 'icon': ICON, 'fx': FX, 'iconsHd': HD_ICONS, 'iconHd': HD}, open(os.path.join(ROOT, 'px', 'meta.json'), 'w'))

@@ -83,7 +83,7 @@ for (const k in COM_EX) { const c = COMMISSIONS[k]; if (!c) continue; const E = 
 { const _rt = rewardText; rewardText = function (r) { const t = _rt(r); return r && r.bp ? (t ? t + '、' : '') + '【獨家】' + GEAR[r.bp].n + '的設計圖' : t; }; }
 { const _gr = giveReward; giveReward = function* (r) {
     const bp = r && r.bp; if (!bp) return yield* _gr(r);
-    yield* _gr({ ...r, bp: undefined }); gainBP(bp, 1); Sound.jingle('item'); yield* itemGet('獲得了獨家報酬「' + GEAR[bp].n + '」的設計圖！（只有這個委託拿得到）');
+    yield* _gr({ ...r, bp: undefined }); gainBP(bp, 1); Sound.jingle('item'); yield* itemGet('獲得了獨家報酬「' + GEAR[bp].n + '」的設計圖！');
   };
 }
 

@@ -6,7 +6,12 @@ const UI_PX = {};
 for (const k in (typeof UI_PX_SRC !== 'undefined' ? UI_PX_SRC : {})) { const im = new Image(); im.onload = () => { im.ok = true; }; im.src = UI_PX_SRC[k]; UI_PX[k] = im; }
 const ICON_IDX = {}; ((typeof UI_PX_META !== 'undefined' && UI_PX_META.icons) || []).forEach((k, i) => ICON_IDX[k] = i);
 const ICON_SZ = (typeof UI_PX_META !== 'undefined' && UI_PX_META.icon) || 12, UIFX_SZ = (typeof UI_PX_META !== 'undefined' && UI_PX_META.fx) || 64;
-function drawIcon(x, key, X, Y) { const im = UI_PX.icons; if (!im || !im.ok || ICON_IDX[key] === undefined) return false; x.drawImage(im, ICON_IDX[key] * ICON_SZ, 0, ICON_SZ, ICON_SZ, X, Y, ICON_SZ, ICON_SZ); return true; }
+const ICON_HD_IDX = {}, ICON_HD = (typeof UI_PX_META !== 'undefined' && UI_PX_META.iconHd) || 64; ((typeof UI_PX_META !== 'undefined' && UI_PX_META.iconsHd) || []).forEach((k, i) => ICON_HD_IDX[k] = i);
+// v12.0.1 (player: 「狀態圖示太過像素 有時看不出來」): the smooth high-resolution icon, scaled into the slot with smoothing
+const iconOk = key => (UI_PX.icons_hd && UI_PX.icons_hd.ok && ICON_HD_IDX[key] !== undefined) || (UI_PX.icons && UI_PX.icons.ok && ICON_IDX[key] !== undefined);
+function drawIcon(x, key, X, Y) { const hd = UI_PX.icons_hd; if (hd && hd.ok && ICON_HD_IDX[key] !== undefined) { const sm = x.imageSmoothingEnabled; x.imageSmoothingEnabled = true; x.imageSmoothingQuality = 'high';
+    x.drawImage(hd, ICON_HD_IDX[key] * ICON_HD, 0, ICON_HD, ICON_HD, X, Y, ICON_SZ, ICON_SZ); x.imageSmoothingEnabled = sm; return true; }
+  const im = UI_PX.icons; if (!im || !im.ok || ICON_IDX[key] === undefined) return false; x.drawImage(im, ICON_IDX[key] * ICON_SZ, 0, ICON_SZ, ICON_SZ, X, Y, ICON_SZ, ICON_SZ); return true; }
 { const _br = badgeRow; badgeRow = function (x, list, X, Y) { for (const b of list) if (b) { if (drawIcon(x, b, X, Y - 1)) X += ICON_SZ + 2; else { statusBadge(x, b, X, Y); X += 18; } } }; }
 function drawStageIcons(x, b, X, Y, max = 4) {
   let n = 0; for (const k of ['atk', 'def', 'spa', 'spd', 'spe']) { const v = b.stages && b.stages[k]; if (!v || n >= max) continue;
