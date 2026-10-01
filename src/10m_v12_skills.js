@@ -60,13 +60,14 @@ Object.assign(BB, {
 // the orb system is gone: no active orbs in weapons, no passive orbs in armour, no orb rewards (paused, draft §7.5)
 activeOrbs = function () { return []; }; passiveOrbs = function () { return []; };
 orbGet = function* () { /* v12: 寶珠取消，獎勵暫停（待定） */ };
-for (const k in ORB_DROP) delete ORB_DROP[k];
+const BOOK_DROP12 = Object.keys(ORB_DROP); for (const k in ORB_DROP) delete ORB_DROP[k]; // the elites / bosses that dropped orbs now drop 修練之書 (10o)
 // enchanting is gone: an enchanted weapon keeps its save data but the enchant does nothing; the stones' chests stay closed until decided
 for (const k in EN_EFF) delete EN_EFF[k];
-for (const id in MAPS) { const d = MAPS[id]; if (d && d.items) d.items = d.items.filter(i => !(i.item && ITEMS[i.item] && ITEMS[i.item].use === 'enchant')); }
+// the 8 extension-area chests that held enchant stones now hold 修練之書 (the upper-grade ones two)
+for (const id in MAPS) { const d = MAPS[id]; if (d && d.items) for (const i of d.items) if (i.item && ITEMS[i.item] && ITEMS[i.item].use === 'enchant') { i.n = ITEMS[i.item].en[1] >= 2 ? 2 : 1; i.item = 'trainBook'; } }
 
 /* ---------- 修練之書 (draft §6.2): a learned skill's evolution progress +12 ---------- */
-ITEMS.trainBook = { n: '修練之書', cat: '永久強化', use: 'trainBook', d: '選一個已學會的技能，進化進度 +12。' };
+ITEMS.trainBook = { n: '修練之書', cat: '永久強化', use: 'trainBook', price: 1500, d: '選一個已學會的技能，進化進度 +12。' };
 function* trainBookFlow(k) {
   const st = Game.st, L = BB.available(st).filter(id => { const e = BB.skillObj(st, id); return e && e.learned && id.startsWith('o_') && orbStage(e) < 2; });
   if (!L.length) { yield* say('沒有可以修練的技能。（已學會、還能進化的技能才行）'); return; }
@@ -120,9 +121,12 @@ BB.apply = function (core, st = Game.st) {
 { const _hs = heroStats; heroStats = function (st = Game.st) { const s = _hs(st), g = typeof shieldOn === 'function' && shieldOn(st); if (g && clsV7(st.cls) === 'guardian') s.block = Math.min(45, gearStats(g).sp.block || 0); return s; }; }
 
 /* ---------- saves (battleV 3): the v9.2 talents are refunded once (st.tal12 starts empty) — told on the first walk ---------- */
-{ const _so = startOverworld; startOverworld = function (...a) { const st = Game.st, old = st && (st.battleV || 0) < 3; if (st) { BB.sync(st); BB.slots(st); st.battleV = 3; if (old && st.cls && !st.tal12) st.flags.tal12Told = 0; }
-    const ow = _so.apply(this, a);
-    if (st && old && st.cls && ow && ow.run && !st.flags.tal12Told) { st.flags.tal12Told = 1; ow.run((function* () { yield* wait(20); yield* sayAll(['（戰鬥系統更新了！）', '天賦全部重新設計，所有天賦點都已經退回。', '每個職業有了自己的核心資源，技能也有了冷卻。到「選單→天賦」重新分配吧。']); })()); }
+{ const _so = startOverworld; startOverworld = function (...a) { const st = Game.st, old = st && (st.battleV || 0) < 3; let conv = [];
+    if (st) { BB.sync(st); conv = v12Convert(st); BB.slots(st); st.battleV = 3; }
+    const ow = _so.apply(this, a), L = [];
+    if (st && old && st.cls && !st.flags.tal12Told) { st.flags.tal12Told = 1; L.push('（戰鬥系統更新了！）', '天賦全部重新設計，所有天賦點都已經退回。', '每個職業有了自己的核心資源，技能也有了冷卻。到「選單→天賦」重新分配吧。'); }
+    if (conv.length) L.push(...conv);
+    if (L.length && ow && ow.run) ow.run((function* () { yield* wait(20); yield* sayAll(L); })());
     return ow; }; }
 { const _ng = newGameState; newGameState = function (...a) { const st = _ng.apply(this, a); if (st) { st.battleV = 3; st.tal12 = {}; } return st; }; }
 

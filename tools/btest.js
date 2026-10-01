@@ -25,7 +25,7 @@ module.exports = async (g) => {
         const C = DEF.classes[c]; if (!DEF.skills[C.sig] || !DEF.mechanics[C.mechanic]) bad.push(c + ' sig/mech'); if ((CLASS_SKILLS12[c] || []).some(k => !DEF.skills['o_' + k])) bad.push(c + ' skill table'); }
       ok('A', '10 職業 × 21 天賦（3 流派×3 層×2＋3 核心）、職業招式、職業機制、技能表', cls.length === 10 && !bad.length, bad.slice(0, 6).join(' | '));
       const loose = []; for (const id in DEF.skills) for (const x of [...DEF.skills[id].effects, ...DEF.skills[id].after]) if (typeof x !== 'string' || !DEF.effects[x]) loose.push(id); ok('A', '技能效果都以 ID 引用（DEF.effects）', !loose.length, loose.slice(0, 4).join(','));
-      const acc = Object.keys(GEAR).filter(k => GEAR[k].slot === 'acc'), noT = acc.filter(k => !GEAR[k].trait || !(GEAR[k].fx || []).length === 1); ok('A', '飾品 ' + acc.length + ' 個，每個 1 條特性', acc.length === 53 && !noT.length, noT.slice(0, 4).join(','));
+      const acc = Object.keys(GEAR).filter(k => GEAR[k].slot === 'acc'), noT = acc.filter(k => !GEAR[k].trait || (GEAR[k].fx || []).length !== 1); ok('A', '飾品 ' + acc.length + ' 個，每個 1 條特性', acc.length >= 53 && !noT.length, noT.slice(0, 4).join(','));
       const wp = Object.keys(GEAR).filter(k => GEAR[k].slot === 'weapon'), noS = wp.filter(k => !weaponSkill12(k)); ok('A', '武器 ' + wp.length + ' 把，每把都有武器技能', !noS.length, noS.slice(0, 4).join(','));
       const cdMiss = Object.keys(SKILL12).filter(k => DEF.skills['o_' + k].cooldown == null || !DEF.skills['o_' + k].metadata.learn); ok('A', '技能都有冷卻與學會次數', !cdMiss.length, cdMiss.join(',')); }
     /* =================== B: core rules =================== */
@@ -139,12 +139,13 @@ module.exports = async (g) => {
     { const c = mk([hero(), foe('B1')]); c.start(false); for (let i = 0; i < 12; i++) c.applyStatus(c.byId.H, c.byId.H, 'stage_atk', { delta: 1, dur: 3 }); for (let i = 0; i < 12; i++) c.applyStatus(c.byId.H, c.byId.B1, 'stage_def', { delta: -1, dur: 3 });
       ok('G', '極端層數：能力等級夾在 ±3', c.statusOf(c.byId.H, 'stage_atk').stacks === 3 && c.statusOf(c.byId.B1, 'stage_def').stacks === -3); }
     /* =================== H: save migration =================== */
-    { let okm = false, info = ''; try { __game.newGameState('舊'); const st = Game.st; applyStartClass('swordsman'); st.lv = 20; st.battleV = 2; delete st.tal12; st.tcAll = { swordsman: { '0.0': 1, '1.0': 0 } };
-        st.orbs = [{ u: 'o1', k: 'galeCut', x: 20, e: ['A'], lv: 1 }, { u: 'o2', k: 'vigor', x: 0, e: [], lv: 2 }]; const w = mainWeapon(st); if (w) { w.o = ['o1']; w.en = { t: '火', lv: 1 }; }
-        const snap = JSON.stringify(st.orbs) + JSON.stringify(w && w.en); BB.sync(st); const spec = BB.heroSpec(st, { kind: 'wild' });
-        okm = TAL12.spent(st) === 0 && JSON.stringify(st.orbs) + JSON.stringify(w && w.en) === snap && BB.entry(st, 'galeCut').x >= 20 && spec.data.talents.length === 0 && !spec.passives.some(p => p.key === 'enchant') && heroStats(st).welem !== '火';
-        info = 'spent ' + TAL12.spent(st) + ' lib ' + BB.entry(st, 'galeCut').x + ' welem ' + heroStats(st).welem; } catch (e) { info = e.message; }
-      ok('H', '舊存檔：天賦退回、寶珠與附魔資料保留但沒有作用、技能庫保留進度', okm, info); }
+    { let okm = false, info = ''; try { __game.newGameState('舊'); const st = Game.st; applyStartClass('swordsman'); st.lv = 20; st.battleV = 2; delete st.tal12; st.flags.v12conv = 0; st.tcAll = { swordsman: { '0.0': 1, '1.0': 0 } };
+        st.orbs = [{ u: 'o1', k: 'galeCut', x: 20, e: ['A'], lv: 1 }, { u: 'o2', k: 'vigor', x: 0, e: [], lv: 2 }, { u: 'o3', k: 'renew', x: 0, e: [], lv: 1 }]; const w = mainWeapon(st), t = (w && GEAR[w.b].t) || 1; if (w) { w.o = ['o1']; w.en = { t: '火', lv: 1 }; }
+        st.bag.enFire = 2; st.bag.enWater2 = 1; st.bag.trainBook = 0; const m0 = st.money;
+        BB.sync(st); const L = v12Convert(st), spec = BB.heroSpec(st, { kind: 'wild' }), want = 600 + 300 + 2 * 200 + 500 + 300 * t;
+        okm = TAL12.spent(st) === 0 && st.orbs.length === 0 && !(w && (w.o || w.en)) && !st.bag.enFire && !st.bag.enWater2 && st.bag.trainBook === 1 && st.money - m0 === want && BB.entry(st, 'galeCut').x >= 20 && spec.data.talents.length === 0 && L.length >= 3 && v12Convert(st).length === 0;
+        info = 'spent ' + TAL12.spent(st) + ' books ' + st.bag.trainBook + ' gold +' + (st.money - m0) + '/' + want + ' lines ' + L.length; } catch (e) { info = e.message; }
+      ok('H', '舊存檔：天賦退回；寶珠→修練之書／金錢、附魔退費、附魔石換錢（只換一次）；技能庫保留進度', okm, info); }
     /* =================== property tests: random battles keep the invariants =================== */
     { const N = 400, R = makeRng(2026), cl = Object.keys(DEF.classes), sps = Object.keys(SPECIES).filter(s => !SPECIES[s].rare && DEF.enemies[s] && MON_PANEL[s]); let bad = [], ev = 0;
       for (let i = 0; i < N; i++) { const cls = R.pick(cl), st = mkHero(cls, { lv: R.int(4, 40), tal: s => TAL12.auto(s, () => R.int(0, 1)) }), e0 = BV2.errors.length;

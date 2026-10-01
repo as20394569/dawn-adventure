@@ -13958,12 +13958,12 @@ function* wshrineEvent(ow, ent) {
   yield* say('古老的「天氣祠」。祠上刻著太陽、雨雲和雪花的圖案。\n現在的天氣是「' + WEATHER[k].n + '」。');
   if (done[id] === stamp) { yield* say('祠堂很安靜。等天氣變了再來看看吧。'); return; }
   if (k === 'clear') { if (yield* yesNo('陽光照在祠上。要祈求好運嗎？')) { done[id] = stamp; st.bless = 3; Sound.jingle('item'); yield* say('身體暖了起來！接下來3場戰鬥，一開始物攻和魔攻就提升一級。'); } }
-  else if (k === 'rain') { done[id] = stamp; yield* say('祠前的石盆積滿了雨水。'); /* v12: 附魔石暫停（獎勵待定） */ }
+  else if (k === 'rain') { done[id] = stamp; st.bag.manaPotion = (st.bag.manaPotion || 0) + 1; yield* itemGet('祠前的石盆積滿了雨水，水底沉著一瓶魔力藥水！'); }
   else if (k === 'storm') { yield* say('轟隆——！閃電打在祠頂上，一隻雷鷹被引了過來！'); const res = yield* ow.battleScript({ sp: 'stormHawk', lv: (mapLevel(id) || [20, 20])[1] + 2, kind: 'elite', id: 'wxStorm' + id, noCard: 1 });
-    if (res === 'win') { done[id] = stamp; /* v12: 附魔石暫停（獎勵待定） */ } }
-  else if (k === 'fog') { done[id] = stamp; yield* say('霧裡走出一個戴著斗篷的商人。「……只在起霧的時候做生意。」'); yield* shopFlow(['attrReset', 'talentReset'].filter(q => ITEMS[q])); /* v12: 附魔石暫停 */ }
+    if (res === 'win') { done[id] = stamp; st.bag.trainBook = (st.bag.trainBook || 0) + 1; yield* itemGet('雷鷹掉下了一本被雷燒焦邊角的書。得到了修練之書！'); } }
+  else if (k === 'fog') { done[id] = stamp; yield* say('霧裡走出一個戴著斗篷的商人。「……只在起霧的時候做生意。」'); yield* shopFlow(['trainBook', 'attrReset', 'talentReset'].filter(q => ITEMS[q])); }
   else if (k === 'snow') { if (yield* yesNo('祠前積了厚厚的雪。要堆一個雪人嗎？')) { done[id] = stamp; for (let i = 0; i < 3; i++) { Sound.sfx('step'); yield* wait(14); } const it = pick(['hiEther', 'superPotion', 'elixir'].filter(q => ITEMS[q])); st.bag[it] = (st.bag[it] || 0) + 1; yield* itemGet('雪人堆好了！雪人的肚子裡藏著' + ITEMS[it].n + '。'); } }
-  else if (k === 'sand') { if (yield* yesNo('沙塵在祠邊堆成了小丘，好像埋著什麼。要挖挖看嗎？')) { done[id] = stamp; const roll = Math.random(); if (roll < 0.4) { const g = 300 + Math.floor(Math.random() * 700); st.money += g; yield* itemGet('挖到了古代的錢幣，價值' + g + ' G！'); } else { yield* say('……什麼也沒挖到。'); /* v12: 附魔石・寶珠暫停（獎勵待定） */ } } }
+  else if (k === 'sand') { if (yield* yesNo('沙塵在祠邊堆成了小丘，好像埋著什麼。要挖挖看嗎？')) { done[id] = stamp; const roll = Math.random(); if (roll < 0.4) { const g = 300 + Math.floor(Math.random() * 700); st.money += g; yield* itemGet('挖到了古代的錢幣，價值' + g + ' G！'); } else if (roll < 0.8) { st.bag.sandCrystal = (st.bag.sandCrystal || 0) + 2; yield* itemGet('挖到了砂晶×2！'); } else { st.bag.trainBook = (st.bag.trainBook || 0) + 1; yield* itemGet('挖到了一本埋在沙裡的修練之書！'); } } }
 }
 for (const id in EXT_AREA) Events['wshrine_' + id] = wshrineEvent;
 Object.assign(COM_TALK, {
@@ -14075,27 +14075,27 @@ Object.assign(Events, {
   *painter() { const st = Game.st, E = evOf(st), rb = st.rainbowUntil > (st.steps || 0) && onMap('lake');
     if (!E.painter) { yield* sayAll(['啊……不好意思，我在畫湖。', '我叫艾琳。小時候，媽媽常帶我來這裡。', '有一次下完雨，湖上出現了好大的彩虹。媽媽說，那是天空在笑。', '媽媽走了以後，我每年都來，想把那道彩虹畫下來……可是一直等不到。', '雨停的時候偶爾才會有彩虹。如果你看到了，能告訴我嗎？']); E.painter = 1; return; }
     if (E.painter === 1 && !rb) { yield* say(wxNow() === 'rain' || wxNow() === 'storm' ? '在下雨呢……雨停之後，說不定會有彩虹。' : '今天也沒有彩虹……不過，我會繼續等的。'); return; }
-    if (E.painter === 1 && rb) { E.painter = 2; yield* sayAll(['……你看！彩虹！', '（艾琳拿起畫筆，一句話也沒說，畫了很久很久。）', '……畫好了。', '媽媽，你看，天空在笑。', '謝謝你陪我等。這個給你——是媽媽留給我的護身符。它會保護你，就像保護過我一樣。']); /* v12: 寶珠暫停（獎勵待定） */ return; }
+    if (E.painter === 1 && rb) { E.painter = 2; yield* sayAll(['……你看！彩虹！', '（艾琳拿起畫筆，一句話也沒說，畫了很久很久。）', '……畫好了。', '媽媽，你看，天空在笑。', '謝謝你陪我等。這個給你——是媽媽留給我的護身符。它會保護你，就像保護過我一樣。']); yield* giftGear12('honeyCharm', 3); return; }
     yield* say('那幅畫，我送給萌芽鎮的旅店了。希望更多人能看到天空在笑。'); },
   *oldBarr() { const st = Game.st, E = evOf(st);
     if (!E.barr) { yield* sayAll(['……你也是來看這座山谷的？', '四十年前，我跟我老婆來這裡度蜜月。', '那天刮起了沙塵暴，她最寶貝的銀髮簪不見了。她到死都還在念。', '聽說只有沙塵暴的時候，谷裡的沙才會被翻開……', '可惜我這把老骨頭，挖不動了。']); E.barr = 1; return; }
-    if (E.barr === 1 && st.bag.silverPin) { delete st.bag.silverPin; E.barr = 2; yield* sayAll(['這是……！', '（老礦工的手在發抖。）', '……就是這支。上面還刻著我們兩個人的名字。', '四十年了……你終於回家了。', '年輕人，謝謝你。這是我當礦工時的護身石，帶著吧。']); st.money += 1500; yield* itemGet(st.name + '得到了1500 G！'); /* v12: 附魔石暫停 */ return; }
+    if (E.barr === 1 && st.bag.silverPin) { delete st.bag.silverPin; E.barr = 2; yield* sayAll(['這是……！', '（老礦工的手在發抖。）', '……就是這支。上面還刻著我們兩個人的名字。', '四十年了……你終於回家了。', '年輕人，謝謝你。這是我當礦工時的提燈，帶著吧。']); st.money += 1500; yield* itemGet(st.name + '得到了1500 G！'); yield* giftGear12('qMinerLamp', 3); return; }
     yield* say(E.barr === 2 ? '我每天都來這裡坐一下。……她應該也在這裡吧。' : '沙塵暴的時候，去祠堂那邊挖挖看吧……拜託你了。'); },
   *ruby() { const st = Game.st, E = evOf(st), fog = wxNow() === 'fog';
     if (!E.ruby) { yield* sayAll(['……！你、你不是魔物吧？', '我叫露比。我在抓螢火蟲。', '我弟弟很怕黑。爸爸在霧裡走丟以後，他晚上就一直哭……', '我想做一個螢火蟲燈籠給他。可是螢火蟲要吃沼苔才會一直發光。', '你能幫我找3把沼苔嗎？']); E.ruby = 1; return; }
     if (E.ruby === 1 && (st.bag.bogMoss || 0) >= 3) { st.bag.bogMoss -= 3; E.ruby = 2; yield* sayAll(['沼苔！謝謝你！', '（露比把沼苔放進玻璃瓶，螢火蟲一隻一隻亮了起來。）', '好漂亮……弟弟一定會喜歡的。', '……可是，我好像不知道回家的路了。', '起霧的時候，燈籠的光可以指路……等起霧了，你能陪我走回去嗎？']); return; }
-    if (E.ruby === 2 && fog) { E.ruby = 3; yield* sayAll(['起霧了！你看，燈籠的光可以穿過霧！', '（你牽著露比，跟著燈籠的光，一步一步走出沼澤。）', '……看到家了！弟弟在窗邊！', '謝謝你。爸爸以前也是這樣，牽著我的手走過霧。', '這個給你。是爸爸留下來的東西，他說能讓人在黑暗裡看清楚。']); /* v12: 附魔石暫停（獎勵待定） */ return; }
+    if (E.ruby === 2 && fog) { E.ruby = 3; yield* sayAll(['起霧了！你看，燈籠的光可以穿過霧！', '（你牽著露比，跟著燈籠的光，一步一步走出沼澤。）', '……看到家了！弟弟在窗邊！', '謝謝你。爸爸以前也是這樣，牽著我的手走過霧。', '這個給你。是爸爸留下來的東西，他說能讓人在黑暗裡看清楚。']); yield* giftGear12('ectoLantern', 3); return; }
     yield* say(E.ruby === 3 ? '弟弟現在晚上都抱著燈籠睡覺。他說，燈籠裡住著爸爸。' : E.ruby === 2 ? '等起霧的時候，再陪我走回家好嗎？' : '沼苔在沼澤裡的苔蘚上採得到……拜託你了。'); },
   *kiteKid() { const st = Game.st, E = evOf(st), w = wxNow();
     if (!E.kite && w !== 'storm') { yield* sayAll(['你看你看！我的風箏飛得好高！', '這裡的風最棒了。我叫小風，因為我是在起大風的那天出生的！']); E.kite = 1; return; }
     if ((E.kite || 0) < 2 && w === 'storm') { E.kite = 2; yield* sayAll(['嗚嗚……我的風箏……', '雷雨一來，線就斷了。風箏卡在丘頂那棵最高的樹上……', '那是爸爸做給我的最後一個風箏……等風停了，你能幫我拿下來嗎？']); return; }
-    if (E.kite === 2 && w !== 'storm') { E.kite = 3; yield* sayAll(['（你爬上樹，把風箏拿了下來。有一點破，但還能飛。）', '風箏！謝謝你！', '爸爸說，風箏最厲害的地方，是越逆風飛得越高。', '這個給你！是我在丘頂撿到的，跑步的時候好像會變快喔！']); /* v12: 寶珠暫停（獎勵待定） */ return; }
+    if (E.kite === 2 && w !== 'storm') { E.kite = 3; yield* sayAll(['（你爬上樹，把風箏拿了下來。有一點破，但還能飛。）', '風箏！謝謝你！', '爸爸說，風箏最厲害的地方，是越逆風飛得越高。', '這個給你！是我在丘頂撿到的，跑步的時候好像會變快喔！']); yield* giftGear12('swiftFeather', 3); return; }
     yield* say(E.kite === 3 ? '你看，風箏又飛起來了！逆風的時候，飛得最高！' : '今天的風好舒服喔！'); },
   *oldDuke() { const st = Game.st, E = evOf(st), n = E.duke || 0, ok = (st.steps || 0) - (E.dukeT || -999) >= 80;
     const T = [['……你也是來掃墓的？', '這些劍，都是我的戰友。三十年前，我們在這裡擋住了魔王軍。', '我是唯一活下來的。……所以我每天都來，跟他們說說話。'],
       ['又見面了。', '左邊第三把劍，是我最好的朋友的。他說打完仗要回家娶老婆，結果……', '我後來去見了他的未婚妻。她一直等著，等到頭髮都白了。'],
       ['……你來了啊。', '我想了很久，為什麼只有我活下來。', '也許，是要我記住他們吧。記住他們笑過、哭過、害怕過……然後還是往前衝。', '年輕人，這個給你。是我們部隊的徽章——「不屈」。帶著它，連同他們的份一起活下去。']];
-    if (n < 3 && (n === 0 || ok)) { yield* sayAll(T[n]); E.duke = n + 1; E.dukeT = st.steps || 0; /* v12: 寶珠暫停（獎勵待定） */ return; }
+    if (n < 3 && (n === 0 || ok)) { yield* sayAll(T[n]); E.duke = n + 1; E.dukeT = st.steps || 0; if (n === 2) yield* giftGear12('troopBadge', 3); return; }
     yield* say(n >= 3 ? '我今天也跟他們說了你的事。他們一定很高興。' : '（老兵閉著眼睛，靜靜地站在劍前。改天再來吧。）'); },
 });
 ITEMS.silverPin = { n: '銀髮簪', key: 1, cat: '重要物品', d: '刻著兩個名字的銀髮簪。埋在沙裡四十年了。' };
@@ -16395,10 +16395,10 @@ Object.assign(BB, {
 });
 activeOrbs = function () { return []; }; passiveOrbs = function () { return []; };
 orbGet = function* () { /* v12: 寶珠取消，獎勵暫停（待定） */ };
-for (const k in ORB_DROP) delete ORB_DROP[k];
+const BOOK_DROP12 = Object.keys(ORB_DROP); for (const k in ORB_DROP) delete ORB_DROP[k]; // the elites / bosses that dropped orbs now drop 修練之書 (10o)
 for (const k in EN_EFF) delete EN_EFF[k];
-for (const id in MAPS) { const d = MAPS[id]; if (d && d.items) d.items = d.items.filter(i => !(i.item && ITEMS[i.item] && ITEMS[i.item].use === 'enchant')); }
-ITEMS.trainBook = { n: '修練之書', cat: '永久強化', use: 'trainBook', d: '選一個已學會的技能，進化進度 +12。' };
+for (const id in MAPS) { const d = MAPS[id]; if (d && d.items) for (const i of d.items) if (i.item && ITEMS[i.item] && ITEMS[i.item].use === 'enchant') { i.n = ITEMS[i.item].en[1] >= 2 ? 2 : 1; i.item = 'trainBook'; } }
+ITEMS.trainBook = { n: '修練之書', cat: '永久強化', use: 'trainBook', price: 1500, d: '選一個已學會的技能，進化進度 +12。' };
 function* trainBookFlow(k) {
   const st = Game.st, L = BB.available(st).filter(id => { const e = BB.skillObj(st, id); return e && e.learned && id.startsWith('o_') && orbStage(e) < 2; });
   if (!L.length) { yield* say('沒有可以修練的技能。（已學會、還能進化的技能才行）'); return; }
@@ -16445,9 +16445,12 @@ BB.apply = function (core, st = Game.st) {
 { const _hs = heroStats; heroStats = function (st = Game.st) { const s = _hs(st); if (st && clsV7(st.cls) === 'otherworlder') s.block = 0; return s; }; }
 { const _ep = equipPick; equipPick = function* (sl) { if (sl === 'shield' && clsV7(Game.st.cls) === 'otherworlder') { Sound.sfx('bump'); yield* say('異界勇者不能裝備盾。'); return; } yield* _ep.call(this, sl); }; }
 { const _hs = heroStats; heroStats = function (st = Game.st) { const s = _hs(st), g = typeof shieldOn === 'function' && shieldOn(st); if (g && clsV7(st.cls) === 'guardian') s.block = Math.min(45, gearStats(g).sp.block || 0); return s; }; }
-{ const _so = startOverworld; startOverworld = function (...a) { const st = Game.st, old = st && (st.battleV || 0) < 3; if (st) { BB.sync(st); BB.slots(st); st.battleV = 3; if (old && st.cls && !st.tal12) st.flags.tal12Told = 0; }
-    const ow = _so.apply(this, a);
-    if (st && old && st.cls && ow && ow.run && !st.flags.tal12Told) { st.flags.tal12Told = 1; ow.run((function* () { yield* wait(20); yield* sayAll(['（戰鬥系統更新了！）', '天賦全部重新設計，所有天賦點都已經退回。', '每個職業有了自己的核心資源，技能也有了冷卻。到「選單→天賦」重新分配吧。']); })()); }
+{ const _so = startOverworld; startOverworld = function (...a) { const st = Game.st, old = st && (st.battleV || 0) < 3; let conv = [];
+    if (st) { BB.sync(st); conv = v12Convert(st); BB.slots(st); st.battleV = 3; }
+    const ow = _so.apply(this, a), L = [];
+    if (st && old && st.cls && !st.flags.tal12Told) { st.flags.tal12Told = 1; L.push('（戰鬥系統更新了！）', '天賦全部重新設計，所有天賦點都已經退回。', '每個職業有了自己的核心資源，技能也有了冷卻。到「選單→天賦」重新分配吧。'); }
+    if (conv.length) L.push(...conv);
+    if (L.length && ow && ow.run) ow.run((function* () { yield* wait(20); yield* sayAll(L); })());
     return ow; }; }
 { const _ng = newGameState; newGameState = function (...a) { const st = _ng.apply(this, a); if (st) { st.battleV = 3; st.tal12 = {}; } return st; }; }
 bvFinalize();
@@ -16630,6 +16633,40 @@ if (typeof BATTLE_HELP !== 'undefined') {
   BATTLE_HELP.unshift(['技能與冷卻', ['技能來自職業（等級到了學會）和武器（裝備就能用，用滿 6／10／14 次永久學會）。', '技能有冷卻：用完要等自己行動幾次才能再用（技能選單會顯示「冷卻N」）。', '「搶先」技能用過後，下一回合排第一個行動。', '選單→技能編排：職業招式固定一格，再放 4 個技能。']]);
   BATTLE_HELP.unshift(['職業核心資源', ['每個職業有自己的核心資源（劍意、咒印、守勢、獵印、樂章、砲台、氣、龍血、看破、魔紋），每場從 0 開始，顯示在 HP 列上方。', '職業招式會消耗它，消耗越多越強。', '選單→天賦：3 個流派 × 3 層，再加 1 個核心天賦，大多是改變規則的天賦。']]);
   BATTLE_HELP.unshift(['行動順序', ['每回合開始依速度排好順序（左邊的小方塊），輪到誰誰才行動。', '防禦會一直減傷到自己下一次行動開始。', '護盾、潮濕、能力變化等效果是以「自己的行動次數」計算。']]);
+}
+function* giftGear12(k, q = 3) { if (!GEAR[k]) return; const g = makeGear(k, q); Sound.jingle('item'); yield* itemGet('得到了' + gearName(g) + '！'); }
+GEAR.troopBadge = { n: '部隊徽章', slot: 'acc', t: 5, st: { ...GEAR.qLakeScale.st }, sp: {}, fx: ['endure'], trait: 'endure', kind: '飾品', d: '老兵杜克的部隊徽章，背面刻著「不屈」。帶著它，連同他們的份一起活下去。' };
+ACC_TRAIT.endure[2].push('部隊徽章');
+{ const _v = Battle.prototype.victory; Battle.prototype.victory = function* () {
+    const r = yield* _v.call(this); const st = Game.st, F = this.F, sp = this.cfg && this.cfg.sp; if (!st || !sp) return r;
+    const boss = this.kind === 'boss' || !!(F && F.boss), elite = !boss && (this.kind === 'elite' || !!(F && F.elite));
+    if ((boss || elite) && BOOK_DROP12.includes(sp) && chance(boss ? 0.45 : 0.3)) { st.bag.trainBook = (st.bag.trainBook || 0) + 1; Sound.jingle('item'); yield* this.msg('得到了修練之書！', { hold: 40 }); }
+    const k = boss ? pick(['megaPotion', 'megaEther']) : elite && chance(0.4) ? pick(['superPotion', 'hiEther']) : null;
+    if (k && ITEMS[k]) { st.bag[k] = (st.bag[k] || 0) + 1; yield* this.msg('得到了' + ITEMS[k].n + '！', { hold: 30 }); }
+    return r; }; }
+{ const _fd = foeDropLines; foeDropLines = function (sp, key, kind) { const L = _fd(sp, key, kind); if (BOOK_DROP12.includes(sp)) L.unshift('修練之書（機率 ' + (kind === 'boss' ? 45 : 30) + '%）');
+    L.push(kind === 'boss' ? '特級傷藥或特級魔力藥水（必得）' : '好傷藥或高級魔力藥水（40%）'); return L; }; }
+for (const c of ['c1', 'c6', 'c9', 'c14', 'c15']) if (COMMISSIONS[c]) COMMISSIONS[c].reward.items = { ...(COMMISSIONS[c].reward.items || {}), trainBook: 1 };
+if (COMMISSIONS.c7) COMMISSIONS.c7.reward.gear = 'herbPouch';
+{ const _gr = giveReward; giveReward = function* (rw) { const r = yield* _gr(rw); if (rw && rw.gear) yield* giftGear12(rw.gear, 2); return r; }; }
+{ const _u = Overworld.prototype.update; Overworld.prototype.update = function (...a) {
+    const st = this.st; if (st && st.v10 && st.flags.license && !st.flags.orbStart && !this.script && !UI.stack.length && !Game.trans) { st.flags.orbStart = 1;
+      this.run((function* () { yield* sayAll(['村長：「對了，戰鬥的招式跟你說一下。」', '村長：「招式有兩種。一種是職業的技能，等級到了自然就會。另一種是武器上的技能，拿著那把武器就能用，用得夠多次就會變成你自己的。」', '村長：「打開選單的「技能編排」，就能決定戰鬥中要帶哪些技能。」']); })()); return; }
+    return _u.apply(this, a); }; }
+function v12Convert(st) {
+  if (!st || !st.flags || st.flags.v12conv) return []; st.flags.v12conv = 1;
+  let books = 0, gold = 0, refund = 0, stones = 0; const orbs = st.orbs || [];
+  for (const o of orbs) { if (ORB_A[o.k]) books++; else if (ORB_P[o.k]) gold += [0, 300, 600, 1000][clamp(o.lv || 1, 1, 3)]; }
+  st.orbs = [];
+  for (const g of st.gear || []) { if (g.o) delete g.o; if (g.en) { refund += 300 * ((GEAR[g.b] && GEAR[g.b].t) || 1) * (g.en.lv || 1); delete g.en; } }
+  for (const k of Object.keys(st.bag || {})) { const it = ITEMS[k]; if (it && it.use === 'enchant') { const n = st.bag[k] || 0; stones += n; gold += n * (it.en[1] >= 2 ? 500 : 200); delete st.bag[k]; } }
+  if (books) st.bag.trainBook = (st.bag.trainBook || 0) + books; st.money = (st.money || 0) + gold + refund;
+  if (!orbs.length && !refund && !stones) return [];
+  const L = ['寶珠和附魔都取消了，持有的東西已經換掉：'];
+  if (books) L.push('技能寶珠 → 修練之書×' + books + '（選一個已學會的技能，進化進度 +12）。');
+  if (gold) L.push('被動寶珠和附魔石 → ' + gold + ' G。');
+  if (refund) L.push('武器上的附魔已經移除，退回附魔費用 ' + refund + ' G。');
+  return L;
 }
 </script>
 </body></html>

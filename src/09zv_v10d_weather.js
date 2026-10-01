@@ -87,12 +87,12 @@ function* wshrineEvent(ow, ent) {
   yield* say('古老的「天氣祠」。祠上刻著太陽、雨雲和雪花的圖案。\n現在的天氣是「' + WEATHER[k].n + '」。');
   if (done[id] === stamp) { yield* say('祠堂很安靜。等天氣變了再來看看吧。'); return; }
   if (k === 'clear') { if (yield* yesNo('陽光照在祠上。要祈求好運嗎？')) { done[id] = stamp; st.bless = 3; Sound.jingle('item'); yield* say('身體暖了起來！接下來3場戰鬥，一開始物攻和魔攻就提升一級。'); } }
-  else if (k === 'rain') { done[id] = stamp; yield* say('祠前的石盆積滿了雨水。'); /* v12: 附魔石暫停（獎勵待定） */ }
+  else if (k === 'rain') { done[id] = stamp; st.bag.manaPotion = (st.bag.manaPotion || 0) + 1; yield* itemGet('祠前的石盆積滿了雨水，水底沉著一瓶魔力藥水！'); }
   else if (k === 'storm') { yield* say('轟隆——！閃電打在祠頂上，一隻雷鷹被引了過來！'); const res = yield* ow.battleScript({ sp: 'stormHawk', lv: (mapLevel(id) || [20, 20])[1] + 2, kind: 'elite', id: 'wxStorm' + id, noCard: 1 });
-    if (res === 'win') { done[id] = stamp; /* v12: 附魔石暫停（獎勵待定） */ } }
-  else if (k === 'fog') { done[id] = stamp; yield* say('霧裡走出一個戴著斗篷的商人。「……只在起霧的時候做生意。」'); yield* shopFlow(['attrReset', 'talentReset'].filter(q => ITEMS[q])); /* v12: 附魔石暫停 */ }
+    if (res === 'win') { done[id] = stamp; st.bag.trainBook = (st.bag.trainBook || 0) + 1; yield* itemGet('雷鷹掉下了一本被雷燒焦邊角的書。得到了修練之書！'); } }
+  else if (k === 'fog') { done[id] = stamp; yield* say('霧裡走出一個戴著斗篷的商人。「……只在起霧的時候做生意。」'); yield* shopFlow(['trainBook', 'attrReset', 'talentReset'].filter(q => ITEMS[q])); }
   else if (k === 'snow') { if (yield* yesNo('祠前積了厚厚的雪。要堆一個雪人嗎？')) { done[id] = stamp; for (let i = 0; i < 3; i++) { Sound.sfx('step'); yield* wait(14); } const it = pick(['hiEther', 'superPotion', 'elixir'].filter(q => ITEMS[q])); st.bag[it] = (st.bag[it] || 0) + 1; yield* itemGet('雪人堆好了！雪人的肚子裡藏著' + ITEMS[it].n + '。'); } }
-  else if (k === 'sand') { if (yield* yesNo('沙塵在祠邊堆成了小丘，好像埋著什麼。要挖挖看嗎？')) { done[id] = stamp; const roll = Math.random(); if (roll < 0.4) { const g = 300 + Math.floor(Math.random() * 700); st.money += g; yield* itemGet('挖到了古代的錢幣，價值' + g + ' G！'); } else { yield* say('……什麼也沒挖到。'); /* v12: 附魔石・寶珠暫停（獎勵待定） */ } } }
+  else if (k === 'sand') { if (yield* yesNo('沙塵在祠邊堆成了小丘，好像埋著什麼。要挖挖看嗎？')) { done[id] = stamp; const roll = Math.random(); if (roll < 0.4) { const g = 300 + Math.floor(Math.random() * 700); st.money += g; yield* itemGet('挖到了古代的錢幣，價值' + g + ' G！'); } else if (roll < 0.8) { st.bag.sandCrystal = (st.bag.sandCrystal || 0) + 2; yield* itemGet('挖到了砂晶×2！'); } else { st.bag.trainBook = (st.bag.trainBook || 0) + 1; yield* itemGet('挖到了一本埋在沙裡的修練之書！'); } } }
 }
 for (const id in EXT_AREA) Events['wshrine_' + id] = wshrineEvent;
 // the clear-weather blessing: +1 attack stages at the start of the next battles
