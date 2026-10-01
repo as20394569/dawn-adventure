@@ -19,19 +19,22 @@ const WX_TABLE = {
   volcano: { clear: 60, sand: 25, fog: 15 }, swamp: { fog: 45, rain: 35, clear: 20 }, lake: { clear: 40, rain: 30, fog: 25, storm: 5 }, star: { clear: 75, fog: 25 },
 };
 const WX_MAP = { frostField: 'north', frostVillage: 'north', canyon: 'canyon', emberPass: 'volcano', swamp: 'swamp', lake: 'lake', jadeCreek: 'lake', starShrine: 'star' };
+// v10.7.2 (player: 「村莊天氣和野外場景不統一」): weather belongs to the REGION, not the map — the village and the fields
+// around it (and every map of the same region) always show the same weather
+const wxKey = id => 'R:' + (WX_MAP[id] || 'base');
 const wxTableOf = id => MAPS[id] && MAPS[id].outdoor ? WX_TABLE[WX_MAP[id] || 'base'] : null;
 function wxRoll(T) { let s = 0; for (const k in T) s += T[k]; let r = Math.random() * s; for (const k in T) { r -= T[k]; if (r < 0) return k; } return 'clear'; }
-function wxNow(st = Game.st, id = st && st.map) { if (!st || !id) return null; const T = wxTableOf(id); if (!T) return null; const W0 = st.wx || (st.wx = {}); const w = W0[id]; return w ? w.k : null; }
+function wxNow(st = Game.st, id = st && st.map) { if (!st || !id) return null; const T = wxTableOf(id); if (!T) return null; const W0 = st.wx || (st.wx = {}); const w = W0[wxKey(id)]; return w ? w.k : null; }
 // roll or advance the weather of the current map
 function wxTick(ow) {
-  const st = ow.st, id = st.map, T = wxTableOf(id); if (!T) return; const W0 = st.wx || (st.wx = {}), w = W0[id], steps = st.steps || 0;
-  if (!w) { W0[id] = { k: wxRoll(T), until: steps + 120 + Math.floor(Math.random() * 140) }; Game.wxBanner = { k: W0[id].k, t: 0 }; return; }
+  const st = ow.st, id = st.map, T = wxTableOf(id); if (!T) return; const W0 = st.wx || (st.wx = {}), w = W0[wxKey(id)], steps = st.steps || 0;
+  if (!w) { W0[wxKey(id)] = { k: wxRoll(T), until: steps + 120 + Math.floor(Math.random() * 140) }; Game.wxBanner = { k: W0[wxKey(id)].k, t: 0 }; return; }
   if (steps < w.until) return; const old = w.k; let k = wxRoll(T); if (k === old) k = wxRoll(T);
-  W0[id] = { k, until: steps + 120 + Math.floor(Math.random() * 140) }; if (k === old) return; Game.wxBanner = { k, t: 0 };
+  W0[wxKey(id)] = { k, until: steps + 120 + Math.floor(Math.random() * 140) }; if (k === old) return; Game.wxBanner = { k, t: 0 };
   if ((old === 'rain' || old === 'storm') && k === 'clear' && chance(0.35)) { st.rainbowUntil = steps + 100; Game.wxBanner.rainbow = 1; Sound.sfx('levelUp'); }
 }
 { const _u = Overworld.prototype.update; Overworld.prototype.update = function (...a) { if (this.st && this.map && !this.script) wxTick(this); return _u.apply(this, a); }; }
-{ const _ld = Overworld.prototype.load; Overworld.prototype.load = function (...a) { const r = _ld.apply(this, a); const st = this.st, w = st && st.wx && st.wx[st.map]; if (w && wxTableOf(st.map)) Game.wxBanner = { k: w.k, t: 0 }; return r; }; }
+{ const _ld = Overworld.prototype.load; Overworld.prototype.load = function (...a) { const r = _ld.apply(this, a); const st = this.st, w = st && st.wx && st.wx[wxKey(st.map)]; if (w && wxTableOf(st.map)) { const sig = wxKey(st.map) + w.k + w.until; if (Game.wxShown !== sig) { Game.wxShown = sig; Game.wxBanner = { k: w.k, t: 0 }; } } return r; }; } // the banner only when the region or its weather is new
 
 /* ---------- drawing: particles over the field and the battle stage, the icon and the banner ---------- */
 function wxIcon(x, k, X, Y) { const c = WEATHER[k].col; x.fillStyle = c;
@@ -68,7 +71,7 @@ function wxOverlay(x, k, t, w, h) {
 { const _hit = hitChance; hitChance = function (u, t, mv) { let h = _hit(u, t, mv); const b = Game.scene, k = b && b.cfg && b.cfg.wx; if (k && WEATHER[k].acc && mv && mv.acc) h = Math.max(0.05, h - WEATHER[k].acc / 100); return h; }; }
 { const _es = Battle.prototype.effSpe; Battle.prototype.effSpe = function (b) { const v = _es.call(this, b), k = this.cfg && this.cfg.wx; return k && WEATHER[k].spe ? v * WEATHER[k].spe : v; }; }
 { const _in = Battle.prototype.intro; Battle.prototype.intro = function* (...a) { const r = yield* _in.apply(this, a); const k = this.cfg && this.cfg.wx, st = Game.st;
-    if (k && st && st.wxTold !== k + (st.wx[st.map] || {}).until) { st.wxTold = k + (st.wx[st.map] || {}).until; yield* this.msg('【' + WEATHER[k].n + '】' + WEATHER[k].d, { hold: 30 }); } return r; }; }
+    if (k && st && st.wxTold !== k + (st.wx[wxKey(st.map)] || {}).until) { st.wxTold = k + (st.wx[wxKey(st.map)] || {}).until; yield* this.msg('【' + WEATHER[k].n + '】' + WEATHER[k].d, { hold: 30 }); } return r; }; }
 { const _d = Battle.prototype.draw; Battle.prototype.draw = function (x) { _d.call(this, x); const k = this.cfg && this.cfg.wx; if (!k) return; x.save(); x.beginPath(); x.rect(0, 0, W, BH); x.clip(); wxOverlay(x, k, this.t || 0, W, BH); x.restore(); wxIcon(x, k, W - 13, 3); }; }
 
 /* ---------- weather monsters (recolours of existing art) ---------- */
@@ -89,7 +92,7 @@ for (const k in WX_MON) { const [sp, n, fam, lv, role, moves, look, dex, el] = W
 
 /* ---------- 天氣祠: one event per weather period ---------- */
 function* wshrineEvent(ow, ent) {
-  const st = ow.st, id = st.map, k = wxNow(st) || 'clear', w = (st.wx || {})[id] || {}, done = st.wsh || (st.wsh = {}), stamp = k + w.until;
+  const st = ow.st, id = st.map, k = wxNow(st) || 'clear', w = (st.wx || {})[wxKey(id)] || {}, done = st.wsh || (st.wsh = {}), stamp = k + w.until;
   yield* say('古老的「天氣祠」。祠上刻著太陽、雨雲和雪花的圖案。\n現在的天氣是「' + WEATHER[k].n + '」。');
   if (done[id] === stamp) { yield* say('祠堂很安靜。等天氣變了再來看看吧。'); return; }
   if (k === 'clear') { if (yield* yesNo('陽光照在祠上。要祈求好運嗎？')) { done[id] = stamp; st.bless = 3; Sound.jingle('item'); yield* say('身體暖了起來！接下來3場戰鬥，一開始物攻和魔攻就提升一級。'); } }

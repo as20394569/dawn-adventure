@@ -11,7 +11,7 @@ function* skillTreeScreen() {
     return [
       { lbl: '普攻', col: '#c9cfe4', n: skillMove('attack', st).n, r: 'MP回復', d: () => MOVES.attack.d },
       ...(S ? S.a.map((id, i) => ({ lbl: '主動', col: UIC.accent, id, n: MOVES[id].n, r: '熟練Lv' + (skillLv(id, st) || 1) + '・MP' + skillMP(id, st), d: () => mvInfo(id) })) : []),
-      ...(S ? [{ lbl: '被動', col: UIC.warm, n: S.p.n, r: '', d: () => wpassText(S.p) + '（裝備為主武器時生效）' }, { lbl: '特技', col: '#ffd860', n: S.s.n, r: '累積' + wsN(S.s, st) + '層', d: () => wspecText(S.s, st) + '。普通攻擊打中累積1層，集滿自動發動，下一場戰鬥會保留。' }] : []),
+      ...(S ? [{ lbl: '被動', col: UIC.warm, n: S.p.n, r: '', d: () => wpassText(S.p) + '（裝備為主武器時生效）' }, { lbl: '特技', col: '#ffd860', n: S.s.n, r: '累積' + wsN(S.s, st) + '層', d: () => wspecText(S.s, st) + '。普通攻擊打中累積1層，集滿自動發動，每場戰鬥重新累積。' }] : []),
       { lbl: '副武器', col: '#b8a0ff', n: sub ? gearShort(sub) : '（未設定）', r: 'A：更換', sub: 1, d: () => '再帶一把武器當「副武器」：不加能力值，只借用它的1招主動技能（威力90%）。' + (sub ? '' : '\n目前沒有設定副武器。') },
       { lbl: '借用', col: '#b8a0ff', id: bor, n: bor ? MOVES[bor].n : '—', r: sub ? 'A：切換' : '', bor: 1, d: () => bor ? mvInfo(bor) : '設定副武器後，可以從它的兩招主動技能中選一招帶進戰鬥。' },
     ]; };
