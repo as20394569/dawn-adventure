@@ -8,7 +8,15 @@ const BR = {
   STAGE_MAX: 3, PAR_SKIP: 0.25, PAR_SPEED: 0.25, VARIANCE: [85, 100], CRIT_MUL: 1.5,
   MULTI_FOE: { 2: { hp: 0.75, pow: 0.85 }, 3: { hp: 0.6, pow: 0.75 } }, // spec G1: more foes, each weaker
   AOE_MUL: 0.75, CHAIN_MUL: 0.5,
-  ORDER_PRIO: { run: 7, item: 6, defend: 5, skill: 0, wait: -1 },
+  STATUS_RES_MAX: 0.8,
+};
+// a data value that may be a named formula: 12, or { f: 'name', v: … }
+BR.val = (x, c) => x != null && typeof x === 'object' && x.f ? BR.FORMULA[x.f](c, x.v) : x;
+// resistance to a major ailment from an enemy (spec §2.4 step 4): the target's statusRes modifiers, in %
+BR.statusResist = function (core, src, tgt, D) {
+  let r = 0; const c = { core, owner: tgt, src, tgt };
+  for (const m of tgt.mods || []) if (m.statusRes && condOk(m.cond, c)) r += m.statusRes;
+  return Math.min(BR.STATUS_RES_MAX, r / 100);
 };
 BR.stageMul = s => s >= 0 ? 1 + 0.25 * s : 1 / (1 + 0.25 * -s);
 BR.stage = (core, u, k) => { const s = core.statusOf(u, 'stage_' + k); return s ? s.stacks : 0; };
@@ -23,8 +31,8 @@ BR.FORMULA = {
   combo: c => 1 + 0.06 * (c.src.res.combo || 0),
 };
 // collect the modifiers that apply to one hit: attacker passives & statuses, defender passives & statuses, the skill, the environment
-BR.mods = function (core, src, tgt, skill, ev) {
-  const out = [], ctxA = { core, owner: src, src, tgt, skill, ev }, ctxD = { core, owner: tgt, src, tgt, skill, ev };
+BR.mods = function (core, src, tgt, skill, ev, x = {}) {
+  const out = [], ctxA = { core, owner: src, src, tgt, skill, ev, spent: x.spent || 0, n: x.n || 0 }, ctxD = { core, owner: tgt, src, tgt, skill, ev, spent: x.spent || 0, n: x.n || 0 };
   const add = (list, who, ctx) => { for (const m of list || []) if ((m.who || 'attacker') === who && condOk(m.cond, ctx)) out.push(m); };
   add(src.mods, 'attacker', ctxA); for (const s of src.statuses) add(DEF.statuses[s.id].mods, 'attacker', ctxA);
   add(tgt.mods, 'defender', ctxD); for (const s of tgt.statuses) add(DEF.statuses[s.id].mods, 'defender', ctxD);
@@ -35,7 +43,7 @@ BR.mods = function (core, src, tgt, skill, ev) {
 BR.modVal = (m, key, c) => m[key] != null ? (typeof m[key] === 'object' && m[key].f ? BR.FORMULA[m[key].f](c, m[key].v) : m[key]) : null;
 // the damage of one hit. o: { power, el, cat, preview } → { amount, mult, crit, parts }
 BR.damage = function (core, src, tgt, skill, o = {}) {
-  const rng = o.preview ? null : core.rng, c = { core, src, tgt, skill }, mods = BR.mods(core, src, tgt, skill, null), phys = (o.cat || skill.cat) === '物', el = o.el || skill.el;
+  const rng = o.preview ? null : core.rng, c = { core, src, tgt, skill, spent: o.spent || 0, n: o.n || 0 }, mods = BR.mods(core, src, tgt, skill, null, c), phys = (o.cat || skill.cat) === '物', el = o.el || skill.el;
   // crit
   let critCh = (src.stats.crit ?? 6) / 100 * (skill.critX || 1), forced = false;
   for (const m of mods) { const a = BR.modVal(m, 'critAdd', c); if (a) critCh += a / 100; if (m.crit) forced = true; if (m.critXSkill && (skill.critX || 1) < m.critXSkill) critCh *= m.critXSkill / (skill.critX || 1); }
@@ -46,13 +54,14 @@ BR.damage = function (core, src, tgt, skill, o = {}) {
   let pow = o.power != null ? o.power : skill.power;
   for (const m of mods) { const a = BR.modVal(m, 'atkMul', c), d = BR.modVal(m, 'defMul', c), p = BR.modVal(m, 'powMul', c); if (a) A *= a; if (d) D *= d; if (p) pow *= p; }
   if (skill.pierceDef) D *= 1 - skill.pierceDef;
+  if (crit) for (const m of mods) { const v = BR.modVal(m, 'critPierce', c); if (v) D *= 1 - v; }
   if (phys && core.hasStatus(src, 'brn')) A *= 0.5;
   D = Math.max(1, D);
   const base = Math.floor(Math.floor(Math.floor(2 * src.lv / 5 + 2) * pow * A / D) / 50) + 2;
   const mult = BR.famMult(el, tgt);
   let m = mult * (rng ? rng.int(BR.VARIANCE[0], BR.VARIANCE[1]) / 100 : (BR.VARIANCE[0] + BR.VARIANCE[1]) / 200);
   let critMul = BR.CRIT_MUL; for (const md of mods) { const v = BR.modVal(md, 'critDmg', c); if (v && crit) critMul += BR.CRIT_MUL * v / 100; }
-  if (crit) m *= critMul;
+  if (crit) { for (const md of mods) { const v = BR.modVal(md, 'critTaken', c); if (v != null) critMul = 1 + (critMul - 1) * v; } m *= critMul; }
   m *= BR.sidePower(src);
   const parts = [];
   for (const md of mods) { const v = BR.modVal(md, 'mul', c); if (v != null && v !== 1) { m *= v; parts.push([md.stage, md.src || md.key || '', v]); } const w = mult > 1 ? BR.modVal(md, 'mulWeak', c) : null; if (w) m *= w; }
@@ -60,7 +69,7 @@ BR.damage = function (core, src, tgt, skill, o = {}) {
   return { amount: Math.max(1, Math.floor(base * m)), mult, crit, parts };
 };
 // the hero's weapon element (or enchant) replaces 一般 on the basic attack and on no-element skills of the weapon's kind
-BR.elementOf = (core, u, sk) => sk.el === '一般' && sk.power && u.data.welem && (sk.cat === u.data.wcat || sk.tags.includes('basic')) ? u.data.welem : sk.el;
+BR.elementOf = (core, u, sk) => sk.el === '一般' && sk.power && u.data.welem && (sk.cat === u.data.wcat || sk.tags.includes('basic') || u.mods.some(m => m.weaponElemAll)) ? u.data.welem : sk.el;
 BR.hitChance = function (core, src, tgt, skill) {
   if (!skill.acc) return 1; let a = skill.acc + (src.stats.hit || 0) - (tgt.stats.eva || 0);
   const c = { core, src, tgt, skill };

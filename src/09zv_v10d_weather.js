@@ -80,8 +80,6 @@ for (const k in WX_MON) { const [sp, n, fam, lv, role, moves, look, dex, el] = W
   SPECIES[sp] = { n, fam, base: CH2_ROLE[role].map(v => Math.round(v * 80)), exp: Math.round((5 * lv + 28) * 1.3), gold: Math.round(lv * 1.6), learn: moves.map((m, i) => [i === 3 ? 12 : 1, m]).filter(([, m]) => MOVES[m]), dex, wxOnly: k };
   MON_PANEL[sp] = ch2Panel(lv, role, 'wild'); const [b, dh, ks, kl] = look; PLACEHOLDER[sp] = look; HD_RIG_OF[sp] = HD_RIG_OF[b] || b; const base = ART[b] ? b : PLACEHOLDER[b] && PLACEHOLDER[b][0]; if (ART[base]) ART[sp] = artRecolor(ART[base], dh, ks, kl); SP_EL[sp] = el; }
 // a weather monster keeps the level of the encounter it replaced; its stone drops more often
-{ const _v = Battle.prototype.victory; Battle.prototype.victory = function* () { const r = yield* _v.call(this); const c = this.cfg, st = Game.st;
-    if (c && c.wxMon && chance(0.2)) { const el = SP_EL[c.sp], k = el && 'en' + EN_KEY[el]; if (k && ITEMS[k]) { st.bag[k] = (st.bag[k] || 0) + 1; yield* this.msg('得到了' + ITEMS[k].n + '！', { hold: 30 }); } } return r; }; }
 
 /* ---------- 天氣祠: one event per weather period ---------- */
 function* wshrineEvent(ow, ent) {
@@ -89,12 +87,12 @@ function* wshrineEvent(ow, ent) {
   yield* say('古老的「天氣祠」。祠上刻著太陽、雨雲和雪花的圖案。\n現在的天氣是「' + WEATHER[k].n + '」。');
   if (done[id] === stamp) { yield* say('祠堂很安靜。等天氣變了再來看看吧。'); return; }
   if (k === 'clear') { if (yield* yesNo('陽光照在祠上。要祈求好運嗎？')) { done[id] = stamp; st.bless = 3; Sound.jingle('item'); yield* say('身體暖了起來！接下來3場戰鬥，一開始物攻和魔攻就提升一級。'); } }
-  else if (k === 'rain') { done[id] = stamp; st.bag.enWater = (st.bag.enWater || 0) + 1; yield* itemGet('祠前的石盆積滿了雨水，水底沉著一顆發光的石頭。得到了流水附魔石！'); }
+  else if (k === 'rain') { done[id] = stamp; yield* say('祠前的石盆積滿了雨水。'); /* v12: 附魔石暫停（獎勵待定） */ }
   else if (k === 'storm') { yield* say('轟隆——！閃電打在祠頂上，一隻雷鷹被引了過來！'); const res = yield* ow.battleScript({ sp: 'stormHawk', lv: (mapLevel(id) || [20, 20])[1] + 2, kind: 'elite', id: 'wxStorm' + id, noCard: 1 });
-    if (res === 'win') { done[id] = stamp; st.bag.enBolt2 = (st.bag.enBolt2 || 0) + 1; yield* itemGet('雷鷹掉下了一顆帶電的石頭。得到了上級雷鳴附魔石！'); } }
-  else if (k === 'fog') { done[id] = stamp; yield* say('霧裡走出一個戴著斗篷的商人。「……只在起霧的時候做生意。」'); yield* shopFlow(['enFire', 'enWater', 'enBolt', 'enLeaf', 'enVenom', 'enRock', 'attrReset', 'talentReset'].filter(q => ITEMS[q])); }
+    if (res === 'win') { done[id] = stamp; /* v12: 附魔石暫停（獎勵待定） */ } }
+  else if (k === 'fog') { done[id] = stamp; yield* say('霧裡走出一個戴著斗篷的商人。「……只在起霧的時候做生意。」'); yield* shopFlow(['attrReset', 'talentReset'].filter(q => ITEMS[q])); /* v12: 附魔石暫停 */ }
   else if (k === 'snow') { if (yield* yesNo('祠前積了厚厚的雪。要堆一個雪人嗎？')) { done[id] = stamp; for (let i = 0; i < 3; i++) { Sound.sfx('step'); yield* wait(14); } const it = pick(['hiEther', 'superPotion', 'elixir'].filter(q => ITEMS[q])); st.bag[it] = (st.bag[it] || 0) + 1; yield* itemGet('雪人堆好了！雪人的肚子裡藏著' + ITEMS[it].n + '。'); } }
-  else if (k === 'sand') { if (yield* yesNo('沙塵在祠邊堆成了小丘，好像埋著什麼。要挖挖看嗎？')) { done[id] = stamp; const roll = Math.random(); if (roll < 0.4) { const g = 300 + Math.floor(Math.random() * 700); st.money += g; yield* itemGet('挖到了古代的錢幣，價值' + g + ' G！'); } else if (roll < 0.8) { st.bag.enRock = (st.bag.enRock || 0) + 1; yield* itemGet('挖到了岩石附魔石！'); } else { yield* orbGet(pick(['keenEye', 'haste', 'vigor'])); } } }
+  else if (k === 'sand') { if (yield* yesNo('沙塵在祠邊堆成了小丘，好像埋著什麼。要挖挖看嗎？')) { done[id] = stamp; const roll = Math.random(); if (roll < 0.4) { const g = 300 + Math.floor(Math.random() * 700); st.money += g; yield* itemGet('挖到了古代的錢幣，價值' + g + ' G！'); } else { yield* say('……什麼也沒挖到。'); /* v12: 附魔石・寶珠暫停（獎勵待定） */ } } }
 }
 for (const id in EXT_AREA) Events['wshrine_' + id] = wshrineEvent;
 // the clear-weather blessing: +1 attack stages at the start of the next battles

@@ -220,9 +220,9 @@ class Battle {
     const gauge = (label, n, N, yy, ok, blink) => { const lw = Math.ceil(Font.width(label, 7)) + 4, w = N * 7 + lw, X = W - w - 3; x.fillStyle = 'rgba(10,10,22,0.72)'; x.fillRect(X - 2, yy - 1, w + 4, 10); Font.draw(x, label, X, yy - 4, ok ? '#ffd860' : UIC.muted, UIC.textSh, 7);
       for (let i = 0; i < N; i++) { const gx = X + lw + i * 7, on = i < n; x.fillStyle = '#10121e'; x.fillRect(gx - 1, yy + 1, 6, 6); x.fillStyle = on ? (blink && Math.floor(this.t / 8) % 2 ? '#ffffff' : ok ? '#ffd860' : '#8ad0ff') : '#3a3a4a'; x.fillRect(gx, yy + 2, 4, 4); } };
     let gy = Y - 11; if ('wc' in Hv.max && Hv.max.wc) { const n = Math.min(Hv.max.wc, Hv.res.wc || 0); gauge('特技', n, Hv.max.wc, gy, n >= Hv.max.wc, n >= Hv.max.wc); gy -= 10; }
-    if ('sgp' in Hv.max) { const n = Math.min(5, Hv.res.sgp || 0), cost = 3; gauge('招式', n, 5, gy, n >= cost, false); }
+    this.drawClassRes(x, gauge, gy);
     if ((Hv.res.combo || 0) > 0) { const step = (this.core.byId.H.data.comboStep || 6), txt = '連段×' + Hv.res.combo + ' +' + step * Hv.res.combo + '%', w = Math.ceil(Font.width(txt, 7)) + 6, yy = Y - 11; x.fillStyle = 'rgba(10,10,22,0.72)'; x.fillRect(3, yy - 1, w, 10); Font.draw(x, txt, 6, yy - 4, Hv.res.combo >= (Hv.max.combo || 3) ? '#ff9a5a' : '#ffd860', UIC.textSh, 7); }
-    if ((Hv.res.chi || 0) > 0) { const X = Math.round(C.x - 14 + Hv.off.x), YY = Math.round(C.y - 34 + Hv.off.y); for (let i = 0; i < 5; i++) { x.fillStyle = '#10121e'; x.fillRect(X + i * 6 - 1, YY - 1, 5, 5); x.fillStyle = i < Hv.res.chi ? (Hv.res.chi >= 5 ? '#ff6040' : '#ffc040') : '#3a3a4a'; x.fillRect(X + i * 6, YY, 3, 3); } }
+    // v12: 氣 is shown with the other class resources (drawClassRes)
   }
   /* ---------- helpers the effect library (FX / MFX) uses ---------- */
   *msg(text, o = {}) { this.dropAnn(); const t = new TextBox(text, { style: 'battle', auto: o.wait ? false : (o.hold || 34) }); UI.push(t); while (!t.done) { t.update(); yield; } UI.remove(t); }
@@ -330,7 +330,7 @@ class Battle {
   // the skill pop-up: the class skill + the 4 slotted skills (menu → 技能 to change them)
   *chooseMove() {
     const st = Game.st, hu = this.core.byId.H, list = hu.skills.filter(id => DEF.skills[id] && id !== hu.data.attackSkill);
-    if (!list.length) { yield* this.msg('還沒有技能！（到鐵匠舖把技能寶珠鑲進武器，選單→技能編排）'); return null; }
+    if (!list.length) { yield* this.msg('還沒有技能！（選單→技能編排）'); return null; }
     let cur = Math.min(this.moveIdx || 0, list.length - 1); this.idle = true;
     const VIS = list.length, X = 8, w = W - 16, Y = 58 - Math.max(0, VIS - 4) * 14, rowH = 14, h = 18 + VIS * rowH + 4, DY = Y + h + 2, DH = BH - 18 - DY, foe = this.core.alive('B')[0];
     const info = (x, m) => {
@@ -338,15 +338,15 @@ class Battle {
       const id = list[m.i], D = DEF.skills[id], ob = BB.skillObj(st, id), mv = MOVES[id] ? skillMove(id) : null, c = TYPE_COL[D.el] || '#9a9aa8'; drawWin(x, X, DY, w, DH, 'menu');
       const fit = (t, sz, maxW) => { let z = sz; while (z > 7 && Font.width(t, z) > maxW) z--; return z; };
       const can = this.canUse(id), est = can.ok && D.power && foe ? this.estimate(id, foe.id) : 0, L = X + 8, R = X + w - 8;
-      const tgt = D.target === 'all_enemies' ? (D.chain ? '・連鎖' : '・全體') : '', learn = ob ? (ob.learned ? '・已學會' : '・學會' + Math.min(ob.x || 0, BB.LEARN_USES) + '/' + BB.LEARN_USES) : '';
-      const t1 = (D.tags.includes('sig') ? '職業招式・' : '') + (D.el === '一般' ? '無屬性' : D.el + '屬性') + '・' + (D.cat === '變' ? '輔助' : D.cat === '物' ? '物理' : '魔法') + tgt + learn, cT = D.tags.includes('sig') ? '招式點 ' + Math.min(hu.res.sgp || 0, 5) + '/3' : can.ok ? this.costText(id) : 'MP不足';
+      const tgt = D.target === 'all_enemies' ? (D.chain ? '・連鎖' : '・全體') : '', learn = ob && !D.tags.includes('sig') ? (ob.learned ? '・已學會' : '・學會' + Math.min(ob.x || 0, BB.learnN(id)) + '/' + BB.learnN(id)) : '';
+      const t1 = (D.tags.includes('sig') ? '職業招式・' : '') + (D.el === '一般' ? '無屬性' : D.el + '屬性') + '・' + (D.cat === '變' ? '輔助' : D.cat === '物' ? '物理' : '魔法') + tgt + learn, cT = can.ok ? this.costText(id) : (can.short || '不可用');
       x.fillStyle = c; x.fillRect(L, DY + 6, 4, 4); Font.draw(x, t1, L + 7, DY + 1, '#c9cfe4', UIC.textSh, fit(t1, 9, w - 30 - Font.width(cT, 9))); Font.drawR(x, cT, R, DY + 1, can.ok ? '#8ab8ff' : UIC.bad, UIC.textSh, 9);
       let y = DY + 14;
       if (D.power) { const pw = mv && typeof powTxt === 'function' ? powTxt(mv) : '威力' + D.power, eT = est ? '預估≈' + est : ''; x.fillStyle = 'rgba(200,160,80,0.35)'; x.fillRect(L, DY + 13, w - 16, 1);
         const pe = Font.draw(x, pw, L, y, UIC.accent, UIC.textSh, fit(pw, 10, w - 22 - (eT ? Font.width(eT, 9) : 0) - 12)); Font.draw(x, 'ⓘ', pe + 2, y, m.formula ? UIC.warm : UIC.muted, UIC.textSh, 9); if (eT) Font.drawR(x, eT, R, y + 1, UIC.warm, UIC.textSh, 9);
         if (typeof touchRegion === 'function') touchRegion(L, y - 2, w - 16, 13, () => { m.formula = !m.formula; Sound.sfx('cursor'); }); y += 13; }
       Font.drawC(x, Game.touchUI ? (m.tapSel === m.i ? '再點一次：使用　點外面：返回' : '點技能看說明・再點一次使用') : 'A：使用　B：返回', W / 2, BB_Y + 11, Game.touchUI && m.tapSel === m.i ? UIC.warm : UIC.muted, UIC.textSh, 9);
-      const extra = ob && ob.e && ob.e.length && typeof evoOptText === 'function' ? '　【進化】' + ob.e.map((b, s) => (b === 'A' ? '強攻' : '附加') + evoOptText(ob, s, b)).join('、') : D.tags.includes('sig') && typeof sigTalentText === 'function' ? sigTalentText(st) : '';
+      const extra = ob && ob.e && ob.e.length && typeof evoOptText === 'function' ? '　【進化】' + ob.e.map((b, s) => (b === 'A' ? '強攻' : '附加') + evoOptText(ob, s, b)).join('、') : '';
       drawFitText(x, m.formula && D.power && mv && typeof powFormula === 'function' ? powFormula(id) : ((mv && mv.d) || D.desc || '') + extra, L, y, w - 16, DY + DH - 5 - y, 9, m.formula ? '#ffe8b0' : UIC.text);
     };
     while (true) {

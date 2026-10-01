@@ -53,7 +53,7 @@ const Events = {
       yield* say({ swordsman: '劍士的道路啊……這把練習木劍就交給你了。', mage: '魔導士的道路啊……這把魔杖是我年輕時用的，交給你了。', guardian: '守護者的道路啊……這把木劍和布帽給你，別逞強喔。', ranger: '遊俠的道路啊……這把獵刀是村裡獵人送的，拿去吧。' }[k]);
       st.flags.license = 1; st.bag.license = 1; yield* itemGet('得到了' + S.gear.filter(b => b !== 'guardBadge').map(b => GEAR[b].n).join('和') + '、護身符和冒險者證！');
       yield* say('還有這些傷藥，帶在身上吧。'); st.bag.potion = (st.bag.potion || 0) + 5; yield* itemGet('得到了傷藥×5！');
-      yield* sayAll(['技能是跟著武器走的。你手上的武器有兩招「主動技能」、一個「被動」，還有攻擊累積3層後、在下一次攻擊或技能時發動的「特技」。', '普通攻擊不花MP，還會回復一點MP；把MP用在武器技能上吧。', '每升2級會得到1點「天賦點」。打開選單的「天賦」，就能點' + CLASSES[k].n + '的三條天賦分支。', '新的裝備都要靠鐵匠打造。撿到的設計圖和素材，記得拿去給他看看。', '到了Lv14再來找我，我會幫你進行「天賦覺醒」。', '魔物分成好幾個種族，各有害怕的屬性。善用屬性技能，戰鬥會輕鬆很多。', '按START可以打開選單，查看狀態、技能和背包，也能記錄進度。']);
+      yield* sayAll(['技能有兩個來源：職業（等級到了就學會）和武器（裝備就能用，用滿次數就永久學會）。普通攻擊累積滿了，還會自動發動武器的「特技」。', '普通攻擊不花MP，還會回復一點MP；技能用過之後要「冷卻」幾次行動才能再用。', '每個職業都有自己的核心資源，用它來施放職業招式。每升2級會得到1點「天賦點」，打開選單的「天賦」，就能點' + CLASSES[k].n + '的三個流派。', '新的裝備都要靠鐵匠打造。撿到的設計圖和素材，記得拿去給他看看。', '到了Lv14再來找我，我會幫你進行「天賦覺醒」。', '魔物分成好幾個種族，各有害怕的屬性。善用屬性技能，戰鬥會輕鬆很多。', '按START可以打開選單，查看狀態、技能和背包，也能記錄進度。']);
       const ap = ow && ow.npcs.find(n => n.id === 'apprentice');
       if (ap) { ap.dir = 'left'; yield* say('學徒：「村長爺爺！讓我幫忙！我在院子裡養了一隻練習用的泡泡姆！」');
         if (yield* yesNo('要和泡泡姆練習一場嗎？')) { const res = yield* ow.battleScript({ sp: 'slime', lv: 1, kind: 'wild' }); if (res === 'win') yield* say('學徒：「好厲害！這就是異界人之力！」'); else yield* say('學徒：「泡、泡泡姆，下手輕一點啦！」'); healHero(); }
@@ -321,7 +321,7 @@ class TitleScene {
     x.drawImage(this.logo, Math.round(W / 2 - this.logo.width / 2), 6 + bob);
     Font.drawC(x, '～異世界冒險RPG～', W / 2, 52 + bob, '#ffe0a0', '#3a1428');
     if (this.stage === 'press' && Math.floor(this.t / 30) % 2 === 0) Font.drawC(x, '按 A 鍵開始', W / 2, 232, '#ffffff', '#1a1024');
-    Font.drawR(x, 'v11.0.1', W - 3, H - 13, '#b890b0', null);
+    Font.drawR(x, 'v12.0.0', W - 3, H - 13, '#b890b0', null);
   }
 }
 

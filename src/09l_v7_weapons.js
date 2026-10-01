@@ -165,7 +165,7 @@ function wsAttackMove(st = Game.st) {
 
 /* ---------- stats: the main weapon's passive ---------- */
 { const _hs = heroStats; heroStats = function (st = Game.st) {
-    const s = _hs(st), k = mainWKey(st); if (!k || typeof ORB_A !== 'undefined') return s; const p = WSK[k].p; // v10: weapons no longer carry a passive
+    const s = _hs(st), k = mainWKey(st); if (!k) return s; const p = WSK[k].p; // v12: growth-type weapons carry their passive again (v10 had moved passives to orbs)
     if (WPASS_FX.has(p.k)) s.fx[p.k] = 1; else if (p.k === 'hpP' || p.k === 'defP' || p.k === 'atkP' || p.k === 'spaP') { const sk = p.k.slice(0, -1); s[sk] = Math.floor(s[sk] * (1 + p.v / 100)); }
     else s[p.k] = (s[p.k] || 0) + p.v;
     return s;

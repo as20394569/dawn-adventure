@@ -1,103 +1,166 @@
-// v11 battle core tests (docs/battle_v2_design.md §H) — node tools/play.js tools/btest.js [--sims]
-// Runs headless inside the built test page: data validation, skill unit tests, event-chain rules, loop limits,
-// determinism, and (with --sims) build simulations written to docs/balance_report.md.
+// v12 battle core tests (spec v1.1 §12–17, docs/battle_v3_draft.md §9) — node tools/play.js tools/btest.js [--sims] [--golden]
+// Gates A data · B core · C events · D content · E fixed cases (seeded event hashes) · F build matrix · G stress · H save migration,
+// plus property tests (random battles, invariants). --sims writes docs/balance_report.md + docs/regression_report.md (metrics, warnings).
 const fs = require('fs'), path = require('path');
+const GOLDEN = path.resolve('tools/btest_golden.json');
 module.exports = async (g) => {
-  const res = await g.ev(() => {
-    const out = [], ok = (name, cond, info) => out.push((cond ? 'PASS ' : 'FAIL ') + name + (!cond && info ? ' — ' + info : ''));
-    const err0 = BV2.errors.length, v = bvValidate(); ok('資料驗證（id、引用、標籤、觸發、效果、循環）', v.length === 0, v.slice(0, 6).join(' | ')); ok('載入時沒有錯誤', err0 === 0, BV2.errors.slice(0, 4).join(' | '));
-    const T = (id, d) => { defPut('skills', id, { name: id, desc: '', tags: ['skill', 'phys', 'el:一般', 'damage'], el: '一般', cat: '物', power: 60, acc: null, critX: 1, prio: 0, target: 'enemy', chain: false, effects: [{ type: 'damage' }], after: [], mods: [], costs: [], hits: null, charge: false, airborne: false, pierceDef: 0, noHitRoll: false, fx: 'hit', fallback: null, usage: null, ai: { pow: 60 }, metadata: {}, ...d }); return id; };
-    const hero = (o = {}) => ({ id: 'H', side: 'A', hero: true, name: '勇者', lv: 20, kind: 'hero', stats: { hp: 300, mp: 40, atk: 60, def: 50, spa: 60, spd: 50, spe: 50, crit: 0, hit: 0, eva: 0, resist: {} }, hp: 300, mp: 40, passives: [], skills: ['attack'], sig: false, wsp: null, chi: false, comboMax: 0, statuses: [], data: { mechanics: [], attackSkill: 'attack', slots: [] }, ...o });
-    const foe = (id, o = {}) => ({ id, side: 'B', name: id, lv: 20, kind: 'wild', sp: 'slime', fam: 'ooze', stats: { hp: 400, atk: 40, def: 50, spa: 40, spd: 50, spe: 30, crit: 0, hit: 0, eva: 0 }, passives: [], skills: [T('t_poke', { power: 10 })], statuses: [], data: { mechanics: [], profile: 'brute' }, ...o });
-    const mk = (units, seed = 7) => new BattleCore({ seed, units, cfg: {} });
+  const golden = fs.existsSync(GOLDEN) && !process.argv.includes('--golden') ? JSON.parse(fs.readFileSync(GOLDEN, 'utf8')) : null;
+  const res = await g.ev((golden) => {
+    const out = [], ok = (gate, name, cond, info) => out.push((cond ? 'PASS ' : 'FAIL ') + '[' + gate + '] ' + name + (!cond && info ? ' — ' + info : ''));
+    const err0 = BV2.errors.length, hashes = {};
+    const T = (id, d) => { defPut('skills', id, { name: id, desc: '', tags: ['skill', 'phys', 'el:一般', 'damage'], el: '一般', cat: '物', power: 60, acc: null, critX: 1, prio: 0, target: 'enemy', effects: [{ type: 'damage' }], after: [], mods: [], costs: [], hits: null, cooldown: 0, noHitRoll: false, fx: 'hit', ai: {}, metadata: {}, override: 1, ...d }); };
+    const hero = (o = {}) => ({ id: 'H', side: 'A', hero: true, name: '勇者', lv: 20, kind: 'hero', cls: o.cls || null, stats: { hp: 300, mp: 40, atk: 60, def: 50, spa: 60, spd: 50, spe: 50, crit: 0, hit: 0, eva: 0, resist: {}, ...(o.stats || {}) }, passives: o.passives || [], skills: o.skills || ['attack'], data: { attackSkill: 'attack', slots: o.slots || [], sigSkill: o.sig || null, mechanics: o.mechanics || [], talents: o.talents || [] }, ...(o.extra || {}) });
+    const foe = (id, o = {}) => ({ id, side: 'B', name: id, lv: 20, kind: 'wild', sp: 'slime', fam: o.fam || 'ooze', stats: { hp: 400, atk: 40, def: 50, spa: 40, spd: 50, spe: 30, crit: 0, hit: 0, eva: 0, ...(o.stats || {}) }, passives: o.passives || [], skills: o.skills || ['m_tackle'], data: { mechanics: [] }, statuses: o.statuses || [] });
+    const mk = (units, seed = 7, cfg = {}) => new BattleCore({ seed, units, cfg });
     const cnt = (c, type, f = () => true) => c.log.filter(e => e.type === type && !e.cancelled && f(e)).length;
-    const act = (c, skill, targets) => { c.submit({ type: 'skill', skill, targets }); };
-    // ---------- skills ----------
-    { const c = mk([hero(), foe('B1', { stats: { hp: 1, atk: 1, def: 1, spa: 1, spd: 1, spe: 1 } }), foe('B2')]); c.start(false); act(c, 'attack', ['B1']); if (!c.result) act(c, 'attack', ['B1']);
-      ok('目標倒下後改打同陣營下一隻（TARGET_CHANGE）', cnt(c, EVT.TARGET_CHANGE) >= 1 && cnt(c, EVT.DAMAGE, e => e.tgts[0] === 'B2' && e.src === 'H') >= 1); }
+    const act = (c, skill, targets) => { if (c.need) c.submit({ type: 'skill', skill, targets }); };
+    const cmd = (c, o) => { if (c.need) c.submit(o); };
+    const P = (key, make) => defPut('passives', key, { make, metadata: {}, tags: [], override: 1 });
+    /* =================== A: data =================== */
+    { const v = bvValidate(); ok('A', '資料驗證（Schema、id、引用、標籤、觸發、效果、循環）', v.length === 0, v.slice(0, 5).join(' | ')); ok('A', '載入時沒有錯誤', err0 === 0, BV2.errors.slice(0, 3).join(' | '));
+      const cls = Object.keys(DEF.classes); let bad = [];
+      for (const c of cls) { const L = Object.values(DEF.talents).filter(t => t.cls === c), keys = L.filter(t => t.tier < 0);
+        if (L.length !== 21 || keys.length !== 3) bad.push(c + ':' + L.length + '/' + keys.length);
+        for (let b = 0; b < 3; b++) for (let t = 0; t < 3; t++) { const opts = L.filter(x => x.branch === b && x.tier === t); if (opts.length !== 2) bad.push(c + ' ' + b + '.' + t); if (opts.filter(x => x.kind === '數值').length > 1) bad.push(c + ' ' + b + '.' + t + ' 兩個數值'); }
+        const C = DEF.classes[c]; if (!DEF.skills[C.sig] || !DEF.mechanics[C.mechanic]) bad.push(c + ' sig/mech'); if ((CLASS_SKILLS12[c] || []).some(k => !DEF.skills['o_' + k])) bad.push(c + ' skill table'); }
+      ok('A', '10 職業 × 21 天賦（3 流派×3 層×2＋3 核心）、職業招式、職業機制、技能表', cls.length === 10 && !bad.length, bad.slice(0, 6).join(' | '));
+      const loose = []; for (const id in DEF.skills) for (const x of [...DEF.skills[id].effects, ...DEF.skills[id].after]) if (typeof x !== 'string' || !DEF.effects[x]) loose.push(id); ok('A', '技能效果都以 ID 引用（DEF.effects）', !loose.length, loose.slice(0, 4).join(','));
+      const acc = Object.keys(GEAR).filter(k => GEAR[k].slot === 'acc'), noT = acc.filter(k => !GEAR[k].trait || !(GEAR[k].fx || []).length === 1); ok('A', '飾品 ' + acc.length + ' 個，每個 1 條特性', acc.length === 53 && !noT.length, noT.slice(0, 4).join(','));
+      const wp = Object.keys(GEAR).filter(k => GEAR[k].slot === 'weapon'), noS = wp.filter(k => !weaponSkill12(k)); ok('A', '武器 ' + wp.length + ' 把，每把都有武器技能', !noS.length, noS.slice(0, 4).join(','));
+      const cdMiss = Object.keys(SKILL12).filter(k => DEF.skills['o_' + k].cooldown == null || !DEF.skills['o_' + k].metadata.learn); ok('A', '技能都有冷卻與學會次數', !cdMiss.length, cdMiss.join(',')); }
+    /* =================== B: core rules =================== */
+    { const c = mk([hero(), foe('B1', { stats: { hp: 1, atk: 1, def: 1, spa: 1, spd: 1, spe: 1 } }), foe('B2')]); c.start(false); act(c, 'attack', ['B1']); act(c, 'attack', ['B1']);
+      ok('B', '目標倒下後改打同陣營下一隻（TARGET_CHANGE）', cnt(c, EVT.TARGET_CHANGE) >= 1 && cnt(c, EVT.DAMAGE, e => e.tgts[0] === 'B2' && e.src === 'H') >= 1); }
     { T('t_cost', { costs: [{ res: 'mp', amount: 99 }], fallback: 'attack' }); const c = mk([hero({ skills: ['attack', 't_cost'] }), foe('B1')]); c.start(false); act(c, 't_cost', ['B1']);
-      ok('成本不足 → SKILL_FAIL(cost) 並改用替代技能', cnt(c, EVT.SKILL_FAIL, e => e.payload.why === 'cost') === 1 && cnt(c, EVT.SKILL_USE, e => e.payload.skill === 'attack' && e.src === 'H') === 1);
-      const c2 = mk([hero({ skills: ['attack', 't_cost'], mp: 40, stats: { ...hero().stats, mp: 120 } }), foe('B1')]); c2.byId.H.res.mp = 120; c2.start(false); act(c2, 't_cost', ['B1']);
-      ok('成本足夠 → COST_PAY + 扣除資源', cnt(c2, EVT.COST_PAY) === 1 && c2.byId.H.res.mp === 21); }
-    { T('t_miss', { acc: 1 }); const c = mk([hero({ skills: ['t_miss'], stats: { ...hero().stats, hit: -50 } }), foe('B1')]); c.start(false); for (let i = 0; i < 4 && !c.result; i++) act(c, 't_miss', ['B1']);
-      ok('命中率極低 → MISS 事件、沒有傷害', cnt(c, EVT.MISS, e => e.src === 'H') >= 3 && cnt(c, EVT.DAMAGE, e => e.src === 'H') <= 1); }
-    { const c = mk([hero({ stats: { ...hero().stats, crit: 100 } }), foe('B1')]); c.start(false); act(c, 'attack', ['B1']);
-      ok('會心率100% → CRIT 事件，傷害標記會心', cnt(c, EVT.CRIT) >= 1 && c.log.some(e => e.type === EVT.DAMAGE && e.payload.crit)); }
-    { T('t_psn', { power: 0, effects: [{ type: 'status', status: 'psn' }], tags: ['skill', 'support', 'el:毒', 'ailment'], cat: '變', noHitRoll: true });
-      const fam = Object.keys(FAMILIES).find(k => FAMILIES[k].immune && FAMILIES[k].immune.includes('psn'));
-      const c = mk([hero({ skills: ['t_psn'] }), foe('B1', { fam })]); c.start(false); act(c, 't_psn', ['B1']);
-      const c2 = mk([hero({ skills: ['t_psn'] }), foe('B1', { fam: 'beast' })]); c2.start(false); act(c2, 't_psn', ['B1']);
-      ok('狀態：免疫失敗 / 一般成功', (!fam || cnt(c, EVT.STATUS_FAIL, e => e.payload.why === 'immune') === 1) && c2.hasStatus(c2.byId.B1, 'psn'), 'fam ' + fam); }
+      ok('B', '成本不足 → SKILL_FAIL(cost) 並改用替代技能', cnt(c, EVT.SKILL_FAIL, e => e.payload.why === 'cost') === 1 && cnt(c, EVT.SKILL_USE, e => e.payload.skill === 'attack' && e.src === 'H') === 1);
+      const c2 = mk([hero({ skills: ['attack', 't_cost'], stats: { mp: 120 } }), foe('B1')]); c2.byId.H.res.mp = 120; c2.start(false); act(c2, 't_cost', ['B1']); ok('B', '成本足夠 → COST_PAY 並扣除', cnt(c2, EVT.COST_PAY) === 1 && c2.byId.H.res.mp === 21); }
+    { T('t_miss', { acc: 1 }); const c = mk([hero({ skills: ['t_miss'], stats: { hit: -50 } }), foe('B1')]); c.start(false); for (let i = 0; i < 4; i++) act(c, 't_miss', ['B1']);
+      ok('B', '命中率極低 → MISS、沒有傷害', cnt(c, EVT.MISS, e => e.src === 'H') >= 3 && cnt(c, EVT.DAMAGE, e => e.src === 'H') <= 1); }
+    { const c = mk([hero({ stats: { crit: 100 } }), foe('B1')]); c.start(false); act(c, 'attack', ['B1']); ok('B', '會心率 100% → CRIT 事件', cnt(c, EVT.CRIT) >= 1 && c.log.some(e => e.type === EVT.DAMAGE && e.payload.crit)); }
+    { T('t_psn', { power: 0, effects: [{ type: 'status', status: 'psn' }], tags: ['skill', 'support', 'el:毒', 'ailment'], cat: '變', noHitRoll: true }); const fam = Object.keys(FAMILIES).find(k => FAMILIES[k].immune && FAMILIES[k].immune.includes('psn'));
+      const c = mk([hero({ skills: ['t_psn'] }), foe('B1', { fam })]); c.start(false); act(c, 't_psn', ['B1']); const c2 = mk([hero({ skills: ['t_psn'] }), foe('B1', { fam: 'beast' })]); c2.start(false); act(c2, 't_psn', ['B1']);
+      ok('B', '狀態：條件免疫失敗 / 一般成功', (!fam || cnt(c, EVT.STATUS_FAIL, e => e.payload.why === 'immune') === 1) && c2.hasStatus(c2.byId.B1, 'psn'));
+      P('t_res', () => ({ mods: [{ statusRes: 80 }] })); let fails = 0; for (let s = 0; s < 20; s++) { const c3 = mk([hero({ skills: ['t_psn'] }), foe('B1', { fam: 'beast', passives: [{ key: 't_res', v: 1 }] })], 100 + s); c3.start(false); act(c3, 't_psn', ['B1']); fails += cnt(c3, EVT.STATUS_FAIL, e => e.payload.why === 'resist'); }
+      ok('B', '狀態：抗性（80% 上限）會讓施加失敗', fails >= 10 && fails < 20, fails + '/20'); }
     { T('t_aoe', { target: 'all_enemies', tags: ['skill', 'phys', 'el:一般', 'damage', 'aoe'] }); const one = mk([hero({ skills: ['t_aoe'] }), foe('B1')], 3), three = mk([hero({ skills: ['t_aoe'] }), foe('B1'), foe('B2'), foe('B3')], 3);
-      one.start(false); act(one, 't_aoe', []); three.start(false); act(three, 't_aoe', []); const d1 = one.log.find(e => e.type === EVT.DAMAGE && e.src === 'H').payload.amount, d3 = three.log.filter(e => e.type === EVT.DAMAGE && e.src === 'H');
-      ok('全體技能：三個目標各受傷，單發約×0.75', d3.length === 3 && d3.every(e => e.payload.amount <= d1 * 0.85 && e.payload.amount >= d1 * 0.6), d1 + ' vs ' + d3.map(e => e.payload.amount).join(',')); }
+      one.start(false); act(one, 't_aoe', []); three.start(false); act(three, 't_aoe', []); const d1 = one.log.find(e => e.type === EVT.DAMAGE && e.src === 'H').payload.amount, d3 = three.log.filter(e => e.type === EVT.DAMAGE && e.src === 'H').slice(0, 3);
+      ok('B', '全體：三個目標各受傷，單發約 ×0.75', d3.length === 3 && d3.every(e => e.payload.amount <= d1 * 0.85 && e.payload.amount >= d1 * 0.6), d1 + ' vs ' + d3.map(e => e.payload.amount)); }
     { T('t_multi', { hits: [3, 3], tags: ['skill', 'phys', 'el:一般', 'damage', 'multi_hit'] }); const c = mk([hero({ skills: ['t_multi'] }), foe('B1')]); c.start(false); act(c, 't_multi', ['B1']);
-      ok('多段：3 段 HIT / DAMAGE', cnt(c, EVT.HIT, e => e.src === 'H') === 3 && cnt(c, EVT.DAMAGE, e => e.src === 'H') === 3);
-      const c2 = mk([hero({ skills: ['t_multi'] }), foe('B1', { stats: { ...foe('x').stats, hp: 1 } }), foe('B2')]); c2.start(false); act(c2, 't_multi', ['B1']);
-      ok('多段：目標中途倒下就停止', cnt(c2, EVT.DAMAGE, e => e.src === 'H' && e.tgts[0] === 'B1') === 1 && c2.byId.B1.down); }
-    // ---------- event chain ----------
-    { const c = mk([hero(), foe('B1'), foe('B2')], 11); c.start(true); const ids = new Set(c.log.map(e => e.id));
-      ok('每個事件 id 唯一（沒有重複的 MAIN）', ids.size === c.log.length);
-      const byId = Object.fromEntries(c.log.map(e => [e.id, e])); ok('parent 都存在，深度不小於 parent', c.log.every(e => !e.parent || (byId[e.parent] ? e.depth >= byId[e.parent].depth : true)));
-      ok('戰鬥結束時佇列清空', !!c.result && c.queue.length === 0 && c.reactQ.length === 0); ok('沒有觸發安全上限', c.trace.length === 0, JSON.stringify(c.trace.slice(0, 1))); }
-    { defPut('passives', 't_cancel', { make: () => ({ triggers: [{ on: EVT.DAMAGE, phase: 'PRE', role: 'tgt', effects: [{ type: 'cancel', why: 'test' }] }] }), metadata: {}, tags: [] });
-      const c = mk([hero(), foe('B1', { passives: [{ key: 't_cancel', v: 1 }] })]); c.start(false); act(c, 'attack', ['B1']);
-      ok('PRE 取消：傷害事件被取消、HP 不變', c.byId.B1.res.hp === c.byId.B1.max.hp && c.log.some(e => e.type === EVT.DAMAGE && e.cancelled)); }
-    { const L = []; defPut('passives', 't_ord', { make: v => ({ triggers: [{ on: EVT.ROUND_END, phase: 'POST', prio: v, effects: [{ type: 'message', text: 'p' + v, target: 'self' }] }] }), metadata: {}, tags: [] });
+      ok('B', '多段：3 段 HIT / DAMAGE', cnt(c, EVT.HIT, e => e.src === 'H') === 3 && cnt(c, EVT.DAMAGE, e => e.src === 'H') === 3);
+      const c2 = mk([hero({ skills: ['t_multi'] }), foe('B1', { stats: { hp: 1 } }), foe('B2')]); c2.start(false); act(c2, 't_multi', ['B1']); ok('B', '多段：目標中途倒下就停止', cnt(c2, EVT.DAMAGE, e => e.src === 'H' && e.tgts[0] === 'B1') === 1 && c2.byId.B1.down); }
+    // turn order: the faster acts first; 搶先 puts a slow unit first next round; the hero decides only on its turn
+    { const c = mk([hero({ stats: { spe: 10 } }), foe('B1', { stats: { spe: 90 } })]); c.start(false); const first = c.log.find(e => e.type === EVT.ACTION_START);
+      ok('B', '行動順序：速度快的先行動，輪到英雄才停下來等指令', first && first.src === 'B1' && !!c.need && c.state === BS.WAITING_ACTION);
+      T('t_prio', { prio: 1 }); act(c, 't_prio', ['B1']); const o2 = c.log.filter(e => e.type === EVT.TURN_ORDER)[1];
+      ok('B', '搶先：用過後下一回合排第一（即使比較慢）', !!o2 && o2.payload.order[0] === 'H', o2 && o2.payload.order.join(',')); }
+    // cooldowns count the owner's own actions
+    { T('t_cd', { cooldown: 2, fallback: 'attack' }); const c = mk([hero({ skills: ['attack', 't_cd'], stats: { hp: 5000 } }), foe('B1', { stats: { hp: 50000 } })]); c.byId.H.res.hp = 5000; c.start(false);
+      act(c, 't_cd', ['B1']); const a = c.byId.H.cd.t_cd; act(c, 't_cd', ['B1']); const f1 = cnt(c, EVT.SKILL_FAIL, e => e.payload.why === 'cooldown'); act(c, 't_cd', ['B1']); const f2 = cnt(c, EVT.SKILL_FAIL, e => e.payload.why === 'cooldown'); act(c, 't_cd', ['B1']);
+      ok('B', '冷卻：CD2 → 之後 2 次自己的行動不能用，第 3 次可以', a === 2 && f1 === 1 && f2 === 2 && cnt(c, EVT.SKILL_USE, e => e.payload.skill === 't_cd') === 2, a + '/' + f1 + '/' + f2); }
+    // status timing points
+    { const c = mk([hero({ stats: { hp: 5000 } }), foe('B1', { stats: { hp: 50000, spe: 90 } })]); c.byId.H.res.hp = 5000; c.start(false); cmd(c, { type: 'defend' });
+      const gEnd = c.hasStatus(c.byId.H, 'guard'); act(c, 'attack', ['B1']); const after = c.log.filter(e => e.type === EVT.STATUS_EXPIRE && e.payload.status === 'guard');
+      ok('B', '防禦：減傷持續到自己下一次行動開始', gEnd && after.length === 1); }
+    { T('t_bar', { power: 0, target: 'self', noHitRoll: true, cat: '變', tags: ['skill', 'support', 'el:一般'], effects: [{ type: 'status', status: 'barrier', dur: 2, target: 'self' }] });
+      const c = mk([hero({ skills: ['attack', 't_bar'], stats: { hp: 5000 } }), foe('B1', { stats: { hp: 50000 } })]); c.byId.H.res.hp = 5000; c.start(false); act(c, 't_bar', []); act(c, 'attack', ['B1']); const on1 = c.hasStatus(c.byId.H, 'barrier'); act(c, 'attack', ['B1']); const on2 = c.hasStatus(c.byId.H, 'barrier');
+      ok('B', '護盾：2 = 護到第 2 次自己行動開始', on1 && !on2); }
+    { T('t_up', { power: 0, target: 'self', noHitRoll: true, cat: '變', tags: ['skill', 'support', 'el:一般'], effects: [{ type: 'stage', stats: { atk: 1 }, target: 'self', dur: 3 }] });
+      const c = mk([hero({ skills: ['attack', 't_up'], stats: { hp: 5000 } }), foe('B1', { stats: { hp: 50000 } })]); c.byId.H.res.hp = 5000; c.start(false); act(c, 't_up', []); const L = [];
+      for (let i = 0; i < 4; i++) { act(c, 'attack', ['B1']); L.push(c.hasStatus(c.byId.H, 'stage_atk') ? 1 : 0); } ok('B', '能力等級：自己施加的 3 = 之後 3 次自己行動', L.join('') === '1100' || L.join('') === '1110', L.join('')); }
+    { const c = mk([hero({ stats: { spe: 99 } }), foe('B1', { stats: { hp: 50000 } })]); c.start(false); c.applyStatus(c.byId.H, c.byId.B1, 'flinch', {}); act(c, 'attack', ['B1']);
+      ok('B', '退縮：回合結束清除、當回合無法行動', cnt(c, EVT.ACTION_CANCEL, e => e.payload.why === 'flinch') === 1 && !c.hasStatus(c.byId.B1, 'flinch')); }
+    { const c = mk([hero({ stats: { spe: 99, hp: 5000 } }), foe('B1', { stats: { hp: 50000 } })]); c.byId.H.res.hp = 5000; c.start(false); c.applyStatus(c.byId.H, c.byId.B1, 'broken', {}); act(c, 'attack', ['B1']); act(c, 'attack', ['B1']);
+      ok('B', '破防：跳過 1 次行動，之後解除', cnt(c, EVT.ACTION_CANCEL, e => e.payload.why === 'broken') === 1 && !c.hasStatus(c.byId.B1, 'broken')); }
+    // DOWN: prevention (撐住) once per battle however many sources
+    { const c = mk([hero({ passives: [{ key: 'fx.endure', v: 1 }, { key: 'endureT', v: 1 }], stats: { hp: 10 } }), foe('B1', { stats: { atk: 999, spe: 99 } })], 9); c.start(true);
+      ok('B', '撐住：DOWN PRE 防止（HP 留 1），兩個來源一場也只發動 1 次', cnt(c, EVT.MESSAGE, e => e.payload.key === 'endure') === 1 && c.log.some(e => e.type === EVT.DOWN && e.cancelled) && c.byId.H.down); }
+    { const c = mk([hero({ stats: { hp: 100 } }), foe('B1')]); c.start(false); c.byId.H.res.hp = 99; c.heal(c.byId.H, c.byId.H, 50); const h = c.log.filter(e => e.type === EVT.HEAL).pop();
+      ok('B', '治療：不超過上限，溢出量記在 payload.over', c.byId.H.res.hp === 100 && h.payload.amount === 1 && h.payload.over === 49); }
+    /* =================== C: events =================== */
+    { const c = mk([hero(), foe('B1'), foe('B2')], 11); c.start(true); const ids = new Set(c.log.map(e => e.id)), byId = Object.fromEntries(c.log.map(e => [e.id, e]));
+      ok('C', '事件 id 唯一、parent 都存在、深度不小於 parent', ids.size === c.log.length && c.log.every(e => !e.parent || (byId[e.parent] ? e.depth >= byId[e.parent].depth : true)));
+      ok('C', '戰鬥結束時順序與反應佇列清空、沒有觸發安全上限', !!c.result && c.order.length === 0 && c.reactQ.length === 0 && c.trace.length === 0, JSON.stringify(c.trace.slice(0, 1)));
+      const seq = []; let okSeq = true; for (const e of c.log) { if (e.type === EVT.ACTION_START) seq.push('S'); if (e.type === EVT.ACTION_END) seq.push('E'); } for (let i = 0; i < seq.length; i += 2) if (seq[i] !== 'S' || seq[i + 1] !== 'E') okSeq = false; ok('C', '行動開始／結束成對', okSeq); }
+    { P('t_cancel', () => ({ triggers: [{ on: EVT.DAMAGE, phase: 'PRE', role: 'tgt', effects: [{ type: 'cancel', why: 'test' }] }] })); const c = mk([hero(), foe('B1', { passives: [{ key: 't_cancel', v: 1 }] })]); c.start(false); act(c, 'attack', ['B1']);
+      ok('C', 'PRE 取消：傷害事件被取消、HP 不變', c.byId.B1.res.hp === c.byId.B1.max.hp && c.log.some(e => e.type === EVT.DAMAGE && e.cancelled)); }
+    { P('t_ord', v => ({ triggers: [{ on: EVT.ROUND_END, phase: 'POST', prio: v, effects: [{ type: 'message', text: 'p' + v, target: 'self' }] }] }));
       const c = mk([hero({ passives: [{ key: 't_ord', v: 1 }, { key: 't_ord', v: 5 }, { key: 't_ord', v: 3 }] }), foe('B1')]); c.start(false); act(c, 'attack', ['B1']);
-      const seq = c.log.filter(e => e.type === EVT.MESSAGE && /^p\d$/.test(e.payload.text || '')).map(e => e.payload.text).slice(0, 3).join(',');
-      ok('觸發依 priority 高到低穩定排序', seq === 'p5,p3,p1', seq); }
-    // ---------- loops stop at the safety limits ----------
-    { defPut('passives', 't_loopA', { make: () => ({ triggers: [{ on: EVT.DAMAGE, phase: 'POST', role: 'src', effects: [{ type: 'damage', flat: 1, target: 'event_target' }] }] }), metadata: {}, tags: [] });
-      const c = mk([hero({ passives: [{ key: 't_loopA', v: 1 }] }), foe('B1', { stats: { ...foe('x').stats, hp: 100000 } })]); c.start(false); act(c, 'attack', ['B1']);
-      ok('A→A 連鎖在上限停下並留下事件鏈', c.trace.length > 0 && !!c.trace[0].chain, String(c.trace.length)); }
-    { defPut('passives', 't_counterAll', { make: () => ({ triggers: [{ on: EVT.DAMAGE, phase: 'POST', role: 'tgt', reaction: 1, cond: { ownerAlive: 1 }, effects: [{ type: 'counter', skill: 'counter_strike' }] }] }), metadata: {}, tags: [] });
-      const c = mk([hero({ passives: [{ key: 't_counterAll', v: 1 }], stats: { ...hero().stats, hp: 100000 } }), foe('B1', { passives: [{ key: 't_counterAll', v: 1 }], stats: { ...foe('x').stats, hp: 100000 } })]); c.byId.H.res.hp = 100000; c.start(false); act(c, 'attack', ['B1']);
-      ok('反擊觸發反擊：反應深度上限 ' + BV2.MAX_REACT, c.trace.some(t => /reaction depth/.test(t.what)) || cnt(c, EVT.REACTION) <= BV2.MAX_REACT * 4, 'reactions ' + cnt(c, EVT.REACTION)); }
-    { defPut('passives', 't_resLoop', { make: () => ({ triggers: [{ on: EVT.RESOURCE_CHANGE, phase: 'POST', role: 'tgt', cond: {}, effects: [{ type: 'resource', res: 'mp', amount: 1, target: 'self' }] }] }), metadata: {}, tags: [] });
-      const c = mk([hero({ passives: [{ key: 't_resLoop', v: 1 }], stats: { ...hero().stats, mp: 100000 } }), foe('B1')]); c.byId.H.res.mp = 0; c.start(false); c.changeRes(c.byId.H, 'mp', 1);
-      ok('資源增加觸發資源增加：在上限停下', c.trace.length > 0, 'mp ' + c.byId.H.res.mp); }
-    // ---------- determinism ----------
-    { const run = seed => { const c = mk([hero({ skills: ['attack', 't_multi'] }), foe('B1'), foe('B2')], seed); c.start(true); return c.hash(); };
-      const a = run(42), b = run(42), d = run(43); ok('同種子同輸入 → 事件雜湊相同', a === b, a + ' / ' + b); ok('不同種子 → 事件雜湊不同', a !== d); }
-    // ---------- the real content: every hero class against a few real monsters, no errors ----------
-    { const e0 = BV2.errors.length; let n = 0, bad = []; for (const cls of Object.keys(SIG)) { __game.newGameState('測'); const st = Game.st; applyStartClass(['mage', 'bard'].includes(cls) ? 'mage' : 'swordsman'); st.cls = cls; st.lv = 18; st.hp = heroStats().hp; st.mp = heroStats().mp;
-        for (const k of ['galeCut', 'fireShot', 'chainLightning', 'mend']) Object.assign(BB.entry(st, k), { learned: true, x: 8 }); st.slots = ['o_galeCut', 'o_fireShot', 'o_chainLightning', 'o_mend'];
-        for (const [sp, lv, kind, extra] of [['slime', 16, 'wild', [['mush', 16], ['wolf', 15]]], ['golem', 16, 'boss'], ['banditBoss', 16, 'boss'], ['crystalGolem', 18, 'boss']]) { try { st.hp = heroStats().hp; st.mp = heroStats().mp; st.status = null; const c = BB.build({ sp, lv, kind, extra, seed: 5 + n }, st); c.start(true); n++; if (!c.result || c.trace.length) bad.push(cls + '/' + sp + (c.trace.length ? ' trace' : ' no result')); } catch (e) { bad.push(cls + '/' + sp + ' ' + e.message); } } }
-      ok('10 職業 × 真實魔物（多體、頭目腳本）跑完沒有錯誤', !bad.length && BV2.errors.length === e0, bad.slice(0, 4).join(' | ') + ' ' + BV2.errors.slice(e0, e0 + 3).join(' | ') + ' (' + n + ' battles)'); }
+      const seq = c.log.filter(e => e.type === EVT.MESSAGE && /^p\d$/.test(e.payload.text || '')).map(e => e.payload.text).slice(0, 3).join(','); ok('C', '觸發：priority 高的先', seq === 'p5,p3,p1', seq); }
+    { const msg = t => ({ on: EVT.ROUND_END, phase: 'POST', effects: [{ type: 'message', text: t, target: 'self' }] });
+      defPut('mechanics', 't_mech', { make: () => ({ triggers: [msg('L5')] }), layer: 'class', override: 1 }); defPut('talents', 't_tal', { cls: 'test', make: () => ({ triggers: [msg('L6')] }), override: 1 }); P('t_eq', () => ({ triggers: [msg('L7')] }));
+      defPut('statuses', 't_st', { tags: [], duration: 'battle', stack: 'none', triggers: [msg('L8')], override: 1 });
+      const c = mk([hero({ passives: [{ key: 't_eq', v: 1, src: 'equip' }], mechanics: ['t_mech'], talents: ['t_tal'] }), foe('B1')]); c.byId.H.statuses.push({ id: 't_st', stacks: 1, dur: null, data: {}, seq: 1 }); c.start(false); act(c, 'attack', ['B1']);
+      const seq = c.log.filter(e => e.type === EVT.MESSAGE && /^L\d$/.test(e.payload.text || '')).map(e => e.payload.text).slice(0, 4).join(','); ok('C', '觸發：同 priority 依來源層級（職業→天賦→裝備→狀態）', seq === 'L5,L6,L7,L8', seq); }
+    { P('t_loopA', () => ({ triggers: [{ on: EVT.DAMAGE, phase: 'POST', role: 'src', effects: [{ type: 'damage', flat: 1, target: 'event_target' }] }] }));
+      const c = mk([hero({ passives: [{ key: 't_loopA', v: 1 }] }), foe('B1', { stats: { hp: 100000 } })]); c.start(false); act(c, 'attack', ['B1']); ok('C', '循環：A→A 連鎖在上限停下並留下完整事件鏈', c.trace.length > 0 && !!c.trace[0].chain, String(c.trace.length)); }
+    { P('t_counterAll', () => ({ triggers: [{ on: EVT.DAMAGE, phase: 'POST', role: 'tgt', reaction: 1, cond: { ownerAlive: 1 }, effects: [{ type: 'counter', skill: 'counter_strike' }] }] }));
+      const c = mk([hero({ passives: [{ key: 't_counterAll', v: 1 }], stats: { hp: 100000 } }), foe('B1', { passives: [{ key: 't_counterAll', v: 1 }], stats: { hp: 100000 } })]); c.byId.H.res.hp = 100000; c.start(false); act(c, 'attack', ['B1']);
+      ok('C', '反擊觸發反擊：反應深度上限 ' + BV2.MAX_REACT, c.trace.some(t => /reaction depth/.test(t.what)) || cnt(c, EVT.REACTION) <= BV2.MAX_REACT * 4, 'reactions ' + cnt(c, EVT.REACTION)); }
+    { P('t_resLoop', () => ({ triggers: [{ on: EVT.RESOURCE_CHANGE, phase: 'POST', role: 'tgt', cond: { evRes: 'mp' }, effects: [{ type: 'resource', res: 'mp', amount: 1, target: 'self' }] }] }));
+      const c = mk([hero({ passives: [{ key: 't_resLoop', v: 1 }], stats: { mp: 100000 } }), foe('B1')]); c.byId.H.res.mp = 0; c.start(false); c.changeRes(c.byId.H, 'mp', 1);
+      ok('C', '同一來源在同一條事件鏈最多重入 ' + BV2.MAX_REENTRY + ' 次', c.trace.some(t => /re-entry/.test(t.what)) && c.byId.H.res.mp <= 1 + BV2.MAX_REENTRY + 1, 'mp ' + c.byId.H.res.mp); }
+    { P('t_every', () => ({ triggers: [{ on: EVT.ACTION_START, phase: 'POST', effects: [{ type: 'message', text: 'x', target: 'self' }] }, { on: EVT.ACTION_END, phase: 'POST', effects: [{ type: 'message', text: 'y', target: 'self' }] }] }));
+      const c = mk([hero({ passives: Array.from({ length: 6 }, () => ({ key: 't_every', v: 1 })), stats: { hp: 1e6 } }), foe('B1', { stats: { hp: 1e6 } })], 5, { maxRounds: 120 }); c.byId.H.res.hp = 1e6; c.start(true);
+      ok('C', '整場觸發上限 ' + BV2.MAX_TRIG_BATTLE + '：超過就停止並記錄', c.trigBattle > BV2.MAX_TRIG_BATTLE && c.trace.some(t => /per battle/.test(t.what)) && cnt(c, EVT.EFFECT_TRIGGER) <= BV2.MAX_TRIG_BATTLE, c.trigBattle + ''); }
+    /* =================== D: content (classes, talents, weapons) =================== */
+    const mkHero = (cls, o = {}) => { __game.newGameState('測'); const st = Game.st; applyStartClass(['mage', 'bard'].includes(cls) ? 'mage' : 'swordsman'); st.cls = cls; st.lv = o.lv || 30; st.flags.deep = 1; st.tal12 = {}; if (o.tal) o.tal(st); st.hp = heroStats().hp; st.mp = heroStats().mp; st.status = null; BB.slots(st); return st; };
+    const fight = (st, foes, seed, policy = 'smart', extra = {}) => { const [sp, lv, kind, ex] = foes; const c = BB.build({ sp, lv, kind, extra: ex || [], seed, maxRounds: 60, ...extra }, st); c.data.heroPolicy = policy; c.cfg.maxRounds = 60; c.start(true); return c; };
+    { const bad = [], used = {}, gained = {};
+      for (const cls of Object.keys(DEF.classes)) { for (let i = 0; i < 4; i++) { const st = mkHero(cls), e0 = BV2.errors.length; let c; try { c = fight(st, ['slime', 26, 'wild', [['mush', 26], ['wolf', 25]]], 50 + i); } catch (e) { bad.push(cls + ': ' + e.message); continue; }
+          if (BV2.errors.length > e0) bad.push(cls + ': ' + BV2.errors[e0]); const C = DEF.classes[cls]; if (cnt(c, EVT.SKILL_USE, e => e.src === 'H' && e.payload.skill === C.sig)) used[cls] = 1;
+          const res = C.res; if (res ? c.log.some(e => e.type === EVT.RESOURCE_CHANGE && e.tgts[0] === 'H' && e.payload.res === res && e.payload.change > 0) : c.log.some(e => e.type === EVT.STATUS_APPLY && e.src === 'H' && ['hunt_mark', 'turret'].includes(e.payload.status))) gained[cls] = 1; } }
+      const cl = Object.keys(DEF.classes); ok('D', '10 職業：核心資源會累積、職業招式會被使用、沒有錯誤', !bad.length && cl.every(c => used[c] && gained[c]), bad.slice(0, 3).join(' | ') + ' 招式:' + cl.filter(c => !used[c]).join(',') + ' 資源:' + cl.filter(c => !gained[c]).join(',')); }
+    { const bad = [], fired = {}; let n = 0;
+      for (const id in DEF.talents) { const T = DEF.talents[id]; if (!DEF.classes[T.cls]) continue; n++; const st = mkHero(T.cls, { tal: s => TAL12.pick(T.branch, T.tier, T.opt, s) }), e0 = BV2.errors.length;
+        st.slots = (CLASS_SKILLS12[T.cls] || []).slice(0, 4).map(k => 'o_' + k);
+        try { const c = BB.build({ sp: 'slime', lv: 26, kind: 'wild', extra: [['mush', 26]], seed: 7 + n, maxRounds: 40 }, st); c.data.heroPolicy = 'random'; c.cfg.maxRounds = 40; c.start(true); if (!c.byId.H.data.talents.includes(id)) bad.push(id + ' not on the hero');
+          if (c.log.some(e => e.type === EVT.EFFECT_TRIGGER && String(e.payload.key || '').startsWith('talent:'))) fired[id] = 1; } catch (e) { bad.push(id + ': ' + e.message); }
+        if (BV2.errors.length > e0) bad.push(id + ': ' + BV2.errors[e0]); }
+      ok('D', '210 個天賦各自上場跑一場：沒有錯誤（觸發過 ' + Object.keys(fired).length + ' 個）', n === 210 && !bad.length, bad.slice(0, 3).join(' | ')); }
+    { const bad = []; for (const k of Object.keys(UNIQUE_W)) { const st = mkHero('swordsman'); const gr = makeGear(k, 3); st.equip.weapon = gr.u; BB.slots(st); const e0 = BV2.errors.length;
+        try { const c = fight(st, ['wolf', 26, 'wild'], 3); if (!c.byId.H.data.mechanics.includes('uw_' + k)) bad.push(k + ' no rule'); } catch (e) { bad.push(k + ': ' + e.message); } if (BV2.errors.length > e0) bad.push(k + ': ' + BV2.errors[e0]); }
+      for (const kind of Object.keys(WKIND12)) { const k = Object.keys(GEAR).find(q => GEAR[q].slot === 'weapon' && GEAR[q].kind === kind && !UNIQUE_W[q]); const st = mkHero('swordsman'); const gr = makeGear(k, 2); st.equip.weapon = gr.u; BB.slots(st);
+        try { const c = fight(st, ['wolf', 26, 'wild'], 4); const a = c.byId.H.data.attackSkill; if ((kind === '短刀' || kind === '拳套') && a !== 'attack_2') bad.push(kind + ' segments'); if (!c.byId.H.data.mechanics.includes('wk_' + kind)) bad.push(kind + ' rule'); } catch (e) { bad.push(kind + ': ' + e.message); } }
+      ok('D', '9 種武器規則、10 把專屬武器規則都會套用', !bad.length, bad.slice(0, 4).join(' | ')); }
+    /* =================== E: fixed cases (seeded event sequences) =================== */
+    { const runs = { basic: () => { const c = mk([hero({ skills: ['attack', 't_multi'] }), foe('B1'), foe('B2')], 42); c.start(true); return c; },
+        swordsman: () => fight(mkHero('swordsman'), ['wolf', 26, 'wild'], 42), mage: () => fight(mkHero('mage'), ['slime', 26, 'wild', [['mush', 26]]], 43), golem: () => fight(mkHero('guardian'), ['golem', 24, 'boss'], 44) };
+      for (const k in runs) { const a = runs[k]().hash(), b = runs[k]().hash(); hashes[k] = a; ok('E', '固定種子重跑相同（' + k + '）', a === b, a + '/' + b); if (golden && golden[k] != null) ok('E', '和基準事件序列相同（' + k + '）', golden[k] === a, golden[k] + ' → ' + a); }
+      const d = mk([hero({ skills: ['attack', 't_multi'] }), foe('B1'), foe('B2')], 43); d.start(true); ok('E', '不同種子 → 事件序列不同', d.hash() !== hashes.basic); }
+    /* =================== F: build matrix (every class × 2 full talent sets × boss / group) =================== */
+    { const bad = []; let n = 0; for (const cls of Object.keys(DEF.classes)) for (const pick of [0, 1]) for (const f of [['golem', 24, 'boss'], ['slime', 30, 'wild', [['bee', 30], ['wolf', 30]]]]) { n++;
+        const st = mkHero(cls, { tal: s => TAL12.auto(s, pick) }), e0 = BV2.errors.length; try { const c = fight(st, f, 100 + n); if (!c.result) bad.push(cls + ' no result'); } catch (e) { bad.push(cls + '/' + pick + ': ' + e.message); } if (BV2.errors.length > e0) bad.push(cls + ': ' + BV2.errors[e0]); }
+      ok('F', 'Build 矩陣：10 職業 × 2 組天賦 × 頭目／多體（' + n + ' 場）沒有錯誤', !bad.length, bad.slice(0, 3).join(' | ')); }
+    /* =================== G: stress =================== */
+    { T('t_flurry', { hits: [5, 5], target: 'all_enemies', tags: ['skill', 'phys', 'el:一般', 'damage', 'aoe', 'multi_hit'] });
+      const c = mk([hero({ skills: ['attack', 't_flurry'], stats: { hp: 1e5 } }), foe('B1', { stats: { hp: 1e5 } }), foe('B2', { stats: { hp: 1e5 } }), foe('B3', { stats: { hp: 1e5 } })], 3, { maxRounds: 150 }); c.byId.H.res.hp = 1e5; c.start(false);
+      for (let i = 0; i < 300 && c.need; i++) act(c, 't_flurry', []); const hpOk = c.units.every(u => u.res.hp >= 0 && u.res.hp <= u.max.hp);
+      ok('G', '壓力：多段×多目標×長戰鬥（' + c.log.length + ' 事件、' + c.round + ' 回合）HP 不出界、正常結束', !!c.result && hpOk && c.log.length > 3000); }
+    { const c = mk([hero(), foe('B1')]); c.start(false); for (let i = 0; i < 12; i++) c.applyStatus(c.byId.H, c.byId.H, 'stage_atk', { delta: 1, dur: 3 }); for (let i = 0; i < 12; i++) c.applyStatus(c.byId.H, c.byId.B1, 'stage_def', { delta: -1, dur: 3 });
+      ok('G', '極端層數：能力等級夾在 ±3', c.statusOf(c.byId.H, 'stage_atk').stacks === 3 && c.statusOf(c.byId.B1, 'stage_def').stacks === -3); }
+    /* =================== H: save migration =================== */
+    { let okm = false, info = ''; try { __game.newGameState('舊'); const st = Game.st; applyStartClass('swordsman'); st.lv = 20; st.battleV = 2; delete st.tal12; st.tcAll = { swordsman: { '0.0': 1, '1.0': 0 } };
+        st.orbs = [{ u: 'o1', k: 'galeCut', x: 20, e: ['A'], lv: 1 }, { u: 'o2', k: 'vigor', x: 0, e: [], lv: 2 }]; const w = mainWeapon(st); if (w) { w.o = ['o1']; w.en = { t: '火', lv: 1 }; }
+        const snap = JSON.stringify(st.orbs) + JSON.stringify(w && w.en); BB.sync(st); const spec = BB.heroSpec(st, { kind: 'wild' });
+        okm = TAL12.spent(st) === 0 && JSON.stringify(st.orbs) + JSON.stringify(w && w.en) === snap && BB.entry(st, 'galeCut').x >= 20 && spec.data.talents.length === 0 && !spec.passives.some(p => p.key === 'enchant') && heroStats(st).welem !== '火';
+        info = 'spent ' + TAL12.spent(st) + ' lib ' + BB.entry(st, 'galeCut').x + ' welem ' + heroStats(st).welem; } catch (e) { info = e.message; }
+      ok('H', '舊存檔：天賦退回、寶珠與附魔資料保留但沒有作用、技能庫保留進度', okm, info); }
+    /* =================== property tests: random battles keep the invariants =================== */
+    { const N = 400, R = makeRng(2026), cl = Object.keys(DEF.classes), sps = Object.keys(SPECIES).filter(s => !SPECIES[s].rare && DEF.enemies[s] && MON_PANEL[s]); let bad = [], ev = 0;
+      for (let i = 0; i < N; i++) { const cls = R.pick(cl), st = mkHero(cls, { lv: R.int(4, 40), tal: s => TAL12.auto(s, () => R.int(0, 1)) }), e0 = BV2.errors.length;
+        const n = R.int(1, 3), lv = Math.max(2, st.lv - R.int(0, 6)), ex = []; for (let k = 1; k < n; k++) ex.push([R.pick(sps), lv]);
+        try { const c = fight(st, [R.pick(sps), lv, 'wild', ex], 9000 + i, R.pick(['smart', 'random', 'attack'])); ev += c.log.length;
+          const hpBad = c.log.some(e => e.type === EVT.DAMAGE && !e.cancelled && (e.payload.hpAfter < 0 || e.payload.amount < 0)) || c.units.some(u => u.res.hp < 0 || u.res.hp > u.max.hp || Object.keys(u.res).some(r => u.res[r] < 0 || (u.max[r] != null && u.res[r] > u.max[r])));
+          if (!c.result || c.order.length || c.reactQ.length || hpBad) bad.push(cls + '#' + i + (hpBad ? ' hp/res' : ' queue')); } catch (e) { bad.push(cls + '#' + i + ': ' + e.message); }
+        if (BV2.errors.length > e0) bad.push(cls + '#' + i + ': ' + BV2.errors[e0]); }
+      ok('P', '隨機性質測試 ' + N + ' 場（' + ev + ' 事件）：HP／資源不出界、佇列清空、沒有非法狀態轉移', !bad.length, bad.slice(0, 4).join(' | ')); }
     for (const k of Object.keys(DEF.skills)) if (k.startsWith('t_')) delete DEF.skills[k]; for (const k of Object.keys(DEF.passives)) if (k.startsWith('t_')) delete DEF.passives[k];
-    return out;
-  });
-  for (const l of res) g.log(l);
-  g.log(res.filter(l => l.startsWith('FAIL')).length ? 'BTEST: FAIL' : 'BTEST: PASS (' + res.length + ' checks)');
-  if (!process.argv.includes('--sims')) return;
-  // ---------- build simulations → docs/balance_report.md ----------
-  const sim = await g.ev(() => {
-    const LOAD = { 物理: ['galeCut', 'steelCleaver', 'bladeRain', 'warCry'], 魔法: ['fireShot', 'chainLightning', 'flameVortex', 'manaWall'], 均衡: ['aquaEdge', 'mend', 'focusMind', 'starfall'] };
-    const FOES = { 單體: [['wolf', 'wild']], 多體: [['slime', 'wild', [['mush'], ['bee']]]], 高防: [['pebble', 'wild']], 高速: [['bird', 'wild']], 頭目: [['golem', 'boss']] };
-    const rows = [], use = {}, N = 6, LV = 20;
-    for (const cls of Object.keys(SIG)) for (const ln in LOAD) { const agg = {}; for (const fk in FOES) { const a = agg[fk] = { win: 0, rounds: 0, dealt: 0, taken: 0, heal: 0, events: 0, n: 0 };
-      for (let i = 0; i < N; i++) { __game.newGameState('測'); const st = Game.st; applyStartClass(['mage', 'bard'].includes(cls) ? 'mage' : 'swordsman'); st.cls = cls; st.lv = LV;
-        for (const k of LOAD[ln]) Object.assign(BB.entry(st, k), { learned: true, x: 8 }); st.slots = LOAD[ln].map(k => 'o_' + k); st.hp = heroStats().hp; st.mp = heroStats().mp; st.status = null;
-        const [sp, kind, ex] = FOES[fk][0], lv = kind === 'boss' ? LV - 6 : LV - 2, c = BB.build({ sp, lv, kind, extra: ex ? ex.map(([s]) => [s, lv]) : [], seed: 1000 + i * 7 + cls.length }, st); c.start(true);
-        a.n++; if (c.result.outcome === 'win') a.win++; a.rounds += c.round; a.events += c.log.length;
-        for (const e of c.log) { if (e.type === EVT.DAMAGE && !e.cancelled) { if (e.src === 'H' && e.tgts[0] !== 'H') a.dealt += e.payload.amount; if (e.tgts[0] === 'H') a.taken += e.payload.amount; } if (e.type === EVT.HEAL && e.tgts[0] === 'H') a.heal += e.payload.amount || 0;
-          if (e.type === EVT.SKILL_USE && e.src === 'H') { const k = e.payload.skill; use[k] = (use[k] || 0) + 1; } } } }
-      rows.push({ cls, ln, agg }); }
-    return { rows, use, N, LV, FOES: Object.keys(FOES), skillNames: Object.fromEntries(Object.keys(DEF.skills).map(k => [k, DEF.skills[k].name])), cls: Object.fromEntries(Object.keys(SIG).map(k => [k, (CLASSES[k] || {}).n || k])) };
-  });
-  const L = ['# 《曙光冒險》v11 戰鬥平衡報告（自動產生）', '', '由 `node tools/play.js tools/btest.js --sims` 產生。英雄 Lv' + sim.LV + '、初始裝備、四個技能已學會；每組 ' + sim.N + ' 場，由自動策略（招式點滿就用招式、低血補血、多體時用範圍技）操作。', '依規格：不自動改數值，只列出數據與警告。', ''];
-  L.push('## 勝率（%）與平均回合', '', '| 職業 | 技能組 | ' + sim.FOES.join(' | ') + ' |', '|---|---|' + sim.FOES.map(() => '---|').join(''));
-  for (const r of sim.rows) L.push('| ' + sim.cls[r.cls] + ' | ' + r.ln + ' | ' + sim.FOES.map(f => { const a = r.agg[f]; return Math.round(a.win / a.n * 100) + '（' + (a.rounds / a.n).toFixed(1) + '）'; }).join(' | ') + ' |');
-  L.push('', '## 每回合造成／承受傷害', '', '| 職業 | 技能組 | ' + sim.FOES.join(' | ') + ' |', '|---|---|' + sim.FOES.map(() => '---|').join(''));
-  for (const r of sim.rows) L.push('| ' + sim.cls[r.cls] + ' | ' + r.ln + ' | ' + sim.FOES.map(f => { const a = r.agg[f], rd = Math.max(1, a.rounds); return Math.round(a.dealt / rd) + '／' + Math.round(a.taken / rd); }).join(' | ') + ' |');
-  const tot = Object.values(sim.use).reduce((a, b) => a + b, 0), useL = Object.entries(sim.use).sort((a, b) => b[1] - a[1]);
-  L.push('', '## 技能使用率', '', '| 技能 | 次數 | 比例 |', '|---|---|---|'); for (const [k, n] of useL.slice(0, 30)) L.push('| ' + (sim.skillNames[k] || k) + ' | ' + n + ' | ' + (n / tot * 100).toFixed(1) + '% |');
-  // warnings: build concentration (one loadout far ahead for a class), abnormal damage (2× the median), unused skills
-  const W = [], dpr = sim.rows.map(r => { let d = 0, n = 0; for (const f of sim.FOES) { d += r.agg[f].dealt; n += Math.max(1, r.agg[f].rounds); } return [r, d / n]; }), med = dpr.map(x => x[1]).sort((a, b) => a - b)[Math.floor(dpr.length / 2)];
-  for (const [r, v] of dpr) if (v > med * 2) W.push('異常輸出：' + sim.cls[r.cls] + '／' + r.ln + ' 每回合 ' + Math.round(v) + '（中位數 ' + Math.round(med) + '）');
-  for (const c of Object.keys(sim.cls)) { const R = sim.rows.filter(r => r.cls === c).map(r => [r.ln, sim.FOES.reduce((a, f) => a + r.agg[f].win / r.agg[f].n, 0) / sim.FOES.length]); R.sort((a, b) => b[1] - a[1]); if (R.length > 1 && R[0][1] - R[1][1] > 0.3) W.push('Build 集中：' + sim.cls[c] + ' 的「' + R[0][0] + '」勝率比其他組高 ' + Math.round((R[0][1] - R[1][1]) * 100) + ' 個百分點'); }
-  for (const k of ['galeCut', 'steelCleaver', 'bladeRain', 'warCry', 'fireShot', 'chainLightning', 'flameVortex', 'manaWall', 'aquaEdge', 'mend', 'focusMind', 'starfall']) if (!sim.use['o_' + k]) W.push('使用率 0：' + (sim.skillNames['o_' + k] || k) + '（自動策略從未選用）');
-  L.push('', '## 警告', '', ...(W.length ? W.map(w => '- ' + w) : ['- （沒有）']), '');
-  fs.writeFileSync(path.resolve('docs/balance_report.md'), L.join('\n')); g.log('balance report: docs/balance_report.md (' + sim.rows.length + ' builds, ' + W.length + ' warnings)');
+    for (const k of ['t_mech']) delete DEF.mechanics[k]; delete DEF.talents.t_tal; delete DEF.statuses.t_st;
+    return { out, hashes };
+  }, golden);
+  for (const l of res.out) g.log(l);
+  if (!golden) { fs.writeFileSync(GOLDEN, JSON.stringify(res.hashes, null, 1)); g.log('golden event hashes written: tools/btest_golden.json'); }
+  const fails = res.out.filter(l => l.startsWith('FAIL')).length;
+  g.log(fails ? 'BTEST: FAIL (' + fails + ')' : 'BTEST: PASS (' + res.out.length + ' checks)');
+  if (process.argv.includes('--sims')) await require('./bsims.js')(g);
 };

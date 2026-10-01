@@ -74,7 +74,7 @@ const ctRank = (n, st = Game.st) => ctOf(st)[n.id] || 0;
 function talentSum(key, st = Game.st) { const T = CT[st.cls]; if (!T) return 0; let s = 0; for (const B of T) for (const n of B) if (n.key === key) s += n.v * ctRank(n, st); return s; }
 const deepOk = (st = Game.st) => st.lv >= 14 && !!(st.flags && st.flags.deep);
 // v9.2.4 playtest: "不希望全部點滿，這樣才有RPG的感覺" — at most 30 points (two of the three branches), whatever the level or books
-const TP_CAP = 30;
+const TP_CAP = 20; // v12: 天賦點上限 20（全部點滿要 22 點，所以一定要取捨）
 function tpRaw(st = Game.st) { return (st.cls ? Math.floor(st.lv / 2) + 1 : 0) + (st.tpRead || 0) + (st.flags && st.flags.deep ? 2 : 0); }
 const tpTotal = (st = Game.st) => Math.min(TP_CAP, tpRaw(st));
 function tpSpent(st = Game.st) { let s = 0; const T = CT[st.cls]; if (T) for (const B of T) for (const n of B) s += ctRank(n, st); return s; }

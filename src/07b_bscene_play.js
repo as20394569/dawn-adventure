@@ -192,7 +192,7 @@ Battle.prototype.victory = function* () {
   Sound.play('victory');
   const stolen = this.core.data.stolen || 0; if (stolen) { st.money += stolen; yield* this.msg('奪回了被搶走的' + stolen + ' G！'); }
   let exp = 0, gold = 0; for (const v of L) { const sp = SPECIES[v.sp] || {};
-    exp += Math.max(1, Math.floor((sp.exp || 10) * v.lv / 5 * (v.elite || v.boss ? 1.5 : 1) * (v.minion ? 0.5 : 1) * (fx.wisdom ? 1.5 : 1) * (this.cfg.pack ? 1.25 : 1) * expScale(st.lv, v.lv)));
+    exp += Math.max(1, Math.floor((sp.exp || 10) * v.lv / 5 * (v.elite || v.boss ? 1.5 : 1) * (v.minion ? 0.5 : 1) * (fx.wisdom ? 1.5 : 1) * (1 + (talentSum('expUp', st) || 0) / 100) * (this.cfg.pack ? 1.25 : 1) * expScale(st.lv, v.lv)));
     gold += Math.floor((v.boss ? 1000 : (sp.gold || 0) * v.lv * (!v.boss && typeof V81_GOLD === 'function' ? V81_GOLD(v.lv) : 1)) * (fx.fortune ? 1.5 : 1) * (v.minion ? 0.5 : 1)); }
   yield* this.gainExp(Math.max(1, exp));
   if (gold) { st.money += gold; yield* this.msg(st.name + '得到了' + gold + ' G！'); }

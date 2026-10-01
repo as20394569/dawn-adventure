@@ -230,7 +230,7 @@ function* summaryScreen() {
         /* v11: the class skill + the 4 skill slots (選單→技能編排); learned skills keep working without their orb */
         const sig = !!(mv && mv.sig), e = typeof BB !== 'undefined' ? BB.skillObj(st, id) : null, tag = sig ? '招式' : e && !e.learned ? '學習' : '技能', col = sig ? '#c8a050' : e && !e.learned ? '#8a7cff' : UIC.accent;
         x.fillStyle = shade(col, -0.45); x.fillRect(14, Y + 2, 30, 13); Font.drawC(x, tag, 29, Y + 1, '#ffffff', UIC.textSh, 10);
-        const nm = typeof BB !== 'undefined' ? BB.nameOf(st, id) : mv.n, D = typeof DEF !== 'undefined' && DEF.skills[id], c0 = D && (D.costs || [])[0], rt = sig ? '招式點' + (c0 ? c0.amount : 3) : 'MP ' + skillMP(id);
+        const nm = typeof BB !== 'undefined' ? BB.nameOf(st, id) : mv.n, D = typeof DEF !== 'undefined' && DEF.skills[id], c0 = D && (D.costs || [])[0], rt = BB.costLabel(st, id);
         let z = 12; while (z > 8 && Font.width(nm, z) > 150 - 52 - Font.width(rt, 11)) z--; Font.draw(x, nm, 52, Y + (12 - z) / 2, UIC.text, UIC.textSh, z); Font.drawR(x, rt, 164, Y, sig ? '#ffd860' : UIC.accent, UIC.textSh, 11); });
       if (t0 > 0) x.drawImage(UPARROW, 86, 25); if (t0 + VIS < SK.length) x.drawImage(DOWNARROW, 86, 24 + VIS * 19 + 3);
       if (SK[Math.min(mi, SK.length - 1)] === '_passive') { drawWin(x, 4, 168, 168, 84, 'menu'); drawPassiveInfo(x, st, 12, 171, 152, true); }
@@ -295,7 +295,7 @@ function* equipGearFlow(g) { // put an instance on; accessories pick a free/olde
 function* bagScreen(mode = 'field') { // returns item id used (battle) or null
   let bagTapSel = -1;
   // v10.7.1 (player: 「背包要能看到寶珠跟寶石」): 寶珠 lists every orb (socketed or not), 寶石 the enchant stones
-  let tab = 0, idx = 0; const tabs = mode === 'battle' ? ['道具'] : ['道具', '裝備', '寶珠', '寶石', '素材', '重要'];
+  let tab = 0, idx = 0; const tabs = mode === 'battle' ? ['道具'] : ['道具', '裝備', '素材', '重要']; // v12: 寶珠・寶石 tabs removed (orbs and enchant cancelled)
   const orbsSorted = () => typeof orbList === 'function' ? orbList(Game.st).slice().sort((a, b) => (!!orbHost(b) - !!orbHost(a)) || (isActiveOrb(b) - isActiveOrb(a)) || orbDef(a).n.localeCompare(orbDef(b).n)) : [];
   const listFor = t => tabs[t] === '裝備' ? gearSort() : tabs[t] === '寶珠' ? orbsSorted() : bagList(it => tabs[t] === '道具' ? (!it.key && !it.mat && it.use !== 'enchant' && (mode !== 'battle' || (it.use !== 'boost' && it.use !== 'tp'))) : tabs[t] === '寶石' ? it.use === 'enchant' : tabs[t] === '素材' ? !!it.mat : !!it.key);
   const VIS = 7;
@@ -329,6 +329,7 @@ function* bagScreen(mode = 'field') { // returns item id used (battle) or null
       if (tabs[tab] === '寶珠') continue; // look only: socket / fuse orbs at the smith
       const k = list[idx], it = ITEMS[k];
       if (it.key || it.mat || it.use === 'enchant') { yield* say(it.use === 'phone' ? phoneText() : it.d); continue; }
+      if (it.use === 'trainBook' && mode !== 'battle') { UI.remove(scr); yield* trainBookFlow(k); UI.push(scr); continue; }
       const r = yield* ask('要使用' + it.n + '嗎？', ['使用', '取消']);
       if (r !== 0) continue;
       if (mode === 'battle') { if (it.use === 'home' && Game.scene.hasBoss && Game.scene.hasBoss()) { yield* say('頭目戰中無法使用！'); continue; } if (it.use === 'escape' || it.use === 'home' || canUseItem(k)) { result = k; break; } yield* say('現在使用也沒有效果。'); continue; }

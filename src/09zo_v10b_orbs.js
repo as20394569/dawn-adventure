@@ -150,11 +150,6 @@ skillLv = function () { return 1; };
 
 /* ---------- passives from armour orbs ---------- */
 function passiveFx(o) { const D = ORB_P[o.k], lv = o.lv || 1, out = []; for (const [k, v] of parseFx9(D.fx)) out.push([k, k.startsWith('fx.') ? v : Math.round(v * [1, 1.5, 2][lv - 1] * 10) / 10]); if (D.up && lv > 1) for (const [k, v] of parseFx9(D.up)) out.push([k, v * (lv - 1)]); return out; }
-{ const _hs = heroStats; heroStats = function (st = Game.st) {
-    const s = _hs(st); const pct = {};
-    for (const o of passiveOrbs(st)) for (const [k, v] of passiveFx(o)) { if (k.startsWith('fx.')) { s.fx[k.slice(3)] = 1; if (k === 'fx.endure') s.endureT = 1; } else if (/^(hp|atk|def|spa|spd|spe|mp)P$/.test(k)) pct[k.slice(0, -1)] = (pct[k.slice(0, -1)] || 0) + v; else s[k] = (s[k] || 0) + v; }
-    for (const k in pct) s[k] = Math.floor(s[k] * (1 + pct[k] / 100)); return s;
-  }; }
 const orbFxText = o => passiveFx(o).map(([k, v]) => k.startsWith('fx.') ? (typeof tDesc === 'function' ? tDesc(k, 1) : k) : typeof tDesc === 'function' ? tDesc(k, v) : k + v).join('、');
 
 /* ---------- battle: evolution effects, use counts, the evolved flash ---------- */
@@ -183,14 +178,5 @@ const ORB_DROP = {
   ratKing: ['bladeRain', 'hunter'], harvestGolem: ['verdantWind', 'guardian'], clockColossus: ['chronoLock', 'thrift'], frostQueen: ['thorHammer', 'keenEye'], lavaGiant: ['starfall', 'lastStand'],
   victorDemon: ['assassinMark', 'sorcery'], shadowGeneral: ['dawnFlash', 'ruthless'], gatekeeper: ['drakeFang', 'vanguard'], starGuardian: ['sonicBoom', 'shadowStep'],
 };
-{ const _v = Battle.prototype.victory; Battle.prototype.victory = function* () {
-    const r = yield* _v.call(this); const F = this.F, st = Game.st, L = F && ORB_DROP[this.cfg.sp];
-    if (L && (F.elite || F.boss || this.kind === 'boss' || this.kind === 'elite')) { const got = st.orbGot || (st.orbGot = {}); let k = null;
-      if (chance(F.boss || this.kind === 'boss' ? 0.45 : 0.3)) { k = pick(L); got[this.cfg.sp] = 1; } // v10.5: never guaranteed (was: the first kill always gave the first orb)
-      if (k) { const o = newOrb(k); Sound.jingle('item'); yield* this.msg('得到了技能寶珠「' + orbDef(o).n + '」！', { hold: 40 }); } }
-    return r;
-  }; }
 // requests & story rewards may carry { orb: key }
-{ const _gr = giveReward; giveReward = function* (rw) { const r = yield* _gr(rw); if (rw && rw.orb) yield* orbGet(rw.orb); return r; }; }
-Object.assign(COMMISSIONS.c1.reward, { orb: 'mend' }); Object.assign(COMMISSIONS.c6.reward, { orb: 'fireShot' }); Object.assign(COMMISSIONS.c9.reward, { orb: 'bulwark' }); Object.assign(COMMISSIONS.c7.reward, { orb: 'resolve' });
-if (COMMISSIONS.c14) Object.assign(COMMISSIONS.c14.reward, { orb: 'holyWard' }); if (COMMISSIONS.c15) Object.assign(COMMISSIONS.c15.reward, { orb: 'keenEye' });
+    

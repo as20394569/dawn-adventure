@@ -1220,9 +1220,6 @@
   "swordPage": [
    "lake寶箱"
   ],
-  "enWater": [
-   "lake寶箱"
-  ],
   "moonDew": [
    "lake採集",
    "lake採集",
@@ -1233,16 +1230,10 @@
   "bellShard": [
    "canyon寶箱"
   ],
-  "enRock": [
-   "canyon寶箱"
-  ],
   "cactusFruit": [
    "canyon採集",
    "canyon採集",
    "魔物:仙人掌怪"
-  ],
-  "enVenom": [
-   "swamp寶箱"
   ],
   "bogMoss": [
    "swamp採集",
@@ -1270,9 +1261,6 @@
   ],
   "lostScore": [
    "capSewer寶箱"
-  ],
-  "enLeaf": [
-   "goldPlains寶箱"
   ],
   "wheat": [
    "goldPlains採集",
@@ -1303,12 +1291,6 @@
    "魔物:冰晶石怪",
    "魔物:冰霜巫妖",
    "魔物:霜之女王"
-  ],
-  "enWater2": [
-   "frostVillage寶箱"
-  ],
-  "enFire2": [
-   "emberPass寶箱"
   ],
   "magmaStone": [
    "emberPass採集",
@@ -1351,9 +1333,6 @@
    "委託獎勵",
    "委託獎勵"
   ],
-  "enBolt": [
-   "windHills寶箱"
-  ],
   "agiFruit": [
    "jadeCreek寶箱",
    "行商",
@@ -1376,9 +1355,6 @@
    "委託獎勵",
    "委託獎勵",
    "委託獎勵"
-  ],
-  "enFire": [
-   "maplePass寶箱"
   ],
   "leaf": [
    "maplePass採集",
@@ -1613,13 +1589,28 @@
   "noraBread": [
    "劇情/任務"
   ],
-  "enBolt2": [
+  "enFire": [
    "劇情/任務"
   ],
-  "enVenom2": [
+  "enFire2": [
    "劇情/任務"
   ],
-  "enRock2": [
+  "enWater": [
+   "劇情/任務"
+  ],
+  "enWater2": [
+   "劇情/任務"
+  ],
+  "enBolt": [
+   "劇情/任務"
+  ],
+  "enLeaf": [
+   "劇情/任務"
+  ],
+  "enVenom": [
+   "劇情/任務"
+  ],
+  "enRock": [
    "劇情/任務"
   ],
   "silverPin": [

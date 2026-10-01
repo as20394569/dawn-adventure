@@ -1,7 +1,7 @@
 /* ===================== v11 戰鬥核心 v2 — 基礎：常數、可重現亂數、事件類型、標籤、條件、資料登錄與 Schema 驗證 =====================
    docs/battle_v2_design.md. Four layers: data (DEF.*), rules (BR.*), execution (BattleCore), view (BattleScene).
    Nothing here touches the screen. */
-const BV2 = { DEV: true, VERSION: 2, MAX_DEPTH: 8, MAX_REACT: 2, MAX_EVENTS_ACTION: 512, MAX_TRIG_ACTION: 32, MAX_TRIG_ROUND: 96, errors: [] };
+const BV2 = { DEV: true, VERSION: 3, MAX_DEPTH: 8, MAX_REACT: 2, MAX_EVENTS_ACTION: 512, MAX_TRIG_ACTION: 32, MAX_TRIG_ROUND: 96, MAX_TRIG_BATTLE: 600, MAX_REENTRY: 2, errors: [] };
 function bvErr(where, msg) { const e = '[BV2] ' + where + ': ' + msg; BV2.errors.push(e); if (BV2.DEV && typeof console !== 'undefined') console.warn(e); return e; }
 
 /* ---------- seedable RNG (mulberry32); every battle-logic random number goes through one of these ---------- */
@@ -30,20 +30,21 @@ const EVT = {
   STATUS_APPLY: 'STATUS_APPLY', STATUS_FAIL: 'STATUS_FAIL', STATUS_STACK: 'STATUS_STACK', STATUS_REMOVE: 'STATUS_REMOVE', STATUS_EXPIRE: 'STATUS_EXPIRE',
   DOWN: 'DOWN', REVIVE: 'REVIVE', EXTRA_ACTION: 'EXTRA_ACTION', REACTION: 'REACTION', EFFECT_TRIGGER: 'EFFECT_TRIGGER', EFFECT_DONE: 'EFFECT_DONE',
   MESSAGE: 'MESSAGE', PHASE: 'PHASE', SUMMON: 'SUMMON', ESCAPE: 'ESCAPE', ITEM_USE: 'ITEM_USE', DEFEND: 'DEFEND', CHARGE: 'CHARGE', BREAK: 'BREAK',
+  TURN_ORDER: 'TURN_ORDER', COOLDOWN: 'COOLDOWN', RESOURCE_OVERFLOW: 'RESOURCE_OVERFLOW',
 };
 const EVT_SET = new Set(Object.values(EVT));
 
 /* ---------- tags: the shared language of skills, statuses, passives and events ---------- */
 const BV_TAGS = new Set(['attack', 'basic', 'skill', 'sig', 'orb', 'weapon_special', 'item', 'defend', 'run', 'phys', 'magic', 'support', 'damage', 'heal', 'buff', 'debuff',
   'ailment', 'dot', 'aoe', 'chain', 'multi_hit', 'priority', 'charge', 'drain', 'recoil', 'reaction', 'counter', 'reflect', 'fixed', 'true_damage', 'shield_break', 'execute',
-  'boss', 'elite', 'rare', 'minion', 'wild', 'hero', 'foe', 'weapon', 'ally', 'break', 'steal', 'monster_skill', 'status', 'stage', 'environment', 'mechanic', 'summon', 'heavy', 'pierce', 'guard', 'cleanse', 'dispel',
+  'boss', 'elite', 'rare', 'minion', 'wild', 'hero', 'foe', 'weapon', 'ally', 'mark', 'turret', 'break', 'steal', 'monster_skill', 'status', 'stage', 'environment', 'mechanic', 'summon', 'heavy', 'pierce', 'guard', 'cleanse', 'dispel',
   'el:一般', 'el:火', 'el:水', 'el:雷', 'el:草', 'el:毒', 'el:岩', 'el:飛', 'el:光', 'el:暗', 'el:冰', 'el:風']);
 const bvTagOk = t => BV_TAGS.has(t) || /^(fam|cls|tpl|kind|key):/.test(t);
 
 /* ---------- conditions: data → test. COND[name](ctx, value) ---------- */
 // ctx: { core, owner, src, tgt, skill, ev, hit } (owner = the unit holding the passive / status)
 const COND = {
-  cat: (c, v) => !!c.skill && c.skill.cat === v,
+  cat: (c, v) => !!c.skill && (c.skill.cats ? c.skill.cats.includes(v) : c.skill.cat === v),
   element: (c, v) => !!c.skill && (Array.isArray(v) ? v.includes(c.skill.el) : c.skill.el === v),
   tag: (c, v) => !!c.skill && c.skill.tags.includes(v),
   notTag: (c, v) => !c.skill || !c.skill.tags.includes(v),
@@ -81,8 +82,25 @@ const COND = {
 };
 function condOk(conds, ctx) { if (!conds) return true; for (const k in conds) { const f = COND[k]; if (!f) { bvErr('cond', 'unknown condition ' + k); return false; } if (!f(ctx, conds[k])) return false; } return true; }
 
+/* ---------- trigger source layers (spec v1.1 §6): 1 system, 2 death prevention / cancel / replace, 3 interrupt / protect / reaction,
+   4 the current skill, 5 class, 6 talent, 7 equipment, 8 status, 9 enemy / field / other. Lower layer goes first when priority ties. ---------- */
+const LAYER = { system: 1, prevent: 2, reaction: 3, skill: 4, class: 5, talent: 6, equip: 7, status: 8, other: 9 };
+
 /* ---------- data registries ---------- */
-const DEF = { skills: {}, statuses: {}, resources: {}, passives: {}, enemies: {}, encounters: {}, classes: {}, items: {}, mechanics: {} };
+const DEF = { skills: {}, statuses: {}, resources: {}, passives: {}, enemies: {}, encounters: {}, classes: {}, items: {}, mechanics: {}, effects: {}, talents: {} };
+// EffectDefinition (spec §4): every effect lives in DEF.effects under a stable id; skills / statuses / items / triggers keep only the ids.
+// The id is the effect's place in the data ('skill:o_galeCut#e0'), so it never changes while the data does not move.
+function effRegister(id, ef) { if (typeof ef === 'string') return ef; const d = { ...ef, id, effect_type: ef.type, target_rule: ef.target || 'target', conditions: ef.cond || null, tags: ef.tags || [], event_flags: ef.flags || [], follow_up_effects: ef.then || [] };
+  DEF.effects[id] = d; return id; }
+const effGet = x => typeof x === 'string' ? DEF.effects[x] : x;
+// run once after all data files: replace inline effect objects with registered ids
+function bvFinalize() {
+  const reg = (pre, list) => (list || []).map((ef, i) => effRegister(pre + i, ef));
+  for (const id in DEF.skills) { const d = DEF.skills[id]; d.effects = reg('skill:' + id + '#e', d.effects); d.after = reg('skill:' + id + '#a', d.after); }
+  for (const id in DEF.items) { const d = DEF.items[id]; d.effects = reg('item:' + id + '#e', d.effects); }
+  for (const id in DEF.statuses) (DEF.statuses[id].triggers || []).forEach((tr, ti) => { tr.effects = reg('status:' + id + '#t' + ti + 'e', tr.effects); });
+  for (const id in DEF.mechanics) (DEF.mechanics[id].triggers || []).forEach((tr, ti) => { tr.effects = reg('mech:' + id + '#t' + ti + 'e', tr.effects); });
+}
 function defPut(kind, id, d) {
   if (!DEF[kind]) return bvErr('def', 'unknown kind ' + kind);
   if (DEF[kind][id] && !d.override) bvErr('def', kind + '.' + id + ' defined twice');
@@ -91,19 +109,20 @@ function defPut(kind, id, d) {
 
 /* ---------- schemas + validation (run at load in dev mode and by tools/btest.js) ---------- */
 const SCHEMA = {
-  skills: { req: ['id', 'version', 'tags', 'target', 'effects'], target: ['enemy', 'all_enemies', 'random_enemy', 'self', 'ally', 'all_allies', 'none'] },
+  skills: { req: ['id', 'version', 'tags', 'target', 'effects', 'cooldown'], target: ['enemy', 'all_enemies', 'random_enemy', 'self', 'ally', 'all_allies', 'none'] },
   statuses: { req: ['id', 'version', 'tags', 'duration', 'stack'], stack: ['none', 'refresh', 'add', 'signed', 'max'] },
   resources: { req: ['id', 'version', 'scope', 'min'], scope: ['permanent', 'battle', 'round'] },
+  talents: { req: ['id', 'version', 'tags', 'cls'] },
   passives: { req: ['id', 'version'] },
   enemies: { req: ['id', 'version', 'tags', 'skills'] },
   encounters: { req: ['id', 'version', 'groups'] },
-  classes: { req: ['id', 'version', 'sig', 'slots'] },
+  classes: { req: ['id', 'version', 'sig', 'resources'] },
   items: { req: ['id', 'version', 'effects'] },
   mechanics: { req: ['id', 'version'] },
 };
 function bvValidate() {
   const errs = [], E = (w, m) => errs.push(w + ': ' + m), effOk = (w, list) => {
-    for (const ef of list || []) { if (!EFFECT_TYPES[ef.type]) E(w, 'effect type ' + ef.type + ' does not exist'); else if (EFFECT_TYPES[ef.type].check) { const m = EFFECT_TYPES[ef.type].check(ef); if (m) E(w, m); }
+    for (const x of list || []) { const ef = effGet(x); if (!ef) { E(w, 'effect id ' + x + ' missing'); continue; } if (!EFFECT_TYPES[ef.type]) E(w, 'effect type ' + ef.type + ' does not exist'); else if (EFFECT_TYPES[ef.type].check) { const m = EFFECT_TYPES[ef.type].check(ef); if (m) E(w, m); }
       if (ef.status && !DEF.statuses[ef.status]) E(w, 'status ' + ef.status + ' missing'); if (ef.res && !DEF.resources[ef.res]) E(w, 'resource ' + ef.res + ' missing');
       if (ef.skill && !DEF.skills[ef.skill]) E(w, 'skill ' + ef.skill + ' missing'); if (ef.cond) for (const k in ef.cond) if (!COND[k]) E(w, 'condition ' + k + ' missing');
       if (ef.then) effOk(w + '>then', ef.then); } };
@@ -115,7 +134,7 @@ function bvValidate() {
       const d = DEF[kind][id], w = kind + '.' + id;
       for (const f of S.req) if (d[f] === undefined) E(w, 'missing ' + f);
       for (const t of d.tags || []) if (!bvTagOk(t)) E(w, 'illegal tag ' + t);
-      if (kind === 'skills') { if (!S.target.includes(d.target)) E(w, 'target ' + d.target); effOk(w, d.effects); for (const c of d.costs || []) { if (!DEF.resources[c.res]) E(w, 'cost resource ' + c.res); if (!(c.amount >= 0)) E(w, 'cost amount'); }
+      if (kind === 'skills') { if (!S.target.includes(d.target)) E(w, 'target ' + d.target); effOk(w, d.effects); for (const c of d.costs || []) { if (!DEF.resources[c.res]) E(w, 'cost resource ' + c.res); if (!c.all && !(c.amount >= 0)) E(w, 'cost amount'); if (c.all && c.min != null && c.min < 0) E(w, 'cost min'); }
         if (d.hits && (d.hits[0] < 1 || d.hits[1] < d.hits[0])) E(w, 'hits range'); if (d.acc != null && (d.acc < 0 || d.acc > 100)) E(w, 'acc range'); }
       if (kind === 'statuses') { if (!S.stack.includes(d.stack)) E(w, 'stack ' + d.stack); if (d.max != null && d.min != null && d.max < d.min) E(w, 'max < min'); for (const tr of d.triggers || []) trigOk(w, tr); for (const m of d.mods || []) if (!BR.STAGES.includes(m.stage)) E(w, 'modifier stage ' + m.stage); }
       if (kind === 'resources') { if (d.max != null && d.max < d.min) E(w, 'max < min'); if (!S.scope.includes(d.scope)) E(w, 'scope ' + d.scope); }
@@ -129,7 +148,7 @@ function bvValidate() {
   }
   // follow-up chains (skill effect → skill) must not loop
   const seen = new Set(), walk = (id, path) => { if (path.includes(id)) { E('skills.' + id, 'circular follow-up ' + path.concat(id).join('>')); return; } if (seen.has(id)) return; seen.add(id);
-    for (const ef of (DEF.skills[id] || {}).effects || []) if (ef.skill) walk(ef.skill, path.concat(id)); };
+    for (const x of (DEF.skills[id] || {}).effects || []) { const ef = effGet(x); if (ef && ef.skill) walk(ef.skill, path.concat(id)); } };
   for (const id in DEF.skills) walk(id, []);
   return errs;
 }

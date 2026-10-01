@@ -9,8 +9,10 @@ const EFFECT_TYPES = {
         if (ef.pctMax != null || ef.ofEvent != null || ef.ofCast != null || ef.flat != null) { // fixed damage (rocks, knives, thorns…)
           let v = ef.flat != null ? ef.flat : ef.pctMax != null ? t.max.hp * ef.pctMax * (t.boss && ef.bossMul ? ef.bossMul : 1) : ef.ofEvent != null ? (ctx.snap ? ctx.snap[ef.field || 'amount'] || 0 : 0) * ef.ofEvent * (t.boss && ef.bossMul ? ef.bossMul : 1) : (ctx.total || 0) * ef.ofCast;
           v = Math.max(1, Math.floor(v)); if (ef.nonLethal) { v = Math.min(v, t.res.hp - 1); if (v < 1) continue; } core.dealDamage(a, t, v, { el: ef.el || '一般', cat: ef.cat || 'fixed', kind: ef.kind || 'fixed', tags: (ef.tags || []).concat(['fixed']), min: 1 }); continue; }
-        const el0 = ef.el || BR.elementOf(core, a, sk), s2 = el0 !== sk.el || ef.cat || ef.critX ? { ...sk, el: el0, cat: ef.cat || sk.cat, critX: ef.critX || sk.critX } : sk;
-        const r = BR.damage(core, a, t, s2, { power: (ef.power ?? sk.power) * (ctx.scale || 1) * (ef.mul || 1) });
+        const el0 = ef.el || BR.elementOf(core, a, sk), cat0 = ef.cat || (sk.catOf ? sk.catOf(core, a) : sk.cat), cats = sk.catOf && core.rule(a, 'dualCat') ? ['物', '特'] : null;
+        const s2 = el0 !== sk.el || cat0 !== sk.cat || ef.critX || cats ? { ...sk, el: el0, cat: cat0, critX: ef.critX || sk.critX, ...(cats ? { cats } : {}) } : sk;
+        const pc = { core, owner: a, src: a, tgt: t, skill: sk, spent: ctx.spent || 0, ctx }, pw = BR.val(ef.power ?? (sk.powerOf ? { f: sk.powerOf } : sk.power), pc);
+        const r = BR.damage(core, a, t, s2, { power: pw * (ctx.scale || 1) * (ef.mul || 1) * (ctx.powMul || 1), spent: ctx.spent || 0, n: ctx.n || 0, cat: cat0 });
         if (r.crit) core.emit(EVT.CRIT, { src: a, tgts: [t], payload: { skill: sk.id } });
         core.dealDamage(a, t, r.amount, { ...r, el: s2.el, cat: s2.cat, skill: sk.id, n: ctx.n, tags: sk.tags.concat(ef.tags || []), kind: ef.kind || 'hit' });
       } } },
@@ -37,9 +39,14 @@ const EFFECT_TYPES = {
     if (ef.set) Object.assign(P, ef.set); (P.notes || (P.notes = [])).push(ef.note || ef.why || 'mod'); } },
   message: { exec(core, ef, ctx, tg) { core.emit(EVT.MESSAGE, { src: ctx.owner, tgts: tg, payload: { key: ef.key || null, text: ef.text || null, vars: ef.vars || null, hold: ef.hold || null } }); } },
   counter: { exec(core, ef, ctx) { const src = ctx.trigEv && ctx.trigEv.src ? core.byId[ctx.trigEv.src] : ctx.pre && ctx.pre.src ? core.byId[ctx.pre.src] : null; if (!src || !core.isUp(src) || !core.isUp(ctx.owner)) return;
-    core.react(ctx.owner, { skill: ef.skill || 'counter_strike', targets: [src.id], why: ef.why || 'counter' }); } },
-  extra_action: { exec(core, ef, ctx) { const u = ctx.owner; if (!core.isUp(u)) return; core.emit(EVT.EXTRA_ACTION, { src: u, tgts: [u], payload: { why: ef.why || null } }, () => { core.queue.push({ actor: u.id, type: 'ai_extra', targets: [], meta: { extra: ef.why || 'extra' } }); }); } },
-  cancel_action: { exec(core, ef, ctx, tg) { for (const t of tg) { const i = core.queue.findIndex(c => c.actor === t.id); if (i >= 0) core.emit(EVT.ACTION_CANCEL, { src: ctx.owner, tgts: [t], payload: { why: ef.why || 'cancelled', pending: 1 } }, () => { core.queue.splice(i, 1); }); } } },
+    core.react(ctx.owner, { skill: ef.skill || 'counter_strike', targets: [src.id], why: ef.why || 'counter', meta: { powMul: BR.val(ef.mul, { core, owner: ctx.owner, src: ctx.owner }) || 1 } }); } },
+  extra_action: { exec(core, ef, ctx) { core.extraTurn(ctx.owner, ef.why || 'extra'); } },
+  cancel_action: { exec(core, ef, ctx, tg) { for (const t of tg) { const i = core.order.findIndex(c => c.id === t.id); if (i >= 0) core.emit(EVT.ACTION_CANCEL, { src: ctx.owner, tgts: [t], payload: { why: ef.why || 'cancelled', pending: 1 } }, () => { core.order.splice(i, 1); }); } } },
+  // DOWN PRE: keep the unit standing with `hp` HP (不屈・涅槃…); the core re-checks and cancels the DOWN
+  prevent_down: { exec(core, ef, ctx) { const e = ctx.pre, u = e && core.byId[e.tgts[0]]; if (!u || e.type !== EVT.DOWN) return; u.res.hp = Math.max(1, ef.pct ? Math.floor(u.max.hp * ef.pct) : ef.hp || 1); e.payload.prevented = ef.why || 'endure';
+    core.emit(EVT.MESSAGE, { src: u, tgts: [u], payload: { key: ef.key || 'endure' } }); } },
+  // cooldowns: how = 'longest' | 'all' | a skill id; n actions (or reset: 1 → to 0)
+  cooldown: { exec(core, ef, ctx, tg) { for (const t of tg) core.cutCooldown(t, ef.how || 'longest', ef.reset ? 99 : ef.n || 1, ef.why || null); } },
   summon: { check: ef => ef.sp ? null : 'summon needs sp',
     exec(core, ef, ctx) { const n = ef.count || 1; for (let i = 0; i < n; i++) { if (core.alive(ctx.owner.side).length >= (ef.maxSide || 3)) break; const spec = BD.unitForEnemy(core, ef.sp, ef.lv || ctx.owner.lv, ef.kind || 'minion', ctx.owner.side, core.units.length); if (spec) core.addUnit(spec, false); } if (typeof BB !== 'undefined' && BB.nameFoes) BB.nameFoes(core); } },
   steal_gold: { exec(core, ef, ctx, tg) { const have = core.data.gold ? core.data.gold() : 0; if (have <= 0) return; const g = Math.min(have, Math.max(ef.min || 50, Math.floor(have * (ef.pct || 0.1))));

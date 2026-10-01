@@ -19,13 +19,6 @@ function monsterElem(sp) {
   for (const L of S.learn || []) { const m = MOVES[Array.isArray(L) ? L[1] : L]; if (m && EN_EL.includes(m.t)) cnt[m.t] = (cnt[m.t] || 0) + 1; }
   let best = null, n = 0; for (const t in cnt) if (cnt[t] > n) { n = cnt[t]; best = t; } return (SP_EL[sp] = best || FAM_EL[S.fam] || null);
 }
-{ const _v = Battle.prototype.victory; Battle.prototype.victory = function* () {
-    const r = yield* _v.call(this); const st = Game.st, sp = this.cfg && this.cfg.sp; if (!sp || !st) return r;
-    const boss = this.kind === 'boss' || (this.F && this.F.boss), elite = this.kind === 'elite' || (this.F && this.F.elite); let el = monsterElem(sp), k = null;
-    if (boss) { el = el || pick(EN_EL); k = 'en' + EN_KEY[el] + '2'; } else if (elite ? chance(0.4) : el && chance(0.05)) { el = el || pick(EN_EL); k = 'en' + EN_KEY[el]; }
-    if (k) { st.bag[k] = (st.bag[k] || 0) + 1; yield* this.msg('得到了' + ITEMS[k].n + '！', { hold: 30 }); }
-    return r;
-  }; }
 // stats: the enchant replaces the weapon's element
 const gearEn = g => g && g.en && EN_EFF[g.en.t] ? g.en : null;
 { const _hs = heroStats; heroStats = function (st = Game.st) { const s = _hs(st), w = mainWeapon(st), E = gearEn(w); if (E) { s.welem = E.t; s.enT = E.t; s.enLv = E.lv; } return s; }; }
@@ -37,7 +30,7 @@ function enBurst(b, t, el) { const C = b.center(t), [k, c] = EN_FX[el]; for (let
 /* ---------- smith: one menu for both smiths ---------- */
 function* smithMenu(f) {
   while (true) {
-    const r = yield* ask('要做什麼？', ['打造', '強化' + (f && f.smithDisc ? '（半價）' : ''), '寶珠', '附魔', '重鑄詞綴', '分解', '離開']);
+    const r0 = yield* ask('要做什麼？', ['打造', '強化' + (f && f.smithDisc ? '（半價）' : ''), '重鑄詞綴', '分解', '離開']), r = r0 >= 2 ? r0 + 2 : r0; // v12: 寶珠・附魔 cancelled
     if (r === 0) yield* craftScreen(); else if (r === 1) yield* enhanceFlow(); else if (r === 2) yield* orbSmithFlow(); else if (r === 3) yield* enchantFlow(); else if (r === 4) yield* reforgeFlow(); else if (r === 5) yield* salvageFlow(); else break;
   }
 }

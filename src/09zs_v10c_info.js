@@ -8,9 +8,9 @@ const FOE_SPOTS = (() => { const L = []; for (const id in MAPS) { const d = MAPS
 function foeMoves(sp, lv, kind) { try { const f = makeFoe(sp, lv, kind); const L = f.moves.map(m => m.id); const ex = PHASE_MOVES[sp]; if (ex && !L.includes(ex)) L.push(ex); return L; } catch (e) { return []; } }
 function foeDropLines(sp, key, kind) {
   const L = [], st = Game.st, O = ORB_DROP[sp];
-  if (O) L.push('寶珠（機率）：' + O.map(k => '「' + (ORB_A[k] || ORB_P[k]).n + '」').join(''));
+  // v12: 寶珠 and 附魔石 drops are cancelled (their replacements are decided later)
   const h = typeof lootHint === 'function' ? lootHint(key, sp) : ''; if (h) L.push(h.replace('首次擊敗：必定掉落紅色', '裝備：首殺').replace('重戰掉落：', '裝備：'));
-  const el = monsterElem(sp); L.push((kind === 'boss' ? '上級' : '') + (el ? el : '') + '附魔石' + (kind === 'boss' ? '（必得）' : '（40%）') + (BOSS_MAT[sp] && ITEMS[BOSS_MAT[sp]] ? '・素材：' + ITEMS[BOSS_MAT[sp]].n : ''));
+  if (BOSS_MAT[sp] && ITEMS[BOSS_MAT[sp]]) L.push('素材：' + ITEMS[BOSS_MAT[sp]].n);
   return L;
 }
 function famText(sp) { const F = FAMILIES[SPECIES[sp].fam] || {}; return (F.weak && F.weak.length ? '弱：' + F.weak.join('') : '') + (F.resist && F.resist.length ? '　抗：' + F.resist.join('') : '') + (F.immune && F.immune.length ? '　免疫' + F.immune.map(q => ({ psn: '毒', par: '麻', slp: '眠', brn: '燒' })[q] || q).join('') : ''); }
@@ -56,7 +56,7 @@ function* orbDexScreen() {
   yield* listScreen('寶珠圖鑑　' + keys.filter(seen).length + '/' + keys.length, () => keys.map(k => ({ ic: typeof orbIcon === 'function' ? orbIcon(k) : null, t: (typeof orbIcon === 'function' && orbIcon(k) ? '' : ORB_A[k] ? '◆' : '◇') + (ORB_A[k] || ORB_P[k]).n, r: seen(k) ? '已取得' : '', col: seen(k) ? (ORB_A[k] ? '#c8f0ff' : UIC.warm) : UIC.dis })),
     i => { const k = keys[i]; if (!k) return []; const o = { k, x: 0, e: [], lv: 1 }; return [[orbInfo(o), UIC.text], ['取得：' + ((ORB_SRC[k] || []).join('、') || '？？？'), '#c8b0ff', 8], ...(ORB_A[k] ? [['進化：強攻 ' + evoOptText(o, 0, 'A') + '→' + evoOptText(o, 1, 'A') + '／附加 ' + evoOptText(o, 0, 'B') + '→' + evoOptText(o, 1, 'B'), UIC.muted, 8]] : [])]; });
 }
-{ const _dx = dexScreen; dexScreen = function* () { const r = yield* ask('要看什麼？', ['魔物圖鑑', '頭目・精英', '寶珠圖鑑']); if (r === 0) yield* _dx(); else if (r === 1) yield* bossDexScreen(); else if (r === 2) yield* orbDexScreen(); }; }
+{ const _dx = dexScreen; dexScreen = function* () { const r = yield* ask('要看什麼？', ['魔物圖鑑', '頭目・精英']); if (r === 0) yield* _dx(); else if (r === 1) yield* bossDexScreen(); else if (r === 2) yield* orbDexScreen(); }; }
 // the smith's recipe page: who drops a missing material
 function matSrc(k) { const B = FOE_SPOTS.find(e => BOSS_MAT[e.sp] === k); if (B) return SPECIES[B.sp].n; for (const s in SPECIES) if (SPECIES[s].mat === k) { const m = typeof spawnMaps === 'function' ? spawnMaps(s) : []; if (m.length) return SPECIES[s].n; } return ''; }
 askFight = function* (sp, lv, key, kind, extra) { // the choice sits inside the message box, so the card can use the whole upper screen

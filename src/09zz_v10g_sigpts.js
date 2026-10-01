@@ -27,10 +27,5 @@ function powFormula(id, st = Game.st) {
 }
 // the chief's first orb follows the class
 function starterOrb(st = Game.st) { const V = CLASS_V7[clsV7(st.cls)]; return V && isMagicW(V.w[0]) ? 'fireShot' : 'galeCut'; }
-{ const _so = startOverworld; startOverworld = function (...a) {
-    const st = Game.st, fix = st && st.flags && st.flags.orbStart && !st.flags.orbStartFix && starterOrb(st) === 'fireShot' && orbList(st).some(o => o.k === 'galeCut') && !orbList(st).some(o => o.k === 'fireShot');
-    if (st && st.flags) st.flags.orbStartFix = 1; const ow = _so.apply(this, a);
-    if (fix && ow && ow.run) ow.run((function* () { yield* wait(30); yield* say('村長：「差點忘了，你是用魔法的吧？裂風斬大概用不上，這顆給你。」'); yield* orbGet('fireShot', ''); })());
-    return ow; }; }
 // menus may take SELECT for an extra action (the skill pop-up: show / hide the power formula)
 { const _ch = choose; choose = function* (items, o = {}) { if (!o.onSel) return yield* _ch(items, o); const m = new Menu(items, o); UI.push(m); while (!m.done) { if (Input.pressed('select')) { Input.consume('select'); o.onSel(m); } m.update(); yield; } UI.remove(m); return m.result; }; }
