@@ -290,22 +290,27 @@ function* equipGearFlow(g) { // put an instance on; accessories pick a free/olde
 }
 function* bagScreen(mode = 'field') { // returns item id used (battle) or null
   let bagTapSel = -1;
-  let tab = 0, idx = 0; const tabs = mode === 'battle' ? ['道具'] : ['道具', '裝備', '素材', '重要'];
-  const listFor = t => tabs[t] === '裝備' ? gearSort() : bagList(it => tabs[t] === '道具' ? (!it.key && !it.mat && (mode !== 'battle' || (it.use !== 'boost' && it.use !== 'tp'))) : tabs[t] === '素材' ? !!it.mat : !!it.key);
+  // v10.7.1 (player: 「背包要能看到寶珠跟寶石」): 寶珠 lists every orb (socketed or not), 寶石 the enchant stones
+  let tab = 0, idx = 0; const tabs = mode === 'battle' ? ['道具'] : ['道具', '裝備', '寶珠', '寶石', '素材', '重要'];
+  const orbsSorted = () => typeof orbList === 'function' ? orbList(Game.st).slice().sort((a, b) => (!!orbHost(b) - !!orbHost(a)) || (isActiveOrb(b) - isActiveOrb(a)) || orbDef(a).n.localeCompare(orbDef(b).n)) : [];
+  const listFor = t => tabs[t] === '裝備' ? gearSort() : tabs[t] === '寶珠' ? orbsSorted() : bagList(it => tabs[t] === '道具' ? (!it.key && !it.mat && it.use !== 'enchant' && (mode !== 'battle' || (it.use !== 'boost' && it.use !== 'tp'))) : tabs[t] === '寶石' ? it.use === 'enchant' : tabs[t] === '素材' ? !!it.mat : !!it.key);
   const VIS = 7;
   const scr = { touchBack: true, draw(x) {
     screenBG(x); headerBar(x, '背包'); Font.drawR(x, Game.st.money + ' G', W - 6, 2, UIC.warm, UIC.textSh);
     const tw = Math.floor(171 / tabs.length); tabs.forEach((t, i) => { const X = 4 + i * tw; drawBtn(x, X, 23, tw - 3, 15, i === tab); Font.drawC(x, t, X + (tw - 3) / 2, 22, i === tab ? UIC.text : UIC.muted, UIC.textSh); });
-    const list = listFor(tab), gear = tabs[tab] === '裝備'; drawWin(x, 4, 40, 168, VIS * 18 + 10, 'menu');
+    const list = listFor(tab), gear = tabs[tab] === '裝備', orbT = tabs[tab] === '寶珠'; drawWin(x, 4, 40, 168, VIS * 18 + 10, 'menu');
     if (!list.length) Font.draw(x, '（空空如也）', 20, 46, UIC.muted, UIC.textSh);
     const top = Math.max(0, Math.min(idx - 3, list.length - VIS));
     list.slice(top, top + VIS).forEach((k, i) => { const Y = 44 + i * 18; if (top + i === idx) selBar(x, 6, Y - 1, 164, 17);
       if (gear) { const e = Font.draw(x, GEAR[k.b].n, 14, Y, gCol(k), UIC.textSh); if (isEquipped(k)) Font.draw(x, 'E', e + 2, Y, UIC.accent, UIC.textSh); Font.drawR(x, EQUIP_SLOTS[GEAR[k.b].slot === 'acc' ? 'acc1' : GEAR[k.b].slot], 164, Y, UIC.muted, UIC.textSh, 11); return; }
+      if (orbT) { const h = orbHost(k); drawOrbLine(x, k, 13, Y + 1, isActiveOrb(k) ? UIC.text : '#c8e8ff'); Font.drawR(x, h ? '鑲嵌中' : '未鑲嵌', 164, Y + 1, h ? UIC.accent : UIC.muted, UIC.textSh, 10); return; }
       const ic = typeof ITEM_ICON !== 'undefined' && ITEM_ICON[k]; if (ic) { x.drawImage(ic, 12, Y + 2); Font.draw(x, ITEMS[k].n, 27, Y, UIC.text, UIC.textSh); } else Font.draw(x, ITEMS[k].n, 14, Y, UIC.text, UIC.textSh); if (!ITEMS[k].key) Font.drawR(x, '×' + Game.st.bag[k], 164, Y, UIC.muted, UIC.textSh); });
     if (top > 0) x.drawImage(UPARROW, 85, 41); if (top + VIS < list.length) x.drawImage(DOWNARROW, 85, 40 + VIS * 18 + 4);
     if (typeof touchRegion === 'function') { list.slice(top, top + VIS).forEach((k, i) => touchRegion(6, 43 + i * 18, 164, 17, () => { if (mode === 'battle' && bagTapSel !== top + i) { bagTapSel = idx = top + i; Sound.sfx('cursor'); return; } idx = top + i; tapKey('a'); })); /* v24.6 battle: 1st tap shows the item, 2nd tap uses it */ tabs.forEach((t, i) => touchRegion(4 + i * tw, 23, tw - 3, 15, () => { tab = i; idx = 0; })); }
     drawWin(x, 4, 180, 168, 72, 'menu');
-    if (list[idx]) { if (gear) drawGearDetail(x, list[idx], 182, 68); else { const k0 = list[idx], it = ITEMS[k0]; Font.draw(x, '【' + it.cat + '】', 10, 182, ITEM_CAT_COL[it.cat] || UIC.muted, UIC.textSh, 10); if (it.mat) Font.drawR(x, '採集熟練度 Lv' + gatherLv(), 166, 182, UIC.accent, UIC.textSh, 10); const src = it.mat ? matSourceText(k0) : ''; Font.wrap(it.d, 152).slice(0, src ? 2 : 3).forEach((l, i) => Font.draw(x, l, 12, 197 + i * 16, UIC.text, UIC.textSh)); if (src) Font.draw(x, Font.wrap('取得：' + src, 156, 10)[0], 10, 234, UIC.warm, UIC.textSh, 10); } }
+    if (list[idx] && orbT) { const o = list[idx], h = orbHost(o); Font.draw(x, '【' + (isActiveOrb(o) ? '主動寶珠' : '被動寶珠') + '】', 10, 182, isActiveOrb(o) ? UIC.warm : '#8ad0ff', UIC.textSh, 10);
+      Font.drawR(x, h ? '鑲在：' + GEAR[h.b].n : '到鐵匠舖鑲嵌', 166, 182, h ? UIC.accent : UIC.muted, UIC.textSh, 10); Font.wrap(orbInfo(o), 154, 10).slice(0, 4).forEach((l, i) => Font.draw(x, l, 10, 197 + i * 13, UIC.text, UIC.textSh, 10)); }
+    else if (list[idx]) { if (gear) drawGearDetail(x, list[idx], 182, 68); else { const k0 = list[idx], it = ITEMS[k0]; Font.draw(x, '【' + (it.use === 'enchant' ? '附魔寶石・到鐵匠舖使用' : it.cat) + '】', 10, 182, it.use === 'enchant' ? UIC.warm : ITEM_CAT_COL[it.cat] || UIC.muted, UIC.textSh, 10); if (it.mat) Font.drawR(x, '採集熟練度 Lv' + gatherLv(), 166, 182, UIC.accent, UIC.textSh, 10); const src = it.mat ? matSourceText(k0) : ''; Font.wrap(it.d, 152).slice(0, src ? 2 : 3).forEach((l, i) => Font.draw(x, l, 12, 197 + i * 16, UIC.text, UIC.textSh)); if (src) Font.draw(x, Font.wrap('取得：' + src, 156, 10)[0], 10, 234, UIC.warm, UIC.textSh, 10); } }
   } };
   UI.push(scr); let result = null;
   while (true) {
@@ -317,8 +322,9 @@ function* bagScreen(mode = 'field') { // returns item id used (battle) or null
     if (Input.pressed('a') && list[idx]) {
       Input.consume('a'); Sound.sfx('select');
       if (tabs[tab] === '裝備') { const g = list[idx], eq = isEquipped(g), opts = eq ? ['查看詳情', '取消'] : ['裝備', '查看詳情', '取消']; const r = yield* ask(GEAR[g.b].n + (eq ? '（裝備中）' : ''), opts); const pick = opts[r]; if (pick === '查看詳情') { UI.remove(scr); yield* gearInfoScreen(g); UI.push(scr); } else if (pick === '裝備' && (yield* equipGearFlow(g))) yield* say(Game.st.name + '裝備了' + GEAR[g.b].n + '！'); continue; }
+      if (tabs[tab] === '寶珠') continue; // look only: socket / fuse orbs at the smith
       const k = list[idx], it = ITEMS[k];
-      if (it.key || it.mat) { yield* say(it.use === 'phone' ? phoneText() : it.d); continue; }
+      if (it.key || it.mat || it.use === 'enchant') { yield* say(it.use === 'phone' ? phoneText() : it.d); continue; }
       const r = yield* ask('要使用' + it.n + '嗎？', ['使用', '取消']);
       if (r !== 0) continue;
       if (mode === 'battle') { if (it.use === 'home' && Game.scene.F && Game.scene.F.boss) { yield* say('頭目戰中無法使用！'); continue; } if (it.use === 'escape' || it.use === 'home' || canUseItem(k)) { result = k; break; } yield* say('現在使用也沒有效果。'); continue; }
