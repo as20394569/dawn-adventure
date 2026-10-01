@@ -28,17 +28,16 @@ body{margin:0;background:var(--bg);background-image:radial-gradient(var(--bg-dot
 #screen{display:block;touch-action:none;background:#000}
 #pad{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:4px;touch-action:none;min-height:var(--s);padding-inline:4px}
 #dpad{position:relative;width:var(--s);height:var(--s);grid-column:3;grid-row:1;justify-self:end;touch-action:none;cursor:pointer}
-#dpad::before,#dpad::after{content:"";position:absolute;background:var(--dpad);border-radius:8px;box-shadow:inset 0 1px 0 var(--dpad-hi),0 3px 0 #06070c}
-#dpad::before{left:33%;top:2%;width:34%;height:96%}
-#dpad::after{top:33%;left:2%;width:96%;height:34%}
-#dpad .arr{position:absolute;z-index:2;width:0;height:0;border:7px solid transparent;opacity:.55;pointer-events:none;transform:translate(-50%,-50%)}
-#dpad .u{left:50%;top:14%;border-bottom:9px solid #8a93b3;border-top:0}
-#dpad .d{left:50%;top:86%;border-top:9px solid #8a93b3;border-bottom:0}
-#dpad .l{top:50%;left:14%;border-right:9px solid #8a93b3;border-left:0}
-#dpad .r{top:50%;left:86%;border-left:9px solid #8a93b3;border-right:0}
+/* v12.0.1 virtual joystick (player: 「方向鍵變小後導致手機不好用 改成虛擬搖桿」): a round base, a knob that follows the thumb, and an invisible touch zone larger than the base */
+#dpad .zone{position:absolute;inset:-2px -22px -14px -22px;border-radius:40%}
+#dpad .base{position:absolute;inset:4%;border-radius:50%;background:radial-gradient(circle at 50% 45%,#262d48,#1a1f33 62%,#141828);border:2px solid #2c3352;box-shadow:inset 0 2px 6px rgba(0,0,0,.45),0 3px 0 #06070c;pointer-events:none}
+#dpad .base::before{content:"";position:absolute;inset:18%;border-radius:50%;border:1px dashed #323a5a;opacity:.7}
+#dpad .tick{position:absolute;width:0;height:0;border:5px solid transparent;opacity:.45;pointer-events:none;transform:translate(-50%,-50%)}
+#dpad .u{left:50%;top:11%;border-bottom:7px solid #8a93b3;border-top:0}#dpad .d{left:50%;top:89%;border-top:7px solid #8a93b3;border-bottom:0}
+#dpad .l{top:50%;left:11%;border-right:7px solid #8a93b3;border-left:0}#dpad .r{top:50%;left:89%;border-left:7px solid #8a93b3;border-right:0}
 #dpad[data-dir=up] .u,#dpad[data-dir=down] .d,#dpad[data-dir=left] .l,#dpad[data-dir=right] .r{opacity:1;filter:drop-shadow(0 0 4px var(--accent))}
-#dpad[data-dir=up] .u{border-bottom-color:var(--accent)}#dpad[data-dir=down] .d{border-top-color:var(--accent)}#dpad[data-dir=left] .l{border-right-color:var(--accent)}#dpad[data-dir=right] .r{border-left-color:var(--accent)}
-#dpad .hub{position:absolute;z-index:1;left:50%;top:50%;width:22%;height:22%;transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(circle at 40% 35%,#2c3350,#1a1f33)}
+#dpad .knob{position:absolute;left:50%;top:50%;width:44%;height:44%;margin:-22% 0 0 -22%;border-radius:50%;pointer-events:none;background:radial-gradient(circle at 38% 32%,#3c4670,#252c48 70%);border:2px solid #3e4870;box-shadow:0 3px 0 #06070c,0 6px 12px rgba(0,0,0,.4);transition:transform .08s ease-out}
+#dpad.held .knob{transition:none;border-color:var(--accent);box-shadow:0 3px 0 #06070c,0 0 12px rgba(110,231,210,.25)}
 #mid{display:flex;flex-direction:column;gap:12px;align-items:center;grid-column:2;grid-row:1;justify-self:center;align-self:end;padding-bottom:2px}
 #mid button{font-family:var(--pix);font-size:10px;letter-spacing:.06em;color:var(--muted);background:var(--pill);border:1px solid #2c3352;border-radius:6px;padding:6px 10px;touch-action:none;cursor:pointer}
 #mid button.on{transform:translateY(1px);color:var(--accent);border-color:var(--accent)}
@@ -96,7 +95,7 @@ body.battle #shell{--padh:0px}
       <div id="screenWrap"><canvas id="screen" width="176" height="256" aria-label="遊戲畫面"></canvas></div>
     </div>
     <div id="pad">
-      <div id="dpad" role="group" aria-label="方向鍵"><span class="hub"></span><span class="arr u"></span><span class="arr d"></span><span class="arr l"></span><span class="arr r"></span></div>
+      <div id="dpad" role="group" aria-label="虛擬搖桿"><span class="zone"></span><span class="base"></span><span class="tick u"></span><span class="tick d"></span><span class="tick l"></span><span class="tick r"></span><span class="knob"></span></div>
       <div id="mid"><button type="button" data-k="select" aria-label="SELECT">SELECT</button><button type="button" data-k="start" aria-label="START 選單">START</button></div>
       <div id="ab"><button type="button" class="round" data-k="b" aria-label="B 取消／跑步">B</button><button type="button" class="round" data-k="a" aria-label="A 確認">A</button></div>
     </div>
