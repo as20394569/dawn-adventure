@@ -56,8 +56,10 @@ function crispPortrait(src) { let c = PORT_CRISP.get(src); if (c) return c; cons
   PORT_CRISP.set(src, c); return c; }
 function drawSpeaker(x, tb) {
   const s = tb.spk; if (tb.y < 60) return; const px = tb.x + 2;
-  if (s.img) { const P = 48; drawWin(x, px, tb.y - P - 5, P + 6, P + 7, 'ow'); x.fillStyle = '#141a30'; x.fillRect(px + 3, tb.y - P - 2, P, P); const sm = x.imageSmoothingEnabled; x.imageSmoothingEnabled = false; x.drawImage(crispPortrait(s.img), px + 3, tb.y - P - 2, P, P); x.imageSmoothingEnabled = sm; } // v27f: portrait 1.5× (48px), a little more contrast, no smoothing
-  if (s.name) { const nx = s.img ? px + 55 : px, w = Math.ceil(Font.width(s.name, 10)) + 14; drawWin(x, nx, tb.y - 16, w, 17, 'ow'); Font.draw(x, s.name, nx + 7, tb.y - 15, UIC.warm, UIC.textSh, 10); }
+  if (s.img) { const P = 48, X = px + 1, Y = tb.y - P - 2; // v27f: portrait 1.5× (48px), a little more contrast, no smoothing; v12.0.1 (player: 「頭像外框縮小」): a slim 1px frame hugging the portrait instead of a window
+    x.fillStyle = '#0b0d18'; x.fillRect(X - 1, Y - 1, P + 2, P + 2); x.fillStyle = UIC.accent; x.fillRect(X - 1, Y - 1, P + 2, 1); x.fillStyle = '#141a30'; x.fillRect(X, Y, P, P);
+    const sm = x.imageSmoothingEnabled; x.imageSmoothingEnabled = false; x.drawImage(crispPortrait(s.img), X, Y, P, P); x.imageSmoothingEnabled = sm; }
+  if (s.name) { const nx = s.img ? px + 52 : px, w = Math.ceil(Font.width(s.name, 10)) + 14; drawWin(x, nx, tb.y - 16, w, 17, 'ow'); Font.draw(x, s.name, nx + 7, tb.y - 15, UIC.warm, UIC.textSh, 10); }
 }
 // hold B to fast-forward (only once B was pressed inside a dialogue, so running with B doesn't skip talks)
 let __ffArm = false, __ffT = 0, __ffF = -1;
