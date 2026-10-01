@@ -1,7 +1,7 @@
 /* ===================== v12.0.1 早期的新魔物（玩家決定：野狼・溪谷小鱷・樹樁怪・小野豬） =====================
    They give the early gear the materials its name asks for: 灰狼皮 (狼王 gear), 水道鱷皮 (鱷鱗甲・鱷皮長靴), the new 木材 (wooden
    weapons and instruments) and 野豬獠牙 (野豬戰斧). Same pattern as the chapter-1 monsters (09za): stats from ch1Panel by level and
-   role, moves from their elder kin, and a recoloured picture of that kin until Codex task AE draws their own. */
+   role, moves from their elder kin; their battle pictures are Codex task AE (art/battle/chibi). */
 ITEMS.wood = { n: '木材', mat: 1, price: 0, sell: 40, cat: '魔物素材', d: '樹樁怪身上掉下來的木頭。乾燥又結實，適合做木製的武器和樂器。' };
 // [key, name, family, level, role, moves, material, look [base, hue, sat, light], dex]
 const V12_MON = [
