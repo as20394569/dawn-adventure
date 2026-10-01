@@ -34,7 +34,7 @@ orbSlots = function () { return 0; }; // gearEn already returns null: EN_EFF is 
 /* ---------- 狀態→技能一覽: the class passive and the accessory traits (passive orbs are gone) ---------- */
 drawPassiveInfo = function (x, st, X, Y, w) {
   const C = CLASSES[st.cls], Z = st.cls && CLS12[clsV7(st.cls)], k = mainWKey(st);
-  const L = [['職業　' + (C ? C.n : '—') + (Z ? '「' + Z.passive[0] + '」' : ''), UIC.warm, 11]];
+  const L = [['職業　' + (C ? C.n : '—') + (Z ? '「' + Z.passive[0] + '」' : ''), UIC.warm, 10]];
   if (Z) L.push([Z.passive[1], UIC.text, 9]);
   const tr = equippedGear(st).map(g => GEAR[g.b] && GEAR[g.b].trait && ACC_TRAIT[GEAR[g.b].trait]).filter(Boolean).map(T => T[0]);
   L.push(['飾品特性：' + (tr.length ? tr.join('・') : '（沒有）'), tr.length ? UIC.text : UIC.muted, 9]);
