@@ -1,4 +1,5 @@
-"""v12.0.1 smooth high-resolution status icons (player: 「狀態圖示太過像素 有時看不出來」).
+"""v12.0.1 smooth high-resolution status icons (player: 「狀態圖示太過像素 有時看不出來」). The files in art/ui/icons_hd are now Codex task AD
+art; this script drew the first version and keeps the key list (HD_ICONS) — running it again would overwrite the Codex icons.
 Each icon is drawn as vector shapes at 256 px (4× supersampling) and reduced to 64 × 64 → art/ui/icons_hd/icon_<key>.png.
 The game draws them smoothly into the 14 px layout slot, so on a phone they are 42–84 real pixels with no pixel grid.
 Tile colour = group (debuff red-violet, buff blue, stat up warm, stat down cool); one bold glyph with a dark outline."""
