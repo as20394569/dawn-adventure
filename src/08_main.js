@@ -428,17 +428,12 @@ function bindButtons() {
     const off = e => { e.preventDefault(); el.classList.remove('on'); Input.set(k, false); };
     el.addEventListener('pointerdown', e => { try { el.setPointerCapture(e.pointerId); } catch (_) { } on(e); }); el.addEventListener('pointerup', off); el.addEventListener('pointercancel', off); el.addEventListener('lostpointercapture', off);
   });
-  // v12.0.1 virtual joystick: the knob follows the thumb (clamped to the base); 4 directions by the dominant axis, a small dead zone,
-  // and hysteresis so a diagonal thumb doesn't flicker between two directions. The touch zone is larger than the drawn base.
-  const dp = document.getElementById('dpad'), knob = dp && dp.querySelector('.knob'); if (!dp) return; let cur = null, pid = null;
+  const dp = document.getElementById('dpad'); if (!dp) return; let cur = null;
   const setDir = d => { if (d === cur) return; if (cur) Input.set(cur, false); cur = d; if (d) { Input.set(d, true); if (navigator.vibrate) try { navigator.vibrate(6); } catch (_) { } } dp.dataset.dir = d || ''; };
-  const fromEv = e => { const r = dp.getBoundingClientRect(), R = r.width / 2; let dx = e.clientX - (r.left + R), dy = e.clientY - (r.top + R); const m = Math.hypot(dx, dy), lim = R * 0.42;
-    if (knob) { const k = m > lim ? lim / m : 1; knob.style.transform = 'translate(' + (dx * k).toFixed(1) + 'px,' + (dy * k).toFixed(1) + 'px)'; }
-    if (m < R * 0.16) return null; const ax = Math.abs(dx), ay = Math.abs(dy), horiz = cur === 'left' || cur === 'right' ? ax * 1.25 >= ay : cur === 'up' || cur === 'down' ? ax > ay * 1.25 : ax > ay;
-    return horiz ? (dx > 0 ? 'right' : 'left') : (dy > 0 ? 'down' : 'up'); };
-  dp.addEventListener('pointerdown', e => { e.preventDefault(); if (pid !== null) return; pid = e.pointerId; try { dp.setPointerCapture(e.pointerId); } catch (_) { } dp.classList.add('held'); setDir(fromEv(e)); });
-  dp.addEventListener('pointermove', e => { if (e.pointerId !== pid) return; e.preventDefault(); setDir(fromEv(e)); });
-  const end = e => { if (e.pointerId !== pid) return; e.preventDefault(); pid = null; dp.classList.remove('held'); if (knob) knob.style.transform = ''; setDir(null); }; dp.addEventListener('pointerup', end); dp.addEventListener('pointercancel', end); dp.addEventListener('lostpointercapture', end);
+  const fromEv = e => { const r = dp.getBoundingClientRect(); const dx = e.clientX - (r.left + r.width / 2), dy = e.clientY - (r.top + r.height / 2); if (Math.hypot(dx, dy) < r.width * 0.12) return cur; return Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'right' : 'left') : (dy > 0 ? 'down' : 'up'); };
+  dp.addEventListener('pointerdown', e => { e.preventDefault(); try { dp.setPointerCapture(e.pointerId); } catch (_) { } setDir(fromEv(e)); });
+  dp.addEventListener('pointermove', e => { if (cur !== null || e.buttons) { e.preventDefault(); if (e.pressure > 0 || e.buttons) setDir(fromEv(e)); } });
+  const end = e => { e.preventDefault(); setDir(null); }; dp.addEventListener('pointerup', end); dp.addEventListener('pointercancel', end); dp.addEventListener('lostpointercapture', end);
   document.addEventListener('contextmenu', e => { if (e.target.closest && e.target.closest('#pad')) e.preventDefault(); });
   const form = document.getElementById('nameForm'); if (form) { form.addEventListener('submit', e => { e.preventDefault(); Game.nameResult = document.getElementById('nameField').value; }); document.getElementById('nameCancel').addEventListener('click', e => { e.preventDefault(); Game.nameResult = ''; }); }
   for (const ev of ['pointerdown', 'touchend', 'keydown']) window.addEventListener(ev, () => Sound.init(), { capture: true });
