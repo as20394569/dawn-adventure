@@ -50,12 +50,6 @@ function fixV22(st) {
   };
 }
 // the level-up window: HP / MP / derived stats grow with the level, attributes come from the new 屬性點
-{ const _lu = Battle.prototype.levelUp; Battle.prototype.levelUp = function* () {
-    const st = Game.st, before = attrAvail(st); const r = yield* _lu.call(this); const gain = attrAvail(st) - before;
-    if (st.attr && gain > 0) { Sound.sfx('item'); yield* this.msg('獲得了' + gain + '點屬性點！（目前' + attrAvail(st) + '點，選單→屬性 分配）', { hold: 40 }); }
-    return r;
-  };
-}
 
 /* ---------- 屬性 screen ---------- */
 function* attrScreen() {
@@ -129,16 +123,4 @@ for (const k in SKILL_SCALE) if (MOVES[k]) MOVES[k].scale = SKILL_SCALE[k];
 const ATTR_SCALE_FROM = 10;
 const powTxt = mv => mv && mv.pow ? (mv.cat === '特' ? '魔攻' : '物攻') + '×' + Math.round(mv.pow / MOVES.attack.pow * 100) + '%' + (mv.hits ? '×' + mv.hits + '段' : '') : '';
 const scaleTxt = mv => mv && mv.scale ? ATTR_NAMES[mv.scale[0]] + '加成' : '';
-{ const _cd = Battle.prototype.calcDamage; Battle.prototype.calcDamage = function (u, t, mv) {
-    const r = _cd.call(this, u, t, mv); if (!u || !u.hero || !mv || !mv.pow || !mv.scale) return r;
-    const a = heroAttr(Game.st)[mv.scale[0]] || 0, m = 1 + Math.max(0, a - ATTR_SCALE_FROM) * mv.scale[1] / 100;
-    if (m > 1) r.dmg = Math.max(1, Math.floor(r.dmg * m)); return r;
-  };
-}
 // a steady damage preview for the skill pop-up (no random spread, no crit, weakness only once it's revealed)
-Battle.prototype.estimateDamage = function (id) {
-  const mv = id === 'attack' ? MOVES.attack : skillMove(id); if (!mv || !mv.pow) return 0;
-  const R = Math.random, hit = this._lastHit; Math.random = () => 0.5; this._estimating = true; let d = 0;
-  try { const r = this.calcDamage(this.H, this.F, this.H.stats.welem && mv.t === '一般' ? { ...mv, t: this.H.stats.welem } : mv); d = r.dmg; if (r.mult !== 1 && !(this.tac && this.tac.rev)) d = Math.round(d / r.mult); } finally { Math.random = R; this._estimating = false; this._lastHit = hit; }
-  return d * (mv.hits || 1);
-};

@@ -44,7 +44,6 @@ ACHIEVEMENTS.push(
 Object.assign(ACH_CATS, {}); for (const [id, c] of [['lake', '戰鬥'], ['spellblade', '成長'], ['rift10', '探索'], ['riftClear', '探索'], ['break30', '戰鬥'], ['rainbow', '收集'], ['ng', '故事'], ['rematch', '戰鬥']]) { const a = ACHIEVEMENTS.find(x => x.id === id); if (a) a.cat = c; }
 
 // ---- break counter + bestiary milestones (after each victory) ----
-{ const _db = Battle.prototype.doBreak; Battle.prototype.doBreak = function* () { Game.st.brkCount = (Game.st.brkCount || 0) + 1; yield* _db.call(this); }; }
 const DEX_RW = [[0.25, { elixir: 1 }], [0.5, { tpBook: 1 }], [0.75, { powerFruit: 1, wisdomFruit: 1 }], [1, { tpBook: 2, luckClover: 2 }]];
 { const _v = Battle.prototype.victory; Battle.prototype.victory = function* () {
     yield* _v.call(this); const st = Game.st, p = dexPct(st); st.dexRw = st.dexRw || {};

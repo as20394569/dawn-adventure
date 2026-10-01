@@ -51,12 +51,6 @@ function shieldFix(st = Game.st) { if (st && st.equip && st.equip.shield && !shi
     return s; }; }
 { const _sm = sigMod; sigMod = function (o, st = Game.st) { _sm(o, st); if (o.pow && clsV7(st.cls) === 'guardian' && shieldOn(st)) o.pow = Math.round(o.pow * 1.2); }; }
 if (SIG.guardian) SIG.guardian.d = '盾擊後展開護盾。持盾更強。';
-{ const _cd = Battle.prototype.calcDamage; Battle.prototype.calcDamage = function (u, t, mv) {
-    const r = _cd.call(this, u, t, mv);
-    if (r && r.dmg > 0 && t && t.hero && u && !u.hero && t.stats && t.stats.block > 0 && chance(t.stats.block / 100)) {
-      r.dmg = Math.max(1, Math.floor(r.dmg * 0.6)); r.blocked = true; const C = this.center(t); Sound.sfx('shield');
-      this.spawn({ k: 'hex', x: C.x - 8, y: C.y, r0: 6, r1: 16, c: '#e8f4ff', life: 12 }); this.spawn({ k: 'txt', s: '格擋', x: C.x - 26, y: C.y - 24, c: '#e8f4ff', sh: '#203050', life: 30, vy: -0.4, fade: 1 }); }
-    return r; }; }
 
 /* ---------- looks: the shield on the left arm of the battle doll, and its icon ---------- */
 const SHIELD_PX = {};

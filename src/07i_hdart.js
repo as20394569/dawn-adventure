@@ -244,88 +244,8 @@ function hdRenderHero(A, L, T, tint) {
 }
 /* ---------- battle integration (animation state machine; the old draw code is reused unchanged) ---------- */
 function hdAnim(b, who, state, dur, hold) { const A = b.hd && b.hd[who]; if (!A) return; if (A.state === 'faint') return; A.state = state; A.t = 0; A.dur = dur; A.hold = !!hold; }
-function hdInit(b) {
-  b.hd = { F: { state: 'idle', t: 0, dur: 1, phase: 0 }, H: { state: 'idle', t: 0, dur: 1, phase: 29 }, hpF: b.F.hp, hpH: b.H.hp, ok: false };
-  try { b.hd.specF = hdFoeSpec(b.F.sp); b.hd.look = heroLookOf(Game.st); b.hd.oldF = b.imgF; b.hd.oldShadow = b.shadowF; b.hd.oldH = [b.imgH, b.imgH2];
-    if (pxReady(b.F.sp) || (chibiOn() && chibiBase(b.F.sp))) b.hd.pxF = pxSpec(b.F.sp); b.hd.pxH = HD_HERO_DOLL ? dollSpec() : null; // hero keeps the paper-doll look (shows equipment)
-    b.imgF = hdRenderFoe(b.hd.F, b.hd.specF, b.t); b.imgH = b.imgH2 = hdRenderHero(b.hd.H, b.hd.look, b.t); b.shadowF = buildShadow(Math.round((b.hd.pxF ? b.hd.pxF.bb : b.hd.specF.bb).w * 0.38), 4); b.hd.ok = true; }
-  catch (e) { console.error('hdArt fallback', e); b.hd.ok = false; }
-}
-function hdStep(b, A, who) {
-  A.t++;
-  if (A.state !== 'idle' && A.state !== 'faint' && !A.hold && A.t >= A.dur) { A.state = 'idle'; A.t = 0; }
-}
-{ const _u = Battle.prototype.update; Battle.prototype.update = function () {
-    _u.call(this);
-    if (!hdOn()) { if (this.hd && this.hd.ok) { this.hd.ok = false; this.imgF = this.hd.oldF; this.shadowF = this.hd.oldShadow; [this.imgH, this.imgH2] = this.hd.oldH; this.hd = null; } return; }
-    if (!this.hd) hdInit(this); if (!this.hd.ok) return;
-    const D = this.hd, F = this.F, H = this.H;
-    // damage → hurt; defending / charging → held poses; fainting → frozen knock-back pose
-    if (F.hp < D.hpF && F.hp > 0) hdAnim(this, 'F', 'hurt', 22); if (H.hp < D.hpH && H.hp > 0) hdAnim(this, 'H', 'hurt', 22); D.hpF = F.hp; D.hpH = H.hp;
-    if (F.hp <= 0 && this.sinkF > 0) D.F.state = 'faint';
-    if (H.defending && D.H.state === 'idle') hdAnim(this, 'H', 'defend', 8, true); if (!H.defending && D.H.state === 'defend') { D.H.state = 'idle'; }
-    if (F.charging && D.F.state === 'idle') hdAnim(this, 'F', 'cast', 14, true); if (!F.charging && D.F.state === 'cast' && D.F.hold && !D.F.fx) D.F.state = 'idle';
-    hdStep(this, D.F, 'F'); hdStep(this, D.H, 'H');
-  };
-  // attacks: a short wind-up before the lunge, then the strike pose plays while the lunge moves
-  const _l = Battle.prototype.lunge; Battle.prototype.lunge = function* (b, dist = 10, frames = 5) {
-    if (!hdOn() || !this.hd || !this.hd.ok) { yield* _l.call(this, b, dist, frames); return; }
-    const who = b.hero ? 'H' : 'F'; hdAnim(this, who, 'attack', 5 + frames * 2 + 10); this.hd[who].fx = 0;
-    yield* wait(5); yield* _l.call(this, b, dist, frames);
-  };
-  // spells / skills without a lunge: raise into a cast pose while the effect plays
-  const _p = Battle.prototype.playFx; Battle.prototype.playFx = function* (name, u, t) {
-    const on = hdOn() && this.hd && this.hd.ok, who = u && u.hero ? 'H' : 'F', A = on && this.hd[who];
-    if (A && A.state === 'idle') { hdAnim(this, who, 'cast', 12, true); A.fx = 1; }
-    yield* _p.call(this, name, u, t);
-    if (A && A.state === 'cast' && A.fx) { A.hold = false; A.state = 'idle'; } if (A) A.fx = 0;
-  };
-  // new hero look after changing gear mid-battle is not possible, but the hero set follows the current look on each battle
-}
 
 /* ---------- drawing: same layout as Battle.draw; actors are rendered live as smooth vectors ---------- */
-{ const _c = Battle.prototype.center; Battle.prototype.center = function (b) {
-    if (b && b.hero && hdOn() && this.hd && this.hd.ok) return { x: this.heroX + HD_HERO_OX + 28, y: HERO_FOOT - 21 }; // v20.6: the middle of the hero's body (was the top of the head)
-    return _c.call(this, b);
-  };
-  const _d = Battle.prototype.draw; Battle.prototype.draw = function (x) {
-    if (!hdOn() || !this.hd || !this.hd.ok) return _d.call(this, x);
-    const tStart = performance.now();
-    const D = this.hd, blit = (im, X, Y, w, h) => { const ds = im.ds || 1; x.imageSmoothingEnabled = !im.px && !HD_PIXEL; x.drawImage(im, X, Y, w ?? im.width * ds, h ?? im.height * ds); x.imageSmoothingEnabled = false; };
-    if (!this.hd2d) { this.cfgBg = this.bg.kind || 'field'; hd2dInit(this); } const LK = this.hd2d.L;
-    // actors are re-rendered every frame while acting, every other frame while idle (saves battery on phones)
-    const redraw = A => !(A.cv || A.pcv) || A.state !== 'idle' || (this.t & 1) === 0 || A.lastT === undefined || A.cvD !== hdD();
-    let im = D.F.pcv && D.pxF ? D.F.pcv : D.F.cv, hi = D.H.pcv && D.pxH ? D.H.pcv : D.H.cv;
-    if (redraw(D.F)) { im = D.pxF ? pxRender(D.F, D.pxF, this.t) : hdRenderFoe(D.F, D.specF, this.t); hd2dLightActor(im, LK); D.F.lastT = this.t; }
-    if (redraw(D.H)) { hi = D.pxH ? dollRender(this, D.H, D.pxH, this.t) : hdRenderHero(D.H, D.look, this.t); hd2dLightActor(hi, LK); D.H.lastT = this.t; }
-    this.imgF = im; this.imgH = this.imgH2 = hi;
-    const sx = this.shake > 0 ? rnd(-3, 3) : 0, sy = this.shake > 0 ? rnd(-2, 2) : 0;
-    x.save(); x.translate(sx, sy); x.imageSmoothingEnabled = true; x.drawImage(hd2dStageFor(this), 0, 0, W, BH); x.imageSmoothingEnabled = false; hd2dMotes(this, x, false);
-    if (this.alphaF > 0) hd2dSoftShadow(x, this.foeX + 32 + this.offF.x, FOE_FOOT - 1, im.bb.w * 0.46, 5, 0.42 * this.alphaF);
-    const ds = im.ds, fw = im.width * ds, fh = im.height * ds, fx0 = this.foeX + 32 - im.bb.cx + this.offF.x, fy0 = FOE_FOOT - im.bb.bot + this.offF.y + this.sinkF;
-    if (this.alphaF > 0 && !(this.blinkF > 0 && Math.floor(this.blinkF / 3) % 2)) {
-      x.save(); x.beginPath(); x.rect(0, 0, W, FOE_FOOT + 3); x.clip(); x.globalAlpha = this.alphaF;
-      const sq = this.squishF; if (sq) blit(im, fx0 - sq, fy0 + sq * 2, fw + sq * 2, fh - sq * 2); else blit(im, fx0, fy0);
-      if (this.tintF && this.tintF.a > 0) { x.globalAlpha = this.tintF.a * this.alphaF; blit(D.pxF ? pxRender(D.F, D.pxF, this.t, this.tintF.c) : hdRenderFoe(D.F, D.specF, this.t, this.tintF.c), fx0, fy0, fw, fh); }
-      x.restore();
-    }
-    if (this.cg && this.cg.shards > 0 && this.alphaF > 0) { const C = this.center(this.F); for (let i = 0; i < this.cg.shards; i++) { const an = this.t / 20 + i * Math.PI * 2 / 3, px0 = Math.round(C.x + Math.cos(an) * 44), py0 = Math.round(C.y + Math.sin(an) * 14); x.fillStyle = '#1a3050'; x.fillRect(px0 - 3, py0 - 5, 7, 11); x.fillStyle = '#9ae0ff'; x.fillRect(px0 - 2, py0 - 4, 5, 9); x.fillStyle = '#e8fbff'; x.fillRect(px0 - 1, py0 - 3, 2, 4); } }
-    if (this.cg && this.cg.mirror && this.alphaF > 0 && Math.floor(this.t / 8) % 2) { x.globalAlpha = 0.25; blit(D.pxF ? pxRender(D.F, D.pxF, this.t, '#e8fbff') : hdRenderFoe(D.F, D.specF, this.t, '#e8fbff'), this.foeX + 32 - im.bb.cx, FOE_FOOT - im.bb.bot, fw, fh); x.globalAlpha = 1; }
-    if (!(this.blinkH > 0 && Math.floor(this.blinkH / 3) % 2)) {
-      const hx0 = this.heroX + HD_HERO_OX; x.save(); hd2dSoftShadow(x, hx0 + 28 + this.offH.x, HERO_FOOT - 1 - (this.hd && this.hd.pxH && this.hd.pxH.chibi ? this.hd.pxH.lift || 0 : 0), 26, 6, 0.4); x.globalAlpha = Math.max(0, 1 - this.sinkH / 70);
-      const hx = (hi.px ? hx0 + 28 - hi.bb.cx : hx0) + this.offH.x, hy = (hi.px ? HERO_FOOT - hi.bb.bot : HERO_Y) + this.offH.y + this.sinkH * 0.25, hw = hi.width * hi.ds, hh = hi.height * hi.ds;
-      blit(hi, hx, hy); if (this.tintH) { x.globalAlpha = this.tintH.a; blit(D.pxH ? dollRender(this, D.H, D.pxH, this.t, this.tintH.c) : hdRenderHero(D.H, D.look, this.t, this.tintH.c), hx, hy, hw, hh); }
-      x.restore();
-    }
-    for (const p of this.fx) drawParticle(x, p);
-    const lowQ = HD_QUALITY.low; if (!lowQ) { hd2dMotes(this, x, true); hd2dShafts(this, x); hd2dBloom(this, x); }
-    this.drawBoxF(x); this.drawBoxH(x);
-    x.restore();
-    x.fillStyle = '#0b0d18'; x.fillRect(0, BH, W, H - BH); x.fillStyle = PANEL.edge; x.fillRect(0, BH, W, 1);
-    if (this.cover > 0) { x.fillStyle = '#000'; const h = Math.round(this.cover * (H / 2 + 1)); x.fillRect(0, 0, W, h); x.fillRect(0, H - h, W, h); }
-    hdQualityTick(performance.now() - tStart);
-  };
-}
 
 /* ---------- hero: the paper-doll sprite (same look as on the field, reflects equipment), drawn on the pixel grid ---------- */
 const HD_HERO_DOLL = true;

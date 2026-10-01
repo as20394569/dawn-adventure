@@ -16,23 +16,6 @@ function heavyCause(b) {
   const h = b._hitH || {}, m = b._foeMv || {};
   return m.charged ? 'charge' : h.shock ? 'shock' : h.ignite ? 'ignite' : h.steam ? 'steam' : h.crit ? 'crit' : b.F && b.F.frenzy ? 'frenzy' : 'plain';
 }
-{ const _cd = Battle.prototype.calcDamage; Battle.prototype.calcDamage = function (u, t, mv) {
-    const r = _cd.call(this, u, t, mv);
-    if (t && t.hero && u && !u.hero) this._hitH = { crit: r.crit, shock: mv.t === '雷' && t.wet > 0, ignite: mv.t === '火' && t.tangle > 0, steam: mv.t === '水' && t.status === 'brn' };
-    return r;
-  };
-  const _pn = Battle.prototype.popNum; Battle.prototype.popNum = function (b, n, col, tag) {
-    if (b && b.hero && this._hitH) { if (tag === '重擊') { const c = heavyCause(this); tag = HEAVY_TAG[c]; this._heavyNote = c; } else if (!tag && this._hitH.crit) tag = '會心'; }
-    return _pn.call(this, b, n, col, tag);
-  };
-  const _um = Battle.prototype.useMove; Battle.prototype.useMove = function* (u, t, id) {
-    if (u.hero) return yield* _um.call(this, u, t, id);
-    this._foeMv = { charged: u.charging === id }; this._hitH = null; this._heavyNote = null; let r;
-    try { r = yield* _um.call(this, u, t, id); } finally { this._foeMv = null; this._hitH = null; }
-    const c = this._heavyNote; this._heavyNote = null; if (c && this.H.hp > 0) yield* heavyTip(this, c);
-    return r;
-  };
-}
 function* heavyTip(b, c) {
   const f = Game.st.flags, L = [], first = !f.tutHeavy;
   if (first) { f.tutHeavy = 1; L.push('（重擊：一次受到超過最大HP四分之一的傷害。傷害數字旁會標出原因。）'); }
@@ -76,8 +59,3 @@ function* battleHelpScreen() {
 }
 
 /* ---------- v20.6 level up: an SFX-bus fanfare (always audible with 音效 on) + a LEVEL UP! pop over the hero ---------- */
-{ const _lu = Battle.prototype.levelUp; Battle.prototype.levelUp = function* () {
-    Sound.sfx('levelUp'); tacInit(this); const C = this.center(this.H); this.tac.pops.push({ x: C.x, y: C.y - 12, s: 'LEVEL UP!', c: '#ffe070', t: 0, big: 1 });
-    return yield* _lu.call(this);
-  };
-}

@@ -30,20 +30,9 @@ function monsterElem(sp) {
 const gearEn = g => g && g.en && EN_EFF[g.en.t] ? g.en : null;
 { const _hs = heroStats; heroStats = function (st = Game.st) { const s = _hs(st), w = mainWeapon(st), E = gearEn(w); if (E) { s.welem = E.t; s.enT = E.t; s.enLv = E.lv; } return s; }; }
 { const _sm = skillMove; skillMove = function (id, st = Game.st) { const m = _sm(id, st); if (id === 'attack') { const E = gearEn(mainWeapon(st)); if (E) return { ...m, t: E.t, en: E.lv }; } return m; }; }
-{ const _cd = Battle.prototype.calcDamage; Battle.prototype.calcDamage = function (u, t, mv) {
-    const r = _cd.call(this, u, t, mv); if (u && u.hero && mv && mv.pow && r && r.dmg > 0 && u.stats && u.stats.enT && mv.t === u.stats.enT) r.dmg = Math.round(r.dmg * (u.stats.enLv >= 2 ? 1.12 : 1.06)); return r; }; }
 const EN_FX = { 火: ['flame', '#ff8030'], 水: ['bub', '#80c8ff'], 雷: ['bolt', '#ffe060'], 草: ['dot', '#70d060'], 毒: ['dot', '#c070e0'], 岩: ['dot', '#b09070'] };
 function enBurst(b, t, el) { const C = b.center(t), [k, c] = EN_FX[el]; for (let i = 0; i < 7; i++) { const a = Math.random() * 7, d = 6 + Math.random() * 14; if (k === 'bolt') { b.spawn({ k: 'bolt', pts: [[C.x + rnd(-14, 14), C.y - 26], [C.x + rnd(-6, 6), C.y - 8], [C.x + rnd(-10, 10), C.y + 6]], w: 2, life: 8 }); break; }
     b.spawn(k === 'flame' ? { k: 'flame', x: C.x + Math.cos(a) * d, y: C.y + Math.sin(a) * d, vy: -0.8, s: 3, life: 16 } : k === 'bub' ? { k: 'bub', x: C.x + Math.cos(a) * d, y: C.y + Math.sin(a) * d, vy: -0.6, r: 2 + Math.random() * 2, c, life: 18 } : { k: 'dot', x: C.x + Math.cos(a) * d, y: C.y + Math.sin(a) * d, vx: Math.cos(a) * 1.2, vy: Math.sin(a) * 1.2 - 0.4, s: 2, c, life: 16 }); } }
-{ const _um = Battle.prototype.useMove; Battle.prototype.useMove = function* (u, t, id) {
-    if (!u || !u.hero || !u.stats || !u.stats.enT || !t || t === u) return yield* _um.call(this, u, t, id);
-    const fhp = t.hp, r = yield* _um.call(this, u, t, id), mv = MOVES[id]; if (!mv || t.hp >= fhp || u.hp <= 0) return r;
-    const el = u.stats.enT, E = EN_EFF[el]; if (skillMove(id).t !== el) return r; enBurst(this, t, el);
-    if (t.hp > 0 && chance((u.stats.enLv >= 2 ? E[2] : E[1]) / 100)) {
-      if (E[0] === 'wet' || E[0] === 'tangle') { if (!t[E[0]]) { t[E[0]] = 3; yield* this.msg(t.n + (E[0] === 'wet' ? '全身濕透了！' : '被藤蔓纏住了！'), { hold: 10 }); } }
-      else if (E[0] === 'fdef') yield* this.statChange(t, { def: -1 }); else if (!t.status) yield* this.inflict(t, E[0], true); }
-    return r;
-  }; }
 
 /* ---------- smith: one menu for both smiths ---------- */
 function* smithMenu(f) {
@@ -87,12 +76,12 @@ function* orbSmithFlow() {
       if (!g) continue; const o = yield* orbPicker('從「' + GEAR[g.b].n + '」拆下', () => gearOrbs(g)); if (!o) continue;
       g.o = (g.o || []).filter(u => u !== o.u); Sound.sfx('cancel'); yield* say('拆下了「' + orbName(o) + '」。（寶珠不會損壞，可以鑲到別的裝備上）');
     } else {
-      const o = yield* orbPicker('選擇要強化的寶珠', () => orbList(st).filter(o => orbList(st).some(p => p !== o && p.k === o.k && !orbHost(p)) && (isActiveOrb(o) ? orbStage(o) < 2 : (o.lv || 1) < 3)), '用一顆相同的寶珠融合');
+      const o = yield* orbPicker('選擇要強化的寶珠', () => orbList(st).filter(o => orbList(st).some(p => p !== o && p.k === o.k && !orbHost(p)) && (isActiveOrb(o) ? orbStage(BB.entry(st, o.k)) < 2 : (o.lv || 1) < 3)), '用一顆相同的寶珠融合');
       if (!o) continue; const food = orbList(st).find(p => p !== o && p.k === o.k && !orbHost(p)); if (!food) continue;
       if (!(yield* yesNo('消耗一顆「' + orbDef(food).n + '」，' + (isActiveOrb(o) ? '讓進化進度+12？' : '讓等級+1？')))) continue;
-      st.orbs = orbList(st).filter(p => p !== food); if (isActiveOrb(o)) o.x = (o.x || 0) + 12; else o.lv = Math.min(3, (o.lv || 1) + 1);
+      st.orbs = orbList(st).filter(p => p !== food); if (isActiveOrb(o)) { BB.libAdd(st, o.k, 12); BB.mirror(st, o.k); } else o.lv = Math.min(3, (o.lv || 1) + 1); // v11: progress lives in the skill library
       Sound.sfx('statUp'); yield* say('融合成功！' + (isActiveOrb(o) ? (orbPending(o) ? '「' + orbName(o) + '」可以進化了！' : '') : '「' + orbName(o) + '」') );
-      if (isActiveOrb(o) && orbPending(o)) yield* orbEvolveFlow(o);
+      if (isActiveOrb(o) && orbPending(BB.entry(st, o.k))) yield* orbEvolveFlow(BB.entry(st, o.k));
     }
   }
 }
@@ -119,42 +108,6 @@ function* enchantFlow() {
   }; }
 
 /* ---------- 選單→技能 ---------- */
-skillTreeScreen = function* () {
-  const st = Game.st; let tab = 0, sel = 0, showF = false;
-  const rows = () => { const R = []; const s = sigId(st); if (s) R.push({ sig: s }); const w = mainWeapon(st), n = w ? orbSlots(w) : 0, A = activeOrbs(st);
-    for (let i = 0; i < n; i++) R.push(A[i] ? { orb: A[i] } : { empty: 'a' });
-    for (const [sl, u] of Object.entries(st.equip || {})) { if (sl === 'weapon') continue; const g = gearBy(u, st); if (!g || !orbSlots(g)) continue; const P = gearOrbs(g).filter(o => !isActiveOrb(o)); if (P.length) for (const o of P) R.push({ orb: o, g }); else R.push({ empty: 'p', g }); }
-    return R; };
-  const bag = () => orbList(st).slice().sort((a, b) => (isActiveOrb(b) - isActiveOrb(a)) || orbDef(a).n.localeCompare(orbDef(b).n));
-  const scr = { draw(x) {
-    screenBG(x); headerBar(x, tab ? '寶珠背包' : '技能'); Font.drawR(x, (tab ? '2' : '1') + '/2 ← →', W - 6, 3, UIC.muted, UIC.textSh, 10);
-    const L = tab ? bag() : rows(), VIS = 9, i = Math.min(sel, Math.max(0, L.length - 1)), top = clamp(i - 4, 0, Math.max(0, L.length - VIS));
-    drawWin(x, 4, 22, 168, VIS * 16 + 8, 'menu'); if (!L.length) Font.draw(x, tab ? '還沒有寶珠。打倒精英和頭目吧！' : '還沒有技能。', 12, 28, UIC.muted, UIC.textSh, 10);
-    L.slice(top, top + VIS).forEach((R, k) => { const Y = 26 + k * 16; if (top + k === i) selBar(x, 6, Y - 1, 164, 15);
-      if (tab) { drawOrbLine(x, R, 12, Y - 1, isActiveOrb(R) ? '#c8f0ff' : UIC.warm); const h = orbHost(R); if (h) Font.drawR(x, 'E', 166, Y - 1, UIC.accent, UIC.textSh, 10); return; }
-      if (R.sig) { Font.draw(x, '★' + skillMove(R.sig).n, 12, Y - 1, '#ffd860', UIC.textSh, 10); Font.drawR(x, '招式點' + SIG_COST + (tpAvail(st) > 0 ? '　A強化' : ''), 166, Y, tpAvail(st) > 0 ? UIC.warm : UIC.muted, UIC.textSh, 8); }
-      else if (R.orb) { drawOrbLine(x, R.orb, 12, Y - 1, isActiveOrb(R.orb) ? '#c8f0ff' : UIC.warm, orbPending(R.orb) ? ' ！' : ''); if (R.g) Font.drawR(x, GEAR[R.g.b].n.slice(0, 4), 166, Y, UIC.muted, UIC.textSh, 8); }
-      else Font.draw(x, R.empty === 'a' ? '◆（空的技能孔）' : '◇（' + GEAR[R.g.b].n.slice(0, 6) + '的空孔）', 12, Y - 1, UIC.dis, UIC.textSh, 10); });
-    if (top > 0) x.drawImage(UPARROW, 86, 23); if (top + VIS < L.length) x.drawImage(DOWNARROW, 86, 22 + VIS * 16 + 3);
-    const Y0 = 22 + VIS * 16 + 12, R = L[i]; drawWin(x, 4, Y0, 168, 252 - Y0, 'menu');
-    let txt = ''; if (tab && R) txt = orbInfo(R) + (orbHost(R) ? '（鑲在' + GEAR[orbHost(R).b].n + '）' : '');
-    else if (R && R.sig) { const m = skillMove(R.sig); txt = '職業招式　' + (m.pow ? '威力' + m.pow + '　' : '') + m.d + sigTalentText(st) + '\nA：用天賦點強化'; }
-    else if (R && R.orb) txt = orbInfo(R.orb) + (orbPending(R.orb) ? '　按A進化！' : '');
-    else if (R) txt = R.empty === 'a' ? '到鐵匠舖把主動技能寶珠鑲進武器，就能在戰鬥中使用。（武器品質越高，孔越多）' : '到鐵匠舖把被動寶珠鑲進這件裝備。';
-    { const fid = !tab && R ? (R.sig || (R.orb && isActiveOrb(R.orb) ? 'o_' + R.orb.k : null)) : null, fm = fid && MOVES[fid] && skillMove(fid, st).pow;
-      if (showF && fm && typeof powFormula === 'function') txt = powFormula(fid, st); drawFitText(x, txt, 10, Y0 + 4, 152, 252 - Y0 - 20, 10, showF && fm ? '#ffe8b0' : UIC.text);
-      Font.draw(x, fm ? (showF ? 'SELECT／點這裡：回到說明' : 'SELECT／點這裡：看威力公式') : '鑲嵌・拆卸・融合：鐵匠舖', 10, 238, UIC.muted, UIC.textSh, 8);
-      if (fm && typeof touchRegion === 'function') touchRegion(4, Y0, 168, 252 - Y0, () => { showF = !showF; Sound.sfx('cursor'); }); }
-  } };
-  UI.push(scr);
-  while (true) { const L = tab ? bag() : rows();
-    if (Input.pressed('left') || Input.pressed('right')) { tab = 1 - tab; sel = 0; Sound.sfx('cursor'); }
-    if (Input.repeat('up') && sel > 0) { sel--; Sound.sfx('cursor'); } if (Input.repeat('down') && sel < L.length - 1) { sel++; Sound.sfx('cursor'); }
-    if (Input.pressed('a')) { Input.consume('a'); const R = L[sel], o = tab ? R : R && R.orb; if (!tab && R && R.sig) { UI.remove(scr); yield* sigScreen(); UI.push(scr); } else if (o && orbPending(o)) { UI.remove(scr); yield* orbEvolveFlow(o); UI.push(scr); } else Sound.sfx('bump'); }
-    if (Input.pressed('select')) { Input.consume('select'); showF = !showF; Sound.sfx('cursor'); }
-    if (Input.pressed('b')) { Input.consume('b'); Sound.sfx('cancel'); break; } yield; }
-  UI.remove(scr);
-};
 // 狀態→技能一覽 passive box
 drawPassiveInfo = function (x, st, X, Y, w, big) {
   const C = CLASSES[st.cls], S = CLASS_SIG[clsV7(st.cls)], P = passiveOrbs(st), k = mainWKey(st);
@@ -166,33 +119,3 @@ drawPassiveInfo = function (x, st, X, Y, w, big) {
 };
 
 /* ---------- the battle skill pop-up: class skill + the weapon's orbs ---------- */
-Battle.prototype.chooseMove = function* () {
-  const st = Game.st, list = wsList(st);
-  if (!list.length) { yield* this.msg('還沒有技能！（到鐵匠舖把技能寶珠鑲進武器）'); return null; }
-  let cur = Math.min(this.moveIdx || 0, list.length - 1); this.idle = true;
-  const VIS = list.length, X = 8, w = W - 16, Y = 58, rowH = 14, h = 18 + VIS * rowH + 4, DY = Y + h + 2, DH = BH - 18 - DY;
-  const info = (x, m) => {
-    Font.drawR(x, 'MP ' + st.mp + '/' + (this.H.maxmp || st.mp), X + w - 8, Y + 2, '#8ab8ff', UIC.textSh, 9);
-    const id = list[m.i], mv = skillMove(id), c = TYPE_COL[mv.t]; drawWin(x, X, DY, w, DH, 'menu');
-    const fit = (t, sz, maxW) => { let z = sz; while (z > 7 && Font.width(t, z) > maxW) z--; return z; };
-    const ob = orbOfMove(id, st), sg = !!MOVES[id].sig, lack = sg ? (this.H.sgp || 0) < SIG_COST : skillMP(id) > st.mp, est = !lack && mv.pow && this.estimateDamage ? this.estimateDamage(id) : 0, L = X + 8, R = X + w - 8;
-    const t1 = (MOVES[id].sig ? '職業招式・' : '') + (mv.t === '一般' ? '無屬性' : mv.t + '屬性') + '・' + (mv.cat === '變' ? '輔助' : mv.cat === '物' ? '物理' : '魔法') + (ob ? '・' + (orbStage(ob) < 2 ? '進化' + Math.min(ob.x || 0, ORB_EVO[orbStage(ob)]) + '/' + ORB_EVO[orbStage(ob)] : '最終進化') : ''), mpT = sg ? '招式點 ' + Math.min(this.H.sgp || 0, SIG_MAX) + '/' + SIG_COST : lack ? 'MP不足' : 'MP' + skillMP(id);
-    x.fillStyle = c; x.fillRect(L, DY + 6, 4, 4); Font.draw(x, t1, L + 7, DY + 1, '#c9cfe4', UIC.textSh, fit(t1, 9, w - 30 - Font.width(mpT, 9))); Font.drawR(x, mpT, R, DY + 1, lack ? UIC.bad : '#8ab8ff', UIC.textSh, 9);
-    let y = DY + 14;
-    if (mv.pow) { const pw = powTxt(mv), eT = est ? '預估≈' + est : ''; x.fillStyle = 'rgba(200,160,80,0.35)'; x.fillRect(L, DY + 13, w - 16, 1);
-      const pe = Font.draw(x, pw, L, y, UIC.accent, UIC.textSh, fit(pw, 10, w - 22 - (eT ? Font.width(eT, 9) : 0) - 12)); Font.draw(x, 'ⓘ', pe + 2, y, m.formula ? UIC.warm : UIC.muted, UIC.textSh, 9); if (eT) Font.drawR(x, eT, R, y + 1, UIC.warm, UIC.textSh, 9);
-      if (typeof touchRegion === 'function') touchRegion(L, y - 2, w - 16, 13, () => { m.formula = !m.formula; Sound.sfx('cursor'); }); y += 13; }
-    Font.drawC(x, Game.touchUI ? (m.tapSel === m.i ? '再點一次：使用　點外面：返回' : '點技能看說明・再點一次使用') : 'A：使用　B：返回', W / 2, BB_Y + 11, Game.touchUI && m.tapSel === m.i ? UIC.warm : UIC.muted, UIC.textSh, 9);
-    const extra = ob && ob.e.length ? '　【進化】' + ob.e.map((b, s) => (b === 'A' ? '強攻' : '附加') + evoOptText(ob, s, b)).join('、') : MOVES[id].sig && typeof sigTalentText === 'function' ? sigTalentText(st) : '';
-    drawFitText(x, m.formula && mv.pow && typeof powFormula === 'function' ? powFormula(id) : (mv.d || '') + extra, L, y, w - 16, DY + DH - 5 - y, 9, m.formula ? '#ffe8b0' : UIC.text);
-  };
-  while (true) {
-    const sgLack = id => MOVES[id].sig && (this.H.sgp || 0) < SIG_COST;
-    const r = yield* choose(list.map(id => ({ t: (MOVES[id].sig ? '★' : '') + skillMove(id).n, r: MOVES[id].sig ? '招式' + SIG_COST : 'MP' + skillMP(id), col: sgLack(id) || skillMP(id) > st.mp || hpCostBlocked(id) ? UIC.dis : undefined })), { x: X, y: Y, w, h, rowH, fs: 10, ox: 12, oy: 17, visible: VIS, title: '技能', index: cur, onMove: i => cur = i, drawExtra: info, twoTap: true, onSel: mm => { mm.formula = !mm.formula; Sound.sfx('cursor'); } });
-    if (r < 0) { this.idle = false; return null; }
-    if (sgLack(list[r])) { yield* this.msg('招式點不夠！（普攻打中或被攻擊時累積）'); continue; }
-    if (skillMP(list[r]) > st.mp) { yield* this.msg('MP不夠！'); continue; }
-    if (hpCostBlocked(list[r])) { yield* this.msg('HP不夠，無法使用' + skillMove(list[r]).n + '！'); continue; }
-    this.idle = false; this.moveIdx = r; return list[r];
-  }
-};

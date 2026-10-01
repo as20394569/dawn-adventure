@@ -212,12 +212,3 @@ ch2ClassTalk = function* () {
 { const _as = applyStartClass; applyStartClass = function (k) { _as(k); const st = Game.st; st.skills = {}; st.skp = 0; st.tp = 0; st.ct = {}; st.baseCls = k; }; }
 
 /* ---------- level-up: 1 talent point (the old skill-point / tree texts are replaced) ---------- */
-{ const _lu = Battle.prototype.levelUp; Battle.prototype.levelUp = function* () {
-    const st = Game.st, self = this, _msg = Battle.prototype.msg;
-    this.msg = function* (t, o) { if (typeof t === 'string') { if (t.startsWith('可以學習新技能了')) return; if (t.includes('點技能點')) t = tpRaw(st) > TP_CAP ? 'MP全部恢復了。（天賦點已達上限' + TP_CAP + '點）' : st.lv % 2 === 0 ? '獲得了1點天賦點！MP也全部恢復了。（選單→天賦）' : 'MP全部恢復了。（下一級會得到天賦點）'; } return yield* _msg.call(self, t, o); };
-    let r; try { r = yield* _lu.call(this); } finally { delete this.msg; }
-    st.skp = 0; st.tp = 0;
-    if (st.lv === 14 && !(st.flags && st.flags.deep)) yield* this.msg('到達Lv14了！去找萌芽鎮的村長，進行「天賦覺醒」吧。', { hold: 40 });
-    return r;
-  };
-}

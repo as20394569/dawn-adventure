@@ -102,7 +102,7 @@ function passiveOrbs(st = Game.st) { const out = []; for (const [sl, u] of Objec
 const orbStage = o => (o.e || []).length;
 const orbName = o => orbDef(o).n + (isActiveOrb(o) ? ORB_STAGE[orbStage(o)] : o.lv > 1 ? ' Lv' + o.lv : '');
 const orbPending = o => isActiveOrb(o) && orbStage(o) < 2 && (o.x || 0) >= ORB_EVO[orbStage(o)];
-const orbOfMove = (id, st = Game.st) => { const k = MOVES[id] && MOVES[id].orb; return k ? activeOrbs(st).find(o => o.k === k) : null; };
+const orbOfMove = (id, st = Game.st) => { const k = MOVES[id] && MOVES[id].orb; if (!k) return null; const L = st.skillLib || {}; return L[k] || activeOrbs(st).find(o => o.k === k) || null; }; // v11: the skill library entry carries the evolution
 // evolution effect codes → text
 const EVO_TXT = {
   brn: v => v + '%灼傷', psn: v => v + '%中毒', par: v => v + '%麻痺', slp: v => v + '%睡眠', drain: v => '造成傷害的' + v + '%回復HP', mp: v => '回復' + v + 'MP', shield: v => '展開' + v + '回合護盾',
@@ -158,30 +158,7 @@ function passiveFx(o) { const D = ORB_P[o.k], lv = o.lv || 1, out = []; for (con
 const orbFxText = o => passiveFx(o).map(([k, v]) => k.startsWith('fx.') ? (typeof tDesc === 'function' ? tDesc(k, 1) : k) : typeof tDesc === 'function' ? tDesc(k, v) : k + v).join('、');
 
 /* ---------- battle: evolution effects, use counts, the evolved flash ---------- */
-{ const _um = Battle.prototype.useMove; Battle.prototype.useMove = function* (u, t, id) {
-    const b = MOVES[id]; if (!u || !u.hero || !b || !(b.orb || b.sig)) return yield* _um.call(this, u, t, id);
-    const st = Game.st, fhp = t ? t.hp : 0, mv = skillMove(id, st); const r = yield* _um.call(this, u, t, id);
-    if (u.hp <= 0) return r; const dealt = t ? Math.max(0, fhp - t.hp) : 0;
-    if (b.orb) { const ob = orbOfMove(id, st); if (ob && this._castId === id) { ob.x = (ob.x || 0) + 1; if (orbPending(ob) && !ob.told) { ob.told = 1; Sound.sfx('statUp'); yield* this.msg('「' + orbName(ob) + '」可以進化了！（戰鬥後選擇進化方向）', { hold: 20 }); } }
-      if (mv.evo && mv.evo.length && this._castId === id) { if (t && t !== u && dealt > 0) evoFlash(this, t, mv.evoBr); for (const c of mv.evo) yield* evoApply(this, u, t, c, dealt, mv); } }
-    if (b.sig && this._castId === id && typeof sigAfter === 'function') yield* sigAfter(this, u, t, dealt, mv);
-    return r;
-  }; }
 function evoFlash(b, t, br) { const C = b.center(t), last = br[br.length - 1] === 'A'; b.spawn({ k: 'ring', x: C.x, y: C.y, r0: 6, r1: 34, c: last ? '#ffb040' : '#80e0ff', life: 16 }); b.spawn({ k: 'flash', c: last ? '#ffd080' : '#a0f0ff', a: 0.22, life: 8 }); }
-function* evoApply(b, u, t, c, dealt, mv) {
-  const [k, v] = evoCode(c), foe = t && t !== u && t.hp > 0;
-  if (['brn', 'psn', 'par', 'slp'].includes(k)) { if (foe && dealt > 0 && !t.status && chance(v / 100)) yield* b.inflict(t, k, true); }
-  else if (k === 'drain' && dealt > 0) { const h = Math.min(u.maxhp - u.hp, Math.ceil(dealt * v / 100)); if (h > 0) { u.hp += h; Game.st.hp = u.hp; yield* b.animHP(u); yield* b.msg('吸收了' + h + '點HP！', { hold: 10 }); } }
-  else if (k === 'mp') { const g = Math.min(u.maxmp - u.mp, v); if (g > 0) { u.mp += g; Game.st.mp = u.mp; } }
-  else if (k === 'shield') { if (!mv.shield) { u.shield = Math.max(u.shield || 0, v); yield* b.msg(u.n + '展開了護盾！', { hold: 10 }); } }
-  else if (/^(atk|spa|def|spd|spe)\+1$/.test(k)) yield* b.statChange(u, { [k.slice(0, 3)]: 1 });
-  else if (/^f(atk|def|spe|spd)-1$/.test(k)) { if (foe && dealt > 0) yield* b.statChange(t, { [k.slice(1, 4)]: -1 }); }
-  else if (k === 'wet' && foe && dealt > 0) { t.wet = 3; } else if (k === 'tangle' && foe && dealt > 0) { t.tangle = 3; }
-  else if (k === 'cure' && u.status) { u.status = null; if (Game.st) Game.st.status = null; yield* b.msg(u.n + '的異常狀態消除了！', { hold: 10 }); }
-  else if (k === 'heal+15') { const h = Math.min(u.maxhp - u.hp, Math.ceil(u.maxhp * 0.15)); if (h > 0) { u.hp += h; Game.st.hp = u.hp; yield* b.animHP(u); } }
-  else if (k === 'spec+1' && typeof mainWKey === 'function' && mainWKey()) { b.H.wc = Math.min((b.H.wcN || wsN(WSK[mainWKey()].s)), (b.H.wc || 0) + 1); }
-  else if (k === 'hit+1' && !mv.hits && foe && dealt > 0) { const d = Math.min(t.hp, Math.max(1, Math.floor(dealt * 0.4))); yield* b.playFx('hit', u, t); t.hp -= d; Sound.sfx('hit'); yield* b.animHP(t); yield* b.msg(u.n + '追擊！造成' + d + '點傷害！', { hold: 10 }); }
-}
 // after a battle: evolve the orbs that are ready (one prompt each)
 function* orbEvolveFlow(o) {
   const s = orbStage(o), D = ORB_A[o.k];
@@ -191,7 +168,7 @@ function* orbEvolveFlow(o) {
   o.e = (o.e || []).concat(r === 0 ? 'A' : 'B'); o.told = 0; Sound.jingle('levelup'); yield* itemGet('「' + orbName(o) + '」進化了！'); return true;
 }
 { const _u = Overworld.prototype.update; Overworld.prototype.update = function (...a) {
-    const st = this.st; if (st && !this.script && !UI.stack.length && !Game.trans && st.orbs) { const o = st.orbs.find(x => orbPending(x) && x.told); if (o) { this.run(orbEvolveFlow(o)); return; } }
+    const st = this.st; if (st && !this.script && !UI.stack.length && !Game.trans && st.skillLib) { const o = Object.values(st.skillLib || {}).find(x => ORB_A[x.k] && orbPending(x) && x.told); if (o) { this.run(orbEvolveFlow(o)); return; } }
     return _u.apply(this, a); }; }
 
 /* ---------- getting orbs ---------- */

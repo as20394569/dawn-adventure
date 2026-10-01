@@ -108,7 +108,7 @@ module.exports = async (g) => {
     const okStat = s => [...STATS, 'mp', 'crit', 'hit', 'eva', 'drain', 'elem', 'counter', 'rage', 'fireUp', 'boltUp', 'venomEdge', 'assassin', 'venomous', 'shadowStep', 'spellblade'].includes(s);
     for (const T of TALENTS) for (const s in T.st) if (!okStat(s) && !['pierceT', 'mpRegen', 'shieldChip', 'statusRes', 'brkBonus', 'weakMp', 'guardPlus', 'weakUp', 'bigUp', 'mpSave', 'magCrit', 'elemRes', 'endureT'].includes(s)) bad('天賦', T.id, '欄位無效', s);
     for (const c in CLASSES) for (const s in CLASSES[c].st) if (!okStat(s)) bad('職業', c, '欄位無效', s);
-    for (const s of ['counter', 'rage', 'fireUp', 'boltUp', 'venomEdge', 'assassin', 'venomous', 'shadowStep', 'spellblade']) if (!new RegExp('\\.' + s + '\\b').test(SRC.replace(/st: \{[^}]*\}/g, ''))) bad('能力', s, '戰鬥程式沒有讀取');
+    for (const s of ['counter', 'rage', 'fireUp', 'boltUp', 'venomEdge', 'assassin', 'venomous', 'shadowStep', 'spellblade']) if (!(typeof DEF !== 'undefined' && DEF.passives && DEF.passives[s]) && !new RegExp('\\.' + s + '\\b').test(SRC.replace(/st: \{[^}]*\}/g, ''))) bad('能力', s, '戰鬥程式沒有讀取'); // v11: the battle reads ability keys through the passive registry (DEF.passives)
     // ---------- CATEGORIES (every entry must have one) ----------
     const miss = (sys, list) => { if (list.length) bad('未分類', sys, list.join(',')); else info('分類完整', sys); };
     miss('道具', Object.keys(ITEMS).filter(k => !ITEM_CATS.includes(ITEMS[k].cat)));

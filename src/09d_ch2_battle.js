@@ -237,4 +237,3 @@ function ch2ChibiFrame(sp, size, step, flip) {
 }
 
 /* half of the foe's visible width (chibis know it exactly; other sprites: a fair guess) */
-Battle.prototype.foeHalfW = function () { const bb = this.imgF && this.imgF.bb; return bb ? (bb.vw ? bb.vw / 2 : bb.w * 0.35) : 20; };

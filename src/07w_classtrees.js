@@ -1,76 +1,10 @@
 /* ===================== v23 battle side of the class trees (04u): new mechanics + one animation per new skill ===================== */
 // ---------- damage: bonus conditions, stat-borrowing, sure crits ----------
-{ const _cd = Battle.prototype.calcDamage; Battle.prototype.calcDamage = function (u, t, mv) {
-    if (!u || !u.hero || !mv || !mv.pow) return _cd.call(this, u, t, mv);
-    let key = null, a0 = 0;
-    if (mv.addStat) { key = mv.cat === '特' ? 'spa' : 'atk'; a0 = u.stats[key]; u.stats[key] = a0 + Math.round((u.stats[mv.addStat[0]] || 0) * mv.addStat[1]); }
-    let r; try { r = _cd.call(this, u, t, mv); } finally { if (key) u.stats[key] = a0; }
-    let m = 1;
-    if (mv.vsSt && t.status === mv.vsSt.st) m *= mv.vsSt.m;
-    if (mv.execute && t.hp < t.maxhp * mv.execute.hp) m *= mv.execute.m;
-    if (mv.lowHp && u.maxhp) m *= 1 + mv.lowHp * Math.max(0, 1 - u.hp / u.maxhp);
-    if ((mv.sureCrit || (mv.critVsMark && t.markT > 0)) && !r.crit) { r.crit = true; m *= 1.5; }
-    if (m !== 1) r.dmg = Math.max(1, Math.floor(r.dmg * m)); return r;
-  };
-}
 // 明鏡止水: +25% crit while it lasts
-{ const _cr = critRate; critRate = function (u, mv) { let r = _cr(u, mv); if (u && u.hero && u.critT > 0) r += 0.25; return r; }; }
 function ctWeakEl(t) { let best = null, bm = 1; for (const el of ['火', '水', '草', '雷', '毒', '岩', '飛']) { const m = famMult(el, t); if (m > bm) { bm = m; best = el; } } return best; }
 
-{ const _um = Battle.prototype.useMove; Battle.prototype.useMove = function* (u, t, id) {
-    if (!u.hero) return yield* ctFoeMove.call(this, _um, u, t, id);
-    const base = MOVES[id]; if (!base) return yield* _um.call(this, u, t, id);
-    const lv = skillLv(id) || 1;
-    // moves that fail before anything is spent
-    if (base.hpCost && base.pow && u.mp >= skillMP(id) && u.hp <= Math.floor(u.maxhp * base.hpCost)) { yield* this.msg(u.n + '的HP不夠，無法使用' + base.n + '！'); return; }
-    if (base.aegis && u.aegisLast === this.turn - 1) { yield* this.msg(u.n + '使用了' + base.n + '！'); yield* this.msg('但是失敗了！（神盾不能連續使用）'); u.aegisLast = -9; return; }
-    const tHp0 = t.hp, st0 = t.status, swapT = u.enchT > 0 && u.enchEl && base.pow && base.t === '一般', upHits = base.hitsUp && (u.smokeT > 0 || u.clones > 0);
-    if (swapT) base.t = u.enchEl; if (upHits) base.hits += base.hitsUp;
-    let r; try { r = yield* _um.call(this, u, t, id); } finally { if (swapT) base.t = '一般'; if (upHits) base.hits -= base.hitsUp; }
-    if (this._castId !== id || u.hp <= 0) return r;
-    const U = this.center(u), T = this.center(t), dealt = Math.max(0, tHp0 - t.hp);
-    if (base.critBuff) { u.critT = base.critBuff + lv - 1; u.critAt = this.turn; yield* FX.meikyoOn.call(this, U, T, u); yield* this.msg(u.n + '心如止水，看清了每一道破綻！' + u.critT + '回合內會心率+25%。', { hold: 24 }); }
-    if (base.wall) { u.shield = base.wall + lv - 1; }
-    if (base.aura) { u.auraT = 3 + lv - 1; u.aura = base.aura; u.auraAt = this.turn; yield* FX[base.fx === 'flameWall' ? 'flameWallOn' : 'staticOn'].call(this, U, T, u);
-      yield* this.msg(base.aura.st === 'brn' ? '火焰之牆升起了！' + u.auraT + '回合內受到的傷害減少，碰到的魔物會被燒傷。' : u.n + '全身纏繞著靜電！' + u.auraT + '回合內碰到的魔物會麻痺。', { hold: 26 });
-      if (base.aura.spe) yield* this.statChange(u, { spe: base.aura.spe }, true, u.auraT); }
-    if (base.aegis) { u.aegisOn = true; u.aegisLast = this.turn; yield* FX.aegisOn.call(this, U, T, u); yield* this.msg(u.n + '舉起了神盾！這回合魔物的攻擊會被完全擋下。', { hold: 24 }); }
-    if (base.clones) { u.clones = base.clones + (lv >= 2 ? 1 : 0); u.afterT = 3; u.afterAt = this.turn; yield* FX.afterimageOn.call(this, U, T, u); yield* this.msg(u.n + '分出了' + u.clones + '個影分身！魔物的攻擊會先打中分身。', { hold: 24 }); }
-    if (base.brave) { const d = 3 + lv - 1; yield* FX.braveOn.call(this, U, T, u); u.stageT = u.stageT || {}; for (const k of ['atk', 'def', 'spa', 'spd']) { u.stages[k] = Math.min(3, u.stages[k] + 1); u.stageT[k] = Math.max(u.stageT[k] || 0, d); } Sound.sfx('statUp'); yield* this.msg(u.n + '立下了勇者的誓言！物攻・物防・魔攻・魔防都提升了！', { hold: 26 }); }
-    if (base.enchant && t.hp > 0) { const el = ctWeakEl(t); if (el) { u.enchT = base.enchant + lv - 1; u.enchEl = el; u.enchAt = this.turn; yield* FX.enchantOn.call(this, U, T, u, el); yield* this.msg('劍身帶上了' + el + '屬性！（' + t.n + '的弱點）' + u.enchT + '回合內無屬性的攻擊都會變成' + el + '屬性。', { hold: 28 }); } else yield* this.msg('看不出' + t.n + '有什麼弱點……附魔失敗了。'); }
-    if (base.hpCost && base.pow) { const c = Math.max(1, Math.floor(u.maxhp * base.hpCost)); u.hp = Math.max(1, u.hp - c); yield* this.animHP(u); yield* this.msg(u.n + '付出了' + c + '點HP的代價！', { hold: 20 }); }
-    if (base.mpDrain && dealt > 0 && u.mp < u.maxmp) { const g = Math.max(3, Math.floor(dealt * base.mpDrain)), m0 = u.mp; u.mp = u.mp + g; for (let i = 0; i < 8; i++) this.spawn({ k: 'mote', x: T.x + rnd(-10, 10), y: T.y + rnd(-10, 10), to: U, s: 2, c: i % 2 ? '#8ab8ff' : '#e0f0ff', life: 18 }); yield* this.msg(u.n + '吸取了' + (u.mp - m0) + '點MP！', { hold: 18 }); }
-    if (base.vsSt && base.vsSt.eat && st0 === base.vsSt.st && t.hp > 0 && t.status === st0) { t.status = null; yield* this.msg('灼傷被引爆，燒光了！', { hold: 18 }); }
-    if (base.smokeAfter && dealt > 0) { u.smokeT = Math.max(u.smokeT || 0, base.smokeAfter); u.smokeAt = this.turn; for (let i = 0; i < 14; i++) this.spawn({ k: 'dot', x: U.x + rnd(-20, 20), y: U.y + rnd(-10, 24), vy: -0.4, c: i % 2 ? '#c8d0f0' : '#8890c0', s: 3, life: 26 }); yield* this.msg(u.n + '的身影隱入了月色！' + u.smokeT + '回合內迴避+30%。', { hold: 22 }); }
-    return r;
-  };
-}
 // the foe's turn: 神盾 blocks the whole turn, 影分身 takes a hit (and the hero counters), 炎之壁 / 靜電場 burn / paralyse a foe that touches you
-function* ctFoeMove(_um, u, t, id) {
-  const mv = MOVES[id], H = t, canBlock = H && H.hero && mv && mv.pow && id !== '__frozen' && !u._frozenNow && u.status !== 'slp' && !u.flinched && !(mv.charge && u.charging !== id);
-  if (canBlock && (H.aegisOn || H.clones > 0)) {
-    if (u.charging === id) u.charging = null; const clone = !H.aegisOn;
-    const utb = new TextBox(u.n + '使用了' + mv.n + '！', { style: 'battle', keep: true }); UI.push(utb); while (!utb.done) { utb.update(); yield; } yield* wait(6);
-    if (!clone) { yield* FX.aegisBlock.call(this, this.center(H), this.center(u), H); UI.remove(utb); yield* this.msg('神盾完全擋下了攻擊！'); return; }
-    H.clones--; if (!H.clones) H.afterT = 0; yield* FX.cloneHit.call(this, this.center(H), this.center(u), H); UI.remove(utb); yield* this.msg('攻擊打中了影分身！' + (H.clones ? '（還剩' + H.clones + '個）' : '（分身全部消失了）'));
-    if (u.hp > 0 && H.hp > 0) { const cm = H.stats.welem ? { ...MOVES.slash, t: H.stats.welem } : MOVES.slash, c2 = this.calcDamage(H, u, cm), cd = Math.min(u.hp, Math.max(1, Math.floor(c2.dmg * 0.7)));
-      yield* FX.afterCounter.call(this, this.center(H), this.center(u), H); u.hp -= cd; Sound.sfx('hit'); yield* this.impact(u, 1); yield* this.animHP(u); yield* this.msg(H.n + '從影子裡反擊！造成了' + cd + '點傷害！', { hold: 22 }); }
-    return;
-  }
-  const hp0 = H && H.hero ? H.hp : 0, r = yield* _um.call(this, u, t, id);
-  if (!H || !H.hero || !mv || !mv.pow || u.hp <= 0 || H.hp <= 0) return r;
-  if (H.auraT > 0 && H.aura && mv.cat === '物' && H.hp < hp0 && !u.status && chance(H.aura.p / 100)) { yield* this.msg('碰到了' + H.aura.n + '！', { hold: 16 }); yield* this.inflict(u, H.aura.st, true); }
-  return r;
-}
 // timers
-{ const _et = Battle.prototype.endTurn; Battle.prototype.endTurn = function* () {
-    yield* _et.call(this); const H = this.H; if (!H) return; H.aegisOn = false;
-    if (H.critT > 0 && H.critAt !== this.turn && --H.critT === 0) yield* this.msg('明鏡止水的專注消失了。', { hold: 16 });
-    if (H.auraT > 0 && H.auraAt !== this.turn && --H.auraT === 0) yield* this.msg((H.aura ? H.aura.n : '效果') + '消失了。', { hold: 16 });
-    if (H.afterT > 0 && H.afterAt !== this.turn && --H.afterT === 0) { H.clones = 0; yield* this.msg('影分身消失了。', { hold: 16 }); }
-    if (H.enchT > 0 && H.enchAt !== this.turn && --H.enchT === 0) yield* this.msg('劍上的附魔消失了。', { hold: 16 });
-  };
-}
 
 /* ---------- animations: every new skill has its own shape, colour and rhythm ---------- */
 HERO_PK.moon = (x, p, a) => { const r = p.r * Math.min(1, p.t / 8); x.globalAlpha = Math.min(1, a * 1.3) * (p.al || 1); const g = x.createRadialGradient(p.x, p.y, r * 0.2, p.x, p.y, r * 1.8); g.addColorStop(0, 'rgba(240,244,255,0.5)'); g.addColorStop(1, 'rgba(160,180,255,0)'); x.fillStyle = g; x.fillRect(p.x - r * 2, p.y - r * 2, r * 4, r * 4);
@@ -200,14 +134,3 @@ Object.assign(MOVES.flameWall, { stat: null, wall: 3 }); delete MOVES.flameWall.
    monster: 獵人印記・時空凍結 (left of its stat icons) */
 const timedIconsH = b => [b.rageT > 0 && 'rage', b.smokeT > 0 && 'smoke', b.critNext && 'focus', b.critT > 0 && 'crit', b.auraT > 0 && (b.aura && b.aura.st === 'brn' ? 'wall' : 'static'), b.clones > 0 && 'after', b.enchT > 0 && 'ench', b.aegisOn && 'aegis', b._parryTmp && 'parry'].filter(Boolean);
 const timedIconsF = b => [b.markT > 0 && 'mark', (b.frozenT > 0 || b._frozenNow) && 'frozen'].filter(Boolean);
-{ const _bf = Battle.prototype.drawBoxF; Battle.prototype.drawBoxF = function (x) {
-    _bf.call(this, x); const F = this.F; if (!F || !UI_PX.icons || !UI_PX.icons.ok || this.boxF < -20 || this.alphaF <= 0) return; const L = timedIconsF(F); if (!L.length) return;
-    const n = Math.min(4, ['atk', 'def', 'spa', 'spd', 'spe'].filter(k => F.stages[k]).length); let X = (W + 120) / 2 - 4 - (n + L.length) * (ICON_SZ + 2);
-    x.globalAlpha = clamp((this.boxF + 30) / 34, 0, 1); for (const k of L) { drawIcon(x, k, X, 6 + 34 + plateExtra()); X += ICON_SZ + 2; } x.globalAlpha = 1;
-  };
-  const _bh = Battle.prototype.drawBoxH; Battle.prototype.drawBoxH = function (x) {
-    _bh.call(this, x); const H = this.H; if (!H || Math.round(this.boxH) >= BH || !UI_PX.icons || !UI_PX.icons.ok) return; const L = timedIconsH(H); if (!L.length) return;
-    const cx = this.center(H).x + this.offH.x, Y = Math.round(HERO_FOOT - 20 + this.offH.y) - ICON_SZ - 2; let X = Math.max(2, Math.round(cx - 20 - L.length * (ICON_SZ + 2)));
-    for (const k of L) { drawIcon(x, k, X, Y); X += ICON_SZ + 2; }
-  };
-}

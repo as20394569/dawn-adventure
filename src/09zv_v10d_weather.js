@@ -66,13 +66,6 @@ function wxOverlay(x, k, t, w, h) {
     if (k && cfg.kind === 'wild' && WX_MON[k] && chance(0.25)) c = { ...c, sp: WX_MON[k][0], wxMon: 1 };
     return yield* _bs.call(this, c, ...a);
   }; }
-{ const _cd = Battle.prototype.calcDamage; Battle.prototype.calcDamage = function (u, t, mv) {
-    const r = _cd.call(this, u, t, mv), k = this.cfg && this.cfg.wx, M = k && WEATHER[k].mul; if (M && mv && mv.pow && r && r.dmg > 0 && M[mv.t]) r.dmg = Math.max(1, Math.round(r.dmg * M[mv.t])); return r; }; }
-{ const _hit = hitChance; hitChance = function (u, t, mv) { let h = _hit(u, t, mv); const b = Game.scene, k = b && b.cfg && b.cfg.wx; if (k && WEATHER[k].acc && mv && mv.acc) h = Math.max(0.05, h - WEATHER[k].acc / 100); return h; }; }
-{ const _es = Battle.prototype.effSpe; Battle.prototype.effSpe = function (b) { const v = _es.call(this, b), k = this.cfg && this.cfg.wx; return k && WEATHER[k].spe ? v * WEATHER[k].spe : v; }; }
-{ const _in = Battle.prototype.intro; Battle.prototype.intro = function* (...a) { const r = yield* _in.apply(this, a); const k = this.cfg && this.cfg.wx, st = Game.st;
-    if (k && st && st.wxTold !== k + (st.wx[wxKey(st.map)] || {}).until) { st.wxTold = k + (st.wx[wxKey(st.map)] || {}).until; yield* this.msg('【' + WEATHER[k].n + '】' + WEATHER[k].d, { hold: 30 }); } return r; }; }
-{ const _d = Battle.prototype.draw; Battle.prototype.draw = function (x) { _d.call(this, x); const k = this.cfg && this.cfg.wx; if (!k) return; x.save(); x.beginPath(); x.rect(0, 0, W, BH); x.clip(); wxOverlay(x, k, this.t || 0, W, BH); x.restore(); wxIcon(x, k, W - 13, 3); }; }
 
 /* ---------- weather monsters (recolours of existing art) ---------- */
 const WX_MON = {
@@ -105,6 +98,3 @@ function* wshrineEvent(ow, ent) {
 }
 for (const id in EXT_AREA) Events['wshrine_' + id] = wshrineEvent;
 // the clear-weather blessing: +1 attack stages at the start of the next battles
-{ const _ca = Battle.prototype.chooseAction; Battle.prototype.chooseAction = function* () {
-    const st = Game.st; if (!this._bless && st && st.bless > 0 && this.H) { this._bless = 1; st.bless--; this.H.stages.atk = Math.min(6, this.H.stages.atk + 1); this.H.stages.spa = Math.min(6, this.H.stages.spa + 1); yield* this.msg('（天氣祠的祝福）物攻和魔攻提升了！', { hold: 16 }); }
-    return yield* _ca.call(this); }; }

@@ -13,15 +13,6 @@ function drawStageIcons(x, b, X, Y, max = 4) {
     if (drawIcon(x, k + (v > 0 ? '_up' : '_down'), X, Y)) { if (Math.abs(v) > 1) Font.draw(x, String(Math.abs(v)), X + ICON_SZ - 3, Y + 3, v > 0 ? '#ffd070' : '#9ac0ff', '#000000', 7); X += ICON_SZ + 2; n++; } }
   return X;
 }
-{ const _bf = Battle.prototype.drawBoxF; Battle.prototype.drawBoxF = function (x) {
-    _bf.call(this, x); const F = this.F; if (!UI_PX.icons || !UI_PX.icons.ok || this.boxF < -20 || this.alphaF <= 0) return;
-    const a = clamp((this.boxF + 30) / 34, 0, 1); x.globalAlpha = a; const n = ['atk', 'def', 'spa', 'spd', 'spe'].filter(k => F.stages[k]).length; drawStageIcons(x, F, (W + 120) / 2 - 4 - Math.min(4, n) * (ICON_SZ + 2), 6 + 34 + plateExtra()); x.globalAlpha = 1;
-  };
-  const _bh = Battle.prototype.drawBoxH; Battle.prototype.drawBoxH = function (x) {
-    _bh.call(this, x); const Y = Math.round(this.boxH), H = this.H; if (Y >= BH || !UI_PX.icons || !UI_PX.icons.ok) return;
-    const P = heroIconPos(this); drawStageIcons(x, H, P.x + P.nb * (ICON_SZ + 2), P.y);
-  };
-}
 // animated effects
 MON_PK.uifx = (x, p) => { const im = UI_PX['fx_' + p.fx]; if (!im || !im.ok) return; const n = Math.max(1, Math.round(im.width / UIFX_SZ)), f = Math.min(n - 1, Math.floor(p.t / p.life * n)), s = p.s || UIFX_SZ;
   x.globalAlpha = p.t > p.life - 5 ? Math.max(0, (p.life - p.t) / 5) : 1; x.imageSmoothingEnabled = false; x.drawImage(im, f * UIFX_SZ, 0, UIFX_SZ, UIFX_SZ, Math.round(p.x - s / 2), Math.round(p.y - s / 2), s, s); };
@@ -36,9 +27,4 @@ function* uiFx(b, k, U, life = 30, dy = 0, hold = 22) { if (!uiFxOk(k)) return f
   FX.heal = function* (U) { uiFxOk('heal') && this.spawn({ k: 'uifx', fx: 'heal', x: U.x, y: U.y - 6, life: 32 }); yield* HL.call(this, U); };
   FX.guard = function* (U) { uiFxOk('shield') && this.spawn({ k: 'uifx', fx: 'shield', x: U.x, y: U.y, life: 30 }); yield* G.call(this, U); };
   if (BA) FX.barrier = function* (U) { uiFxOk('shield') && this.spawn({ k: 'uifx', fx: 'shield', x: U.x, y: U.y, life: 30 }); yield* BA.call(this, U); };
-}
-{ const _inf = Battle.prototype.inflict; Battle.prototype.inflict = function* (b, s, secondary) {
-    if (s === 'par' && !b.status && !(!b.hero && famOf(b) && famOf(b).immune.includes(s)) && uiFxOk('paralyze')) this.spawn({ k: 'uifx', fx: 'paralyze', x: this.center(b).x, y: this.center(b).y, life: 30 });
-    yield* _inf.call(this, b, s, secondary);
-  };
 }

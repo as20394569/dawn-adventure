@@ -4,6 +4,7 @@
    2) pictures that didn't match the name: 見切 (was a hex shield), 水流刃 (bubbles), 疾射飛刀 (a ring; on guns it is now 「快速射擊」),
       龍槍・貫穿・雙龍突・跳躍・龍神降臨 (small hits), 時空凍結 (faint)
    3) the text tells the whole truth: element side effects and the elemental-weapon conversion are written into each skill */
+let wThemeBurst = null, wThemeTH = {}; // exported to the battle scene (07b): the per-weapon colour theme and its finishing burst
 {
   const WTHEME = {
     steel: ['#a8d8ff', '#ffffff', 'rgba(10,20,40,0.6)'], fire: ['#ff7a30', '#fff0a0', 'rgba(70,14,0,0.6)'], water: ['#3c9cf0', '#e8f8ff', 'rgba(0,20,60,0.6)'],
@@ -163,16 +164,6 @@
   }
   { const _wa = wsAttackMove; wsAttackMove = function (st = Game.st) { const m = _wa(st); m.fx = 'wAtk'; if (m.t && m.t !== '一般') m.d = MOVES.attack.d + m.t + '屬性：' + (elemText(m.t) || '可以打弱點。'); return m; }; }
 
-  // ---------- which look is playing: set per hero action, the burst lands after the move's own picture ----------
-  { const _um = Battle.prototype.useMove; Battle.prototype.useMove = function* (u, t, id) {
-      if (!u || !u.hero) return yield* _um.call(this, u, t, id);
-      const sv = [this._thT, this._thKind, this._thPow], k = WMOVE[id] || mainWKey(), m = id === 'attack' ? { pow: 1 } : MOVES[id];
-      this._thT = k ? TH[k] : 'steel'; this._thKind = k ? GEAR[k].kind : null; this._thPow = m && m.pow ? m.pow : 0;
-      try { return yield* _um.call(this, u, t, id); } finally { this._thT = sv[0]; this._thKind = sv[1]; this._thPow = sv[2]; }
-    }; }
-  { const _wh = Battle.prototype.wHit; Battle.prototype.wHit = function* (u, t, S, pow, fx, mul) { const k = mainWKey(); this._thT = k ? TH[k] : 'steel'; this._thPow = pow || 1; return yield* _wh.call(this, u, t, S, pow, fx, mul); }; }
-  { const _p = Battle.prototype.playFx; Battle.prototype.playFx = function* (name, u, t) {
-      yield* _p.call(this, name, u, t);
-      if (u && u.hero && t && !t.hero && this._thT && this._thPow && t.hp > 0) { burst.call(this, this.center(t), this._thT, this._thPow >= 90); this._thPow = 0; }
-    }; }
+  // the scene (07b) sets _thT / _thKind / _thPow for each hero action and calls this after the move's own picture
+  wThemeBurst = burst; wThemeTH = TH;
 }

@@ -105,13 +105,7 @@ function tierRefundBlock9(b, t, st = Game.st) { if (!tcHas(b, t, st)) return '�
 function tcAuto(st = Game.st, pick = 0) { const P = tcOf(st); for (let b = 0; b < 3; b++) for (let t = 0; t < 5; t++) { if (tcHas(b, t, st)) continue; if (tierBlock9(b, t, st)) break; P[b + '.' + t] = typeof pick === 'function' ? pick(b, t) : pick; } }
 
 /* ---------- battle hooks: 傷害加成, opening combo / special / shield, and the 戰後回復 ---------- */
-{ const _cd = Battle.prototype.calcDamage; Battle.prototype.calcDamage = function (u, t, mv) { const r = _cd.call(this, u, t, mv); if (u && u.hero && mv && mv.pow && r && r.dmg > 0) { const d = talentSum('dmgUp'); if (d) r.dmg = Math.round(r.dmg * (1 + d / 100)); } return r; }; }
 // v9.2.3: the nine weapon-shaped branch icons were redrawn by Codex (task R) without weapons
-{ const _ca = Battle.prototype.chooseAction; Battle.prototype.chooseAction = function* () {
-    if (!this._t9 && this.H) { this._t9 = 1; const c0 = talentSum('comboStart'), s0 = talentSum('specStart'), sh = talentSum('openShield');
-      if (c0) this.combo = Math.max(this.combo || 0, c0); if (s0) this.H.wc = Math.max(this.H.wc || 0, s0); if (sh) this.H.shield = Math.max(this.H.shield || 0, sh); }
-    return yield* _ca.call(this);
-  }; }
 { const _v = Battle.prototype.victory; Battle.prototype.victory = function* () {
     const st = Game.st, p = talentSum('winHeal'); if (p && st.hp > 0) { const mx = heroStats().hp, h = Math.min(mx - st.hp, Math.ceil(mx * p / 100)); if (h > 0) { st.hp += h; yield* this.msg('（天賦）戰鬥結束，回復了' + h + '點HP。', { hold: 14 }); } }
     return yield* _v.call(this);

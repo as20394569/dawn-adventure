@@ -25,9 +25,3 @@ MOVES.m_eruption.eff = { st: 'brn', p: 30 };
 /* ---------- 3) money: chapter-2 monsters paid 2–3.5× an inn night per battle, so gold stopped mattering again ----------
    Wild / elite gold now tapers from Lv18 (×0.965 per level, at least ×0.4): about 1.2–1.5 inn nights per battle. */
 const V81_GOLD = lv => lv < 18 ? 1 : Math.max(0.4, 1 - (lv - 18) * 0.035);
-{ const _vic = Battle.prototype.victory; Battle.prototype.victory = function* () {
-    const F = this.F, sp = F && SPECIES[F.sp], g0 = sp ? sp.gold : 0, m = F && !F.boss ? V81_GOLD(F.lv) : 1;
-    if (sp && m < 1) sp.gold = g0 * m;
-    try { return yield* _vic.call(this); } finally { if (sp) sp.gold = g0; }
-  };
-}

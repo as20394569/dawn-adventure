@@ -327,7 +327,7 @@ function* bagScreen(mode = 'field') { // returns item id used (battle) or null
       if (it.key || it.mat || it.use === 'enchant') { yield* say(it.use === 'phone' ? phoneText() : it.d); continue; }
       const r = yield* ask('要使用' + it.n + '嗎？', ['使用', '取消']);
       if (r !== 0) continue;
-      if (mode === 'battle') { if (it.use === 'home' && Game.scene.F && Game.scene.F.boss) { yield* say('頭目戰中無法使用！'); continue; } if (it.use === 'escape' || it.use === 'home' || canUseItem(k)) { result = k; break; } yield* say('現在使用也沒有效果。'); continue; }
+      if (mode === 'battle') { if (it.use === 'home' && Game.scene.hasBoss && Game.scene.hasBoss()) { yield* say('頭目戰中無法使用！'); continue; } if (it.use === 'escape' || it.use === 'home' || canUseItem(k)) { result = k; break; } yield* say('現在使用也沒有效果。'); continue; }
       if (it.use === 'escape') { yield* say('現在不能使用。'); continue; }
       if (it.use === 'home') { if (HOME_MAPS.includes(Game.st.map)) { yield* say('已經在萌芽鎮了。'); continue; } Game.st.bag[k]--; Game.homeWarp = 1; break; }
       const msg = useItem(k); if (!msg) { yield* say((typeof itemBlockMsg === 'function' && itemBlockMsg(k)) || '現在使用也沒有效果。'); continue; }

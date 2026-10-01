@@ -67,18 +67,4 @@ function setBonus(st = Game.st) { const out = []; for (const [S, n] of setCounts
 const COMBO_MAX = 3, COMBO_STEP = 6;
 const comboCap = () => COMBO_MAX + (talentSum('comboMax') || 0), comboStepNow = () => COMBO_STEP + (talentSum('comboStep') || 0); // v9.2 talents
 const isActive = id => id && id !== 'attack' && MOVES[id] && MOVES[id].pow && (/^w_/.test(id) || (typeof WMOVE !== 'undefined' && WMOVE[id]));
-{ const _ca = Battle.prototype.chooseAction; Battle.prototype.chooseAction = function* () { const a = yield* _ca.call(this); if (a && (a.type === 'defend' || a.type === 'item') && !talentSum('comboGuard')) { this.combo = 0; this._lastAct = null; } return a; }; }
-{ const _um = Battle.prototype.useMove; Battle.prototype.useMove = function* (u, t, id) {
-    if (u && u.hero && isActive(id)) { const up = id !== this._lastAct; this.combo = up ? Math.min(comboCap(), (this.combo || 0) + 1) : (talentSum('comboKeep') ? this.combo || 0 : 0); this._lastAct = id;
-      if (up && this.combo === 1 && !Game.st.flags.comboTut) { Game.st.flags.comboTut = 1; yield* this.msg('連段！換著使用不同的技能，傷害會越來越高。（最多3段，重複同一招會中斷）', { wait: true }); } }
-    return yield* _um.call(this, u, t, id);
-  };
-}
-{ const _cd = Battle.prototype.calcDamage; Battle.prototype.calcDamage = function (u, t, mv) { const r = _cd.call(this, u, t, mv); if (u && u.hero && this.combo > 0 && mv && mv.pow && r && r.dmg > 0) r.dmg = Math.round(r.dmg * (1 + comboStepNow() * this.combo / 100)); return r; }; }
-{ const _bh = Battle.prototype.drawBoxH; Battle.prototype.drawBoxH = function (x) {
-    _bh.call(this, x); const Y = Math.round(this.boxH); if (!this.H || Y >= BH || Game.scene !== this || !(this.combo > 0)) return;
-    const txt = '連段×' + this.combo + ' +' + comboStepNow() * this.combo + '%', w = Math.ceil(Font.width(txt, 7)) + 6, yy = Y - 11;
-    x.fillStyle = 'rgba(10,10,22,0.72)'; x.fillRect(3, yy - 1, w, 10); Font.draw(x, txt, 6, yy - 4, this.combo >= comboCap() ? '#ff9a5a' : '#ffd860', UIC.textSh, 7);
-  };
-}
 BATTLE_HELP.unshift(['連段', ['換著使用不同的武器主動技能，就能累積「連段」（最多3段）。', '每一段讓傷害+6%，普通攻擊也吃得到加成。', '連續使用同一招、防禦或使用道具時，連段會中斷。']]);

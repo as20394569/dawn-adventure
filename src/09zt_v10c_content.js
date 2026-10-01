@@ -40,11 +40,6 @@ for (const [boss, k] of [['clockColossus', 'thunderFist'], ['frostQueen', 'frost
 { const _wl = wsList; wsList = function (st = Game.st) { const L = _wl(st), w = mainWeapon(st), s = w && GEAR[w.b] && GEAR[w.b].skill; if (s && MOVES[s]) L.splice(sigId(st) ? 1 : 0, 0, s); return L; }; }
 learnedSkills = function (st = Game.st) { return wsList(st); }; usableSkills = function (st = Game.st) { return wsList(st); }; summarySkills = function (st = Game.st) { return wsList(st); };
 { const _sm = skillMove; skillMove = function (id, st = Game.st) { const b = MOVES[id]; if (b && b.uniq) return { ...b }; return _sm(id, st); }; }
-{ const _um = Battle.prototype.useMove; Battle.prototype.useMove = function* (u, t, id) {
-    const b = MOVES[id]; if (!u || !u.hero || !b || !b.uniq) return yield* _um.call(this, u, t, id);
-    const fhp = t ? t.hp : 0, r = yield* _um.call(this, u, t, id); if (u.hp <= 0 || this._castId !== id) return r; const dealt = t ? Math.max(0, fhp - t.hp) : 0;
-    if (t && t !== u && dealt > 0) evoFlash(this, t, 'B'); for (const c of b.ueff || []) yield* evoApply(this, u, t, c, dealt, b); return r;
-  }; }
 { const _gi = gearInfoLines; gearInfoLines = function (g, wrapW = 150) { const L = _gi(g, wrapW), G = GEAR[g.b]; if (!G || !G.skill || !MOVES[G.skill]) return L; const m = MOVES[G.skill];
     const i = L.findIndex(l => l[0] === '【武器】'); const X = Font.wrap('專屬技「' + m.n + '」' + (m.pow ? '威力' + m.pow + '・' : '') + 'MP' + SKILL_MP[G.skill] + '　' + m.d, wrapW - 4, 10).map(l => [l, '#ffb0e0', 10, 4]);
     L.splice(i < 0 ? L.length : i + 1, 0, ...X); return L; }; }

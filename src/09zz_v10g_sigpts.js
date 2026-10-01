@@ -12,21 +12,7 @@ if (SIG.bard) SIG.bard.healAfter = 18;
 if (SIG.bard) SIG.bard.d = '攻魔提升，回復HP，特技+1。';
 { const _mp = skillMP; skillMP = function (id, st = Game.st) { return MOVES[id] && MOVES[id].sig ? 0 : _mp(id, st); }; }
 const sgpGain = (b, n = 1) => { if (b && b.H && sigId(Game.st)) b.H.sgp = Math.min(SIG_MAX, (b.H.sgp || 0) + n); };
-{ const _ca = Battle.prototype.chooseAction; Battle.prototype.chooseAction = function* () {
-    if (!this._sgp0 && this.H) { this._sgp0 = 1; this.H.sgp = Math.min(SIG_MAX, (this.H.sgp || 0) + (typeof tsum === 'function' ? tsum('sigStart') : 0)); }
-    return yield* _ca.call(this); }; }
-{ const _um = Battle.prototype.useMove; Battle.prototype.useMove = function* (u, t, id) {
-    if (u && u.hero && MOVES[id] && MOVES[id].sig) { if ((this.H.sgp || 0) < SIG_COST) { yield* this.msg('招式點不夠，' + u.n + '改用普通攻擊！'); return yield* this.useMove(u, t, 'attack'); } this.H.sgp -= SIG_COST; }
-    const hp0 = t ? t.hp : 0, r = yield* _um.call(this, u, t, id);
-    if (t && t.hp < hp0 && u) { if (u.hero && id === 'attack') sgpGain(this); else if (!u.hero && t.hero) sgpGain(this); }
-    return r; }; }
 // the gauge above the 特技 counter: 招式 ●●●○○ (gold once it reaches 3)
-{ const _bh = Battle.prototype.drawBoxH; Battle.prototype.drawBoxH = function (x) {
-    _bh.call(this, x); const H = this.H, Y = Math.round(this.boxH); if (!H || Y >= BH || Game.scene !== this || !sigId(Game.st)) return;
-    const n = Math.min(SIG_MAX, H.sgp || 0), ok = n >= SIG_COST, lw = Math.ceil(Font.width('招式', 7)) + 4, w = SIG_MAX * 7 + lw, X = W - w - 3, yy = Y - 21;
-    x.fillStyle = 'rgba(10,10,22,0.72)'; x.fillRect(X - 2, yy - 1, w + 4, 10); Font.draw(x, '招式', X, yy - 4, ok ? '#ffd860' : UIC.muted, UIC.textSh, 7);
-    for (let i = 0; i < SIG_MAX; i++) { const cx = X + lw + i * 7, on = i < n; x.fillStyle = '#10121e'; x.fillRect(cx - 1, yy + 1, 6, 6); x.fillStyle = on ? (ok ? '#ffd860' : '#8ad0ff') : '#3a3a4a'; x.fillRect(cx, yy + 2, 4, 4); if (i === SIG_COST - 1) { x.fillStyle = 'rgba(255,216,96,0.5)'; x.fillRect(cx + 5, yy, 1, 8); } }
-  }; }
 // 威力公式: how this skill's power is built, then the damage formula (short)
 function powFormula(id, st = Game.st) {
   const m = skillMove(id, st), B = MOVES[id], L = [], stat = m.cat === '特' ? '魔攻' : '物攻', vsD = m.cat === '特' ? '魔防' : '物防';

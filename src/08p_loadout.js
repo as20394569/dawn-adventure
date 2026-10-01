@@ -80,18 +80,7 @@ function* inheritScreen() {
 }
 
 /* ---------- battle: the skill pop-up lists usable skills (tree + inherited) ---------- */
-{ const _cm = Battle.prototype.chooseMove; Battle.prototype.chooseMove = function* () {
-    const r = yield* _cm.call(this);
-    if (r && hpCostBlocked(r)) { yield* this.msg('HP不夠，無法使用' + MOVES[r].n + '！'); return yield* this.chooseMove(); }
-    return r;
-  };
-}
 // the damage preview knows about 元素附魔 and 月影舞's extra hits
-{ const _ed = Battle.prototype.estimateDamage; Battle.prototype.estimateDamage = function (id) {
-    const H = this.H, base = MOVES[id]; if (!base) return _ed.call(this, id); const swap = H.enchT > 0 && H.enchEl && base.pow && base.t === '一般', up = base.hitsUp && (H.smokeT > 0 || H.clones > 0);
-    if (swap) base.t = H.enchEl; if (up) base.hits += base.hitsUp; try { return _ed.call(this, id); } finally { if (swap) base.t = '一般'; if (up) base.hits -= base.hitsUp; }
-  };
-}
 
 /* ---------- class change: tell the player about the new tree + the 繼承 slots ---------- */
 { const _ct = classTalk; classTalk = function* () {

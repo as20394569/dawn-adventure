@@ -3,17 +3,6 @@
    slash lines become tapered lozenges with a white edge and a fading after-image, crosses become two lozenges, and the
    square sparks / shards / motes become small flat diamonds pointing where they fly. */
 const isSlashName = n => /斬|刃|閃/.test(n || '');
-{ const _um = Battle.prototype.useMove; Battle.prototype.useMove = function* (u, t, id) {
-    let on = false; try { on = !!(u && u.hero && isSlashName(skillMove(id).n)); } catch (e) { }
-    if (!on) return yield* _um.call(this, u, t, id);
-    this.slashOn = (this.slashOn || 0) + 1; try { return yield* _um.call(this, u, t, id); } finally { this.slashOn--; }
-  };
-  const _ws = Battle.prototype.wSpecial; Battle.prototype.wSpecial = function* (u, t, key) {
-    const on = ['劍', '短刀', '斧'].includes((GEAR[key] || {}).kind); if (on) this.slashOn = (this.slashOn || 0) + 1;
-    try { return yield* _ws.call(this, u, t, key); } finally { if (on) this.slashOn--; }
-  };
-  const _sp = Battle.prototype.spawn; Battle.prototype.spawn = function (p) { const r = _sp.call(this, p); if (this.slashOn > 0 && r) r.sl = 1; return r; };
-}
 function lozenge(x, x1, y1, x2, y2, w) {
   const dx = x2 - x1, dy = y2 - y1, L = Math.hypot(dx, dy) || 1, nx = -dy / L * w / 2, ny = dx / L * w / 2, mx = (x1 + x2) / 2, my = (y1 + y2) / 2;
   x.beginPath(); x.moveTo(x1, y1); x.lineTo(mx + nx, my + ny); x.lineTo(x2, y2); x.lineTo(mx - nx, my - ny); x.closePath(); x.fill();

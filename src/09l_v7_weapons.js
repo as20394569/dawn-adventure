@@ -173,98 +173,12 @@ function wsAttackMove(st = Game.st) {
 }
 
 /* ---------- damage: basic attack / actives / borrowed / kind & crit bonuses ---------- */
-{ const _cd = Battle.prototype.calcDamage; Battle.prototype.calcDamage = function (u, t, mv) {
-    const r = _cd.call(this, u, t, mv); if (!u || !u.hero || !mv || !mv.pow) return r; const S = u.stats || {}; let m = 1;
-    if (mv.basic) m *= 1 + (S.atkUp || 0) / 100;
-    if (mv.ws) m *= 1 + (S.actUp || 0) / 100;
-    if (mv.sub) m *= 0.9 + (S.subUp || 0) / 100;
-    if (mv.wsp) m *= 1 + (S.spcUp || 0) / 100;
-    if (S.kindUp && S.wkind && S.kindUp[S.wkind]) m *= 1 + S.kindUp[S.wkind] / 100;
-    if (S.typeUp && S.typeUp[mv.t]) m *= 1 + S.typeUp[mv.t] / 100;
-    if (r.crit && S.critDmg) m *= 1 + S.critDmg / 100;
-    if (m !== 1) r.dmg = Math.max(1, Math.floor(r.dmg * m)); return r;
-  };
-}
-{ const _ed = Battle.prototype.estimateDamage; Battle.prototype.estimateDamage = function (id) {
-    if (id !== 'attack') return _ed.call(this, id); const A = MOVES.attack; MOVES.attack = wsAttackMove(); try { return _ed.call(this, id); } finally { MOVES.attack = A; }
-  };
-}
 
 /* ---------- battle: MP from basic attacks and the special counter ---------- */
 // v10: the 特技 is driven by normal attacks only — every basic hit adds a layer, and the hit that fills the gauge fires it at once
-{ const _um = Battle.prototype.useMove; Battle.prototype.useMove = function* (u, t, id) {
-    if (!u || !u.hero) return yield* _um.call(this, u, t, id);
-    const fhp = t ? t.hp : 0, r = yield* _um.call(this, u, t, id); if (u.hp <= 0 || !t) return r;
-    const st = Game.st, key = mainWKey(st), basic = id === 'attack' && t.hp < fhp; if (!basic) return r;
-    { const g = 2 + Math.floor((u.maxmp || 0) / 25) + (u.stats.atkMp || 0); if (u.mp < u.maxmp) { u.mp = Math.min(u.maxmp, u.mp + g); st.mp = u.mp; } }
-    if (!key) return r;
-    const S = WSK[key].s, N = wsN(S, st); this.H.wc = Math.min(N, (this.H.wc || 0) + 1); this.H.wcN = N;
-    if (this.H.wc >= N && t.hp > 0 && this.F && this.F.hp > 0) { this.H.wc = 0; yield* this.wSpecial(u, t, key); }
-    return r;
-  };
-}
-Battle.prototype.wHit = function* (u, t, S, pow, fx, mul = 1) {
-  const B = GEAR[mainWKey()], mag = isMagicW(B.kind), mv = { n: S.n, t: B.elem || '一般', cat: mag ? '特' : '物', pow, acc: 100, fx, wsp: 1 };
-  const r = this.calcDamage(u, t, mv); if (t.shield > 0) r.dmg = Math.floor(r.dmg * 0.6); const d = Math.min(t.hp, Math.max(1, Math.floor(r.dmg * mul)));
-  yield* this.playFx(FX[fx] ? fx : 'hit', u, t); t.hp -= d; Sound.sfx(r.mult > 1 ? 'hitSuper' : 'hit'); if (r.crit) Sound.sfx('crit'); yield* this.impact(t, r.crit || r.mult > 1 ? 2 : 1); yield* this.animHP(t); return d;
-};
-Battle.prototype.wSpecial = function* (u, t, key) {
-  const S = WSK[key].s, B = GEAR[key], mag = isMagicW(B.kind), fx = KIND_SPFX[B.kind] || 'hit', C = this.center(u);
-  Sound.sfx('charge'); this.spawn({ k: 'flash', c: '#ffe8a0', a: 0.35, life: 8 }); for (let i = 0; i < 10; i++) this.spawn({ k: 'mote', x: C.x + rnd(-18, 18), y: C.y + rnd(-14, 14), vy: -1.2, s: 2, c: i % 2 ? '#ffd860' : '#ffffff', life: 18 });
-  yield* this.msg('特技「' + S.n + '」發動！', { hold: 20 });
-  const hurt = ['burst', 'multi', 'drain', 'break', 'psn', 'brn', 'par', 'execute'].includes(S.k);
-  if (hurt) {
-    let total = 0;
-    if (S.k === 'multi') { for (let i = 0; i < 3 && t.hp > 0; i++) total += yield* this.wHit(u, t, S, S.pow, i ? 'hit' : fx); yield* this.msg('3連擊！合計' + total + '點傷害！', { hold: 18 }); }
-    else { const ex = S.k === 'execute' && t.hp < t.maxhp * 0.35; total = yield* this.wHit(u, t, S, S.pow, fx, ex ? 2.5 : 1); yield* this.msg((ex ? '斷罪！' : '') + '造成了' + total + '點傷害！', { hold: 18 }); }
-    if (S.k === 'drain' && u.hp < u.maxhp) { const h = Math.min(u.maxhp - u.hp, Math.max(1, Math.floor(total * 0.5))); u.hp += h; Game.st.hp = u.hp; Sound.sfx('heal'); yield* this.animHP(u); yield* this.msg(u.n + '吸取了' + h + '點HP！', { hold: 16 }); }
-    if (S.k === 'break' && t.hp > 0) yield* this.statChange(t, { def: -1, spd: -1 });
-    if ((S.k === 'psn' || S.k === 'brn' || S.k === 'par') && t.hp > 0 && !t.status && chance(0.6)) yield* this.inflict(t, S.k, true);
-    return;
-  }
-  if (S.k === 'heal') { const h = Math.min(u.maxhp - u.hp, Math.ceil(u.maxhp * 0.15)); if (h > 0) { u.hp += h; Game.st.hp = u.hp; Sound.sfx('heal'); yield* this.animHP(u); } yield* this.msg(u.n + '回復了' + h + '點HP！', { hold: 16 }); }
-  else if (S.k === 'mana' || S.k === 'haste') { if (S.k === 'haste') yield* this.statChange(u, { spe: 1 }); const g = Math.min(u.maxmp - u.mp, Math.ceil(u.maxmp * (S.k === 'mana' ? 0.2 : 0.1))); u.mp += g; Game.st.mp = u.mp; Sound.sfx('heal'); yield* this.msg(u.n + '回復了' + g + '點MP！', { hold: 16 }); }
-  else if (S.k === 'guard') { u.shield = Math.max(u.shield || 0, 2); Sound.sfx('shield'); yield* this.msg(u.n + '被護盾包圍了！（2回合）', { hold: 18 }); }
-  else if (S.k === 'power') yield* this.statChange(u, { atk: 1, spa: 1 });
-  else if (S.k === 'weaken') yield* this.statChange(t, { atk: -1, spa: -1 });
-  else if (S.k === 'crit') { u.critNext = true; yield* this.msg('下一次攻擊必定會心！', { hold: 16 }); }
-};
 // the counter beside the HUD: 特技 ◆◆◇◇
-{ const _bh = Battle.prototype.drawBoxH; Battle.prototype.drawBoxH = function (x) {
-    _bh.call(this, x); const H = this.H, Y = Math.round(this.boxH), k = mainWKey(); if (!H || !k || Y >= BH || Game.scene !== this) return;
-    const N = H.wcN || wsN(WSK[k].s), n = Math.min(N, H.wc || 0), full = n >= N, lw = Math.ceil(Font.width('特技', 7)) + 4, w = N * 7 + lw, X = W - w - 3, yy = Y - 11;
-    x.fillStyle = 'rgba(10,10,22,0.72)'; x.fillRect(X - 2, yy - 1, w + 4, 10); Font.draw(x, '特技', X, yy - 4, full ? '#ffd860' : UIC.muted, UIC.textSh, 7); // text middle = squares' middle (yy+4)
-    for (let i = 0; i < N; i++) { const cx = X + lw + i * 7, on = i < n; x.fillStyle = '#10121e'; x.fillRect(cx - 1, yy + 1, 6, 6); x.fillStyle = on ? (full && Math.floor(this.t / 8) % 2 ? '#ffffff' : '#ffc040') : '#3a3a4a'; x.fillRect(cx, yy + 2, 4, 4); }
-  };
-}
 
 /* ---------- the battle skill pop-up: 2 main-weapon actives + the borrowed one ---------- */
-Battle.prototype.chooseMove = function* () {
-  const st = Game.st, list = wsList(st);
-  if (!list.length) { yield* this.msg('這把武器沒有技能！（選單→裝備 換一把武器）'); return null; }
-  let cur = Math.min(this.moveIdx || 0, list.length - 1); this.idle = true;
-  const VIS = list.length, X = 8, w = W - 16, Y = 58, rowH = 14, h = 18 + VIS * rowH + 4, DY = Y + h + 2, DH = BH - 18 - DY;
-  const info = (x, m) => {
-    Font.drawR(x, 'MP ' + st.mp + '/' + (this.H.maxmp || st.mp), X + w - 8, Y + 2, '#8ab8ff', UIC.textSh, 9);
-    const id = list[m.i], mv = skillMove(id), c = TYPE_COL[mv.t]; drawWin(x, X, DY, w, DH, 'menu');
-    const fit = (t, sz, maxW) => { let z = sz; while (z > 7 && Font.width(t, z) > maxW) z--; return z; };
-    const lack = skillMP(id) > st.mp, est = !lack && mv.pow && this.estimateDamage ? this.estimateDamage(id) : 0, L = X + 8, R = X + w - 8;
-    const t1 = (isBorrowed(id) ? '副武器・' : '') + (mv.t === '一般' ? '無屬性' : mv.t + '屬性') + '・' + (mv.cat === '變' ? '輔助' : mv.cat === '物' ? '物理' : '魔法') + '・熟練Lv' + (skillLv(id) || 1), mpT = lack ? 'MP不足' : 'MP' + skillMP(id);
-    x.fillStyle = c; x.fillRect(L, DY + 6, 4, 4); Font.draw(x, t1, L + 7, DY + 1, '#c9cfe4', UIC.textSh, fit(t1, 9, w - 30 - Font.width(mpT, 9))); Font.drawR(x, mpT, R, DY + 1, lack ? UIC.bad : '#8ab8ff', UIC.textSh, 9);
-    let y = DY + 14;
-    if (mv.pow) { const pw = powTxt(mv), eT = est ? '預估≈' + est : ''; x.fillStyle = 'rgba(200,160,80,0.35)'; x.fillRect(L, DY + 13, w - 16, 1);
-      Font.draw(x, pw, L, y, UIC.accent, UIC.textSh, fit(pw, 10, w - 22 - (eT ? Font.width(eT, 9) : 0))); if (eT) Font.drawR(x, eT, R, y + 1, UIC.warm, UIC.textSh, 9); y += 13; }
-    Font.drawC(x, Game.touchUI ? (m.tapSel === m.i ? '再點一次：使用　點外面：返回' : '點技能看說明・再點一次使用') : 'A：使用　B：返回', W / 2, BB_Y + 11, Game.touchUI && m.tapSel === m.i ? UIC.warm : UIC.muted, UIC.textSh, 9);
-    drawFitText(x, mv.d || '', L, y, w - 16, DY + DH - 5 - y, 9);
-  };
-  while (true) {
-    const r = yield* choose(list.map(id => ({ t: MOVES[id].n, r: (isBorrowed(id) ? '副 ' : '') + 'MP' + skillMP(id), col: skillMP(id) > st.mp || hpCostBlocked(id) ? UIC.dis : undefined })), { x: X, y: Y, w, h, rowH, fs: 10, ox: 12, oy: 17, visible: VIS, title: '武器技能', index: cur, onMove: i => cur = i, drawExtra: info, twoTap: true });
-    if (r < 0) { this.idle = false; return null; }
-    if (skillMP(list[r]) > st.mp) { yield* this.msg('MP不夠！'); continue; }
-    if (hpCostBlocked(list[r])) { yield* this.msg('HP不夠，無法使用' + MOVES[list[r]].n + '！'); continue; }
-    this.idle = false; this.moveIdx = r; return list[r];
-  }
-};
 
 /* ===================== v25 skill spotlight (playtest: on some stages — snow, meadow, canyon, tower… — skill effects were hard to see) =====================
    While a hero skill, a weapon 特技 or a strong monster skill plays, the stage BEHIND the fighters dims; the fighters and the
@@ -276,18 +190,3 @@ function stageLum(b) {
 }
 const spotTarget = b => clamp(0.24 + (stageLum(b) - 0.35) * 0.9, 0.24, 0.55);
 function spotStrongFoe(u, id) { const mv = MOVES[id] || {}; return (mv.pow || 0) >= 75 || ((u.boss || u.elite) && (mv.pow || 0) >= 60) || u.charging === id || id === 'm_dominate'; }
-{ const _um = Battle.prototype.useMove; Battle.prototype.useMove = function* (u, t, id) {
-    const on = id !== 'attack' && MOVES[id] && u && (u.hero || spotStrongFoe(u, id)); if (!on) return yield* _um.call(this, u, t, id);
-    this.spotOn = (this.spotOn || 0) + 1; try { return yield* _um.call(this, u, t, id); } finally { this.spotOn--; }
-  };
-  const _ws = Battle.prototype.wSpecial; Battle.prototype.wSpecial = function* (u, t, key) {
-    this.spotOn = (this.spotOn || 0) + 1; try { return yield* _ws.call(this, u, t, key); } finally { this.spotOn--; }
-  };
-  // hd2dMotes(b, x, false) runs right after the stage is painted and before the fighters: dim there
-  const _hm = hd2dMotes; hd2dMotes = function (b, x, near) {
-    _hm(b, x, near); if (near || !(b instanceof Battle)) return;
-    const tgt = b.spotOn > 0 ? spotTarget(b) : 0; b.spotA = (b.spotA || 0) + (tgt - (b.spotA || 0)) * (tgt ? 0.16 : 0.08); if (b.spotA < 0.005) { b.spotA = 0; return; }
-    x.fillStyle = 'rgba(6,8,20,' + b.spotA.toFixed(3) + ')'; x.fillRect(-4, -4, W + 8, BH + 8);
-  };
-  const _hs = hd2dShafts; hd2dShafts = function (b, x) { const k = 1 - Math.min(1, (b.spotA || 0) * 2); if (k <= 0.02) return; const a = x.globalAlpha; x.globalAlpha = a * k; _hs(b, x); x.globalAlpha = a; };
-}

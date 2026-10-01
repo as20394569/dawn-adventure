@@ -70,24 +70,6 @@ function sigMod(o, st = Game.st) {
   if (c) o.sigCrit = c; if (tsum('sigWeak', st)) o.sigWeak = tsum('sigWeak', st); if (tsum('sigVsSt', st)) o.sigVsSt = tsum('sigVsSt', st);
 }
 function sigTalentText(st = Game.st) { const L = []; for (const O of tcPicked(st)) if (O.b === SIG_B) L.push(O.n); return L.length ? '　【強化】' + L.join('・') : ''; }
-{ const _cd = Battle.prototype.calcDamage; Battle.prototype.calcDamage = function (u, t, mv) {
-    const r = _cd.call(this, u, t, mv); if (!u || !u.hero || !mv || !mv.sig || !r || !(r.dmg > 0)) return r;
-    if (mv.sigCrit && !r.crit && chance(mv.sigCrit / 100)) { r.crit = true; r.dmg = Math.round(r.dmg * 1.5); }
-    if (mv.sigWeak && r.mult > 1) r.dmg = Math.round(r.dmg * (1 + mv.sigWeak / 100)); if (mv.sigVsSt && t && t.status) r.dmg = Math.round(r.dmg * (1 + mv.sigVsSt / 100)); return r; }; }
-function* sigAfter(b, u, t, dealt, mv) {
-  const st = Game.st, foe = t && t !== u && t.hp > 0, D = SIG[clsV7(st.cls)] || {};
-  for (const [k, v] of Object.entries(tsumPre('sigSt.', st))) if (foe && dealt > 0 && !t.status && chance(v / 100)) yield* b.inflict(t, k, true);
-  if (foe && dealt > 0 && tsum('sigFdef', st)) yield* b.statChange(t, { def: -1 }); if (foe && dealt > 0 && tsum('sigFatk', st)) yield* b.statChange(t, { atk: -1 });
-  const bu = tsumPre('sigBuff.', st); if (Object.keys(bu).length) yield* b.statChange(u, bu);
-  const dr = tsum('sigDrain', st); if (dr && dealt > 0) { const h = Math.min(u.maxhp - u.hp, Math.ceil(dealt * dr / 100)); if (h > 0) { u.hp += h; st.hp = u.hp; yield* b.animHP(u); } }
-  const hl = tsum('sigHeal', st) + (D.healAfter || 0); if (hl) { const h = Math.min(u.maxhp - u.hp, Math.ceil(u.maxhp * hl / 100)); if (h > 0) { u.hp += h; st.hp = u.hp; Sound.sfx('heal'); yield* b.animHP(u); yield* b.msg(u.n + '回復了' + h + '點HP！', { hold: 10 }); } }
-  if (tsum('sigCure', st) && u.status) { u.status = null; st.status = null; }
-  const sh = tsum('sigShield', st) + (D.shieldAfter || 0); if (sh) { u.shield = Math.max(u.shield || 0, sh); yield* b.msg(u.n + '展開了護盾！', { hold: 10 }); }
-  const mb = tsum('sigMpBack', st); if (mb) { u.mp = Math.min(u.maxmp, u.mp + mb); st.mp = u.mp; }
-  const sp = tsum('sigSpec', st) + (D.specAfter || 0); if (sp && mainWKey()) b.H.wc = Math.min(b.H.wcN || wsN(WSK[mainWKey()].s), (b.H.wc || 0) + sp);
-  const tw = tsum('sigTwice', st); if (tw && foe && dealt > 0 && !b._sigTwice && chance(tw / 100)) { b._sigTwice = 1; const d = Math.min(t.hp, Math.max(1, Math.floor(dealt * 0.5)));
-    yield* b.msg('「' + mv.n + '」再次發動！', { hold: 10 }); yield* b.playFx(mv.fx || 'hit', u, t); t.hp -= d; Sound.sfx('hitSuper'); yield* b.animHP(t); yield* b.msg('追加' + d + '點傷害！', { hold: 10 }); b._sigTwice = 0; }
-}
 // the signature tree's icon (Codex task T); the three branches use their own icons again
 const TALENT_SIG_PX = {}; for (const c in (typeof TALENT_SIG_ROWS !== 'undefined' ? TALENT_SIG_ROWS : {})) { const [cols, rows] = TALENT_SIG_ROWS[c], pal = {}; cols.forEach((h, i) => pal['abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'[i]] = h); TALENT_SIG_PX[c] = spriteFrom(rows, pal); }
 

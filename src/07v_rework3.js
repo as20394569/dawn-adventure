@@ -1,43 +1,9 @@
 /* ===================== v21 battle side of rework 3 (04t) ===================== */
 // talents: 弱點獵手 / 巨獸殺手 / 元素護體, and 斬鐵 against a broken foe
-{ const _cd = Battle.prototype.calcDamage; Battle.prototype.calcDamage = function (u, t, mv) {
-    const r = _cd.call(this, u, t, mv); if (!mv || !mv.pow) return r; let m = 1;
-    if (u.hero && !t.hero) { const S = u.stats || {}; if (r.mult > 1 && S.weakUp) m *= 1 + S.weakUp / 100; if ((t.elite || t.boss) && S.bigUp) m *= 1 + S.bigUp / 100; if (mv.vsBroken && t.broken > 0) m *= mv.vsBroken; }
-    if (t.hero && !u.hero && t.stats && t.stats.elemRes && ['火', '水', '草', '雷'].includes(mv.t)) m *= 1 - t.stats.elemRes / 100;
-    if (m !== 1) r.dmg = Math.max(1, Math.floor(r.dmg * m)); return r;
-  };
-}
 // 奧術洞察: magic crit
-{ const _cr = critRate; critRate = function (u, mv) { let r = _cr(u, mv); if (u && u.hero && mv && mv.cat === '特' && u.stats && u.stats.magCrit) r += u.stats.magCrit / 100; return r; }; }
 // 背水一戰: the talent works like the 不屈 gear effect
 { const _hs = heroStats; heroStats = function (st = Game.st) { const s = _hs(st); if (s.endureT) s.fx = { ...s.fx, endure: 1 }; return s; }; }
 // 時空凍結: the frozen foe skips its next action
-{ const _fc = Battle.prototype.foeChoose; Battle.prototype.foeChoose = function () { const F = this.F; if (F.frozenT > 0) { F.frozenT--; return { type: 'move', id: '__frozen' }; } return _fc.call(this); }; }
-{ const _um = Battle.prototype.useMove; Battle.prototype.useMove = function* (u, t, id) {
-    if (!u.hero && (id === '__frozen' || u._frozenNow)) { u._frozenNow = false; yield* this.msg(u.n + '被凍結在時空的縫隙裡，無法行動！'); return; }
-    if (!u.hero) return yield* _um.call(this, u, t, id);
-    const base = MOVES[id];
-    if (base && base.timeStop && this._timeStopUsed) { yield* this.msg('時空之力還沒有恢復……（每場戰鬥只能用一次）'); return; }
-    if (base && base.heroSoul) { const extra = Math.max(0, u.mp - skillMP(id)); base.pow = Math.min(200, 60 + extra * 3); }
-    const mp0 = u.mp, save = u.stats && u.stats.mpSave && id !== 'attack' && chance(u.stats.mpSave / 100);
-    let r; try { r = yield* _um.call(this, u, t, id); } finally { if (base && base.heroSoul) base.pow = 60; }
-    if (this._castId !== id || !base) return r;
-    if (save && u.mp < mp0) { u.mp = mp0; yield* this.msg('魔力循環！沒有消耗MP。', { hold: 16 }); }
-    if (base.heroSoul && u.mp > 0) { u.mp = 0; yield* this.msg('燃盡了所有的MP！', { hold: 16 }); }
-    if (base.parry && u.hp > 0) { u.defending = true; if (!u.stats.counter) { u.stats.counter = 1; u._parryTmp = 1; } Sound.sfx('statUp'); yield* this.msg(u.n + '擺出了見切的架勢！這回合受到的傷害減半，並會反擊。', { hold: 24 }); }
-    if (base.timeStop && t.hp > 0) { this._timeStopUsed = true; t._frozenNow = true; Sound.sfx('charge'); this.tintF = { c: '#a8d8ff', a: 0 }; yield* tween(12, q => this.tintF.a = q * 0.7); this.shake = 10;
-      const C = this.center(t); for (let i = 0; i < 3; i++) this.spawn({ k: 'ring', x: C.x, y: C.y, r: 8 + i * 10, c: '#c8ecff', life: 22 + i * 4 }); yield* wait(16); this.tintF = { c: '#a8d8ff', a: 0.35 };
-      if (t.charging) { t.charging = null; yield* this.msg('蓄力被打斷了！'); } yield* this.msg(t.n + '被凍結在時空的縫隙裡！牠的下一次行動會被跳過。'); }
-    return r;
-  };
-}
-{ const _et = Battle.prototype.endTurn; Battle.prototype.endTurn = function* () {
-    const H = this.H, F = this.F; if (H && H._parryTmp) { delete H.stats.counter; H._parryTmp = 0; }
-    if (F && F._frozenNow && F.hp > 0) { F._frozenNow = false; F.frozenT = 1; } // it had already acted this turn: skip the next one instead
-    if (F && !(F.frozenT > 0) && this.tintF && this.tintF.c === '#a8d8ff') this.tintF = null;
-    return yield* _et.call(this);
-  };
-}
 // TP: every 2 levels from Lv6 (levelUp in 07_battle reads this)
 const tpGainAt = lv => lv >= 6 && lv % 2 === 0 ? 1 : 0;
 
@@ -143,12 +109,6 @@ Object.assign(FX, {
   },
 });
 MOVES.arcaneEdge.hitFx = 'arcaneEdgeHit';
-{ const _um = Battle.prototype.useMove; Battle.prototype.useMove = function* (u, t, id) { // blades that never got to fly (the foe fell early / a hit missed) dissolve
-    const r = yield* _um.call(this, u, t, id);
-    if (this._aeBlades) { for (const G of this._aeBlades) if (G) for (const p of G) { p.hold = p.t; p.tx = p.sx; p.ty = p.sy - 20; p.life = p.t + 8; } this._aeBlades = null; }
-    return r;
-  };
-}
 SKILL_STYLE.arcaneEdge = ['rune', 'pop', 'arcane', 'slash'];
 
 /* ---------- v22d: slash skills looked too alike (thin white lines + a white flash). Each now has its own shape, colour and rhythm ----------

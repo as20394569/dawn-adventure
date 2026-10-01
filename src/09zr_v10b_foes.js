@@ -14,10 +14,6 @@
 
 /* ---------- 威壓: intimidation instead of a full dispel ---------- */
 Object.assign(MOVES.m_dominate, { dispel: 0, d: '散發壓倒性的氣勢，讓對手的物攻和魔攻各降一級。' });
-Battle.prototype.dominate = function* (u, t) {
-  const utb = new TextBox(u.n + '使用了威壓！', { style: 'battle', keep: true }); UI.push(utb); while (!utb.done) { utb.update(); yield; }
-  yield* MFX.m_dominate.call(this, this.center(u), this.center(t), u); UI.remove(utb); yield* this.statChange(t, { atk: -1, spa: -1 });
-};
 
 /* ---------- new techniques for elites & bosses (animations borrowed from existing monster moves) ---------- */
 const FOE_NEW = {
