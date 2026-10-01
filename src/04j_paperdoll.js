@@ -28,13 +28,13 @@ const DOLL_DECO = { // extra pixels on top of a head shape
 function weaponPath(type, dir) {
   const P = [], line = (x0, y0, x1, y1, c, c2) => { const n = Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0)); for (let t = 0; t <= n; t++) { const x = Math.round(x0 + (x1 - x0) * t / n), y = Math.round(y0 + (y1 - y0) * t / n); P.push([x, y, c]); if (c2) P.push([x + 1, y, c2]); } };
   if (type === 'sword') {
-    if (dir === 'down') { P.push([15, 3, 'T'], [15, 4, 'T'], [14, 5, 'U'], [15, 5, 'U'], [13, 5, 'U']); line(14, 6, 1, 19, 'I', 'i'); }
-    if (dir === 'up') { P.push([11, 6, 'T'], [11, 7, 'T'], [10, 8, 'U'], [11, 8, 'U'], [12, 8, 'U']); line(11, 9, 11, 20, 'I', 'i'); } // v12.0.1: hung straight down the back like the side view (same length)
+    if (dir === 'down') { P.push([14, 6, 'T'], [14, 7, 'T'], [13, 8, 'U'], [14, 8, 'U'], [15, 8, 'U']); line(14, 9, 14, 20, 'I', 'i'); } // v12.0.1: front / side / back show the same vertical sword on the back
+    if (dir === 'up') { P.push([12, 6, 'T'], [12, 7, 'T'], [11, 8, 'U'], [12, 8, 'U'], [13, 8, 'U']); line(12, 9, 12, 20, 'I', 'i'); }
     if (dir === 'left') { P.push([13, 6, 'T'], [13, 7, 'T'], [12, 8, 'U'], [13, 8, 'U'], [14, 8, 'U']); line(13, 9, 13, 20, 'I', 'i'); }
   }
   if (type === 'axe') {
-    if (dir === 'down') { line(15, 4, 3, 19, 'T'); P.push([13, 3, 'I'], [14, 3, 'I'], [15, 2, 'I'], [14, 2, 'i'], [13, 4, 'i'], [12, 4, 'I']); }
-    if (dir === 'up') { line(11, 6, 11, 19, 'T'); P.push([10, 5, 'I'], [11, 4, 'I'], [12, 4, 'i'], [12, 5, 'I'], [10, 4, 'i']); } // v12.0.1: hung straight down the back like the side view (same length)
+    if (dir === 'down') { line(14, 6, 14, 19, 'T'); P.push([13, 5, 'I'], [14, 4, 'I'], [15, 4, 'i'], [15, 5, 'I'], [13, 4, 'i']); } // v12.0.1: the same vertical axe in every view
+    if (dir === 'up') { line(12, 6, 12, 19, 'T'); P.push([11, 5, 'I'], [12, 4, 'I'], [13, 4, 'i'], [13, 5, 'I'], [11, 4, 'i']); }
     if (dir === 'left') { line(13, 6, 13, 19, 'T'); P.push([12, 5, 'I'], [13, 4, 'I'], [14, 4, 'i'], [14, 5, 'I'], [12, 4, 'i']); }
   }
   if (type === 'staff') {
