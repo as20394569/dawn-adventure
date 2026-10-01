@@ -4336,9 +4336,9 @@ function* summaryScreen() {
     } else {
       const SK = (st.cls && typeof classPassiveNode === 'function' ? ['_passive'] : []).concat(typeof summarySkills === 'function' ? summarySkills(st) : learnedSkills(st)), US = typeof usableSkills === 'function' ? usableSkills(st) : SK, VIS = 7; drawWin(x, 4, 24, 168, VIS * 19 + 8, 'menu'); const t0 = clamp(mi - 3, 0, Math.max(0, SK.length - VIS));
       if (!SK.length) Font.draw(x, '還沒有學會技能。（選單→技能）', 12, 30, UIC.muted, UIC.textSh, 11);
-      SK.slice(t0, t0 + VIS).forEach((id, k) => { const i = t0 + k, mv = MOVES[id], Y = 28 + k * 19; if (i === mi) selBar(x, 6, Y, 164, 17); if (id === '_passive') { const pn = classPassives(st.cls).length; x.fillStyle = shade(UIC.warm, -0.45); x.fillRect(14, Y + 2, 30, 13); Font.drawC(x, '被動', 29, Y + 2, '#ffffff', UIC.textSh, 9); Font.draw(x, '職業・武器被動', 52, Y + 1, UIC.warm, UIC.textSh, 10); return; } // v12.0.1: one size smaller (player: 文字過大擠壓)
+      SK.slice(t0, t0 + VIS).forEach((id, k) => { const i = t0 + k, mv = MOVES[id], Y = 28 + k * 19; if (i === mi) selBar(x, 6, Y, 164, 17); if (id === '_passive') { const pn = classPassives(st.cls).length; x.fillStyle = shade(UIC.warm, -0.45); x.fillRect(14, Y + 2, 30, 13); Font.drawC(x, '被動', 29, midY(Y + 2, 13, 9), '#ffffff', UIC.textSh, 9); Font.draw(x, '職業・武器被動', 52, Y + 1, UIC.warm, UIC.textSh, 10); return; } // v12.0.1: one size smaller (player: 文字過大擠壓)
         const sig = !!(mv && mv.sig), e = typeof BB !== 'undefined' ? BB.skillObj(st, id) : null, tag = sig ? '招式' : e && !e.learned ? '學習' : '技能', col = sig ? '#c8a050' : e && !e.learned ? '#8a7cff' : UIC.accent;
-        x.fillStyle = shade(col, -0.45); x.fillRect(14, Y + 2, 30, 13); Font.drawC(x, tag, 29, Y + 2, '#ffffff', UIC.textSh, 9);
+        x.fillStyle = shade(col, -0.45); x.fillRect(14, Y + 2, 30, 13); Font.drawC(x, tag, 29, midY(Y + 2, 13, 9), '#ffffff', UIC.textSh, 9);
         const nm = typeof BB !== 'undefined' ? BB.nameOf(st, id) : mv.n, D = typeof DEF !== 'undefined' && DEF.skills[id], c0 = D && (D.costs || [])[0], rt = BB.costLabel(st, id);
         let z = 10; while (z > 8 && Font.width(nm, z) > 150 - 56 - Font.width(rt, 9)) z--; Font.draw(x, nm, 52, Y + 1 + (10 - z) / 2, UIC.text, UIC.textSh, z); Font.drawR(x, rt, 164, Y + 2, sig ? '#ffd860' : UIC.accent, UIC.textSh, 9); });
       if (t0 > 0) x.drawImage(UPARROW, 86, 25); if (t0 + VIS < SK.length) x.drawImage(DOWNARROW, 86, 24 + VIS * 19 + 3);
@@ -4405,7 +4405,7 @@ function* bagScreen(mode = 'field') { // returns item id used (battle) or null
   const VIS = 7;
   const scr = { touchBack: true, draw(x) {
     screenBG(x); headerBar(x, '背包'); Font.drawR(x, Game.st.money + ' G', W - 6, 2, UIC.warm, UIC.textSh);
-    const tw = Math.floor(171 / tabs.length); tabs.forEach((t, i) => { const X = 4 + i * tw; drawBtn(x, X, 23, tw - 3, 15, i === tab); Font.drawC(x, t, X + (tw - 3) / 2, 22, i === tab ? UIC.text : UIC.muted, UIC.textSh); });
+    const tw = Math.floor(171 / tabs.length); tabs.forEach((t, i) => { const X = 4 + i * tw; drawBtn(x, X, 23, tw - 3, 15, i === tab); Font.drawC(x, t, X + (tw - 3) / 2, midY(23, 15, 11), i === tab ? UIC.text : UIC.muted, UIC.textSh, 11); });
     const list = listFor(tab), gear = tabs[tab] === '裝備', orbT = tabs[tab] === '寶珠'; drawWin(x, 4, 40, 168, VIS * 18 + 10, 'menu');
     if (!list.length) Font.draw(x, '（空空如也）', 20, 46, UIC.muted, UIC.textSh);
     const top = Math.max(0, Math.min(idx - 3, list.length - VIS));
@@ -7694,7 +7694,10 @@ const Events = {
   },
   *traveler() { if (Game.st.flags.golem) { yield* sayAll(['你真的打倒魔像了？……', '魔王復活的傳聞，王都那邊也開始流傳了。', '我得趕快把這件事告訴王都的朋友。']); return; } yield* sayAll(['我在古岩遺跡附近見過那隻魔像……', '它的拳頭開始發光、凝聚力量時，下一擊非常可怕。', '那時候就選「防禦」，能擋下一半的傷害！']); },
   *clerk() { yield* shopFlow(); },
-  *customer() { if (Game.st.flags.croc) { yield* say('騎士長劍是王都騎士團在用的劍！好想要喔……'); return; } yield* sayAll(['鐵劍好貴啊……不過攻擊會提升很多呢。', '魔法護符能提高魔攻，水流刃和落雷也會變強喔！']); },
+  *customer() { const f = Game.st.flags || {}; // v12.0.1 (player: 「貝蒂的對話文字過時 重新設計」): tips that match the current systems, by progress
+    if (!f.license) { yield* sayAll(['出門前記得多買幾瓶藥水喔，這家店的最實在了。', '武器和防具大多要找鐵匠打造。打倒魔物拿到的素材，先別急著賣掉！']); return; }
+    if (!f.croc) { yield* sayAll(['你也是冒險者呀？新武器拿到手要多用用看。', '武器帶著的技能，用熟了就算換了武器也不會忘喔。']); return; }
+    yield* sayAll(['騎士團長劍是王都騎士團在用的劍！好想要喔……', '聽說鐵匠用硬石和水晶碎片就能打一把。', '對了，天賦選錯的話，這裡有賣遺忘之書喔。']); },
   *hiker() { const hf = Game.st.flags; if (hf.mineOpen && !hf.bandit) { yield* sayAll(['東邊的廢棄礦坑被盜賊佔據了。商隊被搶的貨物應該就藏在裡面。', '入口在道路東側的小路盡頭。盜賊頭目「鐵斧」格倫會蓄力揮斧，那時候記得防禦！']); return; } if (Game.st.flags.wolf) { yield* sayAll(['狂牙狼被你打倒了？難怪最近路上安靜多了！', '精英魔物身上常常會掉出好東西喔。']); return; } yield* sayAll(['嘿！這條路上的草叢很深，常有魔物跳出來。', '受傷了就回萌芽鎮的旅店休息吧。', '過了河之後，還有一座能恢復體力的泉水喔！']); },
   *girl2() { yield* sayAll(Game.st.flags.croc ? ['你打倒了沼澤鱷？太好了，終於可以過橋了！'] : ['橋頭那隻沼澤鱷好兇……', '聽說水棲的魔物最怕雷和草的攻擊。']); },
   *spring() {
@@ -11349,9 +11352,9 @@ function* skillTreeScreen() {
     while (true) {
       const st = Game.st, s = heroStats();
       const hdr = { draw(x) { x.fillStyle = 'rgba(8,10,20,0.78)'; x.fillRect(0, 0, W, H); drawWin(x, 4, 4, 168, 40, 'menu'); x.drawImage(heroFramesFor(st).down[0], 0, 0, 16, 22, 10, 8, 24, 33);
-        const nx = Font.draw(x, st.name, 40, 6, UIC.text, UIC.textSh); if (CLASSES[st.cls]) Font.draw(x, CLASSES[st.cls].n, nx + 4, 7, UIC.warm, UIC.textSh, 10); Font.drawR(x, 'Lv' + st.lv, 166, 6, UIC.accent, UIC.textSh);
-        Font.draw(x, 'HP ' + st.hp + '/' + s.hp, 40, 22, UIC.good, UIC.textSh, 10); Font.draw(x, 'MP ' + (st.mp ?? s.mp) + '/' + s.mp, 96, 22, '#86b4ff', UIC.textSh, 10); Font.drawR(x, st.money + ' G', 166, 32, UIC.warm, UIC.textSh, 10);
-        Font.draw(x, MAPS[st.map] ? MAPS[st.map].name || '' : '', 40, 32, UIC.muted, UIC.textSh, 9); } };
+        const nx = Font.draw(x, st.name, 40, 3, UIC.text, UIC.textSh, 11); if (CLASSES[st.cls]) Font.draw(x, CLASSES[st.cls].n, nx + 4, 4, UIC.warm, UIC.textSh, 10); Font.drawR(x, 'Lv' + st.lv, 166, 3, UIC.accent, UIC.textSh, 11); // v12.0.1: rows fit the box
+        Font.draw(x, 'HP ' + st.hp + '/' + s.hp, 40, 16, UIC.good, UIC.textSh, 9); Font.draw(x, 'MP ' + (st.mp ?? s.mp) + '/' + s.mp, 96, 16, '#86b4ff', UIC.textSh, 9); Font.drawR(x, st.money + ' G', 166, 27, UIC.warm, UIC.textSh, 9);
+        Font.draw(x, MAPS[st.map] ? MAPS[st.map].name || '' : '', 40, 27, UIC.muted, UIC.textSh, 9); } };
       UI.push(hdr);
       const items = TILES.map(([t, sub]) => ({ t: '', name: t, dot: (t === '天賦' && st.cls && tpAvail(st) > 0) || (t === '屬性' && attrAvail(st) > 0), sub }));
       const r = yield* choose(items, { x: 4, y: 48, w: 168, h: 204, cols: 2, colW: 82, rowH: 33, ox: 4, oy: 3, buttons: true, style: 'menu', index: Math.min(idx, items.length - 1), drawExtra: (x, m) => { for (let k = 0; k < items.length; k++) { const c = k % 2, rr = Math.floor(k / 2), X = m.x + m.ox + c * m.colW, Y = m.y + m.oy + rr * m.rowH, on = k === m.i; Font.drawC(x, items[k].name, X + 39, Y + 1, on ? UIC.text : '#c9cfe4', UIC.textSh, 12); Font.drawC(x, items[k].sub, X + 39, Y + 16, on ? UIC.accent : UIC.muted, UIC.textSh, 8); if (items[k].dot) { x.fillStyle = UIC.warm; x.fillRect(X + 70, Y + 4, 4, 4); } } } });
@@ -13896,12 +13899,12 @@ for (const id in MAP_EXT) extendMap(id, ...MAP_EXT[id]);
     return _u.apply(this, a); }; }
 if (typeof ACHIEVEMENTS !== 'undefined') ACHIEVEMENTS.push({ id: 'extAll', n: '祕境探險家', d: '走遍15處祕境（地圖邊緣新開的區域）。', cat: '探索', ok: st => Object.keys(st.extSeen || {}).length >= Object.keys(MAP_EXT).length });
 const WEATHER = {
-  clear: { n: '晴', col: '#ffd060', d: '火屬性+15%、水屬性-10%', mul: { 火: 1.15, 水: 0.9 } },
-  rain: { n: '雨', col: '#80b8ff', d: '水・雷屬性+20%、火屬性-20%', mul: { 水: 1.2, 雷: 1.2, 火: 0.8 } },
-  storm: { n: '雷雨', col: '#ffe060', d: '雷屬性+30%、水屬性+10%、火屬性-20%', mul: { 雷: 1.3, 水: 1.1, 火: 0.8 } },
-  fog: { n: '霧', col: '#c8d0e0', d: '雙方命中-10%、毒屬性+15%', acc: 10, mul: { 毒: 1.15 } },
-  snow: { n: '雪', col: '#e8f4ff', d: '水屬性+15%、火屬性-10%、雙方速度-10%', spe: 0.9, mul: { 水: 1.15, 火: 0.9 } },
-  sand: { n: '沙塵', col: '#e0b070', d: '岩屬性+20%、雙方命中-5%', acc: 5, mul: { 岩: 1.2 } },
+  clear: { n: '晴', col: '#ffd060', d: '火+15%、水−10%', mul: { 火: 1.15, 水: 0.9 } },
+  rain: { n: '雨', col: '#80b8ff', d: '水・雷+20%、火−20%', mul: { 水: 1.2, 雷: 1.2, 火: 0.8 } },
+  storm: { n: '雷雨', col: '#ffe060', d: '雷+30%、水+10%、火−20%', mul: { 雷: 1.3, 水: 1.1, 火: 0.8 } },
+  fog: { n: '霧', col: '#c8d0e0', d: '雙方命中−10%、毒+15%', acc: 10, mul: { 毒: 1.15 } },
+  snow: { n: '雪', col: '#e8f4ff', d: '水+15%、火−10%、雙方速度−10%', spe: 0.9, mul: { 水: 1.15, 火: 0.9 } },
+  sand: { n: '沙塵', col: '#e0b070', d: '岩+20%、雙方命中−5%', acc: 5, mul: { 岩: 1.2 } },
 };
 const WX_TABLE = {
   base: { clear: 50, rain: 25, fog: 15, storm: 10 }, north: { snow: 55, clear: 20, fog: 15, storm: 10 }, canyon: { clear: 50, sand: 40, storm: 10 },
@@ -16520,7 +16523,7 @@ Battle.prototype.drawOrder = function (x) {
   let y = Y0; const cur = ids.findIndex((id, i) => i >= done && this.views[id] && !this.views[id].gone);
   ids.forEach((id, i) => { const v = this.views[id]; if (!v || v.gone || y > 128) return; const past = i < done, on = i === cur, hero = v.hero, ch = (v.n || '?').slice(0, 1) + (/[A-G]$/.test(v.n || '') ? v.n.slice(-1) : '');
     x.globalAlpha = past ? 0.4 : 1; x.fillStyle = on ? '#ffd860' : hero ? '#3a6aa0' : '#7a2a34'; x.fillRect(2, y, 14, 12); x.fillStyle = '#0b0d18'; x.fillRect(3, y + 1, 12, 10);
-    Font.drawC(x, ch, 9, y - 1, on ? '#ffe8b0' : hero ? '#bfe0ff' : '#ffc8c8', UIC.textSh, ch.length > 1 ? 6 : 8); x.globalAlpha = 1; y += 13; });
+    Font.drawC(x, ch, 9, midY(y, 12, ch.length > 1 ? 6 : 8), on ? '#ffe8b0' : hero ? '#bfe0ff' : '#ffc8c8', UIC.textSh, ch.length > 1 ? 6 : 8); x.globalAlpha = 1; y += 13; });
   if (cur >= 0) { const yy = Y0 + ids.slice(0, cur).filter(id => this.views[id] && !this.views[id].gone).length * 13; x.fillStyle = '#ffd860'; x.fillRect(17, yy + 4, 2, 4); }
 };
 { const _bf = Battle.prototype.drawBoxF; Battle.prototype.drawBoxF = function (x) { _bf.call(this, x); this.drawOrder(x); }; }
@@ -16618,14 +16621,14 @@ talentScreen = function* () {
     for (let k = 0; k < 3; k++) for (let q = 0; q < 7; q++) { const T = at(k, q); if (!T) continue; const P = tile(k, q), on = k === b && q === r, pk = picked(k, q), t = tierOf(q), blk = pk ? null : TAL12.block(k, t, st), other = q < 6 && TAL12.has(k, t, st) && !pk;
       x.fillStyle = pk ? 'rgba(200,160,80,0.55)' : other ? 'rgba(34,36,50,0.85)' : blk ? 'rgba(24,26,40,0.9)' : 'rgba(40,60,90,0.75)'; x.fillRect(P.X, P.Y, P.w, P.h);
       const edge = on ? '#ffd860' : pk ? '#c8a050' : blk || other ? '#2e3348' : '#4a6a98'; x.fillStyle = edge; x.fillRect(P.X, P.Y, P.w, 1); x.fillRect(P.X, P.Y + P.h - 1, P.w, 1); x.fillRect(P.X, P.Y, 1, P.h); x.fillRect(P.X + P.w - 1, P.Y, 1, P.h);
-      let z = 9; while (z > 7 && Font.width(T.name, z) > P.w - 6) z--; Font.drawC(x, T.name, P.X + P.w / 2, P.Y + (P.h - 13) / 2 + (9 - z) / 2, pk ? '#fff4d0' : other || blk ? UIC.dis : UIC.text, UIC.textSh, z);
+      let z = 9; while (z > 7 && Font.width(T.name, z) > P.w - 6) z--; Font.drawC(x, T.name, P.X + P.w / 2, midY(P.Y, P.h, z), pk ? '#fff4d0' : other || blk ? UIC.dis : UIC.text, UIC.textSh, z);
       if (typeof touchRegion === 'function') touchRegion(P.X, P.Y, P.w, P.h, () => { if (b === k && r === q) tapKey('a'); else { b = k; r = q; Sound.sfx('cursor'); } }); }
     const T = at(b, r), t = tierOf(r), pk = picked(b, r), blk = pk ? null : TAL12.block(b, t, st); drawWin(x, 4, 176, 168, 76, 'menu');
     if (T) { Font.draw(x, T.name, 10, 178, '#ffd860', UIC.textSh, 10); Font.drawR(x, '〔' + T.kind + '〕' + (t < 0 ? '4 點' : (t + 1) + ' 點'), 166, 179, UIC.muted, UIC.textSh, 8);
       drawFitText(x, T.desc, 10, 192, 152, 36, 10); const fr = fresh.has(t < 0 ? 'k' : b + '.' + t), other = t >= 0 && TAL12.has(b, t, st);
       const line = msgT > 0 ? msg : pk ? (fr ? 'A：退回（離開前可改）' : '已確定・改要用遺忘之書') : other ? (fr ? 'A：改選這個' : '已選另一個・要用遺忘之書') : blk ? blk : 'A：選擇';
       let z = 8; while (z > 7 && Font.width(line, z) > 112) z--; Font.draw(x, line, 10, 237 + (8 - z), msgT > 0 ? UIC.warm : pk ? (fr ? UIC.accent : UIC.good) : other && !fr ? UIC.dis : blk ? UIC.bad : UIC.text, UIC.textSh, z); }
-    const have = (st.bag && st.bag.talentReset) || 0; drawBtn(x, 124, 236, 44, 13, false); Font.drawC(x, '重置' + (have ? '×' + have : ''), 146, 236, TAL12.spent(st) && have ? UIC.warm : UIC.dis, UIC.textSh, 8);
+    const have = (st.bag && st.bag.talentReset) || 0; drawBtn(x, 124, 236, 44, 13, false); Font.drawC(x, '重置' + (have ? '×' + have : ''), 146, midY(236, 13, 8), TAL12.spent(st) && have ? UIC.warm : UIC.dis, UIC.textSh, 8);
     if (typeof touchRegion === 'function') touchRegion(124, 236, 44, 13, () => tapKey('start'));
     if (msgT > 0) msgT--;
   } };
@@ -16868,4 +16871,33 @@ for (const k in RECIPE_FIX12) { const R = GEAR_RECIPE[k]; if (!R) { if (BV2.DEV)
   const counts = Object.values(R.mats), keys = RECIPE_FIX12[k], m = {};
   counts.forEach((n, i) => { const id = keys[Math.min(i, keys.length - 1)]; if (!ITEMS[id]) { bvErr('v12', 'recipe mat ' + id); return; } m[id] = (m[id] || 0) + n; });
   R.mats = m; }
+ITEMS.wood = { n: '木材', mat: 1, price: 0, sell: 40, cat: '魔物素材', d: '樹樁怪身上掉下來的木頭。乾燥又結實，適合做木製的武器和樂器。' };
+const V12_MON = [
+  ['meadowWolf', '野狼', 'beast', 7, 'fast', ['m_bite', 'm_howl', 'm_pounce', 'm_rend'], 'wolfPelt', ['wolf', 25, 0.55, 1.15], '晨霧道路上成群出沒的灰褐色野狼。狼王出現之後，牠們也變得大膽起來。'],
+  ['creekCroc', '溪谷小鱷', 'aquatic', 10, 'tank', ['m_jaw', 'm_tailSlam', 'm_mudShot', 'm_scaleGuard'], 'crocHide', ['croc', 40, 0.8, 1.15], '躲在碧溪谷淺灘的小鱷魚。個子不大，咬合力卻一點也不輸大人。'],
+  ['stumpling', '樹樁怪', 'plant', 4, 'tank', ['m_branchSlam', 'm_rootBind', 'm_mossArmor', 'm_tailSlam'], 'wood', ['rotTreant', 35, 1.1, 1.25], '被砍倒的樹留下的樹樁，吸了瘴氣以後長出腳走了起來。'],
+  ['piglet', '小野豬', 'beast', 5, 'phys', ['m_tuskCharge', 'm_bite', 'm_scurry', 'm_warCry'], 'boarTusk', ['wildBoar', 15, 0.8, 1.2], '風車丘陵的小野豬。橫衝直撞的樣子跟長大的暴走野豬一模一樣。'],
+];
+for (const [k, n, fam, lv, role, moves, mat, look, dex] of V12_MON) {
+  const R = CH2_ROLE[role], ok = moves.filter(m => MOVES[m]); if (ok.length < moves.length) bvErr('v12', k + ' moves ' + moves.filter(m => !MOVES[m]).join(','));
+  SPECIES[k] = { n, fam, base: R.map(v => Math.round(v * 60)), exp: 45 + 3 * lv, gold: Math.round(lv * 1.6), learn: ok.map((m, i) => [i === 3 ? lv + 1 : 1, m]), dex, mat };
+  MON_PANEL[k] = ch1Panel(lv, role, 'wild');
+  const [b, dh, ks, kl] = look; PLACEHOLDER[k] = look; HD_RIG_OF_PENDING[k] = b; HD_RIG_OF[k] = b; if (ART[b]) ART[k] = artRecolor(ART[b], dh, ks, kl);
+  CH2_KEYS.add(k);
+  defPut('enemies', k, { tags: ['foe', 'fam:' + fam], skills: ok.filter(id => DEF.skills[id]), fam, trait: null, profile: typeof aiProfile === 'function' ? aiProfile({ sp: k }) : 'brute', script: null, metadata: { n } });
+}
+{ const put = (map, i, row) => { const z = MAPS[map] && MAPS[map].encounters && MAPS[map].encounters[i]; if (z && !z.table.some(t => t[0] === row[0])) z.table.push(row); };
+  put('route', 0, ['stumpling', 2, 4, 15]); put('route', 1, ['stumpling', 4, 6, 15]); put('route', 1, ['meadowWolf', 5, 6, 15]); put('route', 2, ['meadowWolf', 7, 9, 18]);
+  put('forest', 0, ['stumpling', 11, 13, 12]); put('forest', 1, ['stumpling', 11, 13, 12]);
+  put('windHills', 0, ['piglet', 6, 7, 25]); put('windHills', 1, ['piglet', 4, 5, 25]);
+  for (let i = 0; i < 3; i++) put('jadeCreek', i, ['creekCroc', i ? 8 : 10, i ? 9 : 11, 25]); }
+Object.assign(RECIPE_FIX12, {
+  fangDagger: ['wolfPelt'], wolfNecklace: ['wolfPelt'], fangWand: ['wolfPelt', 'stone'], wolfMantle: ['wolfPelt', 'hareFur'], hunterLeather: ['wolfPelt', 'frogSkin'], hunterOath: ['wolfPelt', 'feather'],
+  scaleArmor: ['crocHide', 'stone'], crocBoots: ['crocHide'],
+  woodSword: ['wood'], practiceWand: ['wood'], apprenticeStaff: ['wood', 'stone'], primerTome: ['wood', 'hareFur'], woodFlute: ['wood', 'feather'], corkGun: ['wood', 'stone'],
+  hatchet: ['stone', 'wood'], trainSpear: ['wood'], travelLute: ['wood', 'frogSkin'], oakStaff: ['wood', 'leaf'], boarAxe: ['boarTusk', 'stone'] });
+for (const k of ['fangDagger', 'wolfNecklace', 'fangWand', 'wolfMantle', 'hunterLeather', 'hunterOath', 'scaleArmor', 'crocBoots', 'woodSword', 'practiceWand', 'apprenticeStaff', 'primerTome', 'woodFlute', 'corkGun', 'hatchet', 'trainSpear', 'travelLute', 'oakStaff', 'boarAxe']) {
+  const R = GEAR_RECIPE[k]; if (!R) continue; const counts = Object.values(R.mats), keys = RECIPE_FIX12[k], m = {};
+  counts.forEach((n, i) => { const id = keys[Math.min(i, keys.length - 1)]; m[id] = (m[id] || 0) + n; }); R.mats = m; }
+function midY(Y, h, z = 12) { const C = { 6: 7.5, 7: 8, 8: 7.5, 9: 7, 10: 7.5, 11: 7, 12: 7.5, 13: 8 }; return Math.round(Y + (h - 1) / 2 - (C[z] ?? 7.5)); }
 </script>

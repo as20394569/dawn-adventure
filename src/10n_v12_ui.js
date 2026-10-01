@@ -47,7 +47,7 @@ Battle.prototype.drawOrder = function (x) {
   let y = Y0; const cur = ids.findIndex((id, i) => i >= done && this.views[id] && !this.views[id].gone);
   ids.forEach((id, i) => { const v = this.views[id]; if (!v || v.gone || y > 128) return; const past = i < done, on = i === cur, hero = v.hero, ch = (v.n || '?').slice(0, 1) + (/[A-G]$/.test(v.n || '') ? v.n.slice(-1) : '');
     x.globalAlpha = past ? 0.4 : 1; x.fillStyle = on ? '#ffd860' : hero ? '#3a6aa0' : '#7a2a34'; x.fillRect(2, y, 14, 12); x.fillStyle = '#0b0d18'; x.fillRect(3, y + 1, 12, 10);
-    Font.drawC(x, ch, 9, y - 1, on ? '#ffe8b0' : hero ? '#bfe0ff' : '#ffc8c8', UIC.textSh, ch.length > 1 ? 6 : 8); x.globalAlpha = 1; y += 13; });
+    Font.drawC(x, ch, 9, midY(y, 12, ch.length > 1 ? 6 : 8), on ? '#ffe8b0' : hero ? '#bfe0ff' : '#ffc8c8', UIC.textSh, ch.length > 1 ? 6 : 8); x.globalAlpha = 1; y += 13; });
   if (cur >= 0) { const yy = Y0 + ids.slice(0, cur).filter(id => this.views[id] && !this.views[id].gone).length * 13; x.fillStyle = '#ffd860'; x.fillRect(17, yy + 4, 2, 4); }
 };
 { const _bf = Battle.prototype.drawBoxF; Battle.prototype.drawBoxF = function (x) { _bf.call(this, x); this.drawOrder(x); }; }
@@ -151,14 +151,14 @@ talentScreen = function* () {
     for (let k = 0; k < 3; k++) for (let q = 0; q < 7; q++) { const T = at(k, q); if (!T) continue; const P = tile(k, q), on = k === b && q === r, pk = picked(k, q), t = tierOf(q), blk = pk ? null : TAL12.block(k, t, st), other = q < 6 && TAL12.has(k, t, st) && !pk;
       x.fillStyle = pk ? 'rgba(200,160,80,0.55)' : other ? 'rgba(34,36,50,0.85)' : blk ? 'rgba(24,26,40,0.9)' : 'rgba(40,60,90,0.75)'; x.fillRect(P.X, P.Y, P.w, P.h);
       const edge = on ? '#ffd860' : pk ? '#c8a050' : blk || other ? '#2e3348' : '#4a6a98'; x.fillStyle = edge; x.fillRect(P.X, P.Y, P.w, 1); x.fillRect(P.X, P.Y + P.h - 1, P.w, 1); x.fillRect(P.X, P.Y, 1, P.h); x.fillRect(P.X + P.w - 1, P.Y, 1, P.h);
-      let z = 9; while (z > 7 && Font.width(T.name, z) > P.w - 6) z--; Font.drawC(x, T.name, P.X + P.w / 2, P.Y + (P.h - 13) / 2 + (9 - z) / 2, pk ? '#fff4d0' : other || blk ? UIC.dis : UIC.text, UIC.textSh, z);
+      let z = 9; while (z > 7 && Font.width(T.name, z) > P.w - 6) z--; Font.drawC(x, T.name, P.X + P.w / 2, midY(P.Y, P.h, z), pk ? '#fff4d0' : other || blk ? UIC.dis : UIC.text, UIC.textSh, z);
       if (typeof touchRegion === 'function') touchRegion(P.X, P.Y, P.w, P.h, () => { if (b === k && r === q) tapKey('a'); else { b = k; r = q; Sound.sfx('cursor'); } }); }
     const T = at(b, r), t = tierOf(r), pk = picked(b, r), blk = pk ? null : TAL12.block(b, t, st); drawWin(x, 4, 176, 168, 76, 'menu');
     if (T) { Font.draw(x, T.name, 10, 178, '#ffd860', UIC.textSh, 10); Font.drawR(x, '〔' + T.kind + '〕' + (t < 0 ? '4 點' : (t + 1) + ' 點'), 166, 179, UIC.muted, UIC.textSh, 8);
       drawFitText(x, T.desc, 10, 192, 152, 36, 10); const fr = fresh.has(t < 0 ? 'k' : b + '.' + t), other = t >= 0 && TAL12.has(b, t, st);
       const line = msgT > 0 ? msg : pk ? (fr ? 'A：退回（離開前可改）' : '已確定・改要用遺忘之書') : other ? (fr ? 'A：改選這個' : '已選另一個・要用遺忘之書') : blk ? blk : 'A：選擇';
       let z = 8; while (z > 7 && Font.width(line, z) > 112) z--; Font.draw(x, line, 10, 237 + (8 - z), msgT > 0 ? UIC.warm : pk ? (fr ? UIC.accent : UIC.good) : other && !fr ? UIC.dis : blk ? UIC.bad : UIC.text, UIC.textSh, z); }
-    const have = (st.bag && st.bag.talentReset) || 0; drawBtn(x, 124, 236, 44, 13, false); Font.drawC(x, '重置' + (have ? '×' + have : ''), 146, 236, TAL12.spent(st) && have ? UIC.warm : UIC.dis, UIC.textSh, 8);
+    const have = (st.bag && st.bag.talentReset) || 0; drawBtn(x, 124, 236, 44, 13, false); Font.drawC(x, '重置' + (have ? '×' + have : ''), 146, midY(236, 13, 8), TAL12.spent(st) && have ? UIC.warm : UIC.dis, UIC.textSh, 8);
     if (typeof touchRegion === 'function') touchRegion(124, 236, 44, 13, () => tapKey('start'));
     if (msgT > 0) msgT--;
   } };

@@ -141,7 +141,10 @@ const Events = {
   },
   *traveler() { if (Game.st.flags.golem) { yield* sayAll(['你真的打倒魔像了？……', '魔王復活的傳聞，王都那邊也開始流傳了。', '我得趕快把這件事告訴王都的朋友。']); return; } yield* sayAll(['我在古岩遺跡附近見過那隻魔像……', '它的拳頭開始發光、凝聚力量時，下一擊非常可怕。', '那時候就選「防禦」，能擋下一半的傷害！']); },
   *clerk() { yield* shopFlow(); },
-  *customer() { if (Game.st.flags.croc) { yield* say('騎士長劍是王都騎士團在用的劍！好想要喔……'); return; } yield* sayAll(['鐵劍好貴啊……不過攻擊會提升很多呢。', '魔法護符能提高魔攻，水流刃和落雷也會變強喔！']); },
+  *customer() { const f = Game.st.flags || {}; // v12.0.1 (player: 「貝蒂的對話文字過時 重新設計」): tips that match the current systems, by progress
+    if (!f.license) { yield* sayAll(['出門前記得多買幾瓶藥水喔，這家店的最實在了。', '武器和防具大多要找鐵匠打造。打倒魔物拿到的素材，先別急著賣掉！']); return; }
+    if (!f.croc) { yield* sayAll(['你也是冒險者呀？新武器拿到手要多用用看。', '武器帶著的技能，用熟了就算換了武器也不會忘喔。']); return; }
+    yield* sayAll(['騎士團長劍是王都騎士團在用的劍！好想要喔……', '聽說鐵匠用硬石和水晶碎片就能打一把。', '對了，天賦選錯的話，這裡有賣遺忘之書喔。']); },
   *hiker() { const hf = Game.st.flags; if (hf.mineOpen && !hf.bandit) { yield* sayAll(['東邊的廢棄礦坑被盜賊佔據了。商隊被搶的貨物應該就藏在裡面。', '入口在道路東側的小路盡頭。盜賊頭目「鐵斧」格倫會蓄力揮斧，那時候記得防禦！']); return; } if (Game.st.flags.wolf) { yield* sayAll(['狂牙狼被你打倒了？難怪最近路上安靜多了！', '精英魔物身上常常會掉出好東西喔。']); return; } yield* sayAll(['嘿！這條路上的草叢很深，常有魔物跳出來。', '受傷了就回萌芽鎮的旅店休息吧。', '過了河之後，還有一座能恢復體力的泉水喔！']); },
   *girl2() { yield* sayAll(Game.st.flags.croc ? ['你打倒了沼澤鱷？太好了，終於可以過橋了！'] : ['橋頭那隻沼澤鱷好兇……', '聽說水棲的魔物最怕雷和草的攻擊。']); },
   *spring() {

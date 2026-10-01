@@ -7,12 +7,12 @@
    The 天氣祠 in every new area (09zu) has a different event per weather, and when rain clears a rainbow may appear
    (EXP +20% for 100 steps). */
 const WEATHER = {
-  clear: { n: '晴', col: '#ffd060', d: '火屬性+15%、水屬性-10%', mul: { 火: 1.15, 水: 0.9 } },
-  rain: { n: '雨', col: '#80b8ff', d: '水・雷屬性+20%、火屬性-20%', mul: { 水: 1.2, 雷: 1.2, 火: 0.8 } },
-  storm: { n: '雷雨', col: '#ffe060', d: '雷屬性+30%、水屬性+10%、火屬性-20%', mul: { 雷: 1.3, 水: 1.1, 火: 0.8 } },
-  fog: { n: '霧', col: '#c8d0e0', d: '雙方命中-10%、毒屬性+15%', acc: 10, mul: { 毒: 1.15 } },
-  snow: { n: '雪', col: '#e8f4ff', d: '水屬性+15%、火屬性-10%、雙方速度-10%', spe: 0.9, mul: { 水: 1.15, 火: 0.9 } },
-  sand: { n: '沙塵', col: '#e0b070', d: '岩屬性+20%、雙方命中-5%', acc: 5, mul: { 岩: 1.2 } },
+  clear: { n: '晴', col: '#ffd060', d: '火+15%、水−10%', mul: { 火: 1.15, 水: 0.9 } },
+  rain: { n: '雨', col: '#80b8ff', d: '水・雷+20%、火−20%', mul: { 水: 1.2, 雷: 1.2, 火: 0.8 } },
+  storm: { n: '雷雨', col: '#ffe060', d: '雷+30%、水+10%、火−20%', mul: { 雷: 1.3, 水: 1.1, 火: 0.8 } },
+  fog: { n: '霧', col: '#c8d0e0', d: '雙方命中−10%、毒+15%', acc: 10, mul: { 毒: 1.15 } },
+  snow: { n: '雪', col: '#e8f4ff', d: '水+15%、火−10%、雙方速度−10%', spe: 0.9, mul: { 水: 1.15, 火: 0.9 } },
+  sand: { n: '沙塵', col: '#e0b070', d: '岩+20%、雙方命中−5%', acc: 5, mul: { 岩: 1.2 } },
 };
 const WX_TABLE = {
   base: { clear: 50, rain: 25, fog: 15, storm: 10 }, north: { snow: 55, clear: 20, fog: 15, storm: 10 }, canyon: { clear: 50, sand: 40, storm: 10 },

@@ -226,10 +226,10 @@ function* summaryScreen() {
     } else {
       const SK = (st.cls && typeof classPassiveNode === 'function' ? ['_passive'] : []).concat(typeof summarySkills === 'function' ? summarySkills(st) : learnedSkills(st)), US = typeof usableSkills === 'function' ? usableSkills(st) : SK, VIS = 7; drawWin(x, 4, 24, 168, VIS * 19 + 8, 'menu'); const t0 = clamp(mi - 3, 0, Math.max(0, SK.length - VIS));
       if (!SK.length) Font.draw(x, '還沒有學會技能。（選單→技能）', 12, 30, UIC.muted, UIC.textSh, 11);
-      SK.slice(t0, t0 + VIS).forEach((id, k) => { const i = t0 + k, mv = MOVES[id], Y = 28 + k * 19; if (i === mi) selBar(x, 6, Y, 164, 17); if (id === '_passive') { const pn = classPassives(st.cls).length; x.fillStyle = shade(UIC.warm, -0.45); x.fillRect(14, Y + 2, 30, 13); Font.drawC(x, '被動', 29, Y + 2, '#ffffff', UIC.textSh, 9); Font.draw(x, '職業・武器被動', 52, Y + 1, UIC.warm, UIC.textSh, 10); return; } // v12.0.1: one size smaller (player: 文字過大擠壓)
+      SK.slice(t0, t0 + VIS).forEach((id, k) => { const i = t0 + k, mv = MOVES[id], Y = 28 + k * 19; if (i === mi) selBar(x, 6, Y, 164, 17); if (id === '_passive') { const pn = classPassives(st.cls).length; x.fillStyle = shade(UIC.warm, -0.45); x.fillRect(14, Y + 2, 30, 13); Font.drawC(x, '被動', 29, midY(Y + 2, 13, 9), '#ffffff', UIC.textSh, 9); Font.draw(x, '職業・武器被動', 52, Y + 1, UIC.warm, UIC.textSh, 10); return; } // v12.0.1: one size smaller (player: 文字過大擠壓)
         /* v11: the class skill + the 4 skill slots (選單→技能編排); learned skills keep working without their orb */
         const sig = !!(mv && mv.sig), e = typeof BB !== 'undefined' ? BB.skillObj(st, id) : null, tag = sig ? '招式' : e && !e.learned ? '學習' : '技能', col = sig ? '#c8a050' : e && !e.learned ? '#8a7cff' : UIC.accent;
-        x.fillStyle = shade(col, -0.45); x.fillRect(14, Y + 2, 30, 13); Font.drawC(x, tag, 29, Y + 2, '#ffffff', UIC.textSh, 9);
+        x.fillStyle = shade(col, -0.45); x.fillRect(14, Y + 2, 30, 13); Font.drawC(x, tag, 29, midY(Y + 2, 13, 9), '#ffffff', UIC.textSh, 9);
         const nm = typeof BB !== 'undefined' ? BB.nameOf(st, id) : mv.n, D = typeof DEF !== 'undefined' && DEF.skills[id], c0 = D && (D.costs || [])[0], rt = BB.costLabel(st, id);
         let z = 10; while (z > 8 && Font.width(nm, z) > 150 - 56 - Font.width(rt, 9)) z--; Font.draw(x, nm, 52, Y + 1 + (10 - z) / 2, UIC.text, UIC.textSh, z); Font.drawR(x, rt, 164, Y + 2, sig ? '#ffd860' : UIC.accent, UIC.textSh, 9); });
       if (t0 > 0) x.drawImage(UPARROW, 86, 25); if (t0 + VIS < SK.length) x.drawImage(DOWNARROW, 86, 24 + VIS * 19 + 3);
@@ -301,7 +301,7 @@ function* bagScreen(mode = 'field') { // returns item id used (battle) or null
   const VIS = 7;
   const scr = { touchBack: true, draw(x) {
     screenBG(x); headerBar(x, '背包'); Font.drawR(x, Game.st.money + ' G', W - 6, 2, UIC.warm, UIC.textSh);
-    const tw = Math.floor(171 / tabs.length); tabs.forEach((t, i) => { const X = 4 + i * tw; drawBtn(x, X, 23, tw - 3, 15, i === tab); Font.drawC(x, t, X + (tw - 3) / 2, 22, i === tab ? UIC.text : UIC.muted, UIC.textSh); });
+    const tw = Math.floor(171 / tabs.length); tabs.forEach((t, i) => { const X = 4 + i * tw; drawBtn(x, X, 23, tw - 3, 15, i === tab); Font.drawC(x, t, X + (tw - 3) / 2, midY(23, 15, 11), i === tab ? UIC.text : UIC.muted, UIC.textSh, 11); });
     const list = listFor(tab), gear = tabs[tab] === '裝備', orbT = tabs[tab] === '寶珠'; drawWin(x, 4, 40, 168, VIS * 18 + 10, 'menu');
     if (!list.length) Font.draw(x, '（空空如也）', 20, 46, UIC.muted, UIC.textSh);
     const top = Math.max(0, Math.min(idx - 3, list.length - VIS));
