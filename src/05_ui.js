@@ -226,12 +226,16 @@ function* summaryScreen() {
     } else {
       const SK = (st.cls && typeof classPassiveNode === 'function' ? ['_passive'] : []).concat(typeof summarySkills === 'function' ? summarySkills(st) : learnedSkills(st)), US = typeof usableSkills === 'function' ? usableSkills(st) : SK, VIS = 7; drawWin(x, 4, 24, 168, VIS * 19 + 8, 'menu'); const t0 = clamp(mi - 3, 0, Math.max(0, SK.length - VIS));
       if (!SK.length) Font.draw(x, '還沒有學會技能。（選單→技能）', 12, 30, UIC.muted, UIC.textSh, 11);
-      SK.slice(t0, t0 + VIS).forEach((id, k) => { const i = t0 + k, mv = MOVES[id], Y = 28 + k * 19; if (i === mi) selBar(x, 6, Y, 164, 17); if (id === '_passive') { const pn = classPassives(st.cls).length; x.fillStyle = shade(UIC.warm, -0.45); x.fillRect(14, Y + 2, 30, 13); Font.drawC(x, '被動', 29, Y + 1, '#ffffff', UIC.textSh, 10); Font.draw(x, '職業・武器被動', 52, Y, UIC.warm, UIC.textSh); Font.drawR(x, (pn ? pn + '＋' : '') + (typeof mainWKey === 'function' && mainWKey(st) ? '武器' : ''), 164, Y, UIC.muted, UIC.textSh, 10); return; } if (typeof mainWKey === 'function' && mainWKey(st)) { const bor = isBorrowed(id, st); x.fillStyle = shade(bor ? '#8a7cff' : UIC.accent, -0.45); x.fillRect(14, Y + 2, 30, 13); Font.drawC(x, bor ? '借用' : '主動', 29, Y + 1, '#ffffff', UIC.textSh, 10); } else typeBadge(x, mv.t, 14, Y + 2, 30); /* v8.0.1: weapon skills are tagged 主動/借用 like the 技能 screen */ const use = US.includes(id); { const nm = mv.n + ' Lv' + (skillLv(id) || 1), rt = use ? 'MP ' + skillMP(id) : '未繼承'; let z = 12; while (z > 8 && Font.width(nm, z) > 150 - 52 - Font.width(rt, 11)) z--; Font.draw(x, nm, 52, Y + (12 - z) / 2, use ? UIC.text : UIC.dis, UIC.textSh, z); Font.drawR(x, rt, 164, Y, use ? UIC.accent : UIC.muted, UIC.textSh, 11); } });
+      SK.slice(t0, t0 + VIS).forEach((id, k) => { const i = t0 + k, mv = MOVES[id], Y = 28 + k * 19; if (i === mi) selBar(x, 6, Y, 164, 17); if (id === '_passive') { const pn = classPassives(st.cls).length; x.fillStyle = shade(UIC.warm, -0.45); x.fillRect(14, Y + 2, 30, 13); Font.drawC(x, '被動', 29, Y + 1, '#ffffff', UIC.textSh, 10); Font.draw(x, '職業・武器被動', 52, Y, UIC.warm, UIC.textSh); Font.drawR(x, (pn ? pn + '＋' : '') + (typeof mainWKey === 'function' && mainWKey(st) ? '武器' : ''), 164, Y, UIC.muted, UIC.textSh, 10); return; }
+        /* v11: the class skill + the 4 skill slots (選單→技能編排); learned skills keep working without their orb */
+        const sig = !!(mv && mv.sig), e = typeof BB !== 'undefined' ? BB.skillObj(st, id) : null, tag = sig ? '招式' : e && !e.learned ? '學習' : '技能', col = sig ? '#c8a050' : e && !e.learned ? '#8a7cff' : UIC.accent;
+        x.fillStyle = shade(col, -0.45); x.fillRect(14, Y + 2, 30, 13); Font.drawC(x, tag, 29, Y + 1, '#ffffff', UIC.textSh, 10);
+        const nm = typeof BB !== 'undefined' ? BB.nameOf(st, id) : mv.n, D = typeof DEF !== 'undefined' && DEF.skills[id], c0 = D && (D.costs || [])[0], rt = sig ? '招式點' + (c0 ? c0.amount : 3) : 'MP ' + skillMP(id);
+        let z = 12; while (z > 8 && Font.width(nm, z) > 150 - 52 - Font.width(rt, 11)) z--; Font.draw(x, nm, 52, Y + (12 - z) / 2, UIC.text, UIC.textSh, z); Font.drawR(x, rt, 164, Y, sig ? '#ffd860' : UIC.accent, UIC.textSh, 11); });
       if (t0 > 0) x.drawImage(UPARROW, 86, 25); if (t0 + VIS < SK.length) x.drawImage(DOWNARROW, 86, 24 + VIS * 19 + 3);
       if (SK[Math.min(mi, SK.length - 1)] === '_passive') { drawWin(x, 4, 168, 168, 84, 'menu'); drawPassiveInfo(x, st, 12, 171, 152, true); }
-      else if (SK.length) { const id = SK[Math.min(mi, SK.length - 1)], mv = MOVES[id], m2 = skillMove(id); drawWin(x, 4, 168, 168, 84, 'menu');
-        Font.draw(x, (mv.cat === '變' ? '輔助' : mv.cat === '物' ? '物理' : '魔法') + (m2.pow ? '　' + (typeof powTxt === 'function' ? powTxt(m2) : '威力' + m2.pow) : '') + '　消耗MP ' + skillMP(id), 12, 171, UIC.accent, UIC.textSh, 11);
-        drawFitText(x, mv.d || '', 12, 188, 152, 62, 11); }
+      else if (SK.length) { const id = SK[Math.min(mi, SK.length - 1)]; drawWin(x, 4, 168, 168, 84, 'menu');
+        drawFitText(x, typeof BB !== 'undefined' && BB.skillInfo ? BB.skillInfo(st, id) : (MOVES[id].d || ''), 12, 172, 152, 76, 11); }
     }
   } };
   UI.push(scr);
