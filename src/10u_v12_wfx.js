@@ -100,7 +100,15 @@ function w12Make(k, S) {
     *selfWall(U) { Sound.sfx('statUp'); for (let i = 0; i < 3; i++) this.spawn({ k: 'ring', x: U.x, y: U.y + 4, r0: 30 - i * 6, r1: 18 - i * 4, c: i % 2 ? h : c, w: 3, life: 14 }); w12Particle(this, U.x, U.y, S, 6, 18); yield* wait(14); },
   };
   const f = M[S.mv] || M.slash; FX['w12_' + k] = function* (U, T, u, t) { yield* f.call(this, U, T, u, t); };
-  FX['w12h_' + k] = function* (U, T, u, i) { Sound.sfx('slash'); const a = (S.seed % 5) * 0.6 + i * 1.1; w12Line(this, T.x - Math.cos(a) * 16, T.y - Math.sin(a) * 16, T.x + Math.cos(a) * 16, T.y + Math.sin(a) * 16, S, 3); w12Particle(this, T.x, T.y, S, 4, 8); yield* wait(4); };
+  // the 2nd, 3rd … hit of a multi-hit skill: a blow that fits the move (player: 鐵拳 drew a white slash line on every punch)
+  const hm = /拳/.test(W12[k][0]) || S.mv === 'punch' ? 'fist' : S.mv === 'volley' ? 'shot' : S.mv === 'bite' ? 'jaw' : /^thrust/.test(S.mv) ? 'stab' : 'line';
+  FX['w12h_' + k] = {
+    *fist(U, T, u, i) { Sound.sfx('hit'); const x = T.x + [-8, 8, 0, 6][i % 4], y = T.y + [-4, 4, -8, 2][i % 4]; this.spawn({ k: 'glow', x, y, r: 10, c, life: 8 }); this.spawn({ k: 'ring', x, y, r0: 2, r1: 14, c: i % 2 ? h : c, w: 2, life: 8 }); w12Particle(this, x, y, S, 3, 5); this.shake = Math.max(this.shake, 3); yield* wait(4); },
+    *shot(U, T, u, i) { Sound.sfx('crit'); const P = { x: T.x + rnd(-6, 6), y: T.y + rnd(-6, 6) }; yield* w12Proj(this, U, P, S, 5); this.spawn({ k: 'ring', x: P.x, y: P.y, r0: 2, r1: 12, c: h, w: 2, life: 8 }); w12Particle(this, P.x, P.y, S, 3, 6); },
+    *jaw(U, T, u, i) { Sound.sfx('slash'); for (const s of [-1, 1]) w12Line(this, T.x - 10, T.y + s * 7, T.x + 10, T.y + s * 9, S, 3); w12Particle(this, T.x, T.y, S, 3, 6); yield* wait(4); },
+    *stab(U, T, u, i) { Sound.sfx('slash'); const a = Math.atan2(T.y - U.y, T.x - U.x) + (i % 2 ? 0.15 : -0.15); w12Line(this, T.x - Math.cos(a) * 22, T.y - Math.sin(a) * 22, T.x + Math.cos(a) * 6, T.y + Math.sin(a) * 6, S, 3); w12Particle(this, T.x, T.y, S, 3, 6); yield* wait(4); },
+    *line(U, T, u, i) { Sound.sfx('slash'); const a = (S.seed % 5) * 0.6 + i * 1.1; w12Line(this, T.x - Math.cos(a) * 16, T.y - Math.sin(a) * 16, T.x + Math.cos(a) * 16, T.y + Math.sin(a) * 16, S, 3); w12Particle(this, T.x, T.y, S, 4, 8); yield* wait(4); },
+  }[hm];
 }
 { const sig = new Map();
   for (const k in W12) { const D = DEF.skills['u_' + k]; if (!D) continue; const S = w12Spec(k), key = S.mv + '|' + S.pt + '|' + S.col.join(',');
