@@ -180,7 +180,7 @@ function* questScreen() {
     if (t0 > 0) x.drawImage(UPARROW, 86, 23); if (t0 + VIS < QL.length) x.drawImage(DOWNARROW, 86, 22 + VIS * 16 + 3);
     const q = QL[i], Y0 = 22 + VIS * 16 + 12; drawWin(x, 4, Y0, 168, 252 - Y0, 'menu');
     if (q) { let y = Y0 + 3; Font.draw(x, q.n.replace(/^委託：/, ''), 10, y, QUEST_CAT_COL[q.cat] || UIC.warm, UIC.textSh, 10); Font.drawR(x, 'A 詳情', 166, y + 1, UIC.accent, UIC.textSh, 9); y += 15;
-      const G = !q.done && questGuide(q, st); const body = Font.wrap(q.t, 150, 9).slice(0, G ? 3 : 5); body.forEach((l, k) => Font.draw(x, l, 10, y + k * 11, q.done ? UIC.muted : UIC.text, UIC.textSh, 9)); y += body.length * 11 + 3;
+      const G = !q.done && questGuide(q, st); const room = G ? 33 : 55, z = (() => { let z = 9; while (z > 7 && Font.wrap(q.t, 150, z).length * (z + 2) > room) z--; return z; })(), nL = Math.min(Font.wrap(q.t, 150, z).length, Math.floor(room / (z + 2))); drawFitText(x, q.t, 10, y, 150, room, 9, q.done ? UIC.muted : UIC.text); y += nL * (z + 2) + 3; // v12.0.1: shrink instead of cutting
       if (G) { const s = '▶ ' + G.text + (G.next ? '（先往' + G.next + '）' : '') + (G.arrow ? ' ' + G.arrow : ''); Font.wrap(s, 150, 9).slice(0, 2).forEach((l, k) => Font.draw(x, l, 10, y + k * 11, '#c8f0ff', UIC.textSh, 9)); }
       if (!tab) Font.draw(x, tr && q.n === tr.n ? '★ 追蹤中' : 'SELECT／長按A：設為追蹤', 10, 238, tr && q.n === tr.n ? UIC.warm : UIC.muted, UIC.textSh, 8); }
   } };

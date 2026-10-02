@@ -4426,7 +4426,7 @@ function* bagScreen(mode = 'field') { // returns item id used (battle) or null
     if (UI.stack.some(w => w instanceof TextBox)) { /* v12.0.1: a message box sits over this panel (its window is see-through), so the details step aside instead of showing through the text */ }
     else if (list[idx] && orbT) { const o = list[idx], h = orbHost(o); Font.draw(x, '【' + (isActiveOrb(o) ? '主動寶珠' : '被動寶珠') + '】', 10, 182, isActiveOrb(o) ? UIC.warm : '#8ad0ff', UIC.textSh, 10);
       Font.drawR(x, h ? '鑲在：' + GEAR[h.b].n : '到鐵匠舖鑲嵌', 166, 182, h ? UIC.accent : UIC.muted, UIC.textSh, 10); Font.wrap(orbInfo(o), 154, 10).slice(0, 4).forEach((l, i) => Font.draw(x, l, 10, 197 + i * 13, UIC.text, UIC.textSh, 10)); }
-    else if (list[idx]) { if (gear) drawGearDetail(x, list[idx], 182, 68); else { const k0 = list[idx], it = ITEMS[k0]; Font.draw(x, '【' + (it.use === 'enchant' ? '附魔寶石・到鐵匠舖使用' : it.cat) + '】', 10, 182, it.use === 'enchant' ? UIC.warm : ITEM_CAT_COL[it.cat] || UIC.muted, UIC.textSh, 10); if (it.mat) Font.drawR(x, '採集熟練度 Lv' + gatherLv(), 166, 182, UIC.accent, UIC.textSh, 10); const src = it.mat ? matSourceText(k0) : ''; Font.wrap(it.d, 152).slice(0, src ? 2 : 3).forEach((l, i) => Font.draw(x, l, 12, 197 + i * 16, UIC.text, UIC.textSh)); if (src) Font.draw(x, Font.wrap('取得：' + src, 156, 10)[0], 10, 234, UIC.warm, UIC.textSh, 10); } }
+    else if (list[idx]) { if (gear) drawGearDetail(x, list[idx], 182, 68); else { const k0 = list[idx], it = ITEMS[k0]; Font.draw(x, '【' + (it.use === 'enchant' ? '附魔寶石・到鐵匠舖使用' : it.cat) + '】', 10, 182, it.use === 'enchant' ? UIC.warm : ITEM_CAT_COL[it.cat] || UIC.muted, UIC.textSh, 10); if (it.mat) Font.drawR(x, '採集熟練度 Lv' + gatherLv(), 166, 182, UIC.accent, UIC.textSh, 10); const src = it.mat ? matSourceText(k0) : ''; drawFitText(x, it.d, 12, 197, 152, src ? 36 : 52, 11); /* v12.0.1: long descriptions shrink instead of being cut */ if (src) Font.draw(x, Font.wrap('取得：' + src, 156, 10)[0], 10, 234, UIC.warm, UIC.textSh, 10); } }
   } };
   UI.push(scr); let result = null;
   while (true) {
@@ -4842,7 +4842,7 @@ equipScreen = function* () {
       Font.draw(x, EQUIP_SLOTS[sl], 12, Y + 2, UIC.accent, UIC.textSh, 10); Font.draw(x, g ? GEAR[g.b].n + (g.e ? ' +' + g.e : '') : '（空）', 44, Y + 1, g ? gCol(g) : UIC.dis, UIC.textSh, 11); if (g && (GEAR[g.b].fx || []).length) Font.drawR(x, '★', 164, Y + 1, UIC.warm, UIC.textSh, 10);
       touchRegion(6, Y, 164, 18, () => { if (idx === i) tapKey('a'); else idx = i; }); });
     const Y0 = 22 + slots.length * 19 + 10, g = gearBy(st.equip[slots[idx]]); drawWin(x, 4, Y0, 168, H - Y0 - 4, 'menu');
-    if (!g) { Font.draw(x, '這個部位沒有裝備。按A選擇要裝上的東西。', 10, Y0 + 6, UIC.muted, UIC.textSh, 10); const s = heroStats(); [['物攻', s.atk], ['物防', s.def], ['魔攻', s.spa], ['魔防', s.spd], ['速度', s.spe], ['會心', s.crit.toFixed(1) + '%']].forEach(([a, b], i) => { const X = 10 + (i % 3) * 54, Y = Y0 + 30 + Math.floor(i / 3) * 16; Font.draw(x, a, X, Y, UIC.muted, UIC.textSh, 10); Font.drawR(x, String(b), X + 48, Y, UIC.text, UIC.textSh, 10); }); dollPreview(x, heroLookOf(st), 130, Y0 + 30, 1); return; }
+    if (!g) { Font.draw(x, '這個部位沒有裝備。按A選擇要裝上的東西。', 10, Y0 + 6, UIC.muted, UIC.textSh, typeof fitSize === 'function' ? fitSize('這個部位沒有裝備。按A選擇要裝上的東西。', 156, 10, 7) : 8); const s = heroStats(); [['物攻', s.atk], ['物防', s.def], ['魔攻', s.spa], ['魔防', s.spd], ['速度', s.spe], ['會心', s.crit.toFixed(1) + '%']].forEach(([a, b], i) => { const X = 10 + (i % 3) * 54, Y = Y0 + 30 + Math.floor(i / 3) * 16; Font.draw(x, a, X, Y, UIC.muted, UIC.textSh, 10); Font.drawR(x, String(b), X + 48, Y, UIC.text, UIC.textSh, 10); }); dollPreview(x, heroLookOf(st), 130, Y0 + 30, 1); return; }
     Font.draw(x, gearName(g), 10, Y0 + 3, gCol(g), UIC.textSh); const L = gearInfoLines(g), end = drawInfoLines(x, L, 10, Y0 + 19, H - 20);
     if (end < L.length) Font.drawR(x, '▶ 查看全部', 166, H - 17, UIC.accent, UIC.textSh, 9);
     touchRegion(4, Y0, 168, H - Y0 - 4, () => tapKey('right'));
@@ -5740,6 +5740,13 @@ class Battle {
         if (typeof touchRegion === 'function') touchRegion(L, y - 2, w - 16, 13, () => { m.formula = !m.formula; Sound.sfx('cursor'); }); y += 13; }
       Font.drawC(x, Game.touchUI ? (m.tapSel === m.i ? '再點一次：使用　點外面：返回' : '點技能看說明・再點一次使用') : 'A：使用　B：返回', W / 2, BB_Y + 11, Game.touchUI && m.tapSel === m.i ? UIC.warm : UIC.muted, UIC.textSh, 9);
       const extra = ob && ob.e && ob.e.length && typeof evoOptText === 'function' ? '　【進化】' + ob.e.map((b, s) => (b === 'A' ? '強攻' : '附加') + evoOptText(ob, s, b)).join('、') : '';
+      if (m.formula) { const PY = Y, PH = DY + DH - Y, sig = D.tags.includes('sig'); drawWin(x, X, PY, w, PH, 'menu');
+        const nm = this.skillName(id, 'H'); Font.draw(x, nm, L, PY + 3, c, UIC.textSh, fit(nm, 11, w - 30 - Font.width(cT, 9))); Font.drawR(x, cT, R, PY + 4, can.ok ? '#8ab8ff' : UIC.bad, UIC.textSh, 9);
+        Font.draw(x, t1, L, PY + 17, '#c9cfe4', UIC.textSh, fit(t1, 9, w - 16)); x.fillStyle = 'rgba(200,160,80,0.35)'; x.fillRect(L, PY + 30, w - 16, 1);
+        const pf = D.power && mv && typeof powFormula === 'function' ? powFormula(id) : '', body = sig && pf ? pf : ((mv && mv.d) || D.desc || '') + (pf ? '\n' + pf : '');
+        drawFitText(x, body + (extra ? '\n' + extra.trim() : ''), L, PY + 33, w - 16, PH - 33 - 13, 10, '#ffe8b0');
+        Font.drawC(x, (Game.touchUI ? '點這裡' : 'SELECT') + '：關閉說明', W / 2, PY + PH - 12, UIC.muted, UIC.textSh, 8);
+        if (typeof touchRegion === 'function') touchRegion(X, PY, w, PH, () => { m.formula = false; Sound.sfx('cursor'); }); return; }
       drawFitText(x, m.formula && D.power && mv && typeof powFormula === 'function' ? powFormula(id) : ((mv && mv.d) || D.desc || '') + extra, L, y, w - 16, DY + DH - 5 - y, 9, m.formula ? '#ffe8b0' : UIC.text);
     };
     while (true) {
@@ -8119,7 +8126,7 @@ let TouchR = []; // hit regions registered while drawing (later = on top)
 const tapKey = k => { Input.set(k, true); Input.set(k, false); };
 function touchRegion(x, y, w, h, fn) { TouchR.push({ x, y, w, h, fn }); }
 { const _md = Menu.prototype.draw; Menu.prototype.draw = function (x) {
-  _md.call(this, x); const n = this.items.length, m = this;
+  _md.call(this, x); if (this.formula && this.drawExtra) return; /* v12.0.1: the battle skill ⓘ panel covers the list — no list taps under it */ const n = this.items.length, m = this;
   for (let k = 0; k < n; k++) { const r = Math.floor(k / this.cols) - this.scrollTop, c = k % this.cols; if (r < 0 || r >= this.scrollMax) continue;
     const X = this.buttons ? this.x + this.ox + c * this.colW : (this.cols === 1 ? this.x + 2 : this.x + this.ox + c * this.colW - 7), Y = this.y + this.oy + r * this.rowH - (this.buttons ? 0 : Math.max(0, Math.floor((this.rowH - 16) / 2)));
     const Wd = this.buttons ? this.colW - 3 : (this.cols === 1 ? this.w - 4 : this.colW - 4);
@@ -8477,7 +8484,7 @@ Game.pendingNew = null;
 }
 TitleScene.prototype.menu = function* () {
   while (true) {
-    const save = this.hasSave ? loadGame() : null, canNG = save && save.flags && save.flags.golem;
+    const save = this.hasSave ? loadGame() : null, canNG = false; // v12.0.1: 二周目 closed while the story is still being written
     const opts = this.hasSave ? ['繼續冒險', '新的冒險'] : ['新的冒險']; if (canNG) opts.push('二周目'); opts.push('設定');
     const r = yield* choose(opts, { x: 38, y: 168, w: 100, cancel: true });
     if (r < 0) { this.stage = 'press'; return; }
@@ -9129,7 +9136,7 @@ function* attrScreen() {
       touchRegion(4, Y - 1, 168, 14, () => { if (i === r) tapKey('right'); else i = r; }); });
     const Y2 = 26 + ATTRS.length * 15 + 1; [['推薦配點', av > 0], ['重置（重生之水' + ((st.bag && st.bag.attrReset) || 0) + '）', attrSpent(st) > 0 && (st.bag && st.bag.attrReset) > 0]].forEach(([t, ok], n) => { const X = 8 + n * 82, on = i === ATTRS.length + n; drawBtn(x, X, Y2, 78, 16, on); Font.drawC(x, t, X + 39, Y2, ok ? (on ? UIC.text : '#c9cfe4') : UIC.dis, UIC.textSh, 9); touchRegion(X, Y2, 78, 16, () => { i = ATTRS.length + n; tapKey('a'); }); });
     const k = ATTRS[i]; drawWin(x, 4, 142, 168, 110, 'menu');
-    Font.draw(x, k ? ATTR_NAMES[k] + '：' : (i === ATTRS.length ? '依職業的推薦比例分配剩下的點數。' : '用重生之水把所有屬性點收回來重新分配。'), 12, 144, UIC.accent, UIC.textSh, 10);
+    { const t = k ? ATTR_NAMES[k] + '：' : (i === ATTRS.length ? '依職業的推薦比例分配剩下的點數。' : '用重生之水把所有屬性點收回來重新分配。'); Font.draw(x, t, 12, 144, UIC.accent, UIC.textSh, fitSize(t, 152, 10, 7)); }
     if (k) { const [l1, l2] = ATTR_HELP12[k], z1 = fitSize(l1, 120), z2 = fitSize(l2, 154), z3 = fitSize(ATTR_HELP_NOTE, 154, 8);
       Font.draw(x, l1, 46, 145, UIC.text, UIC.textSh, z1); Font.draw(x, l2, 12, 156, '#ffd890', UIC.textSh, z2); Font.draw(x, ATTR_HELP_NOTE, 12, 166, UIC.muted, UIC.textSh, z3); }
     const s = heroStats(st); DER.forEach(([n, key, u], r) => { const X = 12 + (r % 2) * 80, Y = 178 + Math.floor(r / 2) * 12, v = s[key], d = Math.round((v - s0[key]) * 10) / 10;
@@ -10215,7 +10222,7 @@ class Ch2EndingScene extends EndingScene {
     const st = Game.st, mins = Math.floor((st.time || 0) / 3600);
     const lines = [['曙光冒險', 'big'], ['第二章「曙光的王都」', 'sub'], ['完', 'sub'], [''], ['五十年來停止的鐘，'], ['再一次響起。'], [''], ['影將莫爾德消失在北境的黑暗裡，'], ['但他留下了一句話——'], ['「魔王大人很快就會醒來。」'], [''],
       ['剩下的三將，'], ['東方的海、南方的沙漠、天空之上。'], [''], ['曙光的旅程，還沒有結束。'], [''], ['— 冒險記錄 —', 'sub'], ['旅人　' + st.name], ['等級　Lv' + st.lv], ['遊玩時間　' + Math.floor(mins / 60) + '小時' + (mins % 60) + '分'], [''],
-      ['（打倒影將後，鐘樓出現了「星之門」）', 'sub'], [''], ['按A繼續冒險', 'hint']];
+      ['第三章　製作中', 'sub'], [''], ['按A繼續冒險', 'hint']];
     let yy = H + 10 - this.y; this.maxY = H + 10 + lines.length * 18 - 230;
     for (const [s, k] of lines) {
       if (k === 'big') { if (!this.logo) this.logo = makeLogo(s, 2); x.drawImage(this.logo, Math.round(W / 2 - this.logo.width / 2), yy - 8); yy += 36; continue; }
@@ -11869,7 +11876,7 @@ dexScreen = function* () {
     if (seen(k)) { const cp = typeof dexPortrait === 'function' && dexPortrait(k); x.imageSmoothingEnabled = false;
       if (cp) { const q = Math.min(1, 72 / cp.width, 72 / cp.height), pw = Math.round(cp.width * q), ph = Math.round(cp.height * q); x.drawImage(cp, Math.round(44 - pw / 2), 244 - ph, pw, ph); } else { const im = battleSprite(k); x.drawImage(im, 0, 0, im.width, im.height, 8, 172, 72, 72); }
       const sp = SPECIES[k]; famBadge(x, sp.fam, 86, 170, 38); Font.draw(x, sp.rare ? '稀有' : sp.elite ? '精英' : sp.boss ? '頭目' : '野生', 128, 168, sp.rare ? '#ffd84a' : sp.boss ? UIC.bad : sp.elite ? UIC.warm : UIC.muted, UIC.textSh);
-      Font.draw(x, famLine(sp.fam), 86, 184, UIC.warm, UIC.textSh, 10); Font.wrap(sp.dex || '', 80, 11).slice(0, 2).forEach((l, i) => Font.draw(x, l, 86, 198 + i * 13, UIC.text, UIC.textSh, 11));
+      Font.draw(x, famLine(sp.fam), 86, 184, UIC.warm, UIC.textSh, 10); drawFitText(x, sp.dex || '', 86, 198, 82, 40, 11); /* v12.0.1: shrink instead of cutting the third line */
       drawBtn(x, 106, 230, 62, 16, true); Font.drawC(x, 'A：詳細資料', 137, 230, UIC.accent, UIC.textSh, 9); touchRegion(4, 164, 168, 88, () => tapKey('a')); }
     else Font.draw(x, '還沒有遇見過這種魔物。', 14, 170, UIC.muted, UIC.textSh);
   } };
@@ -12582,7 +12589,7 @@ Ch2EndingScene.prototype.draw = function (x) {
   const lines = [['曙光冒險', 'big'], ['終幕「曙光之鐘」', 'sub'], [''], ['五十年來停止的鐘，'], ['再一次響起。'], [''], ['影將莫爾德'], ['消失在北境的黑暗裡，'], ['但他留下了一句話——'], ['「魔王大人'], ['很快就會醒來。」'], [''],
     ['萌芽鎮的風車，'], ['今天也在轉。'], ...(f.noraBread ? [['諾拉的麵包店'], ['在王都開張了。']] : [['諾拉說，下次'], ['要去王都賣麵粉。']]), ...(f.grenTrust ? [['格倫當上了'], ['關道驛站的站長。']] : [['楓紅關道的驛站'], ['重新蓋好了。']]), ['莉婭成為了'], ['正式的騎士。'], [''],
     ['剩下的三將——'], ['東方的海、'], ['南方的沙漠、'], ['天空之上。'], ['還有，'], ['異界之門的另一邊。'], ...(f.homeChoice === 0 ? [['門的另一邊，'], ['有人在等你回家。']] : f.homeChoice === 1 ? [['不過，你已經'], ['找到了新的家。']] : []), [''], ['曙光的旅程，'], ['還沒有結束。'], [''], ['— 冒險記錄 —', 'sub'], ['旅人　' + st.name], ['等級　Lv' + st.lv], ['世界的記載　' + loreCount(st) + '／' + LORE.length],
-    ['遊玩時間　' + Math.floor(mins / 60) + '小時' + (mins % 60) + '分'], [''], ['（鐘樓出現了', 'sub'], ['「星之門」）', 'sub'], [''], ['按A繼續冒險', 'hint']];
+    ['遊玩時間　' + Math.floor(mins / 60) + '小時' + (mins % 60) + '分'], [''], ['第三章　製作中', 'sub'], ['（之後的冒險會繼續更新）', 'sub'], [''], ['按A繼續冒險', 'hint']];
   let yy = H + 10 - this.y; this.maxY = H + 10 + lines.length * 18 - 230;
   for (const [s, k] of lines) {
     if (k === 'big') { if (!this.logo) this.logo = makeLogo(s, 2); x.drawImage(this.logo, Math.round(W / 2 - this.logo.width / 2), yy - 8); yy += 36; continue; }
@@ -13315,7 +13322,7 @@ function* questScreen() {
     if (t0 > 0) x.drawImage(UPARROW, 86, 23); if (t0 + VIS < QL.length) x.drawImage(DOWNARROW, 86, 22 + VIS * 16 + 3);
     const q = QL[i], Y0 = 22 + VIS * 16 + 12; drawWin(x, 4, Y0, 168, 252 - Y0, 'menu');
     if (q) { let y = Y0 + 3; Font.draw(x, q.n.replace(/^委託：/, ''), 10, y, QUEST_CAT_COL[q.cat] || UIC.warm, UIC.textSh, 10); Font.drawR(x, 'A 詳情', 166, y + 1, UIC.accent, UIC.textSh, 9); y += 15;
-      const G = !q.done && questGuide(q, st); const body = Font.wrap(q.t, 150, 9).slice(0, G ? 3 : 5); body.forEach((l, k) => Font.draw(x, l, 10, y + k * 11, q.done ? UIC.muted : UIC.text, UIC.textSh, 9)); y += body.length * 11 + 3;
+      const G = !q.done && questGuide(q, st); const room = G ? 33 : 55, z = (() => { let z = 9; while (z > 7 && Font.wrap(q.t, 150, z).length * (z + 2) > room) z--; return z; })(), nL = Math.min(Font.wrap(q.t, 150, z).length, Math.floor(room / (z + 2))); drawFitText(x, q.t, 10, y, 150, room, 9, q.done ? UIC.muted : UIC.text); y += nL * (z + 2) + 3; // v12.0.1: shrink instead of cutting
       if (G) { const s = '▶ ' + G.text + (G.next ? '（先往' + G.next + '）' : '') + (G.arrow ? ' ' + G.arrow : ''); Font.wrap(s, 150, 9).slice(0, 2).forEach((l, k) => Font.draw(x, l, 10, y + k * 11, '#c8f0ff', UIC.textSh, 9)); }
       if (!tab) Font.draw(x, tr && q.n === tr.n ? '★ 追蹤中' : 'SELECT／長按A：設為追蹤', 10, 238, tr && q.n === tr.n ? UIC.warm : UIC.muted, UIC.textSh, 8); }
   } };
@@ -16714,11 +16721,11 @@ ACC_TRAIT.endure[2].push('部隊徽章');
     const r = yield* _v.call(this); const st = Game.st, F = this.F, sp = this.cfg && this.cfg.sp; if (!st || !sp) return r;
     const boss = this.kind === 'boss' || !!(F && F.boss), elite = !boss && (this.kind === 'elite' || !!(F && F.elite));
     if ((boss || elite) && BOOK_DROP12.includes(sp) && chance(boss ? 0.45 : 0.3)) { st.bag.trainBook = (st.bag.trainBook || 0) + 1; Sound.jingle('item'); yield* this.msg('得到了修練之書！', { hold: 40 }); }
-    const k = boss ? pick(['megaPotion', 'megaEther']) : elite && chance(0.4) ? pick(['superPotion', 'hiEther']) : null;
+    const k = this.cfg && this.cfg.rematch ? null : boss ? pick(['megaPotion', 'megaEther']) : elite && chance(0.4) ? pick(['superPotion', 'hiEther']) : null; // v12.0.1 (player: 「頭目跟菁英…可以重複刷取 導致藥水變得很好拿」): rematches give no potions
     if (k && ITEMS[k]) { st.bag[k] = (st.bag[k] || 0) + 1; yield* this.msg('得到了' + ITEMS[k].n + '！', { hold: 30 }); }
     return r; }; }
 { const _fd = foeDropLines; foeDropLines = function (sp, key, kind) { const L = _fd(sp, key, kind); if (BOOK_DROP12.includes(sp)) L.unshift('修練之書（機率 ' + (kind === 'boss' ? 45 : 30) + '%）');
-    L.push(kind === 'boss' ? '特級傷藥或特級魔力藥水（必得）' : '好傷藥或高級魔力藥水（40%）'); return L; }; }
+    L.push(kind === 'boss' ? '特級傷藥或特級魔力藥水（第一次打倒必得）' : '好傷藥或高級魔力藥水（第一次打倒 40%）'); return L; }; }
 for (const c of ['c1', 'c6', 'c9', 'c14', 'c15']) if (COMMISSIONS[c]) COMMISSIONS[c].reward.items = { ...(COMMISSIONS[c].reward.items || {}), trainBook: 1 };
 if (COMMISSIONS.c7) COMMISSIONS.c7.reward.gear = 'herbPouch';
 { const _gr = giveReward; giveReward = function* (rw) { const r = yield* _gr(rw); if (rw && rw.gear) yield* giftGear12(rw.gear, 2); return r; }; }
@@ -17544,5 +17551,134 @@ function* liaPendant12() { const st = Game.st, f = st.flags; f.captainQ = 2;
     if (f.captainQ === 1) { yield* liaPendant12(); return; }
     if (f.blackFeather && f.liaQuest === 1) { yield* Events.liaCap(ow, ent); return; }
     yield* _lc.call(this, ow, ent); }; }
+Overworld.prototype.riftEntry = function* () { yield* say('異界之門靜靜地沉睡著。門的另一邊，只看得到一片黑雲……'); };
+{ const n = (MAPS.ruins.npcs || []).find(q => q.id === 'warden'); if (n) n.show = st => !!st.flags.golem && (st.bag.riftToken || 0) > 0; } // stays only while badges are left to trade
+{ const _w = Events.warden; Events.warden = function* (ow) { yield* say('迴廊的門已經關上了。……你手上還有徽章吧？在我這裡還是可以換東西。'); yield* _w.call(this, ow); }; }
+{ const _eq = extraQuests; extraQuests = function (st, L) { _eq(st, L); for (let i = L.length - 1; i >= 0; i--) if (L[i].n === '異界迴廊') L.splice(i, 1); }; }
+const STAR_MAP12 = Object.keys(MAPS).find(m => (MAPS[m].npcs || []).some(n => n.id === 'starGate'));
+if (STAR_MAP12) { const n = MAPS[STAR_MAP12].npcs.find(q => q.id === 'starGate'); n.show = () => false; }
+{ const _ql = questList; questList = function (st = Game.st) { const L = _ql(st);
+    for (let i = L.length - 1; i >= 0; i--) if (L[i].n === '星見神殿') L.splice(i, 1);
+    const M = L.find(q => q.main); if (M && M.done && /星之門/.test(M.t || '')) M.t = '完成：曙光鐘再次響起了。（第三章製作中）';
+    return L; }; }
+{ const _ld = Overworld.prototype.load; Overworld.prototype.load = function (id, x, y, dir, silent) {
+    if (id === 'rift') return _ld.call(this, 'ruins', 7, 2, 'down', silent);
+    if (id === 'starShrine' && STAR_MAP12) { const g = MAPS[STAR_MAP12].npcs.find(q => q.id === 'starGate'); return _ld.call(this, STAR_MAP12, g.x, g.y + 1, 'down', silent); }
+    return _ld.call(this, id, x, y, dir, silent); }; }
+const RETIRED12 = ['breaker', 'riftwalker', 'gatebreaker', 'again', 'starSeer', 'rift10', 'riftClear', 'break30', 'ng', 'starGuardian'];
+for (const L of [TITLES, ACHIEVEMENTS]) for (let i = L.length - 1; i >= 0; i--) if (RETIRED12.includes(L[i].id) && !(L === ACHIEVEMENTS && L[i].id === 'golem')) L.splice(i, 1);
+{ const _u = Overworld.prototype.update; Overworld.prototype.update = function (...a) { const st = this.st; if (st && st.title && RETIRED12.includes(st.title)) st.title = null; return _u.apply(this, a); }; }
+DEF.resources.brk.appliesTo = () => false; // no shield gauge on any monster
+DEF.mechanics.breakGauge.triggers = [];
+COND.tgtBroken = (c, v) => !!c.tgt && (BR.stage(c.core, c.tgt, 'def') < 0) === !!v; // 「對破防的對手」→「對物防下降的對手」
+EFFECT_TYPES.break_chip.exec = function (core, ef, ctx, tg) {
+  for (const t of tg) { if (!t || !core.isUp(t) || t.side === (ctx.owner && ctx.owner.side)) continue; const own = ef.why === 'breaker' || ef.why === 'shieldChip';
+    if (ef.why === 'smash' || (ef.why === 'shieldHit' && skLowersDef(ctx.skill)) || (!own && !core.rng.chance(0.3))) continue; core.applyStatus(ctx.owner, t, 'stage_def', { delta: -1, dur: 3, secondary: true }); } };
+const BRK_TXT = [
+  [/【破盾】額外削減\d點護盾/g, '30% 讓對手物防−1'], [/每一下都能削減護盾/g, '每一下都有 30% 機率讓對手物防−1'], [/（會心也能削減護盾）/g, ''],
+  [/連斬能削減護盾/g, '連斬有機率降低物防'], [/削減護盾的砲擊/g, '有機率降低物防的砲擊'], [/額外削減(對手)?1點護盾/g, '讓對手物防−1'],
+  [/對有護盾的魔物多削 1 格破防盾/g, '30% 讓對手物防 −1'], [/多削 1 格破防盾/g, '讓對手物防 −1'], [/、破防盾 −1/g, ''], [/削減護盾/g, '30% 讓對手物防−1'],
+  [/對破防中的魔物/g, '對物防下降的魔物'], [/對破防的對手/g, '對物防下降的對手'], [/攻擊破防中的魔物/g, '攻擊物防下降的魔物'], [/破防中的(魔物|對手)/g, '物防下降的$1'],
+  [/防禦，或趁現在破防！/g, '快防禦！'], [/，或用弱點、會心打破護盾來打斷蓄力/g, ''], [/趁牠破防時一口氣打倒牠吧/g, '準備好回復，一口氣打倒牠吧'], [/、護盾\+1/g, ''],
+];
+const brkDedupe = s => { if (!s.includes('30% 讓對手物防−1')) return s; const rest = s.replace('30% 讓對手物防−1', '');
+  if (/降低(對手的)?物防|對手物防[−-]1/.test(rest)) s = s.replace(/[，、；]?30% 讓對手物防−1(?=[，、；。])/, '').replace(/30% 讓對手物防−1[，、；]?/, '').replace('：，', '：').replace('，，', '，'); return s; };
+const brkFix = s => { if (typeof s !== 'string' || !/護盾|破防|破盾/.test(s)) return s; for (const [a, b] of BRK_TXT) s = s.replace(a, b); return brkDedupe(s); };
+const skLowersDef = sk => { if (!sk) return false; if (sk._lowDef12 !== undefined) return sk._lowDef12; const effs = [...(sk.effects || []), ...(sk.after || [])].map(e => typeof e === 'string' ? DEF.effects[e] : e).filter(Boolean);
+  return (sk._lowDef12 = effs.some(e => (e.type === 'stage' && e.stats && e.stats.def < 0 && e.target !== 'self') || (e.type === 'status' && e.status === 'stage_def' && e.target !== 'self'))); };
+const brkFixObj = (o, keys) => { for (const k of keys) if (typeof o[k] === 'string') o[k] = brkFix(o[k]); };
+const brkFixDeep = (o, d = 0, seen = new Set()) => { if (!o || typeof o !== 'object' || d > 3 || seen.has(o)) return; seen.add(o); for (const k in o) { const v = o[k]; if (typeof v === 'string') o[k] = brkFix(v); else if (v && typeof v === 'object') brkFixDeep(v, d + 1, seen); } };
+for (const T of [DEF.skills, DEF.mechanics, DEF.talents || {}, typeof SPECIALS !== 'undefined' ? SPECIALS : {}, typeof ACC_TRAIT !== 'undefined' ? ACC_TRAIT : {}]) brkFixDeep(T);
+for (const id in DEF.skills) brkFixObj(DEF.skills[id], ['desc']);
+for (const id in MOVES) brkFixObj(MOVES[id], ['d']);
+for (const id in DEF.talents || {}) brkFixObj(DEF.talents[id], ['desc', 'd', 'name']);
+for (const id in DEF.passives || {}) if (DEF.passives[id].metadata) brkFixObj(DEF.passives[id].metadata, ['desc', 'd']);
+for (const T of [ITEMS, GEAR]) for (const id in T) brkFixObj(T[id], ['d']);
+for (const T of [typeof SPECIALS !== 'undefined' ? SPECIALS : {}, typeof ORB_A !== 'undefined' ? ORB_A : {}, typeof ORB_P !== 'undefined' ? ORB_P : {}, typeof WKIND12 !== 'undefined' ? WKIND12 : {}, typeof CLS12 !== 'undefined' ? CLS12 : {}])
+  for (const id in T) brkFixObj(T[id], ['d', 'rule', 'limit', 'n']);
+if (typeof DIFFS !== 'undefined') for (const D of DIFFS) brkFixObj(D, ['d']);
+if (typeof BATTLE_HELP !== 'undefined') for (const P of BATTLE_HELP) P[1] = P[1].filter(t => !/^破防：/.test(t)).map(brkFix);
+if (typeof HEAVY_TIP !== 'undefined') for (const k in HEAVY_TIP) HEAVY_TIP[k] = brkFix(HEAVY_TIP[k]);
+for (const id in MOVES) for (const k of ['warn', 'chargeMsg']) if (typeof MOVES[id][k] === 'string') MOVES[id][k] = brkFix(MOVES[id][k]);
+const OTW_SPOTS = ['town', 'forest', 'windHills'];
+const otwMarks = (st = Game.st) => OTW_SPOTS.filter(m => ((st.flags.otwMark || {})[m])).length;
+for (const m of OTW_SPOTS) { const d = MAPS[m], E = EXT_AREA[m]; if (!d || !E) continue; const R = d.rows, H = R.length, Wd = R[0].length;
+  const busy = new Set([...(d.npcs || []), ...(d.items || []), ...(d.gathers || [])].map(e => e.x + ',' + e.y)); for (const k in d.signs || {}) busy.add(k);
+  const inExt = (x, y) => E.side === 'right' ? x >= E.from : y >= E.from, ok = (x, y) => y > 0 && x > 0 && y < H - 1 && x < Wd - 1 && !SOLID.has(R[y][x]) && R[y][x] !== ':' && !busy.has(x + ',' + y);
+  let best = null, bs = -1; const cx = E.side === 'right' ? (E.from + Wd) / 2 : Wd / 2, cy = E.side === 'right' ? H / 2 : (E.from + H) / 2;
+  for (let y = 1; y < H - 1; y++) for (let x = 1; x < Wd - 1; x++) { if (!inExt(x, y) || !ok(x, y)) continue; const nb = [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [-1, -1], [1, -1], [-1, 1]].filter(([a, b]) => ok(x + a, y + b)).length;
+    if (nb < 8) continue; const sc = 100 - Math.hypot(x - cx, y - cy); if (sc > bs) { bs = sc; best = [x, y]; } }
+  if (best) { d.npcs.push({ id: 'otwMark_' + m, x: best[0], y: best[1], dir: 'down', look: 'loreStone', name: '曙光的印記', show: st => st.flags.otwQ === 1 && !(st.flags.otwMark || {})[m] }); NPC_ROLES.任務.push('otwMark_' + m);
+    Events['otwMark_' + m] = function* (ow) { const st = Game.st, f = st.flags; (f.otwMark || (f.otwMark = {}))[m] = 1; Sound.sfx('charge'); Game.flashColor = '#fff2c0'; yield* tween(12, t => Game.flash = t * 0.6); yield* tween(16, t => Game.flash = 0.6 * (1 - t));
+      yield* sayAll(['石頭上刻著和你手上一樣的太陽紋章……', '曙光之印發出了光。印記回應了你！（初代勇者的印記 ' + otwMarks(st) + '/3）']);
+      if (otwMarks(st) >= 3) { f.otwQ = 2; yield* sayAll(['三個印記同時亮了起來。', '……遠處，萌芽鎮的方向，好像有什麼東西在呼喚你。', '（目標：到萌芽鎮的井邊看看。）']); }
+      ow.load(ow.map.id, ow.p.x, ow.p.y, ow.p.dir, true); }; }
+  else console.warn('otw: no spot in', m);
+  if (typeof mapCache !== 'undefined') delete mapCache[m]; }
+{ const _se = STORY_MARKS.elder; const otwReady = st => st.flags.license && st.flags.golem && !st.flags.otwQ && !st.flags.hiddenCls;
+  STORY_MARKS.elder = st => { const o = _se ? _se(st) : null; return o || (otwReady(st) ? '!' : null); };
+  const _el = Events.elder; Events.elder = function* (ow) { const st = Game.st, f = st.flags;
+    if (otwReady(st) && !(_se && _se(st))) { f.otwQ = 1;
+      yield* sayAll(['……你手上的曙光之印，最近是不是越來越亮了？', '五百年前的初代勇者，也是從異界來的人。', '他在這一帶留下了三個「曙光的印記」。傳說找齊印記的人，才能接受他留下的試煉。',
+        '印記好像都藏在地圖邊緣新開的小路後面——鎮外的花田、迷霧森林的深處、風車丘陵的山頂。']);
+      yield* say('（任務「初代勇者的試煉」開始了。找到三個曙光的印記。推薦Lv14〜18）'); return; }
+    yield* _el.call(this, ow); }; }
+{ const _w = Events.well; Events.well = function* (ow) { const st = Game.st, f = st.flags;
+    if (f.otwQ === 2 && !f.crystalBoss) { yield* say('井壁上浮現出一階一階發光的踏階，一直通到井底深處……');
+      if (yield* yesNo('要沿著踏階下去嗎？')) { Sound.sfx('door'); yield* ow.warp('sewer', 7, 12, 'up'); } return; }
+    yield* _w.call(this, ow); }; }
+{ const _ld = Overworld.prototype.load; Overworld.prototype.load = function (id, x, y, dir, silent) { _ld.call(this, id, x, y, dir, silent);
+    const f = this.st.flags; if (id === 'sewer' && !f.crystalBoss && (f.otwQ || 0) < 2) this.boss = null; }; }
+{ const _hb = Events.hiddenBoss; Events.hiddenBoss = function (ow) { const g = _hb.call(this, ow); if (!g) return g; return (function* () { yield* g; if (Game.st.flags.crystalBoss) Game.st.flags.otwQ = 3; })(); }; }
+for (const m of OTW_SPOTS) STORY_MARKS['otwMark_' + m] = st => st.flags.otwQ === 1 && !(st.flags.otwMark || {})[m] ? '!' : null;
+STORY_MARKS.well = st => st.flags.otwQ === 2 && !st.flags.crystalBoss ? '!' : null;
+const swordPages = (st = Game.st) => st.bag.swordPage || 0;
+{ const E = (MAPS.lake.elites || []).find(e => e.id === 'rogueBlade');
+  MAPS.lake.npcs.push({ id: 'rogueNpc', x: E ? E.x : 20, y: E ? E.y : 9, dir: 'left', look: 'traveler', name: '流浪的魔劍士', show: st => !st.flags.spellbladeOk && !st.flags.rogueMet && swordPages(st) < 3 });
+  NPC_ROLES.任務.push('rogueNpc'); if (typeof NPC_WHERE !== 'undefined') NPC_WHERE.rogueNpc = '銀月湖畔・東岸'; delete mapCache.lake; }
+function* wyrmPage12() { const st = Game.st, f = st.flags; if (!f.wyrm || f.pageWyrm || f.pageRift) return; f.pageWyrm = 1; st.bag.swordPage = swordPages(st) + 1;
+  yield* itemGet('湖之主留下的鱗片之間，夾著一張舊紙……是「失落的劍譜」！'); }
+{ const _u = Overworld.prototype.update; Overworld.prototype.update = function (...a) { const st = this.st, f = st && st.flags;
+    if (f && this.map && this.map.id === 'lake' && !this.script && !UI.stack.length && !Game.trans && f.wyrm && !f.pageWyrm && !f.pageRift && !f.spellbladeOk) { const ow = this; this.run((function* () { yield* wyrmPage12(); ow.load('lake', ow.p.x, ow.p.y, ow.p.dir, true); })()); return; }
+    return _u.apply(this, a); }; }
+{ const _wb = Events.wyrmBoss; Events.wyrmBoss = function* (ow) { yield* _wb.call(this, ow); yield* wyrmPage12(); }; }
+Events.rogueNpc = function* () { const st = Game.st, f = st.flags; yield* wyrmPage12();
+  if (!f.rogueTalk) { f.rogueTalk = 1; f.q5 = 1;
+    yield* sayAll(['……你的劍裡，有魔力的流動。', '我是個流浪的劍士。在找三頁失傳的「魔劍之道」劍譜。', '一頁被湖心小島的寶箱收著，一頁被蜥人隊長搶走了，還有一頁……沉進了湖底，被湖之主吞進了肚子裡。',
+      '我已經老了，打不贏牠們了。如果你找齊三頁，就帶來給我吧。到時候……讓我看看你的劍。']);
+    yield* say('（任務「失落的劍譜」開始了。收集三頁劍譜。）'); return; }
+  yield* say(swordPages(st) >= 3 ? '……三頁都找齊了？' : '劍譜找到 ' + swordPages(st) + ' 頁了。湖心小島、蜥人隊長、湖之主……慢慢來吧。'); };
+STORY_MARKS.rogueNpc = st => !st.flags.rogueTalk ? '!' : null;
+{ const _h = Events.hermit; Events.hermit = function* (ow) { const st = Game.st, f = st.flags; yield* wyrmPage12();
+    if (f.q5 && !f.spellbladeOk && swordPages(st) < 3) { yield* say('劍譜找到' + swordPages(st) + '頁了。湖心小島、蜥人隊長、湖之主……那個劍士在湖的東岸等你。'); if (!f.wyrm) yield* say('對了，喚醒湖之主要在祭壇供上月露×3。湖邊發光的「月露草」採得到。'); return; }
+    yield* _h.call(this, ow); }; }
+Object.assign(QUEST_CATS, { '初代勇者的試煉': '隱藏', '失落的劍譜': '隱藏' });
+{ const _eq = extraQuests; extraQuests = function (st, L) { _eq(st, L); const f = st.flags;
+    for (let i = L.length - 1; i >= 0; i--) if (L[i].n === '流浪的魔劍士') L.splice(i, 1);
+    if (f.otwQ || f.hiddenCls) L.push({ n: '初代勇者的試煉', t: f.hiddenCls ? '完成：通過了初代勇者的試煉，覺醒了「異界勇者」。' : f.otwQ >= 2 ? '三個印記都找到了。從萌芽鎮的井往下，到地下水道深處接受試煉。（推薦Lv16〜18）'
+      : '找到三個「曙光的印記」（' + otwMarks(st) + '/3）：萌芽鎮郊外花田（萌芽鎮的南邊）、森之深處（迷霧森林的南邊）、風之丘頂（風車丘陵的東邊）。', done: !!f.hiddenCls, rw: '隱藏職業「異界勇者」' });
+    if (f.q5 || f.rogueTalk || f.spellbladeOk) L.push({ n: '失落的劍譜', t: f.spellbladeOk ? '完成：打贏了魔劍士，繼承了魔劍之道。' : swordPages(st) >= 3 ? '三頁劍譜都找齊了。到銀月湖畔的東岸，和流浪的魔劍士決鬥。'
+      : '收集三頁「失落的劍譜」（' + swordPages(st) + '/3）：銀月湖畔的湖心小島、蜥人隊長、湖之主（銀鱗水龍）。', done: !!f.spellbladeOk, rw: '隱藏職業「魔劍士」' });
+  }; }
+const EXT_OPEN = {};
+for (const m in EXT_AREA) { if (m === 'starShrine') continue; const E = EXT_AREA[m], d = MAPS[m], R = d.rows.map(r => r.split('')); let o = null;
+  if (E.side === 'right') { for (let y = 1; y < R.length - 1; y++) if (R[y][E.from - 1] === ':') { o = [E.from - 1, y]; break; } }
+  else { for (let x = 1; x < R[0].length - 1; x++) if (R[E.from - 1][x] === ':') { o = [x, E.from - 1]; break; } }
+  if (!o) { console.warn('ext: no opening', m); continue; } EXT_OPEN[m] = o;
+  const sg = E.side === 'right' ? [o[0], o[1] - 1] : [o[0] - 1, o[1]];
+  if (R[sg[1]] && SOLID.has(R[sg[1]][sg[0]]) && R[sg[1]][sg[0]] !== 'S') { R[sg[1]][sg[0]] = 'S'; d.rows = R.map(r => r.join('')); d.signs = d.signs || {};
+    d.signs[sg[0] + ',' + sg[1]] = (E.side === 'right' ? '→ 往東：' : '↓ 往南：') + '祕境「' + E.name + '」\n地圖邊緣新開的小路。裡面有寶箱、採集點和天氣祠。'; }
+  if (typeof mapCache !== 'undefined') delete mapCache[m]; }
+const extSeen = (m, st = Game.st) => !!((st.extSeen || {})[m]);
+{ const A = ACHIEVEMENTS.find(a => a.id === 'extAll'); if (A) { const n = Object.keys(EXT_OPEN).length; A.d = '走遍' + n + '處祕境（地圖邊緣新開的區域）。'; A.ok = st => Object.keys(EXT_OPEN).every(m => extSeen(m, st)); } }
+{ const _dm = drawMiniMap; drawMiniMap = function (x, id, X0, Y0, maxW, maxH, st) { _dm(x, id, X0, Y0, maxW, maxH, st); const o = EXT_OPEN[id]; if (!o || extSeen(id, st)) return;
+    const m = getMap(id), sc = Math.max(1, Math.floor(Math.min(maxW / m.w, maxH / m.h))), ox = X0 + Math.floor((maxW - m.w * sc) / 2), oy = Y0 + Math.floor((maxH - m.h * sc) / 2);
+    if (Math.floor(Game.frame / 16) % 2) Font.drawC(x, '?', ox + o[0] * sc + sc / 2, oy + o[1] * sc + sc / 2 - 7, '#8af0ff', UIC.textSh, 10); }; }
+Object.assign(QUEST_CATS, { '祕境探索': '支線' });
+{ const _eq = extraQuests; extraQuests = function (st, L) { _eq(st, L); if (!st.flags.license) return;
+    const K = Object.keys(EXT_OPEN), seen = K.filter(m => extSeen(m, st)), near = K.filter(m => !extSeen(m, st) && st.vis && st.vis[m]);
+    const name = m => EXT_AREA[m].name + '（' + MAPS[m].name + (EXT_AREA[m].side === 'right' ? '東邊' : '南邊') + '）';
+    L.push({ n: '祕境探索', t: seen.length >= K.length ? '完成：走遍了所有的祕境。' : near.length ? '路口立著告示牌的小路。還沒去過：' + near.slice(0, 2).map(name).join('、') + '。（' + seen.length + '/' + K.length + '）'
+      : '其他地圖的邊緣也有祕境。去新的地方看看吧。（' + seen.length + '/' + K.length + '）', done: seen.length >= K.length, rw: '每處：寶箱、採集點、天氣祠' }); }; }
 </script>
 </body></html>

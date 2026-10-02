@@ -347,6 +347,14 @@ class Battle {
         if (typeof touchRegion === 'function') touchRegion(L, y - 2, w - 16, 13, () => { m.formula = !m.formula; Sound.sfx('cursor'); }); y += 13; }
       Font.drawC(x, Game.touchUI ? (m.tapSel === m.i ? '再點一次：使用　點外面：返回' : '點技能看說明・再點一次使用') : 'A：使用　B：返回', W / 2, BB_Y + 11, Game.touchUI && m.tapSel === m.i ? UIC.warm : UIC.muted, UIC.textSh, 9);
       const extra = ob && ob.e && ob.e.length && typeof evoOptText === 'function' ? '　【進化】' + ob.e.map((b, s) => (b === 'A' ? '強攻' : '附加') + evoOptText(ob, s, b)).join('、') : '';
+      // v12.0.1 (player: 「部分文字敘述還是會超出看不到」): ⓘ opens the whole explanation over the skill list (it was squeezed into 30px at 7px text)
+      if (m.formula) { const PY = Y, PH = DY + DH - Y, sig = D.tags.includes('sig'); drawWin(x, X, PY, w, PH, 'menu');
+        const nm = this.skillName(id, 'H'); Font.draw(x, nm, L, PY + 3, c, UIC.textSh, fit(nm, 11, w - 30 - Font.width(cT, 9))); Font.drawR(x, cT, R, PY + 4, can.ok ? '#8ab8ff' : UIC.bad, UIC.textSh, 9);
+        Font.draw(x, t1, L, PY + 17, '#c9cfe4', UIC.textSh, fit(t1, 9, w - 16)); x.fillStyle = 'rgba(200,160,80,0.35)'; x.fillRect(L, PY + 30, w - 16, 1);
+        const pf = D.power && mv && typeof powFormula === 'function' ? powFormula(id) : '', body = sig && pf ? pf : ((mv && mv.d) || D.desc || '') + (pf ? '\n' + pf : '');
+        drawFitText(x, body + (extra ? '\n' + extra.trim() : ''), L, PY + 33, w - 16, PH - 33 - 13, 10, '#ffe8b0');
+        Font.drawC(x, (Game.touchUI ? '點這裡' : 'SELECT') + '：關閉說明', W / 2, PY + PH - 12, UIC.muted, UIC.textSh, 8);
+        if (typeof touchRegion === 'function') touchRegion(X, PY, w, PH, () => { m.formula = false; Sound.sfx('cursor'); }); return; }
       drawFitText(x, m.formula && D.power && mv && typeof powFormula === 'function' ? powFormula(id) : ((mv && mv.d) || D.desc || '') + extra, L, y, w - 16, DY + DH - 5 - y, 9, m.formula ? '#ffe8b0' : UIC.text);
     };
     while (true) {

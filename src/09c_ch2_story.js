@@ -370,7 +370,7 @@ class Ch2EndingScene extends EndingScene {
     const st = Game.st, mins = Math.floor((st.time || 0) / 3600);
     const lines = [['曙光冒險', 'big'], ['第二章「曙光的王都」', 'sub'], ['完', 'sub'], [''], ['五十年來停止的鐘，'], ['再一次響起。'], [''], ['影將莫爾德消失在北境的黑暗裡，'], ['但他留下了一句話——'], ['「魔王大人很快就會醒來。」'], [''],
       ['剩下的三將，'], ['東方的海、南方的沙漠、天空之上。'], [''], ['曙光的旅程，還沒有結束。'], [''], ['— 冒險記錄 —', 'sub'], ['旅人　' + st.name], ['等級　Lv' + st.lv], ['遊玩時間　' + Math.floor(mins / 60) + '小時' + (mins % 60) + '分'], [''],
-      ['（打倒影將後，鐘樓出現了「星之門」）', 'sub'], [''], ['按A繼續冒險', 'hint']];
+      ['第三章　製作中', 'sub'], [''], ['按A繼續冒險', 'hint']];
     let yy = H + 10 - this.y; this.maxY = H + 10 + lines.length * 18 - 230;
     for (const [s, k] of lines) {
       if (k === 'big') { if (!this.logo) this.logo = makeLogo(s, 2); x.drawImage(this.logo, Math.round(W / 2 - this.logo.width / 2), yy - 8); yy += 36; continue; }

@@ -2022,7 +2022,7 @@ function questMarks(st = Game.st) {
   if (f.mineOpen && !f.bandit) M.push(['mine', 9, 2]);
   if (f.golem && !f.boneKnight) M.push(st.map === 'catacomb' ? ['catacomb', 9, 3] : ['ruins', 13, 10]);
   const c4 = comState('c4', st); if (c4 && c4.s === 'on' && !st.bag.pocketWatch) M.push(['forest', 19, 9]);
-  if (typeof COM_GIVER !== 'undefined') for (const id in NPC_WHERE) { if (!npcQuestState(id, st)) continue; for (const m in MAPS) for (const n of MAPS[m].npcs || []) if (n.id === id) M.push([m, n.x, n.y]); }
+  if (typeof COM_GIVER !== 'undefined') for (const id in NPC_WHERE) { if (!npcQuestState(id, st)) continue; for (const m in MAPS) for (const n of MAPS[m].npcs || []) if (n.id === id && (!n.show || n.show(st))) M.push([m, n.x, n.y]); }
   return M;
 }
 function extraQuests(st, L) {
@@ -3766,7 +3766,7 @@ Object.assign(ELITE_TEXT, { rockRhino: ['（岩角犀用前腳刨著地面……
   MAPS.lake.signs['15,24'] = '「↓ 幽光沼澤」\n瘴氣很濃，魔物也很強。建議Lv18以上。';
 }
 Object.assign(COMMISSIONS, {
-  c18: { n: '蠍尾針收集', from: '旅店的藥師', d: '想用蠍尾針做解毒劑的研究。請帶來蠍尾針×4。（落日峽谷的砂鉗蠍）', need: { scorpTail: 4 }, reward: { gold: 1500, items: { antidote: 3, superPotion: 2 } }, open: st => st.vis && st.vis.canyon },
+  c18: { n: '蠍尾針收集', from: '旅店老闆娘', d: '想用蠍尾針做解毒劑的研究。請帶來蠍尾針×4。（落日峽谷的砂鉗蠍）', need: { scorpTail: 4 }, reward: { gold: 1500, items: { antidote: 3, superPotion: 2 } }, open: st => st.vis && st.vis.canyon },
   c19: { n: '驅趕鷹妖', from: '信差露卡', d: '鷹妖一直搶信差的包裹。接下委託後，擊敗峽谷鷹妖×5。', kill: ['harpy', 5], reward: { gold: 1800, items: { superPotion: 3 } }, open: st => st.vis && st.vis.canyon },
   c20: { n: '沼苔採集', from: '藥草師', d: '沼苔可以做成很好的藥。請帶來沼苔×5。（幽光沼澤）', need: { bogMoss: 5 }, reward: { gold: 2400, items: { hiEther: 2 } }, open: st => st.vis && st.vis.swamp },
   c21: { n: '枯木樹妖討伐', from: '守燈人', d: '樹妖把通往燈塔的路都堵住了。接下委託後，擊敗枯木樹妖×4。', kill: ['rotTreant', 4], reward: { gold: 2800, items: { elixir: 1 } }, open: st => st.vis && st.vis.swamp },
@@ -3973,6 +3973,10 @@ class Menu {
     const fitRows = Math.max(1, Math.floor(((o.y !== undefined ? H - o.y : TB_Y - 5) - 10 - tH) / this.rowH)); if (!o.visible && !o.h && rowsN > fitRows) o = { ...o, visible: fitRows }; // long menus scroll instead of running off screen
     this.h = o.h || Math.min(rowsN, o.visible || rowsN) * this.rowH + 10 + tH; this.x = o.x ?? (W - this.w - 4); this.y = o.y ?? (TB_Y - this.h - 1); this.buttons = o.buttons; this.ox = o.ox ?? 14; this.oy = o.oy ?? 5 + tH; this.title = o.title;
     this.scrollMax = o.visible || rowsN; this.scrollTop = Math.max(0, Math.floor(this.i / this.cols) - this.scrollMax + 1); this.drawExtra = o.drawExtra; this.noFrame = o.noFrame; this.textCol = o.textCol || '#c9cfe4'; this.textSh = o.textSh || UIC.textSh; this.fs = o.fs;
+    if (!o.w && !o.colW && !o.fs && this.colW * this.cols + 16 > W - 8) {
+      for (const z of [10, 9, 8]) { const mw = Math.max(...this.items.map(it => Font.width(it.t, z) + (it.r ? Font.width(it.r, z) + 12 : 0)), o.title ? Font.width(o.title) - 4 : 0);
+        this.fs = z; this.colW = mw + 20; if (this.colW * this.cols + 16 <= W - 8) break; }
+      this.w = Math.min(W - 8, this.colW * this.cols + 16); if (o.x === undefined) this.x = W - this.w - 4; }
     if (this.onMove) this.onMove(this.i);
   }
   move(d) { const n = this.items.length; let i = this.i; if (this.cols === 1) i = (i + d + n) % n; else { if (d === -1 || d === 1) i = (i + d + n) % n; else i = (i + d * 1 + n * 4) % n; } return i; }
@@ -7398,11 +7402,15 @@ const Events = {
       yield* sayAll(['古岩魔像是「構造體」魔物，最怕水和草的攻擊。記住了。', '從今天起，你就是萌芽鎮的冒險者了。', '先去古岩遺跡，查清楚魔像為什麼會暴走。', '去吧，異世界的' + C.n + '。願曙光指引你的道路。']);
       return;
     }
+    { const n = st.flags.ch2 || 0; // v12.0.1: the elder follows chapter 2 instead of repeating the golem talk forever
+      if (n >= 10) { yield* sayAll(['王都的鐘聲……連這裡都聽得到呢。', '你做到了。初代勇者也一定會為你驕傲。', '……不過，剩下的三將和魔王還在。累了就回來，這裡永遠是你的家。']); return; }
+      if (n >= 5) { yield* sayAll(['宰相是魔王的手下？……連王都都不安全了啊。', '北境很冷，多帶點藥再出發吧。']); return; }
+      if (n >= 1) { yield* sayAll(['國王陛下在等你。王都就在北方街道的盡頭。', '……累了就回來。這裡永遠是你的家。']); return; } }
     if (st.flags.golem) { yield* sayAll(['……你在門的另一邊，看到了魔王城？', '果然，札爾格斯正在甦醒。', '你手上的「曙光之印」，是初代勇者留下的印記。它選中了你。', '魔王城在遙遠的北方。你還需要更多的力量和夥伴。', '在那之前，先把這一帶的魔物清理乾淨，好好鍛鍊吧。'].concat(st.flags.boneKnight ? [] : ['……對了，聽說魔像倒下後，遺跡的石板下面出現了往地底的樓梯。', '那裡是古王的墓穴。亡者怕火，別忘了帶上火系的武器或技能。'])); return; }
     yield* sayAll(['古岩魔像被魔王的瘴氣侵蝕，才會暴走。牠是「構造體」魔物，最怕水和草的攻擊。', '累了就去旅店休息，別太勉強自己。']);
   },
-  *apprentice() { yield* say(Game.st.flags.golem ? '你真的打倒魔像了！我以後也要變得和你一樣強！' : '村長爺爺說，異世界來的人都很強！是真的嗎？'); },
-  *gatekeeper() { yield* say(Game.st.flags.license ? '你就是那個從異世界來的人？好厲害！路上小心喔！' : '前面就是晨霧道路，外面有魔物喔！沒有冒險者證的人不能出鎮。'); },
+  *apprentice() { const n = Game.st.flags.ch2 || 0; if (n >= 1) { yield* say(n >= 10 ? '聽說王都的鐘是你敲響的！我以後也要去王都看看！' : '你要去王都了嗎！回來要跟我說鐘塔長什麼樣子喔！'); return; } yield* say(Game.st.flags.golem ? '你真的打倒魔像了！我以後也要變得和你一樣強！' : '村長爺爺說，異世界來的人都很強！是真的嗎？'); },
+  *gatekeeper() { const n = Game.st.flags.ch2 || 0; yield* say(n >= 10 ? '聽說王都的鐘又響了！是你做的吧？' : n >= 1 ? '聽說你要去王都了？好羨慕喔！路上小心！' : Game.st.flags.license ? '你就是那個從異世界來的人？好厲害！路上小心喔！' : '前面就是晨霧道路，外面有魔物喔！沒有冒險者證的人不能出鎮。'); },
   exitBlock(ow) {
     if (Game.st.flags.license) return null;
     return (function* () {
@@ -7412,7 +7420,7 @@ const Events = {
       if (g) g.dir = 'down';
     })();
   },
-  *kid() { yield* say(Game.st.flags.golem ? '聽說你打倒了魔像！異世界的盔甲果然很強！' : '你的衣服好奇怪喔！那是異世界的盔甲嗎？'); },
+  *kid() { if ((Game.st.flags.ch2 || 0) >= 1) { yield* say('王都的騎士來找你耶！你要變成騎士了嗎？'); return; } yield* say(Game.st.flags.golem ? '聽說你打倒了魔像！異世界的盔甲果然很強！' : '你的衣服好奇怪喔！那是異世界的盔甲嗎？'); },
   *well(ow) {
     const st = Game.st;
     if (st.flags.wellCharm) { if (st.bag.rope) { if (yield* yesNo('要用繩索下到井底嗎？')) yield* ow.warp('sewer', 7, 12, 'up'); } else yield* say('一口很深的井。井底好像還有更深的通道……需要繩索才能下去。'); return; }
@@ -7443,7 +7451,7 @@ const Events = {
   *herbalist() {
     const f = Game.st.flags, st = Game.st;
     if (!f.herb) { f.herb = 1; st.bag.superPotion = (st.bag.superPotion || 0) + 1; yield* sayAll(['哦？這麼深的森林裡，居然有客人。', '我是採藥的老頭子。這個給你，路上小心。']); yield* itemGet(st.name + '得到了好傷藥！'); }
-    yield* sayAll([f.mossGiant ? '苔石巨人倒下了啊……森林的空氣都變輕了。' : '西南邊的水池旁，住著一尊苔石巨人。它身上的青苔最怕火。', '對了……森林西北角有一棵「會讓路的樹」。聽說要等遺跡的魔像倒下，森林才會醒來。']);
+    yield* sayAll([f.mossGiant ? '苔石巨人倒下了啊……森林的空氣都變輕了。' : '西南邊的水池旁，住著一尊苔石巨人。它身上的青苔最怕火。', f.golem ? '對了……森林西北角那棵「會讓路的樹」，魔像倒下之後好像醒過來了。' : '對了……森林西北角有一棵「會讓路的樹」。聽說要等遺跡的魔像倒下，森林才會醒來。']);
   },
   *grandpa() { yield* sayAll(['年輕人，一直按著方向走，就會自己跑起來喔。（想慢慢走的話，在「設定→跑步」改成按住B鍵。）', '你說你們那邊有不用馬就能跑的鐵箱子？……真是難以想像啊。', Game.st.flags.golem ? '聽說魔像倒下的那晚，鎮上那口老井發出了光。' : '鎮上那口老井，據說跟遺跡是連在一起的。']); },
   *florist() {
@@ -7460,7 +7468,7 @@ const Events = {
       else { yield* sayAll(['你說小麥沒事？……他在做什麼，你不能告訴我？', '……好吧，我相信你。只要他平安就好。', '謝謝你特地去找他。這是一點心意。']); st.bag.superPotion = (st.bag.superPotion || 0) + 1; st.money += 200; yield* itemGet(st.name + '得到了好傷藥×1和200 G！'); }
       return;
     }
-    yield* say(f.q1res === 'home' ? '小麥說要先在鎮上好好練習劍術，再去冒險。' : '最近小麥常常晚回家，手上還多了好多傷……你知道些什麼嗎？');
+    yield* say(f.q1res === 'home' ? '小麥說要先在鎮上好好練習劍術，再去冒險。' : (st.ep || {}).florist1 ? '小麥現在光明正大地在鎮外練劍了。……我每天都幫他縫護膝。' : '最近小麥常常晚回家，手上還多了好多傷……你知道些什麼嗎？');
   },
   *lostBoy(ow, ent) {
     const f = Game.st.flags, st = Game.st;
@@ -7476,7 +7484,7 @@ const Events = {
     if (ok) { st.money -= cost; st.respawn = { map: 'inn', x: 4, y: 4, dir: 'up' }; yield* say('好的，請稍等一下。'); yield* healRitual(); yield* sayAll(['讓你久等了！你的體力已經完全恢復了。', '歡迎再來喔！']); }
     else yield* say('歡迎再來喔！');
   },
-  *traveler() { if (Game.st.flags.golem) { yield* sayAll(['你真的打倒魔像了？……', '魔王復活的傳聞，王都那邊也開始流傳了。', '我得趕快把這件事告訴王都的朋友。']); return; } yield* sayAll(['我在古岩遺跡附近見過那隻魔像……', '它的拳頭開始發光、凝聚力量時，下一擊非常可怕。', '那時候就選「防禦」，能擋下一半的傷害！']); },
+  *traveler() { if ((Game.st.flags.ch2 || 0) >= 2 && (comState('c4', Game.st) || {}).res === 'returned') { yield* sayAll(['懷錶已經交給艾德了。那傢伙高興得差點從鐘塔上掉下來。', '……你在王都見過他了吧？']); return; } if (Game.st.flags.golem) { yield* sayAll(['你真的打倒魔像了？……', '魔王復活的傳聞，王都那邊也開始流傳了。', '我得趕快把這件事告訴王都的朋友。']); return; } yield* sayAll(['我在古岩遺跡附近見過那隻魔像……', '它的拳頭開始發光、凝聚力量時，下一擊非常可怕。', '那時候就選「防禦」，能擋下一半的傷害！']); },
   *clerk() { yield* shopFlow(); },
   *customer() { const f = Game.st.flags || {}; // v12.0.1 (player: 「貝蒂的對話文字過時 重新設計」): tips that match the current systems, by progress
     if (!f.license) { yield* sayAll(['出門前記得多買幾瓶藥水喔，這家店的最實在了。', '武器和防具大多要找鐵匠打造。打倒魔物拿到的素材，先別急著賣掉！']); return; }
@@ -7849,14 +7857,15 @@ function npcCommission(id, ow, ent) {
   const mine = Object.keys(COM_GIVER).filter(k => COM_GIVER[k] === id && COMMISSIONS[k]);
   for (const k of mine) { const c = COMMISSIONS[k], s = comState(k, st); if (!s || s.s !== 'on' || c.deliver || !comProgress(k, st).ready) continue;
     return (function* () {
-      if (k === 'c4') { delete st.bag.pocketWatch; s.s = 'done'; s.res = 'returned'; yield* sayAll(['這是……我的懷錶！', '它是鐘塔的鑰匙錶，停在三點十分——異界之門開啟的那一刻。', '若你來到王都，請到鐘塔找我。我叫艾德。']); yield* giveReward(c.reward); return; }
+      if (k === 'c4') { delete st.bag.pocketWatch; s.s = 'done'; s.res = 'returned'; yield* sayAll(['這是……我的懷錶！', '它是鐘塔的鑰匙錶，停在三點十分——異界之門開啟的那一刻。', '我的朋友艾德在王都的鐘塔旁開鐘錶店。這只錶，我會親手交還給他。', '若你來到王都，請去找他。']); yield* giveReward(c.reward); return; }
       if (c.need) for (const i in c.need) st.bag[i] -= c.need[i];
       s.s = 'done'; Sound.sfx('select'); yield* sayAll([].concat(COM_THANKS[k] || '謝謝你！')); yield* say('完成了委託「' + c.n + '」！'); yield* giveReward(c.reward); })();
   }
   const k = mine.find(q => comAvail(q, st)); if (!k) return null; const c = COMMISSIONS[k];
   return (function* () {
     yield* sayAll(COM_TALK[k] || [c.d]); yield* comHintSay(c); yield* say('報酬：' + rewardText(c.reward));
-    if (!(yield* yesNo('要接下「' + c.n + '」嗎？'))) { yield* say('這樣啊……有空的話再來找我吧。'); return; }
+    if (!(yield* yesNo('要接下「' + c.n + '」嗎？'))) { (st.comNo || (st.comNo = {}))[k] = 1; yield* say('這樣啊……有空的話再來找我吧。'); return; } // v12.0.1: remembered, so the NPC's own talk / services come back (10z)
+    if (st.comNo) delete st.comNo[k];
     st.com[k] = { s: 'on', k: c.kill ? (((st.dex || {})[c.kill[0]] || {}).won || 0) : 0 };
     if (c.deliver) st.bag[c.deliver[0]] = 1;
     Sound.sfx('select'); yield* say('接下了「' + c.n + '」！' + (c.deliver ? '\n得到了「' + ITEMS[c.deliver[0]].n + '」。' : '（「狀態→任務」按A可以看進度和取得地點）'));
@@ -7999,7 +8008,8 @@ Overworld.prototype.eliteTalk = function* (e) {
   if (res === 'win') {
     const firstWin = !st.flags[e.id]; st.flags[e.id] = 1; (st.eliteDown || (st.eliteDown = {}))[e.id] = st.steps || 0; this.elites = this.elites.filter(x => x !== e && x.id !== e.id);
     if (firstWin && e.id === 'boneKnight') { yield* say('骸骨騎士倒下後，身後的石棺打開了……'); st.money += 2000; st.bag.powerFruit = (st.bag.powerFruit || 0) + 1; yield* itemGet(st.name + '找到了古王的寶藏：2000 G和力量果實！'); }
-    if (firstWin && Events['eliteWin_' + e.id]) yield* Events['eliteWin_' + e.id](this, e);
+    if (firstWin && Events['eliteWin_' + e.id]) { const mid = this.map.id; yield* Events['eliteWin_' + e.id](this, e);
+      if (Game.scene === this && this.map && this.map.id === mid) this.load(mid, this.p.x, this.p.y, this.p.dir, true); } // v12.0.1: the win event changes flags (漢斯 wakes up, 格倫 breaks camp…) — rebuild the map so the NPCs move at once
     if (firstWin) yield* say('（打倒的菁英魔物，過一段時間會再出現。再戰時會掉落不同的裝備。）');
   } else yield* this.retreatFrom(e, res);
 };
@@ -9745,7 +9755,7 @@ function syncRecipesCh2(st = Game.st) { for (const R of RECIPES_CH2) { const i =
     if (f.sheepQ) L.push({ n: '牧羊女的煩惱', t: f.sheepQ >= 2 ? '完成：趕走了暴走野豬王。' : '金穗平原的暴走野豬王把羊群嚇跑了。打倒牠。', done: f.sheepQ >= 2, rw: '牧羊女的謝禮' });
     if (f.lichQ) L.push({ n: '冰霜巫妖', t: f.lichQ >= 2 ? '完成：打倒了冰霜巫妖。' : '村長婆婆說冰晶洞窟的冰之祭壇有巫妖。打倒牠。', done: f.lichQ >= 2, rw: '村長的寶物' });
     if (f.princessQ) L.push({ n: '公主的心願', t: f.princessQ >= 2 ? '完成：送給公主一顆冰晶。' : '公主想看看北方的雪。帶冰晶×2給她。（有' + (st.bag.iceCrystal || 0) + '）', done: f.princessQ >= 2, rw: '王國徽章' });
-    if (f.captainQ) L.push({ n: '騎士長的遺志', t: f.captainQ >= 2 ? '完成：把騎士長的黑劍交給了莉婭。' : '把黯滅騎士長的事告訴莉婭。', done: f.captainQ >= 2, rw: '???' });
+    if (f.captainQ) L.push({ n: '騎士長的遺志', t: f.captainQ >= 2 ? '完成：把騎士長的吊墜交給了莉婭。' : '把黯滅騎士長留下的吊墜拿給莉婭看。', done: f.captainQ >= 2, rw: '萬靈藥×3' });
     if (n >= 10) L.push({ n: '星見神殿', t: f.starGuardian ? '完成：打倒了星之守護者，看見了初代勇者的星圖。' : '鐘樓出現了通往星空的「星之門」。', done: !!f.starGuardian, rw: '星之守護' });
   };
 }
@@ -9783,7 +9793,7 @@ Object.assign(Events, {
     if (!f.liaQuest) { f.liaQuest = 1; yield* sayAll(['對了，北方街道的盜賊……', '他們的頭目「黑羽」就躲在街道西側的樹林裡，騎士團一直抓不到他。', '如果你遇到他……不，你一定打得贏的！']); return; }
     if (f.blackFeather && f.liaQuest === 1) { f.liaQuest = 2; yield* sayAll(['你打倒黑羽了！？', '騎士團長知道了一定會嚇一跳……這是我的一點心意。']); st.bag.megaPotion = (st.bag.megaPotion || 0) + 3; st.bag.tpBook = (st.bag.tpBook || 0) + 1; yield* itemGet(st.name + '得到了特級傷藥×3和天賦之書！'); return; }
     if (f.captainQ === 1) { f.captainQ = 2; yield* sayAll(['……黯滅騎士長？', '……那是我的父親。五年前在北境失蹤的騎士團長。', '謝謝你……讓他解脫了。', '這把劍……你留著吧。父親一定也希望它繼續守護別人。']); st.bag.elixir = (st.bag.elixir || 0) + 3; yield* itemGet(st.name + '得到了萬靈藥×3！'); return; }
-    yield* say(n < 5 ? '齒輪的事，鐘錶師艾德會告訴你。他的店在王城的東邊。' : n < 9 ? '宰相竟然是叛徒……北方一定要小心！' : '謝謝你，勇者。'); },
+    yield* say(n < 4 ? '齒輪的事，鐘錶師艾德會告訴你。他的店在王城的東邊。' : n === 4 ? '鐘塔的門開了！鐘樓就交給你了！' : n < 9 ? '宰相竟然是叛徒……北方一定要小心！' : '謝謝你，勇者。'); },
   *capKid() { yield* say(ch2() >= 10 ? '鐘響了！我聽到了！' : '我長大要當騎士！像莉婭姊姊一樣！'); },
   *capWoman() { yield* say(ch2() < 5 ? '宰相大人最近好奇怪……每天晚上都一個人去鐘塔。' : '宰相竟然是魔王的手下……好可怕。'); },
   *capOld() { yield* sayAll(['五百年前，初代勇者就是敲響了鐘塔的「曙光鐘」，才把魔王的四將封印起來的。', '鐘停了以後……封印就一年比一年弱了。']); },
@@ -9805,7 +9815,7 @@ Object.assign(Events, {
       yield* itemGet(st.name + '得到了「北境通行證」！'); yield* say('穿過霜語雪原，就是北境。……拜託你了。'); saveGame(); return;
     }
     if (n >= 10) { yield* sayAll(['曙光鐘的聲音傳遍了整個王國。', '謝謝你，勇者。你是這個國家的英雄。', '……但是，四將還剩下三個。魔王也還在沉睡。', '需要你的時候……我會再派莉婭去找你的。']); return; }
-    yield* say(n < 5 ? '時之齒輪……拜託你了。' : '北境很危險。一定要平安回來。');
+    yield* say(n < 4 ? '時之齒輪……拜託你了。' : n === 4 ? '鐘塔的門開了嗎……鐘樓就拜託你了。' : n === 9 ? '曙光之心……你真的帶回來了！快去鐘樓吧！' : '北境很危險。一定要平安回來。');
   },
   *princess() {
     const st = Game.st, f = st.flags;
@@ -9814,7 +9824,7 @@ Object.assign(Events, {
     yield* say(f.princessQ === 2 ? '冰晶放在窗邊，晚上會發光喔。' : '父王最近總是很累的樣子……'); },
   *chancellor() { yield* say(ch2() < 4 ? '……異界之人啊。齒輪的事，就麻煩你了。（……他的眼神好冷。）' : '……鐘塔的事，辛苦你了。'); },
   *castleGuard1() { yield* say('國王陛下就在前面。'); },
-  *castleGuard2() { yield* say('宰相大人最近常常不在王城……'); },
+  *castleGuard2() { const n = ch2(); yield* say(n < 5 ? '宰相大人最近常常不在王城……' : n < 10 ? '沒想到宰相大人竟然是……陛下這幾天都睡不好。' : '王城終於恢復平靜了。'); },
   *liaCastle() { yield* sayAll(['勇者！你回來了！', '王國的人都在說你的故事呢。', '下次……換我保護你！']); },
   *priest() {
     const st = Game.st; yield* say(ch2() >= 10 ? '曙光鐘又響了……願光明永遠照耀你。' : '願曙光保佑你。要讓我為你祈禱嗎？');
@@ -9833,6 +9843,7 @@ Object.assign(Events, {
       Sound.sfx('door'); saveGame(); return;
     }
     if (n === 4) { yield* say('鐘塔的門開了！鐘樓在最上面。'); return; }
+    if (n === 9) { yield* say('你把曙光之心帶回來了！快去鐘樓，把它放回鐘裡吧！'); return; }
     if (n >= 5 && n < 10) { yield* say('曙光之心被搶走了……沒有它，鐘就只是一塊廢鐵。一定要把它搶回來！'); return; }
     yield* say('曙光鐘又開始走了。這一次，我會好好守著它。');
   },
@@ -9944,7 +9955,7 @@ Object.assign(Events, {
     f.victor = 1; ow.boss = null; setCh2(8);
     yield* sayAll(['「……不……不可能……」', '「我只是……不想變老……不想死而已……」', '維克托的身體化成了黑霧，消散了。', '王座之間的結界消失了。']); ow.load('duskFort1', ow.p.x, ow.p.y, ow.p.dir, true); saveGame();
   },
-  *eliteWin_duskCaptain() { const f = Game.st.flags; if (!f.captainQ) { f.captainQ = 1; yield* sayAll(['黯滅騎士長倒下了。鎧甲裡掉出了一個舊舊的吊墜……', '吊墜裡，是一個小女孩的畫像。……那張臉，好像在哪裡見過。', '（回王都告訴莉婭吧。）']); } },
+  *eliteWin_duskCaptain() { const f = Game.st.flags; if (!f.captainQ) { f.captainQ = 1; yield* sayAll(['黯滅騎士長倒下了。鎧甲裡掉出了一個舊舊的吊墜……', '吊墜裡，是一個小女孩的畫像。……那張臉，好像在哪裡見過。', '（把吊墜拿給莉婭看吧。）']); } },
   *moldBoss(ow) {
     const st = Game.st, f = st.flags; if (f.mold) return;
     yield* sayAll(['王座上坐著一個全身漆黑的騎士。', '他的手裡，握著發著金光的「曙光之心」。', '「……五百年了。」', '「那個男人用鐘聲把我關在這裡的時候，也是這樣的眼神。」', '「曙光之印……又一個異界之人。」', '「這一次，我不會再輸。」']);
@@ -11899,12 +11910,14 @@ function* hillsIntro() {
 function* hillsReport() {
   const st = Game.st, f = st.flags;
   yield* sayAll(['……這塊黑色的石頭，是從磨石裡掉出來的？', '（村長把結晶舉到光底下，臉色一下子沉了下來。）', '……瘴氣結晶。五百年前，黯滅之王的軍隊就是帶著這種東西，讓野獸變成魔物的。', '魔王的封印果然在減弱了……']);
+  if ((f.creekQ || 0) >= 3) { f.hillsQ = 3; yield* sayAll(['……漢斯身上也沾過這種瘴氣吧。', '還好你已經用清泉草治好了他。……真是幫了大忙。']); return; } // v12.0.1: the creek was already done (order of play)
   Sound.sfx('exclaim'); yield* wait(20); yield* blackText(['「村長爺爺！」', '門被用力推開，諾拉氣喘吁吁地衝了進來。']);
   yield* sayAll(['諾拉：「爸爸他……爸爸的手臂上長出了黑色的斑點，一直在發燒……！」', '……是瘴氣病。被瘴氣纏得太久了。', '要治好它，需要碧溪谷源頭的「清泉草」。碧溪谷就在晨霧道路的西邊。',
     '……聽說最近那條溪的水也變黑了。北邊橋頭那隻沼澤鱷，說不定就是從那裡被趕下來的。']);
+  if ((f.creekQ || 0) >= 2) { f.hillsQ = 3; yield* say('……咦？你身上這股清香——這不就是清泉草嗎！'); yield* say('諾拉：「真的嗎！？那、那快點拿給爸爸！」'); yield* say('（目標：把清泉草帶回風車丘陵的漢斯家。）'); return; } // v12.0.1: the catfish fell before this report (creekQ stays 2, no softlock)
   yield* say('諾拉：「我也要去！我認得清泉草長什麼樣子……拜託你！」');
   const r = yield* ask('要帶諾拉一起去嗎？', ['一起去吧', '妳留下來照顧爸爸']);
-  f.noraCreek = r === 0 ? 1 : 0; f.hillsQ = 3; f.creekQ = 1;
+  f.noraCreek = r === 0 ? 1 : 0; f.hillsQ = 3; f.creekQ = Math.max(f.creekQ || 0, 1);
   yield* say(r === 0 ? '諾拉：「嗯！我先去溪谷的入口等你！」' : '諾拉：「……嗯。爸爸就交給我。你一定要平安回來喔。」');
   yield* say('（新的目標：到晨霧道路西側的碧溪谷，找到源頭的清泉草。推薦Lv8〜11）');
 }
@@ -12219,7 +12232,7 @@ Object.assign(Events, {
       else yield* sayAll(['格倫：「……也是。換作是我，也不會相信一個盜賊。」', '格倫：「我就在驛站這裡。累了就回來喝口水吧。」']);
       yield* say('（目標：趕走斷崖上的盜賊，通過楓紅關道。推薦Lv17〜20）'); return;
     }
-    yield* say((f.passQ || 0) >= 2 ? '格倫：「鹿王安靜下來了……謝啦，小鬼。」' : '格倫：「驛站燒掉了，不過井水還能喝。休息一下吧。」');
+    yield* say(f.grenNorth ? '格倫：「驛站重新蓋起來了。累了就來喝碗熱湯吧，勇者。」' : (f.passQ || 0) >= 2 ? '格倫：「鹿王安靜下來了……謝啦，小鬼。」' : '格倫：「驛站燒掉了，不過井水還能喝。休息一下吧。」');
     yield* healRitual('喝了口井水，在驛站的屋簷下休息了一下，體力完全恢復了！');
   },
   passCamp(ow) {
@@ -12291,7 +12304,7 @@ Object.assign(Events, {
     if (r === 0) { delete st.bag.heroBanner; st.boost = st.boost || {}; st.boost.str = (st.boost.str || 0) + 1; Sound.jingle('item'); yield* sayAll(['把戰旗插回了墳前。', '一陣風吹過古戰場，彷彿有很多人在說「謝謝」……']); yield* itemGet('得到了曙光軍的祝福！力量永久+1。'); }
     else { st.bag.tpBook = (st.bag.tpBook || 0) + 1; yield* sayAll(['把戰旗小心地收了起來。', '（在旗桿裡發現了一本古老的手冊……是初代勇者的戰術筆記。）']); yield* itemGet('得到了天賦之書！'); }
     if (f.grenTrust) {
-      yield* sayAll(['格倫：「……結束了啊。」', '格倫：「那群蠢蛋，說是要去北邊的街道投靠一個叫『黑羽』的盜賊頭子。……我就不送了。」', '格倫：「這個給你。以前的東西，現在用不著了。」']);
+      yield* sayAll(['格倫：「……結束了啊。」', '格倫：「那群蠢蛋，說是要去北邊的街道投靠一個叫『黑羽』的盜賊頭子。……我得把那群笨蛋拉回來。有需要就喊我，我會趕過去。」', '格倫：「這個給你。以前的東西，現在用不著了。」']);
       gainBP('qGrenBand', 3); Sound.jingle('item'); yield* itemGet('得到了「格倫的護腕」的設計圖和打造券！');
     } else { st.money += 2000; yield* sayAll(['回到關道的時候，格倫託馬車夫帶了一個袋子給你。', '「……謝啦，小鬼。」']); yield* itemGet('得到了格倫的謝禮2000 G！'); }
     f.passQ = 3; f.passDone = 1;
@@ -12441,7 +12454,7 @@ NPC_ROLES.任務.push('noraCap');
 Events.noraCap = function* () {
   const st = Game.st, f = st.flags;
   if (!f.noraCapMet) {
-    f.noraCapMet = 1; yield* sayAll(['諾拉：「啊！你也在王都！」', '諾拉：「我跟爸爸一起來賣麵粉的。王都好大喔……我迷路了三次。」']);
+    f.noraCapMet = 1; yield* sayAll(['諾拉：「啊！你也在王都！」', '諾拉：「我幫爸爸來王都賣麵粉的。王都好大喔……我迷路了三次。」']);
     if (f.passDone && !st.bag.heroBanner) yield* sayAll(['諾拉：「對了……爸爸說，我們家的祖先是曙光軍的士兵，死在北邊的古戰場。」', '諾拉：「……你說你把戰旗插回了墓前？」', '諾拉：「……謝謝你。爸爸聽了一定會哭的。」']);
     else yield* say('諾拉：「爸爸說，我們家的祖先是曙光軍的士兵。好像是在北邊的古戰場……」');
     yield* sayAll(['諾拉：「我想用金穗平原的麥子烤麵包！可是王都的麥子好貴……」', '諾拉：「如果你能幫我摘3根金麥穗，我就烤麵包給你吃！」']);
@@ -12934,7 +12947,7 @@ for (const k in (typeof PORTRAIT_PX_ROWS !== 'undefined' ? PORTRAIT_PX_ROWS : {}
 }
 const PORTRAIT_NAME = { 格倫: 'gren', 鐵斧格倫: 'gren', 諾拉: 'nora', 村長婆婆: 'frostElder', 提姆: 'tim', 小麥: 'mai' }; // characters who share a field look but get their own portrait
 let SPK_INDEX = null;
-function spkIndex() { if (SPK_INDEX) return SPK_INDEX; const L = []; for (const k in MAPS) for (const n of MAPS[k].npcs || []) if (n.name && n.look && !PORTRAIT_PROPS.has(n.look)) L.push({ name: n.name, look: n.look, map: k, id: n.id, x: n.x, y: n.y }); return (SPK_INDEX = L); }
+function spkIndex() { if (SPK_INDEX) return SPK_INDEX; const L = []; for (const k in MAPS) for (const n of MAPS[k].npcs || []) if (n.name && n.look && !PORTRAIT_PROPS.has(n.look)) L.push({ name: n.name, look: n.look, map: k, id: n.id, x: n.x, y: n.y, show: n.show || null }); return (SPK_INDEX = L); }
 function speakerFor(name) {
   if (Game.st && name === Game.st.name) return { name, hero: 1 };
   const L = spkIndex(), e = L.find(x => x.name === name) || L.find(x => x.name.endsWith(name)) || L.find(x => x.name.includes(name));
@@ -13039,7 +13052,7 @@ function questDest(q, st = Game.st) {
     return null; }
   const t = q.t || ''; let best = null, bi = 1e9;
   for (const id in MAPS) { const nm = MAPS[id].name; if (!nm || nm.length < 2) continue; const i = t.indexOf(nm); if (i >= 0 && (i < bi || (i === bi && nm.length > MAPS[best.map].name.length))) { bi = i; best = { map: mapIdByName(nm) || id, what: '前往' + nm }; } }
-  for (const e of spkIndex()) { const short = e.name.length > 3 ? e.name.slice(-2) : e.name, i = t.indexOf(e.name) >= 0 ? t.indexOf(e.name) : t.indexOf(short); if (i >= 0 && i < bi) { bi = i; best = { map: e.map, spot: e, what: '找' + e.name }; } }
+  for (const e of spkIndex()) { if (e.show && !e.show(st)) continue; const short = e.name.length > 3 ? e.name.slice(-2) : e.name, i = t.indexOf(e.name) >= 0 ? t.indexOf(e.name) : t.indexOf(short); if (i >= 0 && i < bi) { bi = i; best = { map: e.map, spot: e, what: '找' + e.name }; } }
   return best;
 }
 function questTracked(st = Game.st) { const L = questList(st).filter(q => !q.done); return L.find(q => q.n === st.track) || L.find(q => q.main) || L[0] || null; }
@@ -13261,7 +13274,8 @@ function evoFlash(b, t, br) { const C = b.center(t), last = br[br.length - 1] ==
 function* orbEvolveFlow(o) {
   const s = orbStage(o), D = ORB_A[o.k];
   yield* say('「' + orbName(o) + '」可以進化了！選擇進化的方向：');
-  const r = yield* ask('「' + D.n + ORB_STAGE[s + 1] + '」', ['強攻：' + evoOptText(o, s, 'A'), '附加：' + evoOptText(o, s, 'B'), '之後再說'], { cancel: false });
+  const opt = br => { const code = br === 'A' ? (D.A ? orbAOpt(o, s) : null) : D.B[s]; if (code && evoCode(code)[0] === 'cheap' && typeof DEF !== 'undefined') { const sk = DEF.skills['o_' + o.k]; return sk && sk.cooldown > 0 ? '冷卻−1' : 'MP−40%'; } return evoOptText(o, s, br); };
+  const r = yield* ask('「' + D.n + ORB_STAGE[s + 1] + '」', ['強攻：' + opt('A'), '附加：' + opt('B'), '之後再說'], { cancel: false });
   if (r > 1) { o.told = 0; return false; }
   o.e = (o.e || []).concat(r === 0 ? 'A' : 'B'); o.told = 0; Sound.jingle('levelup'); yield* itemGet('「' + orbName(o) + '」進化了！'); return true;
 }
@@ -13785,15 +13799,15 @@ Object.assign(COM_TALK, {
   c7: ['……這片森林，我走了四十年了。', '最近毒孢菇的孢子飄得到處都是，連最耐活的藥草都枯了。', '藥草沒了，鎮上的傷藥就沒了。', '年輕人，幫我打倒4隻毒孢菇吧。'],
   c8: ['你知道嗎，我們旅店以前有一道招牌菜。', '菇菇燉湯——是我先生教我的。他走了以後，我一直沒有勇氣再煮。', '……可是最近，我好想再嚐一次那個味道。', '能幫我帶毒孢子3個和蕈傘2個來嗎？放心，毒會煮掉的。'],
   c9: ['硬石不夠了。', '……沒有好石頭，就打不出好刀。這是師父教我的第一件事。', '廢棄礦坑的礦脈最多，就是魔物有點煩人。', '幫我帶6塊硬石來。報酬我不會虧待你。'],
-  c10: ['咳咳……你是冒險者？', '我在這礦坑挖了三十年，從來沒怕過黑。', '可是最近坑道蝠一大群一大群地飛，年輕的礦工都嚇跑了。', '幫我打倒5隻坑道蝠吧，讓那些小伙子敢回來上工。'],
+  c10: ['咳咳……你是冒險者？', '我在這礦坑挖了四十年，從來沒怕過黑。', '可是最近坑道蝠一大群一大群地飛，年輕的礦工都嚇跑了。', '幫我打倒5隻坑道蝠吧，讓那些小伙子敢回來上工。'],
   c11: ['喔喔，冒險者！你身上有沒有……骨頭？', '別那樣看我，我是收藏家。古代人會把骨頭刻成護身符。', '每一片骨片上都有它主人的故事，我想把那些故事留下來。', '帶5塊骨片來，我付好價錢。'],
   c12: ['……墓穴那邊，晚上會傳出哭聲。', '那裡葬著這個鎮的祖先。他們不該被怨靈打擾。', '我年紀大了，下不去。', '拜託你，打倒4隻怨靈，讓他們好好安息。'],
   c13: ['那、那個……你要去晨霧道路北邊嗎？', '這封信……能幫我交給守衛嗎？', '他每天都會經過花店，買一朵白色的雛菊，可是從來不說是要送誰……', '我自己不太敢去。拜、拜託了！'],
   c14: ['唉喲、唉喲……年輕人，扶我一下。', '年紀大了，腰痛又犯了。以前我孫子會幫我去採藥，現在他去王都當學徒了。', '能幫我帶藥草3株和魔力草1株來嗎？'],
-  c15: ['你看你看，莉婭姊姊的頭盔上有羽毛喔！好帥！', '我也想要一個羽毛髮飾……這樣我也能跟她一樣勇敢。', '可以幫我找3根羽毛嗎？路上的鳥型魔物會掉。'],
+  c15: ['你看你看，騎士的頭盔上都有羽毛喔！好帥！', '我也想要一個羽毛髮飾……這樣我也能跟騎士一樣勇敢。', '可以幫我找3根羽毛嗎？路上的鳥型魔物會掉。'],
   c16: ['……月露，你見過嗎？', '滿月的晚上，湖邊的月露草會結出像眼淚一樣的露水。', '我年輕時為了一個人，在這裡等了一整個月的滿月。現在只剩我一個人等了。', '能幫我帶5滴月露來嗎？我想調一瓶藥——給還在等的人。'],
   c17: ['冒險者！拜託你，看看這張網！', '全被湖蜥戰士撕爛了！這可是我女兒一針一線幫我補的。', '再不出海，這個月就沒錢買她的藥了。', '幫我打倒4隻湖蜥戰士吧！'],
-  c18: ['你好，我是旅店的藥師。', '峽谷那邊常有旅人被砂鉗蠍螫傷，送來時腳都腫成兩倍大。', '我想用蠍子自己的毒針做解毒劑——以毒攻毒。', '能幫我帶4根蠍尾針來嗎？'],
+  c18: ['……其實我年輕的時候，當過藥師喔。', '峽谷那邊常有旅人被砂鉗蠍螫傷，送來時腳都腫成兩倍大。', '我想用蠍子自己的毒針做解毒劑——以毒攻毒。', '能幫我帶4根蠍尾針來嗎？'],
   c19: ['唉——又被搶了！第三次了！', '峽谷鷹妖好像把信差的包裹當成獵物，專門從天上搶。', '包裹裡有很多人的家書……有些人等了半年。', '幫我打倒5隻峽谷鷹妖吧！我會準時把信送到的！'],
   c20: ['沼苔啊……是好東西。', '味道很臭，可是能治好很多傷。沼澤邊的人都靠它過冬。', '我老了，進不了沼澤了。', '幫我帶5把沼苔來，我來做成藥膏分給大家。'],
   c21: ['……燈塔的路，被樹妖堵住了。', '我每天晚上都要點燈，讓迷路的人找到回家的方向。', '可是現在，連我自己都過不去。', '請你打倒4隻枯木樹妖。'],
@@ -13825,7 +13839,7 @@ const COM_THANKS2 = {
   c11: ['喔喔喔！這片上面刻著狼！這片是鳥！', '古代人真是浪漫啊。我會把它們好好保存下來的。'],
   c12: ['……今晚，好安靜。', '祖先們應該睡得很好。謝謝你。'],
   c14: ['喔喔，這個藥草好新鮮！', '我孫子寫信來說，他在王都過得很好。……你要是遇到他，幫我跟他說，爺爺的腰好多了。'],
-  c15: ['哇啊——好漂亮的羽毛！', '我要做成髮飾，然後……然後我也要變得跟莉婭姊姊一樣勇敢！'],
+  c15: ['哇啊——好漂亮的羽毛！', '我要做成髮飾，然後……然後我也要變得跟你一樣勇敢！'],
   c16: ['……月露。你真的帶來了。', '（隱士把露水倒進小瓶子裡，看了很久。）', '她說過，會在滿月的晚上回來。……也許今晚就是。謝謝你。'],
   c17: ['湖蜥不敢靠近了！', '我明天就出海。女兒補的網，這次一定要撈到最大的魚給她看！'],
   c18: ['太好了，有了這些，解毒劑就做得出來了。', '峽谷的旅人不用再怕了。謝謝你。'],
@@ -13863,9 +13877,9 @@ const COM_AFTER = {
 };
 { const _nc = npcCommission; npcCommission = function (id, ow, ent) {
     const g = _nc(id, ow, ent); if (g) return g; const st = Game.st; if (!st || !st.flags || !st.flags.license) return null;
-    const ep = EPILOGUES.find(E => E.npc === id && !(st.ep || {})[E.key] && E.when(st)); if (ep) return (function* () { (st.ep || (st.ep = {}))[ep.key] = 1; yield* sayAll(typeof ep.lines === 'function' ? ep.lines(st) : ep.lines); if (ep.gift) yield* ep.gift(st); })();
+    const ep = EPILOGUES.find(E => E.npc === id && !(st.ep || {})[E.key] && E.when(st)); if (ep) return (function* () { (st.ep || (st.ep = {}))[ep.key] = 1; yield* sayAll(typeof ep.lines === 'function' ? ep.lines(st) : ep.lines); if (ep.gift) yield* ep.gift(st); if (Events[id]) yield* Events[id](ow, ent); })(); // v12.0.1: then the NPC's own talk / service (inn, smith…) as usual
     const k = Object.keys(COM_GIVER).find(q => COM_GIVER[q] === id && COM_AFTER[q] && (comState(q, st) || {}).s === 'done' && !(st.comAfter || {})[q]);
-    if (k) return (function* () { (st.comAfter || (st.comAfter = {}))[k] = 1; yield* sayAll(COM_AFTER[k]); })();
+    if (k) return (function* () { (st.comAfter || (st.comAfter = {}))[k] = 1; yield* sayAll(COM_AFTER[k]); if (Events[id]) yield* Events[id](ow, ent); })();
     return null;
   }; }
 const ch2p = st => typeof ch2 === 'function' ? ch2(st) : 0;
@@ -17268,3 +17282,44 @@ function* advAnnounce() {
 { const _u = Overworld.prototype.update; Overworld.prototype.update = function (...a) {
     const st = this.st; if (st && !this.script && !UI.stack.length && !Game.trans && advOn(st) && !st.flags.advTold && st.flags.license) { this.run(advAnnounce()); return; }
     return _u.apply(this, a); }; }
+const npcDef12 = (map, id) => MAPS[map] && (MAPS[map].npcs || []).find(n => n.id === id);
+function npcShow12(map, id, f) { const n = npcDef12(map, id); if (!n) { console.warn('npcfix: no', map, id); return; } const old = n.show;
+  n.show = st => f(st, old ? !!old(st) : true); if (typeof mapCache !== 'undefined') delete mapCache[map]; }
+const ch2n = st => (st.flags && st.flags.ch2) || 0;
+npcShow12('millHouse', 'noraHome', (st, o) => o && !(st.flags.creekQ === 3 && ch2n(st) >= 3));
+npcShow12('capital', 'liaCap', (st, o) => o && ch2n(st) < 7);
+npcShow12('maplePass', 'grenPass', st => !st.flags.grenMet || !st.flags.grenTrust || !!st.flags.grenNorth);
+npcShow12('oldField', 'grenCamp', st => !!st.flags.grenTrust && (st.flags.passQ || 0) >= 1 && !st.flags.passDone);
+npcShow12('route', 'lostBoy', (st, o) => o && !(st.ep && st.ep.florist1));
+npcShow12('swamp', 'ruby', (st, o) => o && ((st.ev || {}).ruby || 0) < 3);
+NPC_ROLES.任務.push('miraForest'); if (typeof NPC_WHERE !== 'undefined') NPC_WHERE.miraForest = '迷霧森林';
+MAPS.forest.npcs.push({ id: 'miraForest', x: 20, y: 4, dir: 'left', look: 'apprentice', name: '學徒米拉', show: st => (st.flags.qMira || 0) >= 2 }); delete mapCache.forest;
+Events.miraForest = function* () { const f = Game.st.flags;
+  yield* say(f.witchFate ? '米拉：「爺爺說，沼澤的魔女是他的師妹……下次我想跟她學調藥！」' : (f.qMira || 0) >= 3 ? '米拉：「上次真的謝謝你！我現在只在白天去沼澤採藥了。」' : '米拉：「我平安回來了！爺爺在那邊，快去跟他說吧。」'); };
+COM_GIVER.c16 = 'hermit'; COM_GIVER.c17 = 'fisher';
+MAPS.town.npcs.push({ id: 'fisher', x: 6, y: 17, dir: 'left', look: 'man', name: '漁夫' }); delete mapCache.town;
+Object.assign(NPC_WHERE, { fisher: '萌芽鎮・池塘邊', hermit: NPC_WHERE.hermit || '銀月湖畔' }); NPC_ROLES.任務.push('fisher');
+Events.fisher = function* () { const st = Game.st, s = comState('c17', st) || {};
+  yield* say(s.s === 'done' ? '漁夫：「女兒補的網，現在每天都撈得滿滿的！」' : s.s === 'on' ? '漁夫：「湖蜥戰士在銀月湖那邊……拜託你了。」' : '漁夫：「這個池塘的魚太小了。我平常都去銀月湖撒網。」'); };
+{ const _ca = comAvail; let hideNo = false, hideAll = false;
+  comAvail = function (k, st = Game.st) { if (hideAll || (hideNo && st && st.comNo && st.comNo[k])) return false; return _ca(k, st); };
+  const _nc = npcCommission; npcCommission = function (id, ow, ent) {
+    const st = Game.st, story = !!(st && typeof STORY_MARKS !== 'undefined' && STORY_MARKS[id] && STORY_MARKS[id](st));
+    hideNo = true; hideAll = story; let g; try { g = _nc(id, ow, ent); } finally { hideNo = false; hideAll = false; } if (g || story) return g || null;
+    const k = st && st.comNo && Object.keys(COM_GIVER).find(q => COM_GIVER[q] === id && COMMISSIONS[q] && st.comNo[q] && comAvail(q, st)); if (!k) return null;
+    const ev = Events[id]; if (!ev) { delete st.comNo[k]; return _nc(id, ow, ent); }
+    return (function* () { const r = yield* ask((ent && ent.name) || '要做什麼？', ['聊天', '委託「' + COMMISSIONS[k].n + '」']);
+      if (r === 1) { delete st.comNo[k]; const g2 = _nc(id, ow, ent); if (g2) yield* g2; } else if (r === 0) yield* ev(ow, ent); })();
+  }; }
+function* liaPendant12() { const st = Game.st, f = st.flags; f.captainQ = 2;
+  yield* sayAll(['莉婭：「……這個吊墜。」', '莉婭：「裡面的畫……是小時候的我。父親一直把它帶在身上。」', '莉婭：「這把劍，你留著吧。父親一定也希望它繼續守護別人。」']);
+  st.bag.elixir = (st.bag.elixir || 0) + 3; yield* itemGet(st.name + '得到了萬靈藥×3！'); }
+{ const _lf = Events.liaFort; Events.liaFort = function* (ow, ent) { const st = Game.st, f = st.flags;
+    if (!f.liaFort1 && f.duskCaptain) { f.liaFort1 = 1; yield* sayAll(['莉婭：「……終於追上你了。」', '莉婭：「騎士團長命令我守住這裡——勇者的退路，由我來保護。」']); } // the knight is already freed: she doesn't ask for it any more
+    if (f.captainQ === 1) yield* liaPendant12();
+    if (f.blackFeather && f.liaQuest === 1) { yield* Events.liaCap(ow, ent); return; }
+    yield* _lf.call(this, ow, ent); }; }
+{ const _lc = Events.liaCastle; Events.liaCastle = function* (ow, ent) { const f = Game.st.flags;
+    if (f.captainQ === 1) { yield* liaPendant12(); return; }
+    if (f.blackFeather && f.liaQuest === 1) { yield* Events.liaCap(ow, ent); return; }
+    yield* _lc.call(this, ow, ent); }; }

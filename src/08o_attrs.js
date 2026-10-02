@@ -73,7 +73,7 @@ function* attrScreen() {
       touchRegion(4, Y - 1, 168, 14, () => { if (i === r) tapKey('right'); else i = r; }); });
     const Y2 = 26 + ATTRS.length * 15 + 1; [['推薦配點', av > 0], ['重置（重生之水' + ((st.bag && st.bag.attrReset) || 0) + '）', attrSpent(st) > 0 && (st.bag && st.bag.attrReset) > 0]].forEach(([t, ok], n) => { const X = 8 + n * 82, on = i === ATTRS.length + n; drawBtn(x, X, Y2, 78, 16, on); Font.drawC(x, t, X + 39, Y2, ok ? (on ? UIC.text : '#c9cfe4') : UIC.dis, UIC.textSh, 9); touchRegion(X, Y2, 78, 16, () => { i = ATTRS.length + n; tapKey('a'); }); });
     const k = ATTRS[i]; drawWin(x, 4, 142, 168, 110, 'menu');
-    Font.draw(x, k ? ATTR_NAMES[k] + '：' : (i === ATTRS.length ? '依職業的推薦比例分配剩下的點數。' : '用重生之水把所有屬性點收回來重新分配。'), 12, 144, UIC.accent, UIC.textSh, 10);
+    { const t = k ? ATTR_NAMES[k] + '：' : (i === ATTRS.length ? '依職業的推薦比例分配剩下的點數。' : '用重生之水把所有屬性點收回來重新分配。'); Font.draw(x, t, 12, 144, UIC.accent, UIC.textSh, fitSize(t, 152, 10, 7)); }
     if (k) { const [l1, l2] = ATTR_HELP12[k], z1 = fitSize(l1, 120), z2 = fitSize(l2, 154), z3 = fitSize(ATTR_HELP_NOTE, 154, 8);
       Font.draw(x, l1, 46, 145, UIC.text, UIC.textSh, z1); Font.draw(x, l2, 12, 156, '#ffd890', UIC.textSh, z2); Font.draw(x, ATTR_HELP_NOTE, 12, 166, UIC.muted, UIC.textSh, z3); }
     const s = heroStats(st); DER.forEach(([n, key, u], r) => { const X = 12 + (r % 2) * 80, Y = 178 + Math.floor(r / 2) * 12, v = s[key], d = Math.round((v - s0[key]) * 10) / 10;

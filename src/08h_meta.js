@@ -69,7 +69,7 @@ Game.pendingNew = null;
 }
 TitleScene.prototype.menu = function* () {
   while (true) {
-    const save = this.hasSave ? loadGame() : null, canNG = save && save.flags && save.flags.golem;
+    const save = this.hasSave ? loadGame() : null, canNG = false; // v12.0.1: 二周目 closed while the story is still being written
     const opts = this.hasSave ? ['繼續冒險', '新的冒險'] : ['新的冒險']; if (canNG) opts.push('二周目'); opts.push('設定');
     const r = yield* choose(opts, { x: 38, y: 168, w: 100, cancel: true });
     if (r < 0) { this.stage = 'press'; return; }
