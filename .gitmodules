@@ -1,0 +1,3 @@
+[submodule "build/cubic"]
+	path = build/cubic
+	url = https://github.com/ACh-K/Cubic-11.git
