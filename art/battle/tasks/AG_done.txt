@@ -1,0 +1,4 @@
+meadowWolf: PASS; battle=5 frames 32x32, 8x preview; binary alpha, <=20 colors, fixed bottom; frontal battle eyes visually checked; no unresolved concerns.
+creekCroc: PASS; battle=5 frames 32x32, 8x preview; binary alpha, <=20 colors, fixed bottom; frontal battle eyes visually checked; no unresolved concerns.
+stumpling: PASS; battle=5 frames 32x32, 8x preview; binary alpha, <=20 colors, fixed bottom; frontal battle eyes visually checked; no unresolved concerns.
+piglet: PASS; battle=5 frames 32x32, 8x preview; binary alpha, <=20 colors, fixed bottom; frontal battle eyes visually checked; no unresolved concerns.
