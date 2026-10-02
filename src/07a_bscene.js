@@ -339,7 +339,7 @@ class Battle {
       const fit = (t, sz, maxW) => { let z = sz; while (z > 7 && Font.width(t, z) > maxW) z--; return z; };
       const can = this.canUse(id), est = can.ok && D.power && foe ? this.estimate(id, foe.id) : 0, L = X + 8, R = X + w - 8;
       const tgt = D.target === 'all_enemies' ? (D.chain ? '・連鎖' : '・全體') : '', learn = ob && !D.tags.includes('sig') ? (ob.learned ? '・已學會' : '・學會' + Math.min(ob.x || 0, BB.learnN(id)) + '/' + BB.learnN(id)) : '';
-      const t1 = (D.tags.includes('sig') ? '職業招式・' : '') + (D.el === '一般' ? '無屬性' : D.el + '屬性') + '・' + (D.cat === '變' ? '輔助' : D.cat === '物' ? '物理' : '魔法') + tgt + learn, cT = can.ok ? this.costText(id) : (can.short || '不可用');
+      const t1 = (D.tags.includes('sig') ? '職業招式・' : '') + (D.el === '一般' ? '無屬性' : D.el + '屬性') + '・' + (D.cat === '變' ? '輔助' : D.cat === '物' ? '物理' : '魔法') + tgt + (typeof skillAttrTag === 'function' && skillAttrTag(id) ? '・' + skillAttrTag(id) : '') + learn, cT = can.ok ? this.costText(id) : (can.short || '不可用');
       x.fillStyle = c; x.fillRect(L, DY + 6, 4, 4); Font.draw(x, t1, L + 7, DY + 1, '#c9cfe4', UIC.textSh, fit(t1, 9, w - 30 - Font.width(cT, 9))); Font.drawR(x, cT, R, DY + 1, can.ok ? '#8ab8ff' : UIC.bad, UIC.textSh, 9);
       let y = DY + 14;
       if (D.power) { const pw = mv && typeof powTxt === 'function' ? powTxt(mv) : '威力' + D.power, eT = est ? '預估≈' + est : ''; x.fillStyle = 'rgba(200,160,80,0.35)'; x.fillRect(L, DY + 13, w - 16, 1);

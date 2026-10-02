@@ -237,3 +237,14 @@ function bladeArc(x, cx, cy, r, a0, a1, w) { const N = 16, o = [], i = [];
     const w = Math.max(5, (p.w || 4) * 1.6), A = Math.min(1, a * 1.6), [nx, ny] = E(mid, 1), ux = nx - mx, uy = ny - my;
     x.save(); x.fillStyle = p.c; x.globalAlpha = A * 0.3; blade(from, to, w * 0.7, -ux * w * 0.9, -uy * w * 0.9);
     x.globalAlpha = A; blade(from, to, w); x.fillStyle = '#ffffff'; x.globalAlpha = Math.min(1, A * 1.3); const pad = (to - from) * 0.08; blade(from + pad, to - pad, Math.max(1.2, w * 0.36)); x.restore(); x.globalAlpha = 1; }; }
+
+/* ---------- v12.0.1 每招技能標出吃哪一項屬性（玩家：「可以」，接在屬性面板說明之後） ----------
+   Read from the skill's own attrScale modifier, so the tag can never disagree with the damage. Shown in the battle skill box,
+   the menus' skill info, the weapon details, and (with the exact current multiplier) in the ⓘ power formula. */
+function skillAttr(id) { const D = DEF.skills[id]; if (!D) return null; for (const m of D.mods || []) if (m.mul && m.mul.f === 'attrScale') return { k: m.mul.v[0], r: m.mul.v[1] }; return null; }
+function skillAttrTag(id) { const a = skillAttr(id); return a ? ATTR_NAMES[a.k] + '加成' : ''; }
+{ const _si = BB.skillInfo; BB.skillInfo = function (st, id) { const t = _si.call(this, st, id), tag = skillAttrTag(id); if (!tag) return t; const i = t.indexOf('　'); return i < 0 ? t + '・' + tag : t.slice(0, i) + '・' + tag + t.slice(i); }; }
+{ const _pf = powFormula; powFormula = function (id, st = Game.st) { const t = _pf(id, st), a = skillAttr(id); if (!a || !st) return t;
+    const v = (heroAttr(st) || {})[a.k] || 0, over = Math.max(0, v - 10), mul = 1 + over * a.r / 100, L = t.split('\n');
+    L[0] += '　' + ATTR_NAMES[a.k] + v + (over ? '：×' + mul.toFixed(2) : '：超過10起每點+' + a.r + '%');
+    return L.join('\n'); }; }

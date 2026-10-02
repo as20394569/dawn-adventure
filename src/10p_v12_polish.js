@@ -22,7 +22,7 @@ orbSlots = function () { return 0; }; // gearEn already returns null: EN_EFF is 
     X.push(['【武器】', UIC.accent, 10, 0]);
     const id = typeof weaponSkill12 === 'function' && weaponSkill12(g.b), D = id && DEF.skills[id];
     if (D) { const e = st && BB.lib(st)[BB.libKey(id)], N = BB.learnN(id);
-      add('技能「' + D.name + '」' + (D.cooldown ? '冷卻' + D.cooldown : '無冷卻') + '・' + (e && e.learned ? '已學會' : '用' + N + '次學會' + (e && e.x ? '（' + e.x + '/' + N + '）' : '')), '#c8f0ff', 10, 4);
+      add('技能「' + D.name + '」' + (D.cooldown ? '冷卻' + D.cooldown : '無冷卻') + (typeof skillAttrTag === 'function' && skillAttrTag(id) ? '・' + skillAttrTag(id) : '') + '・' + (e && e.learned ? '已學會' : '用' + N + '次學會' + (e && e.x ? '（' + e.x + '/' + N + '）' : '')), '#c8f0ff', 10, 4);
       add((MOVES[id] && MOVES[id].d) || D.desc || '', UIC.muted, 9, 10); }
     if (S && S.s) add('特技「' + S.s.n + '」' + wspecText(S.s), '#ffd860', 10, 4);
     if (S && S.p && S.p.n && typeof wpassText === 'function') add('被動「' + S.p.n + '」' + wpassText(S.p), UIC.warm, 10, 4);
