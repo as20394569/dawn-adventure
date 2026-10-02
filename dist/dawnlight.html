@@ -11102,7 +11102,8 @@ function* classCardScreen(keys, o = {}) {
     Font.draw(x, c.n, 12, 100, col, UIC.textSh, 13); { let z = 9; while (z > 7 && Font.width(c.tag, z) > 92) z--; Font.drawR(x, c.tag, 164, 103, UIC.muted, UIC.textSh, z); }
     x.fillStyle = `rgba(${r},${gg},${b},0.5)`; x.fillRect(12, 117, 152, 1);
     drawFitText(x, c.text, 12, 119, 152, 36, 10);
-    Font.draw(x, (c.sig12 ? '擅長武器：' : '推薦武器：') + c.w.join('・'), 12, 156, UIC.accent, UIC.textSh, 9); if (c.res12) Font.drawR(x, '核心資源：' + c.res12, 164, 156, UIC.warm, UIC.textSh, 9); const pas = classPassives(c.k);
+    { const wl = (c.sig12 ? '擅長武器：' : '推薦武器：') + c.w.join('・'), rl = c.res12 ? '核心資源：' + c.res12 : ''; let z = 9; while (z > 7 && Font.width(wl, z) + Font.width(rl, z) + 6 > 152) z--; /* v12.0.1: the two used to run into each other (法杖・魔導書＋核心資源) */
+      Font.draw(x, wl, 12, 156, UIC.accent, UIC.textSh, z); if (rl) Font.drawR(x, rl, 164, 156, UIC.warm, UIC.textSh, z); } const pas = classPassives(c.k);
     if (c.sig12) Font.draw(x, '職業招式「' + c.sig12 + '」', 12, 167, '#ffd860', UIC.textSh, 8); else Font.draw(x, pas.length ? '職業被動：' + pas.map(p => p.n).join('・') : '天賦分支', 12, 167, pas.length ? UIC.warm : UIC.muted, UIC.textSh, 8); Font.drawR(x, '天賦每層二選一', 164, 167, UIC.muted, UIC.textSh, 8);
     c.br.forEach(([bn, bd], n) => { const Y = 180 + n * 19, ic = branchIcon(c.k, n); x.fillStyle = shade(col, -0.35); x.fillRect(12, Y + 1, 44, 14); if (ic) x.drawImage(ic, 13, Y + 2); Font.drawC(x, bn, ic ? 40 : 34, Y, '#ffffff', UIC.textSh, bn.length > 3 ? (ic ? 8 : 9) : 10); let z = 9; while (z > 7 && Font.width(bd, z) > 104) z--; Font.draw(x, bd, 60, Y + 1, UIC.text, UIC.textSh, z); });
     Font.drawR(x, (o.cancel ? 'B：返回　' : '') + 'A：選擇' + (keys.length > 1 ? '　◀▶：切換' : ''), 164, 241, UIC.muted, UIC.textSh, 8);
@@ -14860,7 +14861,7 @@ class BattleCore {
     return true;
   }
   costOf(u, sk, c) { if (c.all) { const p = this.payable(u, sk, c); const f = this.allFix(u, sk, c); return p == null ? (f ? f.pay : this.costMin(u, sk, c)) : p; }
-    let a = c.amount; for (const m of u.mods) if (m.costMul && condOk(m.cond, { core: this, owner: u, src: u, skill: sk }) && (!m.res || m.res === c.res)) a = Math.round(a * m.costMul); return Math.max(0, a); }
+    let a = c.amount; for (const m of u.mods) if (m.costMul != null && condOk(m.cond, { core: this, owner: u, src: u, skill: sk }) && (!m.res || m.res === c.res)) a = Math.round(a * m.costMul); return Math.max(0, a); }
   execute(cmd) {
     const u = this.byId[cmd.actor];
     if (cmd.type === 'skill') return this.doSkill(u, DEF.skills[cmd.skill], cmd.tg.map(id => this.byId[id]), cmd);
@@ -17449,4 +17450,43 @@ if (typeof BATTLE_HELP !== 'undefined') for (const P of BATTLE_HELP) {
   if (P[0] === '行動順序') P[1] = ['每回合一開始先選好指令，再依速度輪流行動（左邊的小方塊是這回合的順序）。', '防禦、道具、逃跑一定最先執行；「搶先」技能在這一回合先出手，比對手慢也一樣。', '每回合每隻魔物只行動一次（頭目的「狂怒」例外）。', '防禦會一直減傷到自己下一次行動開始。', '護盾、潮濕、能力變化等效果是以「自己的行動次數」計算。'];
   if (P[0] === '技能與冷卻') P[1] = P[1].map(t => /搶先/.test(t) ? '「搶先」技能在這一回合先出手（比對手慢也一樣）。' : t);
 }
+const ADV12 = {
+  swordsman: { n: '劍聖', res: '劍意上限 5→6', sig: '威力 +20%，會心命中時回復 1 劍意', pas: ['劍聖', '會心傷害 +20%'] },
+  mage: { n: '大魔導士', res: '咒印上限 3→4', sig: '威力 +20%，不消耗 MP', pas: ['大魔導士', '元素爆發的倍率 +0.3'] },
+  guardian: { n: '聖騎士', res: '守勢上限 5→6', sig: '威力 +20%，之後回復最大 HP 的 10%', pas: ['聖騎士', '護盾中受到的傷害 −15%'] },
+  ranger: { n: '神射手', res: '獵印上限 3→4 層（滿 4 層時引爆）', sig: '威力 +20%，引爆後留下 1 層獵印', pas: ['神射手', '獵印每層傷害 +6%→+8%'] },
+};
+const advOn = (st = Game.st) => !!(st && (st.lv || 0) >= 14 && st.flags && st.flags.deep);
+const advOf = (k, st = Game.st) => { const c = k && clsV7(k); return c && ADV12[c] && advOn(st) ? ADV12[c] : null; };
+for (const k in ADV12) { const C = CLASSES[k]; if (!C) continue; const base = C.n; ADV12[k].base = base;
+  Object.defineProperty(C, 'n', { get() { return advOn() ? ADV12[k].n : base; }, set(v) { ADV12[k].base = v; }, configurable: true, enumerable: true }); }
+const ADV_SIG = c => ({ stage: 'skill', who: 'attacker', mul: 1.2, cond: { skillIs: 'sig_' + c } });
+defPut('mechanics', 'adv_swordsman', { make: u => ({ rules: { max_ki: 1 }, mods: [ADV_SIG('swordsman'), { stage: 'attacker', who: 'attacker', critDmg: 20, cond: { hasPower: 1 } }],
+  triggers: [TRG(EVT.DAMAGE, 'src', { skillIs: 'sig_swordsman', evHit: 1, crit: 1, tgtSide: 'enemy' }, [GAIN('ki', 1)], { limit: { perAction: 1 } })] }) });
+defPut('mechanics', 'adv_mage', { make: u => ({ rules: { max_sigil: 1, burstPlus: 1 }, mods: [ADV_SIG('mage'), { stage: 'skill', costMul: 0, res: 'mp', cond: { skillIs: 'sig_mage' } }] }) });
+defPut('mechanics', 'adv_guardian', { make: u => ({ rules: { max_stance: 1 }, mods: [ADV_SIG('guardian'), { stage: 'defender', who: 'defender', mul: 0.85, cond: { ownerHasStatus: 'barrier', hasPower: 1 } }],
+  triggers: [TRG(EVT.SKILL_SUCCESS, 'src', { skillIs: 'sig_guardian', ownerAlive: 1 }, [{ type: 'heal', target: 'self', pct: 0.1 }])] }) });
+defPut('mechanics', 'adv_ranger', { make: u => ({ rules: { markMax: 1, huntUp: 1, markKeep: 1 }, mods: [ADV_SIG('ranger')] }) });
+{ const _b = BR.FORMULA.burstMul; BR.FORMULA.burstMul = c => _b(c) + (c.core.rule(c.src, 'burstPlus') ? 0.3 : 0); }
+{ const _h = BR.FORMULA.huntMul; BR.FORMULA.huntMul = c => _h(c) + (c.core.rule(c.src, 'huntUp') ? 0.02 * BV12.markOf(c.core, c.src, c.tgt) : 0); }
+{ const D = EFFECT_TYPES.hunt_detonate, _x = D.exec; D.exec = function (core, ef, ctx, ...r) { const u = ctx.owner, t = (ctx.targets || [])[0], before = t ? BV12.markOf(core, u, t) : 0;
+    const out = _x.call(this, core, ef, ctx, ...r); if (t && before && core.rule(u, 'markKeep') && core.isUp(t) && !BV12.markOf(core, u, t)) core.applyStatus(u, t, 'hunt_mark', { quiet: 1 }); return out; }; }
+{ const _hs = BB.heroSpec; BB.heroSpec = function (st, cfg) { const s = _hs.call(this, st, cfg), c = clsV7(st.cls); if (advOf(c, st) && DEF.mechanics['adv_' + c]) s.data.mechanics.push('adv_' + c); return s; }; }
+const advSigLine = id => { const D = DEF.skills[id]; if (!D || !D.tags.includes('sig')) return ''; const c = Object.keys(ADV12).find(k => 'sig_' + k === id), A = c && advOf(c); return A ? '【' + A.n + '】' + A.sig + '。' : ''; };
+{ const _si = BB.skillInfo; BB.skillInfo = function (st, id) { const t = _si.call(this, st, id), a = advSigLine(id); return a ? t + a : t; }; }
+{ const _pf = powFormula; powFormula = function (id, st = Game.st) { const t = _pf(id, st), a = advSigLine(id); return a ? t + '\n' + a : t; }; }
+{ const _cc = classCard; classCard = function (k) { const c = _cc(k), A = ADV12[clsV7(k)]; if (!A) return c;
+    if (advOn()) { c.tag = c.tag.replace('基本職業', '進階職業'); c.text += '\n進階被動「' + A.pas[0] + '」：' + A.pas[1]; } else c.text += '\n（Lv14 天賦覺醒後進階成' + A.n + '）';
+    return c; }; }
+classSelectScreen = function* () { return yield* classCardScreen(['swordsman', 'mage', 'guardian', 'ranger'], { title: '覺醒的儀式', confirm: k => '要走上「' + CLASSES[k].n + '」的道路嗎？\n（Lv14 找村長「天賦覺醒」時會進階成' + ADV12[k].n + '）' }); };
+function* advAnnounce() {
+  const st = Game.st; if (!st || !advOn(st) || st.flags.advTold) return; st.flags.advTold = 1; const c = clsV7(st.cls), A = ADV12[c];
+  if (A) { Sound.jingle('levelup'); yield* itemGet(st.name + '從' + A.base + '\n進階成為了' + A.n + '！');
+    yield* sayAll(['職業招式「' + ((DEF.skills['sig_' + c] || {}).name || '') + '」\n' + A.sig.replace('，', '，\n') + '。', A.res.replace('（', '\n（') + '。', '進階被動「' + A.pas[0] + '」：\n' + A.pas[1] + '。']); }
+  yield* sayAll(['劍士→劍聖、魔導士→大魔導士\n守護者→聖騎士、遊俠→神射手', '之後換成其他基本職業，\n也會是進階後的職業。']);
+}
+{ const _ct = classTalk; classTalk = function* (...a) { const r = yield* _ct.apply(this, a); if (advOn() && !Game.st.flags.advTold) yield* advAnnounce(); return r; }; }
+{ const _u = Overworld.prototype.update; Overworld.prototype.update = function (...a) {
+    const st = this.st; if (st && !this.script && !UI.stack.length && !Game.trans && advOn(st) && !st.flags.advTold && st.flags.license) { this.run(advAnnounce()); return; }
+    return _u.apply(this, a); }; }
 </script>

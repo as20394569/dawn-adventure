@@ -263,7 +263,7 @@ class BattleCore {
     return true;
   }
   costOf(u, sk, c) { if (c.all) { const p = this.payable(u, sk, c); const f = this.allFix(u, sk, c); return p == null ? (f ? f.pay : this.costMin(u, sk, c)) : p; }
-    let a = c.amount; for (const m of u.mods) if (m.costMul && condOk(m.cond, { core: this, owner: u, src: u, skill: sk }) && (!m.res || m.res === c.res)) a = Math.round(a * m.costMul); return Math.max(0, a); }
+    let a = c.amount; for (const m of u.mods) if (m.costMul != null && condOk(m.cond, { core: this, owner: u, src: u, skill: sk }) && (!m.res || m.res === c.res)) a = Math.round(a * m.costMul); return Math.max(0, a); }
   execute(cmd) {
     const u = this.byId[cmd.actor];
     if (cmd.type === 'skill') return this.doSkill(u, DEF.skills[cmd.skill], cmd.tg.map(id => this.byId[id]), cmd);
