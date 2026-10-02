@@ -1,0 +1,224 @@
+<title>曙光冒險</title>
+<meta name="description" content="手機直式遊玩的像素風異世界冒險 RPG。">
+<meta name="theme-color" content="#0b0d16">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@500;700&family=Silkscreen:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  color-scheme: dark;
+  --bg:#0b0d16; --bg-dot:#141830;
+  --shell:#161a2a; --shell-hi:#1d2236; --shell-lo:#121524; --shell-edge:#0a0c14;
+  --bezel:#07080f; --bezel-hi:#262d4a;
+  --ink:#eef1f8; --muted:#8a93b3; --led:#6ee7d2; --accent:#6ee7d2;
+  --dpad:#222840; --dpad-hi:#323a5a; --pill:#1f2438;
+  --pix:"Silkscreen", ui-monospace, "Courier New", monospace;
+}
+html,body{height:100%}
+body{margin:0;background:var(--bg);background-image:radial-gradient(var(--bg-dot) 1px,transparent 1px);background-size:6px 6px;color:var(--ink);
+  font-family:var(--pix);overflow:hidden;overscroll-behavior:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+#app{height:100%;box-sizing:border-box;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding-inline:6px;padding-block:4px}
+#shell{--s:min(29vw,112px);--b:min(13vw,52px);--padh:calc(var(--s) + 14px);width:min(100%,560px,calc((100dvh - var(--padh) - 36px) * 0.6875 + 18px));display:flex;flex-direction:column;align-items:stretch;gap:6px;box-sizing:border-box;
+  background:linear-gradient(180deg,var(--shell-hi),var(--shell) 40%,var(--shell-lo));border-radius:18px;padding:6px 6px 8px;
+  border:1px solid #262c46;box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 10px 30px rgba(0,0,0,.5)}
+#bezel{background:var(--bezel);border-radius:10px;padding:3px;box-shadow:inset 0 0 0 1px var(--bezel-hi)}
+#bezelTop{display:flex;align-items:center;gap:8px;font-size:9px;letter-spacing:.14em;color:#5f6789;padding:0 2px 4px}
+.led{width:6px;height:6px;border-radius:50%;background:var(--led);box-shadow:0 0 6px var(--led)}
+.brand{margin-left:auto}
+#screenWrap{width:100%;aspect-ratio:11/16;display:flex;align-items:center;justify-content:center;background:#000;border-radius:3px;overflow:hidden}
+#screen{display:block;touch-action:none;background:#000}
+#pad{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:4px;touch-action:none;min-height:var(--s);padding-inline:4px}
+#dpad{position:relative;width:var(--s);height:var(--s);grid-column:3;grid-row:1;justify-self:end;touch-action:none;cursor:pointer}
+#dpad::before,#dpad::after{content:"";position:absolute;background:var(--dpad);border-radius:8px;box-shadow:inset 0 1px 0 var(--dpad-hi),0 3px 0 #06070c}
+#dpad::before{left:33%;top:2%;width:34%;height:96%}
+#dpad::after{top:33%;left:2%;width:96%;height:34%}
+#dpad .arr{position:absolute;z-index:2;width:0;height:0;border:7px solid transparent;opacity:.55;pointer-events:none;transform:translate(-50%,-50%)}
+#dpad .u{left:50%;top:14%;border-bottom:9px solid #8a93b3;border-top:0}
+#dpad .d{left:50%;top:86%;border-top:9px solid #8a93b3;border-bottom:0}
+#dpad .l{top:50%;left:14%;border-right:9px solid #8a93b3;border-left:0}
+#dpad .r{top:50%;left:86%;border-left:9px solid #8a93b3;border-right:0}
+#dpad[data-dir=up] .u,#dpad[data-dir=down] .d,#dpad[data-dir=left] .l,#dpad[data-dir=right] .r{opacity:1;filter:drop-shadow(0 0 4px var(--accent))}
+#dpad[data-dir=up] .u{border-bottom-color:var(--accent)}#dpad[data-dir=down] .d{border-top-color:var(--accent)}#dpad[data-dir=left] .l{border-right-color:var(--accent)}#dpad[data-dir=right] .r{border-left-color:var(--accent)}
+#dpad .zone{position:absolute;inset:-2px -20px -12px -20px} /* v12.0.1: touch area a little larger than the cross (it never covers the game screen) */
+#dpad .hub{position:absolute;z-index:1;left:50%;top:50%;width:22%;height:22%;transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(circle at 40% 35%,#2c3350,#1a1f33)}
+#mid{display:flex;flex-direction:column;gap:12px;align-items:center;grid-column:2;grid-row:1;justify-self:center;align-self:end;padding-bottom:2px}
+#mid button{font-family:var(--pix);font-size:10px;letter-spacing:.06em;color:var(--muted);background:var(--pill);border:1px solid #2c3352;border-radius:6px;padding:6px 10px;touch-action:none;cursor:pointer}
+#mid button.on{transform:translateY(1px);color:var(--accent);border-color:var(--accent)}
+#ab{position:relative;width:calc(var(--b) * 2.2);height:calc(var(--b) * 1.9);grid-column:1;grid-row:1;justify-self:start}
+#ab .round{position:absolute;width:var(--b);height:var(--b);border-radius:50%;font-family:var(--pix);font-weight:700;font-size:calc(var(--b) * .32);color:var(--muted);
+  background:radial-gradient(circle at 40% 30%,#283050,#1a1f33 70%);border:2px solid #343c5e;box-shadow:0 3px 0 #06070c,0 6px 12px rgba(0,0,0,.35);touch-action:none;cursor:pointer}
+#ab [data-k=a]{color:var(--accent);border-color:var(--accent);box-shadow:0 3px 0 #06070c,0 0 10px rgba(110,231,210,.18)}
+#ab .round.on{transform:translateY(2px);box-shadow:0 1px 0 #06070c;background:#2a3456}
+#ab [data-k=a]{right:0;top:0}
+#ab [data-k=b]{left:0;bottom:4px}
+#keys{margin:0;font-family:system-ui,sans-serif;font-size:12px;color:var(--muted);text-align:center;line-height:1.6;max-width:440px}
+#keys b{font-family:var(--pix);color:var(--ink);font-weight:400;background:#1c2136;border-radius:4px;padding:0 5px}
+#nameBox{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(5,6,12,.7);z-index:10;padding-inline:16px}
+#nameBox[hidden]{display:none}
+#nameForm{background:#0e1120;color:var(--ink);border:1px solid #3a4262;border-top:2px solid var(--accent);border-radius:6px;padding:16px;display:flex;flex-direction:column;gap:10px;width:min(320px,100%);box-sizing:border-box;font-family:system-ui,sans-serif;box-shadow:0 10px 30px rgba(0,0,0,.5)}
+#nameForm label{font-size:15px;font-weight:600}
+#nameField{font-size:20px;padding:8px 10px;border:1px solid #3a4262;border-radius:4px;background:#161a2e;color:var(--ink);-webkit-user-select:text;user-select:text}
+#nameField:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+#nameForm .row{display:flex;gap:8px;justify-content:flex-end}
+#nameForm button{font-size:15px;padding:8px 16px;border-radius:4px;border:1px solid #3a4262;background:#1a1f33;color:var(--ink);cursor:pointer}
+#nameForm button[type=submit]{background:var(--accent);border-color:var(--accent);color:#0b0d16;font-weight:600}
+button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+@media (hover:none),(pointer:coarse){ #keys{display:none} #bezelTop{display:none} }
+@media (hover:hover) and (pointer:fine){ #shell{--padh:calc(var(--s) + 60px)} }
+/* short screens: tighten controls */
+@media (orientation:portrait) and (max-height:700px){ #shell{--s:min(26vw,96px);--b:min(11.5vw,44px)} #mid{gap:6px} }
+/* phone held sideways: controls on both sides of the tall screen */
+@media (orientation:landscape) and (pointer:coarse){
+  #app{padding-block:4px}
+  #shell{width:auto;max-width:100%;height:100%;display:grid;grid-template-columns:auto auto auto;grid-template-rows:1fr auto;align-items:center;justify-content:center;column-gap:18px;row-gap:4px;border-radius:26px;padding:8px 14px}
+  #pad{display:contents;--s:min(128px,17vw,40dvh);--b:min(58px,8vw,18dvh)}
+  #bezel{grid-column:2;grid-row:1/3;height:calc(100dvh - 34px);display:flex;flex-direction:column;box-sizing:border-box;padding:4px 6px 6px}
+  #bezelTop{padding-bottom:2px}
+  #screenWrap{height:100%;width:auto;flex:1;min-height:0}
+  #dpad{grid-column:3;grid-row:1/3;justify-self:center}
+  #ab{grid-column:1;grid-row:1;justify-self:center;align-self:end}
+  #mid{grid-column:1;grid-row:2;flex-direction:row;justify-self:center;align-self:start;padding:0}
+}
+body.battle #pad,body.battle #dpad,body.battle #ab,body.battle #mid{display:none}
+body.battle #shell{--padh:0px}
+@media (prefers-reduced-motion:reduce){ #ab .round.on,#mid button.on{transform:none} }
+/* v27c phones held upright: thinner frame and a slightly smaller pad, so the game screen gets the room (playtest: S25+, "about 1 cm bigger") */
+@media (pointer:coarse) and (orientation:portrait){
+  #app{padding:2px 0;gap:0}
+  #shell{--s:min(25vw,94px);--b:min(11.5vw,44px);--padh:calc(var(--s) + 6px);width:min(100%,560px,calc((100dvh - var(--padh) - 12px) * 0.6875 + 4px));border-radius:8px;padding:1px 1px 2px;gap:3px;border-width:0}
+  #bezel{padding:1px;border-radius:5px}
+  #pad{padding-inline:6px}
+}
+@media (pointer:coarse) and (orientation:portrait) and (max-height:640px){ #shell{--s:min(22vw,82px);--b:min(10vw,40px)} }
+</style>
+<main id="app">
+  <div id="shell">
+    <div id="bezel">
+      <div id="bezelTop"><span class="led"></span><span>BATTERY</span><span class="brand">DAWNLIGHT</span></div>
+      <div id="screenWrap"><canvas id="screen" width="176" height="256" aria-label="遊戲畫面"></canvas></div>
+    </div>
+    <div id="pad">
+      <div id="dpad" role="group" aria-label="方向鍵"><span class="zone"></span><span class="hub"></span><span class="arr u"></span><span class="arr d"></span><span class="arr l"></span><span class="arr r"></span></div>
+      <div id="mid"><button type="button" data-k="select" aria-label="SELECT">SELECT</button><button type="button" data-k="start" aria-label="START 選單">START</button></div>
+      <div id="ab"><button type="button" class="round" data-k="b" aria-label="B 取消／跑步">B</button><button type="button" class="round" data-k="a" aria-label="A 確認">A</button></div>
+    </div>
+  </div>
+  <p id="keys"><b>↑↓←→</b>/<b>WASD</b> 移動　<b>Z</b> 確認　<b>X</b> 取消・按住跑步　<b>Enter</b> 選單</p>
+  <div id="nameBox" hidden><form id="nameForm" autocomplete="off"><label for="nameField">輸入你的名字（最多 6 個字）</label><input id="nameField" maxlength="6" enterkeyhint="done"><div class="row"><button type="button" id="nameCancel">返回</button><button type="submit">決定</button></div></form></div>
+</main>
+
+<!-- Font: Cubic 11 (俐方體11號) by ACh-K, used under the SIL Open Font License 1.1 (text follows).
+[Cubic 11]
+These fonts are free software.
+Unlimited permission is granted to use, copy, and distribute them, with or without modification, either commercially or noncommercially.
+THESE FONTS ARE PROVIDED "AS IS" WITHOUT WARRANTY.
+此字型是免費的。
+無論您是否進行對本字型進行商業或非商業性修改，均可無限制地使用，複製和分發它們。
+本字型的衍生品之授權必須與此字型相同，且不作任何擔保。
+[JF Dot M+H 12]
+Copyright(c) 2005 M+ FONTS PROJECT
+[M+ BITMAP FONTS]
+Copyright (C) 2002-2004 COZ
+These fonts are free software.
+Unlimited permission is granted to use, copy, and distribute it, with or without modification, either commercially and noncommercially.
+THESE FONTS ARE PROVIDED "AS IS" WITHOUT WARRANTY.
+これらのフォントはフリー（自由な）ソフトウエアです。
+あらゆる改変の有無に関わらず、また商業的な利用であっても、自由にご利用、複製、再配布することができますが、全て無保証とさせていただきます。
+
+This Font Software is licensed under the SIL Open Font License, Version 1.1.
+This license is copied below, and is also available with a FAQ at:
+https://scripts.sil.org/OFL
+
+
+- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
+SIL OPEN FONT LICENSE Version 1.1 - 26 February 2007
+- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
+
+PREAMBLE
+The goals of the Open Font License (OFL) are to stimulate worldwide
+development of collaborative font projects, to support the font creation
+efforts of academic and linguistic communities, and to provide a free and
+open framework in which fonts may be shared and improved in partnership
+with others.
+
+The OFL allows the licensed fonts to be used, studied, modified and
+redistributed freely as long as they are not sold by themselves. The
+fonts, including any derivative works, can be bundled, embedded, 
+redistributed and/or sold with any software provided that any reserved
+names are not used by derivative works. The fonts and derivatives,
+however, cannot be released under any other type of license. The
+requirement for fonts to remain under this license does not apply
+to any document created using the fonts or their derivatives.
+
+DEFINITIONS
+"Font Software" refers to the set of files released by the Copyright
+Holder(s) under this license and clearly marked as such. This may
+include source files, build scripts and documentation.
+
+"Reserved Font Name" refers to any names specified as such after the
+copyright statement(s).
+
+"Original Version" refers to the collection of Font Software components as
+distributed by the Copyright Holder(s).
+
+"Modified Version" refers to any derivative made by adding to, deleting,
+or substituting - - in part or in whole - - any of the components of the
+Original Version, by changing formats or by porting the Font Software to a
+new environment.
+
+"Author" refers to any designer, engineer, programmer, technical
+writer or other person who contributed to the Font Software.
+
+PERMISSION & CONDITIONS
+Permission is hereby granted, free of charge, to any person obtaining
+a copy of the Font Software, to use, study, copy, merge, embed, modify,
+redistribute, and sell modified and unmodified copies of the Font
+Software, subject to the following conditions:
+
+1) Neither the Font Software nor any of its individual components,
+in Original or Modified Versions, may be sold by itself.
+
+2) Original or Modified Versions of the Font Software may be bundled,
+redistributed and/or sold with any software, provided that each copy
+contains the above copyright notice and this license. These can be
+included either as stand-alone text files, human-readable headers or
+in the appropriate machine-readable metadata fields within text or
+binary files as long as those fields can be easily viewed by the user.
+
+3) No Modified Version of the Font Software may use the Reserved Font
+Name(s) unless explicit written permission is granted by the corresponding
+Copyright Holder. This restriction only applies to the primary font name as
+presented to the users.
+
+4) The name(s) of the Copyright Holder(s) or the Author(s) of the Font
+Software shall not be used to promote, endorse or advertise any
+Modified Version, except to acknowledge the contribution(s) of the
+Copyright Holder(s) and the Author(s) or with their explicit written
+permission.
+
+5) The Font Software, modified or unmodified, in part or in whole,
+must be distributed entirely under this license, and must not be
+distributed under any other license. The requirement for fonts to
+remain under this license does not apply to any document created
+using the Font Software.
+
+TERMINATION
+This license becomes null and void if any of the above conditions are
+not met.
+
+DISCLAIMER
+THE FONT SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO ANY WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT
+OF COPYRIGHT, PATENT, TRADEMARK, OR OTHER RIGHT. IN NO EVENT SHALL THE
+COPYRIGHT HOLDER BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+INCLUDING ANY GENERAL, SPECIAL, INDIRECT, INCIDENTAL, OR CONSEQUENTIAL
+DAMAGES, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+FROM, OUT OF THE USE OR INABILITY TO USE THE FONT SOFTWARE OR FROM
+OTHER DEALINGS IN THE FONT SOFTWARE.
+
+-->
+<!-- The game's code is in the separate file game.js (published next to this page), with art in hd/ and px/.
+     Edit game.js, not this page, and keep this page small: the shared-link viewer (people not logged in)
+     fails to open pages over ~3.2MB, while separate files load fine. Bump ?v= when game.js changes. -->
+<script src="game.js?v=7395f8ebf1" onerror="document.body.insertAdjacentHTML('beforeend','<p style=&quot;position:fixed;inset:auto 0 40% 0;text-align:center;color:#eef1f8;font:16px sans-serif&quot;>遊戲檔載入失敗，請重新整理頁面。</p>')"></script>
+

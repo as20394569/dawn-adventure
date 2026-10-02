@@ -2228,7 +2228,7 @@ function checkAch() {
 }
 function drawToast(x) {
   const q = Game.toastQ; if (!q || !q.length || UI.stack.length || !(Game.scene instanceof Overworld)) return; const T = q[0]; if (T.t === 0) Sound.sfx('save'); T.t++;
-  const y = T.t < 14 ? -30 + T.t * 2.4 : T.t > 150 ? 4 - (T.t - 150) * 2.4 : 4; const w = 150, X = (W - w) / 2, Y = Math.round(y);
+  const y = T.t < 14 ? -30 + T.t * 3.6 : T.t > 150 ? 20 - (T.t - 150) * 3.6 : 20; /* v12.0.1: below the top row (area name・weather・自動存檔) instead of on top of it */ const w = 150, X = (W - w) / 2, Y = Math.round(y);
   drawPanel(x, X, Y, w, 28, null); x.fillStyle = UIC.warm; x.fillRect(X + 4, Y + 4, 2, 20);
   Font.draw(x, '★ 成就解鎖　+200 G', X + 10, Y + 1, UIC.warm, UIC.textSh, 10); Font.draw(x, T.n, X + 10, Y + 13, UIC.text, UIC.textSh, 11);
   if (T.t > 164) q.shift();
@@ -4188,10 +4188,11 @@ class Menu {
   constructor(items, o = {}) {
     this.items = items.map(it => typeof it === 'string' ? { t: it } : it); this.i = o.index || 0; this.cols = o.cols || 1;
     this.rowH = o.rowH || 16; this.style = o.style || 'menu'; this.cancel = o.cancel !== false; this.onMove = o.onMove; this.twoTap = !!o.twoTap; this.done = false; this.result = -1;
-    const maxW = Math.max(...this.items.map(it => Font.width(it.t) + (it.r ? Font.width(it.r) + 12 : 0)));
+    const tH = o.title && o.oy === undefined && !o.h ? 14 : 0; this.tH = tH; // v12.0.1 (player: 「使用修煉之書時文字會出現遮擋」): a titled menu gets its own title row instead of drawing the title over the first item
+    const maxW = Math.max(...this.items.map(it => Font.width(it.t) + (it.r ? Font.width(it.r) + 12 : 0)), o.title ? Font.width(o.title) - 4 : 0);
     this.colW = o.colW || maxW + 20; this.w = o.w || this.colW * this.cols + 16; const rowsN = Math.ceil(this.items.length / this.cols);
-    const fitRows = Math.max(1, Math.floor(((o.y !== undefined ? H - o.y : TB_Y - 5) - 10) / this.rowH)); if (!o.visible && !o.h && rowsN > fitRows) o = { ...o, visible: fitRows }; // long menus scroll instead of running off screen
-    this.h = o.h || Math.min(rowsN, o.visible || rowsN) * this.rowH + 10; this.x = o.x ?? (W - this.w - 4); this.y = o.y ?? (TB_Y - this.h - 1); this.buttons = o.buttons; this.ox = o.ox ?? 14; this.oy = o.oy ?? 5; this.title = o.title;
+    const fitRows = Math.max(1, Math.floor(((o.y !== undefined ? H - o.y : TB_Y - 5) - 10 - tH) / this.rowH)); if (!o.visible && !o.h && rowsN > fitRows) o = { ...o, visible: fitRows }; // long menus scroll instead of running off screen
+    this.h = o.h || Math.min(rowsN, o.visible || rowsN) * this.rowH + 10 + tH; this.x = o.x ?? (W - this.w - 4); this.y = o.y ?? (TB_Y - this.h - 1); this.buttons = o.buttons; this.ox = o.ox ?? 14; this.oy = o.oy ?? 5 + tH; this.title = o.title;
     this.scrollMax = o.visible || rowsN; this.scrollTop = Math.max(0, Math.floor(this.i / this.cols) - this.scrollMax + 1); this.drawExtra = o.drawExtra; this.noFrame = o.noFrame; this.textCol = o.textCol || '#c9cfe4'; this.textSh = o.textSh || UIC.textSh; this.fs = o.fs;
     if (this.onMove) this.onMove(this.i);
   }
@@ -4228,7 +4229,7 @@ class Menu {
       Font.draw(x, it.t, X, Y, tc, this.textSh, this.fs);
       if (it.r) Font.drawR(x, it.r, this.x + this.w - 8, Y, it.dis ? UIC.dis : UIC.muted, this.textSh, this.fs);
     }
-    if (this.scrollTop > 0) x.drawImage(UPARROW, this.x + this.w / 2 - 2, this.y + 2);
+    if (this.scrollTop > 0) x.drawImage(UPARROW, this.x + this.w / 2 - 2, this.y + 2 + (this.tH ? this.tH - 2 : 0));
     if (this.scrollTop + this.scrollMax < Math.ceil(n / this.cols)) x.drawImage(DOWNARROW, this.x + this.w / 2 - 2, this.y + this.h - 5);
     if (this.drawExtra) this.drawExtra(x, this);
   }
@@ -4418,7 +4419,8 @@ function* bagScreen(mode = 'field') { // returns item id used (battle) or null
     if (top > 0) x.drawImage(UPARROW, 85, 41); if (top + VIS < list.length) x.drawImage(DOWNARROW, 85, 40 + VIS * 18 + 4);
     if (typeof touchRegion === 'function') { list.slice(top, top + VIS).forEach((k, i) => touchRegion(6, 43 + i * 18, 164, 17, () => { if (mode === 'battle' && bagTapSel !== top + i) { bagTapSel = idx = top + i; Sound.sfx('cursor'); return; } idx = top + i; tapKey('a'); })); /* v24.6 battle: 1st tap shows the item, 2nd tap uses it */ tabs.forEach((t, i) => touchRegion(4 + i * tw, 23, tw - 3, 15, () => { tab = i; idx = 0; })); }
     drawWin(x, 4, 180, 168, 72, 'menu');
-    if (list[idx] && orbT) { const o = list[idx], h = orbHost(o); Font.draw(x, '【' + (isActiveOrb(o) ? '主動寶珠' : '被動寶珠') + '】', 10, 182, isActiveOrb(o) ? UIC.warm : '#8ad0ff', UIC.textSh, 10);
+    if (UI.stack.some(w => w instanceof TextBox)) { /* v12.0.1: a message box sits over this panel (its window is see-through), so the details step aside instead of showing through the text */ }
+    else if (list[idx] && orbT) { const o = list[idx], h = orbHost(o); Font.draw(x, '【' + (isActiveOrb(o) ? '主動寶珠' : '被動寶珠') + '】', 10, 182, isActiveOrb(o) ? UIC.warm : '#8ad0ff', UIC.textSh, 10);
       Font.drawR(x, h ? '鑲在：' + GEAR[h.b].n : '到鐵匠舖鑲嵌', 166, 182, h ? UIC.accent : UIC.muted, UIC.textSh, 10); Font.wrap(orbInfo(o), 154, 10).slice(0, 4).forEach((l, i) => Font.draw(x, l, 10, 197 + i * 13, UIC.text, UIC.textSh, 10)); }
     else if (list[idx]) { if (gear) drawGearDetail(x, list[idx], 182, 68); else { const k0 = list[idx], it = ITEMS[k0]; Font.draw(x, '【' + (it.use === 'enchant' ? '附魔寶石・到鐵匠舖使用' : it.cat) + '】', 10, 182, it.use === 'enchant' ? UIC.warm : ITEM_CAT_COL[it.cat] || UIC.muted, UIC.textSh, 10); if (it.mat) Font.drawR(x, '採集熟練度 Lv' + gatherLv(), 166, 182, UIC.accent, UIC.textSh, 10); const src = it.mat ? matSourceText(k0) : ''; Font.wrap(it.d, 152).slice(0, src ? 2 : 3).forEach((l, i) => Font.draw(x, l, 12, 197 + i * 16, UIC.text, UIC.textSh)); if (src) Font.draw(x, Font.wrap('取得：' + src, 156, 10)[0], 10, 234, UIC.warm, UIC.textSh, 10); } }
   } };
@@ -13960,7 +13962,7 @@ function wxOverlay(x, k, t, w, h) {
 { const _d = Overworld.prototype.draw; Overworld.prototype.draw = function (x) {
     _d.call(this, x); const st = this.st, k = wxNow(st); if (!k) return; wxOverlay(x, k, this.t, W, H);
     if (!this.popup && !UI.stack.length) { const s = WEATHER[k].n + (st.rainbowUntil > (st.steps || 0) ? '・彩虹' : ''), w = Math.ceil(Font.width(s, 9)) + 20; x.fillStyle = 'rgba(10,14,28,0.7)'; x.fillRect(3, 3, w, 14); wxIcon(x, k, 5, 4); Font.draw(x, s, 17, 1, WEATHER[k].col, UIC.textSh, 9); }
-    const B = Game.wxBanner; if (B && !UI.stack.length && !this.popup) { B.t++; if (B.t > 150) Game.wxBanner = null; else { const a = B.t < 10 ? B.t / 10 : B.t > 130 ? (150 - B.t) / 20 : 1, s1 = B.rainbow ? '雨停了，天空出現了彩虹！' : '天氣：' + WEATHER[B.k].n, s2 = B.rainbow ? '接下來100步，戰鬥經驗值+20%' : WEATHER[B.k].d, w = Math.max(Font.width(s1, 10), Font.width(s2, 9)) + 20;
+    const B = Game.wxBanner; if (B && !UI.stack.length && !this.popup && !(Game.toastQ && Game.toastQ.length)) { /* v12.0.1: waits until an achievement toast has gone, they used to overlap */ B.t++; if (B.t > 150) Game.wxBanner = null; else { const a = B.t < 10 ? B.t / 10 : B.t > 130 ? (150 - B.t) / 20 : 1, s1 = B.rainbow ? '雨停了，天空出現了彩虹！' : '天氣：' + WEATHER[B.k].n, s2 = B.rainbow ? '接下來100步，戰鬥經驗值+20%' : WEATHER[B.k].d, w = Math.max(Font.width(s1, 10), Font.width(s2, 9)) + 20;
       x.globalAlpha = a; drawPanel(x, (W - w) / 2, 22, w, 30, null); Font.drawC(x, s1, W / 2, 23, B.rainbow ? '#ffb0e0' : WEATHER[B.k].col, UIC.textSh, 10); Font.drawC(x, s2, W / 2, 36, UIC.text, UIC.textSh, 9); x.globalAlpha = 1; } }
   }; }
 { const _bs = Overworld.prototype.battleScript; Overworld.prototype.battleScript = function* (cfg, ...a) {
@@ -16427,7 +16429,7 @@ ITEMS.trainBook = { n: '修練之書', cat: '永久強化', use: 'trainBook', pr
 function* trainBookFlow(k) {
   const st = Game.st, L = BB.available(st).filter(id => { const e = BB.skillObj(st, id); return e && e.learned && id.startsWith('o_') && orbStage(e) < 2; });
   if (!L.length) { yield* say('沒有可以修練的技能。（已學會、還能進化的技能才行）'); return; }
-  const r = yield* choose(L.map(id => ({ t: BB.nameOf(st, id) + '　' + (BB.skillObj(st, id).x || 0) + '/' + ORB_EVO[orbStage(BB.skillObj(st, id))] })).concat({ t: '返回' }), { title: '修練哪一個技能？' });
+  const r = yield* choose(L.map(id => ({ t: BB.nameOf(st, id), r: '進度 ' + (BB.skillObj(st, id).x || 0) + '/' + ORB_EVO[orbStage(BB.skillObj(st, id))] })).concat({ t: '返回' }), { title: '修練哪一個技能？' });
   if (r < 0 || r >= L.length) return; const e = BB.skillObj(st, L[r]); e.x = (e.x || 0) + 12; st.bag[k]--; if (!st.bag[k]) delete st.bag[k]; Sound.jingle('levelup');
   yield* itemGet('「' + BB.nameOf(st, L[r]) + '」的進化進度 +12！'); if (orbPending(e)) { e.told = 1; yield* orbEvolveFlow(e); }
 }
@@ -17415,4 +17417,11 @@ function skillAttrTag(id) { const a = skillAttr(id); return a ? ATTR_NAMES[a.k] 
     const tot = D.power * hitsAvg(D), cd = tot >= 96 ? 3 : tot >= 66 ? 2 : 1; if ((D.cooldown || 0) < cd) D.cooldown = cd; }
   const AD = '用主武器攻擊。不消耗 MP，命中時回復最大 MP 的 12%；每次攻擊都會累積特技。';
   for (const id of ['attack', 'attack_m', 'attack_2', 'attack_3']) if (DEF.skills[id]) DEF.skills[id].desc = AD; MOVES.attack.d = AD; }
+const battleHero12 = () => { const b = Game.scene, c = b && b.core; return c && c.byId && c.byId.H && !c.over ? { b, c, H: c.byId.H } : null; };
+{ const _cu = canUseItem; canUseItem = function (k) {
+    const B = battleHero12(); if (!B) return _cu(k);
+    const st = Game.st, keep = [st.hp, st.mp, st.status];
+    st.hp = B.H.res.hp; st.mp = B.H.res.mp ?? st.mp; st.status = B.c.majorOf(B.H) || null;
+    try { return _cu(k); } finally { st.hp = keep[0]; st.mp = keep[1]; st.status = keep[2]; }
+  }; }
 </script>

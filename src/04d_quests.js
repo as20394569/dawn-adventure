@@ -74,7 +74,7 @@ function checkAch() {
 }
 function drawToast(x) {
   const q = Game.toastQ; if (!q || !q.length || UI.stack.length || !(Game.scene instanceof Overworld)) return; const T = q[0]; if (T.t === 0) Sound.sfx('save'); T.t++;
-  const y = T.t < 14 ? -30 + T.t * 2.4 : T.t > 150 ? 4 - (T.t - 150) * 2.4 : 4; const w = 150, X = (W - w) / 2, Y = Math.round(y);
+  const y = T.t < 14 ? -30 + T.t * 3.6 : T.t > 150 ? 20 - (T.t - 150) * 3.6 : 20; /* v12.0.1: below the top row (area name・weather・自動存檔) instead of on top of it */ const w = 150, X = (W - w) / 2, Y = Math.round(y);
   drawPanel(x, X, Y, w, 28, null); x.fillStyle = UIC.warm; x.fillRect(X + 4, Y + 4, 2, 20);
   Font.draw(x, '★ 成就解鎖　+200 G', X + 10, Y + 1, UIC.warm, UIC.textSh, 10); Font.draw(x, T.n, X + 10, Y + 13, UIC.text, UIC.textSh, 11);
   if (T.t > 164) q.shift();

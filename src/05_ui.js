@@ -63,10 +63,11 @@ class Menu {
   constructor(items, o = {}) {
     this.items = items.map(it => typeof it === 'string' ? { t: it } : it); this.i = o.index || 0; this.cols = o.cols || 1;
     this.rowH = o.rowH || 16; this.style = o.style || 'menu'; this.cancel = o.cancel !== false; this.onMove = o.onMove; this.twoTap = !!o.twoTap; this.done = false; this.result = -1;
-    const maxW = Math.max(...this.items.map(it => Font.width(it.t) + (it.r ? Font.width(it.r) + 12 : 0)));
+    const tH = o.title && o.oy === undefined && !o.h ? 14 : 0; this.tH = tH; // v12.0.1 (player: 「使用修煉之書時文字會出現遮擋」): a titled menu gets its own title row instead of drawing the title over the first item
+    const maxW = Math.max(...this.items.map(it => Font.width(it.t) + (it.r ? Font.width(it.r) + 12 : 0)), o.title ? Font.width(o.title) - 4 : 0);
     this.colW = o.colW || maxW + 20; this.w = o.w || this.colW * this.cols + 16; const rowsN = Math.ceil(this.items.length / this.cols);
-    const fitRows = Math.max(1, Math.floor(((o.y !== undefined ? H - o.y : TB_Y - 5) - 10) / this.rowH)); if (!o.visible && !o.h && rowsN > fitRows) o = { ...o, visible: fitRows }; // long menus scroll instead of running off screen
-    this.h = o.h || Math.min(rowsN, o.visible || rowsN) * this.rowH + 10; this.x = o.x ?? (W - this.w - 4); this.y = o.y ?? (TB_Y - this.h - 1); this.buttons = o.buttons; this.ox = o.ox ?? 14; this.oy = o.oy ?? 5; this.title = o.title;
+    const fitRows = Math.max(1, Math.floor(((o.y !== undefined ? H - o.y : TB_Y - 5) - 10 - tH) / this.rowH)); if (!o.visible && !o.h && rowsN > fitRows) o = { ...o, visible: fitRows }; // long menus scroll instead of running off screen
+    this.h = o.h || Math.min(rowsN, o.visible || rowsN) * this.rowH + 10 + tH; this.x = o.x ?? (W - this.w - 4); this.y = o.y ?? (TB_Y - this.h - 1); this.buttons = o.buttons; this.ox = o.ox ?? 14; this.oy = o.oy ?? 5 + tH; this.title = o.title;
     this.scrollMax = o.visible || rowsN; this.scrollTop = Math.max(0, Math.floor(this.i / this.cols) - this.scrollMax + 1); this.drawExtra = o.drawExtra; this.noFrame = o.noFrame; this.textCol = o.textCol || '#c9cfe4'; this.textSh = o.textSh || UIC.textSh; this.fs = o.fs;
     if (this.onMove) this.onMove(this.i);
   }
@@ -103,7 +104,7 @@ class Menu {
       Font.draw(x, it.t, X, Y, tc, this.textSh, this.fs);
       if (it.r) Font.drawR(x, it.r, this.x + this.w - 8, Y, it.dis ? UIC.dis : UIC.muted, this.textSh, this.fs);
     }
-    if (this.scrollTop > 0) x.drawImage(UPARROW, this.x + this.w / 2 - 2, this.y + 2);
+    if (this.scrollTop > 0) x.drawImage(UPARROW, this.x + this.w / 2 - 2, this.y + 2 + (this.tH ? this.tH - 2 : 0));
     if (this.scrollTop + this.scrollMax < Math.ceil(n / this.cols)) x.drawImage(DOWNARROW, this.x + this.w / 2 - 2, this.y + this.h - 5);
     if (this.drawExtra) this.drawExtra(x, this);
   }
@@ -312,7 +313,8 @@ function* bagScreen(mode = 'field') { // returns item id used (battle) or null
     if (top > 0) x.drawImage(UPARROW, 85, 41); if (top + VIS < list.length) x.drawImage(DOWNARROW, 85, 40 + VIS * 18 + 4);
     if (typeof touchRegion === 'function') { list.slice(top, top + VIS).forEach((k, i) => touchRegion(6, 43 + i * 18, 164, 17, () => { if (mode === 'battle' && bagTapSel !== top + i) { bagTapSel = idx = top + i; Sound.sfx('cursor'); return; } idx = top + i; tapKey('a'); })); /* v24.6 battle: 1st tap shows the item, 2nd tap uses it */ tabs.forEach((t, i) => touchRegion(4 + i * tw, 23, tw - 3, 15, () => { tab = i; idx = 0; })); }
     drawWin(x, 4, 180, 168, 72, 'menu');
-    if (list[idx] && orbT) { const o = list[idx], h = orbHost(o); Font.draw(x, '【' + (isActiveOrb(o) ? '主動寶珠' : '被動寶珠') + '】', 10, 182, isActiveOrb(o) ? UIC.warm : '#8ad0ff', UIC.textSh, 10);
+    if (UI.stack.some(w => w instanceof TextBox)) { /* v12.0.1: a message box sits over this panel (its window is see-through), so the details step aside instead of showing through the text */ }
+    else if (list[idx] && orbT) { const o = list[idx], h = orbHost(o); Font.draw(x, '【' + (isActiveOrb(o) ? '主動寶珠' : '被動寶珠') + '】', 10, 182, isActiveOrb(o) ? UIC.warm : '#8ad0ff', UIC.textSh, 10);
       Font.drawR(x, h ? '鑲在：' + GEAR[h.b].n : '到鐵匠舖鑲嵌', 166, 182, h ? UIC.accent : UIC.muted, UIC.textSh, 10); Font.wrap(orbInfo(o), 154, 10).slice(0, 4).forEach((l, i) => Font.draw(x, l, 10, 197 + i * 13, UIC.text, UIC.textSh, 10)); }
     else if (list[idx]) { if (gear) drawGearDetail(x, list[idx], 182, 68); else { const k0 = list[idx], it = ITEMS[k0]; Font.draw(x, '【' + (it.use === 'enchant' ? '附魔寶石・到鐵匠舖使用' : it.cat) + '】', 10, 182, it.use === 'enchant' ? UIC.warm : ITEM_CAT_COL[it.cat] || UIC.muted, UIC.textSh, 10); if (it.mat) Font.drawR(x, '採集熟練度 Lv' + gatherLv(), 166, 182, UIC.accent, UIC.textSh, 10); const src = it.mat ? matSourceText(k0) : ''; Font.wrap(it.d, 152).slice(0, src ? 2 : 3).forEach((l, i) => Font.draw(x, l, 12, 197 + i * 16, UIC.text, UIC.textSh)); if (src) Font.draw(x, Font.wrap('取得：' + src, 156, 10)[0], 10, 234, UIC.warm, UIC.textSh, 10); } }
   } };

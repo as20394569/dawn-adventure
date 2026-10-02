@@ -55,7 +55,7 @@ function wxOverlay(x, k, t, w, h) {
 { const _d = Overworld.prototype.draw; Overworld.prototype.draw = function (x) {
     _d.call(this, x); const st = this.st, k = wxNow(st); if (!k) return; wxOverlay(x, k, this.t, W, H);
     if (!this.popup && !UI.stack.length) { const s = WEATHER[k].n + (st.rainbowUntil > (st.steps || 0) ? '・彩虹' : ''), w = Math.ceil(Font.width(s, 9)) + 20; x.fillStyle = 'rgba(10,14,28,0.7)'; x.fillRect(3, 3, w, 14); wxIcon(x, k, 5, 4); Font.draw(x, s, 17, 1, WEATHER[k].col, UIC.textSh, 9); }
-    const B = Game.wxBanner; if (B && !UI.stack.length && !this.popup) { B.t++; if (B.t > 150) Game.wxBanner = null; else { const a = B.t < 10 ? B.t / 10 : B.t > 130 ? (150 - B.t) / 20 : 1, s1 = B.rainbow ? '雨停了，天空出現了彩虹！' : '天氣：' + WEATHER[B.k].n, s2 = B.rainbow ? '接下來100步，戰鬥經驗值+20%' : WEATHER[B.k].d, w = Math.max(Font.width(s1, 10), Font.width(s2, 9)) + 20;
+    const B = Game.wxBanner; if (B && !UI.stack.length && !this.popup && !(Game.toastQ && Game.toastQ.length)) { /* v12.0.1: waits until an achievement toast has gone, they used to overlap */ B.t++; if (B.t > 150) Game.wxBanner = null; else { const a = B.t < 10 ? B.t / 10 : B.t > 130 ? (150 - B.t) / 20 : 1, s1 = B.rainbow ? '雨停了，天空出現了彩虹！' : '天氣：' + WEATHER[B.k].n, s2 = B.rainbow ? '接下來100步，戰鬥經驗值+20%' : WEATHER[B.k].d, w = Math.max(Font.width(s1, 10), Font.width(s2, 9)) + 20;
       x.globalAlpha = a; drawPanel(x, (W - w) / 2, 22, w, 30, null); Font.drawC(x, s1, W / 2, 23, B.rainbow ? '#ffb0e0' : WEATHER[B.k].col, UIC.textSh, 10); Font.drawC(x, s2, W / 2, 36, UIC.text, UIC.textSh, 9); x.globalAlpha = 1; } }
   }; }
 
