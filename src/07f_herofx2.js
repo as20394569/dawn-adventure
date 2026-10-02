@@ -40,7 +40,9 @@ const styleOf = (id, mv) => SKILL_STYLE[id] || [mv.cat === '物' ? 'draw' : 'run
 
 // ---------- casts (at the hero) ----------
 const CASTS = {
-  draw(U, T, c, c2, lv) { Sound.sfx('slash'); this.spawn({ k: 'line', x1: U.x + 14, y1: U.y + 8, x2: U.x + 26, y2: U.y - 16, c: c2, w: 3, grow: 4, life: 14 }); this.spawn({ k: 'star', x: U.x + 26, y: U.y - 16, c: c2, life: 12 }); for (let i = 0; i < 3 + lv; i++) this.spawn({ k: 'mote', x: U.x + rnd(-10, 22), y: U.y + rnd(-8, 14), vy: -0.4, s: 1, c, life: 16 }); return 10; },
+  // v12.0.1 (player: 「部分劍技能發動時武器會有白條」): a gleam runs up the blade (hilt → tip) instead of a thick white bar beside it
+  draw(U, T, c, c2, lv) { Sound.sfx('slash'); const A = { x: U.x + 16, y: U.y + 10 }, B = { x: U.x + 32, y: U.y - 10 }, g = this.spawn({ k: 'star', x: A.x, y: A.y, c: c2, life: 12 });
+    g.upd = q => { const t = Math.min(1, q.t / 6); q.x = lerp(A.x, B.x, t); q.y = lerp(A.y, B.y, t); }; this.spawn({ k: 'glow', x: B.x, y: B.y, r: 8 + lv * 2, c, life: 14 }); for (let i = 0; i < 3 + lv; i++) this.spawn({ k: 'mote', x: U.x + rnd(-10, 22), y: U.y + rnd(-8, 14), vy: -0.4, s: 1, c, life: 16 }); return 10; },
   dash(U, T, c, c2, lv) { Sound.sfx('wind'); for (let i = 0; i < 8 + lv * 3; i++) this.spawn({ k: 'streak', x: rnd(0, W), y: rnd(20, BH - 10), vx: -7 - Math.random() * 4, len: rnd(8, 20), c: i % 2 ? c : c2, life: 12 }); return 10; },
   still(U, T, c, c2, lv) { this.spawn({ k: 'dark', a: 0.55, life: 22 }); this.spawn({ k: 'line', x1: U.x - 30, y1: U.y - 2, x2: U.x + 30, y2: U.y - 2, c: c2, w: 1, grow: 10, life: 20 }); Sound.sfx('tick'); return 20; },
   aura(U, T, c, c2, lv) { Sound.sfx('fire'); this.spawn({ k: 'glow', x: U.x, y: U.y, r: 24 + lv * 4, c, life: 22 }); for (let i = 0; i < 10 + lv * 5; i++) this.spawn({ k: 'mote', x: U.x + rnd(-16, 16), y: U.y + rnd(0, 16), vy: -(1 + Math.random() * 1.4), vx: rnd(-3, 3) / 10, s: rnd(1, 3), c: i % 3 ? c : c2, life: rnd(14, 26) }); return 14; },

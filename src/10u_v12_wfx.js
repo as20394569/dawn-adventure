@@ -61,6 +61,7 @@ function* w12Proj(b, U, T, S, F = 9) { const [c, h] = S.col, x0 = U.x + 6, y0 = 
   for (let i = 1; i <= F; i++) { p.x = lerp(x0, T.x, i / F); p.y = lerp(y0, T.y, i / F) - Math.sin(i / F * Math.PI) * 10; if (i % 2) w12Particle(b, p.x, p.y, S, 1, 3); yield; } }
 function w12Make(k, S) {
   const [c, h, d] = S.col, flip = S.seed & 1 ? 1 : -1;
+  const stab = (b, U, T, off) => { const a = Math.atan2(T.y - U.y, T.x - U.x), ca = Math.cos(a), sa = Math.sin(a), ox = -sa * off, oy = ca * off; w12Line(b, T.x - ca * 28 + ox, T.y - sa * 28 + oy, T.x + ca * 6 + ox, T.y + sa * 6 + oy, S, 4); };
   const impact = (b, T, big) => { b.spawn({ k: 'glow', x: T.x, y: T.y, r: big ? 26 : 16, c, life: 12 }); b.spawn({ k: 'ring', x: T.x, y: T.y, r0: 3, r1: big ? 28 : 18, c: h, w: 2, life: 10 }); w12Particle(b, T.x, T.y, S, big ? 12 : 8, big ? 22 : 14); };
   const M = {
     *slash(U, T, u) { yield* this.lunge(u, 8, 3); Sound.sfx('slash'); w12Line(this, T.x - 20 * flip, T.y - 20, T.x + 16 * flip, T.y + 16, S); yield* wait(4); impact(this, T); yield* wait(8); },
@@ -71,8 +72,9 @@ function w12Make(k, S) {
     *slam(U, T, u) { yield* this.lunge(u, 14, 4); Sound.sfx('quake'); this.shake = Math.max(this.shake, 12); this.spawn({ k: 'ring', x: T.x, y: T.y + 14, r0: 4, r1: 40, c, w: 3, life: 14, fl: 0.4 }); impact(this, T, 1); yield* wait(12); },
     *iai(U, T, u) { this.spawn({ k: 'flash', c: h, a: 0.3, life: 5 }); Sound.sfx('slash'); w12Line(this, T.x - 40, T.y + 2, T.x + 40, T.y - 2, S, 3); yield* wait(6); impact(this, T); yield* wait(8); },
     *multi(U, T, u) { yield* this.lunge(u, 6, 2); for (let i = 0; i < 5; i++) { Sound.sfx('slash'); const a = (S.seed % 7 + i * 1.3) % Math.PI; w12Line(this, T.x - Math.cos(a) * 18, T.y - Math.sin(a) * 18, T.x + Math.cos(a) * 18, T.y + Math.sin(a) * 18, S, 3); yield* wait(2); } impact(this, T); yield* wait(8); },
-    *thrust(U, T, u) { yield* this.lunge(u, 16, 3); Sound.sfx('slash'); w12Line(this, U.x + 8, U.y - 8, T.x, T.y, S, 4); this.star(T.x, T.y, h, 10); yield* wait(4); impact(this, T); yield* wait(8); },
-    *thrust2(U, T, u) { yield* this.lunge(u, 16, 3); for (let i = 0; i < 2; i++) { Sound.sfx('slash'); w12Line(this, U.x + 8, U.y - 8 + i * 6, T.x + (i ? 4 : -4), T.y + (i ? 4 : -4), S, 4); yield* wait(4); } impact(this, T); yield* wait(8); },
+    // a thrust is a short streak driven into the target from the hero's side (player: it used to be a white bar from the sword to the monster)
+    *thrust(U, T, u) { yield* this.lunge(u, 16, 3); Sound.sfx('slash'); stab(this, U, T, 0); this.star(T.x, T.y, h, 10); yield* wait(4); impact(this, T); yield* wait(8); },
+    *thrust2(U, T, u) { yield* this.lunge(u, 16, 3); for (let i = 0; i < 2; i++) { Sound.sfx('slash'); stab(this, U, T, i ? 5 : -5); yield* wait(4); } impact(this, T); yield* wait(8); },
     *dash(U, T, u) { for (let i = 0; i < 4; i++) this.spawn({ k: 'glow', x: lerp(U.x, T.x, i / 4), y: lerp(U.y, T.y, i / 4), r: 8, c: d, life: 10 + i * 2 }); yield* this.lunge(u, 22, 3); Sound.sfx('slash'); w12Line(this, T.x - 22, T.y + 6, T.x + 22, T.y - 6, S, 4); yield* wait(4); impact(this, T); yield* wait(8); },
     *dashSlam(U, T, u) { yield* this.lunge(u, 22, 4); Sound.sfx('quake'); this.shake = Math.max(this.shake, 10); impact(this, T, 1); this.spawn({ k: 'ring', x: T.x, y: T.y, r0: 6, r1: 34, c: d, w: 3, life: 12 }); yield* wait(10); },
     *stab(U, T, u) { yield* this.lunge(u, 12, 2); Sound.sfx('crit'); this.spawn({ k: 'ring', x: T.x, y: T.y, r0: 22, r1: 2, c: h, w: 2, life: 10 }); yield* wait(4); w12Line(this, T.x + 10, T.y - 10, T.x - 4, T.y + 4, S, 3); impact(this, T); yield* wait(8); },
