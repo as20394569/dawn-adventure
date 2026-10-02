@@ -11386,7 +11386,7 @@ function* skillTreeScreen() {
 { const _pt = drawPassiveTile; drawPassiveTile = function (x, st, X, Y, on) { _pt(x, st, X, Y, on); }; }
 BATTLE_HELP.unshift(['武器技能', ['每把武器帶著1個技能：裝備就能用，用滿 6／10／14 次（看冷卻長短）就永久學會，換了武器也能用。',
   '武器還有被動和「特技」：普通攻擊累積層數，滿了就在下一次攻擊或技能時發動（戰鬥畫面右下角的◆）。',
-  '普通攻擊不花MP，還會回復少量MP。短刀、拳套的普攻是 2 段；每種武器的普攻各有特色（裝備的詳情會寫）。',
+  '普通攻擊不花MP，命中時回復最大MP的12%；技能用完要冷卻，冷卻中就用普攻回MP。短刀、拳套的普攻是 2 段；每種武器的普攻各有特色（裝備的詳情會寫）。',
   '職業有擅長的武器種類：普攻和特技威力 +10%。']]);
 { const _ng = newGameState; newGameState = function (...a) { const st = _ng.apply(this, a); if (st) { st.skV = 5; st.ct = {}; st.bp = {}; st.bpT = {}; st.skills = {}; st.skp = 0; st.tp = 0; } return st; }; }
 function v7Migrate(st) {
@@ -15954,9 +15954,10 @@ for (const c in SIG12) { const S = SIG12[c], id = 'sig_' + c, T = MOVES[id] || M
   d.metadata = { ...d.metadata, cls: c, learn: 0 }; defPut('skills', id, { ...d, override: 1 });
   if (MOVES[id]) Object.assign(MOVES[id], { n: S.n, d: S.d, pow: S.power, mp: (S.costs.find(x => x.res === 'mp') || {}).amount || 0 }); }
 for (const c in CLS12) { const C = CLS12[c]; defPut('classes', c, { sig: C.sig, resources: C.res ? [C.res] : [], res: C.res, affinity: C.aff, passive: { n: C.passive[0], d: C.passive[1] }, rule: C.rule, limit: C.limit, mechanic: 'cls_' + c, tags: [], metadata: { n: (CLASSES[c] || {}).n || c } }); }
+const ATK_MP12 = mp => Math.max(3, Math.round((mp || 0) * 0.12));
 defPut('mechanics', 'heroCore', { override: 1, layer: 'system', make: (u) => ({ mods: u.data.rules && u.data.rules.combo ? [{ stage: 'talent', who: 'attacker', mul: { f: 'comboStep', v: 6 }, cond: { hasPower: 1 } }] : [],
   triggers: [
-    TRG(EVT.DAMAGE, 'src', { tag: 'basic', evHit: 1 }, [{ type: 'resource', target: 'self', res: 'mp', amount: 2 + Math.floor((u.max.mp || 0) / 25) + u.mods.reduce((a, m) => a + (m.atkMp || 0), 0) + ((u.data.rules && u.data.rules.atkMp) || 0), why: 'basic' }], { limit: { perAction: 1 }, system: 1, prio: 9 }),
+    TRG(EVT.DAMAGE, 'src', { tag: 'basic', evHit: 1 }, [{ type: 'resource', target: 'self', res: 'mp', amount: ATK_MP12(u.max.mp) + u.mods.reduce((a, m) => a + (m.atkMp || 0), 0) + ((u.data.rules && u.data.rules.atkMp) || 0), why: 'basic' }], { limit: { perAction: 1 }, system: 1, prio: 9 }),
     TRG(EVT.DAMAGE, 'src', { tag: 'basic', evHit: 1 }, [{ type: 'resource', target: 'self', res: 'wc', amount: 1, why: 'hit' }], { limit: u.data.wcPerHit ? {} : { perAction: 1 }, system: 1, prio: 9 }),
     TRG(EVT.RESOURCE_FULL, 'tgt', { evRes: 'wc' }, [{ type: 'fire_special' }], { prio: 6 }),
     TRG(EVT.DEFEND, 'src', {}, [{ type: 'resource', target: 'self', res: 'mp', pct: { f: 'breath' }, min: 1, why: 'breath' }], { system: 1 }),
@@ -17409,5 +17410,10 @@ function skillAttrTag(id) { const a = skillAttr(id); return a ? ATTR_NAMES[a.k] 
     const v = (heroAttr(st) || {})[a.k] || 0, over = Math.max(0, v - 10), mul = 1 + over * a.r / 100, L = t.split('\n');
     L[0] += '　' + ATTR_NAMES[a.k] + v + (over ? '：×' + mul.toFixed(2) : '：超過10起每點+' + a.r + '%');
     return L.join('\n'); }; }
+{ const hitsAvg = D => D.hits ? (D.hits[0] + D.hits[1]) / 2 : 1;
+  for (const id in DEF.skills) { if (!/^(o_|u_)/.test(id)) continue; const D = DEF.skills[id]; if (!(D.power > 0)) continue;
+    const tot = D.power * hitsAvg(D), cd = tot >= 96 ? 3 : tot >= 66 ? 2 : 1; if ((D.cooldown || 0) < cd) D.cooldown = cd; }
+  const AD = '用主武器攻擊。不消耗 MP，命中時回復最大 MP 的 12%；每次攻擊都會累積特技。';
+  for (const id of ['attack', 'attack_m', 'attack_2', 'attack_3']) if (DEF.skills[id]) DEF.skills[id].desc = AD; MOVES.attack.d = AD; }
 </script>
 </body></html>

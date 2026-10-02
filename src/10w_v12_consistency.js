@@ -248,3 +248,13 @@ function skillAttrTag(id) { const a = skillAttr(id); return a ? ATTR_NAMES[a.k] 
     const v = (heroAttr(st) || {})[a.k] || 0, over = Math.max(0, v - 10), mul = 1 + over * a.r / 100, L = t.split('\n');
     L[0] += '　' + ATTR_NAMES[a.k] + v + (over ? '：×' + mul.toFixed(2) : '：超過10起每點+' + a.r + '%');
     return L.join('\n'); }; }
+
+/* ---------- v12.0.1 技能冷卻（玩家：「普通攻擊幾乎用不到 應該要給技能加上冷卻時間」→ 選了「依威力 1～3」＋「普攻回 MP」） ----------
+   Every damaging class / weapon skill has a cooldown by its total power (power × hits): ≤65 → 1, 66–95 → 2, ≥96 → 3; a longer
+   cooldown it already had stays. Support skills, class signature moves (they spend their own resource) and weapon specials keep
+   theirs. The learn counts do not change. Basic attacks restore 12% of max MP (ATK_MP12 in 10k). */
+{ const hitsAvg = D => D.hits ? (D.hits[0] + D.hits[1]) / 2 : 1;
+  for (const id in DEF.skills) { if (!/^(o_|u_)/.test(id)) continue; const D = DEF.skills[id]; if (!(D.power > 0)) continue;
+    const tot = D.power * hitsAvg(D), cd = tot >= 96 ? 3 : tot >= 66 ? 2 : 1; if ((D.cooldown || 0) < cd) D.cooldown = cd; }
+  const AD = '用主武器攻擊。不消耗 MP，命中時回復最大 MP 的 12%；每次攻擊都會累積特技。';
+  for (const id of ['attack', 'attack_m', 'attack_2', 'attack_3']) if (DEF.skills[id]) DEF.skills[id].desc = AD; MOVES.attack.d = AD; }

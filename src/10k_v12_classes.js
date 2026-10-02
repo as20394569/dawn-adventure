@@ -272,10 +272,12 @@ for (const c in SIG12) { const S = SIG12[c], id = 'sig_' + c, T = MOVES[id] || M
 /* ---------- DEF.classes (spec §2: class = rules) ---------- */
 for (const c in CLS12) { const C = CLS12[c]; defPut('classes', c, { sig: C.sig, resources: C.res ? [C.res] : [], res: C.res, affinity: C.aff, passive: { n: C.passive[0], d: C.passive[1] }, rule: C.rule, limit: C.limit, mechanic: 'cls_' + c, tags: [], metadata: { n: (CLASSES[c] || {}).n || c } }); }
 
+// v12.0.1 (player: 「普通攻擊幾乎用不到」→ 選了「普攻回 MP」): a basic hit restores 12% of max MP (at least 3), so attack → skill becomes the rhythm
+const ATK_MP12 = mp => Math.max(3, Math.round((mp || 0) * 0.12));
 /* ---------- the hero's core loop (v12): basic hits feed MP and 特技; 連段 only with a talent that grants it ---------- */
 defPut('mechanics', 'heroCore', { override: 1, layer: 'system', make: (u) => ({ mods: u.data.rules && u.data.rules.combo ? [{ stage: 'talent', who: 'attacker', mul: { f: 'comboStep', v: 6 }, cond: { hasPower: 1 } }] : [],
   triggers: [
-    TRG(EVT.DAMAGE, 'src', { tag: 'basic', evHit: 1 }, [{ type: 'resource', target: 'self', res: 'mp', amount: 2 + Math.floor((u.max.mp || 0) / 25) + u.mods.reduce((a, m) => a + (m.atkMp || 0), 0) + ((u.data.rules && u.data.rules.atkMp) || 0), why: 'basic' }], { limit: { perAction: 1 }, system: 1, prio: 9 }),
+    TRG(EVT.DAMAGE, 'src', { tag: 'basic', evHit: 1 }, [{ type: 'resource', target: 'self', res: 'mp', amount: ATK_MP12(u.max.mp) + u.mods.reduce((a, m) => a + (m.atkMp || 0), 0) + ((u.data.rules && u.data.rules.atkMp) || 0), why: 'basic' }], { limit: { perAction: 1 }, system: 1, prio: 9 }),
     TRG(EVT.DAMAGE, 'src', { tag: 'basic', evHit: 1 }, [{ type: 'resource', target: 'self', res: 'wc', amount: 1, why: 'hit' }], { limit: u.data.wcPerHit ? {} : { perAction: 1 }, system: 1, prio: 9 }),
     TRG(EVT.RESOURCE_FULL, 'tgt', { evRes: 'wc' }, [{ type: 'fire_special' }], { prio: 6 }),
     TRG(EVT.DEFEND, 'src', {}, [{ type: 'resource', target: 'self', res: 'mp', pct: { f: 'breath' }, min: 1, why: 'breath' }], { system: 1 }),
