@@ -2,7 +2,8 @@
    While a hero skill whose name has 斬／刃／閃 (or a sword / dagger / axe 特技) plays, its particles are drawn as blades:
    slash lines become tapered lozenges with a white edge and a fading after-image, crosses become two lozenges, and the
    square sparks / shards / motes become small flat diamonds pointing where they fly. */
-const isSlashName = n => /斬|刃|閃/.test(n || '');
+const SLASH_NAMES = new Set(); // v12.0.1: skills whose motion is a cut (filled in 10w from the skill data), whatever their name
+const isSlashName = n => /斬|刃|閃|劈|十字/.test(n || '') || SLASH_NAMES.has(String(n || '').replace(/・.*$/, ''));
 function lozenge(x, x1, y1, x2, y2, w) {
   const dx = x2 - x1, dy = y2 - y1, L = Math.hypot(dx, dy) || 1, nx = -dy / L * w / 2, ny = dx / L * w / 2, mx = (x1 + x2) / 2, my = (y1 + y2) / 2;
   x.beginPath(); x.moveTo(x1, y1); x.lineTo(mx + nx, my + ny); x.lineTo(x2, y2); x.lineTo(mx - nx, my - ny); x.closePath(); x.fill();

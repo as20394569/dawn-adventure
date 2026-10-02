@@ -193,3 +193,47 @@ const MX = {
     m_holyRay: mxRecolor(MFX.m_runeBeam, P.gold), m_moonBeam: mxRecolor(MFX.m_prismRay, P.moon), m_voidBeam: mxRecolor(MFX.m_prismRay, P.void), m_witchBolt: mxRecolor(MFX.m_runeBeam, P.witch),
   };
   for (const id in FIX) { if (!FIX[id] || !DEF.skills[id]) { bvErr('v12', 'consistency mfx ' + id); continue; } MFX[id] = FIX[id]; DEF.skills[id].fx = id; if (MOVES[id]) MOVES[id].fx = id; } }
+
+/* ---------- v12.0.1 斬擊痕 (player: 「裂風斬的斬擊特效沒有扁平菱形斬擊痕 而且距離魔物有點距離 其他類似的也要修正」) ----------
+   A crescent ('cres') was drawn as an arc around its point, so the cut sat r px beside the monster; and the flat-diamond blade
+   style (09r) only knew straight lines. Now a crescent always passes through its point, and in a cutting skill it is a curved
+   blade: thick in the middle, pointed ends, white core and a faint after-image, sweeping in like the straight cuts.
+   Cutting skills are found from the skill itself too (class skills of the slash class, weapon skills whose motion is a cut),
+   not only from 斬／刃／閃 in the name: 燕翔, 雙牙連擊, 捨身劈, 斷罪十字, 古王裁決, 獵刀切… */
+{ const CUT = new Set(['slash', 'slash2', 'cross', 'heavy', 'crescentCut', 'iai', 'multi', 'sweep']);
+  for (const id in DEF.skills) { const D = DEF.skills[id];
+    if (/^(o_|sig_)/.test(id) && D.tags.includes('cls:slash')) SLASH_NAMES.add(D.name);
+    if (id.startsWith('u_') && W12[id.slice(2)] && CUT.has(w12Spec(id.slice(2)).mv)) SLASH_NAMES.add(D.name);
+    if (id.startsWith('u_') && !W12[id.slice(2)] && D.tags.includes('cls:slash')) SLASH_NAMES.add(D.name); } }
+function bladeArc(x, cx, cy, r, a0, a1, w) { const N = 16, o = [], i = [];
+  for (let k = 0; k <= N; k++) { const t = k / N, th = lerp(a0, a1, t), hw = w / 2 * Math.sin(Math.PI * t); o.push([cx + Math.cos(th) * (r + hw), cy + Math.sin(th) * (r + hw)]); i.push([cx + Math.cos(th) * (r - hw), cy + Math.sin(th) * (r - hw)]); }
+  x.beginPath(); o.forEach(([X, Y], k) => k ? x.lineTo(X, Y) : x.moveTo(X, Y)); for (let k = i.length - 1; k >= 0; k--) x.lineTo(i[k][0], i[k][1]); x.closePath(); x.fill(); }
+{ const _dp = drawParticle; drawParticle = function (x, p) {
+    if (p.k !== 'cres' || p.hidden) return _dp(x, p);
+    const a = 1 - p.t / p.life, r = p.r || 18, ang = p.ang || 0, cx = p.x - Math.cos(ang) * r, cy = p.y - Math.sin(ang) * r; // the arc's middle is on (p.x, p.y)
+    x.save();
+    if (p.sl) { const g = Math.min(1, p.t / 3), sp = 1.15 * g, w = Math.max(5, (p.w || 6) * 1.6), A = Math.min(1, a * 1.6);
+      x.fillStyle = p.c2 || p.c; x.globalAlpha = A * 0.3; bladeArc(x, cx - Math.cos(ang) * w * 0.9, cy - Math.sin(ang) * w * 0.9, r, ang - sp, ang + sp, w * 0.7); // after-image
+      x.globalAlpha = A; bladeArc(x, cx, cy, r, ang - sp, ang + sp, w);
+      x.fillStyle = '#ffffff'; x.globalAlpha = Math.min(1, A * 1.3); bladeArc(x, cx, cy, r, ang - sp * 0.85, ang + sp * 0.85, Math.max(1.2, w * 0.36)); }
+    else { x.globalAlpha = Math.min(1, a * 2); x.lineCap = 'round'; x.strokeStyle = p.c2; x.lineWidth = p.w || 6; x.beginPath(); x.arc(cx, cy, r, ang - 1.15, ang + 1.15); x.stroke();
+      x.strokeStyle = p.c; x.lineWidth = Math.max(1, (p.w || 6) / 3); x.beginPath(); x.arc(cx, cy, r - 1, ang - 1.0, ang + 1.0); x.stroke(); }
+    x.restore(); x.globalAlpha = 1; }; }
+// 'arc': HERO_PK.arc (07v, a sweeping blade arc with a0..a1) took every arc, so the plain arcs without a1 (wind gusts, storm
+// swirls, crescent particles of the weapon skills) were never drawn. Plain arcs draw again; in a cutting skill a partial sweep
+// is a curved blade whose middle crosses the target (it ran around the target at radius r). Full rings (迴旋斬) stay rings.
+{ const _dp = drawParticle; drawParticle = function (x, p) {
+    if (p.k !== 'arc' || p.hidden) return _dp(x, p);
+    const a = 1 - p.t / p.life;
+    if (p.a1 == null) { x.save(); x.globalAlpha = a; x.strokeStyle = p.c; x.lineWidth = 2; x.beginPath(); x.ellipse(p.x, p.y, p.r, p.r * 0.5, 0, (p.a0 || 0) + p.t * 0.25, (p.a0 || 0) + p.t * 0.25 + 2.2); x.stroke(); x.restore(); x.globalAlpha = 1; return; }
+    if (!p.sl || Math.abs(p.a1 - p.a0) >= 4) return _dp(x, p);
+    const k = Math.min(1, p.t / (p.grow || 5)), d = p.a1 >= p.a0 ? 1 : -1, head = p.a0 + (p.a1 - p.a0) * k, tl = Math.max(p.tail || 1.8, Math.abs(p.a1 - p.a0));
+    const from = d > 0 ? Math.max(p.a0, head - tl) : head, to = d > 0 ? head : Math.min(p.a0, head + tl); if (to - from < 0.02) return;
+    const sq = p.sq || 0.6, rot = p.rot || 0, cr = Math.cos(rot), sr = Math.sin(rot), mid = (p.a0 + p.a1) / 2;
+    const E = (th, dr = 0) => { const lx = (p.r + dr) * Math.cos(th), ly = (p.r + dr) * sq * Math.sin(th); return [lx * cr - ly * sr, lx * sr + ly * cr]; };
+    const [mx, my] = E(mid), ox = p.x - mx, oy = p.y - my; // shift so the middle of the sweep is on the target
+    const blade = (f, t2, w, dx = 0, dy = 0) => { const N = 18, o = [], i = []; for (let n = 0; n <= N; n++) { const u = n / N, th = lerp(f, t2, u), hw = w / 2 * Math.sin(Math.PI * u), A = E(th, hw), B = E(th, -hw); o.push([A[0] + ox + dx, A[1] + oy + dy]); i.push([B[0] + ox + dx, B[1] + oy + dy]); }
+      x.beginPath(); o.forEach(([X, Y], n) => n ? x.lineTo(X, Y) : x.moveTo(X, Y)); for (let n = i.length - 1; n >= 0; n--) x.lineTo(i[n][0], i[n][1]); x.closePath(); x.fill(); };
+    const w = Math.max(5, (p.w || 4) * 1.6), A = Math.min(1, a * 1.6), [nx, ny] = E(mid, 1), ux = nx - mx, uy = ny - my;
+    x.save(); x.fillStyle = p.c; x.globalAlpha = A * 0.3; blade(from, to, w * 0.7, -ux * w * 0.9, -uy * w * 0.9);
+    x.globalAlpha = A; blade(from, to, w); x.fillStyle = '#ffffff'; x.globalAlpha = Math.min(1, A * 1.3); const pad = (to - from) * 0.08; blade(from + pad, to - pad, Math.max(1.2, w * 0.36)); x.restore(); x.globalAlpha = 1; }; }
