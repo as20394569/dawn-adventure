@@ -54,12 +54,21 @@ const PORT_CRISP = new WeakMap(); // portraits with a touch more contrast and co
 function crispPortrait(src) { let c = PORT_CRISP.get(src); if (c) return c; const w = src.width, h = src.height; c = mkCanvas(w, h); const x = c.getContext('2d'); x.drawImage(src, 0, 0);
   try { const D = x.getImageData(0, 0, w, h), a = D.data; for (let i = 0; i < a.length; i += 4) { if (a[i + 3] < 8) continue; for (let k = 0; k < 3; k++) a[i + k] = (a[i + k] - 128) * 1.12 + 128; const L = 0.3 * a[i] + 0.59 * a[i + 1] + 0.11 * a[i + 2]; for (let k = 0; k < 3; k++) a[i + k] = L + (a[i + k] - L) * 1.12; } x.putImageData(D, 0, 0); } catch (e) { }
   PORT_CRISP.set(src, c); return c; }
+const PORT_BOX = new WeakMap(); // v27i: the visible part of a portrait (transparent margins trimmed), in source pixels
+function portraitBox(im) {
+  let r = PORT_BOX.get(im); if (r) return r; r = { sx: 0, sy: 0, sw: im.width, sh: im.height };
+  try { const w = im.width, h = im.height, d = (im.getContext ? im : (() => { const c = mkCanvas(w, h); c.getContext('2d').drawImage(im, 0, 0); return c; })()).getContext('2d').getImageData(0, 0, w, h).data;
+    let x0 = w, y0 = h, x1 = -1, y1 = -1; for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) if (d[(y * w + x) * 4 + 3] > 20) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+    if (x1 >= x0) { const pad = Math.max(1, Math.round(h / 32)); x0 = Math.max(0, x0 - pad); y0 = Math.max(0, y0 - pad); x1 = Math.min(w - 1, x1 + pad); y1 = Math.min(h - 1, y1 + pad); r = { sx: x0, sy: y0, sw: x1 - x0 + 1, sh: y1 - y0 + 1 }; } } catch (e) { }
+  PORT_BOX.set(im, r); return r;
+}
 function drawSpeaker(x, tb) {
-  const s = tb.spk; if (tb.y < 60) return; const px = tb.x + 2;
-  if (s.img) { const P = 48, X = px + 1, Y = tb.y - P - 2; // v27f: portrait 1.5× (48px), a little more contrast, no smoothing; v12.0.1 (player: 「頭像外框縮小」): a slim 1px frame hugging the portrait instead of a window
-    x.fillStyle = '#0b0d18'; x.fillRect(X - 1, Y - 1, P + 2, P + 2); x.fillStyle = UIC.accent; x.fillRect(X - 1, Y - 1, P + 2, 1); x.fillStyle = '#141a30'; x.fillRect(X, Y, P, P);
-    const sm = x.imageSmoothingEnabled; x.imageSmoothingEnabled = false; x.drawImage(crispPortrait(s.img), X, Y, P, P); x.imageSmoothingEnabled = sm; }
-  if (s.name) { const nx = s.img ? px + 52 : px, w = Math.ceil(Font.width(s.name, 10)) + 14; drawWin(x, nx, tb.y - 16, w, 17, 'ow'); Font.draw(x, s.name, nx + 7, tb.y - 15, UIC.warm, UIC.textSh, 10); }
+  const s = tb.spk; if (tb.y < 60) return; const px = tb.x + 2; let nx = px;
+  if (s.img) { // v27i (player: 「頭像外框縮小到跟圖像一致」): same 48px scale as before, but the frame now hugs the visible portrait instead of a fixed square
+    const im = s.img.hd ? s.img : crispPortrait(s.img), B = portraitBox(s.img), k = 48 / s.img.height, dw = Math.round(B.sw * k), dh = Math.round(B.sh * k), X = px + 1, Y = tb.y - 2 - dh;
+    x.fillStyle = '#0b0d18'; x.fillRect(X - 1, Y - 1, dw + 2, dh + 2); x.fillStyle = UIC.accent; x.fillRect(X - 1, Y - 1, dw + 2, 1); x.fillStyle = '#141a30'; x.fillRect(X, Y, dw, dh);
+    x.save(); x.imageSmoothingEnabled = !!s.img.hd; if (s.img.hd) x.imageSmoothingQuality = 'high'; x.drawImage(im, B.sx, B.sy, B.sw, B.sh, X, Y, dw, dh); x.restore(); nx = X + dw + 3; }
+  if (s.name) { const w = Math.ceil(Font.width(s.name, 10)) + 14; drawWin(x, nx, tb.y - 16, w, 17, 'ow'); Font.draw(x, s.name, nx + 7, tb.y - 15, UIC.warm, UIC.textSh, 10); }
 }
 // hold B to fast-forward (only once B was pressed inside a dialogue, so running with B doesn't skip talks)
 let __ffArm = false, __ffT = 0, __ffF = -1;

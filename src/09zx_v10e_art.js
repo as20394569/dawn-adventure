@@ -52,8 +52,4 @@ function portraitHD(k) {
 { const KEY = new Map(Object.entries(PORTRAIT_ART).map(([k, c]) => [c, k])), _po = portraitOf;
   portraitOf = function (w) { const im = _po(w), k = im && KEY.get(im); return (k && portraitHD(k)) || im; }; }
 { const _ds = drawSpeaker, BLANK = mkCanvas(32, 32);
-  drawSpeaker = function (x, tb) {
-    const s = tb.spk, im = s && s.img; if (!im || !im.hd || tb.y < 60) return _ds(x, tb);
-    s.img = BLANK; try { _ds(x, tb); } finally { s.img = im; }
-    const px = tb.x + 2, P = 48; x.save(); x.imageSmoothingEnabled = true; x.imageSmoothingQuality = 'high'; x.drawImage(im, px + 1, tb.y - P - 2, P, P); x.restore(); // same place as the slim frame (09zn)
-  }; }
+  drawSpeaker = function (x, tb) { return _ds(x, tb); }; } // v27i: the base draws HD portraits too (trimmed frame)
