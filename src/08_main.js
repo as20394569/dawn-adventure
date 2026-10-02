@@ -61,11 +61,15 @@ const Events = {
       yield* sayAll(['古岩魔像是「構造體」魔物，最怕水和草的攻擊。記住了。', '從今天起，你就是萌芽鎮的冒險者了。', '先去古岩遺跡，查清楚魔像為什麼會暴走。', '去吧，異世界的' + C.n + '。願曙光指引你的道路。']);
       return;
     }
+    { const n = st.flags.ch2 || 0; // v12.0.1: the elder follows chapter 2 instead of repeating the golem talk forever
+      if (n >= 10) { yield* sayAll(['王都的鐘聲……連這裡都聽得到呢。', '你做到了。初代勇者也一定會為你驕傲。', '……不過，剩下的三將和魔王還在。累了就回來，這裡永遠是你的家。']); return; }
+      if (n >= 5) { yield* sayAll(['宰相是魔王的手下？……連王都都不安全了啊。', '北境很冷，多帶點藥再出發吧。']); return; }
+      if (n >= 1) { yield* sayAll(['國王陛下在等你。王都就在北方街道的盡頭。', '……累了就回來。這裡永遠是你的家。']); return; } }
     if (st.flags.golem) { yield* sayAll(['……你在門的另一邊，看到了魔王城？', '果然，札爾格斯正在甦醒。', '你手上的「曙光之印」，是初代勇者留下的印記。它選中了你。', '魔王城在遙遠的北方。你還需要更多的力量和夥伴。', '在那之前，先把這一帶的魔物清理乾淨，好好鍛鍊吧。'].concat(st.flags.boneKnight ? [] : ['……對了，聽說魔像倒下後，遺跡的石板下面出現了往地底的樓梯。', '那裡是古王的墓穴。亡者怕火，別忘了帶上火系的武器或技能。'])); return; }
     yield* sayAll(['古岩魔像被魔王的瘴氣侵蝕，才會暴走。牠是「構造體」魔物，最怕水和草的攻擊。', '累了就去旅店休息，別太勉強自己。']);
   },
-  *apprentice() { yield* say(Game.st.flags.golem ? '你真的打倒魔像了！我以後也要變得和你一樣強！' : '村長爺爺說，異世界來的人都很強！是真的嗎？'); },
-  *gatekeeper() { yield* say(Game.st.flags.license ? '你就是那個從異世界來的人？好厲害！路上小心喔！' : '前面就是晨霧道路，外面有魔物喔！沒有冒險者證的人不能出鎮。'); },
+  *apprentice() { const n = Game.st.flags.ch2 || 0; if (n >= 1) { yield* say(n >= 10 ? '聽說王都的鐘是你敲響的！我以後也要去王都看看！' : '你要去王都了嗎！回來要跟我說鐘塔長什麼樣子喔！'); return; } yield* say(Game.st.flags.golem ? '你真的打倒魔像了！我以後也要變得和你一樣強！' : '村長爺爺說，異世界來的人都很強！是真的嗎？'); },
+  *gatekeeper() { const n = Game.st.flags.ch2 || 0; yield* say(n >= 10 ? '聽說王都的鐘又響了！是你做的吧？' : n >= 1 ? '聽說你要去王都了？好羨慕喔！路上小心！' : Game.st.flags.license ? '你就是那個從異世界來的人？好厲害！路上小心喔！' : '前面就是晨霧道路，外面有魔物喔！沒有冒險者證的人不能出鎮。'); },
   exitBlock(ow) {
     if (Game.st.flags.license) return null;
     return (function* () {
@@ -75,7 +79,7 @@ const Events = {
       if (g) g.dir = 'down';
     })();
   },
-  *kid() { yield* say(Game.st.flags.golem ? '聽說你打倒了魔像！異世界的盔甲果然很強！' : '你的衣服好奇怪喔！那是異世界的盔甲嗎？'); },
+  *kid() { if ((Game.st.flags.ch2 || 0) >= 1) { yield* say('王都的騎士來找你耶！你要變成騎士了嗎？'); return; } yield* say(Game.st.flags.golem ? '聽說你打倒了魔像！異世界的盔甲果然很強！' : '你的衣服好奇怪喔！那是異世界的盔甲嗎？'); },
   *well(ow) {
     const st = Game.st;
     if (st.flags.wellCharm) { if (st.bag.rope) { if (yield* yesNo('要用繩索下到井底嗎？')) yield* ow.warp('sewer', 7, 12, 'up'); } else yield* say('一口很深的井。井底好像還有更深的通道……需要繩索才能下去。'); return; }
@@ -106,7 +110,7 @@ const Events = {
   *herbalist() {
     const f = Game.st.flags, st = Game.st;
     if (!f.herb) { f.herb = 1; st.bag.superPotion = (st.bag.superPotion || 0) + 1; yield* sayAll(['哦？這麼深的森林裡，居然有客人。', '我是採藥的老頭子。這個給你，路上小心。']); yield* itemGet(st.name + '得到了好傷藥！'); }
-    yield* sayAll([f.mossGiant ? '苔石巨人倒下了啊……森林的空氣都變輕了。' : '西南邊的水池旁，住著一尊苔石巨人。它身上的青苔最怕火。', '對了……森林西北角有一棵「會讓路的樹」。聽說要等遺跡的魔像倒下，森林才會醒來。']);
+    yield* sayAll([f.mossGiant ? '苔石巨人倒下了啊……森林的空氣都變輕了。' : '西南邊的水池旁，住著一尊苔石巨人。它身上的青苔最怕火。', f.golem ? '對了……森林西北角那棵「會讓路的樹」，魔像倒下之後好像醒過來了。' : '對了……森林西北角有一棵「會讓路的樹」。聽說要等遺跡的魔像倒下，森林才會醒來。']);
   },
   *grandpa() { yield* sayAll(['年輕人，一直按著方向走，就會自己跑起來喔。（想慢慢走的話，在「設定→跑步」改成按住B鍵。）', '你說你們那邊有不用馬就能跑的鐵箱子？……真是難以想像啊。', Game.st.flags.golem ? '聽說魔像倒下的那晚，鎮上那口老井發出了光。' : '鎮上那口老井，據說跟遺跡是連在一起的。']); },
   *florist() {
@@ -123,7 +127,7 @@ const Events = {
       else { yield* sayAll(['你說小麥沒事？……他在做什麼，你不能告訴我？', '……好吧，我相信你。只要他平安就好。', '謝謝你特地去找他。這是一點心意。']); st.bag.superPotion = (st.bag.superPotion || 0) + 1; st.money += 200; yield* itemGet(st.name + '得到了好傷藥×1和200 G！'); }
       return;
     }
-    yield* say(f.q1res === 'home' ? '小麥說要先在鎮上好好練習劍術，再去冒險。' : '最近小麥常常晚回家，手上還多了好多傷……你知道些什麼嗎？');
+    yield* say(f.q1res === 'home' ? '小麥說要先在鎮上好好練習劍術，再去冒險。' : (st.ep || {}).florist1 ? '小麥現在光明正大地在鎮外練劍了。……我每天都幫他縫護膝。' : '最近小麥常常晚回家，手上還多了好多傷……你知道些什麼嗎？');
   },
   *lostBoy(ow, ent) {
     const f = Game.st.flags, st = Game.st;
@@ -139,7 +143,7 @@ const Events = {
     if (ok) { st.money -= cost; st.respawn = { map: 'inn', x: 4, y: 4, dir: 'up' }; yield* say('好的，請稍等一下。'); yield* healRitual(); yield* sayAll(['讓你久等了！你的體力已經完全恢復了。', '歡迎再來喔！']); }
     else yield* say('歡迎再來喔！');
   },
-  *traveler() { if (Game.st.flags.golem) { yield* sayAll(['你真的打倒魔像了？……', '魔王復活的傳聞，王都那邊也開始流傳了。', '我得趕快把這件事告訴王都的朋友。']); return; } yield* sayAll(['我在古岩遺跡附近見過那隻魔像……', '它的拳頭開始發光、凝聚力量時，下一擊非常可怕。', '那時候就選「防禦」，能擋下一半的傷害！']); },
+  *traveler() { if ((Game.st.flags.ch2 || 0) >= 2 && (comState('c4', Game.st) || {}).res === 'returned') { yield* sayAll(['懷錶已經交給艾德了。那傢伙高興得差點從鐘塔上掉下來。', '……你在王都見過他了吧？']); return; } if (Game.st.flags.golem) { yield* sayAll(['你真的打倒魔像了？……', '魔王復活的傳聞，王都那邊也開始流傳了。', '我得趕快把這件事告訴王都的朋友。']); return; } yield* sayAll(['我在古岩遺跡附近見過那隻魔像……', '它的拳頭開始發光、凝聚力量時，下一擊非常可怕。', '那時候就選「防禦」，能擋下一半的傷害！']); },
   *clerk() { yield* shopFlow(); },
   *customer() { const f = Game.st.flags || {}; // v12.0.1 (player: 「貝蒂的對話文字過時 重新設計」): tips that match the current systems, by progress
     if (!f.license) { yield* sayAll(['出門前記得多買幾瓶藥水喔，這家店的最實在了。', '武器和防具大多要找鐵匠打造。打倒魔物拿到的素材，先別急著賣掉！']); return; }

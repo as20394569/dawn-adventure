@@ -48,7 +48,7 @@ function npcCommission(id, ow, ent) {
   // report a finished request
   for (const k of mine) { const c = COMMISSIONS[k], s = comState(k, st); if (!s || s.s !== 'on' || c.deliver || !comProgress(k, st).ready) continue;
     return (function* () {
-      if (k === 'c4') { delete st.bag.pocketWatch; s.s = 'done'; s.res = 'returned'; yield* sayAll(['這是……我的懷錶！', '它是鐘塔的鑰匙錶，停在三點十分——異界之門開啟的那一刻。', '若你來到王都，請到鐘塔找我。我叫艾德。']); yield* giveReward(c.reward); return; }
+      if (k === 'c4') { delete st.bag.pocketWatch; s.s = 'done'; s.res = 'returned'; yield* sayAll(['這是……我的懷錶！', '它是鐘塔的鑰匙錶，停在三點十分——異界之門開啟的那一刻。', '我的朋友艾德在王都的鐘塔旁開鐘錶店。這只錶，我會親手交還給他。', '若你來到王都，請去找他。']); yield* giveReward(c.reward); return; }
       if (c.need) for (const i in c.need) st.bag[i] -= c.need[i];
       s.s = 'done'; Sound.sfx('select'); yield* sayAll([].concat(COM_THANKS[k] || '謝謝你！')); yield* say('完成了委託「' + c.n + '」！'); yield* giveReward(c.reward); })();
   }
@@ -56,7 +56,8 @@ function npcCommission(id, ow, ent) {
   const k = mine.find(q => comAvail(q, st)); if (!k) return null; const c = COMMISSIONS[k];
   return (function* () {
     yield* sayAll(COM_TALK[k] || [c.d]); yield* comHintSay(c); yield* say('報酬：' + rewardText(c.reward));
-    if (!(yield* yesNo('要接下「' + c.n + '」嗎？'))) { yield* say('這樣啊……有空的話再來找我吧。'); return; }
+    if (!(yield* yesNo('要接下「' + c.n + '」嗎？'))) { (st.comNo || (st.comNo = {}))[k] = 1; yield* say('這樣啊……有空的話再來找我吧。'); return; } // v12.0.1: remembered, so the NPC's own talk / services come back (10z)
+    if (st.comNo) delete st.comNo[k];
     st.com[k] = { s: 'on', k: c.kill ? (((st.dex || {})[c.kill[0]] || {}).won || 0) : 0 };
     if (c.deliver) st.bag[c.deliver[0]] = 1;
     Sound.sfx('select'); yield* say('接下了「' + c.n + '」！' + (c.deliver ? '\n得到了「' + ITEMS[c.deliver[0]].n + '」。' : '（「狀態→任務」按A可以看進度和取得地點）'));

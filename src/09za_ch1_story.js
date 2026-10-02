@@ -152,12 +152,14 @@ function* hillsIntro() {
 function* hillsReport() {
   const st = Game.st, f = st.flags;
   yield* sayAll(['……這塊黑色的石頭，是從磨石裡掉出來的？', '（村長把結晶舉到光底下，臉色一下子沉了下來。）', '……瘴氣結晶。五百年前，黯滅之王的軍隊就是帶著這種東西，讓野獸變成魔物的。', '魔王的封印果然在減弱了……']);
+  if ((f.creekQ || 0) >= 3) { f.hillsQ = 3; yield* sayAll(['……漢斯身上也沾過這種瘴氣吧。', '還好你已經用清泉草治好了他。……真是幫了大忙。']); return; } // v12.0.1: the creek was already done (order of play)
   Sound.sfx('exclaim'); yield* wait(20); yield* blackText(['「村長爺爺！」', '門被用力推開，諾拉氣喘吁吁地衝了進來。']);
   yield* sayAll(['諾拉：「爸爸他……爸爸的手臂上長出了黑色的斑點，一直在發燒……！」', '……是瘴氣病。被瘴氣纏得太久了。', '要治好它，需要碧溪谷源頭的「清泉草」。碧溪谷就在晨霧道路的西邊。',
     '……聽說最近那條溪的水也變黑了。北邊橋頭那隻沼澤鱷，說不定就是從那裡被趕下來的。']);
+  if ((f.creekQ || 0) >= 2) { f.hillsQ = 3; yield* say('……咦？你身上這股清香——這不就是清泉草嗎！'); yield* say('諾拉：「真的嗎！？那、那快點拿給爸爸！」'); yield* say('（目標：把清泉草帶回風車丘陵的漢斯家。）'); return; } // v12.0.1: the catfish fell before this report (creekQ stays 2, no softlock)
   yield* say('諾拉：「我也要去！我認得清泉草長什麼樣子……拜託你！」');
   const r = yield* ask('要帶諾拉一起去嗎？', ['一起去吧', '妳留下來照顧爸爸']);
-  f.noraCreek = r === 0 ? 1 : 0; f.hillsQ = 3; f.creekQ = 1;
+  f.noraCreek = r === 0 ? 1 : 0; f.hillsQ = 3; f.creekQ = Math.max(f.creekQ || 0, 1);
   yield* say(r === 0 ? '諾拉：「嗯！我先去溪谷的入口等你！」' : '諾拉：「……嗯。爸爸就交給我。你一定要平安回來喔。」');
   yield* say('（新的目標：到晨霧道路西側的碧溪谷，找到源頭的清泉草。推薦Lv8〜11）');
 }

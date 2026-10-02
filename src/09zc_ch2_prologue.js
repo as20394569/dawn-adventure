@@ -164,7 +164,7 @@ Object.assign(Events, {
       else yield* sayAll(['格倫：「……也是。換作是我，也不會相信一個盜賊。」', '格倫：「我就在驛站這裡。累了就回來喝口水吧。」']);
       yield* say('（目標：趕走斷崖上的盜賊，通過楓紅關道。推薦Lv17〜20）'); return;
     }
-    yield* say((f.passQ || 0) >= 2 ? '格倫：「鹿王安靜下來了……謝啦，小鬼。」' : '格倫：「驛站燒掉了，不過井水還能喝。休息一下吧。」');
+    yield* say(f.grenNorth ? '格倫：「驛站重新蓋起來了。累了就來喝碗熱湯吧，勇者。」' : (f.passQ || 0) >= 2 ? '格倫：「鹿王安靜下來了……謝啦，小鬼。」' : '格倫：「驛站燒掉了，不過井水還能喝。休息一下吧。」');
     yield* healRitual('喝了口井水，在驛站的屋簷下休息了一下，體力完全恢復了！');
   },
   passCamp(ow) {
@@ -236,7 +236,7 @@ Object.assign(Events, {
     if (r === 0) { delete st.bag.heroBanner; st.boost = st.boost || {}; st.boost.str = (st.boost.str || 0) + 1; Sound.jingle('item'); yield* sayAll(['把戰旗插回了墳前。', '一陣風吹過古戰場，彷彿有很多人在說「謝謝」……']); yield* itemGet('得到了曙光軍的祝福！力量永久+1。'); }
     else { st.bag.tpBook = (st.bag.tpBook || 0) + 1; yield* sayAll(['把戰旗小心地收了起來。', '（在旗桿裡發現了一本古老的手冊……是初代勇者的戰術筆記。）']); yield* itemGet('得到了天賦之書！'); }
     if (f.grenTrust) {
-      yield* sayAll(['格倫：「……結束了啊。」', '格倫：「那群蠢蛋，說是要去北邊的街道投靠一個叫『黑羽』的盜賊頭子。……我就不送了。」', '格倫：「這個給你。以前的東西，現在用不著了。」']);
+      yield* sayAll(['格倫：「……結束了啊。」', '格倫：「那群蠢蛋，說是要去北邊的街道投靠一個叫『黑羽』的盜賊頭子。……我得把那群笨蛋拉回來。有需要就喊我，我會趕過去。」', '格倫：「這個給你。以前的東西，現在用不著了。」']);
       gainBP('qGrenBand', 3); Sound.jingle('item'); yield* itemGet('得到了「格倫的護腕」的設計圖和打造券！');
     } else { st.money += 2000; yield* sayAll(['回到關道的時候，格倫託馬車夫帶了一個袋子給你。', '「……謝啦，小鬼。」']); yield* itemGet('得到了格倫的謝禮2000 G！'); }
     f.passQ = 3; f.passDone = 1;

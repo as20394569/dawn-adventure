@@ -285,7 +285,7 @@ Object.assign(ELITE_TEXT, { rockRhino: ['（岩角犀用前腳刨著地面……
   MAPS.lake.signs['15,24'] = '「↓ 幽光沼澤」\n瘴氣很濃，魔物也很強。建議Lv18以上。';
 }
 Object.assign(COMMISSIONS, {
-  c18: { n: '蠍尾針收集', from: '旅店的藥師', d: '想用蠍尾針做解毒劑的研究。請帶來蠍尾針×4。（落日峽谷的砂鉗蠍）', need: { scorpTail: 4 }, reward: { gold: 1500, items: { antidote: 3, superPotion: 2 } }, open: st => st.vis && st.vis.canyon },
+  c18: { n: '蠍尾針收集', from: '旅店老闆娘', d: '想用蠍尾針做解毒劑的研究。請帶來蠍尾針×4。（落日峽谷的砂鉗蠍）', need: { scorpTail: 4 }, reward: { gold: 1500, items: { antidote: 3, superPotion: 2 } }, open: st => st.vis && st.vis.canyon },
   c19: { n: '驅趕鷹妖', from: '信差露卡', d: '鷹妖一直搶信差的包裹。接下委託後，擊敗峽谷鷹妖×5。', kill: ['harpy', 5], reward: { gold: 1800, items: { superPotion: 3 } }, open: st => st.vis && st.vis.canyon },
   c20: { n: '沼苔採集', from: '藥草師', d: '沼苔可以做成很好的藥。請帶來沼苔×5。（幽光沼澤）', need: { bogMoss: 5 }, reward: { gold: 2400, items: { hiEther: 2 } }, open: st => st.vis && st.vis.swamp },
   c21: { n: '枯木樹妖討伐', from: '守燈人', d: '樹妖把通往燈塔的路都堵住了。接下委託後，擊敗枯木樹妖×4。', kill: ['rotTreant', 4], reward: { gold: 2800, items: { elixir: 1 } }, open: st => st.vis && st.vis.swamp },

@@ -92,7 +92,8 @@ Overworld.prototype.eliteTalk = function* (e) {
   if (res === 'win') {
     const firstWin = !st.flags[e.id]; st.flags[e.id] = 1; (st.eliteDown || (st.eliteDown = {}))[e.id] = st.steps || 0; this.elites = this.elites.filter(x => x !== e && x.id !== e.id);
     if (firstWin && e.id === 'boneKnight') { yield* say('骸骨騎士倒下後，身後的石棺打開了……'); st.money += 2000; st.bag.powerFruit = (st.bag.powerFruit || 0) + 1; yield* itemGet(st.name + '找到了古王的寶藏：2000 G和力量果實！'); }
-    if (firstWin && Events['eliteWin_' + e.id]) yield* Events['eliteWin_' + e.id](this, e);
+    if (firstWin && Events['eliteWin_' + e.id]) { const mid = this.map.id; yield* Events['eliteWin_' + e.id](this, e);
+      if (Game.scene === this && this.map && this.map.id === mid) this.load(mid, this.p.x, this.p.y, this.p.dir, true); } // v12.0.1: the win event changes flags (漢斯 wakes up, 格倫 breaks camp…) — rebuild the map so the NPCs move at once
     if (firstWin) yield* say('（打倒的菁英魔物，過一段時間會再出現。再戰時會掉落不同的裝備。）');
   } else yield* this.retreatFrom(e, res);
 };

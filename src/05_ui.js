@@ -69,6 +69,11 @@ class Menu {
     const fitRows = Math.max(1, Math.floor(((o.y !== undefined ? H - o.y : TB_Y - 5) - 10 - tH) / this.rowH)); if (!o.visible && !o.h && rowsN > fitRows) o = { ...o, visible: fitRows }; // long menus scroll instead of running off screen
     this.h = o.h || Math.min(rowsN, o.visible || rowsN) * this.rowH + 10 + tH; this.x = o.x ?? (W - this.w - 4); this.y = o.y ?? (TB_Y - this.h - 1); this.buttons = o.buttons; this.ox = o.ox ?? 14; this.oy = o.oy ?? 5 + tH; this.title = o.title;
     this.scrollMax = o.visible || rowsN; this.scrollTop = Math.max(0, Math.floor(this.i / this.cols) - this.scrollMax + 1); this.drawExtra = o.drawExtra; this.noFrame = o.noFrame; this.textCol = o.textCol || '#c9cfe4'; this.textSh = o.textSh || UIC.textSh; this.fs = o.fs;
+    // v12.0.1 (player: 「選擇技能進階成改跟極時 文字超出螢幕外」): a menu wider than the screen shrinks its text (11→8) to fit
+    if (!o.w && !o.colW && !o.fs && this.colW * this.cols + 16 > W - 8) {
+      for (const z of [10, 9, 8]) { const mw = Math.max(...this.items.map(it => Font.width(it.t, z) + (it.r ? Font.width(it.r, z) + 12 : 0)), o.title ? Font.width(o.title) - 4 : 0);
+        this.fs = z; this.colW = mw + 20; if (this.colW * this.cols + 16 <= W - 8) break; }
+      this.w = Math.min(W - 8, this.colW * this.cols + 16); if (o.x === undefined) this.x = W - this.w - 4; }
     if (this.onMove) this.onMove(this.i);
   }
   move(d) { const n = this.items.length; let i = this.i; if (this.cols === 1) i = (i + d + n) % n; else { if (d === -1 || d === 1) i = (i + d + n) % n; else i = (i + d * 1 + n * 4) % n; } return i; }

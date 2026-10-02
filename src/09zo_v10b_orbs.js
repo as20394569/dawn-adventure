@@ -158,7 +158,9 @@ function evoFlash(b, t, br) { const C = b.center(t), last = br[br.length - 1] ==
 function* orbEvolveFlow(o) {
   const s = orbStage(o), D = ORB_A[o.k];
   yield* say('「' + orbName(o) + '」可以進化了！選擇進化的方向：');
-  const r = yield* ask('「' + D.n + ORB_STAGE[s + 1] + '」', ['強攻：' + evoOptText(o, s, 'A'), '附加：' + evoOptText(o, s, 'B'), '之後再說'], { cancel: false });
+  // v12.0.1 (player: 「選擇技能進階成改跟極時 文字超出螢幕外」): name only what applies to this skill — 「MP−40%（有冷卻的技能：冷卻−1）」 was 230px on a 176px screen
+  const opt = br => { const code = br === 'A' ? (D.A ? orbAOpt(o, s) : null) : D.B[s]; if (code && evoCode(code)[0] === 'cheap' && typeof DEF !== 'undefined') { const sk = DEF.skills['o_' + o.k]; return sk && sk.cooldown > 0 ? '冷卻−1' : 'MP−40%'; } return evoOptText(o, s, br); };
+  const r = yield* ask('「' + D.n + ORB_STAGE[s + 1] + '」', ['強攻：' + opt('A'), '附加：' + opt('B'), '之後再說'], { cancel: false });
   if (r > 1) { o.told = 0; return false; }
   o.e = (o.e || []).concat(r === 0 ? 'A' : 'B'); o.told = 0; Sound.jingle('levelup'); yield* itemGet('「' + orbName(o) + '」進化了！'); return true;
 }

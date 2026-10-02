@@ -91,7 +91,7 @@ function questMarks(st = Game.st) {
   if (f.mineOpen && !f.bandit) M.push(['mine', 9, 2]);
   if (f.golem && !f.boneKnight) M.push(st.map === 'catacomb' ? ['catacomb', 9, 3] : ['ruins', 13, 10]);
   const c4 = comState('c4', st); if (c4 && c4.s === 'on' && !st.bag.pocketWatch) M.push(['forest', 19, 9]);
-  if (typeof COM_GIVER !== 'undefined') for (const id in NPC_WHERE) { if (!npcQuestState(id, st)) continue; for (const m in MAPS) for (const n of MAPS[m].npcs || []) if (n.id === id) M.push([m, n.x, n.y]); }
+  if (typeof COM_GIVER !== 'undefined') for (const id in NPC_WHERE) { if (!npcQuestState(id, st)) continue; for (const m in MAPS) for (const n of MAPS[m].npcs || []) if (n.id === id && (!n.show || n.show(st))) M.push([m, n.x, n.y]); }
   return M;
 }
 

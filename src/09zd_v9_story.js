@@ -145,7 +145,7 @@ NPC_ROLES.任務.push('noraCap');
 Events.noraCap = function* () {
   const st = Game.st, f = st.flags;
   if (!f.noraCapMet) {
-    f.noraCapMet = 1; yield* sayAll(['諾拉：「啊！你也在王都！」', '諾拉：「我跟爸爸一起來賣麵粉的。王都好大喔……我迷路了三次。」']);
+    f.noraCapMet = 1; yield* sayAll(['諾拉：「啊！你也在王都！」', '諾拉：「我幫爸爸來王都賣麵粉的。王都好大喔……我迷路了三次。」']);
     if (f.passDone && !st.bag.heroBanner) yield* sayAll(['諾拉：「對了……爸爸說，我們家的祖先是曙光軍的士兵，死在北邊的古戰場。」', '諾拉：「……你說你把戰旗插回了墓前？」', '諾拉：「……謝謝你。爸爸聽了一定會哭的。」']);
     else yield* say('諾拉：「爸爸說，我們家的祖先是曙光軍的士兵。好像是在北邊的古戰場……」');
     yield* sayAll(['諾拉：「我想用金穗平原的麥子烤麵包！可是王都的麥子好貴……」', '諾拉：「如果你能幫我摘3根金麥穗，我就烤麵包給你吃！」']);

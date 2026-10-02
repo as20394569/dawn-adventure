@@ -19,7 +19,7 @@ for (const k in (typeof PORTRAIT_PX_ROWS !== 'undefined' ? PORTRAIT_PX_ROWS : {}
 }
 const PORTRAIT_NAME = { 格倫: 'gren', 鐵斧格倫: 'gren', 諾拉: 'nora', 村長婆婆: 'frostElder', 提姆: 'tim', 小麥: 'mai' }; // characters who share a field look but get their own portrait
 let SPK_INDEX = null;
-function spkIndex() { if (SPK_INDEX) return SPK_INDEX; const L = []; for (const k in MAPS) for (const n of MAPS[k].npcs || []) if (n.name && n.look && !PORTRAIT_PROPS.has(n.look)) L.push({ name: n.name, look: n.look, map: k, id: n.id, x: n.x, y: n.y }); return (SPK_INDEX = L); }
+function spkIndex() { if (SPK_INDEX) return SPK_INDEX; const L = []; for (const k in MAPS) for (const n of MAPS[k].npcs || []) if (n.name && n.look && !PORTRAIT_PROPS.has(n.look)) L.push({ name: n.name, look: n.look, map: k, id: n.id, x: n.x, y: n.y, show: n.show || null }); return (SPK_INDEX = L); }
 function speakerFor(name) {
   if (Game.st && name === Game.st.name) return { name, hero: 1 };
   const L = spkIndex(), e = L.find(x => x.name === name) || L.find(x => x.name.endsWith(name)) || L.find(x => x.name.includes(name));
@@ -134,7 +134,7 @@ function questDest(q, st = Game.st) {
   // story quests: the first place or person named in the current step
   const t = q.t || ''; let best = null, bi = 1e9;
   for (const id in MAPS) { const nm = MAPS[id].name; if (!nm || nm.length < 2) continue; const i = t.indexOf(nm); if (i >= 0 && (i < bi || (i === bi && nm.length > MAPS[best.map].name.length))) { bi = i; best = { map: mapIdByName(nm) || id, what: '前往' + nm }; } }
-  for (const e of spkIndex()) { const short = e.name.length > 3 ? e.name.slice(-2) : e.name, i = t.indexOf(e.name) >= 0 ? t.indexOf(e.name) : t.indexOf(short); if (i >= 0 && i < bi) { bi = i; best = { map: e.map, spot: e, what: '找' + e.name }; } }
+  for (const e of spkIndex()) { if (e.show && !e.show(st)) continue; const short = e.name.length > 3 ? e.name.slice(-2) : e.name, i = t.indexOf(e.name) >= 0 ? t.indexOf(e.name) : t.indexOf(short); if (i >= 0 && i < bi) { bi = i; best = { map: e.map, spot: e, what: '找' + e.name }; } }
   return best;
 }
 function questTracked(st = Game.st) { const L = questList(st).filter(q => !q.done); return L.find(q => q.n === st.track) || L.find(q => q.main) || L[0] || null; }

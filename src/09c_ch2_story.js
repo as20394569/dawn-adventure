@@ -112,7 +112,7 @@ function syncRecipesCh2(st = Game.st) { for (const R of RECIPES_CH2) { const i =
     if (f.sheepQ) L.push({ n: '牧羊女的煩惱', t: f.sheepQ >= 2 ? '完成：趕走了暴走野豬王。' : '金穗平原的暴走野豬王把羊群嚇跑了。打倒牠。', done: f.sheepQ >= 2, rw: '牧羊女的謝禮' });
     if (f.lichQ) L.push({ n: '冰霜巫妖', t: f.lichQ >= 2 ? '完成：打倒了冰霜巫妖。' : '村長婆婆說冰晶洞窟的冰之祭壇有巫妖。打倒牠。', done: f.lichQ >= 2, rw: '村長的寶物' });
     if (f.princessQ) L.push({ n: '公主的心願', t: f.princessQ >= 2 ? '完成：送給公主一顆冰晶。' : '公主想看看北方的雪。帶冰晶×2給她。（有' + (st.bag.iceCrystal || 0) + '）', done: f.princessQ >= 2, rw: '王國徽章' });
-    if (f.captainQ) L.push({ n: '騎士長的遺志', t: f.captainQ >= 2 ? '完成：把騎士長的黑劍交給了莉婭。' : '把黯滅騎士長的事告訴莉婭。', done: f.captainQ >= 2, rw: '???' });
+    if (f.captainQ) L.push({ n: '騎士長的遺志', t: f.captainQ >= 2 ? '完成：把騎士長的吊墜交給了莉婭。' : '把黯滅騎士長留下的吊墜拿給莉婭看。', done: f.captainQ >= 2, rw: '萬靈藥×3' });
     if (n >= 10) L.push({ n: '星見神殿', t: f.starGuardian ? '完成：打倒了星之守護者，看見了初代勇者的星圖。' : '鐘樓出現了通往星空的「星之門」。', done: !!f.starGuardian, rw: '星之守護' });
   };
 }
@@ -155,7 +155,7 @@ Object.assign(Events, {
     if (!f.liaQuest) { f.liaQuest = 1; yield* sayAll(['對了，北方街道的盜賊……', '他們的頭目「黑羽」就躲在街道西側的樹林裡，騎士團一直抓不到他。', '如果你遇到他……不，你一定打得贏的！']); return; }
     if (f.blackFeather && f.liaQuest === 1) { f.liaQuest = 2; yield* sayAll(['你打倒黑羽了！？', '騎士團長知道了一定會嚇一跳……這是我的一點心意。']); st.bag.megaPotion = (st.bag.megaPotion || 0) + 3; st.bag.tpBook = (st.bag.tpBook || 0) + 1; yield* itemGet(st.name + '得到了特級傷藥×3和天賦之書！'); return; }
     if (f.captainQ === 1) { f.captainQ = 2; yield* sayAll(['……黯滅騎士長？', '……那是我的父親。五年前在北境失蹤的騎士團長。', '謝謝你……讓他解脫了。', '這把劍……你留著吧。父親一定也希望它繼續守護別人。']); st.bag.elixir = (st.bag.elixir || 0) + 3; yield* itemGet(st.name + '得到了萬靈藥×3！'); return; }
-    yield* say(n < 5 ? '齒輪的事，鐘錶師艾德會告訴你。他的店在王城的東邊。' : n < 9 ? '宰相竟然是叛徒……北方一定要小心！' : '謝謝你，勇者。'); },
+    yield* say(n < 4 ? '齒輪的事，鐘錶師艾德會告訴你。他的店在王城的東邊。' : n === 4 ? '鐘塔的門開了！鐘樓就交給你了！' : n < 9 ? '宰相竟然是叛徒……北方一定要小心！' : '謝謝你，勇者。'); },
   *capKid() { yield* say(ch2() >= 10 ? '鐘響了！我聽到了！' : '我長大要當騎士！像莉婭姊姊一樣！'); },
   *capWoman() { yield* say(ch2() < 5 ? '宰相大人最近好奇怪……每天晚上都一個人去鐘塔。' : '宰相竟然是魔王的手下……好可怕。'); },
   *capOld() { yield* sayAll(['五百年前，初代勇者就是敲響了鐘塔的「曙光鐘」，才把魔王的四將封印起來的。', '鐘停了以後……封印就一年比一年弱了。']); },
@@ -178,7 +178,7 @@ Object.assign(Events, {
       yield* itemGet(st.name + '得到了「北境通行證」！'); yield* say('穿過霜語雪原，就是北境。……拜託你了。'); saveGame(); return;
     }
     if (n >= 10) { yield* sayAll(['曙光鐘的聲音傳遍了整個王國。', '謝謝你，勇者。你是這個國家的英雄。', '……但是，四將還剩下三個。魔王也還在沉睡。', '需要你的時候……我會再派莉婭去找你的。']); return; }
-    yield* say(n < 5 ? '時之齒輪……拜託你了。' : '北境很危險。一定要平安回來。');
+    yield* say(n < 4 ? '時之齒輪……拜託你了。' : n === 4 ? '鐘塔的門開了嗎……鐘樓就拜託你了。' : n === 9 ? '曙光之心……你真的帶回來了！快去鐘樓吧！' : '北境很危險。一定要平安回來。');
   },
   *princess() {
     const st = Game.st, f = st.flags;
@@ -187,7 +187,7 @@ Object.assign(Events, {
     yield* say(f.princessQ === 2 ? '冰晶放在窗邊，晚上會發光喔。' : '父王最近總是很累的樣子……'); },
   *chancellor() { yield* say(ch2() < 4 ? '……異界之人啊。齒輪的事，就麻煩你了。（……他的眼神好冷。）' : '……鐘塔的事，辛苦你了。'); },
   *castleGuard1() { yield* say('國王陛下就在前面。'); },
-  *castleGuard2() { yield* say('宰相大人最近常常不在王城……'); },
+  *castleGuard2() { const n = ch2(); yield* say(n < 5 ? '宰相大人最近常常不在王城……' : n < 10 ? '沒想到宰相大人竟然是……陛下這幾天都睡不好。' : '王城終於恢復平靜了。'); },
   *liaCastle() { yield* sayAll(['勇者！你回來了！', '王國的人都在說你的故事呢。', '下次……換我保護你！']); },
   /* church */
   *priest() {
@@ -208,6 +208,7 @@ Object.assign(Events, {
       Sound.sfx('door'); saveGame(); return;
     }
     if (n === 4) { yield* say('鐘塔的門開了！鐘樓在最上面。'); return; }
+    if (n === 9) { yield* say('你把曙光之心帶回來了！快去鐘樓，把它放回鐘裡吧！'); return; }
     if (n >= 5 && n < 10) { yield* say('曙光之心被搶走了……沒有它，鐘就只是一塊廢鐵。一定要把它搶回來！'); return; }
     yield* say('曙光鐘又開始走了。這一次，我會好好守著它。');
   },
@@ -328,7 +329,7 @@ Object.assign(Events, {
     f.victor = 1; ow.boss = null; setCh2(8);
     yield* sayAll(['「……不……不可能……」', '「我只是……不想變老……不想死而已……」', '維克托的身體化成了黑霧，消散了。', '王座之間的結界消失了。']); ow.load('duskFort1', ow.p.x, ow.p.y, ow.p.dir, true); saveGame();
   },
-  *eliteWin_duskCaptain() { const f = Game.st.flags; if (!f.captainQ) { f.captainQ = 1; yield* sayAll(['黯滅騎士長倒下了。鎧甲裡掉出了一個舊舊的吊墜……', '吊墜裡，是一個小女孩的畫像。……那張臉，好像在哪裡見過。', '（回王都告訴莉婭吧。）']); } },
+  *eliteWin_duskCaptain() { const f = Game.st.flags; if (!f.captainQ) { f.captainQ = 1; yield* sayAll(['黯滅騎士長倒下了。鎧甲裡掉出了一個舊舊的吊墜……', '吊墜裡，是一個小女孩的畫像。……那張臉，好像在哪裡見過。', '（把吊墜拿給莉婭看吧。）']); } },
   *moldBoss(ow) {
     const st = Game.st, f = st.flags; if (f.mold) return;
     yield* sayAll(['王座上坐著一個全身漆黑的騎士。', '他的手裡，握著發著金光的「曙光之心」。', '「……五百年了。」', '「那個男人用鐘聲把我關在這裡的時候，也是這樣的眼神。」', '「曙光之印……又一個異界之人。」', '「這一次，我不會再輸。」']);
