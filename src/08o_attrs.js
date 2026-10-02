@@ -7,6 +7,13 @@
    - 推薦配點 fills the remaining points by the class's template; the first 重置 is free, later ones cost gold.
    - Old saves keep exactly the attributes they had (converted to allocated points) and get one free reset. */
 const ATTR_BASE = { str: 4, agi: 4, vit: 4, int: 4, dex: 4, luk: 3 };
+// v12.0.1 (player: 「屬性面板6項的說明修正」): three short lines per attribute, each sized to fit (no number split across lines):
+// what one point gives (measured from heroStats), which skills it powers (the skills' own attrScale data), and how much.
+const ATTR_HELP12 = {
+  str: ['物攻+1', '技能加成：重擊・斬擊・槍技'], agi: ['速度+1.5 迴避+0.4% 物防+0.5', '技能加成：連擊・突進・快攻'], vit: ['HP+1.6 物防+1.5 魔防+0.8', '技能加成：衝撞類技能'],
+  int: ['魔攻+1.2 MP+1.5 魔防+0.8', '技能加成：魔法類技能'], dex: ['物攻+0.5 魔攻+0.3 命中+0.5%', '技能加成：居合・射擊・迴旋斬'], luk: ['會心+0.6% 迴避+0.1%', '技能加成：暗殺・影襲'] };
+const ATTR_HELP_NOTE = '超過10點的部分，每點威力+1%～1.5%';
+const fitSize = (s, w, z = 9, min = 7) => { while (z > min && Font.width(s, z) > w) z--; return z; };
 const ATTR_HELP = { str: '物攻+1　（重擊技能加成）', agi: '速度+1.5、迴避+0.4%、物防+0.3　（連擊技能加成）', vit: '最大HP+1.6、物防+1、魔防+0.6', int: '魔攻+1.2、最大MP+1.5、魔防+0.6　（魔法加成）', dex: '命中+0.5%、物攻+0.5、魔攻+0.3　（精準技能加成）', luk: '會心率+0.6%、迴避+0.1%　（暗殺技能加成）' };
 const ATTR_TEMPLATE = { swordsman: { str: 3, vit: 2, dex: 2, agi: 1, luk: 1 }, mage: { int: 4, dex: 1, vit: 2, agi: 1 }, guardian: { vit: 3, str: 3, dex: 1 }, ranger: { agi: 3, str: 3, dex: 2, vit: 1, luk: 1 },
   bard: { int: 3, vit: 2, agi: 2, dex: 1 }, machinist: { str: 3, dex: 3, vit: 2, luk: 1 }, monk: { str: 3, agi: 2, vit: 2, dex: 1 }, dragoon: { str: 3, vit: 2, dex: 2, agi: 1 },
@@ -67,8 +74,9 @@ function* attrScreen() {
     const Y2 = 26 + ATTRS.length * 15 + 1; [['推薦配點', av > 0], ['重置（重生之水' + ((st.bag && st.bag.attrReset) || 0) + '）', attrSpent(st) > 0 && (st.bag && st.bag.attrReset) > 0]].forEach(([t, ok], n) => { const X = 8 + n * 82, on = i === ATTRS.length + n; drawBtn(x, X, Y2, 78, 16, on); Font.drawC(x, t, X + 39, Y2, ok ? (on ? UIC.text : '#c9cfe4') : UIC.dis, UIC.textSh, 9); touchRegion(X, Y2, 78, 16, () => { i = ATTRS.length + n; tapKey('a'); }); });
     const k = ATTRS[i]; drawWin(x, 4, 142, 168, 110, 'menu');
     Font.draw(x, k ? ATTR_NAMES[k] + '：' : (i === ATTRS.length ? '依職業的推薦比例分配剩下的點數。' : '用重生之水把所有屬性點收回來重新分配。'), 12, 144, UIC.accent, UIC.textSh, 10);
-    if (k) Font.wrap(ATTR_HELP[k], 118, 9).slice(0, 2).forEach((l, n) => Font.draw(x, l, 48, 145 + n * 11, UIC.text, UIC.textSh, 9));
-    const s = heroStats(st); DER.forEach(([n, key, u], r) => { const X = 12 + (r % 2) * 80, Y = 170 + Math.floor(r / 2) * 13, v = s[key], d = Math.round((v - s0[key]) * 10) / 10;
+    if (k) { const [l1, l2] = ATTR_HELP12[k], z1 = fitSize(l1, 120), z2 = fitSize(l2, 154), z3 = fitSize(ATTR_HELP_NOTE, 154, 8);
+      Font.draw(x, l1, 46, 145, UIC.text, UIC.textSh, z1); Font.draw(x, l2, 12, 156, '#ffd890', UIC.textSh, z2); Font.draw(x, ATTR_HELP_NOTE, 12, 166, UIC.muted, UIC.textSh, z3); }
+    const s = heroStats(st); DER.forEach(([n, key, u], r) => { const X = 12 + (r % 2) * 80, Y = 178 + Math.floor(r / 2) * 12, v = s[key], d = Math.round((v - s0[key]) * 10) / 10;
       Font.draw(x, n, X, Y, UIC.muted, UIC.textSh, 10); Font.drawR(x, (u ? (Math.round(v * 10) / 10) : v) + (u || ''), X + 52, Y, UIC.text, UIC.textSh, 10); if (d) Font.draw(x, (d > 0 ? '+' : '') + d, X + 55, Y + 1, d > 0 ? UIC.good : UIC.bad, UIC.textSh, 8); });
     Font.drawR(x, '▶加點　◀取消　B確定', 166, 239, UIC.muted, UIC.textSh, 8);
   } };
