@@ -48,11 +48,18 @@ module.exports = async (g) => {
     { T('t_multi', { hits: [3, 3], tags: ['skill', 'phys', 'el:一般', 'damage', 'multi_hit'] }); const c = mk([hero({ skills: ['t_multi'] }), foe('B1')]); c.start(false); act(c, 't_multi', ['B1']);
       ok('B', '多段：3 段 HIT / DAMAGE', cnt(c, EVT.HIT, e => e.src === 'H') === 3 && cnt(c, EVT.DAMAGE, e => e.src === 'H') === 3);
       const c2 = mk([hero({ skills: ['t_multi'] }), foe('B1', { stats: { hp: 1 } }), foe('B2')]); c2.start(false); act(c2, 't_multi', ['B1']); ok('B', '多段：目標中途倒下就停止', cnt(c2, EVT.DAMAGE, e => e.src === 'H' && e.tgts[0] === 'B1') === 1 && c2.byId.B1.down); }
-    // turn order: the faster acts first; 搶先 puts a slow unit first next round; the hero decides only on its turn
-    { const c = mk([hero({ stats: { spe: 10 } }), foe('B1', { stats: { spe: 90 } })]); c.start(false); const first = c.log.find(e => e.type === EVT.ACTION_START);
-      ok('B', '行動順序：速度快的先行動，輪到英雄才停下來等指令', first && first.src === 'B1' && !!c.need && c.state === BS.WAITING_ACTION);
-      T('t_prio', { prio: 1 }); act(c, 't_prio', ['B1']); const o2 = c.log.filter(e => e.type === EVT.TURN_ORDER)[1];
-      ok('B', '搶先：用過後下一回合排第一（即使比較慢）', !!o2 && o2.payload.order[0] === 'H', o2 && o2.payload.order.join(',')); }
+    // turn order (v12.0.1): everyone chooses at the start of the round, then the faster acts first; 搶先 / 防禦 go first in the same round
+    { const c = mk([hero({ stats: { spe: 10 } }), foe('B1', { stats: { spe: 90 } })]); c.start(false); const before = c.log.filter(e => e.type === EVT.ACTION_START).length;
+      ok('B', '行動順序：回合開始先等英雄選指令（還沒有人行動）', !!c.need && c.need.plan && before === 0 && c.state === BS.TURN_ORDER);
+      act(c, 'attack', ['B1']); const first = c.log.find(e => e.type === EVT.ACTION_START);
+      ok('B', '行動順序：選完後速度快的先行動', first && first.src === 'B1' && !!c.need && c.need.plan);
+      T('t_prio', { prio: 1 }); act(c, 't_prio', ['B1']); const o2 = c.log.filter(e => e.type === EVT.TURN_ORDER)[1]; act(c, 'attack', ['B1']); const o3 = c.log.filter(e => e.type === EVT.TURN_ORDER)[2];
+      ok('B', '搶先：選了就在這一回合先出手（即使比較慢），下一回合回到速度順序', !!o2 && o2.payload.order[0] === 'H' && !!o3 && o3.payload.order[0] === 'B1', (o2 && o2.payload.order.join(',')) + ' / ' + (o3 && o3.payload.order.join(',')));
+      cmd(c, { type: 'defend' }); const o4 = c.log.filter(e => e.type === EVT.TURN_ORDER)[3]; ok('B', '防禦：一定最先執行', !!o4 && o4.payload.order[0] === 'H', o4 && o4.payload.order.join(','));
+      // between two of the hero's commands, a monster acts once (no 「多打一次」)
+      let dbl = 0; for (let s = 0; s < 30; s++) { const c2 = mk([hero({ stats: { spe: 48, hp: 3000 } }), foe('B1', { stats: { spe: 52, hp: 3000 } })], 40 + s); c2.byId.H.res.hp = 3000; c2.start(false);
+        for (let i = 0; i < 12 && c2.need; i++) { const n0 = c2.log.length; act(c2, i % 2 ? 't_prio' : 'attack', ['B1']); dbl += c2.log.slice(n0).filter(e => e.type === EVT.ACTION_START && e.src === 'B1' && !e.payload.reaction).length > 1 ? 1 : 0; } }
+      ok('B', '兩次指令之間，魔物只行動一次（搶先交替使用 30 場）', dbl === 0, dbl + ''); }
     // cooldowns count the owner's own actions
     { T('t_cd', { cooldown: 2, fallback: 'attack' }); const c = mk([hero({ skills: ['attack', 't_cd'], stats: { hp: 5000 } }), foe('B1', { stats: { hp: 50000 } })]); c.byId.H.res.hp = 5000; c.start(false);
       act(c, 't_cd', ['B1']); const a = c.byId.H.cd.t_cd; act(c, 't_cd', ['B1']); const f1 = cnt(c, EVT.SKILL_FAIL, e => e.payload.why === 'cooldown'); act(c, 't_cd', ['B1']); const f2 = cnt(c, EVT.SKILL_FAIL, e => e.payload.why === 'cooldown'); act(c, 't_cd', ['B1']);
@@ -106,7 +113,7 @@ module.exports = async (g) => {
     const mkHero = (cls, o = {}) => { __game.newGameState('測'); const st = Game.st; applyStartClass(['mage', 'bard'].includes(cls) ? 'mage' : 'swordsman'); st.cls = cls; st.lv = o.lv || 30; st.flags.deep = 1; st.tal12 = {}; if (o.tal) o.tal(st); st.hp = heroStats().hp; st.mp = heroStats().mp; st.status = null; BB.slots(st); return st; };
     const fight = (st, foes, seed, policy = 'smart', extra = {}) => { const [sp, lv, kind, ex] = foes; const c = BB.build({ sp, lv, kind, extra: ex || [], seed, maxRounds: 60, ...extra }, st); c.data.heroPolicy = policy; c.cfg.maxRounds = 60; c.start(true); return c; };
     { const bad = [], used = {}, gained = {};
-      for (const cls of Object.keys(DEF.classes)) { for (let i = 0; i < 4; i++) { const st = mkHero(cls), e0 = BV2.errors.length; let c; try { c = fight(st, ['slime', 26, 'wild', [['mush', 26], ['wolf', 25]]], 50 + i); } catch (e) { bad.push(cls + ': ' + e.message); continue; }
+      for (const cls of Object.keys(DEF.classes)) { for (let i = 0; i < 6; i++) { const st = mkHero(cls), e0 = BV2.errors.length; let c; try { c = fight(st, ['slime', 26, 'wild', [['mush', 26], ['wolf', 25]]], 50 + i); } catch (e) { bad.push(cls + ': ' + e.message); continue; }
           if (BV2.errors.length > e0) bad.push(cls + ': ' + BV2.errors[e0]); const C = DEF.classes[cls]; if (cnt(c, EVT.SKILL_USE, e => e.src === 'H' && e.payload.skill === C.sig)) used[cls] = 1;
           const res = C.res; if (res ? c.log.some(e => e.type === EVT.RESOURCE_CHANGE && e.tgts[0] === 'H' && e.payload.res === res && e.payload.change > 0) : c.log.some(e => e.type === EVT.STATUS_APPLY && e.src === 'H' && ['hunt_mark', 'turret'].includes(e.payload.status))) gained[cls] = 1; } }
       const cl = Object.keys(DEF.classes); ok('D', '10 職業：核心資源會累積、職業招式會被使用、沒有錯誤', !bad.length && cl.every(c => used[c] && gained[c]), bad.slice(0, 3).join(' | ') + ' 招式:' + cl.filter(c => !used[c]).join(',') + ' 資源:' + cl.filter(c => !gained[c]).join(',')); }

@@ -11139,7 +11139,7 @@ classTalk = function* () {
   if (!st.flags.deep) {
     yield* sayAll(['……你的力量又成長了呢。', '讓我看看……嗯，你身上的「' + CLASSES[st.cls].n + '」之力已經穩定下來了。', '把手放在石板上吧。更深的天賦會回應你。']);
     Sound.sfx('charge'); st.flags.deep = 1; Game.fadeColor = '#ffffff'; yield* fadeOut(12, '#ffffff'); Game.fade = 1; Sound.jingle('levelup'); yield* fadeIn(24); Game.fadeColor = '#000';
-    yield* itemGet('天賦覺醒！第4・5層的深層天賦解鎖了，另外獲得2點天賦點！');
+    yield* itemGet('天賦覺醒！第3層天賦和核心天賦解鎖了，另外獲得2點天賦點！');
     yield* say('從今以後，你也可以在我這裡轉換職業。換了職業，天賦會換成那個職業的三條分支（原本職業點的天賦會保留）。'); return true;
   }
   const r = yield* ask('要做什麼？', ['轉職', '聊天']); if (r !== 0) return false; yield* v7ClassChange('轉職的儀式'); return true;
@@ -14637,7 +14637,7 @@ class BattleCore {
   constructor(o) {
     this.seed = o.seed >>> 0; this.rng = makeRng(this.seed); this.env = o.env || {}; this.cfg = o.cfg || {}; this.flags = o.flags || {};
     this.units = []; this.byId = {}; this.state = BS.INIT; this.round = 0; this.seq = 0; this.log = []; this.evStack = [];
-    this.actSeq = 0; this.castSeq = 0; this.hitSeq = 0; this.order = []; this.orderPos = {}; this.roundActs = []; this.reactQ = []; this.need = null; this.pend = null; this.cur = null; this.result = null;
+    this.actSeq = 0; this.castSeq = 0; this.hitSeq = 0; this.order = []; this.orderPos = {}; this.roundActs = []; this.reactQ = []; this.need = null; this.pend = null; this.cur = null; this.result = null; this.plan = {}; this.planned = false;
     this.act = null; this.cast = null; this.hit = null; this.evAction = 0; this.trigAction = 0; this.trigRound = 0; this.trigBattle = 0; this.usage = {}; this.roundDone = false;
     this.envMods = (o.envMods || []).slice(); this.envTrigs = (o.envTrigs || []).slice(); this.escTries = 0; this.castTotal = {}; this.data = {}; this.effs = {}; this.stSeq = 0;
     this.trace = []; // safety stops (spec §8): the full chain is kept here
@@ -14698,15 +14698,20 @@ class BattleCore {
           this.emit(EVT.ROUND_START, { payload: { round: this.round } });
           for (const u of this.units) if (this.isUp(u)) this.tick(u, 'round_start');
           this.go(this.ended() ? BS.VICTORY_CHECK : BS.TURN_ORDER); break; }
-        case BS.TURN_ORDER: this.buildOrder(); this.go(this.order.length ? BS.WAITING_ACTION : BS.ROUND_END); break;
+        case BS.TURN_ORDER: {
+          if (!this.planned) { const need = this.planRound(); if (need) return need; }
+          this.planned = false; this.buildOrder(); this.go(this.order.length ? BS.WAITING_ACTION : BS.ROUND_END); break; }
         case BS.WAITING_ACTION: {
           let ent = null; while (this.order.length) { const e = this.order.shift(); if (this.isUp(this.byId[e.id])) { ent = e; break; } }
           if (!ent) { this.go(BS.ROUND_END); break; }
           const u = this.byId[ent.id], forced = this.forcedCommand(u);
           if (forced) { this.cur = forced; this.go(BS.ACTION_PREPARE); break; }
           if (ent.extra && !u.hero) { this.cur = { actor: u.id, type: 'ai_extra', targets: [], meta: { extra: ent.extra } }; this.go(BS.ACTION_PREPARE); break; }
-          if (u.hero && !this.auto) { this.pend = ent; this.need = { unit: u, round: this.round, extra: ent.extra || null }; return this.need; }
-          this.cur = this.validCmd(u, BAI.decide(this, u)); if (ent.extra) this.cur.meta.extra = ent.extra;
+          const planned = !ent.extra && this.plan[u.id]; if (planned) delete this.plan[u.id];
+          if (planned) { this.cur = this.validCmd(u, planned); if (u.hero) { this.go(BS.ACTION_PREPARE); break; } } // the hero's choice was recorded at submit
+          else if (u.hero && !this.auto) { this.pend = ent; this.need = { unit: u, round: this.round, extra: ent.extra || null }; return this.need; } // an extra action (疾行) is chosen when it comes
+          else this.cur = this.validCmd(u, BAI.decide(this, u));
+          if (ent.extra) this.cur.meta.extra = ent.extra;
           if (u.hero) this.data.lastHeroAct = this.cur.type === 'skill' ? this.cur.skill : this.cur.type;
           this.go(BS.ACTION_PREPARE); break; }
         case BS.ACTION_PREPARE: {
@@ -14731,6 +14736,7 @@ class BattleCore {
   start(auto) { this.auto = !!auto; return this.run(); }
   submit(cmd) {
     if (!this.need) return bvErr('submit', 'no input pending'); const u = this.need.unit;
+    if (this.need.plan) { this.plan[u.id] = this.validCmd(u, { ...cmd, actor: u.id }); this.data.lastHeroAct = cmd.type === 'skill' ? cmd.skill : cmd.type; this.need = null; return this.run(); }
     this.cur = this.validCmd(u, { ...cmd, actor: u.id }); if (this.pend && this.pend.extra) this.cur.meta.extra = this.pend.extra;
     this.data.lastHeroAct = cmd.type === 'skill' ? cmd.skill : cmd.type; this.need = null; this.pend = null; this.go(BS.ACTION_PREPARE); return this.run();
   }
@@ -14750,16 +14756,27 @@ class BattleCore {
     if (this.cfg.maxRounds && this.round >= this.cfg.maxRounds && this.roundDone) return 'draw'; // tests: a battle that can't end
     return null;
   }
+  planRound() {
+    this.plan = {}; this.planned = true; let hero = null;
+    for (const u of this.units) { if (!this.isUp(u) || this.forcedCommand(u)) continue; if (u.hero && !this.auto) { hero = u; continue; } this.plan[u.id] = this.validCmd(u, BAI.decide(this, u)); if (u.hero) this.data.lastHeroAct = this.plan[u.id].type === 'skill' ? this.plan[u.id].skill : this.plan[u.id].type; }
+    if (hero) { this.need = { unit: hero, round: this.round, plan: 1 }; return this.need; }
+    return null;
+  }
+  planPrio(u) { const p = this.plan[u.id]; if (!p) return 0; if (u.hero && (p.type === 'defend' || p.type === 'item' || p.type === 'run')) return 20;
+    const sk = p.type === 'skill' && DEF.skills[p.skill]; return sk && (sk.prio || u.mods.some(m => m.prioSkill === sk.id)) ? 10 : 0; }
+  previewOrder() { const ups = this.units.filter(u => this.isUp(u)), sp = {}; for (const u of ups) sp[u.id] = BR.speed(this, u);
+    const front = u => this.planPrio(u) + (this.hasStatus(u, 'first_next') ? 10 : 0) + ((this.round || 1) === 1 && u.mods.some(m => m.firstRoundPrio) ? 5 : 0) - (this.hasStatus(u, 'delay') ? 10 : 0);
+    return ups.sort((a, b) => front(b) - front(a) || sp[b.id] - sp[a.id] || (a.hero ? -1 : b.hero ? 1 : a.id < b.id ? -1 : 1)).map(u => u.id); }
   buildOrder() {
     const roll = {}, ups = this.units.filter(u => this.isUp(u)); for (const u of ups) roll[u.id] = this.rng.next();
-    const front = u => (this.hasStatus(u, 'first_next') ? 10 : 0) + (this.round === 1 && u.mods.some(m => m.firstRoundPrio) ? 5 : 0) - (this.hasStatus(u, 'delay') ? 10 : 0);
+    const front = u => this.planPrio(u) + (this.hasStatus(u, 'first_next') ? 10 : 0) + (this.round === 1 && u.mods.some(m => m.firstRoundPrio) ? 5 : 0) - (this.hasStatus(u, 'delay') ? 10 : 0);
     const sp = {}; for (const u of ups) sp[u.id] = BR.speed(this, u);
     ups.sort((a, b) => front(b) - front(a) || sp[b.id] - sp[a.id] || roll[a.id] - roll[b.id] || (a.id < b.id ? -1 : 1));
     const order = ups.map(u => ({ id: u.id }));
     for (const u of ups) for (const s of u.statuses) { const D = DEF.statuses[s.id]; if (D.extraEvery && this.round % D.extraEvery === 0) order.push({ id: u.id, extra: s.id }); }
     this.order = order; this.orderPos = {}; order.forEach((e, i) => { if (this.orderPos[e.id] == null) this.orderPos[e.id] = i; });
     this.emit(EVT.TURN_ORDER, { payload: { round: this.round, order: order.map(e => e.id), extra: order.filter(e => e.extra).map(e => e.id) } });
-    for (const u of ups) { if (this.hasStatus(u, 'first_next')) this.removeStatus(u, 'first_next', 'used'); if (this.hasStatus(u, 'delay')) this.removeStatus(u, 'delay', 'used'); }
+    for (const u of ups) for (const k of ['first_next', 'delay', 'prio_used']) if (this.hasStatus(u, k)) this.removeStatus(u, k, 'used');
   }
   wentFirst(u) { const me = this.orderPos[u.id]; if (me == null) return false; return this.units.filter(x => x.side !== u.side && this.isUp(x)).every(x => (this.orderPos[x.id] ?? 99) > me); }
   forcedCommand(u) {
@@ -14908,7 +14925,7 @@ class BattleCore {
       if (sk.after && this.isUp(u)) this.exec(sk.after, { ...base, tgt: tg[0] || u, total: this.castTotal[cast] });
     });
     this.emit(EVT.SKILL_SUCCESS, { src: u, tgts: tg, payload: { skill: sk.id, cast, total: this.castTotal[cast], spent: cmd.spent || 0, follow: !!meta.follow }, tags: sk.tags, skill: sk.id });
-    if ((sk.prio || u.mods.some(m => m.prioSkill === sk.id)) && !meta.follow && this.isUp(u)) this.applyStatus(u, u, 'first_next', { quiet: 1 }); // 搶先: first next round
+    if ((sk.prio || u.mods.some(m => m.prioSkill === sk.id)) && !meta.follow && this.isUp(u)) this.applyStatus(u, u, 'prio_used', { quiet: 1 }); // 搶先 already acted first this round; the mark is for 先機 (next round's first attack +20%)
     this.hit = null; return use;
   }
   emit(type, o = {}, main = null) {
@@ -15184,6 +15201,7 @@ defPut('statuses', 'shards', { tags: ['buff'], duration: 'battle', stack: 'add',
 { const A = DEF.statuses.shards; A.stack = 'signed'; A.min = 0; A.max = 3; }
 defPut('statuses', 'hidden_weak', { tags: [], duration: 'battle', stack: 'none', metadata: { n: '弱點未知' } });
 defPut('statuses', 'first_next', { tags: ['buff'], duration: 'next_order', stack: 'refresh', metadata: { n: '搶先' } });
+defPut('statuses', 'prio_used', { tags: ['buff'], duration: 'next_order', stack: 'refresh', metadata: { n: '搶先過' } }); // v12.0.1: 搶先 acts first in the same round; this only marks it for 先機
 defPut('statuses', 'delay', { tags: ['debuff'], duration: 'next_order', stack: 'refresh', metadata: { n: '延後' } });
 defPut('statuses', 'evade_up', { tags: ['buff'], duration: 'until_own_action', clearAt: 'owner_action_start', stack: 'max', metadata: { n: '迴避提升' },
   mods: [{ stage: 'defender', who: 'defender', accAdd: { f: 'evadeUp' } }] });
@@ -16035,7 +16053,7 @@ PV('fx.will', v => ({ mods: [{ statusRes: 20 }] }));
 PV('fx.elemGuard', v => ({ mods: [{ stage: 'defender', who: 'defender', mul: 0.88, cond: { element: ['火', '水', '雷', '草', '毒', '岩', '飛', '光', '暗', '冰', '風'] } }] }));
 PV('fx.resonance', (v, u) => ({ rules: u.cls === 'otherworlder' ? { max_insight: 1, insightMax: 1 } : u.cls === 'ranger' ? { markMax: 1 } : u.cls === 'machinist' ? { turretMax: 1 } : DEF.classes[u.cls] && DEF.classes[u.cls].res ? { ['max_' + DEF.classes[u.cls].res]: 1 } : {} }));
 PV('fx.timeSand', v => ({ triggers: [{ on: EVT.COOLDOWN, phase: 'POST', role: 'src', cond: { evSetCd: 1 }, chance: 0.2, effects: [{ type: 'cooldown', target: 'self', how: 'longest', n: 1, why: 'timeSand' }] }] }));
-PV('fx.initiative', v => ({ triggers: [{ on: EVT.ROUND_START, phase: 'POST', cond: { ownerHasStatus: 'first_next' }, effects: [{ type: 'status', target: 'self', status: 'first_strike', quiet: 1 }] }] }));
+PV('fx.initiative', v => ({ triggers: [{ on: EVT.ROUND_START, phase: 'POST', cond: { ownerHasStatus: 'prio_used' }, effects: [{ type: 'status', target: 'self', status: 'first_strike', quiet: 1 }] }] }));
 Object.assign(COND, { evSetCd: (c, v) => !!c.ev && !!c.ev.payload.set === !!v });
 { const byName = {}; for (const k in GEAR) if (GEAR[k].slot === 'acc') byName[GEAR[k].n] = k;
   const TRAIT_CAT = { thorns: '防禦', endure: '防禦', leech: '回復', double: '攻擊', pierce: '攻擊', lastStand: '攻擊', hunter: '攻擊', breaker: '攻擊', poisonEdge: '攻擊', shadowStep: '防禦', regen: '回復', first: '攻擊', guardHeal: '回復', meditate: '資源',
@@ -16385,7 +16403,7 @@ for (const id in DEF.skills) if (id.startsWith('u_')) { const D = DEF.skills[id]
 { const D = DEF.skills.u_moonHarp; if (D && !D.effects.some(e => e && e.type === 'cleanse')) D.effects.push({ type: 'cleanse', target: 'self' }); } // 月光奏鳴：「消除異常狀態」 (MOVES.cure had no v12 effect)
 for (const id in DEF.skills) if (DEF.skills[id].cooldown == null) DEF.skills[id].cooldown = 0; // basic attack, weapon specials, monster moves: no cooldown
 { const P = DEF.passives.evo, mk = P.make; P.make = v => { const [k] = evoCode(v.code), sk = DEF.skills[v.skill]; if (k === 'cheap' && sk && sk.cooldown > 0) return { mods: [{ stage: 'skill', cdAdd: -1, cond: { skillIs: v.skill } }] }; return mk(v); }; }
-EVO_TXT.cheap = () => 'MP−40%（有冷卻的技能：冷卻−1）'; EVO_TXT.first = () => '搶先（下回合第一個行動）';
+EVO_TXT.cheap = () => 'MP−40%（有冷卻的技能：冷卻−1）'; EVO_TXT.first = () => '搶先（這回合先出手）';
 const CLASS_SKILLS12 = {
   swordsman: ['galeCut', 'swallowFlight', 'warCry', 'crossJudge', 'focusMind', 'dawnFlash', 'steelCleaver', 'allOut'],
   mage: ['fireShot', 'aquaEdge', 'bolt', 'verdantWind', 'manaWall', 'flameVortex', 'tidalRage', 'starfall'],
@@ -17424,4 +17442,11 @@ const battleHero12 = () => { const b = Game.scene, c = b && b.core; return c && 
     st.hp = B.H.res.hp; st.mp = B.H.res.mp ?? st.mp; st.status = B.c.majorOf(B.H) || null;
     try { return _cu(k); } finally { st.hp = keep[0]; st.mp = keep[1]; st.status = keep[2]; }
   }; }
+{ const _do = Battle.prototype.drawOrder; Battle.prototype.drawOrder = function (x) {
+    const c = this.core; if (!(c && c.need && c.need.plan && typeof c.previewOrder === 'function')) return _do.call(this, x);
+    const keep = this.order12; this.order12 = { ids: c.previewOrder(), done: 0 }; try { _do.call(this, x); } finally { this.order12 = keep; } }; }
+if (typeof BATTLE_HELP !== 'undefined') for (const P of BATTLE_HELP) {
+  if (P[0] === '行動順序') P[1] = ['每回合一開始先選好指令，再依速度輪流行動（左邊的小方塊是這回合的順序）。', '防禦、道具、逃跑一定最先執行；「搶先」技能在這一回合先出手，比對手慢也一樣。', '每回合每隻魔物只行動一次（頭目的「狂怒」例外）。', '防禦會一直減傷到自己下一次行動開始。', '護盾、潮濕、能力變化等效果是以「自己的行動次數」計算。'];
+  if (P[0] === '技能與冷卻') P[1] = P[1].map(t => /搶先/.test(t) ? '「搶先」技能在這一回合先出手（比對手慢也一樣）。' : t);
+}
 </script>

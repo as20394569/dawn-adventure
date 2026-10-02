@@ -199,7 +199,7 @@ classTalk = function* () {
   if (!st.flags.deep) {
     yield* sayAll(['……你的力量又成長了呢。', '讓我看看……嗯，你身上的「' + CLASSES[st.cls].n + '」之力已經穩定下來了。', '把手放在石板上吧。更深的天賦會回應你。']);
     Sound.sfx('charge'); st.flags.deep = 1; Game.fadeColor = '#ffffff'; yield* fadeOut(12, '#ffffff'); Game.fade = 1; Sound.jingle('levelup'); yield* fadeIn(24); Game.fadeColor = '#000';
-    yield* itemGet('天賦覺醒！第4・5層的深層天賦解鎖了，另外獲得2點天賦點！');
+    yield* itemGet('天賦覺醒！第3層天賦和核心天賦解鎖了，另外獲得2點天賦點！');
     yield* say('從今以後，你也可以在我這裡轉換職業。換了職業，天賦會換成那個職業的三條分支（原本職業點的天賦會保留）。'); return true;
   }
   const r = yield* ask('要做什麼？', ['轉職', '聊天']); if (r !== 0) return false; yield* v7ClassChange('轉職的儀式'); return true;

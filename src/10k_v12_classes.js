@@ -365,7 +365,7 @@ PV('fx.will', v => ({ mods: [{ statusRes: 20 }] }));
 PV('fx.elemGuard', v => ({ mods: [{ stage: 'defender', who: 'defender', mul: 0.88, cond: { element: ['火', '水', '雷', '草', '毒', '岩', '飛', '光', '暗', '冰', '風'] } }] }));
 PV('fx.resonance', (v, u) => ({ rules: u.cls === 'otherworlder' ? { max_insight: 1, insightMax: 1 } : u.cls === 'ranger' ? { markMax: 1 } : u.cls === 'machinist' ? { turretMax: 1 } : DEF.classes[u.cls] && DEF.classes[u.cls].res ? { ['max_' + DEF.classes[u.cls].res]: 1 } : {} }));
 PV('fx.timeSand', v => ({ triggers: [{ on: EVT.COOLDOWN, phase: 'POST', role: 'src', cond: { evSetCd: 1 }, chance: 0.2, effects: [{ type: 'cooldown', target: 'self', how: 'longest', n: 1, why: 'timeSand' }] }] }));
-PV('fx.initiative', v => ({ triggers: [{ on: EVT.ROUND_START, phase: 'POST', cond: { ownerHasStatus: 'first_next' }, effects: [{ type: 'status', target: 'self', status: 'first_strike', quiet: 1 }] }] }));
+PV('fx.initiative', v => ({ triggers: [{ on: EVT.ROUND_START, phase: 'POST', cond: { ownerHasStatus: 'prio_used' }, effects: [{ type: 'status', target: 'self', status: 'first_strike', quiet: 1 }] }] }));
 Object.assign(COND, { evSetCd: (c, v) => !!c.ev && !!c.ev.payload.set === !!v });
 // the trait list on the accessories (each accessory exactly one), and the texts the menus show
 { const byName = {}; for (const k in GEAR) if (GEAR[k].slot === 'acc') byName[GEAR[k].n] = k;

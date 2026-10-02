@@ -1,6 +1,9 @@
 /* ===================== v12 戰鬥核心 — 執行層：BattleCore（規格 v1.1：狀態機、行動順序、冷卻、事件／觸發／效果） =====================
-   Synchronous and headless. Each round the order is built by speed (TURN_ORDER); a unit decides when its turn comes
-   (WAITING_ACTION). run() advances until the hero must choose (core.need) or the battle ends (core.result).
+   Synchronous and headless. v12.0.1: every round starts with everyone choosing (TURN_ORDER: the monsters' AI, then the hero —
+   core.need), then the order is built from the choices (防禦・道具・逃跑 first, 搶先 skills next) and speed, and the actions run
+   in that order (WAITING_ACTION). run() advances until the hero must choose (core.need) or the battle ends (core.result).
+   (Before: a unit chose when its turn came and 搶先 moved it to the front of the NEXT round, so after the order changed a monster
+   could act twice between two of the hero's commands — 玩家：「好像有時候怪物會多打一次」.)
    Everything that happens is an event in core.log (in MAIN order); the view plays the log back. */
 const BS = { INIT: 'INITIALIZING', BATTLE_START: 'BATTLE_START', ROUND_START: 'ROUND_START', TURN_ORDER: 'TURN_ORDER', WAITING_ACTION: 'WAITING_ACTION',
   ACTION_PREPARE: 'ACTION_PREPARE', ACTION_EXECUTION: 'ACTION_EXECUTION', EVENT_RESOLUTION: 'EVENT_RESOLUTION', REACTION_RESOLUTION: 'REACTION_RESOLUTION',
@@ -21,7 +24,7 @@ class BattleCore {
   constructor(o) {
     this.seed = o.seed >>> 0; this.rng = makeRng(this.seed); this.env = o.env || {}; this.cfg = o.cfg || {}; this.flags = o.flags || {};
     this.units = []; this.byId = {}; this.state = BS.INIT; this.round = 0; this.seq = 0; this.log = []; this.evStack = [];
-    this.actSeq = 0; this.castSeq = 0; this.hitSeq = 0; this.order = []; this.orderPos = {}; this.roundActs = []; this.reactQ = []; this.need = null; this.pend = null; this.cur = null; this.result = null;
+    this.actSeq = 0; this.castSeq = 0; this.hitSeq = 0; this.order = []; this.orderPos = {}; this.roundActs = []; this.reactQ = []; this.need = null; this.pend = null; this.cur = null; this.result = null; this.plan = {}; this.planned = false;
     this.act = null; this.cast = null; this.hit = null; this.evAction = 0; this.trigAction = 0; this.trigRound = 0; this.trigBattle = 0; this.usage = {}; this.roundDone = false;
     this.envMods = (o.envMods || []).slice(); this.envTrigs = (o.envTrigs || []).slice(); this.escTries = 0; this.castTotal = {}; this.data = {}; this.effs = {}; this.stSeq = 0;
     this.trace = []; // safety stops (spec §8): the full chain is kept here
@@ -85,15 +88,20 @@ class BattleCore {
           this.emit(EVT.ROUND_START, { payload: { round: this.round } });
           for (const u of this.units) if (this.isUp(u)) this.tick(u, 'round_start');
           this.go(this.ended() ? BS.VICTORY_CHECK : BS.TURN_ORDER); break; }
-        case BS.TURN_ORDER: this.buildOrder(); this.go(this.order.length ? BS.WAITING_ACTION : BS.ROUND_END); break;
+        case BS.TURN_ORDER: {
+          if (!this.planned) { const need = this.planRound(); if (need) return need; }
+          this.planned = false; this.buildOrder(); this.go(this.order.length ? BS.WAITING_ACTION : BS.ROUND_END); break; }
         case BS.WAITING_ACTION: {
           let ent = null; while (this.order.length) { const e = this.order.shift(); if (this.isUp(this.byId[e.id])) { ent = e; break; } }
           if (!ent) { this.go(BS.ROUND_END); break; }
           const u = this.byId[ent.id], forced = this.forcedCommand(u);
           if (forced) { this.cur = forced; this.go(BS.ACTION_PREPARE); break; }
           if (ent.extra && !u.hero) { this.cur = { actor: u.id, type: 'ai_extra', targets: [], meta: { extra: ent.extra } }; this.go(BS.ACTION_PREPARE); break; }
-          if (u.hero && !this.auto) { this.pend = ent; this.need = { unit: u, round: this.round, extra: ent.extra || null }; return this.need; }
-          this.cur = this.validCmd(u, BAI.decide(this, u)); if (ent.extra) this.cur.meta.extra = ent.extra;
+          const planned = !ent.extra && this.plan[u.id]; if (planned) delete this.plan[u.id];
+          if (planned) { this.cur = this.validCmd(u, planned); if (u.hero) { this.go(BS.ACTION_PREPARE); break; } } // the hero's choice was recorded at submit
+          else if (u.hero && !this.auto) { this.pend = ent; this.need = { unit: u, round: this.round, extra: ent.extra || null }; return this.need; } // an extra action (疾行) is chosen when it comes
+          else this.cur = this.validCmd(u, BAI.decide(this, u));
+          if (ent.extra) this.cur.meta.extra = ent.extra;
           if (u.hero) this.data.lastHeroAct = this.cur.type === 'skill' ? this.cur.skill : this.cur.type;
           this.go(BS.ACTION_PREPARE); break; }
         case BS.ACTION_PREPARE: {
@@ -118,6 +126,7 @@ class BattleCore {
   start(auto) { this.auto = !!auto; return this.run(); }
   submit(cmd) {
     if (!this.need) return bvErr('submit', 'no input pending'); const u = this.need.unit;
+    if (this.need.plan) { this.plan[u.id] = this.validCmd(u, { ...cmd, actor: u.id }); this.data.lastHeroAct = cmd.type === 'skill' ? cmd.skill : cmd.type; this.need = null; return this.run(); }
     this.cur = this.validCmd(u, { ...cmd, actor: u.id }); if (this.pend && this.pend.extra) this.cur.meta.extra = this.pend.extra;
     this.data.lastHeroAct = cmd.type === 'skill' ? cmd.skill : cmd.type; this.need = null; this.pend = null; this.go(BS.ACTION_PREPARE); return this.run();
   }
@@ -137,10 +146,24 @@ class BattleCore {
     if (this.cfg.maxRounds && this.round >= this.cfg.maxRounds && this.roundDone) return 'draw'; // tests: a battle that can't end
     return null;
   }
-  /* ---------- TURN_ORDER (spec §2.1): 搶先 first, 延後 last, then speed, a fixed roll per round, the stable id ---------- */
+  /* ---------- v12.0.1: everyone chooses at the start of the round (monsters' AI first, then the hero via core.need) ---------- */
+  planRound() {
+    this.plan = {}; this.planned = true; let hero = null;
+    for (const u of this.units) { if (!this.isUp(u) || this.forcedCommand(u)) continue; if (u.hero && !this.auto) { hero = u; continue; } this.plan[u.id] = this.validCmd(u, BAI.decide(this, u)); if (u.hero) this.data.lastHeroAct = this.plan[u.id].type === 'skill' ? this.plan[u.id].skill : this.plan[u.id].type; }
+    if (hero) { this.need = { unit: hero, round: this.round, plan: 1 }; return this.need; }
+    return null;
+  }
+  // how far a chosen command moves its unit forward: the hero's 防禦・道具・逃跑 always go first, then 搶先 skills
+  planPrio(u) { const p = this.plan[u.id]; if (!p) return 0; if (u.hero && (p.type === 'defend' || p.type === 'item' || p.type === 'run')) return 20;
+    const sk = p.type === 'skill' && DEF.skills[p.skill]; return sk && (sk.prio || u.mods.some(m => m.prioSkill === sk.id)) ? 10 : 0; }
+  // the order this round would have from what is known now (the hero's command menu shows it; no random roll is used)
+  previewOrder() { const ups = this.units.filter(u => this.isUp(u)), sp = {}; for (const u of ups) sp[u.id] = BR.speed(this, u);
+    const front = u => this.planPrio(u) + (this.hasStatus(u, 'first_next') ? 10 : 0) + ((this.round || 1) === 1 && u.mods.some(m => m.firstRoundPrio) ? 5 : 0) - (this.hasStatus(u, 'delay') ? 10 : 0);
+    return ups.sort((a, b) => front(b) - front(a) || sp[b.id] - sp[a.id] || (a.hero ? -1 : b.hero ? 1 : a.id < b.id ? -1 : 1)).map(u => u.id); }
+  /* ---------- TURN_ORDER (spec §2.1): 防禦・道具・逃跑 → 搶先 (this round) → speed, a fixed roll per round, the stable id; 延後 last ---------- */
   buildOrder() {
     const roll = {}, ups = this.units.filter(u => this.isUp(u)); for (const u of ups) roll[u.id] = this.rng.next();
-    const front = u => (this.hasStatus(u, 'first_next') ? 10 : 0) + (this.round === 1 && u.mods.some(m => m.firstRoundPrio) ? 5 : 0) - (this.hasStatus(u, 'delay') ? 10 : 0);
+    const front = u => this.planPrio(u) + (this.hasStatus(u, 'first_next') ? 10 : 0) + (this.round === 1 && u.mods.some(m => m.firstRoundPrio) ? 5 : 0) - (this.hasStatus(u, 'delay') ? 10 : 0);
     const sp = {}; for (const u of ups) sp[u.id] = BR.speed(this, u);
     ups.sort((a, b) => front(b) - front(a) || sp[b.id] - sp[a.id] || roll[a.id] - roll[b.id] || (a.id < b.id ? -1 : 1));
     const order = ups.map(u => ({ id: u.id }));
@@ -148,7 +171,7 @@ class BattleCore {
     for (const u of ups) for (const s of u.statuses) { const D = DEF.statuses[s.id]; if (D.extraEvery && this.round % D.extraEvery === 0) order.push({ id: u.id, extra: s.id }); }
     this.order = order; this.orderPos = {}; order.forEach((e, i) => { if (this.orderPos[e.id] == null) this.orderPos[e.id] = i; });
     this.emit(EVT.TURN_ORDER, { payload: { round: this.round, order: order.map(e => e.id), extra: order.filter(e => e.extra).map(e => e.id) } });
-    for (const u of ups) { if (this.hasStatus(u, 'first_next')) this.removeStatus(u, 'first_next', 'used'); if (this.hasStatus(u, 'delay')) this.removeStatus(u, 'delay', 'used'); }
+    for (const u of ups) for (const k of ['first_next', 'delay', 'prio_used']) if (this.hasStatus(u, k)) this.removeStatus(u, k, 'used');
   }
   // the hero / a foe acts before every living foe / hero this round
   wentFirst(u) { const me = this.orderPos[u.id]; if (me == null) return false; return this.units.filter(x => x.side !== u.side && this.isUp(x)).every(x => (this.orderPos[x.id] ?? 99) > me); }
@@ -307,7 +330,7 @@ class BattleCore {
       if (sk.after && this.isUp(u)) this.exec(sk.after, { ...base, tgt: tg[0] || u, total: this.castTotal[cast] });
     });
     this.emit(EVT.SKILL_SUCCESS, { src: u, tgts: tg, payload: { skill: sk.id, cast, total: this.castTotal[cast], spent: cmd.spent || 0, follow: !!meta.follow }, tags: sk.tags, skill: sk.id });
-    if ((sk.prio || u.mods.some(m => m.prioSkill === sk.id)) && !meta.follow && this.isUp(u)) this.applyStatus(u, u, 'first_next', { quiet: 1 }); // 搶先: first next round
+    if ((sk.prio || u.mods.some(m => m.prioSkill === sk.id)) && !meta.follow && this.isUp(u)) this.applyStatus(u, u, 'prio_used', { quiet: 1 }); // 搶先 already acted first this round; the mark is for 先機 (next round's first attack +20%)
     this.hit = null; return use;
   }
   /* ---------- events ---------- */

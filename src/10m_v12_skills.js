@@ -17,7 +17,7 @@ for (const id in DEF.skills) if (id.startsWith('u_')) { const D = DEF.skills[id]
 for (const id in DEF.skills) if (DEF.skills[id].cooldown == null) DEF.skills[id].cooldown = 0; // basic attack, weapon specials, monster moves: no cooldown
 // evolutions: 「MP−40%」 becomes 「冷卻−1」 on a skill that has a cooldown (draft §2.5); 「先制」 is 搶先 (core: prioSkill)
 { const P = DEF.passives.evo, mk = P.make; P.make = v => { const [k] = evoCode(v.code), sk = DEF.skills[v.skill]; if (k === 'cheap' && sk && sk.cooldown > 0) return { mods: [{ stage: 'skill', cdAdd: -1, cond: { skillIs: v.skill } }] }; return mk(v); }; }
-EVO_TXT.cheap = () => 'MP−40%（有冷卻的技能：冷卻−1）'; EVO_TXT.first = () => '搶先（下回合第一個行動）';
+EVO_TXT.cheap = () => 'MP−40%（有冷卻的技能：冷卻−1）'; EVO_TXT.first = () => '搶先（這回合先出手）';
 
 /* ---------- §6.3 class skill tables (learned at these levels; a class change learns the ones already reached) ---------- */
 const CLASS_SKILLS12 = {

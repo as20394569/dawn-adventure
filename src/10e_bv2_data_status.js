@@ -58,8 +58,10 @@ defPut('statuses', 'shards', { tags: ['buff'], duration: 'battle', stack: 'add',
 // shards drop by 1 per stack change; at 0 they are gone
 { const A = DEF.statuses.shards; A.stack = 'signed'; A.min = 0; A.max = 3; }
 defPut('statuses', 'hidden_weak', { tags: [], duration: 'battle', stack: 'none', metadata: { n: '弱點未知' } });
-/* ---------- turn order (spec §2.1): 搶先 = first in the next round's order, 延後 = last; both are used up when the order is built ---------- */
+/* ---------- turn order (spec §2.1): first_next = first in the next round's order (天梯), 延後 = last; both are used up when the order is built.
+   v12.0.1: a 搶先 skill itself goes first in the round it is chosen (core.planPrio) ---------- */
 defPut('statuses', 'first_next', { tags: ['buff'], duration: 'next_order', stack: 'refresh', metadata: { n: '搶先' } });
+defPut('statuses', 'prio_used', { tags: ['buff'], duration: 'next_order', stack: 'refresh', metadata: { n: '搶先過' } }); // v12.0.1: 搶先 acts first in the same round; this only marks it for 先機
 defPut('statuses', 'delay', { tags: ['debuff'], duration: 'next_order', stack: 'refresh', metadata: { n: '延後' } });
 /* ---------- evasion until the owner's next action (輕身, 殘像) ---------- */
 defPut('statuses', 'evade_up', { tags: ['buff'], duration: 'until_own_action', clearAt: 'owner_action_start', stack: 'max', metadata: { n: '迴避提升' },
