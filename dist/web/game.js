@@ -17477,3 +17477,11 @@ Battle.prototype.drawSpd12 = function (x) {
 { const _bf = Battle.prototype.drawBoxF; Battle.prototype.drawBoxF = function (x) { _bf.call(this, x); this.drawSpd12(x); }; }
 if (typeof BATTLE_HELP !== 'undefined') { const i = BATTLE_HELP.findIndex(q => q[0] === '技能與冷卻');
   BATTLE_HELP.splice(i < 0 ? BATTLE_HELP.length : i + 1, 0, ['戰鬥速度', ['點戰鬥畫面右上角的「×2」，戰鬥動畫會加快一倍；再點一次恢復普通。', '選指令、選技能時不受影響。設定裡的「戰鬥速度」也可以切換，鍵盤是 Select 鍵。']]); }
+{ const CLOSED = ['rift', 'starShrine'], mapN = m => (MAPS[m] && MAPS[m].name || m).replace(/ \d+F$/, '');
+  for (const k in MAT_SRC) delete MAT_SRC[k];
+  const add = (k, t) => { (MAT_SRC[k] = MAT_SRC[k] || []).includes(t) || MAT_SRC[k].push(t); }, spOf = s => SPECIES[s] && SPECIES[s].mat ? SPECIES[s] : null;
+  for (const m in MAPS) { if (CLOSED.includes(m)) continue; const d = MAPS[m];
+    for (const e of d.encounters || []) for (const r of e.table || []) { const sp = spOf(r[0]); if (sp) add(sp.mat, sp.n + '・' + mapN(m)); }
+    for (const e of d.elites || []) { const sp = spOf(e.sp); if (sp) add(sp.mat, sp.n + '・' + mapN(m)); }
+    if (d.boss) { const sp = spOf(d.boss.sp); if (sp) add(sp.mat, sp.n + '・' + mapN(m)); }
+    for (const g of d.gathers || []) if (g.mat) add(g.mat, '採集・' + mapN(m)); } }
