@@ -34,11 +34,16 @@ const W12FX_MOVE = { swallowFlight: 'slash2', galeCut: 'thrust', thornBind: 'sla
   shieldRam: 'dashSlam', drakeFang: 'thrust2', chainPalm: 'punch', arcaneShot: 'proj', sonicBoom: 'rings', verdantWind: 'storm', songOfValor: 'selfNotes', tidalRage: 'wave',
   holyWard: 'selfShield', thorHammer: 'rain', starfall: 'rain', manaWall: 'selfShield', aquaEdge: 'bladeProj', chainLightning: 'chain', fireShot: 'proj', bolt: 'rain', mend: 'selfHeal',
   flameVortex: 'vortex', focusMind: 'selfFocus', smokeVeil: 'selfSmoke', ironWall: 'selfWall', combustion: 'bursts', chronoLock: 'clock' };
-const W12FX_VERB = [[['纏'], 'bind'], [['拳'], 'punch'], [['弦'], 'rings'], [['十字'], 'cross'], [['迴斬', '收穫'], 'sweep'], [['連打', '連拳', '連發', '連射', '三連'], 'volley'], [['砲擊', '彈'], 'proj'], [['咬', '撕'], 'bite'], [['居合', '一閃', '劍閃'], 'iai']];
+// v12.0.1 (player: 「技能名稱敘述 特效盡量保持一致」): 拳 before 纏 (布纏連拳 is punches), 連打 is melee, 連刺 is several thrusts, 突 makes a thrust
+const W12FX_VERB = [[['拳'], 'punch'], [['纏'], 'bind'], [['弦'], 'rings'], [['十字'], 'cross'], [['迴斬', '收穫'], 'sweep'], [['連打'], 'slash2'], [['連刺'], 'stabs'], [['連發', '連射', '三連'], 'volley'], [['砲擊', '彈'], 'proj'], [['咬', '撕'], 'bite'], [['居合', '一閃', '劍閃'], 'iai'], [['突'], 'thrust']];
+const W12FX_THRUSTS = new Set(['thrust', 'thrust2', 'stab', 'dash', 'stabs']);
 function w12Spec(k) {
   const [n, arch] = W12[k], len = P => Math.max(0, ...P[0].filter(w => n.includes(w)).map(w => w.length)); let P = null;
   for (const Q of W12FX_PAL) if (len(Q) > (P ? len(P) : 0)) P = Q; P = P || [[], ['#c8d0dc', '#ffffff', '#6a7080'], 'spark2'];
-  let mv = W12FX_MOVE[arch] || 'slash'; const v = W12FX_VERB.find(([ws]) => ws.some(w => n.includes(w))); if (v && !/^self/.test(mv)) mv = v[1];
+  let mv = W12FX_MOVE[arch] || 'slash'; const v = W12FX_VERB.find(([ws]) => ws.some(w => n.includes(w))); if (v && !/^self/.test(mv) && !(v[1] === 'thrust' && W12FX_THRUSTS.has(mv))) mv = v[1];
+  if (mv === 'slam' && /[斬刃劈]/.test(n)) mv = 'heavy'; // a blade or a cleave is a heavy cut, not a ground slam
+  if (mv === 'selfNotes' && GEAR[k] && GEAR[k].kind !== '樂器') mv = 'selfAura'; // notes only for instruments
+  if (k === 'duskSword') mv = 'crescentCut'; // 黯滅斬: a dark crescent, so it does not look like 黑騎士斬
   return { mv, col: P[1], pt: P[2], seed: hashK(k) };
 }
 // particles: one signature shape per word group
@@ -92,6 +97,8 @@ function w12Make(k, S) {
     *chain(U, T, u, t) { Sound.sfx('thunder'); const G = (T.group || [t]).filter(Boolean).map(v => this.center(v)); let A = { x: U.x + 6, y: U.y - 10 }; for (const B of G.length ? G : [T]) { this.spawn({ k: 'bolt', pts: [[A.x, A.y], [lerp(A.x, B.x, 0.5) + rnd(-8, 8), lerp(A.y, B.y, 0.5)], [B.x, B.y]], w: 3, life: 10 }); impact(this, B); A = B; yield* wait(4); } yield* wait(8); },
     *vortex(U, T) { Sound.sfx('fire'); for (let i = 0; i < 16; i++) { const a = i * 0.8, r = 36 - i * 2; w12Particle(this, T.x + Math.cos(a) * r, T.y + Math.sin(a) * r * 0.5, S, 1, 2); if (i % 4 === 0) yield* wait(2); } impact(this, T, 1); yield* wait(10); },
     *bursts(U, T) { for (let i = 0; i < 4; i++) { const x = T.x + rnd(-36, 36), y = T.y + rnd(-12, 12); Sound.sfx('hitSuper'); impact(this, { x, y }, i === 3); yield* wait(4); } yield* wait(8); },
+    *stabs(U, T, u) { yield* this.lunge(u, 10, 2); for (let i = 0; i < 4; i++) { Sound.sfx('slash'); stab(this, U, { x: T.x + [-6, 6, -2, 4][i], y: T.y + [-6, 2, 6, -2][i] }, [-4, 4, 0, -2][i]); yield* wait(3); } impact(this, T); yield* wait(8); },
+    *selfAura(U) { Sound.sfx('statUp'); this.spawn({ k: 'glow', x: U.x, y: U.y, r: 30, c, life: 18 }); this.spawn({ k: 'ring', x: U.x, y: U.y + 16, r0: 30, r1: 8, c: h, w: 2, life: 16, fl: 0.4 }); w12Particle(this, U.x, U.y, S, 8, 20); yield* wait(16); },
     *punch(U, T, u) { yield* this.lunge(u, 10, 2); for (let i = 0; i < 3; i++) { Sound.sfx('hit'); const x = T.x + [-8, 8, 0][i], y = T.y + [-4, 4, -8][i]; this.spawn({ k: 'ring', x, y, r0: 2, r1: 12, c: i % 2 ? h : c, w: 2, life: 8 }); w12Particle(this, x, y, S, 3, 4); yield* wait(3); } yield* wait(6); },
     *clock(U, T) { Sound.sfx('charge'); this.spawn({ k: 'ring', x: T.x, y: T.y, r0: 30, r1: 26, c, w: 3, life: 24 }); for (let i = 0; i < 6; i++) { const a = -Math.PI / 2 + i * Math.PI / 3; w12Line(this, T.x, T.y, T.x + Math.cos(a) * 22, T.y + Math.sin(a) * 22, S, 2); yield* wait(2); } this.spawn({ k: 'flash', c: h, a: 0.3, life: 8 }); w12Particle(this, T.x, T.y, S, 10, 24); yield* wait(10); },
     *selfShield(U) { Sound.sfx('charge'); this.spawn({ k: 'hex', x: U.x, y: U.y, r0: 6, r1: 30, c, life: 16 }); this.spawn({ k: 'hex', x: U.x, y: U.y, r0: 4, r1: 22, c: h, life: 14 }); w12Particle(this, U.x, U.y, S, 8, 20); yield* wait(14); },
@@ -103,7 +110,7 @@ function w12Make(k, S) {
   };
   const f = M[S.mv] || M.slash; FX['w12_' + k] = function* (U, T, u, t) { yield* f.call(this, U, T, u, t); };
   // the 2nd, 3rd … hit of a multi-hit skill: a blow that fits the move (player: 鐵拳 drew a white slash line on every punch)
-  const hm = /拳/.test(W12[k][0]) || S.mv === 'punch' ? 'fist' : S.mv === 'volley' ? 'shot' : S.mv === 'bite' ? 'jaw' : /^thrust/.test(S.mv) ? 'stab' : 'line';
+  const hm = /拳/.test(W12[k][0]) || S.mv === 'punch' ? 'fist' : S.mv === 'volley' ? 'shot' : S.mv === 'bite' ? 'jaw' : (/^thrust/.test(S.mv) || S.mv === 'stabs') ? 'stab' : 'line';
   FX['w12h_' + k] = {
     *fist(U, T, u, i) { Sound.sfx('hit'); const x = T.x + [-8, 8, 0, 6][i % 4], y = T.y + [-4, 4, -8, 2][i % 4]; this.spawn({ k: 'glow', x, y, r: 10, c, life: 8 }); this.spawn({ k: 'ring', x, y, r0: 2, r1: 14, c: i % 2 ? h : c, w: 2, life: 8 }); w12Particle(this, x, y, S, 3, 5); this.shake = Math.max(this.shake, 3); yield* wait(4); },
     *shot(U, T, u, i) { Sound.sfx('crit'); const P = { x: T.x + rnd(-6, 6), y: T.y + rnd(-6, 6) }; yield* w12Proj(this, U, P, S, 5); this.spawn({ k: 'ring', x: P.x, y: P.y, r0: 2, r1: 12, c: h, w: 2, life: 8 }); w12Particle(this, P.x, P.y, S, 3, 6); },
