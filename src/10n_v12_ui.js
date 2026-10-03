@@ -142,7 +142,7 @@ talentScreen = function* () {
   const CX = k => 12 + k * 55, CW = 52, tierY = t => 46 + t * 31 + (t >= 2 ? 4 : 0); // a gutter on the left for the tier numbers
   const tile = (b, r) => r < 6 ? { X: CX(b), Y: tierY(Math.floor(r / 2)) + (r % 2) * 14, w: CW, h: 13 } : { X: CX(b), Y: 156, w: CW, h: 15 };
   const scr = { draw(x) {
-    screenBG(x); headerBar(x, '天賦・' + ((CLASSES[st.cls] || CLASSES[c] || {}).n || '')); const av = tpAvail(st); Font.drawR(x, '天賦點 ' + av + '／' + tpTotal(st), W - 6, 2, av ? UIC.warm : UIC.muted, UIC.textSh);
+    const ttl = '天賦・' + ((CLASSES[st.cls] || CLASSES[c] || {}).n || ''); screenBG(x); headerBar(x, ttl); const av = tpAvail(st), tpS = '天賦點 ' + av + '／' + tpTotal(st); let tz = 12; while (tz > 9 && 12 + Font.width(ttl, 12) + 4 > W - 6 - Font.width(tpS, tz)) tz--; /* v12.0.9f: 四個字的職業名（大魔導士…）會和點數疊在一起 */ Font.drawR(x, tpS, W - 6, 2 + (12 - tz) / 2, av ? UIC.warm : UIC.muted, UIC.textSh, tz);
     for (let k = 0; k < 3; k++) { const X = CX(k); Font.drawC(x, TR.br[k][0], X + CW / 2, 21, UIC.warm, UIC.textSh, 10); Font.drawR(x, TAL12.brPts(k, st) + '點', X + CW, 24, TAL12.brPts(k, st) ? '#ffd860' : UIC.muted, UIC.textSh, 7);
       const d = TR.br[k][1]; let z = 7; while (z > 6 && Font.width(d, z) > CW) z--; Font.drawC(x, d, X + CW / 2, 33, UIC.muted, UIC.textSh, z); }
     for (let t = 0; t < 3; t++) Font.drawC(x, String(t + 1), 6, tierY(t) + 8, UIC.dis, UIC.textSh, 8);

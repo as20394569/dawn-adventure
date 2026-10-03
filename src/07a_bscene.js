@@ -190,7 +190,7 @@ class Battle {
     x.globalAlpha = 1;
   }
   drawPlateSmall(x, v, a, i, n) {
-    if (a <= 0) return; const w = n >= 3 ? 56 : 80, X = Math.round(clamp(v.x - w / 2, 2, W - w - 2)), py = 4, on = this.pickV === v;
+    if (a <= 0) return; const sw = Math.floor((W - 4) / Math.max(1, n)), w = Math.min(n >= 3 ? 56 : 80, sw - 2), X = Math.round(clamp(v.x - w / 2, 2 + i * sw, 2 + i * sw + sw - 2 - w)), py = 4, on = this.pickV === v; // v12.0.9f: each plate stays in its own slot (two foes close together used to overlap)
     const rim = on ? '#ffd860' : v.boss ? '#ff6b7a' : v.elite ? '#ffc46b' : v.rare ? '#ffd84a' : v.minion ? '#b08a6a' : '#8a93b3';
     x.globalAlpha = a; x.fillStyle = 'rgba(10,8,20,0.78)'; x.fillRect(X, py, w, 22); x.fillStyle = rim; x.fillRect(X + 1, py, w - 2, 1); x.fillRect(X + 1, py + 21, w - 2, 1); x.fillRect(X, py + 1, 1, 20); x.fillRect(X + w - 1, py + 1, 1, 20);
     let z = 9; while (z > 7 && Font.width(v.n, z) > w - 24) z--; Font.draw(x, v.n, X + 3, py - 1, on ? '#ffe8b0' : UIC.text, UIC.textSh, z); Font.drawR(x, 'Lv' + v.lv, X + w - 3, py, UIC.muted, UIC.textSh, 7);

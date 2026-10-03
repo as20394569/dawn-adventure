@@ -107,8 +107,8 @@ const SK9 = {
       { mods: [{ stage: 'skill', who: 'attacker', atkMul: { f: 'judgeAtk9' } }], effects: [{ type: 'damage' }, { type: 'stage', stats: { def: -2 }, cond: { tgtAlive: 1, ownerResAtLeast: ['stance', 5] } }] }],
   ],
   ranger: [
-    ['rg9Hunt', '追獵刺', 55, 0, 1, 3, ['agi', 1], '物', '一般', 0, '追上獵物的一刺。命中必定留下 1 層獵印（不管目標行動了沒）。', { B: ['psn:35', 'hit+1'] },
-      { effects: [{ type: 'damage' }, { type: 'status', status: 'hunt_mark', cond: { tgtAlive: 1, tgtNotActed: 0 } }] }],
+    ['rg9Hunt', '追獵刺', 55, 0, 1, 3, ['agi', 1], '物', '一般', 0, '搶先。追上獵物的一刺，命中必定留下 1 層獵印（不管目標行動了沒）。', { B: ['psn:35', 'hit+1'] },
+      { prio: 1, effects: [{ type: 'damage' }, { type: 'status', status: 'hunt_mark', cond: { tgtAlive: 1, tgtNotActed: 0 } }] }],
     ['rg9TwinShadow', '雙影', 30, 2, 1, 4, ['agi', 1], '物', '一般', 0, '兩道影子同時出手，2 段；對有獵印的目標，每段會心率 +15%。', { B: ['spe+1', 'hit+1'] },
       { mods: [{ stage: 'skill', who: 'attacker', critAdd: 15, cond: { tgtMarked: 1 } }] }],
     ['rg9Lurk', '潛伏', 0, 0, 2, 3, null, '變', '一般', 0, '躲進煙幕 2 行動；下一次攻擊算作「目標還沒行動」。', { A: ['cheap', 'spe+1'], B: ['spec+1', 'mp:3'] },
@@ -138,7 +138,7 @@ function sk9Build(cls) {
   L.forEach(([k, n, pow, hits, cd, mp, attr, cat, el, aoe, d, evo, x], i) => {
     const id = 'o_' + k, learn = LEARN_OF_CD[Math.min(3, cd)], tpl = pow ? (cat === '特' ? 'magicBolt' : 'slash') : 'focus';
     ORB_A[k] = { n, tpl, pow, mp, d, B: evo.B, ...(evo.A ? { A: evo.A } : {}), cls9: cls }; SK9_CLS[k] = cls;
-    MOVES[id] = { n, d, t: el, cat, pow, acc: pow ? 100 : null, hits: hits || null, cls: aoe ? 'area' : SK9_KIND[k] || (pow ? 'slash' : 'buff'), ...(attr && pow ? { scale: attr } : {}), orb: k, ws: 1, fx: 'c9_' + k };
+    MOVES[id] = { n, d, t: el, cat, pow, acc: pow ? 100 : null, hits: hits || null, cls: aoe ? 'area' : SK9_KIND[k] || (pow ? 'slash' : 'buff'), ...(attr && pow ? { scale: attr } : {}), ...(x.prio ? { prio: 1 } : {}), orb: k, ws: 1, fx: 'c9_' + k };
     SKILL_MP[id] = mp;
     const D = skillFromMove(id, MOVES[id], { kind: 'skill', tpl, extraTags: ['orb', 'cls9'].concat(x.tags || []), costs: (x.costs || []).concat([{ res: 'mp', amount: mp }]), fallback: 'attack' });
     if (!pow) { D.target = x.target || 'self'; D.noHitRoll = true; D.effects = []; D.tags = D.tags.filter(t => t !== 'damage'); }
@@ -146,7 +146,7 @@ function sk9Build(cls) {
     for (const f of ['hitsOf', 'onPrepare', 'powerOf', 'requires', 'targetOf', 'catOf']) if (x[f]) D[f] = x[f];
     if (x.charge) { D.charge = true; D.airborne = !!x.airborne; if (!D.tags.includes('charge')) D.tags.push('charge'); }
     if (x.reqText) SK9_REQ[id] = x.reqText;
-    Object.assign(D, { cooldown: cd, prio: 0, fx: 'c9_' + k, metadata: { orb: k, tpl, learn, cls9: cls, lv9: CLASS_SKILL_LV[i] } });
+    Object.assign(D, { cooldown: cd, prio: x.prio ? 1 : 0, fx: 'c9_' + k, metadata: { orb: k, tpl, learn, cls9: cls, lv9: CLASS_SKILL_LV[i] } });
     D.effects = D.effects.map((ef, j) => effRegister('skill:' + id + '#e' + j, ef)); D.after = D.after.map((ef, j) => effRegister('skill:' + id + '#a' + j, ef));
     defPut('skills', id, { ...D, override: 1 });
   });
