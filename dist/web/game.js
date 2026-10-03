@@ -17467,10 +17467,10 @@ const bTopOK12 = () => { const t = UI.stack[UI.stack.length - 1]; return !t || t
     if (Input.pressed('select') && bTopOK12()) { Input.consume('select'); bSpdToggle12(); }
     if (bFast12() && S.fast12 && S.script && !UI.stack.some(w => w instanceof Menu)) { for (const k of Input.keys) Input.p[k] = false; S.update(); } }; }
 Battle.prototype.drawSpd12 = function (x) {
-  if (this.boxF < -20 || !bTopOK12()) return; const on = bFast12(), X = W - 24, Y = 28, w = 22, h = 14; // under the name plates (three plates fill the top row)
+  if (this.boxF < -20 || !bTopOK12()) return; const on = bFast12(), X = W - 19, Y = 28, w = 16, h = 10; // under the name plates (three plates fill the top row); v12.0.9h: smaller (player: 「戰鬥速度x2 按鈕縮小」)
   x.globalAlpha = 0.92; x.fillStyle = on ? '#c8a050' : '#5a5040'; x.fillRect(X, Y, w, h); x.fillStyle = on ? '#3a2a10' : '#14121c'; x.fillRect(X + 1, Y + 1, w - 2, h - 2); x.globalAlpha = 1;
-  Font.drawC(x, '×2', X + w / 2, midY(Y, h, 10), on ? '#ffe8b0' : UIC.muted, UIC.textSh, 10);
-  touchRegion(X - 3, Y - 2, w + 5, h + 5, bSpdToggle12);
+  Font.drawC(x, '×2', X + w / 2, midY(Y, h, 8), on ? '#ffe8b0' : UIC.muted, UIC.textSh, 8);
+  touchRegion(X - 5, Y - 4, w + 8, h + 8, bSpdToggle12); // the tap area stays a little bigger than the button
 };
 { const _bf = Battle.prototype.drawBoxF; Battle.prototype.drawBoxF = function (x) { _bf.call(this, x); this.drawSpd12(x); }; }
 if (typeof BATTLE_HELP !== 'undefined') { const i = BATTLE_HELP.findIndex(q => q[0] === '技能與冷卻');
@@ -20407,3 +20407,23 @@ for (const q of GROW12) {
 for (const [id, st, n] of [['spellblade.2.1.0', 'wet', '潮濕'], ['spellblade.2.1.1', 'tangle', '纏繞']]) { const T = DEF.talents[id]; if (!T) { bvErr('r9f', 'talent ' + id + ' missing'); continue; }
   const mods = [{ stage: 'talent', who: 'attacker', mul: 1.15, cond: { tgtStatus: st, hasPower: 1 } }];
   T.desc = '對' + n + '的魔物傷害 +15%'; T.make = () => ({ rules: {}, mods, triggers: [], immune: [] }); }
+BEH_TRIG12.call = () => []; BEH_TRIG12.split = () => [];
+MFX.m9_call12 = function* (U, T) { const W = ['meadowWolf', 'greyWolf', 'snowWolf'].includes(U.sp) ? 'm12_wolfCall' : U.sp === 'fieldMice' ? 'm_chirp' : 'm_warCry'; if (MFX[W]) yield* MFX[W].call(this, U, T); };
+MFX.m9_split12 = function* (U) { Sound.sfx('heal'); for (let i = 0; i < 2; i++) { U.squish = 6; mSpawn(this, 'mjag', { x: U.x, y: U.y - 10, r0: 4, r1: 30, c: i ? '#c8f0ff' : '#60b8ff', n: 10, life: 16, fl: 0.5, rot: i * 0.5 }); yield* wait(8); } };
+for (const [k, n, d] of [['m9_call12', '呼叫同伴', '大聲呼叫，叫同伴過來幫忙（同一場一次）。'], ['m9_split12', '分裂', '身體分成兩半，剩下的體力兩隻各一半（同一場一次）。']]) {
+  MOVES[k] = { n, t: '一般', cat: '變', pp: 1, d, cls: 'buff', foe: 1, fx: k };
+  const D = defPut('skills', k, skillFromMove(k, MOVES[k], { kind: 'skill', extraTags: ['monster_skill'] })); D.cooldown = 0; D.target = 'self'; D.noHitRoll = true;
+  D.tags = D.tags.filter(t => t !== 'damage'); D.effects = [effRegister('skill:' + k + '#e0', { type: 'beh_summon12', key: k === 'm9_call12' ? 'call12' : 'split12' })]; D.after = []; }
+{ const S = EFFECT_TYPES.beh_summon12.exec; EFFECT_TYPES.beh_summon12.exec = function (core, ef, ctx) { const u = ctx.owner; if (u) u.data.called9 = 1;
+    const before = new Set(core.units), r = S.call(this, core, ef, ctx); if (ef.key !== 'split12' || !u) return r;
+    const nu = core.units.find(q => !before.has(q) && q.side === u.side); if (!nu) return r;
+    const hp = u.res.hp, mine = Math.max(1, Math.ceil(hp / 2)), theirs = Math.max(1, Math.min(nu.max.hp, Math.floor(hp / 2)));
+    core.changeRes(u, 'hp', mine - hp, { why: 'split' }); core.changeRes(nu, 'hp', theirs - nu.res.hp, { why: 'split' }); return r; }; }
+{ const _d = BAI.decide; BAI.decide = function (core, u, o = {}) {
+    const b = !u.hero && u.data && u.data.beh12;
+    if ((b === 'call' || b === 'split') && !u.data.called9 && u.res.hp < u.max.hp * 0.5 && core.isUp(u) && core.alive(u.side).length < 3) {
+      return { type: 'skill', skill: b === 'call' ? 'm9_call12' : 'm9_split12', targets: [u.id] }; }
+    return _d.call(this, core, u, o); }; }
+if (typeof BATTLE_HELP !== 'undefined') { const P = BATTLE_HELP.find(q => q[0] === '多隻魔物'); if (P && !P[1].some(t => /叫同伴/.test(t))) P[1].splice(P[1].length - 1, 0, '有些魔物 HP 剩一半時，會花一次行動叫同伴或分裂。'); }
+{ const _bs = Overworld.prototype.battleScript; Overworld.prototype.battleScript = function* (cfg, ...a) { this._amb12 = null; if (cfg && cfg.ambush12) { cfg = { ...cfg }; delete cfg.ambush12; } return yield* _bs.call(this, cfg, ...a); }; }
+{ const i = ACHIEVEMENTS.findIndex(x => x.id === 'r8ambush'); if (i >= 0) ACHIEVEMENTS.splice(i, 1); }
