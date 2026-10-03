@@ -15,7 +15,7 @@ defPut('mechanics', 'mage_power12', { layer: 'class', mods: [{ stage: 'attacker'
 { const _m = BR.FORMULA.mpSpring; BR.FORMULA.mpSpring = (c, v) => _m(c, v) + 0.05; }
 CLS12.mage.passive[1] = '魔法傷害 +30%，回合結束回復 8% MP'; DEF.classes.mage.passive.d = CLS12.mage.passive[1];
 // 武僧: 連環寸勁 30 → 35 per hit
-SIG12.monk.power = 35; SIG12.monk.d = SIG12.monk.d.replace('各 30', '各 35'); DEF.skills.sig_monk.power = 35; DEF.skills.sig_monk.desc = (DEF.skills.sig_monk.desc || '').replace('各 30', '各 35');
+SIG12.monk.power = 35; SIG12.monk.d = SIG12.monk.d.replace('各 30', '各 35'); DEF.skills.sig_monk.power = 35; DEF.skills.sig_monk.desc = (DEF.skills.sig_monk.desc || '').replace('各 30', '各 35'); if (MOVES.sig_monk) MOVES.sig_monk.d = (MOVES.sig_monk.d || '').replace('各 30', '各 35');
 // 守護者: 守護之盾 30% → 20%
 { const M = DEF.mechanics.cls_guardian, mk = M.make; M.make = u => { const r = mk(u); for (const m of r.mods || []) if (m.mul === 0.7 && m.cond && m.cond.guarding) m.mul = 0.8; return r; }; }
 CLS12.guardian.passive[1] = CLS12.guardian.passive[1].replace('再減傷 30%', '再減傷 20%'); DEF.classes.guardian.passive.d = CLS12.guardian.passive[1];

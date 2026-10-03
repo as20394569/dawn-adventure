@@ -2071,7 +2071,7 @@ const gearText = g => gearLines(g).filter(Boolean).join(' ');
 const gearName = g => g._bp === 2 ? '「' + GEAR[g.b].n + '」的設計圖' : '【' + GQ[g.q][0] + '】' + GEAR[g.b].n + (g.s ? '★' + g.s : '') + (g.e ? ' +' + g.e : '');
 const gearShort = g => GEAR[g.b].n + (g.s ? '★' + g.s : '') + (g.e ? ' +' + g.e : '');
 const enhanceCost = g => { const e = (g.e || 0) + 1, t = GEAR[g.b].t; if (e > 5) { const R = typeof GEAR_RECIPE !== 'undefined' && GEAR_RECIPE[g.b], mk = R ? Object.keys(R.mats)[0] : 'crystal'; return { gold: 400 * t * e * (Game.st.flags.smithDisc ? 0.5 : 1), mats: { [mk]: e - 3 }, rate: [0.45, 0.4, 0.35, 0.3, 0.25][e - 6] }; } return { gold: e * 150 * t * (Game.st.flags.smithDisc ? 0.5 : 1), mats: t <= 2 ? { stone: e } : t === 3 ? { stone: e, gel: e } : { crystal: e }, rate: e <= 3 ? 1 : e === 4 ? 0.75 : 0.5 }; };
-const SALVAGE = { weapon: ['stone'], head: ['stone', 'gel'], body: ['stone', 'gel', 'frogSkin'], feet: ['feather', 'gel'], acc: ['feather', 'spore', 'leaf'] };
+const SALVAGE = { weapon: ['stone'], head: ['stone', 'gel'], body: ['stone', 'gel', 'frogSkin'], feet: ['feather', 'gel'], acc: ['feather', 'spore', 'leaf'], shield: ['stone', 'gel'] };
 const gCol = g => GQ[g.q][1];
 const gearSell = g => Math.round((GEAR[g.b].price || GEAR[g.b].t * 400) * 0.3 * GQ[g.q][2] * g.r);
 let rollQuality = () => { const r = Math.random() * 100; return r < 60 ? 1 : r < 92 ? 2 : 3; }; // 金 only from elites, bosses and hidden content
@@ -10889,10 +10889,10 @@ const WS_NAMES = { dawnSword: ['曙光斬', '晨曦十字', null, '初代勇者�
 const WPASS = { // passive keys: name suffix + text
   crit: ['鋒芒', v => '會心率+' + v + '%'], hit: ['精準', v => '命中+' + v + '%'], eva: ['輕盈', v => '迴避+' + v + '%'], drain: ['嗜血', v => '造成傷害的' + v + '%回復HP'],
   elem: ['元素', v => '屬性攻擊傷害+' + v + '%'], fireUp: ['炎心', v => '火屬性傷害+' + v + '%'], boltUp: ['雷心', v => '雷屬性傷害+' + v + '%'], spe: ['疾行', v => '速度+' + v],
-  mpRegen: ['魔泉', v => '每回合回復' + v + '%最大MP'], regen: ['生機', () => '每回合回復6%最大HP'], venomEdge: ['毒牙', () => '物理攻擊20%機率讓對手中毒'], pierceT: ['破甲', v => '物理攻擊無視對手' + v + '%的物防'],
+  mpRegen: ['魔泉', v => '每回合回復' + v + '%最大MP'], regen: ['生機', () => '每回合回復4.5%最大HP（頭目戰3%）'], venomEdge: ['毒牙', () => '物理攻擊20%機率讓對手中毒'], pierceT: ['破甲', v => '物理攻擊無視對手' + v + '%的物防'],
   weakUp: ['看破', v => '打中弱點時傷害+' + v + '%'], bigUp: ['屠巨', v => '對菁英・頭目傷害+' + v + '%'], mpSave: ['節能', v => '技能有' + v + '%機率不消耗MP'], magCrit: ['奧秘', v => '魔法攻擊會心率+' + v + '%'],
   counter: ['反擊', () => '選擇防禦時被攻擊會立刻反擊'], guardPlus: ['堅守', () => '選擇防禦時再減傷30%'], statusRes: ['淨心', v => '更不容易陷入異常狀態（' + v + '%）'], first: ['先制', () => '每場戰鬥第一回合必定先出手'],
-  double: ['連擊', () => '物理攻擊25%機率追加一擊'], thorns: ['荊棘', () => '受到攻擊時反彈25%傷害'], atkMp: ['汲魔', v => '普通攻擊多回復' + v + '點MP'], chargeCut: ['蓄勢', v => '特技所需層數-' + v],
+  double: ['連擊', () => '物理攻擊20%機率追加一擊'], thorns: ['荊棘', () => '受到攻擊時反彈20%傷害'], atkMp: ['汲魔', v => '普通攻擊多回復' + v + '點MP'], chargeCut: ['蓄勢', v => '特技所需層數-' + v],
   healUp: ['慈光', v => '治癒效果+' + v + '%'], critDmg: ['致命', v => '會心傷害+' + v + '%'], hpP: ['強健', v => '最大HP+' + v + '%'], defP: ['堅甲', v => '物防+' + v + '%'], atkP: ['剛力', v => '物攻+' + v + '%'], spaP: ['靈力', v => '魔攻+' + v + '%'],
 };
 const WPASS_FX = new Set(['regen', 'first', 'double', 'thorns']);
@@ -11013,7 +11013,7 @@ const CT = {}; // cls → [ [ {id,b,i,row,n,key,v,max} ×7 ] ×3 ]
 for (const c in CLASS_V7) CT[c] = CLASS_V7[c].br.map(([bn, bd, s], b) => s.split(';').map((q, i) => { const [n, key, v, max] = q.split('|'); return { id: c + '.' + b + '.' + i, b, i, row: ROW_OF[i], n, key, v: +v, max: +max }; }));
 const V7_OLD = { swordmaster: 'swordsman', berserker: 'swordsman', pyromancer: 'mage', stormcaller: 'mage', paladin: 'guardian', assassin: 'ranger', shadowdancer: 'ranger' };
 const clsV7 = c => V7_OLD[c] || (CT[c] ? c : 'swordsman');
-const FX_TXT = { first: '每場戰鬥第一回合必定先出手', regen: '每回合回復6%最大HP', double: '物理攻擊25%機率追加一擊', thorns: '受到攻擊時反彈25%傷害', guardHeal: '選擇防禦時回復15%最大HP', lastStand: 'HP越低傷害越高（最多+50%）', freeCast: '技能有30%機率不消耗MP', stormMark: '攻擊時15%機率讓對手麻痺', arcaneSurge: 'MP在一半以上時魔法傷害+15%', fervor: '每次攻擊物攻或魔攻提升1階（每場最多3次）', pierce: '物理攻擊無視對手30%的物防', wisdom: '獲得的經驗值+50%' };
+const FX_TXT = { first: '每場戰鬥第一回合必定先出手', regen: '每回合回復4.5%最大HP（頭目戰3%）', double: '物理攻擊20%機率追加一擊', thorns: '受到攻擊時反彈20%傷害', guardHeal: '選擇防禦時回復10%最大HP', lastStand: 'HP越低傷害越高（最多+35%）', freeCast: '技能有30%機率不消耗MP', stormMark: '攻擊時15%機率讓對手麻痺', arcaneSurge: 'MP在一半以上時魔法傷害+15%', fervor: '每次攻擊物攻或魔攻提升1階（每場最多2次）', pierce: '物理攻擊無視對手30%的物防', wisdom: '獲得的經驗值+50%' };
 const TK_TXT = { hpP: v => '最大HP+' + v + '%', atkP: v => '物攻+' + v + '%', defP: v => '物防+' + v + '%', spaP: v => '魔攻+' + v + '%', spdP: v => '魔防+' + v + '%', speP: v => '速度+' + v + '%', mpP: v => '最大MP+' + v + '%',
   crit: v => '會心率+' + v + '%', eva: v => '迴避+' + v + '%', hit: v => '命中+' + v + '%', drain: v => '造成傷害的' + v + '%回復HP', elem: v => '屬性攻擊傷害+' + v + '%', fireUp: v => '火屬性傷害+' + v + '%', boltUp: v => '雷屬性傷害+' + v + '%',
   pierceT: v => '物理攻擊無視' + v + '%物防', shieldChip: v => v + '%機率額外削減1點護盾', statusRes: v => '異常狀態抗性+' + v + '%', guardPlus: () => '選擇防禦時再減傷30%', weakUp: v => '打中弱點傷害+' + v + '%', bigUp: v => '對菁英・頭目傷害+' + v + '%',
@@ -16183,7 +16183,7 @@ Object.assign(EFFECT_TYPES, {
   TL(c, 2, 0, 1, '冥想', 'R', '防禦回復 MP 從 12% 提高到 25%', { rules: { meditate: 1 } });
   TL(c, 2, 1, 0, '節流', 'C', '技能進入冷卻時，退還該技能 30% 的 MP', { trig: [TRG(EVT.COOLDOWN, 'src', { evSetCd: 1 }, [E12.res('mp', { f: 'cdRefund' }, { why: 'refund' })])] });
   TL(c, 2, 1, 1, '循環', 'R', 'MP 全滿時技能 MP −30%', { mods: [{ stage: 'skill', costMul: 0.7, res: 'mp', cond: { ownerResFull: 'mp' } }] });
-  TL(c, 2, 2, 0, '魔泉', 'R', '魔力之泉改成每回合 6%', { rules: { springUp: 1 } });
+  TL(c, 2, 2, 0, '魔泉', 'R', '魔力之泉改成每回合 11%', { rules: { springUp: 1 } });
   TL(c, 2, 2, 1, '靜思', 'I', 'MP 低於 30% 時受到的魔法傷害 −30%', { mods: [MUL(0.7, { cat: '特', ownerMpBelow: 0.3 }, 'defender', 'defender')] });
   TK(c, 0, '元素王', '集滿 2 種不同屬性就觸發元素爆發，倍率 ×1.3', { rules: { elemKing: 1 } });
   TK(c, 1, '雷帝', '元素爆發時，另外對所有魔物各打一次雷擊（威力 60）', { kind: 'I', trig: [TRG(EVT.SKILL_SUCCESS, 'src', { burstOld: 1, cat: '特', hasPower: 1 }, [E12.dmg(60, 'all_enemies', { el: '雷', cat: '特', kind: 'thunderGod' })], { prio: 12 })] });
@@ -17875,7 +17875,7 @@ smithMenu = function* (f) {
 const GROW12 = [
   ['等級與屬性', '打倒魔物得到經驗值。升級時能力會提升，還會拿到屬性點，在選單的「屬性」自由分配。'],
   ['職業', '村長那裡可以轉職。Lv14 找村長「天賦覺醒」後，劍士、魔導士、守護者、遊俠會進階成劍聖、大魔導士、聖騎士、神射手。'],
-  ['天賦與職業招式', '升級和天賦之書會給天賦點。在選單的「天賦」，每一層二選一；天賦點也能強化職業招式。'],
+  ['天賦與職業招式', '升級和天賦之書會給天賦點。在選單的「天賦」，每一層二選一。'],
   ['技能練度', '每用一次技能練度 +1：滿第一格學會（武器技能），再用 6 次可以進化「改」，再用 24 次進化「極」。修練之書：練度 +12。'],
   ['裝備', '鐵匠「打造」：用設計圖和素材做裝備。鐵匠「強化」：強化到 +10、用精煉石升星、重鑄詞綴或品質。'],
   ['果實', '六種果實會永久提升能力。果實買越多越貴（六種一起算）。'],
@@ -17904,7 +17904,7 @@ defPut('mechanics', 'mage_power12', { layer: 'class', mods: [{ stage: 'attacker'
 { const _hs = BB.heroSpec; BB.heroSpec = function (st, cfg) { const s = _hs.call(this, st, cfg); if (clsV7(st.cls) === 'mage') s.data.mechanics.push('mage_power12'); return s; }; }
 { const _m = BR.FORMULA.mpSpring; BR.FORMULA.mpSpring = (c, v) => _m(c, v) + 0.05; }
 CLS12.mage.passive[1] = '魔法傷害 +30%，回合結束回復 8% MP'; DEF.classes.mage.passive.d = CLS12.mage.passive[1];
-SIG12.monk.power = 35; SIG12.monk.d = SIG12.monk.d.replace('各 30', '各 35'); DEF.skills.sig_monk.power = 35; DEF.skills.sig_monk.desc = (DEF.skills.sig_monk.desc || '').replace('各 30', '各 35');
+SIG12.monk.power = 35; SIG12.monk.d = SIG12.monk.d.replace('各 30', '各 35'); DEF.skills.sig_monk.power = 35; DEF.skills.sig_monk.desc = (DEF.skills.sig_monk.desc || '').replace('各 30', '各 35'); if (MOVES.sig_monk) MOVES.sig_monk.d = (MOVES.sig_monk.d || '').replace('各 30', '各 35');
 { const M = DEF.mechanics.cls_guardian, mk = M.make; M.make = u => { const r = mk(u); for (const m of r.mods || []) if (m.mul === 0.7 && m.cond && m.cond.guarding) m.mul = 0.8; return r; }; }
 CLS12.guardian.passive[1] = CLS12.guardian.passive[1].replace('再減傷 30%', '再減傷 20%'); DEF.classes.guardian.passive.d = CLS12.guardian.passive[1];
 if (typeof BATTLE_HELP !== 'undefined') for (const P of BATTLE_HELP) P[1] = P[1].map(t => t.replace('「守護之盾」再減30%', '「守護之盾」再減20%'));
@@ -19470,7 +19470,7 @@ ACC_TRAIT.swift = ['疾風', '速度 +15%', []]; // 砂岩之翼: the 疾風 spe
     const fx = magic && el !== AD.el && W12_EL_FX[el] ? W12_EL_FX[el][aoe ? 1 : 0] : AD.fx, d = (dmg && el !== '一般' ? el + '屬性・' : '') + (W12_ARCH_D[arch] || (base.d || '').replace(/。$/, '')) + '；' + codes.map(evoText).join('、') + '。';
     MOVES[id] = { ...base, n, d, t: el, pow, fx, uniq: k, ws: 1, ueff: codes.slice(), orb: undefined }; SKILL_MP[id] = mp; const [cd, learn, prio] = SKILL12[arch] || [0, 6];
     defPut('skills', id, { ...skillFromMove(id, MOVES[id], { kind: 'skill', tpl: ORB_A[arch].tpl, extraTags: ['weapon'], costs: dmg || archMp ? [{ res: 'mp', amount: mp }] : [], fallback: 'attack' }), cooldown: cd, prio: prio || 0, metadata: { uniq: k, tpl: arch, learn, w12: 1 } });
-    const D = DEF.skills[id]; D.fx = fx; D.effects = D.effects.map((ef, i) => typeof ef === 'string' ? ef : effRegister('skill:' + id + '#e' + i, ef)); D.after = D.after.map((ef, i) => typeof ef === 'string' ? ef : effRegister('skill:' + id + '#a' + i, ef));
+    const D = DEF.skills[id]; D.fx = fx; if (dmg) { const tot = D.power * avgHits(D), c2 = tot >= 96 ? 3 : tot >= 66 ? 2 : 1; if ((D.cooldown || 0) < c2) D.cooldown = c2; } D.effects = D.effects.map((ef, i) => typeof ef === 'string' ? ef : effRegister('skill:' + id + '#e' + i, ef)); D.after = D.after.map((ef, i) => typeof ef === 'string' ? ef : effRegister('skill:' + id + '#a' + i, ef));
     if (prio) D.tags = D.tags.filter(t => t !== 'priority').concat(['priority']); } }
 { const _ld = lootDrops; lootDrops = function (b) { const F = b.F, key = b.cfg.id || F.sp, st = Game.st, first = !((st.kills || {})[key]), lord = /_lord$/.test(key) && Object.keys(LORD_GEAR12).find(l => l === F.sp);
     if (!lord || !first || b.cfg.rematch) return _ld(b); const out = _ld(b).filter(g => !g._first), g = makeGear(LORD_GEAR12[lord][0], 4); g._first = 1; out.unshift(g); return out; }; }

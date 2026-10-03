@@ -118,7 +118,7 @@ Object.assign(EFFECT_TYPES, {
   TL(c, 2, 0, 1, '冥想', 'R', '防禦回復 MP 從 12% 提高到 25%', { rules: { meditate: 1 } });
   TL(c, 2, 1, 0, '節流', 'C', '技能進入冷卻時，退還該技能 30% 的 MP', { trig: [TRG(EVT.COOLDOWN, 'src', { evSetCd: 1 }, [E12.res('mp', { f: 'cdRefund' }, { why: 'refund' })])] });
   TL(c, 2, 1, 1, '循環', 'R', 'MP 全滿時技能 MP −30%', { mods: [{ stage: 'skill', costMul: 0.7, res: 'mp', cond: { ownerResFull: 'mp' } }] });
-  TL(c, 2, 2, 0, '魔泉', 'R', '魔力之泉改成每回合 6%', { rules: { springUp: 1 } });
+  TL(c, 2, 2, 0, '魔泉', 'R', '魔力之泉改成每回合 11%', { rules: { springUp: 1 } });
   TL(c, 2, 2, 1, '靜思', 'I', 'MP 低於 30% 時受到的魔法傷害 −30%', { mods: [MUL(0.7, { cat: '特', ownerMpBelow: 0.3 }, 'defender', 'defender')] });
   TK(c, 0, '元素王', '集滿 2 種不同屬性就觸發元素爆發，倍率 ×1.3', { rules: { elemKing: 1 } });
   TK(c, 1, '雷帝', '元素爆發時，另外對所有魔物各打一次雷擊（威力 60）', { kind: 'I', trig: [TRG(EVT.SKILL_SUCCESS, 'src', { burstOld: 1, cat: '特', hasPower: 1 }, [E12.dmg(60, 'all_enemies', { el: '雷', cat: '特', kind: 'thunderGod' })], { prio: 12 })] });

@@ -90,7 +90,7 @@ const gearText = g => gearLines(g).filter(Boolean).join(' ');
 const gearName = g => g._bp === 2 ? '「' + GEAR[g.b].n + '」的設計圖' : '【' + GQ[g.q][0] + '】' + GEAR[g.b].n + (g.s ? '★' + g.s : '') + (g.e ? ' +' + g.e : '');
 const gearShort = g => GEAR[g.b].n + (g.s ? '★' + g.s : '') + (g.e ? ' +' + g.e : '');
 const enhanceCost = g => { const e = (g.e || 0) + 1, t = GEAR[g.b].t; if (e > 5) { const R = typeof GEAR_RECIPE !== 'undefined' && GEAR_RECIPE[g.b], mk = R ? Object.keys(R.mats)[0] : 'crystal'; return { gold: 400 * t * e * (Game.st.flags.smithDisc ? 0.5 : 1), mats: { [mk]: e - 3 }, rate: [0.45, 0.4, 0.35, 0.3, 0.25][e - 6] }; } return { gold: e * 150 * t * (Game.st.flags.smithDisc ? 0.5 : 1), mats: t <= 2 ? { stone: e } : t === 3 ? { stone: e, gel: e } : { crystal: e }, rate: e <= 3 ? 1 : e === 4 ? 0.75 : 0.5 }; };
-const SALVAGE = { weapon: ['stone'], head: ['stone', 'gel'], body: ['stone', 'gel', 'frogSkin'], feet: ['feather', 'gel'], acc: ['feather', 'spore', 'leaf'] };
+const SALVAGE = { weapon: ['stone'], head: ['stone', 'gel'], body: ['stone', 'gel', 'frogSkin'], feet: ['feather', 'gel'], acc: ['feather', 'spore', 'leaf'], shield: ['stone', 'gel'] };
 const gCol = g => GQ[g.q][1];
 const gearSell = g => Math.round((GEAR[g.b].price || GEAR[g.b].t * 400) * 0.3 * GQ[g.q][2] * g.r);
 let rollQuality = () => { const r = Math.random() * 100; return r < 60 ? 1 : r < 92 ? 2 : 3; }; // 金 only from elites, bosses and hidden content
