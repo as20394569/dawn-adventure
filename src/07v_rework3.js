@@ -26,11 +26,7 @@ function rework3Migrate(st) {
 { const _so = startOverworld; startOverworld = function (...a) {
     const st = Game.st; if (st && !st.talV) st.talV = 2; // pre-v19.2 saves were refunded by 07o already; count them as v2
     const res = rework3Migrate(st), ow = _so.apply(this, a);
-    if (res && ow && ow.run) ow.run((function* () { yield* wait(24);
-      yield* say('【系統更新】劍士系的屬性劍技改成純劍術（屬性改由武器決定），天賦樹擴充到18個天賦，天賦點改成Lv6起每2級+1點。');
-      if (res.sk) yield* say('移除的舊技能已退回' + res.sk + '點技能點。新技能：燕返・迴旋斬・斬鐵・見切。');
-      if (res.tp !== undefined) yield* say('天賦已全部重置，依新規則重新計算：目前有' + res.tp + '點天賦點。');
-      yield* say('另外，裝備上的「對某族增傷」和「屬性減傷」取消了，改成會心率和最大HP。'); })());
+    /* v12.0.3: the old-save notice described rules that are gone — removed, the migration stays */
     return ow;
   };
 }

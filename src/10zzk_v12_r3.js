@@ -94,6 +94,16 @@ function* todoScreen12(first) {
     if (f.creekQ === 3 && !f.hansName && i >= 0 && (st.lore || {})[i]) { f.hansName = 1; yield* say('漢斯：「古戰場的石碑上，有個叫漢斯的磨坊學徒？……這個名字，是我們磨坊代代傳下來的。」'); }
     yield* _h.apply(this, a); }; }
 
+/* ---------- 戰後過場（玩家勾「補」）：沼澤鱷（第一幕最後）、苔石巨人（森林之印） ---------- */
+Events.eliteWin_croc = function* () { const f = Game.st.flags;
+  yield* sayAll(['沼澤鱷翻了個身，慢慢沉回了河裡。'].concat((f.creekQ || 0) >= 3 ? ['河水清清的。牠大概是被碧溪谷的黑水，從上游趕下來的吧。'] : [], ['橋頭的路，終於通了。', '（橋的另一邊，是迷霧森林和古岩遺跡。）'])); };
+Events.eliteWin_mossGiant = function* () { const f = Game.st.flags;
+  yield* sayAll(['苔石巨人的身體慢慢散開，變回了一堆長滿青苔的石頭。', '石頭堆的中間，有一枚刻著樹葉紋路的古印，發著淡淡的光。'].concat(f.q2res === 'stay' ? ['提姆：「……打、打贏了！我們打贏了！」'] : [], ['一陣風吹過森林，空氣好像變輕了。'])); };
+
+/* ---------- 很舊的存檔：讀檔時的「系統更新」提示寫的是已經不存在的規則（玩家勾選刪掉；存檔換算照舊） ---------- */
+skillUpdateNote = function* (st) { delete st.skillNote; };
+pointUpdateNote = function* (st) { delete st.pointNote; };
+
 /* ---------- 關閉中的內容 ---------- */
 if (COMMISSIONS.c34) COMMISSIONS.c34.open = st => !!comState('c34', st); // 星塵只在星見神殿：神殿打開時再開放（已經接下的照舊）
 { const A = ACHIEVEMENTS.find(a => a.id === 'com'); if (A) A.ok = st => Object.keys(COMMISSIONS).every(k => k === 'c34' || (comState(k, st) || {}).s === 'done'); }

@@ -146,7 +146,7 @@ function* ch2ClassTalk() {
   yield* say('「技能」選單換成了' + CLASSES[k].n + '的專屬技能樹。舊技能最多可以繼承' + inhSlots(st) + '招' + (inh ? '（先帶上了「' + inh + '」）' : '') + '。');
 }
 { const _elder = Events.elder; Events.elder = function* (ow) { // 萌芽鎮的村長 can also change you into an unlocked 上級職業
-    const f = Game.st.flags; if (CH2_CLS.some(([k, fl]) => f[fl] && Game.st.cls !== k)) { const r = yield* ask('要做什麼？', ['聊天', '上級職業']); if (r === 1) { yield* ch2ClassTalk(); return; } }
+    /* v12.0.3（玩家勾選）：上級職業只在冒險者公會轉職 */
     yield* _elder(ow);
   };
 }

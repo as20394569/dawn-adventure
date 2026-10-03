@@ -212,7 +212,7 @@ function* summaryScreen() {
   let page = 0, mi = 0, qTop = 0; const scr = { draw(x) {
     const st = Game.st, s = heroStats(); screenBG(x);
     headerBar(x, ['冒險者資料', '技能一覽', '任務'][page]); if (page === 1) Font.draw(x, 'MP ' + (st.mp ?? s.mp) + '/' + s.mp, 66, 5, UIC.blue || UIC.accent, UIC.textSh, 8);
-    Font.drawR(x, '← ' + (page + 1) + '/3 →', W - 6, 2, UIC.muted, UIC.textSh);
+    Font.drawR(x, '← ' + (page + 1) + '/2 →', W - 6, 2, UIC.muted, UIC.textSh);
     if (page === 0) heroCard(x, st);
     if (page === 2) {
       const QL = questList(st), VIS = 7, sel = Math.min(qTop, Math.max(0, QL.length - 1)), t0 = clamp(sel - 3, 0, Math.max(0, QL.length - VIS));
@@ -246,11 +246,11 @@ function* summaryScreen() {
   } };
   UI.push(scr);
   while (true) {
-    if (Input.pressed('left') || Input.pressed('right')) { page = (page + (Input.pressed('left') ? 2 : 1)) % 3; Sound.sfx('cursor'); }
+    if (Input.pressed('left') || Input.pressed('right')) { page = (page + 1) % 2; /* v12.0.3: 任務 lives in the 冒險手冊 now */ Sound.sfx('cursor'); }
     if (page === 2) { const n = questList().length; if (Input.repeat('up') && qTop > 0) { qTop--; Sound.sfx('cursor'); } if (Input.repeat('down') && qTop < n - 1) { qTop++; Sound.sfx('cursor'); } }
     if (page === 1) { const n = Math.max(1, (typeof summarySkills === 'function' ? summarySkills(Game.st) : learnedSkills()).length + (Game.st.cls && typeof classPassiveNode === 'function' ? 1 : 0)); if (Input.repeat('up')) { mi = (mi + n - 1) % n; Sound.sfx('cursor'); } if (Input.repeat('down')) { mi = (mi + 1) % n; Sound.sfx('cursor'); } }
     if (Input.pressed('a') && page === 2 && questList().length && typeof questDetailScreen === 'function') { Input.consume('a'); Sound.sfx('select'); const QL = questList(); UI.remove(scr); yield* questDetailScreen(QL[Math.min(qTop, QL.length - 1)]); UI.push(scr); }
-    else if (Input.pressed('a') && page !== 1) { Input.consume('a'); page = (page + 1) % 3; Sound.sfx('cursor'); }
+    else if (Input.pressed('a') && page !== 1) { Input.consume('a'); page = (page + 1) % 2; Sound.sfx('cursor'); }
     else if (Input.pressed('b')) { Input.consume('a', 'b'); Sound.sfx('cancel'); break; }
     yield;
   }

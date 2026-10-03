@@ -314,7 +314,7 @@ class TitleScene {
       if (o === '設定') { yield* optionsScreen(); continue; }
       if (o === '繼續冒險') { Game.st = loadGame(); yield* fadeOut(20); startOverworld(); Game.sys.push(fadeIn(20)); return; }
       if (o === '新的冒險') {
-        if (this.hasSave) { const ok = yield* yesNo('開始新的冒險後，舊的記錄會在下次存檔時被覆蓋。確定嗎？'); if (!ok) continue; Game.autoIntro = yield* yesNo('要快轉開場劇情嗎？\n（對話會自動翻過去，到取名字和選職業時再停下來）'); }
+        if (this.hasSave) { const ok = yield* yesNo('開始新的冒險後，舊的記錄會在下次存檔時被覆蓋。確定嗎？'); if (!ok) continue; }
         yield* fadeOut(24); Game.setScene(new IntroScene()); return;
       }
     }

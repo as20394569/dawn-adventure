@@ -4102,7 +4102,7 @@ function* summaryScreen() {
   let page = 0, mi = 0, qTop = 0; const scr = { draw(x) {
     const st = Game.st, s = heroStats(); screenBG(x);
     headerBar(x, ['冒險者資料', '技能一覽', '任務'][page]); if (page === 1) Font.draw(x, 'MP ' + (st.mp ?? s.mp) + '/' + s.mp, 66, 5, UIC.blue || UIC.accent, UIC.textSh, 8);
-    Font.drawR(x, '← ' + (page + 1) + '/3 →', W - 6, 2, UIC.muted, UIC.textSh);
+    Font.drawR(x, '← ' + (page + 1) + '/2 →', W - 6, 2, UIC.muted, UIC.textSh);
     if (page === 0) heroCard(x, st);
     if (page === 2) {
       const QL = questList(st), VIS = 7, sel = Math.min(qTop, Math.max(0, QL.length - 1)), t0 = clamp(sel - 3, 0, Math.max(0, QL.length - VIS));
@@ -4135,11 +4135,11 @@ function* summaryScreen() {
   } };
   UI.push(scr);
   while (true) {
-    if (Input.pressed('left') || Input.pressed('right')) { page = (page + (Input.pressed('left') ? 2 : 1)) % 3; Sound.sfx('cursor'); }
+    if (Input.pressed('left') || Input.pressed('right')) { page = (page + 1) % 2; /* v12.0.3: 任務 lives in the 冒險手冊 now */ Sound.sfx('cursor'); }
     if (page === 2) { const n = questList().length; if (Input.repeat('up') && qTop > 0) { qTop--; Sound.sfx('cursor'); } if (Input.repeat('down') && qTop < n - 1) { qTop++; Sound.sfx('cursor'); } }
     if (page === 1) { const n = Math.max(1, (typeof summarySkills === 'function' ? summarySkills(Game.st) : learnedSkills()).length + (Game.st.cls && typeof classPassiveNode === 'function' ? 1 : 0)); if (Input.repeat('up')) { mi = (mi + n - 1) % n; Sound.sfx('cursor'); } if (Input.repeat('down')) { mi = (mi + 1) % n; Sound.sfx('cursor'); } }
     if (Input.pressed('a') && page === 2 && questList().length && typeof questDetailScreen === 'function') { Input.consume('a'); Sound.sfx('select'); const QL = questList(); UI.remove(scr); yield* questDetailScreen(QL[Math.min(qTop, QL.length - 1)]); UI.push(scr); }
-    else if (Input.pressed('a') && page !== 1) { Input.consume('a'); page = (page + 1) % 3; Sound.sfx('cursor'); }
+    else if (Input.pressed('a') && page !== 1) { Input.consume('a'); page = (page + 1) % 2; Sound.sfx('cursor'); }
     else if (Input.pressed('b')) { Input.consume('a', 'b'); Sound.sfx('cancel'); break; }
     yield;
   }
@@ -6674,7 +6674,7 @@ const chibiFloats = k => CHIBI_FLOAT.has(k) || ['buzz', 'flame', 'lamp', 'ghost'
   };
 }
 function talentRefund(st) { if (!st || (st.talV || 1) >= TALENT_VERSION) return false; let n = 0; for (const k in st.tal || {}) n += st.tal[k] || 0; st.tal = {}; st.tp = (st.tp || 0) + n; st.talV = TALENT_VERSION; return n > 0; }
-{ const _so = startOverworld; startOverworld = function (...a) { const r = _so.apply(this, a); const st = Game.st; if (st && !st.talV) { const had = talentRefund(st); if (had && r && r.run) r.run((function* () { yield* wait(20); yield* say('【系統更新】天賦改版了！\n「破甲之心」「身手矯健」換成了新的效果，並新增了三個天賦。'); yield* say('已經投入的天賦點全部退回了，打開選單的「天賦」重新分配吧。'); })()); else st.talV = TALENT_VERSION; } return r; }; }
+{ const _so = startOverworld; startOverworld = function (...a) { const r = _so.apply(this, a); const st = Game.st; if (st && !st.talV) { const had = talentRefund(st); if (had && r && r.run) r.run((function* () { yield* wait(1); /* v12.0.3: old-save notice removed (the rules it described are gone) */ })()); else st.talV = TALENT_VERSION; } return r; }; }
 { const _ng = newGameState; newGameState = function (...a) { const st = _ng.apply(this, a); if (st) st.talV = TALENT_VERSION; return st; }; }
 Object.assign(AI_PROFILE, { sandScorpion: 'guard', harpy: 'trick', cactling: 'guard', dustDevil: 'trick', rockRhino: 'brute', duneWorm: 'brute', bogLeech: 'guard', bogToad: 'trick', marshWisp: 'trick', rotTreant: 'guard', bogWitch: 'trick', hydra: 'brute', mimic: 'brute' });
 Object.assign(MFX, {
@@ -7105,11 +7105,6 @@ function rework3Migrate(st) {
 { const _so = startOverworld; startOverworld = function (...a) {
     const st = Game.st; if (st && !st.talV) st.talV = 2; // pre-v19.2 saves were refunded by 07o already; count them as v2
     const res = rework3Migrate(st), ow = _so.apply(this, a);
-    if (res && ow && ow.run) ow.run((function* () { yield* wait(24);
-      yield* say('【系統更新】劍士系的屬性劍技改成純劍術（屬性改由武器決定），天賦樹擴充到18個天賦，天賦點改成Lv6起每2級+1點。');
-      if (res.sk) yield* say('移除的舊技能已退回' + res.sk + '點技能點。新技能：燕返・迴旋斬・斬鐵・見切。');
-      if (res.tp !== undefined) yield* say('天賦已全部重置，依新規則重新計算：目前有' + res.tp + '點天賦點。');
-      yield* say('另外，裝備上的「對某族增傷」和「屬性減傷」取消了，改成會心率和最大HP。'); })());
     return ow;
   };
 }
@@ -7651,7 +7646,7 @@ class TitleScene {
       if (o === '設定') { yield* optionsScreen(); continue; }
       if (o === '繼續冒險') { Game.st = loadGame(); yield* fadeOut(20); startOverworld(); Game.sys.push(fadeIn(20)); return; }
       if (o === '新的冒險') {
-        if (this.hasSave) { const ok = yield* yesNo('開始新的冒險後，舊的記錄會在下次存檔時被覆蓋。確定嗎？'); if (!ok) continue; Game.autoIntro = yield* yesNo('要快轉開場劇情嗎？\n（對話會自動翻過去，到取名字和選職業時再停下來）'); }
+        if (this.hasSave) { const ok = yield* yesNo('開始新的冒險後，舊的記錄會在下次存檔時被覆蓋。確定嗎？'); if (!ok) continue; }
         yield* fadeOut(24); Game.setScene(new IntroScene()); return;
       }
     }
@@ -8017,7 +8012,7 @@ Overworld.prototype.eliteTalk = function* (e) {
     if (firstWin && e.id === 'boneKnight') { yield* say('骸骨騎士倒下後，身後的石棺打開了……'); st.money += 2000; st.bag.powerFruit = (st.bag.powerFruit || 0) + 1; yield* itemGet(st.name + '找到了古王的寶藏：2000 G和力量果實！'); }
     if (firstWin && Events['eliteWin_' + e.id]) { const mid = this.map.id; yield* Events['eliteWin_' + e.id](this, e);
       if (Game.scene === this && this.map && this.map.id === mid) this.load(mid, this.p.x, this.p.y, this.p.dir, true); } // v12.0.1: the win event changes flags (漢斯 wakes up, 格倫 breaks camp…) — rebuild the map so the NPCs move at once
-    if (firstWin) yield* say('（打倒的菁英魔物，過一段時間會再出現。再戰時會掉落不同的裝備。）');
+    if (firstWin && !STORY_ELITES12.includes(e.id)) yield* say('（打倒的菁英魔物，過一段時間會再出現。再戰時會掉落不同的裝備。）'); // v12.0.3: story elites stay down
   } else yield* this.retreatFrom(e, res);
 };
 Overworld.prototype.retreatFrom = function* (e, res) {
@@ -9058,10 +9053,7 @@ rework3Migrate = (function (_rm) { return function (st) {
 { const _so = startOverworld; startOverworld = function (...a) {
     const ow = _so.apply(this, a), st = Game.st; if (!st || (st.skV || 1) >= 4) return ow; st.skV = 4;
     if (inhSlots(st)) { fixInherit(st); const inh = st.inh.map(id => MOVES[id].n).join('、');
-      if (ow && ow.run) ow.run((function* () { yield* wait(30);
-        yield* say('【系統更新】進階職業有了自己的完整技能樹！' + CLASSES[st.cls].n + '的「技能」畫面現在只有專屬的10招。');
-        yield* say('原本學會的舊技能都還在，但戰鬥中只能帶' + inhSlots(st) + '招（繼承技能）。' + (inh ? '先幫你帶上了「' + inh + '」。' : ''));
-        yield* say('在「技能」畫面按上方的「繼承」可以更換；不需要的舊技能可以遺忘，退回技能點拿去學新技能。'); })()); }
+      } /* v12.0.3: old-save notice removed */
     return ow;
   };
 }
@@ -10358,7 +10350,6 @@ function* ch2ClassTalk() {
   yield* say('「技能」選單換成了' + CLASSES[k].n + '的專屬技能樹。舊技能最多可以繼承' + inhSlots(st) + '招' + (inh ? '（先帶上了「' + inh + '」）' : '') + '。');
 }
 { const _elder = Events.elder; Events.elder = function* (ow) { // 萌芽鎮的村長 can also change you into an unlocked 上級職業
-    const f = Game.st.flags; if (CH2_CLS.some(([k, fl]) => f[fl] && Game.st.cls !== k)) { const r = yield* ask('要做什麼？', ['聊天', '上級職業']); if (r === 1) { yield* ch2ClassTalk(); return; } }
     yield* _elder(ow);
   };
 }
@@ -17772,6 +17763,12 @@ function* todoScreen12(first) {
 { const _h = Events.hans; Events.hans = function* (...a) { const st = Game.st, f = st.flags, i = LORE.findIndex(l => l[0] === 'oldField');
     if (f.creekQ === 3 && !f.hansName && i >= 0 && (st.lore || {})[i]) { f.hansName = 1; yield* say('漢斯：「古戰場的石碑上，有個叫漢斯的磨坊學徒？……這個名字，是我們磨坊代代傳下來的。」'); }
     yield* _h.apply(this, a); }; }
+Events.eliteWin_croc = function* () { const f = Game.st.flags;
+  yield* sayAll(['沼澤鱷翻了個身，慢慢沉回了河裡。'].concat((f.creekQ || 0) >= 3 ? ['河水清清的。牠大概是被碧溪谷的黑水，從上游趕下來的吧。'] : [], ['橋頭的路，終於通了。', '（橋的另一邊，是迷霧森林和古岩遺跡。）'])); };
+Events.eliteWin_mossGiant = function* () { const f = Game.st.flags;
+  yield* sayAll(['苔石巨人的身體慢慢散開，變回了一堆長滿青苔的石頭。', '石頭堆的中間，有一枚刻著樹葉紋路的古印，發著淡淡的光。'].concat(f.q2res === 'stay' ? ['提姆：「……打、打贏了！我們打贏了！」'] : [], ['一陣風吹過森林，空氣好像變輕了。'])); };
+skillUpdateNote = function* (st) { delete st.skillNote; };
+pointUpdateNote = function* (st) { delete st.pointNote; };
 if (COMMISSIONS.c34) COMMISSIONS.c34.open = st => !!comState('c34', st); // 星塵只在星見神殿：神殿打開時再開放（已經接下的照舊）
 { const A = ACHIEVEMENTS.find(a => a.id === 'com'); if (A) A.ok = st => Object.keys(COMMISSIONS).every(k => k === 'c34' || (comState(k, st) || {}).s === 'done'); }
 for (let i = FOE_SPOTS.length - 1; i >= 0; i--) if (['rift', 'starShrine'].includes(FOE_SPOTS[i].map)) FOE_SPOTS.splice(i, 1);

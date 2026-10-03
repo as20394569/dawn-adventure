@@ -102,10 +102,7 @@ rework3Migrate = (function (_rm) { return function (st) {
 { const _so = startOverworld; startOverworld = function (...a) {
     const ow = _so.apply(this, a), st = Game.st; if (!st || (st.skV || 1) >= 4) return ow; st.skV = 4;
     if (inhSlots(st)) { fixInherit(st); const inh = st.inh.map(id => MOVES[id].n).join('、');
-      if (ow && ow.run) ow.run((function* () { yield* wait(30);
-        yield* say('【系統更新】進階職業有了自己的完整技能樹！' + CLASSES[st.cls].n + '的「技能」畫面現在只有專屬的10招。');
-        yield* say('原本學會的舊技能都還在，但戰鬥中只能帶' + inhSlots(st) + '招（繼承技能）。' + (inh ? '先幫你帶上了「' + inh + '」。' : ''));
-        yield* say('在「技能」畫面按上方的「繼承」可以更換；不需要的舊技能可以遺忘，退回技能點拿去學新技能。'); })()); }
+      } /* v12.0.3: old-save notice removed */
     return ow;
   };
 }
