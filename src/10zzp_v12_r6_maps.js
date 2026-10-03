@@ -37,6 +37,11 @@ const LANDMARK12 = {}, CAVE12 = {}, CAMP_IDS12 = new Set(['camp6_moki', 'camp6_k
   }
 })();
 
+CH2_PROPS.waterwheel = spriteFrom(['................', '.....kkkkkk.....', '...kkDrrrrDkk...', '..kDrkkrrkkrDk..', '..krk.krrk.krk..', '.kDrk..kk..krDk.', '.krrkkkkkkkkrrk.', '.krrrrkRRkrrrrk.',
+  '.krrrrkRRkrrrrk.', '.krrkkkkkkkkrrk.', '.kDrk..kk..krDk.', '..krk.krrk.krk..', '..kDrkkrrkkrDk..', '.BBkkDrrrrDkkBB.', 'BbBbBkkkkkkBbBbB', 'bBbBbBbBbBbBbBbB'],
+  { k: '#3a2a1e', r: '#a07a40', D: '#6a4a28', R: '#d8b070', B: '#4a90d0', b: '#8ad0f0' });
+if (typeof PORTRAIT_PROPS !== 'undefined') PORTRAIT_PROPS.add('waterwheel');
+Events.wheel6 = function* () { yield* say('大水車慢慢地轉著，把河水一勺一勺送進麥田。'); };
 for (let i = 1; i <= 3; i++) Events['mill6_' + i] = function* () { yield* say('風車在丘頂上慢慢地轉著，發出嘎吱嘎吱的聲音。'); };
 
 /* ---------- 新魔物的能力：跟同一張地圖的現有魔物對齊（等級換算＋角色），洞窟之主再乘菁英倍率 ---------- */
@@ -75,9 +80,21 @@ const landmarkSeen12 = (id, n, st = Game.st) => !!((st.lm12 || {})[id + ':' + n]
 
 /* ---------- 旅人營地 ---------- */
 const CAMP12 = {
-  camp6_moki: { name: '莫奇', hi: '喲，旅人！在這裡歇歇腳吧。', stock: ['potion', 'superPotion', 'ether', 'antidote', 'paralyzeHeal', 'awakening'],
-    trade: [['gel', 3, 'superPotion', 1], ['hareFur', 3, 'ether', 1], ['moonDew', 2, 'luckClover', 1]],
+  camp6_moki: { name: '莫奇', hi: '喲，旅人！在這裡歇歇腳吧。', stock: ['potion', 'superPotion', 'ether', 'antidote', 'parlyzHeal', 'awakening'],
+    trade: [['gel', 3, 'superPotion', 1], ['hareFur', 3, 'ether', 1], ['moonDew', 2, 'manaPotion', 1], ['wood', 3, 'returnWing', 1]],
     tip: '溪的東邊有一個長滿霧的窪地，從北邊的小崖跳下去就到了。窪地南邊還有個洞窟，聽說裡面住著一隻會發光的大傢伙。' },
+  camp6_karl: { name: '卡爾', hi: '商隊今天在這裡紮營。要什麼儘管說。', stock: ['superPotion', 'manaPotion', 'antidote', 'parlyzHeal', 'burnHeal', 'returnWing'],
+    trade: [['lizardScale', 3, 'superPotion', 2], ['sandCrystal', 3, 'hiEther', 1], ['scorpTail', 3, 'superPotion', 3]],
+    tip: '東邊的岩柱林底下有一段斷崖，跳下去就是乾河床。風蝕洞在最東南邊，裡面的石像鬼會捲起砂暴。' },
+  camp6_gavin: { name: '蓋文', hi: '關道上的獵人小屋，歡迎進來烤烤火。', stock: ['superPotion', 'megaPotion', 'manaPotion', 'awakening', 'smoke', 'returnWing'],
+    trade: [['stagHorn', 3, 'megaPotion', 1], ['boneShard', 3, 'hiEther', 1], ['ectoplasm', 2, 'elixir', 1]],
+    tip: '東邊的台地往下跳很快，要上去得走最東邊的坡。舊隧道就在台地底下，聽說有一隻把隧道撞塌的大甲蟲。' },
+  camp6_lottie: { name: '洛蒂', hi: '我是旅行藥師洛蒂。受傷了就來這裡休息吧。', stock: ['megaPotion', 'hiEther', 'antidote', 'parlyzHeal', 'awakening', 'burnHeal', 'elixir'],
+    trade: [['wheat', 3, 'megaPotion', 1], ['honey', 2, 'hiEther', 1], ['banditCloth', 3, 'elixir', 1]],
+    tip: '麥田的田埂像迷宮一樣，最裡面有人藏了東西。還有，舊穀倉的地窖最近一直有沙沙的怪聲。' },
+  camp6_flora: { name: '芙蘿', hi: '歡迎來到溫泉小屋！泡一下溫泉，什麼疲勞都消了。', stock: ['megaPotion', 'megaEther', 'elixir', 'burnHeal', 'returnWing'],
+    trade: [['magmaStone', 3, 'megaEther', 1], ['snowPelt', 3, 'elixir', 1], ['iceCrystal', 2, 'megaPotion', 1]],
+    tip: '熔岩河只有兩座石橋能過。東邊黑曜石坡底下有個洞，熱得跟爐子一樣，最裡面好像有什麼在噴熔岩。' },
 };
 for (const k in CAMP12) Events[k] = function* (ow) {
   const C = CAMP12[k], st = Game.st; yield* say(C.name + '：「' + C.hi + '」');

@@ -80,6 +80,29 @@ class Grid:
             for x in range(x0, x1 + 1):
                 if self.rng.random() >= keep: self.set(x, y, 'T')
 
+    def maze(self, x0, y0, x1, y1, loops=0.12, open_ch='.'):
+        """carve a forest maze in [x0..x1]x[y0..y1]: corridors 1 wide on odd offsets, walls of trees; some extra openings make loops"""
+        self.rect(x0, y0, x1, y1, 'T')
+        cells = [(x, y) for y in range(y0 + 1, y1, 2) for x in range(x0 + 1, x1, 2)]
+        if not cells: return
+        seen = {cells[0]}; stack = [cells[0]]; self.set(*cells[0], open_ch)
+        while stack:
+            x, y = stack[-1]
+            nb = [(x + dx, y + dy, x + dx // 2, y + dy // 2) for dx, dy in ((2, 0), (-2, 0), (0, 2), (0, -2)) if (x + dx, y + dy) in set(cells) and (x + dx, y + dy) not in seen]
+            if not nb: stack.pop(); continue
+            nx, ny, wx, wy = self.rng.choice(nb); seen.add((nx, ny)); stack.append((nx, ny)); self.set(wx, wy, open_ch); self.set(nx, ny, open_ch)
+        for y in range(y0 + 1, y1):
+            for x in range(x0 + 1, x1):
+                if self.get(x, y) == 'T' and self.rng.random() < loops and ((self.get(x - 1, y) == open_ch and self.get(x + 1, y) == open_ch) or (self.get(x, y - 1) == open_ch and self.get(x, y + 1) == open_ch)):
+                    self.set(x, y, open_ch)
+
+    def pillars(self, x0, y0, x1, y1, ch, n):
+        """single solid tiles spread out with at least one free tile between them"""
+        for _ in range(n * 10):
+            if n <= 0: break
+            x, y = self.rng.randint(x0, x1), self.rng.randint(y0, y1)
+            if all(self.get(x + dx, y + dy) in '.,#fy' for dx in (-1, 0, 1) for dy in (-1, 0, 1)) and (x, y) not in self.prot: self.set(x, y, ch); n -= 1
+
     def rows(self): return [''.join(r) for r in self.g]
 
     def reach(self, start):
