@@ -40,9 +40,9 @@ ACC_TRAIT.swift = ['疾風', '速度 +15%', []]; // 砂岩之翼: the 疾風 spe
     const D = DEF.skills[id]; D.fx = fx; D.effects = D.effects.map((ef, i) => typeof ef === 'string' ? ef : effRegister('skill:' + id + '#e' + i, ef)); D.after = D.after.map((ef, i) => typeof ef === 'string' ? ef : effRegister('skill:' + id + '#a' + i, ef));
     if (prio) D.tags = D.tags.filter(t => t !== 'priority').concat(['priority']); } }
 // first kill: the lord's own piece (blueprint + a ticket for 金); later kills roll the area's loot as before
-{ const _ld = lootDrops; lootDrops = function (b) { const F = b.F, key = b.cfg.id || F.sp, st = Game.st, first = !((st.kills || {})[key]), lord = Object.keys(LORD_GEAR12).find(l => l === F.sp);
+{ const _ld = lootDrops; lootDrops = function (b) { const F = b.F, key = b.cfg.id || F.sp, st = Game.st, first = !((st.kills || {})[key]), lord = /_lord$/.test(key) && Object.keys(LORD_GEAR12).find(l => l === F.sp);
     if (!lord || !first || b.cfg.rematch) return _ld(b); const out = _ld(b).filter(g => !g._first), g = makeGear(LORD_GEAR12[lord][0], 4); g._first = 1; out.unshift(g); return out; }; }
-{ const _lh = lootHint; lootHint = function (key, sp) { const L = LORD_GEAR12[sp]; if (L && !((Game.st.kills || {})[key])) return '首次擊敗：必定掉落金色「' + L[1] + '」'; return _lh(key, sp); }; }
+{ const _lh = lootHint; lootHint = function (key, sp) { const L = /_lord$/.test(key || '') && LORD_GEAR12[sp]; if (L && !((Game.st.kills || {})[key])) return '首次擊敗：必定掉落金色「' + L[1] + '」'; return _lh(key, sp); }; }
 
 /* =================== I. 圖鑑獎勵 =================== */
 const DEXMAP12 = [ // [map, act group]

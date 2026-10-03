@@ -112,14 +112,14 @@ function* comInit12() { const st = Game.st;
 // where the new things come from (the quest page and the hints)
 { const W = { mokiHerb12: ['晨霧道路的營地（莫奇）'], glowHerb12: ['晚上採集魔力草'], nightDew12: ['晚上採集月露'], fogMoss12: ['起霧的時候採集沼苔'], featherBird12: ['打倒啾啾鳥'], featherCrow12: ['打倒稻草鴉'], featherOwl12: ['打倒夜梟（晚上）'] };
   const _is = itemSources; itemSources = function (k, ...a) { return W[k] || _is(k, ...a); }; }
-/* ---------- 送貨：莫奇・洛蒂 ---------- */
-for (const [npc, k] of [['camp6_moki', 'c1'], ['camp6_lottie', 'c26']]) { const _e = Events[npc];
-  Events[npc] = function* (ow, ...a) { const st = Game.st, s = comState(k, st);
-    if (k === 'c1' && s && s.s === 'on' && st.bag.potionBox12) { delete st.bag.potionBox12; st.bag.mokiHerb12 = 1; Sound.jingle('item');
-      yield* sayAll(['喔！是旅店的傷藥！正好用完了。', '這些藥草你帶回去給老闆娘吧，說好的交換。']); yield* say('得到了「莫奇的藥草」。'); return; }
-    if (k === 'c26' && s && s.s === 'on' && st.bag.cake12) { delete st.bag.cake12; s.d12 = 1; Sound.jingle('item');
-      yield* sayAll(['哇，是旅店的蜂蜜蛋糕！', '好香……幫我跟老闆說謝謝！']); yield* say('把蜂蜜蛋糕交給了洛蒂。回旅店報告吧。'); return; }
-    return _e ? yield* _e.call(this, ow, ...a) : undefined; }; }
+/* ---------- 送貨：莫奇・洛蒂（營地的人被找上時先處理） ---------- */
+function* campDeliver12(npc) { const st = Game.st;
+  if (npc === 'camp6_moki') { const s = comState('c1', st); if (s && s.s === 'on' && st.bag.potionBox12) { delete st.bag.potionBox12; st.bag.mokiHerb12 = 1; Sound.jingle('item');
+      yield* sayAll(['莫奇：「喔！是旅店的傷藥！正好用完了。」', '莫奇：「這些藥草你帶回去給老闆娘吧，說好的交換。」']); yield* say('得到了「莫奇的藥草」。'); return true; } }
+  if (npc === 'camp6_lottie') { const s = comState('c26', st); if (s && s.s === 'on' && st.bag.cake12) { delete st.bag.cake12; s.d12 = 1; Sound.jingle('item');
+      yield* sayAll(['洛蒂：「哇，是旅店的蜂蜜蛋糕！」', '洛蒂：「好香……幫我跟老闆說謝謝！」']); yield* say('把蜂蜜蛋糕交給了洛蒂。回旅店報告吧。'); return true; } }
+  return false; }
+for (const npc of ['camp6_moki', 'camp6_lottie']) { const _e = Events[npc]; Events[npc] = function* (ow, ...a) { if (yield* campDeliver12(npc)) return; return _e ? yield* _e.call(this, ow, ...a) : undefined; }; }
 
 /* ---------- 夜晚・天氣限定的採集、不同的羽毛 ---------- */
 { const _dg = doGather; doGather = function (kind, st = Game.st) { const r = _dg(kind, st), night = dnNight12(st), add = (it, why) => { st.bag[it] = (st.bag[it] || 0) + 1; r.text += '、' + ITEMS[it].n + '×1' + why; };
