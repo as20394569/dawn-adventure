@@ -114,7 +114,7 @@ module.exports = async (g) => {
     miss('道具', Object.keys(ITEMS).filter(k => !ITEM_CATS.includes(ITEMS[k].cat)));
     miss('地圖', Object.keys(MAPS).filter(k => !MAPS[k].type));
     miss('武器種類', Object.keys(GEAR).filter(k => GEAR[k].slot === 'weapon' && !GEAR[k].kind));
-    miss('防具輕重', Object.keys(GEAR).filter(k => ['head', 'body', 'feet'].includes(GEAR[k].slot) && !['輕裝', '重裝'].includes(GEAR[k].kind)));
+    miss('防具輕重', Object.keys(GEAR).filter(k => ['head', 'body', 'feet'].includes(GEAR[k].slot) && !['輕裝', '重甲', '法衣'].includes(GEAR[k].kind)));
     miss('特殊效果', Object.keys(SPECIALS).filter(k => !SPECIALS[k].cat));
     miss('詞綴', Object.keys(AFFIX_TABLE).filter(k => !AFFIX_TABLE[k].cat));
     miss('成就', ACHIEVEMENTS.filter(a => !a.cat).map(a => a.id));

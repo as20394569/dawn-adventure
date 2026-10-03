@@ -148,7 +148,7 @@ function lootDrops(b) {
 }
 
 /* ---------- reforging (blacksmith): reroll the random affixes of a 紫+ item ---------- */
-const reforgeCost = g => { const t = GEAR[g.b].t; return { gold: 300 * t * g.q, mats: t <= 2 ? { stone: 2, gel: 1 } : t === 3 ? { stone: 2, crystal: 1 } : { crystal: 2, moonDew: t >= 5 ? 0 : 1, riftShard: t >= 5 ? 1 : 0 } }; };
+const reforgeCost = g => { const t = GEAR[g.b].t; return { gold: 300 * t * g.q, mats: t <= 2 ? { stone: 2, gel: 1 } : t === 3 ? { stone: 2, crystal: 1 } : t >= 5 ? (R => { const m = { crystal: 2 }, k = R ? Object.keys(R.mats)[0] : 'crystal'; m[k] = (m[k] || 0) + 1; return m; })(typeof GEAR_RECIPE !== 'undefined' && GEAR_RECIPE[g.b]) : { crystal: 2, moonDew: 1 } }; };
 function* reforgeFlow() {
   const st = Game.st, matsOf = c => Object.entries(c.mats).filter(([, n]) => n > 0);
   while (true) {
