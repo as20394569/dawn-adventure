@@ -34,10 +34,10 @@ Object.assign(MOVES, {
   m_curseMark: { n: '魔女詛咒', t: '一般', cat: '變', acc: 95, pp: 15, stat: { who: 'foe', atk: -1, def: -1 }, d: '在身上刻下詛咒的記號。降低物攻和物防。' },
   m_toxicBrew: { n: '毒藥瓶', t: '毒', cat: '特', pow: 65, acc: 95, pp: 15, eff: { st: 'psn', p: 40 }, d: '丟出冒著泡的毒藥瓶。' },
   m_witchBolt: { n: '沼澤魔彈', t: '一般', cat: '特', pow: 75, acc: 95, pp: 10, d: '從杖頭射出綠色的魔彈。' },
-  m_cauldron: { n: '魔女的大鍋', t: '毒', cat: '特', pow: 135, acc: 100, pp: 5, charge: 1, eff: { st: 'psn', p: 60 }, chargeMsg: '魔女開始攪拌冒著綠煙的大鍋！', warn: '（鍋裡的東西快要煮好了……！）', d: '魔女的秘藥大爆發。' },
+  m_cauldron: { n: '魔女的大鍋', t: '毒', cat: '特', pow: 135, acc: 100, pp: 5, charge: 1, eff: { st: 'psn', p: 60 }, chargeMsg: '開始攪拌冒著綠煙的大鍋！', warn: '（鍋裡的東西快要煮好了……！）', d: '魔女的秘藥大爆發。' },
   m_tripleBite: { n: '三首連咬', t: '一般', cat: '物', pow: 90, acc: 95, pp: 10, eff: { flinch: 1, p: 20 }, d: '三顆頭輪流咬過來。' },
   m_venomSpray: { n: '毒霧吐息', t: '毒', cat: '特', pow: 80, acc: 95, pp: 10, eff: { st: 'psn', p: 30 }, d: '三顆頭一起噴出紫色的毒霧。' },
-  m_hydraFlood: { n: '腐沼洪流', t: '水', cat: '特', pow: 150, acc: 100, pp: 5, charge: 1, chargeMsg: '九頭蛇把整片沼澤的水吸進了肚子裡！', warn: '（沼澤的水位在下降……下一擊會非常可怕！）', d: '把整片沼澤的腐水一口氣噴出。' },
+  m_hydraFlood: { n: '腐沼洪流', t: '水', cat: '特', pow: 150, acc: 100, pp: 5, charge: 1, chargeMsg: '把整片沼澤的水吸進了肚子裡！', warn: '（沼澤的水位在下降……下一擊會非常可怕！）', d: '把整片沼澤的腐水一口氣噴出。' },
   // event monster
   m_chestChomp: { n: '寶箱咬', t: '一般', cat: '物', pow: 70, acc: 95, pp: 15, eff: { flinch: 1, p: 30 }, d: '用箱蓋狠狠咬下。' },
   m_coinToss: { n: '金幣砸', t: '一般', cat: '物', pow: 50, acc: 100, pp: 20, d: '從肚子裡吐出一大把金幣砸過來。' },

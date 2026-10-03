@@ -268,7 +268,7 @@ class Battle {
     yield* parallel(tween(12, t => this.boxF = lerp(-30, 4, 1 - Math.pow(1 - t, 2))), tween(12, t => this.boxH = lerp(BH + 4, HBAR_Y, 1 - Math.pow(1 - t, 2))));
     let s; if (L.length > 1) { const names = [], cnt = {}; for (const v of L) { const b = SPECIES[v.sp] ? SPECIES[v.sp].n : v.n; if (!cnt[b]) names.push(b); cnt[b] = (cnt[b] || 0) + 1; }
       const parts = names.map(b => cnt[b] > 1 ? cnt[b] + '隻' + b : b); s = (parts.length > 1 ? parts.slice(0, -1).join('、') + '和' + parts[parts.length - 1] : parts[0]) + '出現了！'; }
-    else s = main.rare ? '稀有的' + main.n + '出現了！' : main.boss ? main.n + '擋住了去路！' : main.elite ? '精英魔物' + main.n + '發動了攻擊！' : main.n + '出現了！';
+    else s = main.rare ? '稀有的' + main.n + '出現了！' : main.boss ? main.n + '擋住了去路！' : main.elite ? '菁英魔物' + main.n + '發動了攻擊！' : main.n + '出現了！';
     yield* this.msg(s, { hold: 44 });
     if (L.length > 1 && !st.flags.tutMulti) { st.flags.tutMulti = 1; yield* this.msg('（一次出現好幾隻魔物！每隻都比較弱。攻擊前可以用左右選擇目標，範圍技能會打中全部。）', { wait: true }); }
     const k = this.cfg.wx; if (k && typeof WEATHER !== 'undefined' && WEATHER[k] && st.wx) { const w = st.wx[typeof wxKey === 'function' ? wxKey(st.map) : st.map] || {}; if (st.wxTold !== k + w.until) { st.wxTold = k + w.until; yield* this.msg('【' + WEATHER[k].n + '】' + WEATHER[k].d, { hold: 30 }); } }

@@ -80,7 +80,7 @@ function* orbSmithFlow() {
 }
 function* enchantFlow() {
   const st = Game.st, stones = () => Object.keys(ITEMS).filter(k => ITEMS[k].en && st.bag[k] > 0);
-  if (!stones().length) { yield* say('附魔要用「附魔石」。打倒魔物有時候會掉，精英和頭目比較容易拿到。'); return; }
+  if (!stones().length) { yield* say('附魔要用「附魔石」。打倒魔物有時候會掉，菁英和頭目比較容易拿到。'); return; }
   const g = yield* gearPicker('選擇要附魔的武器', () => gearSort().filter(g => GEAR[g.b].slot === 'weapon'), (x, g, Y) => Font.draw(x, gearEn(g) ? '目前：' + (g.en.lv > 1 ? '上級' : '') + g.en.t + '屬性附魔' : '尚未附魔', 12, Y, UIC.accent, UIC.textSh, 10));
   if (!g) return; const L = stones(), r = yield* choose(L.map(k => ({ t: ITEMS[k].n, r: '×' + st.bag[k] })).concat({ t: '返回' }), { title: '附魔石' }); if (r < 0 || r >= L.length) return;
   const k = L[r], [el, lv] = ITEMS[k].en, cost = 300 * gearTier(g) * lv;

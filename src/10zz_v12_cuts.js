@@ -7,7 +7,7 @@
 /* ---------- 3. 異界之門／異界迴廊 ---------- */
 Overworld.prototype.riftEntry = function* () { yield* say('異界之門靜靜地沉睡著。門的另一邊，只看得到一片黑雲……'); };
 { const n = (MAPS.ruins.npcs || []).find(q => q.id === 'warden'); if (n) n.show = st => !!st.flags.golem && (st.bag.riftToken || 0) > 0; } // stays only while badges are left to trade
-{ const _w = Events.warden; Events.warden = function* (ow) { yield* say('迴廊的門已經關上了。……你手上還有徽章吧？在我這裡還是可以換東西。'); yield* _w.call(this, ow); }; }
+{ const _w = Events.warden; Events.warden = function* (ow) { yield* _w.call(this, ow); }; /* v12.0.3: the warden's own line now says the door is closed */ }
 { const _eq = extraQuests; extraQuests = function (st, L) { _eq(st, L); for (let i = L.length - 1; i >= 0; i--) if (L[i].n === '異界迴廊') L.splice(i, 1); }; }
 
 /* ---------- 6. after the ending: no 二周目, no 星見神殿 ---------- */

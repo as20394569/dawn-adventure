@@ -1,7 +1,7 @@
 /* ===================== v10 階段三 A：挑戰前的資料卡・頭目圖鑑・寶珠圖鑑 =====================
    Plan item 9: before an elite or boss fight the card now lists its techniques (蓄力 moves marked ⚠), weaknesses,
    and what it drops (技能寶珠, 首殺裝備, 附魔石, 素材). Story bosses show the card too (A to start). 圖鑑 gets two new
-   pages: 頭目・精英 (level, where, drops, beaten or not) and 寶珠 (every orb and where it comes from). The smith's
+   pages: 頭目・菁英 (level, where, drops, beaten or not) and 寶珠 (every orb and where it comes from). The smith's
    recipe page names the monster behind a missing material. */
 const FOE_SPOTS = (() => { const L = []; for (const id in MAPS) { const d = MAPS[id]; for (const e of d.elites || []) L.push({ sp: e.sp, lv: e.lv, map: id, kind: 'elite', key: e.id }); if (d.boss && id !== 'rift') L.push({ sp: d.boss.sp, lv: d.boss.lv, map: id, kind: 'boss', key: d.boss.sp }); }
   const seen = new Set(); return L.filter(e => { const k = e.sp + e.kind; if (seen.has(k)) return false; seen.add(k); return true; }).sort((a, b) => a.lv - b.lv); })();
@@ -36,7 +36,7 @@ encounterCard = function (sp, lv, key, kind, extra) {
     return yield* _bs.call(this, cfg, ...a);
   }; }
 
-/* ---------- 圖鑑: 頭目・精英 / 寶珠 ---------- */
+/* ---------- 圖鑑: 頭目・菁英 / 寶珠 ---------- */
 function* listScreen(title, rows, detail) { // rows: [{ t, r, col }], detail(i) → [lines]
   let sel = 0; const VIS = 9;
   const scr = { draw(x) { screenBG(x); headerBar(x, title); const R = rows(), i = Math.min(sel, Math.max(0, R.length - 1)), top = clamp(i - 4, 0, Math.max(0, R.length - VIS));
@@ -47,7 +47,7 @@ function* listScreen(title, rows, detail) { // rows: [{ t, r, col }], detail(i) 
 }
 function* bossDexScreen() {
   const st = Game.st, won = e => ((st.dex || {})[e.sp] || {}).won > 0;
-  yield* listScreen('頭目・精英', () => FOE_SPOTS.map(e => ({ t: (won(e) ? '✓ ' : '　 ') + (e.kind === 'boss' ? '【頭目】' : '') + SPECIES[e.sp].n, r: 'Lv' + e.lv, col: won(e) ? UIC.text : e.kind === 'boss' ? '#ff9aa4' : '#ffd890' })),
+  yield* listScreen('頭目・菁英', () => FOE_SPOTS.map(e => ({ t: (won(e) ? '✓ ' : '　 ') + (e.kind === 'boss' ? '【頭目】' : '') + SPECIES[e.sp].n, r: 'Lv' + e.lv, col: won(e) ? UIC.text : e.kind === 'boss' ? '#ff9aa4' : '#ffd890' })),
     i => { const e = FOE_SPOTS[i]; if (!e) return []; return [[(MAPS[e.map].name || '') + '　Lv' + e.lv + '　' + famText(e.sp), UIC.accent], ...foeDropLines(e.sp, e.key, e.kind).map(t => [t, '#c8b0ff', 8]), [won(e) ? '已擊敗' + (e.kind === 'boss' ? '（回憶石碑可以再戰）' : '（一段時間後會再出現）') : '尚未擊敗', won(e) ? UIC.good : UIC.muted, 8]]; });
 }
 const ORB_SRC = (() => { const S = {}; const add = (k, t) => (S[k] = S[k] || []).push(t); for (const sp in ORB_DROP) ORB_DROP[sp].forEach(k => add(k, SPECIES[sp].n)); for (const c in COMMISSIONS) if (COMMISSIONS[c].reward && COMMISSIONS[c].reward.orb) add(COMMISSIONS[c].reward.orb, '委託「' + COMMISSIONS[c].n + '」'); add('galeCut', '村長（冒險者許可・武器系）'); add('fireShot', '村長（冒險者許可・魔法系）'); return S; })();
@@ -56,7 +56,7 @@ function* orbDexScreen() {
   yield* listScreen('寶珠圖鑑　' + keys.filter(seen).length + '/' + keys.length, () => keys.map(k => ({ ic: typeof orbIcon === 'function' ? orbIcon(k) : null, t: (typeof orbIcon === 'function' && orbIcon(k) ? '' : ORB_A[k] ? '◆' : '◇') + (ORB_A[k] || ORB_P[k]).n, r: seen(k) ? '已取得' : '', col: seen(k) ? (ORB_A[k] ? '#c8f0ff' : UIC.warm) : UIC.dis })),
     i => { const k = keys[i]; if (!k) return []; const o = { k, x: 0, e: [], lv: 1 }; return [[orbInfo(o), UIC.text], ['取得：' + ((ORB_SRC[k] || []).join('、') || '？？？'), '#c8b0ff', 8], ...(ORB_A[k] ? [['進化：強攻 ' + evoOptText(o, 0, 'A') + '→' + evoOptText(o, 1, 'A') + '／附加 ' + evoOptText(o, 0, 'B') + '→' + evoOptText(o, 1, 'B'), UIC.muted, 8]] : [])]; });
 }
-{ const _dx = dexScreen; dexScreen = function* () { const r = yield* ask('要看什麼？', ['魔物圖鑑', '頭目・精英']); if (r === 0) yield* _dx(); else if (r === 1) yield* bossDexScreen(); else if (r === 2) yield* orbDexScreen(); }; }
+{ const _dx = dexScreen; dexScreen = function* () { const r = yield* ask('要看什麼？', ['魔物圖鑑', '頭目・菁英']); if (r === 0) yield* _dx(); else if (r === 1) yield* bossDexScreen(); else if (r === 2) yield* orbDexScreen(); }; }
 // the smith's recipe page: who drops a missing material
 function matSrc(k) { const B = FOE_SPOTS.find(e => BOSS_MAT[e.sp] === k); if (B) return SPECIES[B.sp].n; for (const s in SPECIES) if (SPECIES[s].mat === k) { const m = typeof spawnMaps === 'function' ? spawnMaps(s) : []; if (m.length) return SPECIES[s].n; } return ''; }
 askFight = function* (sp, lv, key, kind, extra) { // the choice sits inside the message box, so the card can use the whole upper screen

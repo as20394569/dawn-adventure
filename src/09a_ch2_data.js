@@ -105,7 +105,7 @@ const CH2_MON = [
   // 曙光鐘塔 Lv27–30
   ['clockSoldier', '發條兵', 'construct', 28, 'phys', ['m_spearThrust', 'm_windUp', 'm_gearShot', 'm_spearRush'], 'spring', ['riftKnight', 40, 0.9, 1.25], '古代鐘錶師做的發條士兵。背上的鑰匙還在轉。'],
   ['gearSprite', '齒輪精', 'construct', 28, 'mage', ['m_sparkGear', 'm_overclock', 'm_runeBeam', 'm_gearShot'], 'brassGear', ['ghostLamp', 25, 0.9, 1.1], '鐘塔的齒輪有了意識，變成了會飛的小精靈。', { trait: 'swift' }],
-  ['towerBat', '鐘樓蝠', 'bird', 29, 'fast', ['m_sonic', 'm_screech', 'm_bellToll', 'm_dive'], 'batWing', ['mineBat', 30, 0.8, 1.05], '住在鐘塔頂上的蝙蝠。鐘聲讓牠們變得很兇。'],
+  ['towerBat', '鐘樓蝠', 'bird', 29, 'fast', ['m_sonic', 'm_screech', 'm_bellToll', 'm_dive'], 'batWing', ['mineBat', 30, 0.8, 1.05], '住在鐘塔頂上的蝙蝠。瘴氣讓牠們變得很兇。'],
   ['hollowArmor', '空洞鎧甲', 'construct', 29, 'tank', ['m_darkSlash', 'm_spearRush', 'm_stoneWall', 'm_boneShield'], 'rustScrap', ['boneKnight', 200, 0.4, 1.25], '裡面空無一物的鎧甲。被鐘塔的魔力驅動著。'],
   ['clockKnight', '發條騎士', 'construct', 30, 'phys', ['m_spearRush', 'm_windUp', 'm_gearShot', 'm_chronoLance'], null, ['clockSoldier', 0, 0.7, 0.78], '守護鐘塔中層的發條騎士長。長槍上刻著初代勇者的名字。', { elite: 1, drop: 'chronoLance' }],
   ['clockColossus', '時計巨像', 'construct', 31, 'tank', ['m_gearCrush', 'm_steamBurst', 'm_timeWarp', 'm_twelveStrike'], null, ['golem', 40, 0.9, 1.3], '曙光鐘塔的守護者。胸口的大時鐘五百年來一直在走。', { boss: 1, drop: 'colossusCore' }],

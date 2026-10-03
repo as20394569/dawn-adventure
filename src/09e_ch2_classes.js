@@ -26,7 +26,7 @@ Object.assign(MOVES, {
   // 機工士
   turret: { n: '設置砲台', t: '一般', cat: '變', pp: 10, stat: null, turret: 3, d: '在身邊設置自動砲台。3回合內，每回合結束時砲台會自動射擊。（Lv越高越久、越痛）' },
   taser: { n: '電擊槍', t: '雷', cat: '物', pow: 60, acc: 100, pp: 15, eff: { st: 'par', p: 30 }, d: '射出電擊的機關槍。30%讓對手麻痺。' },
-  clockBomb: { n: '發條炸彈', t: '一般', cat: '物', pow: 80, acc: 95, pp: 10, shieldHit: 2, d: '丟出會爆炸的發條炸彈。【破盾】額外削減2點護盾。' },
+  clockBomb: { n: '發條炸彈', t: '一般', cat: '物', pow: 80, acc: 95, pp: 10, shieldHit: 2, d: '丟出會爆炸的發條炸彈。30% 讓對手物防−1。' },
   steamJet: { n: '蒸汽噴射', t: '水', cat: '物', pow: 70, acc: 100, pp: 15, d: '從機關噴出高壓蒸汽。會讓對手全身濕透。' },
   overdrive: { n: '超頻運轉', t: '一般', cat: '變', pp: 10, stat: { who: 'self', spe: 2, atk: 1 }, d: '讓全身的機關全速運轉。大幅提升速度，提升物攻。' },
   repair: { n: '緊急修理', t: '一般', cat: '變', pp: 10, heal: 0.3, shield: 2, d: '用工具修補傷口和裝備。恢復30%HP，並獲得2回合護盾。' },
@@ -164,7 +164,7 @@ Object.assign(Events, {
     const st = Game.st, f = st.flags;
     if (f.clsBard) { yield* say('歌聲是最溫柔的武器。去公會轉職吧，我的學生。'); return; }
     if (!f.bardQ) { if (ch2() < 3) { yield* say('歡迎來到吟遊詩人公會。……今天沒有演出喔。'); return; } f.bardQ = 1; yield* sayAll(['……你就是那位異界的勇者？', '我是詩人公會長蕾菈。我們公會代代相傳的「勇者之歌」的樂譜，前幾天被溝鼠叼進地下水道了……', '如果你找得到，我就把詩人的歌——「吟遊詩人」的道路傳授給你。']); return; }
-    if (st.bag.lostScore) { delete st.bag.lostScore; f.clsBard = 1; Sound.jingle('item'); yield* sayAll(['這就是……勇者之歌的樂譜！', '（蕾菈輕輕地哼起了旋律。）', '……五百年前，初代勇者的同伴裡，也有一位吟遊詩人。', '你有資格走上這條路了。到冒險者公會找公會長轉職吧。']); yield* itemGet('解鎖了上級職業「吟遊詩人」！'); return; }
+    if (st.bag.lostScore) { delete st.bag.lostScore; f.clsBard = 1; Sound.jingle('item'); yield* sayAll(['這就是……勇者之歌的樂譜！', '（蕾菈輕輕地哼起了旋律。）', '……五百年前，初代勇者的曙光軍裡，也有一位吟遊詩人。', '你有資格走上這條路了。到冒險者公會找公會長轉職吧。']); yield* itemGet('解鎖了上級職業「吟遊詩人」！'); return; }
     yield* say('樂譜應該掉在地下水道的某個角落……拜託你了。');
   },
   *hallGuest() { yield* say('蕾菈大人的歌聲，連魔物聽了都會停下來呢。'); },

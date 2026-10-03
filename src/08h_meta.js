@@ -9,7 +9,7 @@ const TITLES = [
   { id: 'lakefriend', n: '湖之友', d: '打倒銀鱗水龍。', st: { spd: 4 }, ok: st => st.flags.wyrm },
   { id: 'rainbow', n: '虹色傳說', d: '得到一件虹色裝備。', st: { elem: 5, crit: 2 }, ok: st => (st.gear || []).some(g => g.q >= 5) },
   { id: 'again', n: '第二次的旅人', d: '開始二周目。', st: { hp: 8, def: 1 }, ok: st => (st.ng || 0) >= 1 },
-  { id: 'hard', n: '不退轉', d: '以「困難」以上的難度打倒古岩魔像。', st: { atk: 1, def: 1, spa: 1 }, ok: st => (st.diff || 0) >= 1 && st.flags.golem || (st.titlesKept || {}).hard },
+  { id: 'hard', n: '不退轉', d: '打倒古岩魔像。', st: { atk: 1, def: 1, spa: 1 }, ok: st => (st.diff || 0) >= 1 && st.flags.golem || (st.titlesKept || {}).hard },
 ];
 const dexPct = st => { const K = Object.keys(SPECIES); return K.filter(k => st.dex && st.dex[k] && st.dex[k].seen).length / K.length; };
 const titleOk = (id, st = Game.st) => { const T = TITLES.find(t => t.id === id); return T && (T.ok(st) || (st.titlesKept || {})[id]); };
@@ -20,7 +20,7 @@ function* titleScreen() {
     const items = TITLES.map(T => { const on = titleOk(T.id), eq = st.title === T.id; return { t: (eq ? '★' : '') + (on ? T.n : '？？？'), col: on ? (eq ? UIC.warm : UIC.text) : UIC.dis }; });
     const info = { draw(x) { const T = TITLES[idx]; drawWin(x, 4, 172, 168, 80, 'menu'); if (!T) return; const on = titleOk(T.id); Font.draw(x, on ? T.n : '？？？', 12, 175, on ? UIC.warm : UIC.dis, UIC.textSh);
       Font.draw(x, '條件：' + T.d, 12, 192, UIC.text, UIC.textSh, 10); Font.draw(x, '效果：' + Object.entries(T.st).map(([k, v]) => (STAT_NAMES[k] || { crit: '會心', elem: '屬性傷害' }[k] || k) + '+' + v + (['crit', 'elem'].includes(k) ? '%' : '')).join('、'), 12, 207, UIC.accent, UIC.textSh, 10);
-      Font.draw(x, '裝備一個稱號就能得到效果。二周目也會保留。', 12, 226, UIC.muted, UIC.textSh, 9); } };
+      Font.draw(x, '裝備一個稱號就能得到效果。', 12, 226, UIC.muted, UIC.textSh, 9); } };
     UI.push(info); const r = yield* choose(items, { x: 4, y: 4, w: 168, h: 164, index: idx, onMove: i => idx = i }); UI.remove(info);
     if (r < 0) return; idx = r; const T = TITLES[r];
     if (!titleOk(T.id)) { yield* say('還沒有取得這個稱號。'); continue; }

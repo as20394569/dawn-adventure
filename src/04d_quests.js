@@ -12,7 +12,7 @@ const COMMISSIONS = {
   c1: { n: '藥草告急', from: '旅店老闆娘', d: '旅店的傷藥快用完了。請帶來藥草×5。', need: { herb: 5 }, reward: { gold: 300, items: { superPotion: 2 } }, open: st => st.flags.license },
   c2: { n: '趕走電電蜂', from: '果園農夫', d: '電電蜂在道路北邊螫傷了好多人。接下委託後，擊敗電電蜂×4。', kill: ['bee', 4], reward: { gold: 400, items: { luckClover: 1 } }, open: st => st.flags.license },
   c3: { n: '晶石研究', from: '村長', d: '想研究地下水道的水晶和魔王封印的關係。請帶來水晶碎片×3。', need: { crystal: 3 }, reward: { items: { tpBook: 1 } }, open: st => st.flags.golem },
-  c4: { n: '遺失的懷錶', from: '旅行者', d: '在迷霧森林東側弄丟了一只銀懷錶。找到的話，請放進委託箱。', key: 'pocketWatch', reward: { gold: 800 }, open: st => st.flags.wolf },
+  c4: { n: '遺失的懷錶', from: '旅行者', d: '在迷霧森林東側弄丟了一只銀懷錶。找到的話，請還給旅行者。', key: 'pocketWatch', reward: { gold: 800 }, open: st => st.flags.wolf },
   c5: { n: '驅除嘟嘟菇', from: '菜園大嬸', d: '嘟嘟菇把菜園啃得亂七八糟。接下委託後，擊敗嘟嘟菇×5。', kill: ['mush', 5], reward: { gold: 250, items: { potion: 3 } }, open: st => st.flags.license },
   c6: { n: '魔力草研究', from: '魔法學徒', d: '想研究會發光的草。請帶來魔力草×3。（晨霧道路北邊、迷霧森林、地下水道都採得到）', need: { manaHerb: 3 }, reward: { gold: 400, items: { manaPotion: 3 } }, open: st => st.flags.license },
   c7: { n: '森林的毒菇', from: '藥草師', d: '毒孢菇的孢子讓森林的藥草都枯了。接下委託後，擊敗毒孢菇×4。', kill: ['thornMush', 4], reward: { gold: 600, items: { superPotion: 2 } }, open: st => st.flags.wolf },
@@ -53,8 +53,8 @@ function totalPct(st = Game.st) { let tot = 0, got = 0; for (const id in EXPLORE
 /* ---------- Achievements (each gives 200 G) ---------- */
 const ACHIEVEMENTS = [
   { id: 'win1', n: '第一場勝利', d: '第一次打倒魔物。', ok: st => (st.wins || 0) >= 1 },
-  { id: 'win100', n: '百戰錬磨', d: '累計戰鬥勝利100次。', ok: st => (st.wins || 0) >= 100 },
-  { id: 'elite', n: '精英獵人', d: '打倒道路與森林的4隻精英魔物。', ok: st => ['wolf', 'flower', 'croc', 'mossGiant'].every(k => st.flags[k]) },
+  { id: 'win100', n: '百戰鍊磨', d: '累計戰鬥勝利100次。', ok: st => (st.wins || 0) >= 100 },
+  { id: 'elite', n: '菁英獵人', d: '打倒道路與森林的4隻菁英魔物。', ok: st => ['wolf', 'flower', 'croc', 'mossGiant'].every(k => st.flags[k]) },
   { id: 'golem', n: '遺跡的守護者', d: '打倒古岩魔像。', ok: st => st.flags.golem },
   { id: 'crystal', n: '深淵之光', d: '打倒隱藏頭目水晶魔像。', ok: st => st.flags.crystalBoss },
   { id: 'bandit', n: '礦坑的清算', d: '打倒盜賊頭目「鐵斧」格倫。', ok: st => st.flags.bandit },
@@ -168,7 +168,7 @@ const QUEST_EVENTS = {
       yield* sayAll(mg ? ['……完成了。不過你是魔導士吧？', '師父的箱子底下還壓著一根沒完成的法杖，我用同樣的水晶把它也完成了。', '師父的另一件遺作「' + wn + '」。你來決定吧。'] : ['……完成了。師父的遺作「名匠遺作」。', '說實話……我很想把它留在鋪子裡，當作師父的紀念。', '但這把劍是為了真正的戰士打造的。你來決定吧。']);
       const r = yield* ask('要怎麼做？', ['收下' + wn, '讓鐵匠留著'], { cancel: false });
       if (r === 0) { f.q3res = 'take'; const g = bpGift(classGear('masterBlade'), 4); yield* itemGet(st.name + '得到了' + g.txt + '！'); yield* say('師父一定也會很高興。好好使用它！'); }
-      else { f.q3res = 'keep'; f.smithDisc = 1; st.bag.tpBook = (st.bag.tpBook || 0) + 1; yield* sayAll(['……謝謝你。', '這是師父留下的修練書，送給你吧。以後強化的費用，我只收一半！']); yield* itemGet(st.name + '得到了天賦之書！強化費用永久半價！'); }
+      else { f.q3res = 'keep'; f.smithDisc = 1; st.bag.tpBook = (st.bag.tpBook || 0) + 1; yield* sayAll(['……謝謝你。', '這是師父留下的天賦之書，送給你吧。以後強化的費用，我只收一半！']); yield* itemGet(st.name + '得到了天賦之書！強化費用永久半價！'); }
     } else yield* say(f.q3 === 1 ? '水晶碎片的事就拜託了。聽說在老井的地底下。' : f.smith ? '有素材就拿來吧！' : '我是鎮上的鐵匠。把魔物身上的素材帶來，我就幫你打造好東西！');
     f.smith = 1;
     yield* smithMenu(f); // v10: 寶珠 / 附魔 (09zp)

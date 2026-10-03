@@ -10,9 +10,9 @@
 
 /* ---------- monsters ---------- */
 Object.assign(MOVES, {
-  m_mapleStorm: { n: '紅葉風暴', t: '飛', cat: '特', pow: 85, acc: 100, pp: 5, charge: 1, chargeMsg: '鹿王仰天長嘯，整片楓林的紅葉都捲了起來！', warn: '（紅葉風暴要來了！先防禦！）', d: '捲起整片楓林的大技。' },
+  m_mapleStorm: { n: '紅葉風暴', t: '飛', cat: '特', pow: 85, acc: 100, pp: 5, charge: 1, chargeMsg: '仰天長嘯，整片楓林的紅葉都捲了起來！', warn: '（紅葉風暴要來了！先防禦！）', d: '捲起整片楓林的大技。' },
   m_crystalHorn: { n: '晶角突刺', t: '一般', cat: '物', pow: 70, acc: 95, pp: 10, d: '用嵌著黑色結晶的鹿角刺過來。' },
-  m_legionCharge: { n: '亡軍突擊', t: '一般', cat: '物', pow: 90, acc: 100, pp: 5, charge: 1, chargeMsg: '戰將舉起斷掉的軍旗……四周的亡靈士兵一起吶喊了起來！', warn: '（亡軍要衝過來了！先防禦！）', d: '率領亡靈大軍的衝鋒。' },
+  m_legionCharge: { n: '亡軍突擊', t: '一般', cat: '物', pow: 90, acc: 100, pp: 5, charge: 1, chargeMsg: '舉起斷掉的軍旗……四周的亡靈士兵一起吶喊了起來！', warn: '（亡軍要衝過來了！先防禦！）', d: '率領亡靈大軍的衝鋒。' },
 });
 for (const [k, fx, c] of [['m_mapleStorm', 'm_featherStorm', 'charge'], ['m_crystalHorn', 'm_hornCharge', 'strike'], ['m_legionCharge', 'm_spearRush', 'charge']]) {
   Object.assign(MOVES[k], { cls: c, fx, foe: 1 }); (MON_CLASS[c] || (MON_CLASS[c] = [])).push(k);

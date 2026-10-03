@@ -43,8 +43,8 @@ Ch2EndingScene.prototype.draw = function (x) {
   const st = Game.st, f = st.flags, mins = Math.floor((st.time || 0) / 3600);
   const lines = [['曙光冒險', 'big'], ['終幕「曙光之鐘」', 'sub'], [''], ['五十年來停止的鐘，'], ['再一次響起。'], [''], ['影將莫爾德'], ['消失在北境的黑暗裡，'], ['但他留下了一句話——'], ['「魔王大人'], ['很快就會醒來。」'], [''],
     ['萌芽鎮的風車，'], ['今天也在轉。'], ...(f.noraBread ? [['諾拉的麵包店'], ['在王都開張了。']] : [['諾拉說，下次'], ['要去王都賣麵粉。']]), ...(f.grenTrust ? [['格倫當上了'], ['關道驛站的站長。']] : [['楓紅關道的驛站'], ['重新蓋好了。']]), ['莉婭成為了'], ['正式的騎士。'], [''],
-    ['剩下的三將——'], ['東方的海、'], ['南方的沙漠、'], ['天空之上。'], ['還有，'], ['異界之門的另一邊。'], ...(f.homeChoice === 0 ? [['門的另一邊，'], ['有人在等你回家。']] : f.homeChoice === 1 ? [['不過，你已經'], ['找到了新的家。']] : []), [''], ['曙光的旅程，'], ['還沒有結束。'], [''], ['— 冒險記錄 —', 'sub'], ['旅人　' + st.name], ['等級　Lv' + st.lv], ['世界的記載　' + loreCount(st) + '／' + LORE.length],
-    ['遊玩時間　' + Math.floor(mins / 60) + '小時' + (mins % 60) + '分'], [''], ['第三章　製作中', 'sub'], ['（之後的冒險會繼續更新）', 'sub'], [''], ['按A繼續冒險', 'hint']];
+    ['剩下的三將——'], ['東方的海、'], ['南方的沙漠、'], ['天空之上。'], ['還有，'], ['異界之門的另一邊。'], ...(f.homeChoice === 0 ? [['門的另一邊，'], ['有人在等你回家。']] : f.homeChoice === 1 ? [['不過，你已經'], ['找到了新的家。']] : []), [''], ['曙光的旅程，'], ['還沒有結束。'], [''], ['— 冒險記錄 —', 'sub'], ['旅人　' + st.name], ['等級　Lv' + st.lv], ['世界的記載　' + loreCount(st) + '／' + loreTotal()],
+    ['遊玩時間　' + Math.floor(mins / 60) + '小時' + (mins % 60) + '分'], [''], ['第一季　完', 'sub'], ['第三章　製作中', 'sub'], ['（之後的冒險會繼續更新）', 'sub'], [''], ['按A繼續冒險', 'hint']];
   let yy = H + 10 - this.y; this.maxY = H + 10 + lines.length * 18 - 230;
   for (const [s, k] of lines) {
     if (k === 'big') { if (!this.logo) this.logo = makeLogo(s, 2); x.drawImage(this.logo, Math.round(W / 2 - this.logo.width / 2), yy - 8); yy += 36; continue; }
@@ -73,7 +73,9 @@ const LORE = [
   ['emberPass', '龍族的盟約', ['五百年前，龍族和初代勇者訂下了盟約。', '龍族把「火之印」交給人類，約好只要鐘還在響，就不會離開這座火山。', '鐘停了之後，年輕的龍就再也不聽長老的話了。']],
   ['starShrine', '初代勇者的星圖', ['星見神殿的天頂，畫著一張星圖。', '星圖的角落有一行小字，是這個世界沒有的文字。', '……你讀得懂。那是你故鄉的文字。', '「如果有下一個人來到這裡——門的鑰匙，在四將的心裡。」']],
 ];
-const loreCount = (st = Game.st) => Object.keys(st.lore || {}).length;
+// v12.0.3: 星見神殿 is closed (kept for new content) — its stone is left out of the count until it opens again
+const LORE_CLOSED = m => m === 'starShrine', loreTotal = () => LORE.filter(l => !LORE_CLOSED(l[0])).length;
+const loreCount = (st = Game.st) => Object.keys(st.lore || {}).filter(i => LORE[i] && !LORE_CLOSED(LORE[i][0])).length;
 { // place each stone on a free ground tile near the map's first sign (or its centre): never on paths, doors, NPCs or corridors
   const free = (M, x, y) => { if (!M.rows[y] || M.rows[y][x] !== '.') return false; const k = x + ',' + y;
     if ((M.signs || {})[k] || (M.npcs || []).some(n => n.x === x && n.y === y) || (M.items || []).some(n => n.x === x && n.y === y) || (M.triggers || []).some(n => n.x === x && n.y === y) || (M.gathers || []).some(n => n.x === x && n.y === y) || (M.elites || []).some(n => n.x === x && n.y === y)) return false;
@@ -93,19 +95,19 @@ const loreCount = (st = Game.st) => Object.keys(st.lore || {}).length;
 function* readLore(i) {
   const st = Game.st, [, t, lines] = LORE[i], L = st.lore || (st.lore = {}), first = !L[i];
   yield* say('刻著古老文字的「記載之石」。\n——「' + t + '」'); yield* sayAll(lines);
-  if (first) { L[i] = 1; Sound.jingle('item'); yield* itemGet('「' + t + '」記在了冒險手記裡！（' + loreCount(st) + '／' + LORE.length + '）');
-    if (loreCount(st) === LORE.length) { st.bag.tpBook = (st.bag.tpBook || 0) + 1; yield* itemGet('世界的記載全部讀完了！得到了天賦之書！'); } }
+  if (first) { L[i] = 1; Sound.jingle('item'); yield* itemGet('「' + t + '」記在了冒險手記裡！（' + loreCount(st) + '／' + loreTotal() + '）');
+    if (loreCount(st) === loreTotal()) { st.bag.tpBook = (st.bag.tpBook || 0) + 1; yield* itemGet('世界的記載全部讀完了！得到了天賦之書！'); } }
 }
 function* loreScreen() {
   const st = Game.st, have = LORE.map((l, i) => i).filter(i => (st.lore || {})[i]);
   if (!have.length) { yield* say('還沒有讀過任何「記載之石」。\n（各地的石碑上，記載著這個世界的歷史）'); return; }
   let idx = 0; while (true) {
-    const r = yield* ask('世界的記載（' + have.length + '／' + LORE.length + '）', have.map(i => LORE[i][1]).concat(['關閉']), { index: idx }); if (r < 0 || r >= have.length) return; idx = r;
+    const r = yield* ask('世界的記載（' + have.length + '／' + loreTotal() + '）', have.map(i => LORE[i][1]).concat(['關閉']), { index: idx }); if (r < 0 || r >= have.length) return; idx = r;
     yield* sayAll(LORE[have[r]][2]);
   }
 }
 { const _rs = recordScreen; recordScreen = function* () { const r = yield* ask('要看什麼？', ['地圖・成就・稱號', '世界的記載', '對話紀錄']); if (r === 0) yield* _rs(); else if (r === 1) yield* loreScreen(); else if (r === 2) yield* dlgLogScreen(); }; }
-if (typeof ACHIEVEMENTS !== 'undefined') ACHIEVEMENTS.push({ id: 'loreAll', n: '世界的記錄者', d: '讀完所有的「記載之石」。', cat: '探索', ok: st => loreCount(st) >= LORE.length });
+if (typeof ACHIEVEMENTS !== 'undefined') ACHIEVEMENTS.push({ id: 'loreAll', n: '世界的記錄者', d: '讀完所有的「記載之石」。', cat: '探索', ok: st => loreCount(st) >= loreTotal() });
 
 /* ---------- the chancellor and the black order ---------- */
 { const _k = Events.king; Events.king = function* (ow) {
@@ -135,7 +137,7 @@ if (typeof ACHIEVEMENTS !== 'undefined') ACHIEVEMENTS.push({ id: 'loreAll', n: '
 }
 
 /* ---------- 諾拉 in the capital: 諾拉的麵包 ---------- */
-ITEMS.noraBread = { n: '諾拉的麵包', cat: '回復', price: 0, sell: 50, d: '諾拉用金穗平原的麥子烤的麵包。恢復150點HP，還有一點點MP。', use: 'heal', v: 150 };
+ITEMS.noraBread = { n: '諾拉的麵包', cat: '回復', price: 0, sell: 50, d: '諾拉用金穗平原的麥子烤的麵包。恢復150點HP。', use: 'heal', v: 150 };
 { const M = MAPS.capital, want = [[10, 13], [8, 12], [11, 14], [13, 12]]; let spot = null;
   for (const [x, y] of want) if (M.rows[y] && M.rows[y][x] === '.' && !(M.npcs || []).some(n => n.x === x && n.y === y) && !(M.buildings || []).some(b => x >= b.x && x < b.x + b.w && y >= b.y && y <= b.y + b.h)) { spot = [x, y]; break; }
   if (spot) M.npcs.push({ id: 'noraCap', x: spot[0], y: spot[1], dir: 'down', look: 'girl', name: '諾拉', show: st => st.flags.creekQ === 3 && ch2(st) >= 3 });

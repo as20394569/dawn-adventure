@@ -1,4 +1,4 @@
-/* ===================== v10 階段二：難度・存檔・精英與頭目 =====================
+/* ===================== v10 階段二：難度・存檔・菁英與頭目 =====================
    Plan items 13 / 14:
    - Only one difficulty: 異界 (monster HP +40%, attack +30%, smartest AI, extra shield). The picker at a new game is gone.
    - v10 starts a new save (key dawnlight_save_v10); the title says so when only an old save exists.
@@ -28,7 +28,7 @@ const FOE_NEW = {
   m_soulRend: { n: '裂魂斬', t: '一般', cat: '物', pow: 105, acc: 100, pp: 5, charge: 1, chargeMsg: '周圍的空氣變得冰冷……', warn: '（下一擊會撕裂靈魂……防禦！）', cls: 'charge', fx: 'm_darkSlash', d: '蓄力後撕裂靈魂的一斬。' },
   m_tidalCrush: { n: '怒潮壓', t: '水', cat: '物', pow: 85, acc: 95, pp: 10, eff: { flinch: 1, p: 20 }, cls: 'strike', fx: 'm_tailSlam', d: '挾著浪濤壓下來。' },
   m_whirlpool: { n: '漩渦', t: '水', cat: '特', pow: 62, acc: 95, pp: 10, eff: { stat: { spe: -1 }, p: 50 }, cls: 'area', fx: 'm_tailSlam', d: '把對手捲進漩渦。有時會降低速度。' },
-  m_hex: { n: '咒縛', t: '一般', cat: '變', acc: 80, pp: 10, st: 'par', cls: 'debuff', fx: 'm_soulSip', d: '用咒語綁住對手的身體，讓牠麻痺。' },
+  m_hex: { n: '咒縛', t: '一般', cat: '變', acc: 80, pp: 10, st: 'par', cls: 'debuff', fx: 'm_soulSip', d: '用咒語綁住對手的身體，讓對手麻痺。' },
   m_frostNova: { n: '冰霜新星', t: '水', cat: '特', pow: 82, acc: 95, pp: 10, eff: { stat: { spe: -1 }, p: 40 }, cls: 'area', fx: 'm_frostFang', d: '四散的寒氣。有時會凍得動作變慢。' },
   m_dragonRoar: { n: '龍威', t: '一般', cat: '變', acc: 100, pp: 10, stat: { who: 'foe', atk: -1, spa: -1 }, cls: 'debuff', fx: 'm_rumble', d: '龍的咆哮讓人喪失鬥志。' },
   m_scorch: { n: '灼熱吐息', t: '火', cat: '特', pow: 82, acc: 95, pp: 10, eff: { st: 'brn', p: 30 }, cls: 'proj', fx: 'm_flare', d: '噴出灼熱的火焰。有時會灼傷。' },

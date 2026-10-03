@@ -168,7 +168,7 @@ Object.assign(EFFECT_TYPES, {
   TL(c, 2, 0, 1, '標記', 'R', '普攻命中也會留下獵印（每次行動 1 層）', { trig: [TRG(EVT.DAMAGE, 'src', { tag: 'basic', evHit: 1, tgtAlive: 1, tgtSide: 'enemy' }, [E12.mark()], { limit: { perAction: 1 } })] });
   TL(c, 2, 1, 0, '看破', 'I', '打中弱點時獵印 +1', { trig: [TRG(EVT.DAMAGE, 'src', { weakHit: 1, evHit: 1, tgtAlive: 1 }, [E12.mark()], { limit: { perAction: 1 } })] });
   TL(c, 2, 1, 1, '貫甲', 'I', '對有獵印的魔物無視 15% 物防', { mods: [{ stage: 'attacker', who: 'attacker', defMul: 0.85, cond: { tgtMarked: 1 } }] });
-  TL(c, 2, 2, 0, '巨獵', 'I', '對精英、頭目每層獵印 +10%', { rules: { bigHunt: 1 } });
+  TL(c, 2, 2, 0, '巨獵', 'I', '對菁英、頭目每層獵印 +10%', { rules: { bigHunt: 1 } });
   TL(c, 2, 2, 1, '狙擊', 'R', '影牙連射改成 1 發（威力 90，會心率 +30%），仍給 2 層獵印', { rules: { sniper: 1 } });
   TK(c, 0, '絕影', '引爆獵印後，影牙連射的冷卻歸零', { rules: { shadowReset: 1 } });
   TK(c, 1, '疾風獵手', '每回合比所有魔物先行動時，冷卻中的技能 −1', { kind: 'C', trig: [TRG(EVT.TURN_ORDER, null, { wentFirst: 1, ownerAlive: 1 }, [E12.cd('all', 1, { why: 'galeHunter' })])] });
@@ -254,7 +254,7 @@ Object.assign(EFFECT_TYPES, {
   TAL12_TREE[c] = { br: [['蒼龍', '穿透與屠巨'], ['龍裔', '耐久與吸血'], ['翔空', '速度與跳躍']] };
   TL(c, 0, 0, 0, '剛腕', 'N', '物攻 +6%', { stat: { atkP: 6 } });
   TL(c, 0, 0, 1, '貫穿', 'I', '長槍普攻再無視 15% 物防', { mods: [{ stage: 'attacker', who: 'attacker', defMul: 0.85, cond: { tag: 'basic', ownerWkind: '長槍' } }] });
-  TL(c, 0, 1, 0, '斬龍', 'I', '對精英、頭目傷害 +12%', { mods: [MUL(1.12, { tgtBig: 1, hasPower: 1 })] });
+  TL(c, 0, 1, 0, '斬龍', 'I', '對菁英、頭目傷害 +12%', { mods: [MUL(1.12, { tgtBig: 1, hasPower: 1 })] });
   TL(c, 0, 1, 1, '逆鱗', 'R', '落地攻擊會心率 +30%', { mods: [{ stage: 'talent', who: 'attacker', critAdd: 30, cond: { skillIs: S } }] });
   TL(c, 0, 2, 0, '龍威', 'I', '落地命中讓目標物防 −1', { trig: [TRG(EVT.DAMAGE, 'src', { skillIs: S, evHit: 1, tgtAlive: 1 }, [E12.stage({ def: -1 }, 'event_target', { secondary: 1 })])] });
   TL(c, 0, 2, 1, '裂天', 'C', '落地打中弱點時龍血 +1', { trig: [TRG(EVT.DAMAGE, 'src', { skillIs: S, weakHit: 1, evHit: 1 }, [E12.res('dragon', 1)], { limit: { perAction: 1 } })] });
@@ -285,7 +285,7 @@ Object.assign(EFFECT_TYPES, {
   TL(c, 0, 2, 1, '光輝', 'I', '曙光之刃會心時看破 +1', { trig: [TRG(EVT.DAMAGE, 'src', { skillIs: S, crit: 1, evHit: 1 }, [{ type: 'insight_add' }], { limit: { perAction: 1 } })] });
   TL(c, 1, 0, 0, '洞察', 'N', '打弱點傷害 +12%', { stat: { weakUp: 12 } });
   TL(c, 1, 0, 1, '預讀', 'R', '開場對每種魔物都有 1 層看破', { trig: [TRG(EVT.BATTLE_START, null, {}, [{ type: 'insight_seed' }])] });
-  TL(c, 1, 1, 0, '斬巨', 'I', '對精英、頭目每層看破 +12%', { rules: { giantSlayer: 1 } });
+  TL(c, 1, 1, 0, '斬巨', 'I', '對菁英、頭目每層看破 +12%', { rules: { giantSlayer: 1 } });
   TL(c, 1, 1, 1, '借勢', 'C', '看破滿 3 層時，打中弱點回復 5 MP', { trig: [TRG(EVT.DAMAGE, 'src', { weakHit: 1, evHit: 1, insightFull: 1 }, [E12.res('mp', 5, { why: 'insight' })])] });
   TL(c, 1, 2, 0, '萬能', 'R', '不是弱點的攻擊也有 30% 機率累積看破', { trig: [TRG(EVT.DAMAGE, 'src', { weakHit: 0, evHit: 1, hasPower: 1, tgtSide: 'enemy' }, [{ type: 'insight_add' }], { chance: 0.3, limit: { perAction: 1 } })] });
   TL(c, 1, 2, 1, '越界之眼', 'I', '看破 3 層的魔物受到的會心傷害 +30%', { mods: [{ stage: 'talent', who: 'attacker', critDmg: 30, cond: { insightFull: 1 } }] });

@@ -60,7 +60,7 @@ function npcCommission(id, ow, ent) {
     if (st.comNo) delete st.comNo[k];
     st.com[k] = { s: 'on', k: c.kill ? (((st.dex || {})[c.kill[0]] || {}).won || 0) : 0 };
     if (c.deliver) st.bag[c.deliver[0]] = 1;
-    Sound.sfx('select'); yield* say('接下了「' + c.n + '」！' + (c.deliver ? '\n得到了「' + ITEMS[c.deliver[0]].n + '」。' : '（「狀態→任務」按A可以看進度和取得地點）'));
+    Sound.sfx('select'); yield* say('接下了「' + c.n + '」！' + (c.deliver ? '\n得到了「' + ITEMS[c.deliver[0]].n + '」。' : '（「冒險手冊→任務」按A可以看進度和取得地點）'));
   })();
 }
 // deliveries count as "ready" once accepted (the target NPC completes them)

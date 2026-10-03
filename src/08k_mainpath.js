@@ -23,7 +23,7 @@ MAPS.ruins.boss.lv = 17;
 }
 // recommended levels on the signs
 Object.assign(MAPS.route.signs, {
-  '2,24': '「← 迷霧森林」\n樹林深處據說藏著古老的秘密。\n（建議Lv9以上）',
+  '2,24': '「← 迷霧森林」\n樹林深處據說藏著古老的秘密。\n（建議Lv11以上）',
   '15,3': '「↑ 古岩遺跡」\n遺跡的大門被古老的封印鎖住了。\n（建議Lv16以上）',
   '19,28': '「→ 廢棄礦坑」\n礦脈枯竭後就沒人進去了。最近常有可疑人物出入。\n（建議Lv12以上）',
 });
@@ -40,7 +40,7 @@ function* sealDoor(ow) {
     f.qSeal = 1; f.mineOpen = 1;
     yield* sayAll(['遺跡的大門上刻著三個凹槽，發出微弱的光……', '門上的古文字寫著：「集齊森林、礦坑、峽谷的三枚古印之人，方可進入。」']);
     yield* say('守衛：「三枚古印分別被森林的苔石巨人、礦坑的盜賊頭目、峽谷的岩角犀守著。」\n「礦坑的入口已經被盜賊拆開了，從道路東邊就能進去。」');
-    yield* say('（任務「曙光的冒險者」更新了：集齊三枚古印。）'); return;
+    yield* say('（主線任務更新了：集齊三枚古印。）'); return;
   }
   yield* say('大門的封印還沒解開。（古印 ' + n + '/3）\n' + SEALS.filter(([, it]) => !st.flags['got_' + it]).map(([, it, where]) => '・' + ITEMS[it].n + '：' + where).join('\n'));
 }

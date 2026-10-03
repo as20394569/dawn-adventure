@@ -62,7 +62,7 @@ defPut('mechanics', 'b12_golem', { make: u => ({ triggers: [
   { on: EVT.SKILL_SUCCESS, phase: 'POST', role: 'src', cond: { skillIs: 'm_stoneWall', dataNot: ['wallTold', 1] }, prio: 4, effects: [{ type: 'set_data', onUnit: 1, key: 'wallTold', value: 1 }, { type: 'message', target: 'self', text: '（石壁擋住了物理攻擊……改用魔法，或先降低牠的物防！）' }] }] }) });
 
 /* ---------- 水晶魔像：鏡面 every 4th round, told the round before · 稜光射線 is its charged attack ---------- */
-b12Skill('m_prismRay', { pow: 120, charge: 1, chargeMsg: '水晶開始聚集光芒……', warn: '（稜光射線要射出來了，會打中全部……選擇「防禦」！）', d: '蓄力後射出貫穿一切的稜光，打中所有對手。' });
+b12Skill('m_prismRay', { pow: 120, charge: 1, chargeMsg: '身上開始聚集光芒……', warn: '（稜光射線要射出來了，會打中全部……選擇「防禦」！）', d: '蓄力後射出貫穿一切的稜光，打中所有對手。' });
 BAI.SCRIPT.crystalGolem = function (core, u) {
   if (core.round % 4 === 0 && !core.hasStatus(u, 'mirror')) return { type: 'skill', skill: 'm_mirror', targets: [u.id] };
   if (core.round % 4 === 2 && core.round - (u.data.lastCharge ?? -9) >= 3) return b12Charge(core, u, 'm_prismRay');

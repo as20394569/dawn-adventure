@@ -23,7 +23,7 @@ class TextBox {
     else { this.state = this.keep ? 'done' : 'end'; if (this.keep) this.done = true; }
   }
   update() {
-    this.t++; const ff = this.style === 'ow' && typeof dlgFF === 'function' && dlgFF(); // v10: hold B to fast-forward
+    this.t++; const ff = (this.style === 'ow' || this.style === 'dark') && typeof dlgFF === 'function' && dlgFF(); // v10: hold B to fast-forward
     if (ff && this.state === 'type') this.ci = [...this.lines[this.li]].length;
     if (ff && (this.state === 'wait' || (this.state === 'end' && !this.keep)) && this.t % 3 === 0) { if (this.state === 'wait') { this.state = 'scroll'; this.scroll = 0; } else { this.done = true; } return; }
     if (this.state === 'type') {
@@ -645,7 +645,7 @@ function* dexScreen() {
     if (top > 0) x.drawImage(UPARROW, 86, 26); if (top + VIS < list.length) x.drawImage(DOWNARROW, 86, 24 + VIS * 18 + 3);
     drawWin(x, 4, 164, 168, 88, 'menu'); const k = list[idx], e = dex[k];
     if (e && e.seen) { const cp = typeof dexPortrait === 'function' && dexPortrait(k); if (cp) { const q = Math.min(1, 72 / cp.width, 72 / cp.height), pw = Math.round(cp.width * q), ph = Math.round(cp.height * q); x.imageSmoothingEnabled = false; x.drawImage(cp, Math.round(44 - pw / 2), 244 - ph, pw, ph); } else { const im = battleSprite(k); x.drawImage(im, 0, 0, im.width, im.height, 8, 172, 72, 72); } const sp = SPECIES[k];
-      famBadge(x, sp.fam, 86, 170, 38); Font.draw(x, sp.rare ? '稀有' : sp.elite ? '精英' : sp.boss ? '頭目' : '野生', 128, 168, sp.rare ? '#ffd84a' : sp.boss ? UIC.bad : sp.elite ? UIC.warm : UIC.muted, UIC.textSh);
+      famBadge(x, sp.fam, 86, 170, 38); Font.draw(x, sp.rare ? '稀有' : sp.elite ? '菁英' : sp.boss ? '頭目' : '野生', 128, 168, sp.rare ? '#ffd84a' : sp.boss ? UIC.bad : sp.elite ? UIC.warm : UIC.muted, UIC.textSh);
       if (view) { const P = MON_PANEL[k]; Font.draw(x, 'Lv' + P.lv + ' 能力', 86, 184, UIC.muted, UIC.textSh, 10); [['HP', P.hp], ['物攻', P.atk], ['物防', P.def], ['魔攻', P.spa], ['魔防', P.spd], ['速度', P.spe]].forEach(([a, b], i) => { Font.draw(x, a, 86, 197 + i * 9, UIC.muted, UIC.textSh, 9); Font.drawR(x, String(b), 164, 197 + i * 9, UIC.text, UIC.textSh, 9); }); }
       else { Font.draw(x, famLine(sp.fam), 86, 184, UIC.warm, UIC.textSh, 10); Font.wrap(sp.dex || '', 80, 11).slice(0, 3).forEach((l, i) => Font.draw(x, l, 86, 198 + i * 13, UIC.text, UIC.textSh, 11)); } Font.drawR(x, 'A：' + (view ? '介紹' : '能力'), 166, 238, UIC.accent, UIC.textSh, 9); }
     else Font.draw(x, '還沒有遇見過這種魔物。', 14, 170, UIC.muted, UIC.textSh);

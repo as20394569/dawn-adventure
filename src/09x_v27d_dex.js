@@ -28,7 +28,7 @@ function* dexDetail(list, idx) {
     const cp = typeof dexPortrait === 'function' && dexPortrait(k); x.imageSmoothingEnabled = false;
     if (cp) { const q = Math.min(1, 64 / cp.width, 64 / cp.height), pw = Math.round(cp.width * q), ph = Math.round(cp.height * q); x.drawImage(cp, Math.round(40 - pw / 2), 94 - ph, pw, ph); }
     else { const im = battleSprite(k); x.drawImage(im, 0, 0, im.width, im.height, 8, 27, 64, 64); }
-    famBadge(x, sp.fam, 82, 26, 38); Font.draw(x, sp.rare ? '稀有' : sp.boss ? '頭目' : sp.elite ? '精英' : '野生', 124, 24, sp.rare ? '#ffd84a' : sp.boss ? UIC.bad : sp.elite ? UIC.warm : UIC.muted, UIC.textSh, 10);
+    famBadge(x, sp.fam, 82, 26, 38); Font.draw(x, sp.rare ? '稀有' : sp.boss ? '頭目' : sp.elite ? '菁英' : '野生', 124, 24, sp.rare ? '#ffd84a' : sp.boss ? UIC.bad : sp.elite ? UIC.warm : UIC.muted, UIC.textSh, 10);
     Font.draw(x, famLine(sp.fam), 82, 40, UIC.warm, UIC.textSh, 9);
     Font.draw(x, '擊敗 ' + (e.won || 0) + ' 次', 82, 52, UIC.text, UIC.textSh, 9);
     Font.wrap('出沒：' + (info.places.length ? info.places.slice(0, 3).join('、') : '—'), 90, 9).slice(0, 3).forEach((l, i) => Font.draw(x, l, 82, 64 + i * 11, UIC.muted, UIC.textSh, 9));
@@ -48,7 +48,7 @@ function* dexDetail(list, idx) {
       else L.push(['素材：' + (mat ? mat + '（35%）' : '—'), UIC.text]);
       for (const s of info.sigs) L.push(['首次擊敗：「' + GEAR[s.g].n + '」設計圖＋紅色打造券' + (s.got ? '（已取得）' : ''), s.got ? UIC.muted : UIC.warm]);
       if (info.re.length) L.push(['再戰掉落（設計圖或打造券，隨機一種）：' + info.re.map(g => GEAR[g].n).join('、'), '#c8b0ff']);
-      if (!info.big && !info.re.length) L.push(['普通魔物不會掉裝備。裝備靠精英・頭目的設計圖打造。', UIC.muted]);
+      if (!info.big && !info.re.length) L.push(['普通魔物不會掉裝備。裝備靠菁英・頭目的設計圖打造。', UIC.muted]);
       let Y = 127; for (const [t, c] of L) for (const l of Font.wrap(t, 156, 9)) { if (Y > 222) break; Font.draw(x, l, 10, Y, c, UIC.textSh, 9); Y += 11; }
     }
     Font.draw(x, '←→分頁　↑↓換魔物', 6, 239, UIC.muted, UIC.textSh, 9);
@@ -81,7 +81,7 @@ dexScreen = function* () {
     drawWin(x, 4, 164, 168, 88, 'menu'); const k = list[idx];
     if (seen(k)) { const cp = typeof dexPortrait === 'function' && dexPortrait(k); x.imageSmoothingEnabled = false;
       if (cp) { const q = Math.min(1, 72 / cp.width, 72 / cp.height), pw = Math.round(cp.width * q), ph = Math.round(cp.height * q); x.drawImage(cp, Math.round(44 - pw / 2), 244 - ph, pw, ph); } else { const im = battleSprite(k); x.drawImage(im, 0, 0, im.width, im.height, 8, 172, 72, 72); }
-      const sp = SPECIES[k]; famBadge(x, sp.fam, 86, 170, 38); Font.draw(x, sp.rare ? '稀有' : sp.elite ? '精英' : sp.boss ? '頭目' : '野生', 128, 168, sp.rare ? '#ffd84a' : sp.boss ? UIC.bad : sp.elite ? UIC.warm : UIC.muted, UIC.textSh);
+      const sp = SPECIES[k]; famBadge(x, sp.fam, 86, 170, 38); Font.draw(x, sp.rare ? '稀有' : sp.elite ? '菁英' : sp.boss ? '頭目' : '野生', 128, 168, sp.rare ? '#ffd84a' : sp.boss ? UIC.bad : sp.elite ? UIC.warm : UIC.muted, UIC.textSh);
       Font.draw(x, famLine(sp.fam), 86, 184, UIC.warm, UIC.textSh, 10); drawFitText(x, sp.dex || '', 86, 198, 82, 40, 11); /* v12.0.1: shrink instead of cutting the third line */
       drawBtn(x, 106, 230, 62, 16, true); Font.drawC(x, 'A：詳細資料', 137, 230, UIC.accent, UIC.textSh, 9); touchRegion(4, 164, 168, 88, () => tapKey('a')); }
     else Font.draw(x, '還沒有遇見過這種魔物。', 14, 170, UIC.muted, UIC.textSh);

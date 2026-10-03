@@ -18,7 +18,7 @@ for (const m of OTW_SPOTS) { const d = MAPS[m], E = EXT_AREA[m]; if (!d || !E) c
     if (nb < 8) continue; const sc = 100 - Math.hypot(x - cx, y - cy); if (sc > bs) { bs = sc; best = [x, y]; } }
   if (best) { d.npcs.push({ id: 'otwMark_' + m, x: best[0], y: best[1], dir: 'down', look: 'loreStone', name: '曙光的印記', show: st => st.flags.otwQ === 1 && !(st.flags.otwMark || {})[m] }); NPC_ROLES.任務.push('otwMark_' + m);
     Events['otwMark_' + m] = function* (ow) { const st = Game.st, f = st.flags; (f.otwMark || (f.otwMark = {}))[m] = 1; Sound.sfx('charge'); Game.flashColor = '#fff2c0'; yield* tween(12, t => Game.flash = t * 0.6); yield* tween(16, t => Game.flash = 0.6 * (1 - t));
-      yield* sayAll(['石頭上刻著和你手上一樣的太陽紋章……', '曙光之印發出了光。印記回應了你！（初代勇者的印記 ' + otwMarks(st) + '/3）']);
+      yield* sayAll(['石頭上刻著和你手上一樣的太陽紋章……', '曙光之印發出了光。印記回應了你！（曙光的印記 ' + otwMarks(st) + '/3）']);
       if (otwMarks(st) >= 3) { f.otwQ = 2; yield* sayAll(['三個印記同時亮了起來。', '……遠處，萌芽鎮的方向，好像有什麼東西在呼喚你。', '（目標：到萌芽鎮的井邊看看。）']); }
       ow.load(ow.map.id, ow.p.x, ow.p.y, ow.p.dir, true); }; }
   else console.warn('otw: no spot in', m);

@@ -1,6 +1,6 @@
 /* ===================== v12 取代寶珠與附魔石的獎勵（草案 §7.5，玩家 2026-10-01 同意） =====================
-   精英／頭目：原本掉寶珠的改成同機率掉修練之書（精英 30%、頭目 45%）；原本的附魔石改成藥水（頭目必得特級傷藥或特級魔力藥水，
-   精英 40% 好傷藥或高級魔力藥水），野外與天氣魔物的附魔石拿掉。委託、NPC 的禮物、天氣祠、擴張區寶箱見 docs_design_log v12.0.1。
+   菁英／頭目：原本掉寶珠的改成同機率掉修練之書（菁英 30%、頭目 45%）；原本的附魔石改成藥水（頭目必得特級傷藥或特級魔力藥水，
+   菁英 40% 好傷藥或高級魔力藥水），野外與天氣魔物的附魔石拿掉。委託、NPC 的禮物、天氣祠、擴張區寶箱見 docs_design_log v12.0.1。
    舊存檔：寶珠、附魔、附魔石換成修練之書和金錢（v12Convert）。 */
 // a gift of one piece of gear (story rewards use quality 3, 稀有)
 function* giftGear12(k, q = 3) { if (!GEAR[k]) return; const g = makeGear(k, q); Sound.jingle('item'); yield* itemGet('得到了' + gearName(g) + '！'); }
@@ -28,7 +28,7 @@ if (COMMISSIONS.c7) COMMISSIONS.c7.reward.gear = 'herbPouch';
 /* ---------- the chief, after the adventurer's license: how skills work now (was: the first orb) ---------- */
 { const _u = Overworld.prototype.update; Overworld.prototype.update = function (...a) {
     const st = this.st; if (st && st.v10 && st.flags.license && !st.flags.orbStart && !this.script && !UI.stack.length && !Game.trans) { st.flags.orbStart = 1;
-      this.run((function* () { yield* sayAll(['村長：「對了，戰鬥的招式跟你說一下。」', '村長：「招式有兩種。一種是職業的技能，等級到了自然就會。另一種是武器上的技能，拿著那把武器就能用，用得夠多次就會變成你自己的。」', '村長：「打開選單的「技能編排」，就能決定戰鬥中要帶哪些技能。」']); })()); return; }
+      this.run((function* () { yield* say('村長：「按START可以打開選單。狀態、技能編排、背包都在裡面，也能存檔。」'); })()); return; }
     return _u.apply(this, a); }; }
 
 /* ---------- old saves: orbs, enchants and enchant stones become 修練之書 and gold (draft §10) ---------- */

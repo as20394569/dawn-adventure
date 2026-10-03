@@ -2170,7 +2170,7 @@ const COMMISSIONS = {
   c1: { n: '藥草告急', from: '旅店老闆娘', d: '旅店的傷藥快用完了。請帶來藥草×5。', need: { herb: 5 }, reward: { gold: 300, items: { superPotion: 2 } }, open: st => st.flags.license },
   c2: { n: '趕走電電蜂', from: '果園農夫', d: '電電蜂在道路北邊螫傷了好多人。接下委託後，擊敗電電蜂×4。', kill: ['bee', 4], reward: { gold: 400, items: { luckClover: 1 } }, open: st => st.flags.license },
   c3: { n: '晶石研究', from: '村長', d: '想研究地下水道的水晶和魔王封印的關係。請帶來水晶碎片×3。', need: { crystal: 3 }, reward: { items: { tpBook: 1 } }, open: st => st.flags.golem },
-  c4: { n: '遺失的懷錶', from: '旅行者', d: '在迷霧森林東側弄丟了一只銀懷錶。找到的話，請放進委託箱。', key: 'pocketWatch', reward: { gold: 800 }, open: st => st.flags.wolf },
+  c4: { n: '遺失的懷錶', from: '旅行者', d: '在迷霧森林東側弄丟了一只銀懷錶。找到的話，請還給旅行者。', key: 'pocketWatch', reward: { gold: 800 }, open: st => st.flags.wolf },
   c5: { n: '驅除嘟嘟菇', from: '菜園大嬸', d: '嘟嘟菇把菜園啃得亂七八糟。接下委託後，擊敗嘟嘟菇×5。', kill: ['mush', 5], reward: { gold: 250, items: { potion: 3 } }, open: st => st.flags.license },
   c6: { n: '魔力草研究', from: '魔法學徒', d: '想研究會發光的草。請帶來魔力草×3。（晨霧道路北邊、迷霧森林、地下水道都採得到）', need: { manaHerb: 3 }, reward: { gold: 400, items: { manaPotion: 3 } }, open: st => st.flags.license },
   c7: { n: '森林的毒菇', from: '藥草師', d: '毒孢菇的孢子讓森林的藥草都枯了。接下委託後，擊敗毒孢菇×4。', kill: ['thornMush', 4], reward: { gold: 600, items: { superPotion: 2 } }, open: st => st.flags.wolf },
@@ -2207,8 +2207,8 @@ function mapPct(id, st = Game.st) {
 function totalPct(st = Game.st) { let tot = 0, got = 0; for (const id in EXPLORE) { if (!MAPS[id]) continue; const p = mapPct(id, st); tot += visTot[id]; got += p * visTot[id]; } return tot ? got / tot : 0; }
 const ACHIEVEMENTS = [
   { id: 'win1', n: '第一場勝利', d: '第一次打倒魔物。', ok: st => (st.wins || 0) >= 1 },
-  { id: 'win100', n: '百戰錬磨', d: '累計戰鬥勝利100次。', ok: st => (st.wins || 0) >= 100 },
-  { id: 'elite', n: '精英獵人', d: '打倒道路與森林的4隻精英魔物。', ok: st => ['wolf', 'flower', 'croc', 'mossGiant'].every(k => st.flags[k]) },
+  { id: 'win100', n: '百戰鍊磨', d: '累計戰鬥勝利100次。', ok: st => (st.wins || 0) >= 100 },
+  { id: 'elite', n: '菁英獵人', d: '打倒道路與森林的4隻菁英魔物。', ok: st => ['wolf', 'flower', 'croc', 'mossGiant'].every(k => st.flags[k]) },
   { id: 'golem', n: '遺跡的守護者', d: '打倒古岩魔像。', ok: st => st.flags.golem },
   { id: 'crystal', n: '深淵之光', d: '打倒隱藏頭目水晶魔像。', ok: st => st.flags.crystalBoss },
   { id: 'bandit', n: '礦坑的清算', d: '打倒盜賊頭目「鐵斧」格倫。', ok: st => st.flags.bandit },
@@ -2316,7 +2316,7 @@ const QUEST_EVENTS = {
       yield* sayAll(mg ? ['……完成了。不過你是魔導士吧？', '師父的箱子底下還壓著一根沒完成的法杖，我用同樣的水晶把它也完成了。', '師父的另一件遺作「' + wn + '」。你來決定吧。'] : ['……完成了。師父的遺作「名匠遺作」。', '說實話……我很想把它留在鋪子裡，當作師父的紀念。', '但這把劍是為了真正的戰士打造的。你來決定吧。']);
       const r = yield* ask('要怎麼做？', ['收下' + wn, '讓鐵匠留著'], { cancel: false });
       if (r === 0) { f.q3res = 'take'; const g = bpGift(classGear('masterBlade'), 4); yield* itemGet(st.name + '得到了' + g.txt + '！'); yield* say('師父一定也會很高興。好好使用它！'); }
-      else { f.q3res = 'keep'; f.smithDisc = 1; st.bag.tpBook = (st.bag.tpBook || 0) + 1; yield* sayAll(['……謝謝你。', '這是師父留下的修練書，送給你吧。以後強化的費用，我只收一半！']); yield* itemGet(st.name + '得到了天賦之書！強化費用永久半價！'); }
+      else { f.q3res = 'keep'; f.smithDisc = 1; st.bag.tpBook = (st.bag.tpBook || 0) + 1; yield* sayAll(['……謝謝你。', '這是師父留下的天賦之書，送給你吧。以後強化的費用，我只收一半！']); yield* itemGet(st.name + '得到了天賦之書！強化費用永久半價！'); }
     } else yield* say(f.q3 === 1 ? '水晶碎片的事就拜託了。聽說在老井的地底下。' : f.smith ? '有素材就拿來吧！' : '我是鎮上的鐵匠。把魔物身上的素材帶來，我就幫你打造好東西！');
     f.smith = 1;
     yield* smithMenu(f); // v10: 寶珠 / 附魔 (09zp)
@@ -2770,7 +2770,7 @@ Object.assign(GEAR, {
   emberKnife: { n: '燼火短刀', slot: 'weapon', t: 2, st: { atk: 6 }, elem: '火', d: '把燼核熔進刀身的短刀。刀刃一直是溫熱的。' },
   voltSword: { n: '雷角劍', slot: 'weapon', t: 2, st: { atk: 6 }, sp: { hit: 5 }, elem: '雷', d: '用雷角甲蟲的甲殼打造的劍。揮動時會劈啪作響。' },
   thornStaff: { n: '荊棘法杖', slot: 'weapon', t: 2, st: { spa: 7 }, sp: { elem: 4 }, elem: '草', spr: 'woodSword', d: '森林獵人用荊棘枝做的法杖。' },
-  tideStaff: { n: '潮汐法杖', slot: 'weapon', t: 3, st: { spa: 10 }, sp: { elem: 6 }, elem: '水', spr: 'woodSword', d: '王都水道工程師的法杖。杖頭的寶珠會自己滲水。' },
+  tideStaff: { n: '潮汐法杖', slot: 'weapon', t: 3, st: { spa: 10 }, sp: { elem: 6 }, elem: '水', spr: 'woodSword', d: '王都水道工程師的法杖。杖頭的寶石會自己滲水。' },
   boneSaber: { n: '骸骨軍刀', slot: 'weapon', t: 3, st: { atk: 9 }, sp: { crit: 4, vs: ['undead', 20] }, d: '古代守衛的軍刀。對亡者特別有效。' },
   stormStaff: { n: '雷鳴權杖', slot: 'weapon', t: 4, st: { spa: 13 }, sp: { elem: 8 }, elem: '雷', spr: 'woodSword', d: '古王的權杖。符文裡封著雷光。' },
   kingsBlade: { n: '古王之劍', slot: 'weapon', t: 4, st: { atk: 12 }, sp: { crit: 4 }, elem: '火', d: '古王墓室中的陪葬劍。劍身燃著不滅的火。' },
@@ -2886,7 +2886,7 @@ const QUEST_CAT_COL = { 主線: '#6ee7d2', 支線: '#ffcf5a', 成長: '#c58cff',
 const questCatOf = q => q.n.startsWith('委託：') ? '委託' : QUEST_CATS[q.n] || null;
 const NPC_ROLES = { 商店: ['smith', 'peddler', 'clerk'], 回復: ['mom', 'healer'], 任務: ['elder', 'florist', 'guard', 'lostBoy', 'tim', 'caravan'], 情報: ['gatekeeper', 'grandpa', 'traveler', 'customer', 'hiker', 'girl2', 'herbalist', 'apprentice', 'kid'] };
 const npcRoleOf = id => Object.keys(NPC_ROLES).find(r => NPC_ROLES[r].includes(id)) || null;
-const monRankOf = s => s.boss ? '頭目' : s.elite ? '精英' : s.rare ? '稀有' : '野生';
+const monRankOf = s => s.boss ? '頭目' : s.elite ? '菁英' : s.rare ? '稀有' : '野生';
 Object.assign(GEAR, {
   ruinMail: { n: '古岩護甲', slot: 'body', t: 3, st: { def: 8, spd: 4 }, sp: { resist: ['岩', 12] }, d: '用古岩遺跡的石板打磨成的護甲。' },
   kingsSeal: { n: '古王印戒', slot: 'acc', t: 4, st: { atk: 2, spa: 2, hp: 4 }, sp: { crit: 4 }, d: '刻著古王紋章的印戒。戴上後會聽見遠古的號令。' },
@@ -3746,10 +3746,10 @@ Object.assign(MOVES, {
   m_curseMark: { n: '魔女詛咒', t: '一般', cat: '變', acc: 95, pp: 15, stat: { who: 'foe', atk: -1, def: -1 }, d: '在身上刻下詛咒的記號。降低物攻和物防。' },
   m_toxicBrew: { n: '毒藥瓶', t: '毒', cat: '特', pow: 65, acc: 95, pp: 15, eff: { st: 'psn', p: 40 }, d: '丟出冒著泡的毒藥瓶。' },
   m_witchBolt: { n: '沼澤魔彈', t: '一般', cat: '特', pow: 75, acc: 95, pp: 10, d: '從杖頭射出綠色的魔彈。' },
-  m_cauldron: { n: '魔女的大鍋', t: '毒', cat: '特', pow: 135, acc: 100, pp: 5, charge: 1, eff: { st: 'psn', p: 60 }, chargeMsg: '魔女開始攪拌冒著綠煙的大鍋！', warn: '（鍋裡的東西快要煮好了……！）', d: '魔女的秘藥大爆發。' },
+  m_cauldron: { n: '魔女的大鍋', t: '毒', cat: '特', pow: 135, acc: 100, pp: 5, charge: 1, eff: { st: 'psn', p: 60 }, chargeMsg: '開始攪拌冒著綠煙的大鍋！', warn: '（鍋裡的東西快要煮好了……！）', d: '魔女的秘藥大爆發。' },
   m_tripleBite: { n: '三首連咬', t: '一般', cat: '物', pow: 90, acc: 95, pp: 10, eff: { flinch: 1, p: 20 }, d: '三顆頭輪流咬過來。' },
   m_venomSpray: { n: '毒霧吐息', t: '毒', cat: '特', pow: 80, acc: 95, pp: 10, eff: { st: 'psn', p: 30 }, d: '三顆頭一起噴出紫色的毒霧。' },
-  m_hydraFlood: { n: '腐沼洪流', t: '水', cat: '特', pow: 150, acc: 100, pp: 5, charge: 1, chargeMsg: '九頭蛇把整片沼澤的水吸進了肚子裡！', warn: '（沼澤的水位在下降……下一擊會非常可怕！）', d: '把整片沼澤的腐水一口氣噴出。' },
+  m_hydraFlood: { n: '腐沼洪流', t: '水', cat: '特', pow: 150, acc: 100, pp: 5, charge: 1, chargeMsg: '把整片沼澤的水吸進了肚子裡！', warn: '（沼澤的水位在下降……下一擊會非常可怕！）', d: '把整片沼澤的腐水一口氣噴出。' },
   m_chestChomp: { n: '寶箱咬', t: '一般', cat: '物', pow: 70, acc: 95, pp: 15, eff: { flinch: 1, p: 30 }, d: '用箱蓋狠狠咬下。' },
   m_coinToss: { n: '金幣砸', t: '一般', cat: '物', pow: 50, acc: 100, pp: 20, d: '從肚子裡吐出一大把金幣砸過來。' },
   m_greed: { n: '貪婪', t: '一般', cat: '變', pp: 10, stat: { who: 'self', atk: 2 }, d: '眼睛閃著貪婪的光。大幅提升物攻。' },
@@ -4149,7 +4149,7 @@ class TextBox {
     else { this.state = this.keep ? 'done' : 'end'; if (this.keep) this.done = true; }
   }
   update() {
-    this.t++; const ff = this.style === 'ow' && typeof dlgFF === 'function' && dlgFF(); // v10: hold B to fast-forward
+    this.t++; const ff = (this.style === 'ow' || this.style === 'dark') && typeof dlgFF === 'function' && dlgFF(); // v10: hold B to fast-forward
     if (ff && this.state === 'type') this.ci = [...this.lines[this.li]].length;
     if (ff && (this.state === 'wait' || (this.state === 'end' && !this.keep)) && this.t % 3 === 0) { if (this.state === 'wait') { this.state = 'scroll'; this.scroll = 0; } else { this.done = true; } return; }
     if (this.state === 'type') {
@@ -4737,7 +4737,7 @@ function* dexScreen() {
     if (top > 0) x.drawImage(UPARROW, 86, 26); if (top + VIS < list.length) x.drawImage(DOWNARROW, 86, 24 + VIS * 18 + 3);
     drawWin(x, 4, 164, 168, 88, 'menu'); const k = list[idx], e = dex[k];
     if (e && e.seen) { const cp = typeof dexPortrait === 'function' && dexPortrait(k); if (cp) { const q = Math.min(1, 72 / cp.width, 72 / cp.height), pw = Math.round(cp.width * q), ph = Math.round(cp.height * q); x.imageSmoothingEnabled = false; x.drawImage(cp, Math.round(44 - pw / 2), 244 - ph, pw, ph); } else { const im = battleSprite(k); x.drawImage(im, 0, 0, im.width, im.height, 8, 172, 72, 72); } const sp = SPECIES[k];
-      famBadge(x, sp.fam, 86, 170, 38); Font.draw(x, sp.rare ? '稀有' : sp.elite ? '精英' : sp.boss ? '頭目' : '野生', 128, 168, sp.rare ? '#ffd84a' : sp.boss ? UIC.bad : sp.elite ? UIC.warm : UIC.muted, UIC.textSh);
+      famBadge(x, sp.fam, 86, 170, 38); Font.draw(x, sp.rare ? '稀有' : sp.elite ? '菁英' : sp.boss ? '頭目' : '野生', 128, 168, sp.rare ? '#ffd84a' : sp.boss ? UIC.bad : sp.elite ? UIC.warm : UIC.muted, UIC.textSh);
       if (view) { const P = MON_PANEL[k]; Font.draw(x, 'Lv' + P.lv + ' 能力', 86, 184, UIC.muted, UIC.textSh, 10); [['HP', P.hp], ['物攻', P.atk], ['物防', P.def], ['魔攻', P.spa], ['魔防', P.spd], ['速度', P.spe]].forEach(([a, b], i) => { Font.draw(x, a, 86, 197 + i * 9, UIC.muted, UIC.textSh, 9); Font.drawR(x, String(b), 164, 197 + i * 9, UIC.text, UIC.textSh, 9); }); }
       else { Font.draw(x, famLine(sp.fam), 86, 184, UIC.warm, UIC.textSh, 10); Font.wrap(sp.dex || '', 80, 11).slice(0, 3).forEach((l, i) => Font.draw(x, l, 86, 198 + i * 13, UIC.text, UIC.textSh, 11)); } Font.drawR(x, 'A：' + (view ? '介紹' : '能力'), 166, 238, UIC.accent, UIC.textSh, 9); }
     else Font.draw(x, '還沒有遇見過這種魔物。', 14, 170, UIC.muted, UIC.textSh);
@@ -5665,7 +5665,7 @@ class Battle {
     yield* parallel(tween(12, t => this.boxF = lerp(-30, 4, 1 - Math.pow(1 - t, 2))), tween(12, t => this.boxH = lerp(BH + 4, HBAR_Y, 1 - Math.pow(1 - t, 2))));
     let s; if (L.length > 1) { const names = [], cnt = {}; for (const v of L) { const b = SPECIES[v.sp] ? SPECIES[v.sp].n : v.n; if (!cnt[b]) names.push(b); cnt[b] = (cnt[b] || 0) + 1; }
       const parts = names.map(b => cnt[b] > 1 ? cnt[b] + '隻' + b : b); s = (parts.length > 1 ? parts.slice(0, -1).join('、') + '和' + parts[parts.length - 1] : parts[0]) + '出現了！'; }
-    else s = main.rare ? '稀有的' + main.n + '出現了！' : main.boss ? main.n + '擋住了去路！' : main.elite ? '精英魔物' + main.n + '發動了攻擊！' : main.n + '出現了！';
+    else s = main.rare ? '稀有的' + main.n + '出現了！' : main.boss ? main.n + '擋住了去路！' : main.elite ? '菁英魔物' + main.n + '發動了攻擊！' : main.n + '出現了！';
     yield* this.msg(s, { hold: 44 });
     if (L.length > 1 && !st.flags.tutMulti) { st.flags.tutMulti = 1; yield* this.msg('（一次出現好幾隻魔物！每隻都比較弱。攻擊前可以用左右選擇目標，範圍技能會打中全部。）', { wait: true }); }
     const k = this.cfg.wx; if (k && typeof WEATHER !== 'undefined' && WEATHER[k] && st.wx) { const w = st.wx[typeof wxKey === 'function' ? wxKey(st.map) : st.map] || {}; if (st.wxTold !== k + w.until) { st.wxTold = k + w.until; yield* this.msg('【' + WEATHER[k].n + '】' + WEATHER[k].d, { hold: 30 }); } }
@@ -5911,7 +5911,7 @@ Battle.prototype.handlers = {
     if (t.boss) { Sound.sfx('quake'); this.shake = 50; for (let i = 0; i < 30; i++) { if (i % 3 === 0) this.sparks(t.x + rnd(-26, 26), t.foot - 34 + rnd(-26, 26), 3, ['#8a8272', '#a09884', '#ff8040'], 2.5, 26, 0.15); yield; } }
     Sound.sfx(t.boss ? 'bossDown' : 'foeDown'); t.A.state = 'faint'; yield* tween(t.boss ? 40 : 22, k => { t.sink = k * t.bbh; t.alpha = 1 - k * 0.3; });
     yield* tween(8, k => { t.alpha = 0.7 * (1 - k); t.plateA = 1 - k; }); t.alpha = 0; t.gone = true;
-    yield* this.msg((t.boss || t.minion ? '' : t.elite ? '精英魔物' : '') + t.n + '倒下了！', { hold: 30 });
+    yield* this.msg((t.boss || t.minion ? '' : t.elite ? '菁英魔物' : '') + t.n + '倒下了！', { hold: 30 });
     if (this.focus === t) this.focus = this.foes()[0] || t; },
   *REVIVE(e, s, t) { if (!t) return; t.gone = false; t.alpha = 1; t.sink = 0; t.plateA = 1; t.A.state = 'idle'; t.hp = this.core.byId[t.id].res.hp; yield* this.msg(t.n + '重新站了起來！'); },
   *EXTRA_ACTION(e, s) { if (s) yield* this.msg(s.n + '的狂怒！再次行動！', { hold: 22 }); },
@@ -7131,7 +7131,7 @@ const BATTLE_HELP = [
   ['魔物變強的時候', ['菁英和頭目的HP低於60%會變強，還會使出新招式。',
     '頭目的HP低於30%會陷入狂怒，每兩回合行動兩次。',
     '你的HP低於35%時，魔物常會改用最強的招式。',
-    '等級差距、困難／異界難度、魔物提升攻擊或降低你的防禦，都會讓傷害變高。']],
+    '等級差距、難度、魔物提升攻擊或降低你的防禦，都會讓傷害變高。']],
   ['如何避免', ['防禦：傷害減半，效果持續到自己下一次行動（守護者的「守護之盾」再減30%）。看到蓄力預告就防禦。',
     '破防：用弱點或會心削光護盾，可以打斷蓄力，魔物還會停止行動一回合。',
     '魔法護盾：受到的傷害減少40%。盾牌有機率格擋，傷害減少40%。讓魔物灼傷，牠的物理攻擊會減半。',
@@ -7622,12 +7622,12 @@ const Events = {
       yield* say({ swordsman: '劍士的道路啊……這把練習木劍就交給你了。', mage: '魔導士的道路啊……這把魔杖是我年輕時用的，交給你了。', guardian: '守護者的道路啊……這把木劍和布帽給你，別逞強喔。', ranger: '遊俠的道路啊……這把獵刀是村裡獵人送的，拿去吧。' }[k]);
       st.flags.license = 1; st.bag.license = 1; yield* itemGet('得到了' + S.gear.filter(b => b !== 'guardBadge').map(b => GEAR[b].n).join('和') + '、護身符和冒險者證！');
       yield* say('還有這些傷藥，帶在身上吧。'); st.bag.potion = (st.bag.potion || 0) + 5; yield* itemGet('得到了傷藥×5！');
-      yield* sayAll(['技能有兩個來源：職業（等級到了就學會）和武器（裝備就能用，用滿次數就永久學會）。普通攻擊累積滿了，還會自動發動武器的「特技」。', '普通攻擊不花MP，還會回復一點MP；技能用過之後要「冷卻」幾次行動才能再用。', '每個職業都有自己的核心資源，用它來施放職業招式。每升2級會得到1點「天賦點」，打開選單的「天賦」，就能點' + CLASSES[k].n + '的三個流派。', '新的裝備都要靠鐵匠打造。撿到的設計圖和素材，記得拿去給他看看。', '到了Lv14再來找我，我會幫你進行「天賦覺醒」。', '魔物分成好幾個種族，各有害怕的屬性。善用屬性技能，戰鬥會輕鬆很多。', '按START可以打開選單，查看狀態、技能和背包，也能記錄進度。']);
+      yield* sayAll(['技能來自職業和武器。用過之後要「冷卻」幾次行動才能再用；冷卻的時候就用普通攻擊，不花MP，還會回復MP。', '每個職業都有自己的核心資源，戰鬥中會累積起來，用來施放' + CLASSES[k].n + '的職業招式。']);
       const ap = ow && ow.npcs.find(n => n.id === 'apprentice');
       if (ap) { ap.dir = 'left'; yield* say('學徒：「村長爺爺！讓我幫忙！我在院子裡養了一隻練習用的泡泡姆！」');
         if (yield* yesNo('要和泡泡姆練習一場嗎？')) { const res = yield* ow.battleScript({ sp: 'slime', lv: 1, kind: 'wild' }); if (res === 'win') yield* say('學徒：「好厲害！這就是異界人之力！」'); else yield* say('學徒：「泡、泡泡姆，下手輕一點啦！」'); healHero(); }
         else yield* say('學徒：「那下次再練習吧！」'); }
-      yield* sayAll(['古岩魔像是「構造體」魔物，最怕水和草的攻擊。記住了。', '從今天起，你就是萌芽鎮的冒險者了。', '先去古岩遺跡，查清楚魔像為什麼會暴走。', '去吧，異世界的' + C.n + '。願曙光指引你的道路。']);
+      yield* sayAll(['從今天起，你就是萌芽鎮的冒險者了。', '去吧，異世界的' + C.n + '。願曙光指引你的道路。']);
       return;
     }
     { const n = st.flags.ch2 || 0; // v12.0.1: the elder follows chapter 2 instead of repeating the golem talk forever
@@ -7718,7 +7718,7 @@ const Events = {
     if (!f.license) { yield* sayAll(['出門前記得多買幾瓶藥水喔，這家店的最實在了。', '武器和防具大多要找鐵匠打造。打倒魔物拿到的素材，先別急著賣掉！']); return; }
     if (!f.croc) { yield* sayAll(['你也是冒險者呀？新武器拿到手要多用用看。', '武器帶著的技能，用熟了就算換了武器也不會忘喔。']); return; }
     yield* sayAll(['騎士團長劍是王都騎士團在用的劍！好想要喔……', '聽說鐵匠用硬石和水晶碎片就能打一把。', '對了，天賦選錯的話，這裡有賣遺忘之書喔。']); },
-  *hiker() { const hf = Game.st.flags; if (hf.mineOpen && !hf.bandit) { yield* sayAll(['東邊的廢棄礦坑被盜賊佔據了。商隊被搶的貨物應該就藏在裡面。', '入口在道路東側的小路盡頭。盜賊頭目「鐵斧」格倫會蓄力揮斧，那時候記得防禦！']); return; } if (Game.st.flags.wolf) { yield* sayAll(['狂牙狼被你打倒了？難怪最近路上安靜多了！', '精英魔物身上常常會掉出好東西喔。']); return; } yield* sayAll(['嘿！這條路上的草叢很深，常有魔物跳出來。', '受傷了就回萌芽鎮的旅店休息吧。', '過了河之後，還有一座能恢復體力的泉水喔！']); },
+  *hiker() { const hf = Game.st.flags; if (hf.mineOpen && !hf.bandit) { yield* sayAll(['東邊的廢棄礦坑被盜賊佔據了。商隊被搶的貨物應該就藏在裡面。', '入口在道路東側的小路盡頭。盜賊頭目「鐵斧」格倫會蓄力揮斧，那時候記得防禦！']); return; } if (Game.st.flags.wolf) { yield* sayAll(['狂牙狼被你打倒了？難怪最近路上安靜多了！', '菁英魔物身上常常會掉出好東西喔。']); return; } yield* sayAll(['嘿！這條路上的草叢很深，常有魔物跳出來。', '受傷了就回萌芽鎮的旅店休息吧。', '過了河之後，還有一座能恢復體力的泉水喔！']); },
   *girl2() { yield* sayAll(Game.st.flags.croc ? ['你打倒了沼澤鱷？太好了，終於可以過橋了！'] : ['橋頭那隻沼澤鱷好兇……', '聽說水棲的魔物最怕雷和草的攻擊。']); },
   *spring() {
     const ok = yield* yesNo('清澈的泉水閃閃發亮……要喝一口嗎？');
@@ -7872,7 +7872,7 @@ class TitleScene {
       if (o === '設定') { yield* optionsScreen(); continue; }
       if (o === '繼續冒險') { Game.st = loadGame(); yield* fadeOut(20); startOverworld(); Game.sys.push(fadeIn(20)); return; }
       if (o === '新的冒險') {
-        if (this.hasSave) { const ok = yield* yesNo('開始新的冒險後，舊的記錄會在下次存檔時被覆蓋。確定嗎？'); if (!ok) continue; }
+        if (this.hasSave) { const ok = yield* yesNo('開始新的冒險後，舊的記錄會在下次存檔時被覆蓋。確定嗎？'); if (!ok) continue; Game.autoIntro = yield* yesNo('要快轉開場劇情嗎？\n（對話會自動翻過去，到取名字和選職業時再停下來）'); }
         yield* fadeOut(24); Game.setScene(new IntroScene()); return;
       }
     }
@@ -8096,7 +8096,7 @@ function npcCommission(id, ow, ent) {
     if (st.comNo) delete st.comNo[k];
     st.com[k] = { s: 'on', k: c.kill ? (((st.dex || {})[c.kill[0]] || {}).won || 0) : 0 };
     if (c.deliver) st.bag[c.deliver[0]] = 1;
-    Sound.sfx('select'); yield* say('接下了「' + c.n + '」！' + (c.deliver ? '\n得到了「' + ITEMS[c.deliver[0]].n + '」。' : '（「狀態→任務」按A可以看進度和取得地點）'));
+    Sound.sfx('select'); yield* say('接下了「' + c.n + '」！' + (c.deliver ? '\n得到了「' + ITEMS[c.deliver[0]].n + '」。' : '（「冒險手冊→任務」按A可以看進度和取得地點）'));
   })();
 }
 { const _cp = comProgress; comProgress = function (id, st = Game.st) { const c = COMMISSIONS[id]; if (c && c.deliver) { const s = comState(id, st) || {}; return { cur: s.s === 'done' ? 1 : 0, max: 1, ready: false }; } return _cp(id, st); }; }
@@ -8285,7 +8285,7 @@ Object.assign(Events, {
   *hermit(ow) {
     const st = Game.st, f = st.flags, pages = st.bag.swordPage || 0;
     if (!f.q5) {
-      yield* sayAll(['……哦，真少見。這個湖邊很少有人來。', '這座湖叫「銀月湖」。月圓之夜，湖心的祭壇會發光。', '傳說只要在祭壇供上月露，沉睡在湖底的「湖之主」就會醒來。', '……還有一件事。這附近住著一個奇怪的劍士。', '他在找失傳的「魔劍」流派的劍譜。劍譜散落成了三頁——', '一頁沉在湖心的小島上，一頁被蜥人隊長拿走了，最後一頁……據說被吸進了遺跡的「異界之門」。', '如果你找齊了三頁劍譜，就到湖的東岸去吧。他會在那裡等你。']);
+      yield* sayAll(['……哦，真少見。這個湖邊很少有人來。', '這座湖叫「銀月湖」。月圓之夜，湖心的祭壇會發光。', '傳說只要在祭壇供上月露，沉睡在湖底的「湖之主」就會醒來。', '……還有一件事。這附近住著一個奇怪的劍士。', '他在找失傳的「魔劍」流派的劍譜。劍譜散落成了三頁——', '一頁沉在湖心的小島上，一頁被蜥人隊長拿走了，最後一頁……據說被湖之主吞進了肚子裡。', '如果你找齊了三頁劍譜，就到湖的東岸去吧。他會在那裡等你。']);
       f.q5 = 1; return;
     }
     if (f.spellbladeOk) { yield* say('魔劍之道……你真的繼承了啊。那個劍士臉上難得露出了笑容呢。'); return; }
@@ -8388,7 +8388,7 @@ Object.assign(Events, {
   },
   *warden(ow) {
     const st = Game.st, S = riftSt(st);
-    yield* say('我是迴廊的看守人。異界之門的另一邊，是每次都會改變形狀的「迴廊」。\n最深處是第' + RIFT_TOP + '層。你的最高紀錄：' + (S.best || 0) + '層。');
+    yield* say('我是迴廊的看守人。迴廊的門已經關上了……\n你手上還有徽章吧？在我這裡還是可以換東西。');
     while (true) {
       const TS = TOWER_SHOP.filter(([k]) => !(k === 'tpBook' && typeof tpRaw === 'function' && tpRaw(st) >= TP_CAP)); // v9.2.4 talent cap
       const tok = st.bag.riftToken || 0, list = TS.map(([k, c]) => (ITEMS[k] || GEAR[k]).n + '　' + c + '枚');
@@ -8431,7 +8431,7 @@ const TITLES = [
   { id: 'lakefriend', n: '湖之友', d: '打倒銀鱗水龍。', st: { spd: 4 }, ok: st => st.flags.wyrm },
   { id: 'rainbow', n: '虹色傳說', d: '得到一件虹色裝備。', st: { elem: 5, crit: 2 }, ok: st => (st.gear || []).some(g => g.q >= 5) },
   { id: 'again', n: '第二次的旅人', d: '開始二周目。', st: { hp: 8, def: 1 }, ok: st => (st.ng || 0) >= 1 },
-  { id: 'hard', n: '不退轉', d: '以「困難」以上的難度打倒古岩魔像。', st: { atk: 1, def: 1, spa: 1 }, ok: st => (st.diff || 0) >= 1 && st.flags.golem || (st.titlesKept || {}).hard },
+  { id: 'hard', n: '不退轉', d: '打倒古岩魔像。', st: { atk: 1, def: 1, spa: 1 }, ok: st => (st.diff || 0) >= 1 && st.flags.golem || (st.titlesKept || {}).hard },
 ];
 const dexPct = st => { const K = Object.keys(SPECIES); return K.filter(k => st.dex && st.dex[k] && st.dex[k].seen).length / K.length; };
 const titleOk = (id, st = Game.st) => { const T = TITLES.find(t => t.id === id); return T && (T.ok(st) || (st.titlesKept || {})[id]); };
@@ -8442,7 +8442,7 @@ function* titleScreen() {
     const items = TITLES.map(T => { const on = titleOk(T.id), eq = st.title === T.id; return { t: (eq ? '★' : '') + (on ? T.n : '？？？'), col: on ? (eq ? UIC.warm : UIC.text) : UIC.dis }; });
     const info = { draw(x) { const T = TITLES[idx]; drawWin(x, 4, 172, 168, 80, 'menu'); if (!T) return; const on = titleOk(T.id); Font.draw(x, on ? T.n : '？？？', 12, 175, on ? UIC.warm : UIC.dis, UIC.textSh);
       Font.draw(x, '條件：' + T.d, 12, 192, UIC.text, UIC.textSh, 10); Font.draw(x, '效果：' + Object.entries(T.st).map(([k, v]) => (STAT_NAMES[k] || { crit: '會心', elem: '屬性傷害' }[k] || k) + '+' + v + (['crit', 'elem'].includes(k) ? '%' : '')).join('、'), 12, 207, UIC.accent, UIC.textSh, 10);
-      Font.draw(x, '裝備一個稱號就能得到效果。二周目也會保留。', 12, 226, UIC.muted, UIC.textSh, 9); } };
+      Font.draw(x, '裝備一個稱號就能得到效果。', 12, 226, UIC.muted, UIC.textSh, 9); } };
     UI.push(info); const r = yield* choose(items, { x: 4, y: 4, w: 168, h: 164, index: idx, onMove: i => idx = i }); UI.remove(info);
     if (r < 0) return; idx = r; const T = TITLES[r];
     if (!titleOk(T.id)) { yield* say('還沒有取得這個稱號。'); continue; }
@@ -8845,7 +8845,7 @@ MAPS.ruins.boss.lv = 17;
   MAPS.forest.elites.find(e => e.id === 'mossGiant').lv = 14; MAPS.canyon.elites.find(e => e.id === 'rockRhino').lv = 15;
 }
 Object.assign(MAPS.route.signs, {
-  '2,24': '「← 迷霧森林」\n樹林深處據說藏著古老的秘密。\n（建議Lv9以上）',
+  '2,24': '「← 迷霧森林」\n樹林深處據說藏著古老的秘密。\n（建議Lv11以上）',
   '15,3': '「↑ 古岩遺跡」\n遺跡的大門被古老的封印鎖住了。\n（建議Lv16以上）',
   '19,28': '「→ 廢棄礦坑」\n礦脈枯竭後就沒人進去了。最近常有可疑人物出入。\n（建議Lv12以上）',
 });
@@ -8861,7 +8861,7 @@ function* sealDoor(ow) {
     f.qSeal = 1; f.mineOpen = 1;
     yield* sayAll(['遺跡的大門上刻著三個凹槽，發出微弱的光……', '門上的古文字寫著：「集齊森林、礦坑、峽谷的三枚古印之人，方可進入。」']);
     yield* say('守衛：「三枚古印分別被森林的苔石巨人、礦坑的盜賊頭目、峽谷的岩角犀守著。」\n「礦坑的入口已經被盜賊拆開了，從道路東邊就能進去。」');
-    yield* say('（任務「曙光的冒險者」更新了：集齊三枚古印。）'); return;
+    yield* say('（主線任務更新了：集齊三枚古印。）'); return;
   }
   yield* say('大門的封印還沒解開。（古印 ' + n + '/3）\n' + SEALS.filter(([, it]) => !st.flags['got_' + it]).map(([, it, where]) => '・' + ITEMS[it].n + '：' + where).join('\n'));
 }
@@ -9384,7 +9384,7 @@ const CH2_MON = [
   ['harvestGolem', '收穫魔像', 'construct', 28, 'tank', ['m_scytheSweep', 'm_seedBomb', 'm_harden', 'm_harvest'], null, ['golem', 30, 0.8, 1.15], '風車小屋裡守護「時之齒輪」的魔像。用麥稈和木頭做成，背上裝著風車。', { boss: 1, drop: 'harvestScythe' }],
   ['clockSoldier', '發條兵', 'construct', 28, 'phys', ['m_spearThrust', 'm_windUp', 'm_gearShot', 'm_spearRush'], 'spring', ['riftKnight', 40, 0.9, 1.25], '古代鐘錶師做的發條士兵。背上的鑰匙還在轉。'],
   ['gearSprite', '齒輪精', 'construct', 28, 'mage', ['m_sparkGear', 'm_overclock', 'm_runeBeam', 'm_gearShot'], 'brassGear', ['ghostLamp', 25, 0.9, 1.1], '鐘塔的齒輪有了意識，變成了會飛的小精靈。', { trait: 'swift' }],
-  ['towerBat', '鐘樓蝠', 'bird', 29, 'fast', ['m_sonic', 'm_screech', 'm_bellToll', 'm_dive'], 'batWing', ['mineBat', 30, 0.8, 1.05], '住在鐘塔頂上的蝙蝠。鐘聲讓牠們變得很兇。'],
+  ['towerBat', '鐘樓蝠', 'bird', 29, 'fast', ['m_sonic', 'm_screech', 'm_bellToll', 'm_dive'], 'batWing', ['mineBat', 30, 0.8, 1.05], '住在鐘塔頂上的蝙蝠。瘴氣讓牠們變得很兇。'],
   ['hollowArmor', '空洞鎧甲', 'construct', 29, 'tank', ['m_darkSlash', 'm_spearRush', 'm_stoneWall', 'm_boneShield'], 'rustScrap', ['boneKnight', 200, 0.4, 1.25], '裡面空無一物的鎧甲。被鐘塔的魔力驅動著。'],
   ['clockKnight', '發條騎士', 'construct', 30, 'phys', ['m_spearRush', 'm_windUp', 'm_gearShot', 'm_chronoLance'], null, ['clockSoldier', 0, 0.7, 0.78], '守護鐘塔中層的發條騎士長。長槍上刻著初代勇者的名字。', { elite: 1, drop: 'chronoLance' }],
   ['clockColossus', '時計巨像', 'construct', 31, 'tank', ['m_gearCrush', 'm_steamBurst', 'm_timeWarp', 'm_twelveStrike'], null, ['golem', 40, 0.9, 1.3], '曙光鐘塔的守護者。胸口的大時鐘五百年來一直在走。', { boss: 1, drop: 'colossusCore' }],
@@ -9672,7 +9672,7 @@ ch2Map('capital', {
     { kind: 'house', x: 2, y: 20, w: 5, h: 4, door: 2, to: ['capHouse2', 4, 6] },
     { kind: 'tower', x: 19, y: 20, w: 7, h: 5, door: 3, to: ['clockTower1', 8, 20], need: 'towerOpen', msg: '鐘塔的大門緊緊關著。門上有兩個齒輪形狀的凹槽……\n（需要兩個「時之齒輪」）' },
   ],
-  signs: { '12,9': '「王都艾爾德蘭」\n曙光王國的首都。北邊是王城。', '15,26': '「→ 曙光鐘塔」「← 金穗平原」\n「↓ 北方街道」「↗ 霜語雪原（需要通行證）」' },
+  signs: { '12,9': '「王都艾爾德蘭」\n艾爾迪亞王國的首都。北邊是王城。', '15,26': '「→ 曙光鐘塔」「← 金穗平原」\n「↓ 北方街道」「↗ 霜語雪原（需要通行證）」' },
   edgeWarps: [
     { dir: 'left', at: [25], to: ['goldPlains', 22, 25, 'left'] },
     { dir: 'down', at: [13, 14], to: ['northRoad', 10, 1, 'down'] },
@@ -10019,7 +10019,7 @@ Object.assign(Events, {
     const st = Game.st, f = st.flags, n = ch2();
     if (n <= 2) { yield* sayAll(['你來了！國王陛下在王城等你。', '沿著大道一直往北走就是王城。']); return; }
     if (!f.liaQuest) { f.liaQuest = 1; yield* sayAll(['對了，北方街道的盜賊……', '他們的頭目「黑羽」就躲在街道西側的樹林裡，騎士團一直抓不到他。', '如果你遇到他……不，你一定打得贏的！']); return; }
-    if (f.blackFeather && f.liaQuest === 1) { f.liaQuest = 2; yield* sayAll(['你打倒黑羽了！？', '騎士團長知道了一定會嚇一跳……這是我的一點心意。']); st.bag.megaPotion = (st.bag.megaPotion || 0) + 3; st.bag.tpBook = (st.bag.tpBook || 0) + 1; yield* itemGet(st.name + '得到了特級傷藥×3和天賦之書！'); return; }
+    if (f.blackFeather && f.liaQuest === 1) { f.liaQuest = 2; yield* sayAll(['你打倒黑羽了！？', '國王陛下知道了一定會嚇一跳……這是我的一點心意。']); st.bag.megaPotion = (st.bag.megaPotion || 0) + 3; st.bag.tpBook = (st.bag.tpBook || 0) + 1; yield* itemGet(st.name + '得到了特級傷藥×3和天賦之書！'); return; }
     if (f.captainQ === 1) { f.captainQ = 2; yield* sayAll(['……黯滅騎士長？', '……那是我的父親。五年前在北境失蹤的騎士團長。', '謝謝你……讓他解脫了。', '這把劍……你留著吧。父親一定也希望它繼續守護別人。']); st.bag.elixir = (st.bag.elixir || 0) + 3; yield* itemGet(st.name + '得到了萬靈藥×3！'); return; }
     yield* say(n < 4 ? '齒輪的事，鐘錶師艾德會告訴你。他的店在王城的東邊。' : n === 4 ? '鐘塔的門開了！鐘樓就交給你了！' : n < 9 ? '宰相竟然是叛徒……北方一定要小心！' : '謝謝你，勇者。'); },
   *capKid() { yield* say(ch2() >= 10 ? '鐘響了！我聽到了！' : '我長大要當騎士！像莉婭姊姊一樣！'); },
@@ -10471,7 +10471,7 @@ Object.assign(MOVES, {
   heroicFinale: { n: '英雄終曲', t: '一般', cat: '特', pow: 80, acc: 100, pp: 5, buffScale: 1, d: '獻給英雄的終曲。自己每有一級能力提升，威力就提高25%（最高2.5倍）。' },
   turret: { n: '設置砲台', t: '一般', cat: '變', pp: 10, stat: null, turret: 3, d: '在身邊設置自動砲台。3回合內，每回合結束時砲台會自動射擊。（Lv越高越久、越痛）' },
   taser: { n: '電擊槍', t: '雷', cat: '物', pow: 60, acc: 100, pp: 15, eff: { st: 'par', p: 30 }, d: '射出電擊的機關槍。30%讓對手麻痺。' },
-  clockBomb: { n: '發條炸彈', t: '一般', cat: '物', pow: 80, acc: 95, pp: 10, shieldHit: 2, d: '丟出會爆炸的發條炸彈。【破盾】額外削減2點護盾。' },
+  clockBomb: { n: '發條炸彈', t: '一般', cat: '物', pow: 80, acc: 95, pp: 10, shieldHit: 2, d: '丟出會爆炸的發條炸彈。30% 讓對手物防−1。' },
   steamJet: { n: '蒸汽噴射', t: '水', cat: '物', pow: 70, acc: 100, pp: 15, d: '從機關噴出高壓蒸汽。會讓對手全身濕透。' },
   overdrive: { n: '超頻運轉', t: '一般', cat: '變', pp: 10, stat: { who: 'self', spe: 2, atk: 1 }, d: '讓全身的機關全速運轉。大幅提升速度，提升物攻。' },
   repair: { n: '緊急修理', t: '一般', cat: '變', pp: 10, heal: 0.3, shield: 2, d: '用工具修補傷口和裝備。恢復30%HP，並獲得2回合護盾。' },
@@ -10597,7 +10597,7 @@ Object.assign(Events, {
     const st = Game.st, f = st.flags;
     if (f.clsBard) { yield* say('歌聲是最溫柔的武器。去公會轉職吧，我的學生。'); return; }
     if (!f.bardQ) { if (ch2() < 3) { yield* say('歡迎來到吟遊詩人公會。……今天沒有演出喔。'); return; } f.bardQ = 1; yield* sayAll(['……你就是那位異界的勇者？', '我是詩人公會長蕾菈。我們公會代代相傳的「勇者之歌」的樂譜，前幾天被溝鼠叼進地下水道了……', '如果你找得到，我就把詩人的歌——「吟遊詩人」的道路傳授給你。']); return; }
-    if (st.bag.lostScore) { delete st.bag.lostScore; f.clsBard = 1; Sound.jingle('item'); yield* sayAll(['這就是……勇者之歌的樂譜！', '（蕾菈輕輕地哼起了旋律。）', '……五百年前，初代勇者的同伴裡，也有一位吟遊詩人。', '你有資格走上這條路了。到冒險者公會找公會長轉職吧。']); yield* itemGet('解鎖了上級職業「吟遊詩人」！'); return; }
+    if (st.bag.lostScore) { delete st.bag.lostScore; f.clsBard = 1; Sound.jingle('item'); yield* sayAll(['這就是……勇者之歌的樂譜！', '（蕾菈輕輕地哼起了旋律。）', '……五百年前，初代勇者的曙光軍裡，也有一位吟遊詩人。', '你有資格走上這條路了。到冒險者公會找公會長轉職吧。']); yield* itemGet('解鎖了上級職業「吟遊詩人」！'); return; }
     yield* say('樂譜應該掉在地下水道的某個角落……拜託你了。');
   },
   *hallGuest() { yield* say('蕾菈大人的歌聲，連魔物聽了都會停下來呢。'); },
@@ -10897,7 +10897,7 @@ const WPASS = { // passive keys: name suffix + text
   crit: ['鋒芒', v => '會心率+' + v + '%'], hit: ['精準', v => '命中+' + v + '%'], eva: ['輕盈', v => '迴避+' + v + '%'], drain: ['嗜血', v => '造成傷害的' + v + '%回復HP'],
   elem: ['元素', v => '屬性攻擊傷害+' + v + '%'], fireUp: ['炎心', v => '火屬性傷害+' + v + '%'], boltUp: ['雷心', v => '雷屬性傷害+' + v + '%'], spe: ['疾行', v => '速度+' + v],
   mpRegen: ['魔泉', v => '每回合回復' + v + '%最大MP'], regen: ['生機', () => '每回合回復6%最大HP'], venomEdge: ['毒牙', () => '物理攻擊20%機率讓對手中毒'], pierceT: ['破甲', v => '物理攻擊無視對手' + v + '%的物防'],
-  weakUp: ['看破', v => '打中弱點時傷害+' + v + '%'], bigUp: ['屠巨', v => '對精英・頭目傷害+' + v + '%'], mpSave: ['節能', v => '技能有' + v + '%機率不消耗MP'], magCrit: ['奧秘', v => '魔法攻擊會心率+' + v + '%'],
+  weakUp: ['看破', v => '打中弱點時傷害+' + v + '%'], bigUp: ['屠巨', v => '對菁英・頭目傷害+' + v + '%'], mpSave: ['節能', v => '技能有' + v + '%機率不消耗MP'], magCrit: ['奧秘', v => '魔法攻擊會心率+' + v + '%'],
   counter: ['反擊', () => '選擇防禦時被攻擊會立刻反擊'], guardPlus: ['堅守', () => '選擇防禦時再減傷30%'], statusRes: ['淨心', v => '更不容易陷入異常狀態（' + v + '%）'], first: ['先制', () => '每場戰鬥第一回合必定先出手'],
   double: ['連擊', () => '物理攻擊25%機率追加一擊'], thorns: ['荊棘', () => '受到攻擊時反彈25%傷害'], atkMp: ['汲魔', v => '普通攻擊多回復' + v + '點MP'], chargeCut: ['蓄勢', v => '特技所需層數-' + v],
   healUp: ['慈光', v => '治癒效果+' + v + '%'], critDmg: ['致命', v => '會心傷害+' + v + '%'], hpP: ['強健', v => '最大HP+' + v + '%'], defP: ['堅甲', v => '物防+' + v + '%'], atkP: ['剛力', v => '物攻+' + v + '%'], spaP: ['靈力', v => '魔攻+' + v + '%'],
@@ -11023,7 +11023,7 @@ const clsV7 = c => V7_OLD[c] || (CT[c] ? c : 'swordsman');
 const FX_TXT = { first: '每場戰鬥第一回合必定先出手', regen: '每回合回復6%最大HP', double: '物理攻擊25%機率追加一擊', thorns: '受到攻擊時反彈25%傷害', guardHeal: '選擇防禦時回復15%最大HP', lastStand: 'HP越低傷害越高（最多+50%）', freeCast: '技能有30%機率不消耗MP', stormMark: '攻擊時15%機率讓對手麻痺', arcaneSurge: 'MP在一半以上時魔法傷害+15%', fervor: '每次攻擊物攻或魔攻提升1階（每場最多3次）', pierce: '物理攻擊無視對手30%的物防', wisdom: '獲得的經驗值+50%' };
 const TK_TXT = { hpP: v => '最大HP+' + v + '%', atkP: v => '物攻+' + v + '%', defP: v => '物防+' + v + '%', spaP: v => '魔攻+' + v + '%', spdP: v => '魔防+' + v + '%', speP: v => '速度+' + v + '%', mpP: v => '最大MP+' + v + '%',
   crit: v => '會心率+' + v + '%', eva: v => '迴避+' + v + '%', hit: v => '命中+' + v + '%', drain: v => '造成傷害的' + v + '%回復HP', elem: v => '屬性攻擊傷害+' + v + '%', fireUp: v => '火屬性傷害+' + v + '%', boltUp: v => '雷屬性傷害+' + v + '%',
-  pierceT: v => '物理攻擊無視' + v + '%物防', shieldChip: v => v + '%機率額外削減1點護盾', statusRes: v => '異常狀態抗性+' + v + '%', guardPlus: () => '選擇防禦時再減傷30%', weakUp: v => '打中弱點傷害+' + v + '%', bigUp: v => '對精英・頭目傷害+' + v + '%',
+  pierceT: v => '物理攻擊無視' + v + '%物防', shieldChip: v => v + '%機率額外削減1點護盾', statusRes: v => '異常狀態抗性+' + v + '%', guardPlus: () => '選擇防禦時再減傷30%', weakUp: v => '打中弱點傷害+' + v + '%', bigUp: v => '對菁英・頭目傷害+' + v + '%',
   mpSave: v => '技能' + v + '%機率不消耗MP', magCrit: v => '魔法攻擊會心率+' + v + '%', elemRes: v => '受到的屬性傷害-' + v + '%', endureT: () => '每場戰鬥一次，受到致命傷害時保留1HP', mpRegen: v => '每回合回復' + v + '%最大MP',
   venomEdge: () => '物理攻擊20%機率讓對手中毒', venomous: v => '對中毒的對手傷害+' + v + '%', assassin: () => '每場戰鬥第1回合的攻擊必定會心', shadowStep: () => '閃過攻擊後立刻反擊（70%傷害）', rage: () => 'HP低於一半時傷害+30%',
   spellblade: () => '物攻與魔攻互相加成45%', counter: () => '選擇防禦時被攻擊會立刻反擊', atkUp: v => '普通攻擊傷害+' + v + '%', actUp: v => '武器主動技能傷害+' + v + '%', subUp: v => '副武器借用技能傷害+' + v + '%', spcUp: v => '特技傷害+' + v + '%',
@@ -11225,7 +11225,7 @@ function bpTut() { const st = Game.st; if (st.flags.bpTut) return null; st.flags
     const r = yield* _v.call(this), st = Game.st, F = this.F, sp = SPECIES[F.sp] || {};
     if (!F.elite && !F.boss && sp.mat && chance(0.35)) { st.bag[sp.mat] = (st.bag[sp.mat] || 0) + 1; yield* this.msg('又撿到了素材「' + ITEMS[sp.mat].n + '」！', { hold: 24 }); }
     if ((F.elite || F.boss) && !this.cfg.noMats) { const n = F.boss ? 3 : 2, got = {}, sig = sp.mat && ITEMS[sp.mat] ? sp.mat : null; if (sig) { got[sig] = n; st.bag[sig] = (st.bag[sig] || 0) + n; } const ex = areaMats(Game.ow && Game.ow.map && Game.ow.map.id, n, F.lv); for (const k in ex) got[k] = (got[k] || 0) + ex[k];
-      Sound.sfx('item'); yield* this.msg((F.boss ? '頭目' : '精英') + '留下了素材：' + matsText(got) + '！', { hold: 36 }); }
+      Sound.sfx('item'); yield* this.msg((F.boss ? '頭目' : '菁英') + '留下了素材：' + matsText(got) + '！', { hold: 36 }); }
     return r;
   };
 }
@@ -11312,7 +11312,7 @@ function* forgeFlow(k) {
   const opts = [], acts = [];
   for (let lv = 0; lv < 3; lv++) { opts.push(BP_LV[lv].slice(0, 2) + '×' + (lv + 1) + ' ' + oddsT(lv) + (bpCan(k, lv) ? '' : '✕')); acts.push(lv); }
   opts.push('取消'); acts.push(null);
-  const r = yield* ask('要怎麼打造「' + B.n + '」？\n素材投入越多，紅金的機率(%)越高。', opts); const lv = acts[r];
+  const r = yield* ask('要怎麼打造「' + B.n + '」？\n素材投入越多，紅金的機率（%）越高。', opts); const lv = acts[r];
   if (lv === null || lv === undefined || r < 0) return;
   let q;
   { if (!bpCan(k, lv)) { Sound.sfx('bump'); yield* say(missingText(bpCost(k, lv))); return; } const c = bpCost(k, lv); st.money -= c.gold; for (const i in c.mats) st.bag[i] -= c.mats[i]; q = bpRoll(lv); }
@@ -11406,7 +11406,7 @@ function* skillTreeScreen() {
 }
 { const _pt = drawPassiveTile; drawPassiveTile = function (x, st, X, Y, on) { _pt(x, st, X, Y, on); }; }
 BATTLE_HELP.unshift(['武器技能', ['每把武器帶著1個技能：裝備就能用，用滿 6／10／14 次（看冷卻長短）就永久學會，換了武器也能用。',
-  '武器還有被動和「特技」：普通攻擊累積層數，滿了就在下一次攻擊或技能時發動（戰鬥畫面右下角的◆）。',
+  '武器還有被動和「特技」：普通攻擊累積層數，滿了就自動發動（戰鬥畫面右下角的◆）。',
   '普通攻擊不花MP，命中時回復最大MP的12%；技能用完要冷卻，冷卻中就用普攻回MP。短刀、拳套的普攻是 2 段；每種武器的普攻各有特色（裝備的詳情會寫）。',
   '職業有擅長的武器種類：普攻和特技威力 +10%。']]);
 { const _ng = newGameState; newGameState = function (...a) { const st = _ng.apply(this, a); if (st) { st.skV = 5; st.ct = {}; st.bp = {}; st.bpT = {}; st.skills = {}; st.skp = 0; st.tp = 0; } return st; }; }
@@ -11823,7 +11823,7 @@ function* dexDetail(list, idx) {
     const cp = typeof dexPortrait === 'function' && dexPortrait(k); x.imageSmoothingEnabled = false;
     if (cp) { const q = Math.min(1, 64 / cp.width, 64 / cp.height), pw = Math.round(cp.width * q), ph = Math.round(cp.height * q); x.drawImage(cp, Math.round(40 - pw / 2), 94 - ph, pw, ph); }
     else { const im = battleSprite(k); x.drawImage(im, 0, 0, im.width, im.height, 8, 27, 64, 64); }
-    famBadge(x, sp.fam, 82, 26, 38); Font.draw(x, sp.rare ? '稀有' : sp.boss ? '頭目' : sp.elite ? '精英' : '野生', 124, 24, sp.rare ? '#ffd84a' : sp.boss ? UIC.bad : sp.elite ? UIC.warm : UIC.muted, UIC.textSh, 10);
+    famBadge(x, sp.fam, 82, 26, 38); Font.draw(x, sp.rare ? '稀有' : sp.boss ? '頭目' : sp.elite ? '菁英' : '野生', 124, 24, sp.rare ? '#ffd84a' : sp.boss ? UIC.bad : sp.elite ? UIC.warm : UIC.muted, UIC.textSh, 10);
     Font.draw(x, famLine(sp.fam), 82, 40, UIC.warm, UIC.textSh, 9);
     Font.draw(x, '擊敗 ' + (e.won || 0) + ' 次', 82, 52, UIC.text, UIC.textSh, 9);
     Font.wrap('出沒：' + (info.places.length ? info.places.slice(0, 3).join('、') : '—'), 90, 9).slice(0, 3).forEach((l, i) => Font.draw(x, l, 82, 64 + i * 11, UIC.muted, UIC.textSh, 9));
@@ -11842,7 +11842,7 @@ function* dexDetail(list, idx) {
       else L.push(['素材：' + (mat ? mat + '（35%）' : '—'), UIC.text]);
       for (const s of info.sigs) L.push(['首次擊敗：「' + GEAR[s.g].n + '」設計圖＋紅色打造券' + (s.got ? '（已取得）' : ''), s.got ? UIC.muted : UIC.warm]);
       if (info.re.length) L.push(['再戰掉落（設計圖或打造券，隨機一種）：' + info.re.map(g => GEAR[g].n).join('、'), '#c8b0ff']);
-      if (!info.big && !info.re.length) L.push(['普通魔物不會掉裝備。裝備靠精英・頭目的設計圖打造。', UIC.muted]);
+      if (!info.big && !info.re.length) L.push(['普通魔物不會掉裝備。裝備靠菁英・頭目的設計圖打造。', UIC.muted]);
       let Y = 127; for (const [t, c] of L) for (const l of Font.wrap(t, 156, 9)) { if (Y > 222) break; Font.draw(x, l, 10, Y, c, UIC.textSh, 9); Y += 11; }
     }
     Font.draw(x, '←→分頁　↑↓換魔物', 6, 239, UIC.muted, UIC.textSh, 9);
@@ -11875,7 +11875,7 @@ dexScreen = function* () {
     drawWin(x, 4, 164, 168, 88, 'menu'); const k = list[idx];
     if (seen(k)) { const cp = typeof dexPortrait === 'function' && dexPortrait(k); x.imageSmoothingEnabled = false;
       if (cp) { const q = Math.min(1, 72 / cp.width, 72 / cp.height), pw = Math.round(cp.width * q), ph = Math.round(cp.height * q); x.drawImage(cp, Math.round(44 - pw / 2), 244 - ph, pw, ph); } else { const im = battleSprite(k); x.drawImage(im, 0, 0, im.width, im.height, 8, 172, 72, 72); }
-      const sp = SPECIES[k]; famBadge(x, sp.fam, 86, 170, 38); Font.draw(x, sp.rare ? '稀有' : sp.elite ? '精英' : sp.boss ? '頭目' : '野生', 128, 168, sp.rare ? '#ffd84a' : sp.boss ? UIC.bad : sp.elite ? UIC.warm : UIC.muted, UIC.textSh);
+      const sp = SPECIES[k]; famBadge(x, sp.fam, 86, 170, 38); Font.draw(x, sp.rare ? '稀有' : sp.elite ? '菁英' : sp.boss ? '頭目' : '野生', 128, 168, sp.rare ? '#ffd84a' : sp.boss ? UIC.bad : sp.elite ? UIC.warm : UIC.muted, UIC.textSh);
       Font.draw(x, famLine(sp.fam), 86, 184, UIC.warm, UIC.textSh, 10); drawFitText(x, sp.dex || '', 86, 198, 82, 40, 11); /* v12.0.1: shrink instead of cutting the third line */
       drawBtn(x, 106, 230, 62, 16, true); Font.drawC(x, 'A：詳細資料', 137, 230, UIC.accent, UIC.textSh, 9); touchRegion(4, 164, 168, 88, () => tapKey('a')); }
     else Font.draw(x, '還沒有遇見過這種魔物。', 14, 170, UIC.muted, UIC.textSh);
@@ -11937,7 +11937,7 @@ const QUEST_GEAR = {
   qScholarLens: ['學者的單片眼鏡', 4, { spa: 6, spd: 4 }, {}, ['freeCast'], '看得見魔力流動的古董眼鏡。'],
   qGraveBell: ['鎮魂鈴', 4, { hp: 12, spd: 6 }, {}, ['endure'], '讓亡魂安息的小鈴鐺。'],
   qLakeScale: ['湖神鱗片', 5, { hp: 18, def: 4 }, {}, ['thorns'], '銀月湖守護神脫落的鱗片。'],
-  qDesertRose: ['沙漠玫瑰', 5, { atk: 6, spe: 3 }, {}, ['double'], '只在砂漠深處綻放的石之花。'],
+  qDesertRose: ['沙漠玫瑰', 5, { atk: 6, spe: 3 }, {}, ['double'], '只在沙漠深處綻放的石之花。'],
   qGuildSeal: ['公會的印信', 6, { hp: 15, atk: 5, spa: 5 }, {}, ['fervor'], '冒險者公會認可的證明。'],
   qSnowFang: ['雪狼之牙', 6, { atk: 8 }, { crit: 5 }, ['lastStand'], '雪原狼王的獠牙，握著就熱血沸騰。'],
   qStarCompass: ['星之羅盤', 7, { spe: 6, spa: 6, spd: 5 }, {}, ['fortune'], '指針永遠指向星墜之地。'],
@@ -12006,7 +12006,7 @@ if (MAPS.smithy) { MAP_TYPES.smithy = '室內'; MAPS.smithy.type = '室內'; }
 Object.assign(MOVES, {
   m_millGrind: { n: '碾石', t: '一般', cat: '物', pow: 55, acc: 95, pp: 10, d: '用巨大的磨石輾過來。' },
   m_blackGust: { n: '黑風', t: '飛', cat: '特', pow: 45, acc: 95, pp: 10, d: '夾著瘴氣的黑色旋風。' },
-  m_millStorm: { n: '逆轉大風車', t: '飛', cat: '特', pow: 85, acc: 100, pp: 5, charge: 1, chargeMsg: '磨石越轉越快，黑色的旋風把整座山丘捲了起來！', warn: '（這一擊很重！先防禦！）', d: '把整座丘陵的風逆轉過來的大技。' },
+  m_millStorm: { n: '逆轉大風車', t: '飛', cat: '特', pow: 85, acc: 100, pp: 5, charge: 1, chargeMsg: '身上的磨石越轉越快，黑色的旋風把整座山丘捲了起來！', warn: '（這一擊很重！先防禦！）', d: '把整座丘陵的風逆轉過來的大技。' },
   m_whiskerLash: { n: '鬚鞭', t: '水', cat: '物', pow: 55, acc: 95, pp: 10, d: '用粗大的鬍鬚抽打。' },
   m_blackTide: { n: '黑色濁流', t: '水', cat: '特', pow: 80, acc: 100, pp: 5, charge: 1, chargeMsg: '潭水變成黑色的漩渦，整條溪倒捲了起來！', warn: '（濁流要衝過來了！先防禦！）', d: '把整座水潭化成濁流的大技。' },
 });
@@ -12131,7 +12131,7 @@ const npcOf = (ow, id) => ow && ow.npcs.find(n => n.id === id);
 const v8Gate = st => !!st.v8new && st.flags.license && (st.flags.hillsQ || 0) < 2;
 function* hillsIntro() {
   const st = Game.st, f = st.flags; f.hillsQ = 1;
-  yield* sayAll(['……說到這個。', '東邊風車丘陵的磨坊主人漢斯，已經三天沒來送麵粉了。', '丘陵上的風車，從前天起就一動也不動……聽說夜裡還冒出了黑色的霧。',
+  yield* sayAll(['……對了。', '東邊風車丘陵的磨坊主人漢斯，已經三天沒來送麵粉了。', '丘陵上的風車，從前天起就一動也不動……聽說夜裡還冒出了黑色的霧。',
     st.lv >= 10 ? '以你現在的本事應該不成問題。去看看吧，從鎮上的東邊出去就是了。' : '那裡的魔物不算強，正好讓你練練手。從鎮上的東邊出去就是了。']);
   if (st.v8new && st.lv < 8) yield* say('（晨霧道路北邊的魔物還太強。先去風車丘陵吧。）');
 }
@@ -12208,7 +12208,7 @@ Object.assign(Events, {
     yield* blackText(['「……唔……」', '漢斯醒過來了。']);
     yield* sayAll(['漢斯：「……你是？是你……救了我？」', '漢斯：「那天晚上，我看到磨石上有一道黑光……一碰到它，就什麼都不記得了。」']);
     yield* say('諾拉：「爸爸——！」');
-    yield* sayAll(['諾拉緊緊抱住了漢斯。', '漢斯：「讓妳擔心了……謝謝你，異界來的冒險者。」', '漢斯：「我們家就在山下。以後累了就來休息，床隨時借你。」']);
+    yield* sayAll(['諾拉緊緊抱住了漢斯。', '漢斯：「讓妳擔心了……謝謝你，異界來的冒險者。」', '漢斯：「我們家就在山下。以後累了就來休息，床隨時借你。」', '漢斯：「……對了。那顆磨石發光的時候，就是要使出大招了。看到發光，就先擋住。」']);
     f.hillsQ = 2; st.money += 500; st.bag.potion = (st.bag.potion || 0) + 3; if (f.noraWith === 1) st.bag.superPotion = (st.bag.superPotion || 0) + 2;
     yield* itemGet('得到了500 G和傷藥×3' + (f.noraWith === 1 ? '，諾拉也送了好傷藥×2' : '') + '！');
     yield* say('（目標：把黑色結晶拿給村長看。晨霧道路北邊也可以去了。）');
@@ -12315,9 +12315,9 @@ for (const sp in V81_MON) { const P = MON_PANEL[sp]; if (!P) continue; const [h,
 MOVES.m_eruption.eff = { st: 'brn', p: 30 };
 const V81_GOLD = lv => lv < 18 ? 1 : Math.max(0.4, 1 - (lv - 18) * 0.035);
 Object.assign(MOVES, {
-  m_mapleStorm: { n: '紅葉風暴', t: '飛', cat: '特', pow: 85, acc: 100, pp: 5, charge: 1, chargeMsg: '鹿王仰天長嘯，整片楓林的紅葉都捲了起來！', warn: '（紅葉風暴要來了！先防禦！）', d: '捲起整片楓林的大技。' },
+  m_mapleStorm: { n: '紅葉風暴', t: '飛', cat: '特', pow: 85, acc: 100, pp: 5, charge: 1, chargeMsg: '仰天長嘯，整片楓林的紅葉都捲了起來！', warn: '（紅葉風暴要來了！先防禦！）', d: '捲起整片楓林的大技。' },
   m_crystalHorn: { n: '晶角突刺', t: '一般', cat: '物', pow: 70, acc: 95, pp: 10, d: '用嵌著黑色結晶的鹿角刺過來。' },
-  m_legionCharge: { n: '亡軍突擊', t: '一般', cat: '物', pow: 90, acc: 100, pp: 5, charge: 1, chargeMsg: '戰將舉起斷掉的軍旗……四周的亡靈士兵一起吶喊了起來！', warn: '（亡軍要衝過來了！先防禦！）', d: '率領亡靈大軍的衝鋒。' },
+  m_legionCharge: { n: '亡軍突擊', t: '一般', cat: '物', pow: 90, acc: 100, pp: 5, charge: 1, chargeMsg: '舉起斷掉的軍旗……四周的亡靈士兵一起吶喊了起來！', warn: '（亡軍要衝過來了！先防禦！）', d: '率領亡靈大軍的衝鋒。' },
 });
 for (const [k, fx, c] of [['m_mapleStorm', 'm_featherStorm', 'charge'], ['m_crystalHorn', 'm_hornCharge', 'strike'], ['m_legionCharge', 'm_spearRush', 'charge']]) {
   Object.assign(MOVES[k], { cls: c, fx, foe: 1 }); (MON_CLASS[c] || (MON_CLASS[c] = [])).push(k);
@@ -12588,8 +12588,8 @@ Ch2EndingScene.prototype.draw = function (x) {
   const st = Game.st, f = st.flags, mins = Math.floor((st.time || 0) / 3600);
   const lines = [['曙光冒險', 'big'], ['終幕「曙光之鐘」', 'sub'], [''], ['五十年來停止的鐘，'], ['再一次響起。'], [''], ['影將莫爾德'], ['消失在北境的黑暗裡，'], ['但他留下了一句話——'], ['「魔王大人'], ['很快就會醒來。」'], [''],
     ['萌芽鎮的風車，'], ['今天也在轉。'], ...(f.noraBread ? [['諾拉的麵包店'], ['在王都開張了。']] : [['諾拉說，下次'], ['要去王都賣麵粉。']]), ...(f.grenTrust ? [['格倫當上了'], ['關道驛站的站長。']] : [['楓紅關道的驛站'], ['重新蓋好了。']]), ['莉婭成為了'], ['正式的騎士。'], [''],
-    ['剩下的三將——'], ['東方的海、'], ['南方的沙漠、'], ['天空之上。'], ['還有，'], ['異界之門的另一邊。'], ...(f.homeChoice === 0 ? [['門的另一邊，'], ['有人在等你回家。']] : f.homeChoice === 1 ? [['不過，你已經'], ['找到了新的家。']] : []), [''], ['曙光的旅程，'], ['還沒有結束。'], [''], ['— 冒險記錄 —', 'sub'], ['旅人　' + st.name], ['等級　Lv' + st.lv], ['世界的記載　' + loreCount(st) + '／' + LORE.length],
-    ['遊玩時間　' + Math.floor(mins / 60) + '小時' + (mins % 60) + '分'], [''], ['第三章　製作中', 'sub'], ['（之後的冒險會繼續更新）', 'sub'], [''], ['按A繼續冒險', 'hint']];
+    ['剩下的三將——'], ['東方的海、'], ['南方的沙漠、'], ['天空之上。'], ['還有，'], ['異界之門的另一邊。'], ...(f.homeChoice === 0 ? [['門的另一邊，'], ['有人在等你回家。']] : f.homeChoice === 1 ? [['不過，你已經'], ['找到了新的家。']] : []), [''], ['曙光的旅程，'], ['還沒有結束。'], [''], ['— 冒險記錄 —', 'sub'], ['旅人　' + st.name], ['等級　Lv' + st.lv], ['世界的記載　' + loreCount(st) + '／' + loreTotal()],
+    ['遊玩時間　' + Math.floor(mins / 60) + '小時' + (mins % 60) + '分'], [''], ['第一季　完', 'sub'], ['第三章　製作中', 'sub'], ['（之後的冒險會繼續更新）', 'sub'], [''], ['按A繼續冒險', 'hint']];
   let yy = H + 10 - this.y; this.maxY = H + 10 + lines.length * 18 - 230;
   for (const [s, k] of lines) {
     if (k === 'big') { if (!this.logo) this.logo = makeLogo(s, 2); x.drawImage(this.logo, Math.round(W / 2 - this.logo.width / 2), yy - 8); yy += 36; continue; }
@@ -12616,7 +12616,8 @@ const LORE = [
   ['emberPass', '龍族的盟約', ['五百年前，龍族和初代勇者訂下了盟約。', '龍族把「火之印」交給人類，約好只要鐘還在響，就不會離開這座火山。', '鐘停了之後，年輕的龍就再也不聽長老的話了。']],
   ['starShrine', '初代勇者的星圖', ['星見神殿的天頂，畫著一張星圖。', '星圖的角落有一行小字，是這個世界沒有的文字。', '……你讀得懂。那是你故鄉的文字。', '「如果有下一個人來到這裡——門的鑰匙，在四將的心裡。」']],
 ];
-const loreCount = (st = Game.st) => Object.keys(st.lore || {}).length;
+const LORE_CLOSED = m => m === 'starShrine', loreTotal = () => LORE.filter(l => !LORE_CLOSED(l[0])).length;
+const loreCount = (st = Game.st) => Object.keys(st.lore || {}).filter(i => LORE[i] && !LORE_CLOSED(LORE[i][0])).length;
 { // place each stone on a free ground tile near the map's first sign (or its centre): never on paths, doors, NPCs or corridors
   const free = (M, x, y) => { if (!M.rows[y] || M.rows[y][x] !== '.') return false; const k = x + ',' + y;
     if ((M.signs || {})[k] || (M.npcs || []).some(n => n.x === x && n.y === y) || (M.items || []).some(n => n.x === x && n.y === y) || (M.triggers || []).some(n => n.x === x && n.y === y) || (M.gathers || []).some(n => n.x === x && n.y === y) || (M.elites || []).some(n => n.x === x && n.y === y)) return false;
@@ -12636,19 +12637,19 @@ const loreCount = (st = Game.st) => Object.keys(st.lore || {}).length;
 function* readLore(i) {
   const st = Game.st, [, t, lines] = LORE[i], L = st.lore || (st.lore = {}), first = !L[i];
   yield* say('刻著古老文字的「記載之石」。\n——「' + t + '」'); yield* sayAll(lines);
-  if (first) { L[i] = 1; Sound.jingle('item'); yield* itemGet('「' + t + '」記在了冒險手記裡！（' + loreCount(st) + '／' + LORE.length + '）');
-    if (loreCount(st) === LORE.length) { st.bag.tpBook = (st.bag.tpBook || 0) + 1; yield* itemGet('世界的記載全部讀完了！得到了天賦之書！'); } }
+  if (first) { L[i] = 1; Sound.jingle('item'); yield* itemGet('「' + t + '」記在了冒險手記裡！（' + loreCount(st) + '／' + loreTotal() + '）');
+    if (loreCount(st) === loreTotal()) { st.bag.tpBook = (st.bag.tpBook || 0) + 1; yield* itemGet('世界的記載全部讀完了！得到了天賦之書！'); } }
 }
 function* loreScreen() {
   const st = Game.st, have = LORE.map((l, i) => i).filter(i => (st.lore || {})[i]);
   if (!have.length) { yield* say('還沒有讀過任何「記載之石」。\n（各地的石碑上，記載著這個世界的歷史）'); return; }
   let idx = 0; while (true) {
-    const r = yield* ask('世界的記載（' + have.length + '／' + LORE.length + '）', have.map(i => LORE[i][1]).concat(['關閉']), { index: idx }); if (r < 0 || r >= have.length) return; idx = r;
+    const r = yield* ask('世界的記載（' + have.length + '／' + loreTotal() + '）', have.map(i => LORE[i][1]).concat(['關閉']), { index: idx }); if (r < 0 || r >= have.length) return; idx = r;
     yield* sayAll(LORE[have[r]][2]);
   }
 }
 { const _rs = recordScreen; recordScreen = function* () { const r = yield* ask('要看什麼？', ['地圖・成就・稱號', '世界的記載', '對話紀錄']); if (r === 0) yield* _rs(); else if (r === 1) yield* loreScreen(); else if (r === 2) yield* dlgLogScreen(); }; }
-if (typeof ACHIEVEMENTS !== 'undefined') ACHIEVEMENTS.push({ id: 'loreAll', n: '世界的記錄者', d: '讀完所有的「記載之石」。', cat: '探索', ok: st => loreCount(st) >= LORE.length });
+if (typeof ACHIEVEMENTS !== 'undefined') ACHIEVEMENTS.push({ id: 'loreAll', n: '世界的記錄者', d: '讀完所有的「記載之石」。', cat: '探索', ok: st => loreCount(st) >= loreTotal() });
 { const _k = Events.king; Events.king = function* (ow) {
     const st = Game.st, f = st.flags, n0 = ch2(), pass0 = !!f.northPass;
     yield* _k.call(this, ow);
@@ -12672,7 +12673,7 @@ if (typeof ACHIEVEMENTS !== 'undefined') ACHIEVEMENTS.push({ id: 'loreAll', n: '
     st.bag.megaPotion = (st.bag.megaPotion || 0) + 2; st.bag.megaEther = (st.bag.megaEther || 0) + 1; yield* itemGet('得到了特級傷藥×2和特大魔力水！');
   };
 }
-ITEMS.noraBread = { n: '諾拉的麵包', cat: '回復', price: 0, sell: 50, d: '諾拉用金穗平原的麥子烤的麵包。恢復150點HP，還有一點點MP。', use: 'heal', v: 150 };
+ITEMS.noraBread = { n: '諾拉的麵包', cat: '回復', price: 0, sell: 50, d: '諾拉用金穗平原的麥子烤的麵包。恢復150點HP。', use: 'heal', v: 150 };
 { const M = MAPS.capital, want = [[10, 13], [8, 12], [11, 14], [13, 12]]; let spot = null;
   for (const [x, y] of want) if (M.rows[y] && M.rows[y][x] === '.' && !(M.npcs || []).some(n => n.x === x && n.y === y) && !(M.buildings || []).some(b => x >= b.x && x < b.x + b.w && y >= b.y && y <= b.y + b.h)) { spot = [x, y]; break; }
   if (spot) M.npcs.push({ id: 'noraCap', x: spot[0], y: spot[1], dir: 'down', look: 'girl', name: '諾拉', show: st => st.flags.creekQ === 3 && ch2(st) >= 3 });
@@ -12813,7 +12814,7 @@ Events.liaFort = function* () {
   const st = Game.st, f = st.flags;
   if (!f.liaFort1) {
     f.liaFort1 = 1;
-    yield* sayAll(['莉婭：「……終於追上你了。」', '莉婭：「騎士團長命令我守住這裡——勇者的退路，由我來保護。」', '莉婭：「還有……要塞裡有一個穿著騎士團鎧甲的人。」',
+    yield* sayAll(['莉婭：「……終於追上你了。」', '莉婭：「國王陛下命令我守住這裡——勇者的退路，由我來保護。」', '莉婭：「還有……要塞裡有一個穿著騎士團鎧甲的人。」',
       '莉婭：「五年前在北境失蹤的騎士團長……是我的父親。」', '莉婭：「如果真的是他……拜託你，讓他解脫吧。」']);
   } else yield* say(f.duskCaptain ? '莉婭：「……父親終於可以休息了。謝謝你。」' : '莉婭：「受傷了就回來。我會一直在這裡。」');
   yield* healRitual('莉婭用騎士團的急救包幫你包紮，體力完全恢復了！');
@@ -12861,12 +12862,12 @@ function* bondParty() {
   yield* sayAll(['格倫：「……麵包？我只是來看看這小鬼有沒有被騙。」', '莉婭：「格倫先生，那已經是你的第三個了喔。」', '格倫：「……咳。」',
     '諾拉：「欸，你是從『那邊』來的吧？那邊也有麵包嗎？」', '（你說起了故鄉的麵包店。三個人聽得很認真。）']);
   if (f.tombCharm) yield* say('莉婭：「初代勇者的護符上寫著『平安』……那是你故鄉的文字，對吧？」');
-  yield* say('格倫：「那個初代勇者說，回家的門需要『四將的心』。……你打算怎麼辦？」');
+  yield* say(f.tombCharm ? '格倫：「那個初代勇者說，回家的門需要『四將的心』。……你打算怎麼辦？」' : '格倫：「如果哪天，回家的門打開了……你打算怎麼辦？」'); // v12.0.3: only the tomb tells about the generals' hearts
   const r = yield* ask('如果門打開了，你會回去嗎？', ['會回去', '想留在這裡', '還不知道']);
   f.homeChoice = r;
   if (r === 0) yield* sayAll(['諾拉：「……這樣啊。」', '諾拉：「那在你回去之前，每天都要來吃麵包喔！」', '莉婭：「那我們更要努力，讓你平安回家。」']);
   else if (r === 1) yield* sayAll(['格倫：「哼，隨你。……不過，驛站永遠有你的位子。」', '諾拉：「真的！？那你要當麵包店的第一個常客！」', '莉婭：「騎士團也會很高興的。」']);
-  else yield* sayAll(['莉婭：「沒關係。等找到四將的心，再決定也不遲。」', '格倫：「路還長得很。慢慢想吧。」', '諾拉：「不管你選哪一邊，我們都是朋友！」']);
+  else yield* sayAll([f.tombCharm ? '莉婭：「沒關係。等找到四將的心，再決定也不遲。」' : '莉婭：「沒關係。等門真的打開了，再決定也不遲。」', '格倫：「路還長得很。慢慢想吧。」', '諾拉：「不管你選哪一邊，我們都是朋友！」']);
   yield* say('諾拉：「這個送給你——是我們三個一起做的！」');
   f.bondParty = 1; const g = makeGear('bondCharm', 3); Sound.jingle('levelup'); yield* itemGet('得到了' + gearName(g) + '！');
 }
@@ -13593,7 +13594,7 @@ function* orbSmithFlow() {
 }
 function* enchantFlow() {
   const st = Game.st, stones = () => Object.keys(ITEMS).filter(k => ITEMS[k].en && st.bag[k] > 0);
-  if (!stones().length) { yield* say('附魔要用「附魔石」。打倒魔物有時候會掉，精英和頭目比較容易拿到。'); return; }
+  if (!stones().length) { yield* say('附魔要用「附魔石」。打倒魔物有時候會掉，菁英和頭目比較容易拿到。'); return; }
   const g = yield* gearPicker('選擇要附魔的武器', () => gearSort().filter(g => GEAR[g.b].slot === 'weapon'), (x, g, Y) => Font.draw(x, gearEn(g) ? '目前：' + (g.en.lv > 1 ? '上級' : '') + g.en.t + '屬性附魔' : '尚未附魔', 12, Y, UIC.accent, UIC.textSh, 10));
   if (!g) return; const L = stones(), r = yield* choose(L.map(k => ({ t: ITEMS[k].n, r: '×' + st.bag[k] })).concat({ t: '返回' }), { title: '附魔石' }); if (r < 0 || r >= L.length) return;
   const k = L[r], [el, lv] = ITEMS[k].en, cost = 300 * gearTier(g) * lv;
@@ -13741,7 +13742,7 @@ const FOE_NEW = {
   m_soulRend: { n: '裂魂斬', t: '一般', cat: '物', pow: 105, acc: 100, pp: 5, charge: 1, chargeMsg: '周圍的空氣變得冰冷……', warn: '（下一擊會撕裂靈魂……防禦！）', cls: 'charge', fx: 'm_darkSlash', d: '蓄力後撕裂靈魂的一斬。' },
   m_tidalCrush: { n: '怒潮壓', t: '水', cat: '物', pow: 85, acc: 95, pp: 10, eff: { flinch: 1, p: 20 }, cls: 'strike', fx: 'm_tailSlam', d: '挾著浪濤壓下來。' },
   m_whirlpool: { n: '漩渦', t: '水', cat: '特', pow: 62, acc: 95, pp: 10, eff: { stat: { spe: -1 }, p: 50 }, cls: 'area', fx: 'm_tailSlam', d: '把對手捲進漩渦。有時會降低速度。' },
-  m_hex: { n: '咒縛', t: '一般', cat: '變', acc: 80, pp: 10, st: 'par', cls: 'debuff', fx: 'm_soulSip', d: '用咒語綁住對手的身體，讓牠麻痺。' },
+  m_hex: { n: '咒縛', t: '一般', cat: '變', acc: 80, pp: 10, st: 'par', cls: 'debuff', fx: 'm_soulSip', d: '用咒語綁住對手的身體，讓對手麻痺。' },
   m_frostNova: { n: '冰霜新星', t: '水', cat: '特', pow: 82, acc: 95, pp: 10, eff: { stat: { spe: -1 }, p: 40 }, cls: 'area', fx: 'm_frostFang', d: '四散的寒氣。有時會凍得動作變慢。' },
   m_dragonRoar: { n: '龍威', t: '一般', cat: '變', acc: 100, pp: 10, stat: { who: 'foe', atk: -1, spa: -1 }, cls: 'debuff', fx: 'm_rumble', d: '龍的咆哮讓人喪失鬥志。' },
   m_scorch: { n: '灼熱吐息', t: '火', cat: '特', pow: 82, acc: 95, pp: 10, eff: { st: 'brn', p: 30 }, cls: 'proj', fx: 'm_flare', d: '噴出灼熱的火焰。有時會灼傷。' },
@@ -13805,7 +13806,7 @@ function* listScreen(title, rows, detail) { // rows: [{ t, r, col }], detail(i) 
 }
 function* bossDexScreen() {
   const st = Game.st, won = e => ((st.dex || {})[e.sp] || {}).won > 0;
-  yield* listScreen('頭目・精英', () => FOE_SPOTS.map(e => ({ t: (won(e) ? '✓ ' : '　 ') + (e.kind === 'boss' ? '【頭目】' : '') + SPECIES[e.sp].n, r: 'Lv' + e.lv, col: won(e) ? UIC.text : e.kind === 'boss' ? '#ff9aa4' : '#ffd890' })),
+  yield* listScreen('頭目・菁英', () => FOE_SPOTS.map(e => ({ t: (won(e) ? '✓ ' : '　 ') + (e.kind === 'boss' ? '【頭目】' : '') + SPECIES[e.sp].n, r: 'Lv' + e.lv, col: won(e) ? UIC.text : e.kind === 'boss' ? '#ff9aa4' : '#ffd890' })),
     i => { const e = FOE_SPOTS[i]; if (!e) return []; return [[(MAPS[e.map].name || '') + '　Lv' + e.lv + '　' + famText(e.sp), UIC.accent], ...foeDropLines(e.sp, e.key, e.kind).map(t => [t, '#c8b0ff', 8]), [won(e) ? '已擊敗' + (e.kind === 'boss' ? '（回憶石碑可以再戰）' : '（一段時間後會再出現）') : '尚未擊敗', won(e) ? UIC.good : UIC.muted, 8]]; });
 }
 const ORB_SRC = (() => { const S = {}; const add = (k, t) => (S[k] = S[k] || []).push(t); for (const sp in ORB_DROP) ORB_DROP[sp].forEach(k => add(k, SPECIES[sp].n)); for (const c in COMMISSIONS) if (COMMISSIONS[c].reward && COMMISSIONS[c].reward.orb) add(COMMISSIONS[c].reward.orb, '委託「' + COMMISSIONS[c].n + '」'); add('galeCut', '村長（冒險者許可・武器系）'); add('fireShot', '村長（冒險者許可・魔法系）'); return S; })();
@@ -13814,7 +13815,7 @@ function* orbDexScreen() {
   yield* listScreen('寶珠圖鑑　' + keys.filter(seen).length + '/' + keys.length, () => keys.map(k => ({ ic: typeof orbIcon === 'function' ? orbIcon(k) : null, t: (typeof orbIcon === 'function' && orbIcon(k) ? '' : ORB_A[k] ? '◆' : '◇') + (ORB_A[k] || ORB_P[k]).n, r: seen(k) ? '已取得' : '', col: seen(k) ? (ORB_A[k] ? '#c8f0ff' : UIC.warm) : UIC.dis })),
     i => { const k = keys[i]; if (!k) return []; const o = { k, x: 0, e: [], lv: 1 }; return [[orbInfo(o), UIC.text], ['取得：' + ((ORB_SRC[k] || []).join('、') || '？？？'), '#c8b0ff', 8], ...(ORB_A[k] ? [['進化：強攻 ' + evoOptText(o, 0, 'A') + '→' + evoOptText(o, 1, 'A') + '／附加 ' + evoOptText(o, 0, 'B') + '→' + evoOptText(o, 1, 'B'), UIC.muted, 8]] : [])]; });
 }
-{ const _dx = dexScreen; dexScreen = function* () { const r = yield* ask('要看什麼？', ['魔物圖鑑', '頭目・精英']); if (r === 0) yield* _dx(); else if (r === 1) yield* bossDexScreen(); else if (r === 2) yield* orbDexScreen(); }; }
+{ const _dx = dexScreen; dexScreen = function* () { const r = yield* ask('要看什麼？', ['魔物圖鑑', '頭目・菁英']); if (r === 0) yield* _dx(); else if (r === 1) yield* bossDexScreen(); else if (r === 2) yield* orbDexScreen(); }; }
 function matSrc(k) { const B = FOE_SPOTS.find(e => BOSS_MAT[e.sp] === k); if (B) return SPECIES[B.sp].n; for (const s in SPECIES) if (SPECIES[s].mat === k) { const m = typeof spawnMaps === 'function' ? spawnMaps(s) : []; if (m.length) return SPECIES[s].n; } return ''; }
 askFight = function* (sp, lv, key, kind, extra) { // the choice sits inside the message box, so the card can use the whole upper screen
   const card = encounterCard(sp, lv, key, kind, extra); UI.push(card);
@@ -14022,7 +14023,7 @@ Object.assign(COM_TALK, {
   c1: ['啊，你是新來的冒險者吧？歡迎、歡迎。', '最近路上魔物變多了，受傷的客人一個接一個……', '我丈夫以前是採藥的，他走了以後，傷藥都得自己想辦法。', '能幫我採5株藥草回來嗎？晨霧道路上就有。'],
   c2: ['唉，你看我這手……又腫起來了。', '電電蜂在道路北邊築了巢，果園的工人被螫到都不敢來上工。', '再這樣下去，今年的果子要爛在樹上了。', '能幫我打倒4隻電電蜂嗎？'],
   c3: ['你還記得地下水道的那些水晶嗎？', '我年輕時讀過一本古書，說魔王的封印是「用光凝成的石頭」鎖住的。', '要是那些水晶跟封印有關……我想親眼確認。', '能幫我帶3塊水晶碎片回來嗎？'],
-  c4: ['……不好意思，能打擾一下嗎？', '我在迷霧森林東邊弄丟了一只銀懷錶。', '那是我在這個世界唯一留下來的東西……背面刻著王都鐘塔的紋章。', '如果你撿到了，請還給我，或放進委託箱。'],
+  c4: ['……不好意思，能打擾一下嗎？', '我在迷霧森林東邊弄丟了一只銀懷錶。', '那是我在這個世界唯一留下來的東西……背面刻著王都鐘塔的紋章。', '如果你撿到了，請還給我。'],
   c5: ['年輕人！你來得正好！', '嘟嘟菇又把我的高麗菜啃成蕾絲了！', '這片菜園是我跟老伴一起開的，他腰不好，現在只剩我一個人顧。', '幫我打倒5隻嘟嘟菇，我請你吃高麗菜捲！'],
   c6: ['嘿，你看過會發光的草嗎？', '師父說我只會背咒文、不會做研究……我想證明給他看。', '魔力草在晚上會發出藍色的光，我想知道光是從哪裡來的。', '能幫我找3株魔力草嗎？道路北邊、森林和水道都有。'],
   c7: ['……這片森林，我走了四十年了。', '最近毒孢菇的孢子飄得到處都是，連最耐活的藥草都枯了。', '藥草沒了，鎮上的傷藥就沒了。', '年輕人，幫我打倒4隻毒孢菇吧。'],
@@ -14100,7 +14101,7 @@ const COM_AFTER = {
   c17: ['撈到大魚了！女兒說那是湖裡的王。'], c18: ['解毒劑做好了，已經救了三個旅人。'], c19: ['那個老奶奶收到信，哭了一整個下午。是好的那種哭喔。'],
   c20: ['藥膏做好了，分給了沼澤邊的七戶人家。'], c21: ['每天晚上，燈都準時亮著。你迷路的時候，就看看那道光吧。'],
   c22: ['新人們都穿著你帶來的斗篷。有人說，斗篷上有前輩的味道。'], c23: ['北方街道現在安全多了。商人們都在傳你的名字。'], c24: ['那幅畫還掛在公會。畫得不太像，可是很有精神。'],
-  c26: ['女兒說那是她吃過最好吃的蛋糕！'], c27: ['我自己做了一個新的稻草人。這個不會亂走。……大概。'], c28: ['師父爬上鐘塔修好了鐘。他說……謝謝你。'],
+  c26: ['女兒說那是她吃過最好吃的蛋糕！'], c27: ['我自己做了一個新的稻草人。這個不會亂走。……大概。'], c28: ['師父爬上鐘塔，把零件都裝好了。他說……謝謝你。'],
   c29: ['村子撐過了冬天。春天來的時候，我們會辦一場祭典。'], c30: ['暖爐一直燒著。晚上大家會在這裡講你的故事。'], c33: ['我兒子從赤焰山道平安回來了。他說，盾一點都沒燒壞。'],
   c34: ['我每天晚上都看著那些星塵。好像能聽到遠方的腳步聲。'], c35: ['公會最強的冒險者，今天也要平安回來喔。'],
 };
@@ -14144,7 +14145,7 @@ Object.assign(Events, {
     if (E.kite === 2 && w !== 'storm') { E.kite = 3; yield* sayAll(['（你爬上樹，把風箏拿了下來。有一點破，但還能飛。）', '風箏！謝謝你！', '爸爸說，風箏最厲害的地方，是越逆風飛得越高。', '這個給你！是我在丘頂撿到的，跑步的時候好像會變快喔！']); yield* giftGear12('swiftFeather', 3); return; }
     yield* say(E.kite === 3 ? '你看，風箏又飛起來了！逆風的時候，飛得最高！' : '今天的風好舒服喔！'); },
   *oldDuke() { const st = Game.st, E = evOf(st), n = E.duke || 0, ok = (st.steps || 0) - (E.dukeT || -999) >= 80;
-    const T = [['……你也是來掃墓的？', '這些劍，都是我的戰友。三十年前，我們在這裡擋住了魔王軍。', '我是唯一活下來的。……所以我每天都來，跟他們說說話。'],
+    const T = [['……你也是來掃墓的？', '這些劍，都是我的戰友。三十年前，北境的魔物大軍南下，我們在這裡擋住了牠們。', '我是唯一活下來的。……所以我每天都來，跟他們說說話。'],
       ['又見面了。', '左邊第三把劍，是我最好的朋友的。他說打完仗要回家娶老婆，結果……', '我後來去見了他的未婚妻。她一直等著，等到頭髮都白了。'],
       ['……你來了啊。', '我想了很久，為什麼只有我活下來。', '也許，是要我記住他們吧。記住他們笑過、哭過、害怕過……然後還是往前衝。', '年輕人，這個給你。是我們部隊的徽章——「不屈」。帶著它，連同他們的份一起活下去。']];
     if (n < 3 && (n === 0 || ok)) { yield* sayAll(T[n]); E.duke = n + 1; E.dukeT = st.steps || 0; if (n === 2) yield* giftGear12('troopBadge', 3); return; }
@@ -14156,11 +14157,11 @@ ITEMS.silverPin = { n: '銀髮簪', key: 1, cat: '重要物品', d: '刻著兩�
     return yield* _w(ow, ent); };
   for (const id in EXT_AREA) Events['wshrine_' + id] = wshrineEvent; }
 { const _eq = extraQuests; extraQuests = function (st, L) { _eq(st, L); const E = evOf(st);
-    if (E.painter) L.push({ n: '湖上的彩虹', t: E.painter >= 2 ? '完成：艾琳畫下了湖上的彩虹。' : '畫家艾琳想畫下銀月湖畔的彩虹。雨停之後偶爾會出現彩虹，看到了就去湖畔東岸告訴她。', done: E.painter >= 2, rw: '寶珠「再生」' });
-    if (E.barr) L.push({ n: '沙中的銀髮簪', t: E.barr >= 2 ? '完成：銀髮簪回到了巴爾的手上。' : st.bag.silverPin ? '找到了銀髮簪！拿去赤岩祕谷給老礦工巴爾。' : '老礦工巴爾的妻子四十年前在落日峽谷弄丟了銀髮簪。沙塵暴的時候，到赤岩祕谷的天氣祠挖挖看。', done: E.barr >= 2, rw: '上級岩石附魔石・1500 G' });
-    if (E.ruby) L.push({ n: '螢火蟲燈籠', t: E.ruby >= 3 ? '完成：露比帶著燈籠回到了家。' : E.ruby === 2 ? '等幽光沼澤起霧的時候，去螢光沼地陪露比走回家。' : '露比想做螢火蟲燈籠給怕黑的弟弟。帶3把沼苔去幽光沼澤的螢光沼地給她。', done: E.ruby >= 3, rw: '上級劇毒附魔石' });
-    if (E.kite >= 2) L.push({ n: '逆風的風箏', t: E.kite >= 3 ? '完成：小風的風箏又飛起來了。' : '小風的風箏在雷雨中卡在樹上了。等雷雨停了，去風車丘陵的風之丘頂找他。', done: E.kite >= 3, rw: '寶珠「迅捷」' });
-    if (E.duke) L.push({ n: '英靈之丘的老兵', t: E.duke >= 3 ? '完成：老兵杜克把部隊的徽章交給了你。' : '老兵杜克每天都在古戰場的英靈之丘陪戰友說話。過一陣子再去看看他。（' + E.duke + '/3）', done: E.duke >= 3, rw: '寶珠「不屈」' });
+    if (E.painter) L.push({ n: '湖上的彩虹', t: E.painter >= 2 ? '完成：艾琳畫下了湖上的彩虹。' : '畫家艾琳想畫下銀月湖畔的彩虹。雨停之後偶爾會出現彩虹，看到了就去湖畔東岸告訴她。', done: E.painter >= 2, rw: '蜂蜜護符' });
+    if (E.barr) L.push({ n: '沙中的銀髮簪', t: E.barr >= 2 ? '完成：銀髮簪回到了巴爾的手上。' : st.bag.silverPin ? '找到了銀髮簪！拿去赤岩祕谷給老礦工巴爾。' : '老礦工巴爾的妻子四十年前在落日峽谷弄丟了銀髮簪。沙塵暴的時候，到赤岩祕谷的天氣祠挖挖看。', done: E.barr >= 2, rw: '礦工的提燈・1500 G' });
+    if (E.ruby) L.push({ n: '螢火蟲燈籠', t: E.ruby >= 3 ? '完成：露比帶著燈籠回到了家。' : E.ruby === 2 ? '等幽光沼澤起霧的時候，去螢光沼地陪露比走回家。' : '露比想做螢火蟲燈籠給怕黑的弟弟。帶3把沼苔去幽光沼澤的螢光沼地給她。', done: E.ruby >= 3, rw: '靈光提燈' });
+    if (E.kite >= 2) L.push({ n: '逆風的風箏', t: E.kite >= 3 ? '完成：小風的風箏又飛起來了。' : '小風的風箏在雷雨中卡在樹上了。等雷雨停了，去風車丘陵的風之丘頂找他。', done: E.kite >= 3, rw: '疾風羽飾' });
+    if (E.duke) L.push({ n: '英靈之丘的老兵', t: E.duke >= 3 ? '完成：老兵杜克把部隊的徽章交給了你。' : '老兵杜克每天都在古戰場的英靈之丘陪戰友說話。過一陣子再去看看他。（' + E.duke + '/3）', done: E.duke >= 3, rw: '部隊徽章' });
   }; }
 NPC_ROLES.任務.push('painter', 'oldBarr', 'ruby', 'kiteKid', 'oldDuke');
 (NPC_ROLES.事件 || NPC_ROLES.情報).push(...Object.keys(EXT_AREA).map(id => 'wshrine_' + id));
@@ -15711,7 +15712,7 @@ skillTreeScreen = function* () {
   const scr = { draw(x) {
     screenBG(x); headerBar(x, tab ? '寶珠背包' : '技能編排'); Font.drawR(x, (tab ? '2' : '1') + '/2 ← →', W - 6, 3, UIC.muted, UIC.textSh, 10);
     const L = tab ? bag() : rows(), VIS = 9, i = Math.min(sel, Math.max(0, L.length - 1)), top = clamp(i - 4, 0, Math.max(0, L.length - VIS));
-    drawWin(x, 4, 22, 168, VIS * 16 + 8, 'menu'); if (!L.length) Font.draw(x, tab ? '還沒有寶珠。打倒精英和頭目吧！' : '還沒有技能。', 12, 28, UIC.muted, UIC.textSh, 10);
+    drawWin(x, 4, 22, 168, VIS * 16 + 8, 'menu'); if (!L.length) Font.draw(x, tab ? '還沒有寶珠。打倒菁英和頭目吧！' : '還沒有技能。', 12, 28, UIC.muted, UIC.textSh, 10);
     L.slice(top, top + VIS).forEach((R, k) => { const Y = 26 + k * 16; if (top + k === i) selBar(x, 6, Y - 1, 164, 15);
       if (tab) { drawOrbLine(x, R, 12, Y - 1, isActiveOrb(R) ? '#c8f0ff' : UIC.warm); if (orbHost(R)) Font.drawR(x, 'E', 166, Y - 1, UIC.accent, UIC.textSh, 10); return; }
       if (R.sig) { Font.draw(x, '★' + skillMove(R.sig).n, 12, Y - 1, '#ffd860', UIC.textSh, 10); Font.drawR(x, '招式點' + SIG_COST + (tpAvail(st) > 0 ? '　A強化' : ''), 166, Y, tpAvail(st) > 0 ? UIC.warm : UIC.muted, UIC.textSh, 8); }
@@ -16235,7 +16236,7 @@ Object.assign(EFFECT_TYPES, {
   TL(c, 2, 0, 1, '標記', 'R', '普攻命中也會留下獵印（每次行動 1 層）', { trig: [TRG(EVT.DAMAGE, 'src', { tag: 'basic', evHit: 1, tgtAlive: 1, tgtSide: 'enemy' }, [E12.mark()], { limit: { perAction: 1 } })] });
   TL(c, 2, 1, 0, '看破', 'I', '打中弱點時獵印 +1', { trig: [TRG(EVT.DAMAGE, 'src', { weakHit: 1, evHit: 1, tgtAlive: 1 }, [E12.mark()], { limit: { perAction: 1 } })] });
   TL(c, 2, 1, 1, '貫甲', 'I', '對有獵印的魔物無視 15% 物防', { mods: [{ stage: 'attacker', who: 'attacker', defMul: 0.85, cond: { tgtMarked: 1 } }] });
-  TL(c, 2, 2, 0, '巨獵', 'I', '對精英、頭目每層獵印 +10%', { rules: { bigHunt: 1 } });
+  TL(c, 2, 2, 0, '巨獵', 'I', '對菁英、頭目每層獵印 +10%', { rules: { bigHunt: 1 } });
   TL(c, 2, 2, 1, '狙擊', 'R', '影牙連射改成 1 發（威力 90，會心率 +30%），仍給 2 層獵印', { rules: { sniper: 1 } });
   TK(c, 0, '絕影', '引爆獵印後，影牙連射的冷卻歸零', { rules: { shadowReset: 1 } });
   TK(c, 1, '疾風獵手', '每回合比所有魔物先行動時，冷卻中的技能 −1', { kind: 'C', trig: [TRG(EVT.TURN_ORDER, null, { wentFirst: 1, ownerAlive: 1 }, [E12.cd('all', 1, { why: 'galeHunter' })])] });
@@ -16313,7 +16314,7 @@ Object.assign(EFFECT_TYPES, {
   TAL12_TREE[c] = { br: [['蒼龍', '穿透與屠巨'], ['龍裔', '耐久與吸血'], ['翔空', '速度與跳躍']] };
   TL(c, 0, 0, 0, '剛腕', 'N', '物攻 +6%', { stat: { atkP: 6 } });
   TL(c, 0, 0, 1, '貫穿', 'I', '長槍普攻再無視 15% 物防', { mods: [{ stage: 'attacker', who: 'attacker', defMul: 0.85, cond: { tag: 'basic', ownerWkind: '長槍' } }] });
-  TL(c, 0, 1, 0, '斬龍', 'I', '對精英、頭目傷害 +12%', { mods: [MUL(1.12, { tgtBig: 1, hasPower: 1 })] });
+  TL(c, 0, 1, 0, '斬龍', 'I', '對菁英、頭目傷害 +12%', { mods: [MUL(1.12, { tgtBig: 1, hasPower: 1 })] });
   TL(c, 0, 1, 1, '逆鱗', 'R', '落地攻擊會心率 +30%', { mods: [{ stage: 'talent', who: 'attacker', critAdd: 30, cond: { skillIs: S } }] });
   TL(c, 0, 2, 0, '龍威', 'I', '落地命中讓目標物防 −1', { trig: [TRG(EVT.DAMAGE, 'src', { skillIs: S, evHit: 1, tgtAlive: 1 }, [E12.stage({ def: -1 }, 'event_target', { secondary: 1 })])] });
   TL(c, 0, 2, 1, '裂天', 'C', '落地打中弱點時龍血 +1', { trig: [TRG(EVT.DAMAGE, 'src', { skillIs: S, weakHit: 1, evHit: 1 }, [E12.res('dragon', 1)], { limit: { perAction: 1 } })] });
@@ -16342,7 +16343,7 @@ Object.assign(EFFECT_TYPES, {
   TL(c, 0, 2, 1, '光輝', 'I', '曙光之刃會心時看破 +1', { trig: [TRG(EVT.DAMAGE, 'src', { skillIs: S, crit: 1, evHit: 1 }, [{ type: 'insight_add' }], { limit: { perAction: 1 } })] });
   TL(c, 1, 0, 0, '洞察', 'N', '打弱點傷害 +12%', { stat: { weakUp: 12 } });
   TL(c, 1, 0, 1, '預讀', 'R', '開場對每種魔物都有 1 層看破', { trig: [TRG(EVT.BATTLE_START, null, {}, [{ type: 'insight_seed' }])] });
-  TL(c, 1, 1, 0, '斬巨', 'I', '對精英、頭目每層看破 +12%', { rules: { giantSlayer: 1 } });
+  TL(c, 1, 1, 0, '斬巨', 'I', '對菁英、頭目每層看破 +12%', { rules: { giantSlayer: 1 } });
   TL(c, 1, 1, 1, '借勢', 'C', '看破滿 3 層時，打中弱點回復 5 MP', { trig: [TRG(EVT.DAMAGE, 'src', { weakHit: 1, evHit: 1, insightFull: 1 }, [E12.res('mp', 5, { why: 'insight' })])] });
   TL(c, 1, 2, 0, '萬能', 'R', '不是弱點的攻擊也有 30% 機率累積看破', { trig: [TRG(EVT.DAMAGE, 'src', { weakHit: 0, evHit: 1, hasPower: 1, tgtSide: 'enemy' }, [{ type: 'insight_add' }], { chance: 0.3, limit: { perAction: 1 } })] });
   TL(c, 1, 2, 1, '越界之眼', 'I', '看破 3 層的魔物受到的會心傷害 +30%', { mods: [{ stage: 'talent', who: 'attacker', critDmg: 30, cond: { insightFull: 1 } }] });
@@ -16732,7 +16733,7 @@ if (COMMISSIONS.c7) COMMISSIONS.c7.reward.gear = 'herbPouch';
 { const _gr = giveReward; giveReward = function* (rw) { const r = yield* _gr(rw); if (rw && rw.gear) yield* giftGear12(rw.gear, 2); return r; }; }
 { const _u = Overworld.prototype.update; Overworld.prototype.update = function (...a) {
     const st = this.st; if (st && st.v10 && st.flags.license && !st.flags.orbStart && !this.script && !UI.stack.length && !Game.trans) { st.flags.orbStart = 1;
-      this.run((function* () { yield* sayAll(['村長：「對了，戰鬥的招式跟你說一下。」', '村長：「招式有兩種。一種是職業的技能，等級到了自然就會。另一種是武器上的技能，拿著那把武器就能用，用得夠多次就會變成你自己的。」', '村長：「打開選單的「技能編排」，就能決定戰鬥中要帶哪些技能。」']); })()); return; }
+      this.run((function* () { yield* say('村長：「按START可以打開選單。狀態、技能編排、背包都在裡面，也能存檔。」'); })()); return; }
     return _u.apply(this, a); }; }
 function v12Convert(st) {
   if (!st || !st.flags || st.flags.v12conv) return []; st.flags.v12conv = 1;
@@ -16934,15 +16935,15 @@ Object.assign(MOVES, {
   m12_wolfClaw: { n: '撕爪', t: '一般', cat: '物', pow: 55, acc: 95, pp: 20, eff: { stat: { def: -1 }, p: 30 }, d: '用爪子撕開護具。有時降低對手的物防。' },
   m12_wolfCall: { n: '呼伴長嚎', t: '一般', cat: '變', pp: 10, stat: { who: 'self', atk: 1, spe: 1 }, d: '長嚎呼喚同伴，草叢裡亮起好幾對眼睛。提升物攻和速度。' },
   m12_wolfHunt: { n: '圍獵', t: '一般', cat: '物', pow: 70, acc: 95, pp: 10, d: '繞著獵物轉一圈，從背後撲咬。' },
-  m12_crocSnap: { n: '小顎咬', t: '一般', cat: '物', pow: 55, acc: 100, pp: 20, eff: { flinch: 1, p: 20 }, d: '用小小的嘴喀嚓咬下。有時讓對手畏縮。' },
+  m12_crocSnap: { n: '小顎咬', t: '一般', cat: '物', pow: 55, acc: 100, pp: 20, eff: { flinch: 1, p: 20 }, d: '用小小的嘴喀嚓咬下。有時讓對手退縮。' },
   m12_crocSplash: { n: '水花甩尾', t: '水', cat: '物', pow: 55, acc: 95, pp: 15, eff: { stat: { spe: -1 }, p: 30 }, d: '甩尾巴打起一片水花。有時降低對手的速度。' },
   m12_crocShoal: { n: '躲進淺灘', t: '水', cat: '變', pp: 10, stat: { who: 'self', def: 1, spd: 1 }, d: '縮進淺灘的水裡。提升物防和魔防。' },
   m12_crocRoll: { n: '死亡翻滾', t: '一般', cat: '物', pow: 25, acc: 90, pp: 10, hits: [2, 3], d: '咬住對手在水裡打滾。連續攻擊 2～3 次。' },
-  m12_stumpBump: { n: '年輪撞擊', t: '草', cat: '物', pow: 45, acc: 100, pp: 20, eff: { flinch: 1, p: 20 }, d: '用結實的樹樁身體撞過來。有時讓對手畏縮。' },
+  m12_stumpBump: { n: '年輪撞擊', t: '草', cat: '物', pow: 45, acc: 100, pp: 20, eff: { flinch: 1, p: 20 }, d: '用結實的樹樁身體撞過來。有時讓對手退縮。' },
   m12_stumpRoot: { n: '樹根絆腳', t: '草', cat: '物', pow: 35, acc: 95, pp: 15, eff: { stat: { spe: -1 }, p: 50 }, d: '從腳下伸出樹根把對手絆倒。常常降低對手的速度。' },
   m12_stumpSprout: { n: '發芽', t: '草', cat: '變', pp: 10, heal: 0.25, d: '頭頂的嫩芽長出新葉。回復一些體力。' },
   m12_stumpChips: { n: '木屑飛濺', t: '一般', cat: '物', pow: 50, acc: 100, pp: 15, d: '抖動身體，把木屑像石子一樣噴出去。' },
-  m12_pigTusk: { n: '小獠牙', t: '一般', cat: '物', pow: 50, acc: 100, pp: 20, eff: { flinch: 1, p: 20 }, d: '用剛長出來的小獠牙往上頂。有時讓對手畏縮。' },
+  m12_pigTusk: { n: '小獠牙', t: '一般', cat: '物', pow: 50, acc: 100, pp: 20, eff: { flinch: 1, p: 20 }, d: '用剛長出來的小獠牙往上頂。有時讓對手退縮。' },
   m12_pigSnort: { n: '哼哼威嚇', t: '一般', cat: '物', pow: 35, acc: 100, pp: 15, eff: { stat: { atk: -1 }, p: 100 }, d: '用鼻子噴氣再頂一下。降低對手的物攻。' },
   m12_pigMud: { n: '泥巴打滾', t: '一般', cat: '變', pp: 10, stat: { who: 'self', def: 1 }, d: '在泥巴裡打滾，身上裹了一層硬泥。提升物防。' },
   m12_pigRush: { n: '橫衝直撞', t: '一般', cat: '物', pow: 75, acc: 85, pp: 10, d: '低著頭一路衝過來。威力大，但常常撞歪。' },
@@ -17524,7 +17525,7 @@ npcShow12('swamp', 'ruby', (st, o) => o && ((st.ev || {}).ruby || 0) < 3);
 NPC_ROLES.任務.push('miraForest'); if (typeof NPC_WHERE !== 'undefined') NPC_WHERE.miraForest = '迷霧森林';
 MAPS.forest.npcs.push({ id: 'miraForest', x: 20, y: 4, dir: 'left', look: 'apprentice', name: '學徒米拉', show: st => (st.flags.qMira || 0) >= 2 }); delete mapCache.forest;
 Events.miraForest = function* () { const f = Game.st.flags;
-  yield* say(f.witchFate ? '米拉：「爺爺說，沼澤的魔女是他的師妹……下次我想跟她學調藥！」' : (f.qMira || 0) >= 3 ? '米拉：「上次真的謝謝你！我現在只在白天去沼澤採藥了。」' : '米拉：「我平安回來了！爺爺在那邊，快去跟他說吧。」'); };
+  yield* say(f.witchFate === 'spare' && (f.qMira || 0) >= 3 ? '米拉：「爺爺說，沼澤的魔女是他的師妹……下次我想跟她學調藥！」' : (f.qMira || 0) >= 3 ? '米拉：「上次真的謝謝你！我現在只在白天去沼澤採藥了。」' : '米拉：「我平安回來了！爺爺在那邊，快去跟他說吧。」'); };
 COM_GIVER.c16 = 'hermit'; COM_GIVER.c17 = 'fisher';
 MAPS.town.npcs.push({ id: 'fisher', x: 6, y: 17, dir: 'left', look: 'man', name: '漁夫' }); delete mapCache.town;
 Object.assign(NPC_WHERE, { fisher: '萌芽鎮・池塘邊', hermit: NPC_WHERE.hermit || '銀月湖畔' }); NPC_ROLES.任務.push('fisher');
@@ -17544,7 +17545,7 @@ function* liaPendant12() { const st = Game.st, f = st.flags; f.captainQ = 2;
   yield* sayAll(['莉婭：「……這個吊墜。」', '莉婭：「裡面的畫……是小時候的我。父親一直把它帶在身上。」', '莉婭：「這把劍，你留著吧。父親一定也希望它繼續守護別人。」']);
   st.bag.elixir = (st.bag.elixir || 0) + 3; yield* itemGet(st.name + '得到了萬靈藥×3！'); }
 { const _lf = Events.liaFort; Events.liaFort = function* (ow, ent) { const st = Game.st, f = st.flags;
-    if (!f.liaFort1 && f.duskCaptain) { f.liaFort1 = 1; yield* sayAll(['莉婭：「……終於追上你了。」', '莉婭：「騎士團長命令我守住這裡——勇者的退路，由我來保護。」']); } // the knight is already freed: she doesn't ask for it any more
+    if (!f.liaFort1 && f.duskCaptain) { f.liaFort1 = 1; yield* sayAll(['莉婭：「……終於追上你了。」', '莉婭：「國王陛下命令我守住這裡——勇者的退路，由我來保護。」']); } // the knight is already freed: she doesn't ask for it any more
     if (f.captainQ === 1) yield* liaPendant12();
     if (f.blackFeather && f.liaQuest === 1) { yield* Events.liaCap(ow, ent); return; }
     yield* _lf.call(this, ow, ent); }; }
@@ -17554,7 +17555,7 @@ function* liaPendant12() { const st = Game.st, f = st.flags; f.captainQ = 2;
     yield* _lc.call(this, ow, ent); }; }
 Overworld.prototype.riftEntry = function* () { yield* say('異界之門靜靜地沉睡著。門的另一邊，只看得到一片黑雲……'); };
 { const n = (MAPS.ruins.npcs || []).find(q => q.id === 'warden'); if (n) n.show = st => !!st.flags.golem && (st.bag.riftToken || 0) > 0; } // stays only while badges are left to trade
-{ const _w = Events.warden; Events.warden = function* (ow) { yield* say('迴廊的門已經關上了。……你手上還有徽章吧？在我這裡還是可以換東西。'); yield* _w.call(this, ow); }; }
+{ const _w = Events.warden; Events.warden = function* (ow) { yield* _w.call(this, ow); }; /* v12.0.3: the warden's own line now says the door is closed */ }
 { const _eq = extraQuests; extraQuests = function (st, L) { _eq(st, L); for (let i = L.length - 1; i >= 0; i--) if (L[i].n === '異界迴廊') L.splice(i, 1); }; }
 const STAR_MAP12 = Object.keys(MAPS).find(m => (MAPS[m].npcs || []).some(n => n.id === 'starGate'));
 if (STAR_MAP12) { const n = MAPS[STAR_MAP12].npcs.find(q => q.id === 'starGate'); n.show = () => false; }
@@ -17611,7 +17612,7 @@ for (const m of OTW_SPOTS) { const d = MAPS[m], E = EXT_AREA[m]; if (!d || !E) c
     if (nb < 8) continue; const sc = 100 - Math.hypot(x - cx, y - cy); if (sc > bs) { bs = sc; best = [x, y]; } }
   if (best) { d.npcs.push({ id: 'otwMark_' + m, x: best[0], y: best[1], dir: 'down', look: 'loreStone', name: '曙光的印記', show: st => st.flags.otwQ === 1 && !(st.flags.otwMark || {})[m] }); NPC_ROLES.任務.push('otwMark_' + m);
     Events['otwMark_' + m] = function* (ow) { const st = Game.st, f = st.flags; (f.otwMark || (f.otwMark = {}))[m] = 1; Sound.sfx('charge'); Game.flashColor = '#fff2c0'; yield* tween(12, t => Game.flash = t * 0.6); yield* tween(16, t => Game.flash = 0.6 * (1 - t));
-      yield* sayAll(['石頭上刻著和你手上一樣的太陽紋章……', '曙光之印發出了光。印記回應了你！（初代勇者的印記 ' + otwMarks(st) + '/3）']);
+      yield* sayAll(['石頭上刻著和你手上一樣的太陽紋章……', '曙光之印發出了光。印記回應了你！（曙光的印記 ' + otwMarks(st) + '/3）']);
       if (otwMarks(st) >= 3) { f.otwQ = 2; yield* sayAll(['三個印記同時亮了起來。', '……遠處，萌芽鎮的方向，好像有什麼東西在呼喚你。', '（目標：到萌芽鎮的井邊看看。）']); }
       ow.load(ow.map.id, ow.p.x, ow.p.y, ow.p.dir, true); }; }
   else console.warn('otw: no spot in', m);
@@ -17762,7 +17763,7 @@ b12Skill('m_rumble', { pow: 95, cat: '特', t: '岩', acc: 100, charge: 1, stat:
     return b12Pick(core, u, (u.data.phase || 0) >= 1 ? ['m_rockfall', 'm_quake', 'm_boulder'] : ['m_boulder', 'm_quake', 'm_boulder']); }; }
 defPut('mechanics', 'b12_golem', { make: u => ({ triggers: [
   { on: EVT.SKILL_SUCCESS, phase: 'POST', role: 'src', cond: { skillIs: 'm_stoneWall', dataNot: ['wallTold', 1] }, prio: 4, effects: [{ type: 'set_data', onUnit: 1, key: 'wallTold', value: 1 }, { type: 'message', target: 'self', text: '（石壁擋住了物理攻擊……改用魔法，或先降低牠的物防！）' }] }] }) });
-b12Skill('m_prismRay', { pow: 120, charge: 1, chargeMsg: '水晶開始聚集光芒……', warn: '（稜光射線要射出來了，會打中全部……選擇「防禦」！）', d: '蓄力後射出貫穿一切的稜光，打中所有對手。' });
+b12Skill('m_prismRay', { pow: 120, charge: 1, chargeMsg: '身上開始聚集光芒……', warn: '（稜光射線要射出來了，會打中全部……選擇「防禦」！）', d: '蓄力後射出貫穿一切的稜光，打中所有對手。' });
 BAI.SCRIPT.crystalGolem = function (core, u) {
   if (core.round % 4 === 0 && !core.hasStatus(u, 'mirror')) return { type: 'skill', skill: 'm_mirror', targets: [u.id] };
   if (core.round % 4 === 2 && core.round - (u.data.lastCharge ?? -9) >= 3) return b12Charge(core, u, 'm_prismRay');
@@ -17919,5 +17920,79 @@ for (const c in PW12) { defPut('mechanics', 'pw12_' + c, { layer: 'class', mods:
 BOSS_HP12.hydra = 1.3;
 { const E = DEF.skills.m_venomSpray.effects.map(x => DEF.effects[x]).find(x => x && x.type === 'status' && x.status === 'psn'); if (E) E.chance = 0.6; MOVES.m_venomSpray.eff = { ...MOVES.m_venomSpray.eff, p: 60 };
   if (MOVES.m_venomSpray.d && !/中毒/.test(MOVES.m_venomSpray.d)) MOVES.m_venomSpray.d += '常常讓對手中毒。'; } // only the hydra uses it
+let __lp12 = false, __lpT12 = 0, __lpF12 = -1;
+{ const cvs = document.getElementById('screen');
+  if (cvs) { cvs.addEventListener('pointerdown', () => { __lp12 = true; }); for (const ev of ['pointerup', 'pointercancel', 'pointerleave']) cvs.addEventListener(ev, () => { __lp12 = false; }); }
+  window.addEventListener('pointerup', () => { __lp12 = false; }); window.addEventListener('blur', () => { __lp12 = false; }); }
+const longPress12 = () => { if (__lpF12 !== Game.frame) { __lpF12 = Game.frame; __lpT12 = __lp12 ? __lpT12 + 1 : 0; } return __lpT12 > 18; };
+{ const _ff = dlgFF; dlgFF = function () { const v = _ff(); return v || longPress12() || !!Game.autoIntro; }; }
+{ const _u = IntroScene.prototype.update; IntroScene.prototype.update = function () { const n = dlgFF() ? 4 : 1; for (let i = 0; i < n; i++) { _u.call(this); if (!this.script || Game.scene !== this) break; } }; }
+{ const _cs = classSelectScreen; classSelectScreen = function* (...a) { Game.autoIntro = false; return yield* _cs.apply(this, a); }; }
+{ const _ts = TitleScene.prototype.enter; TitleScene.prototype.enter = function (...a) { Game.autoIntro = false; return _ts ? _ts.apply(this, a) : undefined; }; }
+{ const _d = TextBox.prototype.draw; TextBox.prototype.draw = function (x) { _d.call(this, x);
+    const S = Game.settings; if (S.ffHint12 || Game.autoIntro || !(this.style === 'ow' || this.style === 'dark') || this.y < 60) return;
+    Font.drawR(x, '長按畫面（或按住B）可以快轉', this.x + this.w - 4, this.y - 11, UIC.muted, UIC.textSh, 9);
+    if ((S.ffHintT12 = (S.ffHintT12 || 0) + 1) > 600) { S.ffHint12 = 1; delete S.ffHintT12; saveSettings(); } }; }
+{ const _bp = gainBP; gainBP = function (k, q, st = Game.st, ...a) { const r = _bp.call(this, k, q, st, ...a); if (st && st.flags && st.flags.license && !st.flags.h12bp) st.flags.h12bp = 1; return r; }; }
+{ const H = Battle.prototype.handlers, _d = H.DAMAGE; H.DAMAGE = function* (e, s, t, P) {
+    if (s && s.hero && t && !t.hero && P && P.kind === 'hit' && P.mult > 1) { const f = Game.st && Game.st.flags; if (f && !f.h12weak) f.h12weak = 1; }
+    yield* _d.call(this, e, s, t, P); }; }
+{ const _ng = newGameState; newGameState = function (...a) { const st = _ng.apply(this, a); if (st && st.flags) st.flags.r3new = 1; return st; }; }
+const HINT12 = [
+  ['h12tal', st => st.lv >= 2, ['（得到了「天賦點」！打開選單的「天賦」，就能點' + '{cls}' + '的三個流派。之後每升 2 級還會再拿到。）']],
+  ['h12bp2', st => st.flags.h12bp === 1, ['（得到了設計圖！把設計圖和素材拿去萌芽鎮的鐵匠，就能打造新的裝備。）']],
+  ['h12deep', st => st.lv >= 13 && !st.flags.deep, ['（再升一級到 Lv14，就可以找村長進行「天賦覺醒」：解開第 3 層天賦和核心天賦。）']],
+  ['h12weak2', st => st.flags.h12weak === 1, ['（剛才打中了弱點！魔物分成好幾個種族，各有害怕的屬性。善用屬性技能，戰鬥會輕鬆很多。）']],
+];
+{ const _u = Overworld.prototype.update; Overworld.prototype.update = function (...a) {
+    const st = this.st;
+    if (st && st.flags && st.flags.license && st.flags.orbStart && !this.script && !UI.stack.length && !Game.trans) {
+      const h = st.flags.r3new && HINT12.find(([k, ok]) => !st.flags[k] && ok(st));
+      if (h) { st.flags[h[0]] = 1; const cls = (CLASSES[st.cls] || {}).n || ''; this.run(sayAll(h[2].map(s => s.replace('{cls}', cls)))); return; }
+      if ((st.flags.ch2 || 0) >= 10 && !st.flags.todo12) { st.flags.todo12 = 1; this.run(todoScreen12(true)); return; }
+    }
+    return _u.apply(this, a); }; }
+{ const _mf = makeFoe; makeFoe = function (sp, lv, kind) { const f = _mf(sp, lv, kind); if (sp === 'millGolem' && f && f.moves) { const k = f.moves.filter(m => m.id !== 'm_sunder'); if (k.length >= 3) f.moves = k; } return f; }; }
+if (DEF.skills.m_millStorm) Object.assign(DEF.skills.m_millStorm, { warn: '（⚠ 下一回合選「防禦」，傷害會減半！逆轉大風車每 3 回合一次。）' });
+BAI.SCRIPT.b12_millGolem = function (core, u) { const d = u.data; d.cd = (d.cd ?? 2) - 1;
+  if (d.cd <= 0 && DEF.skills.m_millStorm) { d.cd = 2; return b12Charge(core, u, 'm_millStorm'); }
+  return b12Pick(core, u, BR.stage(core, u, 'def') < 1 && core.rng.chance(0.3) ? ['m_scaleGuard'] : ['m_millGrind', 'm_blackGust', 'm_millGrind']); };
+{ const _ue = BD.unitForEnemy; BD.unitForEnemy = function (core, sp, lv, kind, side, idx, o = {}) { const s = _ue.call(this, core, sp, lv, kind, side, idx, o);
+    if (s && sp === 'millGolem') s.data.script = 'b12_millGolem'; return s; }; }
+const STORY_ELITES12 = ['rogueBlade', 'duskCaptain', 'wraithGeneral'];
+{ const _ld = Overworld.prototype.load; Overworld.prototype.load = function (...a) { _ld.apply(this, a);
+    if (this.elites) this.elites = this.elites.filter(e => !(e.rematch && STORY_ELITES12.includes(e.id))); }; }
+function todoLines12(st = Game.st) {
+  const L = [], P = (t, c) => L.push([t, c, 10, t.startsWith('・') || t.startsWith('　') ? 6 : 0]), Q = questList(st), side = Q.filter(q => !q.main && !q.done && !/^委託/.test(q.n) && !['委託告示板', '區域事件'].includes(q.n));
+  const com = Object.keys(COMMISSIONS).filter(k => { const s = comState(k, st); return !(s && s.s === 'done') && (!COMMISSIONS[k].open || COMMISSIONS[k].open(st)); });
+  const dex = st.dex || {}, seen = Object.keys(SPECIES).filter(k => dex[k]).length;
+  const foes = FOE_SPOTS.filter(e => (dex[e.sp] || {}).won > 0).length;
+  const ach = ACHIEVEMENTS.filter(a => { try { return a.ok(st); } catch (e) { return false; } }).length;
+  P('支線任務：還有 ' + side.length + ' 條', UIC.warm); for (const q of side.slice(0, 5)) P('・' + q.n, UIC.text); if (side.length > 5) P('　……還有 ' + (side.length - 5) + ' 條', UIC.muted);
+  P('委託：還有 ' + com.length + ' 件', UIC.warm); for (const k of com.slice(0, 3)) P('・' + COMMISSIONS[k].n + '（' + COMMISSIONS[k].from + '）', UIC.text); if (com.length > 3) P('　……還有 ' + (com.length - 3) + ' 件', UIC.muted);
+  P('魔物圖鑑：' + seen + '／' + Object.keys(SPECIES).length, UIC.warm); P('頭目・菁英：打倒 ' + foes + '／' + FOE_SPOTS.length, UIC.warm);
+  P('世界的記載：' + loreCount(st) + '／' + loreTotal(), UIC.warm); P('成就：' + ach + '／' + ACHIEVEMENTS.length, UIC.warm);
+  return L;
+}
+function* todoScreen12(first) {
+  if (first) yield* sayAll(['曙光鐘的聲音，傳遍了整個王國。', '（第一季到這裡結束。第三章製作中——在那之前，世界還有很多地方等著你。）']);
+  const L = todoLines12(), per = 16; let top = 0;
+  const scr = { touchBack: true, draw(x) { screenBG(x); headerBar(x, '還能做什麼'); drawWin(x, 4, 22, 168, 230, 'menu'); const end = drawInfoLines(x, L, 10, 28, 236, top); scr.more = end < L.length;
+    if (top > 0) x.drawImage(UPARROW, 86, 23); if (scr.more) x.drawImage(DOWNARROW, 86, 237); Font.drawR(x, 'A／B 關閉', 166, 240, UIC.muted, UIC.textSh, 9); } };
+  UI.push(scr); Input.clearAll();
+  while (true) { if (Input.repeat('up') && top > 0) { top--; Sound.sfx('cursor'); } if (Input.repeat('down') && scr.more) { top++; Sound.sfx('cursor'); }
+    if (Input.pressed('a') || Input.pressed('b')) { Input.consume('a', 'b'); Sound.sfx('cancel'); break; } yield; }
+  UI.remove(scr);
+}
+{ const _hb = handbookScreen12; handbookScreen12 = function* () {
+    if ((Game.st.flags.ch2 || 0) < 10) return yield* _hb();
+    while (true) { const r = yield* ask('冒險手冊', ['任務', '圖鑑', '紀錄', '變強的方法', '還能做什麼', '返回']);
+      if (r === 0) yield* questScreen(); else if (r === 1) yield* dexScreen(); else if (r === 2) yield* recordScreen();
+      else if (r === 3) { while (true) { const k = yield* ask('變強的方法', GROW12.map(q => q[0]).concat('返回')); if (k < 0 || k >= GROW12.length) break; yield* say(GROW12[k][1]); } }
+      else if (r === 4) yield* todoScreen12(false); else break; } }; }
+if (COMMISSIONS.c34) COMMISSIONS.c34.open = st => !!comState('c34', st); // 星塵只在星見神殿：神殿打開時再開放（已經接下的照舊）
+{ const A = ACHIEVEMENTS.find(a => a.id === 'com'); if (A) A.ok = st => Object.keys(COMMISSIONS).every(k => k === 'c34' || (comState(k, st) || {}).s === 'done'); }
+for (let i = FOE_SPOTS.length - 1; i >= 0; i--) if (['rift', 'starShrine'].includes(FOE_SPOTS[i].map)) FOE_SPOTS.splice(i, 1);
+{ const _ql = questList; questList = function (st = Game.st) { return _ql(st).filter(q => q.n !== '井底更深處'); }; } // 初代勇者的試煉 replaced the rope route
 </script>
 </body></html>

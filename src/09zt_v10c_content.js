@@ -1,4 +1,4 @@
-/* ===================== v10 階段三 B：新精英・專屬技武器・裝備特效調整 =====================
+/* ===================== v10 階段三 B：新菁英・專屬技武器・裝備特效調整 =====================
    Plan items 10 / 12:
    - 5 new elites roam the areas that had none (地下水道・古岩遺跡・王都地下水道・熔岩坑道・星見神殿): a wild encounter
      there can turn into one (7%, the card lets you retreat); beaten, they return after 200 steps.

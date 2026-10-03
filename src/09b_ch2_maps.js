@@ -39,7 +39,7 @@ ch2Map('capital', {
     { kind: 'house', x: 2, y: 20, w: 5, h: 4, door: 2, to: ['capHouse2', 4, 6] },
     { kind: 'tower', x: 19, y: 20, w: 7, h: 5, door: 3, to: ['clockTower1', 8, 20], need: 'towerOpen', msg: '鐘塔的大門緊緊關著。門上有兩個齒輪形狀的凹槽……\n（需要兩個「時之齒輪」）' },
   ],
-  signs: { '12,9': '「王都艾爾德蘭」\n曙光王國的首都。北邊是王城。', '15,26': '「→ 曙光鐘塔」「← 金穗平原」\n「↓ 北方街道」「↗ 霜語雪原（需要通行證）」' },
+  signs: { '12,9': '「王都艾爾德蘭」\n艾爾迪亞王國的首都。北邊是王城。', '15,26': '「→ 曙光鐘塔」「← 金穗平原」\n「↓ 北方街道」「↗ 霜語雪原（需要通行證）」' },
   edgeWarps: [
     { dir: 'left', at: [25], to: ['goldPlains', 22, 25, 'left'] },
     { dir: 'down', at: [13, 14], to: ['northRoad', 10, 1, 'down'] },

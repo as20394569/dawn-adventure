@@ -25,7 +25,7 @@ npcShow12('swamp', 'ruby', (st, o) => o && ((st.ev || {}).ruby || 0) < 3);
 NPC_ROLES.任務.push('miraForest'); if (typeof NPC_WHERE !== 'undefined') NPC_WHERE.miraForest = '迷霧森林';
 MAPS.forest.npcs.push({ id: 'miraForest', x: 20, y: 4, dir: 'left', look: 'apprentice', name: '學徒米拉', show: st => (st.flags.qMira || 0) >= 2 }); delete mapCache.forest;
 Events.miraForest = function* () { const f = Game.st.flags;
-  yield* say(f.witchFate ? '米拉：「爺爺說，沼澤的魔女是他的師妹……下次我想跟她學調藥！」' : (f.qMira || 0) >= 3 ? '米拉：「上次真的謝謝你！我現在只在白天去沼澤採藥了。」' : '米拉：「我平安回來了！爺爺在那邊，快去跟他說吧。」'); };
+  yield* say(f.witchFate === 'spare' && (f.qMira || 0) >= 3 ? '米拉：「爺爺說，沼澤的魔女是他的師妹……下次我想跟她學調藥！」' : (f.qMira || 0) >= 3 ? '米拉：「上次真的謝謝你！我現在只在白天去沼澤採藥了。」' : '米拉：「我平安回來了！爺爺在那邊，快去跟他說吧。」'); };
 // c16 月露收集 and c17 湖蜥的騷動 had nobody to give them: the lake hermit, and a fisher by the town pond
 COM_GIVER.c16 = 'hermit'; COM_GIVER.c17 = 'fisher';
 MAPS.town.npcs.push({ id: 'fisher', x: 6, y: 17, dir: 'left', look: 'man', name: '漁夫' }); delete mapCache.town;
@@ -54,7 +54,7 @@ function* liaPendant12() { const st = Game.st, f = st.flags; f.captainQ = 2;
   yield* sayAll(['莉婭：「……這個吊墜。」', '莉婭：「裡面的畫……是小時候的我。父親一直把它帶在身上。」', '莉婭：「這把劍，你留著吧。父親一定也希望它繼續守護別人。」']);
   st.bag.elixir = (st.bag.elixir || 0) + 3; yield* itemGet(st.name + '得到了萬靈藥×3！'); }
 { const _lf = Events.liaFort; Events.liaFort = function* (ow, ent) { const st = Game.st, f = st.flags;
-    if (!f.liaFort1 && f.duskCaptain) { f.liaFort1 = 1; yield* sayAll(['莉婭：「……終於追上你了。」', '莉婭：「騎士團長命令我守住這裡——勇者的退路，由我來保護。」']); } // the knight is already freed: she doesn't ask for it any more
+    if (!f.liaFort1 && f.duskCaptain) { f.liaFort1 = 1; yield* sayAll(['莉婭：「……終於追上你了。」', '莉婭：「國王陛下命令我守住這裡——勇者的退路，由我來保護。」']); } // the knight is already freed: she doesn't ask for it any more
     if (f.captainQ === 1) yield* liaPendant12();
     if (f.blackFeather && f.liaQuest === 1) { yield* Events.liaCap(ow, ent); return; }
     yield* _lf.call(this, ow, ent); }; }

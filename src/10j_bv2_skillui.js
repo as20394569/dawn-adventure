@@ -34,7 +34,7 @@ skillTreeScreen = function* () {
   const scr = { draw(x) {
     screenBG(x); headerBar(x, tab ? '寶珠背包' : '技能編排'); Font.drawR(x, (tab ? '2' : '1') + '/2 ← →', W - 6, 3, UIC.muted, UIC.textSh, 10);
     const L = tab ? bag() : rows(), VIS = 9, i = Math.min(sel, Math.max(0, L.length - 1)), top = clamp(i - 4, 0, Math.max(0, L.length - VIS));
-    drawWin(x, 4, 22, 168, VIS * 16 + 8, 'menu'); if (!L.length) Font.draw(x, tab ? '還沒有寶珠。打倒精英和頭目吧！' : '還沒有技能。', 12, 28, UIC.muted, UIC.textSh, 10);
+    drawWin(x, 4, 22, 168, VIS * 16 + 8, 'menu'); if (!L.length) Font.draw(x, tab ? '還沒有寶珠。打倒菁英和頭目吧！' : '還沒有技能。', 12, 28, UIC.muted, UIC.textSh, 10);
     L.slice(top, top + VIS).forEach((R, k) => { const Y = 26 + k * 16; if (top + k === i) selBar(x, 6, Y - 1, 164, 15);
       if (tab) { drawOrbLine(x, R, 12, Y - 1, isActiveOrb(R) ? '#c8f0ff' : UIC.warm); if (orbHost(R)) Font.drawR(x, 'E', 166, Y - 1, UIC.accent, UIC.textSh, 10); return; }
       if (R.sig) { Font.draw(x, '★' + skillMove(R.sig).n, 12, Y - 1, '#ffd860', UIC.textSh, 10); Font.drawR(x, '招式點' + SIG_COST + (tpAvail(st) > 0 ? '　A強化' : ''), 166, Y, tpAvail(st) > 0 ? UIC.warm : UIC.muted, UIC.textSh, 8); }

@@ -68,7 +68,7 @@ Object.assign(Events, {
   },
   *warden(ow) {
     const st = Game.st, S = riftSt(st);
-    yield* say('我是迴廊的看守人。異界之門的另一邊，是每次都會改變形狀的「迴廊」。\n最深處是第' + RIFT_TOP + '層。你的最高紀錄：' + (S.best || 0) + '層。');
+    yield* say('我是迴廊的看守人。迴廊的門已經關上了……\n你手上還有徽章吧？在我這裡還是可以換東西。');
     while (true) {
       const TS = TOWER_SHOP.filter(([k]) => !(k === 'tpBook' && typeof tpRaw === 'function' && tpRaw(st) >= TP_CAP)); // v9.2.4 talent cap
       const tok = st.bag.riftToken || 0, list = TS.map(([k, c]) => (ITEMS[k] || GEAR[k]).n + '　' + c + '枚');

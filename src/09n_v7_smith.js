@@ -67,7 +67,7 @@ function bpTut() { const st = Game.st; if (st.flags.bpTut) return null; st.flags
     const r = yield* _v.call(this), st = Game.st, F = this.F, sp = SPECIES[F.sp] || {};
     if (!F.elite && !F.boss && sp.mat && chance(0.35)) { st.bag[sp.mat] = (st.bag[sp.mat] || 0) + 1; yield* this.msg('又撿到了素材「' + ITEMS[sp.mat].n + '」！', { hold: 24 }); }
     if ((F.elite || F.boss) && !this.cfg.noMats) { const n = F.boss ? 3 : 2, got = {}, sig = sp.mat && ITEMS[sp.mat] ? sp.mat : null; if (sig) { got[sig] = n; st.bag[sig] = (st.bag[sig] || 0) + n; } const ex = areaMats(Game.ow && Game.ow.map && Game.ow.map.id, n, F.lv); for (const k in ex) got[k] = (got[k] || 0) + ex[k];
-      Sound.sfx('item'); yield* this.msg((F.boss ? '頭目' : '精英') + '留下了素材：' + matsText(got) + '！', { hold: 36 }); }
+      Sound.sfx('item'); yield* this.msg((F.boss ? '頭目' : '菁英') + '留下了素材：' + matsText(got) + '！', { hold: 36 }); }
     return r;
   };
 }
@@ -158,7 +158,7 @@ function* forgeFlow(k) {
   const opts = [], acts = [];
   for (let lv = 0; lv < 3; lv++) { opts.push(BP_LV[lv].slice(0, 2) + '×' + (lv + 1) + ' ' + oddsT(lv) + (bpCan(k, lv) ? '' : '✕')); acts.push(lv); }
   opts.push('取消'); acts.push(null);
-  const r = yield* ask('要怎麼打造「' + B.n + '」？\n素材投入越多，紅金的機率(%)越高。', opts); const lv = acts[r];
+  const r = yield* ask('要怎麼打造「' + B.n + '」？\n素材投入越多，紅金的機率（%）越高。', opts); const lv = acts[r];
   if (lv === null || lv === undefined || r < 0) return;
   let q;
   { if (!bpCan(k, lv)) { Sound.sfx('bump'); yield* say(missingText(bpCost(k, lv))); return; } const c = bpCost(k, lv); st.money -= c.gold; for (const i in c.mats) st.bag[i] -= c.mats[i]; q = bpRoll(lv); }

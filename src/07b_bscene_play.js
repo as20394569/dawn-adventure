@@ -145,7 +145,7 @@ Battle.prototype.handlers = {
     if (t.boss) { Sound.sfx('quake'); this.shake = 50; for (let i = 0; i < 30; i++) { if (i % 3 === 0) this.sparks(t.x + rnd(-26, 26), t.foot - 34 + rnd(-26, 26), 3, ['#8a8272', '#a09884', '#ff8040'], 2.5, 26, 0.15); yield; } }
     Sound.sfx(t.boss ? 'bossDown' : 'foeDown'); t.A.state = 'faint'; yield* tween(t.boss ? 40 : 22, k => { t.sink = k * t.bbh; t.alpha = 1 - k * 0.3; });
     yield* tween(8, k => { t.alpha = 0.7 * (1 - k); t.plateA = 1 - k; }); t.alpha = 0; t.gone = true;
-    yield* this.msg((t.boss || t.minion ? '' : t.elite ? '精英魔物' : '') + t.n + '倒下了！', { hold: 30 });
+    yield* this.msg((t.boss || t.minion ? '' : t.elite ? '菁英魔物' : '') + t.n + '倒下了！', { hold: 30 });
     if (this.focus === t) this.focus = this.foes()[0] || t; },
   *REVIVE(e, s, t) { if (!t) return; t.gone = false; t.alpha = 1; t.sink = 0; t.plateA = 1; t.A.state = 'idle'; t.hp = this.core.byId[t.id].res.hp; yield* this.msg(t.n + '重新站了起來！'); },
   *EXTRA_ACTION(e, s) { if (s) yield* this.msg(s.n + '的狂怒！再次行動！', { hold: 22 }); },

@@ -53,12 +53,12 @@ const Events = {
       yield* say({ swordsman: '劍士的道路啊……這把練習木劍就交給你了。', mage: '魔導士的道路啊……這把魔杖是我年輕時用的，交給你了。', guardian: '守護者的道路啊……這把木劍和布帽給你，別逞強喔。', ranger: '遊俠的道路啊……這把獵刀是村裡獵人送的，拿去吧。' }[k]);
       st.flags.license = 1; st.bag.license = 1; yield* itemGet('得到了' + S.gear.filter(b => b !== 'guardBadge').map(b => GEAR[b].n).join('和') + '、護身符和冒險者證！');
       yield* say('還有這些傷藥，帶在身上吧。'); st.bag.potion = (st.bag.potion || 0) + 5; yield* itemGet('得到了傷藥×5！');
-      yield* sayAll(['技能有兩個來源：職業（等級到了就學會）和武器（裝備就能用，用滿次數就永久學會）。普通攻擊累積滿了，還會自動發動武器的「特技」。', '普通攻擊不花MP，還會回復一點MP；技能用過之後要「冷卻」幾次行動才能再用。', '每個職業都有自己的核心資源，用它來施放職業招式。每升2級會得到1點「天賦點」，打開選單的「天賦」，就能點' + CLASSES[k].n + '的三個流派。', '新的裝備都要靠鐵匠打造。撿到的設計圖和素材，記得拿去給他看看。', '到了Lv14再來找我，我會幫你進行「天賦覺醒」。', '魔物分成好幾個種族，各有害怕的屬性。善用屬性技能，戰鬥會輕鬆很多。', '按START可以打開選單，查看狀態、技能和背包，也能記錄進度。']);
+      yield* sayAll(['技能來自職業和武器。用過之後要「冷卻」幾次行動才能再用；冷卻的時候就用普通攻擊，不花MP，還會回復MP。', '每個職業都有自己的核心資源，戰鬥中會累積起來，用來施放' + CLASSES[k].n + '的職業招式。']);
       const ap = ow && ow.npcs.find(n => n.id === 'apprentice');
       if (ap) { ap.dir = 'left'; yield* say('學徒：「村長爺爺！讓我幫忙！我在院子裡養了一隻練習用的泡泡姆！」');
         if (yield* yesNo('要和泡泡姆練習一場嗎？')) { const res = yield* ow.battleScript({ sp: 'slime', lv: 1, kind: 'wild' }); if (res === 'win') yield* say('學徒：「好厲害！這就是異界人之力！」'); else yield* say('學徒：「泡、泡泡姆，下手輕一點啦！」'); healHero(); }
         else yield* say('學徒：「那下次再練習吧！」'); }
-      yield* sayAll(['古岩魔像是「構造體」魔物，最怕水和草的攻擊。記住了。', '從今天起，你就是萌芽鎮的冒險者了。', '先去古岩遺跡，查清楚魔像為什麼會暴走。', '去吧，異世界的' + C.n + '。願曙光指引你的道路。']);
+      yield* sayAll(['從今天起，你就是萌芽鎮的冒險者了。', '去吧，異世界的' + C.n + '。願曙光指引你的道路。']);
       return;
     }
     { const n = st.flags.ch2 || 0; // v12.0.1: the elder follows chapter 2 instead of repeating the golem talk forever
@@ -149,7 +149,7 @@ const Events = {
     if (!f.license) { yield* sayAll(['出門前記得多買幾瓶藥水喔，這家店的最實在了。', '武器和防具大多要找鐵匠打造。打倒魔物拿到的素材，先別急著賣掉！']); return; }
     if (!f.croc) { yield* sayAll(['你也是冒險者呀？新武器拿到手要多用用看。', '武器帶著的技能，用熟了就算換了武器也不會忘喔。']); return; }
     yield* sayAll(['騎士團長劍是王都騎士團在用的劍！好想要喔……', '聽說鐵匠用硬石和水晶碎片就能打一把。', '對了，天賦選錯的話，這裡有賣遺忘之書喔。']); },
-  *hiker() { const hf = Game.st.flags; if (hf.mineOpen && !hf.bandit) { yield* sayAll(['東邊的廢棄礦坑被盜賊佔據了。商隊被搶的貨物應該就藏在裡面。', '入口在道路東側的小路盡頭。盜賊頭目「鐵斧」格倫會蓄力揮斧，那時候記得防禦！']); return; } if (Game.st.flags.wolf) { yield* sayAll(['狂牙狼被你打倒了？難怪最近路上安靜多了！', '精英魔物身上常常會掉出好東西喔。']); return; } yield* sayAll(['嘿！這條路上的草叢很深，常有魔物跳出來。', '受傷了就回萌芽鎮的旅店休息吧。', '過了河之後，還有一座能恢復體力的泉水喔！']); },
+  *hiker() { const hf = Game.st.flags; if (hf.mineOpen && !hf.bandit) { yield* sayAll(['東邊的廢棄礦坑被盜賊佔據了。商隊被搶的貨物應該就藏在裡面。', '入口在道路東側的小路盡頭。盜賊頭目「鐵斧」格倫會蓄力揮斧，那時候記得防禦！']); return; } if (Game.st.flags.wolf) { yield* sayAll(['狂牙狼被你打倒了？難怪最近路上安靜多了！', '菁英魔物身上常常會掉出好東西喔。']); return; } yield* sayAll(['嘿！這條路上的草叢很深，常有魔物跳出來。', '受傷了就回萌芽鎮的旅店休息吧。', '過了河之後，還有一座能恢復體力的泉水喔！']); },
   *girl2() { yield* sayAll(Game.st.flags.croc ? ['你打倒了沼澤鱷？太好了，終於可以過橋了！'] : ['橋頭那隻沼澤鱷好兇……', '聽說水棲的魔物最怕雷和草的攻擊。']); },
   *spring() {
     const ok = yield* yesNo('清澈的泉水閃閃發亮……要喝一口嗎？');
@@ -314,7 +314,7 @@ class TitleScene {
       if (o === '設定') { yield* optionsScreen(); continue; }
       if (o === '繼續冒險') { Game.st = loadGame(); yield* fadeOut(20); startOverworld(); Game.sys.push(fadeIn(20)); return; }
       if (o === '新的冒險') {
-        if (this.hasSave) { const ok = yield* yesNo('開始新的冒險後，舊的記錄會在下次存檔時被覆蓋。確定嗎？'); if (!ok) continue; }
+        if (this.hasSave) { const ok = yield* yesNo('開始新的冒險後，舊的記錄會在下次存檔時被覆蓋。確定嗎？'); if (!ok) continue; Game.autoIntro = yield* yesNo('要快轉開場劇情嗎？\n（對話會自動翻過去，到取名字和選職業時再停下來）'); }
         yield* fadeOut(24); Game.setScene(new IntroScene()); return;
       }
     }

@@ -47,7 +47,7 @@ const NPC_ROLES = { 商店: ['smith', 'peddler', 'clerk'], 回復: ['mom', 'heal
 const npcRoleOf = id => Object.keys(NPC_ROLES).find(r => NPC_ROLES[r].includes(id)) || null;
 
 // ---- 魔物階級 ----
-const monRankOf = s => s.boss ? '頭目' : s.elite ? '精英' : s.rare ? '稀有' : '野生';
+const monRankOf = s => s.boss ? '頭目' : s.elite ? '菁英' : s.rare ? '稀有' : '野生';
 
 // ---- regional loot fixes (no overlaps) ----
 Object.assign(GEAR, {

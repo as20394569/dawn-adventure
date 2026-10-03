@@ -153,7 +153,7 @@ Object.assign(Events, {
     const st = Game.st, f = st.flags, n = ch2();
     if (n <= 2) { yield* sayAll(['你來了！國王陛下在王城等你。', '沿著大道一直往北走就是王城。']); return; }
     if (!f.liaQuest) { f.liaQuest = 1; yield* sayAll(['對了，北方街道的盜賊……', '他們的頭目「黑羽」就躲在街道西側的樹林裡，騎士團一直抓不到他。', '如果你遇到他……不，你一定打得贏的！']); return; }
-    if (f.blackFeather && f.liaQuest === 1) { f.liaQuest = 2; yield* sayAll(['你打倒黑羽了！？', '騎士團長知道了一定會嚇一跳……這是我的一點心意。']); st.bag.megaPotion = (st.bag.megaPotion || 0) + 3; st.bag.tpBook = (st.bag.tpBook || 0) + 1; yield* itemGet(st.name + '得到了特級傷藥×3和天賦之書！'); return; }
+    if (f.blackFeather && f.liaQuest === 1) { f.liaQuest = 2; yield* sayAll(['你打倒黑羽了！？', '國王陛下知道了一定會嚇一跳……這是我的一點心意。']); st.bag.megaPotion = (st.bag.megaPotion || 0) + 3; st.bag.tpBook = (st.bag.tpBook || 0) + 1; yield* itemGet(st.name + '得到了特級傷藥×3和天賦之書！'); return; }
     if (f.captainQ === 1) { f.captainQ = 2; yield* sayAll(['……黯滅騎士長？', '……那是我的父親。五年前在北境失蹤的騎士團長。', '謝謝你……讓他解脫了。', '這把劍……你留著吧。父親一定也希望它繼續守護別人。']); st.bag.elixir = (st.bag.elixir || 0) + 3; yield* itemGet(st.name + '得到了萬靈藥×3！'); return; }
     yield* say(n < 4 ? '齒輪的事，鐘錶師艾德會告訴你。他的店在王城的東邊。' : n === 4 ? '鐘塔的門開了！鐘樓就交給你了！' : n < 9 ? '宰相竟然是叛徒……北方一定要小心！' : '謝謝你，勇者。'); },
   *capKid() { yield* say(ch2() >= 10 ? '鐘響了！我聽到了！' : '我長大要當騎士！像莉婭姊姊一樣！'); },

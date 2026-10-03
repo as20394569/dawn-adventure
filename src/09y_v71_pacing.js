@@ -63,7 +63,7 @@ const QUEST_GEAR = {
   qScholarLens: ['學者的單片眼鏡', 4, { spa: 6, spd: 4 }, {}, ['freeCast'], '看得見魔力流動的古董眼鏡。'],
   qGraveBell: ['鎮魂鈴', 4, { hp: 12, spd: 6 }, {}, ['endure'], '讓亡魂安息的小鈴鐺。'],
   qLakeScale: ['湖神鱗片', 5, { hp: 18, def: 4 }, {}, ['thorns'], '銀月湖守護神脫落的鱗片。'],
-  qDesertRose: ['沙漠玫瑰', 5, { atk: 6, spe: 3 }, {}, ['double'], '只在砂漠深處綻放的石之花。'],
+  qDesertRose: ['沙漠玫瑰', 5, { atk: 6, spe: 3 }, {}, ['double'], '只在沙漠深處綻放的石之花。'],
   qGuildSeal: ['公會的印信', 6, { hp: 15, atk: 5, spa: 5 }, {}, ['fervor'], '冒險者公會認可的證明。'],
   qSnowFang: ['雪狼之牙', 6, { atk: 8 }, { crit: 5 }, ['lastStand'], '雪原狼王的獠牙，握著就熱血沸騰。'],
   qStarCompass: ['星之羅盤', 7, { spe: 6, spa: 6, spd: 5 }, {}, ['fortune'], '指針永遠指向星墜之地。'],

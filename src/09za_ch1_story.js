@@ -12,7 +12,7 @@
 Object.assign(MOVES, {
   m_millGrind: { n: '碾石', t: '一般', cat: '物', pow: 55, acc: 95, pp: 10, d: '用巨大的磨石輾過來。' },
   m_blackGust: { n: '黑風', t: '飛', cat: '特', pow: 45, acc: 95, pp: 10, d: '夾著瘴氣的黑色旋風。' },
-  m_millStorm: { n: '逆轉大風車', t: '飛', cat: '特', pow: 85, acc: 100, pp: 5, charge: 1, chargeMsg: '磨石越轉越快，黑色的旋風把整座山丘捲了起來！', warn: '（這一擊很重！先防禦！）', d: '把整座丘陵的風逆轉過來的大技。' },
+  m_millStorm: { n: '逆轉大風車', t: '飛', cat: '特', pow: 85, acc: 100, pp: 5, charge: 1, chargeMsg: '身上的磨石越轉越快，黑色的旋風把整座山丘捲了起來！', warn: '（這一擊很重！先防禦！）', d: '把整座丘陵的風逆轉過來的大技。' },
   m_whiskerLash: { n: '鬚鞭', t: '水', cat: '物', pow: 55, acc: 95, pp: 10, d: '用粗大的鬍鬚抽打。' },
   m_blackTide: { n: '黑色濁流', t: '水', cat: '特', pow: 80, acc: 100, pp: 5, charge: 1, chargeMsg: '潭水變成黑色的漩渦，整條溪倒捲了起來！', warn: '（濁流要衝過來了！先防禦！）', d: '把整座水潭化成濁流的大技。' },
 });
@@ -145,7 +145,7 @@ const npcOf = (ow, id) => ow && ow.npcs.find(n => n.id === id);
 const v8Gate = st => !!st.v8new && st.flags.license && (st.flags.hillsQ || 0) < 2;
 function* hillsIntro() {
   const st = Game.st, f = st.flags; f.hillsQ = 1;
-  yield* sayAll(['……說到這個。', '東邊風車丘陵的磨坊主人漢斯，已經三天沒來送麵粉了。', '丘陵上的風車，從前天起就一動也不動……聽說夜裡還冒出了黑色的霧。',
+  yield* sayAll(['……對了。', '東邊風車丘陵的磨坊主人漢斯，已經三天沒來送麵粉了。', '丘陵上的風車，從前天起就一動也不動……聽說夜裡還冒出了黑色的霧。',
     st.lv >= 10 ? '以你現在的本事應該不成問題。去看看吧，從鎮上的東邊出去就是了。' : '那裡的魔物不算強，正好讓你練練手。從鎮上的東邊出去就是了。']);
   if (st.v8new && st.lv < 8) yield* say('（晨霧道路北邊的魔物還太強。先去風車丘陵吧。）');
 }
@@ -222,7 +222,7 @@ Object.assign(Events, {
     yield* blackText(['「……唔……」', '漢斯醒過來了。']);
     yield* sayAll(['漢斯：「……你是？是你……救了我？」', '漢斯：「那天晚上，我看到磨石上有一道黑光……一碰到它，就什麼都不記得了。」']);
     yield* say('諾拉：「爸爸——！」');
-    yield* sayAll(['諾拉緊緊抱住了漢斯。', '漢斯：「讓妳擔心了……謝謝你，異界來的冒險者。」', '漢斯：「我們家就在山下。以後累了就來休息，床隨時借你。」']);
+    yield* sayAll(['諾拉緊緊抱住了漢斯。', '漢斯：「讓妳擔心了……謝謝你，異界來的冒險者。」', '漢斯：「我們家就在山下。以後累了就來休息，床隨時借你。」', '漢斯：「……對了。那顆磨石發光的時候，就是要使出大招了。看到發光，就先擋住。」']);
     f.hillsQ = 2; st.money += 500; st.bag.potion = (st.bag.potion || 0) + 3; if (f.noraWith === 1) st.bag.superPotion = (st.bag.superPotion || 0) + 2;
     yield* itemGet('得到了500 G和傷藥×3' + (f.noraWith === 1 ? '，諾拉也送了好傷藥×2' : '') + '！');
     yield* say('（目標：把黑色結晶拿給村長看。晨霧道路北邊也可以去了。）');

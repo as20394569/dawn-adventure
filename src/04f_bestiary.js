@@ -306,7 +306,7 @@ Object.assign(GEAR, {
   emberKnife: { n: '燼火短刀', slot: 'weapon', t: 2, st: { atk: 6 }, elem: '火', d: '把燼核熔進刀身的短刀。刀刃一直是溫熱的。' },
   voltSword: { n: '雷角劍', slot: 'weapon', t: 2, st: { atk: 6 }, sp: { hit: 5 }, elem: '雷', d: '用雷角甲蟲的甲殼打造的劍。揮動時會劈啪作響。' },
   thornStaff: { n: '荊棘法杖', slot: 'weapon', t: 2, st: { spa: 7 }, sp: { elem: 4 }, elem: '草', spr: 'woodSword', d: '森林獵人用荊棘枝做的法杖。' },
-  tideStaff: { n: '潮汐法杖', slot: 'weapon', t: 3, st: { spa: 10 }, sp: { elem: 6 }, elem: '水', spr: 'woodSword', d: '王都水道工程師的法杖。杖頭的寶珠會自己滲水。' },
+  tideStaff: { n: '潮汐法杖', slot: 'weapon', t: 3, st: { spa: 10 }, sp: { elem: 6 }, elem: '水', spr: 'woodSword', d: '王都水道工程師的法杖。杖頭的寶石會自己滲水。' },
   boneSaber: { n: '骸骨軍刀', slot: 'weapon', t: 3, st: { atk: 9 }, sp: { crit: 4, vs: ['undead', 20] }, d: '古代守衛的軍刀。對亡者特別有效。' },
   stormStaff: { n: '雷鳴權杖', slot: 'weapon', t: 4, st: { spa: 13 }, sp: { elem: 8 }, elem: '雷', spr: 'woodSword', d: '古王的權杖。符文裡封著雷光。' },
   kingsBlade: { n: '古王之劍', slot: 'weapon', t: 4, st: { atk: 12 }, sp: { crit: 4 }, elem: '火', d: '古王墓室中的陪葬劍。劍身燃著不滅的火。' },
