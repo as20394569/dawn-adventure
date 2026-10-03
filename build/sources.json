@@ -1020,12 +1020,9 @@
    "forest寶箱",
    "sewer寶箱",
    "mine寶箱",
-   "catacomb寶箱",
    "canyon寶箱",
-   "northRoad寶箱",
    "jadeCreek寶箱",
    "jadeCreek寶箱",
-   "maplePass寶箱",
    "道具店",
    "行商",
    "鐵匠配方",
@@ -1039,6 +1036,7 @@
    "sewer寶箱",
    "mine寶箱",
    "catacomb寶箱",
+   "lavaTunnel寶箱",
    "oldField寶箱",
    "行商",
    "迴廊兌換",
@@ -1173,10 +1171,7 @@
    "lake寶箱",
    "swamp寶箱",
    "goldPlains寶箱",
-   "frostField寶箱",
-   "iceCave寶箱",
    "emberPass寶箱",
-   "lavaTunnel寶箱",
    "duskFort1寶箱",
    "starShrine寶箱",
    "starShrine寶箱",
@@ -1187,6 +1182,25 @@
    "委託獎勵",
    "委託獎勵",
    "委託獎勵",
+   "委託獎勵",
+   "委託獎勵",
+   "委託獎勵"
+  ],
+  "megaPotion": [
+   "catacomb寶箱",
+   "northRoad寶箱",
+   "northRoad寶箱",
+   "capSewer寶箱",
+   "goldPlains寶箱",
+   "clockTower1寶箱",
+   "frostField寶箱",
+   "iceCave寶箱",
+   "emberPass寶箱",
+   "lavaTunnel寶箱",
+   "duskFort1寶箱",
+   "maplePass寶箱",
+   "oldField寶箱",
+   "heroTomb寶箱",
    "委託獎勵",
    "委託獎勵",
    "委託獎勵"
@@ -1203,9 +1217,7 @@
    "lake寶箱",
    "canyon寶箱",
    "swamp寶箱",
-   "northRoad寶箱",
    "capital寶箱",
-   "capSewer寶箱",
    "goldPlains寶箱",
    "maplePass寶箱",
    "oldField寶箱",
@@ -1224,8 +1236,10 @@
    "lake寶箱",
    "canyon寶箱",
    "swamp寶箱",
+   "capSewer寶箱",
    "goldPlains寶箱",
    "frostVillage寶箱",
+   "iceCave寶箱",
    "emberPass寶箱",
    "windHills寶箱",
    "maplePass寶箱",
@@ -1258,18 +1272,12 @@
    "魔物:沼澤魔女",
    "魔物:腐沼九頭蛇"
   ],
-  "megaPotion": [
+  "agiFruit": [
    "northRoad寶箱",
-   "capSewer寶箱",
-   "goldPlains寶箱",
-   "clockTower1寶箱",
-   "frostField寶箱",
-   "iceCave寶箱",
-   "emberPass寶箱",
-   "lavaTunnel寶箱",
-   "duskFort1寶箱",
-   "oldField寶箱",
-   "heroTomb寶箱",
+   "jadeCreek寶箱",
+   "行商",
+   "迴廊兌換",
+   "委託獎勵",
    "委託獎勵",
    "委託獎勵",
    "委託獎勵"
@@ -1284,14 +1292,34 @@
    "魔物:稻草人",
    "魔物:收穫魔像"
   ],
-  "megaEther": [
+  "dexFruit": [
    "clockTower1寶箱",
+   "maplePass寶箱",
+   "行商",
+   "迴廊兌換",
+   "委託獎勵",
+   "委託獎勵",
+   "委託獎勵",
+   "委託獎勵"
+  ],
+  "megaEther": [
    "frostField寶箱",
    "iceCave寶箱",
    "emberPass寶箱",
    "lavaTunnel寶箱",
-   "duskFort1寶箱",
    "starShrine寶箱",
+   "委託獎勵",
+   "委託獎勵",
+   "委託獎勵"
+  ],
+  "vitFruit": [
+   "frostField寶箱",
+   "windHills寶箱",
+   "oldField寶箱",
+   "行商",
+   "迴廊兌換",
+   "委託獎勵",
+   "委託獎勵",
    "委託獎勵",
    "委託獎勵",
    "委託獎勵"
@@ -1318,6 +1346,7 @@
    "魔物:熔岩巨人"
   ],
   "tpBook": [
+   "duskFort1寶箱",
    "starShrine寶箱",
    "行商",
    "道具店(魔像後)",
@@ -1337,38 +1366,9 @@
    "魔物:星靈",
    "魔物:天使石像"
   ],
-  "vitFruit": [
-   "windHills寶箱",
-   "oldField寶箱",
-   "行商",
-   "迴廊兌換",
-   "委託獎勵",
-   "委託獎勵",
-   "委託獎勵",
-   "委託獎勵",
-   "委託獎勵"
-  ],
-  "agiFruit": [
-   "jadeCreek寶箱",
-   "行商",
-   "迴廊兌換",
-   "委託獎勵",
-   "委託獎勵",
-   "委託獎勵",
-   "委託獎勵"
-  ],
   "antidote": [
    "jadeCreek寶箱",
    "道具店",
-   "委託獎勵"
-  ],
-  "dexFruit": [
-   "maplePass寶箱",
-   "行商",
-   "迴廊兌換",
-   "委託獎勵",
-   "委託獎勵",
-   "委託獎勵",
    "委託獎勵"
   ],
   "leaf": [
