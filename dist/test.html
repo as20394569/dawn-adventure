@@ -20017,5 +20017,256 @@ const talSpent9 = P => { let s = 0; for (const k in P || {}) { if (k === 'k') { 
     if (st && !st.v9tal && st.tal12) { st.v9tal = 1; const L = []; for (const c in st.tal12) if (talSpent9(st.tal12[c]) > TP_CAP) { st.tal12[c] = {}; L.push((CLASSES[c] || {}).n || c); }
       if (L.length && Game.ow) Game.ow.run((function* () { yield* say('【第九輪更新】天賦點上限從 20 點改成 ' + TP_CAP + ' 點。\n' + L.join('、') + '的天賦已經免費退回，請到選單「天賦」重新選。'); yield* say('另外 14 個核心天賦改成直接改變職業招式。說明在「天賦」畫面。'); })()); }
     return r; }; }
+BV_TAGS.add('cls9'); BV_TAGS.add('noSigil9'); // class skills (only usable in their own class) · 天體崩落 is not remembered as a sigil
+Object.assign(COND, {
+  tgtNoStatus9: (c, v) => !!c.tgt && !c.core.hasStatus(c.tgt, v),
+  noSigil9: (c, v) => { const u = c.src || c.owner; return !!u && !((u.data.sigils || []).includes(v)); },
+});
+{ const f = COND.tgtNotActed; COND.tgtNotActed = (c, v) => (!!c.tgt && !!c.owner && c.owner === c.src && c.core.hasStatus(c.owner, 'lurk9')) ? !!v : f(c, v); }
+{ const f = COND.elemSkill; COND.elemSkill = (c, v) => !!c.skill && c.skill.tags.includes('noSigil9') ? !v : f(c, v); }
+const actV9 = (c, k) => (c.core.act && c.core.act[k]) || 0;
+Object.assign(BR.FORMULA, {
+  tenpu9: c => { const u = c.src; return (u.max.ki || 0) > 0 && (u.res.ki || 0) >= u.max.ki ? 0.4 : 0.7; },
+  sigRing9: c => 1 + 0.2 * ((c.src.res.sigil) || 0),
+  holyMend9: c => 0.25 + 0.05 * (((c.owner || c.src).res.stance) || 0),
+  retaliate9: c => 70 + 15 * actV9(c, 'rev9'),
+  judgeAtk9: c => (c.src.stats.atk + c.src.stats.def) / Math.max(1, c.src.stats.atk),
+  markCrit9: c => 10 * BV12.markOf(c.core, c.src, c.tgt),
+  shade9: c => 1 + 0.3 * actV9(c, 'shade9'),
+});
+EFFECT_TYPES.sigil_push9 = { exec(core, ef, ctx) { const u = ctx.owner; if (!u || !('sigil' in u.res)) return;
+  const els = ef.els === 'weapon' ? [u.data.welem && u.data.welem !== '一般' ? u.data.welem : '火'] : ef.els || [];
+  for (const el of els) { const L = u.data.sigils || (u.data.sigils = []), dup = core.rule(u, 'sigilDup') ? 2 : 1; if (L.filter(x => x === el).length >= dup || L.length >= u.max.sigil) continue; L.push(el); core.changeRes(u, 'sigil', 1, { why: 'sigil:' + el }); }
+  const need = core.rule(u, 'elemKing') ? 2 : 3; if (new Set(u.data.sigils || []).size >= need && !core.hasStatus(u, 'elem_burst')) core.applyStatus(u, u, 'elem_burst', {}); } };
+{ const D = EFFECT_TYPES.damage.exec; EFFECT_TYPES.damage.exec = function (core, ef, ctx, tg) { if (ef.elLastSig9) { const L = (ctx.owner && ctx.owner.data.sigils) || []; ef = { ...ef, elLastSig9: 0 }; if (L.length) ef.el = L[L.length - 1]; } return D.call(this, core, ef, ctx, tg); }; }
+defPut('statuses', 'kiCounter9', { tags: ['buff'], duration: 'until_own_action', clearAt: 'owner_action_start', stack: 'refresh', metadata: { n: '迎擊' },
+  triggers: [{ on: EVT.DAMAGE, phase: 'POST', role: 'tgt', reaction: 1, cond: { srcSide: 'enemy', hasPower: 1, cat: '物', ownerAlive: 1 }, limit: { perAction: 1 }, effects: [{ type: 'counter', skill: 'sw9_counter', why: 'kiCounter' }] }] });
+defPut('statuses', 'shieldCounter9', { tags: ['buff'], duration: 'until_own_action', clearAt: 'owner_action_start', stack: 'refresh', metadata: { n: '架盾' },
+  triggers: [{ on: EVT.DAMAGE, phase: 'POST', role: 'tgt', reaction: 1, cond: { srcSide: 'enemy', hasPower: 1, ownerAlive: 1 }, limit: { perAction: 1 },
+    effects: [{ type: 'counter', skill: 'gd9_counter', why: 'shieldCounter' }, { type: 'gain', target: 'self', res: 'stance', n: 1, why: 'shieldCounter' }] }] });
+defPut('statuses', 'bulwark9', { tags: ['buff', 'guard'], duration: 'owner_actions', durDefault: 3, tick: 'owner_action_start', stack: 'refresh', metadata: { n: '不動' },
+  mods: [{ stage: 'final', who: 'defender', mul: 0.6, cond: { hasPower: 1 } }, { stage: 'defender', who: 'defender', critAdd: -999, critTaken: 0 }] });
+defPut('statuses', 'lurk9', { tags: ['buff'], duration: 'until_used', stack: 'refresh', metadata: { n: '潛伏' } });
+for (const [id, n, pow, crit] of [['sw9_counter', '迎擊', 80, 1], ['gd9_counter', '架盾反擊', 60, 0]]) {
+  const D = defPut('skills', id, { ...skillFromMove(id, { ...MOVES.slash, n, pow, acc: null }, { kind: 'attack', extraTags: ['reaction', 'counter'] }) });
+  D.cooldown = 0; D.mods = crit ? [{ stage: 'skill', who: 'attacker', crit: true }] : []; D.effects = D.effects.map((ef, i) => effRegister('skill:' + id + '#e' + i, ef)); D.after = D.after.map((ef, i) => effRegister('skill:' + id + '#a' + i, ef)); }
+const GAIN9 = (res, n, x = {}) => ({ type: 'gain', target: 'self', res, n, ...x });
+const SK9 = {
+  swordsman: [
+    ['sw9Tread', '踏斬', 55, 0, 1, 3, ['str', 1], '物', '一般', 0, '踏步斬下。命中時劍意 +2（一般命中只 +1）。', { B: ['spe+1', 'hit+1'] },
+      { effects: [{ type: 'damage' }, GAIN9('ki', 1, { cap: 2, why: 'tread' })] }],
+    ['sw9Meteor', '流星連刃', 30, 2, 1, 4, ['agi', 1], '物', '一般', 0, '流星般落下的連斬，2 段；劍意 3 以上時多 1 段。', { B: ['spe+1', 'hit+1'] },
+      { hitsOf: (core, u) => (u.res.ki || 0) >= 3 ? 3 : 2 }],
+    ['sw9Sheathe', '納刀', 0, 0, 2, 3, null, '變', '一般', 0, '收刀進入防禦姿勢：到下次行動前受到的傷害 −50%，劍意 +1（不會因防禦失去劍意）。', { A: ['atk+1', 'cheap'], B: ['def+1', 'spe+1'] },
+      { effects: [{ type: 'status', target: 'self', status: 'guard' }, GAIN9('ki', 1, { why: 'sheathe' })] }],
+    ['sw9Whirl', '旋風斬', 64, 0, 1, 5, ['str', 1], '物', '一般', 1, '迴旋的一斬打全體。每打出一次會心，劍意 +1。', { B: ['fatk-1', 'atk+1'] }, {}],
+    ['sw9Riposte', '迎擊架勢', 0, 0, 2, 4, null, '變', '一般', 0, '消耗 1 劍意擺出架勢：到下次行動前，被物理攻擊時反擊（威力 80，必定會心）。', { A: ['cheap', 'atk+1'], B: ['spe+1', 'mp:3'] },
+      { costs: [{ res: 'ki', amount: 1 }], effects: [{ type: 'status', target: 'self', status: 'kiCounter9' }] }],
+    ['sw9Tsubame', '燕返・斷', 84, 0, 2, 6, ['str', 1], '物', '一般', 0, '燕子回身般的一斬。劍意 2 以上時消耗 2 點：威力 ×1.5、必定會心。', { B: ['spec+1', 'crit'] },
+      { onPrepare: (core, u, cmd) => { if ((u.res.ki || 0) >= 2) { core.changeRes(u, 'ki', -2, { why: 'cost' }); cmd.tsubame9 = 1; } },
+        mods: [{ stage: 'skill', who: 'attacker', mul: 1.5, cond: { actFlag: 'tsubame9' } }, { stage: 'skill', who: 'attacker', crit: true, cond: { actFlag: 'tsubame9' } }] }],
+    ['sw9Tenpu', '天穿', 94, 0, 2, 6, ['dex', 1], '物', '一般', 0, '貫穿天際的突刺，無視 30% 物防；劍意全滿時無視 60%。', { B: ['fdef-1', 'crit'] },
+      { mods: [{ stage: 'skill', who: 'attacker', defMul: { f: 'tenpu9' } }] }],
+    ['sw9Mujin', '極意・無塵', 120, 0, 3, 8, ['str', 1.5], '物', '一般', 0, '劍意 4 以上才能用（不消耗劍意）。斬過不留塵埃的一刀，會心傷害 +50%。', { B: ['atk+1', 'drain:15'] },
+      { requires: { ownerResAtLeast: ['ki', 4] }, reqText: '劍意要 4 以上才能用！', mods: [{ stage: 'skill', who: 'attacker', critDmg: 50 }] }],
+  ],
+  mage: [
+    ['mg9FlameArrow', '焰矢', 52, 0, 1, 3, ['int', 1], '特', '火', 0, '火屬性的魔法箭，20% 灼傷；還沒有火咒印時威力 +20%。', { B: ['brn:30', 'cheap'] },
+      { mods: [{ stage: 'skill', who: 'attacker', mul: 1.2, cond: { noSigil9: '火' } }], effects: [{ type: 'damage' }, { type: 'status', status: 'brn', chance: 0.2, secondary: true, cond: { tgtAlive: 1, tgtNoMajor: 1 } }] }],
+    ['mg9MirrorArrow', '水鏡箭', 58, 0, 1, 4, ['int', 1], '特', '水', 0, '水鏡凝成的魔法箭。命中讓目標潮濕 2 回合。', { B: ['wet', 'fspd-1'] },
+      { effects: [{ type: 'damage' }, { type: 'status', status: 'wet', dur: 2, cond: { tgtAlive: 1 } }] }],
+    ['mg9Violet', '紫電', 56, 0, 1, 4, ['int', 1], '特', '雷', 1, '紫色的雷電打全體，10% 麻痺；對潮濕的魔物 40%。', { B: ['par:25', 'spec+1'] },
+      { effects: [{ type: 'damage' }, { type: 'status', status: 'par', chance: 0.1, secondary: true, cond: { tgtAlive: 1, tgtNoMajor: 1, tgtNoStatus9: 'wet' } }, { type: 'status', status: 'par', chance: 0.4, secondary: true, cond: { tgtAlive: 1, tgtNoMajor: 1, tgtStatus: 'wet' } }] }],
+    ['mg9Thorn', '棘藤咒', 62, 0, 1, 5, ['int', 1], '特', '草', 1, '從地面竄出的荊棘藤打全體，30% 纏繞。', { B: ['tangle', 'drain:15'] },
+      { effects: [{ type: 'damage' }, { type: 'status', status: 'tangle', chance: 0.3, secondary: true, cond: { tgtAlive: 1 } }] }],
+    ['mg9ChantWall', '詠唱護壁', 0, 0, 2, 5, null, '變', '一般', 0, '詠唱展開護盾 2 行動，並記下 1 個咒印（武器的屬性；一般武器記火）。', { A: ['shield:1', 'shield:1'], B: ['spd+1', 'mp:3'] },
+      { effects: [{ type: 'status', target: 'self', status: 'barrier', dur: 2 }, { type: 'sigil_push9', els: 'weapon' }] }],
+    ['mg9SigilRing', '咒環爆', 70, 0, 2, 6, ['int', 1], '特', '一般', 1, '咒印化成光環炸開，打全體；每有 1 個咒印威力 +20%（不消耗咒印）。', { B: ['brn:30', 'spa+1'] },
+      { mods: [{ stage: 'skill', who: 'attacker', mul: { f: 'sigRing9' } }] }],
+    ['mg9FrostFire', '霜火交錯', 45, 2, 2, 7, ['int', 1], '特', '火', 0, '第 1 段火、第 2 段水，一次記下 2 個咒印；第 2 段打中灼傷的魔物 ×1.3。', { B: ['wet', 'fspe-1'] },
+      { effects: [{ type: 'damage', el: '火', cond: { firstHit: 1 } }, { type: 'damage', el: '水', cond: { firstHit: 0 } }], mods: [{ stage: 'skill', who: 'attacker', mul: 1.3, cond: { firstHit: 0, tgtStatus: 'brn' } }],
+        after: [{ type: 'sigil_push9', els: ['火', '水'] }] }],
+    ['mg9Celestial', '天體崩落', 118, 0, 3, 11, ['int', 1], '特', '一般', 1, '讓星空崩落下來打全體。屬性是最後記下的咒印；元素爆發中威力再 +30%。', { B: ['brn:40', 'cheap'] },
+      { tags: ['noSigil9'], effects: [{ type: 'damage', elLastSig9: 1 }], mods: [{ stage: 'skill', who: 'attacker', mul: 1.3, cond: { ownerHasStatus: 'elem_burst' } }] }],
+  ],
+  guardian: [
+    ['gd9ShieldKnock', '鐵盾叩', 58, 0, 1, 3, ['vit', 1], '物', '一般', 0, '用盾敲下去，攻擊力用「物攻＋物防÷2」；命中時守勢 +1。', { B: ['fdef-1', 'fatk-1'] },
+      { mods: [{ stage: 'skill', who: 'attacker', atkMul: { f: 'guardAtk' } }], effects: [{ type: 'damage' }, GAIN9('stance', 1, { why: 'knock' })] }],
+    ['gd9ShieldCounter', '架盾反擊', 0, 0, 2, 4, null, '變', '一般', 0, '舉盾進入防禦姿勢：到下次行動前，每被攻擊一次就反擊（威力 60），每次守勢 +1。', { A: ['spd+1', 'cheap'], B: ['shield:1', 'def+1'] },
+      { effects: [{ type: 'status', target: 'self', status: 'guard' }, { type: 'status', target: 'self', status: 'shieldCounter9' }] }],
+    ['gd9HoldFast', '固守', 0, 0, 2, 4, null, '變', '一般', 0, '穩住腳步：守勢 +2，物防 +1（3 行動）。', { A: ['spd+1', 'cheap'], B: ['heal+15', 'shield:1'] },
+      { effects: [GAIN9('stance', 2, { why: 'hold' }), { type: 'stage', target: 'self', stats: { def: 1 }, dur: 3 }] }],
+    ['gd9ShieldSweep', '重盾橫掃', 62, 0, 1, 5, ['vit', 1], '物', '一般', 1, '揮盾橫掃全體，攻擊力同鐵盾叩；守勢 3 以上時 30% 退縮。', { B: ['fatk-1', 'def+1'] },
+      { mods: [{ stage: 'skill', who: 'attacker', atkMul: { f: 'guardAtk' } }], effects: [{ type: 'damage' }, { type: 'status', status: 'flinch', chance: 0.3, secondary: true, cond: { tgtAlive: 1, ownerResAtLeast: ['stance', 3] } }] }],
+    ['gd9HolyMend', '聖療', 0, 0, 2, 5, null, '變', '一般', 0, '聖光治療：回復 25% HP，每點守勢再 +5%（不消耗守勢）。', { A: ['heal+25', 'heal+25'], B: ['cure', 'shield:1'] },
+      { tags: ['heal'], effects: [{ type: 'heal', target: 'self', pct: { f: 'holyMend9' } }] }],
+    ['gd9Retaliate', '報復之錘', 70, 0, 2, 6, ['str', 1], '物', '一般', 0, '把受過的打擊還回去：消耗一半守勢（捨去小數），每點威力 +15。', { B: ['shield:1', 'drain:20'] },
+      { powerOf: 'retaliate9', onPrepare: (core, u, cmd) => { const n = Math.floor((u.res.stance || 0) / 2); if (n) { core.changeRes(u, 'stance', -n, { why: 'cost' }); cmd.rev9 = n; } } }],
+    ['gd9Bulwark', '不動城牆', 0, 0, 3, 7, null, '變', '一般', 0, '消耗 3 守勢化成城牆：3 行動內受到的傷害 −40%，不會被打出會心。', { A: ['spd+1', 'cheap'], B: ['heal+15', 'def+1'] },
+      { costs: [{ res: 'stance', amount: 3 }], effects: [{ type: 'status', target: 'self', status: 'bulwark9', dur: 3 }] }],
+    ['gd9Judgment', '審判之槌', 110, 0, 3, 8, ['vit', 1.5], '物', '一般', 0, '降下審判的鐵槌，攻擊力用「物攻＋物防」；守勢 5 以上時目標物防 −2。', { B: ['fdef-1', 'crit'] },
+      { mods: [{ stage: 'skill', who: 'attacker', atkMul: { f: 'judgeAtk9' } }], effects: [{ type: 'damage' }, { type: 'stage', stats: { def: -2 }, cond: { tgtAlive: 1, ownerResAtLeast: ['stance', 5] } }] }],
+  ],
+  ranger: [
+    ['rg9Hunt', '追獵刺', 55, 0, 1, 3, ['agi', 1], '物', '一般', 0, '追上獵物的一刺。命中必定留下 1 層獵印（不管目標行動了沒）。', { B: ['psn:35', 'hit+1'] },
+      { effects: [{ type: 'damage' }, { type: 'status', status: 'hunt_mark', cond: { tgtAlive: 1, tgtNotActed: 0 } }] }],
+    ['rg9TwinShadow', '雙影', 30, 2, 1, 4, ['agi', 1], '物', '一般', 0, '兩道影子同時出手，2 段；對有獵印的目標，每段會心率 +15%。', { B: ['spe+1', 'hit+1'] },
+      { mods: [{ stage: 'skill', who: 'attacker', critAdd: 15, cond: { tgtMarked: 1 } }] }],
+    ['rg9Lurk', '潛伏', 0, 0, 2, 3, null, '變', '一般', 0, '躲進煙幕 2 行動；下一次攻擊算作「目標還沒行動」。', { A: ['cheap', 'spe+1'], B: ['spec+1', 'mp:3'] },
+      { effects: [{ type: 'status', target: 'self', status: 'smoke', dur: 2 }, { type: 'status', target: 'self', status: 'lurk9' }] }],
+    ['rg9Venom', '淬毒刺', 62, 0, 1, 4, ['luk', 1], '物', '一般', 0, '淬了毒的一刺，40% 中毒；打中中毒的魔物獵印 +1。', { B: ['fspe-1', 'crit'] },
+      { effects: [{ type: 'damage' }, { type: 'status', status: 'hunt_mark', cond: { tgtAlive: 1, tgtStatus: 'psn' } }, { type: 'status', status: 'psn', chance: 0.4, secondary: true, cond: { tgtAlive: 1, tgtNoMajor: 1 } }] }],
+    ['rg9FanBlade', '扇刃', 60, 0, 1, 5, ['agi', 1], '物', '一般', 1, '扇形撒出飛刃打全體；有獵印的那一隻威力 ×1.3。', { B: ['psn:40', 'crit'] },
+      { mods: [{ stage: 'skill', who: 'attacker', mul: 1.3, cond: { tgtMarked: 1 } }] }],
+    ['rg9Declare', '獵殺宣告', 72, 0, 2, 5, ['dex', 1], '物', '一般', 0, '宣告下一個獵物。命中獵印 +2（不會引爆）。', { B: ['hit+1', 'fdef-1'] },
+      { effects: [{ type: 'damage' }, { type: 'status', status: 'hunt_mark', delta: 2, cond: { tgtAlive: 1 } }] }],
+    ['rg9Fatal', '致命一擊', 90, 0, 2, 6, ['luk', 1.5], '物', '一般', 0, '瞄準要害。目標 HP 低於 30% 時威力 ×2；每層獵印會心率 +10%。', { B: ['fdef-1', 'first'] },
+      { mods: [{ stage: 'skill', who: 'attacker', mul: 2, cond: { tgtHpBelow: 0.3 } }, { stage: 'skill', who: 'attacker', critAdd: { f: 'markCrit9' } }] }],
+    ['rg9ShadowGrave', '影葬', 110, 0, 3, 8, ['luk', 1.5], '物', '一般', 0, '把獵物葬進影子裡：消耗全部獵印，每層威力 +30%（不算引爆）。', { B: ['first', 'psn:35'] },
+      { onPrepare: (core, u, cmd) => { const t = core.byId[(cmd.tg || [])[0]]; cmd.shade9 = t ? BV12.markOf(core, u, t) : 0; },
+        mods: [{ stage: 'skill', who: 'attacker', powMul: { f: 'shade9' } }], after: [{ type: 'remove_status', target: 'cast_targets', status: 'hunt_mark', why: 'spent' }] }],
+  ],
+};
+const SK9_KIND = { sw9Tread: 'slash', sw9Meteor: 'slash', sw9Sheathe: 'guard', sw9Riposte: 'guard', sw9Tsubame: 'slash', sw9Tenpu: 'pierce', sw9Mujin: 'slash',
+  mg9FlameArrow: 'bolt', mg9MirrorArrow: 'bolt', mg9ChantWall: 'guard', mg9FrostFire: 'bolt',
+  gd9ShieldKnock: 'strike', gd9ShieldCounter: 'guard', gd9HoldFast: 'buff', gd9HolyMend: 'heal', gd9Retaliate: 'strike', gd9Bulwark: 'guard', gd9Judgment: 'strike',
+  rg9Hunt: 'pierce', rg9TwinShadow: 'slash', rg9Lurk: 'buff', rg9Venom: 'pierce', rg9Declare: 'pierce', rg9Fatal: 'pierce', rg9ShadowGrave: 'pierce' };
+const SK9_CLS = {}; // skill key → class
+const SK9_REQ = {}; // skill id → the text when its requirement is not met
+function sk9Build(cls) {
+  const L = SK9[cls]; if (!L || L.length !== 8) { bvErr('r9', 'class skills ' + cls); return; }
+  L.forEach(([k, n, pow, hits, cd, mp, attr, cat, el, aoe, d, evo, x], i) => {
+    const id = 'o_' + k, learn = LEARN_OF_CD[Math.min(3, cd)], tpl = pow ? (cat === '特' ? 'magicBolt' : 'slash') : 'focus';
+    ORB_A[k] = { n, tpl, pow, mp, d, B: evo.B, ...(evo.A ? { A: evo.A } : {}), cls9: cls }; SK9_CLS[k] = cls;
+    MOVES[id] = { n, d, t: el, cat, pow, acc: pow ? 100 : null, hits: hits || null, cls: aoe ? 'area' : SK9_KIND[k] || (pow ? 'slash' : 'buff'), ...(attr && pow ? { scale: attr } : {}), orb: k, ws: 1, fx: 'c9_' + k };
+    SKILL_MP[id] = mp;
+    const D = skillFromMove(id, MOVES[id], { kind: 'skill', tpl, extraTags: ['orb', 'cls9'].concat(x.tags || []), costs: (x.costs || []).concat([{ res: 'mp', amount: mp }]), fallback: 'attack' });
+    if (!pow) { D.target = 'self'; D.noHitRoll = true; D.effects = []; D.tags = D.tags.filter(t => t !== 'damage'); }
+    if (x.effects) D.effects = x.effects.map(e => ({ ...e })); if (x.after) D.after = x.after.map(e => ({ ...e })); if (x.mods) D.mods = D.mods.concat(x.mods);
+    for (const f of ['hitsOf', 'onPrepare', 'powerOf', 'requires']) if (x[f]) D[f] = x[f];
+    if (x.reqText) SK9_REQ[id] = x.reqText;
+    Object.assign(D, { cooldown: cd, prio: 0, fx: 'c9_' + k, metadata: { orb: k, tpl, learn, cls9: cls, lv9: CLASS_SKILL_LV[i] } });
+    D.effects = D.effects.map((ef, j) => effRegister('skill:' + id + '#e' + j, ef)); D.after = D.after.map((ef, j) => effRegister('skill:' + id + '#a' + j, ef));
+    defPut('skills', id, { ...D, override: 1 });
+  });
+  CLASS_SKILLS12[cls] = L.map(r => r[0]);
+}
+defPut('mechanics', 'cls9sk', { layer: 'class', make: u => ({ triggers: [
+  TRG(EVT.DAMAGE, 'src', { skillIs: 'o_sw9Whirl', crit: 1, evHit: 1, tgtSide: 'enemy' }, [GAIN('ki', 1, 0, { why: 'whirl' })]),
+  TRG(EVT.SKILL_SUCCESS, 'src', { hasPower: 1, ownerHasStatus: 'lurk9' }, [{ type: 'remove_status', target: 'self', status: 'lurk9', why: 'used' }]),
+] }) });
+{ const _hs = BB.heroSpec; BB.heroSpec = function (st, cfg) { const s = _hs.call(this, st, cfg); s.data.mechanics.push('cls9sk'); return s; }; }
+{ const _av = BB.available; BB.available = function (st = Game.st) { const c = clsV7(st.cls); return _av.call(this, st).filter(id => { const k = id.startsWith('o_') ? id.slice(2) : null; return !k || !SK9_CLS[k] || SK9_CLS[k] === c; }); }; }
+if (DEF.skills.o_chronoLock) DEF.skills.o_chronoLock.cooldown = 3; // 時停：冷卻 0 → 3
+{ const _cu = Battle.prototype.canUse; Battle.prototype.canUse = function (id) { const r = _cu.call(this, id); if (!r.ok && SK9_REQ[id] && r.short === '不可用') return { ok: false, why: SK9_REQ[id], short: '條件不足' }; return r; }; }
+{ const H = Battle.prototype.handlers, _sf = H.SKILL_FAIL; H.SKILL_FAIL = function* (e, s, t, P) { if (s && s.hero && P.why === 'requires' && SK9_REQ[P.skill]) { yield* this.msg(SK9_REQ[P.skill].replace(/！$/, '') + '，' + s.n + '改用普通攻擊！', { hold: 26 }); return; } yield* _sf.call(this, e, s, t, P); }; }
+const ln9 = (b, x1, y1, x2, y2, c, h, w = 5, life = 12) => { b.spawn({ k: 'line', x1, y1, x2, y2, c, w, grow: 3, life }); b.spawn({ k: 'line', x1, y1, x2, y2, c: h, w: Math.max(1, w - 3), grow: 3, life: life - 2 }); };
+const imp9 = (b, T, S, big) => { const [c, h] = S.col; b.spawn({ k: 'glow', x: T.x, y: T.y, r: big ? 26 : 16, c, life: 12 }); b.spawn({ k: 'ring', x: T.x, y: T.y, r0: 3, r1: big ? 28 : 18, c: h, w: 2, life: 10 }); w12Particle(b, T.x, T.y, S, big ? 12 : 8, big ? 22 : 14); };
+const grp9 = (b, T, t) => t && t.group ? t.group.map(v => b.center(v)) : [T];
+const zig9 = (b, x1, y1, x2, y2, c, w = 3, n = 6, life = 10) => { let px = x1, py = y1; for (let i = 1; i <= n; i++) { const nx = lerp(x1, x2, i / n) + (i < n ? rnd(-6, 6) : 0), ny = lerp(y1, y2, i / n); b.spawn({ k: 'line', x1: px, y1: py, x2: nx, y2: ny, c, w, grow: 1, life }); px = nx; py = ny; } };
+const FX9 = {
+  sw9Tread: { col: ['#d8b070', '#fff4d8', '#7a5a30'], pt: 'dust', cast: 'draw', fin: 'cut', snd: 'hitSuper', // a stamp that cracks the ground, then a cut straight down
+    *f(S, U, T, u) { yield* this.lunge(u, 10, 3); Sound.sfx('heavy'); this.spawn({ k: 'ring', x: T.x, y: T.y + 18, r0: 4, r1: 32, c: S.col[2], w: 3, life: 12, fl: 0.35 }); w12Particle(this, T.x, T.y + 16, S, 8, 18); this.shake = Math.max(this.shake, 5); yield* wait(3);
+      Sound.sfx('slash'); ln9(this, T.x - 4, T.y - 28, T.x + 4, T.y + 20, S.col[0], S.col[1], 6); yield* wait(4); imp9(this, T, S); yield* wait(8); } },
+  sw9Meteor: { col: ['#ffd27a', '#ffffff', '#b07a30'], pt: 'star', cast: 'dash', fin: 'none', snd: 'slash', // blades falling like meteors
+    *f(S, U, T, u) { yield* this.lunge(u, 8, 2); Sound.sfx('slash'); ln9(this, T.x + 34, T.y - 40, T.x - 6, T.y + 6, S.col[0], S.col[1], 4); this.star(T.x - 6, T.y + 6, S.col[1], 10); yield* wait(4); imp9(this, T, S); yield* wait(6); },
+    *h(S, U, T, u, i) { Sound.sfx('slash'); const o = (i % 2 ? -10 : 10); ln9(this, T.x + 30 + o, T.y - 42, T.x - 8 + o, T.y + 4, S.col[0], S.col[1], 3); this.star(T.x - 8 + o, T.y + 4, S.col[1], 10); w12Particle(this, T.x + o, T.y, S, 4, 8); yield* wait(5); } },
+  sw9Sheathe: { col: ['#b8c8e8', '#ffffff', '#506080'], pt: 'spark2', cast: 'still', snd: 'tick', // the blade slides home: a gleam along it, then a click
+    *f(S, U) { Sound.sfx('slash'); const g = this.spawn({ k: 'line', x1: U.x + 30, y1: U.y - 8, x2: U.x - 6, y2: U.y + 6, c: S.col[1], w: 2, grow: 8, life: 14 }); yield* wait(10); Sound.sfx('tick');
+      this.spawn({ k: 'ring', x: U.x - 4, y: U.y + 6, r0: 2, r1: 16, c: S.col[0], w: 2, life: 10 }); for (let i = 0; i < 3; i++) this.spawn({ k: 'hex', x: U.x, y: U.y, r0: 26 - i * 4, r1: 14 - i * 3, c: i % 2 ? S.col[1] : S.col[0], life: 16 }); yield* wait(12); } },
+  sw9Whirl: { col: ['#8ae8b8', '#f0fff8', '#2a7a50'], pt: 'wind', cast: 'dash', fin: 'gust', snd: 'wind', // one spinning cut around the whole group
+    *f(S, U, T, u, t) { yield* this.lunge(u, 10, 3); Sound.sfx('wind'); for (let k = 0; k < 3; k++) { this.spawn({ k: 'ring', x: T.x, y: T.y + 4, r0: 50 - k * 10, r1: 20 + k * 6, c: k % 2 ? S.col[1] : S.col[0], w: 3, life: 14, fl: 0.4 }); yield* wait(2); }
+      Sound.sfx('slash'); for (const C of grp9(this, T, t)) { this.spawn({ k: 'cres', x: C.x, y: C.y, r: 16, ang: Math.random() * 6, c: S.col[1], c2: S.col[0], w: 5, life: 12 }); w12Particle(this, C.x, C.y, S, 5, 10); } yield* wait(10); } },
+  sw9Riposte: { col: ['#ff9a50', '#fff0d0', '#a04a20'], pt: 'spark', cast: 'focus', snd: 'charge', // two blades crossed in front, waiting
+    *f(S, U) { Sound.sfx('slash'); const X = U.x + 22, Y = U.y - 4; ln9(this, X - 12, Y - 14, X + 12, Y + 14, S.col[0], S.col[1], 4, 22); ln9(this, X + 12, Y - 14, X - 12, Y + 14, S.col[0], S.col[1], 4, 22); yield* wait(6);
+      this.spawn({ k: 'ring', x: X, y: Y, r0: 22, r1: 6, c: S.col[1], w: 2, life: 14 }); this.star(X, Y, S.col[1], 14); yield* wait(12); } },
+  sw9Tsubame: { col: ['#6aa8ff', '#e8f4ff', '#1a3a80'], pt: 'feather', cast: 'draw', fin: 'xcut', snd: 'crit', // down, then back up: a swallow's V
+    *f(S, U, T, u) { yield* this.lunge(u, 10, 2); Sound.sfx('slash'); ln9(this, T.x - 22, T.y - 24, T.x, T.y + 14, S.col[0], S.col[1], 5); yield* wait(3); Sound.sfx('slash'); ln9(this, T.x, T.y + 14, T.x + 24, T.y - 26, S.col[0], S.col[1], 5);
+      for (let i = 0; i < 6; i++) this.spawn({ k: 'line', x1: T.x + 24, y1: T.y - 26, x2: T.x + 24 + rnd(-10, 14), y2: T.y - 26 + rnd(-10, 6), c: S.col[1], w: 1, grow: 2, life: 12 }); yield* wait(4); imp9(this, T, S, 1); yield* wait(8); } },
+  sw9Tenpu: { col: ['#c0a0ff', '#ffffff', '#4a2a8a'], pt: 'ray', cast: 'still', fin: 'pop', snd: 'crit', // a thrust that goes up through the sky
+    *f(S, U, T, u) { yield* this.lunge(u, 16, 3); Sound.sfx('slash'); ln9(this, T.x, T.y + 24, T.x, T.y - 60, S.col[0], S.col[1], 5); this.spawn({ k: 'beam', x: T.x, y1: T.y + 20, w: 8, h: 120, c: S.col[1], life: 12 });
+      this.spawn({ k: 'rays', x: T.x, y: T.y, n: 8, a0: 0, len: 22, c: S.col[0], life: 14 }); yield* wait(5); imp9(this, T, S, 1); yield* wait(8); } },
+  sw9Mujin: { col: ['#f4f6ff', '#ffffff', '#8890a8'], pt: 'spark', cast: 'still', fin: 'iai', snd: 'crit', // stillness, a hundred thin lines at once, then everything falls apart
+    *f(S, U, T, u) { this.spawn({ k: 'dark', a: 0.6, life: 30 }); yield* wait(8); Sound.sfx('slash'); for (let i = 0; i < 9; i++) { const a = i * 0.7 + 0.2; this.spawn({ k: 'line', x1: T.x - Math.cos(a) * 34, y1: T.y - Math.sin(a) * 26, x2: T.x + Math.cos(a) * 34, y2: T.y + Math.sin(a) * 26, c: S.col[1], w: 1, grow: 1, life: 18 }); }
+      yield* wait(10); this.spawn({ k: 'flash', c: '#ffffff', a: 0.5, life: 6 }); imp9(this, T, S, 1); yield* wait(8); } },
+  mg9FlameArrow: { col: ['#ff7a2a', '#ffe0a0', '#b03010'], pt: 'flame', cast: 'rune', fin: 'explode', snd: 'fire', // a burning arrow
+    *f(S, U, T) { Sound.sfx('fire'); const x0 = U.x + 8, y0 = U.y - 12, F = 8; for (let i = 1; i <= F; i++) { const x = lerp(x0, T.x, i / F), y = lerp(y0, T.y, i / F), px = lerp(x0, T.x, (i - 1) / F), py = lerp(y0, T.y, (i - 1) / F);
+        this.spawn({ k: 'line', x1: px - (x - px) * 1.5, y1: py - (y - py) * 1.5, x2: x, y2: y, c: S.col[0], w: 3, grow: 1, life: 6 }); this.spawn({ k: 'flame', x: px, y: py, vy: -0.8, s: 3, life: 10 }); yield; } imp9(this, T, S); yield* wait(6); } },
+  mg9MirrorArrow: { col: ['#60d0ff', '#f0ffff', '#2a70b0'], pt: 'shard', cast: 'rune', fin: 'splash', snd: 'water', // an arrow of water that breaks like a mirror
+    *f(S, U, T) { Sound.sfx('water'); const x0 = U.x + 8, y0 = U.y - 12, F = 8; for (let i = 1; i <= F; i++) { const x = lerp(x0, T.x, i / F), y = lerp(y0, T.y, i / F); this.spawn({ k: 'line', x1: lerp(x0, T.x, (i - 2) / F), y1: lerp(y0, T.y, (i - 2) / F), x2: x, y2: y, c: S.col[1], w: 2, grow: 1, life: 6 }); if (i % 2) this.spawn({ k: 'circ', x, y, r: 2, c: S.col[0], vy: 0.4, life: 10 }); yield; }
+      Sound.sfx('crit'); for (let i = 0; i < 6; i++) { const a = i * Math.PI / 3; this.spawn({ k: 'shard', g: 0.1, x: T.x, y: T.y, vx: Math.cos(a) * 2, vy: Math.sin(a) * 2 - 1, s: rnd(3, 5), c: i % 2 ? S.col[1] : S.col[0], life: 22 }); } this.spawn({ k: 'hex', x: T.x, y: T.y, r0: 4, r1: 20, c: S.col[1], life: 12 }); yield* wait(8); } },
+  mg9Violet: { col: ['#c070ff', '#f4e0ff', '#5a2090'], pt: 'hex', cast: 'sky', fin: 'none', snd: 'thunder', // violet lightning on every foe
+    *f(S, U, T, u, t) { for (const C of grp9(this, T, t)) { Sound.sfx('thunder'); zig9(this, C.x + rnd(-8, 8), 0, C.x, C.y, S.col[0], 4); zig9(this, C.x + rnd(-8, 8), 0, C.x, C.y, S.col[1], 1); this.spawn({ k: 'flash', c: S.col[1], a: 0.2, life: 4 }); imp9(this, C, S); yield* wait(4); } yield* wait(8); } },
+  mg9Thorn: { col: ['#4aa040', '#d8ffb0', '#3a2a10'], pt: 'leaf', cast: 'rune', fin: 'leaves', snd: 'leaf', // thorny vines burst out of the ground under them
+    *f(S, U, T, u, t) { Sound.sfx('leaf'); const G = grp9(this, T, t); for (let k = 0; k < 5; k++) { for (const C of G) { const x = C.x + rnd(-16, 16), top = C.y - 18 - k * 5; this.spawn({ k: 'line', x1: x, y1: C.y + 24, x2: x + rnd(-8, 8), y2: top, c: k % 2 ? S.col[2] : S.col[0], w: 4, grow: 6, life: 22 }); this.spawn({ k: 'line', x1: x + 2, y1: top + 8, x2: x + 7, y2: top + 3, c: S.col[1], w: 2, grow: 6, life: 18 }); } yield* wait(3); }
+      for (const C of G) this.spawn({ k: 'ring', x: C.x, y: C.y + 4, r0: 22, r1: 10, c: S.col[0], w: 2, life: 14, fl: 0.5 }); yield* wait(10); } },
+  mg9ChantWall: { col: ['#a0c8ff', '#ffffff', '#4060c0'], pt: 'rune', cast: 'rune', snd: 'charge', // a chanted circle that rises into a dome
+    *f(S, U) { Sound.sfx('charge'); this.spawn({ k: 'rune', x: U.x, y: U.y + 12, r: 26, c: S.col[0], c2: S.col[1], n: 8, poly: 6, life: 26 }); yield* wait(6); for (let i = 0; i < 3; i++) { this.spawn({ k: 'hex', x: U.x, y: U.y - i * 4, r0: 8, r1: 26 + i * 2, c: i % 2 ? S.col[1] : S.col[0], life: 16 }); yield* wait(3); } w12Particle(this, U.x, U.y, S, 6, 18); yield* wait(10); } },
+  mg9SigilRing: { col: ['#ff60c0', '#ffe0f4', '#802060'], pt: 'crest', cast: 'rune', fin: 'nova', snd: 'charge', // rings of sigils close in, then burst
+    *f(S, U, T, u, t) { Sound.sfx('charge'); const G = grp9(this, T, t); for (const C of G) { this.spawn({ k: 'ring', x: C.x, y: C.y, r0: 30, r1: 4, c: S.col[0], w: 2, life: 14 }); this.spawn({ k: 'hex', x: C.x, y: C.y, r0: 24, r1: 6, c: S.col[1], life: 14 }); } yield* wait(12);
+      Sound.sfx('hitSuper'); for (const C of G) imp9(this, C, S, 1); yield* wait(8); } },
+  mg9FrostFire: { col: ['#ff6030', '#a8e8ff', '#2a4a90'], pt: 'ember', cast: 'rune', fin: 'none', snd: 'fire', // a fire stroke, then a frost stroke across it
+    *f(S, U, T) { Sound.sfx('fire'); ln9(this, T.x - 22, T.y - 20, T.x + 20, T.y + 18, '#ff6030', '#ffe0a0', 5); for (let i = 0; i < 6; i++) this.spawn({ k: 'flame', x: T.x + rnd(-14, 14), y: T.y + rnd(-10, 12), vy: -1, s: 3, life: 14 }); yield* wait(6); },
+    *h(S, U, T) { Sound.sfx('water'); ln9(this, T.x + 22, T.y - 20, T.x - 20, T.y + 18, '#6ab8ff', '#e8f8ff', 5); for (let i = 0; i < 6; i++) { const a = Math.random() * 7; this.spawn({ k: 'line', x1: T.x, y1: T.y, x2: T.x + Math.cos(a) * 12, y2: T.y + Math.sin(a) * 12, c: '#c8f0ff', w: 2, grow: 1, life: 12 }); } this.spawn({ k: 'flash', c: '#c8f0ff', a: 0.2, life: 5 }); yield* wait(6); } },
+  mg9Celestial: { col: ['#ffd060', '#ffffff', '#40307a'], pt: 'star', cast: 'sky', fin: 'impact', snd: 'quake', // the night sky comes down
+    *f(S, U, T, u, t) { this.spawn({ k: 'dark', a: 0.55, c: '#0a0828', life: 40 }); for (let i = 0; i < 14; i++) this.star(rnd(8, W - 8), rnd(6, 40), i % 2 ? S.col[1] : S.col[0], 30); yield* wait(10);
+      for (const C of grp9(this, T, t)) { Sound.sfx('fire'); ln9(this, C.x + 30, C.y - 80, C.x, C.y, S.col[0], S.col[1], 7); yield* wait(3); imp9(this, C, S, 1); } this.shake = Math.max(this.shake, 10); yield* wait(10); } },
+  gd9ShieldKnock: { col: ['#a8b8d0', '#ffffff', '#505a70'], pt: 'crest', cast: 'hex', fin: 'bash', snd: 'heavy', // the shield's face stamped on the foe
+    *f(S, U, T, u) { yield* this.lunge(u, 14, 3); Sound.sfx('shield'); this.spawn({ k: 'hex', x: T.x, y: T.y, r0: 18, r1: 6, c: S.col[1], life: 12 }); this.spawn({ k: 'hex', x: T.x, y: T.y, r0: 12, r1: 22, c: S.col[0], life: 12 }); this.shake = Math.max(this.shake, 4); yield* wait(4); imp9(this, T, S); yield* wait(8); } },
+  gd9ShieldCounter: { col: ['#ffb050', '#fff0d0', '#8a5020'], pt: 'spark', cast: 'hex', snd: 'shield', // a raised shield with spikes of light, waiting for the hit
+    *f(S, U) { Sound.sfx('shield'); const X = U.x + 20; for (let i = 0; i < 2; i++) this.spawn({ k: 'hex', x: X, y: U.y, r0: 6, r1: 20 - i * 6, c: i ? S.col[1] : S.col[0], life: 22 }); yield* wait(4);
+      for (let i = 0; i < 5; i++) { const a = -0.9 + i * 0.45; this.spawn({ k: 'line', x1: X + Math.cos(a) * 16, y1: U.y + Math.sin(a) * 16, x2: X + Math.cos(a) * 30, y2: U.y + Math.sin(a) * 30, c: S.col[1], w: 2, grow: 4, life: 14 }); } yield* wait(12); } },
+  gd9HoldFast: { col: ['#9aaa70', '#eef4d8', '#4a5038'], pt: 'rock', cast: 'hex', snd: 'rock', // feet planted: stones rise and settle around
+    *f(S, U) { Sound.sfx('rock'); for (let i = 0; i < 8; i++) this.spawn({ k: 'shard', g: 0.2, x: U.x + rnd(-24, 24), y: U.y + 22, vx: 0, vy: -rnd(15, 30) / 10, s: rnd(3, 5), c: i % 2 ? S.col[0] : S.col[2], life: 20 }); yield* wait(6);
+      this.spawn({ k: 'ring', x: U.x, y: U.y + 22, r0: 30, r1: 12, c: S.col[0], w: 3, life: 14, fl: 0.35 }); this.shake = Math.max(this.shake, 3); yield* wait(12); } },
+  gd9ShieldSweep: { col: ['#6a8ab8', '#e0ecff', '#2a3a60'], pt: 'shard', cast: 'hex', fin: 'shatter', snd: 'heavy', // one wide sweep of the shield across them all
+    *f(S, U, T, u, t) { yield* this.lunge(u, 12, 3); Sound.sfx('slash'); this.spawn({ k: 'cres', x: T.x, y: T.y + 8, r: 46, ang: 1.57, c: S.col[1], c2: S.col[0], w: 8, life: 16 }); yield* wait(5); for (const C of grp9(this, T, t)) { this.spawn({ k: 'hex', x: C.x, y: C.y, r0: 6, r1: 16, c: S.col[1], life: 10 }); imp9(this, C, S); } this.shake = Math.max(this.shake, 6); yield* wait(8); } },
+  gd9HolyMend: { col: ['#ffe890', '#ffffff', '#c09030'], pt: 'spark', cast: 'halo', snd: 'heal', // holy light from above
+    *f(S, U) { Sound.sfx('heal'); this.spawn({ k: 'rays', x: U.x, y: U.y - 10, n: 10, a0: 0, len: 30, c: S.col[0], life: 22 }); for (let i = 0; i < 10; i++) this.spawn({ k: 'txt', s: '+', x: U.x + rnd(-20, 18), y: U.y + rnd(0, 22), vy: -0.7, c: i % 2 ? S.col[0] : S.col[1], life: 24, fade: 1 }); yield* wait(18); } },
+  gd9Retaliate: { col: ['#e04a3a', '#ffc0a0', '#701810'], pt: 'ember', cast: 'aura', fin: 'crimson', snd: 'heavy', // a red hammer swung down from overhead
+    *f(S, U, T, u) { yield* this.lunge(u, 12, 3); Sound.sfx('heavy'); ln9(this, T.x - 30, T.y - 34, T.x + 2, T.y + 4, S.col[0], S.col[1], 9); yield* wait(3); this.spawn({ k: 'shock', x: T.x, y: T.y + 22, r0: 6, r1: 50, c: S.col[0], life: 16 }); this.shake = Math.max(this.shake, 10); imp9(this, T, S, 1); yield* wait(10); } },
+  gd9Bulwark: { col: ['#c0a070', '#fff0d0', '#6a5030'], pt: 'rock', cast: 'hex', snd: 'quake', // a stone wall rises between the hero and the foes, row by row
+    *f(S, U) { Sound.sfx('quake'); const Y = U.y - 26; for (let r = 0; r < 4; r++) { const y = Y + 12 - r * 8, off = r % 2 ? 6 : 0; for (let b = -3; b <= 2; b++) { const x = U.x + b * 12 + off; this.spawn({ k: 'line', x1: x, y1: y, x2: x + 10, y2: y, c: (b + r) % 2 ? S.col[0] : S.col[2], w: 6, grow: 2, life: 30 - r * 2 }); }
+        this.shake = Math.max(this.shake, 4); yield* wait(3); }
+      this.spawn({ k: 'line', x1: U.x - 36, y1: Y - 16, x2: U.x + 36, y2: Y - 16, c: S.col[1], w: 2, grow: 4, life: 20 }); w12Particle(this, U.x, Y, S, 8, 30); yield* wait(14); } },
+  gd9Judgment: { col: ['#fff0a0', '#ffffff', '#a08020'], pt: 'ray', cast: 'sky', fin: 'judge', snd: 'quake', // a hammer of light falls from the sky
+    *f(S, U, T) { Sound.sfx('charge'); this.spawn({ k: 'pillar', x: T.x, y: T.y + 24, w: 18, h: 160, c: S.col[1], life: 20 }); yield* wait(6); Sound.sfx('heavy'); const B = { x: T.x, y: T.y - 70 }; for (let i = 1; i <= 6; i++) { this.spawn({ k: 'hex', x: B.x, y: lerp(B.y, T.y, i / 6), r0: 10, r1: 14, c: S.col[0], life: 6 }); yield; }
+      this.shake = Math.max(this.shake, 12); imp9(this, T, S, 1); yield* wait(10); } },
+  rg9Hunt: { col: ['#ff6a6a', '#ffe0e0', '#802a2a'], pt: 'claw', cast: 'dash', fin: 'none', snd: 'slash', // a running thrust; a target ring closes on the prey
+    *f(S, U, T, u) { for (let i = 0; i < 4; i++) this.spawn({ k: 'glow', x: lerp(U.x, T.x, i / 4), y: lerp(U.y, T.y, i / 4), r: 6, c: S.col[2], life: 8 + i * 2 }); yield* this.lunge(u, 20, 3); Sound.sfx('slash');
+      const a = Math.atan2(T.y - U.y, T.x - U.x); ln9(this, T.x - Math.cos(a) * 26, T.y - Math.sin(a) * 26, T.x + Math.cos(a) * 6, T.y + Math.sin(a) * 6, S.col[0], S.col[1], 4); this.spawn({ k: 'ring', x: T.x, y: T.y, r0: 22, r1: 6, c: S.col[0], w: 2, life: 14 }); yield* wait(4); imp9(this, T, S); yield* wait(8); } },
+  rg9TwinShadow: { col: ['#8a7aa8', '#e8e0ff', '#2a2040'], pt: 'shadow', cast: 'dash', fin: 'none', snd: 'slash', // two shadows cut from both sides
+    *f(S, U, T, u) { this.spawn({ k: 'glow', x: T.x - 26, y: T.y, r: 12, c: S.col[2], life: 14 }); yield* this.lunge(u, 10, 2); Sound.sfx('slash'); ln9(this, T.x - 26, T.y - 14, T.x + 10, T.y + 12, S.col[0], S.col[1], 4); yield* wait(4); imp9(this, T, S); yield* wait(4); },
+    *h(S, U, T) { this.spawn({ k: 'glow', x: T.x + 26, y: T.y, r: 12, c: S.col[2], life: 14 }); Sound.sfx('slash'); ln9(this, T.x + 26, T.y - 14, T.x - 10, T.y + 12, S.col[0], S.col[1], 4); w12Particle(this, T.x, T.y, S, 4, 8); yield* wait(5); } },
+  rg9Lurk: { col: ['#5a6a5a', '#c8d8c8', '#1a221a'], pt: 'smoke', cast: 'still', snd: 'wind', // the hunter fades into smoke
+    *f(S, U) { Sound.sfx('wind'); for (let i = 0; i < 10; i++) this.spawn({ k: 'glow', x: U.x + rnd(-26, 22), y: U.y + rnd(-10, 22), r: rnd(8, 14), c: i % 2 ? S.col[0] : S.col[2], life: 22 }); yield* wait(6);
+      this.spawn({ k: 'ring', x: U.x, y: U.y, r0: 6, r1: 28, c: S.col[1], w: 1, life: 14 }); yield* wait(12); } },
+  rg9Venom: { col: ['#8ad040', '#f0ffc0', '#4a2a60'], pt: 'bubble', cast: 'draw', fin: 'none', snd: 'poison', // a green-dripping stab
+    *f(S, U, T, u) { yield* this.lunge(u, 12, 2); Sound.sfx('slash'); ln9(this, T.x + 14, T.y - 14, T.x - 6, T.y + 6, S.col[0], S.col[1], 3); for (let i = 0; i < 6; i++) this.spawn({ k: 'circ', x: T.x + rnd(-4, 4), y: T.y + 4, vx: rnd(-10, 10) / 10, vy: rnd(5, 15) / 10, g: 0.1, r: 2, c: i % 2 ? S.col[0] : S.col[2], life: 16 });
+      Sound.sfx('poison'); imp9(this, T, S); yield* wait(8); } },
+  rg9FanBlade: { col: ['#e0e8f0', '#ffffff', '#607080'], pt: 'shard2', cast: 'dash', fin: 'none', snd: 'slash', // a fan of thrown blades, one to each
+    *f(S, U, T, u, t) { const G = grp9(this, T, t), x0 = U.x + 8, y0 = U.y - 10, F = 7, P = G.map(() => this.spawn({ k: 'cres', x: x0, y: y0, r: 6, ang: 0, c: S.col[1], c2: S.col[0], w: 3, life: F + 2 }));
+      Sound.sfx('slash'); for (let i = 1; i <= F; i++) { G.forEach((C, j) => { P[j].x = lerp(x0, C.x, i / F); P[j].y = lerp(y0, C.y, i / F); P[j].ang = i * 0.9; }); yield; } for (const C of G) imp9(this, C, S); yield* wait(8); } },
+  rg9Declare: { col: ['#ff8a30', '#fff0c0', '#a03a10'], pt: 'crest', cast: 'focus', fin: 'none', snd: 'crit', // a crosshair on the prey, then the shot home
+    *f(S, U, T, u) { Sound.sfx('tick'); this.spawn({ k: 'ring', x: T.x, y: T.y, r0: 30, r1: 12, c: S.col[0], w: 2, life: 18 }); for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) this.spawn({ k: 'line', x1: T.x + dx * 30, y1: T.y + dy * 30, x2: T.x + dx * 10, y2: T.y + dy * 10, c: S.col[1], w: 2, grow: 4, life: 18 }); yield* wait(10);
+      yield* this.lunge(u, 14, 2); Sound.sfx('crit'); this.star(T.x, T.y, S.col[1], 12); imp9(this, T, S); yield* wait(8); } },
+  rg9Fatal: { col: ['#d0203a', '#ffd0d8', '#400810'], pt: 'claw2', cast: 'still', fin: 'crimson', snd: 'crit', // one precise point, then red
+    *f(S, U, T, u) { this.spawn({ k: 'ring', x: T.x, y: T.y, r0: 18, r1: 2, c: S.col[1], w: 1, life: 14 }); yield* wait(8); yield* this.lunge(u, 16, 2); Sound.sfx('crit'); this.spawn({ k: 'flash', c: S.col[0], a: 0.3, life: 6 }); ln9(this, T.x + 8, T.y - 8, T.x - 2, T.y + 2, S.col[0], S.col[1], 3); imp9(this, T, S, 1); yield* wait(8); } },
+  rg9ShadowGrave: { col: ['#6a3a9a', '#d8b0ff', '#100818'], pt: 'eclipse', cast: 'void', fin: 'rift', snd: 'quake', // shadows rise from the ground and close over the prey
+    *f(S, U, T) { Sound.sfx('quake'); for (let i = 0; i < 6; i++) { const x = T.x + (i - 2.5) * 8; this.spawn({ k: 'line', x1: x, y1: T.y + 22, x2: x + rnd(-3, 3), y2: T.y - 24 - rnd(0, 10), c: i % 2 ? S.col[2] : S.col[0], w: 4, grow: 6, life: 22 }); yield* wait(2); }
+      this.spawn({ k: 'glow', x: T.x, y: T.y, r: 34, c: S.col[2], life: 18 }); yield* wait(6); imp9(this, T, S, 1); yield* wait(8); } },
+};
+function fx9Make(k) { const F = FX9[k]; if (!F) return; const S = { col: F.col, pt: F.pt, seed: hashK(k) }, id = 'o_' + k, D = DEF.skills[id];
+  FX['c9_' + k] = function* (U, T, u, t) { yield* F.f.call(this, S, U, T, u, t); }; if (F.h) { FX['c9h_' + k] = function* (U, T, u, i) { yield* F.h.call(this, S, U, T, u, i); }; if (D) D.hitFx = 'c9h_' + k; }
+  PAL['c9_' + k] = [F.col[0], F.col[1]]; SKILL_STYLE[id] = [F.cast || 'draw', D && D.power ? (F.fin || 'none') : null, 'c9_' + k, F.snd || null]; if (MOVES[id]) MOVES[id].fx = 'c9_' + k; }
+const SK9_DONE = ['swordsman', 'mage', 'guardian', 'ranger'];
+for (const c of SK9_DONE) { sk9Build(c); for (const r of SK9[c]) fx9Make(r[0]); }
+{ const seen = new Map(); for (const c of SK9_DONE) for (const [k] of SK9[c]) { const F = FX9[k]; if (!F) { bvErr('r9', 'fx ' + k); continue; } const key = (F.cast || '') + '|' + (F.fin || '') + '|' + F.col.join(','); if (seen.has(key)) bvErr('r9', 'same picture ' + k + ' / ' + seen.get(key)); seen.set(key, k); } }
+{ const _so = startOverworld; startOverworld = function (...a) { const r = _so.apply(this, a), st = Game.st;
+    if (st && st.cls && (st.v9sk || 0) < SK9_DONE.length && (st.lv || 1) > 1) { const was = st.v9sk || 0; st.v9sk = SK9_DONE.length; const L = SK9_DONE.slice(was).map(c => (CLASSES[c] || {}).n || c);
+      if (L.length && Game.ow) Game.ow.run((function* () { yield* say('【第九輪更新】' + L.join('、') + '的 8 招職業技能換成了自己的招式（等級到了自動學會），每招都會用到職業資源。');
+        yield* say('以前學會的技能都留在技能庫，任何職業都能用。到選單「技能編排」把新招放進技能槽吧。'); })()); }
+    else if (st && !st.v9sk) st.v9sk = SK9_DONE.length;
+    return r; }; }
 </script>
 </body></html>
