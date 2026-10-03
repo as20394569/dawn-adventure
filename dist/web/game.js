@@ -5512,7 +5512,8 @@ class Battle {
       const fit = (t, sz, maxW) => { let z = sz; while (z > 7 && Font.width(t, z) > maxW) z--; return z; };
       const can = this.canUse(id), est = can.ok && D.power && foe ? this.estimate(id, foe.id) : 0, L = X + 8, R = X + w - 8;
       const tgt = D.target === 'all_enemies' ? (D.chain ? '・連鎖' : '・全體') : '', learn = ob && !D.tags.includes('sig') ? (!ob.learned ? '・學會' + Math.min(ob.x || 0, BB.learnN(id)) + '/' + BB.learnN(id) : orbStage(ob) < 2 ? '・練度' + (ob.x || 0) + '/' + evoAt(ob) : '') : '';
-      const t1 = (D.tags.includes('sig') ? '職業招式・' : '') + (D.el === '一般' ? '無屬性' : D.el + '屬性') + '・' + (D.cat === '變' ? '輔助' : D.cat === '物' ? '物理' : '魔法') + tgt + (typeof skillAttrTag === 'function' && skillAttrTag(id) ? '・' + skillAttrTag(id) : '') + learn, cT = can.ok ? this.costText(id) : (can.short || '不可用');
+      const cT = can.ok ? this.costText(id) : (can.short || '不可用'), t1W = w - 30 - Font.width(cT, 9), aT = typeof skillAttrTag === 'function' && skillAttrTag(id) ? '・' + skillAttrTag(id) : '';
+      const t1P = [(D.tags.includes('sig') ? '職業招式・' : '') + (D.el === '一般' ? '無屬性' : D.el + '屬性') + '・' + (D.cat === '變' ? '輔助' : D.cat === '物' ? '物理' : '魔法') + tgt, aT, learn]; while (t1P.length > 1 && Font.width(t1P.join(''), 8) > t1W) t1P.pop(); const t1 = t1P.join('');
       x.fillStyle = c; x.fillRect(L, DY + 6, 4, 4); Font.draw(x, t1, L + 7, DY + 1, '#c9cfe4', UIC.textSh, fit(t1, 9, w - 30 - Font.width(cT, 9))); Font.drawR(x, cT, R, DY + 1, can.ok ? '#8ab8ff' : UIC.bad, UIC.textSh, 9);
       let y = DY + 14;
       if (D.power) { const pw = mv && typeof powTxt === 'function' ? powTxt(mv) : '威力' + D.power, eT = est ? '預估≈' + est : ''; x.fillStyle = 'rgba(200,160,80,0.35)'; x.fillRect(L, DY + 13, w - 16, 1);
@@ -20467,3 +20468,16 @@ for (const id in MAPS) { const d = MAPS[id], R = d.rows; if (!R || !d.items || !
       if (x < 1 || y < 1 || x >= Wd - 1 || y >= H - 1 || SOLID.has(R[y][x]) || busy.has(x + ',' + y)) continue; best = [x, y]; }
     if (best) { busy.add(best[0] + ',' + best[1]); it.x = best[0]; it.y = best[1]; } } }
 { const _ds = dlgSetup; dlgSetup = function (t, o) { if (Game.talker && Game.scene && Game.scene.constructor === Battle) { const T = Game.talker; Game.talker = null; try { return _ds(t, o); } finally { Game.talker = T; } } return _ds(t, o); }; }
+const NOGRASS9 = new WeakMap();
+function noGrass9(img) { let c = NOGRASS9.get(img); if (c) return c; const g = Tiles.grass(0); c = mkCanvas(16, 16); const x = c.getContext('2d'); x.drawImage(img, 0, 0);
+  const gc = mkCanvas(16, 16), gx = gc.getContext('2d'); gx.drawImage(g, 0, 0);
+  try { const D = x.getImageData(0, 0, 16, 16), G = gx.getImageData(0, 0, 16, 16).data, a = D.data; for (let i = 0; i < a.length; i += 4) if (a[i] === G[i] && a[i + 1] === G[i + 1] && a[i + 2] === G[i + 2]) a[i + 3] = 0; x.putImageData(D, 0, 0); } catch (e) { return img; }
+  NOGRASS9.set(img, c); return c; }
+const FLOOR9 = new Set(['s', 'P', ':', '=']);
+{ const _dt = Overworld.prototype.drawTile; Overworld.prototype.drawTile = function (x, c, tx, ty, sx, sy, f, f2) {
+    if (c !== 'o' && c !== 'b' && c !== 'S' && c !== 'N') return _dt.call(this, x, c, tx, ty, sx, sy, f, f2);
+    const n = {}; for (const [dx, dy] of [[0, -1], [1, 0], [0, 1], [-1, 0]]) { const q = this.tileAt(tx + dx, ty + dy); n[q] = (n[q] || 0) + 1; }
+    const fl = Object.keys(n).filter(q => FLOOR9.has(q)).sort((a, b) => n[b] - n[a])[0], grassy = ['.', ',', 'f', 'y', '#', 'T', 't'].some(q => n[q]);
+    if (!fl || (grassy && n[fl] < 2)) return _dt.call(this, x, c, tx, ty, sx, sy, f, f2);
+    _dt.call(this, x, fl === '=' ? ':' : fl, tx, ty, sx, sy, f, f2);
+    const img = c === 'o' ? Tiles.rock : c === 'b' ? Tiles.bush : c === 'S' ? Tiles.sign : Tiles.board; x.drawImage(noGrass9(img), sx, sy); }; }
