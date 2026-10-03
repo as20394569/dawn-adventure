@@ -20731,6 +20731,7 @@ for (const k of DN_KEYS12) k[0] = k[0] / 2;
 { const _qd = questDest; questDest = function (q, st = Game.st) {
     let D = _qd(q, st); if (!D || !q || q.done || !st || questCom(q)) return D;
     if (D.map !== st.map && !D.spot) { const here = (MAPS[st.map] || {}).name, a = (q.t || '').indexOf((MAPS[D.map] || {}).name), b = here && here.length >= 2 ? (q.t || '').indexOf(here) : -1; if (a >= 0 && b > a) D = { map: st.map, what: '前往' + here };
+      else if (a >= 0 && (() => { for (const id in MAPS) { const nm = MAPS[id].name; if (!nm || nm.length < 2 || id === D.map) continue; const i = (q.t || '').indexOf(nm), m = mapIdByName(nm) || id, R = i > a && mapRoute(st.map, m); if (R && R.includes(D.map)) { D = { map: m, what: '前往' + nm }; return true; } } return false; })()) { } // 「到A西側的B」from elsewhere: head for B (the route passes A)
       else if (a >= 0) for (const n of MAPS[st.map].npcs || []) { if (!n.name || n.name.length < 2 || (n.show && !n.show(st))) continue; const i = (q.t || '').indexOf(n.name); if (i > a) return { map: st.map, spot: { x: n.x, y: n.y, name: n.name }, what: '找' + n.name }; } } // the person is right here, inside the house the text names (漢斯家) // already at the later map (到晨霧道路西側的碧溪谷, standing in 碧溪谷)
     if (D.map !== st.map && !mapRoute(st.map, D.map)) { // can't get there yet (往北方街道的關道被封鎖了。穿過楓紅關道…): the first named place we can reach
       let alt = null; for (const id in MAPS) { const nm = MAPS[id].name; if (!nm || nm.length < 2) continue; const i = (q.t || '').indexOf(nm), m = mapIdByName(nm) || id; if (i >= 0 && m !== D.map && (!alt || i < alt.i) && mapRoute(st.map, m)) alt = { i, map: m, nm }; }
@@ -20842,6 +20843,27 @@ function craftHint9(st = Game.st) {
     const st = this.st; if (st && st.com) { const seen = st.comSeen || (st.comSeen = {}), M = questList(st).find(q => q.main && !q.done);
       if (M) for (const k in st.com) if (!seen[k] && st.com[k].s === 'on' && COMMISSIONS[k]) { seen[k] = 1; (Game.comMsg9 || (Game.comMsg9 = [])).push(COMMISSIONS[k].n); } }
     if (Game.comMsg9 && Game.comMsg9.length && !this.script && Game.scene === this && !UI.stack.length) { const n = Game.comMsg9.shift(); this.run(say('（接下了委託「' + n + '」。畫面右上角還是顯示主線；想追蹤委託的話，到任務選單切換。）')); }
+    return _u.apply(this, a); }; }
+const QUEST_RANK9 = { 主線: 1, 成長: 2, 委託: 3, 支線: 4, 隱藏: 5 };
+const SUBMAIN9 = ['風車丘陵的異變', '碧溪谷的黑水', '北境之路'];
+{ const _ql = questList; questList = function (st = Game.st) { let L = _ql(st); const f = st.flags || {}, M = L.find(q => q.main && !q.done);
+    const N = L.find(q => q.n === '北境之路' && !q.done); if (N && f.passCamp && (f.passQ || 0) < 2) N.t = '【推薦Lv20】打倒擋在山頂的楓林鹿王，通過楓紅關道。';
+    if (!f.caravanMet && !f.caravan) L = L.filter(q => !(q.n === '失落的貨物' && !q.done));
+    if (M) L = L.filter(q => { if (q.done || q === M || !SUBMAIN9.includes(q.n)) return true; if (q.rw) M.rw = q.rw; return false; });
+    const rank = q => q.main ? 0 : QUEST_RANK9[q.cat || (typeof questCatOf === 'function' && questCatOf(q))] || 6;
+    return L.map((q, i) => [q, i]).sort((a, b) => rank(a[0]) - rank(b[0]) || a[1] - b[1]).map(a => a[0]); }; }
+{ const _qg = questGuide; questGuide = function (...a) { const G = _qg.apply(this, a); if (G && G.next && G.route && G.route.length === 2 && G.route[1] === G.D.map) G.next = null; return G; }; }
+{ const _ds = dlgSetup; dlgSetup = function (text, o = {}) {
+    const m = typeof text === 'string' && text.match(/^([^：「」\n（【。！？，]{1,10})：(?=「)/);
+    if (!m || !/(寫著|刻著|聲音)$/.test(m[1])) return _ds(text, o);
+    const T = Game.talker; Game.talker = null;
+    try { const r = _ds(text.replace('：', ''), o); r.text = text; const E = typeof DLG_LOG !== 'undefined' && DLG_LOG[DLG_LOG.length - 1]; if (E && E.t.includes('')) E.t = E.t.replace('', '：'); return r; }
+    finally { Game.talker = T; } }; }
+{ const _ld = Overworld.prototype.load; Overworld.prototype.load = function (...a) { _ld.apply(this, a);
+    if (this.map && this.map.id === 'mine') for (const e of this.elites || []) if (e.rematch && /^thug/.test(e.id)) e.sight = 0; }; }
+{ const e = (MAPS.northRoad.elites || []).find(q => q.id === 'blackFeather'); if (e) Object.assign(e, { x: 1, y: 13, dir: 'up', sight: 2 }); }
+{ const _u = Overworld.prototype.update; Overworld.prototype.update = function (...a) { const st = this.st;
+    if (st && !this.script && Game.scene === this && typeof SEALS !== 'undefined' && SEALS.some(([fl, it]) => st.flags[fl] && !st.flags['got_' + it])) { const got = sealSync(st); if (got.length) Game.sealMsg = (Game.sealMsg || []).concat(got); }
     return _u.apply(this, a); }; }
 </script>
 </body></html>
