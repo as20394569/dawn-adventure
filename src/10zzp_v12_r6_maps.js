@@ -100,7 +100,7 @@ for (const k in CAMP12) Events[k] = function* (ow) {
   const C = CAMP12[k], st = Game.st; yield* say(C.name + '：「' + C.hi + '」');
   while (true) {
     const r = yield* ask('要做什麼？', ['休息', '買東西', '換東西', '聊天', '離開']);
-    if (r === 0) yield* healRitual('在營火旁休息了一下。體力完全恢復了！');
+    if (r === 0) { Game.dnRestMode = 'morning'; yield* healRitual('在營火旁休息了一下，一覺睡到了早上。體力完全恢復了！'); }
     else if (r === 1) yield* shopFlow(C.stock.filter(i => ITEMS[i]));
     else if (r === 2) {
       const T = C.trade.filter(t => ITEMS[t[0]] && ITEMS[t[2]]), opts = T.map(t => ITEMS[t[0]].n + '×' + t[1] + ' → ' + ITEMS[t[2]].n + '×' + t[3] + '（有' + (st.bag[t[0]] || 0) + '）').concat(['不換了']);

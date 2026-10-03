@@ -224,7 +224,7 @@ let __qhud = { f: -99, v: null };
     // allows and on up to two lines, so it is no longer cut to a few characters
     const v = __qhud.v; if (!v || !v.G) return; const G = v.G, FS = 7, a = G.arrow || '', aw = a ? Math.ceil(Font.width(a, 9)) + 3 : 0;
     const full = G.next && G.next !== G.text ? G.text + '→' + G.next : (G.next || G.text), k = typeof wxNow === 'function' && wxNow(st);
-    const left = k ? 3 + Math.ceil(Font.width(WEATHER[k].n + (st.rainbowUntil > (st.steps || 0) ? '・彩虹' : ''), 9)) + 20 + 4 : 3, maxT = W - 3 - left - 14 - aw;
+    const left = k ? 3 + Math.ceil(Font.width(WEATHER[k].n + (st.rainbowUntil > (st.steps || 0) ? '・彩虹' : '') + (typeof dnHudTag === 'function' ? dnHudTag(st) : ''), 9)) + 20 + 4 : 3, maxT = W - 3 - left - 14 - aw;
     let L = Font.wrap(full, maxT, FS); if (L.length > 2) { L = L.slice(0, 2); let t = L[1]; while (Font.width(t + '…', FS) > maxT && t.length > 1) t = t.slice(0, -1); L[1] = t + '…'; }
     const tw = Math.ceil(Math.max(...L.map(l => Font.width(l, FS)))), w = tw + 14 + aw, h = L.length > 1 ? 21 : 14, X = W - w - 3;
     x.fillStyle = 'rgba(10,14,28,0.72)'; x.fillRect(X, 3, w, h); x.fillStyle = UIC.warm; x.fillRect(X, 3, 2, h);

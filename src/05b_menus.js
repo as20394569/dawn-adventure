@@ -55,7 +55,7 @@ startMenu = function* () {
     const hdr = { draw(x) { x.fillStyle = 'rgba(8,10,20,0.78)'; x.fillRect(0, 0, W, H); drawWin(x, 4, 4, 168, 40, 'menu'); x.drawImage(heroFramesFor(st).down[0], 0, 0, 16, 22, 10, 8, 24, 33);
       const nx = Font.draw(x, st.name, 40, 6, UIC.text, UIC.textSh); if (CLASSES[st.cls]) Font.draw(x, CLASSES[st.cls].n, nx + 4, 7, UIC.warm, UIC.textSh, 10); Font.drawR(x, 'Lv' + st.lv, 166, 6, UIC.accent, UIC.textSh);
       Font.draw(x, 'HP ' + st.hp + '/' + s.hp, 40, 22, UIC.good, UIC.textSh, 10); Font.draw(x, 'MP ' + (st.mp ?? s.mp) + '/' + s.mp, 96, 22, '#86b4ff', UIC.textSh, 10); Font.drawR(x, st.money + ' G', 166, 32, UIC.warm, UIC.textSh, 10);
-      Font.draw(x, MAPS[st.map] ? MAPS[st.map].name || '' : '', 40, 32, UIC.muted, UIC.textSh, 9); } };
+      if (typeof dnMenuLoc12 === 'function') dnMenuLoc12(x, st, 40, 32, 166 - Font.width(st.money + ' G', 10)); else Font.draw(x, MAPS[st.map] ? MAPS[st.map].name || '' : '', 40, 32, UIC.muted, UIC.textSh, 9); } };
     UI.push(hdr);
     const items = MAIN_TILES.map(([t, sub]) => ({ t, dot: (t === '天賦' && st.tp) || (t === '技能' && st.skp), sub }));
     const r = yield* choose(items, { x: 4, y: 48, w: 168, h: 204, cols: 2, colW: 82, rowH: 40, ox: 4, oy: 4, buttons: true, style: 'menu', index: idx, drawExtra: (x, m) => { for (let k = 0; k < items.length; k++) { const c = k % 2, rr = Math.floor(k / 2), X = m.x + m.ox + c * m.colW, Y = m.y + m.oy + rr * m.rowH; Font.drawC(x, items[k].sub, X + 39, Y + 22, k === m.i ? UIC.accent : UIC.muted, UIC.textSh, 9); if (items[k].dot) { x.fillStyle = UIC.warm; x.fillRect(X + 70, Y + 5, 4, 4); } } } });
