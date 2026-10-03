@@ -120,7 +120,7 @@ function* craftScreen() {
     L.slice(T, T + VIS).forEach((e, i) => { const Y = 41 + i * 16, on = T + i === idx; if (on) selBar(x, 6, Y - 1, 164, 15);
       const nm = e.R ? (ITEMS[e.R.out] || GEAR[e.R.out]).n + (e.R.n > 1 ? '×' + e.R.n : '') : GEAR[e.k].n; let z = 11; while (z > 8 && Font.width(nm, z) > 96) z--;
       Font.draw(x, nm, 14, Y, ok(e) ? UIC.text : UIC.dis, UIC.textSh, z);
-      const tag = e.R ? (canR(e.R) ? '可製作' : '素材不足') : (st.bpT && st.bpT[e.k] ? (tkCount(e.k) > 1 ? '券×' + tkCount(e.k) + ' ' : '券') : '') + 'T' + GEAR[e.k].t + (GEAR[e.k].kind && tab === 0 ? '・' + GEAR[e.k].kind : '');
+      const tag = e.R ? (canR(e.R) ? '可製作' : '素材不足') : (st.bpT && st.bpT[e.k] ? (tkCount(e.k) > 1 ? '券×' + tkCount(e.k) + ' ' : '券') : '') + (GEAR[e.k].kind && tab === 0 ? GEAR[e.k].kind : ''); // v12.0.9m: the tier now follows the name (「T5」)
       Font.drawR(x, tag, 164, Y + 1, e.R ? (canR(e.R) ? UIC.accent : UIC.dis) : st.bpT && st.bpT[e.k] ? UIC.warm : UIC.muted, UIC.textSh, 9);
       if (typeof touchRegion === 'function') touchRegion(6, Y - 1, 164, 15, () => { if (idx === T + i) tapKey('a'); else { idx = T + i; Sound.sfx('cursor'); } }); });
     if (T > 0) x.drawImage(UPARROW, 86, 38); if (T + VIS < L.length) x.drawImage(DOWNARROW, 86, 37 + VIS * 16 + 3);
