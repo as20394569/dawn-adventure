@@ -60,7 +60,7 @@ FOE_SPOTS.sort((a, b) => a.lv - b.lv);
 for (const sp in ORB_DROP) ORB_DROP[sp].forEach((k, i) => { if (!ORB_SRC[k]) ORB_SRC[k] = []; const t = SPECIES[sp].n + (i === 0 ? '（首殺）' : ''); if (!ORB_SRC[k].includes(t)) ORB_SRC[k].push(t); });
 const ROAM_BACK = 200;
 { const _bs = Overworld.prototype.battleScript; Overworld.prototype.battleScript = function* (cfg, ...a) {
-    const st = this.st, R = cfg && cfg.kind === 'wild' && ROAM[st.map]; const down = st.roamDown || (st.roamDown = {});
+    const st = this.st, R = cfg && cfg.kind === 'wild' && !cfg.roam12 && ROAM[st.map]; const down = st.roamDown || (st.roamDown = {});
     if (R && (Game.forceRoam || chance(0.07)) && (down[R[0]] === undefined || (st.steps || 0) - down[R[0]] >= ROAM_BACK)) {
       Game.forceRoam = 0; const [k, , , lv] = R, again = down[R[0]] !== undefined, L = again ? lv + 3 : lv; Sound.sfx('exclaim'); this.p.excl = 30; yield* sayAll(again ? [SPECIES[k].n + '又出現了！看起來比上次更兇猛……'] : ELITE_TEXT[k]);
       if (!(yield* askFight(k, L, k, 'elite', again ? '再戰' : '出沒'))) { yield* say('悄悄地退開了。'); return 'run'; }

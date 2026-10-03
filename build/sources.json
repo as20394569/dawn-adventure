@@ -2,76 +2,112 @@
  "gear": {
   "ironSword": [
    "route掉落池",
-   "道具店"
+   "cave6_route精英掉落",
+   "cave6_route掉落池",
+   "道具店",
+   "重戰掉落:glowToad"
   ],
   "apprenticeStaff": [
    "route掉落池",
-   "道具店"
+   "cave6_route掉落池",
+   "道具店",
+   "重戰掉落:glowToad"
   ],
   "mistDagger": [
    "route掉落池",
    "jadeCreek掉落池",
-   "重戰掉落:creekBandit"
+   "cave6_route掉落池",
+   "cave6_jadeCreek掉落池",
+   "重戰掉落:creekBandit",
+   "重戰掉落:glowToad",
+   "重戰掉落:crystalCrayfish"
   ],
   "clothCap": [
    "route掉落池",
    "windHills掉落池",
+   "cave6_route掉落池",
+   "cave6_windHills掉落池",
    "道具店",
+   "重戰掉落:glowToad",
+   "重戰掉落:rockPangolin",
    "職業起始"
   ],
   "leather": [
    "route掉落池",
    "windHills掉落池",
-   "道具店"
+   "cave6_route掉落池",
+   "cave6_windHills精英掉落",
+   "cave6_windHills掉落池",
+   "道具店",
+   "重戰掉落:rockPangolin"
   ],
   "mistCloak": [
-   "route掉落池"
+   "route掉落池",
+   "cave6_route掉落池"
   ],
   "travelBoots": [
    "route掉落池",
    "windHills掉落池",
-   "道具店"
+   "cave6_route掉落池",
+   "cave6_windHills掉落池",
+   "道具店",
+   "重戰掉落:rockPangolin"
   ],
   "mistBoots": [
    "route掉落池",
    "windHills掉落池",
+   "cave6_route掉落池",
+   "cave6_windHills掉落池",
    "重戰掉落:blackCatfish"
   ],
   "swiftFeather": [
    "route掉落池",
    "windHills掉落池",
+   "cave6_route掉落池",
+   "cave6_windHills掉落池",
    "道具店",
-   "重戰掉落:millGolem"
+   "重戰掉落:millGolem",
+   "重戰掉落:rockPangolin"
   ],
   "wolfNecklace": [
    "route掉落池",
    "windHills掉落池",
+   "cave6_route掉落池",
+   "cave6_windHills掉落池",
    "重戰掉落:wolf",
    "重戰掉落:millGolem"
   ],
   "primerTome": [
    "route掉落池",
+   "cave6_route掉落池",
    "道具店"
   ],
   "oakStaff": [
    "forest掉落池",
-   "jadeCreek掉落池"
+   "jadeCreek掉落池",
+   "cave6_jadeCreek掉落池",
+   "重戰掉落:crystalCrayfish"
   ],
   "thornStaff": [
    "forest掉落池",
-   "jadeCreek掉落池"
+   "jadeCreek掉落池",
+   "cave6_jadeCreek掉落池"
   ],
   "hunterCap": [
    "forest掉落池",
    "windHills掉落池",
    "windHills寶箱",
+   "cave6_windHills掉落池",
    "重戰掉落:millGolem"
   ],
   "hunterLeather": [
    "forest掉落池",
    "forest寶箱",
    "jadeCreek掉落池",
-   "重戰掉落:mossGiant"
+   "cave6_jadeCreek精英掉落",
+   "cave6_jadeCreek掉落池",
+   "重戰掉落:mossGiant",
+   "重戰掉落:crystalCrayfish"
   ],
   "hunterBoots": [
    "forest掉落池"
@@ -79,6 +115,7 @@
   "featherBoots": [
    "forest掉落池",
    "jadeCreek掉落池",
+   "cave6_jadeCreek掉落池",
    "重戰掉落:millGolem",
    "鐵匠配方",
    "磨石魔像掉落"
@@ -169,8 +206,10 @@
   "frogCloak": [
    "mine掉落池",
    "jadeCreek掉落池",
+   "cave6_jadeCreek掉落池",
    "重戰掉落:croc",
    "重戰掉落:blackCatfish",
+   "重戰掉落:crystalCrayfish",
    "鐵匠配方"
   ],
   "minerBoots": [
@@ -614,6 +653,7 @@
   ],
   "voltSword": [
    "jadeCreek掉落池",
+   "cave6_jadeCreek掉落池",
    "重戰掉落:blackCatfish",
    "鐵匠配方"
   ],
@@ -982,6 +1022,7 @@
   "luckClover": [
    "town寶箱",
    "forest寶箱",
+   "cave6_route寶箱",
    "行商",
    "迴廊兌換",
    "委託獎勵",
@@ -992,6 +1033,8 @@
   ],
   "herb": [
    "town採集",
+   "route採集",
+   "route採集",
    "route採集",
    "route採集",
    "route採集",
@@ -1009,6 +1052,11 @@
    "windHills採集",
    "windHills採集",
    "windHills採集",
+   "windHills採集",
+   "windHills採集",
+   "jadeCreek採集",
+   "jadeCreek採集",
+   "jadeCreek採集",
    "jadeCreek採集",
    "jadeCreek採集",
    "maplePass採集",
@@ -1023,6 +1071,10 @@
    "canyon寶箱",
    "jadeCreek寶箱",
    "jadeCreek寶箱",
+   "jadeCreek寶箱",
+   "cave6_route寶箱",
+   "cave6_windHills寶箱",
+   "cave6_jadeCreek寶箱",
    "道具店",
    "行商",
    "鐵匠配方",
@@ -1037,6 +1089,7 @@
    "mine寶箱",
    "catacomb寶箱",
    "lavaTunnel寶箱",
+   "windHills寶箱",
    "oldField寶箱",
    "行商",
    "迴廊兌換",
@@ -1071,6 +1124,45 @@
   "awakening": [
    "route寶箱",
    "道具店"
+  ],
+  "trainBook": [
+   "route寶箱",
+   "lake寶箱",
+   "canyon寶箱",
+   "swamp寶箱",
+   "capSewer寶箱",
+   "goldPlains寶箱",
+   "frostVillage寶箱",
+   "iceCave寶箱",
+   "emberPass寶箱",
+   "windHills寶箱",
+   "windHills寶箱",
+   "jadeCreek寶箱",
+   "maplePass寶箱",
+   "委託獎勵",
+   "委託獎勵",
+   "委託獎勵",
+   "委託獎勵",
+   "委託獎勵"
+  ],
+  "hareFur": [
+   "route寶箱",
+   "windHills寶箱",
+   "魔物:角兔",
+   "魔物:捲毛羊"
+  ],
+  "vitFruit": [
+   "route寶箱",
+   "frostField寶箱",
+   "windHills寶箱",
+   "oldField寶箱",
+   "行商",
+   "迴廊兌換",
+   "委託獎勵",
+   "委託獎勵",
+   "委託獎勵",
+   "委託獎勵",
+   "委託獎勵"
   ],
   "manaHerb": [
    "route採集",
@@ -1111,8 +1203,10 @@
    "catacomb採集",
    "catacomb採集",
    "iceCave採集",
+   "cave6_jadeCreek寶箱",
    "魔物:晶石丸",
-   "魔物:水晶魔像"
+   "魔物:水晶魔像",
+   "魔物:水幕洞之主"
   ],
   "gel": [
    "sewer採集",
@@ -1122,6 +1216,7 @@
    "魔物:泥沼姆",
    "魔物:汙泥姆",
    "魔物:冰凍姆",
+   "魔物:霧角蝸牛",
    "分解",
    "分解",
    "分解"
@@ -1143,12 +1238,18 @@
    "jadeCreek採集",
    "oldField採集",
    "oldField採集",
+   "cave6_route採集",
+   "cave6_windHills寶箱",
+   "cave6_windHills採集",
+   "cave6_jadeCreek採集",
    "魔物:石丸",
    "魔物:苔石巨人",
    "魔物:古岩魔像",
    "魔物:礦泥怪",
    "魔物:符文石像",
    "魔物:磨石魔像",
+   "魔物:地鼴",
+   "魔物:鼴鼠穴之主",
    "分解",
    "分解",
    "分解"
@@ -1163,6 +1264,7 @@
    "魔物:焰骨兵",
    "魔物:亡國兵",
    "魔物:亡靈戰將",
+   "魔物:戰場食屍鬼",
    "分解"
   ],
   "elixir": [
@@ -1211,7 +1313,9 @@
    "魔物:幽靈燈",
    "魔物:溺魂",
    "魔物:怨靈",
-   "魔物:霜之魂"
+   "魔物:霜之魂",
+   "魔物:斷劍幽魂",
+   "魔物:地下壕道之主"
   ],
   "hiEther": [
    "lake寶箱",
@@ -1232,29 +1336,15 @@
   "swordPage": [
    "lake寶箱"
   ],
-  "trainBook": [
-   "lake寶箱",
-   "canyon寶箱",
-   "swamp寶箱",
-   "capSewer寶箱",
-   "goldPlains寶箱",
-   "frostVillage寶箱",
-   "iceCave寶箱",
-   "emberPass寶箱",
-   "windHills寶箱",
-   "maplePass寶箱",
-   "委託獎勵",
-   "委託獎勵",
-   "委託獎勵",
-   "委託獎勵",
-   "委託獎勵"
-  ],
   "moonDew": [
    "lake採集",
    "lake採集",
    "魔物:月光水精",
    "魔物:流浪的魔劍士",
-   "魔物:銀鱗水龍"
+   "魔物:銀鱗水龍",
+   "魔物:露珠精",
+   "魔物:湖貝怪",
+   "魔物:月光洞之主"
   ],
   "bellShard": [
    "canyon寶箱"
@@ -1270,7 +1360,10 @@
    "魔物:沼澤水蛭",
    "魔物:腐沼蟾",
    "魔物:沼澤魔女",
-   "魔物:腐沼九頭蛇"
+   "魔物:腐沼九頭蛇",
+   "魔物:月光苔精",
+   "魔物:泥沼蛞蝓",
+   "魔物:沼底洞之主"
   ],
   "agiFruit": [
    "northRoad寶箱",
@@ -1290,10 +1383,13 @@
    "goldPlains採集",
    "goldPlains採集",
    "魔物:稻草人",
-   "魔物:收穫魔像"
+   "魔物:收穫魔像",
+   "魔物:田鼠群",
+   "魔物:舊穀倉地窖之主"
   ],
   "dexFruit": [
    "clockTower1寶箱",
+   "jadeCreek寶箱",
    "maplePass寶箱",
    "行商",
    "迴廊兌換",
@@ -1312,18 +1408,6 @@
    "委託獎勵",
    "委託獎勵"
   ],
-  "vitFruit": [
-   "frostField寶箱",
-   "windHills寶箱",
-   "oldField寶箱",
-   "行商",
-   "迴廊兌換",
-   "委託獎勵",
-   "委託獎勵",
-   "委託獎勵",
-   "委託獎勵",
-   "委託獎勵"
-  ],
   "iceCrystal": [
    "frostField採集",
    "frostField採集",
@@ -1333,7 +1417,9 @@
    "魔物:冰晶蝠",
    "魔物:冰晶石怪",
    "魔物:冰霜巫妖",
-   "魔物:霜之女王"
+   "魔物:霜之女王",
+   "魔物:霜翅蛾",
+   "魔物:冰柱精"
   ],
   "magmaStone": [
    "emberPass採集",
@@ -1343,7 +1429,10 @@
    "魔物:岩漿蟹",
    "魔物:熔岩石怪",
    "魔物:爆炎精",
-   "魔物:熔岩巨人"
+   "魔物:熔岩巨人",
+   "魔物:黑曜龜",
+   "魔物:黑曜石塊",
+   "魔物:黑曜石洞之主"
   ],
   "tpBook": [
    "duskFort1寶箱",
@@ -1371,12 +1460,22 @@
    "道具店",
    "委託獎勵"
   ],
+  "frogSkin": [
+   "jadeCreek寶箱",
+   "魔物:紫斑蛙",
+   "魔物:溪蛇",
+   "魔物:瘴氣大鯰",
+   "魔物:洞穴蠑螈",
+   "分解"
+  ],
   "leaf": [
    "maplePass採集",
    "魔物:荊棘魔花",
    "魔物:翠狐",
    "魔物:旋風精",
    "魔物:楓葉精",
+   "魔物:蒲絨精",
+   "魔物:藤蔓蛇",
    "分解"
   ],
   "burnHeal": [
@@ -1411,7 +1510,8 @@
    "魔物:異界守門者"
   ],
   "shroomCap": [
-   "魔物:嘟嘟菇"
+   "魔物:嘟嘟菇",
+   "魔物:晨霧洞之主"
   ],
   "feather": [
    "魔物:啾啾鳥",
@@ -1421,6 +1521,8 @@
    "魔物:火山鷹",
    "魔物:稻草鴉",
    "魔物:腐鴉禿鷹",
+   "魔物:蘆葦鷺",
+   "魔物:穀倉鴞",
    "分解",
    "分解"
   ],
@@ -1429,18 +1531,15 @@
   ],
   "stinger": [
    "魔物:電電蜂",
-   "魔物:毒刺蜻蜓"
-  ],
-  "frogSkin": [
-   "魔物:紫斑蛙",
-   "魔物:溪蛇",
-   "魔物:瘴氣大鯰",
-   "分解"
+   "魔物:毒刺蜻蜓",
+   "魔物:水黽",
+   "魔物:毒蚊群"
   ],
   "wolfPelt": [
    "魔物:狂牙狼",
    "魔物:灰鬃狼",
-   "魔物:野狼"
+   "魔物:野狼",
+   "魔物:林道貂"
   ],
   "crocHide": [
    "魔物:沼澤鱷",
@@ -1450,34 +1549,46 @@
   "batWing": [
    "魔物:洞窟飛影",
    "魔物:坑道蝠",
-   "魔物:鐘樓蝠"
+   "魔物:鐘樓蝠",
+   "魔物:苔蝙蝠"
   ],
   "banditCloth": [
    "魔物:盜賊",
    "魔物:鐵斧格倫",
    "魔物:街道盜賊",
-   "魔物:盜賊頭目「黑羽」"
+   "魔物:盜賊頭目「黑羽」",
+   "魔物:黑羽打手",
+   "魔物:黑羽的藏身洞之主"
   ],
   "beetleShell": [
    "魔物:雷角甲蟲",
    "魔物:蘆葦鉗蟹",
    "魔物:苔甲龜",
-   "魔物:樹皮甲蟲"
+   "魔物:樹皮甲蟲",
+   "魔物:溪蝦兵",
+   "魔物:刺背犰狳"
   ],
   "emberCore": [
    "魔物:火燼精",
-   "魔物:地獄犬"
+   "魔物:地獄犬",
+   "魔物:火山灰蛾"
   ],
   "silk": [
    "魔物:礦坑毒蛛",
+   "魔物:根蛀蟲",
+   "魔物:穀倉蜘蛛",
    "分解"
   ],
   "mothDust": [
-   "魔物:暮光蛾"
+   "魔物:暮光蛾",
+   "魔物:螢火蟲群",
+   "魔物:楓葉蝶"
   ],
   "lizardScale": [
    "魔物:湖蜥戰士",
-   "魔物:蜥人隊長"
+   "魔物:蜥人隊長",
+   "魔物:峽谷蜥蜴",
+   "魔物:岩壁守宮"
   ],
   "scorpTail": [
    "魔物:砂鉗蠍"
@@ -1488,17 +1599,22 @@
   "sandCrystal": [
    "魔物:塵旋精",
    "魔物:岩角犀",
-   "魔物:沙丘巨蟲"
+   "魔物:沙丘巨蟲",
+   "魔物:砂岩小人",
+   "魔物:風蝕洞之主"
   ],
   "wispFlame": [
    "魔物:沼地鬼火",
    "魔物:戰場鬼火"
   ],
   "rotWood": [
-   "魔物:枯木樹妖"
+   "魔物:枯木樹妖",
+   "魔物:腐根怪",
+   "魔物:樹根洞之主"
   ],
   "beetleHorn": [
-   "魔物:巨角甲蟲"
+   "魔物:巨角甲蟲",
+   "魔物:舊隧道之主"
   ],
   "ratTail": [
    "魔物:溝鼠",
@@ -1506,7 +1622,9 @@
   ],
   "rustScrap": [
    "魔物:鐵鏽蛛",
-   "魔物:空洞鎧甲"
+   "魔物:空洞鎧甲",
+   "魔物:鏽甲兵",
+   "魔物:鐵刺蝟"
   ],
   "honey": [
    "魔物:麥田蜂"
@@ -1530,7 +1648,9 @@
   "snowPelt": [
    "魔物:雪狼",
    "魔物:雪人",
-   "魔物:雪原巨熊"
+   "魔物:雪原巨熊",
+   "魔物:白絨兔",
+   "魔物:雪洞之主"
   ],
   "salamanderScale": [
    "魔物:火蜥蜴"
@@ -1555,12 +1675,10 @@
    "魔物:彗星鳥",
    "魔物:星之守護者"
   ],
-  "hareFur": [
-   "魔物:角兔"
-  ],
   "stagHorn": [
    "魔物:赤角鹿",
-   "魔物:楓林鹿王"
+   "魔物:楓林鹿王",
+   "魔物:山猿"
   ],
   "wood": [
    "魔物:樹樁怪"

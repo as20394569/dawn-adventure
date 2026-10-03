@@ -63,7 +63,7 @@ function wxOverlay(x, k, t, w, h) {
 { const _bs = Overworld.prototype.battleScript; Overworld.prototype.battleScript = function* (cfg, ...a) {
     const st = this.st, k = wxNow(st); if (!cfg) return yield* _bs.call(this, cfg, ...a);
     let c = { ...cfg, wx: k }; if (st.rainbowUntil > (st.steps || 0) && cfg.kind === 'wild') c.aevExp = (c.aevExp || 1) * 1.2;
-    if (k && cfg.kind === 'wild' && WX_MON[k] && chance(0.25)) c = { ...c, sp: WX_MON[k][0], wxMon: 1 };
+    if (k && cfg.kind === 'wild' && !cfg.roam12 && WX_MON[k] && chance(0.25)) c = { ...c, sp: WX_MON[k][0], wxMon: 1 };
     return yield* _bs.call(this, c, ...a);
   }; }
 
