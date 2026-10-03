@@ -42,6 +42,7 @@ BR.mods = function (core, src, tgt, skill, ev, x = {}) {
 };
 BR.modVal = (m, key, c) => m[key] != null ? (typeof m[key] === 'object' && m[key].f ? BR.FORMULA[m[key].f](c, m[key].v) : m[key]) : null;
 // the damage of one hit. o: { power, el, cat, preview } → { amount, mult, crit, parts }
+BR.PIERCE_RATIO = 3;
 BR.damage = function (core, src, tgt, skill, o = {}) {
   const rng = o.preview ? null : core.rng, c = { core, src, tgt, skill, spent: o.spent || 0, n: o.n || 0 }, mods = BR.mods(core, src, tgt, skill, null, c), phys = (o.cat || skill.cat) === '物', el = o.el || skill.el;
   // crit
@@ -51,12 +52,14 @@ BR.damage = function (core, src, tgt, skill, o = {}) {
   // attack / defence with stat stages (a crit ignores the attacker's drops and the defender's boosts)
   const as = BR.stage(core, src, phys ? 'atk' : 'spa'), ds = BR.stage(core, tgt, phys ? 'def' : 'spd');
   let A = (phys ? src.stats.atk : src.stats.spa) * BR.stageMul(crit ? Math.max(0, as) : as), D = (phys ? tgt.stats.def : tgt.stats.spd) * BR.stageMul(crit ? Math.min(0, ds) : ds);
+  const D0 = D; // v12.0.9f: what「無視物防」starts from (see the floor below)
   let pow = o.power != null ? o.power : skill.power;
   for (const m of mods) { const a = BR.modVal(m, 'atkMul', c), d = BR.modVal(m, 'defMul', c), p = BR.modVal(m, 'powMul', c); if (a) A *= a; if (d) D *= d; if (p) pow *= p; }
   if (skill.pierceDef) D *= 1 - skill.pierceDef;
   if (crit) for (const m of mods) { const v = BR.modVal(m, 'critPierce', c); if (v) D *= 1 - v; }
   if (phys && core.hasStatus(src, 'brn')) A *= 0.5;
-  D = Math.max(1, D);
+  // v12.0.9f: ignoring defence can lift the attack/defence ratio to at most ×3 (「無視全部物防」 used to divide by 1 and deal ~100× damage)
+  D = Math.max(1, D, Math.min(D0, A / BR.PIERCE_RATIO));
   const base = Math.floor(Math.floor(Math.floor(2 * src.lv / 5 + 2) * pow * A / D) / 50) + 2;
   const mult = BR.famMult(el, tgt);
   let m = mult * (rng ? rng.int(BR.VARIANCE[0], BR.VARIANCE[1]) / 100 : (BR.VARIANCE[0] + BR.VARIANCE[1]) / 200);

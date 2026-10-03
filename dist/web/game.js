@@ -14372,6 +14372,7 @@ BR.mods = function (core, src, tgt, skill, ev, x = {}) {
   return out.sort((a, b) => BR.STAGES.indexOf(a.stage) - BR.STAGES.indexOf(b.stage));
 };
 BR.modVal = (m, key, c) => m[key] != null ? (typeof m[key] === 'object' && m[key].f ? BR.FORMULA[m[key].f](c, m[key].v) : m[key]) : null;
+BR.PIERCE_RATIO = 3;
 BR.damage = function (core, src, tgt, skill, o = {}) {
   const rng = o.preview ? null : core.rng, c = { core, src, tgt, skill, spent: o.spent || 0, n: o.n || 0 }, mods = BR.mods(core, src, tgt, skill, null, c), phys = (o.cat || skill.cat) === '物', el = o.el || skill.el;
   let critCh = (src.stats.crit ?? 6) / 100 * (skill.critX || 1), forced = false;
@@ -14379,12 +14380,13 @@ BR.damage = function (core, src, tgt, skill, o = {}) {
   const crit = !o.noCrit && (forced || (rng ? rng.chance(critCh) : false));
   const as = BR.stage(core, src, phys ? 'atk' : 'spa'), ds = BR.stage(core, tgt, phys ? 'def' : 'spd');
   let A = (phys ? src.stats.atk : src.stats.spa) * BR.stageMul(crit ? Math.max(0, as) : as), D = (phys ? tgt.stats.def : tgt.stats.spd) * BR.stageMul(crit ? Math.min(0, ds) : ds);
+  const D0 = D; // v12.0.9f: what「無視物防」starts from (see the floor below)
   let pow = o.power != null ? o.power : skill.power;
   for (const m of mods) { const a = BR.modVal(m, 'atkMul', c), d = BR.modVal(m, 'defMul', c), p = BR.modVal(m, 'powMul', c); if (a) A *= a; if (d) D *= d; if (p) pow *= p; }
   if (skill.pierceDef) D *= 1 - skill.pierceDef;
   if (crit) for (const m of mods) { const v = BR.modVal(m, 'critPierce', c); if (v) D *= 1 - v; }
   if (phys && core.hasStatus(src, 'brn')) A *= 0.5;
-  D = Math.max(1, D);
+  D = Math.max(1, D, Math.min(D0, A / BR.PIERCE_RATIO));
   const base = Math.floor(Math.floor(Math.floor(2 * src.lv / 5 + 2) * pow * A / D) / 50) + 2;
   const mult = BR.famMult(el, tgt);
   let m = mult * (rng ? rng.int(BR.VARIANCE[0], BR.VARIANCE[1]) / 100 : (BR.VARIANCE[0] + BR.VARIANCE[1]) / 200);
@@ -19922,7 +19924,8 @@ function sk9Build(cls) {
     const D = skillFromMove(id, MOVES[id], { kind: 'skill', tpl, extraTags: ['orb', 'cls9'].concat(x.tags || []), costs: (x.costs || []).concat([{ res: 'mp', amount: mp }]), fallback: 'attack' });
     if (!pow) { D.target = x.target || 'self'; D.noHitRoll = true; D.effects = []; D.tags = D.tags.filter(t => t !== 'damage'); }
     if (x.effects) D.effects = x.effects.map(e => ({ ...e })); if (x.after) D.after = x.after.map(e => ({ ...e })); if (x.mods) D.mods = D.mods.concat(x.mods);
-    for (const f of ['hitsOf', 'onPrepare', 'powerOf', 'requires']) if (x[f]) D[f] = x[f];
+    for (const f of ['hitsOf', 'onPrepare', 'powerOf', 'requires', 'targetOf', 'catOf']) if (x[f]) D[f] = x[f];
+    if (x.charge) { D.charge = true; D.airborne = !!x.airborne; if (!D.tags.includes('charge')) D.tags.push('charge'); }
     if (x.reqText) SK9_REQ[id] = x.reqText;
     Object.assign(D, { cooldown: cd, prio: 0, fx: 'c9_' + k, metadata: { orb: k, tpl, learn, cls9: cls, lv9: CLASS_SKILL_LV[i] } });
     D.effects = D.effects.map((ef, j) => effRegister('skill:' + id + '#e' + j, ef)); D.after = D.after.map((ef, j) => effRegister('skill:' + id + '#a' + j, ef));
@@ -20203,7 +20206,173 @@ Object.assign(FX9, {
     *f(S, U, T) { Sound.sfx('charge'); const P = this.spawn({ k: 'glow', x: T.x, y: T.y - 90, r: 34, c: S.col[0], life: 22 }); for (let i = 1; i <= 8; i++) { P.y = lerp(T.y - 90, T.y, i / 8); for (let f = -2; f <= 2; f++) this.spawn({ k: 'line', x1: P.x + f * 7, y1: P.y - 26, x2: P.x + f * 7, y2: P.y - 10, c: S.col[1], w: 3, grow: 1, life: 4 }); yield; }
       Sound.sfx('quake'); this.spawn({ k: 'rays', x: T.x, y: T.y, n: 14, a0: 0, len: 40, c: S.col[0], life: 18 }); this.shake = Math.max(this.shake, 12); imp9(this, T, S, 1); yield* wait(10); } },
 });
-const SK9_DONE = ['swordsman', 'mage', 'guardian', 'ranger', 'bard', 'machinist', 'monk'];
+BV_TAGS.add('landing9'); // 跳斬・龍星墜 count as a landing attack (龍之血脈: ignore 30% 物防; landing hit +1 龍血)
+Object.assign(COND, {
+  landing9: (c, v) => { const sk = c.skill; return (!!sk && sk.id !== 'sig_dragoon' && !!sk.power && (sk.tags.includes('landing9') || !!(c.core.act && c.core.act.landing9))) === !!v; },
+  evNotReaction9: (c, v) => !!c.ev && !c.ev.payload.reaction === !!v,
+});
+Object.assign(BR.FORMULA, {
+  lance9: c => { const u = c.src; return (u.max.dragon || 0) > 0 && (u.res.dragon || 0) >= u.max.dragon ? 0.0001 : 0.6; }, // 龍血全滿：無視全部物防（照 v12.0.9f 的上限）
+  star9: c => 1 + 0.25 * actV9(c, 'star9'),
+  noWeak9: c => { const m = BR.famMult(c.skill.el, c.tgt); return m > 1 ? 1 / m : 1; },
+  dimension9: c => 1 + 0.1 * BV12.insightOf(c.core, c.src, c.tgt),
+  runeWall9: c => 1 + (c.spent || 0),
+  finale9b: c => 1 + 0.25 * (c.spent || 0),
+});
+Object.assign(EFFECT_TYPES, {
+  sky_land9: { exec(core, ef, ctx) { const u = ctx.owner; core.removeStatus(u, 'skyWait9', 'used'); core.removeStatus(u, 'airborne', 'release'); if (core.act && core.act.type === 'skill') { core.act.landing9 = 1; core.act.skyBonus9 = 1; } } },
+});
+{ const D = EFFECT_TYPES.damage.exec; EFFECT_TYPES.damage.exec = function (core, ef, ctx, tg) { if (!ef.elWeak9) return D.call(this, core, ef, ctx, tg);
+    for (const t of tg) { const f = famOf(t), el = f && f.weak && f.weak[0]; D.call(this, core, { ...ef, elWeak9: 0, ...(el ? { el } : {}) }, ctx, [t]); } }; }
+defPut('statuses', 'skyWait9', { tags: ['buff'], duration: 'until_used', stack: 'refresh', metadata: { n: '高空待機' } });
+defPut('statuses', 'sureHit9', { tags: ['buff'], duration: 'until_used', stack: 'refresh', metadata: { n: '看破之眼' },
+  mods: [{ stage: 'attacker', who: 'attacker', accAdd: 999, cond: { hasPower: 1 } }],
+  triggers: [{ on: EVT.SKILL_SUCCESS, phase: 'POST', role: 'src', cond: { hasPower: 1 }, system: 1, effects: [{ type: 'remove_status', target: 'self', status: 'sureHit9', why: 'used' }] }] });
+defPut('statuses', 'inscribe9', { tags: ['buff'], duration: 'until_used', stack: 'refresh', metadata: { n: '銘紋' }, triggers: [
+  { on: EVT.COOLDOWN, phase: 'POST', role: 'src', cond: { evSetCd: 1, cat: '特', isBasic: 0 }, effects: [{ type: 'cut_cd9', why: 'inscribe' }] },
+  { on: EVT.SKILL_USE, phase: 'POST', role: 'src', cond: { cat: '特', isBasic: 0, hasPower: 1, evNoFollow9: 1 }, notTags: ['weapon_special', 'reaction'], effects: [{ type: 'remove_status', target: 'self', status: 'inscribe9', why: 'used' }] }] });
+{ const M = DEF.mechanics.cls_dragoon, mk = M.make; M.make = u => { const m = mk(u); (m.mods || (m.mods = [])).push({ stage: 'attacker', who: 'attacker', defMul: 0.7, cond: { landing9: 1 } });
+    (m.triggers || (m.triggers = [])).push(TRG(EVT.DAMAGE, 'src', { landing9: 1, evHit: 1 }, [GAIN('dragon', 1)], { limit: { perAction: 1 } })); return m; }; }
+{ const M = DEF.mechanics.cls9sk, mk = M.make; M.make = u => { const m = mk(u);
+    m.triggers.push(TRG(EVT.DAMAGE, 'src', { skillIs: 'o_dg9Claw', weakHit: 1, evHit: 1 }, [GAIN('dragon', 1, 0, { why: 'claw' })], { limit: { perAction: 1 } }),
+      TRG(EVT.ACTION_START, 'src', { ownerHasStatus: 'skyWait9', evNotReaction9: 1 }, [{ type: 'sky_land9' }], { prio: 9 }),
+      TRG(EVT.DAMAGE, 'src', { skillIs: 'o_ow9Analyze', weakHit: 0, evHit: 1, tgtSide: 'enemy' }, [{ type: 'insight_add' }], { limit: { perAction: 1 } }));
+    (m.mods || (m.mods = [])).push({ stage: 'skill', who: 'attacker', mul: 1.3, cond: { actFlag: 'skyBonus9', hasPower: 1 } }); return m; }; }
+const SK9_ATTR2 = { o_ow9TwoWorlds: '力量／智力加成', o_sb9DualPole: '力量／智力加成', o_sb9Finale: '力量／智力加成' };
+{ const _t = skillAttrTag; skillAttrTag = function (id) { return SK9_ATTR2[id] || _t(id); }; }
+const ATTR2_9 = (a, b, r = 1, by = 'hit') => by === 'hit' ? [{ stage: 'skill', who: 'attacker', mul: { f: 'attrScale', v: [a, r] }, cond: { srcIsHero: 1, firstHit: 1 } }, { stage: 'skill', who: 'attacker', mul: { f: 'attrScale', v: [b, r] }, cond: { srcIsHero: 1, firstHit: 0 } }]
+  : [{ stage: 'skill', who: 'attacker', mul: { f: 'attrScale', v: [a, r] }, cond: { srcIsHero: 1, cat: '物' } }, { stage: 'skill', who: 'attacker', mul: { f: 'attrScale', v: [b, r] }, cond: { srcIsHero: 1, cat: '特' } }];
+Object.assign(SK9_KIND, { dg9Claw: 'claw', dg9JumpSlash: 'slash', dg9Scale: 'guard', dg9Breath: 'area', dg9SkyWait: 'buff', dg9Lance: 'pierce',
+  ow9Analyze: 'slash', ow9Convert: 'bolt', ow9Shield: 'guard', ow9TwoWorlds: 'slash', ow9Eye: 'buff', ow9DawnCombo: 'slash', ow9Judgment: 'bolt',
+  sb9Blade: 'slash', sb9RuneShot: 'bolt', sb9Inscribe: 'buff', sb9DualPole: 'slash', sb9Wall: 'guard', sb9Thunder: 'slash', sb9Finale: 'slash' });
+Object.assign(SK9, {
+  dragoon: [
+    ['dg9Claw', '龍爪擊', 55, 0, 1, 3, ['str', 1], '物', '一般', 0, '龍爪般的三道抓痕。打中弱點時龍血 +1。', { B: ['spe+1', 'hit+1'] }, {}],
+    ['dg9JumpSlash', '跳斬', 62, 0, 1, 4, ['str', 1], '物', '一般', 0, '跳起來往下斬，跳起和落下在同一次行動；算落地攻擊（無視 30% 物防，命中龍血 +1）。', { B: ['fdef-1', 'first'] }, { tags: ['landing9'] }],
+    ['dg9Scale', '龍鱗護身', 0, 0, 2, 4, null, '變', '一般', 0, '龍鱗覆蓋全身：物防 +1、魔防 +1（3 行動）；龍血 +1。', { A: ['atk+1', 'cheap'], B: ['def+1', 'heal+15'] },
+      { effects: [{ type: 'stage', target: 'self', stats: { def: 1, spd: 1 }, dur: 3 }, GAIN9('dragon', 1, { why: 'scale' })] }],
+    ['dg9Tail', '龍尾橫掃', 62, 0, 1, 5, ['str', 1], '物', '一般', 1, '龍尾般的橫掃打全體；龍血 2 以上時 30% 退縮。', { B: ['fdef-1', 'hit+1'] },
+      { effects: [{ type: 'damage' }, { type: 'status', status: 'flinch', chance: 0.3, secondary: true, cond: { tgtAlive: 1, ownerResAtLeast: ['dragon', 2] } }] }],
+    ['dg9Breath', '龍炎吐息', 70, 0, 2, 6, ['int', 1], '特', '火', 1, '吐出龍炎燒全體（火屬性魔法）；有龍血時消耗 1 點，威力 +40%。', { B: ['brn:30', 'atk+1'] },
+      { onPrepare: (core, u, cmd) => { if ((u.res.dragon || 0) >= 1) { core.changeRes(u, 'dragon', -1, { why: 'cost' }); cmd.breath9 = 1; } }, mods: [{ stage: 'skill', who: 'attacker', mul: 1.4, cond: { actFlag: 'breath9' } }] }],
+    ['dg9SkyWait', '高空待機', 0, 0, 2, 4, null, '變', '一般', 0, '跳上高空等待（大部分攻擊打不到）；下一次行動的技能算落地攻擊，威力 +30%。', { A: ['cheap', 'atk+1'], B: ['spe+1', 'heal+15'] },
+      { effects: [{ type: 'status', target: 'self', status: 'airborne' }, { type: 'status', target: 'self', status: 'skyWait9' }] }],
+    ['dg9Lance', '貫龍槍', 92, 0, 2, 6, ['str', 1], '物', '一般', 0, '連龍鱗都能貫穿的一槍，無視 40% 物防；龍血 3 時無視全部物防。', { B: ['shield:1', 'drain:20'] },
+      { mods: [{ stage: 'skill', who: 'attacker', defMul: { f: 'lance9' } }] }],
+    ['dg9StarFall', '龍星墜', 105, 0, 3, 9, ['str', 1.5], '物', '一般', 1, '跳上高空，下一次行動化成流星落下打全體；落下時消耗全部龍血，每點威力 +25%。', { B: ['atk+1', 'drain:15'] },
+      { tags: ['landing9'], charge: 1, airborne: 1, targetOf: (core, u, cmd) => cmd.meta && cmd.meta.release ? 'all_enemies' : 'enemy',
+        onPrepare: (core, u, cmd) => { if (!(cmd.meta && cmd.meta.release)) return; const n = u.res.dragon || 0; if (n) core.changeRes(u, 'dragon', -n, { why: 'cost' }); cmd.star9 = n; },
+        mods: [{ stage: 'skill', who: 'attacker', powMul: { f: 'star9' } }] }],
+  ],
+  otherworlder: [
+    ['ow9Analyze', '解析斬', 55, 0, 1, 3, ['dex', 1], '物', '一般', 0, '看穿構造的一斬。一定算打中弱點（看破 +1），但不加弱點倍率。', { B: ['spe+1', 'hit+1'] },
+      { mods: [{ stage: 'skill', who: 'attacker', mulWeak: { f: 'noWeak9' } }] }],
+    ['ow9Convert', '轉換彈', 58, 0, 1, 4, ['int', 1], '特', '一般', 0, '途中改變屬性的魔法彈：屬性變成目標的弱點屬性。', { B: ['brn:30', 'cheap'] },
+      { effects: [{ type: 'damage', elWeak9: 1 }] }],
+    ['ow9Shield', '勇者之盾', 0, 0, 2, 4, null, '變', '一般', 0, '勇者之盾：護盾 2 行動，回復 15% HP。', { A: ['heal+25', 'heal+25'], B: ['cure', 'def+1'] },
+      { tags: ['heal'], effects: [{ type: 'status', target: 'self', status: 'barrier', dur: 2 }, { type: 'heal', target: 'self', pct: 0.15 }] }],
+    ['ow9TwoWorlds', '雙界斬', 34, 2, 2, 5, null, '物', '一般', 0, '兩個世界的力量：第 1 段物理、第 2 段魔法。', { B: ['spec+1', 'crit'] },
+      { mods: ATTR2_9('str', 'int'), effects: [{ type: 'damage', cat: '物', cond: { firstHit: 1 } }, { type: 'damage', cat: '特', cond: { firstHit: 0 } }] }],
+    ['ow9Eye', '看破之眼', 0, 0, 2, 3, null, '變', '一般', 0, '看穿目標：對牠的種族看破 +1；下一次攻擊必定命中。', { A: ['cheap', 'spe+1'], B: ['spec+1', 'mp:3'] },
+      { target: 'enemy', effects: [{ type: 'insight_add' }, { type: 'status', target: 'self', status: 'sureHit9' }] }],
+    ['ow9DawnCombo', '曙光連斬', 28, 3, 2, 6, ['agi', 1], '物', '一般', 0, '曙光般的 3 段連斬；看破滿層時每段必定會心。', { B: ['fatk-1', 'atk+1'] },
+      { mods: [{ stage: 'skill', who: 'attacker', crit: true, cond: { insightFull: 1 } }] }],
+    ['ow9Dimension', '次元斬', 80, 0, 2, 7, ['str', 1], '物', '一般', 1, '斬開次元打全體；每層看破威力 +10%。', { B: ['par:25', 'spe+1'] },
+      { mods: [{ stage: 'skill', who: 'attacker', mul: { f: 'dimension9' } }] }],
+    ['ow9Judgment', '黎明審判', 120, 0, 3, 10, ['int', 1.5], '特', '一般', 0, '黎明之光的審判（魔法）；對看破滿層的種族威力 ×1.5。', { B: ['spec+1', 'cheap'] },
+      { mods: [{ stage: 'skill', who: 'attacker', mul: 1.5, cond: { insightFull: 1 } }] }],
+  ],
+  spellblade: [
+    ['sb9Blade', '魔刃斬', 55, 0, 1, 3, ['str', 1], '物', '一般', 0, '注入魔力的一斬。命中魔紋 +2。', { B: ['brn:30', 'cheap'] },
+      { effects: [{ type: 'damage' }, GAIN9('rune', 1, { cap: 2, why: 'blade' })] }],
+    ['sb9RuneShot', '魔紋彈', 58, 0, 1, 4, ['int', 1], '特', '一般', 0, '把魔紋射出去（魔法，帶武器屬性）；照魔紋規則消耗魔紋加威力。', { B: ['spe+1', 'hit+1'] }, {}],
+    ['sb9Inscribe', '銘紋', 0, 0, 2, 3, null, '變', '一般', 0, '在劍上刻下魔紋：魔紋 +2；下一個魔法技能冷卻 −1。', { A: ['cheap', 'spa+1'], B: ['spec+1', 'mp:3'] },
+      { effects: [GAIN9('rune', 2, { why: 'inscribe' }), { type: 'status', target: 'self', status: 'inscribe9' }] }],
+    ['sb9DualPole', '雙極斬', 32, 2, 1, 5, null, '物', '一般', 0, '第 1 段物理（給魔紋）、第 2 段魔法（馬上用掉）。', { B: ['drain:20', 'atk+1'] },
+      { mods: ATTR2_9('str', 'int'), effects: [{ type: 'damage', cat: '物', cond: { firstHit: 1 } }, { type: 'damage', cat: '特', cond: { firstHit: 0 } },
+        { type: 'resource', target: 'self', res: 'rune', set: 0, why: 'spend', cond: { firstHit: 0, ruleOff: 'runeKing' } }] }],
+    ['sb9Wall', '魔力障壁', 0, 0, 2, 5, null, '變', '一般', 0, '把魔紋化成障壁：消耗全部魔紋，護盾「1＋魔紋數」行動。', { A: ['spd+1', 'cheap'], B: ['heal+15', 'mp:3'] },
+      { costs: [{ res: 'rune', all: 1, min: 0 }], effects: [{ type: 'status', target: 'self', status: 'barrier', dur: { f: 'runeWall9' } }] }],
+    ['sb9Thunder', '奔雷魔劍', 78, 0, 2, 6, ['str', 1], '物', '雷', 0, '雷電奔流的魔劍（雷屬性物理）；魔紋 3 時 40% 麻痺。', { B: ['par:25', 'atk+1'] },
+      { onPrepare: (core, u, cmd) => { if ((u.res.rune || 0) >= 3) cmd.thunder9 = 1; }, effects: [{ type: 'damage' }, { type: 'status', status: 'par', chance: 0.4, secondary: true, cond: { tgtAlive: 1, tgtNoMajor: 1, actFlag: 'thunder9' } }] }],
+    ['sb9Burst', '魔紋爆裂', 80, 0, 2, 7, ['int', 1], '特', '一般', 1, '讓魔紋在魔物腳下爆開打全體（魔法）；照魔紋規則消耗。', { B: ['par:25', 'spa+1'] }, {}],
+    ['sb9Finale', '魔劍・終焉', 116, 0, 3, 9, null, '物', '一般', 0, '終結一切的魔劍：用物攻、魔攻較高的一邊；消耗全部魔紋，每層威力 +25%。', { B: ['drain:20', 'crit'] },
+      { costs: [{ res: 'rune', all: 1, min: 0 }], catOf: (core, u) => u.stats.spa > u.stats.atk ? '特' : '物', mods: ATTR2_9('str', 'int', 1.5, 'cat').concat([{ stage: 'skill', who: 'attacker', powMul: { f: 'finale9b' } }]) }],
+  ],
+});
+Object.assign(FX9, {
+  dg9Claw: { col: ['#e05a3a', '#ffd8c0', '#601a10'], pt: 'claw2', cast: 'draw', fin: 'none', snd: 'slash', // three dragon claw marks
+    *f(S, U, T, u) { yield* this.lunge(u, 12, 2); Sound.sfx('slash'); for (let i = 0; i < 3; i++) ln9(this, T.x - 18 + i * 9, T.y - 20, T.x - 8 + i * 9, T.y + 18, S.col[0], S.col[1], 4); yield* wait(4); imp9(this, T, S); yield* wait(8); } },
+  dg9JumpSlash: { col: ['#7ac0ff', '#e8f6ff', '#2a5a90'], pt: 'wind', cast: 'dash', fin: 'cut', snd: 'slash', // up into the sky, then straight down on the target
+    *f(S, U, T, u) { Sound.sfx('jump'); for (let i = 0; i < 6; i++) this.spawn({ k: 'streak', x: U.x + rnd(-8, 8), y: U.y - i * 8, vx: 0, len: 10, c: S.col[1], life: 8 }); yield* wait(6);
+      Sound.sfx('slash'); ln9(this, T.x + 4, T.y - 70, T.x, T.y + 14, S.col[0], S.col[1], 6); yield* wait(3); this.spawn({ k: 'ring', x: T.x, y: T.y + 20, r0: 4, r1: 30, c: S.col[1], w: 2, life: 12, fl: 0.35 }); this.shake = Math.max(this.shake, 6); imp9(this, T, S); yield* wait(8); } },
+  dg9Scale: { col: ['#58b090', '#e0fff0', '#1a5040'], pt: 'shard', cast: 'hex', snd: 'shield', // scales close over the body
+    *f(S, U) { Sound.sfx('shield'); for (let r = 0; r < 3; r++) { for (let k = 0; k < 5; k++) this.spawn({ k: 'cres', x: U.x - 16 + k * 8, y: U.y + 14 - r * 10, r: 5, ang: -1.57, c: S.col[1], c2: r % 2 ? S.col[0] : S.col[2], w: 3, life: 22 - r * 2 }); yield* wait(3); }
+      this.spawn({ k: 'hex', x: U.x, y: U.y, r0: 10, r1: 26, c: S.col[0], life: 14 }); yield* wait(10); } },
+  dg9Tail: { col: ['#a07a40', '#fff0c8', '#4a3010'], pt: 'dust', cast: 'aura', fin: 'none', snd: 'heavy', // a long tail swings across, a second smaller arc after it
+    *f(S, U, T, u, t) { yield* this.lunge(u, 10, 3); Sound.sfx('heavy'); const G = grp9(this, T, t), y = Math.max(...G.map(C => C.y)) + 8; this.spawn({ k: 'cres', x: T.x, y, r: 64, ang: 1.57, c: S.col[1], c2: S.col[0], w: 9, life: 16 }); yield* wait(3);
+      this.spawn({ k: 'cres', x: T.x, y: y - 6, r: 48, ang: 1.57, c: S.col[1], c2: S.col[2], w: 4, life: 14 }); for (const C of G) imp9(this, C, S); this.shake = Math.max(this.shake, 8); yield* wait(8); } },
+  dg9Breath: { col: ['#ff6a20', '#ffe8a0', '#a02000'], pt: 'flame', cast: 'aura', fin: 'firestorm', snd: 'fire', // a cone of dragon fire pouring over them
+    *f(S, U, T, u, t) { const G = grp9(this, T, t); for (let k = 0; k < 10; k++) { Sound.sfx(k % 3 ? 'fire' : 'wind'); for (const C of G) { const f = (k + 1) / 10; this.spawn({ k: 'flame', x: lerp(U.x, C.x, f) + rnd(-6, 6), y: lerp(U.y - 10, C.y, f) + rnd(-6, 6), vy: -0.6, s: 2 + f * 4, life: 14 }); } yield* wait(1); }
+      for (const C of G) this.spawn({ k: 'glow', x: C.x, y: C.y, r: 24, c: S.col[0], life: 12 }); yield* wait(8); } },
+  dg9SkyWait: { col: ['#c0e8ff', '#ffffff', '#4a7aa0'], pt: 'feather', cast: 'dash', snd: 'jump', // the dragoon leaps high, wind rings left below
+    *f(S, U) { Sound.sfx('jump'); for (let i = 0; i < 3; i++) this.spawn({ k: 'ring', x: U.x, y: U.y + 18, r0: 6 + i * 6, r1: 30 + i * 8, c: i % 2 ? S.col[1] : S.col[0], w: 2, life: 14, fl: 0.35 }); for (let i = 0; i < 10; i++) this.spawn({ k: 'streak', x: U.x + rnd(-14, 14), y: U.y - rnd(0, 40), vx: 0, len: rnd(8, 16), c: S.col[1], life: 10 }); w12Particle(this, U.x, U.y - 20, S, 8, 20); yield* wait(14); } },
+  dg9Lance: { col: ['#e0d8ff', '#ffffff', '#5a4aa0'], pt: 'shard2', cast: 'still', fin: 'shatter', snd: 'crit', // one long thrust right through and out the other side
+    *f(S, U, T, u) { yield* this.lunge(u, 18, 3); Sound.sfx('crit'); const a = Math.atan2(T.y - U.y, T.x - U.x); ln9(this, T.x - Math.cos(a) * 30, T.y - Math.sin(a) * 30, T.x + Math.cos(a) * 46, T.y + Math.sin(a) * 46, S.col[0], S.col[1], 4, 16);
+      for (let i = 0; i < 6; i++) this.spawn({ k: 'shard', g: 0.1, x: T.x + Math.cos(a) * 10, y: T.y + Math.sin(a) * 10, vx: Math.cos(a) * 2 + rnd(-10, 10) / 10, vy: Math.sin(a) * 2 + rnd(-10, 10) / 10, s: 3, c: i % 2 ? S.col[0] : S.col[2], life: 18 }); yield* wait(5); imp9(this, T, S, 1); yield* wait(8); } },
+  dg9StarFall: { col: ['#ffb050', '#fff4d0', '#802a10'], pt: 'star', cast: 'none', fin: 'impact', snd: 'quake', // a burning comet crashes into the middle of them
+    *f(S, U, T, u, t) { const F = 10, x0 = T.x + 50, y0 = -10, p = this.spawn({ k: 'glow', x: x0, y: y0, r: 16, c: S.col[0], life: F + 2 }); Sound.sfx('fire');
+      for (let i = 1; i <= F; i++) { const px = p.x, py = p.y; p.x = lerp(x0, T.x, i / F); p.y = lerp(y0, T.y, i / F); ln9(this, px, py, p.x, p.y, S.col[0], S.col[1], 6, 10); if (i % 2) this.star(p.x, p.y, S.col[1], 10); yield; }
+      Sound.sfx('quake'); this.spawn({ k: 'flash', c: S.col[1], a: 0.45, life: 8 }); this.spawn({ k: 'shock', x: T.x, y: T.y + 20, r0: 6, r1: 90, c: S.col[0], life: 20 }); for (const C of grp9(this, T, t)) imp9(this, C, S, 1); this.shake = Math.max(this.shake, 12); yield* wait(10); } },
+  ow9Analyze: { col: ['#60f0ff', '#e8ffff', '#108090'], pt: 'rune', cast: 'draw', fin: 'cut', snd: 'slash', // scan lines run down the target, then a clean cut
+    *f(S, U, T, u) { Sound.sfx('tick'); for (let i = 0; i < 5; i++) { this.spawn({ k: 'line', x1: T.x - 22, y1: T.y - 20 + i * 9, x2: T.x + 22, y2: T.y - 20 + i * 9, c: S.col[0], w: 1, grow: 3, life: 10 }); yield* wait(1); }
+      this.spawn({ k: 'hex', x: T.x, y: T.y, r0: 22, r1: 14, c: S.col[1], life: 12 }); yield* this.lunge(u, 10, 2); Sound.sfx('slash'); ln9(this, T.x - 20, T.y - 18, T.x + 18, T.y + 16, S.col[0], S.col[1], 4); yield* wait(4); imp9(this, T, S); yield* wait(8); } },
+  ow9Convert: { col: ['#b0b0ff', '#ffffff', '#4040a0'], pt: 'hex', cast: 'rune', fin: 'pop', snd: 'charge', // a bolt that changes colour on the way
+    *f(S, U, T) { Sound.sfx('charge'); const cols = ['#b0b0ff', '#ff7a30', '#3c9cf0', '#f8d030', '#5cd060'], x0 = U.x + 8, y0 = U.y - 12, F = 10, p = this.spawn({ k: 'glow', x: x0, y: y0, r: 9, c: cols[0], life: F + 2 });
+      for (let i = 1; i <= F; i++) { p.x = lerp(x0, T.x, i / F); p.y = lerp(y0, T.y, i / F) - Math.sin(i / F * Math.PI) * 8; p.c = cols[Math.floor(i / 2) % cols.length]; this.spawn({ k: 'dot', x: p.x, y: p.y, c: p.c, s: 2, life: 10 }); yield; }
+      this.spawn({ k: 'hex', x: T.x, y: T.y, r0: 4, r1: 22, c: S.col[1], life: 12 }); imp9(this, T, S); yield* wait(6); } },
+  ow9Shield: { col: ['#ffe070', '#fffbe8', '#a08020'], pt: 'crest', cast: 'halo', snd: 'shield', // the hero's crest shines on a raised shield
+    *f(S, U) { Sound.sfx('shield'); const X = U.x + 16, Y = U.y - 4; this.spawn({ k: 'hex', x: X, y: Y, r0: 6, r1: 18, c: S.col[0], life: 22 }); ln9(this, X, Y - 12, X, Y + 12, S.col[0], S.col[1], 3, 20); ln9(this, X - 9, Y - 3, X + 9, Y - 3, S.col[0], S.col[1], 3, 20);
+      yield* wait(6); this.spawn({ k: 'rays', x: X, y: Y, n: 8, a0: 0.2, len: 22, c: S.col[1], life: 14 }); for (let i = 0; i < 6; i++) this.spawn({ k: 'txt', s: '+', x: U.x + rnd(-18, 16), y: U.y + rnd(0, 20), vy: -0.6, c: S.col[0], life: 20, fade: 1 }); yield* wait(12); } },
+  ow9TwoWorlds: { col: ['#ff9a40', '#fff0d0', '#3a50c0'], pt: 'rift', cast: 'draw', fin: 'none', snd: 'slash', // a cut of steel, then a cut of magic the other way
+    *f(S, U, T, u) { yield* this.lunge(u, 10, 2); Sound.sfx('slash'); ln9(this, T.x - 20, T.y - 20, T.x + 18, T.y + 18, '#ff9a40', '#fff0d0', 5); yield* wait(4); imp9(this, T, S); yield* wait(4); },
+    *h(S, U, T) { Sound.sfx('charge'); ln9(this, T.x + 20, T.y - 20, T.x - 18, T.y + 18, '#5a70ff', '#e0e8ff', 5); this.spawn({ k: 'hex', x: T.x, y: T.y, r0: 4, r1: 20, c: '#a0b0ff', life: 12 }); yield* wait(6); } },
+  ow9Eye: { col: ['#a0ffb0', '#ffffff', '#2a8040'], pt: 'spark', cast: 'focus', snd: 'tick', // an eye opens over the target, its gaze sweeps it
+    *f(S, U, T) { Sound.sfx('tick'); const Y = T.y - 30; for (let i = 0; i < 6; i++) { this.spawn({ k: 'ring', x: T.x, y: Y, r0: 4 + i * 3, r1: 6 + i * 3, c: S.col[0], w: 1, life: 6, fl: 0.45 }); yield; }
+      this.spawn({ k: 'ring', x: T.x, y: Y, r0: 20, r1: 20, c: S.col[0], w: 2, life: 22, fl: 0.45 }); this.spawn({ k: 'glow', x: T.x, y: Y, r: 6, c: S.col[1], life: 22 }); for (let i = 0; i < 5; i++) this.spawn({ k: 'line', x1: T.x, y1: Y, x2: T.x - 20 + i * 10, y2: T.y + 16, c: S.col[1], w: 1, grow: 6, life: 16 }); yield* wait(16); } },
+  ow9DawnCombo: { col: ['#ffb070', '#fff4d8', '#e06a50'], pt: 'ray', cast: 'dash', fin: 'none', snd: 'slash', // three slashes lit like sunrise
+    *f(S, U, T, u) { yield* this.lunge(u, 10, 2); Sound.sfx('slash'); ln9(this, T.x - 22, T.y + 6, T.x + 22, T.y - 6, S.col[0], S.col[1], 4); this.spawn({ k: 'rays', x: T.x, y: T.y, n: 6, a0: 0, len: 18, c: S.col[1], life: 10 }); yield* wait(5); },
+    *h(S, U, T, u, i) { Sound.sfx('slash'); const a = i * 0.9 + 0.4; ln9(this, T.x - Math.cos(a) * 22, T.y - Math.sin(a) * 18, T.x + Math.cos(a) * 22, T.y + Math.sin(a) * 18, S.col[0], S.col[1], 4); if (i === 2) { this.spawn({ k: 'rays', x: T.x, y: T.y, n: 12, a0: 0.2, len: 30, c: S.col[1], life: 14 }); this.spawn({ k: 'glow', x: T.x, y: T.y, r: 26, c: S.col[0], life: 12 }); } yield* wait(5); } },
+  ow9Dimension: { col: ['#b050ff', '#f0d0ff', '#28104a'], pt: 'rift', cast: 'void', fin: 'rift', snd: 'quake', // space itself is cut in a line across them
+    *f(S, U, T, u, t) { const G = grp9(this, T, t), y = G.reduce((a, C) => a + C.y, 0) / G.length; Sound.sfx('slash'); this.spawn({ k: 'line', x1: 0, y1: y + 6, x2: W, y2: y - 6, c: S.col[1], w: 2, grow: 4, life: 20 }); yield* wait(5);
+      for (const C of G) this.spawn({ k: 'slit', x: C.x, y: C.y, w: 26, h: 5, ang: -0.14, c: S.col[0], life: 22 }); Sound.sfx('quake'); yield* wait(8); for (const C of G) imp9(this, C, S); yield* wait(6); } },
+  ow9Judgment: { col: ['#fff0c0', '#ffffff', '#ff9040'], pt: 'ray', cast: 'sky', fin: 'sunrise', snd: 'hitSuper', // the light of dawn comes down as a pillar
+    *f(S, U, T) { Sound.sfx('charge'); this.spawn({ k: 'pillar', x: T.x, y: T.y + 24, w: 24, h: 180, c: S.col[2], life: 22 }); yield* wait(4); this.spawn({ k: 'pillar', x: T.x, y: T.y + 24, w: 12, h: 180, c: S.col[1], life: 18 });
+      this.spawn({ k: 'rays', x: T.x, y: T.y, n: 16, a0: 0.1, len: 44, c: S.col[0], life: 20 }); this.spawn({ k: 'flash', c: S.col[0], a: 0.4, life: 8 }); yield* wait(6); imp9(this, T, S, 1); yield* wait(8); } },
+  sb9Blade: { col: ['#b070ff', '#f4e8ff', '#4a1a8a'], pt: 'rune', cast: 'draw', fin: 'cut', snd: 'slash', // a violet cut, two runes left glowing in it
+    *f(S, U, T, u) { yield* this.lunge(u, 10, 2); Sound.sfx('slash'); ln9(this, T.x + 18, T.y - 20, T.x - 18, T.y + 18, S.col[0], S.col[1], 5); yield* wait(3); for (const o of [-8, 8]) this.spawn({ k: 'hex', x: T.x + o, y: T.y - o * 0.9, r0: 2, r1: 9, c: S.col[1], life: 16 }); imp9(this, T, S); yield* wait(8); } },
+  sb9RuneShot: { col: ['#9080ff', '#f0f0ff', '#302080'], pt: 'hex', cast: 'rune', fin: 'pop', snd: 'charge', // a spinning rune flies out
+    *f(S, U, T) { Sound.sfx('charge'); const x0 = U.x + 8, y0 = U.y - 12, F = 9; for (let i = 1; i <= F; i++) { const x = lerp(x0, T.x, i / F), y = lerp(y0, T.y, i / F); this.spawn({ k: 'hex', x, y, r0: 6, r1: 7, c: i % 2 ? S.col[0] : S.col[1], life: 4 }); yield; } imp9(this, T, S, 1); yield* wait(6); } },
+  sb9Inscribe: { col: ['#c890ff', '#ffffff', '#5a2a90'], pt: 'rune', cast: 'rune', snd: 'charge', // runes written one by one along the blade
+    *f(S, U) { Sound.sfx('charge'); const A = { x: U.x + 14, y: U.y + 10 }, B = { x: U.x + 34, y: U.y - 14 }; for (let i = 0; i < 4; i++) { const x = lerp(A.x, B.x, i / 3), y = lerp(A.y, B.y, i / 3); Sound.sfx('tick'); this.spawn({ k: 'hex', x, y, r0: 1, r1: 6, c: S.col[i % 2], life: 22 }); yield* wait(3); }
+      this.spawn({ k: 'line', x1: A.x, y1: A.y, x2: B.x, y2: B.y, c: S.col[0], w: 2, grow: 2, life: 14 }); yield* wait(10); } },
+  sb9DualPole: { col: ['#ffd060', '#ffffff', '#7040c0'], pt: 'crest', cast: 'draw', fin: 'none', snd: 'slash', // a gold steel cut, then a violet magic burst on the same spot
+    *f(S, U, T, u) { yield* this.lunge(u, 10, 2); Sound.sfx('slash'); ln9(this, T.x - 18, T.y - 18, T.x + 18, T.y + 18, S.col[0], S.col[1], 5); yield* wait(4); imp9(this, T, S); yield* wait(4); },
+    *h(S, U, T) { Sound.sfx('hitSuper'); this.spawn({ k: 'glow', x: T.x, y: T.y, r: 22, c: '#a070ff', life: 12 }); this.spawn({ k: 'hex', x: T.x, y: T.y, r0: 4, r1: 24, c: '#e0c8ff', life: 12 }); this.spawn({ k: 'ring', x: T.x, y: T.y, r0: 2, r1: 20, c: S.col[2], w: 2, life: 10 }); yield* wait(6); } },
+  sb9Wall: { col: ['#8a70ff', '#e8e0ff', '#2a1a6a'], pt: 'rune', cast: 'rune', snd: 'shield', // the runes peel off the blade and become a wall of hexes
+    *f(S, U) { Sound.sfx('shield'); for (let i = 0; i < 6; i++) { const a = i * Math.PI / 3; this.spawn({ k: 'mote', x: U.x + 30, y: U.y - 10, vy: 0, to: { x: U.x + Math.cos(a) * 24, y: U.y + Math.sin(a) * 18 }, s: 2, c: S.col[1], life: 12 }); } yield* wait(10);
+      for (let i = 0; i < 6; i++) { const a = i * Math.PI / 3; this.spawn({ k: 'hex', x: U.x + Math.cos(a) * 24, y: U.y + Math.sin(a) * 18, r0: 3, r1: 9, c: i % 2 ? S.col[0] : S.col[1], life: 20 }); } this.spawn({ k: 'hex', x: U.x, y: U.y, r0: 10, r1: 30, c: S.col[0], life: 16 }); yield* wait(12); } },
+  sb9Thunder: { col: ['#ffe040', '#ffffff', '#6a40c0'], pt: 'bolt', cast: 'aura', fin: 'spark', snd: 'thunder', // lightning runs down the blade, then the cut
+    *f(S, U, T, u) { Sound.sfx('thunder'); this.spawn({ k: 'bolt', pts: [[U.x + 34, U.y - 40], [U.x + 30, U.y - 20], [U.x + 26, U.y - 8]], w: 2, life: 10 }); yield* wait(5); yield* this.lunge(u, 12, 2); Sound.sfx('slash');
+      ln9(this, T.x - 20, T.y - 20, T.x + 18, T.y + 18, S.col[2], S.col[0], 6); this.spawn({ k: 'bolt', pts: [[T.x - 20, T.y - 20], [T.x - 4, T.y - 2], [T.x + 2, T.y + 6], [T.x + 18, T.y + 18]], w: 2, life: 10 }); yield* wait(4); imp9(this, T, S, 1); yield* wait(8); } },
+  sb9Burst: { col: ['#e070ff', '#fff0ff', '#5a1080'], pt: 'crest', cast: 'rune', fin: 'none', snd: 'hitSuper', // a rune circle under each foe, then it blows upward
+    *f(S, U, T, u, t) { Sound.sfx('charge'); const G = grp9(this, T, t); for (const C of G) this.spawn({ k: 'rune', x: C.x, y: C.y + 18, r: 18, c: S.col[0], c2: S.col[1], n: 6, poly: 5, life: 24 }); yield* wait(12);
+      Sound.sfx('hitSuper'); for (const C of G) { this.spawn({ k: 'pillar', x: C.x, y: C.y + 20, w: 14, h: 70, c: S.col[1], life: 14 }); imp9(this, C, S, 1); } yield* wait(10); } },
+  sb9Finale: { col: ['#7a2ab0', '#e0a0ff', '#100010'], pt: 'eclipse', cast: 'void', fin: 'crimson', snd: 'hitSuper', // the screen goes dark, one huge dark crescent, then violet light bursts
+    *f(S, U, T, u) { this.spawn({ k: 'dark', a: 0.7, c: '#0a0010', life: 34 }); Sound.sfx('charge'); yield* wait(10); yield* this.lunge(u, 14, 3); Sound.sfx('slash');
+      this.spawn({ k: 'cres', x: T.x, y: T.y, r: 38, ang: 0.7, c: S.col[1], c2: S.col[0], w: 10, life: 18 }); yield* wait(6); this.spawn({ k: 'flash', c: S.col[1], a: 0.4, life: 8 }); for (let i = 0; i < 3; i++) this.spawn({ k: 'ring', x: T.x, y: T.y, r0: 4 + i * 6, r1: 30 + i * 10, c: i % 2 ? S.col[1] : S.col[0], w: 3 - i, life: 14 }); imp9(this, T, S, 1); this.shake = Math.max(this.shake, 10); yield* wait(10); } },
+});
+const SK9_DONE = ['swordsman', 'mage', 'guardian', 'ranger', 'bard', 'machinist', 'monk', 'dragoon', 'otherworlder', 'spellblade'];
 for (const c of SK9_DONE) { sk9Build(c); for (const r of SK9[c]) fx9Make(r[0]); }
 { const seen = new Map(); for (const c of SK9_DONE) for (const [k] of SK9[c]) { const F = FX9[k]; if (!F) { bvErr('r9', 'fx ' + k); continue; } const key = (F.cast || '') + '|' + (F.fin || '') + '|' + F.col.join(','); if (seen.has(key)) bvErr('r9', 'same picture ' + k + ' / ' + seen.get(key)); seen.set(key, k); } }
 { const _so = startOverworld; startOverworld = function (...a) { const r = _so.apply(this, a), st = Game.st;
