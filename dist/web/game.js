@@ -20381,3 +20381,26 @@ for (const c of SK9_DONE) { sk9Build(c); for (const r of SK9[c]) fx9Make(r[0]); 
         yield* say('以前學會的技能都留在技能庫，任何職業都能用。到選單「技能編排」把新招放進技能槽吧。'); })()); }
     else if (st && !st.v9sk) st.v9sk = SK9_DONE.length;
     return r; }; }
+if (typeof BATTLE_HELP !== 'undefined') for (const P of BATTLE_HELP) P[1] = P[1].map(t => t
+  .replace('職業招式會消耗它，消耗越多越強。', '職業招式會消耗它，消耗越多越強；8 招職業技能也會累積、消耗或看它的多少。')
+  .replace('技能來自職業（等級到了學會）和武器（裝備就能用）。', '技能來自職業（等級到了學會，只在那個職業能用）和武器（裝備就能用）。')
+  .replace('範圍技能（落雷、炎浪、隕星…）', '範圍技能（旋風斬、紫電、隕星…）'));
+for (const q of GROW12) {
+  if (q[0] === '職業' && !/職業技能/.test(q[1])) q[1] += '\n每個職業有自己的 8 招職業技能（Lv1～32 學會），只有在那個職業能用；換回來就能再用。';
+  if (q[0] === '天賦與職業招式' && !/16/.test(q[1])) q[1] += '天賦點最多 16 點，剛好點滿兩個流派＋核心天賦。核心天賦會直接改變職業招式。';
+}
+{ const _lu = Battle.prototype.levelUp; Battle.prototype.levelUp = function* () {
+    yield* _lu.call(this); const st = Game.st;
+    for (const [id, lv] of classSkills12(st, true)) { if (lv !== st.lv || !DEF.skills[id]) continue;
+      BB.classGrant(st); const inSlot = BB.slots(st).includes(id); Sound.sfx('item');
+      yield* this.msg('學會了職業技能「' + DEF.skills[id].name + '」！' + (inSlot ? '（已放進技能槽）' : '（選單→技能編排 放進技能槽）'), { hold: 40 }); } }; }
+{ const _cc = changeClass; changeClass = function* (k, quiet) {
+    const st = Game.st, was = st.cls ? clsV7(st.cls) : null;
+    yield* _cc(k, quiet);
+    if (quiet || !was || was === clsV7(k) || !CLASS_SKILLS12[clsV7(k)]) return;
+    const n = classSkills12(st).length; BB.slots(st);
+    yield* say('職業技能換成了' + CLASSES[k].n + '的招式（學會 ' + n + ' 招，空的技能槽會自動放進去）。\n換回原本的職業，原本的職業技能就會回來。'); }; }
+{ const _v = B12_SCRIPT.victorDemon; B12_SCRIPT.victorDemon = function (core, u) {
+    const id = core.data.lastHeroAct, D = id && DEF.skills[id];
+    if (D && D.requires && !condOk(D.requires, { core, owner: u, src: u, skill: D })) return null;
+    return _v(core, u); }; }
