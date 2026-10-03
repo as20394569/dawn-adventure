@@ -20702,4 +20702,12 @@ const FLOOR9 = new Set(['s', 'P', ':', '=']);
     if (!fl || (grassy && n[fl] < 2)) return _dt.call(this, x, c, tx, ty, sx, sy, f, f2);
     _dt.call(this, x, fl === '=' ? ':' : fl, tx, ty, sx, sy, f, f2);
     const img = c === 'o' ? Tiles.rock : c === 'b' ? Tiles.bush : c === 'S' ? Tiles.sign : Tiles.board; x.drawImage(noGrass9(img), sx, sy); }; }
+const FONT_DOWN9 = 0.5;
+{ const adj = z => { const s = typeof z === 'number' ? z : 12; return s >= FONT_MIN12 + FONT_DOWN9 ? s - FONT_DOWN9 : s; };
+  const _d = Font.draw, _w = Font.width, _wr = Font.wrap;
+  Font.draw = (ctx, str, x, y, col, sh, size) => _d(ctx, str, x, y, col, sh, adj(size));
+  Font.width = (str, size) => _w(str, adj(size));
+  Font.wrap = (str, maxW, size) => _wr(str, maxW, adj(size));
+  Font.drawR = (ctx, str, xr, y, col, sh, size) => Font.draw(ctx, str, xr - Font.width(String(str), size), y, col, sh, size);
+  Font.drawC = (ctx, str, xc, y, col, sh, size) => Font.draw(ctx, str, xc - Font.width(String(str), size) / 2, y, col, sh, size); }
 </script>
