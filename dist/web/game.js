@@ -19920,7 +19920,7 @@ function sk9Build(cls) {
     MOVES[id] = { n, d, t: el, cat, pow, acc: pow ? 100 : null, hits: hits || null, cls: aoe ? 'area' : SK9_KIND[k] || (pow ? 'slash' : 'buff'), ...(attr && pow ? { scale: attr } : {}), orb: k, ws: 1, fx: 'c9_' + k };
     SKILL_MP[id] = mp;
     const D = skillFromMove(id, MOVES[id], { kind: 'skill', tpl, extraTags: ['orb', 'cls9'].concat(x.tags || []), costs: (x.costs || []).concat([{ res: 'mp', amount: mp }]), fallback: 'attack' });
-    if (!pow) { D.target = 'self'; D.noHitRoll = true; D.effects = []; D.tags = D.tags.filter(t => t !== 'damage'); }
+    if (!pow) { D.target = x.target || 'self'; D.noHitRoll = true; D.effects = []; D.tags = D.tags.filter(t => t !== 'damage'); }
     if (x.effects) D.effects = x.effects.map(e => ({ ...e })); if (x.after) D.after = x.after.map(e => ({ ...e })); if (x.mods) D.mods = D.mods.concat(x.mods);
     for (const f of ['hitsOf', 'onPrepare', 'powerOf', 'requires']) if (x[f]) D[f] = x[f];
     if (x.reqText) SK9_REQ[id] = x.reqText;
@@ -20038,7 +20038,172 @@ const FX9 = {
 function fx9Make(k) { const F = FX9[k]; if (!F) return; const S = { col: F.col, pt: F.pt, seed: hashK(k) }, id = 'o_' + k, D = DEF.skills[id];
   FX['c9_' + k] = function* (U, T, u, t) { yield* F.f.call(this, S, U, T, u, t); }; if (F.h) { FX['c9h_' + k] = function* (U, T, u, i) { yield* F.h.call(this, S, U, T, u, i); }; if (D) D.hitFx = 'c9h_' + k; }
   PAL['c9_' + k] = [F.col[0], F.col[1]]; SKILL_STYLE[id] = [F.cast || 'draw', D && D.power ? (F.fin || 'none') : null, 'c9_' + k, F.snd || null]; if (MOVES[id]) MOVES[id].fx = 'c9_' + k; }
-const SK9_DONE = ['swordsman', 'mage', 'guardian', 'ranger'];
+BV_TAGS.add('asAttack9'); // 輕快間奏 counts as an「攻擊」action for 拍
+Object.assign(COND, { ownerNoStatus9: (c, v) => !!c.owner && !c.core.hasStatus(c.owner, v), hitFrom9: (c, v) => (c.n || 0) >= v, evSkillNot9: (c, v) => !!c.ev && c.ev.payload.skill !== v,
+  evNoFollow9: (c, v) => !!c.ev && !c.ev.payload.follow === !!v });
+Object.assign(BR.FORMULA, {
+  echo9: c => 1 + 0.1 * ((c.src.res.beat) || 0),
+  finale9: c => 1 + 0.15 * c.src.statuses.filter(s => DEF.statuses[s.id] && DEF.statuses[s.id].group === 'stage' && s.stacks > 0).length,
+  boom9: c => 80 + 40 * actV9(c, 'boom9'),
+  shock9: c => 1 + 0.15 * (c.spent || 0),
+});
+Object.assign(EFFECT_TYPES, {
+  last_attack9: { exec(core, ef, ctx) { if (ctx.owner) ctx.owner.data.lastAct = 'attack'; } },
+  cut_cd9: { exec(core, ef, ctx) { const e = ctx.trigEv; if (e && e.payload.skill) core.cutCooldown(ctx.owner, e.payload.skill, ef.n || 1, ef.why || 'variation'); } },
+  reload9: { exec(core, ef, ctx) { const u = ctx.owner, s = core.statusOf(u, 'turret'), max = BV12.turretMax(core, u); if (s) { if (s.stacks < max) core.applyStatus(u, u, 'turret', { delta: max - s.stacks }); } else core.applyStatus(u, u, 'turret', { delta: 2 }); } },
+});
+defPut('statuses', 'variation9', { tags: ['buff'], duration: 'until_used', stack: 'refresh', metadata: { n: '變奏' }, triggers: [
+  { on: EVT.COOLDOWN, phase: 'POST', role: 'src', cond: { evSetCd: 1, evSkillNot9: 'o_bd9Variation' }, effects: [{ type: 'cut_cd9', why: 'variation' }] },
+  { on: EVT.SKILL_USE, phase: 'POST', role: 'src', cond: { isBasic: 0, skillNot: 'o_bd9Variation', evNoFollow9: 1 }, notTags: ['weapon_special', 'reaction'], effects: [{ type: 'remove_status', target: 'self', status: 'variation9', why: 'used' }] }] });
+defPut('statuses', 'wrench9', { tags: ['buff'], duration: 'until_used', stack: 'refresh', metadata: { n: '調校' } });
+defPut('statuses', 'flameRound9', { tags: ['buff'], duration: 'round', clearAt: 'round_end', stack: 'refresh', metadata: { n: '燃燒彈藥' } });
+defPut('statuses', 'overload9', { tags: ['buff'], duration: 'round', clearAt: 'round_end', stack: 'refresh', metadata: { n: '過載' } });
+defPut('statuses', 'goldBell9', { tags: ['buff', 'guard'], duration: 'owner_actions', durDefault: 3, tick: 'owner_action_start', stack: 'refresh', metadata: { n: '金鐘罩' },
+  mods: [{ stage: 'final', who: 'defender', mul: 0.8, cond: { hasPower: 1 } }],
+  triggers: [{ on: EVT.DAMAGE, phase: 'POST', role: 'tgt', cond: { srcSide: 'enemy', hasPower: 1, ownerAlive: 1 }, limit: { perAction: 1 }, effects: [{ type: 'gain', target: 'self', res: 'chi', n: 1, why: 'goldBell' }] }] });
+{ const D = EFFECT_TYPES.damage.exec; EFFECT_TYPES.damage.exec = function (core, ef, ctx, tg) { const u = ctx.owner; if (ef.kind !== 'turret' || !u) return D.call(this, core, ef, ctx, tg);
+    let m = ef.mul || 1; if (core.hasStatus(u, 'wrench9')) { m *= 1.5; core.removeStatus(u, 'wrench9', 'used'); } if (core.hasStatus(u, 'overload9')) m *= 1.2;
+    const r = D.call(this, core, { ...ef, mul: m }, ctx, tg);
+    if (core.hasStatus(u, 'flameRound9')) for (const t of tg) if (core.isUp(t)) core.exec([{ type: 'status', status: 'brn', chance: 0.3, secondary: true, cond: { tgtAlive: 1, tgtNoMajor: 1 } }], { ...ctx, owner: u, src: u, tgt: t });
+    return r; }; }
+{ const TF = EFFECT_TYPES.turret_fire.exec; EFFECT_TYPES.turret_fire.exec = function (core, ef, ctx) { const u = ctx.owner; if (!core.hasStatus(u, 'overload9')) return TF.call(this, core, ef, ctx);
+    for (let i = 0; i < 12 && core.hasStatus(u, 'turret') && core.isUp(u) && core.foesOf(u).length; i++) TF.call(this, core, ef, ctx); core.removeStatus(u, 'overload9', 'used'); }; }
+Object.assign(SK9_KIND, { bd9Interlude: 'sound', bd9March: 'buff', bd9Lullaby: 'debuff', bd9Healing: 'heal', bd9Discord: 'sound', bd9Variation: 'buff',
+  mc9Rivet: 'proj', mc9Wrench: 'strike', mc9ShieldDrone: 'guard', mc9Reload: 'buff', mc9Incendiary: 'proj', mc9Overload: 'buff',
+  mk9Crumble: 'strike', mk9Gather: 'buff', mk9IronLean: 'strike', mk9GoldBell: 'guard', mk9SixFists: 'strike', mk9SkyPalm: 'strike' });
+Object.assign(SK9, {
+  bard: [
+    ['bd9Interlude', '輕快間奏', 50, 0, 1, 3, ['int', 1], '特', '一般', 0, '輕快的一段間奏（魔法）。算作「攻擊」行動（拍的計算）；命中回復 5 MP。', { B: ['fspd-1', 'slp:15'] },
+      { tags: ['asAttack9'], effects: [{ type: 'damage' }, { type: 'resource', target: 'self', res: 'mp', amount: 5, why: 'interlude' }] }],
+    ['bd9March', '激昂進行曲', 0, 0, 2, 4, null, '變', '一般', 0, '激昂的進行曲：物攻 +1、速度 +1（3 行動）；拍 +1。', { A: ['cheap', 'spe+1'], B: ['heal+15', 'shield:1'] },
+      { effects: [{ type: 'stage', target: 'self', stats: { atk: 1, spe: 1 }, dur: 3 }, GAIN9('beat', 1, { why: 'march' })] }],
+    ['bd9Lullaby', '搖籃小夜曲', 0, 0, 2, 5, null, '變', '一般', 0, '溫柔的搖籃曲讓目標睡眠 35%（拍 3 時 70%）。', { A: ['cheap', 'spa+1'], B: ['spec+1', 'mp:3'] },
+      { target: 'enemy', effects: [{ type: 'status', status: 'slp', chance: 0.35, cond: { tgtAlive: 1, tgtNoMajor: 1, ownerResBelow: ['beat', 3] } }, { type: 'status', status: 'slp', chance: 0.7, cond: { tgtAlive: 1, tgtNoMajor: 1, ownerResAtLeast: ['beat', 3] } }] }],
+    ['bd9Echo', '繞樑之音', 62, 0, 1, 5, ['int', 1], '特', '一般', 1, '餘音繞樑的音波打全體（魔法）；每有 1 拍威力 +10%。', { B: ['fspd-1', 'spa+1'] },
+      { mods: [{ stage: 'skill', who: 'attacker', mul: { f: 'echo9' } }] }],
+    ['bd9Healing', '療癒小調', 0, 0, 2, 5, null, '變', '一般', 0, '溫暖的小調：回復 30% HP，解除 1 個異常狀態。', { A: ['heal+25', 'heal+25'], B: ['spe+1', 'shield:1'] },
+      { tags: ['heal'], effects: [{ type: 'heal', target: 'self', pct: 0.3 }, { type: 'cleanse', target: 'self' }] }],
+    ['bd9Discord', '刺耳和弦', 80, 0, 2, 6, ['int', 1], '特', '一般', 0, '刺耳的和弦（魔法）：目標物攻、魔攻 −1（拍 3 時各 −2）。', { B: ['slp:15', 'drain:15'] },
+      { effects: [{ type: 'damage' }, { type: 'stage', stats: { atk: -1, spa: -1 }, cond: { tgtAlive: 1, ownerResBelow: ['beat', 3] } }, { type: 'stage', stats: { atk: -2, spa: -2 }, cond: { tgtAlive: 1, ownerResAtLeast: ['beat', 3] } }] }],
+    ['bd9Variation', '變奏', 0, 0, 2, 4, null, '變', '一般', 0, '即興的變奏：拍 +2；下一招技能冷卻 −1。', { A: ['cheap', 'spe+1'], B: ['spec+1', 'mp:3'] },
+      { effects: [GAIN9('beat', 2, { why: 'variation' }), { type: 'status', target: 'self', status: 'variation9' }] }],
+    ['bd9Finale', '終幕交響', 112, 0, 3, 10, ['int', 1], '特', '一般', 1, '壓軸的交響打全體（魔法）；自己身上每有 1 種能力提升，威力 +15%。', { B: ['spec+1', 'spe+1'] },
+      { mods: [{ stage: 'skill', who: 'attacker', mul: { f: 'finale9' } }] }],
+  ],
+  machinist: [
+    ['mc9Rivet', '鉚釘槍', 52, 0, 1, 3, ['dex', 1], '物', '一般', 0, '連射鉚釘。砲台在場時補 1 發彈藥。', { B: ['spec+1', 'hit+1'] },
+      { after: [{ type: 'status', target: 'self', status: 'turret', delta: 1, data: { load9: 1 }, cond: { ownerHasStatus: 'turret' } }] }],
+    ['mc9Wrench', '扳手重擊', 62, 0, 1, 4, ['str', 1], '物', '一般', 0, '用大扳手敲下去，30% 物防 −1；順手調校砲台，下一次射擊威力 +50%。', { B: ['fdef-1', 'fatk-1'] },
+      { effects: [{ type: 'damage' }, { type: 'stage', stats: { def: -1 }, chance: 0.3, secondary: true, cond: { tgtAlive: 1 } }], after: [{ type: 'status', target: 'self', status: 'wrench9' }] }],
+    ['mc9ShieldDrone', '護盾機展開', 0, 0, 2, 5, null, '變', '一般', 0, '放出護盾機：護盾 2 行動；砲台在場時 3 行動。', { A: ['spd+1', 'cheap'], B: ['heal+15', 'shield:1'] },
+      { effects: [{ type: 'status', target: 'self', status: 'barrier', dur: 3, cond: { ownerHasStatus: 'turret' } }, { type: 'status', target: 'self', status: 'barrier', dur: 2, cond: { ownerNoStatus9: 'turret' } }] }],
+    ['mc9Scatter', '散彈', 60, 0, 1, 5, ['dex', 1], '物', '一般', 1, '散開的彈丸打全體（物理）。', { B: ['fdef-1', 'spec+1'] }, {}],
+    ['mc9Reload', '緊急裝填', 0, 0, 2, 3, null, '變', '一般', 0, '緊急裝填：砲台補滿；沒有砲台時設置一座 2 發的砲台。', { A: ['cheap', 'spe+1'], B: ['spec+1', 'mp:3'] },
+      { effects: [{ type: 'reload9' }] }],
+    ['mc9Incendiary', '燃燒彈', 74, 0, 2, 6, ['dex', 1], '物', '火', 0, '火屬性的燃燒彈（物理），50% 灼傷；這回合砲台的射擊也有 30% 灼傷。', { B: ['brn:35', 'atk+1'] },
+      { effects: [{ type: 'damage' }, { type: 'status', status: 'brn', chance: 0.5, secondary: true, cond: { tgtAlive: 1, tgtNoMajor: 1 } }], after: [{ type: 'status', target: 'self', status: 'flameRound9' }] }],
+    ['mc9Overload', '過載射擊', 0, 0, 3, 6, null, '變', '一般', 0, '讓砲台過載：這回合結束時一次射完所有彈藥，每發威力 +20%。', { A: ['cheap', 'atk+1'], B: ['spec+1', 'spe+1'] },
+      { effects: [{ type: 'status', target: 'self', status: 'overload9' }] }],
+    ['mc9Selfdestruct', '自爆砲台', 80, 0, 3, 8, ['dex', 1.5], '物', '一般', 1, '讓砲台自爆打全體：砲台消失，每剩 1 發彈藥威力 +40。', { B: ['brn:30', 'atk+1'] },
+      { powerOf: 'boom9', onPrepare: (core, u, cmd) => { cmd.boom9 = ((core.statusOf(u, 'turret') || {}).stacks) || 0; }, after: [{ type: 'remove_status', target: 'self', status: 'turret', why: 'boom' }] }],
+  ],
+  monk: [
+    ['mk9Crumble', '崩山拳', 28, 2, 1, 3, ['str', 1], '物', '一般', 0, '能崩開山壁的兩段拳，每段氣 +1。', { B: ['hit+1', 'par:15'] }, {}],
+    ['mk9Sweep', '掃腿', 50, 0, 1, 4, ['agi', 1], '物', '一般', 1, '壓低身子掃腿踢全體，30% 速度 −1。', { B: ['hit+1', 'fatk-1'] },
+      { effects: [{ type: 'damage' }, { type: 'stage', stats: { spe: -1 }, chance: 0.3, secondary: true, cond: { tgtAlive: 1 } }] }],
+    ['mk9Gather', '聚氣式', 0, 0, 2, 3, null, '變', '一般', 0, '調息聚氣：氣 +2，回復 10% HP。', { A: ['cheap', 'atk+1'], B: ['spe+1', 'heal+15'] },
+      { effects: [GAIN9('chi', 2, { why: 'gather' }), { type: 'heal', target: 'self', pct: 0.1 }] }],
+    ['mk9IronLean', '鐵山靠', 72, 0, 2, 5, ['vit', 1], '物', '一般', 0, '用肩背撞過去。氣 2 以上時消耗 2 點：50% 退縮、目標物防 −1。', { B: ['fdef-1', 'fatk-1'] },
+      { onPrepare: (core, u, cmd) => { if ((u.res.chi || 0) >= 2) { core.changeRes(u, 'chi', -2, { why: 'cost' }); cmd.lean9 = 1; } },
+        effects: [{ type: 'damage' }, { type: 'status', status: 'flinch', chance: 0.5, secondary: true, cond: { tgtAlive: 1, actFlag: 'lean9' } }, { type: 'stage', stats: { def: -1 }, cond: { tgtAlive: 1, actFlag: 'lean9' } }] }],
+    ['mk9GoldBell', '金鐘罩', 0, 0, 2, 5, null, '變', '一般', 0, '運氣護體：3 行動內受到的傷害 −20%；這段期間被打中時氣 +1。', { A: ['spd+1', 'cheap'], B: ['heal+15', 'shield:1'] },
+      { effects: [{ type: 'status', target: 'self', status: 'goldBell9', dur: 3 }] }],
+    ['mk9SixFists', '六合拳', 15, 6, 2, 6, ['agi', 1], '物', '一般', 0, '6 段連拳；每段都給氣（不受每次行動最多 +2 的限制）。', { B: ['spe+1', 'drain:20'] },
+      { effects: [{ type: 'damage' }, GAIN9('chi', 1, { why: 'sixFists', cond: { hitFrom9: 2 } })] }],
+    ['mk9Shock', '震勁', 80, 0, 2, 6, ['str', 1], '物', '一般', 1, '把氣震出去打全體：消耗全部氣，每點威力 +15%。', { B: ['fdef-1', 'hit+1'] },
+      { costs: [{ res: 'chi', all: 1, min: 0 }], mods: [{ stage: 'skill', who: 'attacker', mul: { f: 'shock9' } }] }],
+    ['mk9SkyPalm', '天崩掌', 115, 0, 3, 8, ['str', 1.5], '物', '一般', 0, '天崩地裂的一掌。氣滿時施放，威力再 +50%（照樣必定會心）。', { B: ['atk+1', 'drain:15'] },
+      { onPrepare: (core, u, cmd) => { if ((u.max.chi || 0) > 0 && (u.res.chi || 0) >= u.max.chi) cmd.palm9 = 1; }, mods: [{ stage: 'skill', who: 'attacker', mul: 1.5, cond: { actFlag: 'palm9' } }] }],
+  ],
+});
+{ const M = DEF.mechanics.cls9sk, mk = M.make; M.make = u => { const m = mk(u); m.triggers.push(TPRE(EVT.ACTION_END, 'src', { tag: 'asAttack9', actExecuted: 1 }, [{ type: 'last_attack9' }])); return m; }; }
+{ const H = Battle.prototype.handlers, _ap = H.STATUS_APPLY; H.STATUS_APPLY = function* (e, s, t, P) {
+    if (t && P.status === 'turret' && P.data && P.data.load9 && !P.failed && (t.st.turret || 0) > 0) { const d = P.delta; P.delta = 0; yield* _ap.call(this, e, s, t, P); P.delta = d;
+      if (!P.capped) { const T = this.turretMuzzle(); Sound.sfx('tick'); this.sparks(T.x - 10, T.y + 14, 5, ['#fff0a0', '#c0c8d0'], 1.4, 12); yield* this.msg('砲台裝填了 1 發！（彈藥 ' + P.stacks + '）', { hold: 18 }); } return; }
+    yield* _ap.call(this, e, s, t, P); }; }
+Object.assign(FX9, {
+  bd9Interlude: { col: ['#ff9ad0', '#fff0f8', '#a04070'], pt: 'note', cast: 'rune', fin: 'pop', snd: 'buzz', // three little notes hop to the target
+    *f(S, U, T) { Sound.sfx('buzz'); for (let k = 0; k < 3; k++) { const x0 = U.x + 6, y0 = U.y - 12, F = 7, p = this.spawn({ k: 'ring', x: x0, y: y0, r0: 3, r1: 3, c: k % 2 ? S.col[1] : S.col[0], w: 2, life: F + 2 });
+        for (let i = 1; i <= F; i++) { p.x = lerp(x0, T.x + (k - 1) * 8, i / F); p.y = lerp(y0, T.y, i / F) - Math.abs(Math.sin(i / F * Math.PI * 2)) * 12; yield; } this.star(p.x, p.y, S.col[1], 8); } imp9(this, T, S); yield* wait(6); } },
+  bd9March: { col: ['#ff7040', '#fff0c0', '#a03010'], pt: 'note2', cast: 'aura', snd: 'statUp', // four drum beats, each a ring and an upward stroke
+    *f(S, U) { for (let k = 0; k < 4; k++) { Sound.sfx(k === 3 ? 'statUp' : 'hit'); this.spawn({ k: 'ring', x: U.x, y: U.y + 16, r0: 8, r1: 30, c: k % 2 ? S.col[1] : S.col[0], w: 2, life: 10, fl: 0.4 }); this.spawn({ k: 'line', x1: U.x - 16 + k * 10, y1: U.y + 10, x2: U.x - 16 + k * 10, y2: U.y - 20, c: S.col[0], w: 2, grow: 4, life: 12 }); yield* wait(5); } yield* wait(6); } },
+  bd9Lullaby: { col: ['#a0b8ff', '#f0f4ff', '#4050a0'], pt: 'note2', cast: 'rune', snd: 'buzz', // soft notes drift over, little z's rise
+    *f(S, U, T) { Sound.sfx('buzz'); for (let i = 0; i < 6; i++) this.spawn({ k: 'mote', x: U.x + rnd(-8, 8), y: U.y - 10, vy: 0, to: { x: T.x + rnd(-10, 10), y: T.y - 6 }, s: 2, c: i % 2 ? S.col[0] : S.col[1], life: 22 }); yield* wait(16);
+      for (let i = 0; i < 3; i++) { this.spawn({ k: 'txt', s: 'z', x: T.x + 8 + i * 6, y: T.y - 12 - i * 6, vy: -0.4, c: S.col[1], life: 26, fade: 1 }); yield* wait(4); } this.spawn({ k: 'glow', x: T.x, y: T.y, r: 18, c: S.col[0], life: 16 }); yield* wait(8); } },
+  bd9Echo: { col: ['#d0a0ff', '#f8f0ff', '#6030a0'], pt: 'note', cast: 'focus', fin: 'none', snd: 'buzz', // sound rings roll out over the whole group, three waves
+    *f(S, U, T, u, t) { const G = grp9(this, T, t); for (let k = 0; k < 3; k++) { Sound.sfx('buzz'); this.spawn({ k: 'ring', x: U.x, y: U.y - 10, r0: 10, r1: 120, c: k % 2 ? S.col[1] : S.col[0], w: 2, life: 18, fl: 0.6 }); yield* wait(5); }
+      for (const C of G) imp9(this, C, S); yield* wait(8); } },
+  bd9Healing: { col: ['#80e0b0', '#f0fff8', '#2a8060'], pt: 'note', cast: 'halo', snd: 'heal', // notes rise around, little plus signs
+    *f(S, U) { Sound.sfx('heal'); for (let i = 0; i < 8; i++) { this.spawn({ k: 'ring', x: U.x + rnd(-20, 18), y: U.y + rnd(0, 20), r0: 2, r1: 4, c: i % 2 ? S.col[0] : S.col[1], w: 2, life: 22 }); this.spawn({ k: 'txt', s: '+', x: U.x + rnd(-20, 18), y: U.y + rnd(0, 22), vy: -0.7, c: S.col[0], life: 22, fade: 1 }); } yield* wait(18); } },
+  bd9Discord: { col: ['#ff5a9a', '#ffe0ee', '#7a1840'], pt: 'note', cast: 'rune', fin: 'shatter', snd: 'buzz', // a harsh chord: jagged pink sound waves, then the air cracks around the target
+    *f(S, U, T) { for (let k = 0; k < 3; k++) { Sound.sfx('buzz'); const o = (k - 1) * 8; zig9(this, U.x + 6, U.y - 10 + o, T.x, T.y + o, k % 2 ? S.col[1] : S.col[0], 2, 10, 12); yield* wait(3); }
+      for (let k = 0; k < 3; k++) this.spawn({ k: 'ring', x: T.x, y: T.y, r0: 6 + k * 6, r1: 22 + k * 8, c: k % 2 ? S.col[1] : S.col[0], w: 2, life: 10 + k * 2, fl: 0.8 }); this.shake = Math.max(this.shake, 6); imp9(this, T, S, 1); yield* wait(8); } },
+  bd9Variation: { col: ['#60e0ff', '#f0ffff', '#2060a0'], pt: 'note', cast: 'focus', snd: 'statUp', // notes spiral up around the bard, changing colour
+    *f(S, U) { Sound.sfx('statUp'); const cols = [S.col[0], '#ff9ad0', '#ffe040', S.col[1]]; for (let i = 0; i < 12; i++) { const a = i * 0.9, r = 26 - i; this.spawn({ k: 'ring', x: U.x + Math.cos(a) * r, y: U.y + 10 - i * 3, r0: 2, r1: 4, c: cols[i % 4], w: 2, life: 16 }); if (i % 3 === 0) yield* wait(2); } yield* wait(12); } },
+  bd9Finale: { col: ['#ffd060', '#fffbe8', '#a03060'], pt: 'note', cast: 'aura', fin: 'sunrise', snd: 'hitSuper', // a curtain falls, golden rings and notes burst over everyone
+    *f(S, U, T, u, t) { this.spawn({ k: 'dark', a: 0.5, c: '#200818', life: 34 }); Sound.sfx('charge'); yield* wait(8); const G = grp9(this, T, t);
+      for (let k = 0; k < 3; k++) { Sound.sfx('buzz'); for (const C of G) this.spawn({ k: 'ring', x: C.x, y: C.y, r0: 4 + k * 4, r1: 30 + k * 6, c: k % 2 ? S.col[1] : S.col[0], w: 3 - k, life: 14 }); yield* wait(4); }
+      for (const C of G) { w12Particle(this, C.x, C.y, S, 8, 20); imp9(this, C, S, 1); } this.spawn({ k: 'flash', c: S.col[1], a: 0.3, life: 8 }); yield* wait(10); } },
+  mc9Rivet: { col: ['#c0c8d0', '#ffffff', '#505860'], pt: 'gear', cast: 'none', fin: 'none', snd: 'crit', // three rivets, rat-tat-tat
+    *f(S, U, T) { for (let k = 0; k < 3; k++) { Sound.sfx('crit'); this.spawn({ k: 'glow', x: U.x + 10, y: U.y - 10, r: 6, c: '#fff0a0', life: 4 }); const P = { x: T.x + rnd(-6, 6), y: T.y + rnd(-6, 6) }; this.spawn({ k: 'line', x1: lerp(U.x, P.x, 0.6), y1: lerp(U.y, P.y, 0.6), x2: P.x, y2: P.y, c: S.col[1], w: 2, grow: 2, life: 6 }); yield* wait(3); this.spawn({ k: 'ring', x: P.x, y: P.y, r0: 1, r1: 6, c: S.col[0], w: 2, life: 8 }); } imp9(this, T, S); yield* wait(6); } },
+  mc9Wrench: { col: ['#e0a040', '#fff0c0', '#704010'], pt: 'gear', cast: 'draw', fin: 'bash', snd: 'heavy', // a big wrench swung round, clang
+    *f(S, U, T, u) { yield* this.lunge(u, 12, 3); Sound.sfx('heavy'); this.spawn({ k: 'cres', x: T.x, y: T.y, r: 20, ang: -0.8, c: S.col[1], c2: S.col[0], w: 7, life: 12 }); yield* wait(4); this.spawn({ k: 'ring', x: T.x, y: T.y, r0: 4, r1: 24, c: S.col[1], w: 3, life: 10 }); w12Particle(this, T.x, T.y, S, 6, 14); this.shake = Math.max(this.shake, 6); yield* wait(8); } },
+  mc9ShieldDrone: { col: ['#60c0ff', '#e0f8ff', '#205080'], pt: 'gear', cast: 'hex', snd: 'charge', // a little drone pops up and projects a barrier
+    *f(S, U) { Sound.sfx('charge'); const D = this.spawn({ k: 'glow', x: U.x + 18, y: U.y + 6, r: 6, c: S.col[0], life: 30 }); for (let i = 0; i < 8; i++) { D.y = U.y + 6 - i * 3; yield; }
+      for (let i = 0; i < 3; i++) this.spawn({ k: 'line', x1: D.x, y1: D.y, x2: U.x - 20 + i * 20, y2: U.y + 18, c: S.col[1], w: 1, grow: 4, life: 14 }); this.spawn({ k: 'hex', x: U.x, y: U.y, r0: 8, r1: 28, c: S.col[0], life: 18 }); yield* wait(14); } },
+  mc9Scatter: { col: ['#ffb070', '#fff0e0', '#804020'], pt: 'muzzle', cast: 'none', fin: 'none', snd: 'hitSuper', // one blast, a spray of pellets over everyone
+    *f(S, U, T, u, t) { Sound.sfx('hitSuper'); this.spawn({ k: 'glow', x: U.x + 10, y: U.y - 12, r: 14, c: '#fff0a0', life: 6 }); const G = grp9(this, T, t);
+      for (let i = 0; i < 18; i++) { const C = G[i % G.length]; this.spawn({ k: 'dot', x: U.x + 10, y: U.y - 12, vx: (C.x + rnd(-14, 14) - U.x - 10) / 8, vy: (C.y + rnd(-10, 10) - U.y + 12) / 8, c: i % 2 ? S.col[0] : S.col[1], s: 2, life: 9 }); } yield* wait(8); for (const C of G) imp9(this, C, S); yield* wait(8); } },
+  mc9Reload: { col: ['#ffe080', '#ffffff', '#806020'], pt: 'gear', cast: 'focus', snd: 'tick', // shells clatter out, gears spin
+    *f(S, U) { for (let i = 0; i < 6; i++) { Sound.sfx('tick'); this.spawn({ k: 'shard', g: 0.25, x: U.x + 14, y: U.y - 6, vx: rnd(5, 20) / 10, vy: -rnd(15, 30) / 10, s: 3, c: i % 2 ? S.col[0] : S.col[2], life: 22 }); yield* wait(2); }
+      for (let k = 0; k < 2; k++) this.spawn({ k: 'ring', x: U.x + 14 + k * 10, y: U.y - 4, r0: 3, r1: 9, c: S.col[1], w: 2, life: 14 }); yield* wait(12); } },
+  mc9Incendiary: { col: ['#ff5020', '#ffd080', '#801000'], pt: 'flame', cast: 'none', fin: 'burn', snd: 'fire', // a shell lobbed in an arc that bursts into flame
+    *f(S, U, T) { Sound.sfx('crit'); const x0 = U.x + 8, y0 = U.y - 12, F = 10, p = this.spawn({ k: 'glow', x: x0, y: y0, r: 6, c: S.col[0], life: F + 2 }); for (let i = 1; i <= F; i++) { p.x = lerp(x0, T.x, i / F); p.y = lerp(y0, T.y, i / F) - Math.sin(i / F * Math.PI) * 26; this.spawn({ k: 'flame', x: p.x, y: p.y, vy: -0.5, s: 2, life: 8 }); yield; }
+      Sound.sfx('fire'); this.spawn({ k: 'glow', x: T.x, y: T.y, r: 28, c: S.col[0], life: 14 }); imp9(this, T, S, 1); yield* wait(8); } },
+  mc9Overload: { col: ['#ff4040', '#ffe0e0', '#600010'], pt: 'steam', cast: 'aura', snd: 'charge', // red warning flashes, steam hissing out
+    *f(S, U) { for (let k = 0; k < 3; k++) { Sound.sfx('tick'); this.spawn({ k: 'flash', c: S.col[0], a: 0.18, life: 5 }); this.spawn({ k: 'ring', x: U.x + 16, y: U.y - 8, r0: 4, r1: 18, c: S.col[0], w: 2, life: 8 }); yield* wait(5); }
+      Sound.sfx('charge'); for (let i = 0; i < 8; i++) this.spawn({ k: 'glow', x: U.x + rnd(-10, 26), y: U.y - rnd(0, 26), r: rnd(5, 9), c: '#e8f0f8', life: 18 }); yield* wait(10); } },
+  mc9Selfdestruct: { col: ['#ff8020', '#fff4c0', '#402010'], pt: 'ember', cast: 'none', fin: 'impact', snd: 'quake', // the turret glows, blows up, the blast rolls over all of them
+    *f(S, U, T, u, t) { const M = this.turretMuzzle ? this.turretMuzzle() : { x: U.x + 30, y: U.y - 10 }; for (let k = 0; k < 3; k++) { Sound.sfx('tick'); this.spawn({ k: 'glow', x: M.x, y: M.y, r: 10 + k * 4, c: S.col[0], life: 6 }); yield* wait(5); }
+      Sound.sfx('quake'); this.spawn({ k: 'flash', c: S.col[1], a: 0.5, life: 8 }); this.spawn({ k: 'shock', x: M.x, y: M.y + 10, r0: 6, r1: 120, c: S.col[0], life: 20 }); this.shake = Math.max(this.shake, 12); yield* wait(6);
+      for (const C of grp9(this, T, t)) imp9(this, C, S, 1); yield* wait(10); } },
+  mk9Crumble: { col: ['#c8a070', '#fff0d8', '#6a4a28'], pt: 'rock', cast: 'focus', fin: 'none', snd: 'heavy', // a heavy fist that cracks stone
+    *f(S, U, T, u) { yield* this.lunge(u, 12, 2); Sound.sfx('heavy'); this.spawn({ k: 'glow', x: T.x - 6, y: T.y, r: 14, c: S.col[0], life: 10 }); this.spawn({ k: 'ring', x: T.x - 6, y: T.y, r0: 2, r1: 20, c: S.col[1], w: 3, life: 10 }); for (let i = 0; i < 6; i++) this.spawn({ k: 'shard', g: 0.2, x: T.x - 6, y: T.y, vx: rnd(-20, 20) / 10, vy: -rnd(10, 25) / 10, s: rnd(3, 5), c: i % 2 ? S.col[0] : S.col[2], life: 20 }); this.shake = Math.max(this.shake, 5); yield* wait(6); },
+    *h(S, U, T) { Sound.sfx('heavy'); this.spawn({ k: 'glow', x: T.x + 6, y: T.y + 4, r: 16, c: S.col[0], life: 10 }); this.spawn({ k: 'ring', x: T.x + 6, y: T.y + 4, r0: 2, r1: 24, c: S.col[1], w: 3, life: 10 }); this.spawn({ k: 'ring', x: T.x, y: T.y + 22, r0: 6, r1: 34, c: S.col[2], w: 2, life: 12, fl: 0.35 }); this.shake = Math.max(this.shake, 7); yield* wait(6); } },
+  mk9Sweep: { col: ['#f0d080', '#fffbe0', '#8a6a20'], pt: 'dust', cast: 'dash', fin: 'none', snd: 'wind', // a low kick along the ground, dust behind it
+    *f(S, U, T, u, t) { yield* this.lunge(u, 10, 2); Sound.sfx('wind'); const G = grp9(this, T, t), y = Math.max(...G.map(C => C.y)) + 16; this.spawn({ k: 'cres', x: T.x, y, r: 60, ang: 1.57, c: S.col[1], c2: S.col[0], w: 5, life: 14 }); yield* wait(4);
+      for (const C of G) { for (let i = 0; i < 5; i++) this.spawn({ k: 'glow', x: C.x + rnd(-12, 12), y: C.y + 18, r: rnd(4, 7), c: S.col[2], life: 14 }); imp9(this, C, S); } yield* wait(8); } },
+  mk9Gather: { col: ['#60e8c8', '#e0fff6', '#1a9070'], pt: 'chi', cast: 'focus', snd: 'charge', // chi drawn in from all around, then a calm ring
+    *f(S, U) { Sound.sfx('charge'); for (let i = 0; i < 14; i++) { const a = i * 0.45, R = 44; this.spawn({ k: 'mote', x: U.x + Math.cos(a) * R, y: U.y + Math.sin(a) * R * 0.7, vy: 0, to: { x: U.x, y: U.y }, s: 2, c: i % 2 ? S.col[0] : S.col[1], life: 18 }); } yield* wait(14);
+      this.spawn({ k: 'ring', x: U.x, y: U.y, r0: 4, r1: 26, c: S.col[0], w: 2, life: 12 }); yield* wait(10); } },
+  mk9IronLean: { col: ['#8090a0', '#e8f0ff', '#303840'], pt: 'quake', cast: 'aura', fin: 'bash', snd: 'heavy', // the whole body slammed in, the ground shakes
+    *f(S, U, T, u) { for (let i = 0; i < 3; i++) this.spawn({ k: 'glow', x: lerp(U.x, T.x, i / 3), y: lerp(U.y, T.y, i / 3), r: 10, c: S.col[2], life: 10 + i * 2 }); yield* this.lunge(u, 24, 3); Sound.sfx('heavy'); this.spawn({ k: 'shock', x: T.x, y: T.y + 20, r0: 6, r1: 56, c: S.col[0], life: 16 });
+      this.spawn({ k: 'hex', x: T.x, y: T.y, r0: 6, r1: 26, c: S.col[1], life: 12 }); this.shake = Math.max(this.shake, 12); yield* wait(10); } },
+  mk9GoldBell: { col: ['#ffcc40', '#fff4c0', '#a07010'], pt: 'crest', cast: 'hex', snd: 'shield', // a golden bell rings down over the monk
+    *f(S, U) { Sound.sfx('shield'); for (let i = 0; i < 3; i++) { this.spawn({ k: 'arc', x: U.x, y: U.y - 6 + i * 3, r: 22 - i * 2, a0: 3.4, c: S.col[i % 2], life: 22 }); this.spawn({ k: 'line', x1: U.x - 22 + i * 2, y1: U.y + 18, x2: U.x + 22 - i * 2, y2: U.y + 18, c: S.col[0], w: 2, grow: 3, life: 20 }); yield* wait(3); }
+      this.spawn({ k: 'ring', x: U.x, y: U.y, r0: 10, r1: 34, c: S.col[1], w: 2, life: 14 }); Sound.sfx('statUp'); yield* wait(12); } },
+  mk9SixFists: { col: ['#ff9050', '#fff0e0', '#a04020'], pt: 'chi', cast: 'focus', fin: 'none', snd: 'hit', // six fists, one at each point of a hexagon
+    *f(S, U, T, u) { yield* this.lunge(u, 10, 2); Sound.sfx('hit'); const x = T.x + 14, y = T.y; this.spawn({ k: 'ring', x, y, r0: 2, r1: 12, c: S.col[0], w: 2, life: 8 }); w12Particle(this, x, y, S, 3, 4); yield* wait(3); },
+    *h(S, U, T, u, i) { Sound.sfx('hit'); const a = i * Math.PI / 3, x = T.x + Math.cos(a) * 14, y = T.y + Math.sin(a) * 12; this.spawn({ k: 'glow', x, y, r: 8, c: S.col[0], life: 8 }); this.spawn({ k: 'ring', x, y, r0: 2, r1: 12, c: i % 2 ? S.col[1] : S.col[0], w: 2, life: 8 }); if (i === 5) this.spawn({ k: 'hex', x: T.x, y: T.y, r0: 4, r1: 22, c: S.col[1], life: 12 }); this.shake = Math.max(this.shake, 2); yield* wait(3); } },
+  mk9Shock: { col: ['#50a0ff', '#e0f0ff', '#103070'], pt: 'wave', cast: 'aura', fin: 'none', snd: 'quake', // a stamp, and shock waves run along the ground to each foe
+    *f(S, U, T, u, t) { Sound.sfx('quake'); this.spawn({ k: 'ring', x: U.x, y: U.y + 18, r0: 4, r1: 30, c: S.col[0], w: 3, life: 12, fl: 0.4 }); this.shake = Math.max(this.shake, 6); const G = grp9(this, T, t);
+      for (let i = 1; i <= 6; i++) { for (const C of G) this.spawn({ k: 'ring', x: lerp(U.x, C.x, i / 6), y: lerp(U.y + 18, C.y + 18, i / 6), r0: 2, r1: 10, c: i % 2 ? S.col[1] : S.col[0], w: 2, life: 8, fl: 0.4 }); yield* wait(2); }
+      for (const C of G) { this.spawn({ k: 'shock', x: C.x, y: C.y + 18, r0: 4, r1: 30, c: S.col[0], life: 12 }); imp9(this, C, S); } this.shake = Math.max(this.shake, 8); yield* wait(8); } },
+  mk9SkyPalm: { col: ['#fff6d0', '#ffffff', '#806020'], pt: 'ray', cast: 'sky', fin: 'impact', snd: 'quake', // a huge palm of light comes down from the sky
+    *f(S, U, T) { Sound.sfx('charge'); const P = this.spawn({ k: 'glow', x: T.x, y: T.y - 90, r: 34, c: S.col[0], life: 22 }); for (let i = 1; i <= 8; i++) { P.y = lerp(T.y - 90, T.y, i / 8); for (let f = -2; f <= 2; f++) this.spawn({ k: 'line', x1: P.x + f * 7, y1: P.y - 26, x2: P.x + f * 7, y2: P.y - 10, c: S.col[1], w: 3, grow: 1, life: 4 }); yield; }
+      Sound.sfx('quake'); this.spawn({ k: 'rays', x: T.x, y: T.y, n: 14, a0: 0, len: 40, c: S.col[0], life: 18 }); this.shake = Math.max(this.shake, 12); imp9(this, T, S, 1); yield* wait(10); } },
+});
+const SK9_DONE = ['swordsman', 'mage', 'guardian', 'ranger', 'bard', 'machinist', 'monk'];
 for (const c of SK9_DONE) { sk9Build(c); for (const r of SK9[c]) fx9Make(r[0]); }
 { const seen = new Map(); for (const c of SK9_DONE) for (const [k] of SK9[c]) { const F = FX9[k]; if (!F) { bvErr('r9', 'fx ' + k); continue; } const key = (F.cast || '') + '|' + (F.fin || '') + '|' + F.col.join(','); if (seen.has(key)) bvErr('r9', 'same picture ' + k + ' / ' + seen.get(key)); seen.set(key, k); } }
 { const _so = startOverworld; startOverworld = function (...a) { const r = _so.apply(this, a), st = Game.st;
