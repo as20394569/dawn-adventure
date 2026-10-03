@@ -101,7 +101,8 @@ function activeOrbs(st = Game.st) { const w = mainWeapon(st); return gearOrbs(w,
 function passiveOrbs(st = Game.st) { const out = []; for (const [sl, u] of Object.entries(st.equip || {})) { if (sl === 'weapon') continue; const g = gearBy(u, st); out.push(...gearOrbs(g, st).filter(o => !isActiveOrb(o))); } return out; }
 const orbStage = o => (o.e || []).length;
 const orbName = o => orbDef(o).n + (isActiveOrb(o) ? ORB_STAGE[orbStage(o)] : o.lv > 1 ? ' Lv' + o.lv : '');
-const orbPending = o => isActiveOrb(o) && orbStage(o) < 2 && (o.x || 0) >= ORB_EVO[orbStage(o)];
+let evoAt = (o, s = orbStage(o)) => ORB_EVO[s]; // v12.0.2: per skill (10zzh: 學會後 +6「改」、+30「極」)
+const orbPending = o => isActiveOrb(o) && orbStage(o) < 2 && (o.x || 0) >= evoAt(o);
 const orbOfMove = (id, st = Game.st) => { const k = MOVES[id] && MOVES[id].orb; if (!k) return null; const L = st.skillLib || {}; return L[k] || activeOrbs(st).find(o => o.k === k) || null; }; // v11: the skill library entry carries the evolution
 // evolution effect codes → text
 const EVO_TXT = {

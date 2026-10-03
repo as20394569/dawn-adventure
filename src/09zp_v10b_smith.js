@@ -35,7 +35,7 @@ function* smithMenu(f) {
   }
 }
 const gearTier = g => (GEAR[g.b] && GEAR[g.b].t) || 1;
-function orbLine(o) { const D = orbDef(o), a = isActiveOrb(o); return (a ? '◆' : '◇') + orbName(o) + (a ? (orbStage(o) < 2 ? '（進化 ' + Math.min(o.x || 0, ORB_EVO[orbStage(o)]) + '/' + ORB_EVO[orbStage(o)] + '）' : '（最終）') : ''); }
+function orbLine(o) { const D = orbDef(o), a = isActiveOrb(o); return (a ? '◆' : '◇') + orbName(o) + (a ? (orbStage(o) < 2 ? '（進化 ' + Math.min(o.x || 0, evoAt(o)) + '/' + evoAt(o) + '）' : '（最終）') : ''); }
 // v10 (Codex task U): orb rows show the orb's icon instead of the ◆／◇ glyph when the icon exists
 function drawOrbLine(x, o, X, Y, col, extra = '') { const ic = typeof orbIcon === 'function' ? orbIcon(o.k) : null;
   if (!ic) return Font.draw(x, orbLine(o) + extra, X, Y, col, UIC.textSh, 10); x.drawImage(ic, X - 1, Y + 1); return Font.draw(x, orbLine(o).slice(1) + extra, X + 13, Y, col, UIC.textSh, 10); }

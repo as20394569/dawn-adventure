@@ -86,7 +86,7 @@ skillTreeScreen = function* () {
     const next = classSkills12(st, true).find(([id, lv]) => (st.lv || 1) < lv); if (next) R.push({ next });
     return R; };
   const pend = id => { const e = BB.skillObj(st, id); return !!(e && id.startsWith('o_') && orbPending(e)); };
-  const right = id => { const e = BB.skillObj(st, id), src = BB.sourceOf(st, id), cd = DEF.skills[id].cooldown; return (e && !e.learned ? '學會' + Math.min(e.x || 0, BB.learnN(id)) + '/' + BB.learnN(id) : src) + (cd ? '・CD' + cd : ''); };
+  const right = id => { const cd = DEF.skills[id].cooldown; return cd ? 'CD' + cd : ''; }; // v12.0.2: progress is the 練度 bar beside it
   const scr = { draw(x) {
     screenBG(x); headerBar(x, '技能編排');
     const L = rows(), VIS = 9, i = Math.min(sel, Math.max(0, L.length - 1)), top = clamp(i - 4, 0, Math.max(0, L.length - VIS));
@@ -94,9 +94,9 @@ skillTreeScreen = function* () {
     L.slice(top, top + VIS).forEach((R, k) => { const Y = 26 + k * 16; if (top + k === i) selBar(x, 6, Y - 1, 164, 15);
       if (R.sig) { Font.draw(x, '★' + DEF.skills[R.sig].name, 12, Y - 1, '#ffd860', UIC.textSh, 10); Font.drawR(x, BB.costLabel(st, R.sig), 166, Y, UIC.muted, UIC.textSh, 8); }
       else if (R.slot !== undefined) { Font.draw(x, String(R.slot + 1), 12, Y - 1, UIC.muted, UIC.textSh, 9);
-        if (R.id) { const e = BB.skillObj(st, R.id); Font.draw(x, BB.nameOf(st, R.id) + (pend(R.id) ? ' ！' : ''), 22, Y - 1, '#c8f0ff', UIC.textSh, 10); Font.drawR(x, right(R.id), 166, Y, e && e.learned ? UIC.accent : UIC.muted, UIC.textSh, 8); }
+        if (R.id) { const e = BB.skillObj(st, R.id); Font.draw(x, BB.nameOf(st, R.id) + (pend(R.id) ? ' ！' : ''), 22, Y - 1, '#c8f0ff', UIC.textSh, 10); Font.drawR(x, right(R.id), 132, Y, UIC.muted, UIC.textSh, 8); if (typeof drawMastery12 === 'function') drawMastery12(x, 136, Y + 5, 30, masteryOf12(st, R.id)); }
         else Font.draw(x, '（空的技能槽）', 22, Y - 1, UIC.dis, UIC.textSh, 10); }
-      else if (R.spare) { Font.draw(x, '＋' + BB.nameOf(st, R.spare) + (pend(R.spare) ? ' ！' : ''), 12, Y - 1, UIC.text, UIC.textSh, 10); Font.drawR(x, right(R.spare), 166, Y, UIC.muted, UIC.textSh, 8); }
+      else if (R.spare) { Font.draw(x, '＋' + BB.nameOf(st, R.spare) + (pend(R.spare) ? ' ！' : ''), 12, Y - 1, UIC.text, UIC.textSh, 10); Font.drawR(x, right(R.spare), 132, Y, UIC.muted, UIC.textSh, 8); if (typeof drawMastery12 === 'function') drawMastery12(x, 136, Y + 5, 30, masteryOf12(st, R.spare)); }
       else if (R.next) { Font.draw(x, '？' + (DEF.skills[R.next[0]] || {}).name, 12, Y - 1, UIC.dis, UIC.textSh, 10); Font.drawR(x, 'Lv' + R.next[1] + '學會', 166, Y, UIC.dis, UIC.textSh, 8); } });
     if (top > 0) x.drawImage(UPARROW, 86, 23); if (top + VIS < L.length) x.drawImage(DOWNARROW, 86, 22 + VIS * 16 + 3);
     const Y0 = 22 + VIS * 16 + 12, R = L[i]; drawWin(x, 4, Y0, 168, 252 - Y0, 'menu'); let txt = '', fid = null;

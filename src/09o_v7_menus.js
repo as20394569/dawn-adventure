@@ -46,7 +46,7 @@ function* skillTreeScreen() {
 }
 
 /* ---------- the main menu: 技能 = weapon skills, 天賦 = class talents (dot when points are waiting) ---------- */
-{ const TILES = [['狀態', '能力・技能'], ['任務', '進度・追蹤'], ['屬性', '自由加點'], ['技能', '技能・編排'], ['天賦', '職業天賦'], ['背包', '道具・素材'], ['裝備', '更換・詳情'], ['圖鑑', '魔物資料'], ['紀錄', '地圖・成就'], ['存檔', '記錄進度'], ['設定', '音量・速度'], ['關閉', '回到遊戲']];
+{ const TILES = [['狀態', '能力・技能'], ['冒險手冊', '任務・圖鑑・紀錄'], ['屬性', '自由加點'], ['技能', '技能・編排'], ['天賦', '職業天賦'], ['背包', '道具・素材'], ['裝備', '更換・詳情'], ['存檔', '記錄進度'], ['設定', '音量・速度'], ['關閉', '回到遊戲']]; // v12.0.2: 任務・圖鑑・紀錄 → 冒險手冊 (10zzi)
   startMenu = function* () {
     Sound.sfx('menu'); let idx = Game.menuIdx || 0;
     while (true) {
@@ -62,7 +62,7 @@ function* skillTreeScreen() {
       const name = r >= 0 ? TILES[r][0] : '關閉'; if (name === '關閉') break; idx = r; Game.menuIdx = r;
       if (name === '狀態') yield* summaryScreen(); if (name === '任務') yield* questScreen(); if (name === '屬性') yield* attrScreen(); if (name === '技能') yield* skillTreeScreen(); if (name === '天賦') yield* talentScreen();
       if (name === '背包') { yield* bagScreen('field'); if (Game.homeWarp) break; }
-      if (name === '裝備') yield* equipScreen(); if (name === '圖鑑') yield* dexScreen(); if (name === '紀錄') yield* recordScreen();
+      if (name === '裝備') yield* equipScreen(); if (name === '冒險手冊') yield* handbookScreen12();
       if (name === '存檔') { const ok = yield* yesNo('要記錄目前的冒險進度嗎？'); if (ok) { const good = saveGame(); if (good) { Sound.sfx('save'); yield* say(Game.st.name + '把冒險記錄了下來！'); } else yield* say('無法存檔……這個瀏覽器可能不允許儲存資料。'); } }
       if (name === '設定') yield* optionsScreen();
     }

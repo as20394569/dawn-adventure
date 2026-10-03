@@ -5510,7 +5510,7 @@ class Battle {
       const id = list[m.i], D = DEF.skills[id], ob = BB.skillObj(st, id), mv = MOVES[id] ? skillMove(id) : null, c = TYPE_COL[D.el] || '#9a9aa8'; drawWin(x, X, DY, w, DH, 'menu');
       const fit = (t, sz, maxW) => { let z = sz; while (z > 7 && Font.width(t, z) > maxW) z--; return z; };
       const can = this.canUse(id), est = can.ok && D.power && foe ? this.estimate(id, foe.id) : 0, L = X + 8, R = X + w - 8;
-      const tgt = D.target === 'all_enemies' ? (D.chain ? '・連鎖' : '・全體') : '', learn = ob && !D.tags.includes('sig') ? (ob.learned ? '・已學會' : '・學會' + Math.min(ob.x || 0, BB.learnN(id)) + '/' + BB.learnN(id)) : '';
+      const tgt = D.target === 'all_enemies' ? (D.chain ? '・連鎖' : '・全體') : '', learn = ob && !D.tags.includes('sig') ? (!ob.learned ? '・學會' + Math.min(ob.x || 0, BB.learnN(id)) + '/' + BB.learnN(id) : orbStage(ob) < 2 ? '・練度' + (ob.x || 0) + '/' + evoAt(ob) : '') : '';
       const t1 = (D.tags.includes('sig') ? '職業招式・' : '') + (D.el === '一般' ? '無屬性' : D.el + '屬性') + '・' + (D.cat === '變' ? '輔助' : D.cat === '物' ? '物理' : '魔法') + tgt + (typeof skillAttrTag === 'function' && skillAttrTag(id) ? '・' + skillAttrTag(id) : '') + learn, cT = can.ok ? this.costText(id) : (can.short || '不可用');
       x.fillStyle = c; x.fillRect(L, DY + 6, 4, 4); Font.draw(x, t1, L + 7, DY + 1, '#c9cfe4', UIC.textSh, fit(t1, 9, w - 30 - Font.width(cT, 9))); Font.drawR(x, cT, R, DY + 1, can.ok ? '#8ab8ff' : UIC.bad, UIC.textSh, 9);
       let y = DY + 14;
@@ -11152,7 +11152,7 @@ function* skillTreeScreen() {
   }
   UI.remove(scr);
 }
-{ const TILES = [['狀態', '能力・技能'], ['任務', '進度・追蹤'], ['屬性', '自由加點'], ['技能', '技能・編排'], ['天賦', '職業天賦'], ['背包', '道具・素材'], ['裝備', '更換・詳情'], ['圖鑑', '魔物資料'], ['紀錄', '地圖・成就'], ['存檔', '記錄進度'], ['設定', '音量・速度'], ['關閉', '回到遊戲']];
+{ const TILES = [['狀態', '能力・技能'], ['冒險手冊', '任務・圖鑑・紀錄'], ['屬性', '自由加點'], ['技能', '技能・編排'], ['天賦', '職業天賦'], ['背包', '道具・素材'], ['裝備', '更換・詳情'], ['存檔', '記錄進度'], ['設定', '音量・速度'], ['關閉', '回到遊戲']]; // v12.0.2: 任務・圖鑑・紀錄 → 冒險手冊 (10zzi)
   startMenu = function* () {
     Sound.sfx('menu'); let idx = Game.menuIdx || 0;
     while (true) {
@@ -11168,7 +11168,7 @@ function* skillTreeScreen() {
       const name = r >= 0 ? TILES[r][0] : '關閉'; if (name === '關閉') break; idx = r; Game.menuIdx = r;
       if (name === '狀態') yield* summaryScreen(); if (name === '任務') yield* questScreen(); if (name === '屬性') yield* attrScreen(); if (name === '技能') yield* skillTreeScreen(); if (name === '天賦') yield* talentScreen();
       if (name === '背包') { yield* bagScreen('field'); if (Game.homeWarp) break; }
-      if (name === '裝備') yield* equipScreen(); if (name === '圖鑑') yield* dexScreen(); if (name === '紀錄') yield* recordScreen();
+      if (name === '裝備') yield* equipScreen(); if (name === '冒險手冊') yield* handbookScreen12();
       if (name === '存檔') { const ok = yield* yesNo('要記錄目前的冒險進度嗎？'); if (ok) { const good = saveGame(); if (good) { Sound.sfx('save'); yield* say(Game.st.name + '把冒險記錄了下來！'); } else yield* say('無法存檔……這個瀏覽器可能不允許儲存資料。'); } }
       if (name === '設定') yield* optionsScreen();
     }
@@ -13232,7 +13232,8 @@ function activeOrbs(st = Game.st) { const w = mainWeapon(st); return gearOrbs(w,
 function passiveOrbs(st = Game.st) { const out = []; for (const [sl, u] of Object.entries(st.equip || {})) { if (sl === 'weapon') continue; const g = gearBy(u, st); out.push(...gearOrbs(g, st).filter(o => !isActiveOrb(o))); } return out; }
 const orbStage = o => (o.e || []).length;
 const orbName = o => orbDef(o).n + (isActiveOrb(o) ? ORB_STAGE[orbStage(o)] : o.lv > 1 ? ' Lv' + o.lv : '');
-const orbPending = o => isActiveOrb(o) && orbStage(o) < 2 && (o.x || 0) >= ORB_EVO[orbStage(o)];
+let evoAt = (o, s = orbStage(o)) => ORB_EVO[s]; // v12.0.2: per skill (10zzh: 學會後 +6「改」、+30「極」)
+const orbPending = o => isActiveOrb(o) && orbStage(o) < 2 && (o.x || 0) >= evoAt(o);
 const orbOfMove = (id, st = Game.st) => { const k = MOVES[id] && MOVES[id].orb; if (!k) return null; const L = st.skillLib || {}; return L[k] || activeOrbs(st).find(o => o.k === k) || null; }; // v11: the skill library entry carries the evolution
 const EVO_TXT = {
   brn: v => v + '%灼傷', psn: v => v + '%中毒', par: v => v + '%麻痺', slp: v => v + '%睡眠', drain: v => '造成傷害的' + v + '%回復HP', mp: v => '回復' + v + 'MP', shield: v => '展開' + v + '回合護盾',
@@ -13327,7 +13328,7 @@ function* smithMenu(f) {
   }
 }
 const gearTier = g => (GEAR[g.b] && GEAR[g.b].t) || 1;
-function orbLine(o) { const D = orbDef(o), a = isActiveOrb(o); return (a ? '◆' : '◇') + orbName(o) + (a ? (orbStage(o) < 2 ? '（進化 ' + Math.min(o.x || 0, ORB_EVO[orbStage(o)]) + '/' + ORB_EVO[orbStage(o)] + '）' : '（最終）') : ''); }
+function orbLine(o) { const D = orbDef(o), a = isActiveOrb(o); return (a ? '◆' : '◇') + orbName(o) + (a ? (orbStage(o) < 2 ? '（進化 ' + Math.min(o.x || 0, evoAt(o)) + '/' + evoAt(o) + '）' : '（最終）') : ''); }
 function drawOrbLine(x, o, X, Y, col, extra = '') { const ic = typeof orbIcon === 'function' ? orbIcon(o.k) : null;
   if (!ic) return Font.draw(x, orbLine(o) + extra, X, Y, col, UIC.textSh, 10); x.drawImage(ic, X - 1, Y + 1); return Font.draw(x, orbLine(o).slice(1) + extra, X + 13, Y, col, UIC.textSh, 10); }
 function orbInfo(o) { if (isActiveOrb(o)) { const m = MOVES['o_' + o.k], D = ORB_A[o.k]; return (m.cat === '變' ? '輔助' : m.cat === '物' ? '物理' : '魔法') + (m.t !== '一般' ? '・' + m.t : '') + (D.pow ? '・威力' + D.pow : '') + '・MP' + D.mp + '　' + D.d + (o.e.length ? '　進化：' + o.e.map((b, s) => (b === 'A' ? '強攻' : '附加') + evoOptText(o, s, b)).join('、') : ''); }
@@ -16248,9 +16249,9 @@ ITEMS.trainBook = { n: '修練之書', cat: '永久強化', use: 'trainBook', pr
 function* trainBookFlow(k) {
   const st = Game.st, L = BB.available(st).filter(id => { const e = BB.skillObj(st, id); return e && e.learned && id.startsWith('o_') && orbStage(e) < 2; });
   if (!L.length) { yield* say('沒有可以修練的技能。（已學會、還能進化的技能才行）'); return; }
-  const r = yield* choose(L.map(id => ({ t: BB.nameOf(st, id), r: '進度 ' + (BB.skillObj(st, id).x || 0) + '/' + ORB_EVO[orbStage(BB.skillObj(st, id))] })).concat({ t: '返回' }), { title: '修練哪一個技能？' });
+  const r = yield* choose(L.map(id => ({ t: BB.nameOf(st, id), r: '練度 ' + (BB.skillObj(st, id).x || 0) + '/' + evoAt(BB.skillObj(st, id)) })).concat({ t: '返回' }), { title: '修練哪一個技能？' });
   if (r < 0 || r >= L.length) return; const e = BB.skillObj(st, L[r]); e.x = (e.x || 0) + 12; st.bag[k]--; if (!st.bag[k]) delete st.bag[k]; Sound.jingle('levelup');
-  yield* itemGet('「' + BB.nameOf(st, L[r]) + '」的進化進度 +12！'); if (orbPending(e)) { e.told = 1; yield* orbEvolveFlow(e); }
+  yield* itemGet('「' + BB.nameOf(st, L[r]) + '」的練度 +12！'); if (orbPending(e)) { e.told = 1; yield* orbEvolveFlow(e); }
 }
 BB.heroSpec = function (st, cfg = {}) {
   BB.sync(st); const S = heroStats(st), c = clsV7(st.cls), C = DEF.classes[c], P = [], seen = new Set(), T = TAL12.defs(st), rules = {};
@@ -16394,7 +16395,7 @@ skillTreeScreen = function* () {
     const next = classSkills12(st, true).find(([id, lv]) => (st.lv || 1) < lv); if (next) R.push({ next });
     return R; };
   const pend = id => { const e = BB.skillObj(st, id); return !!(e && id.startsWith('o_') && orbPending(e)); };
-  const right = id => { const e = BB.skillObj(st, id), src = BB.sourceOf(st, id), cd = DEF.skills[id].cooldown; return (e && !e.learned ? '學會' + Math.min(e.x || 0, BB.learnN(id)) + '/' + BB.learnN(id) : src) + (cd ? '・CD' + cd : ''); };
+  const right = id => { const cd = DEF.skills[id].cooldown; return cd ? 'CD' + cd : ''; }; // v12.0.2: progress is the 練度 bar beside it
   const scr = { draw(x) {
     screenBG(x); headerBar(x, '技能編排');
     const L = rows(), VIS = 9, i = Math.min(sel, Math.max(0, L.length - 1)), top = clamp(i - 4, 0, Math.max(0, L.length - VIS));
@@ -16402,9 +16403,9 @@ skillTreeScreen = function* () {
     L.slice(top, top + VIS).forEach((R, k) => { const Y = 26 + k * 16; if (top + k === i) selBar(x, 6, Y - 1, 164, 15);
       if (R.sig) { Font.draw(x, '★' + DEF.skills[R.sig].name, 12, Y - 1, '#ffd860', UIC.textSh, 10); Font.drawR(x, BB.costLabel(st, R.sig), 166, Y, UIC.muted, UIC.textSh, 8); }
       else if (R.slot !== undefined) { Font.draw(x, String(R.slot + 1), 12, Y - 1, UIC.muted, UIC.textSh, 9);
-        if (R.id) { const e = BB.skillObj(st, R.id); Font.draw(x, BB.nameOf(st, R.id) + (pend(R.id) ? ' ！' : ''), 22, Y - 1, '#c8f0ff', UIC.textSh, 10); Font.drawR(x, right(R.id), 166, Y, e && e.learned ? UIC.accent : UIC.muted, UIC.textSh, 8); }
+        if (R.id) { const e = BB.skillObj(st, R.id); Font.draw(x, BB.nameOf(st, R.id) + (pend(R.id) ? ' ！' : ''), 22, Y - 1, '#c8f0ff', UIC.textSh, 10); Font.drawR(x, right(R.id), 132, Y, UIC.muted, UIC.textSh, 8); if (typeof drawMastery12 === 'function') drawMastery12(x, 136, Y + 5, 30, masteryOf12(st, R.id)); }
         else Font.draw(x, '（空的技能槽）', 22, Y - 1, UIC.dis, UIC.textSh, 10); }
-      else if (R.spare) { Font.draw(x, '＋' + BB.nameOf(st, R.spare) + (pend(R.spare) ? ' ！' : ''), 12, Y - 1, UIC.text, UIC.textSh, 10); Font.drawR(x, right(R.spare), 166, Y, UIC.muted, UIC.textSh, 8); }
+      else if (R.spare) { Font.draw(x, '＋' + BB.nameOf(st, R.spare) + (pend(R.spare) ? ' ！' : ''), 12, Y - 1, UIC.text, UIC.textSh, 10); Font.drawR(x, right(R.spare), 132, Y, UIC.muted, UIC.textSh, 8); if (typeof drawMastery12 === 'function') drawMastery12(x, 136, Y + 5, 30, masteryOf12(st, R.spare)); }
       else if (R.next) { Font.draw(x, '？' + (DEF.skills[R.next[0]] || {}).name, 12, Y - 1, UIC.dis, UIC.textSh, 10); Font.drawR(x, 'Lv' + R.next[1] + '學會', 166, Y, UIC.dis, UIC.textSh, 8); } });
     if (top > 0) x.drawImage(UPARROW, 86, 23); if (top + VIS < L.length) x.drawImage(DOWNARROW, 86, 22 + VIS * 16 + 3);
     const Y0 = 22 + VIS * 16 + 12, R = L[i]; drawWin(x, 4, Y0, 168, 252 - Y0, 'menu'); let txt = '', fid = null;
@@ -16522,7 +16523,7 @@ function v12Convert(st) {
   if (books) st.bag.trainBook = (st.bag.trainBook || 0) + books; st.money = (st.money || 0) + gold + refund;
   if (!orbs.length && !refund && !stones) return [];
   const L = ['寶珠和附魔都取消了，持有的東西已經換掉：'];
-  if (books) L.push('技能寶珠 → 修練之書×' + books + '（選一個已學會的技能，進化進度 +12）。');
+  if (books) L.push('技能寶珠 → 修練之書×' + books + '（選一個已學會的技能，練度 +12）。');
   if (gold) L.push('被動寶珠和附魔石 → ' + gold + ' G。');
   if (refund) L.push('武器上的附魔已經移除，退回附魔費用 ' + refund + ' G。');
   return L;
@@ -17622,3 +17623,71 @@ B12_SCRIPT.shadowGeneral = function (core, u) { const d = u.data;
   if (d.sg25) { d.n25 = (d.n25 || 0) + 1; if (d.n25 % 3 === 0) return b12Charge(core, u, 'm_eclipseBlade'); }
   else if (core.round - (d.lastCharge ?? -9) >= 4 && core.rng.chance(0.4)) return b12Charge(core, u, 'm_eclipseBlade');
   return b12Pick(core, u, ['m_shadowSlash', 'm_darkPulse', 'm_shadowSlash']); };
+const evoSkill12 = o => o && (DEF.skills['o_' + o.k] ? 'o_' + o.k : DEF.skills[o.k] ? o.k : null);
+evoAt = (o, s = orbStage(o)) => { const id = evoSkill12(o); return id ? BB.learnN(id) + (s >= 1 ? 30 : 6) : ORB_EVO[s]; };
+function masteryOf12(st, id) { const e = BB.skillObj(st, id); if (!e || !DEF.skills[id] || DEF.skills[id].tags.includes('sig')) return null; const N = BB.learnN(id), M = [N, N + 6, N + 30];
+  const lvl = !e.learned ? 0 : 1 + Math.min(2, orbStage(e)); return { e, x: e.x || 0, M, lvl, next: lvl === 0 ? M[0] : lvl < 3 ? M[lvl] : null, pending: orbPending(e) }; }
+function drawMastery12(x, X, Y, w, m) { if (!m) return; const max = m.M[2], f = Math.min(1, m.x / max);
+  x.fillStyle = '#10121e'; x.fillRect(X, Y, w, 4); x.fillStyle = m.lvl >= 3 ? '#ffd860' : m.pending ? '#ffb070' : m.lvl >= 1 ? '#7ad0ff' : '#9aa0b8'; x.fillRect(X, Y, Math.max(1, Math.round(w * f)), 4);
+  for (let k = 0; k < 3; k++) { const tx = Math.min(X + w - 2, X + Math.round(w * m.M[k] / max) - 1); x.fillStyle = m.lvl > k ? '#fff4c8' : '#5a5f78'; x.fillRect(tx, Y - 1, 2, 6); } }
+const masteryText12 = (st, id) => { const m = masteryOf12(st, id); if (!m) return ''; const src = BB.sourceOf(st, id), s = src && src !== '已學會' ? '・' + src : '';
+  if (m.lvl === 0) return '【練度 ' + m.x + '/' + m.next + '：再用 ' + Math.max(0, m.next - m.x) + ' 次永久學會' + s + '】';
+  if (m.lvl >= 3) return '【練度已滿（極）' + s + '】';
+  return '【已學會' + s + '・練度 ' + m.x + '/' + m.next + (m.pending ? '：可以進化「' + (m.lvl === 1 ? '改' : '極') + '」！' : '：滿了可以進化「' + (m.lvl === 1 ? '改' : '極') + '」') + '】'; };
+{ const _si = BB.skillInfo; BB.skillInfo = function (st, id) { const t = _si.call(this, st, id), m = masteryOf12(st, id); if (!m) return t;
+    return t.replace(/　【(?:已學會[^】]*|[^】]*再用\d+次永久學會)】/, '　' + masteryText12(st, id)); }; }
+Object.assign(ITEMS.trainBook, { d: '選一個已學會的技能，練度 +12。' });
+if (typeof BATTLE_HELP !== 'undefined') { const P = BATTLE_HELP.find(q => q[0] === '技能與冷卻');
+  if (P) P[1] = P[1].map(t => /用滿 6／10／14 次永久學會/.test(t) ? '技能來自職業（等級到了學會）和武器（裝備就能用）。每用一次練度 +1：滿第一格學會，再用 6 次可以進化「改」，再用 24 次進化「極」。' : t); }
+function* smithOnGear12(g, flow) { // run an existing one-gear flow (it opens gearPicker) on a gear already chosen
+  const _gp = gearPicker; let used = false;
+  gearPicker = function* (title, getList) { if (used) return null; used = true; if (getList().includes(g)) return g; yield* say('這件裝備不能這樣做。'); return null; };
+  try { yield* flow(); } finally { gearPicker = _gp; } }
+function* smithEnhance12(g) { const st = Game.st, c = enhanceCost(g), ok = st.money >= c.gold && Object.entries(c.mats).every(([k, n]) => (st.bag[k] || 0) >= n);
+  if ((g.e || 0) >= 10) { yield* say('已經強化到 +10 了。'); return; } if (!ok) { yield* say('素材或金錢不夠喔。'); return; }
+  if (!(yield* yesNo('要強化' + gearShort(g) + '嗎？' + (c.rate < 1 ? '\n（失敗的話素材和金錢會消失）' : '')))) return;
+  st.money -= c.gold; for (const k in c.mats) st.bag[k] -= c.mats[k]; Sound.sfx('rock'); yield* say('鏘！鏘！鏘！');
+  if (Math.random() < c.rate) { g.e = (g.e || 0) + 1; clampHP(); Sound.jingle('item'); yield* say('強化成功！' + gearName(g) + '！'); } else { Sound.sfx('bump'); yield* say('……可惜，這次失敗了。'); } }
+function* smithStar12(g) { const st = Game.st, R = st.refine || (st.refine = {}), s = g.s || 0, need = starStones(s), c = starGold(g, s);
+  if (s >= STAR_MAX) { yield* say('已經是最高的★' + STAR_MAX + '了。'); return; }
+  if ((R[g.b] || 0) < need || st.money < c) { yield* say('精煉石或金錢不夠喔。（再打倒掉落這件裝備的魔物，就能拿到精煉石）'); return; }
+  if (!(yield* yesNo('要讓' + gearShort(g) + '升星嗎？\n（精煉石×' + need + '、' + c + ' G，一定成功）'))) return;
+  R[g.b] -= need; st.money -= c; g.s = s + 1; clampHP(); Sound.sfx('rock'); yield* say('鏘！鏘！鏘！'); Sound.jingle('levelup'); yield* say('升星成功！' + gearName(g) + '！'); }
+function* smithUpgrade12() { const st = Game.st, R = () => st.refine || {};
+  while (true) {
+    const g = yield* gearPicker('強化', () => gearSort(), (x, g, Y) => { const c = enhanceCost(g), s = g.s || 0;
+      Font.draw(x, (g.e || 0) < 10 ? '強化 +' + (g.e || 0) + '→+' + ((g.e || 0) + 1) + '　' + c.gold + ' G・成功率' + Math.round(c.rate * 100) + '%' : '強化：已經 +10', 12, Y, UIC.accent, UIC.textSh, 10);
+      Font.draw(x, s < STAR_MAX ? '升星 ★' + s + '→★' + (s + 1) + '　精煉石 ' + (R()[g.b] || 0) + '/' + starStones(s) + '・' + starGold(g, s) + ' G' : '升星：已經 ★' + STAR_MAX, 12, Y + 13, '#ffd860', UIC.textSh, 10);
+      Font.draw(x, g.q >= 2 ? '重鑄：詞綴 ' + reforgeCost(g).gold + ' G／品質' : '重鑄：品質（藍色沒有詞綴）', 12, Y + 26, '#c8b8ff', UIC.textSh, 10); });
+    if (!g) return;
+    while (true) { const c = enhanceCost(g), s = g.s || 0;
+      const opts = ['強化 +' + (g.e || 0) + '→+' + ((g.e || 0) + 1) + '（' + c.gold + ' G）', '升星 ★' + s + '→★' + (s + 1) + '（精煉石 ' + (R()[g.b] || 0) + '/' + starStones(s) + '）', '重鑄（詞綴／品質）', '換一件'];
+      const r = yield* ask(gearName(g), opts); if (r === 0) yield* smithEnhance12(g); else if (r === 1) yield* smithStar12(g); else if (r === 2) yield* smithOnGear12(g, reforgeFlow); else break; } } }
+smithMenu = function* (f) {
+  while (true) { const r = yield* ask('要做什麼？', ['打造', '強化' + (f && f.smithDisc ? '（強化半價）' : ''), '離開']);
+    if (r === 0) { const r2 = yield* ask('打造', ['打造裝備', '分解', '返回']); if (r2 === 0) yield* craftScreen(); else if (r2 === 1) yield* salvageFlow(); }
+    else if (r === 1) yield* smithUpgrade12(); else break; } };
+const GROW12 = [
+  ['等級與屬性', '打倒魔物得到經驗值。升級時能力會提升，還會拿到屬性點，在選單的「屬性」自由分配。'],
+  ['職業', '村長那裡可以轉職。Lv14 找村長「天賦覺醒」後，劍士、魔導士、守護者、遊俠會進階成劍聖、大魔導士、聖騎士、神射手。'],
+  ['天賦與職業招式', '升級和天賦之書會給天賦點。在選單的「天賦」，每一層二選一；天賦點也能強化職業招式。'],
+  ['技能練度', '每用一次技能練度 +1：滿第一格學會（武器技能），再用 6 次可以進化「改」，再用 24 次進化「極」。修練之書：練度 +12。'],
+  ['裝備', '鐵匠「打造」：用設計圖和素材做裝備。鐵匠「強化」：強化到 +10、用精煉石升星、重鑄詞綴或品質。'],
+  ['果實', '六種果實會永久提升能力，同一種越買越貴。'],
+];
+function* handbookScreen12() {
+  while (true) { const r = yield* ask('冒險手冊', ['任務', '圖鑑', '紀錄', '變強的方法', '返回']);
+    if (r === 0) yield* questScreen(); else if (r === 1) yield* dexScreen(); else if (r === 2) yield* recordScreen();
+    else if (r === 3) { while (true) { const k = yield* ask('變強的方法', GROW12.map(q => q[0]).concat('返回')); if (k < 0 || k >= GROW12.length) break; yield* say(GROW12[k][1]); } }
+    else break; } }
+const EN12 = Object.keys(ITEMS).filter(k => ITEMS[k].use === 'enchant'), EN12_DEF = Object.fromEntries(EN12.map(k => [k, ITEMS[k]]));
+for (const k of EN12) delete ITEMS[k];
+{ const _v = v12Convert; v12Convert = function (st) { for (const k of EN12) ITEMS[k] = EN12_DEF[k];
+    try { return _v(st); } finally { for (const k of EN12) { delete ITEMS[k]; if (st && st.bag) delete st.bag[k]; } } }; }
+const MAT_USE12 = (() => { const U = {}, add = (k, name) => { (U[k] = U[k] || { gear: 0, items: [] }); if (name) { if (!U[k].items.includes(name)) U[k].items.push(name); } else U[k].gear++; };
+  for (const k in GEAR_RECIPE) for (const m in GEAR_RECIPE[k].mats || {}) add(m);
+  for (const R of [RECIPES, typeof RECIPES_V20 !== 'undefined' ? RECIPES_V20 : [], typeof RECIPES_CH2 !== 'undefined' ? RECIPES_CH2 : []]) for (const r of R) if (r.mats && ITEMS[r.out]) for (const m in r.mats) add(m, ITEMS[r.out].n);
+  return U; })();
+for (const k in ITEMS) { const I = ITEMS[k]; if (!['魔物素材', '採集素材'].includes(I.cat)) continue; let base = I.d || '';
+  Object.defineProperty(I, 'd', { configurable: true, enumerable: true, get() { const U = MAT_USE12[k], use = U ? [U.gear ? U.gear + ' 件裝備' : '', ...U.items.slice(0, 2)].filter(Boolean).join('、') : '';
+    return base + '\n來源：' + matSource(k) + (use ? '\n用途：' + use : ''); }, set(v) { base = v; } }); }

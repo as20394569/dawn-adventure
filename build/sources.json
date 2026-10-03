@@ -1112,7 +1112,6 @@
    "mine採集",
    "catacomb採集",
    "catacomb採集",
-   "iceCave採集",
    "魔物:晶石丸",
    "魔物:水晶魔像"
   ],
@@ -1307,6 +1306,13 @@
    "魔物:冰霜巫妖",
    "魔物:霜之女王"
   ],
+  "starDust": [
+   "iceCave採集",
+   "starShrine採集",
+   "starShrine採集",
+   "魔物:星靈",
+   "魔物:天使石像"
+  ],
   "magmaStone": [
    "emberPass採集",
    "emberPass採集",
@@ -1330,12 +1336,6 @@
    "委託獎勵",
    "委託獎勵",
    "委託獎勵"
-  ],
-  "starDust": [
-   "starShrine採集",
-   "starShrine採集",
-   "魔物:星靈",
-   "魔物:天使石像"
   ],
   "vitFruit": [
    "windHills寶箱",
@@ -1608,30 +1608,6 @@
    "劇情/任務"
   ],
   "noraBread": [
-   "劇情/任務"
-  ],
-  "enFire": [
-   "劇情/任務"
-  ],
-  "enFire2": [
-   "劇情/任務"
-  ],
-  "enWater": [
-   "劇情/任務"
-  ],
-  "enWater2": [
-   "劇情/任務"
-  ],
-  "enBolt": [
-   "劇情/任務"
-  ],
-  "enLeaf": [
-   "劇情/任務"
-  ],
-  "enVenom": [
-   "劇情/任務"
-  ],
-  "enRock": [
    "劇情/任務"
   ],
   "silverPin": [

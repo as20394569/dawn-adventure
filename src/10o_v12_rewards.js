@@ -42,7 +42,7 @@ function v12Convert(st) {
   if (books) st.bag.trainBook = (st.bag.trainBook || 0) + books; st.money = (st.money || 0) + gold + refund;
   if (!orbs.length && !refund && !stones) return [];
   const L = ['寶珠和附魔都取消了，持有的東西已經換掉：'];
-  if (books) L.push('技能寶珠 → 修練之書×' + books + '（選一個已學會的技能，進化進度 +12）。');
+  if (books) L.push('技能寶珠 → 修練之書×' + books + '（選一個已學會的技能，練度 +12）。');
   if (gold) L.push('被動寶珠和附魔石 → ' + gold + ' G。');
   if (refund) L.push('武器上的附魔已經移除，退回附魔費用 ' + refund + ' G。');
   return L;

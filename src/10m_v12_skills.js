@@ -72,9 +72,9 @@ ITEMS.trainBook = { n: '修練之書', cat: '永久強化', use: 'trainBook', pr
 function* trainBookFlow(k) {
   const st = Game.st, L = BB.available(st).filter(id => { const e = BB.skillObj(st, id); return e && e.learned && id.startsWith('o_') && orbStage(e) < 2; });
   if (!L.length) { yield* say('沒有可以修練的技能。（已學會、還能進化的技能才行）'); return; }
-  const r = yield* choose(L.map(id => ({ t: BB.nameOf(st, id), r: '進度 ' + (BB.skillObj(st, id).x || 0) + '/' + ORB_EVO[orbStage(BB.skillObj(st, id))] })).concat({ t: '返回' }), { title: '修練哪一個技能？' });
+  const r = yield* choose(L.map(id => ({ t: BB.nameOf(st, id), r: '練度 ' + (BB.skillObj(st, id).x || 0) + '/' + evoAt(BB.skillObj(st, id)) })).concat({ t: '返回' }), { title: '修練哪一個技能？' });
   if (r < 0 || r >= L.length) return; const e = BB.skillObj(st, L[r]); e.x = (e.x || 0) + 12; st.bag[k]--; if (!st.bag[k]) delete st.bag[k]; Sound.jingle('levelup');
-  yield* itemGet('「' + BB.nameOf(st, L[r]) + '」的進化進度 +12！'); if (orbPending(e)) { e.told = 1; yield* orbEvolveFlow(e); }
+  yield* itemGet('「' + BB.nameOf(st, L[r]) + '」的練度 +12！'); if (orbPending(e)) { e.told = 1; yield* orbEvolveFlow(e); }
 }
 
 /* ---------- the hero as a battle unit (v12) ---------- */
