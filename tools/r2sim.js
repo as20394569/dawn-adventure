@@ -15,6 +15,15 @@ module.exports = async (g) => {
       const low = PROFILE === 'low', put = (sl, k) => { if (!k) return; const gr = makeGear(k, low ? 1 : 2); gr.e = low ? 0 : 3; st.equip[sl] = gr.u; };
       put('weapon', best(cls, 'weapon', t)[0]); for (const sl of ['head', 'body', 'feet']) put(sl, best(cls, sl, t)[0]); const A = best(cls, 'acc', t, 2); put('acc1', A[0]); put('acc2', A[1]);
       st.slots = (CLASS_SKILLS12[cls] || []).filter((k, j) => CLASS_SKILL_LV[j] <= lv).slice(-4).map(k => 'o_' + k); st.hp = heroStats().hp; st.mp = heroStats().mp; st.status = null; return st; };
+    const _h0 = BAI.hero; // a mage player builds three different sigils before 元素奔流 (the plain test AI bursts at one)
+    { const _h2 = _h0; BAI.hero = function (core, u, p) { if (!u.hero || clsV7(u.cls || Game.st.cls) !== 'mage' || core.foesOf(u).some(f => core.hasStatus(f, 'charging'))) return _h2.call(this, core, u, p);
+    const foes = core.foesOf(u); if (!foes.length) return _h2.call(this, core, u, p); const t = foes.slice().sort((a, b) => a.res.hp - b.res.hp)[0], L = u.data.sigils || [], sig = u.data.sigSkill;
+    const can = id => !!DEF.skills[id] && !core.skillBlock(u, DEF.skills[id], { meta: {} }), el = id => BR.elementOf(core, u, DEF.skills[id]);
+    if (L.length >= 3 && sig && can(sig)) return { type: 'skill', skill: sig, targets: [t.id] };
+    const E = (u.data.slots || []).filter(id => can(id) && DEF.skills[id].power && el(id) !== '一般' && !L.includes(el(id)));
+    if (E.length) { const id = foes.length > 1 ? (E.find(i => DEF.skills[i].target === 'all_enemies') || E[0]) : E[0]; return { type: 'skill', skill: id, targets: [t.id] }; }
+    if (L.length >= 1 && sig && can(sig)) return { type: 'skill', skill: sig, targets: [t.id] };
+    return _h2.call(this, core, u, p); }; }
     const _h = BAI.hero; BAI.hero = function (core, u, p) { if (core.foesOf(u).some(f => core.hasStatus(f, 'charging')) && !core.hasStatus(u, 'guard') && core.rng.chance(0.9)) return { type: 'defend' }; return _h.call(this, core, u, p); };
     const fight = (cfg, st, seed) => { const c = BB.build({ ...cfg, seed }, st); c.cfg.maxRounds = 40; c.start(true); return { win: c.result && c.result.outcome === 'win', r: c.round, hp: c.byId.H.res.hp / c.byId.H.max.hp }; };
     const CLS = Object.keys(DEF.classes);
@@ -26,9 +35,9 @@ module.exports = async (g) => {
       for (const [m, lv] of WILD) { const d = MAPS[m], tab = (d.encounters || [])[0] && d.encounters[0].table || []; const sps = tab.map(r => r[0]).filter(s => SPECIES[s]).slice(0, 4); const t = tierOf(lv); const row = { m, lv, sps, by: {} };
         for (const cls of CLS) { let w = 0, r = 0, hp = 0, n = 0; for (const sp of sps) for (let i = 0; i < 3; i++) { const st = hero(cls, lv, t); const multi = i === 2; const f = fight({ sp, lv: lv - 1, kind: 'wild', extra: multi ? [[sp, lv - 1], [sp, lv - 1]] : [] }, st, 300 + i * 17 + cls.length); n++; if (f.win) w++; r += f.r; hp += f.win ? f.hp : 0; } row.by[cls] = [w, n, r / n, hp / Math.max(1, w)]; }
         out.wild.push(row); }
-    } finally { BAI.hero = _h; }
+    } finally { BAI.hero = _h0; }
     out.cls = Object.fromEntries(CLS.map(k => [k, (CLASSES[k] || {}).n || k])); return out; }, [PROFILE, PATCH, ONLY]);
-  const C = Object.keys(res.cls), L = ['# 第二輪數值檢查（自動產生，tools/r2sim.js，裝備：' + (PROFILE === 'low' ? '低' : '好') + '）', '', '主角：天賦自動（甲）、職業技能最後 4 招、裝備＝' + (PROFILE === 'low' ? '前一個地區最高階的藍色 +0' : '該地區最高階的紫色 +3') + '（武器依職業挑物攻或魔攻）。AI：測試用 AI，魔物蓄力（⚠）時 90% 會防禦，不用道具。每格 6 場。', '',
+  const C = Object.keys(res.cls), L = ['# 第二輪數值檢查（自動產生，tools/r2sim.js，裝備：' + (PROFILE === 'low' ? '低' : '好') + '）', '', '主角：天賦自動（甲）、職業技能最後 4 招、裝備＝' + (PROFILE === 'low' ? '前一個地區最高階的藍色 +0' : '該地區最高階的紫色 +3') + '（武器依職業挑物攻或魔攻）。AI：測試用 AI，魔物蓄力（⚠）時 90% 會防禦，魔導士會先湊三種咒印再放元素奔流，不用道具。每格 6 場。', '',
     '## 頭目勝率（主角等級＝頭目等級／＋3）', '', '| 頭目 | Lv | ' + C.map(k => res.cls[k]).join(' | ') + ' | 平均 |', '|---|---|' + C.map(() => '---|').join('') + '---|'];
   for (const r of res.boss) for (const dl of [0, 3]) { const v = C.map(k => r.by[k + '+' + dl]); const avg = Math.round(v.reduce((a, x) => a + x[0] / x[1], 0) / v.length * 100);
     L.push('| ' + (dl ? '　（+3）' : r.n) + ' | ' + (r.lv + dl) + ' | ' + v.map(x => Math.round(x[0] / x[1] * 100)).join(' | ') + ' | ' + avg + ' |'); }

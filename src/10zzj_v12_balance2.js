@@ -20,3 +20,16 @@ SIG12.monk.power = 35; SIG12.monk.d = SIG12.monk.d.replace('各 30', '各 35'); 
 { const M = DEF.mechanics.cls_guardian, mk = M.make; M.make = u => { const r = mk(u); for (const m of r.mods || []) if (m.mul === 0.7 && m.cond && m.cond.guarding) m.mul = 0.8; return r; }; }
 CLS12.guardian.passive[1] = CLS12.guardian.passive[1].replace('再減傷 30%', '再減傷 20%'); DEF.classes.guardian.passive.d = CLS12.guardian.passive[1];
 if (typeof BATTLE_HELP !== 'undefined') for (const P of BATTLE_HELP) P[1] = P[1].map(t => t.replace('「守護之盾」再減30%', '「守護之盾」再減20%'));
+
+/* ---------- 第二輪（續）（玩家：「那就調整數值」，2026-10-03） ----------
+   tools/r2sim.js now plays the mage the way a player does (three sigils, then 元素奔流); with that the mage is mid-pack
+   (71%／44%), so the mage keeps +30%. Still behind with weak gear: 劍聖 18%、武僧 8%、魔劍士 13% → damage +20%／+30%／+30%
+   (simulated 83%／32%, 81%／31%, 79%／31%). 腐沼九頭蛇 was still easy (83%): HP +10% → +30% and 毒霧吐息 poisons 30% → 60%
+   (its 腐沼洪流 doubles on a poisoned target), simulated 95%／48%. */
+const PW12 = { swordsman: 1.2, monk: 1.3, spellblade: 1.3 };
+for (const c in PW12) { defPut('mechanics', 'pw12_' + c, { layer: 'class', mods: [{ stage: 'attacker', who: 'attacker', mul: PW12[c], cond: { hasPower: 1, tgtSide: 'enemy' } }] });
+  CLS12[c].passive[1] += '；造成的傷害 +' + Math.round((PW12[c] - 1) * 100) + '%'; DEF.classes[c].passive.d = CLS12[c].passive[1]; }
+{ const _hs = BB.heroSpec; BB.heroSpec = function (st, cfg) { const s = _hs.call(this, st, cfg), c = clsV7(st.cls); if (PW12[c]) s.data.mechanics.push('pw12_' + c); return s; }; }
+BOSS_HP12.hydra = 1.3;
+{ const E = DEF.skills.m_venomSpray.effects.map(x => DEF.effects[x]).find(x => x && x.type === 'status' && x.status === 'psn'); if (E) E.chance = 0.6; MOVES.m_venomSpray.eff = { ...MOVES.m_venomSpray.eff, p: 60 };
+  if (MOVES.m_venomSpray.d && !/中毒/.test(MOVES.m_venomSpray.d)) MOVES.m_venomSpray.d += '常常讓對手中毒。'; } // only the hydra uses it
