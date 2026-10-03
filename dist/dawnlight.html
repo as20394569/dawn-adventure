@@ -4875,7 +4875,7 @@ function* equipPick(sl) {
     Font.draw(x, '裝上後的變化', 10, Y0 + 3, UIC.accent, UIC.textSh, 10);
     if (!d.length) Font.draw(x, '能力沒有變化', 12, Y0 + 17, UIC.muted, UIC.textSh, 10);
     d.slice(0, 8).forEach(([k, v], i) => { const X = 12 + (i % 2) * 62, Y = Y0 + 17 + Math.floor(i / 2) * 13; Font.draw(x, (k === 'mp' ? 'MP' : k === 'crit' ? '會心' : STAT_NAMES[k]), X, Y, UIC.muted, UIC.textSh, 10); Font.drawR(x, (v > 0 ? '+' : '') + v + (k === 'crit' ? '%' : ''), X + 56, Y, v > 0 ? UIC.good : UIC.bad, UIC.textSh, 10); });
-    if (o.g) { const L = gearInfoLines(o.g).filter(l => l[0].startsWith('・') || l[0].startsWith('★')).concat(GEAR[o.g.b].elem ? [[GEAR[o.g.b].elem + '屬性武器', '#c8f0ff', 10, 0]] : []), yy = Y0 + 17 + Math.ceil(Math.min(8, d.length || 1) / 2) * 13 + 4; drawInfoLines(x, L.map(l => [l[0], l[1], 10, 0]), 10, yy, H - 20); Font.drawR(x, '→ 詳情', 166, H - 17, UIC.accent, UIC.textSh, 9); }
+    if (o.g) { const L = gearInfoLines(o.g).filter(l => l[0].startsWith('・') || l[0].startsWith('★')).map(l => l[0].startsWith('・') && l[0].includes('：') ? [l[0].split('：')[0], l[1], l[2], l[3]] : l) /* v12.0.9k (player: 「武器的效果詞綴不如顯示名稱就好」): effects show the name only here; → 詳情 has the full text */.concat(GEAR[o.g.b].elem ? [[GEAR[o.g.b].elem + '屬性武器', '#c8f0ff', 10, 0]] : []), yy = Y0 + 17 + Math.ceil(Math.min(8, d.length || 1) / 2) * 13 + 4; drawInfoLines(x, L.map(l => [l[0], l[1], 10, 0]), 10, yy, H - 20); Font.drawR(x, '→ 詳情', 166, H - 17, UIC.accent, UIC.textSh, 9); }
   } };
   UI.push(scr);
   while (true) {
