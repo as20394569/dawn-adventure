@@ -2125,8 +2125,9 @@ function* recordScreen() {
       const id = maps[mi]; drawWin(x, 4, 24, 168, 200, 'menu');
       if (!id) { Font.draw(x, '還沒有探索過任何地方。', 14, 30, UIC.muted, UIC.textSh); return; }
       Font.draw(x, EXPLORE[id] + (MAPS[id].type ? '・' + MAPS[id].type : ''), 12, 26, UIC.accent, UIC.textSh); if (maps.length > 1) Font.drawR(x, '↑↓ 切換地區', 166, 27, UIC.muted, UIC.textSh, 10);
-      drawMiniMap(x, id, 8, 44, 160, 176, st);
-      drawWin(x, 4, 226, 168, 26, 'menu'); Font.draw(x, '探索度 ' + Math.round(mapPct(id) * 100) + '%', 12, 230, UIC.text, UIC.textSh); Font.drawR(x, '總探索度 ' + Math.round(totalPct() * 100) + '%', 166, 230, UIC.warm, UIC.textSh);
+      drawMiniMap(x, id, 8, 44, 160, 146, st);
+      drawWin(x, 4, 194, 168, 58, 'menu'); Font.draw(x, '探索度 ' + Math.round(mapPct(id) * 100) + '%', 12, 198, UIC.text, UIC.textSh); Font.drawR(x, '總探索度 ' + Math.round(totalPct() * 100) + '%', 166, 198, UIC.warm, UIC.textSh);
+      if (typeof mapProgress12 === 'function') { const P = mapProgress12(id, st); Font.draw(x, P[0], 12, 216, UIC.text, UIC.textSh, 10); Font.draw(x, P[1], 12, 232, UIC.text, UIC.textSh, 10); } // v12.0.4
     } else {
       const A = ACHIEVEMENTS, got = A.filter(a => (st.ach || {})[a.id]).length; drawWin(x, 4, 24, 168, 228, 'menu'); Font.draw(x, '已解鎖 ' + got + '/' + A.length, 12, 26, UIC.warm, UIC.textSh); Font.drawR(x, '每個成就 +200 G', 166, 27, UIC.muted, UIC.textSh, 10);
       A.slice(top, top + VIS).forEach((a, i) => { const Y = 44 + i * 23, on = (st.ach || {})[a.id]; x.fillStyle = on ? 'rgba(255,196,77,0.10)' : 'rgba(255,255,255,0.03)'; x.fillRect(8, Y, 160, 21);
@@ -17653,7 +17654,7 @@ const GROW12 = [
   ['天賦與職業招式', '升級和天賦之書會給天賦點。在選單的「天賦」，每一層二選一；天賦點也能強化職業招式。'],
   ['技能練度', '每用一次技能練度 +1：滿第一格學會（武器技能），再用 6 次可以進化「改」，再用 24 次進化「極」。修練之書：練度 +12。'],
   ['裝備', '鐵匠「打造」：用設計圖和素材做裝備。鐵匠「強化」：強化到 +10、用精煉石升星、重鑄詞綴或品質。'],
-  ['果實', '六種果實會永久提升能力，同一種越買越貴。'],
+  ['果實', '六種果實會永久提升能力。果實買越多越貴（六種一起算）。'],
 ];
 function* handbookScreen12() {
   while (true) { const r = yield* ask('冒險手冊', ['任務', '圖鑑', '紀錄', '變強的方法', '返回']);
@@ -17700,7 +17701,7 @@ const longPress12 = () => { if (__lpF12 !== Game.frame) { __lpF12 = Game.frame; 
 { const _cs = classSelectScreen; classSelectScreen = function* (...a) { Game.autoIntro = false; return yield* _cs.apply(this, a); }; }
 { const _ts = TitleScene.prototype.enter; TitleScene.prototype.enter = function (...a) { Game.autoIntro = false; return _ts ? _ts.apply(this, a) : undefined; }; }
 { const _d = TextBox.prototype.draw; TextBox.prototype.draw = function (x) { _d.call(this, x);
-    const S = Game.settings; if (S.ffHint12 || Game.autoIntro || !(this.style === 'ow' || this.style === 'dark') || this.y < 60) return;
+    const S = Game.settings; if (S.ffHint12 || Game.autoIntro || this.keep || UI.stack[UI.stack.length - 1] !== this || !(this.style === 'ow' || this.style === 'dark') || this.y < 60) return;
     Font.drawR(x, '長按畫面（或按住B）可以快轉', this.x + this.w - 4, this.y - 11, UIC.muted, UIC.textSh, 9);
     if ((S.ffHintT12 = (S.ffHintT12 || 0) + 1) > 600) { S.ffHint12 = 1; delete S.ffHintT12; saveSettings(); } }; }
 { const _bp = gainBP; gainBP = function (k, q, st = Game.st, ...a) { const r = _bp.call(this, k, q, st, ...a); if (st && st.flags && st.flags.license && !st.flags.h12bp) st.flags.h12bp = 1; return r; }; }
@@ -17773,3 +17774,24 @@ if (COMMISSIONS.c34) COMMISSIONS.c34.open = st => !!comState('c34', st); // 星�
 { const A = ACHIEVEMENTS.find(a => a.id === 'com'); if (A) A.ok = st => Object.keys(COMMISSIONS).every(k => k === 'c34' || (comState(k, st) || {}).s === 'done'); }
 for (let i = FOE_SPOTS.length - 1; i >= 0; i--) if (['rift', 'starShrine'].includes(FOE_SPOTS[i].map)) FOE_SPOTS.splice(i, 1);
 { const _ql = questList; questList = function (st = Game.st) { return _ql(st).filter(q => q.n !== '井底更深處'); }; } // 初代勇者的試煉 replaced the rope route
+const RARE12 = { windHills: 'goldSlime', jadeCreek: 'moonFox', maplePass: 'moonFox', oldField: 'goldSkeleton', capSewer: 'gemSlime', lavaTunnel: 'gemSlime',
+  clockTower1: 'crystalBat', iceCave: 'crystalBat', duskFort1: 'paleWraith', northRoad: 'moonFox', goldPlains: 'goldSlime', emberPass: 'gemSlime' };
+const encRange12 = m => { let lo = 99, hi = 0; for (const e of MAPS[m].encounters || []) for (const r of e.table || []) { lo = Math.min(lo, r[1]); hi = Math.max(hi, r[2] ?? r[1]); } return hi ? [lo, hi] : null; };
+for (const m in RARE12) { const d = MAPS[m], sp = RARE12[m]; if (!d || !SPECIES[sp] || !MON_PANEL[sp]) continue; const L = encRange12(m); if (!L) continue; d.rare = [sp, L[0], L[1]]; }
+const PERM12 = { northRoad: 'agiFruit', capSewer: 'trainBook', clockTower1: 'dexFruit', frostField: 'vitFruit', iceCave: 'trainBook', lavaTunnel: 'powerFruit', duskFort1: 'tpBook' };
+const chestCons12 = it => !it.gold && !it.q && !it.show && ITEMS[it.item] && /傷藥|魔力|萬靈藥|活力茶/.test(ITEMS[it.item].n);
+function mapEntries12(d) { const E = [], h = d.rows.length, w = d.rows[0].length;
+  if (d.exit && typeof d.exit.x === 'number') E.push([d.exit.x, d.exit.y]);
+  for (const e of d.edgeWarps || []) { const [a, b] = e.at || [0, 0]; for (let k = a; k <= b; k++) E.push(e.dir === 'up' ? [k, 0] : e.dir === 'down' ? [k, h - 1] : e.dir === 'left' ? [0, k] : [w - 1, k]); }
+  if (!E.length) E.push([Math.floor(w / 2), h - 1]); return E; }
+for (const m in PERM12) { const d = MAPS[m]; if (!d || !d.items || !ITEMS[PERM12[m]]) continue; const E = mapEntries12(d);
+  const far = d.items.filter(chestCons12).map(it => [it, Math.min(...E.map(([x, y]) => Math.abs(x - it.x) + Math.abs(y - it.y)))]).sort((a, b) => b[1] - a[1])[0];
+  if (far) { far[0].item = PERM12[m]; delete far[0].n; far[0].perm12 = 1; } }
+for (const m in MAPS) { const d = MAPS[m], L = d.items && mapLevel(m); if (!L || L[0] < 17) continue; for (const it of d.items) if (it.item === 'superPotion' && ITEMS.megaPotion) it.item = 'megaPotion'; }
+function mapProgress12(id, st = Game.st) { const d = MAPS[id] || {}, f = st.flags || {}, mark = ok => ok ? '✓' : '—';
+  const items = (d.items || []).filter(it => f[it.id] || !it.show || it.show(st)), got = items.filter(it => f[it.id]).length;
+  const L = LORE.map((l, i) => [l, i]).filter(([l]) => l[0] === id), read = L.filter(([, i]) => (st.lore || {})[i]).length;
+  const a = ['寶箱 ' + got + '／' + items.length].concat(L.length ? ['記載之石 ' + read + '／' + L.length] : []);
+  const ws = (d.npcs || []).some(n => n.id === 'wshrine_' + id), ext = typeof EXT_OPEN !== 'undefined' && EXT_OPEN[id], rr = d.rare;
+  const b = [ws ? '天氣祠 ' + mark((st.wsh || {})[id] !== undefined) : '', ext ? '祕境 ' + mark(extSeen(id, st)) : '', rr ? '稀有魔物 ' + mark(((st.dex || {})[rr[0]] || {}).won > 0) : ''].filter(Boolean);
+  return [a.join('　'), b.join('　')]; }

@@ -200,8 +200,9 @@ function* recordScreen() {
       const id = maps[mi]; drawWin(x, 4, 24, 168, 200, 'menu');
       if (!id) { Font.draw(x, '還沒有探索過任何地方。', 14, 30, UIC.muted, UIC.textSh); return; }
       Font.draw(x, EXPLORE[id] + (MAPS[id].type ? '・' + MAPS[id].type : ''), 12, 26, UIC.accent, UIC.textSh); if (maps.length > 1) Font.drawR(x, '↑↓ 切換地區', 166, 27, UIC.muted, UIC.textSh, 10);
-      drawMiniMap(x, id, 8, 44, 160, 176, st);
-      drawWin(x, 4, 226, 168, 26, 'menu'); Font.draw(x, '探索度 ' + Math.round(mapPct(id) * 100) + '%', 12, 230, UIC.text, UIC.textSh); Font.drawR(x, '總探索度 ' + Math.round(totalPct() * 100) + '%', 166, 230, UIC.warm, UIC.textSh);
+      drawMiniMap(x, id, 8, 44, 160, 146, st);
+      drawWin(x, 4, 194, 168, 58, 'menu'); Font.draw(x, '探索度 ' + Math.round(mapPct(id) * 100) + '%', 12, 198, UIC.text, UIC.textSh); Font.drawR(x, '總探索度 ' + Math.round(totalPct() * 100) + '%', 166, 198, UIC.warm, UIC.textSh);
+      if (typeof mapProgress12 === 'function') { const P = mapProgress12(id, st); Font.draw(x, P[0], 12, 216, UIC.text, UIC.textSh, 10); Font.draw(x, P[1], 12, 232, UIC.text, UIC.textSh, 10); } // v12.0.4
     } else {
       const A = ACHIEVEMENTS, got = A.filter(a => (st.ach || {})[a.id]).length; drawWin(x, 4, 24, 168, 228, 'menu'); Font.draw(x, '已解鎖 ' + got + '/' + A.length, 12, 26, UIC.warm, UIC.textSh); Font.drawR(x, '每個成就 +200 G', 166, 27, UIC.muted, UIC.textSh, 10);
       A.slice(top, top + VIS).forEach((a, i) => { const Y = 44 + i * 23, on = (st.ach || {})[a.id]; x.fillStyle = on ? 'rgba(255,196,77,0.10)' : 'rgba(255,255,255,0.03)'; x.fillRect(8, Y, 160, 21);

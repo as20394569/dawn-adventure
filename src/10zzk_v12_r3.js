@@ -20,7 +20,7 @@ const longPress12 = () => { if (__lpF12 !== Game.frame) { __lpF12 = Game.frame; 
 { const _ts = TitleScene.prototype.enter; TitleScene.prototype.enter = function (...a) { Game.autoIntro = false; return _ts ? _ts.apply(this, a) : undefined; }; }
 // one hint beside the first dialogues on this device
 { const _d = TextBox.prototype.draw; TextBox.prototype.draw = function (x) { _d.call(this, x);
-    const S = Game.settings; if (S.ffHint12 || Game.autoIntro || !(this.style === 'ow' || this.style === 'dark') || this.y < 60) return;
+    const S = Game.settings; if (S.ffHint12 || Game.autoIntro || this.keep || UI.stack[UI.stack.length - 1] !== this || !(this.style === 'ow' || this.style === 'dark') || this.y < 60) return;
     Font.drawR(x, '長按畫面（或按住B）可以快轉', this.x + this.w - 4, this.y - 11, UIC.muted, UIC.textSh, 9);
     if ((S.ffHintT12 = (S.ffHintT12 || 0) + 1) > 600) { S.ffHint12 = 1; delete S.ffHintT12; saveSettings(); } }; }
 
