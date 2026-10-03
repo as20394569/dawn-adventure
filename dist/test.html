@@ -18194,7 +18194,7 @@ const M6_MOVES = {
   m6_rootWeb: { n: '根網', t: '草', cat: '物', pow: 45, acc: 95, pp: 10, eff: { st: 'par', p: 50 }, d: '用樹根織成的網罩住對手。常常讓對手麻痺。', cls: 'strike', fx: 'm_rootBind' },
   m6_sandStorm: { n: '砂暴', t: '岩', cat: '特', pow: 70, acc: 90, pp: 10, eff: { flinch: 1, p: 20 }, d: '捲起砂暴。有時讓對手退縮。', cls: 'area', fx: 'm_sandstorm' },
   m6_lunarTide: { n: '月潮', t: '水', cat: '特', pow: 70, acc: 100, pp: 10, drain: 0.5, d: '引來發光的潮水。回復造成傷害一半的 HP。', cls: 'area', fx: 'm_whirlpool' },
-  m6_mudCoil: { n: '泥漩纏身', t: '水', cat: '特', pow: 60, acc: 95, pp: 10, eff: { stat: { spe: -1 }, p: 100 }, d: '捲起泥漩把對手纏住。降低對手的速度。', cls: 'bolt', fx: 'm_mudBomb' },
+  m6_mudCoil: { n: '泥漩纏身', t: '水', cat: '特', pow: 60, acc: 95, pp: 10, eff: { stat: { spe: -1 }, st: 'psn', p: 60 }, d: '捲起混著毒泥的漩渦把對手纏住。常常降低對手的速度、讓對手中毒。', cls: 'bolt', mfx: mxRecolor(MFX.m_whirlpool, ['#3a2a18', '#7a4a90', '#d0a8f0']) },
   m6_cavein: { n: '崩落衝撞', t: '岩', cat: '物', pow: 95, acc: 90, pp: 5, charge: 1, chargeMsg: '用背殼頂住洞頂，碎石開始落下……', warn: '（洞頂要塌了！先防禦！）', d: '蓄力一回合，下一回合連洞頂一起撞下來。', cls: 'charge', fx: 'm_rockfall' },
   m6_breach: { n: '破城一擊', t: '一般', cat: '物', pow: 80, acc: 90, pp: 10, pierceDef: 0.5, d: '攻城槌的全力一擊。無視對手一半的物防。', cls: 'strike', fx: 'm_golemFist' },
   m6_berserk: { n: '狂暴', t: '一般', cat: '變', pp: 10, stat: { who: 'self', atk: 2 }, d: '扯掉頭巾狂吼。大幅提升物攻。', cls: 'buff', fx: 'm_warRoar' },
