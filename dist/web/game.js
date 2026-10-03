@@ -20466,3 +20466,4 @@ for (const id in MAPS) { const d = MAPS[id], R = d.rows; if (!R || !d.items || !
     for (let r = 1; r < 6 && !best; r++) for (let dy = -r; dy <= r && !best; dy++) for (let dx = -r; dx <= r && !best; dx++) { const x = it.x + dx, y = it.y + dy; if (Math.max(Math.abs(dx), Math.abs(dy)) !== r) continue;
       if (x < 1 || y < 1 || x >= Wd - 1 || y >= H - 1 || SOLID.has(R[y][x]) || busy.has(x + ',' + y)) continue; best = [x, y]; }
     if (best) { busy.add(best[0] + ',' + best[1]); it.x = best[0]; it.y = best[1]; } } }
+{ const _ds = dlgSetup; dlgSetup = function (t, o) { if (Game.talker && Game.scene && Game.scene.constructor === Battle) { const T = Game.talker; Game.talker = null; try { return _ds(t, o); } finally { Game.talker = T; } } return _ds(t, o); }; }
