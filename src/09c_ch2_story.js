@@ -229,7 +229,7 @@ Object.assign(Events, {
     yield* say('隨時再來！');
   },
   *capResident() { yield* say('我年輕的時候，鐘塔每天早上都會響……真懷念。'); },
-  *capScholar() { yield* sayAll(['四將……影將莫爾德、還有另外三個。', '古書說，他們各自被封印在大陸的四個角落。', '影將在北境。其他的……我還在查。']); },
+  *capScholar() { yield* sayAll(['四將……影將莫爾德、還有另外三個。', '古書說，他們各自被封印在大陸的四個角落。', '曙光鐘的聲音，是靠鐘裡的「曙光之心」發出來的。北境那邊，另外還有霜之女王用冰守著影將的要塞。', '影將在北境。其他的……我還在查。']); },
   /* ----- 地下水道 ----- */
   *ratBoss(ow) {
     const st = Game.st, f = st.flags; if (f.ratKing) return;

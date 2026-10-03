@@ -89,6 +89,11 @@ function* todoScreen12(first) {
       else if (r === 3) { while (true) { const k = yield* ask('變強的方法', GROW12.map(q => q[0]).concat('返回')); if (k < 0 || k >= GROW12.length) break; yield* say(GROW12[k][1]); } }
       else if (r === 4) yield* todoScreen12(false); else break; } }; }
 
+/* ---------- 設定集矛盾 4（玩家勾「是伏筆」）：讀過古戰場的記載之石後，漢斯提一句名字的由來 ---------- */
+{ const _h = Events.hans; Events.hans = function* (...a) { const st = Game.st, f = st.flags, i = LORE.findIndex(l => l[0] === 'oldField');
+    if (f.creekQ === 3 && !f.hansName && i >= 0 && (st.lore || {})[i]) { f.hansName = 1; yield* say('漢斯：「古戰場的石碑上，有個叫漢斯的磨坊學徒？……這個名字，是我們磨坊代代傳下來的。」'); }
+    yield* _h.apply(this, a); }; }
+
 /* ---------- 關閉中的內容 ---------- */
 if (COMMISSIONS.c34) COMMISSIONS.c34.open = st => !!comState('c34', st); // 星塵只在星見神殿：神殿打開時再開放（已經接下的照舊）
 { const A = ACHIEVEMENTS.find(a => a.id === 'com'); if (A) A.ok = st => Object.keys(COMMISSIONS).every(k => k === 'c34' || (comState(k, st) || {}).s === 'done'); }
