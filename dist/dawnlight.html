@@ -20664,4 +20664,27 @@ questDetail = function (q, st = Game.st) {
   if (q.rw) { gap(); add('報酬：' + q.rw, UIC.warm, 10); }
   return L;
 };
+Object.assign(EFFECT_TYPES, {
+  spirit_marks9: { exec(core, ef, ctx) { const u = ctx.owner; for (const f of core.foesOf(u)) if (core.isUp(f)) core.applyStatus(u, f, 'hunt_mark', { quiet: true }); } },
+  spirit_insight9: { exec(core, ef, ctx) { const u = ctx.owner, I = u.data.insight || (u.data.insight = {}), mx = BV12.insightMax(core, u);
+    for (const f of core.foesOf(u)) { const k = BV12.insightKey(core, u, f); I[k] = Math.min(mx, (I[k] || 0) + 1); } } },
+  spirit_sigil9: { exec(core, ef, ctx) { const u = ctx.owner, L = u.data.sigils || []; const el = [u.data.welem, '火', '水', '雷', '草'].find(e => e && ['火', '水', '雷', '草'].includes(e) && !L.includes(e));
+    if (el) EFFECT_TYPES.sigil_add.exec(core, { type: 'sigil_add', el }, ctx); } },
+});
+{ const R = res => [{ on: EVT.BATTLE_START, phase: 'POST', prio: -10, effects: [{ type: 'resource', target: 'self', res, amount: 1, why: 'start' }] }], S = type => [{ on: EVT.BATTLE_START, phase: 'POST', prio: -10, effects: [{ type }] }];
+  const T = { swordsman: R('ki'), guardian: R('stance'), bard: R('beat'), monk: R('chi'), dragoon: R('dragon'), spellblade: R('rune'),
+    mage: S('spirit_sigil9'), otherworlder: S('spirit_insight9'), ranger: S('spirit_marks9'),
+    machinist: [{ on: EVT.BATTLE_START, phase: 'POST', prio: -10, effects: [{ type: 'status', target: 'self', status: 'turret', delta: 1 }] }] };
+  DEF.passives.faSpirit.make = (v, u) => ({ triggers: T[u && u.cls] || [] }); }
+const SPIRIT_TXT9 = { swordsman: '開場劍意 +1', guardian: '開場守勢 +1', bard: '開場樂章 +1', monk: '開場氣 +1', dragoon: '開場龍血 +1', spellblade: '開場魔紋 +1',
+  mage: '開場多 1 個咒印（武器屬性，已經有就換別的屬性）', otherworlder: '開場每種魔物看破 +1', ranger: '開場時每隻魔物身上有 1 層獵印', machinist: '開場砲台多 1 發彈藥' };
+FA9.f_spirit[4] = () => { const c = Game.st && Game.st.cls ? clsV7(Game.st.cls) : null; return SPIRIT_TXT9[c] || '開場職業資源 +1'; };
+COND.notInSpecial9 = (c, v) => !(c.core.evStack || []).some(e => e.type === EVT.SKILL_USE && DEF.skills[e.payload.skill] && DEF.skills[e.payload.skill].tags.includes('weapon_special')) === !!v;
+{ const T = DEF.talents['bard.0.1.1']; if (T) { const m = T.make; T.make = (...a) => { const r = m(...a); return { ...r, triggers: (r.triggers || []).map(t => ({ ...t, cond: { ...(t.cond || {}), notInSpecial9: 1 } })) }; }; } }
+for (const id in MAPS) { const d = MAPS[id], R = d.rows; if (!R || !d.items || !d.npcs) continue; const H = R.length, Wd = R[0].length;
+  const busy = new Set([...d.npcs, ...d.items, ...(d.gathers || [])].map(e => e.x + ',' + e.y)); for (const k in d.signs || {}) busy.add(k);
+  for (const it of d.items) { if (!d.npcs.some(n => n.x === it.x && n.y === it.y)) continue; let best = null;
+    for (let r = 1; r < 6 && !best; r++) for (let dy = -r; dy <= r && !best; dy++) for (let dx = -r; dx <= r && !best; dx++) { const x = it.x + dx, y = it.y + dy; if (Math.max(Math.abs(dx), Math.abs(dy)) !== r) continue;
+      if (x < 1 || y < 1 || x >= Wd - 1 || y >= H - 1 || SOLID.has(R[y][x]) || busy.has(x + ',' + y)) continue; best = [x, y]; }
+    if (best) { busy.add(best[0] + ',' + best[1]); it.x = best[0]; it.y = best[1]; } } }
 </script>
