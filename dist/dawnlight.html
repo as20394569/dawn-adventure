@@ -17699,23 +17699,11 @@ Battle.prototype.drawSpd12 = function (x) {
 { const _bf = Battle.prototype.drawBoxF; Battle.prototype.drawBoxF = function (x) { _bf.call(this, x); this.drawSpd12(x); }; }
 if (typeof BATTLE_HELP !== 'undefined') { const i = BATTLE_HELP.findIndex(q => q[0] === '技能與冷卻');
   BATTLE_HELP.splice(i < 0 ? BATTLE_HELP.length : i + 1, 0, ['戰鬥速度', ['點戰鬥畫面右上角的「×2」，戰鬥動畫會加快一倍；再點一次恢復普通。', '選指令、選技能時不受影響。設定裡的「戰鬥速度」也可以切換，鍵盤是 Select 鍵。']]); }
-const MAT2_12 = { skeleton: 'riftShard', ghostLamp: 'riftShard', drownedSoul: 'riftShard', crystalPebble: 'riftShard',
-  iceBat: 'starShard', iceGolem: 'starShard', gearSprite: 'starShard', towerBat: 'starShard',
-  frostWraith: 'starDust', frostSlime: 'starDust', clockSoldier: 'starDust', hollowArmor: 'starDust' };
-for (const k in MAT2_12) if (!SPECIES[k]) { console.warn('mat2: no species', k); delete MAT2_12[k]; }
-{ const g = (MAPS.iceCave.gathers || []).find(q => q.id === 'gic2'); if (g) Object.assign(g, { kind: 'star', mat: 'starDust' }); }
-Object.assign(ITEMS.riftShard, { d: '異界裂縫留下的碎片，會自己發出微光。古岩遺跡和地下水道的魔物身上偶爾找得到。' });
-Object.assign(ITEMS.starShard, { d: '流星掉下來的碎片。冰晶洞窟和曙光鐘塔的魔物偶爾會帶著。' });
-Object.assign(ITEMS.starDust, { d: '閃閃發亮的粉末。冰晶洞窟的採集點和曙光鐘塔的魔物身上找得到。' });
-{ const _v = Battle.prototype.victory; Battle.prototype.victory = function* (...a) { const r = yield* _v.apply(this, a), st = Game.st;
-    for (const v of this.defeated()) { if (v.elite || v.boss || v.minion) continue; const m = MAT2_12[v.sp]; if (!m || !ITEMS[m] || !chance(0.2)) continue;
-      st.bag[m] = (st.bag[m] || 0) + 1; yield* this.msg('得到了素材「' + ITEMS[m].n + '」！', { hold: 30 }); }
-    return r; }; }
 { const CLOSED = ['rift', 'starShrine'], mapN = m => (MAPS[m] && MAPS[m].name || m).replace(/ \d+F$/, '');
   for (const k in MAT_SRC) delete MAT_SRC[k];
   const add = (k, t) => { (MAT_SRC[k] = MAT_SRC[k] || []).includes(t) || MAT_SRC[k].push(t); }, spOf = s => SPECIES[s] && SPECIES[s].mat ? SPECIES[s] : null;
   for (const m in MAPS) { if (CLOSED.includes(m)) continue; const d = MAPS[m];
-    for (const e of d.encounters || []) for (const r of e.table || []) { const sp = spOf(r[0]); if (sp) add(sp.mat, sp.n + '・' + mapN(m)); if (MAT2_12[r[0]]) add(MAT2_12[r[0]], SPECIES[r[0]].n + '・' + mapN(m)); }
+    for (const e of d.encounters || []) for (const r of e.table || []) { const sp = spOf(r[0]); if (sp) add(sp.mat, sp.n + '・' + mapN(m)); }
     for (const e of d.elites || []) { const sp = spOf(e.sp); if (sp) add(sp.mat, sp.n + '・' + mapN(m)); }
     if (d.boss) { const sp = spOf(d.boss.sp); if (sp) add(sp.mat, sp.n + '・' + mapN(m)); }
     for (const g of d.gathers || []) if (g.mat) add(g.mat, '採集・' + mapN(m)); } }
