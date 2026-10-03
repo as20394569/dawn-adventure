@@ -9746,7 +9746,7 @@ function syncRecipesCh2(st = Game.st) { for (const R of RECIPES_CH2) { const i =
 }
 { const _eq = extraQuests; extraQuests = function (st, L) {
     _eq(st, L); const f = st.flags, n = ch2(st); if (!n && !f.golem) return;
-    const T = !n ? '王都派來的騎士正在萌芽鎮找你。（村長家附近）' : n === 1 ? '搭萌芽鎮的馬車到北方街道，往北前往王都艾爾德蘭。' : n === 2 ? '到王都北邊的王城，謁見國王。'
+    const T = !n ? '王都派來的騎士雷恩正在萌芽鎮找你。（村長家附近）' : n === 1 ? '往北穿過北方街道，前往王都艾爾德蘭。（萌芽鎮的馬車也能直接送你到北方街道）' : n === 2 ? '到王都北邊的王城，謁見國王阿爾德里克。'
       : n === 3 ? '找回兩個「時之齒輪」：王都地下水道（王都西南的水道入口）和金穗平原的風車小屋。（' + gearCount(st) + '/2）→ 交給鐘錶師艾德' + (gearCount(st) >= 2 ? '　★兩個都找到了！' : '')
       : n === 4 ? '曙光鐘塔的門開了。登上鐘樓，重新啟動曙光鐘。' : n === 5 ? (f.northPass ? '宰相逃往北方。穿過霜語雪原，前往冰晶洞窟——北方山道被冰封住了。' : '回到王城向國王報告。')
       : n === 6 ? '北方山道解凍了。越過赤焰山道，進入熔岩坑道。' : n === 7 ? '火之印打開了要塞之門。穿過熔岩坑道深處，攻入黯滅要塞。' : n === 8 ? '宰相倒下了。登上要塞的王座之間，打倒影將莫爾德。'
@@ -11905,7 +11905,7 @@ const v8Gate = st => !!st.v8new && st.flags.license && (st.flags.hillsQ || 0) < 
 function* hillsIntro() {
   const st = Game.st, f = st.flags; f.hillsQ = 1;
   yield* sayAll(['……對了。', '東邊風車丘陵的磨坊主人漢斯，已經三天沒來送麵粉了。', '丘陵上的風車，從前天起就一動也不動……聽說夜裡還冒出了黑色的霧。',
-    st.lv >= 10 ? '以你現在的本事應該不成問題。去看看吧，從鎮上的東邊出去就是了。' : '那裡的魔物不算強，正好讓你練練手。從鎮上的東邊出去就是了。']);
+    st.lv >= 10 ? '以你現在的本事應該不成問題。去看看吧，從鎮上的東邊出去就是了。' : '山腳的魔物不算強，正好讓你練練手。不過山頂那邊不太對勁……等你熟練一點再上去。從鎮上的東邊出去就是了。']);
   if (st.v8new && st.lv < 8) yield* say('（晨霧道路北邊的魔物還太強。先去風車丘陵吧。）');
 }
 function* hillsReport() {
@@ -12054,7 +12054,7 @@ function* creekCure() {
   yield* sayAll(['漢斯手臂上的黑斑，慢慢地淡了下去。', '漢斯：「……身體好輕。這陣子像被什麼東西壓著一樣。」', '漢斯：「你救了我兩次了。我們一家欠你一輩子。」',
     '諾拉：「這個……給你。是我繡的緞帶，會保佑你平安。」']);
   gainBP('qNoraRibbon', 3); Sound.jingle('item'); yield* itemGet('得到了「諾拉的緞帶」的設計圖和打造券！');
-  yield* sayAll(['漢斯：「對了，北邊橋頭的沼澤鱷……牠原本就住在碧溪谷的上游。」', '漢斯：「被黑水趕下山之後，牠就一直待在橋頭，誰靠近就咬誰。水變乾淨了，可是牠已經被瘴氣迷了心……」', '漢斯：「要過橋去北邊的森林，恐怕只能打倒牠了。」']);
+  yield* sayAll(['漢斯：「對了，北邊橋頭的沼澤鱷……牠原本就住在碧溪谷的上游。」', '漢斯：「被黑水趕下山之後，牠就一直待在橋頭，誰靠近就咬誰。水變乾淨了，可是牠已經被瘴氣迷了心……」', '漢斯：「要過橋去北邊，恐怕只能打倒牠了。」']);
   f.creekQ = 3; st.money += 800; yield* itemGet('也得到了謝禮800 G！');
   yield* say('（目標：打倒北方橋頭的沼澤鱷。推薦Lv13）');
 }
@@ -12066,7 +12066,7 @@ function* creekCure() {
       else if (f.hillsQ === 2) M.t = '把黑色結晶拿給村長看。';
       else if (f.creekQ === 1) M.t = '【推薦Lv8〜11】到晨霧道路西側的碧溪谷，找到源頭的清泉草。';
       else if (f.creekQ === 2) M.t = '把清泉草帶回風車丘陵的漢斯家。';
-      else if (!f.croc) M.t = '【推薦Lv13】打倒佔據北方橋頭的沼澤鱷，前往迷霧森林。';
+      else if (!f.croc) M.t = '【推薦Lv13】打倒佔據晨霧道路北方橋頭的沼澤鱷，打通往北邊的路。';
       else if (!f.golem) M.t = '【推薦Lv13〜17】' + M.t;
     }
     if (f.hillsQ) L.push({ n: '風車丘陵的異變', cat: '主線', t: (f.hillsQ || 0) >= 3 ? '完成：打倒了磨石魔像，救出了漢斯。' : f.hillsQ === 2 ? '把黑色結晶拿給村長看。' : '登上風車丘陵山頂的大風車，找到失蹤的漢斯。', done: (f.hillsQ || 0) >= 3, rw: '500 G、傷藥、漢斯家可以便宜休息' });
@@ -12319,7 +12319,7 @@ Object.assign(Events, {
     const L = _ql(st), f = st.flags, n = f.ch2 || 0, M = L.find(q => q.n === '第二章：曙光的王都');
     if (M && !M.done) {
       const rec = n === 0 ? '17' : n === 1 ? (v81Gate(st) ? null : '22〜25') : n === 3 ? '24〜28' : n === 4 ? '28〜31' : n === 5 ? (f.northPass ? '30〜34' : null) : n === 6 ? '33〜37' : n === 7 ? '37〜38' : n === 8 ? '39〜40' : null;
-      if (n === 1 && v81Gate(st)) M.t = '【推薦Lv17〜23】往北方街道的關道被封鎖了。穿過楓紅關道和古戰場，前往北方街道。';
+      if (n === 1 && v81Gate(st)) M.t = '【推薦Lv17〜23】往北方街道的關道被封鎖了。請萌芽鎮的馬車夫湯姆送你到楓紅關道，穿過古戰場，前往北方街道。';
       else if (rec) M.t = '【推薦Lv' + rec + '】' + M.t;
     }
     if (f.passQ) L.push({ n: '北境之路', cat: '主線', t: f.passDone ? '完成：打倒了亡靈戰將，打通了往北方街道的路。' : f.passQ >= 2 ? '【推薦Lv20〜23】穿過古戰場，打倒守在北邊關口的亡靈戰將。' : '【推薦Lv17〜20】趕走斷崖上的盜賊，通過楓紅關道。（格倫在驛站）', done: !!f.passDone, rw: '格倫的護腕（設計圖＋打造券）或2000 G、力量+1或天賦之書' });
@@ -17771,7 +17771,7 @@ function* todoScreen12(first) {
     if (f.creekQ === 3 && !f.hansName && i >= 0 && (st.lore || {})[i]) { f.hansName = 1; yield* say('漢斯：「古戰場的石碑上，有個叫漢斯的磨坊學徒？……這個名字，是我們磨坊代代傳下來的。」'); }
     yield* _h.apply(this, a); }; }
 Events.eliteWin_croc = function* () { const f = Game.st.flags;
-  yield* sayAll(['沼澤鱷翻了個身，慢慢沉回了河裡。'].concat((f.creekQ || 0) >= 3 ? ['河水清清的。牠大概是被碧溪谷的黑水，從上游趕下來的吧。'] : [], ['橋頭的路，終於通了。', '（橋的另一邊，是迷霧森林和古岩遺跡。）'])); };
+  yield* sayAll(['沼澤鱷翻了個身，慢慢沉回了河裡。'].concat((f.creekQ || 0) >= 3 ? ['河水清清的。牠大概是被碧溪谷的黑水，從上游趕下來的吧。'] : [], ['橋頭的路，終於通了。', '（橋的另一邊，是古岩遺跡和落日峽谷。）'])); };
 Events.eliteWin_mossGiant = function* () { const f = Game.st.flags;
   yield* sayAll(['苔石巨人的身體慢慢散開，變回了一堆長滿青苔的石頭。', '石頭堆的中間，有一枚刻著樹葉紋路的古印，發著淡淡的光。'].concat(f.q2res === 'stay' ? ['提姆：「……打、打贏了！我們打贏了！」'] : [], ['一陣風吹過森林，空氣好像變輕了。'])); };
 skillUpdateNote = function* (st) { delete st.skillNote; };
@@ -20507,3 +20507,91 @@ Object.assign(DN12, { LEN: 1200, day: 150, dusk: 650, night: 800 });
 for (const k of DN_KEYS12) k[0] = k[0] / 2;
 { const _ng = newGameState; newGameState = function (...a) { const st = _ng.apply(this, a); if (st) { st.clock = 30; st.dnHalf9 = 1; } return st; }; }
 { const _so = startOverworld; startOverworld = function (...a) { const st = Game.st; if (st && !st.dnHalf9) { if (st.clock != null) st.clock = Math.floor(st.clock / 2); st.dnHalf9 = 1; } return _so.apply(this, a); }; }
+{ const _qd = questDest; questDest = function (q, st = Game.st) {
+    let D = _qd(q, st); if (!D || !q || q.done || !st || questCom(q)) return D;
+    if (D.map !== st.map && !D.spot) { const here = (MAPS[st.map] || {}).name, a = (q.t || '').indexOf((MAPS[D.map] || {}).name), b = here && here.length >= 2 ? (q.t || '').indexOf(here) : -1; if (a >= 0 && b > a) D = { map: st.map, what: '前往' + here };
+      else if (a >= 0) for (const n of MAPS[st.map].npcs || []) { if (!n.name || n.name.length < 2 || (n.show && !n.show(st))) continue; const i = (q.t || '').indexOf(n.name); if (i > a) return { map: st.map, spot: { x: n.x, y: n.y, name: n.name }, what: '找' + n.name }; } } // the person is right here, inside the house the text names (漢斯家) // already at the later map (到晨霧道路西側的碧溪谷, standing in 碧溪谷)
+    if (D.map !== st.map && !mapRoute(st.map, D.map)) { // can't get there yet (往北方街道的關道被封鎖了。穿過楓紅關道…): the first named place we can reach
+      let alt = null; for (const id in MAPS) { const nm = MAPS[id].name; if (!nm || nm.length < 2) continue; const i = (q.t || '').indexOf(nm), m = mapIdByName(nm) || id; if (i >= 0 && m !== D.map && (!alt || i < alt.i) && mapRoute(st.map, m)) alt = { i, map: m, nm }; }
+      if (alt) D = alt.map === st.map ? { map: st.map, what: '前往' + alt.nm } : { map: alt.map, what: '前往' + alt.nm }; }
+    if (D.map !== st.map) return D;
+    const d = MAPS[D.map] || {}, t = (q.t || '').split(d.name || '\u0000').join('\u3000'.repeat((d.name || '').length)), ow = Game.ow, C = []; // the map's own name is not a target (風車 in 風車丘陵)
+    for (const n of (ow && ow.map && ow.map.id === D.map && ow.npcs) || d.npcs || []) if (n.name && n.name.length >= 2 && (!n.show || n.show(st))) { C.push({ name: n.name, x: n.x, y: n.y }); if (n.name.length > 3) C.push({ name: n.name.slice(-2), x: n.x, y: n.y, full: n.name }); }
+    for (const e of (ow && ow.map && ow.map.id === D.map && ow.elites) || d.elites || []) { const nm = e.name || (SPECIES[e.sp] || {}).n; if (nm) C.push({ name: nm, x: e.x, y: e.y }); }
+    if (d.boss && SPECIES[d.boss.sp] && !(st.flags || {})[d.boss.flag || 'golem']) { const bn = SPECIES[d.boss.sp].n; C.push({ name: bn, x: d.boss.x, y: d.boss.y }); if (bn.length > 3) C.push({ name: bn.slice(-2), x: d.boss.x, y: d.boss.y, full: bn }); } // 「暴走的魔像」 = 古岩魔像
+    for (const L of (typeof LANDMARK12 !== 'undefined' && LANDMARK12[D.map]) || []) if (L.n) C.push({ name: L.n, x: L.x, y: L.y });
+    const sn = D.spot && D.spot.name; let best = null, bi = 1e9; if (sn) { let i = t.indexOf(sn); if (i < 0 && sn.length > 3) i = t.indexOf(sn.slice(-2)); bi = i >= 0 ? i : -1; } // the original already found the person (王都的騎士雷恩 by 雷恩): only something named earlier beats it
+    for (const c of C) { const i = t.indexOf(c.name); if (i >= 0 && i < bi) { bi = i; best = c; } } // a boss named before the person wins (打倒磨石魔像，救出漢斯)
+    let far = null; for (const id in MAPS) { const nm = MAPS[id].name; if (!nm || nm.length < 2 || nm === d.name) continue; const i = t.indexOf(nm); if (i >= 0 && i > (q.t || '').indexOf(d.name) && i < bi && (!far || i < far.i)) far = { i, map: mapIdByName(nm) || id, nm }; }
+    let alt = far && far.map !== st.map && mapRoute(st.map, far.map) ? { i: far.i, r: { map: far.map, what: '前往' + far.nm } } : null;
+    for (const e of spkIndex()) { if (e.map === st.map || (e.show && !e.show(st))) continue; const i = t.indexOf(e.name); if (i >= 0 && i > (q.t || '').indexOf(d.name) && i < bi && (!alt || i < alt.i) && mapRoute(st.map, e.map)) alt = { i, r: { map: e.map, spot: e, what: '找' + e.name } }; }
+    if (alt) return alt.r;
+    if (best) return { ...D, spot: best, what: (/^前往/.test(D.what) || D.spot ? '找' : D.what) + (best.full || best.name) };
+    for (const g of GOAL9) if (g.map === D.map && g.when(st.flags || {})) return { ...D, spot: { x: g.x, y: g.y, name: g.name }, what: '前往' + g.name };
+    return D; }; }
+const GOAL9 = [{ map: 'jadeCreek', when: f => f.creekQ === 1 && !f.creekTop, x: 18, y: 6, name: '源頭' }];
+{ const _mg = mapGraph; let done9 = null; mapGraph = function () { const G = _mg(); if (G === done9) return G; done9 = G;
+    for (const id in MAPS) { const d = MAPS[id], h = (d.rows || []).length, w = h ? d.rows[0].length : 0; if (!w) continue;
+      for (const e of d.edgeWarps || []) { if (!e.to || !e.at || !e.at.length || !G[id] || !G[id][e.to[0]]) continue; const a = e.at[Math.floor((e.at.length - 1) / 2)];
+        G[id][e.to[0]] = e.dir === 'left' ? { dir: 'left', x: 0, y: a } : e.dir === 'right' ? { dir: 'right', x: w - 1, y: a } : e.dir === 'up' ? { dir: 'up', x: a, y: 0 } : e.dir === 'down' ? { dir: 'down', x: a, y: h - 1 } : G[id][e.to[0]]; } }
+    return G; }; }
+const COACH9 = { town: 'coachT', maplePass: 'coachM', northRoad: 'coachN', capital: 'coachC', frostVillage: 'coachF' };
+function coachOk9(from, to, st = Game.st) { const f = (st && st.flags) || {}, gate = typeof v81Gate === 'function' && v81Gate(st);
+  if (from === to || !COACH9[from] || !COACH9[to] || (f.ch2 || 0) < 1) return false;
+  return to === 'town' || to === 'maplePass' || (to === 'northRoad' ? !gate : !!((st.vis || {})[to])); }
+{ const _mg = mapGraph; let done9 = null; mapGraph = function () { const G = _mg(); if (G === done9) return G; done9 = G;
+    for (const a in COACH9) { const n = ((MAPS[a] || {}).npcs || []).find(q => q.id === COACH9[a]); if (!n) continue; G[a] = G[a] || {};
+      for (const b in COACH9) if (a !== b && !G[a][b]) G[a][b] = { x: n.x, y: n.y, coach: b, npc: n.id }; }
+    return G; }; }
+mapRoute = function (from, to) { if (from === to) return [from]; const G = mapGraph(), prev = { [from]: null }, q = [from];
+  while (q.length) { const a = q.shift(); for (const b in G[a] || {}) { if (b in prev) continue; const v = G[a][b]; if (v && v.coach && !coachOk9(a, b)) continue; prev[b] = a; if (b === to) { const P = [to]; let c = a; while (c) { P.unshift(c); c = prev[c]; } return P; } q.push(b); } }
+  return null; };
+{ const _qg = questGuide; questGuide = function (q, st = Game.st, ow = Game.ow) { const G = _qg(q, st, ow); if (!G || !G.route || G.route.length < 2) return G;
+    const v = (mapGraph()[st.map] || {})[G.route[1]]; if (v && v.coach) { G.text = G.D.what + '（搭馬車）'; if (G.route[1] === G.D.map) G.next = null; if (ow && ow.p) G.arrow = dirArrow(v.x - ow.p.x, v.y - ow.p.y); } return G; }; }
+{ const _mg = mapGraph; let done9 = null; mapGraph = function () { const G = _mg(); if (G === done9) return G; done9 = G;
+    for (const a in G) for (const b in G[a]) { if (G[a][b] || !MAPS[a]) continue; const has = id => Events[id] && String(Events[id]).includes("'" + b + "'");
+      const n = (MAPS[a].npcs || []).find(q => has(q.id)); if (n) { G[a][b] = { x: n.x, y: n.y, npc: n.id }; continue; }
+      const t = (MAPS[a].triggers || []).find(q => has(q.id)); if (t) G[a][b] = { x: t.x, y: t.y }; }
+    return G; }; }
+for (const [ev, eid] of [['hillsTop', 'millGolem'], ['creekTop', 'blackCatfish']]) { const _e = Events[ev]; if (!_e) continue;
+  Events[ev] = function (ow) { const g = _e(ow); if (!g) return g; return (function* () { yield* g; const e = (ow.elites || []).find(q => q.id === eid); if (e && Game.scene === ow) yield* ow.eliteTalk(e); })(); }; }
+{ const _ql = questList; questList = function (st = Game.st) { const L = _ql(st), f = st.flags, M = L.find(q => q.main);
+    if (M && f.hillsTop && !f.millGolem && (f.hillsQ || 0) < 2) M.t = '【推薦Lv4〜8】風車丘陵山頂的磨石魔像動起來了！打倒牠，救出漢斯。';
+    if (M && f.creekTop && !f.blackCatfish && f.creekQ === 1) M.t = '【推薦Lv8〜11】碧溪谷源頭的瘴氣大鯰出現了！打倒牠，拿到清泉草。';
+    return L; }; }
+{ const _cs = Overworld.prototype.checkSight; Overworld.prototype.checkSight = function () {
+    const f = (this.st && this.st.flags) || {}, calm = (f.creekQ || 0) < 3 && !f.croc ? (this.elites || []).filter(e => e.id === 'croc' && !e.rematch) : [];
+    for (const e of calm) { e.s9 = e.sight; e.sight = 0; } try { return _cs.call(this); } finally { for (const e of calm) e.sight = e.s9; } }; }
+{ const _qd = questDest; questDest = function (q, st = Game.st) {
+    const f = st && st.flags;
+    if (q && q.main && !q.done && f && f.license && f.qSeal && !f.golem && typeof SEALS !== 'undefined' && sealCount(st) < 3) {
+      let best = null, bd = 1e9; for (const [fl, it, where, mk] of SEALS) { if (f['got_' + it]) continue; const d = mapDist(st.map, mk[0]); if (d < bd) { const M = MAPS[mk[0]] || {}, g = M.boss && (M.boss.flag || 'golem') === fl ? M.boss : (M.elites || []).find(e => e.id === fl) || { x: mk[1], y: mk[2] }; bd = d; best = { map: mk[0], spot: { x: g.x, y: g.y, name: where.split('・')[1] || where }, what: '找' + (where.split('・')[1] || where) }; } } // the guardian itself (格倫 stands at 8,2; the map mark is at 9,2)
+      if (best) return best; }
+    return _qd(q, st); }; }
+{ const _ig = itemGet; itemGet = function* (...a) { const T = Game.talker; Game.talker = null; try { yield* _ig.apply(this, a); } finally { if (Game.talker === null) Game.talker = T; } }; }
+{ const _ld = Overworld.prototype.load; Overworld.prototype.load = function (...a) { _ld.apply(this, a);
+    if (this.map && this.map.id === 'route') for (const e of this.elites || []) if (e.id === 'croc' && e.rematch) { const x = 13, y = 13; e.x = e.tx = x; e.y = e.ty = y; e.px = x * TS; e.py = y * TS; e.dir = 'down'; e.sight = 0; e.home = [x, y, 'down']; } }; }
+{ const _ql = questList; questList = function (st = Game.st) { const L = _ql(st), f = st.flags, M = L.find(q => q.main && !q.done && q.t && q.t.includes('北方街道'));
+    if (M && !M.done && (f.ch2 || 0) === 1 && typeof v81Gate === 'function' && v81Gate(st) && !f.passDone) {
+      M.t = !f.passIn ? '【推薦Lv17〜23】往北方街道的關道被封鎖了。請萌芽鎮的馬車夫湯姆送你到楓紅關道。'
+        : !f.passCamp ? '【推薦Lv17〜20】楓紅關道的驛站被盜賊燒了。往北走，趕走斷崖上的盜賊。'
+        : (f.passQ || 0) < 2 ? '【推薦Lv20】打倒擋在楓紅關道山頂的楓林鹿王。'
+        : '【推薦Lv20〜23】穿過古戰場，打倒守在北邊關口的亡靈戰將。'; }
+    return L; }; }
+GOAL9.push({ map: 'maplePass', when: f => f.passIn && !f.passCamp, x: 11, y: 6, name: '斷崖' });
+{ const _hr = healRitual; healRitual = function* (...a) { const ow = Game.ow, st = Game.st; if (Game.restSpot9 && ow && ow.p && ow.map && st) st.respawn = { map: ow.map.id, x: ow.p.x, y: ow.p.y, dir: ow.p.dir, at9: Game.restSpot9 }; return yield* _hr.apply(this, a); }; }
+for (const k of Object.keys(CAMP12).concat(['grenPass', 'grenCamp'])) { const _e = Events[k]; if (!_e) continue; const who = CAMP12[k] ? CAMP12[k].name : '格倫';
+  Events[k] = function* (...a) { Game.restSpot9 = who; try { return yield* _e.apply(this, a); } finally { Game.restSpot9 = 0; } }; }
+{ Overworld.prototype.whiteout = function* () {
+    const st = this.st; Game.fade = 1; this.camDY = 0; this.bossGlow = 0; const lost = Math.floor(st.money / 2); st.money -= lost;
+    Sound.stop(); UI.clear();
+    const box = { draw(x) { x.fillStyle = '#000'; x.fillRect(0, 0, W, H); } }; UI.push(box);
+    Game.fade = 0;
+    yield* say(st.name + '眼前一片漆黑……', { style: 'dark', y: 98 });
+    if (lost) yield* say('慌亂之中弄丟了' + lost + ' G……', { style: 'dark', y: 98 });
+    UI.remove(box); Game.fade = 1;
+    healHero(); const r = st.respawn; this.load(r.map, r.x, r.y, r.dir, true);
+    yield* fadeIn(20);
+    yield* say(r.map === 'home' ? '瑪莎：「你醒啦！別太勉強自己喔。」' : r.map === 'inn' ? '老闆娘：「你被送來這裡了呢。我已經幫你治療好了，要小心喔！」'
+      : r.at9 ? r.at9 + '：「醒啦？你倒在外面，是人家把你抬回來的。別太勉強啊。」' : r.map === 'route' ? '清涼的泉水讓你恢復了精神。' : '醒來的時候，已經躺在' + ((MAPS[r.map] || {}).name || '') + '的床上了。體力恢復了。');
+  }; }
