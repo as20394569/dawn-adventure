@@ -40,7 +40,8 @@ drawPassiveInfo = function (x, st, X, Y, w) {
   L.push(['飾品特性：' + (tr.length ? tr.join('・') : '（沒有）'), tr.length ? UIC.text : UIC.muted, 9]);
   if (k && WSK[k]) L.push(['特技「' + WSK[k].s.n + '」普通攻擊' + wsN(WSK[k].s, st) + '層發動', '#ffd860', 9]);
   const n = typeof tpSpent === 'function' ? tpSpent(st) : 0; L.push(['天賦：已投入' + n + '／' + TP_CAP + '點', n ? '#c9cfe4' : UIC.muted, 9]);
-  L.forEach(([t, col, z0], i) => { let z = z0; while (z > 7 && Font.width(t, z) > w) z--; Font.draw(x, t, X, Y + i * 15 + (i ? 1 : 0), col, UIC.textSh, z); });
+  const R = []; for (const [t, col, z0] of L) { let z = z0; while (z > 8 && Font.width(t, z) > w) z--; if (Font.width(t, z) <= w) R.push([t, col, z]); else for (const s of Font.wrap(t, w, 8)) R.push([s, col, 8]); }
+  const dy = R.length > 5 ? 13 : 15; R.forEach(([t, col, z], i) => Font.draw(x, t, X, Y + i * dy + (i ? 1 : 0), col, UIC.textSh, z)); // v12.0.5 最小字級 8：放不下就換行
 };
 
 /* ---------- class cards: v12 passive, 擅長武器, core resource, signature skill ---------- */

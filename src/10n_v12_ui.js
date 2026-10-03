@@ -146,13 +146,13 @@ talentScreen = function* () {
     for (let k = 0; k < 3; k++) { const X = CX(k); Font.drawC(x, TR.br[k][0], X + CW / 2, 21, UIC.warm, UIC.textSh, 10); Font.drawR(x, TAL12.brPts(k, st) + '點', X + CW, 24, TAL12.brPts(k, st) ? '#ffd860' : UIC.muted, UIC.textSh, 7);
       const d = TR.br[k][1]; let z = 7; while (z > 6 && Font.width(d, z) > CW) z--; Font.drawC(x, d, X + CW / 2, 33, UIC.muted, UIC.textSh, z); }
     for (let t = 0; t < 3; t++) Font.drawC(x, String(t + 1), 6, tierY(t) + 8, UIC.dis, UIC.textSh, 8);
-    if (!deepOk(st)) Font.drawC(x, '— 第 3 層與核心天賦：天賦覺醒後開放 —', W / 2 + 4, 106, UIC.dis, UIC.textSh, 7);
     Font.drawC(x, '核心天賦（三選一・4 點）', W / 2 + 4, 143, '#ffd860', UIC.textSh, 8);
     for (let k = 0; k < 3; k++) for (let q = 0; q < 7; q++) { const T = at(k, q); if (!T) continue; const P = tile(k, q), on = k === b && q === r, pk = picked(k, q), t = tierOf(q), blk = pk ? null : TAL12.block(k, t, st), other = q < 6 && TAL12.has(k, t, st) && !pk;
       x.fillStyle = pk ? 'rgba(200,160,80,0.55)' : other ? 'rgba(34,36,50,0.85)' : blk ? 'rgba(24,26,40,0.9)' : 'rgba(40,60,90,0.75)'; x.fillRect(P.X, P.Y, P.w, P.h);
       const edge = on ? '#ffd860' : pk ? '#c8a050' : blk || other ? '#2e3348' : '#4a6a98'; x.fillStyle = edge; x.fillRect(P.X, P.Y, P.w, 1); x.fillRect(P.X, P.Y + P.h - 1, P.w, 1); x.fillRect(P.X, P.Y, 1, P.h); x.fillRect(P.X + P.w - 1, P.Y, 1, P.h);
       let z = 9; while (z > 7 && Font.width(T.name, z) > P.w - 6) z--; Font.drawC(x, T.name, P.X + P.w / 2, midY(P.Y, P.h, z), pk ? '#fff4d0' : other || blk ? UIC.dis : UIC.text, UIC.textSh, z);
       if (typeof touchRegion === 'function') touchRegion(P.X, P.Y, P.w, P.h, () => { if (b === k && r === q) tapKey('a'); else { b = k; r = q; Sound.sfx('cursor'); } }); }
+    if (!deepOk(st)) { x.fillStyle = 'rgba(10,12,22,0.8)'; x.fillRect(8, tierY(2) + 6, 164, 16); Font.drawC(x, '第 3 層與核心天賦：天賦覺醒後開放', W / 2 + 4, tierY(2) + 6, UIC.warm, UIC.textSh, 9); } // v12.0.5: a banner over the locked tier (it used to sit on top of the tiles)
     const T = at(b, r), t = tierOf(r), pk = picked(b, r), blk = pk ? null : TAL12.block(b, t, st); drawWin(x, 4, 176, 168, 76, 'menu');
     if (T) { Font.draw(x, T.name, 10, 178, '#ffd860', UIC.textSh, 10); Font.drawR(x, '〔' + T.kind + '〕' + (t < 0 ? '4 點' : (t + 1) + ' 點'), 166, 179, UIC.muted, UIC.textSh, 8);
       drawFitText(x, T.desc, 10, 192, 152, 36, 10); const fr = fresh.has(t < 0 ? 'k' : b + '.' + t), other = t >= 0 && TAL12.has(b, t, st);

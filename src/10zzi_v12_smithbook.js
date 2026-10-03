@@ -20,10 +20,11 @@ function* smithStar12(g) { const st = Game.st, R = st.refine || (st.refine = {})
   R[g.b] -= need; st.money -= c; g.s = s + 1; clampHP(); Sound.sfx('rock'); yield* say('鏘！鏘！鏘！'); Sound.jingle('levelup'); yield* say('升星成功！' + gearName(g) + '！'); }
 function* smithUpgrade12() { const st = Game.st, R = () => st.refine || {};
   while (true) {
+    const fit = (x, t, Y, col) => { let z = 10; while (z > 8 && Font.width(t, z) > 152) z--; Font.draw(x, t, 12, Y + (10 - z) / 2, col, UIC.textSh, z); }; // v12.0.5: long lines used to run past the window
     const g = yield* gearPicker('強化', () => gearSort(), (x, g, Y) => { const c = enhanceCost(g), s = g.s || 0;
-      Font.draw(x, (g.e || 0) < 10 ? '強化 +' + (g.e || 0) + '→+' + ((g.e || 0) + 1) + '　' + c.gold + ' G・成功率' + Math.round(c.rate * 100) + '%' : '強化：已經 +10', 12, Y, UIC.accent, UIC.textSh, 10);
-      Font.draw(x, s < STAR_MAX ? '升星 ★' + s + '→★' + (s + 1) + '　精煉石 ' + (R()[g.b] || 0) + '/' + starStones(s) + '・' + starGold(g, s) + ' G' : '升星：已經 ★' + STAR_MAX, 12, Y + 13, '#ffd860', UIC.textSh, 10);
-      Font.draw(x, g.q >= 2 ? '重鑄：詞綴 ' + reforgeCost(g).gold + ' G／品質' : '重鑄：品質（藍色沒有詞綴）', 12, Y + 26, '#c8b8ff', UIC.textSh, 10); });
+      fit(x, (g.e || 0) < 10 ? '強化 +' + (g.e || 0) + '→+' + ((g.e || 0) + 1) + '　' + c.gold + ' G・成功率' + Math.round(c.rate * 100) + '%' : '強化：已經 +10', Y, UIC.accent);
+      fit(x, s < STAR_MAX ? '升星 ★' + s + '→★' + (s + 1) + '　精煉石 ' + (R()[g.b] || 0) + '/' + starStones(s) + '・' + starGold(g, s) + ' G' : '升星：已經 ★' + STAR_MAX, Y + 13, '#ffd860');
+      fit(x, g.q >= 2 ? '重鑄：詞綴 ' + reforgeCost(g).gold + ' G／品質' : '重鑄：品質（藍色沒有詞綴）', Y + 26, '#c8b8ff'); });
     if (!g) return;
     while (true) { const c = enhanceCost(g), s = g.s || 0;
       const opts = ['強化 +' + (g.e || 0) + '→+' + ((g.e || 0) + 1) + '（' + c.gold + ' G）', '升星 ★' + s + '→★' + (s + 1) + '（精煉石 ' + (R()[g.b] || 0) + '/' + starStones(s) + '）', '重鑄（詞綴／品質）', '換一件'];

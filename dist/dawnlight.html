@@ -16667,13 +16667,13 @@ talentScreen = function* () {
     for (let k = 0; k < 3; k++) { const X = CX(k); Font.drawC(x, TR.br[k][0], X + CW / 2, 21, UIC.warm, UIC.textSh, 10); Font.drawR(x, TAL12.brPts(k, st) + '點', X + CW, 24, TAL12.brPts(k, st) ? '#ffd860' : UIC.muted, UIC.textSh, 7);
       const d = TR.br[k][1]; let z = 7; while (z > 6 && Font.width(d, z) > CW) z--; Font.drawC(x, d, X + CW / 2, 33, UIC.muted, UIC.textSh, z); }
     for (let t = 0; t < 3; t++) Font.drawC(x, String(t + 1), 6, tierY(t) + 8, UIC.dis, UIC.textSh, 8);
-    if (!deepOk(st)) Font.drawC(x, '— 第 3 層與核心天賦：天賦覺醒後開放 —', W / 2 + 4, 106, UIC.dis, UIC.textSh, 7);
     Font.drawC(x, '核心天賦（三選一・4 點）', W / 2 + 4, 143, '#ffd860', UIC.textSh, 8);
     for (let k = 0; k < 3; k++) for (let q = 0; q < 7; q++) { const T = at(k, q); if (!T) continue; const P = tile(k, q), on = k === b && q === r, pk = picked(k, q), t = tierOf(q), blk = pk ? null : TAL12.block(k, t, st), other = q < 6 && TAL12.has(k, t, st) && !pk;
       x.fillStyle = pk ? 'rgba(200,160,80,0.55)' : other ? 'rgba(34,36,50,0.85)' : blk ? 'rgba(24,26,40,0.9)' : 'rgba(40,60,90,0.75)'; x.fillRect(P.X, P.Y, P.w, P.h);
       const edge = on ? '#ffd860' : pk ? '#c8a050' : blk || other ? '#2e3348' : '#4a6a98'; x.fillStyle = edge; x.fillRect(P.X, P.Y, P.w, 1); x.fillRect(P.X, P.Y + P.h - 1, P.w, 1); x.fillRect(P.X, P.Y, 1, P.h); x.fillRect(P.X + P.w - 1, P.Y, 1, P.h);
       let z = 9; while (z > 7 && Font.width(T.name, z) > P.w - 6) z--; Font.drawC(x, T.name, P.X + P.w / 2, midY(P.Y, P.h, z), pk ? '#fff4d0' : other || blk ? UIC.dis : UIC.text, UIC.textSh, z);
       if (typeof touchRegion === 'function') touchRegion(P.X, P.Y, P.w, P.h, () => { if (b === k && r === q) tapKey('a'); else { b = k; r = q; Sound.sfx('cursor'); } }); }
+    if (!deepOk(st)) { x.fillStyle = 'rgba(10,12,22,0.8)'; x.fillRect(8, tierY(2) + 6, 164, 16); Font.drawC(x, '第 3 層與核心天賦：天賦覺醒後開放', W / 2 + 4, tierY(2) + 6, UIC.warm, UIC.textSh, 9); } // v12.0.5: a banner over the locked tier (it used to sit on top of the tiles)
     const T = at(b, r), t = tierOf(r), pk = picked(b, r), blk = pk ? null : TAL12.block(b, t, st); drawWin(x, 4, 176, 168, 76, 'menu');
     if (T) { Font.draw(x, T.name, 10, 178, '#ffd860', UIC.textSh, 10); Font.drawR(x, '〔' + T.kind + '〕' + (t < 0 ? '4 點' : (t + 1) + ' 點'), 166, 179, UIC.muted, UIC.textSh, 8);
       drawFitText(x, T.desc, 10, 192, 152, 36, 10); const fr = fresh.has(t < 0 ? 'k' : b + '.' + t), other = t >= 0 && TAL12.has(b, t, st);
@@ -16775,7 +16775,8 @@ drawPassiveInfo = function (x, st, X, Y, w) {
   L.push(['飾品特性：' + (tr.length ? tr.join('・') : '（沒有）'), tr.length ? UIC.text : UIC.muted, 9]);
   if (k && WSK[k]) L.push(['特技「' + WSK[k].s.n + '」普通攻擊' + wsN(WSK[k].s, st) + '層發動', '#ffd860', 9]);
   const n = typeof tpSpent === 'function' ? tpSpent(st) : 0; L.push(['天賦：已投入' + n + '／' + TP_CAP + '點', n ? '#c9cfe4' : UIC.muted, 9]);
-  L.forEach(([t, col, z0], i) => { let z = z0; while (z > 7 && Font.width(t, z) > w) z--; Font.draw(x, t, X, Y + i * 15 + (i ? 1 : 0), col, UIC.textSh, z); });
+  const R = []; for (const [t, col, z0] of L) { let z = z0; while (z > 8 && Font.width(t, z) > w) z--; if (Font.width(t, z) <= w) R.push([t, col, z]); else for (const s of Font.wrap(t, w, 8)) R.push([s, col, 8]); }
+  const dy = R.length > 5 ? 13 : 15; R.forEach(([t, col, z], i) => Font.draw(x, t, X, Y + i * dy + (i ? 1 : 0), col, UIC.textSh, z)); // v12.0.5 最小字級 8：放不下就換行
 };
 { const _cc = classCard; classCard = function (k) { const c = _cc(k), Z = CLS12[clsV7(k)]; if (!Z) return c;
     c.text = '職業被動「' + Z.passive[0] + '」：' + Z.passive[1]; c.w = Z.aff[0] === '*' ? ['全部武器'] : Z.aff;
@@ -17857,10 +17858,11 @@ function* smithStar12(g) { const st = Game.st, R = st.refine || (st.refine = {})
   R[g.b] -= need; st.money -= c; g.s = s + 1; clampHP(); Sound.sfx('rock'); yield* say('鏘！鏘！鏘！'); Sound.jingle('levelup'); yield* say('升星成功！' + gearName(g) + '！'); }
 function* smithUpgrade12() { const st = Game.st, R = () => st.refine || {};
   while (true) {
+    const fit = (x, t, Y, col) => { let z = 10; while (z > 8 && Font.width(t, z) > 152) z--; Font.draw(x, t, 12, Y + (10 - z) / 2, col, UIC.textSh, z); }; // v12.0.5: long lines used to run past the window
     const g = yield* gearPicker('強化', () => gearSort(), (x, g, Y) => { const c = enhanceCost(g), s = g.s || 0;
-      Font.draw(x, (g.e || 0) < 10 ? '強化 +' + (g.e || 0) + '→+' + ((g.e || 0) + 1) + '　' + c.gold + ' G・成功率' + Math.round(c.rate * 100) + '%' : '強化：已經 +10', 12, Y, UIC.accent, UIC.textSh, 10);
-      Font.draw(x, s < STAR_MAX ? '升星 ★' + s + '→★' + (s + 1) + '　精煉石 ' + (R()[g.b] || 0) + '/' + starStones(s) + '・' + starGold(g, s) + ' G' : '升星：已經 ★' + STAR_MAX, 12, Y + 13, '#ffd860', UIC.textSh, 10);
-      Font.draw(x, g.q >= 2 ? '重鑄：詞綴 ' + reforgeCost(g).gold + ' G／品質' : '重鑄：品質（藍色沒有詞綴）', 12, Y + 26, '#c8b8ff', UIC.textSh, 10); });
+      fit(x, (g.e || 0) < 10 ? '強化 +' + (g.e || 0) + '→+' + ((g.e || 0) + 1) + '　' + c.gold + ' G・成功率' + Math.round(c.rate * 100) + '%' : '強化：已經 +10', Y, UIC.accent);
+      fit(x, s < STAR_MAX ? '升星 ★' + s + '→★' + (s + 1) + '　精煉石 ' + (R()[g.b] || 0) + '/' + starStones(s) + '・' + starGold(g, s) + ' G' : '升星：已經 ★' + STAR_MAX, Y + 13, '#ffd860');
+      fit(x, g.q >= 2 ? '重鑄：詞綴 ' + reforgeCost(g).gold + ' G／品質' : '重鑄：品質（藍色沒有詞綴）', Y + 26, '#c8b8ff'); });
     if (!g) return;
     while (true) { const c = enhanceCost(g), s = g.s || 0;
       const opts = ['強化 +' + (g.e || 0) + '→+' + ((g.e || 0) + 1) + '（' + c.gold + ' G）', '升星 ★' + s + '→★' + (s + 1) + '（精煉石 ' + (R()[g.b] || 0) + '/' + starStones(s) + '）', '重鑄（詞綴／品質）', '換一件'];
@@ -18016,4 +18018,13 @@ function mapProgress12(id, st = Game.st) { const d = MAPS[id] || {}, f = st.flag
   const ws = (d.npcs || []).some(n => n.id === 'wshrine_' + id), ext = typeof EXT_OPEN !== 'undefined' && EXT_OPEN[id], rr = d.rare;
   const b = [ws ? '天氣祠 ' + mark((st.wsh || {})[id] !== undefined) : '', ext ? '祕境 ' + mark(extSeen(id, st)) : '', rr ? '稀有魔物 ' + mark(((st.dex || {})[rr[0]] || {}).won > 0) : ''].filter(Boolean);
   return [a.join('　'), b.join('　')]; }
+const FONT_MIN12 = 8;
+{ const _d = Font.draw, _w = Font.width;
+  const small = (str, size) => typeof size === 'number' && size < FONT_MIN12 && str !== '' && str != null;
+  const squeeze = (ctx, str, x0, y, col, sh, size) => { const a = _w(str, size), b = _w(str, FONT_MIN12);
+    if (!(b > a) || !(a > 0)) return _d(ctx, str, x0, y, col, sh, FONT_MIN12);
+    ctx.save(); ctx.translate(x0, 0); ctx.scale(a / b, 1); _d(ctx, str, 0, y, col, sh, FONT_MIN12); ctx.restore(); return x0 + a; };
+  Font.draw = (ctx, str, x, y, col, sh, size) => small(str, size) ? squeeze(ctx, String(str), x, y, col, sh, size) : _d(ctx, str, x, y, col, sh, size);
+  Font.drawR = (ctx, str, xr, y, col, sh, size) => Font.draw(ctx, str, xr - _w(String(str), size), y, col, sh, size);
+  Font.drawC = (ctx, str, xc, y, col, sh, size) => Font.draw(ctx, str, xc - _w(String(str), size) / 2, y, col, sh, size); }
 </script>
