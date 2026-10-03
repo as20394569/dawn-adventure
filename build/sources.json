@@ -1399,6 +1399,7 @@
    "cave6_forest採集",
    "cave6_swamp採集",
    "魔物:毒孢菇",
+   "魔物:毒孢菇王",
    "分解"
   ],
   "crystal": [
@@ -1422,6 +1423,7 @@
    "魔物:汙泥姆",
    "魔物:冰凍姆",
    "魔物:霧角蝸牛",
+   "魔物:巨大汙泥姆",
    "分解",
    "分解",
    "分解"
@@ -1543,7 +1545,8 @@
    "魔物:斷劍幽魂",
    "魔物:地下壕道之主",
    "魔物:提燈沼怪",
-   "魔物:無頭騎士"
+   "魔物:無頭騎士",
+   "魔物:怨靈之母"
   ],
   "hiEther": [
    "lake寶箱",
@@ -1672,7 +1675,8 @@
    "魔物:雪人",
    "魔物:雪原巨熊",
    "魔物:白絨兔",
-   "魔物:雪洞之主"
+   "魔物:雪洞之主",
+   "魔物:白牙雪狼"
   ],
   "iceCrystal": [
    "frostField採集",
@@ -1753,7 +1757,8 @@
    "魔物:枯木樹妖",
    "魔物:腐根怪",
    "魔物:樹根洞之主",
-   "魔物:夜遊樹精"
+   "魔物:夜遊樹精",
+   "魔物:千年樹妖"
   ],
   "beetleHorn": [
    "cave6_maplePass寶箱",
@@ -1824,7 +1829,8 @@
    "魔物:毒刺蜻蜓",
    "魔物:水黽",
    "魔物:毒蚊群",
-   "魔物:夜啼蟋蟀"
+   "魔物:夜啼蟋蟀",
+   "魔物:蜂王電電蜂"
   ],
   "wolfPelt": [
    "魔物:狂牙狼",
@@ -1873,7 +1879,8 @@
    "魔物:湖蜥戰士",
    "魔物:蜥人隊長",
    "魔物:峽谷蜥蜴",
-   "魔物:岩壁守宮"
+   "魔物:岩壁守宮",
+   "魔物:斷尾湖蜥"
   ],
   "scorpTail": [
    "魔物:砂鉗蠍"
@@ -1909,7 +1916,8 @@
    "魔物:時計巨像"
   ],
   "salamanderScale": [
-   "魔物:火蜥蜴"
+   "魔物:火蜥蜴",
+   "魔物:熔岩火蜥"
   ],
   "dragonScale": [
    "魔物:火龍幼體"
@@ -1981,6 +1989,15 @@
   ],
   "silverPin": [
    "劇情/任務"
+  ],
+  "potionBox12": [
+   "劇情/任務"
+  ],
+  "mokiHerb12": [
+   "劇情/任務"
+  ],
+  "cake12": [
+   "劇情/任務"
   ]
  },
  "matUse": {
@@ -1988,7 +2005,6 @@
    "配方:potion",
    "配方:superPotion",
    "配方:manaPotion",
-   "委託c1",
    "委託c14"
   ],
   "gel": [
@@ -2000,8 +2016,7 @@
   "feather": [
    "配方:featherBoots",
    "配方:voltRod",
-   "配方:returnWing",
-   "委託c15"
+   "配方:returnWing"
   ],
   "stone": [
    "配方:stoneMail",
@@ -2009,8 +2024,7 @@
    "配方:voltSword",
    "配方:crabMail",
    "配方:verdantBlade",
-   "強化",
-   "委託c9"
+   "強化"
   ],
   "foxfire": [
    "配方:foxBlade",
@@ -2038,7 +2052,6 @@
    "配方:moonPendant",
    "配方:batCloak",
    "強化",
-   "委託c3",
    "支線:師父的遺作"
   ],
   "leaf": [
@@ -2071,15 +2084,13 @@
    "配方:hiEther",
    "配方:returnWing",
    "配方:verdantBlade",
-   "委託c6",
    "委託c14"
   ],
   "moonDew": [
    "配方:moonDagger",
    "配方:lakeStaff",
    "配方:moonPendant",
-   "配方:riftRing",
-   "委託c16"
+   "配方:riftRing"
   ],
   "lizardScale": [
    "配方:moonDagger",
@@ -2094,20 +2105,32 @@
   "batWing": [
    "配方:batCloak"
   ],
-  "scorpTail": [
-   "委託c18"
+  "mokiHerb12": [
+   "委託c1"
   ],
-  "bogMoss": [
+  "glowHerb12": [
+   "委託c6"
+  ],
+  "nightDew12": [
+   "委託c16"
+  ],
+  "fogMoss12": [
    "委託c20"
+  ],
+  "featherBird12": [
+   "委託c15"
+  ],
+  "featherCrow12": [
+   "委託c15"
+  ],
+  "featherOwl12": [
+   "委託c15"
   ],
   "wolfPelt": [
    "委託c22"
   ],
   "rustScrap": [
    "委託c25"
-  ],
-  "honey": [
-   "委託c26"
   ],
   "spring": [
    "委託c28"
@@ -2120,9 +2143,6 @@
   ],
   "voidShard": [
    "委託c32"
-  ],
-  "salamanderScale": [
-   "委託c33"
   ],
   "starDust": [
    "委託c34"
