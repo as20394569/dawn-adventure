@@ -122,7 +122,7 @@ const CP12 = {
   cave6_jadeCreek: { kind: 'sluice', room: [[15, 3, 3, 3], [16, 6, 1, 2]], gate: [[16, 7, 'water'], [16, 6, 'water']], lever: [18, 9], clear: [[17, 9], [16, 8]], chest: [16, 4, 'hiEther', 2] },
   cave6_forest: { kind: 'roots', room: [[15, 2, 3, 3], [16, 5, 1, 1]], gate: [[16, 5, 'roots']], wallTorch: [8, 17], chest: [16, 3, 'trainBook', 1] },
   cave6_canyon: { kind: 'wind', room: [[15, 2, 4, 2], [17, 4, 1, 4]], wind: [[17, 7], [17, 6], [17, 5], [17, 4]], windFrom: [17, 8], chest: [15, 2, 'elixir', 1] },
-  cave6_lake: { kind: 'mirror', room: [[1, 3, 2, 3], [2, 6, 1, 1]], gate: [[2, 6, 'door']], source: [17, 8], mirrors: [[4, 8, 1], [4, 7, 3]], crest: [1, 7], clear: [[5, 8], [5, 7], [3, 7], [2, 7], [4, 9], [3, 8]], chest: [1, 4, 'trainBook', 1] },
+  cave6_lake: { kind: 'mirror', room: [[1, 3, 2, 3], [2, 6, 1, 1]], gate: [[2, 6, 'door']], source: [17, 8], mirrors: [[3, 8, 1], [3, 7, 3]], crest: [1, 7], clear: [[4, 8], [4, 7], [2, 7], [3, 9], [2, 8], [4, 9]], chest: [1, 4, 'trainBook', 1] }, // v12.0.9n: the mirrors moved one tile west — (4,7) was the only way north (to 月光洞之主) and the mirror blocked it
   cave6_swamp: { kind: 'logs', room: [[15, 2, 3, 6]], logs: { safe: [[16, 7], [16, 6], [15, 6], [15, 5], [15, 4]], fake: [[15, 7], [17, 7], [17, 6], [16, 5], [17, 5], [16, 4], [17, 4]] }, back: [16, 8], fall: 'mud', chest: [17, 2, 'elixir', 1] },
   cave6_maplePass: { kind: 'cart', room: [[15, 2, 3, 3], [16, 5, 1, 3]], gate: [[16, 5, 'rubble']], rails: [[16, 8], [16, 7], [16, 6], [16, 5]], cart: [16, 8], clear: [[16, 9]], chest: [16, 3, 'trainBook', 1] },
   cave6_oldField: { kind: 'plates', room: [[17, 2, 3, 3], [18, 5, 1, 1]], gate: [[18, 5, 'door']], plates: [[4, 8], [1, 11], [16, 13]], chest: [18, 2, 'megaPotion', 3] },
