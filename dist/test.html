@@ -20724,5 +20724,9 @@ let MENU_DRAW9 = 0;
 { const _d = UI.draw; UI.draw = function (c) { MENU_DRAW9++; try { return _d.call(this, c); } finally { MENU_DRAW9--; } }; }
 for (const k in GEAR) { const G = GEAR[k]; if (!G || typeof G.n !== 'string' || !G.t) continue; let base = G.n; const t = G.t;
   Object.defineProperty(G, 'n', { configurable: true, enumerable: true, get() { return MENU_DRAW9 ? base + ' T' + t : base; }, set(v) { base = v; } }); }
+Object.assign(DN12, { LEN: 1200, day: 150, dusk: 650, night: 800 });
+for (const k of DN_KEYS12) k[0] = k[0] / 2;
+{ const _ng = newGameState; newGameState = function (...a) { const st = _ng.apply(this, a); if (st) { st.clock = 30; st.dnHalf9 = 1; } return st; }; }
+{ const _so = startOverworld; startOverworld = function (...a) { const st = Game.st; if (st && !st.dnHalf9) { if (st.clock != null) st.clock = Math.floor(st.clock / 2); st.dnHalf9 = 1; } return _so.apply(this, a); }; }
 </script>
 </body></html>
