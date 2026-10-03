@@ -20710,5 +20710,15 @@ const FONT_DOWN9 = 0.5;
   Font.wrap = (str, maxW, size) => _wr(str, maxW, adj(size));
   Font.drawR = (ctx, str, xr, y, col, sh, size) => Font.draw(ctx, str, xr - Font.width(String(str), size), y, col, sh, size);
   Font.drawC = (ctx, str, xc, y, col, sh, size) => Font.draw(ctx, str, xc - Font.width(String(str), size) / 2, y, col, sh, size); }
+{ const H = Battle.prototype.handlers, _d = H.DOWN; H.DOWN = function* (e, s, t, P) { if (e && e.cancelled) return; return yield* _d.call(this, e, s, t, P); }; }
+{ const multi = (id, n, pow) => { const D = DEF.skills[id], M = MOVES[id]; if (!D || !M) return; M.hits = n; M.pow = pow; D.hits = [n, n]; D.power = pow; if (!D.tags.includes('multi_hit')) D.tags.push('multi_hit'); };
+  multi('m_peck', 3, 13); multi('m_boneRush', 2, 36); multi('m_spearRush', 3, 29); multi('m_tripleBite', 3, 31);
+  const txt = (id, n, d) => { const D = DEF.skills[id], M = MOVES[id]; if (!D || !M) return; if (n) { M.n = n; D.name = n; } if (d) { M.d = d; D.desc = d; } };
+  txt('m_peck', null, '用尖嘴連續啄 3 下。'); txt('m_boneRush', null, '用骨頭獠牙連續咬 2 下。'); txt('m_spearRush', null, '衝上前連續刺 3 下。'); txt('m_tripleBite', null, '三顆頭輪流咬過來，共 3 下。有時會讓對手退縮。');
+  { const D = DEF.skills.m6_bloodsuck; if (D) { MOVES.m6_bloodsuck.drain = 0.5; if (!D.tags.includes('drain')) D.tags.push('drain'); D.after = (D.after || []).concat([effRegister('skill:m6_bloodsuck#a9', { type: 'heal', ofCast: 0.5, target: 'self', kind: 'drain', quiet: 1 })]); }
+    txt('m6_bloodsuck', null, '用細長的針吸血，回復造成傷害一半的 HP。常常讓對手中毒。'); }
+  txt('m12_wolfCall', '長嚎', '仰天長嚎、壯大聲勢。提升物攻和速度。');
+  txt('m_kingsFeast', null, '吃掉身邊的小老鼠（每隻威力 +20%），再撲上來大咬一口，吸取傷害的 30%。');
+  txt('m_harvest', null, '揮動巨鐮收割一切，吸取傷害的 30%。無視防禦，但打不中閃避中的對手。'); }
 </script>
 </body></html>

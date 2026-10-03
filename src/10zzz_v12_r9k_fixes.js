@@ -39,3 +39,6 @@ const FONT_DOWN9 = 0.5;
   Font.wrap = (str, maxW, size) => _wr(str, maxW, adj(size));
   Font.drawR = (ctx, str, xr, y, col, sh, size) => Font.draw(ctx, str, xr - Font.width(String(str), size), y, col, sh, size);
   Font.drawC = (ctx, str, xc, y, col, sh, size) => Font.draw(ctx, str, xc - Font.width(String(str), size) / 2, y, col, sh, size); }
+/* - 骷髏兵等「裝死」的魔物（玩家 04:14「古岩魔像的骷髏兵打贏時會有BUG」）：裝死擋下了倒地，戰鬥畫面卻照樣播了「倒下了！」、把牠從畫面拿掉，
+     之後選不到目標、戰鬥卡住。英雄的「撐住」天賦也一樣會播倒地動畫。→ 被擋下（取消）的倒地不播。 */
+{ const H = Battle.prototype.handlers, _d = H.DOWN; H.DOWN = function* (e, s, t, P) { if (e && e.cancelled) return; return yield* _d.call(this, e, s, t, P); }; }
