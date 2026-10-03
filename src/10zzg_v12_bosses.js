@@ -12,7 +12,7 @@
      收穫魔像   豐收之刻無視防禦，但幾乎打不中煙幕／迴避中的目標 → 煙霧彈、提高閃避
      時計巨像   時鐘 9→10→11→12，12 點必定審判；時間扭曲讓你下一回合最後行動（搶先技能不受影響）
      霜之女王   冰系攻擊累積冰霜，滿 3 層凍結一回合 → 防禦或火屬性攻擊清掉冰霜
-     熔岩巨人   熔岩甲：物理傷害 −40%；被水屬性打中冷卻 3 次行動 → 先用水破甲
+     熔岩巨人   熔岩甲：物理傷害 −15%；被水屬性打中冷卻 3 次行動 → 先用水破甲（第二輪：−40%→−15%、大噴發 165→140、HP −25%）
      魔人維克托 模仿你上一回合用的技能（威力 ×0.8）→ 大招之後的下一回合防禦
      影將莫爾德 HP 75% 反擊架勢（2 回合）、50% 連續蓄力兩次、25% 每 3 次行動一記蝕日之劍 */
 const B12_FAM = new Set(Object.values(FAM_TECH).flat().concat(['m_dominate']));
@@ -123,10 +123,10 @@ defPut('mechanics', 'b12_frostQueen', { make: u => ({ triggers: [
   { on: EVT.DEFEND, phase: 'POST', role: 'enemy_src', prio: 3, effects: [{ type: 'frost12', clear: 1, why: 'guard', target: 'all_enemies' }] },
   { on: EVT.DAMAGE, phase: 'POST', role: 'tgt', cond: { srcSide: 'enemy', evEl: '火', hasPower: 1 }, limit: { perAction: 1 }, prio: 3, effects: [{ type: 'frost12', clear: 1, why: 'fire', target: 'all_enemies' }] }] }) });
 
-/* ---------- 熔岩巨人：熔岩甲 (physical damage −40%) until a water hit cools it (3 of its actions) ---------- */
+/* ---------- 熔岩巨人：熔岩甲 (physical damage −15%) until a water hit cools it (3 of its actions) · round 2: 大噴發 140, HP −25% (10zzj) ---------- */
 defPut('statuses', 'cooled12', { tags: ['debuff'], duration: 'owner_actions', durDefault: 3, tick: 'owner_action_end', stack: 'refresh', metadata: { n: '冷卻' } });
-defPut('mechanics', 'b12_lavaGiant', { make: u => ({ mods: [{ stage: 'final', who: 'defender', mul: 0.6, cond: { cat: '物', hasPower: 1, ownerLacksStatus: 'cooled12' } }], triggers: [
-  { on: EVT.ROUND_START, phase: 'POST', cond: { round: 1, ownerAlive: 1 }, prio: 2, effects: [{ type: 'message', target: 'self', text: '熔岩巨人全身覆蓋著熔岩甲！（物理攻擊效果很差……用水屬性讓牠冷卻！）' }] },
+defPut('mechanics', 'b12_lavaGiant', { make: u => ({ mods: [{ stage: 'final', who: 'defender', mul: 0.85, cond: { cat: '物', hasPower: 1, ownerLacksStatus: 'cooled12' } }], triggers: [
+  { on: EVT.ROUND_START, phase: 'POST', cond: { round: 1, ownerAlive: 1 }, prio: 2, effects: [{ type: 'message', target: 'self', text: '熔岩巨人全身覆蓋著熔岩甲！（物理攻擊的效果會變差……用水屬性讓牠冷卻！）' }] },
   { on: EVT.DAMAGE, phase: 'POST', role: 'tgt', cond: { srcSide: 'enemy', evEl: '水', hasPower: 1, ownerAlive: 1 }, limit: { perAction: 1 }, prio: 3, effects: [{ type: 'status', status: 'cooled12', target: 'self', dur: 3 }, { type: 'message', target: 'self', text: '熔岩甲冷卻變硬、裂開了！物理攻擊現在有效！' }] }] }) });
 
 /* ---------- 魔人維克托：copies the skill you used last round (×0.8) ---------- */
