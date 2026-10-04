@@ -265,6 +265,77 @@ const FX11 = {
       for (let r = 0; r < 3; r++) { const y = U.y + 2 - r * 10; for (let b = -3; b <= 2; b++) { const x = U.x + b * 12 + (r % 2 ? 6 : 0); this.spawn({ k: 'line', x1: x, y1: y, x2: x + 10, y2: y, c: (b + r) % 2 ? S.col[0] : S.col[2], w: 6, grow: 2, life: 28 }); } this.shake = Math.max(this.shake, 3); yield* wait(3); }
       this.spawn({ k: 'glow', x: U.x, y: U.y, r: 30, c: S.col[1], life: 20 }); for (let i = 0; i < 5; i++) this.spawn({ k: 'txt', s: '+', x: U.x + rnd(-18, 18), y: U.y + rnd(-4, 16), vy: -0.6, c: '#a0ffb0', life: 20, fade: 1 }); yield* wait(12); } },
 };
+/* ----- 絕技（職業退場：原本各職業的代表招）和戰技樹的兩招 ----- */
+Object.assign(FX11, {
+  zjSky: { col: ['#e8f0ff', '#ffffff', '#3050a0'], pt: 'spark2', cast: 'still', fin: 'flash', snd: 'crit', // 一刀天斷: the blade is drawn and the world goes still for one cut
+    *f(S, U, T, u) { this.spawn({ k: 'dark', a: 0.5, c: '#080818', life: 26 }); Sound.sfx('tick'); this.spawn({ k: 'line', x1: U.x + 6, y1: U.y - 4, x2: U.x + 20, y2: U.y - 4, c: S.col[1], w: 2, grow: 3, life: 10 }); yield* wait(8);
+      yield* this.lunge(u, 26, 2); Sound.sfx('crit'); ln9(this, T.x - 50, T.y + 6, T.x + 50, T.y - 6, S.col[0], S.col[1], 4, 16); this.spawn({ k: 'flash', c: '#ffffff', a: 0.45, life: 5 }); yield* wait(4);
+      for (let i = 0; i < 5; i++) this.spawn({ k: 'line', x1: T.x - 40 + i * 20, y1: T.y - 20, x2: T.x - 34 + i * 20, y2: T.y + 20, c: S.col[0], w: 1, grow: 2, life: 10 }); imp9(this, T, S, 1); this.shake = Math.max(this.shake, 8); yield* wait(10); } },
+  zjRune: { col: ['#b080ff', '#f8f0ff', '#402080'], pt: 'rune', cast: 'rune', fin: 'burst', snd: 'slash', // 星紋魔劍: a cut, then two rune bolts
+    *f(S, U, T, u) { yield* this.lunge(u, 14, 3); Sound.sfx('slash'); sl11(this, T, -0.7, 26, S, 6); this.spawn({ k: 'hex', x: T.x, y: T.y, r0: 6, r1: 22, c: S.col[0], life: 14 }); yield* wait(5);
+      for (let k = 0; k < 2; k++) { Sound.sfx('charge'); yield* bolt11(this, U, { x: T.x + (k ? 8 : -8), y: T.y }, S, 6, 3); this.spawn({ k: 'ring', x: T.x, y: T.y, r0: 4, r1: 20, c: S.col[1], w: 2, life: 10 }); this.star(T.x, T.y, S.col[0], 10); yield* wait(3); }
+      this.spawn({ k: 'glow', x: U.x, y: U.y, r: 16, c: '#80b0ff', life: 12 }); yield* wait(8); } },
+  zjSwallow: { col: ['#a0e0ff', '#ffffff', '#20608a'], pt: 'wind', cast: 'dash', fin: 'cut', snd: 'slash', // 迴燕雙斷: a swallow-turn — one sweep out, one back
+    *f(S, U, T, u) { yield* this.lunge(u, 18, 2); Sound.sfx('slash'); this.spawn({ k: 'cres', x: T.x, y: T.y, r: 24, ang: 0.4, c: S.col[1], c2: S.col[0], w: 5, life: 12 }); yield* wait(4);
+      Sound.sfx('crit'); this.spawn({ k: 'cres', x: T.x, y: T.y, r: 24, ang: 3.5, c: S.col[1], c2: S.col[0], w: 5, life: 12 }); for (let i = 0; i < 4; i++) this.spawn({ k: 'line', x1: T.x, y1: T.y, x2: T.x + Math.cos(i * 1.6) * 30, y2: T.y + Math.sin(i * 1.6) * 20, c: S.col[1], w: 1, grow: 2, life: 10 }); imp9(this, T, S, 1); yield* wait(10); } },
+  zjObsidian: { col: ['#6a4a8a', '#e0d0ff', '#100818'], pt: 'shadow', cast: 'void', fin: 'impact', snd: 'heavy', // 黑曜終劍: a black blade falls from the dark
+    *f(S, U, T, u) { this.spawn({ k: 'dark', a: 0.55, c: '#0a0410', life: 30 }); Sound.sfx('charge'); for (let i = 0; i < 6; i++) this.spawn({ k: 'glow', x: T.x + rnd(-30, 30), y: T.y - 40 + rnd(-10, 10), r: 10, c: S.col[0], life: 16 }); yield* wait(8);
+      yield* this.lunge(u, 16, 3); Sound.sfx('heavy'); ln9(this, T.x, T.y - 70, T.x, T.y + 16, S.col[0], S.col[1], 9, 16); this.spawn({ k: 'shock', x: T.x, y: T.y + 18, r0: 4, r1: 44, c: S.col[1], life: 14 }); this.shake = Math.max(this.shake, 10); imp9(this, T, S, 1); yield* wait(10); } },
+  zjMoonFang: { col: ['#e0e8ff', '#ffffff', '#405080'], pt: 'crescent', cast: 'dash', fin: 'none', snd: 'slash', // 月影雙牙: two fangs of moonlight
+    *f(S, U, T, u) { yield* this.lunge(u, 18, 2); Sound.sfx('slash'); this.spawn({ k: 'arc', x: T.x - 6, y: T.y, r: 16, a0: -0.6, c: S.col[0], life: 12 }); sl11(this, T, -1.1, 18, S, 3); yield* wait(5); },
+    *h(S, U, T) { Sound.sfx('crit'); this.spawn({ k: 'arc', x: T.x + 6, y: T.y, r: 16, a0: 2.4, c: S.col[1], life: 12 }); sl11(this, T, 1.1, 18, S, 3); this.star(T.x, T.y, S.col[1], 10); yield* wait(6); } },
+  zjBloom: { col: ['#ff9ac8', '#fff0f8', '#802050'], pt: 'leaf', cast: 'dash', fin: 'none', snd: 'wind', // 旋花飛刃: blades spin like petals over them all
+    *f(S, U, T, u, t) { Sound.sfx('wind'); for (let w = 0; w < 3; w++) { for (const C of grp9(this, T, t)) { for (let i = 0; i < 6; i++) { const a = i * 1.05 + w * 0.5; this.spawn({ k: 'line', x1: C.x + Math.cos(a) * 26, y1: C.y + Math.sin(a) * 16, x2: C.x + Math.cos(a + 0.7) * 26, y2: C.y + Math.sin(a + 0.7) * 16, c: i % 2 ? S.col[0] : S.col[1], w: 3, grow: 2, life: 12 }); }
+        this.spawn({ k: 'dot', x: C.x + rnd(-20, 20), y: C.y + rnd(-14, 14), vx: rnd(-10, 10) / 10, vy: rnd(-10, 4) / 10, s: 3, c: S.col[0], life: 20 }); } yield* wait(4); } yield* wait(4); },
+    *h(S, U, T, u, i, t) { Sound.sfx('slash'); for (const C of grp9(this, T, t)) { this.spawn({ k: 'ring', x: C.x, y: C.y, r0: 20, r1: 6, c: S.col[0], w: 2, life: 10 }); w12Particle(this, C.x, C.y, S, 5, 14); } yield* wait(5); } },
+  zjIronLaw: { col: ['#b0b8c8', '#ffffff', '#3a4050'], pt: 'shard', cast: 'aura', fin: 'impact', snd: 'heavy', // 鐵律重斧: an iron-grey weight comes down like a verdict
+    *f(S, U, T, u) { Sound.sfx('charge'); this.spawn({ k: 'hex', x: U.x, y: U.y, r0: 8, r1: 24, c: S.col[0], life: 14 }); yield* wait(6); yield* this.lunge(u, 16, 3); Sound.sfx('heavy');
+      this.spawn({ k: 'line', x1: T.x - 22, y1: T.y - 40, x2: T.x + 22, y2: T.y - 40, c: S.col[0], w: 6, grow: 2, life: 14 }); ln9(this, T.x, T.y - 40, T.x, T.y + 12, S.col[0], S.col[1], 8, 14); yield* wait(3);
+      this.spawn({ k: 'shock', x: T.x, y: T.y + 20, r0: 4, r1: 46, c: S.col[0], life: 14 }); for (let i = 0; i < 6; i++) this.spawn({ k: 'shard', g: 0.2, x: T.x, y: T.y, vx: rnd(-20, 20) / 10, vy: -rnd(10, 25) / 10, s: 4, c: S.col[0], life: 22 }); this.shake = Math.max(this.shake, 9); yield* wait(10); } },
+  zjHolyWall: { col: ['#ffe8a0', '#ffffff', '#a07a20'], pt: 'hex', cast: 'hex', fin: 'impact', snd: 'shield', // 聖壁衝鋒: a wall of light charges in, then shields the hero
+    *f(S, U, T, u) { Sound.sfx('shield'); for (let i = -2; i <= 2; i++) this.spawn({ k: 'hex', x: U.x + i * 10, y: U.y - 20, r0: 4, r1: 9, c: S.col[0], life: 16 }); yield* wait(5); yield* this.lunge(u, 22, 3);
+      Sound.sfx('heavy'); for (let i = -2; i <= 2; i++) this.spawn({ k: 'hex', x: T.x + i * 10, y: T.y, r0: 12, r1: 4, c: S.col[1], life: 12 }); this.spawn({ k: 'flash', c: S.col[0], a: 0.3, life: 6 }); imp9(this, T, S, 1); this.shake = Math.max(this.shake, 7); yield* wait(10); } },
+  zjFourFold: { col: ['#ff8040', '#40a0ff', '#f0d040'], pt: 'star', cast: 'rune', fin: 'burst', snd: 'charge', // 四象奔流: fire, water, thunder, leaf — four streams in turn
+    *f(S, U, T) { const E = [['#ff7030', 'fire'], ['#40a0ff', 'water'], ['#f8d040', 'thunder'], ['#60d060', 'leaf']]; Sound.sfx('charge'); this.spawn({ k: 'hex', x: U.x, y: U.y + 16, r0: 30, r1: 10, c: '#ffffff', life: 16 }); yield* wait(5);
+      for (const [c, snd] of E) { const s2 = { col: [c, '#ffffff', c] }; Sound.sfx(snd); yield* bolt11(this, U, T, s2, 5, 3); this.spawn({ k: 'glow', x: T.x, y: T.y, r: 20, c, life: 10 }); this.spawn({ k: 'ring', x: T.x, y: T.y, r0: 4, r1: 22, c, w: 2, life: 10 }); yield* wait(2); }
+      this.spawn({ k: 'flash', c: '#ffffff', a: 0.25, life: 5 }); yield* wait(8); } },
+  zjStarPage: { col: ['#d0d8ff', '#ffffff', '#3040a0'], pt: 'star', cast: 'sky', fin: 'none', snd: 'charge', // 星辰墜頁: pages of starlight fall on them all
+    *f(S, U, T, u, t) { this.spawn({ k: 'dark', a: 0.4, c: '#080a20', life: 30 }); Sound.sfx('charge'); yield* wait(6);
+      for (let k = 0; k < 3; k++) { for (const C of grp9(this, T, t)) { const x = C.x + rnd(-14, 14); ln9(this, x + 20, C.y - 70, x, C.y, S.col[0], S.col[1], 3, 12); this.spawn({ k: 'line', x1: x - 4, y1: C.y - 2, x2: x + 4, y2: C.y + 2, c: S.col[1], w: 5, grow: 1, life: 10 }); this.star(x, C.y, S.col[1], 10); } Sound.sfx('hit'); yield* wait(4); }
+      yield* wait(8); } },
+  zjOverture: { col: ['#ffd8a0', '#fff8e8', '#a06030'], pt: 'note', cast: 'aura', snd: 'statUp', // 迴響序曲: an overture — notes rise, light rings out
+    *f(S, U) { Sound.sfx('statUp'); note11(this, U.x, U.y - 10, S, 8); for (let i = 0; i < 3; i++) this.spawn({ k: 'ring', x: U.x, y: U.y, r0: 6 + i * 6, r1: 30 + i * 10, c: i % 2 ? S.col[1] : S.col[0], w: 2, life: 16 + i * 3 }); yield* wait(10);
+      this.spawn({ k: 'glow', x: U.x, y: U.y, r: 26, c: '#a0ffb0', life: 16 }); Sound.sfx('heal'); yield* wait(10); } },
+  zjFinale: { col: ['#ff80c0', '#ffe0f0', '#701040'], pt: 'note', cast: 'aura', fin: 'burst', snd: 'buzz', // 終章頌歌: the closing hymn crashes over them all
+    *f(S, U, T, u, t) { Sound.sfx('buzz'); note11(this, U.x, U.y - 12, S, 6); for (let k = 0; k < 4; k++) { this.spawn({ k: 'ring', x: lerp(U.x, T.x, k / 4), y: lerp(U.y, T.y, k / 4), r0: 6, r1: 24, c: k % 2 ? S.col[1] : S.col[0], w: 3, life: 10 }); yield* wait(2); }
+      for (const C of grp9(this, T, t)) { note11(this, C.x, C.y - 10, S, 3); this.spawn({ k: 'ring', x: C.x, y: C.y, r0: 4, r1: 34, c: S.col[0], w: 3, life: 14 }); imp9(this, C, S); } this.spawn({ k: 'flash', c: S.col[0], a: 0.2, life: 6 }); yield* wait(10); } },
+  zjGearGun: { col: ['#d0a050', '#fff0c0', '#604020'], pt: 'gear', cast: 'hex', fin: 'impact', snd: 'heavy', // 齒輪砲台: the cannon fires and a little turret clicks into place
+    *f(S, U, T, u) { Sound.sfx('heavy'); this.spawn({ k: 'glow', x: U.x + 16, y: U.y - 10, r: 14, c: '#fff0a0', life: 6 }); ln9(this, U.x + 16, U.y - 10, T.x, T.y, S.col[0], S.col[1], 5, 8); yield* wait(3); imp9(this, T, S, 1); this.shake = Math.max(this.shake, 6); yield* wait(6);
+      const X = U.x - 26, Y = U.y + 10; for (let i = 0; i < 6; i++) { const a = i * Math.PI / 3; this.spawn({ k: 'circ', x: X + Math.cos(a) * 7, y: Y + Math.sin(a) * 7, vx: 0, vy: 0, g: 0, r: 2, c: S.col[0], life: 22 }); } this.spawn({ k: 'ring', x: X, y: Y, r0: 2, r1: 12, c: S.col[1], w: 2, life: 14 }); Sound.sfx('tick'); yield* wait(10); } },
+  zjRedShell: { col: ['#ff5020', '#ffd0a0', '#701808'], pt: 'flame', cast: 'still', fin: 'burst', snd: 'fire', // 赤焰彈: a red shell bursts into flame
+    *f(S, U, T) { Sound.sfx('crit'); ln9(this, U.x + 16, U.y - 10, T.x, T.y, S.col[0], S.col[1], 3, 8); yield* wait(3); Sound.sfx('fire'); this.spawn({ k: 'glow', x: T.x, y: T.y, r: 28, c: S.col[0], life: 14 });
+      for (let i = 0; i < 10; i++) this.spawn({ k: 'flame', x: T.x + rnd(-14, 14), y: T.y + rnd(-6, 12), vy: -1.4, s: 4, life: 18 }); this.spawn({ k: 'ring', x: T.x, y: T.y, r0: 4, r1: 30, c: S.col[1], w: 3, life: 12 }); yield* wait(10); } },
+  zjThousand: { col: ['#ffc060', '#fff8e0', '#a05010'], pt: 'chi', cast: 'aura', fin: 'none', snd: 'heavy', // 千手寸勁: palm after palm, the chi spent with each
+    *f(S, U, T, u) { Sound.sfx('charge'); aura11(this, U, S, 8); yield* wait(5); yield* this.lunge(u, 18, 2); Sound.sfx('heavy');
+      for (let i = 0; i < 6; i++) { const ox = [-8, 10, -14, 6, 14, -4][i], oy = [0, -10, 8, 10, -4, -14][i]; this.spawn({ k: 'ring', x: T.x + ox, y: T.y + oy, r0: 2, r1: 16, c: S.col[i % 2], w: 3, life: 9 }); this.star(T.x + ox, T.y + oy, S.col[1], 9); this.shake = Math.max(this.shake, 2); yield* wait(2); } yield* wait(2); },
+    *h(S, U, T, u, i) { Sound.sfx('heavy'); const ox = [8, -6, 4, -10, 10][i % 5], oy = [-6, 6, -10, 2, 8][i % 5]; this.spawn({ k: 'ring', x: T.x + ox, y: T.y + oy, r0: 2, r1: 14, c: S.col[0], w: 3, life: 8 }); this.star(T.x + ox, T.y + oy, S.col[1], 8); this.shake = Math.max(this.shake, 2); yield* wait(3); } },
+  zjQuake: { col: ['#ffb040', '#ffffff', '#804010'], pt: 'chi', cast: 'aura', fin: 'impact', snd: 'quake', // 裂地神掌: one palm that cracks the ground open
+    *f(S, U, T, u) { Sound.sfx('charge'); aura11(this, U, S, 12); this.spawn({ k: 'glow', x: U.x + 12, y: U.y - 8, r: 18, c: S.col[0], life: 16 }); yield* wait(8); yield* this.lunge(u, 22, 3);
+      Sound.sfx('quake'); this.spawn({ k: 'glow', x: T.x, y: T.y, r: 34, c: S.col[0], life: 12 }); for (let i = 0; i < 4; i++) zig9(this, T.x, T.y + 10, T.x + (i - 1.5) * 26, T.y + 30, S.col[2], 3, 4, 16); this.spawn({ k: 'shock', x: T.x, y: T.y + 20, r0: 6, r1: 56, c: S.col[0], life: 16 });
+      this.shake = Math.max(this.shake, 12); imp9(this, T, S, 1); yield* wait(10); } },
+  zjAzure: { col: ['#60c0ff', '#f0faff', '#103a70'], pt: 'wind', cast: 'sky', fin: 'impact', snd: 'wind', // 蒼龍躍: the hero comes down like a blue dragon
+    *f(S, U, T, u) { Sound.sfx('wind'); ln9(this, T.x + 30, T.y - 90, T.x, T.y + 6, S.col[0], S.col[1], 7, 14); for (let i = 0; i < 6; i++) this.spawn({ k: 'line', x1: T.x + 30 - i * 5 + rnd(-8, 8), y1: T.y - 90 + i * 15, x2: T.x + 36 - i * 5, y2: T.y - 96 + i * 15, c: S.col[1], w: 1, grow: 2, life: 12 }); yield* wait(4);
+      Sound.sfx('heavy'); this.spawn({ k: 'shock', x: T.x, y: T.y + 20, r0: 4, r1: 50, c: S.col[0], life: 14 }); imp9(this, T, S, 1); this.shake = Math.max(this.shake, 10); yield* wait(10); } },
+  zjMeteor: { col: ['#ff9050', '#fff0d0', '#702010'], pt: 'ember', cast: 'sky', fin: 'burst', snd: 'quake', // 流星龍墜: a dragon-meteor lands on them all
+    *f(S, U, T, u, t) { this.spawn({ k: 'dark', a: 0.35, c: '#200808', life: 24 }); Sound.sfx('wind'); ln9(this, T.x + 50, T.y - 100, T.x, T.y, S.col[0], S.col[1], 10, 14); for (let i = 0; i < 8; i++) this.spawn({ k: 'flame', x: T.x + 50 - i * 6, y: T.y - 100 + i * 12, vy: -0.6, s: 4, life: 14 }); yield* wait(4);
+      Sound.sfx('quake'); for (const C of grp9(this, T, t)) { this.spawn({ k: 'shock', x: C.x, y: C.y + 18, r0: 4, r1: 40, c: S.col[0], life: 14 }); imp9(this, C, S, 1); } this.shake = Math.max(this.shake, 12); yield* wait(10); } },
+  cmDawn: { col: ['#ffe0a0', '#fffff0', '#c08030'], pt: 'ray', cast: 'draw', fin: 'flash', snd: 'crit', // 晨曦之刃: a dawn-coloured cut that pulls light back to the hero
+    *f(S, U, T, u) { yield* this.lunge(u, 16, 3); Sound.sfx('crit'); sl11(this, T, -0.5, 30, S, 7, 14); this.spawn({ k: 'glow', x: T.x, y: T.y, r: 24, c: S.col[0], life: 12 }); yield* wait(4);
+      for (let i = 0; i < 5; i++) this.spawn({ k: 'glow', x: lerp(T.x, U.x, i / 5), y: lerp(T.y, U.y, i / 5), r: 6, c: S.col[1], life: 8 + i * 3 }); this.spawn({ k: 'glow', x: U.x, y: U.y, r: 18, c: '#a0ffb0', life: 14 }); yield* wait(8); } },
+  cmTwin: { col: ['#ffffff', '#80c0ff', '#ff8080'], pt: 'spark', cast: 'draw', fin: 'cut', snd: 'slash', // 雙相斬: a steel cut, then a mirrored cut of magic
+    *f(S, U, T, u) { yield* this.lunge(u, 14, 3); Sound.sfx('slash'); ln9(this, T.x - 24, T.y - 18, T.x + 20, T.y + 16, '#e0e8f0', '#ffffff', 5, 12); yield* wait(5);
+      Sound.sfx('charge'); ln9(this, T.x + 24, T.y - 18, T.x - 20, T.y + 16, S.col[1], '#ffffff', 5, 12); this.spawn({ k: 'hex', x: T.x, y: T.y, r0: 6, r1: 20, c: S.col[1], life: 12 }); imp9(this, T, S); yield* wait(10); } },
+});
 function fx11Make(k) { const F = FX11[k], id = 't_' + k, D = DEF.skills[id]; if (!F || !D) { bvErr('r9y', 'fx ' + k); return; } const S = { col: F.col, pt: F.pt, seed: hashK(k) };
   FX['t11_' + k] = function* (U, T, u, t) { yield* F.f.call(this, S, U, T, u, t); };
   if (F.h) { FX['t11h_' + k] = function* (U, T, u, i, t) { yield* F.h.call(this, S, U, T, u, i, t); }; D.hitFx = 't11h_' + k; }

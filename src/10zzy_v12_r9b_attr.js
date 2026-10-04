@@ -67,8 +67,8 @@ function statFormula9(key, st = Game.st) { const s = heroStats(st), a = heroAttr
   if (key === 'healUp') { const b = 0.5 * over10(a.vit), e = gearSp9(st, 'healUp'); return line('體力超過 10 的部分每點 +0.5 → ' + fmt9(b), e, rest(s.healUp || 0, b, e), ['回復技能、再生、藥水的回復量']); }
   return []; }
 function activeLines9(st = Game.st) { const s = heroStats(st), L = [], H = t => L.push([t, UIC.accent, 10, 0]), P = (t, c = UIC.text, ind = 6) => { for (const l of Font.wrap(t, 156 - ind, 10)) L.push([l, c, 10, ind]); };
-  if (st.cls) { const Z = typeof CLS12 !== 'undefined' && CLS12[clsV7(st.cls)]; H('【職業】' + ((CLASSES[st.cls] || {}).n || '')); if (Z && Z.passive) P(Z.passive[0] + '：' + Z.passive[1]); }
-  const T = typeof TAL12 !== 'undefined' ? TAL12.ids(st) : []; if (T.length) { H('【天賦】'); for (const id of T) { const D = DEF.talents[id]; if (D) P(D.name + '：' + D.desc); } }
+  { const k = typeof mainKind11 === 'function' ? mainKind11(st) : null, dm = typeof dualMode11 === 'function' ? dualMode11(st) : null; if (k || dm) H('【主武器】' + (k || '') + (dm ? '（' + dm + '）' : '')); } // 職業退場（v262）
+  if (typeof COMMON11 !== 'undefined') { const L2 = []; for (const k of COMMON11) for (const [id, n, max, , d] of TREE11[k].nodes) { const v = trLv11('cm:' + id, st); if (v) L2.push(n + (max > 1 ? ' Lv' + v : '') + '：' + d); } if (L2.length) { H('【共通技能樹】'); L2.forEach(t => P(t)); } }
   const th = s.th9 || {}, thL = []; for (const k in ATTR_TH9) for (let i = 0; i < (th[k] || 0); i++) thL.push(ATTR_NAMES[k] + TH9[i] + '：' + ATTR_TH9[k][i]); if (thL.length) { H('【屬性門檻】'); thL.forEach(t => P(t)); }
   const A = s.arm9 || {}; if (A.重甲 || A.輕裝 || A.法衣) { H('【防具三系】'); for (const t of ['重甲', '輕裝', '法衣']) if (A[t]) P(t + ' ' + A[t] + ' 件：' + ARM9_RULE[t] + '（每件）'); }
   const fx = []; for (const g of equippedGear(st)) { for (const f of gearFx(g)) if (SPECIALS[f]) fx.push(SPECIALS[f].n + '：' + (SPECIALS[f].d || '').replace(/。$/, '') + '（' + GEAR[g.b].n + '）');

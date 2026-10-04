@@ -18,12 +18,9 @@ module.exports = async (g) => {
     const P = (key, make) => defPut('passives', key, { make, metadata: {}, tags: [], override: 1 });
     /* =================== A: data =================== */
     { const v = bvValidate(); ok('A', '資料驗證（Schema、id、引用、標籤、觸發、效果、循環）', v.length === 0, v.slice(0, 5).join(' | ')); ok('A', '載入時沒有錯誤', err0 === 0, BV2.errors.slice(0, 3).join(' | '));
-      const cls = Object.keys(DEF.classes); let bad = [];
-      for (const c of cls) { const L = Object.values(DEF.talents).filter(t => t.cls === c), keys = L.filter(t => t.tier < 0);
-        if (L.length !== 21 || keys.length !== 3) bad.push(c + ':' + L.length + '/' + keys.length);
-        for (let b = 0; b < 3; b++) for (let t = 0; t < 3; t++) { const opts = L.filter(x => x.branch === b && x.tier === t); if (opts.length !== 2) bad.push(c + ' ' + b + '.' + t); if (opts.filter(x => x.kind === '數值').length > 1) bad.push(c + ' ' + b + '.' + t + ' 兩個數值'); }
-        const C = DEF.classes[c]; if (!DEF.skills[C.sig] || !DEF.mechanics[C.mechanic]) bad.push(c + ' sig/mech'); if ((CLASS_SKILLS12[c] || []).some(k => !DEF.skills['o_' + k])) bad.push(c + ' skill table'); }
-      ok('A', '10 職業 × 21 天賦（3 流派×3 層×2＋3 核心）、職業招式、職業機制、技能表', cls.length === 10 && !bad.length, bad.slice(0, 6).join(' | '));
+      { const bad = [], zj = [], sp = new Set(); for (const k of TREE_KINDS11) { const T = TREE11[k]; for (const r of T.sk) { if (!DEF.skills['t_' + r[1]]) bad.push(k + ' ' + r[1]); if (r[0][0] === '4' || /^cm/.test(r[1])) zj.push(r[1]); } T.sp.forEach((x, j) => sp.add(k + j));
+          if (T.common) for (const N of T.nodes) { if (N[5].tal && !DEF.talents[N[5].tal]) bad.push(k + ' ' + N[0] + ' talent'); } }
+        ok('A', '職業退場：12 棵武器樹＋3 棵共通樹、20 個絕技、33 個特技，招式・天賦效果都存在', TREE_KINDS11.length === 15 && COMMON11.length === 3 && zj.length === 20 && sp.size === 33 && !bad.length, bad.slice(0, 6).join(' | ') + ' 絕技 ' + zj.length + ' 特技 ' + sp.size); }
       const loose = []; for (const id in DEF.skills) for (const x of [...DEF.skills[id].effects, ...DEF.skills[id].after]) if (typeof x !== 'string' || !DEF.effects[x]) loose.push(id); ok('A', '技能效果都以 ID 引用（DEF.effects）', !loose.length, loose.slice(0, 4).join(','));
       const acc = Object.keys(GEAR).filter(k => GEAR[k].slot === 'acc'), noT = acc.filter(k => !GEAR[k].trait || (GEAR[k].fx || []).length !== 1); ok('A', '飾品 ' + acc.length + ' 個，每個 1 條特性', acc.length >= 53 && !noT.length, noT.slice(0, 4).join(','));
       const wp = Object.keys(GEAR).filter(k => GEAR[k].slot === 'weapon'), noS = wp.filter(k => !weaponSkill12(k)); ok('A', '武器 ' + wp.length + ' 把，每把都有武器技能', !noS.length, noS.slice(0, 4).join(','));
@@ -112,19 +109,23 @@ module.exports = async (g) => {
     /* =================== D: content (classes, talents, weapons) =================== */
     const mkHero = (cls, o = {}) => { __game.newGameState('測'); const st = Game.st; applyStartClass(['mage', 'bard'].includes(cls) ? 'mage' : 'swordsman'); st.cls = cls; st.lv = o.lv || 30; st.flags.deep = 1; st.tal12 = {}; if (o.tal) o.tal(st); st.hp = heroStats().hp; st.mp = heroStats().mp; st.status = null; BB.slots(st); return st; };
     const fight = (st, foes, seed, policy = 'smart', extra = {}) => { const [sp, lv, kind, ex] = foes; const c = BB.build({ sp, lv, kind, extra: ex || [], seed, maxRounds: 60, ...extra }, st); c.data.heroPolicy = policy; c.cfg.maxRounds = 60; c.start(true); return c; };
-    { const bad = [], used = {}, gained = {};
-      for (const cls of Object.keys(DEF.classes)) { for (let i = 0; i < 6; i++) { const st = mkHero(cls), e0 = BV2.errors.length; let c; try { c = fight(st, ['slime', 26, 'wild', [['mush', 26], ['wolf', 25]]], 50 + i); } catch (e) { bad.push(cls + ': ' + e.message); continue; }
-          if (BV2.errors.length > e0) bad.push(cls + ': ' + BV2.errors[e0]); const C = DEF.classes[cls]; if (cnt(c, EVT.SKILL_USE, e => e.src === 'H' && e.payload.skill === C.sig)) used[cls] = 1;
-          const res = C.res; if (res ? c.log.some(e => e.type === EVT.RESOURCE_CHANGE && e.tgts[0] === 'H' && e.payload.res === res && e.payload.change > 0) : c.log.some(e => e.type === EVT.STATUS_APPLY && e.src === 'H' && ['hunt_mark', 'turret'].includes(e.payload.status))) gained[cls] = 1; } }
-      const cl = Object.keys(DEF.classes); ok('D', '10 職業：核心資源會累積、職業招式會被使用、沒有錯誤', !bad.length && cl.every(c => used[c] && gained[c]), bad.slice(0, 3).join(' | ') + ' 招式:' + cl.filter(c => !used[c]).join(',') + ' 資源:' + cl.filter(c => !gained[c]).join(',')); }
-    { const bad = [], fired = {}; let n = 0;
-      for (const id in DEF.talents) { const T = DEF.talents[id]; if (!DEF.classes[T.cls]) continue; n++; const st = mkHero(T.cls, { tal: s => TAL12.pick(T.branch, T.tier, T.opt, s) }), e0 = BV2.errors.length;
-        st.slots = (CLASS_SKILLS12[T.cls] || []).slice(0, 4).map(k => 'o_' + k);
-        try { const c = BB.build({ sp: 'slime', lv: 26, kind: 'wild', extra: [['mush', 26]], seed: 7 + n, maxRounds: 40 }, st); c.data.heroPolicy = 'random'; c.cfg.maxRounds = 40; c.start(true); if (!c.byId.H.data.talents.includes(id)) bad.push(id + ' not on the hero');
-          if (c.log.some(e => e.type === EVT.EFFECT_TRIGGER && String(e.payload.key || '').startsWith('talent:'))) fired[id] = 1; } catch (e) { bad.push(id + ': ' + e.message); }
-        if (BV2.errors.length > e0) bad.push(id + ': ' + BV2.errors[e0]); }
-      ok('D', '210 個天賦各自上場跑一場：沒有錯誤（觸發過 ' + Object.keys(fired).length + ' 個）', n === 210 && !bad.length, bad.slice(0, 3).join(' | ')); }
-    { const bad = []; for (const kind of TREE_KINDS11.filter(k => !TREE11[k].dual)) { const st = mkHero('swordsman'); GEAR11_GLAM = false; const gr = makeGear(BASE11.weapon[kind][2], 2); GEAR11_GLAM = true; st.equip.weapon = gr.u; tr11(st).lv[kind + ':trait'] = 1; BB.slots(st); const e0 = BV2.errors.length;
+    const treeHero = (kind, o = {}) => { const st = mkHero('swordsman', { lv: o.lv || 40 }); for (const f of ['clsBard', 'clsMachinist', 'clsMonk', 'clsDragoon', 'hiddenCls', 'spellbladeOk']) st.flags[f] = 1;
+      const mk = (b, q = 3) => { GEAR11_GLAM = false; const x = makeGear(b, q); GEAR11_GLAM = true; return x; }; let w, off = null;
+      if (kind === '雙刀') { w = mk(BASE11.weapon.短刀[4]); off = mk(BASE11.weapon.短刀[3]); } else if (kind === '雙劍') { w = mk(BASE11.weapon.劍[4]); off = mk(BASE11.weapon.劍[3]); } else if (kind === '雙盾') { w = mk(BASE11.shield[4]); off = mk(BASE11.shield[3]); } else if (BASE11.weapon[kind]) w = mk(BASE11.weapon[kind][4]);
+      if (w) st.equip.weapon = w.u; st.equip.shield = off ? off.u : null; const T = tr11(st); T.lv = {}; for (const N of treeNodes11(kind)) T.lv[N.key] = N.t === 'cp' ? N.max : 1; st.trRef11 = 999;
+      st.slots = TREE11[kind].sk.slice(-4).map(r => 't_' + r[1]); st.hp = heroStats(st).hp; st.mp = heroStats(st).mp; return st; };
+    { const bad = [], used = {}, zj = TREE_KINDS11.flatMap(k => TREE11[k].sk.filter(r => r[0][0] === '4' || /^cm/.test(r[1])).map(r => 't_' + r[1]));
+      for (const kind of TREE_KINDS11) for (let i = 0; i < 4; i++) { const st = treeHero(TREE11[kind].common ? '劍' : kind); if (TREE11[kind].common) { for (const N of treeNodes11(kind)) tr11(st).lv[N.key] = N.t === 'cp' ? N.max : 1; st.slots = TREE11[kind].sk.map(r => 't_' + r[1]); }
+        const e0 = BV2.errors.length; let c; try { c = fight(st, ['golem', 30, 'boss'], 70 + i, 'random'); } catch (e) { bad.push(kind + ': ' + e.message); continue; } if (BV2.errors.length > e0) bad.push(kind + ': ' + BV2.errors[e0]);
+        for (const e of c.log) if (e.type === EVT.SKILL_SUCCESS && e.src === 'H') used[e.payload.skill] = 1; }
+      ok('D', '每棵樹（含絕技、共通樹的招）上場跑頭目戰：沒有錯誤，20 個絕技都用得出來', !bad.length && zj.every(id => used[id]), bad.slice(0, 3).join(' | ') + ' 沒用到：' + zj.filter(id => !used[id]).join(',')); }
+    { const bad = []; let n = 0; for (const k of COMMON11) for (const N of TREE11[k].nodes) { n++; const st = treeHero('劍'), E = N[5], s0 = heroStats(st); tr11(st).lv = { ['cm:' + N[0]]: N[2] }; const s1 = heroStats(st), sp = BB.heroSpec(st, { kind: 'wild' });
+        if (E.tal && !sp.data.talents.includes(E.tal)) bad.push(N[1] + ' 天賦沒上身'); for (const a in E.p || {}) if (!(s1[a] > s0[a])) bad.push(N[1] + ' ' + a); for (const a in E.f || {}) if (!((s1[a] || 0) > (s0[a] || 0))) bad.push(N[1] + ' ' + a);
+        if ((E.big || E.regen || E.mpRegen) && !sp.passives.some(p => p.key === 'cm11' && (p.v.big || p.v.regen || p.v.mpRegen))) bad.push(N[1] + ' 被動'); if (E.cut && !(sp.wsp == null || sp.wsp.N >= 2)) bad.push(N[1]);
+        const e0 = BV2.errors.length; try { fight(st, ['wolf', 30, 'wild'], 300 + n); } catch (e) { bad.push(N[1] + ': ' + e.message); } if (BV2.errors.length > e0) bad.push(N[1] + ': ' + BV2.errors[e0]); }
+      ok('D', '共通樹 ' + n + ' 個節點各自生效（能力・被動・沿用的天賦），上場沒有錯誤', n >= 29 && !bad.length, bad.slice(0, 4).join(' | ')); }
+    { const st = treeHero('劍'), sp = BB.heroSpec(st, { kind: 'wild' }); ok('D', '主角沒有職業：沒有招牌招・職業機制・職業資源，基礎傷害 +20%', !sp.data.sigSkill && !sp.skills.some(id => /^sig_/.test(id)) && !sp.data.mechanics.some(m => /^cls_|^pw12_/.test(m)) && sp.passives.some(p => p.key === 'nc12' && p.v === 20) && sp.cls === NC12, JSON.stringify(sp.data.mechanics)); }
+    { const bad = []; for (const kind of TREE_KINDS11.filter(k => !TREE11[k].dual && !TREE11[k].common)) { const st = mkHero('swordsman'); GEAR11_GLAM = false; const gr = makeGear(BASE11.weapon[kind][2], 2); GEAR11_GLAM = true; st.equip.weapon = gr.u; tr11(st).lv[kind + ':trait'] = 1; BB.slots(st); const e0 = BV2.errors.length;
         try { const sp = BB.heroSpec(st, { kind: 'wild' }), a = sp.data.attackSkill, P = sp.passives.find(p => p.key === 'tr11'); if (kind === '短刀' && a !== 'attack_2') bad.push(kind + ' segments'); if (kind === '拳套' && a !== 'attack_f11') bad.push(kind + ' fist'); if (!P || !(P.v.traits || []).includes(kind)) bad.push(kind + ' no trait');
           const c = fight(st, ['wolf', 26, 'wild'], 4); if (!c.result) bad.push(kind + ' no result'); } catch (e) { bad.push(kind + ': ' + e.message); } if (BV2.errors.length > e0) bad.push(kind + ': ' + BV2.errors[e0]); }
       ok('D', '9 種武器的特性（武器技能樹）都會套用', !bad.length, bad.slice(0, 4).join(' | ')); }
@@ -134,9 +135,10 @@ module.exports = async (g) => {
       for (const k in runs) { const a = runs[k]().hash(), b = runs[k]().hash(); hashes[k] = a; ok('E', '固定種子重跑相同（' + k + '）', a === b, a + '/' + b); if (golden && golden[k] != null) ok('E', '和基準事件序列相同（' + k + '）', golden[k] === a, golden[k] + ' → ' + a); }
       const d = mk([hero({ skills: ['attack', 't_multi'] }), foe('B1'), foe('B2')], 43); d.start(true); ok('E', '不同種子 → 事件序列不同', d.hash() !== hashes.basic); }
     /* =================== F: build matrix (every class × 2 full talent sets × boss / group) =================== */
-    { const bad = []; let n = 0; for (const cls of Object.keys(DEF.classes)) for (const pick of [0, 1]) for (const f of [['golem', 24, 'boss'], ['slime', 30, 'wild', [['bee', 30], ['wolf', 30]]]]) { n++;
-        const st = mkHero(cls, { tal: s => TAL12.auto(s, pick) }), e0 = BV2.errors.length; try { const c = fight(st, f, 100 + n); if (!c.result) bad.push(cls + ' no result'); } catch (e) { bad.push(cls + '/' + pick + ': ' + e.message); } if (BV2.errors.length > e0) bad.push(cls + ': ' + BV2.errors[e0]); }
-      ok('F', 'Build 矩陣：10 職業 × 2 組天賦 × 頭目／多體（' + n + ' 場）沒有錯誤', !bad.length, bad.slice(0, 3).join(' | ')); }
+    { const bad = []; let n = 0; for (const kind of TREE_KINDS11.filter(k => !TREE11[k].common)) for (const pick of [0, 1]) for (const f of [['golem', 24, 'boss'], ['slime', 30, 'wild', [['bee', 30], ['wolf', 30]]]]) { n++;
+        const st = treeHero(kind); for (const k of COMMON11.filter((k, i) => pick ? i > 0 : i === 0)) for (const N of treeNodes11(k)) tr11(st).lv[N.key] = N.max; const e0 = BV2.errors.length;
+        try { const c = fight(st, f, 100 + n); if (!c.result) bad.push(kind + ' no result'); } catch (e) { bad.push(kind + '/' + pick + ': ' + e.message); } if (BV2.errors.length > e0) bad.push(kind + ': ' + BV2.errors[e0]); }
+      ok('F', 'Build 矩陣：12 棵武器樹 × 2 組共通樹 × 頭目／多體（' + n + ' 場）沒有錯誤', !bad.length, bad.slice(0, 3).join(' | ')); }
     /* =================== G: stress =================== */
     { T('t_flurry', { hits: [5, 5], target: 'all_enemies', tags: ['skill', 'phys', 'el:一般', 'damage', 'aoe', 'multi_hit'] });
       const c = mk([hero({ skills: ['attack', 't_flurry'], stats: { hp: 1e5 } }), foe('B1', { stats: { hp: 1e5 } }), foe('B2', { stats: { hp: 1e5 } }), foe('B3', { stats: { hp: 1e5 } })], 3, { maxRounds: 150 }); c.byId.H.res.hp = 1e5; c.start(false);

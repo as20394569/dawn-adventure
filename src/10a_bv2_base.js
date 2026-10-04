@@ -140,7 +140,7 @@ function bvValidate() {
       if (kind === 'resources') { if (d.max != null && d.max < d.min) E(w, 'max < min'); if (!S.scope.includes(d.scope)) E(w, 'scope ' + d.scope); }
       if (kind === 'passives') { for (const tr of d.triggers || []) trigOk(w, tr); for (const m of d.mods || []) if (!BR.STAGES.includes(m.stage)) E(w, 'modifier stage ' + m.stage); }
       if (kind === 'enemies') { for (const s of d.skills) if (!DEF.skills[s]) E(w, 'skill ' + s + ' missing'); for (const tr of d.triggers || []) trigOk(w, tr); }
-      if (kind === 'classes') { if (!DEF.skills[d.sig]) E(w, 'sig skill ' + d.sig + ' missing'); }
+      if (kind === 'classes') { if (d.sig != null && !DEF.skills[d.sig]) E(w, 'sig skill ' + d.sig + ' missing'); }
       if (kind === 'items') effOk(w, d.effects);
       if (kind === 'mechanics') for (const tr of d.triggers || []) trigOk(w, tr);
       if (kind === 'encounters') for (const g of d.groups) for (const m of g.members || []) if (!DEF.enemies[m.sp]) E(w, 'enemy ' + m.sp + ' missing');
