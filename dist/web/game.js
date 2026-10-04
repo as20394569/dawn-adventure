@@ -21339,7 +21339,7 @@ const DMG11 = (x = {}) => [{ type: 'damage' }].concat(x);
 const STA11 = (status, chance, x = {}) => ({ type: 'status', status, chance, secondary: true, cond: { tgtAlive: 1, ...(['psn', 'par', 'brn', 'slp'].includes(status) ? { tgtNoMajor: 1 } : {}) }, ...x });
 const SG11 = (stats, chance = 1, x = {}) => ({ type: 'stage', stats, ...(chance < 1 ? { chance, secondary: true } : {}), cond: { tgtAlive: 1 }, ...x });
 const SELF11 = (stats, dur = 3) => ({ type: 'stage', target: 'self', stats, dur });
-const CHIP11 = n => ({ type: 'break_chip', n, cond: { tgtAlive: 1 }, why: 'tree11' });
+const CHIP11 = n => ({ type: 'hunt_chip', n, cond: { tgtAlive: 1 }, why: 'tree11' });
 const FL11 = p => STA11('flinch', p);
 const MUL11 = (m, cond) => ({ stage: 'skill', who: 'attacker', mul: m, cond });
 const TREE11 = {
@@ -21350,7 +21350,7 @@ const TREE11 = {
       ['2a', 'sdGap', '破綻突', 80, 0, 1, 5, 0, '突刺；對手物防下降時威力 ×1.5，並削 1 格護盾。', { cls: 'pierce', mods: [MUL11(1.5, { tgtDefDown11: 1 })], effects: DMG11(CHIP11(1)) }],
       ['2b', 'sdWhirl', '旋刃', 65, 0, 2, 6, 1, '迴旋斬攻擊全體，會心率 +20%。', { mods: [{ stage: 'skill', who: 'attacker', critAdd: 20 }] }],
       ['2c', 'sdFrenzy', '狂刃', 0, 0, 4, 6, 0, '3 回合物攻 +2 階、會心率 +20%；結束時物防 −2 階。', { effects: [SELF11({ atk: 2 }), { type: 'status', target: 'self', status: 'frenzy11', dur: 3 }] }],
-      ['3a', 'sdMeteor', '崩星劍', 170, 0, 3, 10, 0, '蓄力 1 回合後全力劈下；對破防中的對手威力 ×1.5。', { charge: 1, mods: [MUL11(1.5, { tgtBroken: 1 })] }],
+      ['3a', 'sdMeteor', '崩星劍', 170, 0, 3, 10, 0, '蓄力 1 回合後全力劈下；對破防中的對手威力 ×1.5。', { charge: 1, mods: [MUL11(1.5, { tgtStatus: 'broken' })] }],
       ['3b', 'sdFlow', '流光連斬', 22, 5, 2, 9, 0, '五段連斬，每段會心都會多削 1 格護盾。', {}]] },
   短刀: { attr: ['agi', 1], cat: '物', trait: '異常機率 +15%', mast: '短刀精通', third: ['輕盈', '迴避 +2%／級'], sp: [['蛇吻', 'psn'], ['影襲', 'surecrit'], ['疾步', 'haste']],
     sk: [['1a', 'dgVenom', '淬刃', 30, 2, 0, 4, 0, '兩段斬，每段 30% 中毒。', { effects: DMG11(STA11('psn', 0.3)) }],
@@ -21370,7 +21370,7 @@ const TREE11 = {
       ['2a', 'axCrush', '碎盾擊', 80, 0, 2, 6, 0, '削 2 格護盾。', { cls: 'strike', effects: DMG11(CHIP11(2)) }],
       ['2b', 'axFury', '怒濤劈', 75, 0, 1, 5, 0, 'HP 越低威力越高（HP 一半 ×1.3、剩 20% ×1.6）。', { mods: [MUL11(1.3, { srcHpBelow: 0.5 }), MUL11(1.6 / 1.3, { srcHpBelow: 0.2 })] }],
       ['2c', 'axQuake', '震地擊', 65, 0, 2, 6, 1, '敲擊地面攻擊全體，30% 退縮。', { effects: DMG11(FL11(0.3)) }],
-      ['3a', 'axCastle', '崩城擊', 175, 0, 3, 10, 0, '蓄力 1 回合；對破防中的對手威力 ×1.5。', { charge: 1, cls: 'strike', mods: [MUL11(1.5, { tgtBroken: 1 })] }],
+      ['3a', 'axCastle', '崩城擊', 175, 0, 3, 10, 0, '蓄力 1 回合；對破防中的對手威力 ×1.5。', { charge: 1, cls: 'strike', mods: [MUL11(1.5, { tgtStatus: 'broken' })] }],
       ['3b', 'axBlood', '狂戰之血', 0, 0, 5, 8, 0, '3 回合物攻 +2 階、攻擊回復傷害 15% 的 HP；這段時間受到的傷害 +15%。', { effects: [SELF11({ atk: 2 }), { type: 'status', target: 'self', status: 'blood11', dur: 3 }] }]] },
   長槍: { attr: ['dex', 1], cat: '物', trait: '對破防中的魔物傷害 +20%（第三階段：打部位 +30%）', mast: '槍術精通', third: ['疾行', '速度 +1／級'], sp: [['貫心', 'pierce'], ['旋槍', 'aoe'], ['凝息', 'crit']],
     sk: [['1a', 'spPierce', '穿甲刺', 60, 0, 0, 3, 0, '無視 30% 物防的突刺。', { cls: 'pierce', pierceDef: 0.3 }],
@@ -21380,7 +21380,7 @@ const TREE11 = {
       ['2b', 'spBreak', '破陣槍', 80, 0, 2, 6, 0, '削 1 格護盾；對蓄力中的對手威力 ×1.5。', { cls: 'pierce', mods: [MUL11(1.5, { tgtStatus: 'charging' })], effects: DMG11(CHIP11(1)) }],
       ['2c', 'spGuard', '迴槍架勢', 0, 0, 3, 5, 0, '2 回合物防 +2 階，被攻擊時反擊（威力 50）。', { effects: [SELF11({ def: 2 }, 2), { type: 'status', target: 'self', status: 'spearGuard11', dur: 2 }] }],
       ['3a', 'spThousand', '千重突', 18, 6, 3, 10, 0, '六段突刺，每段無視 30% 物防。', { cls: 'pierce', pierceDef: 0.3 }],
-      ['3b', 'spSpiral', '螺旋貫', 110, 0, 2, 9, 0, '無視 50% 物防；對破防中的對手再 +30%。', { cls: 'pierce', pierceDef: 0.5, mods: [MUL11(1.3, { tgtBroken: 1 })] }]] },
+      ['3b', 'spSpiral', '螺旋貫', 110, 0, 2, 9, 0, '無視 50% 物防；對破防中的對手再 +30%。', { cls: 'pierce', pierceDef: 0.5, mods: [MUL11(1.3, { tgtStatus: 'broken' })] }]] },
   拳套: { attr: ['str', 1], cat: '物', trait: '普通攻擊打兩下（第二下 50%）', mast: '拳術精通', third: ['堅甲', '物防 +3%／級'], sp: [['連環腳', 'multi2'], ['氣旋', 'mana'], ['鐵骨', 'guard']],
     sk: [['1a', 'fsTriple', '三連拳', 20, 3, 0, 3, 0, '三連拳，每段回 1 MP。', { cls: 'strike', effects: DMG11({ type: 'resource', target: 'self', res: 'mp', amount: 1, why: 'fist11' }) }],
       ['1b', 'fsBreak', '破體拳', 60, 0, 0, 4, 0, '50% 讓對手物防 −1。', { cls: 'strike', effects: DMG11(SG11({ def: -1 }, 0.5)) }],
@@ -21388,7 +21388,7 @@ const TREE11 = {
       ['2a', 'fsKick', '旋踢', 25, 3, 1, 6, 1, '三段迴旋踢，攻擊全體。', { cls: 'strike' }],
       ['2b', 'fsShell', '碎殼掌', 75, 0, 2, 6, 0, '讓對手陷入「裂甲」3 回合：物防 −1 階，每回合受到最大 HP 3% 的傷害（頭目 1%）。', { cls: 'strike', effects: DMG11([SG11({ def: -1 }), { type: 'status', status: 'crack11', dur: 3, cond: { tgtAlive: 1 } }]) }],
       ['2c', 'fsQi', '氣勁彈', 75, 0, 1, 5, 0, '遠距的氣功彈，用物攻和魔攻較高的一項計算。', { cls: 'bolt', catOf: (core, u) => (u.stats.spa > u.stats.atk ? '特' : '物') }],
-      ['3a', 'fsStorm', '狂嵐拳', 14, 8, 3, 10, 0, '八段連打，最後一段削 1 格護盾。', { cls: 'strike', after: [{ type: 'break_chip', target: 'cast_targets', n: 1, cond: { tgtAlive: 1 }, why: 'tree11' }] }],
+      ['3a', 'fsStorm', '狂嵐拳', 14, 8, 3, 10, 0, '八段連打，最後一段削 1 格護盾。', { cls: 'strike', after: [{ type: 'hunt_chip', target: 'cast_targets', n: 1, cond: { tgtAlive: 1 }, why: 'tree11' }] }],
       ['3b', 'fsThrough', '透勁', 120, 0, 2, 9, 0, '無視 40% 物防，50% 退縮。', { cls: 'strike', pierceDef: 0.4, effects: DMG11(FL11(0.5)) }]] },
   法杖: { attr: ['int', 1], cat: '特', trait: '打中弱點的傷害再 +15%', mast: '杖術精通', third: ['省力', '技能有 4%／級的機率不花 MP'], sp: [['魔力迸發', 'burst'], ['魔力湧泉', 'mana'], ['星輝', 'crit']],
     sk: [['1a', 'stArrows', '魔力箭', 22, 3, 0, 4, 0, '三支魔力箭，回 2 MP。', { cls: 'bolt', after: [{ type: 'resource', target: 'self', res: 'mp', amount: 2, why: 'arrows11' }] }],
@@ -21438,18 +21438,18 @@ const TREE11 = {
       ['1b', 'dsParry', '架劍', 0, 0, 2, 3, 0, '這回合受到的物理傷害 −60%，被攻擊時反擊（威力 60）。', { prio: 1, effects: [{ type: 'status', target: 'self', status: 'parry11' }] }],
       ['2a', 'dsWhirl', '迴旋雙刃', 35, 2, 2, 7, 1, '兩把劍迴旋攻擊全體。', {}],
       ['2b', 'dsPhantom', '幻影連斬', 20, 6, 2, 8, 0, '六段連斬；每次會心，後面每段威力 +10%。', { mods: [{ stage: 'skill', who: 'attacker', mul: { f: 'phantom11' } }], after: [{ type: 'remove_status', target: 'self', status: 'phantom11' }] }],
-      ['3a', 'dsStar', '雙星十字', 65, 2, 3, 11, 0, '兩道十字斬，會心時多削 1 格護盾；對破防中的對手威力 ×1.3。', { mods: [MUL11(1.3, { tgtBroken: 1 })] }],
+      ['3a', 'dsStar', '雙星十字', 65, 2, 3, 11, 0, '兩道十字斬，會心時多削 1 格護盾；對破防中的對手威力 ×1.3。', { mods: [MUL11(1.3, { tgtStatus: 'broken' })] }],
       ['3b', 'dsDance', '雙劍舞陣', 0, 0, 5, 8, 0, '3 回合每次攻擊後副手追加一斬（威力 30），速度 +1 階。', { effects: [SELF11({ spe: 1 }), { type: 'status', target: 'self', status: 'swordDance11', dur: 3 }] }]] },
   雙盾: { dual: 1, attr: ['vit', 1], cat: '物', trait: '防禦時受到的傷害再 −20%，被攻擊時 30% 反擊（威力 40）', mast: '雙盾精通', mastD: '用盾攻擊的傷害 +3%／級', sp: [['盾鳴', 'flinch30'], ['鋼壁', 'guard']],
     sk: [['1a', 'shBash', '雙盾擊', 55, 0, 0, 3, 0, '用兩面盾砸，30% 退縮。', { cls: 'strike', effects: DMG11(FL11(0.3)) }],
       ['1b', 'shStance', '雙盾架勢', 0, 0, 3, 4, 0, '2 回合受到的傷害 −50%；這段時間每被打一次得到 1 層「盾勢」（最多 3 層）。', { effects: [{ type: 'status', target: 'self', status: 'shieldStance11', dur: 2 }] }],
       ['2a', 'shRam', '盾突', 75, 0, 1, 5, 0, '衝撞，削 1 格護盾；每層盾勢威力 +25%，用掉盾勢。', { cls: 'strike', mods: [{ stage: 'skill', who: 'attacker', mul: { f: 'ram11' } }], effects: DMG11(CHIP11(1)), after: [{ type: 'remove_status', target: 'self', status: 'bulk11', why: 'used' }] }],
       ['2b', 'shReflect', '反射壁', 0, 0, 3, 5, 0, '這回合受到的魔法傷害反彈 50% 回去。', { prio: 1, effects: [{ type: 'status', target: 'self', status: 'mirror', dur: 1 }] }],
-      ['3a', 'shCrash', '雙盾崩擊', 150, 0, 3, 10, 0, '蓄力 1 回合（蓄力時受到的傷害 −70%），兩面盾一起砸下；對破防中的對手威力 ×1.5。', { charge: 1, cls: 'strike', mods: [MUL11(1.5, { tgtBroken: 1 })] }],
+      ['3a', 'shCrash', '雙盾崩擊', 150, 0, 3, 10, 0, '蓄力 1 回合（蓄力時受到的傷害 −70%），兩面盾一起砸下；對破防中的對手威力 ×1.5。', { charge: 1, cls: 'strike', mods: [MUL11(1.5, { tgtStatus: 'broken' })] }],
       ['3b', 'shFort', '不落要塞', 0, 0, 5, 10, 0, '3 回合物防、魔防 +2 階，每回合回 5% HP，被攻擊時反擊（威力 40）。', { effects: [SELF11({ def: 2, spd: 2 }), { type: 'status', target: 'self', status: 'regen11', dur: 3 }, { type: 'status', target: 'self', status: 'fortCounter11', dur: 3 }] }]] },
 };
 const TREE_KINDS11 = Object.keys(TREE11), DUAL_KINDS11 = TREE_KINDS11.filter(k => TREE11[k].dual);
-const POS_LV11 = { 1: 1, 2: 15, 3: 30 }, POS_LVD11 = { 1: 15, 2: 25, 3: 35 };
+const POS_LV11 = { 1: 1, 2: 15, 3: 30 }, POS_LVD11 = POS_LV11; // 雙持樹跟一般的樹一樣（原本 15／25／35）
 const SK_TREE11 = {}; // skill id → [kind, pos]
 function sk11Build(kind) { const T = TREE11[kind];
   for (const [pos, k, n, pow, hits, cd, mp, aoe, d, x] of T.sk) {
@@ -21484,7 +21484,7 @@ for (const kind of TREE_KINDS11) TREE11[kind].sp.forEach(([n, k], j) => { for (l
   if (k === 'pierce') d.pierceDef = 1;
   if (k === 'defdown') d.after.push({ type: 'stage', stats: { def: -1 }, target: 'cast_targets', cond: { tgtAlive: 1 } });
   if (k === 'psn') d.after.push({ type: 'status', status: 'psn', chance: 0.6, target: 'cast_targets', secondary: true, cond: { tgtAlive: 1, tgtNoMajor: 1 } });
-  if (k === 'chip') d.after.push({ type: 'break_chip', target: 'cast_targets', n: 1, cond: { tgtAlive: 1 }, why: 'sp11' });
+  if (k === 'chip') d.after.push({ type: 'hunt_chip', target: 'cast_targets', n: 1, cond: { tgtAlive: 1 }, why: 'sp11' });
   if (/^flinch/.test(k)) d.after.push({ type: 'status', status: 'flinch', chance: +k.slice(6) / 100, target: 'cast_targets', secondary: true, cond: { tgtAlive: 1 } });
   if (k === 'crit') d.effects = [{ type: 'status', status: 'critNext', target: 'self' }];
   if (k === 'haste') d.effects = [{ type: 'stage', stats: { spe: 1 }, target: 'self' }, { type: 'resource', res: 'mp', pct: 0.1, target: 'self' }];
@@ -21507,14 +21507,15 @@ function treeNodes11(kind) { const T = TREE11[kind], L = [], PL = T.dual ? POS_L
   for (const [pos, k] of T.sk) { const tier = +pos[0], col = pos[1], pre = tier > 1 ? T.sk.find(s => s[0] === (tier - 1) + col) : null; L.push({ key: 't_' + k, t: 'sk', n: DEF.skills['t_' + k].name, max: 5, lv: PL[tier], pre: pre ? 't_' + pre[1] : null, pos }); }
   T.sp.forEach(([n], j) => L.push({ key: kind + ':sp' + j, t: 'sp', n, max: 1, lv: PL[1], j }));
   return L; }
-const dualOn11 = (st = Game.st) => !!(st.flags || {}).dual11;
+const dualOn11 = () => true; // 一開始就能雙持
+const PAIR11 = { 短刀: '雙刀', 雙刀: '短刀', 劍: '雙劍', 雙劍: '劍' }; // 同時用得到的兩棵樹，特技只裝一個
 function dualMode11(st = Game.st) { const w = gearBy(st.equip && st.equip.weapon, st), o = gearBy(st.equip && st.equip.shield, st); if (!w) return null; const W = GEAR[w.b];
   if (W.slot === 'shield') return '雙盾'; if (!o || GEAR[o.b].slot !== 'weapon') return null; const O = GEAR[o.b];
   if (W.kind === '短刀' && O.kind === '短刀') return '雙刀'; if (W.kind === '劍' && O.kind === '劍') return '雙劍'; return null; }
 const mainKind11 = (st = Game.st) => { const w = gearBy(st.equip && st.equip.weapon, st); return w && GEAR[w.b].slot === 'weapon' && TREE11[GEAR[w.b].kind] ? GEAR[w.b].kind : null; };
 const curKinds11 = (st = Game.st) => [mainKind11(st), dualMode11(st)].filter(Boolean);
 function nodeState11(kind, N, st = Game.st) { const lv = trLv11(N.key, st);
-  if (TREE11[kind].dual && !dualOn11(st)) return { ok: false, why: 'Lv15 到鐵匠學雙持後才能學' };
+  if (TREE11[kind].dual && !dualOn11(st)) return { ok: false, why: '還不能學' };
   if (lv >= N.max) return { ok: false, why: '已經學滿', full: 1 };
   if ((st.lv || 1) < N.lv) return { ok: false, why: 'Lv' + N.lv + ' 開放' };
   if (N.pre && trLv11(N.pre, st) < 3) return { ok: false, why: '要先把「' + DEF.skills[N.pre].name + '」練到 3 級' };
@@ -21543,10 +21544,10 @@ PV('tr11', (v, u) => { const mods = [], triggers = [];
   if (v.aff > 1) mods.push({ stage: 'skill', who: 'attacker', mul: v.aff, cond: { tag: 'tree11' } });
   if (v.mast > 0) mods.push({ stage: 'equipment', who: 'attacker', mul: 1 + v.mast, cond: { hasPower: 1 } });
   const T = new Set(v.traits || []);
-  if (T.has('劍')) triggers.push({ on: EVT.DAMAGE, phase: 'POST', role: 'src', cond: { crit: 1, evHit: 1, tgtSide: 'enemy' }, limit: { perAction: 1 }, effects: [{ type: 'break_chip', target: 'event_target', n: 1, why: 'sword11' }] });
+  if (T.has('劍')) triggers.push({ on: EVT.DAMAGE, phase: 'POST', role: 'src', cond: { crit: 1, evHit: 1, tgtSide: 'enemy' }, limit: { perAction: 1 }, effects: [{ type: 'hunt_chip', target: 'event_target', n: 1, why: 'sword11' }] });
   if (T.has('短刀')) mods.push({ stHit: 15 });
-  if (T.has('斧') && WKIND12.斧.make) { const r = WKIND12.斧.make(); triggers.push(...(r.triggers || [])); }
-  if (T.has('長槍')) mods.push({ stage: 'equipment', who: 'attacker', mul: 1.2, cond: { tgtBroken: 1, hasPower: 1 } });
+  if (T.has('斧')) triggers.push({ on: EVT.DAMAGE, phase: 'POST', role: 'src', cond: { tag: 'basic', evHit: 1, tgtSide: 'enemy' }, limit: { perAction: 1 }, effects: [{ type: 'hunt_chip', target: 'event_target', n: 1, why: 'axe11' }] });
+  if (T.has('長槍')) mods.push({ stage: 'equipment', who: 'attacker', mul: 1.2, cond: { tgtStatus: 'broken', hasPower: 1 } });
   if (T.has('法杖') && DEF.passives.weakUp) { const r = DEF.passives.weakUp.make(15, u); mods.push(...(r.mods || [])); triggers.push(...(r.triggers || [])); }
   if (T.has('魔導書')) mods.push({ costMul: 0.8, res: 'mp' });
   if (T.has('樂器')) mods.push({ tr11Long: 1 });
@@ -21555,8 +21556,8 @@ PV('tr11', (v, u) => { const mods = [], triggers = [];
   if (T.has('雙劍')) triggers.push({ on: EVT.DAMAGE, phase: 'POST', role: 'src', cond: { crit: 1, evHit: 1, tgtSide: 'enemy', hasPower: 1 }, limit: { perAction: 1 }, effects: [{ type: 'damage', target: 'event_target', power: 30, cond: { tgtAlive: 1 }, kind: 'follow', tags: ['follow'] }] });
   if (T.has('雙盾')) { mods.push({ stage: 'final', who: 'defender', mul: 0.8, cond: { guarding: 1, hasPower: 1 } }); triggers.push({ on: EVT.DAMAGE, phase: 'POST', role: 'tgt', cond: { srcSide: 'enemy', hasPower: 1, ownerAlive: 1 }, chance: 0.3, limit: { perAction: 1 }, effects: [{ type: 'counter', mul: { f: 'cnt11', v: 40 }, why: 'shield11' }] }); }
   if (v.shield) { mods.push({ stage: 'skill', who: 'attacker', atkMul: { f: 'shield11' }, cond: { hasPower: 1 } }); mods.push({ stage: 'final', who: 'defender', mul: 0.3, cond: { ownerHasStatus: 'charging', hasPower: 1 } }); }
-  triggers.push({ on: EVT.DAMAGE, phase: 'POST', role: 'src', cond: { skillIs: 't_sdFlow', crit: 1, evHit: 1, tgtSide: 'enemy' }, effects: [{ type: 'break_chip', target: 'event_target', n: 1, why: 'flow11' }] });
-  triggers.push({ on: EVT.DAMAGE, phase: 'POST', role: 'src', cond: { skillIs: 't_dsStar', crit: 1, evHit: 1, tgtSide: 'enemy' }, effects: [{ type: 'break_chip', target: 'event_target', n: 1, why: 'star11' }] });
+  triggers.push({ on: EVT.DAMAGE, phase: 'POST', role: 'src', cond: { skillIs: 't_sdFlow', crit: 1, evHit: 1, tgtSide: 'enemy' }, effects: [{ type: 'hunt_chip', target: 'event_target', n: 1, why: 'flow11' }] });
+  triggers.push({ on: EVT.DAMAGE, phase: 'POST', role: 'src', cond: { skillIs: 't_dsStar', crit: 1, evHit: 1, tgtSide: 'enemy' }, effects: [{ type: 'hunt_chip', target: 'event_target', n: 1, why: 'star11' }] });
   triggers.push({ on: EVT.DAMAGE, phase: 'POST', role: 'src', cond: { skillIs: 't_dsPhantom', crit: 1, evHit: 1 }, effects: [{ type: 'status', target: 'self', status: 'phantom11', delta: 1, quiet: 1 }] });
   triggers.push({ on: EVT.STATUS_EXPIRE, phase: 'POST', cond: { statusIs: 'frenzy11' }, effects: [{ type: 'stage', target: 'self', stats: { def: -2 } }] });
   return { mods, triggers }; }, { n: '技能樹' });
@@ -21578,7 +21579,7 @@ PV('tr11Thrift', v => FREECAST(v / 100), { n: '省力' });
     s.wsp = null; s.data.wspSkill = null; s.data.wspName = null;
     const w = gearBy(st.equip.weapon, st), tier = clamp((w && GEAR[w.b].t) || 1, 1, 7), mag = s.data.wcat === '特';
     for (const k of K) { const j = T.eq[k]; if (j == null || !trLv11(k + ':sp' + j, st)) continue; const [n, type] = TREE11[k].sp[j];
-      s.wsp = { N: SPN11[type] || 4 }; s.data.wspSkill = spId11(k, j, tier, mag); s.data.wspName = n; break; }
+      s.wsp = { N: SPN11[type] || 4 }; s.data.wspSkill = spId11(k, j, tier, mag); s.data.wspName = n; s.data.wspFx = 'sp11_' + TREE_KINDS11.indexOf(k) + '_' + j; break; }
     return s; }; }
 { const _hs = heroStats; heroStats = function (st = Game.st) { const s = _hs(st); if (!st || !st.equip) return s; const K = curKinds11(st), L = k => K.includes(k) ? trLv11(k + ':third', st) : 0;
     if (L('劍')) s.crit = (s.crit || 0) + 2 * L('劍'); if (L('短刀')) s.eva = (s.eva || 0) + 2 * L('短刀'); if (L('斧')) s.hp = Math.floor(s.hp * (1 + 0.03 * L('斧')));
@@ -21627,10 +21628,6 @@ function* equipPick11(sl, fit) {
     if (typeof shieldFix === 'function' && shieldFix(st)) { clampHP(); yield* say('雙手武器不能配副手，副手卸下了。'); } if (dualFix11(st)) { clampHP(); yield* say('副手的武器跟主手不同種，卸下了。'); }
     const m = dualMode11(st); if (m && m !== m0) yield* say('現在是「' + m + '」！' + (trLeft11(st) > 0 ? '\n（選單→技能→武器技能樹 可以學' + m + '的招式）' : '')); }; }
 { const _so = startOverworld; startOverworld = function (...a) { if (Game.st) dualFix11(Game.st); return _so.apply(this, a); }; }
-{ const _sm = smithMenu; smithMenu = function* (f) { const st = Game.st;
-    if (st && (st.lv || 1) >= 15 && !dualOn11(st)) { st.flags.dual11 = 1; Sound.jingle('item');
-      yield* say('鐵匠：「你也練到能兩手各拿一把了吧。教你個絕活——」\n學會了「雙持」！'); yield* say('副手欄可以裝同種的第二把短刀（雙刀）或劍（雙劍），主手和副手也可以都拿盾（雙盾）。\n雙持有自己的技能樹：選單→技能→武器技能樹。'); }
-    yield* _sm.call(this, f); }; }
 const HAND11 = { L: { idle1: [11.5, 38.5], idle2: [11.5, 39.5], attack1: [10.5, 37.5], attack2: [13.5, 35], cast1: [9.5, 27.5], hurt1: [9.5, 34.5], guard1: [11.5, 32.5] },
   R: { idle1: [26.5, 37.5], idle2: [26.5, 38.5], attack1: [28.5, 27.5], attack2: [28.5, 26.5], cast1: [26.5, 37.5], hurt1: [27.5, 34.5], guard1: [27.5, 31.5] } };
 { const _hl = heroLookOf; heroLookOf = function (st = Game.st, over = {}) { const L = _hl(st, over); if (!st || !st.equip) return L;
@@ -21686,8 +21683,8 @@ function* treeScreen11() { const st = Game.st, kinds = () => TREE_KINDS11.filter
     if (Input.pressed('a')) { Input.consume('a'); const N = R[sel];
       if (N.t === 'reset') { UI.remove(scr); yield* treeReset11(); UI.push(scr); }
       else { const lv = trLv11(N.key, st), s = nodeState11(kind, N, st);
-        if (N.t === 'sp' && lv) { tr11(st).eq[kind] = tr11(st).eq[kind] === N.j ? null : N.j; Sound.sfx('select'); }
-        else if (s.ok) { tr11(st).lv[N.key] = lv + 1; if (N.t === 'sp' && tr11(st).eq[kind] == null) tr11(st).eq[kind] = N.j; Sound.sfx(lv ? 'statUp' : 'select'); if (N.t === 'sk' && !lv) BB.slots(st); clampHP(); }
+        if (N.t === 'sp' && lv) { tr11(st).eq[kind] = tr11(st).eq[kind] === N.j ? null : N.j; if (tr11(st).eq[kind] != null && PAIR11[kind]) tr11(st).eq[PAIR11[kind]] = null; Sound.sfx('select'); }
+        else if (s.ok) { tr11(st).lv[N.key] = lv + 1; if (N.t === 'sp' && tr11(st).eq[kind] == null && (!PAIR11[kind] || tr11(st).eq[PAIR11[kind]] == null)) tr11(st).eq[kind] = N.j; Sound.sfx(lv ? 'statUp' : 'select'); if (N.t === 'sk' && !lv) BB.slots(st); clampHP(); }
         else Sound.sfx('bump'); } }
     if (Input.pressed('b')) { Input.consume('b'); Sound.sfx('cancel'); break; } yield; }
   UI.remove(scr); }
@@ -21699,7 +21696,7 @@ function* treeReset11() { const st = Game.st, T = tr11(st); if (!trSpent11(st)) 
 { const _ts = skillTreeScreen; skillTreeScreen = function* () { const st = Game.st;
     while (true) { const n = trLeft11(st), r = yield* ask('技能', ['技能編排', '武器技能樹' + (n ? '（剩 ' + n + ' 點）' : ''), '返回']); if (r === 0) yield* _ts(); else if (r === 1) yield* treeScreen11(); else break; } }; }
 { const _up = Overworld.prototype.update; Overworld.prototype.update = function (...a) { const st = this.st || Game.st; if (st && (Game.frame || 0) % 30 === 0) st.skp = trLeft11(st); return _up.apply(this, a); }; }
-GROW12.push(['武器技能樹', '每種武器有自己的技能樹（選單→技能→武器技能樹）。技能點＝等級＋主線頭目各 1 點；只能用身上武器那棵樹的招。Lv15 到鐵匠學「雙持」，雙刀・雙劍・雙盾有自己的樹。']);
+GROW12.push(['武器技能樹', '每種武器有自己的技能樹（選單→技能→武器技能樹）。技能點＝等級＋主線頭目各 1 點；只能用身上武器那棵樹的招。副手欄放同種的第二把短刀（雙刀）或劍（雙劍），或主手、副手都拿盾（雙盾），就能用雙持的樹。']);
 { const fix = (k, t) => { const i = GROW12.findIndex(q => q[0] === k); if (i >= 0) GROW12[i][1] = t; };
   fix('技能練度', '職業技能每用一次練度 +1：用滿第一格之後，再用 6 次可以進化「改」，再用 24 次進化「極」。修練之書：練度 +12。武器技能樹的招式用技能點升級（1〜5 級）。');
   fix('裝備', '鐵匠「打造」：用素材點數打底裝，品質決定潛力和晶石孔。「賦予」：用潛力和點數加上能力（物攻、會心、屬性…）。晶石、幻化、分解也在鐵匠。');
@@ -21971,3 +21968,103 @@ function fx11Make(k) { const F = FX11[k], id = 't_' + k, D = DEF.skills[id]; if 
   PAL['t11_' + k] = [F.col[0], F.col[1]]; SKILL_STYLE[id] = [F.cast || 'draw', D.power ? (F.fin || 'none') : null, 't11_' + k, F.snd || null]; if (MOVES[id]) MOVES[id].fx = 't11_' + k; }
 for (const kind of TREE_KINDS11) for (const r of TREE11[kind].sk) fx11Make(r[1]);
 { const seen = new Map(); for (const k in FX11) { const F = FX11[k], key = (F.cast || '') + '|' + (F.fin || '') + '|' + F.col.join(','); if (seen.has(key)) bvErr('r9y', 'same picture ' + k + ' / ' + seen.get(key)); seen.set(key, k); } }
+const ray11 = (b, U, S, n = 6, len = 30) => { for (let i = 0; i < n; i++) { const a = -Math.PI / 2 + (i - (n - 1) / 2) * 0.4; b.spawn({ k: 'line', x1: U.x, y1: U.y - 6, x2: U.x + Math.cos(a) * len, y2: U.y - 6 + Math.sin(a) * len, c: i % 2 ? S.col[0] : S.col[1], w: 2, grow: 4, life: 16 }); } };
+const up11 = (b, U, S, n = 3) => { for (let i = 0; i < n; i++) { const x = U.x - 14 + i * 14; b.spawn({ k: 'line', x1: x, y1: U.y + 14, x2: x, y2: U.y - 14, c: S.col[0], w: 3, grow: 5, life: 18 }); b.spawn({ k: 'line', x1: x - 4, y1: U.y - 9, x2: x, y2: U.y - 14, c: S.col[1], w: 2, grow: 2, life: 18 }); b.spawn({ k: 'line', x1: x + 4, y1: U.y - 9, x2: x, y2: U.y - 14, c: S.col[1], w: 2, grow: 2, life: 18 }); } };
+const SPFX11 = {
+  '劍:0': { col: ['#b8d8ff', '#ffffff', '#4060a0'], pt: 'spark', // 劍鳴：劍身震響，強力的一刀，音環從刀痕擴散
+    *f(S, U, T, u) { Sound.sfx('tick'); for (let i = 0; i < 3; i++) this.spawn({ k: 'ring', x: U.x + 14, y: U.y - 10, r0: 2, r1: 10 + i * 6, c: S.col[0], w: 1, life: 10 + i * 3 }); yield* wait(4); yield* this.lunge(u, 16, 3); Sound.sfx('slash'); sl11(this, T, -0.85, 30, S, 7, 14);
+      for (let i = 0; i < 3; i++) this.spawn({ k: 'ring', x: T.x, y: T.y, r0: 4 + i * 6, r1: 26 + i * 8, c: i ? S.col[0] : S.col[1], w: 2, life: 12 + i * 2 }); imp9(this, T, S, 1); this.shake = Math.max(this.shake, 6); yield* wait(10); } },
+  '劍:1': { col: ['#a0f0ff', '#ffffff', '#2a7a90'], pt: 'spark2', // 澄心：心靜下來，光從四周收進劍尖（下一次必定會心）
+    *f(S, U) { Sound.sfx('charge'); ringIn11(this, U, S, 40, 4, 16); yield* wait(4); ringIn11(this, U, S, 28, 3, 14); this.spawn({ k: 'line', x1: U.x + 14, y1: U.y - 34, x2: U.x + 14, y2: U.y + 4, c: S.col[1], w: 1, grow: 6, life: 22 }); yield* wait(8); this.star(U.x + 14, U.y - 30, S.col[1], 14); Sound.sfx('tick'); yield* wait(10); } },
+  '劍:2': { col: ['#c0c8d0', '#ffffff', '#c06020'], pt: 'shard', // 碎鋼：斬開護甲，鐵片四散（物防 −1）
+    *f(S, U, T, u) { yield* this.lunge(u, 14, 3); Sound.sfx('slash'); sl11(this, T, 0.7, 26, S, 6); this.spawn({ k: 'hex', x: T.x, y: T.y, r0: 18, r1: 6, c: S.col[2], life: 14 }); yield* wait(3);
+      for (let i = 0; i < 8; i++) this.spawn({ k: 'shard', g: 0.18, x: T.x + rnd(-8, 8), y: T.y, vx: rnd(-22, 22) / 10, vy: -rnd(8, 22) / 10, s: rnd(3, 5), c: i % 2 ? S.col[0] : S.col[2], life: 24 }); this.spawn({ k: 'line', x1: T.x + 22, y1: T.y - 20, x2: T.x + 22, y2: T.y + 4, c: '#ff8060', w: 3, grow: 4, life: 18 }); yield* wait(10); } },
+  '短刀:0': { col: ['#80e060', '#f0ffd0', '#2a6020'], pt: 'bubble', // 蛇吻：兩道毒牙咬下，滴出毒液（60% 中毒）
+    *f(S, U, T, u) { yield* this.lunge(u, 14, 2); Sound.sfx('slash'); ln9(this, T.x - 14, T.y - 16, T.x - 2, T.y + 8, S.col[0], S.col[1], 4, 12); ln9(this, T.x + 14, T.y - 16, T.x + 2, T.y + 8, S.col[0], S.col[1], 4, 12); yield* wait(3); Sound.sfx('poison');
+      for (let i = 0; i < 6; i++) this.spawn({ k: 'circ', x: T.x + rnd(-6, 6), y: T.y + 8, vx: rnd(-6, 6) / 10, vy: rnd(4, 12) / 10, g: 0.12, r: 2, c: i % 2 ? S.col[0] : S.col[2], life: 18 }); imp9(this, T, S); yield* wait(10); } },
+  '短刀:1': { col: ['#9a70d0', '#f0e0ff', '#200830'], pt: 'shadow', // 影襲：身影消失，從背後一刀（必定會心）
+    *f(S, U, T, u) { Sound.sfx('wind'); for (let i = 0; i < 4; i++) this.spawn({ k: 'glow', x: U.x + rnd(-8, 8), y: U.y + rnd(-6, 10), r: 14, c: S.col[2], life: 12 }); this.spawn({ k: 'dark', a: 0.3, c: '#100018', life: 22 }); yield* wait(6);
+      for (let i = 0; i < 3; i++) this.spawn({ k: 'glow', x: T.x + 20 - i * 6, y: T.y - 10, r: 10, c: S.col[2], life: 10 }); Sound.sfx('crit'); ln9(this, T.x + 22, T.y - 22, T.x - 22, T.y + 20, S.col[0], S.col[1], 6, 14); yield* wait(2); ln9(this, T.x - 22, T.y - 22, T.x + 22, T.y + 20, S.col[0], S.col[1], 4, 12); this.star(T.x, T.y, S.col[1], 16); imp9(this, T, S, 1); yield* wait(10); } },
+  '短刀:2': { col: ['#9af0a0', '#ffffff', '#2a8040'], pt: 'wind', // 疾步：腳下起風，殘影往後拉（速度 +1 階、回 MP）
+    *f(S, U) { Sound.sfx('wind'); for (let k = 0; k < 3; k++) { this.spawn({ k: 'ring', x: U.x, y: U.y + 20, r0: 6, r1: 24 + k * 6, c: S.col[0], w: 2, life: 12, fl: 0.35 }); for (let i = 0; i < 3; i++) this.spawn({ k: 'line', x1: U.x - 12 - i * 4, y1: U.y - 10 + i * 10, x2: U.x - 34 - i * 4, y2: U.y - 10 + i * 10, c: S.col[1], w: 1, grow: 2, life: 10 }); yield* wait(4); }
+      this.spawn({ k: 'glow', x: U.x, y: U.y, r: 16, c: '#80c0ff', life: 12 }); yield* wait(8); } },
+  '斧:0': { col: ['#d0a060', '#fff0c0', '#604020'], pt: 'rock', // 崩岩：當頭劈下，岩片炸開（削 1 格護盾）
+    *f(S, U, T, u) { yield* this.lunge(u, 16, 3); Sound.sfx('slash'); ln9(this, T.x, T.y - 40, T.x, T.y + 14, S.col[0], S.col[1], 8, 12); yield* wait(2); Sound.sfx('rock'); this.spawn({ k: 'shock', x: T.x, y: T.y + 20, r0: 4, r1: 40, c: S.col[0], life: 14 });
+      for (let i = 0; i < 8; i++) this.spawn({ k: 'shard', g: 0.2, x: T.x, y: T.y + 10, vx: rnd(-25, 25) / 10, vy: -rnd(15, 30) / 10, s: rnd(3, 6), c: i % 2 ? S.col[0] : S.col[2], life: 24 }); this.spawn({ k: 'hex', x: T.x, y: T.y, r0: 8, r1: 24, c: '#ffe070', life: 12 }); this.shake = Math.max(this.shake, 8); yield* wait(10); } },
+  '斧:1': { col: ['#ff7040', '#ffe0a0', '#802010'], pt: 'ember', // 蠻勇：火紅的鬥氣，力量往上衝（物攻 +1 階）
+    *f(S, U) { Sound.sfx('charge'); aura11(this, U, S, 12); up11(this, U, S, 3); yield* wait(10); this.spawn({ k: 'flash', c: S.col[0], a: 0.18, life: 6 }); Sound.sfx('statUp'); yield* wait(8); } },
+  '斧:2': { col: ['#c09050', '#f0e0b0', '#503010'], pt: 'rock', // 地鳴：斧頭砸地，一圈圈震波（50% 退縮）
+    *f(S, U, T, u) { yield* this.lunge(u, 10, 3); Sound.sfx('quake'); this.shake = Math.max(this.shake, 10); for (let k = 0; k < 3; k++) { this.spawn({ k: 'shock', x: T.x, y: T.y + 22, r0: 6, r1: 34 + k * 14, c: k % 2 ? S.col[1] : S.col[0], life: 14 }); yield* wait(3); }
+      for (let i = 0; i < 10; i++) this.spawn({ k: 'glow', x: T.x + rnd(-40, 40), y: T.y + 14 + rnd(-6, 6), r: 12, c: i % 2 ? S.col[0] : S.col[2], life: 18 }); for (let i = 0; i < 6; i++) this.spawn({ k: 'shard', g: 0.2, x: T.x + rnd(-30, 30), y: T.y + 22, vx: rnd(-10, 10) / 10, vy: -rnd(15, 28) / 10, s: rnd(3, 5), c: S.col[2], life: 20 }); yield* wait(8); } },
+  '長槍:0': { col: ['#e0f0ff', '#ffffff', '#5070a0'], pt: 'ray', // 貫心：一槍穿透，光從背後透出去（無視物防）
+    *f(S, U, T, u) { yield* this.lunge(u, 22, 2); Sound.sfx('crit'); const a = Math.atan2(T.y - U.y, T.x - U.x); ln9(this, T.x - Math.cos(a) * 40, T.y - Math.sin(a) * 40, T.x + Math.cos(a) * 46, T.y + Math.sin(a) * 46, S.col[0], S.col[1], 5, 14);
+      this.spawn({ k: 'ring', x: T.x, y: T.y, r0: 2, r1: 12, c: S.col[1], w: 3, life: 10 }); for (let i = 0; i < 5; i++) this.spawn({ k: 'line', x1: T.x, y1: T.y, x2: T.x + Math.cos(a + rnd(-4, 4) / 10) * 40, y2: T.y + Math.sin(a + rnd(-4, 4) / 10) * 40, c: S.col[0], w: 1, grow: 3, life: 10 }); yield* wait(10); } },
+  '長槍:1': { col: ['#70c0ff', '#e0f4ff', '#204a80'], pt: 'wind', // 旋槍：槍身迴旋，掃過所有敵人
+    *f(S, U, T, u, t) { yield* this.lunge(u, 10, 3); Sound.sfx('wind'); this.spawn({ k: 'ring', x: T.x, y: T.y + 8, r0: 56, r1: 20, c: S.col[0], w: 4, life: 14, fl: 0.35 }); yield* wait(3);
+      for (const C of grp9(this, T, t)) { Sound.sfx('slash'); this.spawn({ k: 'cres', x: C.x, y: C.y, r: 20, ang: Math.random() * 6, c: S.col[1], c2: S.col[0], w: 4, life: 12 }); imp9(this, C, S); yield* wait(2); } yield* wait(8); } },
+  '長槍:2': { col: ['#fff0b0', '#ffffff', '#a08030'], pt: 'spark', // 凝息：屏住呼吸，槍尖聚光（下一次必定會心）
+    *f(S, U) { Sound.sfx('tick'); const X = U.x + 16, Y = U.y - 28; for (let i = 0; i < 8; i++) { const a = i * Math.PI / 4; this.spawn({ k: 'glow', x: X + Math.cos(a) * 22, y: Y + Math.sin(a) * 22, vx: -Math.cos(a) * 1.6, vy: -Math.sin(a) * 1.6, r: 4, c: S.col[0], life: 14 }); } yield* wait(12); this.star(X, Y, S.col[1], 16); this.spawn({ k: 'ring', x: X, y: Y, r0: 2, r1: 14, c: S.col[1], w: 2, life: 10 }); yield* wait(10); } },
+  '拳套:0': { col: ['#ffb060', '#fff0d0', '#a04010'], pt: 'spark', // 連環腳：左右兩記迴旋踢
+    *f(S, U, T, u) { yield* this.lunge(u, 14, 2); Sound.sfx('heavy'); this.spawn({ k: 'cres', x: T.x - 6, y: T.y + 4, r: 20, ang: 0.6, c: S.col[1], c2: S.col[0], w: 5, life: 12 }); this.star(T.x - 10, T.y + 6, S.col[1], 10); yield* wait(5); },
+    *h(S, U, T) { Sound.sfx('heavy'); this.spawn({ k: 'cres', x: T.x + 6, y: T.y - 4, r: 20, ang: 3.7, c: S.col[1], c2: S.col[0], w: 5, life: 12 }); imp9(this, T, S); yield* wait(6); } },
+  '拳套:1': { col: ['#60b0ff', '#e0f0ff', '#204080'], pt: 'chi', // 氣旋：氣在身邊打轉，吸進身體（回 MP）
+    *f(S, U) { Sound.sfx('charge'); for (let k = 0; k < 14; k++) { const a = k * 0.9, r = 34 - k * 2; this.spawn({ k: 'glow', x: U.x + Math.cos(a) * r, y: U.y + Math.sin(a) * r * 0.6, r: 5, c: k % 2 ? S.col[0] : S.col[1], life: 10 }); if (k % 3 === 0) yield; }
+      this.spawn({ k: 'glow', x: U.x, y: U.y, r: 22, c: S.col[0], life: 14 }); Sound.sfx('heal'); yield* wait(10); } },
+  '拳套:2': { col: ['#a0a8b8', '#ffffff', '#404858'], pt: 'hex', // 鐵骨：全身繃緊，鋼鐵的六角紋浮上來（受傷 −40%）
+    *f(S, U) { Sound.sfx('shield'); for (let i = 0; i < 5; i++) { this.spawn({ k: 'hex', x: U.x + rnd(-14, 14), y: U.y + rnd(-14, 14), r0: 3, r1: 9, c: i % 2 ? S.col[0] : S.col[1], life: 18 }); yield* wait(2); } this.spawn({ k: 'hex', x: U.x, y: U.y, r0: 10, r1: 28, c: S.col[0], life: 20 }); this.shake = Math.max(this.shake, 2); yield* wait(10); } },
+  '法杖:0': { col: ['#c080ff', '#ffffff', '#5020a0'], pt: 'rune', // 魔力迸發：魔力球飛過去，炸成一大圈
+    *f(S, U, T) { Sound.sfx('charge'); this.spawn({ k: 'glow', x: U.x + 12, y: U.y - 14, r: 12, c: S.col[0], life: 10 }); yield* wait(4); yield* bolt11(this, U, T, S, 7, 4); Sound.sfx('hitSuper'); this.spawn({ k: 'flash', c: S.col[0], a: 0.25, life: 6 });
+      for (let i = 0; i < 3; i++) this.spawn({ k: 'ring', x: T.x, y: T.y, r0: 4, r1: 30 + i * 10, c: i % 2 ? S.col[1] : S.col[0], w: 3 - i, life: 14 + i * 2 }); imp9(this, T, S, 1); yield* wait(10); } },
+  '法杖:1': { col: ['#60a0ff', '#d0f0ff', '#2040a0'], pt: 'bubble', // 魔力湧泉：腳下湧出藍色的泉水（回 MP）
+    *f(S, U) { Sound.sfx('water'); this.spawn({ k: 'ring', x: U.x, y: U.y + 20, r0: 4, r1: 26, c: S.col[0], w: 2, life: 16, fl: 0.35 }); for (let k = 0; k < 4; k++) { for (let i = 0; i < 4; i++) this.spawn({ k: 'bub', x: U.x + rnd(-16, 16), y: U.y + 18, r: rnd(2, 4), c: i % 2 ? S.col[0] : S.col[1], vy: -rnd(8, 16) / 10, life: 20 }); yield* wait(3); }
+      Sound.sfx('heal'); yield* wait(8); } },
+  '法杖:2': { col: ['#ffe070', '#ffffff', '#806010'], pt: 'star', // 星輝：星星在身邊閃爍（下一次必定會心）
+    *f(S, U) { Sound.sfx('tick'); for (let i = 0; i < 7; i++) { const a = i * 0.9, x = U.x + Math.cos(a) * 26, y = U.y - 14 + Math.sin(a) * 18; this.star(x, y, i % 2 ? S.col[0] : S.col[1], 16); this.spawn({ k: 'glow', x, y, r: 7, c: S.col[0], life: 16 }); this.spawn({ k: 'line', x1: x - 5, y1: y, x2: x + 5, y2: y, c: S.col[1], w: 1, grow: 1, life: 12 }); this.spawn({ k: 'line', x1: x, y1: y - 5, x2: x, y2: y + 5, c: S.col[1], w: 1, grow: 1, life: 12 }); yield* wait(2); } this.spawn({ k: 'glow', x: U.x, y: U.y - 8, r: 20, c: S.col[0], life: 14 }); yield* wait(10); } },
+  '魔導書:0': { col: ['#f0e8d0', '#ffffff', '#806a40'], pt: 'rune', // 飛頁：書頁一張張飛過去打中
+    *f(S, U, T) { Sound.sfx('wind'); for (let i = 0; i < 5; i++) { const y0 = U.y - 10 + rnd(-8, 8); this.spawn({ k: 'line', x1: U.x + 10, y1: y0, x2: U.x + 16, y2: y0 - 3, c: S.col[0], w: 4, grow: 1, life: 6 }); yield* bolt11(this, { x: U.x + rnd(-6, 6), y: y0 + 10 }, { x: T.x + rnd(-10, 10), y: T.y + rnd(-10, 10) }, S, 4, 2); }
+      Sound.sfx('hit'); imp9(this, T, S); yield* wait(8); } },
+  '魔導書:1': { col: ['#6080c0', '#d0e0ff', '#203060'], pt: 'rune', // 縛頁：書頁繞著對手轉，越收越緊（速度 −1 階）
+    *f(S, U, T) { Sound.sfx('wind'); for (let k = 0; k < 10; k++) { const a = k * 0.7, r = 34 - k * 2; this.spawn({ k: 'line', x1: T.x + Math.cos(a) * r, y1: T.y + Math.sin(a) * r * 0.6, x2: T.x + Math.cos(a + 0.3) * r, y2: T.y + Math.sin(a + 0.3) * r * 0.6, c: S.col[1], w: 3, grow: 1, life: 10 }); if (k % 2) yield; }
+      this.spawn({ k: 'ring', x: T.x, y: T.y + 6, r0: 30, r1: 10, c: S.col[0], w: 3, life: 14, fl: 0.4 }); Sound.sfx('statDown'); yield* wait(10); } },
+  '魔導書:2': { col: ['#80e0e0', '#f0ffff', '#206060'], pt: 'rune', // 智慧之泉：書翻開，文字化成光流回來（回 MP）
+    *f(S, U) { Sound.sfx('tick'); this.spawn({ k: 'hex', x: U.x, y: U.y - 26, r0: 4, r1: 14, c: S.col[0], life: 18 }); for (let i = 0; i < 8; i++) { this.spawn({ k: 'glow', x: U.x + rnd(-14, 14), y: U.y - 30, vy: 1.2, r: 4, c: i % 2 ? S.col[0] : S.col[1], life: 18 }); if (i % 2) yield; }
+      this.spawn({ k: 'glow', x: U.x, y: U.y, r: 20, c: S.col[0], life: 14 }); Sound.sfx('heal'); yield* wait(10); } },
+  '樂器:0': { col: ['#80d0ff', '#ffffff', '#3060a0'], pt: 'note', // 迴響：音波一圈圈打過去（20% 退縮）
+    *f(S, U, T) { Sound.sfx('buzz'); for (let k = 0; k < 4; k++) { const x = lerp(U.x, T.x, k / 4), y = lerp(U.y, T.y, k / 4); this.spawn({ k: 'ring', x, y, r0: 4, r1: 16, c: k % 2 ? S.col[1] : S.col[0], w: 2, life: 10 }); yield* wait(2); }
+      note11(this, T.x, T.y - 10, S, 3); for (let i = 0; i < 2; i++) this.spawn({ k: 'ring', x: T.x, y: T.y, r0: 6, r1: 26 + i * 8, c: S.col[0], w: 2, life: 12 }); yield* wait(10); } },
+  '樂器:1': { col: ['#ffd060', '#fff8e0', '#a06010'], pt: 'note', // 激勵：激昂的旋律，金光往上（物攻・魔攻各 +1 階）
+    *f(S, U) { Sound.sfx('statUp'); note11(this, U.x, U.y - 8, S, 6); ray11(this, U, S, 5, 32); yield* wait(8); up11(this, U, S, 2); yield* wait(10); } },
+  '樂器:2': { col: ['#a0f0b0', '#ffffff', '#408050'], pt: 'note', // 安撫：柔和的音符落在身上（回 15% HP）
+    *f(S, U) { Sound.sfx('heal'); for (let i = 0; i < 6; i++) this.spawn({ k: 'txt', s: i % 2 ? '♪' : '♫', x: U.x + rnd(-18, 18), y: U.y - 30, vy: 0.6, c: i % 2 ? S.col[0] : S.col[1], life: 26, fade: 1 }); yield* wait(10); this.spawn({ k: 'glow', x: U.x, y: U.y, r: 24, c: S.col[0], life: 18 }); this.spawn({ k: 'ring', x: U.x, y: U.y, r0: 26, r1: 8, c: S.col[1], w: 2, life: 14 }); yield* wait(10); } },
+  '火槍:0': { col: ['#ffd080', '#ffffff', '#a05010'], pt: 'spark', // 追射：補兩槍
+    *f(S, U, T) { Sound.sfx('crit'); this.spawn({ k: 'glow', x: U.x + 16, y: U.y - 10, r: 8, c: S.col[1], life: 5 }); ln9(this, U.x + 16, U.y - 10, T.x - 4, T.y + 2, S.col[0], S.col[1], 2, 6); this.star(T.x - 4, T.y + 2, S.col[1], 8); yield* wait(4); },
+    *h(S, U, T) { Sound.sfx('crit'); this.spawn({ k: 'glow', x: U.x + 16, y: U.y - 10, r: 8, c: S.col[1], life: 5 }); ln9(this, U.x + 16, U.y - 12, T.x + 6, T.y - 4, S.col[0], S.col[1], 2, 6); imp9(this, T, S); yield* wait(5); } },
+  '火槍:1': { col: ['#ff8030', '#ffe0a0', '#601808'], pt: 'flame', // 炸裂彈：拋物線的榴彈，在敵群中炸開
+    *f(S, U, T, u, t) { Sound.sfx('tick'); const x0 = U.x + 14, y0 = U.y - 12; for (let i = 1; i <= 8; i++) { this.spawn({ k: 'circ', x: lerp(x0, T.x, i / 8), y: lerp(y0, T.y, i / 8) - Math.sin(i / 8 * 3.14) * 30, vx: 0, vy: 0, g: 0, r: 3, c: '#303030', life: 3 }); yield; }
+      Sound.sfx('fire'); this.spawn({ k: 'flash', c: S.col[0], a: 0.3, life: 6 }); this.shake = Math.max(this.shake, 8); for (const C of grp9(this, T, t)) { this.spawn({ k: 'glow', x: C.x, y: C.y, r: 26, c: S.col[0], life: 14 }); for (let i = 0; i < 5; i++) this.spawn({ k: 'flame', x: C.x + rnd(-12, 12), y: C.y + rnd(-8, 10), vy: -1.2, s: 4, life: 16 }); imp9(this, C, S, 1); } yield* wait(10); } },
+  '火槍:2': { col: ['#c0c8d8', '#ffffff', '#506080'], pt: 'gear', // 急速裝填：彈倉轉一圈，咔嚓上膛（回 MP）
+    *f(S, U) { const X = U.x + 16, Y = U.y - 8; for (let i = 0; i < 6; i++) { const a = i * Math.PI / 3; this.spawn({ k: 'circ', x: X + Math.cos(a) * 8, y: Y + Math.sin(a) * 8, vx: 0, vy: 0, g: 0, r: 2, c: S.col[0], life: 4 + i * 2 }); Sound.sfx('tick'); yield* wait(2); }
+      this.spawn({ k: 'ring', x: X, y: Y, r0: 2, r1: 16, c: S.col[1], w: 2, life: 10 }); this.spawn({ k: 'glow', x: U.x, y: U.y, r: 18, c: '#80c0ff', life: 12 }); Sound.sfx('heal'); yield* wait(8); } },
+  '雙刀:0': { col: ['#d060a0', '#ffe0f0', '#501030'], pt: 'shadow', // 雙影襲：兩道影子左右交錯
+    *f(S, U, T, u) { yield* this.lunge(u, 14, 2); Sound.sfx('slash'); this.spawn({ k: 'glow', x: T.x - 20, y: T.y, r: 10, c: S.col[2], life: 10 }); ln9(this, T.x - 26, T.y - 14, T.x + 14, T.y + 12, S.col[0], S.col[1], 4, 12); yield* wait(5); },
+    *h(S, U, T) { Sound.sfx('slash'); this.spawn({ k: 'glow', x: T.x + 20, y: T.y, r: 10, c: S.col[2], life: 10 }); ln9(this, T.x + 26, T.y - 14, T.x - 14, T.y + 12, S.col[0], S.col[1], 4, 12); imp9(this, T, S); yield* wait(6); } },
+  '雙刀:1': { col: ['#b0f0d0', '#ffffff', '#307050'], pt: 'wind', // 刃嵐：刀光像暴風一樣捲過全體
+    *f(S, U, T, u, t) { Sound.sfx('wind'); for (const C of grp9(this, T, t)) for (let i = 0; i < 5; i++) { const a = Math.random() * 6; sl11(this, C, a, 14 + rnd(0, 8), S, 2, 10); if (i % 2) yield; } this.spawn({ k: 'ring', x: T.x, y: T.y + 6, r0: 50, r1: 14, c: S.col[0], w: 2, life: 14, fl: 0.4 }); yield* wait(10); } },
+  '雙劍:0': { col: ['#ffe8a0', '#ffffff', '#a07020'], pt: 'spark2', // 交叉斬：兩把劍劃出 X 字（容易會心）
+    *f(S, U, T, u) { yield* this.lunge(u, 14, 2); Sound.sfx('slash'); sl11(this, T, -0.8, 24, S, 5); sl11(this, T, 0.8, 24, S, 5); this.star(T.x, T.y, S.col[1], 12); yield* wait(5); },
+    *h(S, U, T) { Sound.sfx('crit'); sl11(this, T, -0.2, 26, S, 4); sl11(this, T, 1.4, 26, S, 4); imp9(this, T, S); yield* wait(6); } },
+  '雙劍:1': { col: ['#a0e8ff', '#ffffff', '#3070a0'], pt: 'wind', // 劍風：雙劍一揮，風刃掃過全體
+    *f(S, U, T, u, t) { yield* this.lunge(u, 10, 2); Sound.sfx('wind'); const G = grp9(this, T, t); for (let k = 0; k < 2; k++) { ln9(this, T.x - 60, T.y + 10 - k * 14, T.x + 60, T.y - 10 - k * 14, S.col[0], S.col[1], 3, 12); yield* wait(2); }
+      for (const C of G) { this.spawn({ k: 'cres', x: C.x, y: C.y, r: 16, ang: 2.4, c: S.col[1], c2: S.col[0], w: 3, life: 10 }); imp9(this, C, S); } yield* wait(10); } },
+  '雙盾:0': { col: ['#d0d8e8', '#ffffff', '#506078'], pt: 'hex', // 盾鳴：兩面盾互撞，聲波震出去（30% 退縮）
+    *f(S, U, T, u) { yield* this.lunge(u, 12, 3); Sound.sfx('shield'); this.spawn({ k: 'hex', x: T.x - 10, y: T.y, r0: 4, r1: 14, c: S.col[0], life: 12 }); this.spawn({ k: 'hex', x: T.x + 10, y: T.y, r0: 4, r1: 14, c: S.col[0], life: 12 }); yield* wait(3);
+      Sound.sfx('heavy'); for (let i = 0; i < 3; i++) this.spawn({ k: 'ring', x: T.x, y: T.y, r0: 6 + i * 4, r1: 26 + i * 10, c: i % 2 ? S.col[1] : S.col[0], w: 2, life: 12 + i * 2 }); this.shake = Math.max(this.shake, 4); yield* wait(10); } },
+  '雙盾:1': { col: ['#90b0d0', '#ffffff', '#304860'], pt: 'hex', // 鋼壁：兩道鋼牆立在前面（受傷 −40%）
+    *f(S, U) { Sound.sfx('shield'); for (const dx of [-14, 14]) { for (let i = 0; i < 3; i++) this.spawn({ k: 'hex', x: U.x + dx, y: U.y - 22 + i * 12, r0: 3, r1: 7, c: i % 2 ? S.col[0] : S.col[1], life: 22 }); this.spawn({ k: 'line', x1: U.x + dx, y1: U.y - 30, x2: U.x + dx, y2: U.y + 10, c: S.col[0], w: 4, grow: 4, life: 22 }); yield* wait(4); }
+      this.shake = Math.max(this.shake, 2); this.spawn({ k: 'glow', x: U.x, y: U.y - 8, r: 24, c: S.col[0], life: 14 }); yield* wait(10); } },
+};
+const spFxId11 = (kind, j) => 'sp11_' + TREE_KINDS11.indexOf(kind) + '_' + j;
+for (const kind of TREE_KINDS11) TREE11[kind].sp.forEach((sp, j) => { const F = SPFX11[kind + ':' + j], fid = spFxId11(kind, j); if (!F) { bvErr('r9y', 'special fx ' + kind + j); return; }
+  const S = { col: F.col, pt: F.pt, seed: hashK(fid) }; FX[fid] = function* (U, T, u, t) { yield* F.f.call(this, S, U, T, u, t); }; PAL[fid] = [F.col[0], F.col[1]];
+  if (F.h) FX[fid + 'h'] = function* (U, T, u, i) { yield* F.h.call(this, S, U, T, u, i); };
+  for (let tr = 1; tr <= 7; tr++) for (const mag of [0, 1]) { const D = DEF.skills[spId11(kind, j, tr, mag)]; if (!D) continue; D.fx = fid; if (F.h) D.hitFx = fid + 'h'; } });

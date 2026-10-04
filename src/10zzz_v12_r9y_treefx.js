@@ -272,3 +272,117 @@ function fx11Make(k) { const F = FX11[k], id = 't_' + k, D = DEF.skills[id]; if 
 for (const kind of TREE_KINDS11) for (const r of TREE11[kind].sk) fx11Make(r[1]);
 // the pictures must not repeat (cast, finish, colours)
 { const seen = new Map(); for (const k in FX11) { const F = FX11[k], key = (F.cast || '') + '|' + (F.fin || '') + '|' + F.col.join(','); if (seen.has(key)) bvErr('r9y', 'same picture ' + k + ' / ' + seen.get(key)); seen.set(key, k); } }
+
+/* ===================== 特技：33 個特技各自的特效（照特技說明做；原本整種武器共用一個、自我強化的特技沒有畫面） ===================== */
+const ray11 = (b, U, S, n = 6, len = 30) => { for (let i = 0; i < n; i++) { const a = -Math.PI / 2 + (i - (n - 1) / 2) * 0.4; b.spawn({ k: 'line', x1: U.x, y1: U.y - 6, x2: U.x + Math.cos(a) * len, y2: U.y - 6 + Math.sin(a) * len, c: i % 2 ? S.col[0] : S.col[1], w: 2, grow: 4, life: 16 }); } };
+const up11 = (b, U, S, n = 3) => { for (let i = 0; i < n; i++) { const x = U.x - 14 + i * 14; b.spawn({ k: 'line', x1: x, y1: U.y + 14, x2: x, y2: U.y - 14, c: S.col[0], w: 3, grow: 5, life: 18 }); b.spawn({ k: 'line', x1: x - 4, y1: U.y - 9, x2: x, y2: U.y - 14, c: S.col[1], w: 2, grow: 2, life: 18 }); b.spawn({ k: 'line', x1: x + 4, y1: U.y - 9, x2: x, y2: U.y - 14, c: S.col[1], w: 2, grow: 2, life: 18 }); } };
+const SPFX11 = {
+  /* 劍 */
+  '劍:0': { col: ['#b8d8ff', '#ffffff', '#4060a0'], pt: 'spark', // 劍鳴：劍身震響，強力的一刀，音環從刀痕擴散
+    *f(S, U, T, u) { Sound.sfx('tick'); for (let i = 0; i < 3; i++) this.spawn({ k: 'ring', x: U.x + 14, y: U.y - 10, r0: 2, r1: 10 + i * 6, c: S.col[0], w: 1, life: 10 + i * 3 }); yield* wait(4); yield* this.lunge(u, 16, 3); Sound.sfx('slash'); sl11(this, T, -0.85, 30, S, 7, 14);
+      for (let i = 0; i < 3; i++) this.spawn({ k: 'ring', x: T.x, y: T.y, r0: 4 + i * 6, r1: 26 + i * 8, c: i ? S.col[0] : S.col[1], w: 2, life: 12 + i * 2 }); imp9(this, T, S, 1); this.shake = Math.max(this.shake, 6); yield* wait(10); } },
+  '劍:1': { col: ['#a0f0ff', '#ffffff', '#2a7a90'], pt: 'spark2', // 澄心：心靜下來，光從四周收進劍尖（下一次必定會心）
+    *f(S, U) { Sound.sfx('charge'); ringIn11(this, U, S, 40, 4, 16); yield* wait(4); ringIn11(this, U, S, 28, 3, 14); this.spawn({ k: 'line', x1: U.x + 14, y1: U.y - 34, x2: U.x + 14, y2: U.y + 4, c: S.col[1], w: 1, grow: 6, life: 22 }); yield* wait(8); this.star(U.x + 14, U.y - 30, S.col[1], 14); Sound.sfx('tick'); yield* wait(10); } },
+  '劍:2': { col: ['#c0c8d0', '#ffffff', '#c06020'], pt: 'shard', // 碎鋼：斬開護甲，鐵片四散（物防 −1）
+    *f(S, U, T, u) { yield* this.lunge(u, 14, 3); Sound.sfx('slash'); sl11(this, T, 0.7, 26, S, 6); this.spawn({ k: 'hex', x: T.x, y: T.y, r0: 18, r1: 6, c: S.col[2], life: 14 }); yield* wait(3);
+      for (let i = 0; i < 8; i++) this.spawn({ k: 'shard', g: 0.18, x: T.x + rnd(-8, 8), y: T.y, vx: rnd(-22, 22) / 10, vy: -rnd(8, 22) / 10, s: rnd(3, 5), c: i % 2 ? S.col[0] : S.col[2], life: 24 }); this.spawn({ k: 'line', x1: T.x + 22, y1: T.y - 20, x2: T.x + 22, y2: T.y + 4, c: '#ff8060', w: 3, grow: 4, life: 18 }); yield* wait(10); } },
+  /* 短刀 */
+  '短刀:0': { col: ['#80e060', '#f0ffd0', '#2a6020'], pt: 'bubble', // 蛇吻：兩道毒牙咬下，滴出毒液（60% 中毒）
+    *f(S, U, T, u) { yield* this.lunge(u, 14, 2); Sound.sfx('slash'); ln9(this, T.x - 14, T.y - 16, T.x - 2, T.y + 8, S.col[0], S.col[1], 4, 12); ln9(this, T.x + 14, T.y - 16, T.x + 2, T.y + 8, S.col[0], S.col[1], 4, 12); yield* wait(3); Sound.sfx('poison');
+      for (let i = 0; i < 6; i++) this.spawn({ k: 'circ', x: T.x + rnd(-6, 6), y: T.y + 8, vx: rnd(-6, 6) / 10, vy: rnd(4, 12) / 10, g: 0.12, r: 2, c: i % 2 ? S.col[0] : S.col[2], life: 18 }); imp9(this, T, S); yield* wait(10); } },
+  '短刀:1': { col: ['#9a70d0', '#f0e0ff', '#200830'], pt: 'shadow', // 影襲：身影消失，從背後一刀（必定會心）
+    *f(S, U, T, u) { Sound.sfx('wind'); for (let i = 0; i < 4; i++) this.spawn({ k: 'glow', x: U.x + rnd(-8, 8), y: U.y + rnd(-6, 10), r: 14, c: S.col[2], life: 12 }); this.spawn({ k: 'dark', a: 0.3, c: '#100018', life: 22 }); yield* wait(6);
+      for (let i = 0; i < 3; i++) this.spawn({ k: 'glow', x: T.x + 20 - i * 6, y: T.y - 10, r: 10, c: S.col[2], life: 10 }); Sound.sfx('crit'); ln9(this, T.x + 22, T.y - 22, T.x - 22, T.y + 20, S.col[0], S.col[1], 6, 14); yield* wait(2); ln9(this, T.x - 22, T.y - 22, T.x + 22, T.y + 20, S.col[0], S.col[1], 4, 12); this.star(T.x, T.y, S.col[1], 16); imp9(this, T, S, 1); yield* wait(10); } },
+  '短刀:2': { col: ['#9af0a0', '#ffffff', '#2a8040'], pt: 'wind', // 疾步：腳下起風，殘影往後拉（速度 +1 階、回 MP）
+    *f(S, U) { Sound.sfx('wind'); for (let k = 0; k < 3; k++) { this.spawn({ k: 'ring', x: U.x, y: U.y + 20, r0: 6, r1: 24 + k * 6, c: S.col[0], w: 2, life: 12, fl: 0.35 }); for (let i = 0; i < 3; i++) this.spawn({ k: 'line', x1: U.x - 12 - i * 4, y1: U.y - 10 + i * 10, x2: U.x - 34 - i * 4, y2: U.y - 10 + i * 10, c: S.col[1], w: 1, grow: 2, life: 10 }); yield* wait(4); }
+      this.spawn({ k: 'glow', x: U.x, y: U.y, r: 16, c: '#80c0ff', life: 12 }); yield* wait(8); } },
+  /* 斧 */
+  '斧:0': { col: ['#d0a060', '#fff0c0', '#604020'], pt: 'rock', // 崩岩：當頭劈下，岩片炸開（削 1 格護盾）
+    *f(S, U, T, u) { yield* this.lunge(u, 16, 3); Sound.sfx('slash'); ln9(this, T.x, T.y - 40, T.x, T.y + 14, S.col[0], S.col[1], 8, 12); yield* wait(2); Sound.sfx('rock'); this.spawn({ k: 'shock', x: T.x, y: T.y + 20, r0: 4, r1: 40, c: S.col[0], life: 14 });
+      for (let i = 0; i < 8; i++) this.spawn({ k: 'shard', g: 0.2, x: T.x, y: T.y + 10, vx: rnd(-25, 25) / 10, vy: -rnd(15, 30) / 10, s: rnd(3, 6), c: i % 2 ? S.col[0] : S.col[2], life: 24 }); this.spawn({ k: 'hex', x: T.x, y: T.y, r0: 8, r1: 24, c: '#ffe070', life: 12 }); this.shake = Math.max(this.shake, 8); yield* wait(10); } },
+  '斧:1': { col: ['#ff7040', '#ffe0a0', '#802010'], pt: 'ember', // 蠻勇：火紅的鬥氣，力量往上衝（物攻 +1 階）
+    *f(S, U) { Sound.sfx('charge'); aura11(this, U, S, 12); up11(this, U, S, 3); yield* wait(10); this.spawn({ k: 'flash', c: S.col[0], a: 0.18, life: 6 }); Sound.sfx('statUp'); yield* wait(8); } },
+  '斧:2': { col: ['#c09050', '#f0e0b0', '#503010'], pt: 'rock', // 地鳴：斧頭砸地，一圈圈震波（50% 退縮）
+    *f(S, U, T, u) { yield* this.lunge(u, 10, 3); Sound.sfx('quake'); this.shake = Math.max(this.shake, 10); for (let k = 0; k < 3; k++) { this.spawn({ k: 'shock', x: T.x, y: T.y + 22, r0: 6, r1: 34 + k * 14, c: k % 2 ? S.col[1] : S.col[0], life: 14 }); yield* wait(3); }
+      for (let i = 0; i < 10; i++) this.spawn({ k: 'glow', x: T.x + rnd(-40, 40), y: T.y + 14 + rnd(-6, 6), r: 12, c: i % 2 ? S.col[0] : S.col[2], life: 18 }); for (let i = 0; i < 6; i++) this.spawn({ k: 'shard', g: 0.2, x: T.x + rnd(-30, 30), y: T.y + 22, vx: rnd(-10, 10) / 10, vy: -rnd(15, 28) / 10, s: rnd(3, 5), c: S.col[2], life: 20 }); yield* wait(8); } },
+  /* 長槍 */
+  '長槍:0': { col: ['#e0f0ff', '#ffffff', '#5070a0'], pt: 'ray', // 貫心：一槍穿透，光從背後透出去（無視物防）
+    *f(S, U, T, u) { yield* this.lunge(u, 22, 2); Sound.sfx('crit'); const a = Math.atan2(T.y - U.y, T.x - U.x); ln9(this, T.x - Math.cos(a) * 40, T.y - Math.sin(a) * 40, T.x + Math.cos(a) * 46, T.y + Math.sin(a) * 46, S.col[0], S.col[1], 5, 14);
+      this.spawn({ k: 'ring', x: T.x, y: T.y, r0: 2, r1: 12, c: S.col[1], w: 3, life: 10 }); for (let i = 0; i < 5; i++) this.spawn({ k: 'line', x1: T.x, y1: T.y, x2: T.x + Math.cos(a + rnd(-4, 4) / 10) * 40, y2: T.y + Math.sin(a + rnd(-4, 4) / 10) * 40, c: S.col[0], w: 1, grow: 3, life: 10 }); yield* wait(10); } },
+  '長槍:1': { col: ['#70c0ff', '#e0f4ff', '#204a80'], pt: 'wind', // 旋槍：槍身迴旋，掃過所有敵人
+    *f(S, U, T, u, t) { yield* this.lunge(u, 10, 3); Sound.sfx('wind'); this.spawn({ k: 'ring', x: T.x, y: T.y + 8, r0: 56, r1: 20, c: S.col[0], w: 4, life: 14, fl: 0.35 }); yield* wait(3);
+      for (const C of grp9(this, T, t)) { Sound.sfx('slash'); this.spawn({ k: 'cres', x: C.x, y: C.y, r: 20, ang: Math.random() * 6, c: S.col[1], c2: S.col[0], w: 4, life: 12 }); imp9(this, C, S); yield* wait(2); } yield* wait(8); } },
+  '長槍:2': { col: ['#fff0b0', '#ffffff', '#a08030'], pt: 'spark', // 凝息：屏住呼吸，槍尖聚光（下一次必定會心）
+    *f(S, U) { Sound.sfx('tick'); const X = U.x + 16, Y = U.y - 28; for (let i = 0; i < 8; i++) { const a = i * Math.PI / 4; this.spawn({ k: 'glow', x: X + Math.cos(a) * 22, y: Y + Math.sin(a) * 22, vx: -Math.cos(a) * 1.6, vy: -Math.sin(a) * 1.6, r: 4, c: S.col[0], life: 14 }); } yield* wait(12); this.star(X, Y, S.col[1], 16); this.spawn({ k: 'ring', x: X, y: Y, r0: 2, r1: 14, c: S.col[1], w: 2, life: 10 }); yield* wait(10); } },
+  /* 拳套 */
+  '拳套:0': { col: ['#ffb060', '#fff0d0', '#a04010'], pt: 'spark', // 連環腳：左右兩記迴旋踢
+    *f(S, U, T, u) { yield* this.lunge(u, 14, 2); Sound.sfx('heavy'); this.spawn({ k: 'cres', x: T.x - 6, y: T.y + 4, r: 20, ang: 0.6, c: S.col[1], c2: S.col[0], w: 5, life: 12 }); this.star(T.x - 10, T.y + 6, S.col[1], 10); yield* wait(5); },
+    *h(S, U, T) { Sound.sfx('heavy'); this.spawn({ k: 'cres', x: T.x + 6, y: T.y - 4, r: 20, ang: 3.7, c: S.col[1], c2: S.col[0], w: 5, life: 12 }); imp9(this, T, S); yield* wait(6); } },
+  '拳套:1': { col: ['#60b0ff', '#e0f0ff', '#204080'], pt: 'chi', // 氣旋：氣在身邊打轉，吸進身體（回 MP）
+    *f(S, U) { Sound.sfx('charge'); for (let k = 0; k < 14; k++) { const a = k * 0.9, r = 34 - k * 2; this.spawn({ k: 'glow', x: U.x + Math.cos(a) * r, y: U.y + Math.sin(a) * r * 0.6, r: 5, c: k % 2 ? S.col[0] : S.col[1], life: 10 }); if (k % 3 === 0) yield; }
+      this.spawn({ k: 'glow', x: U.x, y: U.y, r: 22, c: S.col[0], life: 14 }); Sound.sfx('heal'); yield* wait(10); } },
+  '拳套:2': { col: ['#a0a8b8', '#ffffff', '#404858'], pt: 'hex', // 鐵骨：全身繃緊，鋼鐵的六角紋浮上來（受傷 −40%）
+    *f(S, U) { Sound.sfx('shield'); for (let i = 0; i < 5; i++) { this.spawn({ k: 'hex', x: U.x + rnd(-14, 14), y: U.y + rnd(-14, 14), r0: 3, r1: 9, c: i % 2 ? S.col[0] : S.col[1], life: 18 }); yield* wait(2); } this.spawn({ k: 'hex', x: U.x, y: U.y, r0: 10, r1: 28, c: S.col[0], life: 20 }); this.shake = Math.max(this.shake, 2); yield* wait(10); } },
+  /* 法杖 */
+  '法杖:0': { col: ['#c080ff', '#ffffff', '#5020a0'], pt: 'rune', // 魔力迸發：魔力球飛過去，炸成一大圈
+    *f(S, U, T) { Sound.sfx('charge'); this.spawn({ k: 'glow', x: U.x + 12, y: U.y - 14, r: 12, c: S.col[0], life: 10 }); yield* wait(4); yield* bolt11(this, U, T, S, 7, 4); Sound.sfx('hitSuper'); this.spawn({ k: 'flash', c: S.col[0], a: 0.25, life: 6 });
+      for (let i = 0; i < 3; i++) this.spawn({ k: 'ring', x: T.x, y: T.y, r0: 4, r1: 30 + i * 10, c: i % 2 ? S.col[1] : S.col[0], w: 3 - i, life: 14 + i * 2 }); imp9(this, T, S, 1); yield* wait(10); } },
+  '法杖:1': { col: ['#60a0ff', '#d0f0ff', '#2040a0'], pt: 'bubble', // 魔力湧泉：腳下湧出藍色的泉水（回 MP）
+    *f(S, U) { Sound.sfx('water'); this.spawn({ k: 'ring', x: U.x, y: U.y + 20, r0: 4, r1: 26, c: S.col[0], w: 2, life: 16, fl: 0.35 }); for (let k = 0; k < 4; k++) { for (let i = 0; i < 4; i++) this.spawn({ k: 'bub', x: U.x + rnd(-16, 16), y: U.y + 18, r: rnd(2, 4), c: i % 2 ? S.col[0] : S.col[1], vy: -rnd(8, 16) / 10, life: 20 }); yield* wait(3); }
+      Sound.sfx('heal'); yield* wait(8); } },
+  '法杖:2': { col: ['#ffe070', '#ffffff', '#806010'], pt: 'star', // 星輝：星星在身邊閃爍（下一次必定會心）
+    *f(S, U) { Sound.sfx('tick'); for (let i = 0; i < 7; i++) { const a = i * 0.9, x = U.x + Math.cos(a) * 26, y = U.y - 14 + Math.sin(a) * 18; this.star(x, y, i % 2 ? S.col[0] : S.col[1], 16); this.spawn({ k: 'glow', x, y, r: 7, c: S.col[0], life: 16 }); this.spawn({ k: 'line', x1: x - 5, y1: y, x2: x + 5, y2: y, c: S.col[1], w: 1, grow: 1, life: 12 }); this.spawn({ k: 'line', x1: x, y1: y - 5, x2: x, y2: y + 5, c: S.col[1], w: 1, grow: 1, life: 12 }); yield* wait(2); } this.spawn({ k: 'glow', x: U.x, y: U.y - 8, r: 20, c: S.col[0], life: 14 }); yield* wait(10); } },
+  /* 魔導書 */
+  '魔導書:0': { col: ['#f0e8d0', '#ffffff', '#806a40'], pt: 'rune', // 飛頁：書頁一張張飛過去打中
+    *f(S, U, T) { Sound.sfx('wind'); for (let i = 0; i < 5; i++) { const y0 = U.y - 10 + rnd(-8, 8); this.spawn({ k: 'line', x1: U.x + 10, y1: y0, x2: U.x + 16, y2: y0 - 3, c: S.col[0], w: 4, grow: 1, life: 6 }); yield* bolt11(this, { x: U.x + rnd(-6, 6), y: y0 + 10 }, { x: T.x + rnd(-10, 10), y: T.y + rnd(-10, 10) }, S, 4, 2); }
+      Sound.sfx('hit'); imp9(this, T, S); yield* wait(8); } },
+  '魔導書:1': { col: ['#6080c0', '#d0e0ff', '#203060'], pt: 'rune', // 縛頁：書頁繞著對手轉，越收越緊（速度 −1 階）
+    *f(S, U, T) { Sound.sfx('wind'); for (let k = 0; k < 10; k++) { const a = k * 0.7, r = 34 - k * 2; this.spawn({ k: 'line', x1: T.x + Math.cos(a) * r, y1: T.y + Math.sin(a) * r * 0.6, x2: T.x + Math.cos(a + 0.3) * r, y2: T.y + Math.sin(a + 0.3) * r * 0.6, c: S.col[1], w: 3, grow: 1, life: 10 }); if (k % 2) yield; }
+      this.spawn({ k: 'ring', x: T.x, y: T.y + 6, r0: 30, r1: 10, c: S.col[0], w: 3, life: 14, fl: 0.4 }); Sound.sfx('statDown'); yield* wait(10); } },
+  '魔導書:2': { col: ['#80e0e0', '#f0ffff', '#206060'], pt: 'rune', // 智慧之泉：書翻開，文字化成光流回來（回 MP）
+    *f(S, U) { Sound.sfx('tick'); this.spawn({ k: 'hex', x: U.x, y: U.y - 26, r0: 4, r1: 14, c: S.col[0], life: 18 }); for (let i = 0; i < 8; i++) { this.spawn({ k: 'glow', x: U.x + rnd(-14, 14), y: U.y - 30, vy: 1.2, r: 4, c: i % 2 ? S.col[0] : S.col[1], life: 18 }); if (i % 2) yield; }
+      this.spawn({ k: 'glow', x: U.x, y: U.y, r: 20, c: S.col[0], life: 14 }); Sound.sfx('heal'); yield* wait(10); } },
+  /* 樂器 */
+  '樂器:0': { col: ['#80d0ff', '#ffffff', '#3060a0'], pt: 'note', // 迴響：音波一圈圈打過去（20% 退縮）
+    *f(S, U, T) { Sound.sfx('buzz'); for (let k = 0; k < 4; k++) { const x = lerp(U.x, T.x, k / 4), y = lerp(U.y, T.y, k / 4); this.spawn({ k: 'ring', x, y, r0: 4, r1: 16, c: k % 2 ? S.col[1] : S.col[0], w: 2, life: 10 }); yield* wait(2); }
+      note11(this, T.x, T.y - 10, S, 3); for (let i = 0; i < 2; i++) this.spawn({ k: 'ring', x: T.x, y: T.y, r0: 6, r1: 26 + i * 8, c: S.col[0], w: 2, life: 12 }); yield* wait(10); } },
+  '樂器:1': { col: ['#ffd060', '#fff8e0', '#a06010'], pt: 'note', // 激勵：激昂的旋律，金光往上（物攻・魔攻各 +1 階）
+    *f(S, U) { Sound.sfx('statUp'); note11(this, U.x, U.y - 8, S, 6); ray11(this, U, S, 5, 32); yield* wait(8); up11(this, U, S, 2); yield* wait(10); } },
+  '樂器:2': { col: ['#a0f0b0', '#ffffff', '#408050'], pt: 'note', // 安撫：柔和的音符落在身上（回 15% HP）
+    *f(S, U) { Sound.sfx('heal'); for (let i = 0; i < 6; i++) this.spawn({ k: 'txt', s: i % 2 ? '♪' : '♫', x: U.x + rnd(-18, 18), y: U.y - 30, vy: 0.6, c: i % 2 ? S.col[0] : S.col[1], life: 26, fade: 1 }); yield* wait(10); this.spawn({ k: 'glow', x: U.x, y: U.y, r: 24, c: S.col[0], life: 18 }); this.spawn({ k: 'ring', x: U.x, y: U.y, r0: 26, r1: 8, c: S.col[1], w: 2, life: 14 }); yield* wait(10); } },
+  /* 火槍 */
+  '火槍:0': { col: ['#ffd080', '#ffffff', '#a05010'], pt: 'spark', // 追射：補兩槍
+    *f(S, U, T) { Sound.sfx('crit'); this.spawn({ k: 'glow', x: U.x + 16, y: U.y - 10, r: 8, c: S.col[1], life: 5 }); ln9(this, U.x + 16, U.y - 10, T.x - 4, T.y + 2, S.col[0], S.col[1], 2, 6); this.star(T.x - 4, T.y + 2, S.col[1], 8); yield* wait(4); },
+    *h(S, U, T) { Sound.sfx('crit'); this.spawn({ k: 'glow', x: U.x + 16, y: U.y - 10, r: 8, c: S.col[1], life: 5 }); ln9(this, U.x + 16, U.y - 12, T.x + 6, T.y - 4, S.col[0], S.col[1], 2, 6); imp9(this, T, S); yield* wait(5); } },
+  '火槍:1': { col: ['#ff8030', '#ffe0a0', '#601808'], pt: 'flame', // 炸裂彈：拋物線的榴彈，在敵群中炸開
+    *f(S, U, T, u, t) { Sound.sfx('tick'); const x0 = U.x + 14, y0 = U.y - 12; for (let i = 1; i <= 8; i++) { this.spawn({ k: 'circ', x: lerp(x0, T.x, i / 8), y: lerp(y0, T.y, i / 8) - Math.sin(i / 8 * 3.14) * 30, vx: 0, vy: 0, g: 0, r: 3, c: '#303030', life: 3 }); yield; }
+      Sound.sfx('fire'); this.spawn({ k: 'flash', c: S.col[0], a: 0.3, life: 6 }); this.shake = Math.max(this.shake, 8); for (const C of grp9(this, T, t)) { this.spawn({ k: 'glow', x: C.x, y: C.y, r: 26, c: S.col[0], life: 14 }); for (let i = 0; i < 5; i++) this.spawn({ k: 'flame', x: C.x + rnd(-12, 12), y: C.y + rnd(-8, 10), vy: -1.2, s: 4, life: 16 }); imp9(this, C, S, 1); } yield* wait(10); } },
+  '火槍:2': { col: ['#c0c8d8', '#ffffff', '#506080'], pt: 'gear', // 急速裝填：彈倉轉一圈，咔嚓上膛（回 MP）
+    *f(S, U) { const X = U.x + 16, Y = U.y - 8; for (let i = 0; i < 6; i++) { const a = i * Math.PI / 3; this.spawn({ k: 'circ', x: X + Math.cos(a) * 8, y: Y + Math.sin(a) * 8, vx: 0, vy: 0, g: 0, r: 2, c: S.col[0], life: 4 + i * 2 }); Sound.sfx('tick'); yield* wait(2); }
+      this.spawn({ k: 'ring', x: X, y: Y, r0: 2, r1: 16, c: S.col[1], w: 2, life: 10 }); this.spawn({ k: 'glow', x: U.x, y: U.y, r: 18, c: '#80c0ff', life: 12 }); Sound.sfx('heal'); yield* wait(8); } },
+  /* 雙刀 */
+  '雙刀:0': { col: ['#d060a0', '#ffe0f0', '#501030'], pt: 'shadow', // 雙影襲：兩道影子左右交錯
+    *f(S, U, T, u) { yield* this.lunge(u, 14, 2); Sound.sfx('slash'); this.spawn({ k: 'glow', x: T.x - 20, y: T.y, r: 10, c: S.col[2], life: 10 }); ln9(this, T.x - 26, T.y - 14, T.x + 14, T.y + 12, S.col[0], S.col[1], 4, 12); yield* wait(5); },
+    *h(S, U, T) { Sound.sfx('slash'); this.spawn({ k: 'glow', x: T.x + 20, y: T.y, r: 10, c: S.col[2], life: 10 }); ln9(this, T.x + 26, T.y - 14, T.x - 14, T.y + 12, S.col[0], S.col[1], 4, 12); imp9(this, T, S); yield* wait(6); } },
+  '雙刀:1': { col: ['#b0f0d0', '#ffffff', '#307050'], pt: 'wind', // 刃嵐：刀光像暴風一樣捲過全體
+    *f(S, U, T, u, t) { Sound.sfx('wind'); for (const C of grp9(this, T, t)) for (let i = 0; i < 5; i++) { const a = Math.random() * 6; sl11(this, C, a, 14 + rnd(0, 8), S, 2, 10); if (i % 2) yield; } this.spawn({ k: 'ring', x: T.x, y: T.y + 6, r0: 50, r1: 14, c: S.col[0], w: 2, life: 14, fl: 0.4 }); yield* wait(10); } },
+  /* 雙劍 */
+  '雙劍:0': { col: ['#ffe8a0', '#ffffff', '#a07020'], pt: 'spark2', // 交叉斬：兩把劍劃出 X 字（容易會心）
+    *f(S, U, T, u) { yield* this.lunge(u, 14, 2); Sound.sfx('slash'); sl11(this, T, -0.8, 24, S, 5); sl11(this, T, 0.8, 24, S, 5); this.star(T.x, T.y, S.col[1], 12); yield* wait(5); },
+    *h(S, U, T) { Sound.sfx('crit'); sl11(this, T, -0.2, 26, S, 4); sl11(this, T, 1.4, 26, S, 4); imp9(this, T, S); yield* wait(6); } },
+  '雙劍:1': { col: ['#a0e8ff', '#ffffff', '#3070a0'], pt: 'wind', // 劍風：雙劍一揮，風刃掃過全體
+    *f(S, U, T, u, t) { yield* this.lunge(u, 10, 2); Sound.sfx('wind'); const G = grp9(this, T, t); for (let k = 0; k < 2; k++) { ln9(this, T.x - 60, T.y + 10 - k * 14, T.x + 60, T.y - 10 - k * 14, S.col[0], S.col[1], 3, 12); yield* wait(2); }
+      for (const C of G) { this.spawn({ k: 'cres', x: C.x, y: C.y, r: 16, ang: 2.4, c: S.col[1], c2: S.col[0], w: 3, life: 10 }); imp9(this, C, S); } yield* wait(10); } },
+  /* 雙盾 */
+  '雙盾:0': { col: ['#d0d8e8', '#ffffff', '#506078'], pt: 'hex', // 盾鳴：兩面盾互撞，聲波震出去（30% 退縮）
+    *f(S, U, T, u) { yield* this.lunge(u, 12, 3); Sound.sfx('shield'); this.spawn({ k: 'hex', x: T.x - 10, y: T.y, r0: 4, r1: 14, c: S.col[0], life: 12 }); this.spawn({ k: 'hex', x: T.x + 10, y: T.y, r0: 4, r1: 14, c: S.col[0], life: 12 }); yield* wait(3);
+      Sound.sfx('heavy'); for (let i = 0; i < 3; i++) this.spawn({ k: 'ring', x: T.x, y: T.y, r0: 6 + i * 4, r1: 26 + i * 10, c: i % 2 ? S.col[1] : S.col[0], w: 2, life: 12 + i * 2 }); this.shake = Math.max(this.shake, 4); yield* wait(10); } },
+  '雙盾:1': { col: ['#90b0d0', '#ffffff', '#304860'], pt: 'hex', // 鋼壁：兩道鋼牆立在前面（受傷 −40%）
+    *f(S, U) { Sound.sfx('shield'); for (const dx of [-14, 14]) { for (let i = 0; i < 3; i++) this.spawn({ k: 'hex', x: U.x + dx, y: U.y - 22 + i * 12, r0: 3, r1: 7, c: i % 2 ? S.col[0] : S.col[1], life: 22 }); this.spawn({ k: 'line', x1: U.x + dx, y1: U.y - 30, x2: U.x + dx, y2: U.y + 10, c: S.col[0], w: 4, grow: 4, life: 22 }); yield* wait(4); }
+      this.shake = Math.max(this.shake, 2); this.spawn({ k: 'glow', x: U.x, y: U.y - 8, r: 24, c: S.col[0], life: 14 }); yield* wait(10); } },
+};
+const spFxId11 = (kind, j) => 'sp11_' + TREE_KINDS11.indexOf(kind) + '_' + j;
+for (const kind of TREE_KINDS11) TREE11[kind].sp.forEach((sp, j) => { const F = SPFX11[kind + ':' + j], fid = spFxId11(kind, j); if (!F) { bvErr('r9y', 'special fx ' + kind + j); return; }
+  const S = { col: F.col, pt: F.pt, seed: hashK(fid) }; FX[fid] = function* (U, T, u, t) { yield* F.f.call(this, S, U, T, u, t); }; PAL[fid] = [F.col[0], F.col[1]];
+  if (F.h) FX[fid + 'h'] = function* (U, T, u, i) { yield* F.h.call(this, S, U, T, u, i); };
+  for (let tr = 1; tr <= 7; tr++) for (const mag of [0, 1]) { const D = DEF.skills[spId11(kind, j, tr, mag)]; if (!D) continue; D.fx = fid; if (F.h) D.hitFx = fid + 'h'; } });

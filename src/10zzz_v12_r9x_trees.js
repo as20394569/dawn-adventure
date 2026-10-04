@@ -3,7 +3,7 @@
    · 技能點：等級＋主線頭目第一次打倒各 1 點；每招 1〜5 級（傷害招每級威力 +10%；輔助招每級 MP −10%，5 級冷卻 −1）。
    · 只能用身上武器那棵樹（雙持時再加雙持樹）；技能槽裡別棵樹的招變灰。職業技能・招牌技・天賦照舊；舊的武器專屬技能退場（每招退 1 點）。
    · 特技：每棵樹學會後選一個裝，普通攻擊累積層數自動發動，威力跟著武器階級。
-   · 雙持：Lv15 鐵匠教；副手欄裝同種的第二把短刀／劍，或主手、副手都拿盾。 */
+   · 雙持：一開始就能用（玩家 2026-10-04：原本 Lv15 鐵匠教，改成一開始就能學）；副手欄裝同種的第二把短刀／劍，或主手、副手都拿盾。 */
 
 /* ---------- custom statuses, conditions, formulas ---------- */
 BV_TAGS.add('tree11'); BV_TAGS.add('dual11');
@@ -55,7 +55,8 @@ const DMG11 = (x = {}) => [{ type: 'damage' }].concat(x);
 const STA11 = (status, chance, x = {}) => ({ type: 'status', status, chance, secondary: true, cond: { tgtAlive: 1, ...(['psn', 'par', 'brn', 'slp'].includes(status) ? { tgtNoMajor: 1 } : {}) }, ...x });
 const SG11 = (stats, chance = 1, x = {}) => ({ type: 'stage', stats, ...(chance < 1 ? { chance, secondary: true } : {}), cond: { tgtAlive: 1 }, ...x });
 const SELF11 = (stats, dur = 3) => ({ type: 'stage', target: 'self', stats, dur });
-const CHIP11 = n => ({ type: 'break_chip', n, cond: { tgtAlive: 1 }, why: 'tree11' });
+// 削護盾＝v257 的破防護盾（hunt_chip）；break_chip 從 10zz 起是舊的「30% 物防 −1」。「對破防中」＝有 broken 狀態（COND.tgtBroken 在 10zz 被改成物防下降）
+const CHIP11 = n => ({ type: 'hunt_chip', n, cond: { tgtAlive: 1 }, why: 'tree11' });
 const FL11 = p => STA11('flinch', p);
 const MUL11 = (m, cond) => ({ stage: 'skill', who: 'attacker', mul: m, cond });
 const TREE11 = {
@@ -66,7 +67,7 @@ const TREE11 = {
       ['2a', 'sdGap', '破綻突', 80, 0, 1, 5, 0, '突刺；對手物防下降時威力 ×1.5，並削 1 格護盾。', { cls: 'pierce', mods: [MUL11(1.5, { tgtDefDown11: 1 })], effects: DMG11(CHIP11(1)) }],
       ['2b', 'sdWhirl', '旋刃', 65, 0, 2, 6, 1, '迴旋斬攻擊全體，會心率 +20%。', { mods: [{ stage: 'skill', who: 'attacker', critAdd: 20 }] }],
       ['2c', 'sdFrenzy', '狂刃', 0, 0, 4, 6, 0, '3 回合物攻 +2 階、會心率 +20%；結束時物防 −2 階。', { effects: [SELF11({ atk: 2 }), { type: 'status', target: 'self', status: 'frenzy11', dur: 3 }] }],
-      ['3a', 'sdMeteor', '崩星劍', 170, 0, 3, 10, 0, '蓄力 1 回合後全力劈下；對破防中的對手威力 ×1.5。', { charge: 1, mods: [MUL11(1.5, { tgtBroken: 1 })] }],
+      ['3a', 'sdMeteor', '崩星劍', 170, 0, 3, 10, 0, '蓄力 1 回合後全力劈下；對破防中的對手威力 ×1.5。', { charge: 1, mods: [MUL11(1.5, { tgtStatus: 'broken' })] }],
       ['3b', 'sdFlow', '流光連斬', 22, 5, 2, 9, 0, '五段連斬，每段會心都會多削 1 格護盾。', {}]] },
   短刀: { attr: ['agi', 1], cat: '物', trait: '異常機率 +15%', mast: '短刀精通', third: ['輕盈', '迴避 +2%／級'], sp: [['蛇吻', 'psn'], ['影襲', 'surecrit'], ['疾步', 'haste']],
     sk: [['1a', 'dgVenom', '淬刃', 30, 2, 0, 4, 0, '兩段斬，每段 30% 中毒。', { effects: DMG11(STA11('psn', 0.3)) }],
@@ -86,7 +87,7 @@ const TREE11 = {
       ['2a', 'axCrush', '碎盾擊', 80, 0, 2, 6, 0, '削 2 格護盾。', { cls: 'strike', effects: DMG11(CHIP11(2)) }],
       ['2b', 'axFury', '怒濤劈', 75, 0, 1, 5, 0, 'HP 越低威力越高（HP 一半 ×1.3、剩 20% ×1.6）。', { mods: [MUL11(1.3, { srcHpBelow: 0.5 }), MUL11(1.6 / 1.3, { srcHpBelow: 0.2 })] }],
       ['2c', 'axQuake', '震地擊', 65, 0, 2, 6, 1, '敲擊地面攻擊全體，30% 退縮。', { effects: DMG11(FL11(0.3)) }],
-      ['3a', 'axCastle', '崩城擊', 175, 0, 3, 10, 0, '蓄力 1 回合；對破防中的對手威力 ×1.5。', { charge: 1, cls: 'strike', mods: [MUL11(1.5, { tgtBroken: 1 })] }],
+      ['3a', 'axCastle', '崩城擊', 175, 0, 3, 10, 0, '蓄力 1 回合；對破防中的對手威力 ×1.5。', { charge: 1, cls: 'strike', mods: [MUL11(1.5, { tgtStatus: 'broken' })] }],
       ['3b', 'axBlood', '狂戰之血', 0, 0, 5, 8, 0, '3 回合物攻 +2 階、攻擊回復傷害 15% 的 HP；這段時間受到的傷害 +15%。', { effects: [SELF11({ atk: 2 }), { type: 'status', target: 'self', status: 'blood11', dur: 3 }] }]] },
   長槍: { attr: ['dex', 1], cat: '物', trait: '對破防中的魔物傷害 +20%（第三階段：打部位 +30%）', mast: '槍術精通', third: ['疾行', '速度 +1／級'], sp: [['貫心', 'pierce'], ['旋槍', 'aoe'], ['凝息', 'crit']],
     sk: [['1a', 'spPierce', '穿甲刺', 60, 0, 0, 3, 0, '無視 30% 物防的突刺。', { cls: 'pierce', pierceDef: 0.3 }],
@@ -96,7 +97,7 @@ const TREE11 = {
       ['2b', 'spBreak', '破陣槍', 80, 0, 2, 6, 0, '削 1 格護盾；對蓄力中的對手威力 ×1.5。', { cls: 'pierce', mods: [MUL11(1.5, { tgtStatus: 'charging' })], effects: DMG11(CHIP11(1)) }],
       ['2c', 'spGuard', '迴槍架勢', 0, 0, 3, 5, 0, '2 回合物防 +2 階，被攻擊時反擊（威力 50）。', { effects: [SELF11({ def: 2 }, 2), { type: 'status', target: 'self', status: 'spearGuard11', dur: 2 }] }],
       ['3a', 'spThousand', '千重突', 18, 6, 3, 10, 0, '六段突刺，每段無視 30% 物防。', { cls: 'pierce', pierceDef: 0.3 }],
-      ['3b', 'spSpiral', '螺旋貫', 110, 0, 2, 9, 0, '無視 50% 物防；對破防中的對手再 +30%。', { cls: 'pierce', pierceDef: 0.5, mods: [MUL11(1.3, { tgtBroken: 1 })] }]] },
+      ['3b', 'spSpiral', '螺旋貫', 110, 0, 2, 9, 0, '無視 50% 物防；對破防中的對手再 +30%。', { cls: 'pierce', pierceDef: 0.5, mods: [MUL11(1.3, { tgtStatus: 'broken' })] }]] },
   拳套: { attr: ['str', 1], cat: '物', trait: '普通攻擊打兩下（第二下 50%）', mast: '拳術精通', third: ['堅甲', '物防 +3%／級'], sp: [['連環腳', 'multi2'], ['氣旋', 'mana'], ['鐵骨', 'guard']],
     sk: [['1a', 'fsTriple', '三連拳', 20, 3, 0, 3, 0, '三連拳，每段回 1 MP。', { cls: 'strike', effects: DMG11({ type: 'resource', target: 'self', res: 'mp', amount: 1, why: 'fist11' }) }],
       ['1b', 'fsBreak', '破體拳', 60, 0, 0, 4, 0, '50% 讓對手物防 −1。', { cls: 'strike', effects: DMG11(SG11({ def: -1 }, 0.5)) }],
@@ -104,7 +105,7 @@ const TREE11 = {
       ['2a', 'fsKick', '旋踢', 25, 3, 1, 6, 1, '三段迴旋踢，攻擊全體。', { cls: 'strike' }],
       ['2b', 'fsShell', '碎殼掌', 75, 0, 2, 6, 0, '讓對手陷入「裂甲」3 回合：物防 −1 階，每回合受到最大 HP 3% 的傷害（頭目 1%）。', { cls: 'strike', effects: DMG11([SG11({ def: -1 }), { type: 'status', status: 'crack11', dur: 3, cond: { tgtAlive: 1 } }]) }],
       ['2c', 'fsQi', '氣勁彈', 75, 0, 1, 5, 0, '遠距的氣功彈，用物攻和魔攻較高的一項計算。', { cls: 'bolt', catOf: (core, u) => (u.stats.spa > u.stats.atk ? '特' : '物') }],
-      ['3a', 'fsStorm', '狂嵐拳', 14, 8, 3, 10, 0, '八段連打，最後一段削 1 格護盾。', { cls: 'strike', after: [{ type: 'break_chip', target: 'cast_targets', n: 1, cond: { tgtAlive: 1 }, why: 'tree11' }] }],
+      ['3a', 'fsStorm', '狂嵐拳', 14, 8, 3, 10, 0, '八段連打，最後一段削 1 格護盾。', { cls: 'strike', after: [{ type: 'hunt_chip', target: 'cast_targets', n: 1, cond: { tgtAlive: 1 }, why: 'tree11' }] }],
       ['3b', 'fsThrough', '透勁', 120, 0, 2, 9, 0, '無視 40% 物防，50% 退縮。', { cls: 'strike', pierceDef: 0.4, effects: DMG11(FL11(0.5)) }]] },
   法杖: { attr: ['int', 1], cat: '特', trait: '打中弱點的傷害再 +15%', mast: '杖術精通', third: ['省力', '技能有 4%／級的機率不花 MP'], sp: [['魔力迸發', 'burst'], ['魔力湧泉', 'mana'], ['星輝', 'crit']],
     sk: [['1a', 'stArrows', '魔力箭', 22, 3, 0, 4, 0, '三支魔力箭，回 2 MP。', { cls: 'bolt', after: [{ type: 'resource', target: 'self', res: 'mp', amount: 2, why: 'arrows11' }] }],
@@ -154,18 +155,18 @@ const TREE11 = {
       ['1b', 'dsParry', '架劍', 0, 0, 2, 3, 0, '這回合受到的物理傷害 −60%，被攻擊時反擊（威力 60）。', { prio: 1, effects: [{ type: 'status', target: 'self', status: 'parry11' }] }],
       ['2a', 'dsWhirl', '迴旋雙刃', 35, 2, 2, 7, 1, '兩把劍迴旋攻擊全體。', {}],
       ['2b', 'dsPhantom', '幻影連斬', 20, 6, 2, 8, 0, '六段連斬；每次會心，後面每段威力 +10%。', { mods: [{ stage: 'skill', who: 'attacker', mul: { f: 'phantom11' } }], after: [{ type: 'remove_status', target: 'self', status: 'phantom11' }] }],
-      ['3a', 'dsStar', '雙星十字', 65, 2, 3, 11, 0, '兩道十字斬，會心時多削 1 格護盾；對破防中的對手威力 ×1.3。', { mods: [MUL11(1.3, { tgtBroken: 1 })] }],
+      ['3a', 'dsStar', '雙星十字', 65, 2, 3, 11, 0, '兩道十字斬，會心時多削 1 格護盾；對破防中的對手威力 ×1.3。', { mods: [MUL11(1.3, { tgtStatus: 'broken' })] }],
       ['3b', 'dsDance', '雙劍舞陣', 0, 0, 5, 8, 0, '3 回合每次攻擊後副手追加一斬（威力 30），速度 +1 階。', { effects: [SELF11({ spe: 1 }), { type: 'status', target: 'self', status: 'swordDance11', dur: 3 }] }]] },
   雙盾: { dual: 1, attr: ['vit', 1], cat: '物', trait: '防禦時受到的傷害再 −20%，被攻擊時 30% 反擊（威力 40）', mast: '雙盾精通', mastD: '用盾攻擊的傷害 +3%／級', sp: [['盾鳴', 'flinch30'], ['鋼壁', 'guard']],
     sk: [['1a', 'shBash', '雙盾擊', 55, 0, 0, 3, 0, '用兩面盾砸，30% 退縮。', { cls: 'strike', effects: DMG11(FL11(0.3)) }],
       ['1b', 'shStance', '雙盾架勢', 0, 0, 3, 4, 0, '2 回合受到的傷害 −50%；這段時間每被打一次得到 1 層「盾勢」（最多 3 層）。', { effects: [{ type: 'status', target: 'self', status: 'shieldStance11', dur: 2 }] }],
       ['2a', 'shRam', '盾突', 75, 0, 1, 5, 0, '衝撞，削 1 格護盾；每層盾勢威力 +25%，用掉盾勢。', { cls: 'strike', mods: [{ stage: 'skill', who: 'attacker', mul: { f: 'ram11' } }], effects: DMG11(CHIP11(1)), after: [{ type: 'remove_status', target: 'self', status: 'bulk11', why: 'used' }] }],
       ['2b', 'shReflect', '反射壁', 0, 0, 3, 5, 0, '這回合受到的魔法傷害反彈 50% 回去。', { prio: 1, effects: [{ type: 'status', target: 'self', status: 'mirror', dur: 1 }] }],
-      ['3a', 'shCrash', '雙盾崩擊', 150, 0, 3, 10, 0, '蓄力 1 回合（蓄力時受到的傷害 −70%），兩面盾一起砸下；對破防中的對手威力 ×1.5。', { charge: 1, cls: 'strike', mods: [MUL11(1.5, { tgtBroken: 1 })] }],
+      ['3a', 'shCrash', '雙盾崩擊', 150, 0, 3, 10, 0, '蓄力 1 回合（蓄力時受到的傷害 −70%），兩面盾一起砸下；對破防中的對手威力 ×1.5。', { charge: 1, cls: 'strike', mods: [MUL11(1.5, { tgtStatus: 'broken' })] }],
       ['3b', 'shFort', '不落要塞', 0, 0, 5, 10, 0, '3 回合物防、魔防 +2 階，每回合回 5% HP，被攻擊時反擊（威力 40）。', { effects: [SELF11({ def: 2, spd: 2 }), { type: 'status', target: 'self', status: 'regen11', dur: 3 }, { type: 'status', target: 'self', status: 'fortCounter11', dur: 3 }] }]] },
 };
 const TREE_KINDS11 = Object.keys(TREE11), DUAL_KINDS11 = TREE_KINDS11.filter(k => TREE11[k].dual);
-const POS_LV11 = { 1: 1, 2: 15, 3: 30 }, POS_LVD11 = { 1: 15, 2: 25, 3: 35 };
+const POS_LV11 = { 1: 1, 2: 15, 3: 30 }, POS_LVD11 = POS_LV11; // 雙持樹跟一般的樹一樣（原本 15／25／35）
 const SK_TREE11 = {}; // skill id → [kind, pos]
 function sk11Build(kind) { const T = TREE11[kind];
   for (const [pos, k, n, pow, hits, cd, mp, aoe, d, x] of T.sk) {
@@ -202,7 +203,7 @@ for (const kind of TREE_KINDS11) TREE11[kind].sp.forEach(([n, k], j) => { for (l
   if (k === 'pierce') d.pierceDef = 1;
   if (k === 'defdown') d.after.push({ type: 'stage', stats: { def: -1 }, target: 'cast_targets', cond: { tgtAlive: 1 } });
   if (k === 'psn') d.after.push({ type: 'status', status: 'psn', chance: 0.6, target: 'cast_targets', secondary: true, cond: { tgtAlive: 1, tgtNoMajor: 1 } });
-  if (k === 'chip') d.after.push({ type: 'break_chip', target: 'cast_targets', n: 1, cond: { tgtAlive: 1 }, why: 'sp11' });
+  if (k === 'chip') d.after.push({ type: 'hunt_chip', target: 'cast_targets', n: 1, cond: { tgtAlive: 1 }, why: 'sp11' });
   if (/^flinch/.test(k)) d.after.push({ type: 'status', status: 'flinch', chance: +k.slice(6) / 100, target: 'cast_targets', secondary: true, cond: { tgtAlive: 1 } });
   if (k === 'crit') d.effects = [{ type: 'status', status: 'critNext', target: 'self' }];
   if (k === 'haste') d.effects = [{ type: 'stage', stats: { spe: 1 }, target: 'self' }, { type: 'resource', res: 'mp', pct: 0.1, target: 'self' }];
@@ -228,14 +229,15 @@ function treeNodes11(kind) { const T = TREE11[kind], L = [], PL = T.dual ? POS_L
   for (const [pos, k] of T.sk) { const tier = +pos[0], col = pos[1], pre = tier > 1 ? T.sk.find(s => s[0] === (tier - 1) + col) : null; L.push({ key: 't_' + k, t: 'sk', n: DEF.skills['t_' + k].name, max: 5, lv: PL[tier], pre: pre ? 't_' + pre[1] : null, pos }); }
   T.sp.forEach(([n], j) => L.push({ key: kind + ':sp' + j, t: 'sp', n, max: 1, lv: PL[1], j }));
   return L; }
-const dualOn11 = (st = Game.st) => !!(st.flags || {}).dual11;
+const dualOn11 = () => true; // 一開始就能雙持
+const PAIR11 = { 短刀: '雙刀', 雙刀: '短刀', 劍: '雙劍', 雙劍: '劍' }; // 同時用得到的兩棵樹，特技只裝一個
 function dualMode11(st = Game.st) { const w = gearBy(st.equip && st.equip.weapon, st), o = gearBy(st.equip && st.equip.shield, st); if (!w) return null; const W = GEAR[w.b];
   if (W.slot === 'shield') return '雙盾'; if (!o || GEAR[o.b].slot !== 'weapon') return null; const O = GEAR[o.b];
   if (W.kind === '短刀' && O.kind === '短刀') return '雙刀'; if (W.kind === '劍' && O.kind === '劍') return '雙劍'; return null; }
 const mainKind11 = (st = Game.st) => { const w = gearBy(st.equip && st.equip.weapon, st); return w && GEAR[w.b].slot === 'weapon' && TREE11[GEAR[w.b].kind] ? GEAR[w.b].kind : null; };
 const curKinds11 = (st = Game.st) => [mainKind11(st), dualMode11(st)].filter(Boolean);
 function nodeState11(kind, N, st = Game.st) { const lv = trLv11(N.key, st);
-  if (TREE11[kind].dual && !dualOn11(st)) return { ok: false, why: 'Lv15 到鐵匠學雙持後才能學' };
+  if (TREE11[kind].dual && !dualOn11(st)) return { ok: false, why: '還不能學' };
   if (lv >= N.max) return { ok: false, why: '已經學滿', full: 1 };
   if ((st.lv || 1) < N.lv) return { ok: false, why: 'Lv' + N.lv + ' 開放' };
   if (N.pre && trLv11(N.pre, st) < 3) return { ok: false, why: '要先把「' + DEF.skills[N.pre].name + '」練到 3 級' };
@@ -270,10 +272,10 @@ PV('tr11', (v, u) => { const mods = [], triggers = [];
   if (v.aff > 1) mods.push({ stage: 'skill', who: 'attacker', mul: v.aff, cond: { tag: 'tree11' } });
   if (v.mast > 0) mods.push({ stage: 'equipment', who: 'attacker', mul: 1 + v.mast, cond: { hasPower: 1 } });
   const T = new Set(v.traits || []);
-  if (T.has('劍')) triggers.push({ on: EVT.DAMAGE, phase: 'POST', role: 'src', cond: { crit: 1, evHit: 1, tgtSide: 'enemy' }, limit: { perAction: 1 }, effects: [{ type: 'break_chip', target: 'event_target', n: 1, why: 'sword11' }] });
+  if (T.has('劍')) triggers.push({ on: EVT.DAMAGE, phase: 'POST', role: 'src', cond: { crit: 1, evHit: 1, tgtSide: 'enemy' }, limit: { perAction: 1 }, effects: [{ type: 'hunt_chip', target: 'event_target', n: 1, why: 'sword11' }] });
   if (T.has('短刀')) mods.push({ stHit: 15 });
-  if (T.has('斧') && WKIND12.斧.make) { const r = WKIND12.斧.make(); triggers.push(...(r.triggers || [])); }
-  if (T.has('長槍')) mods.push({ stage: 'equipment', who: 'attacker', mul: 1.2, cond: { tgtBroken: 1, hasPower: 1 } });
+  if (T.has('斧')) triggers.push({ on: EVT.DAMAGE, phase: 'POST', role: 'src', cond: { tag: 'basic', evHit: 1, tgtSide: 'enemy' }, limit: { perAction: 1 }, effects: [{ type: 'hunt_chip', target: 'event_target', n: 1, why: 'axe11' }] });
+  if (T.has('長槍')) mods.push({ stage: 'equipment', who: 'attacker', mul: 1.2, cond: { tgtStatus: 'broken', hasPower: 1 } });
   if (T.has('法杖') && DEF.passives.weakUp) { const r = DEF.passives.weakUp.make(15, u); mods.push(...(r.mods || [])); triggers.push(...(r.triggers || [])); }
   if (T.has('魔導書')) mods.push({ costMul: 0.8, res: 'mp' });
   if (T.has('樂器')) mods.push({ tr11Long: 1 });
@@ -283,8 +285,8 @@ PV('tr11', (v, u) => { const mods = [], triggers = [];
   if (T.has('雙盾')) { mods.push({ stage: 'final', who: 'defender', mul: 0.8, cond: { guarding: 1, hasPower: 1 } }); triggers.push({ on: EVT.DAMAGE, phase: 'POST', role: 'tgt', cond: { srcSide: 'enemy', hasPower: 1, ownerAlive: 1 }, chance: 0.3, limit: { perAction: 1 }, effects: [{ type: 'counter', mul: { f: 'cnt11', v: 40 }, why: 'shield11' }] }); }
   if (v.shield) { mods.push({ stage: 'skill', who: 'attacker', atkMul: { f: 'shield11' }, cond: { hasPower: 1 } }); mods.push({ stage: 'final', who: 'defender', mul: 0.3, cond: { ownerHasStatus: 'charging', hasPower: 1 } }); }
   // 流光連斬・雙星十字: every critical hit chips the shield
-  triggers.push({ on: EVT.DAMAGE, phase: 'POST', role: 'src', cond: { skillIs: 't_sdFlow', crit: 1, evHit: 1, tgtSide: 'enemy' }, effects: [{ type: 'break_chip', target: 'event_target', n: 1, why: 'flow11' }] });
-  triggers.push({ on: EVT.DAMAGE, phase: 'POST', role: 'src', cond: { skillIs: 't_dsStar', crit: 1, evHit: 1, tgtSide: 'enemy' }, effects: [{ type: 'break_chip', target: 'event_target', n: 1, why: 'star11' }] });
+  triggers.push({ on: EVT.DAMAGE, phase: 'POST', role: 'src', cond: { skillIs: 't_sdFlow', crit: 1, evHit: 1, tgtSide: 'enemy' }, effects: [{ type: 'hunt_chip', target: 'event_target', n: 1, why: 'flow11' }] });
+  triggers.push({ on: EVT.DAMAGE, phase: 'POST', role: 'src', cond: { skillIs: 't_dsStar', crit: 1, evHit: 1, tgtSide: 'enemy' }, effects: [{ type: 'hunt_chip', target: 'event_target', n: 1, why: 'star11' }] });
   // 幻影連斬: each critical hit adds a stack; 狂刃 ends with 物防 −2
   triggers.push({ on: EVT.DAMAGE, phase: 'POST', role: 'src', cond: { skillIs: 't_dsPhantom', crit: 1, evHit: 1 }, effects: [{ type: 'status', target: 'self', status: 'phantom11', delta: 1, quiet: 1 }] });
   triggers.push({ on: EVT.STATUS_EXPIRE, phase: 'POST', cond: { statusIs: 'frenzy11' }, effects: [{ type: 'stage', target: 'self', stats: { def: -2 } }] });
@@ -308,7 +310,7 @@ PV('tr11Thrift', v => FREECAST(v / 100), { n: '省力' });
     s.wsp = null; s.data.wspSkill = null; s.data.wspName = null;
     const w = gearBy(st.equip.weapon, st), tier = clamp((w && GEAR[w.b].t) || 1, 1, 7), mag = s.data.wcat === '特';
     for (const k of K) { const j = T.eq[k]; if (j == null || !trLv11(k + ':sp' + j, st)) continue; const [n, type] = TREE11[k].sp[j];
-      s.wsp = { N: SPN11[type] || 4 }; s.data.wspSkill = spId11(k, j, tier, mag); s.data.wspName = n; break; }
+      s.wsp = { N: SPN11[type] || 4 }; s.data.wspSkill = spId11(k, j, tier, mag); s.data.wspName = n; s.data.wspFx = 'sp11_' + TREE_KINDS11.indexOf(k) + '_' + j; break; }
     return s; }; }
 // stat passives of the trees in hand
 { const _hs = heroStats; heroStats = function (st = Game.st) { const s = _hs(st); if (!st || !st.equip) return s; const K = curKinds11(st), L = k => K.includes(k) ? trLv11(k + ':third', st) : 0;
@@ -362,11 +364,6 @@ function* equipPick11(sl, fit) {
     if (typeof shieldFix === 'function' && shieldFix(st)) { clampHP(); yield* say('雙手武器不能配副手，副手卸下了。'); } if (dualFix11(st)) { clampHP(); yield* say('副手的武器跟主手不同種，卸下了。'); }
     const m = dualMode11(st); if (m && m !== m0) yield* say('現在是「' + m + '」！' + (trLeft11(st) > 0 ? '\n（選單→技能→武器技能樹 可以學' + m + '的招式）' : '')); }; }
 { const _so = startOverworld; startOverworld = function (...a) { if (Game.st) dualFix11(Game.st); return _so.apply(this, a); }; }
-// the smith teaches 雙持 at Lv15
-{ const _sm = smithMenu; smithMenu = function* (f) { const st = Game.st;
-    if (st && (st.lv || 1) >= 15 && !dualOn11(st)) { st.flags.dual11 = 1; Sound.jingle('item');
-      yield* say('鐵匠：「你也練到能兩手各拿一把了吧。教你個絕活——」\n學會了「雙持」！'); yield* say('副手欄可以裝同種的第二把短刀（雙刀）或劍（雙劍），主手和副手也可以都拿盾（雙盾）。\n雙持有自己的技能樹：選單→技能→武器技能樹。'); }
-    yield* _sm.call(this, f); }; }
 
 /* ---------- 雙持：戰鬥中的樣子（現有的武器圖和盾牌圖） ----------
    副手武器＝同一把武器圖左右翻轉拿在左手；盾牌（側面圖）掛在左手，雙盾時右手也拿一面。HAND11 是戰鬥小人每個姿勢的手的位置。 */
@@ -429,8 +426,8 @@ function* treeScreen11() { const st = Game.st, kinds = () => TREE_KINDS11.filter
     if (Input.pressed('a')) { Input.consume('a'); const N = R[sel];
       if (N.t === 'reset') { UI.remove(scr); yield* treeReset11(); UI.push(scr); }
       else { const lv = trLv11(N.key, st), s = nodeState11(kind, N, st);
-        if (N.t === 'sp' && lv) { tr11(st).eq[kind] = tr11(st).eq[kind] === N.j ? null : N.j; Sound.sfx('select'); }
-        else if (s.ok) { tr11(st).lv[N.key] = lv + 1; if (N.t === 'sp' && tr11(st).eq[kind] == null) tr11(st).eq[kind] = N.j; Sound.sfx(lv ? 'statUp' : 'select'); if (N.t === 'sk' && !lv) BB.slots(st); clampHP(); }
+        if (N.t === 'sp' && lv) { tr11(st).eq[kind] = tr11(st).eq[kind] === N.j ? null : N.j; if (tr11(st).eq[kind] != null && PAIR11[kind]) tr11(st).eq[PAIR11[kind]] = null; Sound.sfx('select'); }
+        else if (s.ok) { tr11(st).lv[N.key] = lv + 1; if (N.t === 'sp' && tr11(st).eq[kind] == null && (!PAIR11[kind] || tr11(st).eq[PAIR11[kind]] == null)) tr11(st).eq[kind] = N.j; Sound.sfx(lv ? 'statUp' : 'select'); if (N.t === 'sk' && !lv) BB.slots(st); clampHP(); }
         else Sound.sfx('bump'); } }
     if (Input.pressed('b')) { Input.consume('b'); Sound.sfx('cancel'); break; } yield; }
   UI.remove(scr); }
@@ -443,7 +440,7 @@ function* treeReset11() { const st = Game.st, T = tr11(st); if (!trSpent11(st)) 
     while (true) { const n = trLeft11(st), r = yield* ask('技能', ['技能編排', '武器技能樹' + (n ? '（剩 ' + n + ' 點）' : ''), '返回']); if (r === 0) yield* _ts(); else if (r === 1) yield* treeScreen11(); else break; } }; }
 // the menu dot: unspent tree points
 { const _up = Overworld.prototype.update; Overworld.prototype.update = function (...a) { const st = this.st || Game.st; if (st && (Game.frame || 0) % 30 === 0) st.skp = trLeft11(st); return _up.apply(this, a); }; }
-GROW12.push(['武器技能樹', '每種武器有自己的技能樹（選單→技能→武器技能樹）。技能點＝等級＋主線頭目各 1 點；只能用身上武器那棵樹的招。Lv15 到鐵匠學「雙持」，雙刀・雙劍・雙盾有自己的樹。']);
+GROW12.push(['武器技能樹', '每種武器有自己的技能樹（選單→技能→武器技能樹）。技能點＝等級＋主線頭目各 1 點；只能用身上武器那棵樹的招。副手欄放同種的第二把短刀（雙刀）或劍（雙劍），或主手、副手都拿盾（雙盾），就能用雙持的樹。']);
 
 /* ---------- help texts ---------- */
 { const fix = (k, t) => { const i = GROW12.findIndex(q => q[0] === k); if (i >= 0) GROW12[i][1] = t; };
