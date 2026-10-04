@@ -62,9 +62,11 @@ module.exports = async (g) => {
     const kindOf = id => TREE_KINDS11.find(k => TREE11[k].sk.some(r => r[1] === id));
     const badHits = []; for (const id in HITS) { const r = fight(kindOf(id), id); const n = hitsOf(r, id); if (n !== HITS[id]) badHits.push(DEF.skills['t_' + id].name + ' ' + n + '/' + HITS[id]); }
     ok('段數（' + Object.keys(HITS).length + ' 招多段，疾風百刃比對手快時 12 段）', !badHits.length, badHits.join('、'));
-    const chipOf = r => -r.log.filter(e => e.type === EVT.RESOURCE_CHANGE && e.payload.res === 'brk' && e.tgts[0] === r.F.id).reduce((a, e) => a + e.payload.change, 0);
-    { const base = chipOf(fight('劍', 'sdBreak')); const bad = []; for (const [id, n] of [['axSplit', 1], ['axCrush', 2], ['spBreak', 1], ['gnAp', 1], ['shRam', 1], ['sdGap', 1], ['fsStorm', 1]]) { const v = chipOf(fight(kindOf(id), id)) - base; if (v !== n) bad.push(DEF.skills['t_' + id].name + ' ' + v + '/' + n); }
-      ok('削護盾（劈山 1、碎盾擊 2、破陣槍 1、貫通彈 1、盾突 1、破綻突 1、狂嵐拳 1）', !bad.length, bad.join('、') + '（普通招式自己削 ' + base + '）'); }
+    // v12.5 護盾：「削 N 格」→ 對魔物護盾的倍率（劈山 ×2、碎盾擊 ×3 …）
+    const WPRE = (c, H, F) => { H.stats.crit = 0; wardOpen12(c, F, F, { pct: 50, abs: 1, turns: 9 }); };
+    const chipOf = r => Math.max(0, ...r.log.filter(e => e.type === EVT.DAMAGE && e.src === 'H' && e.tgts[0] === r.F.id && e.payload.wardMul).map(e => e.payload.wardMul));
+    { const base = chipOf(fight('劍', 'sdBreak', { pre: WPRE })); const bad = []; for (const [id, n] of [['axSplit', 2], ['axCrush', 3], ['spBreak', 2], ['gnAp', 2], ['shRam', 2], ['sdGap', 2], ['fsStorm', 2]]) { const v = chipOf(fight(kindOf(id), id, { pre: WPRE })); if (v !== n) bad.push(DEF.skills['t_' + id].name + ' ×' + v + '/×' + n); }
+      ok('破盾倍率（劈山・破陣槍・貫通彈・盾突・破綻突・狂嵐拳 ×2、碎盾擊 ×3）', !bad.length && base === 1, bad.join('、') + '（普通招式 ×' + base + '）'); }
     const stApplied = (r, sid, who = 'F') => r.log.filter(e => e.type === EVT.STATUS_APPLY && e.payload.status === sid && e.tgts[0] === (who === 'F' ? r.F.id : 'H')).length;
     const rate = (id, sid, seeds = 40) => { let n = 0; for (let s = 1; s <= seeds; s++) if (stApplied(fight(kindOf(id), id, { seed: s }), sid)) n++; return n / seeds; };
     { const v = rate('dgVenom', 'psn'); ok('淬刃 每段 30% 中毒（兩段至少一次約 51%）', v > 0.3 && v < 0.75, Math.round(v * 100) + '%'); }
@@ -93,12 +95,11 @@ module.exports = async (g) => {
       const hi = dq(1200), lo = dq(50); ok('氣勁彈（實戰）用物攻和魔攻較高的一項', parseInt(hi) > parseInt(lo) * 2 && /特/.test(hi) && /物/.test(lo), '魔攻高 ' + hi + '／魔攻低 ' + lo); }
     { // weapon traits that touch 破防
       const withTrait = (kind, f) => { T.lv[kind + ':trait'] = 1; try { return f(); } finally { delete T.lv[kind + ':trait']; } };
-      const chipAtk = (kind, crit) => { const r = fight(kind, 'x', { seq: ['attack'], setup: (c, H) => { H.stats.crit = crit; } }); return chipOf(r); };
-      // basic attack id per kind
-      const a0 = chipAtk('斧', 0), a1 = withTrait('斧', () => { const { H } = build('斧'); const r = fight('斧', 'x', { seq: [H.data.attackSkill || 'attack'] }); return chipOf(r); });
-      ok('斧的特性：普通攻擊削 1 格護盾', a1 - a0 === 1, '沒特性 ' + a0 + '、有特性 ' + a1);
-      const s1 = withTrait('劍', () => { const r = fight('劍', 'sdBreak', { setup: (c, H) => { H.stats.crit = 100; } }); return chipOf(r); }), s0 = (() => { const r = fight('劍', 'sdBreak', { setup: (c, H) => { H.stats.crit = 100; } }); return chipOf(r); })();
-      ok('劍的特性：會心時多削 1 格護盾', s1 - s0 === 1, '沒特性 ' + s0 + '、有特性 ' + s1);
+      const atkMul = () => { const { H } = build('斧'); return chipOf(fight('斧', 'x', { seq: [H.data.attackSkill || 'attack'], pre: WPRE })); };
+      const a0 = atkMul(), a1 = withTrait('斧', atkMul);
+      ok('斧的特性：普通攻擊對護盾 ×1.5', a0 === 1 && a1 === 1.5, '沒特性 ×' + a0 + '、有特性 ×' + a1);
+      const CRIT = (c, H, F) => { WPRE(c, H, F); H.stats.crit = 100; }, s1 = withTrait('劍', () => chipOf(fight('劍', 'sdBreak', { pre: CRIT }))), s0 = chipOf(fight('劍', 'sdBreak', { pre: CRIT }));
+      ok('劍的特性：會心對護盾 ×2 → ×3', s0 === 2 && s1 === 3, '沒特性 ×' + s0 + '、有特性 ×' + s1);
       // 長槍的特性（打部位 +30%）在 tools/s3check.js
     }
     BR.VARIANCE = V0;

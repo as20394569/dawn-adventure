@@ -50,14 +50,14 @@ function stats9(st = Game.st) { const s = heroStats(st);
     ['會心傷害', Math.round(150 * (1 + (s.critDmg || 0) / 100)) + '%', 'critDmg'], ['命中', '+' + fmt9(s.hit) + '%', 'hit'], ['迴避', fmt9(s.eva) + '%', 'eva'], ['吸血', Math.min(20, s.drain || 0) + '%', 'drain'],
     ['屬性傷害', '+' + (s.elem || 0) + '%', 'elem'], ['異常命中', '+' + fmt9(s.stHit || 0) + '%', 'stHit'], ['異常抗性', fmt9(Math.min(80, s.stRes || 0)) + '%', 'stRes'], ['回復量', '+' + fmt9(s.healUp || 0) + '%', 'healUp']]; }
 function statFormula9(key, st = Game.st) { const s = heroStats(st), a = heroAttr(st), L = st.lv, eq = eqBonus(st), rest = (tot, ...parts) => tot - parts.reduce((x, y) => x + y, 0), A = s.arm9 || {};
-  const line = (base, e, other, extra = []) => [base, ...(e ? ['＋裝備 ' + fmt9(e)] : []), ...(Math.abs(other) >= 0.05 ? ['＋職業・天賦・武器等 ' + fmt9(other)] : []), ...extra];
+  const line = (base, e, other, extra = []) => [base, ...(e ? ['＋裝備 ' + fmt9(e)] : []), ...(Math.abs(other) >= 0.05 ? ['＋技能樹・晶石・武器等 ' + fmt9(other)] : []), ...extra];
   const B = { hp: Math.floor(6 + L * 1.8 + a.vit * 1.6), mp: Math.floor(8 + L * 1 + a.int * 1.5), atk: Math.floor(a.str + a.dex / 2), def: Math.floor(a.vit * 1.5 + a.agi * 0.5), spa: Math.floor(a.int * 1.2 + a.dex / 3), spd: Math.floor((a.int + a.vit) * 0.8), spe: Math.floor(a.agi * 1.5) };
   const F = { hp: '6＋等級×1.8＋體力×1.6', mp: '8＋等級×1＋智力×1.5', atk: '力量＋靈巧÷2', def: '體力×1.5＋敏捷×0.5', spa: '智力×1.2＋靈巧÷3', spd: '（智力＋體力）×0.8', spe: '敏捷×1.5' };
   if (B[key] != null) { const tot = key === 'hp' || key === 'mp' ? s[key] : s[key]; const e = eq[key] || 0;
     return line(F[key] + '＝' + B[key], e, rest(tot, B[key], e), key === 'spe' && A.重甲 ? ['（已算進重甲 ' + A.重甲 + ' 件：速度 −' + 3 * A.重甲 + '%）'] : []).concat(key === 'spe' && A.輕裝 ? ['輕裝 ' + A.輕裝 + ' 件：第一回合速度 +' + 10 * A.輕裝 + '%'] : []); }
   if (key === 'crit') { const b = 3 + a.luk * 0.6, e = gearSp9(st, 'crit'); return line('3＋幸運×0.6＝' + fmt9(b), e, rest(s.crit, b, e), ['會心時傷害 ×' + (1.5 * (1 + (s.critDmg || 0) / 100)).toFixed(2)]); }
   if (key === 'critDmg') { const b = over10(a.luk), e = gearSp9(st, 'critDmg'), T = s.th9 || {};
-    return ['基礎 150%×（1＋加成）', '幸運超過 10 的部分每點 +1 → ' + b, ...(e ? ['＋裝備 ' + e] : []), ...(Math.abs(rest(s.critDmg || 0, b, e)) >= 0.05 ? ['＋職業・天賦・武器等 ' + fmt9(rest(s.critDmg || 0, b, e))] : []), ...(T.str ? ['（力量門檻：物理再 +' + (T.str >= 3 ? 30 : 10) + '）'] : []), ...(T.int >= 2 ? ['（智力門檻：魔法再 +15）'] : [])]; }
+    return ['基礎 150%×（1＋加成）', '幸運超過 10 的部分每點 +1 → ' + b, ...(e ? ['＋裝備 ' + e] : []), ...(Math.abs(rest(s.critDmg || 0, b, e)) >= 0.05 ? ['＋技能樹・晶石・武器等 ' + fmt9(rest(s.critDmg || 0, b, e))] : []), ...(T.str ? ['（力量門檻：物理再 +' + (T.str >= 3 ? 30 : 10) + '）'] : []), ...(T.int >= 2 ? ['（智力門檻：魔法再 +15）'] : [])]; }
   if (key === 'hit') { const b = a.dex * 0.5, e = gearSp9(st, 'hit'); return line('靈巧×0.5＝' + fmt9(b), e, rest(s.hit, b, e), ['命中率＝招式命中＋這個數字−對手迴避']); }
   if (key === 'eva') { const b = a.agi * 0.4 + a.luk * 0.1, e = gearSp9(st, 'eva'), l = 2 * (A.輕裝 || 0); return line('敏捷×0.4＋幸運×0.1＝' + fmt9(b), e, rest(s.eva, b, e, l), l ? ['＋輕裝 ' + A.輕裝 + ' 件 ' + l] : []); }
   if (key === 'drain') { const e = gearSp9(st, 'drain'); return line('造成傷害的這個比例回復 HP（上限 20%）', e, rest(s.drain || 0, e)); }

@@ -85,7 +85,8 @@ const Font = (() => {
     ctx.drawImage(out, Math.round(x - 2), Math.round(y - 2));
     return out;
   }
-  const NOSTART = '。，、！？」』）：；…～．,.!?)';
+  const NOSTART = '。，、！？」』）】〕］〉》：；…～．％%,.!?)'; // v268: 】％ 也不放行首
+  const NOEND = '（「『【〔［〈《(';                                 // v268: 開括號不留在行尾
   function wrap(str, maxW, size) {
     const lines = [];
     for (const para of String(str).split('\n')) {
@@ -93,7 +94,10 @@ const Font = (() => {
       for (let i = 0; i < chars.length; i++) {
         const ch = chars[i], cw = width(ch, size);
         if (w + cw > maxW && line) {
-          if (NOSTART.includes(ch)) { const lc = [...line]; const last = lc.pop(); lines.push(lc.join('')); line = last; w = width(last, size); }
+          const lc = [...line]; let carry = '';
+          if (NOSTART.includes(ch) && lc.length > 1) carry = lc.pop();
+          while (lc.length > 1 && NOEND.includes(lc[lc.length - 1])) carry = lc.pop() + carry;
+          if (carry) { lines.push(lc.join('')); line = carry; w = width(carry, size); }
           else { lines.push(line); line = ''; w = 0; if (ch === ' ') continue; }
         }
         line += ch; w += cw;
@@ -3105,7 +3109,7 @@ RECIPES.push(
   { out: 'foxfireStaff', mats: { foxfire: 4, spore: 2 }, gold: 800 }, { out: 'crystalStaff', mats: { crystal: 5, silk: 2 }, gold: 1500 },
 );
 const MAGE_SWAP = { dawnSword: 'dawnStaff', masterBlade: 'masterStaff', fangDagger: 'fangWand', grenAxe: 'stolenTome' };
-const classGear = (id, st = Game.st) => (st && baseClassOf(st.cls) === 'mage' && MAGE_SWAP[id]) || id;
+const classGear = (id, st = Game.st) => (st && (typeof magicHand12 === 'function' ? magicHand12(st) : baseClassOf(st.cls) === 'mage') && MAGE_SWAP[id]) || id; // v268: 看主手武器
 Object.assign(WPN_PAL, {
   wandR: { T: '#5a2a1a', V: '#ff6a3a' }, wandV: { T: '#3a3a5a', V: '#fff060' }, wandQ: { T: '#6a6070', V: '#ffc0f0' }, wandF: { T: '#5a3a28', V: '#fff8e8' },
   wandM: { T: '#3a2a5a', V: '#c890ff' }, wandO: { T: '#6a3a1a', V: '#ffa040' }, wandC: { T: '#4a6a8a', V: '#a0f8ff' }, wandD: { T: '#b08830', V: '#fff0a0' }, wandMs: { T: '#3a3a5a', V: '#e0f0ff' },
@@ -8230,7 +8234,7 @@ function* titleScreen() {
 ACHIEVEMENTS.find(a => a.id === 'gold').ok = st => (st.gear || []).some(g => g.q >= 4);
 ACHIEVEMENTS.push(
   { id: 'lake', n: '湖之主', d: '打倒銀鱗水龍。', ok: st => st.flags.wyrm },
-  { id: 'spellblade', n: '魔劍之道', d: '繼承魔劍士的道路。', ok: st => st.flags.spellbladeOk },
+  { id: 'spellblade', n: '魔劍之道', d: '打贏流浪的魔劍士，學到他的劍技。', ok: st => st.flags.spellbladeOk },
   { id: 'rift10', n: '迴廊的深處', d: '在異界迴廊到達第10層。', ok: st => st.rift && st.rift.best >= 10 },
   { id: 'riftClear', n: '門的彼方', d: '踏破異界迴廊（第20層）。', ok: st => st.flags.riftClear },
   { id: 'break30', n: '破防達人', d: '累計讓魔物破防30次。', ok: st => (st.brkCount || 0) >= 30 },
@@ -10369,7 +10373,7 @@ Object.assign(Events, {
   *bardMaster() {
     const st = Game.st, f = st.flags;
     if (f.clsBard) { yield* say('歌聲是最溫柔的武器。去公會轉職吧，我的學生。'); return; }
-    if (!f.bardQ) { if (ch2() < 3) { yield* say('歡迎來到吟遊詩人公會。……今天沒有演出喔。'); return; } f.bardQ = 1; yield* sayAll(['……你就是那位異界的勇者？', '我是詩人公會長蕾菈。我們公會代代相傳的「勇者之歌」的樂譜，前幾天被溝鼠叼進地下水道了……', '如果你找得到，我就把詩人的歌——「吟遊詩人」的道路傳授給你。']); return; }
+    if (!f.bardQ) { if (ch2() < 3) { yield* say('歡迎來到吟遊詩人公會。……今天沒有演出喔。'); return; } f.bardQ = 1; yield* sayAll(['……你就是那位異界的勇者？', '我是詩人公會長蕾菈。我們公會代代相傳的「勇者之歌」的樂譜，前幾天被溝鼠叼進地下水道了……', '如果你找得到，我就把詩人的歌傳授給你。']); return; }
     if (st.bag.lostScore) { delete st.bag.lostScore; f.clsBard = 1; Sound.jingle('item'); yield* sayAll(['這就是……勇者之歌的樂譜！', '（蕾菈輕輕地哼起了旋律。）', '……五百年前，初代勇者的曙光軍裡，也有一位吟遊詩人。', '你有資格走上這條路了。到冒險者公會找公會長轉職吧。']); yield* itemGet('解鎖了上級職業「吟遊詩人」！'); return; }
     yield* say('樂譜應該掉在地下水道的某個角落……拜託你了。');
   },
@@ -13762,7 +13766,7 @@ function wxOverlay(x, k, t, w, h) {
     _d.call(this, x); const st = this.st, k = wxNow(st); if (!k) return; wxOverlay(x, k, this.t, W, H);
     if (!this.popup && !UI.stack.length) { const s = WEATHER[k].n + (st.rainbowUntil > (st.steps || 0) ? '・彩虹' : '') + (typeof dnHudTag === 'function' ? dnHudTag(st) : ''), w = Math.ceil(Font.width(s, 9)) + 20; x.fillStyle = 'rgba(10,14,28,0.7)'; x.fillRect(3, 3, w, 14); wxIcon(x, k, 5, 4); Font.draw(x, s, 17, 1, WEATHER[k].col, UIC.textSh, 9); }
     const B = Game.wxBanner; if (B && !UI.stack.length && !this.popup && !(Game.toastQ && Game.toastQ.length)) { /* v12.0.1: waits until an achievement toast has gone, they used to overlap */ B.t++; if (B.t > 150) Game.wxBanner = null; else { const a = B.t < 10 ? B.t / 10 : B.t > 130 ? (150 - B.t) / 20 : 1, s1 = B.rainbow ? '雨停了，天空出現了彩虹！' : '天氣：' + WEATHER[B.k].n, s2 = B.rainbow ? '接下來100步，戰鬥經驗值+20%' : WEATHER[B.k].d, w = Math.max(Font.width(s1, 10), Font.width(s2, 9)) + 20;
-      x.globalAlpha = a; drawPanel(x, (W - w) / 2, 22, w, 30, null); Font.drawC(x, s1, W / 2, 23, B.rainbow ? '#ffb0e0' : WEATHER[B.k].col, UIC.textSh, 10); Font.drawC(x, s2, W / 2, 36, UIC.text, UIC.textSh, 9); x.globalAlpha = 1; } }
+      x.globalAlpha = a; drawPanel(x, (W - w) / 2, 28, w, 30, null); Font.drawC(x, s1, W / 2, 29, B.rainbow ? '#ffb0e0' : WEATHER[B.k].col, UIC.textSh, 10); Font.drawC(x, s2, W / 2, 42, UIC.text, UIC.textSh, 9); x.globalAlpha = 1; } }
   }; }
 { const _bs = Overworld.prototype.battleScript; Overworld.prototype.battleScript = function* (cfg, ...a) {
     const st = this.st, k = wxNow(st); if (!cfg) return yield* _bs.call(this, cfg, ...a);
@@ -16388,7 +16392,7 @@ BB.skillInfo = function (st, id) {
 skillTreeScreen = function* () {
   const st = Game.st; let sel = 0, showF = false;
   const rows = () => { const R = [], C = DEF.classes[clsV7(st.cls)], slots = BB.slots(st), av = BB.available(st);
-    if (C && st.cls) R.push({ sig: C.sig });
+    if (C && st.cls && C.sig) R.push({ sig: C.sig }); // v268: 沒職業招式時不留空白列
     for (let i = 0; i < BB.SLOTS; i++) R.push({ slot: i, id: slots[i] || null });
     for (const id of av) if (!slots.includes(id)) R.push({ spare: id });
     const next = classSkills12(st, true).find(([id, lv]) => (st.lv || 1) < lv); if (next) R.push({ next });
@@ -16409,7 +16413,7 @@ skillTreeScreen = function* () {
     if (top > 0) x.drawImage(UPARROW, 86, 23); if (top + VIS < L.length) x.drawImage(DOWNARROW, 86, 22 + VIS * 16 + 3);
     const Y0 = 22 + VIS * 16 + 12, R = L[i]; drawWin(x, 4, Y0, 168, 252 - Y0, 'menu'); let txt = '', fid = null;
     if (R && R.sig) { fid = R.sig; txt = BB.skillInfo(st, R.sig) + '\n（職業招式固定在第一格）'; }
-    else if (R && R.slot !== undefined) { fid = R.id; txt = R.id ? BB.skillInfo(st, R.id) + (pend(R.id) ? '　按A可以進化！' : '') + '\nA：更換／取下' : '把技能放進這一格，戰鬥中就能使用（最多' + BB.SLOTS + '個）。技能來自職業（等級學會）和武器（用滿次數永久學會）。'; }
+    else if (R && R.slot !== undefined) { fid = R.id; txt = R.id ? BB.skillInfo(st, R.id) + (pend(R.id) ? '　按A可以進化！' : '') + '\nA：更換／取下' : '把技能放進這一格，戰鬥中就能使用（最多' + BB.SLOTS + '個）。技能來自武器和共通的技能樹，用技能點學。'; }
     else if (R && R.spare) { fid = R.spare; txt = BB.skillInfo(st, R.spare) + '\nA：放進技能槽'; }
     else if (R && R.next) txt = '職業技能：Lv' + R.next[1] + ' 學會「' + DEF.skills[R.next[0]].name + '」。';
     const fm = fid && MOVES[fid] && skillMove(fid, st).pow; if (showF && fm && typeof powFormula === 'function') txt = powFormula(fid, st);
@@ -17710,7 +17714,8 @@ const longPress12 = () => { if (__lpF12 !== Game.frame) { __lpF12 = Game.frame; 
 { const _ts = TitleScene.prototype.enter; TitleScene.prototype.enter = function (...a) { Game.autoIntro = false; return _ts ? _ts.apply(this, a) : undefined; }; }
 { const _d = TextBox.prototype.draw; TextBox.prototype.draw = function (x) { _d.call(this, x);
     const S = Game.settings; if (S.ffHint12 || Game.autoIntro || this.keep || UI.stack[UI.stack.length - 1] !== this || !(this.style === 'ow' || this.style === 'dark') || this.y < 60) return;
-    Font.drawR(x, '長按畫面（或按住B）可以快轉', this.x + this.w - 4, this.y - 11, UIC.muted, UIC.textSh, 9);
+    { const t = '長按畫面（或按住B）可以快轉', tw = Math.ceil(Font.width(t, 8)) + 8, R = this.x + this.w - 2; // v268: 自己的底色，不壓框線
+      x.fillStyle = 'rgba(10,14,28,0.78)'; x.fillRect(R - tw, this.y - 13, tw, 11); Font.drawR(x, t, R - 4, this.y - 14, '#c9cfe4', UIC.textSh, 8); }
     if ((S.ffHintT12 = (S.ffHintT12 || 0) + 1) > 600) { S.ffHint12 = 1; delete S.ffHintT12; saveSettings(); } }; }
 { const _bp = gainBP; gainBP = function (k, q, st = Game.st, ...a) { const r = _bp.call(this, k, q, st, ...a); if (st && st.flags && st.flags.license && !st.flags.h12bp) st.flags.h12bp = 1; return r; }; }
 { const H = Battle.prototype.handlers, _d = H.DAMAGE; H.DAMAGE = function* (e, s, t, P) {
@@ -19651,14 +19656,14 @@ function stats9(st = Game.st) { const s = heroStats(st);
     ['會心傷害', Math.round(150 * (1 + (s.critDmg || 0) / 100)) + '%', 'critDmg'], ['命中', '+' + fmt9(s.hit) + '%', 'hit'], ['迴避', fmt9(s.eva) + '%', 'eva'], ['吸血', Math.min(20, s.drain || 0) + '%', 'drain'],
     ['屬性傷害', '+' + (s.elem || 0) + '%', 'elem'], ['異常命中', '+' + fmt9(s.stHit || 0) + '%', 'stHit'], ['異常抗性', fmt9(Math.min(80, s.stRes || 0)) + '%', 'stRes'], ['回復量', '+' + fmt9(s.healUp || 0) + '%', 'healUp']]; }
 function statFormula9(key, st = Game.st) { const s = heroStats(st), a = heroAttr(st), L = st.lv, eq = eqBonus(st), rest = (tot, ...parts) => tot - parts.reduce((x, y) => x + y, 0), A = s.arm9 || {};
-  const line = (base, e, other, extra = []) => [base, ...(e ? ['＋裝備 ' + fmt9(e)] : []), ...(Math.abs(other) >= 0.05 ? ['＋職業・天賦・武器等 ' + fmt9(other)] : []), ...extra];
+  const line = (base, e, other, extra = []) => [base, ...(e ? ['＋裝備 ' + fmt9(e)] : []), ...(Math.abs(other) >= 0.05 ? ['＋技能樹・晶石・武器等 ' + fmt9(other)] : []), ...extra];
   const B = { hp: Math.floor(6 + L * 1.8 + a.vit * 1.6), mp: Math.floor(8 + L * 1 + a.int * 1.5), atk: Math.floor(a.str + a.dex / 2), def: Math.floor(a.vit * 1.5 + a.agi * 0.5), spa: Math.floor(a.int * 1.2 + a.dex / 3), spd: Math.floor((a.int + a.vit) * 0.8), spe: Math.floor(a.agi * 1.5) };
   const F = { hp: '6＋等級×1.8＋體力×1.6', mp: '8＋等級×1＋智力×1.5', atk: '力量＋靈巧÷2', def: '體力×1.5＋敏捷×0.5', spa: '智力×1.2＋靈巧÷3', spd: '（智力＋體力）×0.8', spe: '敏捷×1.5' };
   if (B[key] != null) { const tot = key === 'hp' || key === 'mp' ? s[key] : s[key]; const e = eq[key] || 0;
     return line(F[key] + '＝' + B[key], e, rest(tot, B[key], e), key === 'spe' && A.重甲 ? ['（已算進重甲 ' + A.重甲 + ' 件：速度 −' + 3 * A.重甲 + '%）'] : []).concat(key === 'spe' && A.輕裝 ? ['輕裝 ' + A.輕裝 + ' 件：第一回合速度 +' + 10 * A.輕裝 + '%'] : []); }
   if (key === 'crit') { const b = 3 + a.luk * 0.6, e = gearSp9(st, 'crit'); return line('3＋幸運×0.6＝' + fmt9(b), e, rest(s.crit, b, e), ['會心時傷害 ×' + (1.5 * (1 + (s.critDmg || 0) / 100)).toFixed(2)]); }
   if (key === 'critDmg') { const b = over10(a.luk), e = gearSp9(st, 'critDmg'), T = s.th9 || {};
-    return ['基礎 150%×（1＋加成）', '幸運超過 10 的部分每點 +1 → ' + b, ...(e ? ['＋裝備 ' + e] : []), ...(Math.abs(rest(s.critDmg || 0, b, e)) >= 0.05 ? ['＋職業・天賦・武器等 ' + fmt9(rest(s.critDmg || 0, b, e))] : []), ...(T.str ? ['（力量門檻：物理再 +' + (T.str >= 3 ? 30 : 10) + '）'] : []), ...(T.int >= 2 ? ['（智力門檻：魔法再 +15）'] : [])]; }
+    return ['基礎 150%×（1＋加成）', '幸運超過 10 的部分每點 +1 → ' + b, ...(e ? ['＋裝備 ' + e] : []), ...(Math.abs(rest(s.critDmg || 0, b, e)) >= 0.05 ? ['＋技能樹・晶石・武器等 ' + fmt9(rest(s.critDmg || 0, b, e))] : []), ...(T.str ? ['（力量門檻：物理再 +' + (T.str >= 3 ? 30 : 10) + '）'] : []), ...(T.int >= 2 ? ['（智力門檻：魔法再 +15）'] : [])]; }
   if (key === 'hit') { const b = a.dex * 0.5, e = gearSp9(st, 'hit'); return line('靈巧×0.5＝' + fmt9(b), e, rest(s.hit, b, e), ['命中率＝招式命中＋這個數字−對手迴避']); }
   if (key === 'eva') { const b = a.agi * 0.4 + a.luk * 0.1, e = gearSp9(st, 'eva'), l = 2 * (A.輕裝 || 0); return line('敏捷×0.4＋幸運×0.1＝' + fmt9(b), e, rest(s.eva, b, e, l), l ? ['＋輕裝 ' + A.輕裝 + ' 件 ' + l] : []); }
   if (key === 'drain') { const e = gearSp9(st, 'drain'); return line('造成傷害的這個比例回復 HP（上限 20%）', e, rest(s.drain || 0, e)); }
@@ -20766,7 +20771,7 @@ DEF.mechanics.breakGauge.triggers = [
 const BRK11 = { elite: 3, boss: 5 };
 const HUNT11 = { eGap: 3, eChance: 0.6, bGap: 3, bChance: 0.5, hpLo: 0.6, hpHi: 0.8, guard: 0.3 }; // charge rhythm and how hard a charged hit lands
 function huntClone11(id) { const cid = 'hc_' + id; if (DEF.skills[cid]) return cid; const M = MOVES[id], S = DEF.skills[id]; if (!M || !S) return null;
-  MOVES[cid] = { ...M, charge: 1, chargeMsg: '全身的力量都集中了起來……！', warn: '（下一擊非常危險！選擇「防禦」能擋下七成傷害，打出「破防」也能打斷牠。）', d: (M.d || '') + '（蓄力大招）' };
+  MOVES[cid] = { ...M, charge: 1, chargeMsg: '全身的力量都集中了起來……！', warn: '（下一擊非常危險！選擇「防禦」能擋下七成傷害；打破牠的護盾就能打斷。）', d: (M.d || '') + '（蓄力大招）' };
   const D = defPut('skills', cid, { ...skillFromMove(cid, MOVES[cid], { kind: 'skill', extraTags: ['monster_skill'] }) }); D.cooldown = 0; D.hunt11 = 1; D.fx = S.fx;
   D.effects = D.effects.map((ef, i) => typeof ef === 'string' ? ef : effRegister('skill:' + cid + '#e' + i, ef)); D.after = D.after.map((ef, i) => typeof ef === 'string' ? ef : effRegister('skill:' + cid + '#a' + i, ef));
   if (typeof SKILL_MP !== 'undefined' && SKILL_MP[id] != null) SKILL_MP[cid] = SKILL_MP[id]; return cid; }
@@ -20861,7 +20866,7 @@ lootHint = function (key, sp) { const first = !((Game.st.kills || {})[key]), sig
   if (first && g) return '首次擊敗：「' + g.n + '」的設計圖';
   return PARTS11[sp] ? '再戰：部位、經驗、金錢' : '再戰：經驗、金錢' + ((SPECIES[sp] || {}).mat && ITEMS[SPECIES[sp].mat] ? '、' + ITEMS[SPECIES[sp].mat].n : ''); };
 { const H = Battle.prototype.handlers, _c = H.CHARGE; H.CHARGE = function* (e, s, t, P) { yield* _c.call(this, e, s, t, P);
-    if (s && !s.hero && (s.elite || s.boss) && !Game.st.flags.tutCharge11) { Game.st.flags.tutCharge11 = 1; yield* this.msg('（蓄力大招：選「防禦」可以擋下七成傷害；用弱點或會心削光護盾、打出「破防」，也能打斷蓄力。）', { wait: true }); } }; }
+    if (s && !s.hero && (s.elite || s.boss) && !Game.st.flags.tutCharge11) { Game.st.flags.tutCharge11 = 1; yield* this.msg('（蓄力大招：選「防禦」可以擋下七成傷害；也可以在牠出手前打破牠張開的護盾（弱點・會心對護盾加倍），打出「破防」直接打斷。）', { wait: true }); } }; }
 { const H = Battle.prototype.handlers, _b = H.BREAK; H.BREAK = function* (e, s, t, P) { const had = Game.st.flags.tutBreak; Game.st.flags.tutBreak = 1; yield* _b.call(this, e, s, t, P);
     if (!had && t) yield* this.msg('（破防：下一次行動被跳過，受到的傷害 +50%。破防越多，部位掉得越多！）', { wait: true }); }; }
 if (typeof BATTLE_HELP !== 'undefined') {
@@ -21034,7 +21039,7 @@ const DIFF11 = [
   { n: '困難', hp: 1.5, pow: 1.15, exp: 1.5, parts: 1.5, rare: 1, brk: 0, gap: 0 },
   { n: '惡夢', hp: 2.2, pow: 1.3, exp: 2, parts: 1.5, rare: 2, brk: 1, gap: 1 },
   { n: '極限', hp: 3, pow: 1.5, exp: 3, parts: 2, rare: 99, brk: 2, gap: 1 }];
-const diffTxt11 = d => ({ 0: '現在的強度', 1: 'HP ×1.5・攻擊 ×1.15・經驗和部位 ×1.5', 2: 'HP ×2.2・攻擊 ×1.3・護盾 +1、蓄力更頻繁・經驗 ×2・稀有部位機率 ×2', 3: 'HP ×3・攻擊 ×1.5・護盾 +2、蓄力更頻繁・經驗 ×3・部位 ×2、稀有部位必掉' })[d];
+const diffTxt11 = d => ({ 0: '現在的強度', 1: 'HP ×1.5・攻擊 ×1.15・經驗和部位 ×1.5', 2: 'HP ×2.2・攻擊 ×1.3・護盾量 +25%、蓄力更頻繁・經驗 ×2・稀有部位機率 ×2', 3: 'HP ×3・攻擊 ×1.5・護盾量 +50%、蓄力更頻繁・經驗 ×3・部位 ×2、稀有部位必掉' })[d];
 Overworld.prototype.steleTalk = function* (s) {
   const bd = s.stele, sp = bd.sp, st = this.st, lv = (bd.lv || MAPS[this.map.id].boss && MAPS[this.map.id].boss.lv || 15) + 3, D = st.diff11 || (st.diff11 = {});
   yield* say('刻著' + SPECIES[sp].n + '身影的「回憶石碑」。\n手放上去，就能再次和牠交手。');
@@ -22204,47 +22209,6 @@ for (const kind of TREE_KINDS11) TREE11[kind].sp.forEach((sp, j) => { const F = 
   const S = { col: F.col, pt: F.pt, seed: hashK(fid) }; FX[fid] = function* (U, T, u, t) { yield* F.f.call(this, S, U, T, u, t); }; PAL[fid] = [F.col[0], F.col[1]];
   if (F.h) FX[fid + 'h'] = function* (U, T, u, i) { yield* F.h.call(this, S, U, T, u, i); };
   for (let tr = 1; tr <= 7; tr++) for (const mag of [0, 1]) { const D = DEF.skills[spId11(kind, j, tr, mag)]; if (!D) continue; D.fx = fid; if (F.h) D.hitFx = fid + 'h'; } });
-const SHIELD_X11 = 1; // 回合 → 格：+1
-{ const B = DEF.statuses.barrier; Object.assign(B, { duration: 'battle', durDefault: null, stack: 'signed', min: 0, max: 9 }); delete B.tick;
-  B.triggers = (B.triggers || []).concat([
-    { on: EVT.DAMAGE, phase: 'POST', role: 'tgt', cond: { srcSide: 'enemy', hasPower: 1 }, limit: { perAction: 1 }, effects: [{ type: 'status', target: 'self', status: 'barrier', delta: -1, quiet: 1 }] },
-    { on: EVT.DAMAGE, phase: 'POST', role: 'tgt', cond: { srcSide: 'enemy', hasPower: 1, crit: 1 }, limit: { perAction: 1 }, effects: [{ type: 'status', target: 'self', status: 'barrier', delta: -1, quiet: 1 }] }]); }
-{ const _as = BattleCore.prototype.applyStatus; BattleCore.prototype.applyStatus = function (src, t, id, o = {}) {
-    if (id !== 'barrier' || (o.delta != null && o.delta < 0)) return _as.call(this, src, t, id, o);
-    const n = Math.max(1, Math.round((typeof o.dur === 'number' ? o.dur : 2) + SHIELD_X11)), cur = t && this.statusOf(t, 'barrier'), have = cur ? cur.stacks : 0;
-    return _as.call(this, src, t, id, { ...o, dur: null, delta: cur ? Math.max(0, n - have) : n }); }; }
-delete BADGE_OF.barrier;
-{ const H = Battle.prototype.handlers;
-  const _ap = H.STATUS_APPLY; H.STATUS_APPLY = function* (e, s, t, P) {
-    if (!t || P.failed || P.status !== 'barrier') return yield* _ap.call(this, e, s, t, P);
-    const C = this.center(t); if (P.cleared || !P.stacks) { delete t.st.barrier; Sound.sfx('rock'); this.sparks && this.sparks(C.x, C.y, 10, ['#c8e0ff', '#80a8e0'], 2.5); yield* this.msg(t.n + '的護盾被打破了！', { hold: 20 }); return; }
-    t.st.barrier = P.stacks;
-    if (P.delta < 0) { Sound.sfx('shield'); this.spawn({ k: 'hex', x: C.x, y: C.y, r0: 22, r1: 10, c: '#a8c8f0', life: 10 }); if (this.popNum) this.popNum(t, '護盾 ' + P.stacks + ' 格', '#a8c8f0', null, { small: true, dy: -14 }); return; }
-    yield* FX.barrier.call(this, C); yield* this.msg(P.capped ? t.n + '的護盾維持 ' + P.stacks + ' 格。' : t.n + '展開了護盾！（' + P.stacks + ' 格）', { hold: 22 }); };
-  const _sg = H.statusGone; H.statusGone = function* (e, s, t, P, expire) { if (t && P.status === 'barrier') { delete t.st.barrier; if (P.why !== 'down') yield* this.msg(t.n + '的護盾消失了。', { hold: 18 }); return; } yield* _sg.call(this, e, s, t, P, expire); }; }
-{ const _db = Battle.prototype.drawBoxH; Battle.prototype.drawBoxH = function (x) { _db.call(this, x); const Hv = this.H; if (!Hv || !Hv.st || !(Hv.st.barrier > 0) || Math.round(this.boxH) >= BH) return;
-    const C = this.center(Hv), X = Math.max(2, Math.round(C.x - 46 + Hv.off.x)), Y = Math.round(HERO_FOOT - 46 + Hv.off.y); drawShieldBadge(x, X, Y, Hv.st.barrier, false, false); }; }
-const shTxt11 = s => typeof s !== 'string' || !/護盾/.test(s) ? s : s
-  .replace(/展開魔法護盾，(\d+)\s*回合內受到的傷害減少\s*40%/g, (m, n) => '展開 ' + (+n + SHIELD_X11) + ' 格護盾（受到的傷害 −40%）')
-  .replace(/之後展開護盾（守勢 4 以上時 2 回合）/g, '之後展開 2 格護盾（守勢 4 以上時 3 格）')
-  .replace(/護盾「1＋魔紋數」行動/g, '護盾「2＋魔紋數」格')
-  .replace(/(\d+)\s*行動；砲台在場時\s*(\d+)\s*行動/g, (m, a, b) => (+a + SHIELD_X11) + ' 格；砲台在場時 ' + (+b + SHIELD_X11) + ' 格')
-  .replace(/(\d+)\s*回合(內)?的?護盾/g, (m, n) => (+n + SHIELD_X11) + ' 格護盾')
-  .replace(/護盾\s*(\d+)\s*(回合|行動)/g, (m, n) => '護盾 ' + (+n + SHIELD_X11) + ' 格')
-  .replace(/魔法護盾：受到的傷害減少40%。/g, '護盾：有格數時受到的傷害減少 40%，每被打中一次少 1 格（會心少 2 格），用完就消失。');
-for (const id in DEF.skills) { const D = DEF.skills[id]; if (D.desc) D.desc = shTxt11(D.desc); }
-for (const id in DEF.talents) { const T = DEF.talents[id]; if (T.desc) T.desc = shTxt11(T.desc); }
-for (const k in MOVES) if (MOVES[k].d) MOVES[k].d = shTxt11(MOVES[k].d);
-if (typeof SPECIALS !== 'undefined') for (const k in SPECIALS) if (SPECIALS[k] && SPECIALS[k].d) SPECIALS[k].d = shTxt11(SPECIALS[k].d);
-if (typeof SIG !== 'undefined') for (const k in SIG) if (SIG[k] && SIG[k].d) SIG[k].d = shTxt11(SIG[k].d);
-for (const T of [typeof ORB_A !== 'undefined' ? ORB_A : null, typeof ORB_P !== 'undefined' ? ORB_P : null]) if (T) for (const k in T) if (T[k] && T[k].d) T[k].d = shTxt11(T[k].d);
-for (const T of [typeof TK_TXT !== 'undefined' ? TK_TXT : null, typeof EVO_TXT !== 'undefined' ? EVO_TXT : null]) if (T) for (const k in T) if (typeof T[k] === 'function') { const f = T[k]; T[k] = (...a) => shTxt11(f(...a)); }
-if (typeof WSPEC !== 'undefined') for (const k in WSPEC) if (Array.isArray(WSPEC[k]) && typeof WSPEC[k][1] === 'function') { const f = WSPEC[k][1]; WSPEC[k][1] = (...a) => shTxt11(f(...a)); }
-if (typeof cryEffText11 === 'function') { const f = cryEffText11; cryEffText11 = (...a) => shTxt11(f(...a)); }
-{ const f = BB.skillInfo; BB.skillInfo = (...a) => shTxt11(f(...a)); }
-SP_TXT11.guard = '展開 3 格護盾（受到的傷害 −40%）';
-for (const L of [typeof BATTLE_HELP !== 'undefined' ? BATTLE_HELP : [], typeof GROW12 !== 'undefined' ? GROW12 : []]) for (const b of L) if (Array.isArray(b)) { if (typeof b[1] === 'string') b[1] = shTxt11(b[1]); else if (Array.isArray(b[1])) b[1] = b[1].map(shTxt11); }
-if (typeof BATTLE_HELP !== 'undefined') BATTLE_HELP.push(['護盾', ['主角的護盾：技能給幾格，有格數時受到的傷害 −40%；每被打中一次少 1 格，被會心再少 1 格，用完就消失。', '魔物的護盾（菁英 3 格、頭目 5 格）：不減傷，被弱點・會心・削盾的招式削格，削光就破防（跳過下一次行動、受到的傷害 +50%，蓄力被打斷）。', '兩邊都用盾牌圖示顯示剩下的格數。']]);
 const NC12 = 'adventurer';
 CLASSES[NC12] = { n: '冒險者', tier: 1, st: {}, d: '' };
 CT[NC12] = [];
@@ -22496,3 +22460,226 @@ for (const id in DEF.skills) { if (!id.startsWith('t_') || !MOVES[id]) continue;
   if (typeof BATTLE_HELP !== 'undefined') for (const b of BATTLE_HELP) if (Array.isArray(b[1])) b[1] = b[1].map(fx);
   for (const b of GROW12) b[1] = fx(b[1]); }
 GROW12.push(['普攻與 MP', '普攻不花 MP，打中回最大 MP 的 15%；技能的 MP 比較貴，傷害技能不能連續用同一招。大約「普攻→普攻→技能」一輪。戰鬥之間 MP 不會自己回，省著用。']);
+if (typeof BATTLE_HELP !== 'undefined') for (const b of BATTLE_HELP) if (Array.isArray(b[1])) b[1] = b[1].map(t => typeof t === 'string' ? t.replace(/（守護者的「守護之盾」再減\d+%）/g, '') : t);
+const MAGIC_KINDS12 = ['魔導書', '法杖', '樂器'];
+function magicHand12(st = Game.st) { const w = st && typeof gearBy === 'function' && gearBy(st.equip && st.equip.weapon, st); return !!(w && GEAR[w.b] && MAGIC_KINDS12.includes(GEAR[w.b].kind)); }
+{ const fx = t => typeof t !== 'string' ? t : t.replace(/（設計圖＋打造券）/g, '').replace(/的設計圖(?=[、，或）]|$)/g, '').replace(/（魔導士：/g, '（用魔法武器的話：');
+  const _ql = questList; questList = function (st = Game.st) { const L = _ql(st); for (const q of L) { if (q.rw) q.rw = fx(q.rw); if (q.t) q.t = fx(q.t); } return L; }; }
+Object.assign(EXPLORE, { windHills: '風車丘陵', jadeCreek: '碧溪谷', maplePass: '楓紅關道', oldField: '古戰場', heroTomb: '初代勇者之墓' });
+{ const P = BattleCore.prototype, _as = P.applyStatus; P.applyStatus = function (src, t, id, o = {}) {
+    if (id === 'slp' && t && t.hero && this.units.some(f => f.side !== t.side && !f.down && (f.elite || f.boss) && this.hasStatus(f, 'charging')))
+      return this.emit(EVT.STATUS_FAIL, { src, tgts: [t], payload: { status: id, why: 'charge12' } });
+    const r = _as.call(this, src, t, id, o);
+    if (id === 'charging' && t && !t.hero && (t.elite || t.boss)) for (const h of this.units) if (h.hero && !h.down && this.hasStatus(h, 'slp')) { h.data.woke12 = 1; this.removeStatus(h, 'slp', 'charge12'); }
+    return r; }; }
+{ const H = Battle.prototype.handlers, _sg = H.statusGone, _sf = H.STATUS_FAIL;
+  H.statusGone = function* (e, s, t, P, expire) { if (t && P.status === 'slp' && P.why === 'charge12') { delete t.st.slp; yield* this.msg('危險的氣息讓' + t.n + '驚醒了！', { hold: 20 }); return; } return yield* _sg.call(this, e, s, t, P, expire); };
+  H.STATUS_FAIL = function* (e, s, t, P) { if (t && P.why === 'charge12') { yield* this.msg(t.n + '緊盯著蓄力中的對手，沒有睡著！', { hold: 20 }); return; } return yield* _sf.call(this, e, s, t, P); }; }
+DEF.passives['fx.resonance'].make = () => ({ rules: { max_chi: 1, max_stance: 1, turretMax: 1 } });
+if (typeof SPECIALS !== 'undefined' && SPECIALS.resonance) SPECIALS.resonance.d = '氣・守勢・砲台的上限 +1，特技需要的層數 −1。';
+if (typeof ACC_TRAIT !== 'undefined' && ACC_TRAIT.resonance) ACC_TRAIT.resonance[1] = '氣・守勢・砲台的上限 +1，特技需要的層數 −1';
+{ const _hs = BB.heroSpec; BB.heroSpec = function (st, cfg) { const s = _hs.call(this, st, cfg); if (st && s.wsp && (heroStats(st).fx || {}).resonance) s.wsp = { ...s.wsp, N: Math.max(2, s.wsp.N - 1) }; return s; }; }
+const WARD12 = {
+  hero: { pct: 0.20, abs: 0.5, turns: 1 },
+  node: 0.15,                                   // 先盾（護身樹）：開場護盾 +15%
+  shieldT: t => 0.06 + 0.02 * clamp(t || 1, 1, 7), // 盾牌的開場護盾：T1 8% … T7 20%
+  sp: { pct: 0.25, abs: 0.75 },                 // 特技 鋼壁・鐵骨
+  holy: { pct: 0.30, abs: 0.75 },               // 聖壁衝鋒
+  mwall: { pct: 0.25, abs: { 特: 1, 物: 0.5 }, turns: 2, lv: 0.03 }, // 法力屏障（每級 +3%）
+  death: { pct: 0.30, abs: 1, turns: 2 },       // 亡者守護（每場 1 次，HP 低於 30%）
+  foe: { charge: { boss: 0.10, elite: 0.12 }, hpTh: { boss: [0.7, 0.4], elite: [0.5] }, hpPct: 0.12, every: 4, everyPct: 0.08 },
+  mul: { weak: 2, crit: 2, cap: 5, sword: 1.5, axe: 1.5 },
+};
+const wardSum12 = (u, k) => { let v = 0; for (const m of (u && u.mods) || []) if (m[k]) v += m[k]; return v; };
+defPut('statuses', 'barrier', { tags: ['buff', 'guard'], duration: 'battle', durDefault: null, stack: 'refresh', metadata: { n: '護盾' }, override: 1 });
+const wardFoe12 = u => !!u && !u.hero && !!(u.elite || u.boss) && u.sp !== 'millGolem'; // 磨石魔像（第一隻菁英，大風車教學）不張盾
+const wardOf12 = (core, u) => { const w = u && core.statusOf(u, 'barrier'); return w && w.data && w.data.ward12 ? w.data : null; };
+const oppActs12 = (core, u) => { const S = core.data.side12 || {}; let n = 0; for (const k in S) if (k !== u.side) n += S[k]; return n; };
+function wardOpen12(core, src, t, W, o = {}) {
+  if (!t || !core.isUp(t)) return null;
+  const up = t.hero ? 1 + wardSum12(t, 'wardUp12') / 100 : (t.data.wardMul12 || 1), lv = W.lvAdd || 0;
+  const amt = Math.max(1, Math.round(t.max.hp * (W.pct + lv) * up)), turns = Math.max(1, Math.round(W.turns || 1) + (t.hero ? wardSum12(t, 'wardLong12') : 0));
+  const c = wardOf12(core, t), absMax = (a, b) => { if (a == null) return b; if (typeof a === 'number' && typeof b === 'number') return Math.max(a, b);
+    const A = typeof a === 'object' ? a : { 物: a, 特: a }, B = typeof b === 'object' ? b : { 物: b, 特: b }; return { 物: Math.max(A.物 ?? 0.5, B.物 ?? 0.5), 特: Math.max(A.特 ?? 0.5, B.特 ?? 0.5) }; };
+  const left = c ? Math.max(0, c.turns - ((t.data.starts12 || 0) - c.s0)) : 0;
+  const d = { ward12: 1, foe: !t.hero, amt: c ? Math.max(c.amt, amt) : amt, abs: c ? absMax(c.abs, W.abs ?? 1) : (W.abs ?? 1), turns: Math.max(turns, left),
+    s0: t.data.starts12 || 0, o0: oppActs12(core, t), r0: core.round, why: W.why || (c && c.why) || null };
+  d.max = c ? Math.max(c.max || 0, d.amt) : d.amt;
+  if (!t.hero) t.data.wardR12 = core.round;
+  const r = core.applyStatus(src || t, t, 'barrier', { ...o, dur: null, data: d }), w = core.statusOf(t, 'barrier'); if (w && w.data === d) w.data = { ...d }; // the event keeps the opening numbers
+  return r;
+}
+{ const P = BattleCore.prototype, _tk = P.tick; P.tick = function (u, at) {
+    if (at === 'owner_action_start' && u) { const S = this.data.side12 || (this.data.side12 = {}); S[u.side] = (S[u.side] || 0) + 1; u.data.starts12 = (u.data.starts12 || 0) + 1; u.data.lastActR12 = this.round;
+      const d = wardOf12(this, u), seen = d && (d.foe ? this.units.some(x => x.side !== u.side && (x.data.lastActR12 || 0) > d.r0) : oppActs12(this, u) - d.o0 >= 1);
+      if (d && u.data.starts12 - d.s0 >= d.turns && seen) this.removeStatus(u, 'barrier', 'expire'); }
+    return _tk.call(this, u, at); }; }
+{ const P = BattleCore.prototype, _pp = P.planPrio; P.planPrio = function (u) { const p = _pp.call(this, u); return u && !u.hero && this.hasStatus(u, 'charging') ? Math.min(p, -15) : p; }; }
+{ const P = BattleCore.prototype, _fc = P.forcedCommand; P.forcedCommand = function (u) { const ch = u && !u.hero && this.statusOf(u, 'charging');
+    if (ch && ch.at === this.round) return { action_id: 0, actor: u.id, type: 'wait', skill: null, item: null, targets: [], meta: { hold12: 1 } };
+    return _fc.call(this, u); }; }
+{ const P = BattleCore.prototype, _as = P.applyStatus; P.applyStatus = function (src, t, id, o = {}) {
+    if (id === 'barrier' && t && !(o.data && o.data.ward12)) { if (o.delta != null && o.delta < 0) return null;
+      const dur = typeof o.dur === 'object' && o.dur ? BR.val(o.dur, { core: this, owner: t, src: t }) : o.dur;
+      return wardOpen12(this, src, t, { ...WARD12.hero, turns: Math.max(1, (typeof dur === 'number' ? dur : 2) - 1) }, { quiet: o.quiet }); }
+    const r = _as.call(this, src, t, id, o);
+    if (id === 'charging' && wardFoe12(t) && this.hasStatus(t, 'charging'))
+      wardOpen12(this, t, t, { pct: WARD12.foe.charge[t.boss ? 'boss' : 'elite'], abs: 1, turns: 1, why: 'charge' });
+    return r; }; }
+EFFECT_TYPES.ward12 = { exec(core, ef, ctx, tg) { const T = tg && tg.length ? tg : [ctx.owner];
+  const lv = ef.lv && ctx.skill && ctx.owner && ctx.owner.data.tlv12 ? ((ctx.owner.data.tlv12[ctx.skill.id] || 1) - 1) * ef.lv : 0;
+  for (const t of T) wardOpen12(core, ctx.owner, t, { pct: BR.val(ef.pct, ctx), abs: ef.abs ?? WARD12.hero.abs, turns: BR.val(ef.turns, ctx) ?? 1, lvAdd: lv, why: ef.why || null }); } };
+function wardMul12(core, s, t, P) {
+  let m = 1; const D = P.skill && DEF.skills[P.skill];
+  if (P.mult > 1) m *= WARD12.mul.weak;
+  if (P.crit) m *= WARD12.mul.crit * (wardSum12(s, 'wSword12') ? WARD12.mul.sword : 1) * (D && D.wardCritX ? D.wardCritX : 1);
+  if (D && D.wardX) m *= D.wardX;
+  if (D && wardSum12(s, 'wAxe12') && (D.tags || []).includes('basic')) m *= WARD12.mul.axe;
+  return Math.min(WARD12.mul.cap, m) * (1 + wardSum12(s, 'wbrk12') / 100); }
+function wardAbsorb12(core, ev) {
+  const P = ev.payload, t = core.byId[ev.tgts[0]], s = ev.src ? core.byId[ev.src] : null;
+  if (!t || !s || s.side === t.side || P.kind === 'dot' || !(P.amount > 0)) return null;
+  const d = wardOf12(core, t); if (!d || !(d.amt > 0)) return null; let broke = false;
+  if (d.foe) { const m = wardMul12(core, s, t, P), need = d.amt / m;
+    if (P.amount < need) { P.ward = Math.round(P.amount * m); d.amt -= P.amount * m; P.amount = 0; }
+    else { P.ward = Math.round(d.amt); P.amount = Math.floor(P.amount - need); d.amt = 0; broke = true; }
+    P.wardMul = Math.round(m * 10) / 10; }
+  else { const ab = typeof d.abs === 'object' ? (d.abs[P.cat] ?? 0.5) : d.abs, take = Math.min(d.amt, Math.floor(P.amount * ab));
+    d.amt -= take; P.amount -= take; P.ward = take; if (d.amt <= 0) broke = true; }
+  P.wardLeft = Math.max(0, Math.round(d.amt)); return { t, s, broke };
+}
+function wardBroke12(core, r) { const { t, s } = r; if (!core.statusOf(t, 'barrier')) return;
+  core.removeStatus(t, 'barrier', 'broken', s);
+  if (t.hero) { const v = wardSum12(t, 'wardBack12'); if (v && s && core.isUp(s) && core.isUp(t)) core.react(t, { skill: 'counter_strike', targets: [s.id], why: 'wardBack', meta: { powMul: v / 40 } }); return; }
+  if (!core.isUp(t) || core.hasStatus(t, 'broken')) return;
+  core.emit(EVT.BREAK, { src: s, tgts: [t], tags: ['break'] }, () => {
+    t.data.brkN11 = (t.data.brkN11 || 0) + 1; if (t.data.hunt2) t.data.brkP2_11 = 1;
+    core.applyStatus(s, t, 'broken', {}); core.removeStatus(t, 'charging', 'break'); core.removeStatus(t, 'airborne', 'break'); }); }
+function wardHp12(core, t, hp0) { if (!wardFoe12(t) || !core.isUp(t) || core.hasStatus(t, 'broken')) return;
+  const L = WARD12.foe.hpTh[t.boss ? 'boss' : 'elite'], a = hp0 / t.max.hp, b = t.res.hp / t.max.hp, done = t.data.wth12 || (t.data.wth12 = []);
+  for (const th of L) if (a > th && b <= th && !done.includes(th)) { done.push(th); wardOpen12(core, t, t, { pct: WARD12.foe.hpPct, abs: 1, turns: 1, why: 'hp' }); break; } }
+{ const P = BattleCore.prototype, _em = P.emit; P.emit = function (type, o = {}, main = null) {
+    if (type === EVT.DAMAGE && typeof main === 'function') { let r = null, hp0 = 0, tu = null; const core = this;
+      const e = _em.call(this, type, o, ev => { tu = core.byId[ev.tgts[0]]; hp0 = tu ? tu.res.hp : 0; r = wardAbsorb12(core, ev); main(ev); });
+      if (r && r.broke) wardBroke12(this, r);
+      if (tu && !e.cancelled && e.src && this.byId[e.src] && this.byId[e.src].side !== tu.side) wardHp12(this, tu, hp0);
+      return e; }
+    const e = _em.call(this, type, o, main);
+    if (type === EVT.ACTION_END && wardFoe12(o.src) && o.payload && o.payload.executed && !o.payload.reaction) { const u = o.src;
+      if (this.isUp(u) && !this.hasStatus(u, 'broken') && !this.hasStatus(u, 'charging') && !wardOf12(this, u) && this.round - (u.data.wardR12 || 0) >= WARD12.foe.every)
+        wardOpen12(this, u, u, { pct: WARD12.foe.everyPct, abs: 1, turns: 1, why: 'every' }); }
+    return e; }; }
+BRK11.elite = 0; BRK11.boss = 0;
+EFFECT_TYPES.hunt_chip = { exec() {} }; // 「削 N 格」→ 招式本身的破盾倍率（wardX）
+EFFECT_TYPES.hunt_hp = { exec(core, ef, ctx) { const e = ctx.pre, R = core.rel11; if (!e || !R) return; const t = ctx.tgt || core.byId[e.tgts[0]]; if (!t) return;
+  const hits = R.sk.hits ? (R.sk.hits[0] + R.sk.hits[1]) / 2 : 1; let v = t.max.hp * (HUNT11.hpLo + (HUNT11.hpHi - HUNT11.hpLo) * core.rng.next()) / hits;
+  if (!R.noGuard && core.hasStatus(t, 'guard')) v *= HUNT11.guard;
+  e.payload.amount = Math.max(1, Math.floor(v)); (e.payload.notes || (e.payload.notes = [])).push('hunt11'); } };
+{ const _ue = BD.unitForEnemy; BD.unitForEnemy = function (core, sp, lv, kind, side, idx, o = {}) { const s = _ue.call(this, core, sp, lv, kind, side, idx, o); if (!s) return s;
+    s.data.wardMul12 = [1, 1, 1.25, 1.5][s.data.diff11 || 0] || 1; return s; }; }
+const WARDX12 = { t_axSplit: 2, t_axCrush: 3, t_sdGap: 2, t_spBreak: 2, t_fsStorm: 2, t_gnAp: 2, t_shRam: 2 };
+for (const id in WARDX12) if (DEF.skills[id]) DEF.skills[id].wardX = WARDX12[id];
+for (const id of ['t_sdFlow', 't_dsStar']) if (DEF.skills[id]) DEF.skills[id].wardCritX = 1.5;
+const wEff12 = (id, ef) => effRegister('skill:' + id + '#w12', ef);
+for (const id in DEF.skills) { const D = DEF.skills[id], w = D.metadata && D.metadata.wsp; if (!w) continue;
+  if (w === 'chip') D.wardX = 2;
+  if (w === 'guard') D.effects = [wEff12(id, { type: 'ward12', target: 'self', pct: WARD12.sp.pct, abs: WARD12.sp.abs, turns: 1, why: 'sp' })]; }
+if (DEF.skills.t_zjHolyWall) DEF.skills.t_zjHolyWall.after = [wEff12('t_zjHolyWall', { type: 'ward12', target: 'self', pct: WARD12.holy.pct, abs: WARD12.holy.abs, turns: { f: 'shieldDur' }, why: 'holy' })];
+if (DEF.skills.t_stWall) DEF.skills.t_stWall.effects = [wEff12('t_stWall', { type: 'ward12', target: 'self', pct: WARD12.mwall.pct, abs: WARD12.mwall.abs, turns: WARD12.mwall.turns, lv: WARD12.mwall.lv, why: 'mwall' })];
+DEF.passives['fx.deathWard'].make = (v => ({ triggers: [{ on: EVT.ROUND_END, phase: 'POST', cond: { ownerHpBelow: 0.3, ownerAlive: 1 }, limit: { perBattle: 1 }, prio: 8,
+  effects: [{ type: 'ward12', target: 'self', pct: WARD12.death.pct, abs: WARD12.death.abs, turns: WARD12.death.turns, why: 'death' }, { type: 'message', key: 'death_ward', target: 'self' }] }] }));
+DEF.passives['cr.deathWard'].make = DEF.passives['fx.deathWard'].make;
+DEF.passives.openShield.make = v => ({ triggers: [{ on: EVT.BATTLE_START, phase: 'POST', effects: [{ type: 'ward12', target: 'self', pct: WARD12.hero.pct, abs: WARD12.hero.abs, turns: v }] }] });
+PV('wardOpen12', v => ({ triggers: [{ on: EVT.BATTLE_START, phase: 'POST', effects: [{ type: 'ward12', target: 'self', pct: v / 100, abs: WARD12.hero.abs, turns: 1, why: 'open' }] }] }), { n: '開場護盾' });
+PV('wardUp12', v => ({ mods: [{ wardUp12: v }] }), { n: '護盾量' });
+PV('wbrk12', v => ({ mods: [{ wbrk12: v }] }), { n: '破盾' });
+PV('faWardGuard', v => ({ triggers: [{ on: EVT.DEFEND, phase: 'POST', role: 'src', effects: [{ type: 'ward12', target: 'self', pct: v / 100, abs: WARD12.hero.abs, turns: 1, why: 'guard' }] }] }), { n: '盾衛' });
+PV('faWardLong', v => ({ mods: [{ wardLong12: v }] }), { n: '堅盾' });
+PV('faWardBrk', v => ({ mods: [{ wbrk12: v }] }), { n: '破盾' });
+PV('faWardBack', v => ({ mods: [{ wardBack12: v }] }), { n: '盾反' });
+{ const N = TREE11['護身'].nodes.find(n => n[0] === 'cmOpen'); if (N) { N[4] = '開場張開護盾（最大 HP 15%，有盾牌時加在一起）'; N[5] = { ward: 1 }; } }
+{ const D = DEF.passives.tr11, _mk = D.make; D.make = function (v, u) { const r = _mk.call(this, v, u), T = new Set((v && v.traits) || []);
+    r.triggers = (r.triggers || []).filter(tr => !(tr.effects || []).some(ef => (typeof ef === 'string' ? (DEF.effects[ef] || {}).type : ef.type) === 'hunt_chip'));
+    if (T.has('劍')) r.mods.push({ wSword12: 1 }); if (T.has('斧')) r.mods.push({ wAxe12: 1 }); return r; }; }
+Object.assign(EN11, { ward: ['護盾量', 3, '%', 2, '金屬', 2, 10, 'ra'], wbrk: ['破盾', 5, '%', 2, '魔素', 2, 10, 'wa'] });
+Object.assign(FA9, {
+  f_wardGuard: ['盾衛', 'faWardGuard', [12, 15, 18], FA_DEF, v => '防禦時張開護盾（最大 HP ' + v + '%）'],
+  f_wardLong: ['堅盾', 'faWardLong', [1, 1, 1], FA_DEF, () => '自己張開的護盾多 1 回合', 4],
+  f_wardBrk: ['破盾', 'faWardBrk', [25, 35, 45], FA_OFF, v => '對魔物護盾的傷害 +' + v + '%'],
+  f_wardBack: ['盾反', 'faWardBack', [40, 50, 60], FA_DEF, v => '護盾被打破時反擊（威力 ' + v + '）'] });
+for (const id of ['f_wardGuard', 'f_wardLong', 'f_wardBrk', 'f_wardBack']) { const [n, key, , slots] = FA9[id]; AFFIX_TABLE[id] = { n, key, eff: 1, slots, w: 0, min: 1, max: 1, cat: '效果' }; }
+Object.assign(CRY11.crystalGolem, { 2: CRY11.crystalGolem[2].concat([['wardUp', 15]]) });
+Object.assign(CRY11.stagLord, { 2: CRY11.stagLord[2].concat([['wardBrk', 20]]) });
+PV('cr.wardUp', v => ({ mods: [{ wardUp12: v }] })); PV('cr.wardBrk', v => ({ mods: [{ wbrk12: v }] })); CRY_PAS11.add('wardUp'); CRY_PAS11.add('wardBrk');
+{ const _t = cryEffText11; cryEffText11 = function (e, v) { return e[0] === 'wardUp' ? '張開的護盾量 +' + v + '%' : e[0] === 'wardBrk' ? '對魔物護盾的傷害 +' + v + '%' : e[0] === 'deathWard' ? '每場 1 次：HP 低於 30% 時張開護盾（最大 HP 30%、全部吸收、2 回合）' : _t(e, v); }; }
+{ const _hs = heroStats; heroStats = function (st = Game.st) { const s = _hs(st); if (!st || !st.equip) return s;
+    let up = 0, brk = 0; for (const g of equippedGear(st)) { const E = g.en11 || {}; if (E.ward) up += EN11.ward[1] * E.ward; if (E.wbrk) brk += EN11.wbrk[1] * E.wbrk; }
+    if (up) s.wardUp12 = (s.wardUp12 || 0) + up; if (brk) s.wbrk12 = (s.wbrk12 || 0) + brk;
+    const sh = gearBy(st.equip.shield, st), op = (sh && GEAR[sh.b].slot === 'shield' ? Math.round(WARD12.shieldT(GEAR[sh.b].t) * 100) : 0) + (trLv11('cm:cmOpen', st) ? Math.round(WARD12.node * 100) : 0);
+    if (op) s.wardOpen12 = op; return s; }; }
+{ const _hs = BB.heroSpec; BB.heroSpec = function (st, cfg) { const s = _hs.call(this, st, cfg); if (!st) return s; s.data.tlv12 = { ...(tr11(st).lv || {}) };
+    s.passives = s.passives.filter(p => !(p.key === 'openShield')); return s; }; }
+DEF.passives['fx.breaker'].make = () => ({ mods: [{ wbrk12: 35 }] });
+if (ACC_TRAIT.breaker) ACC_TRAIT.breaker[1] = '對魔物護盾的傷害 +35%'; if (SPECIALS.breaker) SPECIALS.breaker.d = '對魔物護盾的傷害 +35%。';
+{ const _ids = TAL12.ids; TAL12.ids = function (st = Game.st) { return _ids.call(this, st).filter(id => id !== 'guardian.0.1.1'); }; }
+{ const _gi = gearInfoLines; gearInfoLines = function (g, wrapW = 150) { const L = _gi(g, wrapW), B = g && GEAR[g.b];
+    if (B && B.slot === 'shield') L.splice(Math.min(L.length, 2), 0, ['開場護盾：最大 HP ' + Math.round(WARD12.shieldT(B.t) * 100) + '%（吸收 50%，1 回合）', '#a8e0ff', 10, 0]);
+    return L; }; }
+{ const T = (id, d) => { const D = DEF.skills[id]; if (D) D.desc = d; if (MOVES[id]) MOVES[id].d = d; for (const k of TREE_KINDS11) for (const r of TREE11[k].sk || []) if ('t_' + r[1] === id) r[8] = d; };
+  T('t_sdGap', '突刺；對手物防下降時威力 ×1.5；對護盾傷害 ×2。'); T('t_sdFlow', '五段連斬；會心的那段對護盾傷害再 ×1.5。');
+  T('t_axSplit', '重劈，對護盾傷害 ×2。'); T('t_axCrush', '對護盾傷害 ×3。'); T('t_spBreak', '對護盾傷害 ×2；對蓄力中的對手威力 ×1.5。');
+  T('t_fsStorm', '八段連打，對護盾傷害 ×2。'); T('t_gnAp', '無視 40% 物防，對護盾傷害 ×2。'); T('t_dsStar', '兩道十字斬，會心時對護盾傷害再 ×1.5；對破防中的對手威力 ×1.3。');
+  T('t_shRam', '衝撞，對護盾傷害 ×2；每層盾勢威力 +25%，用掉盾勢。');
+  T('t_zjHolyWall', '消耗全部守勢（至少 2），每點威力 +15；之後張開護盾（最大 HP 30%、吸收 75%；守勢 4 以上 2 回合）。');
+  T('t_stWall', '張開護盾：最大 HP 25%（每級 +3%），魔法傷害全部吸收、物理吸收一半，2 回合。');
+  TREE11['劍'].trait = '會心時對護盾的傷害再 ×1.5'; TREE11['斧'].trait = '普通攻擊對護盾的傷害 ×1.5';
+  SP_TXT11.chip = '追擊，對護盾傷害 ×2'; SP_TXT11.guard = '張開護盾（最大 HP 25%、吸收 75%）';
+  START_TXT12.劍 = '均衡的近身武器，會心打護盾特別痛。'; START_TXT12.斧 = '一擊很重，普攻打護盾更痛。';
+  if (SPECIALS.deathWard) SPECIALS.deathWard.d = '每場戰鬥一次：HP 低於 30% 時張開護盾（最大 HP 30%、全部吸收、2 回合）。'; }
+const WARD_HELP12 = ['護盾：主角的護盾照最大 HP 的比例張開，打過來的傷害有一部分（通常一半）先打在護盾上；到自己下一次行動前有效（有的招會更久）。',
+  '魔物的護盾：菁英・頭目蓄力時、HP 掉到一定程度時、每隔幾回合會張開護盾，打在上面的傷害不扣血。在牠下次行動前打破 → 破防！弱點和會心對護盾加倍，有的招式和裝備也特別會破盾。',
+  '破防：跳過牠下一次行動、受到的傷害 +50%、打斷蓄力，頭目還能打部位。打不破的話，蓄力大招就選「防禦」。'];
+if (typeof BATTLE_HELP !== 'undefined') { for (const b of BATTLE_HELP) if (Array.isArray(b[1])) b[1] = b[1].filter(t => typeof t !== 'string' || !/^破防：/.test(t)).map(t => typeof t === 'string' ? t.replace('魔法護盾：受到的傷害減少40%。', '護盾：張開時，打過來的傷害有一部分先打在護盾上。') : t);
+  const P = BATTLE_HELP.find(q => q[0] === '如何避免'); if (P) P[1].splice(1, 0, '破防：在魔物的護盾消失前把它打破（詳見「護盾」那一頁）。'); BATTLE_HELP.push(['護盾', WARD_HELP12]); }
+GROW12.push(['護盾', WARD_HELP12.join('')]);
+delete BADGE_OF.barrier;
+{ const H = Battle.prototype.handlers;
+  const _ap = H.STATUS_APPLY; H.STATUS_APPLY = function* (e, s, t, P) {
+    if (!t || P.failed || P.status !== 'barrier') return yield* _ap.call(this, e, s, t, P);
+    const d = P.data || {}, C = this.center(t); t.st.barrier = 1; t.st.ward = Math.round(d.amt || 0); t.st.wardMax = Math.round(d.max || d.amt || 1); t.st.wardTurns = d.turns || 1;
+    if (P.quiet) return; yield* FX.barrier.call(this, C);
+    yield* this.msg(t.n + (P.refreshed ? '的護盾變強了！' : '張開了護盾！') + '（' + t.st.ward + '）', { hold: 22 });
+    const f = Game.st.flags; if (!t.hero && !f.tutWard12) { f.tutWard12 = 1; yield* this.msg('（魔物張開了護盾！打在護盾上的傷害不扣血。在牠下次行動前打破它就會「破防」：弱點和會心對護盾加倍。）', { wait: true }); } };
+  const _sg = H.statusGone; H.statusGone = function* (e, s, t, P, expire) { if (!t || P.status !== 'barrier') return yield* _sg.call(this, e, s, t, P, expire);
+    delete t.st.barrier; delete t.st.ward; if (P.why === 'down') return; const C = this.center(t);
+    if (P.why === 'broken') { Sound.sfx('rock'); if (this.sparks) this.sparks(C.x, C.y, 12, ['#c8e0ff', '#80a8e0'], 2.8); yield* this.msg(t.n + '的護盾被打破了！', { hold: 20 }); }
+    else yield* this.msg(t.n + '的護盾消失了。', { hold: 18 }); };
+  const _dm = H.DAMAGE; H.DAMAGE = function* (e, s, t, P) {
+    if (t && P.ward > 0) { t.st.ward = P.wardLeft || 0; Sound.sfx('shield'); const C = this.center(t); this.spawn({ k: 'hex', x: C.x, y: C.y, r0: 22, r1: 10, c: '#a8d8ff', life: 10 });
+      this.popNum(t, '盾 −' + P.ward, '#a8e0ff', P.wardMul > 1 ? '×' + P.wardMul : null, { small: true, dy: P.amount > 0 ? -14 : 0 }); }
+    return yield* _dm.call(this, e, s, t, P); }; }
+function drawWardTag12(x, X, Y, n, turns, hero) { const s = String(n), w = Math.max(24, Math.ceil(Font.width(s, 8)) + 13);
+  x.fillStyle = 'rgba(8,16,30,0.85)'; x.fillRect(X, Y, w, 11); x.fillStyle = '#7ec8ff'; x.fillRect(X, Y, w, 1); x.fillRect(X, Y + 10, w, 1); x.fillRect(X, Y, 1, 11); x.fillRect(X + w - 1, Y, 1, 11);
+  x.fillStyle = '#a8e0ff'; x.fillRect(X + 3, Y + 3, 5, 4); x.fillRect(X + 4, Y + 7, 3, 1); // shield glyph
+  Font.drawR(x, s, X + w - 3, Y - 2, '#e8f6ff', '#000000', 8); return w; }
+{ const _pb = Battle.prototype.drawPlateBig; Battle.prototype.drawPlateBig = function (x, F, a0) { const ch = F && F.charging, wd = F && F.st && F.st.ward > 0;
+    const cs = F && F.st && F.st.charging; if (wd && ch) F.st.charging = 0; try { _pb.call(this, x, F, a0); } finally { if (wd && ch) F.st.charging = cs; }
+    if (!wd) return; const a = a0 * (F.plateA ?? 1); if (a <= 0) return; x.globalAlpha = a; const py = 6, pe = plateExtra(), w = 120, X = (W - w) / 2;
+    drawWardTag12(x, 2, py + 12, F.st.ward); const r = clamp(F.st.ward / (F.st.wardMax || 1), 0, 1); x.fillStyle = '#7ec8ff'; x.fillRect(X + 7, py + 28, Math.round((w - 14) * r), 1);
+    if (!F.broken) Font.drawC(x, ch ? '蓄力中！打破護盾就能打斷' : '護盾中：打破就破防', W / 2, py + 45 + pe, ch ? (Math.floor(this.t / 8) % 2 ? '#ff7a6a' : '#a8e0ff') : '#a8e0ff', '#000000', 10);
+    x.globalAlpha = 1; }; }
+{ const _ps = Battle.prototype.drawPlateSmall; Battle.prototype.drawPlateSmall = function (x, v, a, i, n) { _ps.call(this, x, v, a, i, n); if (!(v && v.st && v.st.ward > 0) || a <= 0) return;
+    const sw = Math.floor((W - 4) / Math.max(1, n)), w = Math.min(n >= 3 ? 56 : 80, sw - 2), X = Math.round(clamp(v.x - w / 2, 2 + i * sw, 2 + i * sw + sw - 2 - w));
+    x.globalAlpha = a; x.fillStyle = '#7ec8ff'; x.fillRect(X + 3, 4 + 11, Math.round((w - 6) * clamp(v.st.ward / (v.st.wardMax || 1), 0, 1)), 2); x.globalAlpha = 1; }; }
+{ const _db = Battle.prototype.drawBoxH; Battle.prototype.drawBoxH = function (x) { _db.call(this, x); const Hv = this.H; if (!Hv || !Hv.st || !(Hv.st.ward > 0) || Math.round(this.boxH) >= BH) return;
+    const C = this.center(Hv); drawWardTag12(x, Math.max(2, Math.round(C.x - 50 + Hv.off.x)), Math.round(HERO_FOOT - 44 + Hv.off.y), Hv.st.ward); }; }
+{ const _sy = Battle.prototype.sync; Battle.prototype.sync = function () { _sy.call(this); for (const u of this.core.units) { const v = this.views[u.id], d = wardOf12(this.core, u); if (!v) continue;
+    if (d && d.amt > 0) { v.st.ward = Math.round(d.amt); v.st.wardMax = Math.round(d.max || d.amt); } else delete v.st.ward; } }; }
+{ const B = { golem: { hp: 0.7 }, crystalGolem: { hp: 0.7, pow: 0.9 }, duneWorm: { hp: 0.9, pow: 0.9 }, silverWyrm: { hp: 0.9, pow: 0.75 }, hydra: { pow: 0.85 },
+    frostQueen: { hp: 1.4, pow: 1.25 }, lavaGiant: { hp: 0.72, pow: 0.63 }, victorDemon: { hp: 0.8, pow: 0.72 }, shadowGeneral: { hp: 0.85, pow: 0.9 } };
+  const E = { youngDragon: { hp: 0.62, pow: 0.9 }, magmaNewt: { pow: 0.75 }, duskCaptain: { hp: 0.7 }, lavaKnight: { hp: 0.85 },
+    boneKnight: { hp: 1.8, pow: 1.15 }, wraithGeneral: { hp: 1.8, pow: 1.15 }, blackFeather: { hp: 1.5, pow: 1.15 }, runeGolem: { hp: 2.5, pow: 1.15 },
+    ramGhost: { hp: 1.5, pow: 1.15 }, boarKing: { hp: 1.5, pow: 1.15 }, hideoutBear: { hp: 1.5, pow: 1.15 }, termiteQueen: { hp: 1.5, pow: 1.15 },
+    clockKnight: { hp: 1.5, pow: 1.15 }, snowBear: { hp: 1.5, pow: 1.15 }, frostLich: { hp: 1.5, pow: 1.15 }, iceMammoth: { hp: 1.5, pow: 1.15 } };
+  const mix = (T, add) => { for (const k in add) { const o = T[k] || (T[k] = {}); for (const f of ['hp', 'pow']) if (add[k][f]) o[f] = Math.round((o[f] || 1) * add[k][f] * 1000) / 1000; } };
+  mix(BOSS_TUNE11, B); mix(ELITE_TUNE11, E); }

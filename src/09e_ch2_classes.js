@@ -163,7 +163,7 @@ Object.assign(Events, {
   *bardMaster() {
     const st = Game.st, f = st.flags;
     if (f.clsBard) { yield* say('歌聲是最溫柔的武器。去公會轉職吧，我的學生。'); return; }
-    if (!f.bardQ) { if (ch2() < 3) { yield* say('歡迎來到吟遊詩人公會。……今天沒有演出喔。'); return; } f.bardQ = 1; yield* sayAll(['……你就是那位異界的勇者？', '我是詩人公會長蕾菈。我們公會代代相傳的「勇者之歌」的樂譜，前幾天被溝鼠叼進地下水道了……', '如果你找得到，我就把詩人的歌——「吟遊詩人」的道路傳授給你。']); return; }
+    if (!f.bardQ) { if (ch2() < 3) { yield* say('歡迎來到吟遊詩人公會。……今天沒有演出喔。'); return; } f.bardQ = 1; yield* sayAll(['……你就是那位異界的勇者？', '我是詩人公會長蕾菈。我們公會代代相傳的「勇者之歌」的樂譜，前幾天被溝鼠叼進地下水道了……', '如果你找得到，我就把詩人的歌傳授給你。']); return; }
     if (st.bag.lostScore) { delete st.bag.lostScore; f.clsBard = 1; Sound.jingle('item'); yield* sayAll(['這就是……勇者之歌的樂譜！', '（蕾菈輕輕地哼起了旋律。）', '……五百年前，初代勇者的曙光軍裡，也有一位吟遊詩人。', '你有資格走上這條路了。到冒險者公會找公會長轉職吧。']); yield* itemGet('解鎖了上級職業「吟遊詩人」！'); return; }
     yield* say('樂譜應該掉在地下水道的某個角落……拜託你了。');
   },

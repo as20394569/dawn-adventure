@@ -191,7 +191,7 @@ const DIFF11 = [
   { n: '困難', hp: 1.5, pow: 1.15, exp: 1.5, parts: 1.5, rare: 1, brk: 0, gap: 0 },
   { n: '惡夢', hp: 2.2, pow: 1.3, exp: 2, parts: 1.5, rare: 2, brk: 1, gap: 1 },
   { n: '極限', hp: 3, pow: 1.5, exp: 3, parts: 2, rare: 99, brk: 2, gap: 1 }];
-const diffTxt11 = d => ({ 0: '現在的強度', 1: 'HP ×1.5・攻擊 ×1.15・經驗和部位 ×1.5', 2: 'HP ×2.2・攻擊 ×1.3・護盾 +1、蓄力更頻繁・經驗 ×2・稀有部位機率 ×2', 3: 'HP ×3・攻擊 ×1.5・護盾 +2、蓄力更頻繁・經驗 ×3・部位 ×2、稀有部位必掉' })[d];
+const diffTxt11 = d => ({ 0: '現在的強度', 1: 'HP ×1.5・攻擊 ×1.15・經驗和部位 ×1.5', 2: 'HP ×2.2・攻擊 ×1.3・護盾量 +25%、蓄力更頻繁・經驗 ×2・稀有部位機率 ×2', 3: 'HP ×3・攻擊 ×1.5・護盾量 +50%、蓄力更頻繁・經驗 ×3・部位 ×2、稀有部位必掉' })[d];
 Overworld.prototype.steleTalk = function* (s) {
   const bd = s.stele, sp = bd.sp, st = this.st, lv = (bd.lv || MAPS[this.map.id].boss && MAPS[this.map.id].boss.lv || 15) + 3, D = st.diff11 || (st.diff11 = {});
   yield* say('刻著' + SPECIES[sp].n + '身影的「回憶石碑」。\n手放上去，就能再次和牠交手。');

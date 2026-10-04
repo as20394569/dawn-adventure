@@ -66,8 +66,8 @@ module.exports = async (g) => {
       const gEnd = c.hasStatus(c.byId.H, 'guard'); act(c, 'attack', ['B1']); const after = c.log.filter(e => e.type === EVT.STATUS_EXPIRE && e.payload.status === 'guard');
       ok('B', '防禦：減傷持續到自己下一次行動開始', gEnd && after.length === 1); }
     { T('t_bar', { power: 0, target: 'self', noHitRoll: true, cat: '變', tags: ['skill', 'support', 'el:一般'], effects: [{ type: 'status', status: 'barrier', dur: 2, target: 'self' }] });
-      const c = mk([hero({ skills: ['attack', 't_bar'], stats: { hp: 5000 } }), foe('B1', { stats: { hp: 50000 } })]); c.byId.H.res.hp = 5000; c.start(false); act(c, 't_bar', []); act(c, 'attack', ['B1']); const on1 = c.hasStatus(c.byId.H, 'barrier'); act(c, 'attack', ['B1']); const on2 = c.hasStatus(c.byId.H, 'barrier');
-      ok('B', '護盾：2 = 護到第 2 次自己行動開始', on1 && !on2); }
+      const c = mk([hero({ skills: ['attack', 't_bar'], stats: { hp: 5000 } }), foe('B1', { stats: { hp: 50000 } })]); c.byId.H.res.hp = 5000; c.start(false); act(c, 't_bar', []); const on1 = c.hasStatus(c.byId.H, 'barrier'); act(c, 'attack', ['B1']); const on2 = c.hasStatus(c.byId.H, 'barrier');
+      ok('B', '護盾（v12.5）：1 回合 = 對手行動過後，到自己下一次行動開始', on1 && !on2); }
     { T('t_up', { power: 0, target: 'self', noHitRoll: true, cat: '變', tags: ['skill', 'support', 'el:一般'], effects: [{ type: 'stage', stats: { atk: 1 }, target: 'self', dur: 3 }] });
       const c = mk([hero({ skills: ['attack', 't_up'], stats: { hp: 5000 } }), foe('B1', { stats: { hp: 50000 } })]); c.byId.H.res.hp = 5000; c.start(false); act(c, 't_up', []); const L = [];
       for (let i = 0; i < 4; i++) { act(c, 'attack', ['B1']); L.push(c.hasStatus(c.byId.H, 'stage_atk') ? 1 : 0); } ok('B', '能力等級：自己施加的 3 = 之後 3 次自己行動', L.join('') === '1100' || L.join('') === '1110', L.join('')); }

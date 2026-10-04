@@ -33,7 +33,7 @@ function* titleScreen() {
 ACHIEVEMENTS.find(a => a.id === 'gold').ok = st => (st.gear || []).some(g => g.q >= 4);
 ACHIEVEMENTS.push(
   { id: 'lake', n: '湖之主', d: '打倒銀鱗水龍。', ok: st => st.flags.wyrm },
-  { id: 'spellblade', n: '魔劍之道', d: '繼承魔劍士的道路。', ok: st => st.flags.spellbladeOk },
+  { id: 'spellblade', n: '魔劍之道', d: '打贏流浪的魔劍士，學到他的劍技。', ok: st => st.flags.spellbladeOk },
   { id: 'rift10', n: '迴廊的深處', d: '在異界迴廊到達第10層。', ok: st => st.rift && st.rift.best >= 10 },
   { id: 'riftClear', n: '門的彼方', d: '踏破異界迴廊（第20層）。', ok: st => st.flags.riftClear },
   { id: 'break30', n: '破防達人', d: '累計讓魔物破防30次。', ok: st => (st.brkCount || 0) >= 30 },

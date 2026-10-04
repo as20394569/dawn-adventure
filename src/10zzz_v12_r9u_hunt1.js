@@ -104,7 +104,7 @@ const HUNT11 = { eGap: 3, eChance: 0.6, bGap: 3, bChance: 0.5, hpLo: 0.6, hpHi: 
 /* ---------- 3. 蓄力大招 ---------- */
 // a charged copy of a move (same name): used by elites that have no charged move, and by bosses in the second half
 function huntClone11(id) { const cid = 'hc_' + id; if (DEF.skills[cid]) return cid; const M = MOVES[id], S = DEF.skills[id]; if (!M || !S) return null;
-  MOVES[cid] = { ...M, charge: 1, chargeMsg: '全身的力量都集中了起來……！', warn: '（下一擊非常危險！選擇「防禦」能擋下七成傷害，打出「破防」也能打斷牠。）', d: (M.d || '') + '（蓄力大招）' };
+  MOVES[cid] = { ...M, charge: 1, chargeMsg: '全身的力量都集中了起來……！', warn: '（下一擊非常危險！選擇「防禦」能擋下七成傷害；打破牠的護盾就能打斷。）', d: (M.d || '') + '（蓄力大招）' };
   const D = defPut('skills', cid, { ...skillFromMove(cid, MOVES[cid], { kind: 'skill', extraTags: ['monster_skill'] }) }); D.cooldown = 0; D.hunt11 = 1; D.fx = S.fx;
   D.effects = D.effects.map((ef, i) => typeof ef === 'string' ? ef : effRegister('skill:' + cid + '#e' + i, ef)); D.after = D.after.map((ef, i) => typeof ef === 'string' ? ef : effRegister('skill:' + cid + '#a' + i, ef));
   if (typeof SKILL_MP !== 'undefined' && SKILL_MP[id] != null) SKILL_MP[cid] = SKILL_MP[id]; return cid; }
@@ -211,7 +211,7 @@ lootHint = function (key, sp) { const first = !((Game.st.kills || {})[key]), sig
   return PARTS11[sp] ? '再戰：部位、經驗、金錢' : '再戰：經驗、金錢' + ((SPECIES[sp] || {}).mat && ITEMS[SPECIES[sp].mat] ? '、' + ITEMS[SPECIES[sp].mat].n : ''); };
 // the first charge explains both answers once
 { const H = Battle.prototype.handlers, _c = H.CHARGE; H.CHARGE = function* (e, s, t, P) { yield* _c.call(this, e, s, t, P);
-    if (s && !s.hero && (s.elite || s.boss) && !Game.st.flags.tutCharge11) { Game.st.flags.tutCharge11 = 1; yield* this.msg('（蓄力大招：選「防禦」可以擋下七成傷害；用弱點或會心削光護盾、打出「破防」，也能打斷蓄力。）', { wait: true }); } }; }
+    if (s && !s.hero && (s.elite || s.boss) && !Game.st.flags.tutCharge11) { Game.st.flags.tutCharge11 = 1; yield* this.msg('（蓄力大招：選「防禦」可以擋下七成傷害；也可以在牠出手前打破牠張開的護盾（弱點・會心對護盾加倍），打出「破防」直接打斷。）', { wait: true }); } }; }
 { const H = Battle.prototype.handlers, _b = H.BREAK; H.BREAK = function* (e, s, t, P) { const had = Game.st.flags.tutBreak; Game.st.flags.tutBreak = 1; yield* _b.call(this, e, s, t, P);
     if (!had && t) yield* this.msg('（破防：下一次行動被跳過，受到的傷害 +50%。破防越多，部位掉得越多！）', { wait: true }); }; }
 

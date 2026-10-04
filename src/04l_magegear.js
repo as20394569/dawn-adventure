@@ -44,7 +44,7 @@ RECIPES.push(
 );
 // magic classes get a magic weapon where the story hands out a sword/axe/dagger
 const MAGE_SWAP = { dawnSword: 'dawnStaff', masterBlade: 'masterStaff', fangDagger: 'fangWand', grenAxe: 'stolenTome' };
-const classGear = (id, st = Game.st) => (st && baseClassOf(st.cls) === 'mage' && MAGE_SWAP[id]) || id;
+const classGear = (id, st = Game.st) => (st && (typeof magicHand12 === 'function' ? magicHand12(st) : baseClassOf(st.cls) === 'mage') && MAGE_SWAP[id]) || id; // v268: 看主手武器
 
 // field / battle looks
 Object.assign(WPN_PAL, {

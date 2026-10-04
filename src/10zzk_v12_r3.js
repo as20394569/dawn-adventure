@@ -21,7 +21,8 @@ const longPress12 = () => { if (__lpF12 !== Game.frame) { __lpF12 = Game.frame; 
 // one hint beside the first dialogues on this device
 { const _d = TextBox.prototype.draw; TextBox.prototype.draw = function (x) { _d.call(this, x);
     const S = Game.settings; if (S.ffHint12 || Game.autoIntro || this.keep || UI.stack[UI.stack.length - 1] !== this || !(this.style === 'ow' || this.style === 'dark') || this.y < 60) return;
-    Font.drawR(x, '長按畫面（或按住B）可以快轉', this.x + this.w - 4, this.y - 11, UIC.muted, UIC.textSh, 9);
+    { const t = '長按畫面（或按住B）可以快轉', tw = Math.ceil(Font.width(t, 8)) + 8, R = this.x + this.w - 2; // v268: 自己的底色，不壓框線
+      x.fillStyle = 'rgba(10,14,28,0.78)'; x.fillRect(R - tw, this.y - 13, tw, 11); Font.drawR(x, t, R - 4, this.y - 14, '#c9cfe4', UIC.textSh, 8); }
     if ((S.ffHintT12 = (S.ffHintT12 || 0) + 1) > 600) { S.ffHint12 = 1; delete S.ffHintT12; saveSettings(); } }; }
 
 /* ---------- 第一次碰到時的提示 ---------- */

@@ -91,7 +91,8 @@ const Font = (() => {
     ctx.drawImage(out, Math.round(x - 2), Math.round(y - 2));
     return out;
   }
-  const NOSTART = '。，、！？」』）：；…～．,.!?)';
+  const NOSTART = '。，、！？」』）】〕］〉》：；…～．％%,.!?)'; // v268: 】％ 也不放行首
+  const NOEND = '（「『【〔［〈《(';                                 // v268: 開括號不留在行尾
   function wrap(str, maxW, size) {
     const lines = [];
     for (const para of String(str).split('\n')) {
@@ -99,7 +100,10 @@ const Font = (() => {
       for (let i = 0; i < chars.length; i++) {
         const ch = chars[i], cw = width(ch, size);
         if (w + cw > maxW && line) {
-          if (NOSTART.includes(ch)) { const lc = [...line]; const last = lc.pop(); lines.push(lc.join('')); line = last; w = width(last, size); }
+          const lc = [...line]; let carry = '';
+          if (NOSTART.includes(ch) && lc.length > 1) carry = lc.pop();
+          while (lc.length > 1 && NOEND.includes(lc[lc.length - 1])) carry = lc.pop() + carry;
+          if (carry) { lines.push(lc.join('')); line = carry; w = width(carry, size); }
           else { lines.push(line); line = ''; w = 0; if (ch === ' ') continue; }
         }
         line += ch; w += cw;

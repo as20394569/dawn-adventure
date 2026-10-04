@@ -80,7 +80,7 @@ BB.skillInfo = function (st, id) {
 skillTreeScreen = function* () {
   const st = Game.st; let sel = 0, showF = false;
   const rows = () => { const R = [], C = DEF.classes[clsV7(st.cls)], slots = BB.slots(st), av = BB.available(st);
-    if (C && st.cls) R.push({ sig: C.sig });
+    if (C && st.cls && C.sig) R.push({ sig: C.sig }); // v268: 沒職業招式時不留空白列
     for (let i = 0; i < BB.SLOTS; i++) R.push({ slot: i, id: slots[i] || null });
     for (const id of av) if (!slots.includes(id)) R.push({ spare: id });
     const next = classSkills12(st, true).find(([id, lv]) => (st.lv || 1) < lv); if (next) R.push({ next });
@@ -101,7 +101,7 @@ skillTreeScreen = function* () {
     if (top > 0) x.drawImage(UPARROW, 86, 23); if (top + VIS < L.length) x.drawImage(DOWNARROW, 86, 22 + VIS * 16 + 3);
     const Y0 = 22 + VIS * 16 + 12, R = L[i]; drawWin(x, 4, Y0, 168, 252 - Y0, 'menu'); let txt = '', fid = null;
     if (R && R.sig) { fid = R.sig; txt = BB.skillInfo(st, R.sig) + '\n（職業招式固定在第一格）'; }
-    else if (R && R.slot !== undefined) { fid = R.id; txt = R.id ? BB.skillInfo(st, R.id) + (pend(R.id) ? '　按A可以進化！' : '') + '\nA：更換／取下' : '把技能放進這一格，戰鬥中就能使用（最多' + BB.SLOTS + '個）。技能來自職業（等級學會）和武器（用滿次數永久學會）。'; }
+    else if (R && R.slot !== undefined) { fid = R.id; txt = R.id ? BB.skillInfo(st, R.id) + (pend(R.id) ? '　按A可以進化！' : '') + '\nA：更換／取下' : '把技能放進這一格，戰鬥中就能使用（最多' + BB.SLOTS + '個）。技能來自武器和共通的技能樹，用技能點學。'; }
     else if (R && R.spare) { fid = R.spare; txt = BB.skillInfo(st, R.spare) + '\nA：放進技能槽'; }
     else if (R && R.next) txt = '職業技能：Lv' + R.next[1] + ' 學會「' + DEF.skills[R.next[0]].name + '」。';
     const fm = fid && MOVES[fid] && skillMove(fid, st).pow; if (showF && fm && typeof powFormula === 'function') txt = powFormula(fid, st);
