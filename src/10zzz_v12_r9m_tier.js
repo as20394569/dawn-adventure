@@ -4,4 +4,4 @@
 let MENU_DRAW9 = 0;
 { const _d = UI.draw; UI.draw = function (c) { MENU_DRAW9++; try { return _d.call(this, c); } finally { MENU_DRAW9--; } }; }
 for (const k in GEAR) { const G = GEAR[k]; if (!G || typeof G.n !== 'string' || !G.t) continue; let base = G.n; const t = G.t;
-  Object.defineProperty(G, 'n', { configurable: true, enumerable: true, get() { return MENU_DRAW9 ? base + ' T' + t : base; }, set(v) { base = v; } }); }
+  Object.defineProperty(G, 'n', { configurable: true, enumerable: true, get() { return MENU_DRAW9 ? base + ' T' + (this.t || t) : base; }, set(v) { base = v; } }); }

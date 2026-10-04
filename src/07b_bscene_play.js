@@ -61,7 +61,7 @@ Battle.prototype.handlers = {
     if (s && s.hero && kind === 'hit' && this.hs && this.hs.enT && P.el === this.hs.enT && typeof enBurst === 'function' && !(cs && cs.en)) { enBurst(this, t, P.el); if (cs) cs.en = 1; }
     // numbers: weakness / crit / broken tags on monsters; a big hit on the hero shakes, flashes red and stops time briefly
     let stop = 0;
-    if (!t.hero) { if (P.mult > 1 && kind === 'hit') { const dx = st.dex && st.dex[t.sp]; if (dx && !dx.rev) dx.rev = 1; }
+    if (!t.hero) { if (P.mult > 1 && kind === 'hit') { const dx = st.dex && st.dex[t.sp]; if (dx) { if (t.u && t.u.data && t.u.data.hunt2) dx.rev2 = 1; else dx.rev = 1; } }
       if (a > 0) this.popNum(t, a, P.mult > 1 ? '#ffd040' : P.crit ? '#ff9a50' : '#ffffff', P.mult > 1 ? '弱點' : P.crit ? '會心' : t.broken ? '破防' : null); }
     else if (a > 0) { const fr = a / t.maxhp; this.popNum(t, a, fr >= 0.25 ? '#ff5a5a' : '#ffb0a0', fr >= 0.25 ? '重擊' : null); this.shake = Math.max(this.shake, Math.round(8 + fr * 70)); if (fr >= 0.25) { this.red = 16; Sound.sfx('quake'); } if (t.hero && fr >= 0.25) Sound.sfx('heavy'); stop = fr >= 0.15 ? 7 : 3; }
     yield* this.impact(t, kind === 'dot' ? 0 : hitPower(P)); if (stop) yield* wait(stop);

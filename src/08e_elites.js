@@ -94,7 +94,7 @@ Overworld.prototype.eliteTalk = function* (e) {
     if (firstWin && e.id === 'boneKnight') { yield* say('骸骨騎士倒下後，身後的石棺打開了……'); st.money += 2000; st.bag.powerFruit = (st.bag.powerFruit || 0) + 1; yield* itemGet(st.name + '找到了古王的寶藏：2000 G和力量果實！'); }
     if (firstWin && Events['eliteWin_' + e.id]) { const mid = this.map.id; yield* Events['eliteWin_' + e.id](this, e);
       if (Game.scene === this && this.map && this.map.id === mid) this.load(mid, this.p.x, this.p.y, this.p.dir, true); } // v12.0.1: the win event changes flags (漢斯 wakes up, 格倫 breaks camp…) — rebuild the map so the NPCs move at once
-    if (firstWin && !STORY_ELITES12.includes(e.id)) yield* say('（打倒的菁英魔物，過一天會再出現。再戰只會得到經驗、金錢和素材。）'); // v12.0.3: story elites stay down
+    if (firstWin && !STORY_ELITES12.includes(e.id)) yield* say('（打倒的菁英魔物，過一天會再出現。再戰會掉牠的部位素材，還有經驗和金錢。）'); // v12.0.3: story elites stay down
   } else yield* this.retreatFrom(e, res);
 };
 Overworld.prototype.retreatFrom = function* (e, res) {

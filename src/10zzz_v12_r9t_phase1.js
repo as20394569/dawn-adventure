@@ -3,7 +3,7 @@
    這一階段：
    · 菁英一場 6〜8 回合、頭目 10〜14 回合（血量調高，菁英攻擊力略降，重點是要應對）。
    · 首次打倒：固定給牠自己的招牌設計圖（不再隨機、不給打造券）；經驗約等於 5 場（頭目 10 場）小怪。
-   · 再戰：只給經驗（30%）、金錢、頭目素材；菁英一天（1200 步）重生一次、回憶石碑一天一次。
+   · 再戰：只給經驗（30%）、金錢、頭目素材；菁英一天（1200 步）重生一次。（回憶石碑一天一次 → 第十一輪改回隨時）
    · 原本只能從再戰拿到的設計圖（67 件）改成一般設計圖，鐵匠階級到了就能打。
    · 招牌裝備不超過當時鐵匠能打的階級（超出的降一階、數值照比例調低，保留專屬效果）。
    · 小怪素材 50% → 60%；修練之書再戰不掉，委託多給 10 本。 */
@@ -55,11 +55,7 @@ const WILD_EXP10 = medExp10(Object.keys(MAPS)) || 20; // a typical wild monster'
       else if (!((st.kills || {})[cfg.id || F.sp])) { const ref = (medExp10([Game.ow && Game.ow.map && Game.ow.map.id].filter(Boolean)) || WILD_EXP10) * F.lv / 5 * 1.4 * (typeof expScale === 'function' ? expScale(st.lv, F.lv) : 1); a = Math.max(a, Math.round(ref * (F.boss ? 10 : 5))); } }
     return yield* _ge.call(this, a); }; }
 
-/* ---------- 回憶石碑一天只能再戰一次 ---------- */
-{ const _s = Overworld.prototype.steleTalk; Overworld.prototype.steleTalk = function* (s) {
-    const st = this.st, sp = s.stele && s.stele.sp, D = st.steleDown9 || (st.steleDown9 = {}), left = sp && D[sp] !== undefined ? ELITE_RESPAWN - ((st.steps || 0) - D[sp]) : 0;
-    if (left > 0) { yield* say('刻著' + SPECIES[sp].n + '身影的「回憶石碑」。\n石碑的光芒還很黯淡。（過一天再來吧）'); return; }
-    const k0 = (st.kills || {})[sp] || 0; yield* _s.call(this, s); if (sp && ((st.kills || {})[sp] || 0) > k0) D[sp] = st.steps || 0; }; }
+/* ---------- 回憶石碑：第十一輪改成隨時可以再戰（見 r9u） ---------- */
 
 /* ---------- 修練之書：委託多給 10 本（再戰不掉的部分在 10o） ---------- */
 for (const k of ['c16', 'c18', 'c20', 'c22', 'c25', 'c26', 'c27', 'c28', 'c30', 'c33']) { const R = COMMISSIONS[k] && COMMISSIONS[k].reward; if (R) (R.items || (R.items = {})).trainBook = (R.items.trainBook || 0) + 1; }
