@@ -54,7 +54,7 @@ function bpTut() { const st = Game.st; if (st.flags.bpTut) return null; st.flags
 
 /* ---------- drops: every gear drop becomes a blueprint / ticket / materials ---------- */
 { const _ls = Battle.prototype.lootShow; Battle.prototype.lootShow = function* (g, head) {
-    const st = Game.st; if (!g || !GEAR[g.b]) return yield* _ls.call(this, g, head);
+    const st = Game.st; if (Game.smith11 || !g || !GEAR[g.b]) return yield* _ls.call(this, g, head); // v12.0.9w: drops are base gear now
     const tMin = g._first ? 1 : this.F && this.F.boss ? 2 : 3; // v26: bosses give a ticket from 紫, everything else from 紅; the card always shows what you really get
     st.gear = (st.gear || []).filter(x => x !== g); const k = g.b, q = g.q || 1, known = bpKnown(k, st);
     if (known && q < tMin) { const got = recipeMats(k, 1 + q); Sound.sfx('item'); yield* this.msg((this.F ? this.F.n + '掉落了' : '得到了') + '「' + GEAR[k].n + '」的素材：' + matsText(got) + '！（設計圖已經學會了）', { hold: 40 }); return; }
@@ -73,7 +73,7 @@ function bpTut() { const st = Game.st; if (st.flags.bpTut) return null; st.flags
 }
 // pickups on the road
 { const _pi = Overworld.prototype.pickItem; Overworld.prototype.pickItem = function* (it) {
-    if (!it || it.gather || it.gold || !GEAR[it.item]) return yield* _pi.call(this, it);
+    if (Game.smith11 || !it || it.gather || it.gold || !GEAR[it.item]) return yield* _pi.call(this, it);
     const st = this.st; this.items = this.items.filter(i => i !== it); st.flags[it.id] = 1;
     const txt = gainBP(it.item, it.q || 1, st); Sound.jingle('item'); yield* say(st.name + '撿到了' + txt + '！'); const tut = bpTut(); if (tut) yield* say(tut);
   };

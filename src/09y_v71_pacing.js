@@ -90,7 +90,7 @@ for (const k in COM_EX) { const c = COMMISSIONS[k]; if (!c) continue; const E = 
 /* ---------- duplicate drops → 精煉石 → 升星 ---------- */
 const STAR_MAX = 5, starStones = s => s + 1, starGold = (g, s) => 500 * GEAR[g.b].t * (s + 1);
 { const _ls = Battle.prototype.lootShow; Battle.prototype.lootShow = function* (g, head) {
-    const st = Game.st; if (!g || !GEAR[g.b] || !bpKnown(g.b, st) || (g.q || 1) < 2) return yield* _ls.call(this, g, head);
+    const st = Game.st; if (Game.smith11 || !g || !GEAR[g.b] || !bpKnown(g.b, st) || (g.q || 1) < 2) return yield* _ls.call(this, g, head);
     st.gear = (st.gear || []).filter(x => x !== g); const n = g.q >= 5 ? 3 : g.q >= 4 ? 2 : 1, R = st.refine || (st.refine = {}); R[g.b] = (R[g.b] || 0) + n;
     Sound.sfx('item'); yield* this.msg('得到了「' + GEAR[g.b].n + '」的精煉石×' + n + '！（持有' + R[g.b] + '）', { hold: 30 });
     if (!st.flags.starTut) { st.flags.starTut = 1; yield* this.msg('（精煉石拿去給鐵匠，可以讓同名的裝備「升星」變強。）', { wait: true }); }

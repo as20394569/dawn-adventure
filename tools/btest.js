@@ -124,11 +124,10 @@ module.exports = async (g) => {
           if (c.log.some(e => e.type === EVT.EFFECT_TRIGGER && String(e.payload.key || '').startsWith('talent:'))) fired[id] = 1; } catch (e) { bad.push(id + ': ' + e.message); }
         if (BV2.errors.length > e0) bad.push(id + ': ' + BV2.errors[e0]); }
       ok('D', '210 個天賦各自上場跑一場：沒有錯誤（觸發過 ' + Object.keys(fired).length + ' 個）', n === 210 && !bad.length, bad.slice(0, 3).join(' | ')); }
-    { const bad = []; for (const k of Object.keys(UNIQUE_W)) { const st = mkHero('swordsman'); const gr = makeGear(k, 3); st.equip.weapon = gr.u; BB.slots(st); const e0 = BV2.errors.length;
-        try { const c = fight(st, ['wolf', 26, 'wild'], 3); if (!c.byId.H.data.mechanics.includes('uw_' + k)) bad.push(k + ' no rule'); } catch (e) { bad.push(k + ': ' + e.message); } if (BV2.errors.length > e0) bad.push(k + ': ' + BV2.errors[e0]); }
-      for (const kind of Object.keys(WKIND12)) { const k = Object.keys(GEAR).find(q => GEAR[q].slot === 'weapon' && GEAR[q].kind === kind && !UNIQUE_W[q]); const st = mkHero('swordsman'); const gr = makeGear(k, 2); st.equip.weapon = gr.u; BB.slots(st);
-        try { const c = fight(st, ['wolf', 26, 'wild'], 4); const a = c.byId.H.data.attackSkill; if ((kind === '短刀' || kind === '拳套') && a !== 'attack_2') bad.push(kind + ' segments'); if (!c.byId.H.data.mechanics.includes('wk_' + kind)) bad.push(kind + ' rule'); } catch (e) { bad.push(kind + ': ' + e.message); } }
-      ok('D', '9 種武器規則、10 把專屬武器規則都會套用', !bad.length, bad.slice(0, 4).join(' | ')); }
+    { const bad = []; for (const kind of TREE_KINDS11.filter(k => !TREE11[k].dual)) { const st = mkHero('swordsman'); GEAR11_GLAM = false; const gr = makeGear(BASE11.weapon[kind][2], 2); GEAR11_GLAM = true; st.equip.weapon = gr.u; tr11(st).lv[kind + ':trait'] = 1; BB.slots(st); const e0 = BV2.errors.length;
+        try { const sp = BB.heroSpec(st, { kind: 'wild' }), a = sp.data.attackSkill, P = sp.passives.find(p => p.key === 'tr11'); if (kind === '短刀' && a !== 'attack_2') bad.push(kind + ' segments'); if (kind === '拳套' && a !== 'attack_f11') bad.push(kind + ' fist'); if (!P || !(P.v.traits || []).includes(kind)) bad.push(kind + ' no trait');
+          const c = fight(st, ['wolf', 26, 'wild'], 4); if (!c.result) bad.push(kind + ' no result'); } catch (e) { bad.push(kind + ': ' + e.message); } if (BV2.errors.length > e0) bad.push(kind + ': ' + BV2.errors[e0]); }
+      ok('D', '9 種武器的特性（武器技能樹）都會套用', !bad.length, bad.slice(0, 4).join(' | ')); }
     /* =================== E: fixed cases (seeded event sequences) =================== */
     { const runs = { basic: () => { const c = mk([hero({ skills: ['attack', 't_multi'] }), foe('B1'), foe('B2')], 42); c.start(true); return c; },
         swordsman: () => fight(mkHero('swordsman'), ['wolf', 26, 'wild'], 42), mage: () => fight(mkHero('mage'), ['slime', 26, 'wild', [['mush', 26]]], 43), golem: () => fight(mkHero('guardian'), ['golem', 24, 'boss'], 44) };

@@ -43,7 +43,7 @@ function cryEffText11(e, v) { const k = e[0];
     guardHeal: '防禦時回復 ' + v + '% HP', endure: '每場 1 次撐住（剩 1 HP）', deathWard: '每場 1 次：HP 低於 30% 時得到 2 回合護盾', mpGuard: '防禦時回復 ' + v + '% MP',
     siphon: '普攻命中回復 ' + v + ' MP', freecast: '技能 ' + v + '% 機率不花 MP', shadowStep: '閃過攻擊時反擊', fervor: '攻擊後物攻或魔攻 +1（每場最多 ' + v + ' 次）',
     elemRes: '受到的屬性傷害 −' + v + '%', spellblade: '物理攻擊加上魔攻的 ' + v + '%；魔法攻擊加上物攻的 ' + v + '%', brokenDmg: '對破防中的魔物傷害 +' + v + '%',
-    typeUp: e[2] + '屬性傷害 +' + v + '%', fireRes: '受到的火屬性傷害 −' + v + '%', psnRes: '中毒抗性 +' + v + '%', gold: '戰鬥金錢 +' + v + '%', matUp: '素材掉落 +' + v + '%',
+    typeUp: e[2] + '屬性傷害 +' + v + '%', fireRes: '受到的火屬性傷害 −' + v + '%', psnRes: '中毒抗性 +' + v + '%', gold: '戰鬥金錢 +' + v + '%', matUp: '素材點數 +' + v + '%',
     crit: '會心 ' + pm11(v), eva: '迴避 ' + pm11(v), all: '全部能力 +' + v + '%' })[k] || k; }
 const cryText11 = (sp, star = 1) => CRY11[sp][2].map(e => cryEffText11(e, cryVal11(e, star))).join('；');
 // the encounter card / dex had 楓林鹿王「打部位」and 舊穀倉地窖之主「素材點數」: parts come in stage 3 and points in stage 2, so these stand in until then
@@ -104,7 +104,7 @@ function cryActive11(st = Game.st) { const O = st && st.cry11 || {}, out = []; i
     const st = Game.st, F = this.mainView(), money0 = st.money, P = (heroStats(st).cr11P || []), gold = P.filter(p => p[0] === 'gold').reduce((a, p) => a + p[1], 0), matUp = P.filter(p => p[0] === 'matUp').reduce((a, p) => a + p[1], 0);
     const r = yield* _v.call(this);
     if (gold > 0) { const extra = Math.floor(Math.max(0, st.money - money0) * gold / 100); if (extra > 0) { st.money += extra; yield* this.msg('（晶石）多拿到了 ' + extra + ' G！', { hold: 20 }); } }
-    if (matUp > 0) for (const v of this.defeated()) { const S = SPECIES[v.sp] || {}; if (S.mat && ITEMS[S.mat] && !v.elite && !v.boss && chance(matUp / 100)) { st.bag[S.mat] = (st.bag[S.mat] || 0) + 1; yield* this.msg('（晶石）多撿到了素材「' + ITEMS[S.mat].n + '」！', { hold: 20 }); } }
+    // matUp（素材點數 +%）：見 r9w 的戰鬥後點數
     if (F && F.u && F.u.down && (F.elite || F.boss) && CRY11[F.sp] && cryGive11(F.sp, st)) { Sound.jingle('item'); this.focus = F;
       yield* this.msg('得到了「' + cryName11(F.sp) + '」！', { wait: true });
       if (!st.flags.tutCry11) { st.flags.tutCry11 = 1; yield* this.msg('（晶石可以在鐵匠那裡鑲進裝備：紫・紅色裝備有 1 個孔，金色以上有 2 個孔。再戰拿到的部位可以把晶石升級。）', { wait: true }); } }
@@ -121,10 +121,11 @@ function cryActive11(st = Game.st) { const O = st && st.cry11 || {}, out = []; i
     return !cryOwn11()[sp] ? '首次擊敗：「' + cryName11(sp) + '」' : '再戰：部位、經驗、金錢'; }; }
 
 /* ---------- 裝備資訊：孔和晶石 ---------- */
-{ const _gi = gearInfoLines; gearInfoLines = function (g, wrapW = 150) { const L = _gi(g, wrapW), n = crySlots11(g); if (!n) return L; const O = cryOwn11();
-    const C = (g.cr11 || []).filter(sp => O[sp] && CRY11[sp]).slice(0, n);
-    for (const sp of C) L.push(['◆' + cryName11(sp) + '★' + O[sp] + '：' + cryText11(sp, O[sp]), '#9ad8ff']);
-    if (C.length < n) L.push(['◇ 空的晶石孔 ×' + (n - C.length), UIC.muted]); return L; }; }
+function cryLines11(g) { const L = [], n = crySlots11(g); if (!n) return L; const O = cryOwn11();
+  const C = (g.cr11 || []).filter(sp => O[sp] && CRY11[sp]).slice(0, n);
+  for (const sp of C) L.push(['◆' + cryName11(sp) + '★' + O[sp] + '：' + cryText11(sp, O[sp]), '#9ad8ff']);
+  if (C.length < n) L.push(['◇ 空的晶石孔 ×' + (n - C.length), UIC.muted]); return L; }
+{ const _gi = gearInfoLines; gearInfoLines = function (g, wrapW = 150) { const L = _gi(g, wrapW); return L.concat(cryLines11(g)); }; }
 
 /* ---------- 鐵匠：晶石 ---------- */
 const cryCost11 = (sp, star) => { const t = cryTier11(sp); return star === 1 ? { mats: { ['pt_' + sp]: 3 }, gold: 200 * t } : { mats: { ['pt_' + sp]: 5, ['pr_' + sp]: 1 }, gold: 600 * t }; };

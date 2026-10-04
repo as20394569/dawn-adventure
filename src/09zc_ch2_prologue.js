@@ -237,7 +237,7 @@ Object.assign(Events, {
     else { st.bag.tpBook = (st.bag.tpBook || 0) + 1; yield* sayAll(['把戰旗小心地收了起來。', '（在旗桿裡發現了一本古老的手冊……是初代勇者的戰術筆記。）']); yield* itemGet('得到了天賦之書！'); }
     if (f.grenTrust) {
       yield* sayAll(['格倫：「……結束了啊。」', '格倫：「那群蠢蛋，說是要去北邊的街道投靠一個叫『黑羽』的盜賊頭子。……我得把那群笨蛋拉回來。有需要就喊我，我會趕過去。」', '格倫：「這個給你。以前的東西，現在用不著了。」']);
-      gainBP('qGrenBand', 3); Sound.jingle('item'); yield* itemGet('得到了「格倫的護腕」的設計圖和打造券！');
+      gainBP('qGrenBand', 3); Sound.jingle('item'); yield* itemGet('得到了「格倫的護腕」！');
     } else { st.money += 2000; yield* sayAll(['回到關道的時候，格倫託馬車夫帶了一個袋子給你。', '「……謝啦，小鬼。」']); yield* itemGet('得到了格倫的謝禮2000 G！'); }
     f.passQ = 3; f.passDone = 1;
     yield* say('（北方街道就在關口的另一邊。馬車現在也能直接到北方街道了。目標：前往王都艾爾德蘭。推薦Lv22〜25）');
