@@ -67,7 +67,7 @@ function* askFight(sp, lv, key, kind, extra) {
 }
 
 /* ---------- elites: prompt, retreat, respawn ---------- */
-const ELITE_RESPAWN = 250;
+const ELITE_RESPAWN = 1200; // v12.0.9s: once a day (a day is 1200 steps); was 250
 { const _ld = Overworld.prototype.load; Overworld.prototype.load = function (id, x, y, dir, silent) {
     _ld.call(this, id, x, y, dir, silent); const st = this.st, down = st.eliteDown || {};
     for (const e of this.map.d.elites || []) if (st.flags[e.id] && (st.steps || 0) - (down[e.id] || 0) >= ELITE_RESPAWN && !this.elites.some(q => q.id === e.id) && !(e.x === this.p.x && e.y === this.p.y))
@@ -94,7 +94,7 @@ Overworld.prototype.eliteTalk = function* (e) {
     if (firstWin && e.id === 'boneKnight') { yield* say('骸骨騎士倒下後，身後的石棺打開了……'); st.money += 2000; st.bag.powerFruit = (st.bag.powerFruit || 0) + 1; yield* itemGet(st.name + '找到了古王的寶藏：2000 G和力量果實！'); }
     if (firstWin && Events['eliteWin_' + e.id]) { const mid = this.map.id; yield* Events['eliteWin_' + e.id](this, e);
       if (Game.scene === this && this.map && this.map.id === mid) this.load(mid, this.p.x, this.p.y, this.p.dir, true); } // v12.0.1: the win event changes flags (漢斯 wakes up, 格倫 breaks camp…) — rebuild the map so the NPCs move at once
-    if (firstWin && !STORY_ELITES12.includes(e.id)) yield* say('（打倒的菁英魔物，過一段時間會再出現。再戰時會掉落不同的裝備。）'); // v12.0.3: story elites stay down
+    if (firstWin && !STORY_ELITES12.includes(e.id)) yield* say('（打倒的菁英魔物，過一天會再出現。再戰只會得到經驗、金錢和素材。）'); // v12.0.3: story elites stay down
   } else yield* this.retreatFrom(e, res);
 };
 Overworld.prototype.retreatFrom = function* (e, res) {

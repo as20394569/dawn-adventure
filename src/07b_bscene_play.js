@@ -196,7 +196,7 @@ Battle.prototype.victory = function* () {
     gold += Math.floor((v.boss ? 1000 : (sp.gold || 0) * v.lv * (!v.boss && typeof V81_GOLD === 'function' ? V81_GOLD(v.lv) : 1)) * (fx.fortune ? 1.5 : 1) * (v.minion ? 0.5 : 1)); }
   yield* this.gainExp(Math.max(1, exp));
   if (gold) { st.money += gold; yield* this.msg(st.name + '得到了' + gold + ' G！'); }
-  for (const v of L) { const sp = SPECIES[v.sp] || {}; if (sp.mat && ITEMS[sp.mat] && !v.elite && !v.boss && chance(0.5)) { st.bag[sp.mat] = (st.bag[sp.mat] || 0) + 1; yield* this.msg('得到了素材「' + ITEMS[sp.mat].n + '」！', { hold: 30 }); } }
+  for (const v of L) { const sp = SPECIES[v.sp] || {}; if (sp.mat && ITEMS[sp.mat] && !v.elite && !v.boss && chance(0.6)) { st.bag[sp.mat] = (st.bag[sp.mat] || 0) + 1; yield* this.msg('得到了素材「' + ITEMS[sp.mat].n + '」！', { hold: 30 }); } }
   const pool = Game.ow && Game.ow.map && Game.ow.map.d.gearPool;
   for (const v of L) { this.focus = v;
     if (v.rare && pool) { const g = makeGear(pick(pool), 3); yield* this.lootShow(g, v.n + '掉落了裝備！'); }

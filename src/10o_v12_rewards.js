@@ -12,12 +12,12 @@ ACC_TRAIT.endure[2].push('部隊徽章');
 { const _v = Battle.prototype.victory; Battle.prototype.victory = function* () {
     const r = yield* _v.call(this); const st = Game.st, F = this.F, sp = this.cfg && this.cfg.sp; if (!st || !sp) return r;
     const boss = this.kind === 'boss' || !!(F && F.boss), elite = !boss && (this.kind === 'elite' || !!(F && F.elite));
-    if ((boss || elite) && BOOK_DROP12.includes(sp) && chance(boss ? 0.45 : 0.3)) { st.bag.trainBook = (st.bag.trainBook || 0) + 1; Sound.jingle('item'); yield* this.msg('得到了修練之書！', { hold: 40 }); }
+    if ((boss || elite) && !(this.cfg && this.cfg.rematch) && !this._eliteAgain && BOOK_DROP12.includes(sp) && chance(boss ? 0.45 : 0.3)) { st.bag.trainBook = (st.bag.trainBook || 0) + 1; Sound.jingle('item'); yield* this.msg('得到了修練之書！', { hold: 40 }); }
     const k = this.cfg && this.cfg.rematch ? null : boss ? pick(['megaPotion', 'megaEther']) : elite && chance(0.4) ? pick(['superPotion', 'hiEther']) : null; // v12.0.1 (player: 「頭目跟菁英…可以重複刷取 導致藥水變得很好拿」): rematches give no potions
     if (k && ITEMS[k]) { st.bag[k] = (st.bag[k] || 0) + 1; yield* this.msg('得到了' + ITEMS[k].n + '！', { hold: 30 }); }
     return r; }; }
 // the monster info card lists them
-{ const _fd = foeDropLines; foeDropLines = function (sp, key, kind) { const L = _fd(sp, key, kind); if (BOOK_DROP12.includes(sp)) L.unshift('修練之書（機率 ' + (kind === 'boss' ? 45 : 30) + '%）');
+{ const _fd = foeDropLines; foeDropLines = function (sp, key, kind) { const L = _fd(sp, key, kind); if (BOOK_DROP12.includes(sp)) L.unshift('修練之書（首次擊敗，機率 ' + (kind === 'boss' ? 45 : 30) + '%）');
     L.push(kind === 'boss' ? '特級傷藥或特級魔力藥水（第一次打倒必得）' : '好傷藥或高級魔力藥水（第一次打倒 40%）'); return L; }; }
 
 /* ---------- requests: 藥草告急・魔力草研究・爺爺的藥・鐵匠的礦石・小芽的收藏 → 修練之書；森林的毒菇 → 藥草香囊 ---------- */

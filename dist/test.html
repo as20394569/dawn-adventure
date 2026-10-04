@@ -5961,7 +5961,7 @@ Battle.prototype.victory = function* () {
     gold += Math.floor((v.boss ? 1000 : (sp.gold || 0) * v.lv * (!v.boss && typeof V81_GOLD === 'function' ? V81_GOLD(v.lv) : 1)) * (fx.fortune ? 1.5 : 1) * (v.minion ? 0.5 : 1)); }
   yield* this.gainExp(Math.max(1, exp));
   if (gold) { st.money += gold; yield* this.msg(st.name + '得到了' + gold + ' G！'); }
-  for (const v of L) { const sp = SPECIES[v.sp] || {}; if (sp.mat && ITEMS[sp.mat] && !v.elite && !v.boss && chance(0.5)) { st.bag[sp.mat] = (st.bag[sp.mat] || 0) + 1; yield* this.msg('得到了素材「' + ITEMS[sp.mat].n + '」！', { hold: 30 }); } }
+  for (const v of L) { const sp = SPECIES[v.sp] || {}; if (sp.mat && ITEMS[sp.mat] && !v.elite && !v.boss && chance(0.6)) { st.bag[sp.mat] = (st.bag[sp.mat] || 0) + 1; yield* this.msg('得到了素材「' + ITEMS[sp.mat].n + '」！', { hold: 30 }); } }
   const pool = Game.ow && Game.ow.map && Game.ow.map.d.gearPool;
   for (const v of L) { this.focus = v;
     if (v.rare && pool) { const g = makeGear(pick(pool), 3); yield* this.lootShow(g, v.n + '掉落了裝備！'); }
@@ -8209,7 +8209,7 @@ function* askFight(sp, lv, key, kind, extra) {
   const card = encounterCard(sp, lv, key, kind, extra); UI.push(card);
   const r = yield* ask('要迎戰嗎？', ['迎戰', '撤退'], { cancel: false }); UI.remove(card); return r === 0;
 }
-const ELITE_RESPAWN = 250;
+const ELITE_RESPAWN = 1200; // v12.0.9s: once a day (a day is 1200 steps); was 250
 { const _ld = Overworld.prototype.load; Overworld.prototype.load = function (id, x, y, dir, silent) {
     _ld.call(this, id, x, y, dir, silent); const st = this.st, down = st.eliteDown || {};
     for (const e of this.map.d.elites || []) if (st.flags[e.id] && (st.steps || 0) - (down[e.id] || 0) >= ELITE_RESPAWN && !this.elites.some(q => q.id === e.id) && !(e.x === this.p.x && e.y === this.p.y))
@@ -8236,7 +8236,7 @@ Overworld.prototype.eliteTalk = function* (e) {
     if (firstWin && e.id === 'boneKnight') { yield* say('骸骨騎士倒下後，身後的石棺打開了……'); st.money += 2000; st.bag.powerFruit = (st.bag.powerFruit || 0) + 1; yield* itemGet(st.name + '找到了古王的寶藏：2000 G和力量果實！'); }
     if (firstWin && Events['eliteWin_' + e.id]) { const mid = this.map.id; yield* Events['eliteWin_' + e.id](this, e);
       if (Game.scene === this && this.map && this.map.id === mid) this.load(mid, this.p.x, this.p.y, this.p.dir, true); } // v12.0.1: the win event changes flags (漢斯 wakes up, 格倫 breaks camp…) — rebuild the map so the NPCs move at once
-    if (firstWin && !STORY_ELITES12.includes(e.id)) yield* say('（打倒的菁英魔物，過一段時間會再出現。再戰時會掉落不同的裝備。）'); // v12.0.3: story elites stay down
+    if (firstWin && !STORY_ELITES12.includes(e.id)) yield* say('（打倒的菁英魔物，過一天會再出現。再戰只會得到經驗、金錢和素材。）'); // v12.0.3: story elites stay down
   } else yield* this.retreatFrom(e, res);
 };
 Overworld.prototype.retreatFrom = function* (e, res) {
@@ -11299,7 +11299,7 @@ function* forgeFlow(k) {
   const st = Game.st, B = GEAR[k], tk = tkList(k, st).length ? Math.max(...tkList(k, st)) : 0, tn = tkCount(k, st);
   if (tk) { // v25: with a ticket the smith always uses it — free, quality at least the ticket's
     const r = yield* ask('要用打造券打造「' + B.n + '」嗎？\n（免費・品質保底「' + qName(tk) + '」' + (tn > 1 ? '・共有' + tn + '張' : '') + '）', ['使用打造券', '取消']); if (r !== 0) return;
-    const q = Math.max(tkUse(k, st), bpRoll(2)); Sound.sfx('rock'); yield* say('鏘！鏘！鏘！'); const g = makeGear(k, q); Sound.jingle(q >= 3 ? 'levelup' : 'item');
+    const q = Math.max(tkUse(k, st), bpRoll(0)); // v12.0.9s: the ticket only guarantees its own quality; the rest rolls like an ordinary craft (was the ×3-materials odds) Sound.sfx('rock'); yield* say('鏘！鏘！鏘！'); const g = makeGear(k, q); Sound.jingle(q >= 3 ? 'levelup' : 'item');
     yield* itemGet('鐵匠打造了' + gearName(g) + '！'); // the 【品質】 tag in front already says it return;
   }
   const oddsT = lv => bpOdds(lv).map((p, q) => p && q >= 2 ? qName(q + 1) + p : '').filter(Boolean).join(' ');
@@ -11833,9 +11833,9 @@ function* dexDetail(list, idx) {
       L.push(['經驗值 ' + (sp.exp || 0) + '　金錢 ' + (sp.gold || 0) + ' G', UIC.text]);
       const mat = sp.mat && ITEMS[sp.mat] ? ITEMS[sp.mat].n : null;
       if (info.big) L.push(['素材：' + (mat ? mat + '×' + (sp.boss ? 3 : 2) + '＋' : '') + '當地素材×' + (sp.boss ? 3 : 2) + '（每次必定）', UIC.text]);
-      else L.push(['素材：' + (mat ? mat + '（35%）' : '—'), UIC.text]);
-      for (const s of info.sigs) L.push(['首次擊敗：「' + GEAR[s.g].n + '」設計圖＋紅色打造券' + (s.got ? '（已取得）' : ''), s.got ? UIC.muted : UIC.warm]);
-      if (info.re.length) L.push(['再戰掉落（設計圖或打造券，隨機一種）：' + info.re.map(g => GEAR[g].n).join('、'), '#c8b0ff']);
+      else L.push(['素材：' + (mat ? mat + '（60%）' : '—'), UIC.text]);
+      for (const s of info.sigs) L.push(['首次擊敗：「' + GEAR[s.g].n + '」的設計圖' + (s.got ? '（已取得）' : ''), s.got ? UIC.muted : UIC.warm]);
+      if (info.big) L.push(['再戰：經驗（30%）、金錢、素材', '#c8b0ff']);
       if (!info.big && !info.re.length) L.push(['普通魔物不會掉裝備。裝備靠菁英・頭目的設計圖打造。', UIC.muted]);
       let Y = 127; for (const [t, c] of L) for (const l of Font.wrap(t, 156, 9)) { if (Y > 222) break; Font.draw(x, l, 10, Y, c, UIC.textSh, 9); Y += 11; }
     }
@@ -16718,11 +16718,11 @@ ACC_TRAIT.endure[2].push('部隊徽章');
 { const _v = Battle.prototype.victory; Battle.prototype.victory = function* () {
     const r = yield* _v.call(this); const st = Game.st, F = this.F, sp = this.cfg && this.cfg.sp; if (!st || !sp) return r;
     const boss = this.kind === 'boss' || !!(F && F.boss), elite = !boss && (this.kind === 'elite' || !!(F && F.elite));
-    if ((boss || elite) && BOOK_DROP12.includes(sp) && chance(boss ? 0.45 : 0.3)) { st.bag.trainBook = (st.bag.trainBook || 0) + 1; Sound.jingle('item'); yield* this.msg('得到了修練之書！', { hold: 40 }); }
+    if ((boss || elite) && !(this.cfg && this.cfg.rematch) && !this._eliteAgain && BOOK_DROP12.includes(sp) && chance(boss ? 0.45 : 0.3)) { st.bag.trainBook = (st.bag.trainBook || 0) + 1; Sound.jingle('item'); yield* this.msg('得到了修練之書！', { hold: 40 }); }
     const k = this.cfg && this.cfg.rematch ? null : boss ? pick(['megaPotion', 'megaEther']) : elite && chance(0.4) ? pick(['superPotion', 'hiEther']) : null; // v12.0.1 (player: 「頭目跟菁英…可以重複刷取 導致藥水變得很好拿」): rematches give no potions
     if (k && ITEMS[k]) { st.bag[k] = (st.bag[k] || 0) + 1; yield* this.msg('得到了' + ITEMS[k].n + '！', { hold: 30 }); }
     return r; }; }
-{ const _fd = foeDropLines; foeDropLines = function (sp, key, kind) { const L = _fd(sp, key, kind); if (BOOK_DROP12.includes(sp)) L.unshift('修練之書（機率 ' + (kind === 'boss' ? 45 : 30) + '%）');
+{ const _fd = foeDropLines; foeDropLines = function (sp, key, kind) { const L = _fd(sp, key, kind); if (BOOK_DROP12.includes(sp)) L.unshift('修練之書（首次擊敗，機率 ' + (kind === 'boss' ? 45 : 30) + '%）');
     L.push(kind === 'boss' ? '特級傷藥或特級魔力藥水（第一次打倒必得）' : '好傷藥或高級魔力藥水（第一次打倒 40%）'); return L; }; }
 for (const c of ['c1', 'c6', 'c9', 'c14', 'c15']) if (COMMISSIONS[c]) COMMISSIONS[c].reward.items = { ...(COMMISSIONS[c].reward.items || {}), trainBook: 1 };
 if (COMMISSIONS.c7) COMMISSIONS.c7.reward.gear = 'herbPouch';
@@ -20865,5 +20865,49 @@ const SUBMAIN9 = ['風車丘陵的異變', '碧溪谷的黑水', '北境之路']
 { const _u = Overworld.prototype.update; Overworld.prototype.update = function (...a) { const st = this.st;
     if (st && !this.script && Game.scene === this && typeof SEALS !== 'undefined' && SEALS.some(([fl, it]) => st.flags[fl] && !st.flags['got_' + it])) { const got = sealSync(st); if (got.length) Game.sealMsg = (Game.sealMsg || []).concat(got); }
     return _u.apply(this, a); }; }
+const SIG10 = {}, SIGSET10 = new Set(), REST10 = new Set();
+{ const sw = k => [k, typeof MAGE_SWAP !== 'undefined' && MAGE_SWAP[k]].filter(x => x && GEAR[x]);
+  for (const m in MAPS) { const M = MAPS[m]; for (const e of (M.elites || []).concat(M.boss ? [{ ...M.boss, id: M.boss.flag || M.boss.sp }] : [])) {
+      const L = LOOT[e.id] || [], lord = /_lord$/.test(e.id || '') && typeof LORD_GEAR12 !== 'undefined' && LORD_GEAR12[e.sp] ? LORD_GEAR12[e.sp][0] : null;
+      const s = lord || e.drop || (SPECIES[e.sp] || {}).drop || L[0]; if (!s || !GEAR[s]) continue;
+      if (!SIG10[e.id]) SIG10[e.id] = { k: s, lv: e.lv }; else SIG10[e.id].lv = Math.min(SIG10[e.id].lv, e.lv);
+      sw(s).forEach(k => SIGSET10.add(k)); for (const k of L) if (k !== s) sw(k).forEach(x => REST10.add(x)); } }
+  for (const k of SIGSET10) REST10.delete(k); }
+const sigOf10 = (key, sp) => (SIG10[key] && SIG10[key].k) || (SPECIES[sp] || {}).drop || (LOOT[key] || [])[0] || null;
+const GEARBAL10 = (() => { const rank = lv => Math.min(7, 2 + Math.floor(Math.max(0, lv - 4) / 6)), lvOf = {}, out = [];
+  for (const id in SIG10) { const { k, lv } = SIG10[id]; for (const kk of [k, typeof MAGE_SWAP !== 'undefined' && MAGE_SWAP[k]].filter(x => x && GEAR[x])) lvOf[kk] = Math.min(lvOf[kk] ?? 99, lv); }
+  const score = G => { const s = G.st || {}; return G.slot === 'weapon' ? Math.max(s.atk || 0, s.spa || 0) : Object.entries(s).reduce((a, [k, v]) => a + (k === 'hp' ? v / 4 : v), 0); };
+  const med = {}; for (const k in GEAR) { const G = GEAR[k]; if (SIGSET10.has(k) || REST10.has(k) || !G.slot || !G.t || !G.st) continue; (med[G.slot + G.t] || (med[G.slot + G.t] = [])).push(score(G)); }
+  const medOf = K => { const a = (med[K] || []).slice().sort((x, y) => x - y); return a.length ? a[Math.floor(a.length / 2)] : 0; };
+  for (const k in lvOf) { const G = GEAR[k], r = rank(lvOf[k]); if (!G.t || G.t <= r) continue;
+    const a = medOf(G.slot + G.t), b = medOf(G.slot + r), f = a && b ? Math.min(1, b / a) : 0.8;
+    out.push([k, G.t, r, Math.round(f * 100)]); for (const s in G.st || {}) G.st[s] = Math.max(1, Math.round(G.st[s] * f)); G.t = r; }
+  return out; })();
+for (const k of REST10) BP_RARE.delete(k);
+const TUNE10 = { elite: { hp: 1.8, pow: 0.9 }, boss: { hp: 1, pow: 1 } }; // bosses already last 7–10 rounds in the sims; they are re-tuned per area in stage 2 (after the gear numbers shrink)
+{ const _ue = BD.unitForEnemy; BD.unitForEnemy = function (core, sp, lv, kind, side, idx, o = {}) { const s = _ue.call(this, core, sp, lv, kind, side, idx, o), T = s && TUNE10[kind]; if (!T) return s;
+    s.stats.hp = Math.max(1, Math.round(s.stats.hp * T.hp)); s.hp = s.stats.hp;
+    if (T.pow !== 1) for (const k of ['atk', 'spa']) s.stats[k] = Math.max(1, Math.round(s.stats[k] * T.pow));
+    return s; }; }
+{ const _ld = lootDrops; lootDrops = function (b) { const F = b.F || {}; if (!(F.elite || F.boss)) return _ld(b);
+    const st = Game.st, key = b.cfg.id || F.sp, kills = st.kills || (st.kills = {}), first = !kills[key] && !b.cfg.rematch; kills[key] = (kills[key] || 0) + 1;
+    if (!first) return [];
+    const sig = (/_lord$/.test(key) && SIG10[key] && SIG10[key].k) || b.cfg.drop || sigOf10(key, F.sp); if (!sig) return [];
+    const k = SIGSET10.has(sig) && /^lg/.test(sig) ? sig : classGear(sig); return GEAR[k] ? [makeGear(k, 1)] : []; }; } // quality 1: the blueprint only, no ticket
+const medExp10 = maps => { const L = []; for (const m of maps) for (const e of (MAPS[m] || {}).encounters || []) for (const r of e.table || []) { const s = SPECIES[r[0]]; if (s && s.exp && !s.rare) L.push(s.exp); } L.sort((a, b) => a - b); return L.length ? L[Math.floor(L.length / 2)] : 0; };
+const WILD_EXP10 = medExp10(Object.keys(MAPS)) || 20; // a typical wild monster's base EXP (median; the map the fight is on is used when it has encounters)
+{ const _ge = Battle.prototype.gainExp; Battle.prototype.gainExp = function* (a) { const F = this.F, st = Game.st, cfg = this.cfg || {};
+    if (F && (F.elite || F.boss) && st) {
+      if (cfg.rematch) { if (F.boss) a = Math.max(1, Math.floor(a * 0.3)); }
+      else if (!((st.kills || {})[cfg.id || F.sp])) { const ref = (medExp10([Game.ow && Game.ow.map && Game.ow.map.id].filter(Boolean)) || WILD_EXP10) * F.lv / 5 * 1.4 * (typeof expScale === 'function' ? expScale(st.lv, F.lv) : 1); a = Math.max(a, Math.round(ref * (F.boss ? 10 : 5))); } }
+    return yield* _ge.call(this, a); }; }
+{ const _s = Overworld.prototype.steleTalk; Overworld.prototype.steleTalk = function* (s) {
+    const st = this.st, sp = s.stele && s.stele.sp, D = st.steleDown9 || (st.steleDown9 = {}), left = sp && D[sp] !== undefined ? ELITE_RESPAWN - ((st.steps || 0) - D[sp]) : 0;
+    if (left > 0) { yield* say('刻著' + SPECIES[sp].n + '身影的「回憶石碑」。\n石碑的光芒還很黯淡。（過一天再來吧）'); return; }
+    const k0 = (st.kills || {})[sp] || 0; yield* _s.call(this, s); if (sp && ((st.kills || {})[sp] || 0) > k0) D[sp] = st.steps || 0; }; }
+for (const k of ['c16', 'c18', 'c20', 'c22', 'c25', 'c26', 'c27', 'c28', 'c30', 'c33']) { const R = COMMISSIONS[k] && COMMISSIONS[k].reward; if (R) (R.items || (R.items = {})).trainBook = (R.items.trainBook || 0) + 1; }
+lootHint = function (key, sp) { const first = !((Game.st.kills || {})[key]), sig = sigOf10(key, sp), mat = (SPECIES[sp] || {}).mat, g = sig && GEAR[/^lg/.test(sig) ? sig : classGear(sig)];
+  if (first && g) return '首次擊敗：「' + g.n + '」的設計圖';
+  return '再戰：經驗、金錢' + (mat && ITEMS[mat] ? '、' + ITEMS[mat].n : ''); };
 </script>
 </body></html>

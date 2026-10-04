@@ -151,7 +151,7 @@ function* forgeFlow(k) {
   const st = Game.st, B = GEAR[k], tk = tkList(k, st).length ? Math.max(...tkList(k, st)) : 0, tn = tkCount(k, st);
   if (tk) { // v25: with a ticket the smith always uses it — free, quality at least the ticket's
     const r = yield* ask('要用打造券打造「' + B.n + '」嗎？\n（免費・品質保底「' + qName(tk) + '」' + (tn > 1 ? '・共有' + tn + '張' : '') + '）', ['使用打造券', '取消']); if (r !== 0) return;
-    const q = Math.max(tkUse(k, st), bpRoll(2)); Sound.sfx('rock'); yield* say('鏘！鏘！鏘！'); const g = makeGear(k, q); Sound.jingle(q >= 3 ? 'levelup' : 'item');
+    const q = Math.max(tkUse(k, st), bpRoll(0)); // v12.0.9s: the ticket only guarantees its own quality; the rest rolls like an ordinary craft (was the ×3-materials odds) Sound.sfx('rock'); yield* say('鏘！鏘！鏘！'); const g = makeGear(k, q); Sound.jingle(q >= 3 ? 'levelup' : 'item');
     yield* itemGet('鐵匠打造了' + gearName(g) + '！'); // the 【品質】 tag in front already says it return;
   }
   const oddsT = lv => bpOdds(lv).map((p, q) => p && q >= 2 ? qName(q + 1) + p : '').filter(Boolean).join(' ');
