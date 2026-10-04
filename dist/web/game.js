@@ -22477,3 +22477,21 @@ CRY_PAS11.add('partDmg');
 GROW12.push(['慣性', '菁英・頭目會「慣」：主角每次行動打到牠，用的那一類（普攻・物理技能・魔法技能）−10%，另外兩類各 +10%（50%〜200%）。輪流用最痛；戰鬥中名牌左邊有現在的百分比。魔導書的特性讓變化減半。'],
   ['打部位', '13 隻主線頭目各有 2 個部位。頭目破防中，選目標時可以選部位：傷害照算進 HP，但不吃破防的 +50%。部位打壞了，對應的招式威力減半，馬上掉 1 個稀有部位，這場經驗 +20%。長槍的特性和楓林鹿王晶石讓打部位更痛。']);
 if (typeof BATTLE_HELP !== 'undefined') BATTLE_HELP.push(['慣性與部位', ['菁英・頭目會「慣性」：同一類攻擊（普攻／物理技能／魔法技能）一直用會變弱，另外兩類變強；名牌左邊「普・物・魔」是現在的百分比。', '頭目破防中可以打部位（選目標時多出來的◆）。打壞了那一招威力減半、掉稀有部位、經驗 +20%；打部位不吃破防的 +50%。']]);
+const MP13 = { cost: 2.5, top: 2, ret: 2, atk: 0.15, minCd: 1 }; // ret: what a skill gives back (×2, so 三連拳 still costs a little)
+{ const big = r => r[0][0] === '4' || /^cm(Dawn|Twin)$/.test(r[1]);
+  const scaleEff = (x, k) => { const E = typeof x === 'string' ? DEF.effects[x] : x; if (E && E.type === 'resource' && E.res === 'mp' && E.target === 'self' && E.amount > 0 && !E.mp13) { E.amount = Math.round(E.amount * k); E.mp13 = 1; } };
+  for (const kind of Object.keys(TREE11)) for (const r of TREE11[kind].sk || []) { const D = DEF.skills['t_' + r[1]]; if (!D) continue; const k = big(r) ? MP13.top : MP13.cost;
+    for (const c of D.costs || []) if (c.res === 'mp' && c.amount) c.amount = Math.round(c.amount * k);
+    if (typeof r[6] === 'number') r[6] = Math.round(r[6] * k);
+    if (D.power && !(D.cooldown > 0)) { D.cooldown = MP13.minCd; r[5] = MP13.minCd; }
+    for (const x of (D.effects || []).concat(D.after || [])) scaleEff(x, MP13.ret);
+    if (typeof r[8] === 'string') r[8] = r[8].replace(/回 (\d+) MP/g, (m, n) => '回 ' + Math.round(n * MP13.ret) + ' MP'); } }
+for (const id in DEF.skills) { if (!id.startsWith('t_') || !MOVES[id]) continue; const M = MOVES[id], rp = t => t.replace(/回 (\d+) MP/g, (m, n) => '回 ' + Math.round(n * MP13.ret) + ' MP'); if (typeof M.d === 'string') M.d = rp(M.d); if (typeof DEF.skills[id].desc === 'string') DEF.skills[id].desc = rp(DEF.skills[id].desc);
+  const c = (DEF.skills[id].costs || []).find(q => q.res === 'mp'); if (typeof SKILL_MP !== 'undefined' && c) SKILL_MP[id] = c.amount; }
+{ const M = DEF.mechanics.heroCore, _mk = M.make; M.make = function (u, ...a) { const r = _mk.call(this, u, ...a);
+    for (const t of r.triggers || []) for (const e of t.effects || []) if (e.type === 'resource' && e.res === 'mp' && e.why === 'basic' && typeof e.amount === 'number') e.amount += Math.max(0, Math.round((u.max.mp || 0) * MP13.atk) - Math.max(3, Math.round((u.max.mp || 0) * 0.12)));
+    return r; }; }
+{ const fx = t => typeof t === 'string' ? t.replace(/回復最大MP的12%/g, '回復最大MP的15%').replace(/回最大 MP 的 12%/g, '回最大 MP 的 15%') : t;
+  if (typeof BATTLE_HELP !== 'undefined') for (const b of BATTLE_HELP) if (Array.isArray(b[1])) b[1] = b[1].map(fx);
+  for (const b of GROW12) b[1] = fx(b[1]); }
+GROW12.push(['普攻與 MP', '普攻不花 MP，打中回最大 MP 的 15%；技能的 MP 比較貴，傷害技能不能連續用同一招。大約「普攻→普攻→技能」一輪。戰鬥之間 MP 不會自己回，省著用。']);
