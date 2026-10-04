@@ -238,7 +238,7 @@ const sigOf13 = v => { const u = v && v.u; if (!isB13(u)) return null; const ch 
     else if (ph >= 2) for (let i = 0; i < 16; i++) { const px = (i * 47 + b.t * (0.3 + (i % 3) * 0.15)) % W, py = BH - ((b.t * (0.6 + (i % 4) * 0.2) + i * 31) % BH); x.fillStyle = i % 2 ? 'rgba(255,140,40,0.8)' : 'rgba(255,220,120,0.7)'; x.fillRect(Math.round(px), Math.round(py), 1, 1 + (i % 2)); }
     return r; }; }
 // 部位：打壞的那一塊留下裂痕・缺角（Codex 的打壞版圖到之前）
-const crack13 = (g, X, Y, seed) => { const R = n => { seed = (seed * 9301 + 49297) % 233280; return seed / 233280 * n; };
+let crack13 = (g, X, Y, seed) => { const R = n => { seed = (seed * 9301 + 49297) % 233280; return seed / 233280 * n; };
   g.save(); g.globalCompositeOperation = 'source-atop'; g.lineWidth = 1;
   for (let i = 0; i < 5; i++) { let a = R(6.28), x = X, y = Y; g.strokeStyle = 'rgba(18,6,10,0.95)'; g.beginPath(); g.moveTo(x, y); for (let s = 0; s < 3; s++) { a += R(1.2) - 0.6; x += Math.cos(a) * (2 + R(3)); y += Math.sin(a) * (2 + R(3)); g.lineTo(Math.round(x) + 0.5, Math.round(y) + 0.5); } g.stroke(); }
   g.fillStyle = 'rgba(30,10,14,0.55)'; g.fillRect(X - 3, Y - 2, 6, 4); g.globalCompositeOperation = 'destination-out'; g.fillRect(X - 1, Y - 1, 2, 2); g.fillRect(X + 2, Y - 3, 1, 2); g.restore(); };
@@ -256,3 +256,38 @@ const crack13 = (g, X, Y, seed) => { const R = n => { seed = (seed * 9301 + 4929
 GROW12.push(['頭目的打法', '每隻頭目都有一招「必殺技」：沒有應對會被打掉最大 HP 的 85%。蓄力時畫面邊緣會變紅，名牌下面寫著該怎麼應對（防禦、破防打斷、先解毒……）。HP 一半進入後半戰（換弱點、規則改變），剩 1/4 會暴走。']);
 // 破防中的魔物躲不開（打部位那一下不會落空）
 { const _hc = BR.hitChance; BR.hitChance = function (core, src, tgt, skill) { if (tgt && !tgt.hero && core.hasStatus(tgt, 'broken')) return 1; return _hc.call(this, core, src, tgt, skill); }; }
+
+/* ---------- 新的頭目圖（Codex AK-bosses：64 原生、非 Q 版；有 cast・rage・parta・partb 影格的頭目） ----------
+   ・站得低一點（腳底 +14），頭上留給名牌。
+   ・蓄力必殺技時一直維持蓄力姿勢；暴走後待機換成暴走的樣子。
+   ・部位打壞：把「打壞版」跟待機不同的那一塊貼上去（待機・暴走時），打壞那一下碎片從那一塊噴出來。 */
+const big13 = v => !!(v && v.spx && v.spx.meta && v.spx.meta.frames && v.spx.meta.frames.parta && isB13(v.u));
+{ const _l = Battle.prototype.layout; Battle.prototype.layout = function (snap) { _l.call(this, snap); for (const v of this.foes()) if (big13(v)) v.foot += 14; }; }
+const OVL13 = {};
+function ovl13(S) { if (OVL13[S.sp] !== undefined) return OVL13[S.sp]; const fr = S.meta.frames, out = [];
+  try { const g = mkCanvas(S.w, S.h).getContext('2d'), grab = f => { g.clearRect(0, 0, S.w, S.h); g.drawImage(S.im, f * S.w, 0, S.w, S.h, 0, 0, S.w, S.h); return g.getImageData(0, 0, S.w, S.h).data; };
+    const base = grab(fr.idle[0]);
+    for (const key of ['parta', 'partb']) { if (!fr[key]) { out.push(null); continue; } const d = grab(fr[key][0]), add = mkCanvas(S.w, S.h), cut = mkCanvas(S.w, S.h), ga = add.getContext('2d'), gc = cut.getContext('2d');
+      const A = ga.createImageData(S.w, S.h), C = gc.createImageData(S.w, S.h); let n = 0, sx = 0, sy = 0;
+      for (let i = 0; i < d.length; i += 4) { const same = d[i] === base[i] && d[i + 1] === base[i + 1] && d[i + 2] === base[i + 2] && d[i + 3] === base[i + 3]; if (same) continue;
+        const p = i >> 2, x = p % S.w, y = (p / S.w) | 0; n++; sx += x; sy += y;
+        if (d[i + 3]) { A.data[i] = d[i]; A.data[i + 1] = d[i + 1]; A.data[i + 2] = d[i + 2]; A.data[i + 3] = 255; } else C.data[i + 3] = 255; }
+      ga.putImageData(A, 0, 0); gc.putImageData(C, 0, 0); out.push(n ? { add, cut, cx: sx / n / S.w, cy: sy / n / S.h } : null); } } catch (e) { return OVL13[S.sp] = null; }
+  return OVL13[S.sp] = out; }
+{ const _pr = pxRender; pxRender = function (A, S, T, tint) { const u = A.u13, fr = S.meta && S.meta.frames; if (!u || !fr || !fr.parta) return _pr(A, S, T, tint);
+    const idle = fr.idle, ch = u.statuses && u.statuses.some(s => s.id === 'charging'); let use = null;
+    if (A.state === 'idle') use = ch && fr.cast ? fr.cast : u.data.rage13 && fr.rage ? fr.rage : null;
+    if (use) fr.idle = [use[0]]; let cv; try { cv = _pr(A, S, T, tint); } finally { fr.idle = idle; }
+    const P = u.data.parts11, O = P && P.some(p => p.gone) && A.state === 'idle' && !ch ? ovl13(S) : null;
+    if (O && !tint) { const x = cv.getContext('2d'), big = S.h > 80, p = ((T + A.phase) % HD_IDLE_PERIOD) / HD_IDLE_PERIOD, s = Math.round((big ? 3 : 2) * (0.5 - 0.5 * Math.cos(TAU * p)));
+      P.forEach((q, k) => { const o = O[k]; if (!q.gone || !o) return; x.globalCompositeOperation = 'destination-out'; x.drawImage(o.cut, PX_PAD, PX_PAD + s, S.w, S.h - s); x.globalCompositeOperation = 'source-over'; x.drawImage(o.add, PX_PAD, PX_PAD + s, S.w, S.h - s); }); }
+    return cv; }; }
+{ const _rf = Battle.prototype.renderFoe; Battle.prototype.renderFoe = function (v, tint) { if (v && v.A) v.A.u13 = v.u && big13(v) ? v.u : null; return _rf.call(this, v, tint); }; }
+// the program-drawn cracks and the shard spot: use the real broken piece when the boss has one
+{ const _c = crack13; crack13 = function () {}; const _rf = Battle.prototype.renderFoe; Battle.prototype.renderFoe = function (v, tint) {
+    if (v && !big13(v) && v.spx && v.u && v.u.data.parts11 && v.u.data.parts11.some(p => p.gone) && !tint && PART_AT13[v.sp]) { const im = _rf.call(this, v, tint), g = im.getContext('2d'), S = v.spx;
+      v.u.data.parts11.forEach((p, k) => { const A = PART_AT13[v.sp][k]; if (p.gone && A) _c(g, Math.round(PX_PAD + A[0] * S.w), Math.round(PX_PAD + A[1] * S.h), 7 + k * 13); }); return im; }
+    return _rf.call(this, v, tint); }; }
+{ const H = Battle.prototype.handlers, _m = H.MESSAGE; H.MESSAGE = function* (e, s, t, P) { if (P && P.part11 && s && big13(s)) { const O = ovl13(s.spx), k = s.u.data.parts11.findIndex(p => p.n === P.pn), o = O && O[k];
+      if (o) { const save = PART_AT13[s.sp]; PART_AT13[s.sp] = save.map((a, i) => i === k ? [o.cx, o.cy] : a); try { return yield* _m.call(this, e, s, t, P); } finally { PART_AT13[s.sp] = save; } } }
+    return yield* _m.call(this, e, s, t, P); }; }
