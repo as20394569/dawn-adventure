@@ -99,8 +99,8 @@ module.exports = async (g) => {
       ok('斧的特性：普通攻擊削 1 格護盾', a1 - a0 === 1, '沒特性 ' + a0 + '、有特性 ' + a1);
       const s1 = withTrait('劍', () => { const r = fight('劍', 'sdBreak', { setup: (c, H) => { H.stats.crit = 100; } }); return chipOf(r); }), s0 = (() => { const r = fight('劍', 'sdBreak', { setup: (c, H) => { H.stats.crit = 100; } }); return chipOf(r); })();
       ok('劍的特性：會心時多削 1 格護盾', s1 - s0 === 1, '沒特性 ' + s0 + '、有特性 ' + s1);
-      const sp = (tr) => { const f = () => { const { c, H, F } = build('長槍'); H.lv = 500; const a = pv(c, H, F, 't_spPierce'); c.applyStatus(H, F, 'broken', {}); return pv(c, H, F, 't_spPierce') / a; }; return tr ? withTrait('長槍', f) : f(); };
-      ok('長槍的特性：對破防中的魔物 +20%', Math.abs(sp(1) / sp(0) - 1.2) < 0.02, '破防時 ×' + sp(0).toFixed(3) + ' → 有特性 ×' + sp(1).toFixed(3)); }
+      // 長槍的特性（打部位 +30%）在 tools/s3check.js
+    }
     BR.VARIANCE = V0;
     return out.join('\n') + '\n\n' + out.filter(x => x.startsWith('PASS')).length + '/' + out.length + ' PASS';
   }, save));
