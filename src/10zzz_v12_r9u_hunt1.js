@@ -32,8 +32,8 @@ const PART_N11 = { elite: 2, boss: 3 }, PART_RARE11 = { elite: 0.25, boss: 0.15 
     for (const e of M.elites || []) { if (e.id) ID2SP11[e.id] = e.sp; note(e.sp, e.lv, 0, m); }
     if (M.boss) { ID2SP11[M.boss.flag || M.boss.sp] = M.boss.sp; ID2SP11[M.boss.sp] = M.boss.sp; note(M.boss.sp, M.boss.lv, 1, m); } } }
 for (const sp in PARTS11) { const S = SPECIES[sp]; if (!S) { bvErr('v12.9u', 'parts for ' + sp); continue; } const [a, b] = PARTS11[sp], lv = PART_LV11[sp] || 10;
-  ITEMS['pt_' + sp] = { n: a, mat: 1, price: 0, sell: 20 + lv * 6, cat: '魔物素材', part11: sp, d: S.n + '身上取下的部位素材。打造' + (PART_BOSS11[sp] ? '頭目' : '牠') + '的招牌裝備要用。' };
-  ITEMS['pr_' + sp] = { n: b, mat: 1, price: 0, sell: 60 + lv * 20, cat: '魔物素材', part11: sp, rare11: 1, d: S.n + '身上很少拿到的稀有部位。打造時放進去，品質會抽兩次、取比較好的那個。' };
+  ITEMS['pt_' + sp] = { n: a, mat: 1, price: 0, sell: 20 + lv * 6, cat: '魔物素材', part11: sp, d: S.n + '身上取下的部位素材。把牠的晶石升級要用（鐵匠→晶石）。' };
+  ITEMS['pr_' + sp] = { n: b, mat: 1, price: 0, sell: 60 + lv * 20, cat: '魔物素材', part11: sp, rare11: 1, d: S.n + '身上很少拿到的稀有部位。把牠的晶石升到 ★3 要用。' };
   PART_OF11['pt_' + sp] = { sp, rare: 0 }; PART_OF11['pr_' + sp] = { sp, rare: 1 }; }
 if (BV2.DEV) { const seen = {}; for (const k in ITEMS) { const n = ITEMS[k].n; if (seen[n] && (PART_OF11[k] || PART_OF11[seen[n]])) bvErr('v12.9u', 'item name twice: ' + n); seen[n] = k; } }
 
@@ -65,11 +65,12 @@ matSrc = function (k) { const P = PART_OF11[k]; if (P) return SPECIES[P.sp].n + 
 function* huntDrops11(F) {
   const st = Game.st, sp = F.sp, boss = !!F.boss, d = (F.u && F.u.data) || {}, got = {}, add = (k, n) => { if (n > 0 && ITEMS[k]) { got[k] = (got[k] || 0) + n; st.bag[k] = (st.bag[k] || 0) + n; } };
   const brk = d.brkN11 || 0, bonus = boss ? brk : brk > 0 ? 1 : 0;
-  add('pt_' + sp, (boss ? PART_N11.boss : PART_N11.elite) + bonus);
-  add('pr_' + sp, (chance(boss ? PART_RARE11.boss : PART_RARE11.elite) ? 1 : 0) + (boss && d.brkP2_11 ? 1 : 0));
+  const X = (typeof DIFF11 !== 'undefined' && DIFF11[(this.cfg || {}).diff11 || 0]) || { parts: 1, rare: 1 }; // 回憶石碑的難度（r9v）
+  add('pt_' + sp, Math.round((boss ? PART_N11.boss : PART_N11.elite) * X.parts) + bonus);
+  add('pr_' + sp, (chance(Math.min(1, (boss ? PART_RARE11.boss : PART_RARE11.elite) * X.rare)) ? 1 : 0) + (boss && d.brkP2_11 ? 1 : 0));
   Sound.sfx('item'); yield* this.msg((boss ? '頭目' : '菁英') + '留下了部位：' + matsText(got) + '！', { hold: 36 });
   if (bonus) yield* this.msg('（破防' + (boss && brk > 1 ? brk + ' 次' : '成功') + '，多拿到了 ' + bonus + ' 個部位' + (boss && d.brkP2_11 ? '，後半戰的破防還多給了稀有部位' : '') + '！）', { hold: 30 });
-  if (!st.flags.tutPart11) { st.flags.tutPart11 = 1; yield* this.msg('（部位素材是打造招牌裝備用的。破防越多，拿到的部位越多；再戰也會掉。）', { wait: true }); }
+  if (!st.flags.tutPart11) { st.flags.tutPart11 = 1; yield* this.msg('（部位素材可以把這隻魔物的晶石升級。破防越多，拿到的部位越多；再戰也會掉。）', { wait: true }); }
 }
 { const _v = Battle.prototype.victory; Battle.prototype.victory = function* () {
     const F = this.mainView(), c = this.cfg || {}, P = F && F.u && F.u.down && PARTS11[F.sp] && (F.elite || F.boss), had = c.noMats;
@@ -135,7 +136,7 @@ const huntCharges11 = (core, u) => u.skills.filter(id => DEF.skills[id] && DEF.s
     const hero = core.units.find(q => q.hero && !q.down), gap = core.round - (u.data.lastCharge ?? -9), R = core.rng;
     const go = id => { u.data.lastCharge = core.round; u.data.lastHunt11 = id; return { type: 'skill', skill: id, targets: DEF.skills[id].target === 'self' ? [u.id] : hero ? [hero.id] : [] }; };
     if (u.boss) { const r = _d.call(this, core, u, o), id = u.data.hunt2Skill;
-      if (id && DEF.skills[id] && !(r && r.type === 'skill' && DEF.skills[r.skill] && DEF.skills[r.skill].charge) && gap >= HUNT11.bGap && R.chance(HUNT11.bChance)) return go(id);
+      if (id && DEF.skills[id] && !(r && r.type === 'skill' && DEF.skills[r.skill] && DEF.skills[r.skill].charge) && gap >= (u.data.bGap11 ?? HUNT11.bGap) && R.chance(HUNT11.bChance)) return go(id);
       return r; }
     if (u.data.script) return _d.call(this, core, u, o); // 磨石魔像 keeps its 3-round windmill
     const ch = huntCharges11(core, u); if (!ch.length) return _d.call(this, core, u, o);

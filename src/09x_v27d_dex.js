@@ -47,7 +47,8 @@ function* dexDetail(list, idx) {
       if (info.big && typeof PARTS11 !== 'undefined' && PARTS11[k]) for (const t of foeDropLines(k, null, sp.boss || PART_BOSS11[k] ? 'boss' : 'elite').filter(t => /^(部位|稀有)：/.test(t))) L.push([t, UIC.text]);
       else if (info.big) L.push(['素材：' + (mat ? mat + '×' + (sp.boss ? 3 : 2) + '＋' : '') + '當地素材×' + (sp.boss ? 3 : 2) + '（每次必定）', UIC.text]);
       else L.push(['素材：' + (mat ? mat + '（60%）' : '—'), UIC.text]);
-      for (const s of info.sigs) L.push(['首次擊敗：「' + GEAR[s.g].n + '」的設計圖' + (s.got ? '（已取得）' : ''), s.got ? UIC.muted : UIC.warm]);
+      if (typeof CRY11 !== 'undefined' && CRY11[k] && info.big) { const got = !!cryOwn11()[k]; L.push(['首次擊敗：「' + cryName11(k) + '」' + (got ? '（已取得）' : ''), got ? UIC.muted : UIC.warm]); }
+      else for (const s of info.sigs) L.push(['首次擊敗：「' + GEAR[s.g].n + '」的設計圖' + (s.got ? '（已取得）' : ''), s.got ? UIC.muted : UIC.warm]);
       if (info.big) L.push([typeof PARTS11 !== 'undefined' && PARTS11[k] ? '再戰：部位、經驗（頭目 30%）、金錢' : '再戰：經驗（30%）、金錢、素材', '#c8b0ff']);
       if (!info.big && !info.re.length) L.push(['普通魔物不會掉裝備。裝備靠菁英・頭目的設計圖打造。', UIC.muted]);
       let Y = 127; for (const [t, c] of L) for (const l of Font.wrap(t, 156, 9)) { if (Y > 222) break; Font.draw(x, l, 10, Y, c, UIC.textSh, 9); Y += 11; }
