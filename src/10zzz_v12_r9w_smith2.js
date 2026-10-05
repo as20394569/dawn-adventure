@@ -1,7 +1,7 @@
 /* ===================== v12.0.9w 超級重製第二階段（一）：素材點數、底裝、潛力賦予、鍛冶熟練、幻化、舊存檔（〈超級重製企劃：借鏡托蘭〉第二階段清單，玩家 2026-10-04「開始做吧」） =====================
    · 素材歸成六類點數（金屬・布料・獸材・木料・藥材・魔素）；點數＝打到的地區階級（T1 1〜T6 6、T7 8）。每隻小怪必給點數；任務要的素材先留在背包。
    · 底裝：武器 9 種×7 階、防具 3 系×頭身腳×7 階、盾 7 面，只有基本數值；其他裝備退場，外觀變成幻化外觀。
-   · 品質決定潛力和晶石孔（藍 10/0・紫 15/1・紅 20/1・金 25/2・虹 30/2）；賦予 10 種能力，一定成功，可以清掉重來（退一半點數）。
+   · 品質決定基本數值、潛力和晶石孔（藍 10/0・紫 15/1・紅 20/1・金 25/2・虹 30/2）；賦予 10 種能力，一定成功，可以清掉重來（退一半點數）。
    · 鍛冶熟練 Lv1〜10 取代鐵匠階級；分解退一半點數；鐵匠：打造／賦予／晶石／幻化／分解。
    · 舊存檔：裝備換成同種同階底裝（品質照舊、外觀幻化成原本的樣子）、詞綴換成賦予、強化升星退點數、打造券和精煉石換金錢、素材換點數。 */
 
@@ -202,7 +202,7 @@ function* craft11() { const st = Game.st;
     const ti = yield* choose(opts.concat({ t: '返回' }), { title: group + '：選階級' }); if (ti < 0 || ti >= T.length) continue;
     const t = T[ti], k = pick(t), c = craftCost11(group, t), B = GEAR[k];
     const [a] = gearLines({ b: k, q: 1, en11: {} });
-    if (!(yield* yesNo('打造「' + B.n + '」？（T' + t + '・' + a + '）\n需要：' + ptsText11(c.pts) + ' 點、' + c.gold + ' G' + '\n（品質隨機：品質越好，潛力越多、晶石孔越多）'))) continue;
+    if (!(yield* yesNo('打造「' + B.n + '」？（T' + t + '・' + a + '）\n需要：' + ptsText11(c.pts) + ' 點、' + c.gold + ' G' + '\n（品質隨機：品質越好，基本數值越高、潛力越多、晶石孔越多）'))) continue;
     if (!ptsHave11(c.pts) || st.money < c.gold) { Sound.sfx('bump'); yield* matShort12('點數或金錢不夠喔。'); continue; }
     // a rare part: roll the quality twice and keep the better one
     let q2 = false; const rare = Object.keys(st.bag).filter(i => /^pr_/.test(i) && st.bag[i] > 0 && ITEMS[i]);
@@ -262,7 +262,7 @@ Events.armorer = function* () { yield* say('王國的裝備現在都交給鐵匠
 
 /* ---------- 鐵匠選單 ---------- */
 smithMenu = function* (f) { const st = Game.st;
-  if (!st.flags.tutSmith11) { st.flags.tutSmith11 = 1; yield* say('（鐵匠改版了！）\n打造：用素材點數打底裝，品質決定潛力和晶石孔。\n賦予：用潛力和點數把能力加上去。\n晶石・幻化・分解也在這裡。\n素材換點數：把背包裡的素材換成點數。'); }
+  if (!st.flags.tutSmith11) { st.flags.tutSmith11 = 1; yield* say('（鐵匠改版了！）\n打造：用素材點數打底裝，品質決定基本數值、潛力和晶石孔。\n賦予：用潛力和點數把能力加上去。\n晶石・幻化・分解也在這裡。\n素材換點數：把背包裡的素材換成點數。'); }
   yield* ptsBar11((function* () {
     while (true) { const S = smith11(st), r = yield* ask('要做什麼？（鍛冶熟練 Lv' + S.lv + '）', ['打造', '賦予', '晶石', '幻化', '分解', '離開']);
       if (r === 0) yield* craft11(); else if (r === 1) yield* enchantMenu11(); else if (r === 2) yield* cryMenu11(); else if (r === 3) yield* glamour11(); else if (r === 4) yield* salvage11(); else break; } })()); };
@@ -294,4 +294,4 @@ function convertGear11(st) { if (!st || st.gear11v) return []; const L = [], G0 
 { const _so = startOverworld; startOverworld = function (...a) { const st = Game.st; let L = []; if (st && st.cls !== undefined && !st.gear11v) { L = convertGear11(st); if (L.length) L.unshift('（鐵匠和裝備改版了！）'); }
     const ow = _so.apply(this, a); if (L.length && ow && ow.run) ow.run((function* () { yield* wait(24); yield* sayAll(L); })()); return ow; }; }
 { const _ng = newGameState; newGameState = function (...a) { const st = _ng.apply(this, a); if (st) { st.gear11v = 1; st.pt11 = {}; st.sm11 = { lv: 1, x: 0 }; st.gl11 = {}; } return st; }; }
-GROW12.push(['素材點數與鐵匠', '打倒魔物、採集會得到六類素材點數。鐵匠用點數打造底裝（品質決定潛力和晶石孔），再用潛力和點數賦予能力；打造和賦予越多次，鍛冶熟練越高。']);
+GROW12.push(['素材點數與鐵匠', '打倒魔物、採集會得到六類素材點數。鐵匠用點數打造底裝（品質決定基本數值、潛力和晶石孔），再用潛力和點數賦予能力；打造和賦予越多次，鍛冶熟練越高。']);

@@ -19,7 +19,7 @@ function* matShort12(msg) { const P = matPreview12();
   yield* say(msg + '\n點數：' + (ptsText11(pts11()) || '0') + '\n打倒魔物、採集、開寶箱拿到素材，再到這裡換成點數。'); }
 // the smith: 素材換點數
 smithMenu = function* (f) { const st = Game.st;
-  if (!st.flags.tutSmith11) { st.flags.tutSmith11 = 1; yield* say('（鐵匠改版了！）\n打造：用素材點數打底裝，品質決定潛力和晶石孔。\n賦予：用潛力和點數把能力加上去。\n素材換點數：把背包裡的素材換成點數。'); }
+  if (!st.flags.tutSmith11) { st.flags.tutSmith11 = 1; yield* say('（鐵匠改版了！）\n打造：用素材點數打底裝，品質決定基本數值、潛力和晶石孔。\n賦予：用潛力和點數把能力加上去。\n素材換點數：把背包裡的素材換成點數。'); }
   yield* ptsBar11((function* () {
     while (true) { const S = smith11(st), P = matPreview12(st), n = Object.values(P.got).reduce((a, b) => a + b, 0);
       const r = yield* ask('要做什麼？（鍛冶熟練 Lv' + S.lv + '）', ['素材換點數' + (n ? '（+' + n + '）' : ''), '打造', '賦予', '晶石', '幻化', '分解', '離開']);

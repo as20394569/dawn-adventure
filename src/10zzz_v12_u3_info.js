@@ -51,7 +51,8 @@ function armLines12(g, P) { const t = GEAR[g.b].arm9, E = ARM_EACH12[t]; if (!E)
 { const _gi = gearInfoLines; gearInfoLines = function (g, wrapW = 150) { const B = g && GEAR[g.b]; if (!B || g._bp === 2) return _gi(g, wrapW);
     const L = [], P = (t, c = UIC.text, s = 10, ind = 0) => { for (const l of Font.wrap(t, wrapW - ind, s)) L.push([l, c, s, ind]); };
     const wpn = B.slot === 'weapon', mag = wpn && typeof isMagicW === 'function' && isMagicW(B.kind);
-    P('T' + (B.t || 1) + '・' + kindLabel11(g) + (isOff11(g) ? '（副手：基本數值算一半）' : ''), UIC.accent);
+    const qm = typeof QMUL12 !== 'undefined' && (g.q || 1) > 1 ? '　' + GQ[g.q][0] + '色 基本數值 ×' + QMUL12[g.q] : '';
+    P('T' + (B.t || 1) + '・' + kindLabel11(g) + qm + (isOff11(g) ? '（副手：基本數值算一半）' : ''), UIC.accent);
     const [a] = gearLines(g); if (a) P(a, UIC.text, 11);
     // special numbers and ★ effects, one by one
     const o = gearStats(g);
