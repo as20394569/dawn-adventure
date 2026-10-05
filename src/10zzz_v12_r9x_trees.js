@@ -481,7 +481,7 @@ function treeInfo11(kind, N, st = Game.st) { const T = TREE11[kind], lv = trLv11
   else if (N.t === 'sp') { const [n, k] = T.sp[N.j]; t = '特技「' + n + '」：普通攻擊累積層數後自動發動：' + SP_TXT11[k] + '。威力跟著武器的階級。' + (lv ? (tr11(st).eq[kind] === N.j ? '【裝備中】' : '　A：裝上') : ''); }
   if (s && !s.ok && !s.full) t += '\n（' + s.why + '）'; else if (s && s.ok) t += '\nA：' + (lv ? '升級' : '學習') + '（1 點）';
   return t; }
-function* treeScreen11(start) { const st = Game.st, kinds = () => TREE_KINDS11.filter(k => !TREE11[k].dual || dualOn11(st)); let ti = Math.max(0, kinds().indexOf(start || curKinds11(st)[0] || '劍')), sel = 0;
+function* treeScreen11(start) { const st = Game.st, kinds = () => TREE_KINDS11.filter(k => (!TREE11[k].dual || dualOn11(st)) && (typeof kindOn13 !== 'function' || kindOn13(k))); let ti = Math.max(0, kinds().indexOf(start || curKinds11(st)[0] || '劍')), sel = 0;
   const scr = { touchBack: true, draw(x) { const K = kinds(), kind = K[ti], R = treeRows11(kind, st), VIS = 10, i = Math.min(sel, R.length - 1), top = clamp(i - 4, 0, Math.max(0, R.length - VIS));
     screenBG(x); headerBar(x, TREE11[kind].common ? kind + '樹（共通）' : kind + '樹' + (curKinds11(st).includes(kind) ? '（使用中）' : '')); Font.drawR(x, '剩 ' + trLeft11(st) + ' 點　←→', W - 6, 3, trLeft11(st) ? UIC.warm : UIC.muted, UIC.textSh, 9);
     drawWin(x, 4, 22, 168, VIS * 14 + 8, 'menu');
@@ -527,5 +527,5 @@ if (typeof BATTLE_HELP !== 'undefined') for (const b of BATTLE_HELP) {
 { const _el = effectLines9; effectLines9 = function () { const L = _el(), i = L.findIndex(l => /^【武器被動】/.test(l[0])); if (i >= 0) L.splice(i);
     const H = t => L.push([t, UIC.accent, 10, 0]), P = t => { for (const l of Font.wrap(t, 150, 10)) L.push([l, UIC.text, 10, 6]); };
     H('【賦予】（每一格；點數 × 裝備階級）'); for (const k in EN11) { const E = EN11[k]; P(E[0] + '：+' + E[1] + E[2] + '，潛力 ' + E[3] + '・' + E[4] + ' ' + E[5] + '（上限 +' + E[1] * E[6] + E[2] + '）'); } P('屬性（只有武器）：火・水・雷・草選一種，潛力 ' + ELPOT11 + '・魔素 ' + ELPTS11);
-    H('【武器種特性】（技能樹裡學）'); for (const k of TREE_KINDS11) P(k + '：' + TREE11[k].trait);
+    H('【武器種特性】（技能樹裡學）'); for (const k of TREE_KINDS11) if (typeof kindOn13 !== 'function' || kindOn13(k)) P(k + '：' + TREE11[k].trait);
     return L; }; }

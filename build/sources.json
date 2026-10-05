@@ -77,11 +77,6 @@
    "重戰掉落:wolf",
    "重戰掉落:millGolem"
   ],
-  "primerTome": [
-   "route掉落池",
-   "cave6_route掉落池",
-   "道具店"
-  ],
   "oakStaff": [
    "forest掉落池",
    "jadeCreek掉落池",
@@ -132,10 +127,6 @@
    "磨石魔像掉落"
   ],
   "herbPouch": [
-   "forest掉落池",
-   "cave6_forest掉落池"
-  ],
-  "herbalTome": [
    "forest掉落池",
    "cave6_forest掉落池"
   ],
@@ -197,9 +188,6 @@
    "ruins掉落池",
    "鐵匠配方"
   ],
-  "ancientTome": [
-   "ruins掉落池"
-  ],
   "banditHood": [
    "mine精英掉落",
    "重戰掉落:thug1",
@@ -257,9 +245,6 @@
    "catacomb掉落池",
    "重戰掉落:boneKnight"
   ],
-  "deathTome": [
-   "catacomb掉落池"
-  ],
   "moonBlade": [
    "lake掉落池",
    "lake寶箱",
@@ -305,9 +290,7 @@
    "鐵匠配方"
   ],
   "lakeTome": [
-   "lake掉落池",
    "lake寶箱",
-   "cave6_lake掉落池",
    "重戰掉落:thug1(魔導士)",
    "重戰掉落:thug2(魔導士)",
    "重戰掉落:banditBoss(魔導士)",
@@ -402,10 +385,6 @@
    "異界迴廊"
   ],
   "riftDagger": [
-   "rift掉落池",
-   "異界迴廊"
-  ],
-  "riftTome": [
    "rift掉落池",
    "異界迴廊"
   ],
@@ -523,16 +502,6 @@
    "重戰掉落:hideoutBear(魔導士)",
    "重戰掉落:termiteQueen(魔導士)"
   ],
-  "sageTome": [
-   "northRoad掉落池",
-   "capSewer掉落池",
-   "goldPlains掉落池",
-   "clockTower1掉落池",
-   "oldField掉落池",
-   "cave6_oldField掉落池",
-   "cave6_northRoad掉落池",
-   "cave6_goldPlains掉落池"
-  ],
   "royalGreaves": [
    "northRoad寶箱"
   ],
@@ -636,12 +605,6 @@
    "重戰掉落:snowBear",
    "重戰掉落:frostLich"
   ],
-  "frostTome": [
-   "frostField掉落池",
-   "iceCave掉落池",
-   "cave6_frostField掉落池",
-   "重戰掉落:frostQueen"
-  ],
   "flameBrand": [
    "emberPass掉落池",
    "lavaTunnel掉落池",
@@ -715,15 +678,6 @@
    "重戰掉落:shadowGeneral(魔導士)",
    "影將莫爾德掉落(魔導士)"
   ],
-  "voidTome": [
-   "duskFort1掉落池",
-   "重戰掉落:gatekeeper",
-   "重戰掉落:victorDemon",
-   "重戰掉落:gatekeeper(魔導士)",
-   "duskFort1掉落池(魔導士)",
-   "重戰掉落:duskCaptain(魔導士)",
-   "黯滅騎士長掉落(魔導士)"
-  ],
   "duskHelm": [
    "duskFort1掉落池",
    "duskFort1寶箱",
@@ -774,9 +728,6 @@
    "starShrine掉落池",
    "starShrine寶箱"
   ],
-  "starTome": [
-   "starShrine掉落池"
-  ],
   "voltSword": [
    "jadeCreek掉落池",
    "cave6_jadeCreek掉落池",
@@ -802,14 +753,6 @@
    "cave6_maplePass掉落池",
    "重戰掉落:rockBeetle"
   ],
-  "moonLyre": [
-   "maplePass掉落池",
-   "cave6_maplePass掉落池"
-  ],
-  "gearRepeater": [
-   "maplePass掉落池",
-   "cave6_maplePass掉落池"
-  ],
   "crescentAxe": [
    "oldField掉落池",
    "cave6_oldField掉落池",
@@ -820,9 +763,8 @@
    "oldField掉落池",
    "cave6_oldField掉落池"
   ],
-  "windHorn": [
-   "oldField掉落池",
-   "cave6_oldField掉落池"
+  "primerTome": [
+   "道具店"
   ],
   "woodShield": [
    "道具店"
@@ -954,6 +896,14 @@
   "voidBlade": [
    "重戰掉落:gatekeeper"
   ],
+  "voidTome": [
+   "重戰掉落:gatekeeper",
+   "重戰掉落:victorDemon",
+   "重戰掉落:gatekeeper(魔導士)",
+   "duskFort1掉落池(魔導士)",
+   "重戰掉落:duskCaptain(魔導士)",
+   "黯滅騎士長掉落(魔導士)"
+  ],
   "rhinoHelm": [
    "重戰掉落:rockRhino",
    "岩角犀掉落"
@@ -1030,6 +980,9 @@
   "frostTiara": [
    "重戰掉落:frostQueen",
    "霜之女王掉落"
+  ],
+  "frostTome": [
+   "重戰掉落:frostQueen"
   ],
   "dragonMail": [
    "重戰掉落:youngDragon",

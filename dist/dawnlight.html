@@ -21446,7 +21446,7 @@ function* craft11() { const st = Game.st;
   while (true) {
     const top = craftTop11(st), r = yield* ask('要打什麼？（能打到 T' + top + '）', ['武器', '防具', '盾', '返回']); if (r < 0 || r === 3) return;
     let group, pick;
-    if (r === 0) { const K = Object.keys(WNAME11), k = yield* ask('哪一種武器？', K.concat('返回')); if (k < 0 || k >= K.length) continue; group = K[k]; pick = t => BASE11.weapon[group][t - 1]; }
+    if (r === 0) { const K = Object.keys(WNAME11).filter(q => typeof kindOn13 !== 'function' || kindOn13(q)), k = yield* ask('哪一種武器？', K.concat('返回')); if (k < 0 || k >= K.length) continue; group = K[k]; pick = t => BASE11.weapon[group][t - 1]; }
     else if (r === 1) { const S = ['重甲', '輕裝', '法衣'], s = yield* ask('哪一系？\n重甲：物防高　輕裝：帶速度　法衣：魔防高', S.concat('返回')); if (s < 0 || s >= 3) continue; const sl = yield* ask('哪個部位？', ['頭', '身', '腳', '返回']); if (sl < 0 || sl >= 3) continue;
       group = S[s]; const slot = ['head', 'body', 'feet'][sl]; pick = t => BASE11.armor[group][slot][t - 1]; }
     else { group = '盾'; pick = t => BASE11.shield[t - 1]; }
@@ -21969,7 +21969,7 @@ function treeInfo11(kind, N, st = Game.st) { const T = TREE11[kind], lv = trLv11
   else if (N.t === 'sp') { const [n, k] = T.sp[N.j]; t = '特技「' + n + '」：普通攻擊累積層數後自動發動：' + SP_TXT11[k] + '。威力跟著武器的階級。' + (lv ? (tr11(st).eq[kind] === N.j ? '【裝備中】' : '　A：裝上') : ''); }
   if (s && !s.ok && !s.full) t += '\n（' + s.why + '）'; else if (s && s.ok) t += '\nA：' + (lv ? '升級' : '學習') + '（1 點）';
   return t; }
-function* treeScreen11(start) { const st = Game.st, kinds = () => TREE_KINDS11.filter(k => !TREE11[k].dual || dualOn11(st)); let ti = Math.max(0, kinds().indexOf(start || curKinds11(st)[0] || '劍')), sel = 0;
+function* treeScreen11(start) { const st = Game.st, kinds = () => TREE_KINDS11.filter(k => (!TREE11[k].dual || dualOn11(st)) && (typeof kindOn13 !== 'function' || kindOn13(k))); let ti = Math.max(0, kinds().indexOf(start || curKinds11(st)[0] || '劍')), sel = 0;
   const scr = { touchBack: true, draw(x) { const K = kinds(), kind = K[ti], R = treeRows11(kind, st), VIS = 10, i = Math.min(sel, R.length - 1), top = clamp(i - 4, 0, Math.max(0, R.length - VIS));
     screenBG(x); headerBar(x, TREE11[kind].common ? kind + '樹（共通）' : kind + '樹' + (curKinds11(st).includes(kind) ? '（使用中）' : '')); Font.drawR(x, '剩 ' + trLeft11(st) + ' 點　←→', W - 6, 3, trLeft11(st) ? UIC.warm : UIC.muted, UIC.textSh, 9);
     drawWin(x, 4, 22, 168, VIS * 14 + 8, 'menu');
@@ -22012,7 +22012,7 @@ if (typeof BATTLE_HELP !== 'undefined') for (const b of BATTLE_HELP) {
 { const _el = effectLines9; effectLines9 = function () { const L = _el(), i = L.findIndex(l => /^【武器被動】/.test(l[0])); if (i >= 0) L.splice(i);
     const H = t => L.push([t, UIC.accent, 10, 0]), P = t => { for (const l of Font.wrap(t, 150, 10)) L.push([l, UIC.text, 10, 6]); };
     H('【賦予】（每一格；點數 × 裝備階級）'); for (const k in EN11) { const E = EN11[k]; P(E[0] + '：+' + E[1] + E[2] + '，潛力 ' + E[3] + '・' + E[4] + ' ' + E[5] + '（上限 +' + E[1] * E[6] + E[2] + '）'); } P('屬性（只有武器）：火・水・雷・草選一種，潛力 ' + ELPOT11 + '・魔素 ' + ELPTS11);
-    H('【武器種特性】（技能樹裡學）'); for (const k of TREE_KINDS11) P(k + '：' + TREE11[k].trait);
+    H('【武器種特性】（技能樹裡學）'); for (const k of TREE_KINDS11) if (typeof kindOn13 !== 'function' || kindOn13(k)) P(k + '：' + TREE11[k].trait);
     return L; }; }
 const sl11 = (b, T, a, len, S, w = 5, life = 12) => { const dx = Math.cos(a) * len, dy = Math.sin(a) * len; ln9(b, T.x - dx, T.y - dy, T.x + dx, T.y + dy, S.col[0], S.col[1], w, life); };
 const th11 = (b, U, T, S, w = 4, over = 14) => { const a = Math.atan2(T.y - U.y, T.x - U.x); ln9(b, T.x - Math.cos(a) * 34, T.y - Math.sin(a) * 34, T.x + Math.cos(a) * over, T.y + Math.sin(a) * over, S.col[0], S.col[1], w); };
@@ -23061,7 +23061,7 @@ const MP_EQ12 = 0.6;
 for (const k in GEAR) { const S = GEAR[k].st; if (S && S.mp > 0) S.mp = Math.max(1, Math.round(S.mp * MP_EQ12)); }
 if (ATTR_HELP12 && ATTR_HELP12.int) ATTR_HELP12.int[0] = ATTR_HELP12.int[0].replace('MP+1.5', 'MP+0.9');
 if (ATTR_HELP && ATTR_HELP.int) ATTR_HELP.int = ATTR_HELP.int.replace('最大MP+1.5', '最大MP+0.9');
-function* treeScreen11Tabs(start) { const st = Game.st, kinds = () => { const K = TREE_KINDS11.filter(k => !TREE11[k].dual || (typeof dualTab12 === 'function' ? dualTab12(k, st) : dualOn11(st))); return typeof DUAL_TAB12 !== 'undefined' && !K.some(k => TREE11[k].dual) ? K.concat(DUAL_TAB12) : K; };
+function* treeScreen11Tabs(start) { const st = Game.st, kinds = () => { const K = TREE_KINDS11.filter(k => (!TREE11[k].dual || (typeof dualTab12 === 'function' ? dualTab12(k, st) : dualOn11(st))) && (typeof kindOn13 !== 'function' || kindOn13(k))); return typeof DUAL_TAB12 !== 'undefined' && !K.some(k => TREE11[k].dual) ? K.concat(DUAL_TAB12) : K; };
   let ti = Math.max(0, kinds().indexOf(start || curKinds11(st)[0] || '劍')), onTabs = false; const selBy = {}, undo = [], VIS = 9, LY = 36;
   const selOf = k => selBy[k] || 0, tabY = 22, tabH = 13;
   const undoOne = () => { const u = undo.pop(); if (!u) return false; const T = tr11(st), v = (T.lv[u.key] || 0) - 1;
@@ -23579,7 +23579,7 @@ function fxtSetup13(kind) { const st = Game.st, T = tr11(st), base = fxtBase13(k
     while (true) { const r = P.length > 1 ? yield* choose(P.map(q => q[0]), { title: '哪一組？', index: this.fxtPage || 0, cancel: true }) : 0; if (r < 0) return null; this.fxtPage = r;
       hu.skills = [atk].concat(P[r][1]); this.moveIdx = idx[r] || 0; let out; try { out = yield* _cm.call(this); } finally { hu.skills = all; } if (out) { idx[r] = this.moveIdx; return out; } if (P.length <= 1) return null; } }; }
 if (fxtest13()) { if (typeof saveGame === 'function') saveGame = function () {}; }
-function* fxtMenu13() { const K = TREE_KINDS11.filter(k => !TREE11[k].common).concat(COMMON11.filter(k => (TREE11[k].sk || []).length).slice(0, 1)); let i = 0;
+function* fxtMenu13() { const K = TREE_KINDS11.filter(k => !TREE11[k].common && (typeof kindOn13 !== 'function' || kindOn13(k))).concat(COMMON11.filter(k => (TREE11[k].sk || []).length).slice(0, 1)); let i = 0;
   while (true) {
     const lab = k => (TREE11[k].common ? '共通' : k) + '（' + (TREE11[k].sk || []).length + (TREE11[k].common ? '' : '＋' + (TREE11[k].sp || []).length) + '）';
     const r = yield* choose(K.map(k => ({ t: lab(k) })), { x: 8, y: 30, w: W - 16, cols: 2, colW: (W - 24) / 2, cancel: true, index: i, title: '特效測試：選技能樹' });
@@ -23593,4 +23593,345 @@ if (fxtest13()) { const _tm = TitleScene.prototype.menu; TitleScene.prototype.me
     if (r === 1) return yield* _tm.call(this);
     Game.st = newGameState('測試'); const st = Game.st; st.map = 'route'; st.x = 10; st.y = 20; st.status = null; st.flags.tutInert11 = 1; st.flags.tutPart11 = 1; st.flags.tutWard12 = 1;
     yield* fadeOut(20); startOverworld(); Game.noEnc = 1; const ow = Game.scene; UI.clear(); ow.script = null; ow.run(fxtMenu13()); Game.sys.push(fadeIn(20)); }; }
+const HIDE_K13 = ['樂器', '魔導書', '火槍'], SWAP_K13 = { 樂器: '法杖', 魔導書: '法杖', 火槍: '劍' };
+function kindOn13(k) { return !HIDE_K13.includes(k); }
+const hidG13 = k => { const G = k && GEAR[k]; return !!(G && G.slot === 'weapon' && HIDE_K13.includes(G.kind)); };
+const swapOf13 = k => { const G = GEAR[k], t = clamp((G && G.t) || 1, 1, 7); return BASE11.weapon[SWAP_K13[G.kind]][t - 1]; };
+for (let i = START_KINDS12.length - 1; i >= 0; i--) if (!kindOn13(START_KINDS12[i])) START_KINDS12.splice(i, 1);
+for (const id in MAPS) { const P = MAPS[id].gearPool; if (!P) continue; for (let i = P.length - 1; i >= 0; i--) { const k = P[i]; if (hidG13(k) || (GEAR[k] && hidG13(base11Of(k)))) P.splice(i, 1); } }
+{ const _df = dropFits12; dropFits12 = function (k, sp) { if (hidG13(k) || (GEAR[k] && hidG13(base11Of(k)))) return false; return _df(k, sp); }; }
+{ const _mg = makeGear; makeGear = function (b, q, r) { const k = GEAR[b] ? base11Of(b) : b; if (hidG13(b) || hidG13(k)) { const G0 = GEAR11_GLAM; GEAR11_GLAM = false; try { return _mg.call(this, swapOf13(hidG13(k) ? k : b), q, r); } finally { GEAR11_GLAM = G0; } } return _mg.call(this, b, q, r); }; }
+function hideFix13(st) { if (!st || st.hide13v) return; st.hide13v = 1; const T = tr11(st), main = (() => { const w = gearBy(st.equip && st.equip.weapon, st); return w && GEAR[w.b] ? GEAR[w.b].kind : null; })();
+  for (const g of st.gear || []) { if (!hidG13(g.b)) continue; g.b = swapOf13(g.b); if (g.gl && (hidG13(g.gl) || (GEAR[g.gl] && GEAR[g.gl].slot === 'weapon'))) delete g.gl; }
+  let refund = 0; for (const kind of HIDE_K13) { if (!TREE11[kind]) continue; for (const N of treeNodes11(kind)) { if (T.lv[N.key]) { refund += T.lv[N.key]; delete T.lv[N.key]; } } delete T.eq[kind]; }
+  const gone = id => { const tr = treeOf11(id); return tr && HIDE_K13.includes(tr[0]); }; if (st.slots) st.slots = st.slots.filter(id => !gone(id));
+  if (main && HIDE_K13.includes(main)) { const nk = SWAP_K13[main]; if (!T.lv[nk + ':trait']) T.lv[nk + ':trait'] = 1; }
+  if (refund) st.hide13msg = refund; }
+{ const _so = startOverworld; startOverworld = function (...a) { try { hideFix13(Game.st); } catch (e) { bvErr('v12.32', 'hide ' + e.message); } return _so.apply(this, a); }; }
+{ const _ld = Overworld.prototype.load; Overworld.prototype.load = function (...a) { _ld.apply(this, a); const st = this.st || Game.st; if (st && st.hide13msg) { const n = st.hide13msg; delete st.hide13msg;
+    const go = (function* () { yield* say('（樂器・魔導書・火槍暫時下架了：身上的這三種換成了同階、同品質的法杖或劍（賦予和晶石照留），這三棵技能樹用掉的 ' + n + ' 點技能點已經退回。）'); })();
+    if (this.script) { const s0 = this.script; this.script = (function* () { yield* s0; yield* go; })(); } else this.run(go); } }; }
+if (typeof GROW12 !== 'undefined') { const q = GROW12.find(x => x[0] === '慣性'); if (q) q[1] = q[1].replace('魔導書的特性讓變化減半。', ''); }
+if (typeof BATTLE_HELP !== 'undefined') for (const q of BATTLE_HELP) if (Array.isArray(q[1])) q[1] = q[1].filter(t => !/^火槍學會特性後/.test(t));
+const OL13 = '#120c22';
+const k13path = (x, pts) => { x.beginPath(); pts.forEach(([a, b], i) => i ? x.lineTo(a, b) : x.moveTo(a, b)); x.closePath(); };
+Object.assign(HERO_PK, {
+  k13cut(x, p, a) { const g = clamp(p.t / (p.grow || 3), 0, 1), tail = clamp((p.t - (p.grow || 3)) / Math.max(1, p.life - (p.grow || 3)), 0, 1), L = p.len, dx = Math.cos(p.ang), dy = Math.sin(p.ang), nx = -dy, ny = dx;
+    const u0 = tail * 0.9, u1 = g; if (u1 <= u0) return; const N = 10, top = [], bot = [], bend = p.bend || 0;
+    for (let i = 0; i <= N; i++) { const u = u0 + (u1 - u0) * i / N, w = (p.w || 6) * Math.sin(Math.PI * u) * (1 - tail * 0.6) / 2 + 0.5, s = L * (u - 0.5), b = Math.sin(Math.PI * u) * bend, cx = p.x + dx * s + nx * b, cy = p.y + dy * s + ny * b; top.push([cx + nx * w, cy + ny * w]); bot.unshift([cx - nx * w, cy - ny * w]); }
+    x.globalAlpha = Math.min(1, a * 2); x.lineJoin = 'round'; k13path(x, top.concat(bot)); x.strokeStyle = p.o || OL13; x.lineWidth = 2.5; x.stroke(); x.fillStyle = p.c; x.fill();
+    x.strokeStyle = p.h || '#ffffff'; x.lineWidth = Math.max(1, (p.w || 6) / 4); x.beginPath(); top.forEach(([q, r], i) => { const [q2, r2] = bot[bot.length - 1 - i]; const mx = (q + q2) / 2, my = (r + r2) / 2; i ? x.lineTo(mx, my) : x.moveTo(mx, my); }); x.stroke(); },
+  k13arc(x, p, a) { const g = clamp(p.t / (p.grow || 5), 0, 1), tail = clamp((p.t - (p.grow || 5)) / Math.max(1, p.life - (p.grow || 5)), 0, 1), A0 = lerp(p.a0, p.a1, tail * 0.85), A1 = lerp(p.a0, p.a1, g); if (Math.abs(A1 - A0) < 0.02) return;
+    const N = 18, out = [], inn = [], fl = p.fl || 1; for (let i = 0; i <= N; i++) { const an = A0 + (A1 - A0) * i / N, u = i / N, w = (p.w || 6) * (0.25 + 0.75 * u) * (1 - tail * 0.5); out.push([p.x + Math.cos(an) * (p.r + w / 2), p.y + Math.sin(an) * (p.r + w / 2) * fl]); inn.unshift([p.x + Math.cos(an) * (p.r - w / 2), p.y + Math.sin(an) * (p.r - w / 2) * fl]); }
+    x.globalAlpha = Math.min(1, a * 2); x.lineJoin = 'round'; k13path(x, out.concat(inn)); x.strokeStyle = p.o || OL13; x.lineWidth = 2.5; x.stroke(); x.fillStyle = p.c; x.fill();
+    x.strokeStyle = p.h || '#ffffff'; x.lineWidth = 1.2; x.beginPath(); for (let i = Math.floor(N * 0.4); i <= N; i++) { const an = A0 + (A1 - A0) * i / N; const X = p.x + Math.cos(an) * p.r, Y = p.y + Math.sin(an) * p.r * fl; i > Math.floor(N * 0.4) ? x.lineTo(X, Y) : x.moveTo(X, Y); } x.stroke(); },
+  k13ring(x, p, a) { const e = 1 - Math.pow(1 - p.t / p.life, 3), r = lerp(p.r0, p.r1, e), w = (p.w || 3) * (0.4 + 0.6 * a), fl = p.fl || 1; x.globalAlpha = Math.min(1, a * 1.6);
+    x.strokeStyle = p.o || OL13; x.lineWidth = w + 2; x.beginPath(); x.ellipse(p.x, p.y, r, r * fl, 0, 0, 7); x.stroke(); x.strokeStyle = p.c; x.lineWidth = w; x.stroke(); if (p.h) { x.strokeStyle = p.h; x.lineWidth = 1; x.stroke(); } },
+  k13spike(x, p, a) { const e = Math.min(1, p.t / 4), n = p.n || 8, R1 = lerp(p.r0 || 4, p.r1 || 24, e) * (0.7 + 0.3 * a); x.globalAlpha = Math.min(1, a * 1.8);
+    const pts = []; for (let i = 0; i < n * 2; i++) { const an = (p.rot || 0) + i * Math.PI / n, r = i % 2 ? R1 * (p.inner || 0.32) : R1 * (i % 4 === 0 ? 1 : 0.72); pts.push([p.x + Math.cos(an) * r, p.y + Math.sin(an) * r]); }
+    k13path(x, pts); x.strokeStyle = p.o || OL13; x.lineWidth = 2.5; x.stroke(); x.fillStyle = p.c; x.fill(); x.fillStyle = p.h || '#ffffff'; x.beginPath(); x.arc(p.x, p.y, R1 * 0.22, 0, 7); x.fill(); },
+  k13orb(x, p, a) { const H = p.hist || (p.hist = []); H.push([p.x, p.y]); if (H.length > (p.trail || 6)) H.shift(); const r = p.r * (p.pulse ? 1 + 0.12 * Math.sin(p.t * 1.3) : 1);
+    x.globalAlpha = Math.min(1, a * 2); H.forEach(([q, w], i) => { const k = (i + 1) / H.length; x.fillStyle = p.c; x.globalAlpha = Math.min(1, a * 2) * k * 0.5; x.beginPath(); x.arc(q, w, r * k * 0.8, 0, 7); x.fill(); });
+    x.globalAlpha = Math.min(1, a * 2); x.fillStyle = p.o || OL13; x.beginPath(); x.arc(p.x, p.y, r + 1.5, 0, 7); x.fill(); x.fillStyle = p.c; x.beginPath(); x.arc(p.x, p.y, r, 0, 7); x.fill();
+    x.fillStyle = p.h || '#ffffff'; x.beginPath(); x.arc(p.x - r * 0.25, p.y - r * 0.25, r * 0.45, 0, 7); x.fill(); },
+  k13mark(x, p, a) { const e = 1 - Math.pow(1 - Math.min(1, p.t / (p.grow || 8)), 3), R = lerp(p.r0 || 30, p.r1 || 12, e), rot = (p.spin || 0.8) * (1 - e); x.globalAlpha = Math.min(1, a * 2); x.lineCap = 'square';
+    for (const [c, w] of [[p.o || OL13, 4], [p.c, 2]]) { x.strokeStyle = c; x.lineWidth = w; for (let i = 0; i < 4; i++) { const an = rot + i * Math.PI / 2 + Math.PI / 4, cx = p.x + Math.cos(an) * R, cy = p.y + Math.sin(an) * R, ux = Math.cos(an + Math.PI * 0.75) * 6, uy = Math.sin(an + Math.PI * 0.75) * 6, vx = Math.cos(an - Math.PI * 0.75) * 6, vy = Math.sin(an - Math.PI * 0.75) * 6;
+      x.beginPath(); x.moveTo(cx + ux, cy + uy); x.lineTo(cx, cy); x.lineTo(cx + vx, cy + vy); x.stroke(); } }
+    if (p.dot && e > 0.9) { x.fillStyle = p.o || OL13; x.fillRect(p.x - 2, p.y - 2, 5, 5); x.fillStyle = p.c; x.fillRect(p.x - 1, p.y - 1, 3, 3); } },
+  k13beam(x, p, a) { const g = clamp(p.t / (p.grow || 3), 0, 1), X2 = lerp(p.x1, p.x2, g), Y2 = lerp(p.y1, p.y2, g), w = (p.w || 8) * (0.5 + 0.5 * a) * (p.t % 4 < 2 ? 1 : 0.85); x.globalAlpha = Math.min(1, a * 2); x.lineCap = 'round';
+    for (const [c, ww] of [[p.o || OL13, w + 3], [p.c, w], [p.h || '#ffffff', Math.max(1, w * 0.35)]]) { x.strokeStyle = c; x.lineWidth = ww; x.beginPath(); x.moveTo(p.x1, p.y1); x.lineTo(X2, Y2); x.stroke(); } },
+  k13poly(x, p, a) { const sc = Math.max(0.02, (p.s0 != null ? lerp(p.s0, p.s1 ?? 1, clamp(p.t / (p.grow || 5), 0, 1)) : 1) * (p.sc || 1)); if (p.t < 0) return; x.globalAlpha = Math.min(1, a * (p.fade ? 1.5 : 4)) * (p.al ?? 1); x.translate(p.x, p.y); x.rotate((p.rot || 0) + (p.vr || 0) * p.t); x.scale(sc, sc * (p.sy || 1)); x.lineJoin = 'round';
+    for (const s of p.shapes) { k13path(x, s.pts); x.strokeStyle = s.o || p.o || OL13; x.lineWidth = (s.ow || 2.5) / sc; x.stroke(); x.fillStyle = s.c; x.fill(); } },
+  k13ghost(x, p, a) { if (!p.img) return; x.globalAlpha = a * (p.al || 0.6); x.imageSmoothingEnabled = false; x.drawImage(p.img, Math.round(p.x), Math.round(p.y), p.w, p.h); },
+  k13clock(x, p, a) { const r = p.r * Math.min(1, p.t / 5); x.globalAlpha = Math.min(1, a * 2); x.fillStyle = p.bg || 'rgba(10,30,50,0.55)'; x.beginPath(); x.arc(p.x, p.y, r, 0, 7); x.fill();
+    x.strokeStyle = OL13; x.lineWidth = 4; x.stroke(); x.strokeStyle = p.c; x.lineWidth = 2; x.stroke(); for (let i = 0; i < 12; i++) { const an = i * Math.PI / 6; x.fillStyle = i % 3 ? p.c : p.h || '#ffffff'; x.fillRect(Math.round(p.x + Math.cos(an) * r * 0.8) - 1, Math.round(p.y + Math.sin(an) * r * 0.8) - 1, i % 3 ? 2 : 3, i % 3 ? 2 : 3); }
+    const h1 = (p.h0 || 0) + p.t * (p.sp || 0.5), h2 = (p.m0 || 0) + p.t * (p.sp || 0.5) * 12;
+    for (const [an, L, w] of [[h1, 0.5, 3], [h2, 0.78, 2]]) { x.strokeStyle = OL13; x.lineWidth = w + 2; x.beginPath(); x.moveTo(p.x, p.y); x.lineTo(p.x + Math.cos(an - Math.PI / 2) * r * L, p.y + Math.sin(an - Math.PI / 2) * r * L); x.stroke(); x.strokeStyle = p.h || '#ffffff'; x.lineWidth = w; x.stroke(); } },
+});
+const K13 = {
+  cut(b, P, ang, len, col, w = 7, life = 14, o = {}) { return b.spawn({ k: 'k13cut', x: P.x, y: P.y, ang, len: len * 1.12, w: w * 1.15, c: col[0], h: col[1], o: col[2], grow: o.grow || 3, bend: o.bend || 0, life: Math.round(life * 1.45) }); }, // lingers: the battle plays at ×2
+  arc(b, P, r, a0, a1, col, w = 7, life = 16, o = {}) { return b.spawn({ k: 'k13arc', x: P.x, y: P.y, r, a0, a1, w: w * 1.15, c: col[0], h: col[1], o: col[2], fl: o.fl || 1, grow: o.grow || 5, life: Math.round(life * 1.35) }); },
+  ring(b, P, r0, r1, col, w = 3, life = 14, fl = 1) { return b.spawn({ k: 'k13ring', x: P.x, y: P.y, r0, r1, w, c: col[0], h: col[1], o: col[2], fl, life }); },
+  spike(b, P, r1, col, n = 8, life = 12, o = {}) { return b.spawn({ k: 'k13spike', x: P.x, y: P.y, r0: o.r0 || 4, r1, n, c: col[0], h: col[1], o: col[2], rot: o.rot ?? Math.random(), inner: o.inner, life }); },
+  mark(b, P, col, o = {}) { return b.spawn({ k: 'k13mark', x: P.x, y: P.y, r0: o.r0 || 32, r1: o.r1 || 13, c: col[0], o: col[2], grow: o.grow || 8, spin: o.spin ?? 0.8, dot: o.dot ?? 1, life: o.life || 24 }); },
+  beam(b, A, B, col, w = 8, life = 12, grow = 3) { return b.spawn({ k: 'k13beam', x1: A.x, y1: A.y, x2: B.x, y2: B.y, w, c: col[0], h: col[1], o: col[2], grow, life }); },
+  poly(b, P, shapes, o = {}) { return b.spawn(Object.assign({ k: 'k13poly', x: P.x, y: P.y, shapes, life: 20 }, o)); },
+  *orb(b, A, B, col, r = 5, n = 10, arc = 0, o = {}) { const p = b.spawn({ k: 'k13orb', x: A.x, y: A.y, r, c: col[0], h: col[1], o: col[2], trail: o.trail || 7, pulse: o.pulse, life: n + 2 });
+    p.upd = q => { const t = clamp(q.t / n, 0, 1), e = o.ease ? t * t : t; q.x = lerp(A.x, B.x, e); q.y = lerp(A.y, B.y, e) - Math.sin(Math.PI * t) * arc; }; yield* wait(n); },
+  ghost(b, dx, dy, col, life = 14, al = 0.55) { const Hv = b.H, hi = Hv && Hv.img; if (!hi) return; const ds = hi.ds || 1, hx0 = b.heroX + HD_HERO_OX, hx = (hi.px ? hx0 + 28 - hi.bb.cx : hx0) + dx, hy = (hi.px ? HERO_FOOT - hi.bb.bot : HERO_Y) + dy;
+    let im = hi; if (col) { try { const cv = document.createElement('canvas'); cv.width = hi.width; cv.height = hi.height; const g = cv.getContext('2d'); g.drawImage(hi, 0, 0); g.globalCompositeOperation = 'source-atop'; g.globalAlpha = 0.5; g.fillStyle = col; g.fillRect(0, 0, cv.width, cv.height); cv.px = hi.px; im = cv; } catch (e) { im = hi; } } return b.spawn({ k: 'k13ghost', img: im, x: hx, y: hy, w: hi.width * ds, h: hi.height * ds, al, life }); },
+  streaks(b, y0, y1, dir, col, n = 10, life = 12) { for (let i = 0; i < n; i++) b.spawn({ k: 'streak', x: dir > 0 ? rnd(-20, W / 2) : rnd(W / 2, W + 20), y: rnd(y0, y1), vx: dir * (6 + Math.random() * 5), len: rnd(10, 24), c: i % 2 ? col[0] : col[1], life }); },
+  motes(b, from, to, col, n = 10, life = 18) { for (let i = 0; i < n; i++) b.spawn({ k: 'mote', x: from.x + rnd(-14, 14), y: from.y + rnd(-14, 14), vy: 0, to: { x: to.x + rnd(-4, 4), y: to.y + rnd(-4, 4) }, s: 3, c: i % 2 ? col[0] : col[1], life: life + rnd(0, 6) }); },
+  debris(b, P, n, cols, spd = 2.4, g = 0.16, life = 24, s = [3, 6]) { for (let i = 0; i < n; i++) b.spawn({ k: 'shard', g, x: P.x + rnd(-8, 8), y: P.y + rnd(-6, 6), vx: rnd(-10, 10) / 10 * spd, vy: -rnd(6, 16) / 10 * spd, s: rnd(s[0], s[1]), c: cols[i % cols.length], life }); },
+  dark(b, a = 0.45, life = 26, c = '#0a0618') { b.spawn({ k: 'dark', a, c, life }); },
+  flash(b, c = '#ffffff', a = 0.4, life = 6) { b.spawn({ k: 'flash', c, a, life }); },
+  hit(b, P, col, big = 0) { K13.spike(b, P, big ? 30 : 20, col, big ? 10 : 8, big ? 14 : 11); K13.ring(b, P, 4, big ? 34 : 24, col, big ? 4 : 3, big ? 14 : 11); b.sparks(P.x, P.y, big ? 14 : 8, [col[0], col[1]], big ? 3 : 2.2, 16); b.shake = Math.max(b.shake, big ? 9 : 4); },
+  views(b, t) { return t && t.group ? t.group.slice() : t ? [t] : (b.tgtV ? [b.tgtV] : []); },
+  low(t, r = 0.5) { return !!(t && t.maxhp && t.hp / t.maxhp <= r); },
+  ward(t) { return !!(t && t.st && t.st.barrier); },
+  broken(t) { return !!(t && (t.broken || (t.st && t.st.broken))); },
+  defDown(t) { return !!(t && t.st && t.st.stage_def < 0); },
+  tint(v, c, a, n) { if (!v) return; v.tint = { c, a }; v._t13 = n; },
+};
+{ const _up = Battle.prototype.update; Battle.prototype.update = function () { _up.call(this); for (const v of Object.values(this.views || {})) if (v && v._t13 > 0 && --v._t13 === 0) v.tint = null; }; }
+const ICON13 = {
+  eye: spriteFrom(['...kkkkk...', '.kkwwwwwkk.', 'kwwwyyywwwk', 'kwwyykyywwk', 'kwwwyyywwwk', '.kkwwwwwkk.', '...kkkkk...'], { k: '#120c22', w: '#ffffff', y: '#ffc030' }),
+  skull: spriteFrom(['.kkkkk.', 'kwwwwwk', 'kwkwkwk', 'kwwwwwk', '.kwkwk.', '.kkkkk.'], { k: '#120c22', w: '#ffe0e0' }),
+};
+const REDO13 = new Set();
+{ const _hc = heroCast; heroCast = function* (u, mv, id, t) { if (REDO13.has(id)) return; yield* _hc.call(this, u, mv, id, t); };
+  const _hi = heroImpact; heroImpact = function* (T, mv, r, id, u) { if (REDO13.has(id)) return; yield* _hi.call(this, T, mv, r, id, u); };
+  const _hb = heroBless; heroBless = function (u, mv, id) { if (REDO13.has(id)) return; return _hb.call(this, u, mv, id); };
+  const H = Battle.prototype.handlers, _su = H.SKILL_USE; H.SKILL_USE = function* (e, s, t, P) { const on = s && s.hero && REDO13.has(P.skill); this.redo13 = on;
+    try { return yield* _su.call(this, e, s, t, P); } finally { this.redo13 = false; } };
+  if (typeof wThemeBurst === 'function') { const _wb = wThemeBurst; wThemeBurst = function (...a) { if (this && this.redo13) return; return _wb.apply(this, a); }; }
+  const _sp = Battle.prototype.spawn; Battle.prototype.spawn = function (p) { const r = _sp.call(this, p); if (this.redo13) delete r.sl; return r; }; }
+function redo13(id, fxKey, F) { const D = DEF.skills[id]; if (!D) { bvErr('v12.32', 'redo ' + id); return; } REDO13.add(id); const S = { col: F.col };
+  FX[fxKey] = function* (U, T, u, t) { if (!T) { const L = this.foes ? this.foes().filter(v => !v.gone) : [], g = L.length > 1 ? this.groupOf(L.map(v => v.id)) : L[0]; T = g ? this.center(g) : { x: U.x, y: U.y - 80 }; if (!t) t = g; } if (!u) u = this.H; this.slashOn = 0; yield* F.f.call(this, S, U, T, u, t); };
+  if (F.h) { FX[fxKey + 'h13'] = function* (U, T, u, i, t) { this.slashOn = 0; yield* F.h.call(this, S, U, T, u, i, t); }; D.hitFx = fxKey + 'h13'; }
+  if (F.alsoIds) for (const x of F.alsoIds) { REDO13.add(x); const D2 = DEF.skills[x]; if (D2) { D2.fx = fxKey; if (F.h) D2.hitFx = fxKey + 'h13'; } }
+  D.fx = fxKey; if (typeof SKILL_STYLE !== 'undefined') SKILL_STYLE[id] = ['draw', null, 'steel', null]; if (MOVES[id]) MOVES[id].fx = fxKey; }
+function redoSp13(kind, j, F) { const ids = []; for (let t = 1; t <= 7; t++) for (const m of [0, 1]) { const id = spId11(kind, j, t, m); if (DEF.skills[id]) ids.push(id); } if (!ids.length) { bvErr('v12.32', 'sp ' + kind + j); return; }
+  redo13(ids[0], spFxId11(kind, j), Object.assign({}, F, { alsoIds: ids.slice(1) })); }
+const C13 = { // [main, highlight, outline]
+  wind: ['#4ee0a0', '#f0fff8', '#0a3324'], gold: ['#ffcc33', '#fffbe0', '#3a2806'], red: ['#ff5034', '#fff0e0', '#3a0806'], star: ['#b07cff', '#fff0ff', '#1e0840'],
+  blood: ['#e8263e', '#ffe0e4', '#2a0410'], shade: ['#8a5ad0', '#efe0ff', '#12061e'], moon: ['#f4e27a', '#ffffff', '#1c1a3a'], axe: ['#ff8a2a', '#fff0d0', '#3a1404'],
+  brick: ['#c09060', '#f8e0c0', '#2e1a0a'], iron: ['#9aa8c0', '#ffffff', '#141a2a'], chi: ['#ffb020', '#fff6d0', '#3a2000'], crack: ['#ff4a2a', '#ffd0a0', '#2a0600'],
+  mana: ['#6a8cff', '#eef2ff', '#0a1440'], arc: ['#c060ff', '#fbeaff', '#24063e'], ward: ['#7ad0ff', '#ffffff', '#082040'], storm: ['#a050ff', '#f0e0ff', '#18042a'],
+  time: ['#40e0e0', '#f0ffff', '#06282e'], finale: ['#5aa0ff', '#ffffff', '#081a40'], max: ['#e040ff', '#ffe8ff', '#2a0636'], mp: ['#58a8ff', '#e0f0ff', '#081a3a'],
+  fang: ['#ff3a6a', '#ffe4ec', '#30061a'], petal: ['#ff8ac8', '#fff0f8', '#3a0a26'], gale: ['#9ae8ff', '#ffffff', '#0a2a3a'], swal: ['#ffe066', '#ffffff', '#2a2006'],
+  obs: ['#3a2a52', '#c890ff', '#06020c'], shield: ['#a8c0e0', '#ffffff', '#101a2c'], holy: ['#ffe070', '#ffffff', '#3a2a06'],
+};
+const EL13 = { 火: ['#ff5a20', '#ffe8a0', '#3a0a00'], 水: ['#3aa0ff', '#e0f4ff', '#061a40'], 雷: ['#ffe040', '#ffffff', '#3a3000'], 草: ['#4ad060', '#e8ffd0', '#06300a'] };
+const SH13 = {
+  hex: (r, c) => [{ pts: [0, 1, 2, 3, 4, 5].map(i => [Math.cos(i * Math.PI / 3) * r, Math.sin(i * Math.PI / 3) * r]), c }],
+  eye: (w, h) => { const top = [], bot = []; for (let i = 0; i <= 10; i++) { const x = -w + 2 * w * i / 10, y = h * (1 - Math.pow(x / w, 2)); top.push([x, -y]); bot.unshift([x, y]); }
+    const iris = [], pup = []; for (let i = 0; i < 12; i++) { const an = i * Math.PI / 6; iris.push([Math.cos(an) * h * 0.78, Math.sin(an) * h * 0.78]); pup.push([Math.cos(an) * h * 0.32, Math.sin(an) * h * 0.32]); }
+    return [{ pts: top.concat(bot), c: '#ffffff' }, { pts: iris, c: '#ffc030' }, { pts: pup, c: '#120c22' }]; },
+  needle: c => [{ pts: [[0, -10], [2.2, 4], [0, 8], [-2.2, 4]], c }],
+  axe: (c, h) => [{ pts: [[-2, -34], [2, -34], [2, 30], [-2, 30]], c: '#7a4a24' }, { pts: [[2, -30], [16, -36], [24, -22], [24, -6], [16, 6], [2, 0]], c }, { pts: [[18, -32], [24, -22], [24, -6], [19, 3], [21, -14]], c: h }],
+  palm: c => [{ pts: [[-9, -3], [9, -3], [10, 10], [0, 15], [-10, 10]], c }, ...[-9, -4.5, 0, 4.5].map(x => ({ pts: [[x, -17 + Math.abs(x + 2) * 0.4], [x + 4, -17 + Math.abs(x + 2) * 0.4], [x + 4, -2], [x, -2]], c })), { pts: [[8, 2], [15, -6], [18, -3], [10, 8]], c }],
+  spear: (c, h) => [{ pts: [[-1.6, -18], [1.6, -18], [1.6, 34], [-1.6, 34]], c: h }, { pts: [[0, -36], [6, -22], [2, -18], [0, -20], [-2, -18], [-6, -22]], c }],
+  arrow: c => [{ pts: [[0, -12], [5, -3], [1.6, -4], [1.6, 9], [-1.6, 9], [-1.6, -4], [-5, -3]], c }],
+  blade: (c, h) => [{ pts: [[-4, -44], [4, -44], [5, 22], [0, 34], [-5, 22]], c }, { pts: [[0, -44], [2, -44], [3, 22], [0, 30]], c: h }, { pts: [[-13, -48], [13, -48], [13, -43], [-13, -43]], c: '#1a0e2a' }, { pts: [[-2.5, -64], [2.5, -64], [2.5, -48], [-2.5, -48]], c: '#5a3a7a' }],
+  shield: (c, h) => [{ pts: [[-12, -14], [12, -14], [14, -4], [0, 16], [-14, -4]], c }, { pts: [[-2, -10], [2, -10], [2, 8], [-2, 8]], c: h }, { pts: [[-8, -4], [8, -4], [8, 0], [-8, 0]], c: h }],
+  petal: c => [{ pts: [[0, -8], [3.5, -1], [0, 7], [-3.5, -1]], c }],
+  wall: (c, w, h) => [{ pts: [[-w, -h], [w, -h], [w, h], [-w, h]], c }],
+};
+const ang13 = (A, B) => Math.atan2(B.y - A.y, B.x - A.x);
+const mainFoe13 = b => { const L = b.foes ? b.foes().filter(v => !v.gone && v.hp > 0) : []; return b.F && L.includes(b.F) ? b.F : L[0]; };
+redo13('t_sdTwin', 't11_sdTwin', { col: C13.wind,
+  *f(S, U, T, u) { const c = S.col; Sound.sfx('wind'); for (let i = 0; i < 3; i++) K13.ghost(this, -6 - i * 7, 4, '#6af0b8', 9 + i * 3, 0.5 - i * 0.12); K13.streaks(this, U.y - 34, U.y + 16, -1, c, 10, 12);
+    yield* this.lunge(u, 24, 2); Sound.sfx('slash'); K13.cut(this, T, -0.8, 70, c, 10, 14, { bend: 7 }); K13.spike(this, T, 18, c, 6, 10); this.shake = Math.max(this.shake, 3); yield* wait(6); },
+  *h(S, U, T) { const c = S.col; Sound.sfx('slash'); K13.cut(this, T, 0.8, 70, c, 10, 14, { bend: -7 }); K13.hit(this, T, c, 0); yield* wait(5);
+    Sound.sfx('wind'); const H = this.center(this.H); K13.arc(this, { x: H.x, y: H.y + 8 }, 28, Math.PI * 0.8, Math.PI * 2.8, c, 6, 20, { fl: 0.38, grow: 9 }); K13.ghost(this, -12, 0, '#6af0b8', 16, 0.45); K13.ghost(this, 12, 0, '#6af0b8', 16, 0.45); yield* wait(12); } });
+redo13('t_sdEye', 't11_sdEye', { col: C13.gold,
+  *f(S, U) { const c = S.col, H = this.center(this.H), E = { x: H.x, y: H.y - 50 }; K13.dark(this, 0.45, 48); Sound.sfx('tick');
+    const eye = K13.poly(this, E, SH13.eye(16, 8), { life: 40, sy: 0.05 }); eye.upd = q => { q.sy = Math.min(1, q.t / 6); }; K13.ring(this, E, 6, 30, c, 2, 14); yield* wait(10);
+    const F = mainFoe13(this), P = F ? this.center(F) : { x: E.x, y: E.y - 50 }; Sound.sfx('crit'); K13.beam(this, E, P, c, 2, 20, 6); K13.mark(this, P, c, { life: 34, r0: 36, r1: 12 }); yield* wait(12);
+    Sound.sfx('wind'); for (const dx of [-16, 16]) { K13.ghost(this, dx, 0, '#a0e8ff', 18, 0.55); K13.ghost(this, dx * 1.6, 0, '#a0e8ff', 14, 0.3); } yield* wait(14); } });
+redo13('t_sdGap', 't11_sdGap', { col: C13.red,
+  *f(S, U, T, u, t) { const c = S.col, v = K13.views(this, t)[0], weak = K13.defDown(v), warded = K13.ward(v); Sound.sfx('tick'); K13.mark(this, T, c, { r0: 34, r1: 10, grow: 7, life: 22 }); yield* wait(9);
+    yield* this.lunge(u, 28, 2); Sound.sfx('crit'); const a = ang13(U, T); K13.cut(this, { x: T.x - Math.cos(a) * 8, y: T.y - Math.sin(a) * 8 }, a, 96, c, 8, 12, { grow: 2 }); K13.spike(this, T, 24, c, 4, 12, { rot: a, inner: 0.22 });
+    for (let i = 0; i < (weak ? 8 : 5); i++) { const an = a + Math.PI + rnd(-14, 14) / 10; K13.cut(this, { x: T.x + Math.cos(an) * 12, y: T.y + Math.sin(an) * 12 }, an, 16 + rnd(0, 12), c, 3, 16); }
+    if (warded) { Sound.sfx('rock'); K13.ring(this, T, 10, 44, C13.ward, 4, 14); for (let i = 0; i < 12; i++) { const an = Math.random() * 6.3, sp = rnd(15, 35) / 10; this.spawn({ k: 'k13poly', x: T.x + Math.cos(an) * 14, y: T.y + Math.sin(an) * 14, vx: Math.cos(an) * sp, vy: Math.sin(an) * sp - 0.6, g: 0.1, vr: 0.2, shapes: SH13.hex(4, C13.ward[0]), life: 22, fade: 1 }); } }
+    if (weak) { K13.flash(this, '#ff4020', 0.25, 6); K13.spike(this, T, 36, c, 10, 14); }
+    K13.hit(this, T, c, weak || warded ? 1 : 0); yield* wait(10); } });
+redo13('t_zjRune', 't11_zjRune', { col: C13.star,
+  *f(S, U, T, u) { const c = S.col, el = EL13[((gearBy(Game.st.equip.weapon) || {}).el) || ''] || C13.arc, H = this.center(this.H), tip = { x: H.x + 18, y: H.y - 20 };
+    Sound.sfx('charge'); for (let i = 0; i < 6; i++) K13.spike(this, { x: tip.x + rnd(-12, 12), y: tip.y + rnd(-18, 8) }, 7, c, 4, 16, { inner: 0.3 }); K13.ring(this, tip, 26, 4, c, 2, 12); yield* wait(10);
+    yield* this.lunge(u, 18, 3); Sound.sfx('slash'); K13.cut(this, T, -0.9, 74, c, 10, 16, { bend: 8 }); K13.hit(this, T, c, 0); yield* wait(4);
+    const Sg = { x: T.x, y: T.y - 34 }; this.spawn({ k: 'glow', x: Sg.x, y: Sg.y, r: 26, c: c[2], life: 36 }); this.spawn({ k: 'rune', x: Sg.x, y: Sg.y, r: 18, c: c[0], c2: c[1], n: 10, poly: 5, sq: 1, life: 36 }); K13.ring(this, Sg, 4, 22, c, 3, 12); yield* wait(6);
+    for (let k = 0; k < 2; k++) { const P = { x: T.x + (k ? 9 : -9), y: T.y + 2 }; Sound.sfx('charge'); yield* K13.orb(this, Sg, P, el, 6, 5, 0, { trail: 6 }); Sound.sfx('hitSuper'); K13.hit(this, P, el, 0); yield* wait(5); }
+    Sound.sfx('heal'); K13.motes(this, T, H, C13.mp, 14, 18); yield* wait(14); } });
+redo13('t_dgReap', 't11_dgReap', { col: C13.blood,
+  *f(S, U, T, u, t) { const c = S.col, v = K13.views(this, t)[0], low = K13.low(v, 0.5);
+    if (low) { K13.dark(this, 0.42, 36, '#1a0006'); this.spawn({ k: 'img', img: ICON13.skull, x: T.x, y: T.y - 38, vy: -0.15, life: 32, fade: 1 }); }
+    K13.mark(this, T, c, { r0: 28, r1: 8, grow: 6, life: 22 }); Sound.sfx('tick'); yield* wait(7);
+    Sound.sfx('wind'); for (let i = 1; i <= 4; i++) K13.ghost(this, (T.x - U.x) * i / 6, (T.y - U.y) * i / 6, '#ff5068', 6 + i * 2, 0.4); yield* this.lunge(u, 30, 2);
+    Sound.sfx('crit'); const a = ang13(U, T); K13.cut(this, T, a, 56, c, 7, 10, { grow: 2 });
+    if (low) { yield* wait(2); K13.cut(this, T, a + 1.5, 60, c, 9, 14); K13.flash(this, '#ff1030', 0.35, 8); K13.spike(this, T, 36, c, 10, 16); }
+    K13.hit(this, T, c, low ? 1 : 0); this.sparks(T.x, T.y, 10, ['#ff2040', '#ffd0d0'], 2.6, 18, 0.12); yield* wait(10); } });
+redo13('t_dgStitch', 't11_dgStitch', { col: C13.shade,
+  *f(S, U, T, u, t) { const c = S.col, v = K13.views(this, t)[0], foot = v ? v.foot : T.y + 26; Sound.sfx('wind'); K13.streaks(this, U.y - 40, U.y + 10, 1, c, 8, 10);
+    const A = { x: U.x + 14, y: U.y - 16 }; for (const dx of [-15, 0, 15]) { const P = { x: T.x + dx, y: foot - 2 }, nd = K13.poly(this, A, SH13.needle(c[0]), { life: 44, rot: ang13(A, P) + Math.PI / 2 }); nd.upd = q => { const k = clamp(q.t / 5, 0, 1); q.x = lerp(A.x, P.x, k); q.y = lerp(A.y, P.y, k); }; Sound.sfx('tick'); yield* wait(2); }
+    yield* wait(4); Sound.sfx('statDown'); this.spawn({ k: 'k13ring', x: T.x, y: foot - 1, r0: 6, r1: 32, w: 6, c: c[0], h: c[1], o: c[2], fl: 0.24, life: 34 });
+    for (const dx of [-15, 0, 15]) this.spawn({ k: 'k13beam', x1: T.x + dx, y1: foot - 2, x2: T.x + dx * 0.5, y2: T.y - 4, w: 2, c: c[0], h: c[1], o: c[2], grow: 5, life: 30 });
+    K13.tint(v, '#2a1844', 0.6, 34); K13.hit(this, T, c, 0); yield* wait(16); } });
+redo13('t_zjMoonFang', 't11_zjMoonFang', { col: C13.moon,
+  *f(S, U, T, u, t) { const c = S.col, v = K13.views(this, t)[0], low = K13.low(v, 0.5); K13.dark(this, 0.5, 44, '#04061a'); Sound.sfx('charge');
+    this.spawn({ k: 'moon', x: T.x + 22, y: T.y - 36, r: 13, c: '#fff6c8', life: 44 }); yield* wait(7); yield* this.lunge(u, 22, 2); Sound.sfx('slash');
+    K13.arc(this, { x: T.x + 12, y: T.y }, 30, Math.PI * 1.3, Math.PI * 0.45, c, 14, 16, { grow: 4 }); K13.cut(this, { x: T.x - 10, y: T.y + 4 }, 1.9, 30, c, 6, 10); if (low) { Sound.sfx('crit'); K13.spike(this, T, 30, ['#ffd040', '#ffffff', OL13], 4, 14, { rot: 0.78, inner: 0.2 }); }
+    K13.hit(this, T, c, low ? 1 : 0); yield* wait(5); },
+  *h(S, U, T) { const c = S.col, low = K13.low(this.tgtV, 0.5); Sound.sfx('slash'); K13.arc(this, { x: T.x - 12, y: T.y }, 30, -Math.PI * 0.3, Math.PI * 0.55, c, 14, 16, { grow: 4 }); K13.cut(this, { x: T.x + 10, y: T.y + 4 }, 1.25, 30, c, 6, 10);
+    if (low) { Sound.sfx('crit'); K13.spike(this, T, 30, ['#ffd040', '#ffffff', OL13], 4, 14, { rot: 0, inner: 0.2 }); } K13.hit(this, T, c, low ? 1 : 0); yield* wait(8); } });
+redo13('t_axSpin', 't11_axSpin', { col: C13.axe,
+  *f(S, U, T, u, t) { const c = S.col, L = K13.views(this, t).map(v => this.center(v)).sort((a, b) => a.x - b.x), G = T; Sound.sfx('wind');
+    for (let i = 0; i < 4; i++) K13.ghost(this, Math.cos(i * 1.57) * 10, Math.sin(i * 1.57) * 4, '#ffb060', 8 + i * 3, 0.4); yield* this.lunge(u, 16, 3);
+    Sound.sfx('heavy'); K13.arc(this, { x: G.x, y: G.y + 6 }, 74, Math.PI * 0.95, Math.PI * 2.95, c, 12, 22, { fl: 0.36, grow: 12 });
+    for (const P of L) { yield* wait(3); Sound.sfx('slash'); K13.cut(this, P, -0.2 + rnd(-3, 3) / 10, 40, c, 8, 12); K13.hit(this, P, c, 0); K13.debris(this, { x: P.x, y: P.y + 20 }, 4, ['#a07040', '#e0c090'], 1.6); }
+    yield* wait(10); } });
+redo13('t_axCastle', 't11_axCastle', { col: C13.axe,
+  *f(S, U, T, u, t) { const c = S.col, v = K13.views(this, t)[0], brk = K13.broken(v); K13.dark(this, 0.35, 40, '#140600'); Sound.sfx('charge');
+    const ax = K13.poly(this, { x: T.x + 10, y: -40 }, SH13.axe(c[0], c[1]), { life: 30, sc: 1.4, rot: -0.5 }); ax.upd = q => { const k = clamp((q.t - 6) / 6, 0, 1); q.y = lerp(-40, T.y - 6, k * k); q.rot = lerp(-0.5, 0.25, k); };
+    yield* this.lunge(u, 14, 3); yield* wait(6); Sound.sfx('quake'); this.shake = Math.max(this.shake, 14); K13.flash(this, '#ffd0a0', 0.35, 6);
+    this.spawn({ k: 'shock', x: T.x, y: T.y + 26, r0: 8, r1: 80, c: c[0], life: 18 }); for (let i = 0; i < 4; i++) zig9(this, T.x, T.y + 24, T.x + (i - 1.5) * 34, T.y + 40, c[2], 3, 4, 20);
+    for (let i = 0; i < 10; i++) this.spawn({ k: 'k13poly', x: T.x + rnd(-14, 14), y: T.y + rnd(0, 14), vx: rnd(-28, 28) / 10, vy: -rnd(18, 34) / 10, g: 0.18, vr: rnd(-3, 3) / 10, shapes: SH13.wall(i % 2 ? C13.brick[0] : '#8a6040', 4, 2.5), life: 26 });
+    K13.hit(this, T, c, 1); if (brk) { yield* wait(3); Sound.sfx('hitSuper'); K13.ring(this, T, 6, 52, C13.gold, 5, 16); K13.spike(this, T, 40, C13.gold, 12, 16); K13.flash(this, '#ffe070', 0.35, 8); }
+    yield* wait(12); } });
+redo13('t_zjIronLaw', 't11_zjIronLaw', { col: C13.iron,
+  *f(S, U, T, u) { const c = S.col, H = this.center(this.H), tip = { x: H.x + 16, y: H.y - 26 }; Sound.sfx('shield');
+    for (let i = 0; i < 6; i++) { const an = -Math.PI / 2 + (i - 2.5) * 0.55, P0 = { x: H.x + Math.cos(an) * 24, y: H.y + 8 + Math.sin(an) * 14 }, p = K13.poly(this, P0, SH13.hex(7, c[0]), { life: 20 }); p.upd = q => { const k = clamp((q.t - 6) / 8, 0, 1); q.x = lerp(P0.x, tip.x, k * k); q.y = lerp(P0.y, tip.y, k * k); }; }
+    yield* wait(14); K13.spike(this, tip, 16, c, 6, 10); Sound.sfx('charge'); yield* this.lunge(u, 18, 3);
+    Sound.sfx('heavy'); K13.cut(this, { x: T.x, y: T.y - 4 }, Math.PI / 2, 84, c, 12, 14, { grow: 2 }); this.shake = Math.max(this.shake, 10);
+    for (let i = 0; i < 9; i++) this.spawn({ k: 'k13poly', x: T.x + rnd(-12, 12), y: T.y + rnd(-10, 10), vx: rnd(-24, 24) / 10, vy: -rnd(10, 26) / 10, g: 0.16, vr: rnd(-3, 3) / 10, shapes: SH13.wall(i % 2 ? '#c8d0e0' : '#6a7488', 4, 3), life: 26 });
+    K13.hit(this, T, c, 1); yield* wait(12); } });
+const kick13 = function* (b, T, t, c, i) { const L = K13.views(b, t).map(v => b.center(v)).sort((a, q) => a.x - q.x), dir = i % 2 ? -1 : 1;
+  Sound.sfx('heavy'); const y = T.y + [10, 0, -6][i % 3]; K13.arc(b, { x: T.x, y }, 70, dir > 0 ? Math.PI * 1.02 : -0.02 * Math.PI, dir > 0 ? Math.PI * 1.98 : -0.98 * Math.PI, c, 10, 14, { fl: 0.3, grow: 7 });
+  for (const P of dir > 0 ? L : L.slice().reverse()) { yield* wait(2); K13.hit(b, P, c, i === 2 ? 1 : 0); } yield* wait(4); };
+redo13('t_fsKick', 't11_fsKick', { col: C13.chi,
+  *f(S, U, T, u, t) { yield* this.lunge(u, 16, 2); yield* kick13(this, T, t, S.col, 0); },
+  *h(S, U, T, u, i) { const v = this.tgtV, t = { group: this.foes().filter(q => !q.gone && q.hp > 0) }; yield* kick13(this, this.center(this.groupOf(t.group.map(q => q.id)) || v), t, S.col, i); } });
+redo13('t_fsShell', 't11_fsShell', { col: C13.chi,
+  *f(S, U, T, u) { const c = S.col; yield* this.lunge(u, 22, 3); Sound.sfx('heavy'); const p = K13.poly(this, T, SH13.palm(c[0]), { life: 16, s0: 0.4, s1: 1.5, grow: 4 }); K13.ring(this, T, 6, 36, c, 4, 12); this.shake = Math.max(this.shake, 7); yield* wait(5);
+    Sound.sfx('rock'); for (let i = 0; i < 7; i++) { const an = i * 0.9 + rnd(-2, 2) / 10; K13.cut(this, { x: T.x + Math.cos(an) * 12, y: T.y + Math.sin(an) * 12 }, an, 22 + rnd(0, 10), C13.crack, 4, 34); }
+    for (let i = 0; i < 8; i++) this.spawn({ k: 'k13poly', x: T.x + rnd(-14, 14), y: T.y + rnd(-14, 10), vx: rnd(-16, 16) / 10, vy: -rnd(4, 16) / 10, g: 0.18, vr: rnd(-3, 3) / 10, shapes: [{ pts: [[-4, -3], [4, -2], [2, 4], [-3, 3]], c: i % 2 ? '#d8a070' : '#a07048' }], life: 28 });
+    K13.hit(this, T, C13.crack, 0); yield* wait(14); } });
+redo13('t_fsQi', 't11_fsQi', { col: C13.chi,
+  *f(S, U, T) { const c = S.col, H = this.center(this.H), A = { x: H.x + 4, y: H.y - 26 }; Sound.sfx('charge');
+    const ball = this.spawn({ k: 'k13orb', x: A.x, y: A.y, r: 2, c: c[0], h: c[1], o: c[2], trail: 1, pulse: 1, life: 14 }); ball.upd = q => { q.r = 2 + q.t * 0.5; }; K13.motes(this, { x: A.x, y: A.y + 10 }, A, c, 12, 12); yield* wait(13);
+    Sound.sfx('wind'); const p = this.spawn({ k: 'k13orb', x: A.x, y: A.y, r: 8, c: c[0], h: c[1], o: c[2], trail: 8, pulse: 1, life: 12 }); p.upd = q => { const k = clamp(q.t / 10, 0, 1); q.x = lerp(A.x, T.x, k) + Math.sin(q.t * 1.2) * 5; q.y = lerp(A.y, T.y, k); };
+    for (let i = 0; i < 5; i++) { yield* wait(2); this.spawn({ k: 'k13ring', x: p.x, y: p.y, r0: 3, r1: 10, w: 2, c: c[0], h: c[1], o: c[2], life: 8 }); }
+    Sound.sfx('hitSuper'); for (let k = 0; k < 3; k++) K13.ring(this, T, 4 + k * 4, 30 + k * 12, c, 4 - k, 12 + k * 3); K13.hit(this, T, c, 1); yield* wait(12); } });
+redo13('t_fsThrough', 't11_fsThrough', { col: C13.chi,
+  *f(S, U, T, u, t) { const c = S.col, v = K13.views(this, t)[0], a = ang13(U, T); yield* this.lunge(u, 26, 3); Sound.sfx('heavy'); K13.poly(this, { x: T.x - Math.cos(a) * 12, y: T.y - Math.sin(a) * 12 }, SH13.palm(c[0]), { life: 10, rot: a + Math.PI / 2, sc: 1.1 });
+    K13.ring(this, T, 4, 22, c, 3, 10); yield* wait(4); Sound.sfx('quake');
+    for (let k = 0; k < 3; k++) { const P = { x: T.x + Math.cos(a) * (10 + k * 14), y: T.y + Math.sin(a) * (10 + k * 14) }; this.spawn({ k: 'k13arc', x: P.x, y: P.y, r: 14 + k * 6, a0: a - 1.1, a1: a + 1.1, w: 5 - k, c: c[0], h: c[1], o: c[2], grow: 3, life: 12 }); yield* wait(2); }
+    if (v && v.off) { const o = v.off; yield* tween(4, q => { o.x = Math.cos(a) * 6 * q; o.y = Math.sin(a) * 6 * q; }); yield* tween(6, q => { o.x = Math.cos(a) * 6 * (1 - q); o.y = Math.sin(a) * 6 * (1 - q); }); o.x = 0; o.y = 0; }
+    for (let i = 0; i < 3; i++) this.star(T.x + rnd(-14, 14), T.y - 26 + rnd(-4, 4), '#fff0a0', 18); K13.hit(this, T, c, 0); yield* wait(8); } });
+redo13('t_zjQuake', 't11_zjQuake', { col: C13.chi,
+  *f(S, U, T, u) { const c = S.col, hu = this.core.byId.H, full = !!(hu && hu.max && hu.max.chi && (hu.res.chi || 0) >= hu.max.chi); K13.dark(this, 0.5, 52, '#140a00'); Sound.sfx('charge');
+    this.spawn({ k: 'pillar', x: U.x, y: U.y + 22, w: 16, h: 90, c: c[0], life: 24 }); K13.motes(this, { x: U.x, y: U.y + 10 }, { x: U.x, y: U.y - 20 }, c, 14, 16); yield* wait(10);
+    const palm = K13.poly(this, { x: T.x, y: -50 }, SH13.palm(c[0]), { life: 34, sc: 3 }); palm.upd = q => { const k = clamp((q.t - 2) / 8, 0, 1); q.y = lerp(-50, T.y - 10, k * k); };
+    yield* this.lunge(u, 20, 3); yield* wait(5); Sound.sfx('quake'); this.shake = Math.max(this.shake, 16); K13.flash(this, '#fff0c0', 0.45, 8);
+    for (let i = 0; i < 6; i++) zig9(this, T.x, T.y + 26, T.x + (i - 2.5) * 30, T.y + 46, '#3a2000', 4, 5, 26); this.spawn({ k: 'shock', x: T.x, y: T.y + 28, r0: 8, r1: 90, c: c[0], life: 20 });
+    Sound.sfx('crit'); K13.spike(this, T, 44, C13.gold, 4, 18, { rot: 0.785, inner: 0.18 }); K13.hit(this, T, c, 1);
+    if (full) { yield* wait(4); this.spawn({ k: 'pillar', x: T.x, y: T.y + 28, w: 26, h: 200, c: '#fff0b0', life: 20 }); K13.flash(this, '#ffffff', 0.5, 8); K13.ring(this, T, 8, 60, C13.gold, 5, 16); }
+    yield* wait(12); } });
+const tip13 = b => { const H = b.center(b.H); return { x: H.x + 18, y: H.y - 28 }; };
+const arrow13 = function* (b, T, c, i) { const A = tip13(b), P = { x: T.x + [-8, 8, 0][i % 3], y: T.y + [4, -2, 0][i % 3] }, rot = ang13(A, P) + Math.PI / 2; Sound.sfx('charge');
+  b.spawn({ k: 'glow', x: A.x, y: A.y, r: 12, c: c[0], life: 8 }); const ar = K13.poly(b, A, SH13.arrow(c[0]), { life: 8, rot, sc: 1.9 }); ar.upd = q => { const k = clamp(q.t / 6, 0, 1); q.x = lerp(A.x, P.x, k); q.y = lerp(A.y, P.y, k); };
+  for (let k = 1; k < 6; k++) b.spawn({ k: 'k13orb', x: lerp(A.x, P.x, k / 6), y: lerp(A.y, P.y, k / 6), r: 2, c: c[0], h: c[1], o: c[2], trail: 1, life: 6 + k }); yield* wait(6); Sound.sfx('hit'); K13.hit(b, P, c, 0); };
+redo13('t_stArrows', 't11_stArrows', { col: C13.arc,
+  *f(S, U, T) { K13.ring(this, tip13(this), 18, 4, S.col, 2, 10); yield* wait(4); yield* arrow13(this, T, S.col, 0); yield* wait(3); },
+  *h(S, U, T, u, i) { yield* arrow13(this, T, S.col, i); if (i >= 2) { yield* wait(3); Sound.sfx('heal'); K13.motes(this, T, this.center(this.H), C13.mp, 10, 16); yield* wait(12); } else yield* wait(3); } });
+redo13('t_stLance', 't11_stLance', { col: C13.mana,
+  *f(S, U, T) { const c = S.col, H = this.center(this.H), A = { x: H.x + 14, y: H.y - 38 }, rot = ang13(A, T) + Math.PI / 2; Sound.sfx('charge');
+    this.spawn({ k: 'glow', x: A.x, y: A.y, r: 22, c: c[0], life: 16 }); const sp = K13.poly(this, A, SH13.spear(c[0], '#dfe8ff'), { life: 30, rot, s0: 0.2, s1: 1.5, grow: 8 }); K13.ring(this, A, 30, 4, c, 2, 12); yield* wait(12);
+    Sound.sfx('wind'); sp.upd = q => { const k = clamp((q.t - 12) / 5, 0, 1); q.x = lerp(A.x, T.x + (T.x - A.x) * 0.3, k); q.y = lerp(A.y, T.y + (T.y - A.y) * 0.3, k); };
+    K13.beam(this, A, { x: T.x + (T.x - A.x) * 0.3, y: T.y + (T.y - A.y) * 0.3 }, c, 7, 16, 5); yield* wait(4);
+    Sound.sfx('crit'); this.spawn({ k: 'rune', x: T.x, y: T.y, r: 20, c: c[0], c2: c[1], n: 8, poly: 6, sq: 1, life: 14 }); for (let i = 0; i < 6; i++) { const an = i * 1.05; K13.cut(this, { x: T.x + Math.cos(an) * 14, y: T.y + Math.sin(an) * 14 }, an, 14, c, 3, 14); }
+    K13.hit(this, T, c, 1); yield* wait(12); } });
+redo13('t_stWall', 't11_stWall', { col: C13.ward,
+  *f(S) { const c = S.col, H = this.center(this.H), O = { x: H.x, y: H.y + 14 }; Sound.sfx('shield');
+    for (const [R, fill, al] of [[34, 'rgba(122,208,255,0.9)', 1], [46, 'rgba(160,220,255,0.45)', 0.85]]) { const n = Math.round(R * 0.62);
+      for (let i = 0; i <= n; i++) { const an = Math.PI + Math.PI * i / n, x = O.x + Math.cos(an) * R, y = O.y + Math.sin(an) * R * 1.05; const p = K13.poly(this, { x, y }, SH13.hex(5.5, fill), { life: 50, s0: 0, s1: 1, grow: 4, o: c[2], al }); p.t = -Math.round(Math.abs(i - n / 2) * 1.2) - (R > 40 ? 6 : 0); } }
+    yield* wait(14); Sound.sfx('charge'); this.spawn({ k: 'glow', x: H.x, y: H.y - 8, r: 40, c: c[0], life: 34 }); K13.ring(this, { x: H.x, y: H.y - 10 }, 10, 44, c, 3, 16); yield* wait(24); } });
+redo13('t_stImpact', 't11_stImpact', { col: C13.arc,
+  *f(S, U, T, u, t) { const c = S.col, v = K13.views(this, t)[0], chg = !!(v && v.charging); const A = tip13(this); Sound.sfx('charge');
+    const b0 = this.spawn({ k: 'k13orb', x: A.x, y: A.y, r: 10, c: c[0], h: c[1], o: c[2], trail: 1, life: 10 }); b0.upd = q => { q.r = 10 - q.t * 0.4; }; yield* wait(8);
+    yield* K13.orb(this, A, T, c, 6, 7, 0, { trail: 8, ease: 1 }); Sound.sfx('quake'); this.shake = Math.max(this.shake, 10);
+    for (let k = 0; k < 4; k++) K13.ring(this, T, 6 + k * 4, 34 + k * 12, c, 5 - k, 12 + k * 2);
+    if (v && v.off) { const o = v.off; yield* tween(3, q => { o.y = -8 * q; }); yield* tween(6, q => { o.y = -8 * (1 - q); }); o.y = 0; }
+    if (chg) { Sound.sfx('hitSuper'); for (let i = 0; i < 14; i++) this.spawn({ k: 'k13orb', x: T.x, y: T.y, r: 2.5, c: '#ff9a30', h: '#fff0c0', o: OL13, trail: 3, vx: Math.cos(i * 0.45) * 3, vy: Math.sin(i * 0.45) * 3, life: 16 }); K13.flash(this, '#ffb060', 0.3, 6); }
+    K13.hit(this, T, c, chg ? 1 : 0); yield* wait(10); } });
+redo13('t_stStorm', 't11_stStorm', { col: C13.storm,
+  *f(S, U, T, u, t) { const c = S.col, L = K13.views(this, t).map(v => this.center(v)); K13.dark(this, 0.45, 48, '#0c0418'); Sound.sfx('wind');
+    for (let i = 0; i < 16; i++) this.spawn({ k: 'k13orb', x: T.x - 76 + i * 10 + rnd(-3, 3), y: T.y - 44 + (i % 2) * 7 + rnd(-3, 3), r: rnd(9, 14), c: i % 3 ? '#3e2e58' : '#2c2042', h: '#5e4c80', o: OL13, trail: 1, vx: rnd(-2, 2) / 10, life: 50 });
+    yield* wait(8); for (let k = 0; k < 2; k++) for (const P of L) { const x0 = P.x + rnd(-10, 10), pts = []; let xx = x0; for (let y = T.y - 40; y < P.y + 6; y += 8) { pts.push([xx, y]); xx += rnd(-7, 7); } pts.push([P.x, P.y]);
+      for (let j = 1; j < pts.length; j++) this.spawn({ k: 'k13beam', x1: pts[j - 1][0], y1: pts[j - 1][1], x2: pts[j][0], y2: pts[j][1], w: 5, c: c[0], h: c[1], o: c[2], grow: 1, life: 10 });
+      Sound.sfx('thunder'); K13.hit(this, P, c, k); K13.flash(this, '#d0a0ff', 0.2, 4); yield* wait(4); }
+    yield* wait(10); } });
+redo13('t_stHaste', 't11_stHaste', { col: C13.time,
+  *f(S) { const c = S.col, H = this.center(this.H), P = { x: H.x, y: H.y - 34 }; Sound.sfx('charge'); const clk = this.spawn({ k: 'k13clock', x: P.x, y: P.y, r: 22, c: c[0], h: c[1], sp: 0.05, life: 44 });
+    clk.upd = q => { q.sp = q.t < 26 ? 0.05 + q.t * 0.012 : 0; }; for (let i = 0; i < 4; i++) { K13.streaks(this, H.y - 30, H.y + 20, -1, c, 4, 10); Sound.sfx('tick'); yield* wait(5); }
+    K13.ghost(this, -12, 0, '#60f0f0', 14, 0.45); K13.ghost(this, -22, 0, '#60f0f0', 12, 0.3); yield* wait(6);
+    Sound.sfx('crit'); clk.m0 = (clk.m0 || 0) + 0.52; K13.ring(this, P, 6, 34, c, 3, 12); K13.spike(this, { x: P.x, y: P.y - 22 }, 10, c, 4, 12); yield* wait(14); } });
+redo13('t_stFinale', 't11_stFinale', { col: C13.finale,
+  *f(S, U, T) { const c = S.col, H = this.center(this.H), A = tip13(this), hu = this.core.byId.H, mp = Math.max(10, (this.H && this.H.mp) || 0, hu && hu.max ? hu.max.mp * 0.6 : 0), R = clamp(8 + mp / 5, 12, 22); K13.dark(this, 0.55, 60, '#020818'); Sound.sfx('charge');
+    const orb = this.spawn({ k: 'k13orb', x: A.x, y: A.y - 8, r: 2, c: c[0], h: c[1], o: c[2], trail: 1, pulse: 1, life: 32 }); orb.upd = q => { q.r = Math.min(R, 2 + q.t * R / 18); };
+    for (let k = 0; k < 5; k++) { K13.motes(this, { x: H.x, y: H.y + 8 }, { x: A.x, y: A.y - 8 }, C13.mp, 12, 14); this.spawn({ k: 'k13beam', x1: H.x + rnd(-10, 10), y1: H.y + rnd(0, 14), x2: A.x, y2: A.y - 8, w: 2, c: C13.mp[0], h: C13.mp[1], o: OL13, grow: 4, life: 10 }); yield* wait(5); }
+    yield* wait(6); Sound.sfx('thunder'); K13.beam(this, { x: A.x, y: A.y - 8 }, T, c, R * 1.3 + 4, 20, 3); K13.flash(this, '#c0e0ff', 0.5, 8); yield* wait(4);
+    Sound.sfx('quake'); this.shake = Math.max(this.shake, 16); for (let k = 0; k < 3; k++) K13.ring(this, T, 6, 40 + k * 18 + R * 2, c, 6 - k * 2, 16 + k * 3); K13.spike(this, T, 30 + R * 2, c, 12, 18); K13.hit(this, T, c, 1); yield* wait(14); } });
+redo13('t_stMax', 't11_stMax', { col: C13.max,
+  *f(S) { const c = S.col, H = this.center(this.H); Sound.sfx('charge'); this.spawn({ k: 'rune', x: H.x, y: H.y + 20, r: 32, c: c[0], c2: c[1], n: 10, poly: 5, life: 54 }); this.spawn({ k: 'pillar', x: H.x, y: H.y + 22, w: 20, h: 110, c: c[0], life: 40 });
+    for (let k = 0; k < 2; k++) { K13.ring(this, { x: H.x, y: H.y - 34 - k * 12 }, 4, 18 - k * 4, c, 3, 40 - k * 6, 0.35); this.spawn({ k: 'rune', x: H.x, y: H.y - 34 - k * 12, r: 18 - k * 4, c: c[0], c2: c[1], n: 6, poly: 3, sq: 0.35, dir: k ? -1 : 1, life: 46 - k * 6 }); Sound.sfx('tick'); yield* wait(5); }
+    for (let i = 0; i < 12; i++) this.spawn({ k: 'k13spike', x: H.x + rnd(-16, 16), y: H.y + rnd(-4, 18), r0: 2, r1: 6, n: 4, c: c[0], h: c[1], o: c[2], rot: 0, inner: 0.25, vy: -rnd(10, 18) / 10, life: 16 });
+    yield* wait(8); Sound.sfx('statUp');
+    for (let i = 0; i < 8; i++) this.spawn({ k: 'k13orb', x: H.x + rnd(-12, 12), y: H.y + rnd(-8, 4), r: 3, c: C13.mp[0], h: C13.mp[1], o: OL13, trail: 5, vx: rnd(-6, 6) / 10, vy: 0.4, g: 0.12, life: 22 }); yield* wait(18); } });
+redo13('t_zjFourFold', 't11_zjFourFold', { col: C13.arc,
+  *f(S, U, T) { const A = tip13(this), E = ['火', '水', '雷', '草'].map(k => EL13[k]); Sound.sfx('charge'); const orbs = E.map((c, i) => { const p = this.spawn({ k: 'k13orb', x: A.x, y: A.y, r: 5, c: c[0], h: c[1], o: c[2], trail: 4, life: 22 + i * 9 }); p.upd = q => { if (q.go) return; const an = q.t * 0.35 + i * Math.PI / 2; q.x = A.x + Math.cos(an) * 16; q.y = A.y - 6 + Math.sin(an) * 9; }; return p; });
+    yield* wait(12);
+    for (let i = 0; i < 4; i++) { const c = E[i], p = orbs[i], P0 = { x: p.x, y: p.y }, P = { x: T.x + [-8, 8, 0, 0][i], y: T.y + [0, 0, -4, 6][i] }; p.go = 1; p.upd = q => { const k = clamp((q.t - q.t0) / 5, 0, 1); q.x = lerp(P0.x, P.x, k); q.y = lerp(P0.y, P.y, k); }; p.t0 = p.t; p.life = p.t + 6; yield* wait(5);
+      if (i === 0) { Sound.sfx('fire'); for (let j = 0; j < 10; j++) this.spawn({ k: 'flame', x: P.x + rnd(-10, 10), y: P.y + rnd(-4, 10), vy: -1.6, s: rnd(3, 5), life: rnd(12, 18) }); }
+      if (i === 1) { Sound.sfx('water'); for (let j = 0; j < 12; j++) this.spawn({ k: 'circ', x: P.x, y: P.y, vx: rnd(-24, 24) / 10, vy: -rnd(10, 30) / 10, g: 0.18, r: rnd(2, 3), c: j % 2 ? c[0] : c[1], life: 20 }); }
+      if (i === 2) { Sound.sfx('thunder'); const pts = []; let xx = P.x; for (let y = 0; y < P.y; y += 10) { pts.push([xx, y]); xx += rnd(-6, 6); } pts.push([P.x, P.y]); for (let j = 1; j < pts.length; j++) this.spawn({ k: 'k13beam', x1: pts[j - 1][0], y1: pts[j - 1][1], x2: pts[j][0], y2: pts[j][1], w: 3, c: c[0], h: c[1], o: c[2], grow: 1, life: 8 }); }
+      if (i === 3) { Sound.sfx('leaf'); for (let j = 0; j < 12; j++) { const an = j * 0.52; this.spawn({ k: 'img', img: LEAF_IMG, x: P.x + Math.cos(an) * 18, y: P.y + Math.sin(an) * 10, vx: -Math.sin(an) * 2, vy: Math.cos(an) * 1.1 - 0.4, fade: 1, life: 20 }); } }
+      K13.hit(this, P, c, i === 3 ? 1 : 0); yield* wait(4); }
+    yield* wait(8); } });
+redoSp13('法杖', 0, { col: C13.arc,
+  *f(S, U, T) { const c = S.col; Sound.sfx('charge'); this.spawn({ k: 'rune', x: T.x, y: T.y + 26, r: 26, c: c[0], c2: c[1], n: 8, poly: 4, life: 30 }); K13.ring(this, { x: T.x, y: T.y + 26 }, 30, 8, c, 3, 12, 0.35); yield* wait(10);
+    Sound.sfx('hitSuper'); this.spawn({ k: 'pillar', x: T.x, y: T.y + 28, w: 22, h: 150, c: c[0], life: 20 }); K13.beam(this, { x: T.x, y: T.y + 26 }, { x: T.x, y: T.y - 70 }, c, 10, 14, 3); this.shake = Math.max(this.shake, 10); K13.hit(this, T, c, 1); yield* wait(12); } });
+redoSp13('法杖', 2, { col: C13.gold,
+  *f(S) { const c = S.col, A = tip13(this); Sound.sfx('tick'); for (let i = 0; i < 8; i++) { const an = i * Math.PI / 4, P0 = { x: A.x + Math.cos(an) * 34, y: A.y + Math.sin(an) * 26 }, p = this.spawn({ k: 'k13spike', x: P0.x, y: P0.y, r0: 3, r1: 6, n: 4, c: c[0], h: c[1], o: c[2], rot: 0.78, inner: 0.3, life: 12 }); p.upd = q => { const k = clamp(q.t / 10, 0, 1); q.x = lerp(P0.x, A.x, k); q.y = lerp(P0.y, A.y, k); }; }
+    yield* wait(11); Sound.sfx('crit'); K13.spike(this, A, 26, c, 4, 20, { rot: 0, inner: 0.16 }); K13.ring(this, A, 4, 26, c, 3, 12); yield* wait(6);
+    const F = mainFoe13(this); if (F) K13.mark(this, this.center(F), c, { life: 26 }); yield* wait(14); } });
+const fang13 = function* (b, T, low, c, second) { Sound.sfx('slash'); const d = second ? 0.18 : 0; K13.cut(b, { x: T.x - 12, y: T.y - 8 }, Math.PI * (0.32 + d), 50, c, 8, 12, { grow: 2 }); K13.cut(b, { x: T.x + 12, y: T.y - 8 }, Math.PI * (0.68 - d), 50, c, 8, 12, { grow: 2 });
+  yield* wait(2); K13.spike(b, { x: T.x, y: T.y + 8 }, low ? 32 : 20, c, low ? 10 : 6, 12); if (low) { Sound.sfx('crit'); K13.flash(b, '#ff1040', 0.35, 8); } K13.hit(b, T, c, low ? 1 : 0); };
+redo13('t_ddFang', 't11_ddFang', { col: C13.fang,
+  *f(S, U, T, u, t) { const v = K13.views(this, t)[0], low = K13.low(v, 0.3); if (low) K13.dark(this, 0.45, 40, '#280010'); for (const dx of [-10, 10]) K13.ghost(this, dx, 0, '#ff6090', 10, 0.4); yield* this.lunge(u, 26, 2); yield* fang13(this, T, low, S.col, 0); yield* wait(6); },
+  *h(S, U, T) { yield* fang13(this, T, K13.low(this.tgtV, 0.3), S.col, 1); yield* wait(8); } });
+redo13('t_zjBloom', 't11_zjBloom', { col: C13.petal,
+  *f(S, U, T, u, t) { const c = S.col, G = T, H = this.center(this.H); Sound.sfx('wind'); this.bloom13 = [];
+    for (let i = 0; i < 14; i++) { const p = K13.poly(this, H, SH13.petal(i % 2 ? c[0] : '#ffc0e0'), { life: 60, vr: 0.4, sc: 1.3 }); const ph = i * Math.PI * 2 / 14; p.upd = q => { const k = clamp(q.t / 14, 0, 1), an = ph + q.t * 0.22, R = lerp(10, 74, k), cx = lerp(H.x, G.x, k), cy = lerp(H.y, G.y, k); if (!q.hold) { q.x = cx + Math.cos(an) * R; q.y = cy + Math.sin(an) * R * 0.38; } }; this.bloom13.push(p); }
+    yield* wait(12); for (const P of K13.views(this, t).map(v => this.center(v))) { Sound.sfx('slash'); K13.hit(this, P, c, 0); yield* wait(2); } yield* wait(4); },
+  *h(S, U, T) { const c = S.col, L = this.foes().filter(q => !q.gone && q.hp > 0).map(v => this.center(v)), ps = this.bloom13 || []; Sound.sfx('wind');
+    ps.forEach((p, i) => { const P = L[i % Math.max(1, L.length)] || T, P0 = { x: p.x, y: p.y }, t0 = p.t; p.hold = 1; p.upd = q => { const k = clamp((q.t - t0) / 6, 0, 1); q.x = lerp(P0.x, P.x, k); q.y = lerp(P0.y, P.y, k); }; p.life = t0 + 8; });
+    yield* wait(6); for (const P of L) { Sound.sfx('slash'); K13.hit(this, P, c, 1); for (let j = 0; j < 8; j++) this.spawn({ k: 'k13poly', x: P.x, y: P.y, vx: Math.cos(j * 0.8) * 2, vy: Math.sin(j * 0.8) * 2 - 0.5, g: 0.06, vr: 0.3, shapes: SH13.petal(j % 2 ? c[0] : '#ffc0e0'), life: 18, fade: 1 }); yield* wait(2); }
+    this.bloom13 = null; yield* wait(8); } });
+redoSp13('雙刀', 1, { col: C13.gale,
+  *f(S, U, T, u, t) { const c = S.col, L = K13.views(this, t).map(v => this.center(v)).sort((a, b) => a.x - b.x); Sound.sfx('wind');
+    const tw = { x: -10 }; for (let k = 0; k < 6; k++) { const ring = this.spawn({ k: 'k13ring', x: -10, y: T.y + 22 - k * 12, r0: 10 + k * 3, r1: 12 + k * 3, w: 3, c: c[0], h: c[1], o: c[2], fl: 0.3, life: 30 }); ring.upd = q => { q.x = tw.x + Math.sin(q.t * 0.5 + k) * 3; }; }
+    for (let f = 0; f < 26; f++) { tw.x = lerp(-10, W + 10, f / 25); for (const P of L) if (Math.abs(P.x - tw.x) < 7) { Sound.sfx('slash'); for (let j = 0; j < 3; j++) K13.cut(this, { x: P.x + rnd(-8, 8), y: P.y + rnd(-10, 10) }, Math.random() * 6.3, 30, c, 5, 10); K13.hit(this, P, c, 0); }
+      if (f % 2) this.spawn({ k: 'k13cut', x: tw.x + rnd(-14, 14), y: T.y + rnd(-26, 20), ang: Math.random() * 6.3, len: 14, w: 3, c: c[1], h: '#ffffff', o: c[2], grow: 1, life: 6 }); yield; }
+    yield* wait(8); } });
+redo13('t_zjSwallow', 't11_zjSwallow', { col: C13.swal,
+  *f(S, U, T, u) { const c = S.col; Sound.sfx('wind'); for (let i = 0; i < 5; i++) K13.ghost(this, Math.cos(i * 1.26) * 12, Math.sin(i * 1.26) * 5, '#fff0a0', 6 + i * 3, 0.45); yield* wait(6); yield* this.lunge(u, 24, 2);
+    Sound.sfx('slash'); K13.arc(this, { x: T.x - 18, y: T.y + 14 }, 36, Math.PI * 1.5, Math.PI * 2.0, c, 13, 16, { grow: 3 }); K13.arc(this, { x: T.x + 18, y: T.y + 14 }, 36, Math.PI * 1.5, Math.PI * 1.0, c, 13, 16, { grow: 3 }); yield* wait(3);
+    Sound.sfx('crit'); K13.cut(this, T, 0, 70, c, 6, 12, { grow: 2 }); K13.spike(this, T, 34, c, 4, 16, { rot: 0.785, inner: 0.16 }); K13.hit(this, T, c, 1); yield* wait(12); } });
+redo13('t_zjObsidian', 't11_zjObsidian', { col: C13.obs,
+  *f(S, U, T, u) { const c = S.col; K13.dark(this, 0.65, 56, '#05020a'); Sound.sfx('charge');
+    const sw = K13.poly(this, { x: T.x, y: T.y - 60 }, SH13.blade(c[0], c[1]), { life: 40, s0: 0.2, s1: 1.1, grow: 10, o: '#c890ff' }); for (let i = 0; i < 10; i++) this.spawn({ k: 'mote', x: T.x + rnd(-40, 40), y: T.y - 60 + rnd(-30, 30), vy: 0, to: { x: T.x, y: T.y - 60 }, s: 2, c: c[1], life: 14 });
+    yield* wait(14); Sound.sfx('slash'); sw.upd = q => { const k = clamp((q.t - 14) / 4, 0, 1); q.y = lerp(T.y - 60, T.y + 14, k * k); }; yield* this.lunge(u, 14, 2); yield* wait(2);
+    Sound.sfx('quake'); this.shake = Math.max(this.shake, 14); K13.flash(this, '#d0a0ff', 0.5, 8); K13.cut(this, { x: T.x, y: T.y }, Math.PI / 2, 96, [c[1], '#ffffff', OL13], 6, 16, { grow: 2 });
+    for (let i = 0; i < 6; i++) K13.cut(this, { x: T.x + Math.cos(i * 1.05) * 14, y: T.y + Math.sin(i * 1.05) * 14 }, i * 1.05, 22, [c[1], '#ffffff', OL13], 3, 18); K13.hit(this, T, [c[1], '#ffffff', OL13], 1); yield* wait(14); } });
+redo13('t_shCrash', 't11_shCrash', { col: C13.shield,
+  *f(S, U, T, u, t) { const c = S.col, v = K13.views(this, t)[0], brk = K13.broken(v); Sound.sfx('shield');
+    const mk = (dx) => { const A = { x: U.x + dx * 0.4, y: U.y - 20 }, B = { x: T.x + dx, y: T.y - 42 }, p = K13.poly(this, A, SH13.shield(c[0], c[1]), { life: 30, sc: 1.4 }); p.upd = q => { const k1 = clamp(q.t / 8, 0, 1), k2 = clamp((q.t - 12) / 4, 0, 1); q.x = lerp(A.x, B.x, k1) - dx * 0.6 * k2; q.y = lerp(A.y, B.y, k1) + 40 * k2 * k2; q.rot = (dx > 0 ? 0.3 : -0.3) * (1 - k2); }; };
+    mk(-18); mk(18); yield* wait(15); Sound.sfx('quake'); this.shake = Math.max(this.shake, 14); this.spawn({ k: 'shock', x: T.x, y: T.y + 26, r0: 8, r1: 76, c: c[0], life: 18 });
+    K13.ring(this, T, 6, 40, c, 4, 14); K13.hit(this, T, c, 1); if (brk) { yield* wait(3); Sound.sfx('hitSuper'); K13.ring(this, T, 8, 54, C13.gold, 5, 16); K13.spike(this, T, 40, C13.gold, 12, 16); K13.flash(this, '#ffe070', 0.35, 8); }
+    yield* wait(12); } });
+redo13('t_zjHolyWall', 't11_zjHolyWall', { col: C13.holy,
+  *f(S, U, T, u) { const c = S.col, H = this.center(this.H), n = clamp(Math.round((this.H && this.H.res && this.H.res.stance) || (this.core.byId.H.res.stance0 || 3)), 2, 6), wallP = { x: H.x, y: H.y - 26 }; Sound.sfx('charge');
+    for (let i = 0; i < n; i++) { const an = -Math.PI / 2 + (i - (n - 1) / 2) * 0.5, P0 = { x: H.x + Math.cos(an) * 26, y: H.y + Math.sin(an) * 18 }, p = this.spawn({ k: 'k13orb', x: P0.x, y: P0.y, r: 6, c: c[0], h: c[1], o: c[2], trail: 4, life: 16 + i * 2 }); p.upd = q => { const k = clamp((q.t - 4 - i * 2) / 6, 0, 1); q.x = lerp(P0.x, wallP.x, k); q.y = lerp(P0.y, wallP.y, k); }; Sound.sfx('tick'); yield* wait(2); }
+    yield* wait(8); const wl = K13.poly(this, wallP, SH13.wall('rgba(255,224,112,0.88)', 28, 9).concat([{ pts: [[-2, -7], [2, -7], [2, 7], [-2, 7]], c: '#ffffff' }, { pts: [[-6, -2], [6, -2], [6, 2], [-6, 2]], c: '#ffffff' }]), { life: 26, s0: 0.3, s1: 1, grow: 5, o: c[2] }); yield* wait(5);
+    Sound.sfx('wind'); wl.upd = q => { const k = clamp((q.t - 5) / 7, 0, 1); q.x = lerp(wallP.x, T.x, k); q.y = lerp(wallP.y, T.y + 12, k); }; K13.streaks(this, U.y - 60, U.y + 10, 1, c, 10, 10); yield* this.lunge(u, 30, 3);
+    Sound.sfx('quake'); this.shake = Math.max(this.shake, 12); K13.flash(this, '#fff0b0', 0.4, 6); K13.hit(this, T, c, 1); K13.ring(this, T, 8, 20 + n * 8, c, 5, 16); yield* wait(10);
+    Sound.sfx('shield'); for (let k = 0; k < 2; k++) K13.arc(this, { x: H.x, y: H.y + 16 }, 36 + k * 9, Math.PI, Math.PI * 2, k ? ['#fff4c0', '#ffffff', c[2]] : c, 7 - k * 2, 30, { grow: 8 }); this.spawn({ k: 'glow', x: H.x, y: H.y - 6, r: 40, c: c[0], life: 30 }); yield* wait(18); } });
+redoSp13('雙盾', 0, { col: C13.shield,
+  *f(S, U, T, u, t) { const c = S.col, H = this.center(this.H), P = { x: H.x + 4, y: H.y - 30 }; Sound.sfx('shield');
+    for (const dx of [-1, 1]) { const p = K13.poly(this, { x: P.x + dx * 22, y: P.y }, SH13.shield(c[0], c[1]), { life: 16, sc: 1.1 }); p.upd = q => { const k = clamp(q.t / 5, 0, 1); q.x = P.x + dx * lerp(22, 6, k * k); }; }
+    yield* wait(5); Sound.sfx('heavy'); K13.spike(this, P, 18, C13.gold, 8, 10); this.sparks(P.x, P.y, 12, ['#ffffff', '#ffe070'], 3, 14);
+    const a = ang13(P, T); for (let k = 0; k < 4; k++) { const sw = this.spawn({ k: 'k13arc', x: P.x, y: P.y, r: 10, a0: a - 0.75, a1: a + 0.75, w: 8, c: '#ffe58a', h: '#ffffff', o: c[2], grow: 2, life: 16 }); sw.upd = q => { q.r = 10 + q.t * 5; }; Sound.sfx('buzz'); yield* wait(3); }
+    yield* wait(4); for (let i = 0; i < 3; i++) this.star(T.x + rnd(-14, 14), T.y - 28 + rnd(-4, 4), '#fff0a0', 20); K13.hit(this, T, c, 0); yield* wait(10); } });
 </script>

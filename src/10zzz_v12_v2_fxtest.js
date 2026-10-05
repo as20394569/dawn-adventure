@@ -46,7 +46,7 @@ function fxtSetup13(kind) { const st = Game.st, T = tr11(st), base = fxtBase13(k
       hu.skills = [atk].concat(P[r][1]); this.moveIdx = idx[r] || 0; let out; try { out = yield* _cm.call(this); } finally { hu.skills = all; } if (out) { idx[r] = this.moveIdx; return out; } if (P.length <= 1) return null; } }; }
 // no saving in the test page
 if (fxtest13()) { if (typeof saveGame === 'function') saveGame = function () {}; }
-function* fxtMenu13() { const K = TREE_KINDS11.filter(k => !TREE11[k].common).concat(COMMON11.filter(k => (TREE11[k].sk || []).length).slice(0, 1)); let i = 0;
+function* fxtMenu13() { const K = TREE_KINDS11.filter(k => !TREE11[k].common && (typeof kindOn13 !== 'function' || kindOn13(k))).concat(COMMON11.filter(k => (TREE11[k].sk || []).length).slice(0, 1)); let i = 0;
   while (true) {
     const lab = k => (TREE11[k].common ? '共通' : k) + '（' + (TREE11[k].sk || []).length + (TREE11[k].common ? '' : '＋' + (TREE11[k].sp || []).length) + '）';
     const r = yield* choose(K.map(k => ({ t: lab(k) })), { x: 8, y: 30, w: W - 16, cols: 2, colW: (W - 24) / 2, cancel: true, index: i, title: '特效測試：選技能樹' });

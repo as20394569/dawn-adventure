@@ -20,7 +20,7 @@ module.exports = async (g) => {
       const b1 = pv(c, H, F, atk), p1 = pv(c, H, F, 't_sdBreak');
       ok('慣性：普攻 3 次 → 普攻 ×0.7、物理技能 ×1.3', Math.abs(b1 / b0 - 0.7) < 0.02 && Math.abs(p1 / p0 - 1.3) < 0.02, JSON.stringify(F.data.in11) + ' 普攻 ×' + (b1 / b0).toFixed(3) + ' 物理 ×' + (p1 / p0).toFixed(3));
       for (let i = 0; i < 20; i++) inShift11(H, F, DEF.skills[atk]); ok('慣性：範圍 50%〜200%', F.data.in11.b === 50 && F.data.in11.p === 200, JSON.stringify(F.data.in11)); }
-    { const half = withTrait('魔導書', () => { const { c, H, F } = build('魔導書', 'rockRhino', 'elite'); inShift11(H, F, DEF.skills['t_tmCurse']); return F.data.in11; });
+    if (typeof kindOn13 !== 'function' || kindOn13('魔導書')) { const half = withTrait('魔導書', () => { const { c, H, F } = build('魔導書', 'rockRhino', 'elite'); inShift11(H, F, DEF.skills['t_tmCurse']); return F.data.in11; });
       ok('魔導書的特性：用的那一類只 −5%', half.m === 95 && half.b === 110, JSON.stringify(half)); }
     { const { c, H, F } = build('劍', 'wolf', 'wild'); inShift11(H, F, DEF.skills[H.data.attackSkill || 'attack']); ok('一般魔物沒有慣性', !F.data.in11, JSON.stringify(F.data.in11 || null)); }
     /* real battle: 3 attacks on an elite */

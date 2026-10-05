@@ -194,7 +194,7 @@ function* craft11() { const st = Game.st;
   while (true) {
     const top = craftTop11(st), r = yield* ask('要打什麼？（能打到 T' + top + '）', ['武器', '防具', '盾', '返回']); if (r < 0 || r === 3) return;
     let group, pick;
-    if (r === 0) { const K = Object.keys(WNAME11), k = yield* ask('哪一種武器？', K.concat('返回')); if (k < 0 || k >= K.length) continue; group = K[k]; pick = t => BASE11.weapon[group][t - 1]; }
+    if (r === 0) { const K = Object.keys(WNAME11).filter(q => typeof kindOn13 !== 'function' || kindOn13(q)), k = yield* ask('哪一種武器？', K.concat('返回')); if (k < 0 || k >= K.length) continue; group = K[k]; pick = t => BASE11.weapon[group][t - 1]; }
     else if (r === 1) { const S = ['重甲', '輕裝', '法衣'], s = yield* ask('哪一系？\n重甲：物防高　輕裝：帶速度　法衣：魔防高', S.concat('返回')); if (s < 0 || s >= 3) continue; const sl = yield* ask('哪個部位？', ['頭', '身', '腳', '返回']); if (sl < 0 || sl >= 3) continue;
       group = S[s]; const slot = ['head', 'body', 'feet'][sl]; pick = t => BASE11.armor[group][slot][t - 1]; }
     else { group = '盾'; pick = t => BASE11.shield[t - 1]; }
