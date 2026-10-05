@@ -64,6 +64,12 @@ module.exports = async (g) => {
       const hp = H.res.hp; c.dealDamage(F, H, 20, { kind: 'hit', cat: '特' }); const m = hp - H.res.hp; c.dealDamage(F, H, 20, { kind: 'hit', cat: '物' }); const p = hp - m - H.res.hp;
       ok('法力屏障 Lv3：31%、魔法全吸收、物理一半、2 回合', d && Math.abs(d.max - Math.round(H.max.hp * 0.31)) <= 1 && d.turns === 2 && m === 0 && p === 10, d && (d.max + '／' + H.max.hp + ' 魔' + m + ' 物' + p + ' ' + d.turns + '回')); }
     { const { c, H } = build(); c.applyStatus(H, H, 'barrier', { dur: 3 }); const d = ward(c, H); ok('舊的「3 回合護盾」→ 2 回合、20%', d && d.turns === 2 && Math.abs(d.amt - Math.round(H.max.hp * 0.2)) <= 1, d && d.turns + '／' + d.amt); }
+    /* ===== 異常狀態 3 回合（v269） ===== */
+    for (const id of ['psn', 'brn', 'par']) { const r = fight({ rounds: 6, sp: 'wolf', setup: (c, H, F) => { H.stats.atk = 0; F.max.hp = F.res.hp = 99999; c.applyStatus(H, F, id, {}); } });
+      const ex = r.log.find(e => e.type === EVT.STATUS_EXPIRE && e.payload.status === id && e.tgts[0] === r.F.id), dots = r.log.filter(e => e.type === EVT.DAMAGE && e.payload.kind === 'dot' && e.tgts[0] === r.F.id).length;
+      ok(DEF.statuses[id].metadata.n + '：3 回合後自動消除' + (id === 'par' ? '' : '（扣 3 次）'), ex && ex.round === 3 && (id === 'par' || dots === 3), (ex ? 'R' + ex.round : '沒消') + ' 扣' + dots); }
+    { st.status = 'psn'; const b = build(); const s = b.c.statusOf(b.H, 'psn'); st.status = null; ok('舊存檔帶著中毒進戰鬥：也只剩 3 回合', s && s.dur === 3, s && s.dur); }
+    { const b = build(); b.c.applyStatus(b.F, b.H, 'psn', {}); b.c.finish('win'); BB.apply(b.c, st); ok('戰鬥結束時異常消除', st.status == null, st.status); }
     BR.VARIANCE = V0;
     return out.join('\n') + '\n\n' + out.filter(x => x.startsWith('PASS')).length + '/' + out.length + ' PASS';
   }, save));

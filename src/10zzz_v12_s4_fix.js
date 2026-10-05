@@ -33,3 +33,16 @@ DEF.passives['fx.resonance'].make = () => ({ rules: { max_chi: 1, max_stance: 1,
 if (typeof SPECIALS !== 'undefined' && SPECIALS.resonance) SPECIALS.resonance.d = '氣・守勢・砲台的上限 +1，特技需要的層數 −1。';
 if (typeof ACC_TRAIT !== 'undefined' && ACC_TRAIT.resonance) ACC_TRAIT.resonance[1] = '氣・守勢・砲台的上限 +1，特技需要的層數 −1';
 { const _hs = BB.heroSpec; BB.heroSpec = function (st, cfg) { const s = _hs.call(this, st, cfg); if (st && s.wsp && (heroStats(st).fx || {}).resonance) s.wsp = { ...s.wsp, N: Math.max(2, s.wsp.N - 1) }; return s; }; }
+
+/* ---------- 異常狀態 3 回合自動消除（玩家 2026-10-05：「異常狀態設定3回合自動消除」） ----------
+   中毒・灼傷・麻痺：原本要治好才會消失 → 3 回合（每回合結束算一次；中毒、灼傷剛好扣 3 次）。睡眠本來就是 1〜3 回合，照舊。
+   戰鬥結束時身上的異常也一起消除（不再帶到地圖上走路扣血、也不會帶進下一場）。對魔物也一樣。 */
+const AIL_TURNS12 = 3;
+for (const id of ['psn', 'brn', 'par']) Object.assign(DEF.statuses[id], { duration: 'rounds', durDefault: AIL_TURNS12, tick: 'round_end' });
+{ const _hs = BB.heroSpec; BB.heroSpec = function (st, cfg) { const s = _hs.call(this, st, cfg); for (const x of s.statuses || []) if (['psn', 'brn', 'par'].includes(x.id) && x.dur == null) x.dur = AIL_TURNS12; return s; }; }
+{ const _ap = BB.apply; BB.apply = function (core, st = Game.st) { const r = _ap.call(this, core, st); if (st) { st.status = null; delete st.sleepT; } return r; }; }
+{ const H = Battle.prototype.handlers, _sg = H.statusGone; H.statusGone = function* (e, s, t, P, expire) {
+    if (t && expire && ['psn', 'brn', 'par'].includes(P.status)) { delete t.st[P.status]; yield* this.msg(t.n + '的' + DEF.statuses[P.status].metadata.n + '消退了。', { hold: 20 }); return; }
+    return yield* _sg.call(this, e, s, t, P, expire); }; }
+if (typeof BATTLE_HELP !== 'undefined') {
+  BATTLE_HELP.push(['異常狀態', ['中毒・灼傷：每回合結束扣血。麻痺：有時候不能行動。睡眠：1〜3 回合不能行動。', '中毒・灼傷・麻痺 3 回合後自動消除；戰鬥結束時身上的異常也會消除。', '解毒藥這類道具可以馬上治好；體力越高越不容易中異常。']]); }
