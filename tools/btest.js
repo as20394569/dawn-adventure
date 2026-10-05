@@ -44,7 +44,7 @@ module.exports = async (g) => {
       ok('B', '全體：三個目標各受傷，單發約 ×0.75', d3.length === 3 && d3.every(e => e.payload.amount <= d1 * 0.85 && e.payload.amount >= d1 * 0.6), d1 + ' vs ' + d3.map(e => e.payload.amount)); }
     { T('t_multi', { hits: [3, 3], tags: ['skill', 'phys', 'el:一般', 'damage', 'multi_hit'] }); const c = mk([hero({ skills: ['t_multi'] }), foe('B1')]); c.start(false); act(c, 't_multi', ['B1']);
       ok('B', '多段：3 段 HIT / DAMAGE', cnt(c, EVT.HIT, e => e.src === 'H') === 3 && cnt(c, EVT.DAMAGE, e => e.src === 'H') === 3);
-      const c2 = mk([hero({ skills: ['t_multi'] }), foe('B1', { stats: { hp: 1 } }), foe('B2')]); c2.start(false); act(c2, 't_multi', ['B1']); ok('B', '多段：目標中途倒下就停止', cnt(c2, EVT.DAMAGE, e => e.src === 'H' && e.tgts[0] === 'B1') === 1 && c2.byId.B1.down); }
+      const c2 = mk([hero({ skills: ['t_multi'] }), foe('B1', { stats: { hp: 1 } }), foe('B2')]); c2.start(false); act(c2, 't_multi', ['B1']); ok('B', '多段：目標倒下後，剩下的段數轉打別隻', cnt(c2, EVT.DAMAGE, e => e.src === 'H' && e.tgts[0] === 'B1') === 1 && c2.byId.B1.down && cnt(c2, EVT.DAMAGE, e => e.src === 'H' && e.tgts[0] === 'B2') >= 1); }
     // turn order (v12.0.1): everyone chooses at the start of the round, then the faster acts first; 搶先 / 防禦 go first in the same round
     { const c = mk([hero({ stats: { spe: 10 } }), foe('B1', { stats: { spe: 90 } })]); c.start(false); const before = c.log.filter(e => e.type === EVT.ACTION_START).length;
       ok('B', '行動順序：回合開始先等英雄選指令（還沒有人行動）', !!c.need && c.need.plan && before === 0 && c.state === BS.TURN_ORDER);

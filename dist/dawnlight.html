@@ -14935,9 +14935,11 @@ class BattleCore {
       if (sk.target === 'self' || sk.target === 'none' || sk.noHitRoll) { this.exec(sk.effects, { ...base, tgt: tg[0] || u, n: 0 }); return; }
       const multi = tg.length > 1; let hits = sk.hitsOf ? sk.hitsOf(this, u, cmd) : sk.hits ? this.rng.int(sk.hits[0], sk.hits[1]) : 1;
       for (const m of u.mods) if (m.hitsAdd && condOk(m.cond, { core: this, owner: u, src: u, skill: sk })) hits += m.hitsAdd;
+      const spread = !multi && hits > 1 && sk.target === 'enemy' && tg[0] && tg[0].side !== u.side, spreadPool = () => this.foesOf(u).filter(f => this.isUp(f) && (sk.hitsAirborne || !this.hasStatus(f, 'airborne')));
       tg.forEach((t, ti) => {
         let landed = 0; const scale = multi ? (sk.chain ? (ti === 0 ? 1 : BR.CHAIN_MUL) : BR.AOE_MUL) : 1;
         for (let h = 0; h < hits; h++) {
+          if (spread && this.isUp(u)) { const P = spreadPool(); if (P.length && (h > 0 || !this.isUp(t))) t = P.length > 1 ? this.rng.pick(P) : P[0]; }
           if (!this.isUp(t) || !this.isUp(u)) break;
           this.hit = ++this.hitSeq;
           const air = !multi && this.hasStatus(t, 'airborne') && t.side !== u.side && !sk.hitsAirborne; // in the air: single-target attacks miss
@@ -23097,4 +23099,58 @@ function* treeScreen11Tabs(start) { const st = Game.st, kinds = () => TREE_KINDS
     if (Input.pressed('b')) { Input.consume('b'); Sound.sfx('cancel'); break; } yield; }
   UI.remove(scr); }
 treeScreen11 = treeScreen11Tabs;
+for (const id in DEF.skills) if (/^attack_d11_/.test(id)) for (const x of DEF.skills[id].effects) { const ef = typeof x === 'string' ? DEF.effects[x] : x; if (ef && ef.kind === 'off11' && ef.cond) { delete ef.cond.tgtAlive; if (ef.conditions && ef.conditions !== ef.cond) delete ef.conditions.tgtAlive; } }
+{ const D = EFFECT_TYPES.damage, _ex = D.exec; D.exec = function (core, ef, ctx, tg) {
+    if (ef.kind === 'off11' && ctx.owner && !(tg || []).some(t => core.isUp(t))) { const P = core.foesOf(ctx.owner).filter(f => core.isUp(f)); if (!P.length) return; tg = [P.length > 1 ? core.rng.pick(P) : P[0]]; }
+    return _ex.call(this, core, ef, ctx, tg); }; }
+{ const H = Battle.prototype.handlers, _hit = H.HIT; H.HIT = function* (e, s, t, P) { const D = DEF.skills[P.skill];
+    if (s && s.hero && t && D && P.hitIndex > 0 && this.tgtV && t !== this.tgtV && !D.tags.includes('basic') && !D.hitFx) { yield* segSwing(this, s, this.center(t), P.hitIndex, this._thKind || '劍'); return; }
+    return yield* _hit.call(this, e, s, t, P); };
+  const _dm = H.DAMAGE; H.DAMAGE = function* (e, s, t, P) {
+    if (s && s.hero && t && P.kind === 'off11' && this.tgtV && t !== this.tgtV) yield* segSwing(this, s, this.center(t), 1, this._thKind || '劍');
+    return yield* _dm.call(this, e, s, t, P); }; }
+if (typeof BATTLE_HELP !== 'undefined') { const b = BATTLE_HELP.find(q => q[0] === '武器技能'); if (b && Array.isArray(b[1])) b[1] = b[1].map(t => /^短刀的普攻是 2 段/.test(t) ? '短刀普攻 2 段、拳套學會特性後打兩下、雙持時副手也出手。多段攻擊第二下起隨機打一隻，目標倒下就轉打別隻。' + (t.includes('鐵匠') ? '武器屬性在鐵匠賦予。' : '') : t); }
+const ROAM16 = { SCALE: 3, REFILL: 30, DUNGEON: [6, 8], FAR_X: 7, FAR_Y: 9 };
+roamImg12 = function (sp) {
+  if (ROAM_IMG12[sp]) return ROAM_IMG12[sp];
+  let c = null;
+  if (typeof chibiBase === 'function' && chibiBase(sp)) { const im = chibiImage(sp), M = BATTLE_PXC_META[chibiBase(sp)];
+    if (im && im.ok !== false && (im.complete !== false) && M) { const w = Math.ceil(M.w / ROAM16.SCALE), h = Math.ceil(M.h / ROAM16.SCALE); c = mkCanvas(w, h); const x = c.getContext('2d'); x.imageSmoothingEnabled = false;
+      x.drawImage(im, M.frames.idle[0] * M.w, 0, M.w, M.h, 0, 0, w, h); } }
+  if (!c && ART[sp]) return monsterMini(sp, 20);
+  if (!c) return null;
+  return ROAM_IMG12[sp] = { c, flip: flipCanvas(c), big: 1 };
+};
+for (const k in ROAM_IMG12) delete ROAM_IMG12[k];
+const zoneAt16 = (d, x, y) => d.encounters.find(e => y >= e.y0 && y <= e.y1 && (e.x0 === undefined || (x >= e.x0 && x <= e.x1)));
+const isDungeon16 = d => !d.rows.some(r => r.includes('#'));
+const roamSpecies16 = d => { const M = new Map(); for (const enc of d.encounters || []) for (const r of enc.table || []) if (r[3] > 0 && !(SPECIES[r[0]] || {}).rare && roamImg12(r[0])) { if (!M.has(r[0])) M.set(r[0], []); M.get(r[0]).push(enc); } return M; };
+Overworld.prototype.roamSpots16 = function (far) { const d = this.map.d, p = this.p, out = [], ch = isDungeon16(d) ? 's' : '#';
+  d.rows.forEach((r, y) => [...r].forEach((c, x) => { if (c !== ch || !zoneAt16(d, x, y)) return; const dx = Math.abs(x - p.x), dy = Math.abs(y - p.y);
+    if (far ? (dx <= ROAM16.FAR_X && dy <= ROAM16.FAR_Y) : dx + dy <= 5) return; if (this.roamFree12(x, y)) out.push([x, y]); }));
+  return out; };
+Overworld.prototype.roamMake16 = function (spot, sp) { const d = this.map.d, st = this.st, [x, y] = spot, enc = zoneAt16(d, x, y); if (!enc) return null;
+  let row = sp ? enc.table.find(r => r[0] === sp) : null; if (!row) row = rollEnc(enc); if (!row || (SPECIES[row[0]] || {}).rare) return null; const img = roamImg12(row[0]); if (!img) return null;
+  const lv = rnd(row[1], row[2]), pack = st.lv >= 8 && chance(0.12) ? rnd(2, 3) : 0, dir = pick(['down', 'left', 'right', 'up']);
+  const e = new Entity({ roam: 1, sp: row[0], lv, enc, rare: 0, pack, wxm: 0, x, y, dir, img, aggro: chance(0.5) && lv >= (st.lv || 1) - 2 }); e.home = [x, y, dir]; e.timer = rnd(20, 120); return e; };
+{ const _sp = Overworld.prototype.roamSpawn12; Overworld.prototype.roamSpawn12 = function () { const L = _sp.call(this), d = this.map.d;
+    const need = roamSpecies16(d), cnt = () => { const c = {}; for (const e of L) c[e.sp] = (c[e.sp] || 0) + 1; return c; };
+    for (const [sp, zones] of need) { if (L.some(e => e.sp === sp)) continue; const c = cnt();
+      const cand = L.filter(e => zones.includes(e.enc) && c[e.sp] > 1 && !e.rare && !e.pack && !e.wxm && !e.champ12 && !e.bounty12 && !e.scare12);
+      if (cand.length) { const e = pick(cand), row = e.enc.table.find(r => r[0] === sp); e.sp = sp; e.lv = rnd(row[1], row[2]); e.img = roamImg12(sp); e.aggro = chance(0.5) && e.lv >= (this.st.lv || 1) - 2; continue; }
+      const spots = this.roamSpots16(false).filter(([x, y]) => zones.includes(zoneAt16(d, x, y)) && !L.some(q => q.x === x && q.y === y)); if (!spots.length) continue;
+      const e = this.roamMake16(pick(spots), sp); if (e) L.push(e); }
+    if (isDungeon16(d)) { const want = rnd(ROAM16.DUNGEON[0], ROAM16.DUNGEON[1]); let tries = 0;
+      while (L.length < want && tries++ < 20) { const spots = this.roamSpots16(false).filter(([x, y]) => !L.some(q => q.x === x && q.y === y)); if (!spots.length) break; const e = this.roamMake16(pick(spots)); if (e) L.push(e); } }
+    return L; }; }
+{ const _ld = Overworld.prototype.load; Overworld.prototype.load = function (...a) { _ld.apply(this, a); if (this.roam12 && this.roam12.size16 == null) this.roam12.size16 = this.roam12.list.length; }; }
+{ const _dr = Overworld.prototype.roamDrop12; Overworld.prototype.roamDrop12 = function (e) { _dr.call(this, e);
+    if (e && e.roam && !e.bounty12 && this.roam12 && roamOn12(this.map.d)) (this.roam12.refill16 || (this.roam12.refill16 = [])).push((this.st.steps || 0) + ROAM16.REFILL + rnd(0, 10)); }; }
+{ const _os = Overworld.prototype.onStep; Overworld.prototype.onStep = function () { _os.call(this); const R = this.roam12, st = this.st;
+    if (!R || !R.refill16 || !R.refill16.length || this.script || !roamOn12(this.map.d) || R.map !== st.map) return;
+    const due = R.refill16.filter(t => t <= (st.steps || 0)); if (!due.length) return; R.refill16 = R.refill16.filter(t => t > (st.steps || 0));
+    for (let i = 0; i < due.length; i++) { if (R.size16 && R.list.length >= R.size16) break; const spots = this.roamSpots16(true); if (!spots.length) break;
+      const have = new Set(R.list.map(q => q.sp)), miss = [...roamSpecies16(this.map.d).keys()].filter(sp => !have.has(sp)), spot = pick(spots), z = zoneAt16(this.map.d, spot[0], spot[1]);
+      const sp = miss.find(s => z && z.table.some(r => r[0] === s && r[3] > 0)) || null, e = this.roamMake16(spot, sp); if (!e) continue;
+      e.moving = false; e.px = e.x * 16; e.py = e.y * 16; R.list.push(e); this.elites.push(e); } }; }
 </script>

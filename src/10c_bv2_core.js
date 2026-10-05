@@ -314,9 +314,12 @@ class BattleCore {
       if (sk.target === 'self' || sk.target === 'none' || sk.noHitRoll) { this.exec(sk.effects, { ...base, tgt: tg[0] || u, n: 0 }); return; }
       const multi = tg.length > 1; let hits = sk.hitsOf ? sk.hitsOf(this, u, cmd) : sk.hits ? this.rng.int(sk.hits[0], sk.hits[1]) : 1;
       for (const m of u.mods) if (m.hitsAdd && condOk(m.cond, { core: this, owner: u, src: u, skill: sk })) hits += m.hitsAdd;
+      // v12.15: a single-target multi-hit move against several foes — the 1st hit goes to the chosen one, every later hit to a random foe; a fallen target hands the rest to another
+      const spread = !multi && hits > 1 && sk.target === 'enemy' && tg[0] && tg[0].side !== u.side, spreadPool = () => this.foesOf(u).filter(f => this.isUp(f) && (sk.hitsAirborne || !this.hasStatus(f, 'airborne')));
       tg.forEach((t, ti) => {
         let landed = 0; const scale = multi ? (sk.chain ? (ti === 0 ? 1 : BR.CHAIN_MUL) : BR.AOE_MUL) : 1;
         for (let h = 0; h < hits; h++) {
+          if (spread && this.isUp(u)) { const P = spreadPool(); if (P.length && (h > 0 || !this.isUp(t))) t = P.length > 1 ? this.rng.pick(P) : P[0]; }
           if (!this.isUp(t) || !this.isUp(u)) break;
           this.hit = ++this.hitSeq;
           const air = !multi && this.hasStatus(t, 'airborne') && t.side !== u.side && !sk.hitsAirborne; // in the air: single-target attacks miss
