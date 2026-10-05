@@ -21408,24 +21408,25 @@ function enLines11(g) { const L = [], used = potUsed11(g), pot = potOf11(g);
 { const _ws = weaponSpr; weaponSpr = function (st = Game.st) { const g = gearBy(st.equip && st.equip.weapon, st); if (g && g.gl && GEAR[g.gl]) return GEAR[g.gl].spr || 'ironSword'; return _ws(st); }; }
 { const _pi = Overworld.prototype.pickItem; Overworld.prototype.pickItem = function* (it) { GEAR11_MINQ = 3; try { return yield* _pi.call(this, it); } finally { GEAR11_MINQ = 0; } }; }
 if (typeof giveReward === 'function') { const _gr = giveReward; giveReward = function* (...a) { GEAR11_MINQ = 3; try { return yield* _gr.apply(this, a); } finally { GEAR11_MINQ = 0; } }; }
-{ const H = Battle.prototype, _m = H.msg; H.msg = function* (t, o) { if (this._mute11 && typeof t === 'string' && /^(得到了素材|（晶石）多撿到了素材)/.test(t)) return; return yield* _m.call(this, t, o); }; }
+const matVal12 = k => tierPts11(MATT11[k] || 1);
+const matLine12 = o => Object.keys(o).filter(k => o[k] > 0 && ITEMS[k]).map(k => ITEMS[k].n + (o[k] > 1 ? '×' + o[k] : '') + (MATCAT11[k] ? '（' + MATCAT11[k] + ' +' + o[k] * matVal12(k) + '）' : '')).join('、');
+const MATMUTE12 = /^(得到了素材|（晶石）多撿到了素材|又撿到了素材|（幸運）多撿到了|(頭目|菁英)留下了素材)/;
+const matTut12 = function* (show) { const st = Game.st; if (st.flags.tutMat12) return; st.flags.tutMat12 = 1; yield* show('（素材會放進背包。到鐵匠選「素材換點數」，就能換成打造・賦予用的點數；括號裡是換得到的點數。任務要的素材換的時候會自動留著。）'); };
+{ const H = Battle.prototype, _m = H.msg; H.msg = function* (t, o) { if (this._mute11 && typeof t === 'string' && MATMUTE12.test(t)) return; return yield* _m.call(this, t, o); }; }
 { const _v = Battle.prototype.victory; Battle.prototype.victory = function* () {
     const st = Game.st, bag0 = { ...st.bag }; this._mute11 = true; let r;
     try { r = yield* _v.call(this); } finally { this._mute11 = false; }
     if (!st || !(st.hp > 0)) return r;
-    const R = reserved11(st), got = {}, kept = [], extra = {}; for (const k in st.bag) if (MATCAT11[k] && (st.bag[k] || 0) > (bag0[k] || 0)) { extra[k] = st.bag[k] - (bag0[k] || 0); st.bag[k] = bag0[k] || 0; if (!st.bag[k]) delete st.bag[k]; }
-    const defeated = this.defeated ? this.defeated() : [], T = lvTier11(Math.max(1, ...defeated.map(v => v.lv || 1)));
-    const one = (k, pts) => { if ((st.bag[k] || 0) < (R[k] || 0)) { st.bag[k] = (st.bag[k] || 0) + 1; kept.push(ITEMS[k].n); } else { const c = MATCAT11[k]; got[c] = (got[c] || 0) + pts; } };
-    for (const v of defeated) { const k = (SPECIES[v.sp] || {}).mat; if (!k || !MATCAT11[k] || v.minion) continue; if (extra[k] > 0) extra[k]--; one(k, tierPts11(lvTier11(v.lv || 1)) * (v.elite || v.boss ? 2 : 1)); }
-    for (const k in extra) for (let i = 0; i < extra[k]; i++) one(k, tierPts11(T));
+    const gained = {}; for (const k in st.bag) if (MATCAT11[k] && (st.bag[k] || 0) > (bag0[k] || 0)) gained[k] = st.bag[k] - (bag0[k] || 0);
+    const need = {}, defeated = this.defeated ? this.defeated() : []; for (const v of defeated) { const k = (SPECIES[v.sp] || {}).mat; if (!k || !MATCAT11[k] || v.minion) continue; need[k] = (need[k] || 0) + (v.elite || v.boss ? 2 : 1); }
+    for (const k in need) if ((gained[k] || 0) < need[k]) { st.bag[k] = (st.bag[k] || 0) + need[k] - (gained[k] || 0); gained[k] = need[k]; }
+    const up = (heroStats(st).cr11P || []).filter(p => p[0] === 'matUp').reduce((a, p) => a + p[1], 0);
+    if (up > 0) for (const k in gained) { const x = gained[k] * up / 100, n = Math.floor(x) + (chance(x - Math.floor(x)) ? 1 : 0); if (n > 0) { st.bag[k] += n; gained[k] += n; } }
     { const F = this.mainView && this.mainView(), key = (this.cfg || {}).id || (F && F.sp); if (F && F.elite && key && ((st.kills || {})[key] || 0) >= 2) { const k = sigOf10(key, F.sp); if (k && glamOk11(k) && !glam11(st)[k]) { glam11(st)[k] = 1; yield* this.msg('解鎖了「' + GEAR[k].n + '」的外觀！（鐵匠→幻化）', { hold: 26 }); } } }
-    const up = (heroStats(st).cr11P || []).filter(p => p[0] === 'matUp').reduce((a, p) => a + p[1], 0); if (up > 0) for (const c in got) got[c] += Math.max(1, Math.round(got[c] * up / 100));
-    if (Object.keys(got).length) { ptsPay11(got, st, 1); yield* this.msg('素材點數：' + PTS11.filter(c => got[c]).map(c => c + ' +' + got[c]).join('、'), { hold: 26 }); }
-    if (kept.length) yield* this.msg('得到了素材「' + [...new Set(kept)].join('」「') + '」！（任務要用，先留著）', { hold: 26 });
-    if (!st.flags.tutPts11 && Object.keys(got).length) { st.flags.tutPts11 = 1; yield* this.msg('（素材會直接變成六類「素材點數」，到鐵匠打造和賦予裝備時使用。任務要的素材會先留在背包。）', { wait: true }); }
+    if (Object.keys(gained).length) { yield* this.msg('得到了素材：' + matLine12(gained) + '！', { hold: 30 }); yield* matTut12(t => this.msg(t, { wait: true })); }
     return r; }; }
-{ const _dg = doGather; doGather = function (kind) { const st = Game.st, bag0 = { ...st.bag }, r = _dg(kind); const only = {}; for (const k in st.bag) if (MATCAT11[k] && (st.bag[k] || 0) > (bag0[k] || 0)) only[k] = st.bag[k] - (bag0[k] || 0);
-    const t = mapTier11(), got = bagToPts11(st, () => t, only); if (Object.keys(got).length && r && typeof r.text === 'string') r.text += '（→ ' + PTS11.filter(c => got[c]).map(c => c + ' +' + got[c]).join('、') + ' 點）'; return r; }; }
+{ const _dg = doGather; doGather = function (kind) { const st = Game.st, bag0 = { ...st.bag }, r = _dg(kind); const got = {}; for (const k in st.bag) if ((st.bag[k] || 0) > (bag0[k] || 0)) got[k] = st.bag[k] - (bag0[k] || 0);
+    if (r && Object.keys(got).length) r.text = matLine12(got); return r; }; }
 const CRAFTCAT11 = { 劍: ['金屬', '獸材'], 短刀: ['獸材', '金屬'], 斧: ['金屬', '木料'], 長槍: ['木料', '金屬'], 拳套: ['獸材', '布料'], 法杖: ['木料', '魔素'], 魔導書: ['布料', '魔素'], 樂器: ['木料', '布料'], 火槍: ['金屬', '木料'],
   重甲: ['金屬', '獸材'], 輕裝: ['獸材', '布料'], 法衣: ['布料', '魔素'], 盾: ['金屬', '木料'] };
 const craftCost11 = (group, t) => { const [a, b] = CRAFTCAT11[group], m = smithCut11(); return { pts: { [a]: Math.round(10 * t * m), [b]: Math.round(5 * t * m) }, gold: 100 * t }; };
@@ -21446,7 +21447,7 @@ function* craft11() { const st = Game.st;
     const t = T[ti], k = pick(t), c = craftCost11(group, t), B = GEAR[k];
     const [a] = gearLines({ b: k, q: 1, en11: {} });
     if (!(yield* yesNo('打造「' + B.n + '」？（T' + t + '・' + a + '）\n需要：' + ptsText11(c.pts) + ' 點、' + c.gold + ' G' + '\n（品質隨機：品質越好，潛力越多、晶石孔越多）'))) continue;
-    if (!ptsHave11(c.pts) || st.money < c.gold) { Sound.sfx('bump'); yield* say('點數或金錢不夠喔。\n點數：' + ptsText11(pts11()) + '\n打倒魔物、採集就能得到素材點數。'); continue; }
+    if (!ptsHave11(c.pts) || st.money < c.gold) { Sound.sfx('bump'); yield* matShort12('點數或金錢不夠喔。'); continue; }
     let q2 = false; const rare = Object.keys(st.bag).filter(i => /^pr_/.test(i) && st.bag[i] > 0 && ITEMS[i]);
     if (rare.length) { const p = yield* ask('要放稀有部位嗎？（品質抽兩次，取好的那次）', rare.map(i => ITEMS[i].n + '（有' + st.bag[i] + '）').concat('不放')); if (p >= 0 && p < rare.length) { st.bag[rare[p]]--; if (!st.bag[rare[p]]) delete st.bag[rare[p]]; q2 = true; } }
     ptsPay11(c.pts); st.money -= c.gold; const lv = smith11(st).lv; let q = rollQ11(lv); if (q2) q = Math.max(q, rollQ11(lv));
@@ -21467,7 +21468,7 @@ function* enchant11(g) { const st = Game.st, t = GEAR[g.b].t || 1;
     if (wpn && r === keys.length) { if (g.el) continue; const e = yield* ask('要賦予哪個屬性？（普通攻擊和武器技能都會變成這個屬性）', EL11.concat('取消')); if (e < 0 || e >= 4) continue; cost = enElCost11(g); apply = () => { g.el = EL11[e]; };
       if (left < ELPOT11) { yield* say('潛力不夠了。'); continue; } }
     else { const k = keys[r], E = EN11[k]; if ((en[k] || 0) >= E[6]) { yield* say('這項已經加到上限了。'); continue; } if (left < E[3]) { yield* say('潛力不夠了。'); continue; } cost = enStepCost11(g, k); apply = () => { en[k] = (en[k] || 0) + 1; }; }
-    if (!ptsHave11(cost)) { Sound.sfx('bump'); yield* say('點數不夠喔。（需要 ' + ptsText11(cost) + '）\n打倒魔物、採集就能得到素材點數。'); continue; }
+    if (!ptsHave11(cost)) { Sound.sfx('bump'); yield* matShort12('點數不夠喔。（需要 ' + ptsText11(cost) + '）'); continue; }
     ptsPay11(cost); const E11 = g.e11 || (g.e11 = {}); for (const c in cost) E11[c] = (E11[c] || 0) + cost[c]; apply(); clampHP(); Sound.sfx('item');
     const up = smithExp11(1); if (up) { Sound.jingle('levelup'); yield* say('鍛冶熟練升到了 Lv' + up + '！'); } } }
 function* enchantMenu11() { const st = Game.st;
@@ -21495,7 +21496,7 @@ gainBP = function (k, q = 1, st = Game.st) { if (!GEAR[k]) return ''; const G0 =
 Events.armorer = function* () { yield* say('王國的裝備現在都交給鐵匠打造了。\n鐵匠用素材點數打底裝，再把能力賦予上去——去找他吧。'); };
 { const _lh = lootHint; lootHint = function (key, sp) { return String(_lh(key, sp)).replace(/「([^」]*)」的設計圖/, '「$1」（底裝＋外觀）').replace(/、[^、]*$/, m => /素材|部位|經驗|金錢/.test(m) ? m : m); }; }
 smithMenu = function* (f) { const st = Game.st;
-  if (!st.flags.tutSmith11) { st.flags.tutSmith11 = 1; yield* say('（鐵匠改版了！）\n打造：用素材點數打底裝，品質決定潛力和晶石孔。\n賦予：用潛力和點數把能力加上去。\n晶石・幻化・分解也在這裡。'); }
+  if (!st.flags.tutSmith11) { st.flags.tutSmith11 = 1; yield* say('（鐵匠改版了！）\n打造：用素材點數打底裝，品質決定潛力和晶石孔。\n賦予：用潛力和點數把能力加上去。\n晶石・幻化・分解也在這裡。\n素材換點數：把背包裡的素材換成點數。'); }
   yield* ptsBar11((function* () {
     while (true) { const S = smith11(st), r = yield* ask('要做什麼？（鍛冶熟練 Lv' + S.lv + '）', ['打造', '賦予', '晶石', '幻化', '分解', '離開']);
       if (r === 0) yield* craft11(); else if (r === 1) yield* enchantMenu11(); else if (r === 2) yield* cryMenu11(); else if (r === 3) yield* glamour11(); else if (r === 4) yield* salvage11(); else break; } })()); };
@@ -23153,5 +23154,48 @@ Overworld.prototype.roamMake16 = function (spot, sp) { const d = this.map.d, st 
       const have = new Set(R.list.map(q => q.sp)), miss = [...roamSpecies16(this.map.d).keys()].filter(sp => !have.has(sp)), spot = pick(spots), z = zoneAt16(this.map.d, spot[0], spot[1]);
       const sp = miss.find(s => z && z.table.some(r => r[0] === s && r[3] > 0)) || null, e = this.roamMake16(spot, sp); if (!e) continue;
       e.moving = false; e.px = e.x * 16; e.py = e.y * 16; R.list.push(e); this.elites.push(e); } }; }
+function matPreview12(st = Game.st) { const R = reserved11(st), got = {}, kept = [];
+  for (const k in st.bag) { if (!MATCAT11[k] || !(st.bag[k] > 0)) continue; const keep = Math.min(st.bag[k], R[k] || 0), n = st.bag[k] - keep; if (keep) kept.push(ITEMS[k].n);
+    if (n > 0) { const c = MATCAT11[k]; got[c] = (got[c] || 0) + n * matVal12(k); } }
+  return { got, kept }; }
+function* matConvert12(ask0) { const st = Game.st, P = matPreview12(st);
+  if (!Object.keys(P.got).length) { yield* say('背包裡沒有可以換的素材。' + (P.kept.length ? '\n（' + P.kept.join('、') + '是任務要用的，先留著。）' : '\n打倒魔物、採集、開寶箱都會拿到素材。')); return false; }
+  if (!(yield* yesNo((ask0 ? ask0 + '\n' : '') + '把背包裡的素材換成點數嗎？\n→ ' + ptsText11(P.got) + (P.kept.length ? '\n（任務要的' + P.kept.slice(0, 3).join('、') + (P.kept.length > 3 ? '…' : '') + '會留著）' : '')))) return false;
+  const got = bagToPts11(st); Sound.jingle('item'); yield* say('換好了！' + ptsText11(got).replace(/ (\d+)/g, ' +$1') + '\n現在的點數：' + ptsText11(pts11())); return true; }
+function* matShort12(msg) { const P = matPreview12();
+  if (Object.keys(P.got).length) { yield* matConvert12(msg + '\n背包裡還有素材。'); return; }
+  yield* say(msg + '\n點數：' + (ptsText11(pts11()) || '0') + '\n打倒魔物、採集、開寶箱拿到素材，再到這裡換成點數。'); }
+smithMenu = function* (f) { const st = Game.st;
+  if (!st.flags.tutSmith11) { st.flags.tutSmith11 = 1; yield* say('（鐵匠改版了！）\n打造：用素材點數打底裝，品質決定潛力和晶石孔。\n賦予：用潛力和點數把能力加上去。\n素材換點數：把背包裡的素材換成點數。'); }
+  yield* ptsBar11((function* () {
+    while (true) { const S = smith11(st), P = matPreview12(st), n = Object.values(P.got).reduce((a, b) => a + b, 0);
+      const r = yield* ask('要做什麼？（鍛冶熟練 Lv' + S.lv + '）', ['素材換點數' + (n ? '（+' + n + '）' : ''), '打造', '賦予', '晶石', '幻化', '分解', '離開']);
+      if (r === 0) yield* matConvert12(); else if (r === 1) yield* craft11(); else if (r === 2) yield* enchantMenu11(); else if (r === 3) yield* cryMenu11(); else if (r === 4) yield* glamour11(); else if (r === 5) yield* salvage11(); else break; } })()); };
+{ const _pi = Overworld.prototype.pickItem; Overworld.prototype.pickItem = function* (it) {
+    if (!it || it.gold || !it.item || GEAR[it.item] || !MATCAT11[it.item]) { const r = yield* _pi.call(this, it); if (it && it.gather) yield* matTut12(say); return r; }
+    const st = this.st, n = it.n || 1; this.items = this.items.filter(i => i !== it); st.flags[it.id] = 1; st.bag[it.item] = (st.bag[it.item] || 0) + n;
+    yield* itemGet(st.name + '撿到了素材：' + matLine12({ [it.item]: n }) + '！'); yield* matTut12(say); }; }
+{ const NM = Object.keys(MATCAT11).filter(k => ITEMS[k]).sort((a, b) => ITEMS[b].n.length - ITEMS[a].n.length), BY = {}; for (const k of NM) BY[ITEMS[k].n] = k;
+  const RX = new RegExp('((?:撿到|得到|拿到|收到|採到)了?(?:素材)?[：]?)(「)?(' + NM.map(k => ITEMS[k].n.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|') + ')(」)?(?:×(\\d+))?(?!（)', 'g');
+  const deco = s => typeof s !== 'string' || /（(金屬|布料|獸材|木料|藥材|魔素) \+/.test(s) ? s : s.replace(RX, (m, a, o, n, cl, c) => { const k = BY[n], q = +(c || 1); return a + (o || '') + n + (cl || '') + (c ? '×' + c : '') + '（' + MATCAT11[k] + ' +' + q * matVal12(k) + '）'; });
+  const _ig = itemGet; itemGet = function* (text, ...a) { yield* _ig(deco(text), ...a); }; }
+ITEM_CATS.splice(ITEM_CATS.indexOf('採集素材') + 1, 0, '部位素材'); ITEM_CAT_COL['部位素材'] = '#e8a0c8';
+for (const sp in PARTS11) { const n = cryName11(sp);
+  if (ITEMS['pt_' + sp]) Object.assign(ITEMS['pt_' + sp], { cat: '部位素材', d: SPECIES[sp].n + '的部位。用來升級「' + n + '」：★2 要 3 個，★3 要 5 個＋稀有部位 1 個（鐵匠→晶石）。' });
+  if (ITEMS['pr_' + sp]) Object.assign(ITEMS['pr_' + sp], { cat: '部位素材', d: SPECIES[sp].n + '的稀有部位。把「' + n + '」升到 ★3 要 1 個（鐵匠→晶石）。打牠時多破防比較容易拿到。' }); }
+for (const k in MATCAT11) { const I = ITEMS[k]; if (!I) continue; let base0 = String(I.d || '').split('\n來源：')[0];
+  Object.defineProperty(I, 'd', { configurable: true, enumerable: true, get() { const U = typeof MAT_USE12 !== 'undefined' ? MAT_USE12[k] : null, use = U ? U.items.slice(0, 2).join('、') : '';
+    return base0 + '\n來源：' + (typeof matSource === 'function' ? matSource(k) : '') + '\n鐵匠「素材換點數」：' + MATCAT11[k] + ' ' + matVal12(k) + ' 點' + (use ? '\n也能做：' + use : ''); }, set(v) { base0 = String(v).split('\n來源：')[0]; } }); }
+{ const i = GROW12.findIndex(q => q[0] === '素材點數與鐵匠'); const t = '打倒魔物、採集、開寶箱會拿到素材（放在背包）。到鐵匠選「素材換點數」，換成金屬・布料・獸材・木料・藥材・魔素六類點數（任務要的會自動留著），再用點數打造底裝、賦予能力。菁英・頭目的「部位素材」是升級晶石用的，不會換成點數。';
+  if (i >= 0) GROW12[i][1] = t; else GROW12.push(['素材點數與鐵匠', t]); }
+WBAL12.taken['雙刀'] = 0.8; delete WBAL12.taken['雙劍'];
+for (const r of TREE11['雙刀'].sk) { const id = 't_' + r[1], D = DEF.skills[id]; if (!D || !D.power || D.powerOf) continue; D.power = Math.round(D.power / 1.25); r[3] = D.power; if (MOVES[id]) MOVES[id].pow = D.power; }
+TREE11['雙刀'].trait = '多段攻擊每段威力 +10%，速度 +3，受到的傷害 −20%';
+const DUALSW12 = { off: 0.15, pow: 0.8, basic: 0.8 };
+PV('dualSw12', v => ({ mods: [{ stage: 'final', who: 'attacker', mul: v, cond: { tag: 'dual11' } }] }));
+{ const _hs = BB.heroSpec; BB.heroSpec = function (st, cfg) { const s = _hs.call(this, st, cfg); if (st && dualMode11(st) === '雙劍') { if (s.data.offMul11) s.data.offMul11 = Math.max(0.3, s.data.offMul11 - DUALSW12.off); s.passives.push({ key: 'dualSw12', v: DUALSW12.basic, src: 'tree' }); } return s; }; }
+for (const r of TREE11['雙劍'].sk) { const id = 't_' + r[1], D = DEF.skills[id]; if (!D || !D.power || D.powerOf) continue; D.power = Math.round(D.power * DUALSW12.pow); r[3] = D.power; if (MOVES[id]) MOVES[id].pow = D.power; }
+TREE11['雙劍'].mastD = '副手的威力 45%，每級 +6%';
+TREE11['雙劍'].trait = '會心時副手追加一斬（威力 30）；雙劍的普攻（兩下）威力 ×0.8';
 </script>
 </body></html>
