@@ -44,9 +44,14 @@ module.exports = async (g) => {
       ok('打穿魔物護盾：多的傷害扣血、破防', F.res.hp === hp - 30 && c.hasStatus(F, 'broken'), (hp - F.res.hp) + (c.hasStatus(F, 'broken') ? ' 破防' : '')); }
     /* HP 門檻・每 4 回合 */
     { const { c, H, F } = build({ sp: 'golem', foeKind: 'boss', lv: 17 }); c.dealDamage(H, F, Math.ceil(F.max.hp * 0.31), { kind: 'hit' }); const d = ward(c, F);
-      ok('頭目 HP 掉到 70% → 張開護盾 12%', d && d.why === 'hp' && Math.abs(d.amt - Math.round(F.max.hp * 0.12)) <= 1, d && d.amt); }
+      ok('頭目 HP 掉到 75% → 張開護盾 12%', d && d.why === 'hp' && Math.abs(d.amt - Math.round(F.max.hp * 0.12)) <= 1, d && d.amt); }
     { const r = fight({ rounds: 5, sp: 'golem', foeKind: 'boss', lv: 17, foeDo: () => ({ type: 'wait' }), setup: (c, H, F) => { H.stats.atk = 1; } }); const ap = r.log.filter(e => e.type === EVT.STATUS_APPLY && e.payload.status === 'barrier' && e.tgts[0] === r.F.id);
-      ok('每 4 回合張開一次（8%）', ap.length >= 1 && ap[0].round === 4 && ap[0].payload.data.why === 'every', ap.map(e => 'R' + e.round + ':' + e.payload.data.why).join(',')); }
+      ok('頭目每 3 回合張開一次（8%）', ap.length >= 1 && ap[0].round === 3 && ap[0].payload.data.why === 'every', ap.map(e => 'R' + e.round + ':' + e.payload.data.why).join(',')); }
+    { const r = fight({ rounds: 5, sp: 'wolf', foeKind: 'elite', lv: 9, foeDo: () => ({ type: 'wait' }), setup: (c, H, F) => { H.stats.atk = 1; } }); const ap = r.log.filter(e => e.type === EVT.STATUS_APPLY && e.payload.status === 'barrier' && e.tgts[0] === r.F.id);
+      ok('菁英每 4 回合張開一次', ap.length >= 1 && ap[0].round === 4 && ap[0].payload.data.why === 'every', ap.map(e => 'R' + e.round + ':' + e.payload.data.why).join(',')); }
+    { const { c, H, F } = build({ sp: 'golem', foeKind: 'boss', lv: 17 }); c.dealDamage(H, F, Math.ceil(F.max.hp * 0.26), { kind: 'hit' }); const d1 = ward(c, F); c.removeStatus(F, 'barrier');
+      c.dealDamage(H, F, Math.ceil(F.max.hp * 0.26), { kind: 'hit' }); const d2 = ward(c, F);
+      ok('頭目 HP 75%・50% 各張一次', d1 && d1.why === 'hp' && d2 && d2.why === 'hp', (d1 && d1.why) + '／' + (d2 && d2.why)); }
     /* 魔物護盾的時間：主角至少有一次行動 */
     { const r = chargeFoe({ slow: 1, setup: (c, H, F) => { H.stats.atk = 1; } }); const hits = r.log.filter(e => e.type === EVT.DAMAGE && e.src === 'H' && e.payload.ward > 0);
       ok('主角比較慢也打得到護盾', hits.length >= 1, hits.length + ' 下'); }
