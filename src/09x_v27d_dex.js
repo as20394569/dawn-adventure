@@ -46,7 +46,7 @@ function* dexDetail(list, idx) {
       const mat = sp.mat && ITEMS[sp.mat] ? ITEMS[sp.mat].n : null;
       if (info.big && typeof PARTS11 !== 'undefined' && PARTS11[k]) for (const t of foeDropLines(k, null, sp.boss || PART_BOSS11[k] ? 'boss' : 'elite').filter(t => /^(部位|稀有)：/.test(t))) L.push([t, UIC.text]);
       else if (info.big) L.push(['素材：' + (mat ? mat + '×' + (sp.boss ? 3 : 2) + '＋' : '') + '當地素材×' + (sp.boss ? 3 : 2) + '（每次必定）', UIC.text]);
-      else L.push(['素材：' + (mat ? mat + '（60%）' : '—'), UIC.text]);
+      else { L.push(['素材：' + (mat ? mat + '（每次必定）' : '—'), UIC.text]); const rk = typeof rareOf13 === 'function' ? rareOf13(k) : null; if (rk) L.push(['稀有：' + rareName13(rk) + '（金・虹，2%）', UIC.warm]); } // v12.30 刷寶
       if (typeof CRY11 !== 'undefined' && CRY11[k] && info.big) { const got = !!cryOwn11()[k]; L.push(['晶石（' + (typeof CRYCH12 !== 'undefined' ? '菁英 ' + Math.round(CRYCH12.elite * 100) + '%・頭目 ' + Math.round(CRYCH12.boss * 100) + '%' : '機率') + '）：「' + cryName11(k) + '」' + (got ? '（已取得）' : ''), got ? UIC.muted : UIC.warm]); }
       else for (const s of info.sigs) L.push(['首次擊敗：「' + GEAR[s.g].n + '」的設計圖' + (s.got ? '（已取得）' : ''), s.got ? UIC.muted : UIC.warm]);
       if (info.big) L.push([typeof PARTS11 !== 'undefined' && PARTS11[k] ? '再戰：部位、經驗（頭目 30%）、金錢' : '再戰：經驗（30%）、金錢、素材', '#c8b0ff']);

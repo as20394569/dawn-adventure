@@ -5972,7 +5972,7 @@ Battle.prototype.victory = function* () {
   for (const v of L) { this.focus = v;
     if (v.rare && pool) { const k = typeof pickDrop12 === 'function' ? pickDrop12(pool, v.sp) : pick(pool); if (k) { const g = makeGear(k, 3); yield* this.lootShow(g, v.n + '掉落了裝備！'); } }
     const main = v === L[0] && v.id === this.mainId(); for (const g of lootDrops({ F: v, cfg: main ? this.cfg : { kind: 'wild' }, H: this.H })) yield* this.lootShow(g, v.n + '掉落了裝備！'); }
-  const wild = L.filter(v => !v.elite && !v.boss && !v.minion && (typeof pickDrop12 !== 'function' || pool && pickDrop12(pool, v.sp))); if (pool && wild.length && chance((fx.fortune ? 0.16 : 0.08) * (1 + 0.25 * (wild.length - 1)))) { const v = pick(wild); this.focus = v; const g = makeGear(typeof pickDrop12 === 'function' ? pickDrop12(pool, v.sp) : pick(pool), rollQuality()); yield* this.lootShow(g, v.n + '掉落了裝備！'); }
+  const wild = L.filter(v => !v.elite && !v.boss && !v.minion && (typeof pickDrop12 !== 'function' || pool && pickDrop12(pool, v.sp))); if (pool && wild.length && chance((fx.fortune ? 0.16 : 0.08) * (1 + 0.25 * (wild.length - 1)) * (typeof dropMul13 === 'function' ? dropMul13() : 1))) { const v = pick(wild); this.focus = v; const g = makeGear(typeof pickDrop12 === 'function' ? pickDrop12(pool, v.sp) : pick(pool), rollQuality()); yield* this.lootShow(g, v.n + '掉落了裝備！'); }
   this.focus = this.mainView();
 };
 Battle.prototype.mainId = function () { const u = this.core.units.find(q => q.side === 'B'); return u ? u.id : null; };
@@ -11840,7 +11840,7 @@ function* dexDetail(list, idx) {
       const mat = sp.mat && ITEMS[sp.mat] ? ITEMS[sp.mat].n : null;
       if (info.big && typeof PARTS11 !== 'undefined' && PARTS11[k]) for (const t of foeDropLines(k, null, sp.boss || PART_BOSS11[k] ? 'boss' : 'elite').filter(t => /^(部位|稀有)：/.test(t))) L.push([t, UIC.text]);
       else if (info.big) L.push(['素材：' + (mat ? mat + '×' + (sp.boss ? 3 : 2) + '＋' : '') + '當地素材×' + (sp.boss ? 3 : 2) + '（每次必定）', UIC.text]);
-      else L.push(['素材：' + (mat ? mat + '（60%）' : '—'), UIC.text]);
+      else { L.push(['素材：' + (mat ? mat + '（每次必定）' : '—'), UIC.text]); const rk = typeof rareOf13 === 'function' ? rareOf13(k) : null; if (rk) L.push(['稀有：' + rareName13(rk) + '（金・虹，2%）', UIC.warm]); } // v12.30 刷寶
       if (typeof CRY11 !== 'undefined' && CRY11[k] && info.big) { const got = !!cryOwn11()[k]; L.push(['晶石（' + (typeof CRYCH12 !== 'undefined' ? '菁英 ' + Math.round(CRYCH12.elite * 100) + '%・頭目 ' + Math.round(CRYCH12.boss * 100) + '%' : '機率') + '）：「' + cryName11(k) + '」' + (got ? '（已取得）' : ''), got ? UIC.muted : UIC.warm]); }
       else for (const s of info.sigs) L.push(['首次擊敗：「' + GEAR[s.g].n + '」的設計圖' + (s.got ? '（已取得）' : ''), s.got ? UIC.muted : UIC.warm]);
       if (info.big) L.push([typeof PARTS11 !== 'undefined' && PARTS11[k] ? '再戰：部位、經驗（頭目 30%）、金錢' : '再戰：經驗（30%）、金錢、素材', '#c8b0ff']);
@@ -23485,5 +23485,36 @@ const WILD13 = { pow: 1.3, taken: { 短刀: 1.5, 樂器: 1.5, 雙盾: 1.8, 魔�
 PV('wildTaken13', v => ({ mods: [{ stage: 'final', who: 'defender', mul: v, cond: { hasPower: 1 } }] }));
 { const _hs = BB.heroSpec; BB.heroSpec = function (st, cfg) { const s = _hs.call(this, st, cfg); if (!st || !cfg || (cfg.kind && cfg.kind !== 'wild')) return s;
     const k = dualMode11(st) || mainKind11(st), v = WILD13.taken[k]; if (v) s.passives.push({ key: 'wildTaken13', v, src: 'tree' }); return s; }; }
+expScale = function (heroLv, foeLv) { const d = heroLv - foeLv; const m = d <= 0 ? 1 + Math.min(0.5, -d * BALANCE.expUnder) : d <= 2 ? 1 : Math.max(0.3, 1 - 0.15 * (d - 2)); return m * BALANCE.exp; };
+const BOSS_UP13 = { banditBoss: 2, duneWorm: 2, golem: 2, crystalGolem: 3, silverWyrm: 3, hydra: 3, ratKing: 3, harvestGolem: 3, clockColossus: 4, frostQueen: 4, lavaGiant: 3, victorDemon: 3, shadowGeneral: 3 };
+const CAVE_UP13 = 4, CAVE_UP_LATE13 = { cave6_frostField: 6, cave6_emberPass: 6 }, isChallenge13 = id => /^cave6_/.test(id || ''); // 後期最後兩個洞窟 +6：最後三個頭目 Lv40〜43 要有地方練
+{ for (const id in MAPS) { const d = MAPS[id];
+    if (d.boss && BOSS_UP13[d.boss.sp] && !d.boss.up13) { d.boss.lv += BOSS_UP13[d.boss.sp]; d.boss.up13 = 1; }
+    if (isChallenge13(id) && !d.up13) { d.up13 = 1; const u = CAVE_UP_LATE13[id] || CAVE_UP13; for (const e of d.encounters || []) for (const r of e.table || []) { r[1] += u; r[2] += u; } for (const e of d.elites || []) e.lv += u; } }
+  for (const s of FOE_SPOTS) { if (s.kind === 'boss' && MAPS[s.map] && MAPS[s.map].boss && MAPS[s.map].boss.sp === s.sp) s.lv = MAPS[s.map].boss.lv; else if (isChallenge13(s.map)) { const e = (MAPS[s.map].elites || []).find(q => q.sp === s.sp); if (e) s.lv = e.lv; } } }
+const caveLv13 = id => { let lo = 99, hi = 0; for (const e of MAPS[id].encounters || []) for (const r of e.table || []) { lo = Math.min(lo, r[1]); hi = Math.max(hi, r[2]); } return [lo, hi]; };
+const dropMul13 = () => isChallenge13(Game.ow && Game.ow.map && Game.ow.map.id) ? 2 : 1;
+{ const _ld = Overworld.prototype.load; Overworld.prototype.load = function (...a) { _ld.apply(this, a); const id = this.map && this.map.id, st = this.st || Game.st;
+    if (isChallenge13(id) && st && !(st.flags.ch13 || {})[id]) { (st.flags.ch13 || (st.flags.ch13 = {}))[id] = 1; const [lo, hi] = caveLv13(id);
+      const go = (function* () { yield* say('（挑戰區「' + MAPS[id].name + '」：魔物 Lv' + lo + '〜' + hi + '，比外面強。打倒牠們掉裝備和稀有掉落的機率都加倍，很適合練等、刷寶。）'); })();
+      if (this.script) { const s0 = this.script; this.script = (function* () { yield* s0; yield* go; })(); } else this.run(go); } }; }
+const RARE13 = { rate: 0.02, rainbow: 0.15 }, RARE_OF13 = {};
+function rareOf13(sp) { if (sp in RARE_OF13) return RARE_OF13[sp]; let home = null; for (const id in MAPS) { if (isChallenge13(id) || id === 'rift') continue; if ((MAPS[id].encounters || []).some(e => (e.table || []).some(r => r[0] === sp)) && (MAPS[id].gearPool || []).length) { home = id; break; } }
+  if (!home) { for (const id in MAPS) if ((MAPS[id].encounters || []).some(e => (e.table || []).some(r => r[0] === sp)) && (MAPS[id].gearPool || []).length) { home = id; break; } }
+  const L = home ? MAPS[home].gearPool.filter(k => GEAR[k] && (typeof dropFits12 !== 'function' || dropFits12(k, sp))) : [];
+  const S = SPECIES[sp], own = S && typeof DROP_THEME12 !== 'undefined' ? L.filter(k => DROP_THEME12.some(([rx, ok]) => rx.test(dropNames12(k)) && ok(S))) : [], P = own.length ? own : L;
+  let h = 0; for (const c of sp) h = (h * 31 + c.charCodeAt(0)) >>> 0; return RARE_OF13[sp] = P.length ? P[h % P.length] : null; }
+const rareName13 = k => { if (!k || !GEAR[k]) return ''; const b = typeof base11Of === 'function' ? base11Of(k) : k; return GEAR[b].n + (b !== k ? '（' + GEAR[k].n + '的樣子）' : ''); };
+{ const _v = Battle.prototype.victory; Battle.prototype.victory = function* () { const r = yield* _v.call(this); const st = Game.st; if (!st || !(st.hp > 0)) return r;
+    const L = this.defeated ? this.defeated() : []; const mul = dropMul13() * (this.cfg && this.cfg.champ12 ? 3 : 1);
+    for (const v of L) { if (v.elite || v.boss || v.minion) continue; const k = rareOf13(v.sp); if (!k || !chance(RARE13.rate * mul)) continue;
+      this.focus = v; const g = makeGear(k, chance(RARE13.rainbow) ? 5 : 4); Sound.jingle('item'); yield* this.lootShow(g, v.n + '掉落了稀有裝備！'); }
+    return r; }; }
+{ const _fd = foeDropLines; foeDropLines = function (sp, key, kind) { const L = _fd(sp, key, kind); if (kind && kind !== 'wild') return L; const k = rareOf13(sp); if (k) L.push('稀有：' + rareName13(k) + '（金・虹，2%）'); return L; }; }
+{ const _bs = Overworld.prototype.battleScript; Overworld.prototype.battleScript = function* (cfg, ...a) { const st = this.st || Game.st;
+    if (cfg && cfg.kind === 'boss' && !cfg.rematch && BOSS_UP13[cfg.sp] && st && cfg.lv - (st.lv || 1) >= 3) {
+      const n = cfg.lv - st.lv; if (!(yield* yesNo('（' + ((SPECIES[cfg.sp] || {}).n || '頭目') + ' Lv' + cfg.lv + '，比你高 ' + n + ' 級，會很辛苦。\n附近的洞窟是挑戰區，可以先去練等、刷裝備。還是要打嗎？）'))) return 'run'; }
+    return yield* _bs.call(this, cfg, ...a); }; }
+if (typeof GROW12 !== 'undefined') GROW12.push(['練等與刷寶', '主線頭目比路上的魔物高 2〜4 級，打之前可以先練等。各區域旁邊的洞窟是「挑戰區」：魔物高 3〜5 級，掉裝備・稀有掉落的機率加倍。比魔物高 1〜2 級經驗照拿，再高就慢慢變少（最少 30%）。每種野外魔物都有自己的稀有掉落（金色或虹色，2%），圖鑑和遭遇時都看得到。']);
 </script>
 </body></html>
