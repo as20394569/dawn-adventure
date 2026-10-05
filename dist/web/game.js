@@ -22990,8 +22990,14 @@ function cryChance12(F) { const d = (F && F.u && F.u.data) || {}; return Math.mi
       wx.putImageData(O, 0, 0);
       c = mkCanvas(w + PAD, h); const x = c.getContext('2d'); x.imageSmoothingEnabled = false;
       x.save(); x.translate(PAD + 48, 0); x.scale(-1, 1); x.drawImage(wo, 0, 0); x.restore(); x.drawImage(base, PAD, 0); c.padL = PAD; }
-    else { const base = _hb(frame, { ...L, mshd: undefined }), pad = base.padL || 0, im = (typeof shieldSide === 'function' && shieldSide(L.mshd)) || shieldSprite(L.mshd);
-      c = mkCanvas(base.width + 9, base.height); const x = c.getContext('2d'); x.imageSmoothingEnabled = false; x.drawImage(base, 0, 0);
-      if (im) { const X = pad + 12 * 3, Y = (11 - (frame ? 1 : 0)) * 3; x.save(); x.translate(X + im.width * 3, Y); x.scale(-1, 1); x.drawImage(im, 0, 0, im.width * 3, im.height * 3); x.restore(); }
+    else { // 雙盾: the right-hand shield is the left-hand one mirrored across the doll's middle, pixel for pixel (v281: 「雙盾兩隻手長得不一樣」)
+      const Lb = { ...L, mshd: undefined }, base = _hb(frame, Lb), pad = base.padL || 0, bare = _hb(frame, { ...Lb, skey: undefined }), w = base.width, h = base.height;
+      const A = base.getContext('2d').getImageData(0, 0, w, h).data, B = bare.getContext('2d').getImageData(0, 0, bare.width, h).data;
+      let x0 = 1e9, x1 = -1; for (let y = 0; y < h; y++) for (let xx = 0; xx < bare.width; xx++) if (B[(y * bare.width + xx) * 4 + 3]) { x0 = Math.min(x0, xx); x1 = Math.max(x1, xx); }
+      const S = x0 + x1 + 2 * pad, pts = []; let wmax = w;
+      for (let y = 0; y < h; y++) for (let X = 0; X < w; X++) { const i = (y * w + X) * 4; if (!A[i + 3]) continue; const bx = X - pad, j = (y * bare.width + bx) * 4, same = bx >= 0 && bx < bare.width && B[j] === A[i] && B[j + 1] === A[i + 1] && B[j + 2] === A[i + 2] && B[j + 3] === A[i + 3];
+        if (!same) { const Xm = S - X; pts.push([Xm, y, A[i], A[i + 1], A[i + 2], A[i + 3]]); wmax = Math.max(wmax, Xm + 1); } }
+      c = mkCanvas(wmax, h); const x = c.getContext('2d'); x.imageSmoothingEnabled = false; x.drawImage(base, 0, 0);
+      const D = x.getImageData(0, 0, wmax, h); for (const [X, y, r, g, b2, a] of pts) { if (X < 0) continue; const k = (y * wmax + X) * 4; D.data[k] = r; D.data[k + 1] = g; D.data[k + 2] = b2; D.data[k + 3] = a; } x.putImageData(D, 0, 0);
       c.padL = pad; }
     return (cache[key] = c); }; }
