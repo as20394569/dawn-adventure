@@ -11618,7 +11618,7 @@ function* dexDetail(list, idx) {
       if (info.big && typeof PARTS11 !== 'undefined' && PARTS11[k]) for (const t of foeDropLines(k, null, sp.boss || PART_BOSS11[k] ? 'boss' : 'elite').filter(t => /^(部位|稀有)：/.test(t))) L.push([t, UIC.text]);
       else if (info.big) L.push(['素材：' + (mat ? mat + '×' + (sp.boss ? 3 : 2) + '＋' : '') + '當地素材×' + (sp.boss ? 3 : 2) + '（每次必定）', UIC.text]);
       else L.push(['素材：' + (mat ? mat + '（60%）' : '—'), UIC.text]);
-      if (typeof CRY11 !== 'undefined' && CRY11[k] && info.big) { const got = !!cryOwn11()[k]; L.push(['首次擊敗：「' + cryName11(k) + '」' + (got ? '（已取得）' : ''), got ? UIC.muted : UIC.warm]); }
+      if (typeof CRY11 !== 'undefined' && CRY11[k] && info.big) { const got = !!cryOwn11()[k]; L.push(['晶石（' + (typeof CRYCH12 !== 'undefined' ? '菁英 ' + Math.round(CRYCH12.elite * 100) + '%・頭目 ' + Math.round(CRYCH12.boss * 100) + '%' : '機率') + '）：「' + cryName11(k) + '」' + (got ? '（已取得）' : ''), got ? UIC.muted : UIC.warm]); }
       else for (const s of info.sigs) L.push(['首次擊敗：「' + GEAR[s.g].n + '」的設計圖' + (s.got ? '（已取得）' : ''), s.got ? UIC.muted : UIC.warm]);
       if (info.big) L.push([typeof PARTS11 !== 'undefined' && PARTS11[k] ? '再戰：部位、經驗（頭目 30%）、金錢' : '再戰：經驗（30%）、金錢、素材', '#c8b0ff']);
       if (!info.big && !info.re.length) L.push(['普通魔物不會掉裝備。裝備靠菁英・頭目的設計圖打造。', UIC.muted]);
@@ -20687,7 +20687,7 @@ const WILD_EXP10 = medExp10(Object.keys(MAPS)) || 20; // a typical wild monster'
 { const _ge = Battle.prototype.gainExp; Battle.prototype.gainExp = function* (a) { const F = this.F, st = Game.st, cfg = this.cfg || {};
     if (F && (F.elite || F.boss) && st) {
       if (cfg.rematch) { if (F.boss) a = Math.max(1, Math.floor(a * 0.3)); }
-      else if (!((st.kills || {})[cfg.id || F.sp])) { const ref = (medExp10([Game.ow && Game.ow.map && Game.ow.map.id].filter(Boolean)) || WILD_EXP10) * F.lv / 5 * 1.4 * (typeof expScale === 'function' ? expScale(st.lv, F.lv) : 1); a = Math.max(a, Math.round(ref * (F.boss ? 10 : 5))); } }
+    } // v12.19（玩家 2026-10-05：「boss與菁英取消第一次討伐獎勵」）：第一次打倒的大量經驗（約 5 場／頭目 10 場小怪）拿掉，照一般算
     return yield* _ge.call(this, a); }; }
 for (const k of ['c16', 'c18', 'c20', 'c22', 'c25', 'c26', 'c27', 'c28', 'c30', 'c33']) { const R = COMMISSIONS[k] && COMMISSIONS[k].reward; if (R) (R.items || (R.items = {})).trainBook = (R.items.trainBook || 0) + 1; }
 lootHint = function (key, sp) { const first = !((Game.st.kills || {})[key]), sig = sigOf10(key, sp), mat = (SPECIES[sp] || {}).mat, g = sig && GEAR[/^lg/.test(sig) ? sig : classGear(sig)];
@@ -20964,7 +20964,7 @@ function cryActive11(st = Game.st) { const O = st && st.cry11 || {}, out = []; i
     const st = Game.st, F = this.mainView(), money0 = st.money, P = (heroStats(st).cr11P || []), gold = P.filter(p => p[0] === 'gold').reduce((a, p) => a + p[1], 0), matUp = P.filter(p => p[0] === 'matUp').reduce((a, p) => a + p[1], 0);
     const r = yield* _v.call(this);
     if (gold > 0) { const extra = Math.floor(Math.max(0, st.money - money0) * gold / 100); if (extra > 0) { st.money += extra; yield* this.msg('（晶石）多拿到了 ' + extra + ' G！', { hold: 20 }); } }
-    if (F && F.u && F.u.down && (F.elite || F.boss) && CRY11[F.sp] && cryGive11(F.sp, st)) { Sound.jingle('item'); this.focus = F;
+    if (F && F.u && F.u.down && (F.elite || F.boss) && CRY11[F.sp] && !cryOwn11(st)[F.sp] && chance(cryChance12(F)) && cryGive11(F.sp, st)) { Sound.jingle('item'); this.focus = F;
       yield* this.msg('得到了「' + cryName11(F.sp) + '」！', { wait: true });
       if (!st.flags.tutCry11) { st.flags.tutCry11 = 1; yield* this.msg('（晶石可以在鐵匠那裡鑲進裝備：紫・紅色裝備有 1 個孔，金色以上有 2 個孔。再戰拿到的部位可以把晶石升級。）', { wait: true }); } }
     return r; }; }
@@ -20974,7 +20974,7 @@ function cryActive11(st = Game.st) { const O = st && st.cry11 || {}, out = []; i
       this.run(sayAll(['（裝備系統改版：菁英・頭目改成掉「晶石」，招牌裝備的設計圖不再掉了。）', '（你之前打倒過的 ' + n + ' 隻菁英・頭目，牠們的晶石都送到你手上了。到鐵匠那裡就能鑲進裝備。）'])); }
     return _u.apply(this, a); }; }
 { const _lh = lootHint; lootHint = function (key, sp) { if (!PARTS11[sp] || !CRY11[sp]) return _lh(key, sp);
-    return !cryOwn11()[sp] ? '首次擊敗：「' + cryName11(sp) + '」' : '再戰：部位、經驗、金錢'; }; }
+    return !cryOwn11()[sp] ? '部位・機率掉「' + cryName11(sp) + '」' : '部位、經驗、金錢'; }; }
 function cryLines11(g) { const L = [], n = crySlots11(g); if (!n) return L; const O = cryOwn11();
   const C = (g.cr11 || []).filter(sp => O[sp] && CRY11[sp]).slice(0, n);
   for (const sp of C) L.push(['◆' + cryName11(sp) + '★' + O[sp] + '：' + cryText11(sp, O[sp]), '#9ad8ff']);
@@ -21012,7 +21012,7 @@ function* cryPicker11(title, getList) {
   UI.remove(scr); return res; }
 function* cryMenu11() {
   const st = Game.st;
-  if (!cryList11(st).length) { yield* say('還沒有晶石。\n第一次打倒菁英魔物或頭目，就會得到牠的晶石。'); return; }
+  if (!cryList11(st).length) { yield* say('還沒有晶石。\n打倒菁英魔物或頭目，有機率得到牠的晶石（破防越多越容易）。'); return; }
   while (true) {
     const r = yield* ask('晶石要怎麼處理？', ['鑲嵌', '取出', '升級', '合成', '返回']); if (r < 0 || r === 4) return;
     if (r === 0) { const sp = yield* cryPicker11('鑲嵌：選晶石', () => cryList11(st)); if (!sp) continue;
@@ -22976,3 +22976,22 @@ PV('dualSw12', v => ({ mods: [{ stage: 'final', who: 'attacker', mul: v, cond: {
 for (const r of TREE11['雙劍'].sk) { const id = 't_' + r[1], D = DEF.skills[id]; if (!D || !D.power || D.powerOf) continue; D.power = Math.round(D.power * DUALSW12.pow); r[3] = D.power; if (MOVES[id]) MOVES[id].pow = D.power; }
 TREE11['雙劍'].mastD = '副手的威力 45%，每級 +6%';
 TREE11['雙劍'].trait = '會心時副手追加一斬（威力 30）；雙劍的普攻（兩下）威力 ×0.8';
+const CRYCH12 = { elite: 0.2, boss: 0.35, brk: 0.05, max: 0.8 };
+function cryChance12(F) { const d = (F && F.u && F.u.data) || {}; return Math.min(CRYCH12.max, (F && F.boss ? CRYCH12.boss : CRYCH12.elite) + CRYCH12.brk * (d.brkN11 || 0)); }
+{ const i = GROW12.findIndex(q => q[0] === '晶石'); if (i >= 0) GROW12[i][1] = GROW12[i][1].replace('第一次打倒菁英・頭目會得到牠的晶石。', '打倒菁英・頭目有機率得到牠的晶石（菁英 20%、頭目 35%，牠每被破防一次 +5%；已經有的不會再掉）。'); }
+{ const _hb = heroBattleImgLook, cache = {}, PAD = 12 * 3;
+  heroBattleImgLook = function (frame, L) {
+    if (!L || !(L.owpn || L.mshd)) return _hb(frame, L);
+    const key = frame + lookKey(L); if (cache[key]) return cache[key];
+    let c;
+    if (L.owpn) { const L0 = { ...L, owpn: undefined, skey: undefined, mshd: undefined }, base = _hb(frame, L0), bare = _hb(frame, { ...L0, weapon: null });
+      const w = base.width, h = base.height, wo = mkCanvas(w, h), wx = wo.getContext('2d'), A = base.getContext('2d').getImageData(0, 0, w, h), B = bare.getContext('2d').getImageData(0, 0, w, h), O = wx.createImageData(w, h);
+      for (let i = 0; i < A.data.length; i += 4) { const same = A.data[i] === B.data[i] && A.data[i + 1] === B.data[i + 1] && A.data[i + 2] === B.data[i + 2] && A.data[i + 3] === B.data[i + 3]; if (!same && A.data[i + 3]) for (let k = 0; k < 4; k++) O.data[i + k] = A.data[i + k]; }
+      wx.putImageData(O, 0, 0);
+      c = mkCanvas(w + PAD, h); const x = c.getContext('2d'); x.imageSmoothingEnabled = false;
+      x.save(); x.translate(PAD + 48, 0); x.scale(-1, 1); x.drawImage(wo, 0, 0); x.restore(); x.drawImage(base, PAD, 0); c.padL = PAD; }
+    else { const base = _hb(frame, { ...L, mshd: undefined }), pad = base.padL || 0, im = (typeof shieldSide === 'function' && shieldSide(L.mshd)) || shieldSprite(L.mshd);
+      c = mkCanvas(base.width + 9, base.height); const x = c.getContext('2d'); x.imageSmoothingEnabled = false; x.drawImage(base, 0, 0);
+      if (im) { const X = pad + 12 * 3, Y = (11 - (frame ? 1 : 0)) * 3; x.save(); x.translate(X + im.width * 3, Y); x.scale(-1, 1); x.drawImage(im, 0, 0, im.width * 3, im.height * 3); x.restore(); }
+      c.padL = pad; }
+    return (cache[key] = c); }; }

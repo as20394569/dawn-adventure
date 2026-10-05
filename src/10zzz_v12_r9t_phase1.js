@@ -52,7 +52,7 @@ const WILD_EXP10 = medExp10(Object.keys(MAPS)) || 20; // a typical wild monster'
 { const _ge = Battle.prototype.gainExp; Battle.prototype.gainExp = function* (a) { const F = this.F, st = Game.st, cfg = this.cfg || {};
     if (F && (F.elite || F.boss) && st) {
       if (cfg.rematch) { if (F.boss) a = Math.max(1, Math.floor(a * 0.3)); }
-      else if (!((st.kills || {})[cfg.id || F.sp])) { const ref = (medExp10([Game.ow && Game.ow.map && Game.ow.map.id].filter(Boolean)) || WILD_EXP10) * F.lv / 5 * 1.4 * (typeof expScale === 'function' ? expScale(st.lv, F.lv) : 1); a = Math.max(a, Math.round(ref * (F.boss ? 10 : 5))); } }
+    } // v12.19（玩家 2026-10-05：「boss與菁英取消第一次討伐獎勵」）：第一次打倒的大量經驗（約 5 場／頭目 10 場小怪）拿掉，照一般算
     return yield* _ge.call(this, a); }; }
 
 /* ---------- 回憶石碑：第十一輪改成隨時可以再戰（見 r9u） ---------- */

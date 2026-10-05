@@ -105,7 +105,7 @@ function cryActive11(st = Game.st) { const O = st && st.cry11 || {}, out = []; i
     const r = yield* _v.call(this);
     if (gold > 0) { const extra = Math.floor(Math.max(0, st.money - money0) * gold / 100); if (extra > 0) { st.money += extra; yield* this.msg('（晶石）多拿到了 ' + extra + ' G！', { hold: 20 }); } }
     // matUp（素材點數 +%）：見 r9w 的戰鬥後點數
-    if (F && F.u && F.u.down && (F.elite || F.boss) && CRY11[F.sp] && cryGive11(F.sp, st)) { Sound.jingle('item'); this.focus = F;
+    if (F && F.u && F.u.down && (F.elite || F.boss) && CRY11[F.sp] && !cryOwn11(st)[F.sp] && chance(cryChance12(F)) && cryGive11(F.sp, st)) { Sound.jingle('item'); this.focus = F;
       yield* this.msg('得到了「' + cryName11(F.sp) + '」！', { wait: true });
       if (!st.flags.tutCry11) { st.flags.tutCry11 = 1; yield* this.msg('（晶石可以在鐵匠那裡鑲進裝備：紫・紅色裝備有 1 個孔，金色以上有 2 個孔。再戰拿到的部位可以把晶石升級。）', { wait: true }); } }
     return r; }; }
@@ -118,7 +118,7 @@ function cryActive11(st = Game.st) { const O = st && st.cry11 || {}, out = []; i
 
 /* ---------- 遭遇卡・圖鑑 ---------- */
 { const _lh = lootHint; lootHint = function (key, sp) { if (!PARTS11[sp] || !CRY11[sp]) return _lh(key, sp);
-    return !cryOwn11()[sp] ? '首次擊敗：「' + cryName11(sp) + '」' : '再戰：部位、經驗、金錢'; }; }
+    return !cryOwn11()[sp] ? '部位・機率掉「' + cryName11(sp) + '」' : '部位、經驗、金錢'; }; }
 
 /* ---------- 裝備資訊：孔和晶石 ---------- */
 function cryLines11(g) { const L = [], n = crySlots11(g); if (!n) return L; const O = cryOwn11();
@@ -160,7 +160,7 @@ function* cryPicker11(title, getList) {
   UI.remove(scr); return res; }
 function* cryMenu11() {
   const st = Game.st;
-  if (!cryList11(st).length) { yield* say('還沒有晶石。\n第一次打倒菁英魔物或頭目，就會得到牠的晶石。'); return; }
+  if (!cryList11(st).length) { yield* say('還沒有晶石。\n打倒菁英魔物或頭目，有機率得到牠的晶石（破防越多越容易）。'); return; }
   while (true) {
     const r = yield* ask('晶石要怎麼處理？', ['鑲嵌', '取出', '升級', '合成', '返回']); if (r < 0 || r === 4) return;
     if (r === 0) { const sp = yield* cryPicker11('鑲嵌：選晶石', () => cryList11(st)); if (!sp) continue;
