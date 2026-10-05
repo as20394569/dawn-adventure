@@ -33,8 +33,9 @@ function* treeScreen11Tabs(start) { const st = Game.st, kinds = () => TREE_KINDS
       if (typeof touchRegion === 'function') touchRegion(6, Y - 1, 164, 13, () => { if (onTabs) { onTabs = false; selBy[kind] = top + k; Sound.sfx('cursor'); return; } if (selOf(kind) === top + k) tapKey('a'); else { selBy[kind] = top + k; Sound.sfx('cursor'); } }); });
     if (top > 0) x.drawImage(UPARROW, 86, LY + 1); if (top + VIS < R.length) x.drawImage(DOWNARROW, 86, LY + VIS * 14 + 3);
     const Y0 = LY + VIS * 14 + 12; drawWin(x, 4, Y0, 168, 252 - Y0, 'menu');
-    let info = onTabs ? '選武器樹：←→ 換樹，↓ 或 A 回到清單。（在清單最上面按 ↑ 就能回到這裡）' : treeInfo11(kind, R[i], st); if (undo.length) info += '\n↩退點（Select）：收回剛剛加的 1 點。';
-    drawFitText(x, info, 10, Y0 + 4, 152, 252 - Y0 - 8, 10, UIC.text); } };
+    if (onTabs || typeof drawTreeInfo12 !== 'function') { let info = onTabs ? '選武器樹：←→ 換樹，↓ 或 A 回到清單。（在清單最上面按 ↑ 就能回到這裡）' : treeInfo11(kind, R[i], st); if (undo.length) info += '\n↩退點（Select）：收回剛剛加的 1 點。';
+      drawFitText(x, info, 10, Y0 + 4, 152, 252 - Y0 - 8, 10, UIC.text); }
+    else drawTreeInfo12(x, kind, R[i], st, Y0, 252); } }; // v284: tags / text / status row (10zzz_v12_u4_treeinfo.js)
   UI.push(scr);
   while (true) { const K = kinds(); if (ti >= K.length) ti = 0; const kind = K[ti], R = treeRows11(kind, st); let sel = Math.min(selOf(kind), R.length - 1);
     // ←→ only change the tree while the tabs have the cursor (↑ at the top of the list); in the list they do nothing, so a slip on the pad can't switch trees

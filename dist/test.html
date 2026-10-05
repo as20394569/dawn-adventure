@@ -308,6 +308,7 @@ const Font = (() => {
   }
   const NOSTART = '。，、！？」』）】〕］〉》：；…～．％%,.!?)'; // v268: 】％ 也不放行首
   const NOEND = '（「『【〔［〈《(';                                 // v268: 開括號不留在行尾
+  const WORD = /[0-9A-Za-z.%×+\-−~～]/;                              // v284: 數字・英數連在一起不拆開
   function wrap(str, maxW, size) {
     const lines = [];
     for (const para of String(str).split('\n')) {
@@ -316,7 +317,8 @@ const Font = (() => {
         const ch = chars[i], cw = width(ch, size);
         if (w + cw > maxW && line) {
           const lc = [...line]; let carry = '';
-          if (NOSTART.includes(ch) && lc.length > 1) carry = lc.pop();
+          if (WORD.test(ch) && WORD.test(lc[lc.length - 1])) { let j = lc.length; while (j > 0 && WORD.test(lc[j - 1])) j--; if (j > 0 && lc.length - j <= 8) carry = lc.splice(j).join(''); }
+          if (!carry && NOSTART.includes(ch) && lc.length > 1) carry = lc.pop();
           while (lc.length > 1 && NOEND.includes(lc[lc.length - 1])) carry = lc.pop() + carry;
           if (carry) { lines.push(lc.join('')); line = carry; w = width(carry, size); }
           else { lines.push(line); line = ''; w = 0; if (ch === ' ') continue; }
@@ -5968,9 +5970,9 @@ Battle.prototype.victory = function* () {
   for (const v of L) { const sp = SPECIES[v.sp] || {}; if (sp.mat && ITEMS[sp.mat] && !v.elite && !v.boss && chance(0.6)) { st.bag[sp.mat] = (st.bag[sp.mat] || 0) + 1; yield* this.msg('得到了素材「' + ITEMS[sp.mat].n + '」！', { hold: 30 }); } }
   const pool = Game.ow && Game.ow.map && Game.ow.map.d.gearPool;
   for (const v of L) { this.focus = v;
-    if (v.rare && pool) { const g = makeGear(pick(pool), 3); yield* this.lootShow(g, v.n + '掉落了裝備！'); }
+    if (v.rare && pool) { const k = typeof pickDrop12 === 'function' ? pickDrop12(pool, v.sp) : pick(pool); if (k) { const g = makeGear(k, 3); yield* this.lootShow(g, v.n + '掉落了裝備！'); } }
     const main = v === L[0] && v.id === this.mainId(); for (const g of lootDrops({ F: v, cfg: main ? this.cfg : { kind: 'wild' }, H: this.H })) yield* this.lootShow(g, v.n + '掉落了裝備！'); }
-  const wild = L.filter(v => !v.elite && !v.boss && !v.minion); if (pool && wild.length && chance((fx.fortune ? 0.16 : 0.08) * (1 + 0.25 * (wild.length - 1)))) { const v = pick(wild); this.focus = v; const g = makeGear(pick(pool), rollQuality()); yield* this.lootShow(g, v.n + '掉落了裝備！'); }
+  const wild = L.filter(v => !v.elite && !v.boss && !v.minion && (typeof pickDrop12 !== 'function' || pool && pickDrop12(pool, v.sp))); if (pool && wild.length && chance((fx.fortune ? 0.16 : 0.08) * (1 + 0.25 * (wild.length - 1)))) { const v = pick(wild); this.focus = v; const g = makeGear(typeof pickDrop12 === 'function' ? pickDrop12(pool, v.sp) : pick(pool), rollQuality()); yield* this.lootShow(g, v.n + '掉落了裝備！'); }
   this.focus = this.mainView();
 };
 Battle.prototype.mainId = function () { const u = this.core.units.find(q => q.side === 'B'); return u ? u.id : null; };
@@ -8736,7 +8738,7 @@ function aevEnd(ow, quiet) {
 { const _vi = Battle.prototype.victory; Battle.prototype.victory = function* () {
     yield* _vi.call(this); const c = this.cfg, st = Game.st, F = this.F;
     if (c.aevGold) { const g = Math.floor((SPECIES[F.sp].gold || 0) * F.lv * (c.aevGold - 1)); if (g > 0) { st.money += g; yield* this.msg('魔物潮加成：額外獲得' + g + ' G！'); } }
-    if (c.aevLoot) { const pool = (Game.ow && Game.ow.map && Game.ow.map.d.gearPool) || []; if (pool.length) { const g = makeGear(classGear(pick(pool)), Math.max(c.aevLoot, rollLootQuality(false))); yield* this.lootShow(g, F.n + '留下了裝備！'); }
+    if (c.aevLoot) { const pool = (Game.ow && Game.ow.map && Game.ow.map.d.gearPool) || []; const dk = pool.length ? (typeof pickDrop12 === 'function' ? pickDrop12(pool, F.sp) : pick(pool)) : null; if (dk) { const g = makeGear(classGear(dk), Math.max(c.aevLoot, rollLootQuality(false))); yield* this.lootShow(g, F.n + '留下了裝備！'); }
       const gg = F.lv * 40; st.money += gg; yield* this.msg('得到了' + gg + ' G！'); }
   };
 }
@@ -18856,7 +18858,7 @@ function champUnit12(s, k) { const S = s.stats, C = CHAMP12[k]; s.name = C.n + s
     const g = Math.floor((sp.gold || 0) * u.lv * (typeof V81_GOLD === 'function' ? V81_GOLD(u.lv) : 1) * (fx.fortune ? 1.5 : 1)); st.money += g;
     const mat = sp.mat && ITEMS[sp.mat] ? sp.mat : null; if (mat) st.bag[mat] = (st.bag[mat] || 0) + 2; Sound.jingle('item');
     yield* this.msg('強化魔物的獎勵：再得到' + g + ' G' + (mat ? '和素材「' + ITEMS[mat].n + '」×2' : '') + '！', { hold: 36 });
-    const pool = Game.ow && Game.ow.map && Game.ow.map.d.gearPool; if (pool && pool.length && chance(0.25)) { this.focus = this.views[u.id] || this.focus; yield* this.lootShow(makeGear(pick(pool), rollQuality()), u.name + '掉落了裝備！'); }
+    const pool = Game.ow && Game.ow.map && Game.ow.map.d.gearPool; const dk = pool && pool.length ? (typeof pickDrop12 === 'function' ? pickDrop12(pool, u.sp) : pick(pool)) : null; if (dk && chance(0.25)) { this.focus = this.views[u.id] || this.focus; yield* this.lootShow(makeGear(dk, rollQuality()), u.name + '掉落了裝備！'); }
     return r; }; }
 const BEH12 = {
   call: ['meadowWolf', 'greyWolf', 'snowWolf', 'fieldMice', 'roadBandit', 'featherThug'],
@@ -23078,8 +23080,9 @@ function* treeScreen11Tabs(start) { const st = Game.st, kinds = () => TREE_KINDS
       if (typeof touchRegion === 'function') touchRegion(6, Y - 1, 164, 13, () => { if (onTabs) { onTabs = false; selBy[kind] = top + k; Sound.sfx('cursor'); return; } if (selOf(kind) === top + k) tapKey('a'); else { selBy[kind] = top + k; Sound.sfx('cursor'); } }); });
     if (top > 0) x.drawImage(UPARROW, 86, LY + 1); if (top + VIS < R.length) x.drawImage(DOWNARROW, 86, LY + VIS * 14 + 3);
     const Y0 = LY + VIS * 14 + 12; drawWin(x, 4, Y0, 168, 252 - Y0, 'menu');
-    let info = onTabs ? '選武器樹：←→ 換樹，↓ 或 A 回到清單。（在清單最上面按 ↑ 就能回到這裡）' : treeInfo11(kind, R[i], st); if (undo.length) info += '\n↩退點（Select）：收回剛剛加的 1 點。';
-    drawFitText(x, info, 10, Y0 + 4, 152, 252 - Y0 - 8, 10, UIC.text); } };
+    if (onTabs || typeof drawTreeInfo12 !== 'function') { let info = onTabs ? '選武器樹：←→ 換樹，↓ 或 A 回到清單。（在清單最上面按 ↑ 就能回到這裡）' : treeInfo11(kind, R[i], st); if (undo.length) info += '\n↩退點（Select）：收回剛剛加的 1 點。';
+      drawFitText(x, info, 10, Y0 + 4, 152, 252 - Y0 - 8, 10, UIC.text); }
+    else drawTreeInfo12(x, kind, R[i], st, Y0, 252); } }; // v284: tags / text / status row (10zzz_v12_u4_treeinfo.js)
   UI.push(scr);
   while (true) { const K = kinds(); if (ti >= K.length) ti = 0; const kind = K[ti], R = treeRows11(kind, st); let sel = Math.min(selOf(kind), R.length - 1);
     if (onTabs) { if (Input.pressed('left') || Input.pressed('right')) { const d = Input.pressed('left') ? -1 : 1; Input.consume('left', 'right'); ti = (ti + d + K.length) % K.length; Sound.sfx('cursor'); }
@@ -23233,9 +23236,10 @@ const BUFF12 = {
 };
 const BUFF_COL12 = { atk: ['#ff9050', 'rgba(90,30,10,0.92)'], def: ['#9ec8ff', 'rgba(20,40,80,0.92)'], spd: ['#7ef0c8', 'rgba(10,60,50,0.92)'], reg: ['#90f090', 'rgba(20,70,20,0.92)'], ctr: ['#ffe070', 'rgba(80,60,10,0.92)'], deb: ['#d0a0ff', 'rgba(50,20,80,0.92)'], up: ['#ffc070', 'rgba(80,45,10,0.92)'], down: ['#a0c0ff', 'rgba(20,30,80,0.92)'] };
 const STAGE_N12 = { atk: '物攻', def: '物防', spa: '魔攻', spd: '魔防', spe: '速度', acc: '命中', eva: '迴避', crit: '會心' };
-function buffPills12(b, v) { const L = [], st = v.st || {}, D = v.bdur12 || {};
-  for (const id in BUFF12) if (st[id]) { const B = BUFF12[id]; if (v.hero ? B.k === 'deb' : B.k !== 'deb') continue; const d = D[id]; L.push([B.n + (B.stacks ? ' ' + st[id] : d > 0 ? ' ' + d : ''), B.k]); }
-  for (const k in STAGE_N12) { const n = st['stage_' + k]; if (!n) continue; const d = D['stage_' + k]; L.push([STAGE_N12[k] + (n > 0 ? '+' : '') + n + (d > 0 ? ' ' + d : ''), n > 0 ? 'up' : 'down']); }
+const STAGE_S12 = { atk: '攻', def: '防', spa: '魔攻', spd: '魔防', spe: '速', acc: '命中', eva: '迴避', crit: '會心' };
+function buffPills12(b, v) { const L = [], st = v.st || {}, D = v.bdur12 || {}, sh = !v.hero;
+  for (const id in BUFF12) if (st[id]) { const B = BUFF12[id]; if (v.hero ? B.k === 'deb' : B.k !== 'deb') continue; const d = D[id]; L.push([B.n + (B.stacks ? ' ' + st[id] : d > 0 && !sh ? ' ' + d : ''), B.k]); }
+  for (const k in STAGE_N12) { const n = st['stage_' + k]; if (!n) continue; const d = D['stage_' + k]; L.push([(sh ? STAGE_S12[k] : STAGE_N12[k]) + (n > 0 ? '+' : '') + n + (d > 0 && !sh ? ' ' + d : ''), n > 0 ? 'up' : 'down']); }
   return L; }
 function buffPill12(x, X, Y, s, k, right) { const [c, bg] = BUFF_COL12[k] || BUFF_COL12.def, w = Math.ceil(Font.width(s, 9)) + 8; if (right) X -= w;
   x.fillStyle = bg; x.fillRect(X, Y, w, 12); x.fillStyle = c; x.fillRect(X, Y, 1, 12); x.fillRect(X + w - 1, Y, 1, 12); x.fillRect(X, Y + 11, w, 1); Font.draw(x, s, X + 4, Y - 2, c, '#000000', 9); return w; }
@@ -23245,16 +23249,18 @@ function buffPill12(x, X, Y, s, k, right) { const [c, bg] = BUFF_COL12[k] || BUF
     const L = buffPills12(this, Hv).slice(0, 5); if (!L.length) return; const C = this.center(Hv), X = Math.min(W - 4, Math.round(C.x + 30 + Hv.off.x)); let Y = Math.round(HERO_FOOT - 30 - (L.length - 1) * 13 + Hv.off.y);
     for (const [s, k] of L) { const w = Math.ceil(Font.width(s, 9)) + 8; buffPill12(x, Math.min(X, W - 2 - w), Y, s, k); Y += 13; } }; }
 { const _pb = Battle.prototype.drawPlateBig; Battle.prototype.drawPlateBig = function (x, F, a0) { _pb.call(this, x, F, a0); const a = a0 * (F && F.plateA != null ? F.plateA : 1); if (!F || a <= 0) return;
-    const L = buffPills12(this, F).slice(0, 3); if (!L.length) return; x.globalAlpha = a; const w0 = 120, pe = plateExtra(); let X = (W - w0) / 2 + 4; const Y = 6 + 33 + pe + 14;
-    for (const [s, k] of L) X += buffPill12(x, X, Y, s, k) + 2; x.globalAlpha = 1; }; }
+    const L = buffPills12(this, F); if (!L.length) return; x.globalAlpha = a; const w0 = 120, pe = plateExtra(), X0 = (W - w0) / 2, Y = 6 + 33 + pe, fam = FAMILIES[F.fam];
+    const left = X0 + 4 + (fam && fam.weak.length ? Font.width('弱 ' + (this.revealed(F) ? fam.weak.join('・') : '？'), 8) + 12 : 0); let X = X0 + w0 - 2, n = 0;
+    for (const [s, k] of L) { const w = Math.ceil(Font.width(s, 9)) + 8, more = L.length - n - 1, mw = more ? Math.ceil(Font.width('+' + more, 9)) + 4 : 0; if (X - w - mw < left) { Font.drawR(x, '+' + (L.length - n), X, Y - 2, '#d8d8e8', '#000000', 9); break; } buffPill12(x, X, Y, s, k, true); X -= w + 2; n++; }
+    x.globalAlpha = 1; }; }
 { const _up = Battle.prototype.update; Battle.prototype.update = function () { _up.call(this);
     const Hv = this.H; if (!Hv || Hv.gone || !(Hv.hp > 0)) return; const st = Hv.st || {}, kinds = new Set(); for (const id in BUFF12) if (st[id]) kinds.add(BUFF12[id].k); if (st.stage_atk > 0 || st.stage_spa > 0) kinds.add('atk'); if (st.stage_def > 0 || st.stage_spd > 0) kinds.add('def'); if (st.stage_spe > 0) kinds.add('spd');
     if (!kinds.size) return; const C = this.center(Hv), t = this.t;
-    if (kinds.has('def') && t % 30 === 0) { const c = st.shieldStance11 ? '#c8dcff' : BUFF_COL12.def[0]; this.spawn({ k: 'hex', x: C.x, y: C.y, r0: 20, r1: 24, c, life: 24 }); }
-    if (kinds.has('atk') && t % 6 === 0) this.spawn({ k: 'flame', x: C.x + rnd(-12, 12), y: C.y + rnd(4, 18), vy: -0.9, s: pick([2, 3]), life: 14 });
-    if (kinds.has('spd') && t % 14 === 0) this.spawn({ k: 'line', x1: C.x - 16, y1: C.y + rnd(-14, 14), x2: C.x - 30, y2: C.y + rnd(-14, 14), c: BUFF_COL12.spd[0], w: 1, grow: 3, life: 10 });
-    if (kinds.has('reg') && t % 26 === 0) this.spawn({ k: 'txt', s: '+', x: C.x + rnd(-12, 12), y: C.y + rnd(-4, 12), vx: 0, vy: -0.5, c: '#90f090', sh: '#003000', fade: 1, life: 30 });
-    if (kinds.has('ctr') && t % 40 === 0) this.star(C.x + 18, C.y - 12, BUFF_COL12.ctr[0], 8); }; }
+    if (kinds.has('def') && t % 50 === 0) this.star(C.x - 16, C.y + rnd(-4, 8), st.shieldStance11 ? '#c8dcff' : BUFF_COL12.def[0], 10);
+    if (kinds.has('atk') && t % 18 === 0) this.spawn({ k: 'flame', x: C.x + rnd(-10, 10), y: C.y + rnd(8, 18), vy: -0.7, s: 2, life: 12 });
+    if (kinds.has('spd') && t % 30 === 0) this.spawn({ k: 'line', x1: C.x - 16, y1: C.y + rnd(-10, 10), x2: C.x - 28, y2: C.y + rnd(-10, 10), c: BUFF_COL12.spd[0], w: 1, grow: 3, life: 10 });
+    if (kinds.has('reg') && t % 40 === 0) this.spawn({ k: 'txt', s: '+', x: C.x + rnd(-12, 12), y: C.y + rnd(-4, 12), vx: 0, vy: -0.5, c: '#90f090', sh: '#003000', fade: 1, life: 30 });
+    if (kinds.has('ctr') && t % 60 === 0) this.star(C.x + 18, C.y - 12, BUFF_COL12.ctr[0], 8); }; }
 { const H = Battle.prototype.handlers, _ap = H.STATUS_APPLY; H.STATUS_APPLY = function* (e, s, t, P) {
     if (t && !P.failed && !P.cleared && !(P.quiet)) { const B = BUFF12[P.status];
       if (B && B.stacks) { const U = this.core.byId[t.id], n = (U && (this.core.statusOf(U, P.status) || {}).stacks) || 1; this.popNum(t, B.n + ' ' + n, BUFF_COL12[B.k][0], null, { big: true, dy: -20 }); }
@@ -23352,5 +23358,80 @@ function ctrBadge12(B, x) { const K = B.ctr12; if (!K || !K.v || K.v.gone || (!K
   x.strokeStyle = K.c; x.lineWidth = 1.5; x.beginPath(); x.moveTo(X + 3, Y + 3); x.lineTo(X + 11, Y + 11); x.moveTo(X + 11, Y + 3); x.lineTo(X + 3, Y + 11); x.stroke();
   Font.draw(x, s, X + 14, Y - 1, K.c, '#000000', 10); x.globalAlpha = 1; }
 { const _dp = Battle.prototype.drawPops; Battle.prototype.drawPops = function (x) { ctrBadge12(this, x); _dp.call(this, x); }; }
+const DROP_THEME12 = [
+  [/狼/, s => /狼/.test(s.n)], [/(?<!黑)羽|翼/, s => s.fam === 'bird'], [/鷹/, s => s.fam === 'bird'], [/蛙|蟾/, s => /蛙|蟾/.test(s.n)], [/蟹|鉗/, s => /蟹|鉗/.test(s.n)],
+  [/蠍/, s => /蠍/.test(s.n)], [/雪人/, s => /雪人/.test(s.n)], [/虎/, s => /虎|貓/.test(s.n)], [/龍|鱗/, s => /龍|蜥|鱷|守宮|魚/.test(s.n)], [/蜥/, s => /蜥|守宮/.test(s.n)],
+  [/甲蟲|角/, s => /角|甲蟲/.test(s.n)], [/骸骨|骨/, s => s.fam === 'undead'], [/蜂|蜜/, s => /蜂/.test(s.n)], [/毛皮/, s => s.fam === 'beast'],
+];
+const dropCarrier12 = s => s.fam === 'human' || /兵|騎士|盜賊|法師|打手|鎧甲/.test(s.n);
+function dropNames12(k) { const G = GEAR[k]; if (!G) return ''; const b = typeof base11Of === 'function' ? base11Of(k) : k; return G.n + ' ' + ((GEAR[b] || G).n); }
+function dropFits12(k, sp) { const s = SPECIES[sp]; if (!s || dropCarrier12(s)) return true; const n = dropNames12(k);
+  for (const [rx, ok] of DROP_THEME12) if (rx.test(n) && !ok(s)) return false; return true; }
+function pickDrop12(pool, sp) { const L = (pool || []).filter(k => GEAR[k] && dropFits12(k, sp)); return L.length ? pick(L) : null; }
+const EXP_C12 = '#aab8d0', HEAD_C12 = '#ffd890';
+const EN_EXP12 = { atk: n => '整體物攻 ×' + (1 + n / 100).toFixed(2), spa: n => '整體魔攻 ×' + (1 + n / 100).toFixed(2), def: n => '整體物防 ×' + (1 + n / 100).toFixed(2), spd: n => '整體魔防 ×' + (1 + n / 100).toFixed(2),
+  hp: n => '整體最大 HP ×' + (1 + n / 100).toFixed(2), crit: () => '會心時傷害 ×1.5', spe: () => '速度快的先行動', stRes: () => '中毒・麻痺・睡眠等異常有這個機率擋下', heal: () => '回復技能・道具的回復量提高' };
+const SP_EXP12 = { crit: () => '會心時傷害 ×1.5', hit: () => '比較不會打空', eva: () => '比較容易閃過攻擊', drain: () => '打出傷害的這個比例回復 HP（合計最多 20%）',
+  elem: () => '火・水・雷・草・毒・岩屬性的攻擊更痛', block: () => '被攻擊時有這個機率格擋，那一下傷害 −40%', critDmg: () => '會心的那一下再更痛', stHit: () => '讓對手中異常的機率提高',
+  stRes: () => '中毒・麻痺・睡眠等異常有這個機率擋下', healUp: () => '回復技能・道具的回復量提高' };
+const elExp12 = (el, magic) => '普攻和無屬性的' + (magic ? '魔法' : '物理') + '招式變' + el + '屬性；打弱' + el + ' ×1.5、抗' + el + ' ×0.6';
+function wKindLines12(g, P) { const B = GEAR[g.b], k = B.kind, st = Game.st, mag = typeof isMagicW === 'function' && isMagicW(k), T = typeof TREE11 !== 'undefined' ? TREE11[k] : null;
+  P('【武器】' + k + '・' + (mag ? '魔法武器（看魔攻）' : '物理武器（看物攻）'), HEAD_C12, 9);
+  P('能用技能樹「' + k + '」的招式。', EXP_C12, 9, 8);
+  const fist = k === '拳套', seg = (typeof WKIND12 !== 'undefined' && WKIND12[k] && WKIND12[k].attack) || 1;
+  P('普攻：' + (mag ? '魔法彈打一下（看魔攻）' : seg === 2 ? '打兩下（每下 55%）' : fist ? '打一下；學會特性後打兩下（每下 75%）' : '打一下') + '。', EXP_C12, 9, 8);
+  if (T && T.trait) P('特性' + (trLv11(k + ':trait', st) ? '（已學會）' : '（技能樹裡學）') + '：' + T.trait, EXP_C12, 9, 8);
+  const pair = k === '短刀' ? ['雙刀', 60] : k === '劍' ? ['雙劍', Math.round((0.6 - (typeof DUALSW12 !== 'undefined' ? DUALSW12.off : 0)) * 100)] : null;
+  if (pair) P('兩手都拿' + k + '＝' + pair[0] + '：副手也出手（威力 ' + pair[1] + '%）', EXP_C12, 9, 8); }
+function shieldLines12(g, P) { P('【盾】拿在副手', HEAD_C12, 9);
+  P('主手也拿盾＝雙盾：普攻「盾擊」打兩下，攻擊力改看物防。', EXP_C12, 9, 8); }
+const ARM_EACH12 = { 重甲: [['受到會心傷害', -12, '%'], ['速度', -3, '%']], 輕裝: [['迴避', 2, '%'], ['首回合速度', 10, '%']], 法衣: [['每回合回 MP', 1, '%'], ['受到魔法傷害', -4, '%']] };
+function armLines12(g, P) { const t = GEAR[g.b].arm9, E = ARM_EACH12[t]; if (!E) return; const fmt = (n) => E.map(([a, v, u]) => a + ' ' + (v * n > 0 ? '+' : '−') + Math.abs(v * n) + u).join('、');
+  P('【防具】' + t + '（頭・身・腳每件疊加）', HEAD_C12, 9); P('每件：' + fmt(1), EXP_C12, 9, 8);
+  const n = (typeof arm9Count === 'function' ? arm9Count(Game.st) : {})[t] || 0; P(n ? '身上 ' + n + ' 件：' + fmt(n) : '身上沒有穿' + t, EXP_C12, 9, 8); }
+{ const _gi = gearInfoLines; gearInfoLines = function (g, wrapW = 150) { const B = g && GEAR[g.b]; if (!B || g._bp === 2) return _gi(g, wrapW);
+    const L = [], P = (t, c = UIC.text, s = 10, ind = 0) => { for (const l of Font.wrap(t, wrapW - ind, s)) L.push([l, c, s, ind]); };
+    const wpn = B.slot === 'weapon', mag = wpn && typeof isMagicW === 'function' && isMagicW(B.kind);
+    P('T' + (B.t || 1) + '・' + kindLabel11(g) + (isOff11(g) ? '（副手：基本數值算一半）' : ''), UIC.accent);
+    const [a] = gearLines(g); if (a) P(a, UIC.text, 11);
+    const o = gearStats(g);
+    if (B.elem) { P(B.elem + '屬性武器', UIC.warm, 10); P(elExp12(B.elem, mag), EXP_C12, 9, 8); }
+    for (const k in SP_NAMES) if (o.sp[k]) { P(SP_NAMES[k] + ' +' + o.sp[k] + '%', UIC.warm, 10); if (SP_EXP12[k]) P(SP_EXP12[k](o.sp[k]), EXP_C12, 9, 8); }
+    for (const [t, v] of o.sp.vs || []) { const n = FAMILIES[t] ? FAMILIES[t].n : t + '系'; P('對' + n + ' +' + v + '%', UIC.warm, 10); P('打' + n + '的魔物傷害 +' + v + '%', EXP_C12, 9, 8); }
+    for (const t in o.sp.resist || {}) { P(t + '系傷害 −' + o.sp.resist[t] + '%', UIC.warm, 10); P('受到' + t + '屬性的傷害 −' + o.sp.resist[t] + '%', EXP_C12, 9, 8); }
+    for (const f of o.fx) { const S = SPECIALS[f]; if (!S) continue; P('★' + S.n, UIC.warm, 10); if (S.d) P(S.d, EXP_C12, 9, 8); }
+    if (B.slot === 'shield' && typeof WARD12 !== 'undefined') { P('開場護盾：最大 HP ' + Math.round(WARD12.shieldT(B.t) * 100) + '%', '#a8e0ff', 10); P('戰鬥開始時張開，吸收 50% 傷害（1 回合）', EXP_C12, 9, 8); }
+    const pot = potOf11(g), used = potUsed11(g); P('潛力 ' + used + '／' + pot + (crySlots11(g) ? '　晶石孔 ' + crySlots11(g) : ''), used >= pot ? UIC.muted : '#ffe08a');
+    for (const k in EN11) { const n = (g.en11 || {})[k]; if (!n) continue; const E = EN11[k]; P('・' + enText11(k, n), '#c8f0ff', 11, 4);
+      P((EN_EXP12[k] ? EN_EXP12[k](E[1] * n) + '　' : '') + '賦予 ' + n + '／' + E[6] + ' 階', EXP_C12, 9, 12); }
+    if (g.el) { P('・' + g.el + '屬性', '#ffb878', 11, 4); P(elExp12(g.el, mag) + (isOff11(g) ? '（副手那一下用這個屬性）' : ''), EXP_C12, 9, 12); }
+    for (const l of cryLines11(g)) P(l[0], l[1], 10);
+    if (wpn) wKindLines12(g, P); else if (B.slot === 'shield') shieldLines12(g, P); else if (B.arm9) armLines12(g, P);
+    if (g.gl && GEAR[g.gl]) P('外觀：' + GEAR[g.gl].n, '#d8b8ff', 9);
+    if (B.d) P(B.d, UIC.muted, 9);
+    return L; }; }
+function treeInfoParts12(kind, N, st = Game.st) { const T = TREE11[kind], lv = N.t === 'reset' ? 0 : trLv11(N.key, st), s = N.t === 'reset' ? null : nodeState11(kind, N, st), P = { tags: [], text: '', lv: '', act: '', need: '' };
+  if (N.t === 'reset') { P.tags = ['重置']; P.text = treeInfo11(kind, N, st); P.act = 'A：重置'; return P; }
+  if (N.t === 'sk') { const D = DEF.skills[N.key], lvx = Math.max(1, lv), mp = (D.costs || []).find(c => c.res === 'mp');
+    const pw = D.power && !D.powerOf ? Math.round(D.power * (1 + 0.1 * (lvx - 1))) : null, mpv = mp ? (mp.all ? '全部 MP' : 'MP ' + (D.power ? mp.amount : Math.max(0, Math.round(mp.amount * (1 - 0.1 * (lvx - 1)))))) : '';
+    const cd = Math.max(0, (D.cooldown || 0) - (!D.power && lvx >= 5 ? 1 : 0));
+    P.tags.push(D.cat === '變' ? '輔助' : D.cat === '物' ? '物理' : '魔法'); if (pw) P.tags.push('威力 ' + pw + (D.hits ? '×' + D.hits[0] : '')); if (mpv) P.tags.push(mpv); if (cd) P.tags.push('冷卻 ' + cd);
+    if (D.prio) P.tags.push('搶先'); if (D.target === 'all_enemies') P.tags.push('全體'); if (D.charge) P.tags.push('蓄力');
+    P.text = D.desc || ''; }
+  else if (N.t === 'sp') { const [n, k] = T.sp[N.j]; P.tags = ['特技', '普攻累積後自動發動']; P.text = '「' + n + '」' + SP_TXT11[k] + '。威力跟著武器的階級。';
+    if (lv) { const on = tr11(st).eq[kind] === N.j; P.lv = on ? '裝備中' : '已學會'; P.act = on ? 'A：卸下' : 'A：裝上'; } }
+  else if (N.t === 'trait') { P.tags = ['特性', '用' + kind + '時有效']; P.text = T.trait + '。'; }
+  else if (N.t === 'mast') { P.tags = ['精通']; P.text = (T.dual ? T.mastD : '用' + kind + '時傷害 +3%／級') + '。'; }
+  else if (N.t === 'third') { P.tags = ['被動', '用' + kind + '時有效']; P.text = T.third[0] + '：' + T.third[1] + '。'; }
+  else if (N.t === 'cp') { P.tags = ['共通', '用什麼武器都有效']; P.text = N.n + '：' + N.d + '。'; }
+  if (!P.lv) P.lv = N.max > 1 ? 'Lv' + lv + '/' + N.max + (lv ? '' : '・還沒學') : lv ? '已學會' : '還沒學';
+  if (!P.act && s) { if (s.ok) P.act = 'A：' + (lv ? '升級' : '學習') + '（1 點）'; else if (!s.full) P.need = s.why; }
+  return P; }
+function drawTreeInfo12(x, kind, N, st, Y0, Y1) { const X = 10, Wd = 152, P = treeInfoParts12(kind, N, st); let y = Y0 + 4;
+  let tx = X; for (const t of P.tags) { const w = Math.ceil(Font.width(t, 8)) + 6; if (tx + w > X + Wd) break; x.fillStyle = 'rgba(40,70,90,0.85)'; x.fillRect(tx, y, w, 11); x.fillStyle = UIC.accent; x.fillRect(tx, y + 10, w, 1); Font.draw(x, t, tx + 3, y - 2, '#c8f4ec', UIC.textSh, 8); tx += w + 3; }
+  if (P.tags.length) y += 14;
+  const bot = Y1 - 13; let top = bot; Font.draw(x, P.lv, X, bot, UIC.muted, UIC.textSh, 9); if (P.act) Font.drawR(x, P.act, X + Wd, bot, UIC.accent, UIC.textSh, 9);
+  if (P.need) { top = bot - 12; Font.draw(x, P.need, X, top, UIC.warm, UIC.textSh, 9); }
+  if (P.text) drawFitText(x, P.text, X, y, Wd, top - y - 1, 10, UIC.text); }
 </script>
 </body></html>

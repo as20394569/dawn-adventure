@@ -18,9 +18,11 @@ const BUFF12 = {
 const BUFF_COL12 = { atk: ['#ff9050', 'rgba(90,30,10,0.92)'], def: ['#9ec8ff', 'rgba(20,40,80,0.92)'], spd: ['#7ef0c8', 'rgba(10,60,50,0.92)'], reg: ['#90f090', 'rgba(20,70,20,0.92)'], ctr: ['#ffe070', 'rgba(80,60,10,0.92)'], deb: ['#d0a0ff', 'rgba(50,20,80,0.92)'], up: ['#ffc070', 'rgba(80,45,10,0.92)'], down: ['#a0c0ff', 'rgba(20,30,80,0.92)'] };
 const STAGE_N12 = { atk: '物攻', def: '物防', spa: '魔攻', spd: '魔防', spe: '速度', acc: '命中', eva: '迴避', crit: '會心' };
 // the pills a unit wears now: [text, kind]
-function buffPills12(b, v) { const L = [], st = v.st || {}, D = v.bdur12 || {};
-  for (const id in BUFF12) if (st[id]) { const B = BUFF12[id]; if (v.hero ? B.k === 'deb' : B.k !== 'deb') continue; const d = D[id]; L.push([B.n + (B.stacks ? ' ' + st[id] : d > 0 ? ' ' + d : ''), B.k]); }
-  for (const k in STAGE_N12) { const n = st['stage_' + k]; if (!n) continue; const d = D['stage_' + k]; L.push([STAGE_N12[k] + (n > 0 ? '+' : '') + n + (d > 0 ? ' ' + d : ''), n > 0 ? 'up' : 'down']); }
+const STAGE_S12 = { atk: '攻', def: '防', spa: '魔攻', spd: '魔防', spe: '速', acc: '命中', eva: '迴避', crit: '會心' };
+// (a foe's pills are short — 「攻+1」「裂甲」 — so three fit next to 「弱」; the hero's keep the turns left)
+function buffPills12(b, v) { const L = [], st = v.st || {}, D = v.bdur12 || {}, sh = !v.hero;
+  for (const id in BUFF12) if (st[id]) { const B = BUFF12[id]; if (v.hero ? B.k === 'deb' : B.k !== 'deb') continue; const d = D[id]; L.push([B.n + (B.stacks ? ' ' + st[id] : d > 0 && !sh ? ' ' + d : ''), B.k]); }
+  for (const k in STAGE_N12) { const n = st['stage_' + k]; if (!n) continue; const d = D['stage_' + k]; L.push([(sh ? STAGE_S12[k] : STAGE_N12[k]) + (n > 0 ? '+' : '') + n + (d > 0 && !sh ? ' ' + d : ''), n > 0 ? 'up' : 'down']); }
   return L; }
 function buffPill12(x, X, Y, s, k, right) { const [c, bg] = BUFF_COL12[k] || BUFF_COL12.def, w = Math.ceil(Font.width(s, 9)) + 8; if (right) X -= w;
   x.fillStyle = bg; x.fillRect(X, Y, w, 12); x.fillStyle = c; x.fillRect(X, Y, 1, 12); x.fillRect(X + w - 1, Y, 1, 12); x.fillRect(X, Y + 11, w, 1); Font.draw(x, s, X + 4, Y - 2, c, '#000000', 9); return w; }
@@ -32,17 +34,21 @@ function buffPill12(x, X, Y, s, k, right) { const [c, bg] = BUFF_COL12[k] || BUF
     const L = buffPills12(this, Hv).slice(0, 5); if (!L.length) return; const C = this.center(Hv), X = Math.min(W - 4, Math.round(C.x + 30 + Hv.off.x)); let Y = Math.round(HERO_FOOT - 30 - (L.length - 1) * 13 + Hv.off.y);
     for (const [s, k] of L) { const w = Math.ceil(Font.width(s, 9)) + 8; buffPill12(x, Math.min(X, W - 2 - w), Y, s, k); Y += 13; } }; }
 { const _pb = Battle.prototype.drawPlateBig; Battle.prototype.drawPlateBig = function (x, F, a0) { _pb.call(this, x, F, a0); const a = a0 * (F && F.plateA != null ? F.plateA : 1); if (!F || a <= 0) return;
-    const L = buffPills12(this, F).slice(0, 3); if (!L.length) return; x.globalAlpha = a; const w0 = 120, pe = plateExtra(); let X = (W - w0) / 2 + 4; const Y = 6 + 33 + pe + 14;
-    for (const [s, k] of L) X += buffPill12(x, X, Y, s, k) + 2; x.globalAlpha = 1; }; }
+    // v284 (「畫面有點雜亂」): on the 弱 row, right-aligned (where the old 攻↑ icons were) — no longer over the 「護盾中／蓄力中」 line
+    const L = buffPills12(this, F); if (!L.length) return; x.globalAlpha = a; const w0 = 120, pe = plateExtra(), X0 = (W - w0) / 2, Y = 6 + 33 + pe, fam = FAMILIES[F.fam];
+    const left = X0 + 4 + (fam && fam.weak.length ? Font.width('弱 ' + (this.revealed(F) ? fam.weak.join('・') : '？'), 8) + 12 : 0); let X = X0 + w0 - 2, n = 0;
+    for (const [s, k] of L) { const w = Math.ceil(Font.width(s, 9)) + 8, more = L.length - n - 1, mw = more ? Math.ceil(Font.width('+' + more, 9)) + 4 : 0; if (X - w - mw < left) { Font.drawR(x, '+' + (L.length - n), X, Y - 2, '#d8d8e8', '#000000', 9); break; } buffPill12(x, X, Y, s, k, true); X -= w + 2; n++; }
+    x.globalAlpha = 1; }; }
 // 2. the look while it lasts
 { const _up = Battle.prototype.update; Battle.prototype.update = function () { _up.call(this);
     const Hv = this.H; if (!Hv || Hv.gone || !(Hv.hp > 0)) return; const st = Hv.st || {}, kinds = new Set(); for (const id in BUFF12) if (st[id]) kinds.add(BUFF12[id].k); if (st.stage_atk > 0 || st.stage_spa > 0) kinds.add('atk'); if (st.stage_def > 0 || st.stage_spd > 0) kinds.add('def'); if (st.stage_spe > 0) kinds.add('spd');
     if (!kinds.size) return; const C = this.center(Hv), t = this.t;
-    if (kinds.has('def') && t % 30 === 0) { const c = st.shieldStance11 ? '#c8dcff' : BUFF_COL12.def[0]; this.spawn({ k: 'hex', x: C.x, y: C.y, r0: 20, r1: 24, c, life: 24 }); }
-    if (kinds.has('atk') && t % 6 === 0) this.spawn({ k: 'flame', x: C.x + rnd(-12, 12), y: C.y + rnd(4, 18), vy: -0.9, s: pick([2, 3]), life: 14 });
-    if (kinds.has('spd') && t % 14 === 0) this.spawn({ k: 'line', x1: C.x - 16, y1: C.y + rnd(-14, 14), x2: C.x - 30, y2: C.y + rnd(-14, 14), c: BUFF_COL12.spd[0], w: 1, grow: 3, life: 10 });
-    if (kinds.has('reg') && t % 26 === 0) this.spawn({ k: 'txt', s: '+', x: C.x + rnd(-12, 12), y: C.y + rnd(-4, 12), vx: 0, vy: -0.5, c: '#90f090', sh: '#003000', fade: 1, life: 30 });
-    if (kinds.has('ctr') && t % 40 === 0) this.star(C.x + 18, C.y - 12, BUFF_COL12.ctr[0], 8); }; }
+    // v284 (「畫面有點雜亂」): quieter — no hexagon around the body, fewer sparks; the pills say what is on
+    if (kinds.has('def') && t % 50 === 0) this.star(C.x - 16, C.y + rnd(-4, 8), st.shieldStance11 ? '#c8dcff' : BUFF_COL12.def[0], 10);
+    if (kinds.has('atk') && t % 18 === 0) this.spawn({ k: 'flame', x: C.x + rnd(-10, 10), y: C.y + rnd(8, 18), vy: -0.7, s: 2, life: 12 });
+    if (kinds.has('spd') && t % 30 === 0) this.spawn({ k: 'line', x1: C.x - 16, y1: C.y + rnd(-10, 10), x2: C.x - 28, y2: C.y + rnd(-10, 10), c: BUFF_COL12.spd[0], w: 1, grow: 3, life: 10 });
+    if (kinds.has('reg') && t % 40 === 0) this.spawn({ k: 'txt', s: '+', x: C.x + rnd(-12, 12), y: C.y + rnd(-4, 12), vx: 0, vy: -0.5, c: '#90f090', sh: '#003000', fade: 1, life: 30 });
+    if (kinds.has('ctr') && t % 60 === 0) this.star(C.x + 18, C.y - 12, BUFF_COL12.ctr[0], 8); }; }
 // 3. a big word when it starts (and 盾勢 as it builds)
 { const H = Battle.prototype.handlers, _ap = H.STATUS_APPLY; H.STATUS_APPLY = function* (e, s, t, P) {
     if (t && !P.failed && !P.cleared && !(P.quiet)) { const B = BUFF12[P.status];

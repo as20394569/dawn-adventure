@@ -199,9 +199,9 @@ Battle.prototype.victory = function* () {
   for (const v of L) { const sp = SPECIES[v.sp] || {}; if (sp.mat && ITEMS[sp.mat] && !v.elite && !v.boss && chance(0.6)) { st.bag[sp.mat] = (st.bag[sp.mat] || 0) + 1; yield* this.msg('得到了素材「' + ITEMS[sp.mat].n + '」！', { hold: 30 }); } }
   const pool = Game.ow && Game.ow.map && Game.ow.map.d.gearPool;
   for (const v of L) { this.focus = v;
-    if (v.rare && pool) { const g = makeGear(pick(pool), 3); yield* this.lootShow(g, v.n + '掉落了裝備！'); }
+    if (v.rare && pool) { const k = typeof pickDrop12 === 'function' ? pickDrop12(pool, v.sp) : pick(pool); if (k) { const g = makeGear(k, 3); yield* this.lootShow(g, v.n + '掉落了裝備！'); } }
     const main = v === L[0] && v.id === this.mainId(); for (const g of lootDrops({ F: v, cfg: main ? this.cfg : { kind: 'wild' }, H: this.H })) yield* this.lootShow(g, v.n + '掉落了裝備！'); }
-  const wild = L.filter(v => !v.elite && !v.boss && !v.minion); if (pool && wild.length && chance((fx.fortune ? 0.16 : 0.08) * (1 + 0.25 * (wild.length - 1)))) { const v = pick(wild); this.focus = v; const g = makeGear(pick(pool), rollQuality()); yield* this.lootShow(g, v.n + '掉落了裝備！'); }
+  const wild = L.filter(v => !v.elite && !v.boss && !v.minion && (typeof pickDrop12 !== 'function' || pool && pickDrop12(pool, v.sp))); if (pool && wild.length && chance((fx.fortune ? 0.16 : 0.08) * (1 + 0.25 * (wild.length - 1)))) { const v = pick(wild); this.focus = v; const g = makeGear(typeof pickDrop12 === 'function' ? pickDrop12(pool, v.sp) : pick(pool), rollQuality()); yield* this.lootShow(g, v.n + '掉落了裝備！'); }
   this.focus = this.mainView();
 };
 Battle.prototype.mainId = function () { const u = this.core.units.find(q => q.side === 'B'); return u ? u.id : null; };

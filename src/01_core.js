@@ -93,6 +93,7 @@ const Font = (() => {
   }
   const NOSTART = '。，、！？」』）】〕］〉》：；…～．％%,.!?)'; // v268: 】％ 也不放行首
   const NOEND = '（「『【〔［〈《(';                                 // v268: 開括號不留在行尾
+  const WORD = /[0-9A-Za-z.%×+\-−~～]/;                              // v284: 數字・英數連在一起不拆開
   function wrap(str, maxW, size) {
     const lines = [];
     for (const para of String(str).split('\n')) {
@@ -101,7 +102,9 @@ const Font = (() => {
         const ch = chars[i], cw = width(ch, size);
         if (w + cw > maxW && line) {
           const lc = [...line]; let carry = '';
-          if (NOSTART.includes(ch) && lc.length > 1) carry = lc.pop();
+          // v284: a number like 「×1.5」「−12%」「Lv30」 stays in one piece (「技能樹的技能效果的文字編排不好」)
+          if (WORD.test(ch) && WORD.test(lc[lc.length - 1])) { let j = lc.length; while (j > 0 && WORD.test(lc[j - 1])) j--; if (j > 0 && lc.length - j <= 8) carry = lc.splice(j).join(''); }
+          if (!carry && NOSTART.includes(ch) && lc.length > 1) carry = lc.pop();
           while (lc.length > 1 && NOEND.includes(lc[lc.length - 1])) carry = lc.pop() + carry;
           if (carry) { lines.push(lc.join('')); line = carry; w = width(carry, size); }
           else { lines.push(line); line = ''; w = 0; if (ch === ' ') continue; }

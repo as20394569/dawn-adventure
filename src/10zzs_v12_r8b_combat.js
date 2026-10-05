@@ -101,7 +101,7 @@ function champUnit12(s, k) { const S = s.stats, C = CHAMP12[k]; s.name = C.n + s
     const g = Math.floor((sp.gold || 0) * u.lv * (typeof V81_GOLD === 'function' ? V81_GOLD(u.lv) : 1) * (fx.fortune ? 1.5 : 1)); st.money += g;
     const mat = sp.mat && ITEMS[sp.mat] ? sp.mat : null; if (mat) st.bag[mat] = (st.bag[mat] || 0) + 2; Sound.jingle('item');
     yield* this.msg('強化魔物的獎勵：再得到' + g + ' G' + (mat ? '和素材「' + ITEMS[mat].n + '」×2' : '') + '！', { hold: 36 });
-    const pool = Game.ow && Game.ow.map && Game.ow.map.d.gearPool; if (pool && pool.length && chance(0.25)) { this.focus = this.views[u.id] || this.focus; yield* this.lootShow(makeGear(pick(pool), rollQuality()), u.name + '掉落了裝備！'); }
+    const pool = Game.ow && Game.ow.map && Game.ow.map.d.gearPool; const dk = pool && pool.length ? (typeof pickDrop12 === 'function' ? pickDrop12(pool, u.sp) : pick(pool)) : null; if (dk && chance(0.25)) { this.focus = this.views[u.id] || this.focus; yield* this.lootShow(makeGear(dk, rollQuality()), u.name + '掉落了裝備！'); }
     return r; }; }
 
 /* ---------- C. 魔物的招牌行為 ---------- */
