@@ -23479,4 +23479,10 @@ function drawDualTip12(x, LY, h, Y0) { const n = dualPairs12(); let y = LY + 6;
       if (k) { st.flags.dualHint12 = 1; const I = DUAL_INFO12.find(q => q[1] === k);
         this.run(say('（你有兩' + (k === '盾' ? '面盾' : '把' + k) + '了！到選單「裝備」' + (k === '盾' ? '把主手和副手都換成盾' : '把第二把放進副手欄') + '，就能雙持「' + I[0] + '」：' + I[3] + '，還會開啟' + I[0] + '的技能樹。）')); } }
     return r; }; }
+const WILD13 = { pow: 1.3, taken: { 短刀: 1.5, 樂器: 1.5, 雙盾: 1.8, 魔導書: 0.9 } }; // 魔導書本來就扣最多（16% → 加了之後 21%），稍微收回
+{ const _ue = BD.unitForEnemy; BD.unitForEnemy = function (core, sp, lv, kind, side, idx, o = {}) { const s = _ue.call(this, core, sp, lv, kind, side, idx, o); if (!s || kind !== 'wild') return s;
+    const f = clamp((lv - 4) / 5, 0, 1), m = 1 + (WILD13.pow - 1) * f; if (m !== 1) for (const k of ['atk', 'spa']) s.stats[k] = Math.max(1, Math.round(s.stats[k] * m)); return s; }; }
+PV('wildTaken13', v => ({ mods: [{ stage: 'final', who: 'defender', mul: v, cond: { hasPower: 1 } }] }));
+{ const _hs = BB.heroSpec; BB.heroSpec = function (st, cfg) { const s = _hs.call(this, st, cfg); if (!st || !cfg || (cfg.kind && cfg.kind !== 'wild')) return s;
+    const k = dualMode11(st) || mainKind11(st), v = WILD13.taken[k]; if (v) s.passives.push({ key: 'wildTaken13', v, src: 'tree' }); return s; }; }
 </script>
