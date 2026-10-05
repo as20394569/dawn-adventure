@@ -60,7 +60,8 @@ BR.damage = function (core, src, tgt, skill, o = {}) {
   if (phys && core.hasStatus(src, 'brn')) A *= 0.5;
   // v12.0.9f: ignoring defence can lift the attack/defence ratio to at most ×3 (「無視全部物防」 used to divide by 1 and deal ~100× damage)
   D = Math.max(1, D, Math.min(D0, A / BR.PIERCE_RATIO));
-  const base = Math.floor(Math.floor(Math.floor(2 * src.lv / 5 + 2) * pow * A / D) / 50) + 2;
+  // v12.14: a monster's multi-hit move adds the flat +2 once per hit — at Lv1〜5 that alone was 6+ damage a turn (啾啾鳥's 啄擊 took 60% of a fresh hero's HP), so its hits add +1
+  const base = Math.floor(Math.floor(Math.floor(2 * src.lv / 5 + 2) * pow * A / D) / 50) + (!src.hero && skill.hits && skill.hits[1] > 1 ? 1 : 2);
   const mult = BR.famMult(el, tgt);
   let m = mult * (rng ? rng.int(BR.VARIANCE[0], BR.VARIANCE[1]) / 100 : (BR.VARIANCE[0] + BR.VARIANCE[1]) / 200);
   let critMul = BR.CRIT_MUL; for (const md of mods) { const v = BR.modVal(md, 'critDmg', c); if (v && crit) critMul += BR.CRIT_MUL * v / 100; }
