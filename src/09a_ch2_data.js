@@ -246,7 +246,7 @@ Object.assign(GEAR, {
   frostBrand: { n: '霜之劍', slot: 'weapon', t: 6, st: { atk: 17 }, sp: { crit: 3 }, elem: '水', d: '劍身結著不會融化的霜。' },
   iceDagger: { n: '冰晶短刀', slot: 'weapon', t: 6, st: { atk: 15, spe: 3 }, sp: { crit: 5 }, d: '用冰晶削成的短刀。' },
   glacierStaff: { n: '冰河法杖', slot: 'weapon', t: 6, st: { spa: 18 }, sp: { elem: 5 }, elem: '水', d: '封著冰河寒氣的法杖。' },
-  frostHood: { n: '雪原兜帽', slot: 'head', t: 6, st: { def: 6, spd: 6 }, d: '雪狼毛做的兜帽。' },
+  frostHood: { n: '雪原兜帽', slot: 'head', t: 6, st: { def: 6, spd: 6 }, d: '雪原毛皮做的兜帽。' },
   yetiFur: { n: '雪人毛皮甲', slot: 'body', t: 6, st: { def: 16, spd: 8, hp: 5 }, d: '雪人的毛皮做的鎧甲。又暖又硬。' },
   snowBoots: { n: '雪地長靴', slot: 'feet', t: 6, st: { spe: 7, def: 5 }, d: '在雪地上也走得很快的靴子。' },
   iceCharm: { n: '冰晶護符', slot: 'acc', t: 6, st: { spd: 5, hp: 6 }, d: '冰晶做的護符。' },

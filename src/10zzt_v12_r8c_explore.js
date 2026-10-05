@@ -24,7 +24,7 @@ const LMEV12 = [
   { id: 'mill', map: 'windHills', lm: '三座風車', at: [42, 6], kind: 'once', cond: st => wx12(st) === 'storm', hint: '第三座風車的頂上，好像卡著一個麻袋。\n要是颳起暴風雨，說不定會掉下來。',
     run: function* () { yield* sayAll(['暴風雨中，第三座風車轉得飛快——', '「咚！」一個麻袋從風車頂上掉了下來！', '裡面裝著錢。大概是很久以前藏在上面的。']); yield* gain12([], 1000); } },
   { id: 'pasture', map: 'windHills', lm: '牧草坡', kind: 'once', cond: st => phase12(st) !== 'night', hint: '羊群都睡著了。白天再來吧。',
-    run: function* () { yield* sayAll(['吹了一聲口哨——', '捲毛羊們跑了過來，在你身上蹭來蹭去。', '羊群跑走之後，地上留下了一團毛。']); yield* gain12([['hareFur', 3]]); } },
+    run: function* () { yield* sayAll(['吹了一聲口哨——', '捲毛羊們跑了過來，在你身上蹭來蹭去。', '羊群跑走之後，地上留下了一團毛。']); yield* gain12([['beastFur', 3]]); } },
   { id: 'falls', map: 'jadeCreek', lm: '白練瀑布', kind: 'once', run: function* () { yield* sayAll(['瀑布後面有一個小洞！', '洞裡藏著一個寶箱。']); yield* gain12([['trainBook', 1]]); } },
   { id: 'bottle', map: 'jadeCreek', lm: '溪中沙洲', kind: 'once', run: function* () { yield* sayAll(['沙洲上有一個被沖上岸的瓶子，裡面塞著一封信。', '「撿到這封信的人：請拿去買點好吃的。」']); yield* gain12([], 300); } },
   { id: 'shrine', map: 'jadeCreek', lm: '碧溪下游', kind: 'daily', run: function* () { yield* sayAll(['水神的小祠。祠前的碗裡，放著前人留下的東西。', '（拿一點，也留一點給下一個人吧。）']); yield* gain12([['manaHerb', 2]]); } },

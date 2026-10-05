@@ -283,7 +283,7 @@ Object.assign(Events, {
   *iceCaveDoor(ow) { if (yield* yesNo('冰晶洞窟的入口。冷風從裡面吹出來……要進去嗎？')) yield* ow.warp('iceCave', 9, 22, 'up'); },
   *iceWall2() { yield* Events.iceWall(); },
   *iceWall() { yield* say('厚厚的冰牆擋住了通往北方的山道。敲起來硬得像鋼鐵……\n（冰晶洞窟深處好像有什麼東西在控制這些冰。）'); },
-  *eliteWin_snowBear() { const st = Game.st; st.bag.snowPelt = (st.bag.snowPelt || 0) + 3; yield* itemGet(st.name + '得到了雪狼毛×3！'); },
+  *eliteWin_snowBear() { const st = Game.st; st.bag.snowPelt = (st.bag.snowPelt || 0) + 3; yield* itemGet(st.name + '得到了雪原毛皮×3！'); },
   *frostKid() { yield* say('雪原的風會說悄悄話喔！……今天它說「好冷」。'); },
   *frostHunter() { yield* say(Game.st.flags.frostQueen ? '冰牆融化了！北邊的山道又能走了。' : '北邊的山道被冰封住了……聽說是冰晶洞窟的女王生氣了。'); },
   *frostInnkeeper() { yield* ch2Inn('暖爐旅店', { map: 'frostInn', x: 4, y: 4, dir: 'up' }); },

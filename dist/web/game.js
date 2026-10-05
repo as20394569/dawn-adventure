@@ -9286,7 +9286,7 @@ Object.assign(GEAR, {
   frostBrand: { n: '霜之劍', slot: 'weapon', t: 6, st: { atk: 17 }, sp: { crit: 3 }, elem: '水', d: '劍身結著不會融化的霜。' },
   iceDagger: { n: '冰晶短刀', slot: 'weapon', t: 6, st: { atk: 15, spe: 3 }, sp: { crit: 5 }, d: '用冰晶削成的短刀。' },
   glacierStaff: { n: '冰河法杖', slot: 'weapon', t: 6, st: { spa: 18 }, sp: { elem: 5 }, elem: '水', d: '封著冰河寒氣的法杖。' },
-  frostHood: { n: '雪原兜帽', slot: 'head', t: 6, st: { def: 6, spd: 6 }, d: '雪狼毛做的兜帽。' },
+  frostHood: { n: '雪原兜帽', slot: 'head', t: 6, st: { def: 6, spd: 6 }, d: '雪原毛皮做的兜帽。' },
   yetiFur: { n: '雪人毛皮甲', slot: 'body', t: 6, st: { def: 16, spd: 8, hp: 5 }, d: '雪人的毛皮做的鎧甲。又暖又硬。' },
   snowBoots: { n: '雪地長靴', slot: 'feet', t: 6, st: { spe: 7, def: 5 }, d: '在雪地上也走得很快的靴子。' },
   iceCharm: { n: '冰晶護符', slot: 'acc', t: 6, st: { spd: 5, hp: 6 }, d: '冰晶做的護符。' },
@@ -9920,7 +9920,7 @@ Object.assign(Events, {
   *iceCaveDoor(ow) { if (yield* yesNo('冰晶洞窟的入口。冷風從裡面吹出來……要進去嗎？')) yield* ow.warp('iceCave', 9, 22, 'up'); },
   *iceWall2() { yield* Events.iceWall(); },
   *iceWall() { yield* say('厚厚的冰牆擋住了通往北方的山道。敲起來硬得像鋼鐵……\n（冰晶洞窟深處好像有什麼東西在控制這些冰。）'); },
-  *eliteWin_snowBear() { const st = Game.st; st.bag.snowPelt = (st.bag.snowPelt || 0) + 3; yield* itemGet(st.name + '得到了雪狼毛×3！'); },
+  *eliteWin_snowBear() { const st = Game.st; st.bag.snowPelt = (st.bag.snowPelt || 0) + 3; yield* itemGet(st.name + '得到了雪原毛皮×3！'); },
   *frostKid() { yield* say('雪原的風會說悄悄話喔！……今天它說「好冷」。'); },
   *frostHunter() { yield* say(Game.st.flags.frostQueen ? '冰牆融化了！北邊的山道又能走了。' : '北邊的山道被冰封住了……聽說是冰晶洞窟的女王生氣了。'); },
   *frostInnkeeper() { yield* ch2Inn('暖爐旅店', { map: 'frostInn', x: 4, y: 4, dir: 'up' }); },
@@ -11621,9 +11621,10 @@ function* dexDetail(list, idx) {
       else if (info.big) L.push(['素材：' + (mat ? mat + '×' + (sp.boss ? 3 : 2) + '＋' : '') + '當地素材×' + (sp.boss ? 3 : 2) + '（每次必定）', UIC.text]);
       else { L.push(['素材：' + (mat ? mat + '（每次必定）' : '—'), UIC.text]); const rk = typeof rareOf13 === 'function' ? rareOf13(k) : null; if (rk) L.push(['稀有：' + rareName13(rk) + '（金・虹，2%）', UIC.warm]); } // v12.30 刷寶
       if (typeof CRY11 !== 'undefined' && CRY11[k] && info.big) { const got = !!cryOwn11()[k]; L.push(['晶石（' + (typeof CRYCH12 !== 'undefined' ? '菁英 ' + Math.round(CRYCH12.elite * 100) + '%・頭目 ' + Math.round(CRYCH12.boss * 100) + '%' : '機率') + '）：「' + cryName11(k) + '」' + (got ? '（已取得）' : ''), got ? UIC.muted : UIC.warm]); }
-      else for (const s of info.sigs) L.push(['首次擊敗：「' + GEAR[s.g].n + '」的設計圖' + (s.got ? '（已取得）' : ''), s.got ? UIC.muted : UIC.warm]);
-      if (info.big) L.push([typeof PARTS11 !== 'undefined' && PARTS11[k] ? '再戰：部位、經驗（頭目 30%）、金錢' : '再戰：經驗（30%）、金錢、素材', '#c8b0ff']);
-      if (!info.big && !info.re.length) L.push(['普通魔物不會掉裝備。裝備靠菁英・頭目的設計圖打造。', UIC.muted]);
+      else if (typeof ROAM13 !== 'undefined' && ROAM13.has(k)) L.push([roamSigText13(k, k), UIC.warm]); // v12.31 遊蕩菁英：每次 20%
+      else for (const s of info.sigs) L.push(['首次擊敗：「' + GEAR[s.g].n + '」' + (s.got ? '（已取得）' : ''), s.got ? UIC.muted : UIC.warm]);
+      if (info.big) L.push([typeof PARTS11 !== 'undefined' && PARTS11[k] ? '再戰：部位、經驗（頭目 30%）、金錢' : '再戰：經驗、金錢、素材', '#c8b0ff']);
+      if (!info.big && typeof dropFits12 === 'function' && Object.keys(MAPS).some(m => (MAPS[m].encounters || []).some(e => (e.table || []).some(r => r[0] === k)) && (MAPS[m].gearPool || []).some(g => GEAR[g] && dropFits12(g, k)))) L.push(['裝備：出沒地圖的裝備（每場約 8%）', UIC.text]);
       let Y = 127; for (const [t, c] of L) for (const l of Font.wrap(t, 156, 9)) { if (Y > 222) break; Font.draw(x, l, 10, Y, c, UIC.textSh, 9); Y += 11; }
     }
     Font.draw(x, '←→分頁　↑↓換魔物', 6, 239, UIC.muted, UIC.textSh, 9);
@@ -18501,6 +18502,11 @@ function dnStage12(src, ph) {
 { const _la = hd2dLightActor; hd2dLightActor = function (cv, L) { _la(cv, L); const b = Game.scene, ph = b && b.cfg && b.cfg.dn; if (!ph || ph === 'day') return;
     const x = cv.getContext('2d'); x.save(); x.setTransform(1, 0, 0, 1, 0, 0); x.globalCompositeOperation = 'source-atop'; x.fillStyle = ph === 'night' ? 'rgba(36,48,110,0.26)' : ph === 'dusk' ? 'rgba(255,130,60,0.12)' : 'rgba(255,200,140,0.08)'; x.fillRect(0, 0, cv.width, cv.height); x.restore(); }; }
 { const _sh = hd2dShafts; hd2dShafts = function (b, x) { if (b.cfg && b.cfg.dn === 'night') return; return _sh(b, x); }; }
+ITEMS.snowPelt.n = '雪原毛皮';
+ITEMS.beastFur = { n: '獸毛', mat: 1, price: 0, sell: 40, cat: '魔物素材', d: '野獸身上蓬鬆的毛。羊・貓・貂・狸・猿身上都有，可以紡成線，也能縫進皮革裡。' };
+for (const sp of ['curlySheep', 'nightCat', 'forestMarten', 'mapleTanuki', 'mountainApe', 'nightOtter']) { if (SPECIES[sp]) SPECIES[sp].mat = 'beastFur'; else bvErr('v12.31', 'beastFur ' + sp); }
+SPECIES.blackCatfish.mat = 'gel'; SPECIES.rockRhino.mat = 'stone'; BOSS_MAT.rockRhino = 'stone';
+for (const sp of ['crystalCroc', 'ruinWarden', 'miasmaWolf', 'lavaKnight']) { const k = BOSS_MAT[sp]; if (SPECIES[sp] && k && ITEMS[k]) SPECIES[sp].mat = k; else bvErr('v12.31', 'roam mat ' + sp); }
 const DUNGEON_ROAM12 = ['sewer', 'ruins', 'mine', 'catacomb', 'capSewer', 'clockTower1', 'iceCave', 'lavaTunnel', 'duskFort1', 'heroTomb'];
 for (const id of DUNGEON_ROAM12) if (MAPS[id] && MAPS[id].encounters && MAPS[id].encounters.length) { MAPS[id].roam12 = 1; if (typeof mapCache !== 'undefined') delete mapCache[id]; }
 const RESERVED_MATS12 = new Set(['riftShard', 'starShard', 'starDust']);
@@ -18756,7 +18762,7 @@ const LMEV12 = [
   { id: 'mill', map: 'windHills', lm: '三座風車', at: [42, 6], kind: 'once', cond: st => wx12(st) === 'storm', hint: '第三座風車的頂上，好像卡著一個麻袋。\n要是颳起暴風雨，說不定會掉下來。',
     run: function* () { yield* sayAll(['暴風雨中，第三座風車轉得飛快——', '「咚！」一個麻袋從風車頂上掉了下來！', '裡面裝著錢。大概是很久以前藏在上面的。']); yield* gain12([], 1000); } },
   { id: 'pasture', map: 'windHills', lm: '牧草坡', kind: 'once', cond: st => phase12(st) !== 'night', hint: '羊群都睡著了。白天再來吧。',
-    run: function* () { yield* sayAll(['吹了一聲口哨——', '捲毛羊們跑了過來，在你身上蹭來蹭去。', '羊群跑走之後，地上留下了一團毛。']); yield* gain12([['hareFur', 3]]); } },
+    run: function* () { yield* sayAll(['吹了一聲口哨——', '捲毛羊們跑了過來，在你身上蹭來蹭去。', '羊群跑走之後，地上留下了一團毛。']); yield* gain12([['beastFur', 3]]); } },
   { id: 'falls', map: 'jadeCreek', lm: '白練瀑布', kind: 'once', run: function* () { yield* sayAll(['瀑布後面有一個小洞！', '洞裡藏著一個寶箱。']); yield* gain12([['trainBook', 1]]); } },
   { id: 'bottle', map: 'jadeCreek', lm: '溪中沙洲', kind: 'once', run: function* () { yield* sayAll(['沙洲上有一個被沖上岸的瓶子，裡面塞著一封信。', '「撿到這封信的人：請拿去買點好吃的。」']); yield* gain12([], 300); } },
   { id: 'shrine', map: 'jadeCreek', lm: '碧溪下游', kind: 'daily', run: function* () { yield* sayAll(['水神的小祠。祠前的碗裡，放著前人留下的東西。', '（拿一點，也留一點給下一個人吧。）']); yield* gain12([['manaHerb', 2]]); } },
@@ -21201,6 +21207,7 @@ const matTut12 = function* (show) { const st = Game.st; if (st.flags.tutMat12) r
     const gained = {}; for (const k in st.bag) if (MATCAT11[k] && (st.bag[k] || 0) > (bag0[k] || 0)) gained[k] = st.bag[k] - (bag0[k] || 0);
     const need = {}, defeated = this.defeated ? this.defeated() : []; for (const v of defeated) { const k = (SPECIES[v.sp] || {}).mat; if (!k || !MATCAT11[k] || v.minion) continue; need[k] = (need[k] || 0) + (v.elite || v.boss ? 2 : 1); }
     for (const k in need) if ((gained[k] || 0) < need[k]) { st.bag[k] = (st.bag[k] || 0) + need[k] - (gained[k] || 0); gained[k] = need[k]; }
+    if (typeof matRegion13 === 'function') matRegion13(gained, defeated); // v12.31：後期地區打到前期的素材，多掉幾個（見 v1_drops）
     const up = (heroStats(st).cr11P || []).filter(p => p[0] === 'matUp').reduce((a, p) => a + p[1], 0);
     if (up > 0) for (const k in gained) { const x = gained[k] * up / 100, n = Math.floor(x) + (chance(x - Math.floor(x)) ? 1 : 0); if (n > 0) { st.bag[k] += n; gained[k] += n; } }
     { const F = this.mainView && this.mainView(), key = (this.cfg || {}).id || (F && F.sp); if (F && F.elite && key && ((st.kills || {})[key] || 0) >= 2) { const k = sigOf10(key, F.sp); if (k && glamOk11(k) && !glam11(st)[k]) { glam11(st)[k] = 1; yield* this.msg('解鎖了「' + GEAR[k].n + '」的外觀！（鐵匠→幻化）', { hold: 26 }); } } }
@@ -22110,7 +22117,7 @@ Object.assign(FX11, {
       Sound.sfx('charge'); ln9(this, T.x + 24, T.y - 18, T.x - 20, T.y + 16, S.col[1], '#ffffff', 5, 12); this.spawn({ k: 'hex', x: T.x, y: T.y, r0: 6, r1: 20, c: S.col[1], life: 12 }); imp9(this, T, S); yield* wait(10); } },
 });
 function fx11Make(k) { const F = FX11[k], id = 't_' + k, D = DEF.skills[id]; if (!F || !D) { bvErr('r9y', 'fx ' + k); return; } const S = { col: F.col, pt: F.pt, seed: hashK(k) };
-  FX['t11_' + k] = function* (U, T, u, t) { yield* F.f.call(this, S, U, T, u, t); };
+  FX['t11_' + k] = function* (U, T, u, t) { if (!T) { const L = this.foes ? this.foes().filter(v => !v.gone) : [], g = L.length > 1 ? this.groupOf(L.map(v => v.id)) : L[0]; T = g ? this.center(g) : { x: U.x, y: U.y - 60 }; } yield* F.f.call(this, S, U, T, u, t); };
   if (F.h) { FX['t11h_' + k] = function* (U, T, u, i, t) { yield* F.h.call(this, S, U, T, u, i, t); }; D.hitFx = 't11h_' + k; }
   PAL['t11_' + k] = [F.col[0], F.col[1]]; SKILL_STYLE[id] = [F.cast || 'draw', D.power ? (F.fin || 'none') : null, 't11_' + k, F.snd || null]; if (MOVES[id]) MOVES[id].fx = 't11_' + k; }
 for (const kind of TREE_KINDS11) for (const r of TREE11[kind].sk) fx11Make(r[1]);
@@ -23020,20 +23027,23 @@ const BUFF_COL12 = { atk: ['#ff9050', 'rgba(90,30,10,0.92)'], def: ['#9ec8ff', '
 const STAGE_N12 = { atk: '物攻', def: '物防', spa: '魔攻', spd: '魔防', spe: '速度', acc: '命中', eva: '迴避', crit: '會心' };
 const STAGE_S12 = { atk: '攻', def: '防', spa: '魔攻', spd: '魔防', spe: '速', acc: '命中', eva: '迴避', crit: '會心' };
 function buffPills12(b, v) { const L = [], st = v.st || {}, D = v.bdur12 || {}, sh = !v.hero;
-  for (const id in BUFF12) if (st[id]) { const B = BUFF12[id]; if (v.hero ? B.k === 'deb' : B.k !== 'deb') continue; const d = D[id]; L.push([B.n + (B.stacks ? ' ' + st[id] : d > 0 && !sh ? ' ' + d : ''), B.k]); }
-  for (const k in STAGE_N12) { const n = st['stage_' + k]; if (!n) continue; const d = D['stage_' + k]; L.push([(sh ? STAGE_S12[k] : STAGE_N12[k]) + (n > 0 ? '+' : '') + n + (d > 0 && !sh ? ' ' + d : ''), n > 0 ? 'up' : 'down']); }
+  for (const id in BUFF12) if (st[id]) { const B = BUFF12[id]; if (v.hero ? B.k === 'deb' : B.k !== 'deb') continue; const d = D[id]; L.push([B.n + (B.stacks ? '×' + st[id] : ''), B.k, !B.stacks && d > 0 && !sh ? d + '回' : '']); }
+  for (const k in STAGE_N12) { const n = st['stage_' + k]; if (!n) continue; const d = D['stage_' + k]; L.push([(sh ? STAGE_S12[k] : STAGE_N12[k]) + (n > 0 ? '+' : '-') + Math.abs(n), n > 0 ? 'up' : 'down', d > 0 && !sh ? d + '回' : '']); }
   return L; }
-function buffPill12(x, X, Y, s, k, right) { const [c, bg] = BUFF_COL12[k] || BUFF_COL12.def, w = Math.ceil(Font.width(s, 9)) + 8; if (right) X -= w;
-  x.fillStyle = bg; x.fillRect(X, Y, w, 12); x.fillStyle = c; x.fillRect(X, Y, 1, 12); x.fillRect(X + w - 1, Y, 1, 12); x.fillRect(X, Y + 11, w, 1); Font.draw(x, s, X + 4, Y - 2, c, '#000000', 9); return w; }
+const pillW12 = (s, t) => Math.ceil(Font.width(s, 9)) + 8 + (t ? Math.ceil(Font.width(t, 8)) + 5 : 0);
+function buffPill12(x, X, Y, s, k, right, t) { const [c, bg] = BUFF_COL12[k] || BUFF_COL12.def, w = pillW12(s, t), w1 = Math.ceil(Font.width(s, 9)) + 8; if (right) X -= w;
+  x.fillStyle = bg; x.fillRect(X, Y, w, 12); x.fillStyle = c; x.fillRect(X, Y, 1, 12); x.fillRect(X + w - 1, Y, 1, 12); x.fillRect(X, Y + 11, w, 1); Font.draw(x, s, X + 4, Y - 2, c, '#000000', 9);
+  if (t) { x.fillStyle = 'rgba(0,0,0,0.45)'; x.fillRect(X + w1 - 1, Y, w - w1, 11); x.fillStyle = c; x.fillRect(X + w1 - 1, Y + 2, 1, 8); Font.draw(x, t, X + w1 + 2, Y - 1, '#e8e8f0', '#000000', 8); }
+  return w; }
 { const _sy = Battle.prototype.sync; Battle.prototype.sync = function () { _sy.call(this);
     for (const u of this.core.units) { const v = this.views[u.id]; if (!v) continue; const D = v.bdur12 = {}; for (const s of u.statuses) if (BUFF12[s.id] || /^stage_/.test(s.id)) D[s.id] = s.dur != null ? s.dur : null; } }; }
 { const _db = Battle.prototype.drawBoxH; Battle.prototype.drawBoxH = function (x) { _db.call(this, x); const Hv = this.H; if (!Hv || Math.round(this.boxH) >= BH) return;
     const L = buffPills12(this, Hv).slice(0, 5); if (!L.length) return; const C = this.center(Hv), X = Math.min(W - 4, Math.round(C.x + 30 + Hv.off.x)); let Y = Math.round(HERO_FOOT - 30 - (L.length - 1) * 13 + Hv.off.y);
-    for (const [s, k] of L) { const w = Math.ceil(Font.width(s, 9)) + 8; buffPill12(x, Math.min(X, W - 2 - w), Y, s, k); Y += 13; } }; }
+    for (const [s, k, t] of L) { const w = pillW12(s, t); buffPill12(x, Math.min(X, W - 2 - w), Y, s, k, false, t); Y += 13; } }; }
 { const _pb = Battle.prototype.drawPlateBig; Battle.prototype.drawPlateBig = function (x, F, a0) { _pb.call(this, x, F, a0); const a = a0 * (F && F.plateA != null ? F.plateA : 1); if (!F || a <= 0) return;
     const L = buffPills12(this, F); if (!L.length) return; x.globalAlpha = a; const w0 = 120, pe = plateExtra(), X0 = (W - w0) / 2, Y = 6 + 33 + pe, fam = FAMILIES[F.fam];
     const left = X0 + 4 + (fam && fam.weak.length ? Font.width('弱 ' + (this.revealed(F) ? fam.weak.join('・') : '？'), 8) + 12 : 0); let X = X0 + w0 - 2, n = 0;
-    for (const [s, k] of L) { const w = Math.ceil(Font.width(s, 9)) + 8, more = L.length - n - 1, mw = more ? Math.ceil(Font.width('+' + more, 9)) + 4 : 0; if (X - w - mw < left) { Font.drawR(x, '+' + (L.length - n), X, Y - 2, '#d8d8e8', '#000000', 9); break; } buffPill12(x, X, Y, s, k, true); X -= w + 2; n++; }
+    for (const [s, k, t] of L) { const w = pillW12(s, t), more = L.length - n - 1, mw = more ? Math.ceil(Font.width('+' + more, 9)) + 4 : 0; if (X - w - mw < left) { Font.drawR(x, '+' + (L.length - n), X, Y - 2, '#d8d8e8', '#000000', 9); break; } buffPill12(x, X, Y, s, k, true, t); X -= w + 2; n++; }
     x.globalAlpha = 1; }; }
 { const _up = Battle.prototype.update; Battle.prototype.update = function () { _up.call(this);
     const Hv = this.H; if (!Hv || Hv.gone || !(Hv.hp > 0)) return; const st = Hv.st || {}, kinds = new Set(); for (const id in BUFF12) if (st[id]) kinds.add(BUFF12[id].k); if (st.stage_atk > 0 || st.stage_spa > 0) kinds.add('atk'); if (st.stage_def > 0 || st.stage_spd > 0) kinds.add('def'); if (st.stage_spe > 0) kinds.add('spd');
@@ -23045,7 +23055,7 @@ function buffPill12(x, X, Y, s, k, right) { const [c, bg] = BUFF_COL12[k] || BUF
     if (kinds.has('ctr') && t % 60 === 0) this.star(C.x + 18, C.y - 12, BUFF_COL12.ctr[0], 8); }; }
 { const H = Battle.prototype.handlers, _ap = H.STATUS_APPLY; H.STATUS_APPLY = function* (e, s, t, P) {
     if (t && !P.failed && !P.cleared && !(P.quiet)) { const B = BUFF12[P.status];
-      if (B && B.stacks) { const U = this.core.byId[t.id], n = (U && (this.core.statusOf(U, P.status) || {}).stacks) || 1; this.popNum(t, B.n + ' ' + n, BUFF_COL12[B.k][0], null, { big: true, dy: -20 }); }
+      if (B && B.stacks) { const U = this.core.byId[t.id], n = (U && (this.core.statusOf(U, P.status) || {}).stacks) || 1; this.popNum(t, B.n + '×' + n, BUFF_COL12[B.k][0], null, { big: true, dy: -20 }); }
       else if (B && (t.hero ? B.k !== 'deb' : B.k === 'deb')) { const [c] = BUFF_COL12[B.k]; this.popNum(t, B.n + '！', c, null, { big: true, dy: -30 }); this.popNum(t, B.tip, c, null, { small: true, dy: -14 }); } }
     return yield* _ap.call(this, e, s, t, P); };
 }
@@ -23295,3 +23305,70 @@ const rareName13 = k => { if (!k || !GEAR[k]) return ''; const b = typeof base11
       const n = cfg.lv - st.lv; if (!(yield* yesNo('（' + ((SPECIES[cfg.sp] || {}).n || '頭目') + ' Lv' + cfg.lv + '，比你高 ' + n + ' 級，會很辛苦。\n附近的洞窟是挑戰區，可以先去練等、刷裝備。還是要打嗎？）'))) return 'run'; }
     return yield* _bs.call(this, cfg, ...a); }; }
 if (typeof GROW12 !== 'undefined') GROW12.push(['練等與刷寶', '主線頭目比路上的魔物高 2〜4 級，打之前可以先練等。各區域旁邊的洞窟是「挑戰區」：魔物高 3〜5 級，掉裝備・稀有掉落的機率加倍。比魔物高 1〜2 級經驗照拿，再高就慢慢變少（最少 30%）。每種野外魔物都有自己的稀有掉落（金色或虹色，2%），圖鑑和遭遇時都看得到。']);
+MATCAT11.beastFur = '獸材'; if (!MATT11.beastFur) MATT11.beastFur = 1;
+const regionT13 = (id, L) => { const M = MAPS[id]; let lo = 99; for (const e of (M && M.encounters) || []) for (const r of e.table || []) lo = Math.min(lo, r[1]);
+  if (lo === 99) for (const v of L || []) if (v && v.lv) lo = Math.min(lo, v.lv); return lo < 99 ? lvTier11(lo) : 0; };
+function matRegion13(gained, L) { const st = Game.st, R = regionT13(Game.ow && Game.ow.map && Game.ow.map.id, L); if (!R || !st) return;
+  for (const k in gained) { const t = MATT11[k] || 1; if (!MATCAT11[k] || t >= R || !(gained[k] > 0)) continue;
+    const x = gained[k] * (tierPts11(R) / tierPts11(t) - 1), n = Math.floor(x) + (chance(x - Math.floor(x)) ? 1 : 0); if (n > 0) { st.bag[k] = (st.bag[k] || 0) + n; gained[k] += n; } } }
+const ROAM13 = new Set(Object.values(ROAM).map(r => r[0])), ROAMSIG13 = 0.2;
+const roamSig13 = (key, sp) => { const s = sigOf10(key, sp), k = s && classGear(s); return k && GEAR[k] ? k : null; };
+{ const _ld = lootDrops; lootDrops = function (b) { const F = b.F || {}; if (!F.elite || !ROAM13.has(F.sp)) return _ld(b);
+    const st = Game.st, key = (b.cfg && b.cfg.id) || F.sp, again = !!((st.kills || {})[key]) || !!(b.cfg && b.cfg.rematch), r = _ld(b);
+    if (again && chance(ROAMSIG13)) { const k = roamSig13(key, F.sp); if (k) r.push(makeGear(k, 3)); }
+    for (const g of r) g.q = Math.max(g.q || 1, 3); return r; }; }
+const roamSigText13 = (key, sp) => { const k = roamSig13(key, sp); if (!k) return ''; const got = !!((Game.st.kills || {})[key]);
+  return '招牌：' + rareName13(k) + '（紅色' + (got ? '，每次 20%）' : '，第一次必掉，之後每次 20%）'); };
+{ const _lh = lootHint; lootHint = function (key, sp) { if (!ROAM13.has(sp)) return _lh(key, sp); return roamSigText13(key || sp, sp); }; }
+{ const i = GROW12.findIndex(q => q[0] === '素材點數與鐵匠'); if (i >= 0 && !/多掉幾個/.test(GROW12[i][1])) GROW12[i][1] += '後期的地區打到前期就有的素材（羽毛・凝膠・骨片…）會多掉幾個，換到的點數跟當地的素材差不多。'; }
+const FXT13 = { on: false, kind: null, sp: {} };
+const fxtest13 = () => typeof window !== 'undefined' && !!window.FXTEST;
+const fxtBase13 = k => k === '雙刀' ? '短刀' : k === '雙劍' ? '劍' : null;
+function fxtSetup13(kind) { const st = Game.st, T = tr11(st), base = fxtBase13(kind), common = !!TREE11[kind].common;
+  for (const f in UNLOCK11) st.flags[f] = 1; st.lv = 50; T.lv = {}; T.eq = {};
+  for (const k of [kind].concat(base ? [base] : [])) for (const N of treeNodes11(k)) T.lv[N.key] = N.max;
+  if (!common && (TREE11[kind].sp || []).length) T.eq[kind] = 0;
+  const mk = b => { GEAR11_GLAM = false; try { return makeGear(b, 3).u; } finally { GEAR11_GLAM = true; } };
+  st.gear = []; st.equip = { ...(st.equip || {}), weapon: null, shield: null };
+  if (kind === '雙盾') { st.equip.weapon = mk(BASE11.shield[4]); st.equip.shield = mk(BASE11.shield[4]); }
+  else if (base) { st.equip.weapon = mk(BASE11.weapon[base][4]); st.equip.shield = mk(BASE11.weapon[base][4]); }
+  else st.equip.weapon = mk(BASE11.weapon[common ? '劍' : kind][4]);
+  st.hp = heroStats(st).hp; st.mp = heroStats(st).mp; }
+{ const _hs = BB.heroSpec; BB.heroSpec = function (st, cfg) { const s = _hs.call(this, st, cfg); if (!FXT13.on || !st) return s; const k = FXT13.kind, T = TREE11[k];
+    const w = gearBy(st.equip.weapon, st), tier = clamp((w && GEAR[w.b].t) || 1, 1, 7), mag = s.data.wcat === '特';
+    const sk = (T.sk || []).map(q => 't_' + q[1]).filter(id => DEF.skills[id]), sp = T.common ? [] : (T.sp || []).map((q, j) => spId11(k, j, tier, mag)).filter(id => DEF.skills[id]);
+    FXT13.sp = {}; sp.forEach((id, j) => { FXT13.sp[id] = j; const D = DEF.skills[id], [n, ty] = T.sp[j]; if (D && !/^特技/.test(D.desc || '')) D.desc = '特技「' + n + '」：' + (SP_TXT11[ty] || '') + '。平常是普通攻擊累積層數後自動發動；這裡選了以後，下一次普攻就發動。'; });
+    s.skills = [s.data.attackSkill].concat(sk, sp).filter((v, i, a) => v && a.indexOf(v) === i); return s; }; }
+{ const _ue = BD.unitForEnemy; BD.unitForEnemy = function (core, sp, lv, kind, side, idx, o = {}) { const s = _ue.call(this, core, sp, lv, kind, side, idx, o); if (!FXT13.on || !s) return s;
+    s.stats.hp = 999999; s.hp = s.stats.hp; s.stats.atk = 1; s.stats.spa = 1; return s; }; }
+{ const _d = BAI.decide; BAI.decide = function (core, u, o) { if (FXT13.on && !u.hero) return { type: 'wait' }; return _d.call(this, core, u, o); }; }
+{ const H = Battle.prototype.handlers, _m = H.MESSAGE; H.MESSAGE = function* (e, s, t, P) { if (FXT13.on && P && P.key === 'wait') return; return yield* _m.call(this, e, s, t, P); }; }
+{ const _e = BR.escape; BR.escape = function (core, u, n) { return FXT13.on ? true : _e.call(this, core, u, n); }; }
+{ const _c = Battle.prototype.command; Battle.prototype.command = function* () { if (!FXT13.on) return yield* _c.call(this);
+    const c = this.core, hu = c.byId.H; for (const r in hu.max || {}) if (r !== 'wc' && hu.max[r] > 0) hu.res[r] = hu.max[r]; // HP・MP・氣・守勢 全滿 hu.cd = {}; for (const k in c.data) if (/^skill\|H\|/.test(k)) c.data[k] = 0; if (this.sync) this.sync();
+    const cmd = yield* _c.call(this);
+    if (cmd && cmd.type === 'skill' && FXT13.sp[cmd.skill] != null) { const j = FXT13.sp[cmd.skill], k = FXT13.kind, foe = c.alive('B')[0];
+      hu.data.wspSkill = cmd.skill; hu.data.wspName = TREE11[k].sp[j][0]; hu.data.wspFx = 'sp11_' + TREE_KINDS11.indexOf(k) + '_' + j; hu.res.wc = Math.max(0, ((hu.max && hu.max.wc) || 3) - 1);
+      return { type: 'skill', skill: hu.data.attackSkill, targets: cmd.targets && cmd.targets.length ? cmd.targets : [foe.id] }; }
+    return cmd; }; }
+{ const _cm = Battle.prototype.chooseMove; Battle.prototype.chooseMove = function* () { if (!FXT13.on) return yield* _cm.call(this);
+    const hu = this.core.byId.H, all = hu.skills.slice(), atk = hu.data.attackSkill, L = all.filter(id => id !== atk && DEF.skills[id]), sp = L.filter(id => FXT13.sp[id] != null), sk = L.filter(id => FXT13.sp[id] == null), P = [];
+    for (let i = 0; i < sk.length; i += 5) P.push(['招式 ' + (i + 1) + '〜' + Math.min(sk.length, i + 5), sk.slice(i, i + 5)]); if (sp.length) P.push(['特技（選了以後普攻一次就發動）', sp]);
+    const idx = this.fxtIdx || (this.fxtIdx = {});
+    while (true) { const r = P.length > 1 ? yield* choose(P.map(q => q[0]), { title: '哪一組？', index: this.fxtPage || 0, cancel: true }) : 0; if (r < 0) return null; this.fxtPage = r;
+      hu.skills = [atk].concat(P[r][1]); this.moveIdx = idx[r] || 0; let out; try { out = yield* _cm.call(this); } finally { hu.skills = all; } if (out) { idx[r] = this.moveIdx; return out; } if (P.length <= 1) return null; } }; }
+if (fxtest13()) { if (typeof saveGame === 'function') saveGame = function () {}; }
+function* fxtMenu13() { const K = TREE_KINDS11.filter(k => !TREE11[k].common).concat(COMMON11.filter(k => (TREE11[k].sk || []).length).slice(0, 1)); let i = 0;
+  while (true) {
+    const lab = k => (TREE11[k].common ? '共通' : k) + '（' + (TREE11[k].sk || []).length + (TREE11[k].common ? '' : '＋' + (TREE11[k].sp || []).length) + '）';
+    const r = yield* choose(K.map(k => ({ t: lab(k) })), { x: 8, y: 30, w: W - 16, cols: 2, colW: (W - 24) / 2, cancel: true, index: i, title: '特效測試：選技能樹' });
+    if (r < 0) continue; i = r; const kind = K[r];
+    fxtSetup13(kind); FXT13.on = true; FXT13.kind = kind;
+    try { yield* Game.scene.battleScript({ sp: 'stumpling', lv: 30, kind: 'wild', extra: [['stumpling', 30], ['stumpling', 30]], fxtest: 1 }); }
+    finally { FXT13.on = false; }
+  } }
+if (fxtest13()) { const _tm = TitleScene.prototype.menu; TitleScene.prototype.menu = function* () {
+    const r = yield* choose(['特效測試', '一般遊戲'], { x: 38, y: 168, w: 100, cancel: true }); if (r < 0) { this.stage = 'press'; return; }
+    if (r === 1) return yield* _tm.call(this);
+    Game.st = newGameState('測試'); const st = Game.st; st.map = 'route'; st.x = 10; st.y = 20; st.status = null; st.flags.tutInert11 = 1; st.flags.tutPart11 = 1; st.flags.tutWard12 = 1;
+    yield* fadeOut(20); startOverworld(); Game.noEnc = 1; const ow = Game.scene; UI.clear(); ow.script = null; ow.run(fxtMenu13()); Game.sys.push(fadeIn(20)); }; }

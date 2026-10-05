@@ -337,7 +337,8 @@ Object.assign(FX11, {
       Sound.sfx('charge'); ln9(this, T.x + 24, T.y - 18, T.x - 20, T.y + 16, S.col[1], '#ffffff', 5, 12); this.spawn({ k: 'hex', x: T.x, y: T.y, r0: 6, r1: 20, c: S.col[1], life: 12 }); imp9(this, T, S); yield* wait(10); } },
 });
 function fx11Make(k) { const F = FX11[k], id = 't_' + k, D = DEF.skills[id]; if (!F || !D) { bvErr('r9y', 'fx ' + k); return; } const S = { col: F.col, pt: F.pt, seed: hashK(k) };
-  FX['t11_' + k] = function* (U, T, u, t) { yield* F.f.call(this, S, U, T, u, t); };
+  // v12.31（特效測試版跑出來的）：輔助招（目標是自己）播特效時沒有 T，用到 T 的特效（障目彈…）會讓戰鬥當掉 → 沒有就用魔物那一邊的中心
+  FX['t11_' + k] = function* (U, T, u, t) { if (!T) { const L = this.foes ? this.foes().filter(v => !v.gone) : [], g = L.length > 1 ? this.groupOf(L.map(v => v.id)) : L[0]; T = g ? this.center(g) : { x: U.x, y: U.y - 60 }; } yield* F.f.call(this, S, U, T, u, t); };
   if (F.h) { FX['t11h_' + k] = function* (U, T, u, i, t) { yield* F.h.call(this, S, U, T, u, i, t); }; D.hitFx = 't11h_' + k; }
   PAL['t11_' + k] = [F.col[0], F.col[1]]; SKILL_STYLE[id] = [F.cast || 'draw', D.power ? (F.fin || 'none') : null, 't11_' + k, F.snd || null]; if (MOVES[id]) MOVES[id].fx = 't11_' + k; }
 for (const kind of TREE_KINDS11) for (const r of TREE11[kind].sk) fx11Make(r[1]);

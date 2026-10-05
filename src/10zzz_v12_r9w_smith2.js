@@ -171,6 +171,7 @@ const matTut12 = function* (show) { const st = Game.st; if (st.flags.tutMat12) r
     // every felled monster leaves at least its own material (elites and bosses two)
     const need = {}, defeated = this.defeated ? this.defeated() : []; for (const v of defeated) { const k = (SPECIES[v.sp] || {}).mat; if (!k || !MATCAT11[k] || v.minion) continue; need[k] = (need[k] || 0) + (v.elite || v.boss ? 2 : 1); }
     for (const k in need) if ((gained[k] || 0) < need[k]) { st.bag[k] = (st.bag[k] || 0) + need[k] - (gained[k] || 0); gained[k] = need[k]; }
+    if (typeof matRegion13 === 'function') matRegion13(gained, defeated); // v12.31：後期地區打到前期的素材，多掉幾個（見 v1_drops）
     // 晶石「素材 +%」: that much more of what dropped
     const up = (heroStats(st).cr11P || []).filter(p => p[0] === 'matUp').reduce((a, p) => a + p[1], 0);
     if (up > 0) for (const k in gained) { const x = gained[k] * up / 100, n = Math.floor(x) + (chance(x - Math.floor(x)) ? 1 : 0); if (n > 0) { st.bag[k] += n; gained[k] += n; } }

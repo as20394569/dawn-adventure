@@ -48,9 +48,11 @@ function* dexDetail(list, idx) {
       else if (info.big) L.push(['素材：' + (mat ? mat + '×' + (sp.boss ? 3 : 2) + '＋' : '') + '當地素材×' + (sp.boss ? 3 : 2) + '（每次必定）', UIC.text]);
       else { L.push(['素材：' + (mat ? mat + '（每次必定）' : '—'), UIC.text]); const rk = typeof rareOf13 === 'function' ? rareOf13(k) : null; if (rk) L.push(['稀有：' + rareName13(rk) + '（金・虹，2%）', UIC.warm]); } // v12.30 刷寶
       if (typeof CRY11 !== 'undefined' && CRY11[k] && info.big) { const got = !!cryOwn11()[k]; L.push(['晶石（' + (typeof CRYCH12 !== 'undefined' ? '菁英 ' + Math.round(CRYCH12.elite * 100) + '%・頭目 ' + Math.round(CRYCH12.boss * 100) + '%' : '機率') + '）：「' + cryName11(k) + '」' + (got ? '（已取得）' : ''), got ? UIC.muted : UIC.warm]); }
-      else for (const s of info.sigs) L.push(['首次擊敗：「' + GEAR[s.g].n + '」的設計圖' + (s.got ? '（已取得）' : ''), s.got ? UIC.muted : UIC.warm]);
-      if (info.big) L.push([typeof PARTS11 !== 'undefined' && PARTS11[k] ? '再戰：部位、經驗（頭目 30%）、金錢' : '再戰：經驗（30%）、金錢、素材', '#c8b0ff']);
-      if (!info.big && !info.re.length) L.push(['普通魔物不會掉裝備。裝備靠菁英・頭目的設計圖打造。', UIC.muted]);
+      else if (typeof ROAM13 !== 'undefined' && ROAM13.has(k)) L.push([roamSigText13(k, k), UIC.warm]); // v12.31 遊蕩菁英：每次 20%
+      else for (const s of info.sigs) L.push(['首次擊敗：「' + GEAR[s.g].n + '」' + (s.got ? '（已取得）' : ''), s.got ? UIC.muted : UIC.warm]);
+      if (info.big) L.push([typeof PARTS11 !== 'undefined' && PARTS11[k] ? '再戰：部位、經驗（頭目 30%）、金錢' : '再戰：經驗、金錢、素材', '#c8b0ff']);
+      // v12.31: wild monsters do drop the gear of where they live (07b: 8% a battle, only pieces that fit them)
+      if (!info.big && typeof dropFits12 === 'function' && Object.keys(MAPS).some(m => (MAPS[m].encounters || []).some(e => (e.table || []).some(r => r[0] === k)) && (MAPS[m].gearPool || []).some(g => GEAR[g] && dropFits12(g, k)))) L.push(['裝備：出沒地圖的裝備（每場約 8%）', UIC.text]);
       let Y = 127; for (const [t, c] of L) for (const l of Font.wrap(t, 156, 9)) { if (Y > 222) break; Font.draw(x, l, 10, Y, c, UIC.textSh, 9); Y += 11; }
     }
     Font.draw(x, '←→分頁　↑↓換魔物', 6, 239, UIC.muted, UIC.textSh, 9);
