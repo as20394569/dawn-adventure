@@ -146,7 +146,7 @@ function heroStats(st = Game.st) {
     spe: a.agi * 1.5 + L * G,                     // 速度 = 敏捷×1.5 + 等級×0.6
   };
   for (const k in s) s[k] = Math.floor(s[k]);
-  s.mp = Math.floor(8 + L * LV_GROW.mp + a.int * 1.5);      // 最大MP = 8 + 等級×1.3 + 智力×1.5
+  s.mp = Math.floor(8 + L * LV_GROW.mp + a.int * (LV_GROW.mpInt ?? 1.5));      // 最大MP = 8 + 等級×1.3 + 智力×1.5
   for (const k in st.boost || {}) if (s[k] !== undefined) s[k] += st.boost[k]; // legacy saves
   for (const g of equippedGear(st)) { const o = gearStats(g).st; for (const k in o) s[k] += o[k]; }
   s.crit = 3 + a.luk * 0.6;   // 會心率% = 3 + 幸運×0.6

@@ -51,8 +51,8 @@ function stats9(st = Game.st) { const s = heroStats(st);
     ['屬性傷害', '+' + (s.elem || 0) + '%', 'elem'], ['異常命中', '+' + fmt9(s.stHit || 0) + '%', 'stHit'], ['異常抗性', fmt9(Math.min(80, s.stRes || 0)) + '%', 'stRes'], ['回復量', '+' + fmt9(s.healUp || 0) + '%', 'healUp']]; }
 function statFormula9(key, st = Game.st) { const s = heroStats(st), a = heroAttr(st), L = st.lv, eq = eqBonus(st), rest = (tot, ...parts) => tot - parts.reduce((x, y) => x + y, 0), A = s.arm9 || {};
   const line = (base, e, other, extra = []) => [base, ...(e ? ['＋裝備 ' + fmt9(e)] : []), ...(Math.abs(other) >= 0.05 ? ['＋技能樹・晶石・武器等 ' + fmt9(other)] : []), ...extra];
-  const B = { hp: Math.floor(6 + L * 1.8 + a.vit * 1.6), mp: Math.floor(8 + L * 1 + a.int * 1.5), atk: Math.floor(a.str + a.dex / 2), def: Math.floor(a.vit * 1.5 + a.agi * 0.5), spa: Math.floor(a.int * 1.2 + a.dex / 3), spd: Math.floor((a.int + a.vit) * 0.8), spe: Math.floor(a.agi * 1.5) };
-  const F = { hp: '6＋等級×1.8＋體力×1.6', mp: '8＋等級×1＋智力×1.5', atk: '力量＋靈巧÷2', def: '體力×1.5＋敏捷×0.5', spa: '智力×1.2＋靈巧÷3', spd: '（智力＋體力）×0.8', spe: '敏捷×1.5' };
+  const B = { hp: Math.floor(6 + L * 1.8 + a.vit * 1.6), mp: Math.floor(8 + L * LV_GROW.mp + a.int * (LV_GROW.mpInt ?? 1.5)), atk: Math.floor(a.str + a.dex / 2), def: Math.floor(a.vit * 1.5 + a.agi * 0.5), spa: Math.floor(a.int * 1.2 + a.dex / 3), spd: Math.floor((a.int + a.vit) * 0.8), spe: Math.floor(a.agi * 1.5) };
+  const F = { hp: '6＋等級×1.8＋體力×1.6', mp: '8＋等級×' + LV_GROW.mp + '＋智力×' + (LV_GROW.mpInt ?? 1.5), atk: '力量＋靈巧÷2', def: '體力×1.5＋敏捷×0.5', spa: '智力×1.2＋靈巧÷3', spd: '（智力＋體力）×0.8', spe: '敏捷×1.5' };
   if (B[key] != null) { const tot = key === 'hp' || key === 'mp' ? s[key] : s[key]; const e = eq[key] || 0;
     return line(F[key] + '＝' + B[key], e, rest(tot, B[key], e), key === 'spe' && A.重甲 ? ['（已算進重甲 ' + A.重甲 + ' 件：速度 −' + 3 * A.重甲 + '%）'] : []).concat(key === 'spe' && A.輕裝 ? ['輕裝 ' + A.輕裝 + ' 件：第一回合速度 +' + 10 * A.輕裝 + '%'] : []); }
   if (key === 'crit') { const b = 3 + a.luk * 0.6, e = gearSp9(st, 'crit'); return line('3＋幸運×0.6＝' + fmt9(b), e, rest(s.crit, b, e), ['會心時傷害 ×' + (1.5 * (1 + (s.critDmg || 0) / 100)).toFixed(2)]); }
