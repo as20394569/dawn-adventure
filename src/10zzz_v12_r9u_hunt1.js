@@ -70,7 +70,7 @@ function* huntDrops11(F) {
   add('pr_' + sp, (chance(Math.min(1, (boss ? PART_RARE11.boss : PART_RARE11.elite) * X.rare)) ? 1 : 0) + (boss && d.brkP2_11 ? 1 : 0));
   Sound.sfx('item'); yield* this.msg((boss ? '頭目' : '菁英') + '留下了部位：' + matsText(got) + '！', { hold: 36 });
   if (bonus) yield* this.msg('（破防' + (boss && brk > 1 ? brk + ' 次' : '成功') + '，多拿到了 ' + bonus + ' 個部位' + (boss && d.brkP2_11 ? '，後半戰的破防還多給了稀有部位' : '') + '！）', { hold: 30 });
-  if (!st.flags.tutPart11) { st.flags.tutPart11 = 1; yield* this.msg('（部位素材可以把這隻魔物的晶石升級。破防越多，拿到的部位越多；再戰也會掉。）', { wait: true }); }
+  if (!st.flags.tutPartMat11) { st.flags.tutPartMat11 = 1; yield* this.msg('（部位素材可以把這隻魔物的晶石升級。破防越多，拿到的部位越多；再戰也會掉。）', { wait: true }); }
 }
 { const _v = Battle.prototype.victory; Battle.prototype.victory = function* () {
     const F = this.mainView(), c = this.cfg || {}, P = F && F.u && F.u.down && PARTS11[F.sp] && (F.elite || F.boss), had = c.noMats;

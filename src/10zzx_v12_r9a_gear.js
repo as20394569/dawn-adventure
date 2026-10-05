@@ -183,7 +183,7 @@ handbookScreen12 = function* () {
   while (true) { const late = (Game.st.flags.ch2 || 0) >= 10, opts = ['任務', '圖鑑', '紀錄', '變強的方法', '效果一覽'].concat(late ? ['還能做什麼'] : []).concat(['返回']);
     const r = yield* ask('冒險手冊', opts);
     if (r === 0) yield* questScreen(); else if (r === 1) yield* dexScreen(); else if (r === 2) yield* recordScreen();
-    else if (r === 3) { while (true) { const k = yield* ask('變強的方法', GROW12.map(q => q[0]).concat('返回')); if (k < 0 || k >= GROW12.length) break; yield* say(GROW12[k][1]); } }
+    else if (r === 3) { const G = typeof growList12 === 'function' ? growList12() : GROW12; while (true) { const k = yield* ask('變強的方法', G.map(q => q[0]).concat('返回')); if (k < 0 || k >= G.length) break; yield* say(G[k][1]); } }
     else if (r === 4) yield* listScreen9('效果一覽', effectLines9());
     else if (r === 5 && late) yield* todoScreen12(false); else break; } };
 GROW12.push(['裝備的效果', '防具分重甲、輕裝、法衣，每件各有自己的規則。紅色以上的裝備有一條效果詞綴。全部的效果和數字，在冒險手冊的「效果一覽」。']);

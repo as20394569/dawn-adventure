@@ -19590,7 +19590,7 @@ handbookScreen12 = function* () {
   while (true) { const late = (Game.st.flags.ch2 || 0) >= 10, opts = ['任務', '圖鑑', '紀錄', '變強的方法', '效果一覽'].concat(late ? ['還能做什麼'] : []).concat(['返回']);
     const r = yield* ask('冒險手冊', opts);
     if (r === 0) yield* questScreen(); else if (r === 1) yield* dexScreen(); else if (r === 2) yield* recordScreen();
-    else if (r === 3) { while (true) { const k = yield* ask('變強的方法', GROW12.map(q => q[0]).concat('返回')); if (k < 0 || k >= GROW12.length) break; yield* say(GROW12[k][1]); } }
+    else if (r === 3) { const G = typeof growList12 === 'function' ? growList12() : GROW12; while (true) { const k = yield* ask('變強的方法', G.map(q => q[0]).concat('返回')); if (k < 0 || k >= G.length) break; yield* say(G[k][1]); } }
     else if (r === 4) yield* listScreen9('效果一覽', effectLines9());
     else if (r === 5 && late) yield* todoScreen12(false); else break; } };
 GROW12.push(['裝備的效果', '防具分重甲、輕裝、法衣，每件各有自己的規則。紅色以上的裝備有一條效果詞綴。全部的效果和數字，在冒險手冊的「效果一覽」。']);
@@ -20748,7 +20748,7 @@ function* huntDrops11(F) {
   add('pr_' + sp, (chance(Math.min(1, (boss ? PART_RARE11.boss : PART_RARE11.elite) * X.rare)) ? 1 : 0) + (boss && d.brkP2_11 ? 1 : 0));
   Sound.sfx('item'); yield* this.msg((boss ? '頭目' : '菁英') + '留下了部位：' + matsText(got) + '！', { hold: 36 });
   if (bonus) yield* this.msg('（破防' + (boss && brk > 1 ? brk + ' 次' : '成功') + '，多拿到了 ' + bonus + ' 個部位' + (boss && d.brkP2_11 ? '，後半戰的破防還多給了稀有部位' : '') + '！）', { hold: 30 });
-  if (!st.flags.tutPart11) { st.flags.tutPart11 = 1; yield* this.msg('（部位素材可以把這隻魔物的晶石升級。破防越多，拿到的部位越多；再戰也會掉。）', { wait: true }); }
+  if (!st.flags.tutPartMat11) { st.flags.tutPartMat11 = 1; yield* this.msg('（部位素材可以把這隻魔物的晶石升級。破防越多，拿到的部位越多；再戰也會掉。）', { wait: true }); }
 }
 { const _v = Battle.prototype.victory; Battle.prototype.victory = function* () {
     const F = this.mainView(), c = this.cfg || {}, P = F && F.u && F.u.down && PARTS11[F.sp] && (F.elite || F.boss), had = c.noMats;
@@ -21069,7 +21069,7 @@ const MATCAT11 = {};
     魔素: ['crystal', 'sandCrystal', 'iceCrystal', 'emberCore', 'ectoplasm', 'moonDew', 'wispFlame', 'mothDust', 'windStone', 'voidShard'] };
   for (const c in M) for (const k of M[c]) { if (!ITEMS[k]) bvErr('r9w', 'material ' + k); MATCAT11[k] = c; } }
 const lvTier11 = lv => lv <= 7 ? 1 : lv <= 11 ? 2 : lv <= 15 ? 3 : lv <= 20 ? 4 : lv <= 27 ? 5 : lv <= 35 ? 6 : 7;
-const tierPts11 = t => t >= 7 ? 8 : Math.max(1, t);
+const tierPts11 = t => (t >= 7 ? 8 : Math.max(1, t)) + 2; // v12.26：每個素材 +2 點（完整走一輪的模擬：前期點數只夠打 0〜1 件）
 const MATT11 = {};
 { for (const m in MAPS) { const M = MAPS[m]; let lo = 99; const mats = new Set();
     for (const e of M.encounters || []) for (const r of e.table || []) { const S = SPECIES[r[0]]; if (!S) continue; lo = Math.min(lo, r[1]); if (S.mat) mats.add(S.mat); }
@@ -21210,7 +21210,7 @@ const matTut12 = function* (show) { const st = Game.st; if (st.flags.tutMat12) r
     if (r && Object.keys(got).length) r.text = matLine12(got); return r; }; }
 const CRAFTCAT11 = { 劍: ['金屬', '獸材'], 短刀: ['獸材', '金屬'], 斧: ['金屬', '木料'], 長槍: ['木料', '金屬'], 拳套: ['獸材', '布料'], 法杖: ['木料', '魔素'], 魔導書: ['布料', '魔素'], 樂器: ['木料', '布料'], 火槍: ['金屬', '木料'],
   重甲: ['金屬', '獸材'], 輕裝: ['獸材', '布料'], 法衣: ['布料', '魔素'], 盾: ['金屬', '木料'] };
-const craftCost11 = (group, t) => { const [a, b] = CRAFTCAT11[group], m = smithCut11(); return { pts: { [a]: Math.round(10 * t * m), [b]: Math.round(5 * t * m) }, gold: 100 * t }; };
+const craftCost11 = (group, t) => { const [a, b] = CRAFTCAT11[group], m = smithCut11(); return { pts: { [a]: Math.round(8 * t * m), [b]: Math.round(4 * t * m) }, gold: 100 * t }; }; // v12.26：10t/5t → 8t/4t
 const craftTop11 = (st = Game.st) => smithRank(st);
 function* ptsBar11(f) { const scr = { draw(x) { drawWin(x, 4, 2, 168, 30, 'menu'); const P = pts11(); PTS11.forEach((c, i) => { const X = 10 + (i % 3) * 54, Y = 6 + Math.floor(i / 3) * 12; Font.draw(x, c, X, Y, PTS_COL11[c], UIC.textSh, 9); Font.drawR(x, String(P[c]), X + 50, Y, UIC.text, UIC.textSh, 9); }); } };
   UI.push(scr); try { return yield* f; } finally { UI.remove(scr); } }
@@ -21568,6 +21568,7 @@ function treeNodes11(kind) { const T = TREE11[kind], L = [], PL = T.dual ? POS_L
   T.sp.forEach(([n], j) => L.push({ key: kind + ':sp' + j, t: 'sp', n, max: 1, lv: PL[1], j }));
   return L; }
 const dualOn11 = () => true; // 一開始就能雙持
+let SKILL_ARR11 = null; // 技能編排（v12.27：選單的「技能」直接進這裡）
 const PAIR11 = { 短刀: '雙刀', 雙刀: '短刀', 劍: '雙劍', 雙劍: '劍' }; // 同時用得到的兩棵樹，特技只裝一個
 function dualMode11(st = Game.st) { const w = gearBy(st.equip && st.equip.weapon, st), o = gearBy(st.equip && st.equip.shield, st); if (!w) return null; const W = GEAR[w.b];
   if (W.slot === 'shield') return '雙盾'; if (!o || GEAR[o.b].slot !== 'weapon') return null; const O = GEAR[o.b];
@@ -21769,7 +21770,7 @@ function* treeReset11() { const st = Game.st, T = tr11(st); if (!trSpent11(st)) 
   if (!free && !have) { yield* say('第二次以後的重置要用「重生之水」。'); return; }
   if (!(yield* yesNo('把全部技能點收回來嗎？' + (free ? '（第一次免費）' : '（用掉 1 個重生之水）')))) return;
   if (!free) { st.bag.attrReset--; if (!st.bag.attrReset) delete st.bag.attrReset; } T.lv = {}; T.eq = {}; T.rs = (T.rs || 0) + 1; st.slots = (st.slots || []).filter(id => !treeOf11(id)); clampHP(); Sound.jingle('item'); yield* say('技能點全部收回來了。'); }
-{ const _ts = skillTreeScreen; skillTreeScreen = function* () { const st = Game.st;
+{ const _ts = skillTreeScreen; SKILL_ARR11 = _ts; skillTreeScreen = function* () { const st = Game.st;
     while (true) { const n = trLeft11(st), r = yield* ask('技能', ['技能編排', '技能樹' + (n ? '（剩 ' + n + ' 點）' : ''), '返回']); if (r === 0) yield* _ts(); else if (r === 1) yield* treeScreen11(); else break; } }; }
 { const _up = Overworld.prototype.update; Overworld.prototype.update = function (...a) { const st = this.st || Game.st; if (st && (Game.frame || 0) % 30 === 0) st.skp = trLeft11(st); return _up.apply(this, a); }; }
 GROW12.push(['武器技能樹', '每種武器有自己的技能樹（選單→技能→武器技能樹）。技能點＝等級＋主線頭目各 1 點；只能用身上武器那棵樹的招。副手欄放同種的第二把短刀（雙刀）或劍（雙劍），或主手、副手都拿盾（雙盾），就能用雙持的樹。']);
@@ -22425,7 +22426,7 @@ let PART_PICK11 = null;
     const r = yield* _c.call(this); if (r && r.type === 'skill' && PART_PICK11 != null) r.meta = { ...(r.meta || {}), part11: PART_PICK11 }; PART_PICK11 = null; return r; }; }
 { const _pb = Battle.prototype.drawPlateBig; Battle.prototype.drawPlateBig = function (x, F, a0) { _pb.call(this, x, F, a0); const u = F && F.u; if (!u || !(u.elite || u.boss)) return;
     const a = a0 * (F.plateA ?? 1); if (a <= 0) return; x.globalAlpha = a; const py = 6, pe = plateExtra(), I = u.data.in11 || { b: 100, p: 100, m: 100 };
-    [['普', 'b'], ['物', 'p'], ['魔', 'm']].forEach(([n, k], j) => { const v = Math.round(I[k]), Y = py + 25 + j * 9; x.fillStyle = 'rgba(10,8,20,0.78)'; x.fillRect(2, Y, 25, 8);
+    [['普', 'b'], ['物', 'p'], ['魔', 'm']].filter(([n, k]) => Math.round(I[k]) !== 100).forEach(([n, k], j) => { const v = Math.round(I[k]), Y = py + 25 + j * 9; x.fillStyle = 'rgba(10,8,20,0.78)'; x.fillRect(2, Y, 25, 8);
       Font.draw(x, n, 3, Y - 2, UIC.muted, UIC.textSh, 7); Font.drawR(x, String(v), 26, Y - 2, v > 100 ? '#8af08a' : v < 100 ? '#ff7a6a' : UIC.text, UIC.textSh, 7); });
     const P = u.boss && F.broken && partsOf11(u); if (P) { const w = 120, X = (W - w) / 2, Y = py + 57 + pe;
       P.forEach((p, k) => { const cx = X + k * 62, r = clamp(p.hp / p.max, 0, 1); x.fillStyle = 'rgba(10,8,20,0.8)'; x.fillRect(cx, Y, 58, 11);
@@ -22832,7 +22833,7 @@ const MP_EQ12 = 0.6;
 for (const k in GEAR) { const S = GEAR[k].st; if (S && S.mp > 0) S.mp = Math.max(1, Math.round(S.mp * MP_EQ12)); }
 if (ATTR_HELP12 && ATTR_HELP12.int) ATTR_HELP12.int[0] = ATTR_HELP12.int[0].replace('MP+1.5', 'MP+0.9');
 if (ATTR_HELP && ATTR_HELP.int) ATTR_HELP.int = ATTR_HELP.int.replace('最大MP+1.5', '最大MP+0.9');
-function* treeScreen11Tabs(start) { const st = Game.st, kinds = () => TREE_KINDS11.filter(k => !TREE11[k].dual || dualOn11(st));
+function* treeScreen11Tabs(start) { const st = Game.st, kinds = () => TREE_KINDS11.filter(k => !TREE11[k].dual || (typeof dualTab12 === 'function' ? dualTab12(k, st) : dualOn11(st)));
   let ti = Math.max(0, kinds().indexOf(start || curKinds11(st)[0] || '劍')), onTabs = false; const selBy = {}, undo = [], VIS = 9, LY = 36;
   const selOf = k => selBy[k] || 0, tabY = 22, tabH = 13;
   const undoOne = () => { const u = undo.pop(); if (!u) return false; const T = tr11(st), v = (T.lv[u.key] || 0) - 1;
@@ -22951,8 +22952,9 @@ smithMenu = function* (f) { const st = Game.st;
   if (!st.flags.tutSmith11) { st.flags.tutSmith11 = 1; yield* say('（鐵匠改版了！）\n打造：用素材點數打底裝，品質決定基本數值、潛力和晶石孔。\n賦予：用潛力和點數把能力加上去。\n素材換點數：把背包裡的素材換成點數。'); }
   yield* ptsBar11((function* () {
     while (true) { const S = smith11(st), P = matPreview12(st), n = Object.values(P.got).reduce((a, b) => a + b, 0);
-      const r = yield* ask('要做什麼？（鍛冶熟練 Lv' + S.lv + '）', ['素材換點數' + (n ? '（+' + n + '）' : ''), '打造', '賦予', '晶石', '幻化', '分解', '離開']);
-      if (r === 0) yield* matConvert12(); else if (r === 1) yield* craft11(); else if (r === 2) yield* enchantMenu11(); else if (r === 3) yield* cryMenu11(); else if (r === 4) yield* glamour11(); else if (r === 5) yield* salvage11(); else break; } })()); };
+      const hasCry = Object.keys(cryOwn11(st) || {}).length > 0, hasGl = Object.keys(glam11(st) || {}).length > 0;
+      const L = [['素材換點數' + (n ? '（+' + n + '）' : ''), matConvert12], ['打造', craft11], ['賦予', enchantMenu11]].concat(hasCry ? [['晶石', cryMenu11]] : [], hasGl ? [['幻化', glamour11]] : [], [['分解', salvage11]]);
+      const r = yield* ask('要做什麼？（鍛冶熟練 Lv' + S.lv + '）', L.map(q => q[0]).concat('離開')); if (r < 0 || r >= L.length) break; yield* L[r][1](); } })()); };
 { const _pi = Overworld.prototype.pickItem; Overworld.prototype.pickItem = function* (it) {
     if (!it || it.gold || !it.item || GEAR[it.item] || !MATCAT11[it.item]) { const r = yield* _pi.call(this, it); if (it && it.gather) yield* matTut12(say); return r; }
     const st = this.st, n = it.n || 1; this.items = this.items.filter(i => i !== it); st.flags[it.id] = 1; st.bag[it.item] = (st.bag[it.item] || 0) + n;
@@ -23220,3 +23222,24 @@ const qStat12 = (v, q, k) => { if (!v || q <= 1 || v < 0) return v; const r = Ma
   if (typeof GROW12 !== 'undefined') for (const q of GROW12) q[1] = fixT(q[1]);
   if (typeof BATTLE_HELP !== 'undefined') for (const q of BATTLE_HELP) if (Array.isArray(q[1])) q[1] = q[1].map(fixT); else q[1] = fixT(q[1]);
   if (typeof GROW12 !== 'undefined' && !GROW12.some(q => q[0] === '裝備的品質')) GROW12.push(['裝備的品質', '裝備有藍・紫・紅・金・虹五種品質。品質越好，基本數值越高（藍 ×1.0、紫 ×1.1、紅 ×1.2、金 ×1.3、虹 ×1.45，每高一級每項至少 +1，速度只照倍率），潛力越多、晶石孔越多。']); }
+const expLow13 = lv => lv <= 8 ? 2 : lv <= 14 ? 1.5 : lv < 19 ? 1.5 - 0.5 * (lv - 14) / 5 : 1; // Lv8 以下 ×2（第一隻菁英磨石魔像 Lv8 前，風車丘陵的魔物只到 Lv7）
+{ const _ge = Battle.prototype.gainExp; Battle.prototype.gainExp = function* (a) { const st = Game.st, m = st ? expLow13(st.lv || 1) : 1; return yield* _ge.call(this, m !== 1 ? Math.max(1, Math.round(a * m)) : a); }; }
+const WBAL13 = { dmg: { 雙劍: 0.85, 拳套: 0.9, 雙刀: 0.9, 火槍: 0.9, 樂器: 1.1 }, magicWard: 1.5,
+  lvUp: { 法杖: [20, 0.025], 樂器: [20, 0.025], 雙盾: [25, 0.015] } };
+const wbalMul13 = (k, lv) => { const U = WBAL13.lvUp[k]; return (WBAL13.dmg[k] || 1) * (U ? 1 + Math.max(0, lv - U[0]) * U[1] : 1); };
+WBAL12.shieldDef = 0.7; TREE11['雙盾'].mastD = '用盾攻擊時，攻擊力＝物防的 70%，每級 +3%';
+{ const i = typeof GROW12 !== 'undefined' ? GROW12.findIndex(q => q[0] === '雙盾的攻擊') : -1; if (i >= 0) GROW12[i][1] = GROW12[i][1].replace('物防的 60%', '物防的 70%'); }
+PV('wbal13', v => ({ mods: [{ stage: 'final', who: 'attacker', mul: v, cond: { hasPower: 1 } }] }));
+{ const _hs = BB.heroSpec; BB.heroSpec = function (st, cfg) { const s = _hs.call(this, st, cfg); if (!st) return s; const k = dualMode11(st) || mainKind11(st), v = wbalMul13(k, st.lv || 1);
+    if (v !== 1) s.passives.push({ key: 'wbal13', v, src: 'tree' }); return s; }; }
+{ const _wm = wardMul12; wardMul12 = function (core, s, t, P) { const m = _wm(core, s, t, P); return P && P.cat === '特' ? m * WBAL13.magicWard : m; }; }
+{ const fx = t => typeof t === 'string' ? t.replace('弱點和會心對護盾加倍，', '弱點和會心對護盾加倍、魔法攻擊 ×1.5，') : t;
+  if (typeof WARD_HELP12 !== 'undefined') for (let i = 0; i < WARD_HELP12.length; i++) WARD_HELP12[i] = fx(WARD_HELP12[i]);
+  if (typeof GROW12 !== 'undefined') for (const q of GROW12) q[1] = fx(q[1]); }
+skillTreeScreen = function* () { if (SKILL_ARR11) yield* SKILL_ARR11(); };
+const dualTab12 = (k, st = Game.st) => dualMode11(st) === k || treeNodes11(k).some(N => trLv11(N.key, st) > 0);
+const GROW_WHEN12 = { 果實: st => (st.lv || 1) >= 8, 屬性門檻: st => (st.lv || 1) >= 10, 晶石: st => Object.keys(cryOwn11(st) || {}).length > 0 || !!st.flags.tutCry11,
+  回憶石碑: st => (st.lv || 1) >= 16, 素材點數與鐵匠: st => !!(st.flags.tutMat12 || st.flags.tutSmith11), 絕技: st => (st.lv || 1) >= 28, 慣性: st => !!st.flags.tutInert11,
+  打部位: st => !!st.flags.tutPart11, 護盾: st => !!st.flags.tutWard12, 雙盾的攻擊: st => dualTab12('雙盾', st) };
+function growList12(st = Game.st) { return GROW12.filter(q => !GROW_WHEN12[q[0]] || GROW_WHEN12[q[0]](st)); }
+for (const b of GROW12) if (b[0] === '武器技能樹' && !/雙持的樹/.test(b[1])) b[1] += '（雙持的樹：兩手拿同種短刀・劍或兩面盾之後才會出現在分頁）';

@@ -15,7 +15,7 @@ const MATCAT11 = {};
     魔素: ['crystal', 'sandCrystal', 'iceCrystal', 'emberCore', 'ectoplasm', 'moonDew', 'wispFlame', 'mothDust', 'windStone', 'voidShard'] };
   for (const c in M) for (const k of M[c]) { if (!ITEMS[k]) bvErr('r9w', 'material ' + k); MATCAT11[k] = c; } }
 const lvTier11 = lv => lv <= 7 ? 1 : lv <= 11 ? 2 : lv <= 15 ? 3 : lv <= 20 ? 4 : lv <= 27 ? 5 : lv <= 35 ? 6 : 7;
-const tierPts11 = t => t >= 7 ? 8 : Math.max(1, t);
+const tierPts11 = t => (t >= 7 ? 8 : Math.max(1, t)) + 2; // v12.26：每個素材 +2 點（完整走一輪的模擬：前期點數只夠打 0〜1 件）
 // a material's own tier: the earliest map where it drops or is gathered (old bags are converted with this)
 const MATT11 = {};
 { for (const m in MAPS) { const M = MAPS[m]; let lo = 99; const mats = new Set();
@@ -185,7 +185,7 @@ const matTut12 = function* (show) { const st = Game.st; if (st.flags.tutMat12) r
 /* ---------- 鐵匠：打造 ---------- */
 const CRAFTCAT11 = { 劍: ['金屬', '獸材'], 短刀: ['獸材', '金屬'], 斧: ['金屬', '木料'], 長槍: ['木料', '金屬'], 拳套: ['獸材', '布料'], 法杖: ['木料', '魔素'], 魔導書: ['布料', '魔素'], 樂器: ['木料', '布料'], 火槍: ['金屬', '木料'],
   重甲: ['金屬', '獸材'], 輕裝: ['獸材', '布料'], 法衣: ['布料', '魔素'], 盾: ['金屬', '木料'] };
-const craftCost11 = (group, t) => { const [a, b] = CRAFTCAT11[group], m = smithCut11(); return { pts: { [a]: Math.round(10 * t * m), [b]: Math.round(5 * t * m) }, gold: 100 * t }; };
+const craftCost11 = (group, t) => { const [a, b] = CRAFTCAT11[group], m = smithCut11(); return { pts: { [a]: Math.round(8 * t * m), [b]: Math.round(4 * t * m) }, gold: 100 * t }; }; // v12.26：10t/5t → 8t/4t
 const craftTop11 = (st = Game.st) => smithRank(st);
 function* ptsBar11(f) { const scr = { draw(x) { drawWin(x, 4, 2, 168, 30, 'menu'); const P = pts11(); PTS11.forEach((c, i) => { const X = 10 + (i % 3) * 54, Y = 6 + Math.floor(i / 3) * 12; Font.draw(x, c, X, Y, PTS_COL11[c], UIC.textSh, 9); Font.drawR(x, String(P[c]), X + 50, Y, UIC.text, UIC.textSh, 9); }); } };
   UI.push(scr); try { return yield* f; } finally { UI.remove(scr); } }

@@ -22,8 +22,10 @@ smithMenu = function* (f) { const st = Game.st;
   if (!st.flags.tutSmith11) { st.flags.tutSmith11 = 1; yield* say('（鐵匠改版了！）\n打造：用素材點數打底裝，品質決定基本數值、潛力和晶石孔。\n賦予：用潛力和點數把能力加上去。\n素材換點數：把背包裡的素材換成點數。'); }
   yield* ptsBar11((function* () {
     while (true) { const S = smith11(st), P = matPreview12(st), n = Object.values(P.got).reduce((a, b) => a + b, 0);
-      const r = yield* ask('要做什麼？（鍛冶熟練 Lv' + S.lv + '）', ['素材換點數' + (n ? '（+' + n + '）' : ''), '打造', '賦予', '晶石', '幻化', '分解', '離開']);
-      if (r === 0) yield* matConvert12(); else if (r === 1) yield* craft11(); else if (r === 2) yield* enchantMenu11(); else if (r === 3) yield* cryMenu11(); else if (r === 4) yield* glamour11(); else if (r === 5) yield* salvage11(); else break; } })()); };
+      // v12.27（精簡）：晶石要有晶石、幻化要有解鎖的外觀才出現在選單
+      const hasCry = Object.keys(cryOwn11(st) || {}).length > 0, hasGl = Object.keys(glam11(st) || {}).length > 0;
+      const L = [['素材換點數' + (n ? '（+' + n + '）' : ''), matConvert12], ['打造', craft11], ['賦予', enchantMenu11]].concat(hasCry ? [['晶石', cryMenu11]] : [], hasGl ? [['幻化', glamour11]] : [], [['分解', salvage11]]);
+      const r = yield* ask('要做什麼？（鍛冶熟練 Lv' + S.lv + '）', L.map(q => q[0]).concat('離開')); if (r < 0 || r >= L.length) break; yield* L[r][1](); } })()); };
 // chests on the map: the same message as battles
 { const _pi = Overworld.prototype.pickItem; Overworld.prototype.pickItem = function* (it) {
     if (!it || it.gold || !it.item || GEAR[it.item] || !MATCAT11[it.item]) { const r = yield* _pi.call(this, it); if (it && it.gather) yield* matTut12(say); return r; }

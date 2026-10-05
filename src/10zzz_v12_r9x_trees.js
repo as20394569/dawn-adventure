@@ -285,6 +285,7 @@ function treeNodes11(kind) { const T = TREE11[kind], L = [], PL = T.dual ? POS_L
   T.sp.forEach(([n], j) => L.push({ key: kind + ':sp' + j, t: 'sp', n, max: 1, lv: PL[1], j }));
   return L; }
 const dualOn11 = () => true; // 一開始就能雙持
+let SKILL_ARR11 = null; // 技能編排（v12.27：選單的「技能」直接進這裡）
 const PAIR11 = { 短刀: '雙刀', 雙刀: '短刀', 劍: '雙劍', 雙劍: '劍' }; // 同時用得到的兩棵樹，特技只裝一個
 function dualMode11(st = Game.st) { const w = gearBy(st.equip && st.equip.weapon, st), o = gearBy(st.equip && st.equip.shield, st); if (!w) return null; const W = GEAR[w.b];
   if (W.slot === 'shield') return '雙盾'; if (!o || GEAR[o.b].slot !== 'weapon') return null; const O = GEAR[o.b];
@@ -509,7 +510,7 @@ function* treeReset11() { const st = Game.st, T = tr11(st); if (!trSpent11(st)) 
   if (!free && !have) { yield* say('第二次以後的重置要用「重生之水」。'); return; }
   if (!(yield* yesNo('把全部技能點收回來嗎？' + (free ? '（第一次免費）' : '（用掉 1 個重生之水）')))) return;
   if (!free) { st.bag.attrReset--; if (!st.bag.attrReset) delete st.bag.attrReset; } T.lv = {}; T.eq = {}; T.rs = (T.rs || 0) + 1; st.slots = (st.slots || []).filter(id => !treeOf11(id)); clampHP(); Sound.jingle('item'); yield* say('技能點全部收回來了。'); }
-{ const _ts = skillTreeScreen; skillTreeScreen = function* () { const st = Game.st;
+{ const _ts = skillTreeScreen; SKILL_ARR11 = _ts; skillTreeScreen = function* () { const st = Game.st;
     while (true) { const n = trLeft11(st), r = yield* ask('技能', ['技能編排', '技能樹' + (n ? '（剩 ' + n + ' 點）' : ''), '返回']); if (r === 0) yield* _ts(); else if (r === 1) yield* treeScreen11(); else break; } }; }
 // the menu dot: unspent tree points
 { const _up = Overworld.prototype.update; Overworld.prototype.update = function (...a) { const st = this.st || Game.st; if (st && (Game.frame || 0) % 30 === 0) st.skp = trLeft11(st); return _up.apply(this, a); }; }
