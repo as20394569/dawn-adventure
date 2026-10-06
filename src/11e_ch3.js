@@ -30,10 +30,10 @@ const SEA13 = { // key: [name, base, [hue, sat ×, light ×], role, panel level,
   mistWraith13: ['霧之怨靈', 'wraith', [160, 0.6, 1.15], 'mage', 48, '在霧裡飄來飄去的怨靈。靠近的時候，耳邊會響起好幾個人的低語。'],
   deepEel13: ['深海鰻', 'mireEel', [150, 1.1, 0.8], 'fast', 48, '從灣底的深溝游上來的大鰻魚。身上的花紋在黑暗裡會發光。'],
 };
-const SIREN13 = 'siren13';
+const SIREN13 = 'siren13', SEA_MUL13 = 0.95; // v12.65: the shore and the cove ×0.95 (fair gear T7 q3 at the map's level won only 4/12 in 沉船灣)
 for (const k in SEA13) { const [n, b, look, role, plv, dex] = SEA13[k], B = SPECIES[b]; if (!B) { if (typeof bvErr === 'function') bvErr('ch3', 'base ' + b); continue; }
   SPECIES[k] = { ...B, n, elite: 0, boss: 0, rare: 0, exp: Math.round((B.exp || 40) * 1.4), gold: Math.max(3, B.gold || 3), dex, ch3: 1 };
-  MON_PANEL[k] = LATE_PANEL13(role, 1); HD_RIG_OF[k] = chibiOwn(b) ? b : (HD_RIG_OF[b] || b); if (typeof HD_RIG_OF_PENDING !== 'undefined') HD_RIG_OF_PENDING[k] = HD_RIG_OF[k];
+  MON_PANEL[k] = LATE_PANEL13(role, SEA_MUL13); HD_RIG_OF[k] = chibiOwn(b) ? b : (HD_RIG_OF[b] || b); if (typeof HD_RIG_OF_PENDING !== 'undefined') HD_RIG_OF_PENDING[k] = HD_RIG_OF[k];
   if (ART[b]) ART[k] = artRecolor(ART[b], look[0], look[1], look[2]); else if (ART[HD_RIG_OF[k]]) ART[k] = ART[HD_RIG_OF[k]];
   const E = DEF.enemies[b]; defPut('enemies', k, { tags: ['foe', 'fam:' + (B.fam || 'beast')], skills: E ? E.skills.slice() : ['m_tackle'], fam: B.fam, trait: null, profile: E ? E.profile : 'brute', script: null, metadata: { n } }); }
 // 霧笛魔女「賽蓮」: the swamp witch's picture, sea-coloured
