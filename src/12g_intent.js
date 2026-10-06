@@ -117,9 +117,10 @@ function intentOf14(core, u, cmd) {
 }
 { const _db = Battle.prototype.drawBoxF; Battle.prototype.drawBoxF = function (x) { _db.call(this, x); const core = this.core; if (!core || !core.plan || (typeof FXT13 !== 'undefined' && FXT13.on)) return;
     for (const v of this.foes()) { const u = core.byId[v.id]; if (!u || v.gone || v.alpha < 0.5 || v.st.charging) continue; const I = intentOf14(core, u, core.plan[v.id] || (core.hasStatus(u, 'rise14') ? {} : null)); if (!I) continue;
-      const img = INT_PX14[I.k === 'heavy' ? 'atk' : I.k], col = INT_COL14[I.k], tw = I.t ? Math.ceil(Font.width(I.t, 8)) + 3 : 0, w = 11 + tw, X = Math.round(v.x + v.off.x - w / 2), Y = Math.round(v.foot - v.bbh - 15 + v.sink * (v.sink < 0 ? 1 : 0));
-      x.fillStyle = 'rgba(8,6,18,0.78)'; x.fillRect(X - 1, Y, w + 2, 11); x.fillStyle = I.k === 'heavy' ? '#ff9a40' : 'rgba(255,255,255,0.18)'; x.fillRect(X - 1, Y + 10, w + 2, 1);
-      if (img) { x.imageSmoothingEnabled = false; x.drawImage(img, X + 1, Y + 2); } if (I.t) Font.draw(x, I.t, X + 10, Y - 1, col, UIC.textSh, 8); } }; }
+      const hdKey = 'intent_' + I.k, hd = UI_PX.icons_hd && UI_PX.icons_hd.ok && ICON_HD_IDX[hdKey] !== undefined, iw = hd ? 12 : 9; // v12.79: Codex task AO icons (the 7-pixel ones stay as a fallback)
+      const img = INT_PX14[I.k === 'heavy' ? 'atk' : I.k], col = INT_COL14[I.k], tw = I.t ? Math.ceil(Font.width(I.t, 8)) + 3 : 0, w = iw + 2 + tw, X = Math.round(v.x + v.off.x - w / 2), Y = Math.round(v.foot - v.bbh - 17 + v.sink * (v.sink < 0 ? 1 : 0));
+      x.fillStyle = 'rgba(8,6,18,0.78)'; x.fillRect(X - 1, Y, w + 2, 13); x.fillStyle = I.k === 'heavy' ? '#ff9a40' : 'rgba(255,255,255,0.18)'; x.fillRect(X - 1, Y + 12, w + 2, 1);
+      if (hd) drawIcon(x, hdKey, X, Y); else if (img) { x.imageSmoothingEnabled = false; x.drawImage(img, X + 1, Y + 3); } if (I.t) Font.draw(x, I.t, X + iw + 2, Y, col, UIC.textSh, 8); } }; }
 // 高飛 floats the monster up, 潛水 sinks it (the image is clipped at its feet) with a ripple
 { const _dr = Battle.prototype.draw; Battle.prototype.draw = function (x) { for (const v of this.foes()) { if (v.A && v.A.state === 'faint') continue; const want = v.st.fly14 ? -20 : v.st.dive14 ? Math.round((v.bbh || 48) * 0.7) : 0;
       if (v.sink !== want && (v.st.fly14 || v.st.dive14 || v.lift14)) { v.sink += Math.sign(want - v.sink) * Math.min(3, Math.abs(want - v.sink)); v.lift14 = v.sink !== 0 ? 1 : 0; } }

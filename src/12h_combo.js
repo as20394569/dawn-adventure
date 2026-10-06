@@ -14,8 +14,8 @@ defPut('statuses', 'bleed14', { tags: ['debuff', 'dot'], duration: 'owner_action
 defPut('statuses', 'stun14', { tags: ['debuff'], duration: 'next_action', stack: 'none', metadata: { n: '暈眩' }, blockAction: (core, u) => { core.removeStatus(u, 'stun14', 'used'); return 'stun14'; } });
 defPut('statuses', 'silence14', { tags: ['debuff'], duration: 'owner_actions', durDefault: 2, tick: 'owner_action_end', stack: 'refresh', metadata: { n: '沉默' }, mods: [], triggers: [] });
 CANCEL_TXT.stun14 = '頭昏眼花，無法行動！';
-Object.assign(STATUS_INFO, { bleed14: ['血', '#d03848'], stun14: ['暈', '#d8a820'], silence14: ['默', '#8a64d0'] });
-Object.assign(BADGE_OF, { bleed14: 'bleed14', stun14: 'stun14', silence14: 'silence14' });
+Object.assign(STATUS_INFO, { bleed: ['血', '#d03848'], stun: ['暈', '#d8a820'], silence: ['默', '#8a64d0'] }); // the text badge if the icon is missing
+Object.assign(BADGE_OF, { bleed14: 'bleed', stun14: 'stun', silence14: 'silence' }); // v12.79: Codex task AO icons
 if (typeof BUFF12 !== 'undefined') Object.assign(BUFF12, { bleed14: { n: '流血', k: 'deb', tip: '每次行動扣血' }, stun14: { n: '暈眩', k: 'deb', tip: '跳過下一次行動' }, silence14: { n: '沉默', k: 'deb', tip: '只能用最弱的招' },
   fly14: { n: '高飛', k: 'spd', tip: '物理 40% 落空・下一下 ×1.3' }, dive14: { n: '潛水', k: 'def', tip: '單體攻擊只剩 40%' }, cguard14: { n: '架盾', k: 'def', tip: '受傷 −50%' }, rise14: { n: '倒地', k: 'deb', tip: '下回合會站起來' } });
 // 沉默: a silenced monster only uses its weakest damaging move (a charge it already started still goes off)

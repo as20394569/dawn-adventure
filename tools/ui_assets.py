@@ -29,6 +29,8 @@ for k in kinds:
     s.save(os.path.join(ROOT, 'px', 'fx_' + k + '.png')); print(k, len(fr))
 # v12.0.1: smooth high-resolution icons (tools/draw_hd_icons.py → art/ui/icons_hd), drawn smoothly into the 14 px slot
 import sys; sys.path.insert(0, os.path.dirname(os.path.abspath(__file__))); from draw_hd_icons import HD_ICONS, OUT as HD
+# v12.79 (Codex task AO): the new ailments and the battle 「下一步」 icons — hand-drawn files in icons_hd, not from draw_hd_icons
+HD_ICONS = HD_ICONS + ['bleed', 'stun', 'silence'] + ['intent_' + k for k in ['atk', 'heavy', 'buff', 'debuff', 'ail', 'heal', 'guard', 'flee', 'summon', 'hide', 'fly', 'dive', 'steal']]
 hd = Image.new('RGBA', (HD * len(HD_ICONS), HD))
 for i, k in enumerate(HD_ICONS): hd.alpha_composite(Image.open(os.path.join(ROOT, 'icons_hd', 'icon_' + k + '.png')).convert('RGBA'), (i * HD, 0))
 hd.save(os.path.join(ROOT, 'px', 'icons_hd.png'), optimize=True)
