@@ -91,3 +91,7 @@ ACHIEVEMENTS.push({ id: 'bty13_all', n: '懸賞全數討伐', d: '完成冒險�
 { const _eq = extraQuests; extraQuests = function (st, L) { _eq(st, L); if (!st.flags.bty13Met) return; const S = bty13St(st), keys = Object.keys(BOUNTY13), done = keys.filter(k => S[k] === 'done').length;
     const on = keys.filter(k => S[k] === 'on' || S[k] === 'down').map(k => BOUNTY13[k][0] + (S[k] === 'down' ? '（回報）' : '（' + MAPS[BOUNTY13[k][5]].name + '）'));
     L.push({ n: '公會的懸賞', t: done === keys.length ? '完成：8 張懸賞全部解決了。' : '賞金獵人蓋爾的懸賞，完成 ' + done + '／' + keys.length + '。' + (on.length ? '進行中：' + on.join('、') + '。' : ''), done: done === keys.length, rw: '賞金・屬性果實・稱號「賞金獵人」', cat: '支線' }); }; }
+// on the map they get the same orange 懸賞 ring and label as the first eight
+{ const _wp = owWorldPost; owWorldPost = function (ow, x) { const L = (ow.elites || []).filter(e => e.roam && e.bounty13 && e.img), keep = L.map(e => e.img);
+    for (const e of L) e.img = { ...e.img, big: 0 }; try { _wp(ow, x); } finally { L.forEach((e, i) => { e.img = keep[i]; }); }
+    if (L.length) champDraw12(ow, x, L.map(e => Object.assign(Object.create(e), { bounty12: 1 }))); }; }
