@@ -49,7 +49,7 @@ for (const k in ISLE_BIG14) { const [n, bases, look, fam, moves, mat, dex, ref, 
   islePut14(k, n, b, look, fam, moves, mat, dex, { elite: 1, exp: 760, gold: 0 });
   const P = { ...(MON_PANEL[ref] || ch2Panel(44, 'phys', 'elite')) }; for (const s in mul) if (P[s]) P[s] = Math.round(P[s] * mul[s]); MON_PANEL[k] = P; }
 if (typeof BOSS_MAT !== 'undefined') { BOSS_MAT[CRAB14] = 'deepPearl14'; BOSS_MAT[SERPENT14] = 'tideScaleM14'; }
-if (typeof CHIBI_FLOAT !== 'undefined') for (const k of ['pufferFish14', 'surgeGull14', SERPENT14]) CHIBI_FLOAT.add(k);
+if (typeof CHIBI_FLOAT !== 'undefined') for (const k of ['pufferFish14', 'surgeGull14', SERPENT14, 'fogOwl13', 'mistWraith13', SIREN13]) CHIBI_FLOAT.add(k); // the Codex sets of these hover (task AL ★F)
 // placeholder pictures: the base chibi recoloured; the Codex set (task AL) wins as soon as it is in the game
 { const _ci = chibiImage; chibiImage = function (k) { const L = ISLE_LOOK14[k]; if (!L || chibiOwn(k)) return _ci(k); if (CHIBI_VAR[k]) return CHIBI_VAR[k]; const src = _ci(L[0]); if (!src || src.ok === false || !(src.complete !== false)) return src;
     const [dh, ks, kl] = L[1], c = mkCanvas(src.width, src.height), x = c.getContext('2d'); x.drawImage(src, 0, 0); const id = x.getImageData(0, 0, c.width, c.height), d = id.data;
