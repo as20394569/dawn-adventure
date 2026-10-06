@@ -55,6 +55,11 @@ if (typeof CHIBI_FLOAT !== 'undefined') for (const k of ['pufferFish14', 'surgeG
     const [dh, ks, kl] = L[1], c = mkCanvas(src.width, src.height), x = c.getContext('2d'); x.drawImage(src, 0, 0); const id = x.getImageData(0, 0, c.width, c.height), d = id.data;
     for (let i = 0; i < d.length; i += 4) { if (!d[i + 3]) continue; const [h, s, l] = rgb2hsl(d[i], d[i + 1], d[i + 2]), [r, g, bb] = hex2rgb(hsl2hex(h + dh, Math.min(1, s * ks), Math.min(1, l * kl))); d[i] = r; d[i + 1] = g; d[i + 2] = bb; }
     x.putImageData(id, 0, 0); c.ok = true; return CHIBI_VAR[k] = c; }; }
+// on the map (elites): the chibi idle frame, own or recoloured, instead of the old shaded picture
+{ const _mm = monsterMini; monsterMini = function (sp, size) { if (!(ISLE_LOOK14[sp] || (typeof SEA13 !== 'undefined' && SEA13[sp]) || sp === SIREN13) || !chibiReady(sp)) return _mm(sp, size);
+    const k = 'c14' + sp + size; if (miniCache[k]) return miniCache[k]; const im = chibiImage(sp), M = BATTLE_PXC_META[chibiBase(sp)]; if (!im || !M || im.ok === false || im.complete === false) return _mm(sp, size);
+    const fi = (M.frames.idle || [0])[0], c = mkCanvas(size, size), x = c.getContext('2d'); x.imageSmoothingEnabled = false; const s = Math.min(size / M.w, size / M.h);
+    x.drawImage(im, fi * M.w, 0, M.w, M.h, Math.round((size - M.w * s) / 2), Math.round(size - M.h * s), Math.round(M.w * s), Math.round(M.h * s)); return miniCache[k] = { c, flip: flipCanvas(c) }; }; }
 // 巨鉗蟹王: 巨鉗粉碎 every third action (charged, so 防禦 halves it); once below half HP it hardens its shell
 ELITE_TEXT[CRAB14] = ['（沙灘上的一塊大礁石……動了！）', '巨鉗蟹王舉起了比身體還大的鉗子！'];
 BAI.SCRIPT.b14_crabKing = function (core, u) { const d = u.data; d.cd = (d.cd ?? 2) - 1;
