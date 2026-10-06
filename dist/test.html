@@ -7889,7 +7889,7 @@ class TitleScene {
     x.drawImage(this.logo, Math.round(W / 2 - this.logo.width / 2), 6 + bob);
     Font.drawC(x, '～異世界冒險RPG～', W / 2, 52 + bob, '#ffe0a0', '#3a1428');
     if (this.stage === 'press' && Math.floor(this.t / 30) % 2 === 0) Font.drawC(x, '按 A 鍵開始', W / 2, 232, '#ffffff', '#1a1024');
-    Font.drawR(x, 'v12.42', W - 3, H - 13, '#b890b0', null);
+    Font.drawR(x, 'v12.43', W - 3, H - 13, '#b890b0', null);
   }
 }
 class IntroScene {
@@ -25139,5 +25139,54 @@ const trHint13 = st => { const n = trLeft11(st), a = typeof attrAvail === 'funct
 { const _bs = Overworld.prototype.battleScript; Overworld.prototype.battleScript = function* (cfg, ...a) { const r = yield* _bs.call(this, cfg, ...a), st = Game.st;
     if (r === 'win' && st && !st.flags.trTip13 && trLeft11(st) >= 4) { st.flags.trTip13 = 1; yield* say('（技能點累積了 ' + trLeft11(st) + ' 點！打開選單→「技能樹」，就能學新的招式或加強學過的招式。）'); }
     return r; }; }
+const ptsPot13 = st => { const f = { ...st, bag: { ...st.bag }, pt11: { ...pts11(st) } }; try { bagToPts11(f); } catch (e) { } return f.pt11; };
+const tierOf13 = g => { if (!g) return 0; for (const k in BASE11.weapon) { const i = BASE11.weapon[k].indexOf(g.b); if (i >= 0) return i + 1; }
+  for (const s in BASE11.armor) for (const sl in BASE11.armor[s]) { const i = BASE11.armor[s][sl].indexOf(g.b); if (i >= 0) return i + 1; } const i = BASE11.shield.indexOf(g.b); return i >= 0 ? i + 1 : 0; };
+const groupOf13 = g => { if (!g) return null; for (const k in BASE11.weapon) if (BASE11.weapon[k].includes(g.b)) return k; for (const s in BASE11.armor) for (const sl in BASE11.armor[s]) if (BASE11.armor[s][sl].includes(g.b)) return s; return BASE11.shield.includes(g.b) ? '盾' : null; };
+function craftHint13(st = Game.st) { const P = ptsPot13(st), top = craftTop11(st), can = (grp, t) => { const c = craftCost11(grp, t), p = c.pts; return st.money >= c.gold && PTS11.every(x => (P[x] || 0) >= (p[x] || 0)); };
+  const SLOT = [['weapon', '武器'], ['body', '身體防具'], ['head', '頭部防具'], ['feet', '腳部防具'], ['shield', '盾']];
+  for (const [sl, nm] of SLOT) { const g = gearBy(st.equip[sl], st), grp = groupOf13(g), t0 = tierOf13(g); if (!grp || !t0 || !CRAFTCAT11[grp]) continue;
+    for (let t = top; t > t0; t--) if (can(grp, t)) return { t, text: '（打不贏的時候，可以去鐵匠把素材換成點數，打造 T' + t + ' 的' + (sl === 'weapon' ? grp : nm) + '。現在的是 T' + t0 + '。）' }; }
+  return null; }
+{ const _ch = craftHint9; craftHint9 = function (st = Game.st) { if (trHint13(st)) return null; const h = craftHint13(st); return h ? h.text : _ch(st); }; }
+{ const _wo = Overworld.prototype.whiteout; Overworld.prototype.whiteout = function* (...a) { const st = this.st, k = Game.lastFight9, arena = typeof ARENA_ON13 !== 'undefined' && ARENA_ON13;
+    const ok = st && !arena && k !== 'elite' && k !== 'boss' && !trHint13(st); yield* _wo.apply(this, a); const h = ok ? craftHint13(st) : null;
+    if (h && (st.flags.crHint13 || 0) < h.t) { st.flags.crHint13 = h.t; yield* say(h.text); } }; }
+const SLOTS13 = 3;
+let SLOT13 = 1;
+const slotKey13 = n => n === 1 ? SAVE_KEY : SAVE_KEY + '_s' + n;
+const slotLoad13 = n => { try { const s = localStorage.getItem(slotKey13(n)); return s ? JSON.parse(s) : null; } catch (e) { return null; } };
+try { const l = +localStorage.getItem(SAVE_KEY + '_last'); if (l >= 1 && l <= SLOTS13) SLOT13 = l; } catch (e) { }
+if (!fxtest13()) {
+  saveGame = function () { try { localStorage.setItem(slotKey13(SLOT13), JSON.stringify(Game.st)); try { localStorage.setItem(SAVE_KEY + '_last', String(SLOT13)); } catch (e) { } return true; } catch (e) { return false; } };
+  loadGame = function () { return slotLoad13(SLOT13); };
+}
+const slotTime13 = s => { const m = Math.floor((s.time || 0) / 3600); return Math.floor(m / 60) + '小時' + (m % 60) + '分'; };
+function* pickSlot13(title, mode) {
+  const S = []; for (let n = 1; n <= SLOTS13; n++) S.push(slotLoad13(n));
+  const items = S.map((s, i) => ({ t: '存檔 ' + (i + 1), r: s ? s.name + ' Lv' + s.lv : '（空）', dis: mode === 'load' && !s })).concat({ t: '返回' });
+  let cur = SLOT13 - 1; if (mode === 'load' && !S[cur]) cur = Math.max(0, S.findIndex(s => s)); if (mode === 'new' && S.some(s => !s)) cur = S.findIndex(s => !s); // a new adventure starts on an empty slot
+  const box = { draw(x) { if (cur >= SLOTS13) return; const s = S[cur]; drawWin(x, 8, 104, W - 16, 44, 'menu');
+      if (!s) { Font.draw(x, '空的欄位', 16, 120, UIC.muted, UIC.textSh); return; }
+      Font.draw(x, s.name + '　Lv' + s.lv, 16, 109, UIC.text, UIC.textSh); Font.draw(x, (MAPS[s.map] || {}).name || '', 16, 122, UIC.warm, UIC.textSh, 10); Font.draw(x, '遊玩時間 ' + slotTime13(s), 16, 134, UIC.muted, UIC.textSh, 10); } };
+  UI.push(box);
+  try { const r = yield* choose(items, { title, x: 8, y: 152, w: W - 16, index: cur, cancel: true, onMove: i => { cur = i; } }); return r >= 0 && r < SLOTS13 ? r + 1 : 0; }
+  finally { UI.remove(box); } }
+if (!fxtest13()) TitleScene.prototype.menu = function* () {
+  while (true) {
+    const any = []; for (let n = 1; n <= SLOTS13; n++) if (slotLoad13(n)) any.push(n); this.hasSave = any.length > 0;
+    const opts = any.length ? ['繼續冒險', '新的冒險', '設定'] : ['新的冒險', '設定'];
+    const r = yield* choose(opts, { x: 38, y: 168, w: 100, cancel: true });
+    if (r < 0) { this.stage = 'press'; return; }
+    const o = opts[r];
+    if (o === '設定') { yield* optionsScreen(); continue; }
+    if (o === '繼續冒險') { let n = any[0]; if (any.length > 1) { n = yield* pickSlot13('讀取哪一個存檔？', 'load'); if (!n) continue; }
+      SLOT13 = n; const st = loadGame(); if (!st) continue; Game.st = st; yield* fadeOut(20); startOverworld(); Game.sys.push(fadeIn(20)); return; }
+    if (o === '新的冒險') { let n = 1;
+      if (any.length) { n = yield* pickSlot13('要用哪一個欄位？', 'new'); if (!n) continue; const s = slotLoad13(n);
+        if (s && !(yield* yesNo('要覆蓋「存檔 ' + n + '」（' + s.name + ' Lv' + s.lv + '）嗎？\n舊的記錄會在下次存檔時消失。'))) continue; }
+      SLOT13 = n; Game.pendingNew = { diff: 2, carry: null }; yield* fadeOut(24); Game.setScene(new IntroScene()); return; }
+  } };
+{ const _say = say; say = function* (text, o) { if (typeof text === 'string' && / 把冒險記錄了下來！$|把冒險記錄了下來！$/.test(text) && !fxtest13()) text += '（存檔 ' + SLOT13 + '）'; return yield* _say(text, o); }; }
 </script>
 </body></html>
