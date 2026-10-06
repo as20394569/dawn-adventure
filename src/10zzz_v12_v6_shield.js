@@ -2,7 +2,7 @@
    法杖（招式在 r9x 的表裡，key 不變、舊存檔的等級照留）：火球・冰錐・元素屏障・落雷・炎浪・藤鞭・雷暴・元素增幅；特技「元素迸發」帶武器的屬性（沒屬性時是火）。
    單手盾：劍・斧・短刀＋盾的時候多一棵「單手盾」樹，跟主武器的樹一起用（像雙持）：
    · 特性「盾衛」：格擋時受到的傷害 −55%（原本 −40%）。精通「護盾精通」：格擋率 +2%／級。
-   · 盾撞・堅守・盾反（盾反：格擋成功時反擊）。 */
+   · 盾撞・堅守・格擋反擊（格擋成功時反擊；原本叫「盾反」，跟賦予同名，玩家選改成這個）。 */
 // which tree: 劍・斧・短刀 in the main hand + a shield in the off hand (not 雙盾: that is two shields)
 function shieldMode13(st = Game.st) { if (!st || !st.equip) return null; const w = gearBy(st.equip.weapon, st), o = gearBy(st.equip.shield, st); if (!w || !o) return null;
   const W = GEAR[w.b], O = GEAR[o.b]; return W && O && W.slot === 'weapon' && ['劍', '斧', '短刀'].includes(W.kind) && O.slot === 'shield' ? '單手盾' : null; }
@@ -19,7 +19,7 @@ PV('blockS13', blockPV13(0.45), { n: '格擋（盾衛）' });
 // 盾衛
 { const _hs = BB.heroSpec; BB.heroSpec = function (st, cfg) { const s = _hs.call(this, st, cfg); if (st && shieldMode13(st) && trLv11('單手盾:trait', st)) for (const p of s.passives) if (p.key === 'block') p.key = 'blockS13'; return s; }; }
 // labels
-if (typeof CTR12 !== 'undefined') CTR12.why.osCtr13 = ['盾反', 'block'];
+if (typeof CTR12 !== 'undefined') CTR12.why.osCtr13 = ['格擋反擊', 'block'];
 if (typeof BUFF12 !== 'undefined') Object.assign(BUFF12, { elemUp13: { n: '元素增幅', k: 'atk', tip: '魔攻↑↑・弱點 +20%' }, osHold13: { n: '堅守', k: 'def', tip: '這回合受傷 −50%' },
-  osBlock13: { n: '格擋↑', k: 'def', tip: '下一回合格擋率 +30%' }, osCtr13: { n: '盾反', k: 'ctr', tip: '格擋成功就反擊' } });
-if (typeof BATTLE_HELP !== 'undefined') { const b = BATTLE_HELP.find(q => q[0] === '武器技能'); if (b && Array.isArray(b[1]) && !b[1].some(t => /單手盾/.test(t))) b[1].push('劍・斧・短刀配盾的時候，多一棵「單手盾」技能樹（盾撞・堅守・盾反），跟主武器的樹一起用。'); }
+  osBlock13: { n: '格擋↑', k: 'def', tip: '下一回合格擋率 +30%' }, osCtr13: { n: '格擋反擊', k: 'ctr', tip: '格擋成功就反擊' } });
+if (typeof BATTLE_HELP !== 'undefined') { const b = BATTLE_HELP.find(q => q[0] === '武器技能'); if (b && Array.isArray(b[1]) && !b[1].some(t => /單手盾/.test(t))) b[1].push('劍・斧・短刀配盾的時候，多一棵「單手盾」技能樹（盾撞・堅守・格擋反擊），跟主武器的樹一起用。'); }

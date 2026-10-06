@@ -122,7 +122,7 @@ module.exports = async (g) => {
     { let blocks = 0, ctr = 0, bad = 0; for (let sd = 1; sd <= 12; sd++) { const r = fight('單手盾', 'osCounter', { foeAct: 1, rounds: 3, seed: sd, seq: ['t_osCounter', 't_osBash', 't_osBash'] });
         const L = r.log.filter(e => e.type === EVT.DAMAGE && e.tgts[0] === 'H' && e.src === r.F.id); for (const e of L) if ((e.payload.notes || []).includes('block')) blocks++;
         const C = r.log.filter(e => e.type === EVT.DAMAGE && e.src === 'H' && e.payload.skill === 'counter_strike'); ctr += C.length; }
-      ok('盾反：格擋成功時反擊', ctr > 0 && ctr <= blocks, '格擋 ' + blocks + ' 次、反擊 ' + ctr + ' 次'); }
+      ok('格擋反擊：格擋成功時反擊', ctr > 0 && ctr <= blocks, '格擋 ' + blocks + ' 次、反擊 ' + ctr + ' 次'); }
     { const r = fight('劍', 'sdFrenzy', { rounds: 5, seq: ['t_sdFrenzy', 'attack', 'attack', 'attack', 'attack'] }); const on = r.c.hasStatus(r.H, 'frenzy11'), ex = r.log.filter(e => e.type === EVT.STATUS_EXPIRE && e.payload.status === 'frenzy11').length;
       ok('狂刃 3 回合後結束（以前不會結束）', !on && ex === 1, on ? '5 回合後還在' : '結束 ' + ex + ' 次'); }
     BR.VARIANCE = V0;

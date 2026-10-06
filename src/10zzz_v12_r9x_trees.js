@@ -222,13 +222,13 @@ const COMMON11 = Object.keys(CM11);
 /* v12.33 單手盾（玩家 2026-10-06「單手盾新增小技能樹」→ 3 招＋2 被動）：劍・斧・短刀＋盾的時候出現，跟主武器的樹一起用（像雙持）。放在最後，前面各棵樹的編號不變。 */
 ST11('osHold13', '堅守', { dur: 'until_own_action', mods: [{ stage: 'final', who: 'defender', mul: 0.5, cond: { hasPower: 1 } }] });
 ST11('osBlock13', '堅守', {}); DEF.statuses.osBlock13.tick = 'owner_action_start'; // 「下一回合」: from the next own action to the one after
-ST11('osCtr13', '盾反', { triggers: [{ on: EVT.DAMAGE, phase: 'POST', role: 'tgt', cond: { srcSide: 'enemy', hasPower: 1, ownerAlive: 1, blocked13: 1 }, limit: { perAction: 1 }, effects: [{ type: 'counter', mul: { f: 'cnt11', v: 60 }, why: 'osCtr13' }] }] });
+ST11('osCtr13', '格擋反擊', { triggers: [{ on: EVT.DAMAGE, phase: 'POST', role: 'tgt', cond: { srcSide: 'enemy', hasPower: 1, ownerAlive: 1, blocked13: 1 }, limit: { perAction: 1 }, effects: [{ type: 'counter', mul: { f: 'cnt11', v: 60 }, why: 'osCtr13' }] }] });
 Object.assign(COND, { blocked13: (c, v) => !!c.ev && ((c.ev.payload && c.ev.payload.notes) || []).includes('block') === !!v });
 BR.FORMULA.osBash13 = c => (c.src.stats.atk + 0.7 * c.src.stats.def) / Math.max(1, c.src.stats.atk);
 TREE11['單手盾'] = { dual: 1, attr: ['vit', 1], cat: '物', trait: '盾衛：格擋時受到的傷害再 −15%（−40% → −55%）', mast: '護盾精通', mastD: '格擋率 +2%／級', sp: [],
   sk: [['1a', 'osBash', '盾撞', 50, 0, 1, 4, 0, '用盾撞過去（攻擊力加上物防的 70%），30% 退縮。', { cls: 'strike', mods: [{ stage: 'skill', who: 'attacker', atkMul: { f: 'osBash13' } }], effects: DMG11(FL11(0.3)) }],
     ['1b', 'osHold', '堅守', 0, 0, 3, 3, 0, '搶先；這回合受到的傷害 −50%，下一回合格擋率 +30%。', { prio: 1, effects: [{ type: 'status', target: 'self', status: 'osHold13' }, { type: 'status', target: 'self', status: 'osBlock13', dur: 2 }] }],
-    ['2b', 'osCounter', '盾反', 0, 0, 4, 5, 0, '2 回合內，格擋成功時反擊（威力 60）。', { effects: [{ type: 'status', target: 'self', status: 'osCtr13', dur: 2 }] }]] };
+    ['2b', 'osCounter', '格擋反擊', 0, 0, 4, 5, 0, '2 回合內，格擋成功時反擊（威力 60）。', { effects: [{ type: 'status', target: 'self', status: 'osCtr13', dur: 2 }] }]] };
 const TREE_KINDS11 = Object.keys(TREE11), DUAL_KINDS11 = TREE_KINDS11.filter(k => TREE11[k].dual);
 const POS_LV11 = { 1: 1, 2: 15, 3: 30, 4: 35 }, POS_LVD11 = POS_LV11; // 雙持樹跟一般的樹一樣（原本 15／25／35）；第四段＝絕技
 const SK_TREE11 = {}; // skill id → [kind, pos]

@@ -86,7 +86,7 @@ Object.assign(HERO_PK, {
   // an 8-ray hit burst (rays on the 8 pixel directions: always crisp); the middle hollows out
   p13burst(x, p, a) { if (p.t < (p.delay || 0)) return; const t = p.t - (p.delay || 0), L = p.life - (p.delay || 0), R = p.r || 12, R1 = R * (0.45 + 0.55 * clamp(t / 3, 0, 1)), R0 = R * 0.85 * clamp((t - 1) / Math.max(1, L - 1), 0, 1), s = p.s || 2;
     if (t < 3) { PXF.disc(x, p.x, p.y, Math.max(2, R * 0.3) + 1, p.c[2] || OL13); PXF.disc(x, p.x, p.y, Math.max(2, R * 0.3), t < 2 ? '#ffffff' : p.c[0]); }
-    const D = (p.n || 8) === 4 ? [[1, 0], [0, 1], [-1, 0], [0, -1]] : [[1, 0], [1, 1], [0, 1], [-1, 1], [-1, 0], [-1, -1], [0, -1], [1, -1]];
+    const D = p.n === 'x' ? [[1, 1], [-1, 1], [-1, -1], [1, -1]] : (p.n || 8) === 4 ? [[1, 0], [0, 1], [-1, 0], [0, -1]] : [[1, 0], [1, 1], [0, 1], [-1, 1], [-1, 0], [-1, -1], [0, -1], [1, -1]];
     for (const pass of [0, 1, 2]) D.forEach(([dx, dy], i) => { const k = (dx && dy ? 0.72 : 1) * (p.n === 8 && i % 2 ? 0.8 : 1), x0 = p.x + dx * R0 * k, y0 = p.y + dy * R0 * k, x1 = p.x + dx * R1 * k, y1 = p.y + dy * R1 * k; if (Math.abs(x1 - x0) + Math.abs(y1 - y0) < 1) return;
       if (pass === 0) PXF.line(x, x0, y0, x1, y1, p.c[2] || OL13, s + 2); else if (pass === 1) PXF.line(x, x0, y0, x1, y1, p.c[0], s); else if (s >= 2) PXF.line(x, x0, y0, x1, y1, p.c[1], 1); }); },
   // a square bit that flies (vx, vy, g) and steps through colours
@@ -100,19 +100,16 @@ Object.assign(HERO_PK, {
   // any polygon(s) in local coordinates, rotated (rasterised every frame: crisp at any angle)
   p13poly(x, p, a) { if (p.t < (p.delay || 0)) return; if (p.blink !== 0 && a < 0.28 && p.t % 2) return; const r = (p.rot || 0) + (p.vr || 0) * p.t, sc = p.sc || 1, cs = Math.cos(r), sn = Math.sin(r);
     for (const s of p.shapes) { const P = s.pts.map(([u, v]) => [p.x + (u * cs - v * sn) * sc, p.y + (u * sn + v * cs) * sc]); if (s.o === null) PXF.poly(x, P, s.c); else PXF.polyO(x, P, s.c, s.o || OL13); } },
-  // a spear: shaft and head, pointing along ang, head at (x, y)
-  p13spear(x, p, a) { if (p.t < (p.delay || 0)) return; if (p.blink && a < 0.28 && p.t % 2) return; const ux = Math.cos(p.ang), uy = Math.sin(p.ang), nx = -uy, ny = ux, sc = p.sc || 1, L = (p.len || 44) * sc, hl = (p.hl || 10) * sc, hw = (p.hw || 3.6) * sc, X = p.x, Y = p.y, sh = p.shaft || PXC.wood, hd = p.c || PXC.steel, sw = Math.max(2, Math.round(2 * sc));
-    const bx = X - ux * L, by = Y - uy * L, sx = X - ux * hl * 0.55, sy = Y - uy * hl * 0.55; PXF.line(x, bx, by, sx, sy, sh[2], sw + 2); PXF.line(x, bx, by, sx, sy, sh[0], sw); PXF.line(x, bx + nx * 0.6, by + ny * 0.6, sx + nx * 0.6, sy + ny * 0.6, sh[1], 1);
-    const head = [[X + ux * hl * 0.5, Y + uy * hl * 0.5], [X - ux * hl * 0.15 + nx * hw, Y - uy * hl * 0.15 + ny * hw], [X - ux * hl * 0.55, Y - uy * hl * 0.55], [X - ux * hl * 0.15 - nx * hw, Y - uy * hl * 0.15 - ny * hw]];
-    PXF.polyO(x, head, hd[0], hd[2]); PXF.line(x, X - ux * hl * 0.4, Y - uy * hl * 0.4, X + ux * hl * 0.35, Y + uy * hl * 0.35, hd[1], 1);
-    if (p.tuft) for (const s2 of [-1, 1]) { const tx = sx - ux * 3 * sc + nx * s2 * 2.5 * sc, ty = sy - uy * 3 * sc + ny * s2 * 2.5 * sc; PXF.line(x, sx - ux * sc, sy - uy * sc, tx, ty, OL13, sw + 2); PXF.line(x, sx - ux * sc, sy - uy * sc, tx, ty, p.tuft, sw); } },
-  // a dagger: blade (pointing along ang, tip at x,y), guard, grip, pommel; sc scales it
-  p13dagger(x, p, a) { if (p.t < (p.delay || 0)) return; if (p.blink !== 0 && a < 0.28 && p.t % 2) return; const ux = Math.cos(p.ang), uy = Math.sin(p.ang), nx = -uy, ny = ux, sc = p.sc || 1, bl = 13 * sc, bw = 2.6 * sc, X = p.x, Y = p.y, c = p.c || PXC.steel;
-    const Bx = X - ux * bl, By = Y - uy * bl, gl = 6 * sc, Gx = Bx - ux * gl, Gy = By - uy * gl, gw = 4.5 * sc, gc = p.gc || '#e0b040', s2 = Math.max(2, Math.round(2 * sc));
-    PXF.line(x, Bx, By, Gx, Gy, OL13, s2 + 2); PXF.line(x, Bx, By, Gx, Gy, p.grip || '#6a3a20', s2); PXF.sq(x, Gx - ux, Gy - uy, s2 + 3, OL13); PXF.sq(x, Gx - ux, Gy - uy, s2 + 1, gc);
-    PXF.line(x, Bx + nx * gw, By + ny * gw, Bx - nx * gw, By - ny * gw, OL13, s2 + 2); PXF.line(x, Bx + nx * gw, By + ny * gw, Bx - nx * gw, By - ny * gw, gc, s2);
-    PXF.polyO(x, [[X + ux, Y + uy], [Bx + ux * 2 + nx * bw, By + uy * 2 + ny * bw], [Bx + nx * bw * 0.8, By + ny * bw * 0.8], [Bx - nx * bw * 0.8, By - ny * bw * 0.8], [Bx + ux * 2 - nx * bw, By + uy * 2 - ny * bw]], c[0], c[2] || OL13);
-    PXF.line(x, Bx + ux * 2 + nx * Math.max(1, bw * 0.4), By + uy * 2 + ny * Math.max(1, bw * 0.4), X - ux * 2, Y - uy * 2, c[1], 1); },
+  // a thrust of light (no weapon drawn): a tapered spike whose point runs from (x1,y1) to (x2,y2) in `grow` frames, holds, then the tail follows it in
+  p13thr(x, p, a) { if (p.t < (p.delay || 0)) return; const t = p.t - (p.delay || 0), G = p.grow || 2, Hd = p.hold ?? 3, L = p.life - (p.delay || 0), g = clamp(t / G, 0, 1), tl = clamp((t - G - Hd) / Math.max(1, L - G - Hd), 0, 1);
+    const dx = p.x2 - p.x1, dy = p.y2 - p.y1, D = Math.hypot(dx, dy) || 1, ux = dx / D, uy = dy / D, nx = -uy, ny = ux, tip = { x: p.x1 + dx * g, y: p.y1 + dy * g }, tail = { x: p.x1 + dx * Math.max(tl, p.cut || 0), y: p.y1 + dy * Math.max(tl, p.cut || 0) }, len = Math.hypot(tip.x - tail.x, tip.y - tail.y);
+    if (len < 2 || (p.blink !== 0 && a < 0.25 && p.t % 2)) return; const w = (p.w || 4) * (1 - tl * 0.6) / 2, m = { x: tip.x - ux * Math.min(len * 0.3, (p.w || 4) * 2.2), y: tip.y - uy * Math.min(len * 0.3, (p.w || 4) * 2.2) };
+    PXF.polyO(x, [[tip.x + ux, tip.y + uy], [m.x + nx * w, m.y + ny * w], [tail.x + nx * 0.6, tail.y + ny * 0.6], [tail.x - nx * 0.6, tail.y - ny * 0.6], [m.x - nx * w, m.y - ny * w]], p.c[0], p.c[2] || OL13);
+    if (w >= 1.2) PXF.line(x, lerp(tail.x, tip.x, 0.25), lerp(tail.y, tip.y, 0.25), tip.x - ux, tip.y - uy, p.c[1], 1); },
+  // a wave front (a crescent facing ang, radius r around its centre): thick in the middle; the centre and r can be moved by upd
+  p13wave(x, p, a) { if (p.t < (p.delay || 0) || (a < 0.25 && p.t % 2)) return; const sp = p.span || 1.8, n = Math.max(8, Math.round(sp * p.r * 1.2)), P = [], fl = p.fl || 1;
+    for (let i = 0; i <= n; i++) { const u = i / n, an = p.ang - sp / 2 + sp * u, w = Math.max(1, Math.round(p.w * Math.sin(Math.PI * (0.08 + u * 0.84)))); P.push([p.x + Math.cos(an) * p.r, p.y + Math.sin(an) * p.r * fl, w]); }
+    for (const [X, Y, w] of P) PXF.sq(x, X, Y, w + 2, p.c[2] || OL13); for (const [X, Y, w] of P) PXF.sq(x, X, Y, w, p.c[0]); for (const [X, Y, w] of P) if (w >= 3) PXF.sq(x, X, Y, 1, p.c[1]); },
   // a wavy vine from A to B (grows), leaves along it
   p13vine(x, p, a) { const g = clamp(p.t / (p.grow || 6), 0, 1), N = 16, P = [], dx = p.x2 - p.x1, dy = p.y2 - p.y1, L = Math.hypot(dx, dy) || 1, nx = -dy / L, ny = dx / L;
     for (let i = 0; i <= N * g; i++) { const u = i / N, w = Math.sin(u * Math.PI * (p.waves || 2.5) + p.t * 0.25) * (p.amp || 6) * Math.sin(Math.PI * u); P.push([p.x1 + dx * u + nx * w, p.y1 + dy * u + ny * w]); }
@@ -145,19 +142,10 @@ const PX13 = {
   hit(b, P, col, big = 0) { PX13.burst(b, P, big ? 18 : 12, col, big ? 12 : 9, { s: big ? 3 : 2 }); PX13.bits(b, P, big ? 10 : 6, [col[1], col[0], col[0]], big ? 2.6 : 2, 0.12, 14, { s: 3 }); b.shake = Math.max(b.shake || 0, big ? 8 : 3); },
   // a jagged path from A to B (lightning, cracks)
   zig(A, B, n = 7, amp = 6) { const P = [[A.x, A.y]], d = PX13.dir(A, B); for (let i = 1; i < n; i++) { const u = i / n, w = (Math.random() * 2 - 1) * amp; P.push([A.x + (B.x - A.x) * u + d.nx * w, A.y + (B.y - A.y) * u + d.ny * w]); } P.push([B.x, B.y]); return P; },
-  // a thrust: the spear's head runs from A past B (over = how far beyond), stays, pulls back
-  spear(b, A, B, o = {}) { const d = PX13.dir(A, B), F = o.frames || 4, over = o.over ?? 6, hold = o.hold ?? 4, back = o.back ?? 4, L = o.len || 46, X1 = B.x + d.ux * over, Y1 = B.y + d.uy * over;
-    const p = b.spawn({ k: 'p13spear', x: A.x, y: A.y, ang: d.ang, len: L, sc: o.sc || 1.3, hl: o.hl || 11, hw: o.hw || 4, c: o.c || PXC.steel, shaft: o.shaft || PXC.wood, tuft: o.tuft === undefined ? '#d02a2a' : o.tuft, life: F + hold + back + 1 });
-    p.upd = q => { const t = q.t, k = t < F ? t / F : t < F + hold ? 1 : 1 - (t - F - hold) / back * 0.6; q.x = lerp(A.x, X1, k * k * (3 - 2 * k)); q.y = lerp(A.y, Y1, k * k * (3 - 2 * k)); }; return p; },
-  // a dagger stab: the blade runs from 22 px before P to just past it, holds, blinks out; a streak behind it
-  dStab(b, P, o = {}) { const A = o.from || PX13.hand(b), d = PX13.dir(A, P), L = o.len || 24, S0 = { x: P.x - d.ux * L, y: P.y - d.uy * L }, E = { x: P.x + d.ux * (o.over ?? 3), y: P.y + d.uy * (o.over ?? 3) }, F = o.frames || 3;
-    const p = b.spawn({ k: 'p13dagger', x: S0.x, y: S0.y, ang: d.ang, sc: o.sc || 1, c: o.c || PXC.steel, gc: o.gc, life: F + (o.hold ?? 6) + 4, delay: o.delay || 0 }); p.upd = q => { const k = clamp((q.t - (o.delay || 0)) / F, 0, 1); q.x = lerp(S0.x, E.x, k); q.y = lerp(S0.y, E.y, k); };
-    if (o.trail !== 0) PX13.line(b, { x: S0.x - d.ux * 8, y: S0.y - d.uy * 8 }, { x: E.x - d.ux * 10, y: E.y - d.uy * 10 }, o.tc || [o.c ? o.c[1] : '#ffffff'], 1, F + 5, { thin: 1, grow: F, hold: F + 1, delay: o.delay || 0 }); return p; },
-  // a dagger slash: the blade's tip sweeps along a crescent around C (radius r, a0 → a1, fl flattens), the crescent trail follows
-  dSlash(b, C, r, a0, a1, col, o = {}) { const F = o.frames || 4, fl = o.fl || 1, dir = a1 > a0 ? 1 : -1;
-    PX13.arc(b, C, r, a0, a1, col, o.w || 4, o.life || 13, { grow: F, fl, delay: o.delay || 0 });
-    const p = b.spawn({ k: 'p13dagger', x: C.x, y: C.y, ang: 0, sc: o.sc || 1, c: o.blade || PXC.steel, gc: o.gc, life: F + 5, delay: o.delay || 0 });
-    p.upd = q => { const k = clamp((q.t - (o.delay || 0)) / F, 0, 1), an = lerp(a0, a1, k); q.x = C.x + Math.cos(an) * r; q.y = C.y + Math.sin(an) * r * fl; q.ang = Math.atan2(Math.cos(an) * fl * dir, -Math.sin(an) * dir); }; return p; },
+  // a thrust of light from A into B (o.over: how far past B the point goes)
+  thr(b, A, B, col, w = 4, life = 12, o = {}) { const d = PX13.dir(A, B), over = o.over ?? 3; return b.spawn(Object.assign({ k: 'p13thr', x1: A.x, y1: A.y, x2: B.x + d.ux * over, y2: B.y + d.uy * over, c: col, w, life }, o)); },
+  // a stab mark into P coming from `from` (default: the weapon hand): a short light spike, len px long
+  stab(b, P, col, o = {}) { const A = o.from || PX13.hand(b), d = PX13.dir(A, P), L = o.len || 26; return PX13.thr(b, { x: P.x - d.ux * L, y: P.y - d.uy * L }, P, col, o.w || 3, o.life || 11, o); },
   // speed lines along a direction around a point
   speed(b, A, B, col, n = 6, life = 8) { const d = PX13.dir(A, B); for (let i = 0; i < n; i++) { const off = (i - (n - 1) / 2) * 5 + rnd(-1, 1), s0 = rnd(0, 20), len = rnd(14, 26), P0 = { x: A.x + d.nx * off + d.ux * s0, y: A.y + d.ny * off + d.uy * s0 };
       b.spawn({ k: 'p13line', x1: P0.x, y1: P0.y, x2: P0.x + d.ux * len, y2: P0.y + d.uy * len, c: [i % 2 ? col[0] : col[1]], thin: 1, s: 1, grow: 2, life: life + rnd(-2, 2), delay: rnd(0, 3) }); } },
