@@ -45,4 +45,10 @@ const { chromium } = require('/home/claude/.npm-global/lib/node_modules/playwrig
   if (want('tmap')) { await base({ map: 'town', x: 8, y: 25, dir: 'down', lv: 12 });
     await p.evaluate(() => { const st = Game.st; st.flags.tm13 = 1; tmGive13('t1'); Game.noEnc = 1; const ow = Game.scene; ow.run(tmapView13(0)); });
     await rec('tmap', 230, "i => { if (i === 70) __game.press('b', 2, 0); if (i === 80) { __game.Input.set('down', true); } if (i === 86) __game.Input.set('down', false); if (i === 100) __game.press('a', 2, 0); if (i > 110 && UI.stack.some(w => w.lines) && i % 30 === 0) __game.press('a', 2, 0); }"); }
+  if (want('ice')) { await base({ map: 'mirrorCave13', x: 8, y: 15, dir: 'up', lv: 30 });
+    await p.evaluate(() => { Game.noEnc = 1; });
+    await rec('ice', 150, "i => { const I = __game.Input; I.set('up', i >= 4 && i < 8); I.set('right', i >= 40 && i < 44); I.set('down', i >= 75 && i < 79); I.set('left', i >= 110 && i < 114); }"); }
+  if (want('pal')) { await base({ map: 'windHills', x: 12, y: 36, dir: 'left', lv: 9, flags: { tm13: 1, palSniff13: 1 } });
+    await p.evaluate(() => { const st = Game.st; st.clock = 400; st.wx = { [wxKey('windHills')]: { k: 'clear', until: 1e9 } }; st.pal13 = { got: { curlySheep: 1 }, on: 'curlySheep' }; st.tm13 = { own: ['t3'], got: {} }; Game.noEnc = 1; Game.scene.load('windHills', 12, 36, 'left'); __game.step(4); });
+    await rec('pal', 150, "i => { __game.Input.set('left', i < 100); }"); await p.evaluate(() => __game.Input.set('left', false)); }
   await b.close(); })();
