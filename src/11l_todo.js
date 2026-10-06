@@ -8,4 +8,5 @@
     try { P('・釣魚：' + (rodOf13(st) >= 0 ? fishKinds13(st) + '／' + FISH_KEYS13.length + ' 種' : '找萌芽鎮池塘邊的羅德'), UIC.text, 1); } catch (e) { }
     try { P('・料理：做過 ' + DISH_KEYS13.filter(k => (st.cookSeen13 || {})[k]).length + '／' + DISH_KEYS13.length + ' 道', UIC.text, 1); } catch (e) { }
     try { P('・藏寶圖：' + (st.flags.tm13 ? '找到 ' + tmFound13(st) + '／' + TMAP_KEYS13.length + ' 個' : '找萌芽鎮南邊的巴克'), UIC.text, 1); } catch (e) { }
+    try { P('・小夥伴：' + palKinds13(st) + ' 種', UIC.text, 1); } catch (e) { }
     return L; }; }
