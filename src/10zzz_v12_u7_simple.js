@@ -7,7 +7,7 @@
    5. 戰鬥：魔物名牌左邊的慣性（普／物／魔）只顯示不是 100 的那幾類。
    6. 修：「部位素材」的說明和「打部位」的教學共用同一個旗標，先跳的那個會讓另一個永遠不出現。 */
 skillTreeScreen = function* () { if (SKILL_ARR11) yield* SKILL_ARR11(); };
-const dualTab12 = (k, st = Game.st) => dualMode11(st) === k || treeNodes11(k).some(N => trLv11(N.key, st) > 0);
+const dualTab12 = (k, st = Game.st) => dualMode11(st) === k || (typeof shieldMode13 === 'function' && shieldMode13(st) === k) || treeNodes11(k).some(N => trLv11(N.key, st) > 0);
 const GROW_WHEN12 = { 果實: st => (st.lv || 1) >= 8, 屬性門檻: st => (st.lv || 1) >= 10, 晶石: st => Object.keys(cryOwn11(st) || {}).length > 0 || !!st.flags.tutCry11,
   回憶石碑: st => (st.lv || 1) >= 16, 素材點數與鐵匠: st => !!(st.flags.tutMat12 || st.flags.tutSmith11), 絕技: st => (st.lv || 1) >= 28, 慣性: st => !!st.flags.tutInert11,
   打部位: st => !!st.flags.tutPart11, 護盾: st => !!st.flags.tutWard12, 雙盾的攻擊: st => dualTab12('雙盾', st) };

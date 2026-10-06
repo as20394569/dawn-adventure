@@ -341,7 +341,7 @@ function fx11Make(k) { const F = FX11[k], id = 't_' + k, D = DEF.skills[id]; if 
   FX['t11_' + k] = function* (U, T, u, t) { if (!T) { const L = this.foes ? this.foes().filter(v => !v.gone) : [], g = L.length > 1 ? this.groupOf(L.map(v => v.id)) : L[0]; T = g ? this.center(g) : { x: U.x, y: U.y - 60 }; } yield* F.f.call(this, S, U, T, u, t); };
   if (F.h) { FX['t11h_' + k] = function* (U, T, u, i, t) { yield* F.h.call(this, S, U, T, u, i, t); }; D.hitFx = 't11h_' + k; }
   PAL['t11_' + k] = [F.col[0], F.col[1]]; SKILL_STYLE[id] = [F.cast || 'draw', D.power ? (F.fin || 'none') : null, 't11_' + k, F.snd || null]; if (MOVES[id]) MOVES[id].fx = 't11_' + k; }
-for (const kind of TREE_KINDS11) for (const r of TREE11[kind].sk) fx11Make(r[1]);
+for (const kind of TREE_KINDS11) if (kind !== '單手盾') for (const r of TREE11[kind].sk) fx11Make(r[1]); // 單手盾 (v12.33) gets its pictures in 10zzz_v12_v8
 // the pictures must not repeat (cast, finish, colours)
 { const seen = new Map(); for (const k in FX11) { const F = FX11[k], key = (F.cast || '') + '|' + (F.fin || '') + '|' + F.col.join(','); if (seen.has(key)) bvErr('r9y', 'same picture ' + k + ' / ' + seen.get(key)); seen.set(key, k); } }
 

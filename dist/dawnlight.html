@@ -21547,15 +21547,17 @@ Object.assign(BR.FORMULA, {
   off11: c => 40 * ((c.src && c.src.data && c.src.data.offMul11) || 0.6),
   shield11: c => { const u = c.src; return u && u.data && u.data.shield11 ? Math.max(0.5, (u.stats.def * u.data.shield11) / Math.max(1, u.stats.atk)) : 1; },
 });
-const ST11 = (id, n, o) => defPut('statuses', id, { tags: o.tags || ['buff'], duration: o.dur || 'owner_actions', stack: o.stack || 'refresh', metadata: { n }, mods: o.mods || [], triggers: o.triggers || [] });
+const ST11 = (id, n, o) => { const du = o.dur || 'owner_actions'; return defPut('statuses', id, { tags: o.tags || ['buff'], duration: du, stack: o.stack || 'refresh', metadata: { n }, mods: o.mods || [], triggers: o.triggers || [],
+  ...(du === 'owner_actions' ? { tick: 'owner_action_end' } : du === 'until_own_action' ? { clearAt: 'owner_action_start' } : {}) }); };
 ST11('nextPow11', '蓄勢', { dur: 'until_used', mods: [{ stage: 'status', who: 'attacker', mul: 1.3, cond: { hasPower: 1 } }], triggers: [{ on: EVT.SKILL_SUCCESS, phase: 'POST', role: 'src', cond: { hasPower: 1 }, effects: [{ type: 'remove_status', target: 'self', status: 'nextPow11' }] }] });
 ST11('frenzy11', '狂刃', { mods: [{ stage: 'attacker', who: 'attacker', critAdd: 20 }] });
 ST11('roar11', '狂吼', { mods: [{ stage: 'final', who: 'defender', mul: 0.9, cond: { hasPower: 1 } }] });
 ST11('blood11', '狂戰之血', { mods: [{ stage: 'final', who: 'defender', mul: 1.15, cond: { hasPower: 1 } }], triggers: [{ on: EVT.DAMAGE, phase: 'POST', role: 'src', cond: { hasPower: 1, tgtSide: 'enemy' }, effects: [{ type: 'heal', target: 'self', ofEvent: 0.15, kind: 'drain', quiet: 1 }] }] });
 ST11('spearGuard11', '迴槍架勢', { triggers: [{ on: EVT.DAMAGE, phase: 'POST', role: 'tgt', cond: { srcSide: 'enemy', hasPower: 1, ownerAlive: 1 }, limit: { perAction: 1 }, effects: [{ type: 'counter', mul: { f: 'cnt11', v: 50 }, why: 'spear11' }] }] });
 ST11('crack11', '裂甲', { tags: ['debuff'], triggers: [{ on: EVT.ROUND_END, effects: [{ type: 'damage', target: 'self', pctMax: 0.03, bossMul: 1 / 3, kind: 'dot', tags: ['dot'] }] }] });
-ST11('mwall11', '法力屏障', { mods: [{ stage: 'final', who: 'defender', mul: 0.6, cond: { cat: '特', hasPower: 1 } }, { stage: 'final', who: 'defender', mul: 0.8, cond: { cat: '物', hasPower: 1 } }] });
+ST11('mwall11', '元素屏障', { mods: [{ stage: 'final', who: 'defender', mul: 0.6, cond: { cat: '特', hasPower: 1 } }, { stage: 'final', who: 'defender', mul: 0.8, cond: { cat: '物', hasPower: 1 } }] });
 ST11('maxim11', '魔導極限', { mods: [{ stage: 'base', costMul: 1.5, res: 'mp' }] });
+ST11('elemUp13', '元素增幅', { mods: [{ stage: 'talent', who: 'attacker', mulWeak: 1.2 }] });
 ST11('pageGuard11', '守護之頁', { mods: [{ stage: 'final', who: 'defender', mul: 0.7, cond: { hasPower: 1 } }] });
 ST11('evade11', '疾風之歌', { mods: [{ stage: 'defender', who: 'defender', accAdd: -10 }] });
 ST11('harm11', '守護和聲', { mods: [{ stage: 'final', who: 'defender', mul: 0.75, cond: { hasPower: 1 } }] });
@@ -21628,15 +21630,15 @@ const TREE11 = {
       ['2c', 'fsQi', '氣勁彈', 75, 0, 1, 5, 0, '遠距的氣功彈，用物攻和魔攻較高的一項計算。', { cls: 'bolt', catOf: (core, u) => (u.stats.spa > u.stats.atk ? '特' : '物') }],
       ['3a', 'fsStorm', '狂嵐拳', 14, 8, 3, 10, 0, '八段連打，最後一段削 1 格護盾。', { cls: 'strike', after: [{ type: 'hunt_chip', target: 'cast_targets', n: 1, cond: { tgtAlive: 1 }, why: 'tree11' }] }],
       ['3b', 'fsThrough', '透勁', 120, 0, 2, 9, 0, '無視 40% 物防，50% 退縮。', { cls: 'strike', pierceDef: 0.4, effects: DMG11(FL11(0.5)) }]] },
-  法杖: { attr: ['int', 1], cat: '特', trait: '打中弱點的傷害再 +15%', mast: '杖術精通', third: ['省力', '技能有 4%／級的機率不花 MP'], sp: [['魔力迸發', 'burst'], ['魔力湧泉', 'mana'], ['星輝', 'crit']],
-    sk: [['1a', 'stArrows', '魔力箭', 22, 3, 0, 4, 0, '三支魔力箭，回 2 MP。', { cls: 'bolt', after: [{ type: 'resource', target: 'self', res: 'mp', amount: 2, why: 'arrows11' }] }],
-      ['1b', 'stLance', '魔力槍', 70, 0, 1, 5, 0, '魔法長槍，50% 讓對手魔防 −1。', { cls: 'bolt', effects: DMG11(SG11({ spd: -1 }, 0.5)) }],
-      ['1c', 'stWall', '法力屏障', 0, 0, 3, 5, 0, '2 回合受到的魔法傷害 −40%、物理傷害 −20%。', { effects: [{ type: 'status', target: 'self', status: 'mwall11', dur: 2 }] }],
-      ['2a', 'stImpact', '魔力衝擊', 80, 0, 1, 6, 0, '30% 退縮；對蓄力中的對手威力 ×1.5。', { cls: 'bolt', mods: [MUL11(1.5, { tgtStatus: 'charging' })], effects: DMG11(FL11(0.3)) }],
-      ['2b', 'stStorm', '魔力風暴', 65, 0, 2, 7, 1, '攻擊全體，30% 讓對手魔防 −1。', { effects: DMG11(SG11({ spd: -1 }, 0.3)) }],
-      ['2c', 'stHaste', '時之加速', 0, 0, 4, 6, 0, '速度 +2 階，所有技能冷卻 −1。', { effects: [SELF11({ spe: 2 }), { type: 'cooldown', target: 'self', how: 'all', n: 1, why: 'haste11' }] }],
-      ['3a', 'stFinale', '魔力終曲', 50, 0, 4, 10, 0, '用掉全部 MP（至少 10），每 1 MP 威力 +5（最多 250）。', { cls: 'bolt', costs: [{ res: 'mp', all: true, min: 10 }], powerOf: 'finale11' }],
-      ['3b', 'stMax', '魔導極限', 0, 0, 5, 8, 0, '3 回合魔攻 +2 階，這段時間技能 MP +50%。', { effects: [SELF11({ spa: 2 }), { type: 'status', target: 'self', status: 'maxim11', dur: 3 }] }]] },
+  法杖: { attr: ['int', 1], cat: '特', trait: '打中弱點的傷害再 +15%', mast: '杖術精通', third: ['省力', '技能有 4%／級的機率不花 MP'], sp: [['元素迸發', 'burstEl'], ['魔力湧泉', 'mana'], ['星輝', 'crit']],
+    sk: [['1a', 'stArrows', '火球', 60, 0, 0, 4, 0, '火屬性魔法，20% 灼傷。', { cls: 'bolt', el: '火', effects: DMG11(STA11('brn', 0.2)) }],
+      ['1b', 'stLance', '冰錐', 55, 0, 1, 5, 0, '水屬性魔法，10% 凍結（跳過下一次行動；頭目不會凍結）。', { cls: 'bolt', el: '水', effects: DMG11(STA11('frozen', 0.1, { cond: { tgtAlive: 1, tgtBoss: 0 } })) }],
+      ['1c', 'stWall', '元素屏障', 0, 0, 3, 5, 0, '張開護盾：最大 HP 25%，魔法傷害全部吸收、物理吸收一半，2 回合。', { effects: [{ type: 'status', target: 'self', status: 'mwall11', dur: 2 }] }],
+      ['2a', 'stImpact', '落雷', 75, 0, 1, 6, 0, '雷屬性魔法，20% 麻痺；對蓄力中的對手威力 ×1.5。', { cls: 'bolt', el: '雷', mods: [MUL11(1.5, { tgtStatus: 'charging' })], effects: DMG11(STA11('par', 0.2)) }],
+      ['2b', 'stStorm', '炎浪', 60, 0, 2, 7, 1, '火屬性魔法打全體，10% 灼傷。', { el: '火', effects: DMG11(STA11('brn', 0.1)) }],
+      ['2c', 'stHaste', '藤鞭', 60, 0, 4, 6, 0, '草屬性魔法，回復傷害 25% 的 HP。', { cls: 'bolt', el: '草', after: [{ type: 'heal', target: 'self', ofCast: 0.25, kind: 'drain', quiet: 1 }] }],
+      ['3a', 'stFinale', '雷暴', 45, 2, 4, 10, 1, '雷屬性魔法打全體 2 段（各 45），20% 麻痺。', { el: '雷', after: [STA11('par', 0.2, { target: 'cast_targets' })] }],
+      ['3b', 'stMax', '元素增幅', 0, 0, 5, 8, 0, '3 回合魔攻 +2 階，打中弱點的傷害再 +20%。', { effects: [SELF11({ spa: 2 }), { type: 'status', target: 'self', status: 'elemUp13', dur: 3 }] }]] },
   魔導書: { attr: ['int', 1], cat: '特', trait: '技能 MP −20%（第三階段：慣性的變化減半）', mast: '魔導書精通', third: ['回魔', '每回合回最大 MP 的 1%／級'], sp: [['飛頁', 'strike'], ['縛頁', 'slow'], ['智慧之泉', 'mana']],
     sk: [['1a', 'tmCurse', '咒言', 55, 0, 0, 4, 0, '魔法攻擊，40% 讓對手物攻 −1。', { cls: 'bolt', effects: DMG11(SG11({ atk: -1 }, 0.4)) }],
       ['1b', 'tmSlow', '遲滯咒', 0, 0, 2, 4, 0, '對手速度 −2 階（一定命中）。', { target: 'enemy', effects: [SG11({ spe: -2 })] }],
@@ -21731,6 +21733,15 @@ const CM11 = {
 };
 for (const k in CM11) TREE11[k] = { common: 1, attr: ['str', 1], cat: CM11[k].cat, nodes: CM11[k].nodes, sk: CM11[k].sk, sp: [] };
 const COMMON11 = Object.keys(CM11);
+ST11('osHold13', '堅守', { dur: 'until_own_action', mods: [{ stage: 'final', who: 'defender', mul: 0.5, cond: { hasPower: 1 } }] });
+ST11('osBlock13', '堅守', {}); DEF.statuses.osBlock13.tick = 'owner_action_start'; // 「下一回合」: from the next own action to the one after
+ST11('osCtr13', '盾反', { triggers: [{ on: EVT.DAMAGE, phase: 'POST', role: 'tgt', cond: { srcSide: 'enemy', hasPower: 1, ownerAlive: 1, blocked13: 1 }, limit: { perAction: 1 }, effects: [{ type: 'counter', mul: { f: 'cnt11', v: 60 }, why: 'osCtr13' }] }] });
+Object.assign(COND, { blocked13: (c, v) => !!c.ev && ((c.ev.payload && c.ev.payload.notes) || []).includes('block') === !!v });
+BR.FORMULA.osBash13 = c => (c.src.stats.atk + 0.7 * c.src.stats.def) / Math.max(1, c.src.stats.atk);
+TREE11['單手盾'] = { dual: 1, attr: ['vit', 1], cat: '物', trait: '盾衛：格擋時受到的傷害再 −15%（−40% → −55%）', mast: '護盾精通', mastD: '格擋率 +2%／級', sp: [],
+  sk: [['1a', 'osBash', '盾撞', 50, 0, 1, 4, 0, '用盾撞過去（攻擊力加上物防的 70%），30% 退縮。', { cls: 'strike', mods: [{ stage: 'skill', who: 'attacker', atkMul: { f: 'osBash13' } }], effects: DMG11(FL11(0.3)) }],
+    ['1b', 'osHold', '堅守', 0, 0, 3, 3, 0, '搶先；這回合受到的傷害 −50%，下一回合格擋率 +30%。', { prio: 1, effects: [{ type: 'status', target: 'self', status: 'osHold13' }, { type: 'status', target: 'self', status: 'osBlock13', dur: 2 }] }],
+    ['2b', 'osCounter', '盾反', 0, 0, 4, 5, 0, '2 回合內，格擋成功時反擊（威力 60）。', { effects: [{ type: 'status', target: 'self', status: 'osCtr13', dur: 2 }] }]] };
 const TREE_KINDS11 = Object.keys(TREE11), DUAL_KINDS11 = TREE_KINDS11.filter(k => TREE11[k].dual);
 const POS_LV11 = { 1: 1, 2: 15, 3: 30, 4: 35 }, POS_LVD11 = POS_LV11; // 雙持樹跟一般的樹一樣（原本 15／25／35）；第四段＝絕技
 const SK_TREE11 = {}; // skill id → [kind, pos]
@@ -21753,11 +21764,11 @@ function sk11Build(kind) { const T = TREE11[kind];
 for (const k of TREE_KINDS11) sk11Build(k);
 const treeOf11 = id => SK_TREE11[id] || null;
 const treeSkillKey11 = id => id.slice(2);
-const SPN11 = { burst: 4, crit: 3, defdown: 3, psn: 4, surecrit: 4, haste: 3, chip: 3, atkup: 4, flinch50: 3, pierce: 4, aoe: 4, multi2: 4, mana: 3, guard: 4, strike: 3, slow: 3, flinch20: 3, power: 4, heal: 4, multi2crit: 4, flinch30: 3 };
-const SP_TXT11 = { burst: '強力追擊', crit: '下一次攻擊必定會心', defdown: '追擊，對手物防 −1', psn: '追擊，60% 中毒', surecrit: '追擊，必定會心', haste: '速度 +1 階，回 10% MP', chip: '追擊，削 1 格護盾', atkup: '物攻 +1 階',
+const SPN11 = { burst: 4, burstEl: 4, crit: 3, defdown: 3, psn: 4, surecrit: 4, haste: 3, chip: 3, atkup: 4, flinch50: 3, pierce: 4, aoe: 4, multi2: 4, mana: 3, guard: 4, strike: 3, slow: 3, flinch20: 3, power: 4, heal: 4, multi2crit: 4, flinch30: 3 };
+const SP_TXT11 = { burst: '強力追擊', burstEl: '強力追擊，帶武器的屬性（武器沒屬性時是火）', crit: '下一次攻擊必定會心', defdown: '追擊，對手物防 −1', psn: '追擊，60% 中毒', surecrit: '追擊，必定會心', haste: '速度 +1 階，回 10% MP', chip: '追擊，削 1 格護盾', atkup: '物攻 +1 階',
   flinch50: '追擊，50% 退縮', pierce: '追擊，無視物防', aoe: '追擊全體', multi2: '兩段追擊', mana: '回 20% MP', guard: '2 回合受到的傷害 −40%', strike: '追擊一次', slow: '對手速度 −1 階', flinch20: '音波追擊，20% 退縮',
   power: '物攻・魔攻各 +1 階', heal: '回 15% HP', multi2crit: '兩段追擊，容易會心', flinch30: '追擊，30% 退縮' };
-const spPow11 = (k, t) => ({ burst: 40 + 10 * t, strike: 30 + 8 * t, multi2: 20 + 5 * t, multi2crit: 20 + 5 * t, surecrit: 30 + 8 * t, pierce: 30 + 6 * t })[k] ?? (['defdown', 'psn', 'chip', 'flinch50', 'flinch30', 'flinch20', 'aoe'].includes(k) ? 25 + 6 * t : 0);
+const spPow11 = (k, t) => ({ burst: 40 + 10 * t, burstEl: 40 + 10 * t, strike: 30 + 8 * t, multi2: 20 + 5 * t, multi2crit: 20 + 5 * t, surecrit: 30 + 8 * t, pierce: 30 + 6 * t })[k] ?? (['defdown', 'psn', 'chip', 'flinch50', 'flinch30', 'flinch20', 'aoe'].includes(k) ? 25 + 6 * t : 0);
 const spId11 = (kind, j, t, mag) => 'wsp11_' + TREE_KINDS11.indexOf(kind) + '_' + j + '_' + t + (mag ? 'm' : '');
 for (const kind of TREE_KINDS11) TREE11[kind].sp.forEach(([n, k], j) => { for (let t = 1; t <= 7; t++) for (const mag of [0, 1]) {
   const p = spPow11(k, t), id = spId11(kind, j, t, mag), hurt = p > 0, base = { n, t: '一般', cat: mag ? '特' : '物', pow: p, acc: null };
@@ -21802,7 +21813,7 @@ function dualMode11(st = Game.st) { const w = gearBy(st.equip && st.equip.weapon
   if (W.slot === 'shield') return '雙盾'; if (!o || GEAR[o.b].slot !== 'weapon') return null; const O = GEAR[o.b];
   if (W.kind === '短刀' && O.kind === '短刀') return '雙刀'; if (W.kind === '劍' && O.kind === '劍') return '雙劍'; return null; }
 const mainKind11 = (st = Game.st) => { const w = gearBy(st.equip && st.equip.weapon, st); return w && GEAR[w.b].slot === 'weapon' && TREE11[GEAR[w.b].kind] ? GEAR[w.b].kind : null; };
-const curKinds11 = (st = Game.st) => [mainKind11(st), dualMode11(st)].filter(Boolean);
+const curKinds11 = (st = Game.st) => [mainKind11(st), dualMode11(st), typeof shieldMode13 === 'function' ? shieldMode13(st) : null].filter(Boolean);
 function nodeState11(kind, N, st = Game.st) { const lv = trLv11(N.key, st);
   if (TREE11[kind].dual && !dualOn11(st)) return { ok: false, why: '還不能學' };
   if (lv >= N.max) return { ok: false, why: '已經學滿', full: 1 };
@@ -21823,7 +21834,7 @@ BB.slots = function (st = Game.st) { const av = BB.available(st), learned = lear
 { const _nm = BB.nameOf; BB.nameOf = function (st, id) { const T = treeOf11(id); if (!T) return _nm.call(this, st, id); const D = DEF.skills[id]; return D.name + (activeKinds11(st).includes(T[0]) ? '' : '（' + T[0] + '）'); }; }
 { const _so = BB.sourceOf; BB.sourceOf = function (st, id) { const T = treeOf11(id); return T ? T[0] + '技能樹 Lv' + trLv11(id, st) : _so.call(this, st, id); }; }
 { const _si = BB.skillInfo; BB.skillInfo = function (st, id) { const T = treeOf11(id); if (!T) return _si.call(this, st, id); return treeSkillText11(id, st); }; }
-function treeSkillText11(id, st = Game.st) { const D = DEF.skills[id], lv = Math.max(1, trLv11(id, st)), kind = D.cat === '變' ? '輔助' : D.cat === '物' ? '物理' : '魔法', mp = (D.costs || []).find(c => c.res === 'mp');
+function treeSkillText11(id, st = Game.st) { const D = DEF.skills[id], lv = Math.max(1, trLv11(id, st)), kind = D.cat === '變' || !D.power ? '輔助' : D.cat === '物' ? '物理' : '魔法', mp = (D.costs || []).find(c => c.res === 'mp');
   const pw = D.power && !D.powerOf ? Math.round(D.power * (1 + 0.1 * (lv - 1))) : null, mpv = mp ? (mp.all ? '全部 MP' : 'MP' + (D.power ? mp.amount : Math.max(0, Math.round(mp.amount * (1 - 0.1 * (lv - 1)))))) : '';
   const cd = Math.max(0, (D.cooldown || 0) - (!D.power && lv >= 5 ? 1 : 0));
   return kind + (pw ? '・威力' + pw + (D.hits ? '×' + D.hits[0] : '') : '') + (mpv ? '・' + mpv : '') + (cd ? '・冷卻' + cd : '') + (D.prio ? '・搶先' : '') + (D.target === 'all_enemies' ? '・全體' : '') + (D.charge ? '・蓄力' : '') + '　' + D.desc + '　【' + treeOf11(id)[0] + '技能樹 Lv' + lv + '】'; }
@@ -21928,9 +21939,9 @@ function* equipPick11(sl, fit) {
     if (!((sl === 'shield' || sl === 'weapon') && dualOn11(st))) { yield* _ep.call(this, sl); if (dualFix11(st)) { clampHP(); yield* say('副手的武器跟主手不同種，卸下了。'); } return; }
     if (sl === 'shield' && clsV7(st.cls) === 'otherworlder') { Sound.sfx('bump'); yield* say('異界勇者不能使用副手。'); return; }
     if (sl === 'shield' && !shieldOk(st)) { Sound.sfx('bump'); yield* say('雙手武器不能用副手。\n（劍、斧、短刀、盾才能配副手）'); return; }
-    const m0 = dualMode11(st); yield* equipPick11(sl, sl === 'weapon' ? mainOk11 : offOk11);
+    const mode = () => dualMode11(st) || (typeof shieldMode13 === 'function' ? shieldMode13(st) : null), m0 = mode(); yield* equipPick11(sl, sl === 'weapon' ? mainOk11 : offOk11);
     if (typeof shieldFix === 'function' && shieldFix(st)) { clampHP(); yield* say('雙手武器不能配副手，副手卸下了。'); } if (dualFix11(st)) { clampHP(); yield* say('副手的武器跟主手不同種，卸下了。'); }
-    const m = dualMode11(st); if (m && m !== m0) yield* say('現在是「' + m + '」！' + (trLeft11(st) > 0 ? '\n（選單→技能→武器技能樹 可以學' + m + '的招式）' : '')); }; }
+    const m = mode(); if (m && m !== m0) yield* say('現在是「' + m + '」！' + (trLeft11(st) > 0 ? '\n（選單→技能→武器技能樹 可以學' + m + '的招式）' : '')); }; }
 { const _so = startOverworld; startOverworld = function (...a) { if (Game.st) dualFix11(Game.st); return _so.apply(this, a); }; }
 const HAND11 = { L: { idle1: [11.5, 38.5], idle2: [11.5, 39.5], attack1: [10.5, 37.5], attack2: [13.5, 35], cast1: [9.5, 27.5], hurt1: [9.5, 34.5], guard1: [11.5, 32.5] },
   R: { idle1: [26.5, 37.5], idle2: [26.5, 38.5], attack1: [28.5, 27.5], attack2: [28.5, 26.5], cast1: [26.5, 37.5], hurt1: [27.5, 34.5], guard1: [27.5, 31.5] } };
@@ -22341,7 +22352,7 @@ function fx11Make(k) { const F = FX11[k], id = 't_' + k, D = DEF.skills[id]; if 
   FX['t11_' + k] = function* (U, T, u, t) { if (!T) { const L = this.foes ? this.foes().filter(v => !v.gone) : [], g = L.length > 1 ? this.groupOf(L.map(v => v.id)) : L[0]; T = g ? this.center(g) : { x: U.x, y: U.y - 60 }; } yield* F.f.call(this, S, U, T, u, t); };
   if (F.h) { FX['t11h_' + k] = function* (U, T, u, i, t) { yield* F.h.call(this, S, U, T, u, i, t); }; D.hitFx = 't11h_' + k; }
   PAL['t11_' + k] = [F.col[0], F.col[1]]; SKILL_STYLE[id] = [F.cast || 'draw', D.power ? (F.fin || 'none') : null, 't11_' + k, F.snd || null]; if (MOVES[id]) MOVES[id].fx = 't11_' + k; }
-for (const kind of TREE_KINDS11) for (const r of TREE11[kind].sk) fx11Make(r[1]);
+for (const kind of TREE_KINDS11) if (kind !== '單手盾') for (const r of TREE11[kind].sk) fx11Make(r[1]); // 單手盾 (v12.33) gets its pictures in 10zzz_v12_v8
 { const seen = new Map(); for (const k in FX11) { const F = FX11[k], key = (F.cast || '') + '|' + (F.fin || '') + '|' + F.col.join(','); if (seen.has(key)) bvErr('r9y', 'same picture ' + k + ' / ' + seen.get(key)); seen.set(key, k); } }
 const ray11 = (b, U, S, n = 6, len = 30) => { for (let i = 0; i < n; i++) { const a = -Math.PI / 2 + (i - (n - 1) / 2) * 0.4; b.spawn({ k: 'line', x1: U.x, y1: U.y - 6, x2: U.x + Math.cos(a) * len, y2: U.y - 6 + Math.sin(a) * len, c: i % 2 ? S.col[0] : S.col[1], w: 2, grow: 4, life: 16 }); } };
 const up11 = (b, U, S, n = 3) => { for (let i = 0; i < n; i++) { const x = U.x - 14 + i * 14; b.spawn({ k: 'line', x1: x, y1: U.y + 14, x2: x, y2: U.y - 14, c: S.col[0], w: 3, grow: 5, life: 18 }); b.spawn({ k: 'line', x1: x - 4, y1: U.y - 9, x2: x, y2: U.y - 14, c: S.col[1], w: 2, grow: 2, life: 18 }); b.spawn({ k: 'line', x1: x + 4, y1: U.y - 9, x2: x, y2: U.y - 14, c: S.col[1], w: 2, grow: 2, life: 18 }); } };
@@ -23061,7 +23072,7 @@ const MP_EQ12 = 0.6;
 for (const k in GEAR) { const S = GEAR[k].st; if (S && S.mp > 0) S.mp = Math.max(1, Math.round(S.mp * MP_EQ12)); }
 if (ATTR_HELP12 && ATTR_HELP12.int) ATTR_HELP12.int[0] = ATTR_HELP12.int[0].replace('MP+1.5', 'MP+0.9');
 if (ATTR_HELP && ATTR_HELP.int) ATTR_HELP.int = ATTR_HELP.int.replace('最大MP+1.5', '最大MP+0.9');
-function* treeScreen11Tabs(start) { const st = Game.st, kinds = () => { const K = TREE_KINDS11.filter(k => (!TREE11[k].dual || (typeof dualTab12 === 'function' ? dualTab12(k, st) : dualOn11(st))) && (typeof kindOn13 !== 'function' || kindOn13(k))); return typeof DUAL_TAB12 !== 'undefined' && !K.some(k => TREE11[k].dual) ? K.concat(DUAL_TAB12) : K; };
+function* treeScreen11Tabs(start) { const st = Game.st, kinds = () => { const K = TREE_KINDS11.filter(k => (!TREE11[k].dual || (typeof dualTab12 === 'function' ? dualTab12(k, st) : dualOn11(st))) && (typeof kindOn13 !== 'function' || kindOn13(k))); K.sort((a, b) => (TREE11[a].common ? 1 : 0) - (TREE11[b].common ? 1 : 0)); return typeof DUAL_TAB12 !== 'undefined' && !K.some(k => TREE11[k].dual && k !== '單手盾') ? K.concat(DUAL_TAB12) : K; };
   let ti = Math.max(0, kinds().indexOf(start || curKinds11(st)[0] || '劍')), onTabs = false; const selBy = {}, undo = [], VIS = 9, LY = 36;
   const selOf = k => selBy[k] || 0, tabY = 22, tabH = 13;
   const undoOne = () => { const u = undo.pop(); if (!u) return false; const T = tr11(st), v = (T.lv[u.key] || 0) - 1;
@@ -23429,7 +23440,7 @@ function treeInfoParts12(kind, N, st = Game.st) { const T = TREE11[kind], lv = N
   if (N.t === 'sk') { const D = DEF.skills[N.key], lvx = Math.max(1, lv), mp = (D.costs || []).find(c => c.res === 'mp');
     const pw = D.power && !D.powerOf ? Math.round(D.power * (1 + 0.1 * (lvx - 1))) : null, mpv = mp ? (mp.all ? '全部 MP' : 'MP ' + (D.power ? mp.amount : Math.max(0, Math.round(mp.amount * (1 - 0.1 * (lvx - 1)))))) : '';
     const cd = Math.max(0, (D.cooldown || 0) - (!D.power && lvx >= 5 ? 1 : 0));
-    P.tags.push(D.cat === '變' ? '輔助' : D.cat === '物' ? '物理' : '魔法'); if (pw) P.tags.push('威力 ' + pw + (D.hits ? '×' + D.hits[0] : '')); if (mpv) P.tags.push(mpv); if (cd) P.tags.push('冷卻 ' + cd);
+    P.tags.push(D.cat === '變' || !D.power ? '輔助' : D.cat === '物' ? '物理' : '魔法'); if (pw) P.tags.push('威力 ' + pw + (D.hits ? '×' + D.hits[0] : '')); if (mpv) P.tags.push(mpv); if (cd) P.tags.push('冷卻 ' + cd);
     if (D.prio) P.tags.push('搶先'); if (D.target === 'all_enemies') P.tags.push('全體'); if (D.charge) P.tags.push('蓄力');
     P.text = D.desc || ''; }
   else if (N.t === 'sp') { const [n, k] = T.sp[N.j]; P.tags = ['特技', '普攻累積後自動發動']; P.text = '「' + n + '」' + SP_TXT11[k] + '。威力跟著武器的階級。';
@@ -23469,7 +23480,7 @@ PV('wbal13', v => ({ mods: [{ stage: 'final', who: 'attacker', mul: v, cond: { h
   if (typeof WARD_HELP12 !== 'undefined') for (let i = 0; i < WARD_HELP12.length; i++) WARD_HELP12[i] = fx(WARD_HELP12[i]);
   if (typeof GROW12 !== 'undefined') for (const q of GROW12) q[1] = fx(q[1]); }
 skillTreeScreen = function* () { if (SKILL_ARR11) yield* SKILL_ARR11(); };
-const dualTab12 = (k, st = Game.st) => dualMode11(st) === k || treeNodes11(k).some(N => trLv11(N.key, st) > 0);
+const dualTab12 = (k, st = Game.st) => dualMode11(st) === k || (typeof shieldMode13 === 'function' && shieldMode13(st) === k) || treeNodes11(k).some(N => trLv11(N.key, st) > 0);
 const GROW_WHEN12 = { 果實: st => (st.lv || 1) >= 8, 屬性門檻: st => (st.lv || 1) >= 10, 晶石: st => Object.keys(cryOwn11(st) || {}).length > 0 || !!st.flags.tutCry11,
   回憶石碑: st => (st.lv || 1) >= 16, 素材點數與鐵匠: st => !!(st.flags.tutMat12 || st.flags.tutSmith11), 絕技: st => (st.lv || 1) >= 28, 慣性: st => !!st.flags.tutInert11,
   打部位: st => !!st.flags.tutPart11, 護盾: st => !!st.flags.tutWard12, 雙盾的攻擊: st => dualTab12('雙盾', st) };
@@ -23552,6 +23563,7 @@ function fxtSetup13(kind) { const st = Game.st, T = tr11(st), base = fxtBase13(k
   const mk = b => { GEAR11_GLAM = false; try { return makeGear(b, 3).u; } finally { GEAR11_GLAM = true; } };
   st.gear = []; st.equip = { ...(st.equip || {}), weapon: null, shield: null };
   if (kind === '雙盾') { st.equip.weapon = mk(BASE11.shield[4]); st.equip.shield = mk(BASE11.shield[4]); }
+  else if (kind === '單手盾') { st.equip.weapon = mk(BASE11.weapon['劍'][4]); st.equip.shield = mk(BASE11.shield[4]); }
   else if (base) { st.equip.weapon = mk(BASE11.weapon[base][4]); st.equip.shield = mk(BASE11.weapon[base][4]); }
   else st.equip.weapon = mk(BASE11.weapon[common ? '劍' : kind][4]);
   st.hp = heroStats(st).hp; st.mp = heroStats(st).mp; }
@@ -23744,27 +23756,6 @@ redo13('t_zjRune', 't11_zjRune', { col: C13.star,
     const Sg = { x: T.x, y: T.y - 34 }; this.spawn({ k: 'glow', x: Sg.x, y: Sg.y, r: 26, c: c[2], life: 36 }); this.spawn({ k: 'rune', x: Sg.x, y: Sg.y, r: 18, c: c[0], c2: c[1], n: 10, poly: 5, sq: 1, life: 36 }); K13.ring(this, Sg, 4, 22, c, 3, 12); yield* wait(6);
     for (let k = 0; k < 2; k++) { const P = { x: T.x + (k ? 9 : -9), y: T.y + 2 }; Sound.sfx('charge'); yield* K13.orb(this, Sg, P, el, 6, 5, 0, { trail: 6 }); Sound.sfx('hitSuper'); K13.hit(this, P, el, 0); yield* wait(5); }
     Sound.sfx('heal'); K13.motes(this, T, H, C13.mp, 14, 18); yield* wait(14); } });
-redo13('t_dgReap', 't11_dgReap', { col: C13.blood,
-  *f(S, U, T, u, t) { const c = S.col, v = K13.views(this, t)[0], low = K13.low(v, 0.5);
-    if (low) { K13.dark(this, 0.42, 36, '#1a0006'); this.spawn({ k: 'img', img: ICON13.skull, x: T.x, y: T.y - 38, vy: -0.15, life: 32, fade: 1 }); }
-    K13.mark(this, T, c, { r0: 28, r1: 8, grow: 6, life: 22 }); Sound.sfx('tick'); yield* wait(7);
-    Sound.sfx('wind'); for (let i = 1; i <= 4; i++) K13.ghost(this, (T.x - U.x) * i / 6, (T.y - U.y) * i / 6, '#ff5068', 6 + i * 2, 0.4); yield* this.lunge(u, 30, 2);
-    Sound.sfx('crit'); const a = ang13(U, T); K13.cut(this, T, a, 56, c, 7, 10, { grow: 2 });
-    if (low) { yield* wait(2); K13.cut(this, T, a + 1.5, 60, c, 9, 14); K13.flash(this, '#ff1030', 0.35, 8); K13.spike(this, T, 36, c, 10, 16); }
-    K13.hit(this, T, c, low ? 1 : 0); this.sparks(T.x, T.y, 10, ['#ff2040', '#ffd0d0'], 2.6, 18, 0.12); yield* wait(10); } });
-redo13('t_dgStitch', 't11_dgStitch', { col: C13.shade,
-  *f(S, U, T, u, t) { const c = S.col, v = K13.views(this, t)[0], foot = v ? v.foot : T.y + 26; Sound.sfx('wind'); K13.streaks(this, U.y - 40, U.y + 10, 1, c, 8, 10);
-    const A = { x: U.x + 14, y: U.y - 16 }; for (const dx of [-15, 0, 15]) { const P = { x: T.x + dx, y: foot - 2 }, nd = K13.poly(this, A, SH13.needle(c[0]), { life: 44, rot: ang13(A, P) + Math.PI / 2 }); nd.upd = q => { const k = clamp(q.t / 5, 0, 1); q.x = lerp(A.x, P.x, k); q.y = lerp(A.y, P.y, k); }; Sound.sfx('tick'); yield* wait(2); }
-    yield* wait(4); Sound.sfx('statDown'); this.spawn({ k: 'k13ring', x: T.x, y: foot - 1, r0: 6, r1: 32, w: 6, c: c[0], h: c[1], o: c[2], fl: 0.24, life: 34 });
-    for (const dx of [-15, 0, 15]) this.spawn({ k: 'k13beam', x1: T.x + dx, y1: foot - 2, x2: T.x + dx * 0.5, y2: T.y - 4, w: 2, c: c[0], h: c[1], o: c[2], grow: 5, life: 30 });
-    K13.tint(v, '#2a1844', 0.6, 34); K13.hit(this, T, c, 0); yield* wait(16); } });
-redo13('t_zjMoonFang', 't11_zjMoonFang', { col: C13.moon,
-  *f(S, U, T, u, t) { const c = S.col, v = K13.views(this, t)[0], low = K13.low(v, 0.5); K13.dark(this, 0.5, 44, '#04061a'); Sound.sfx('charge');
-    this.spawn({ k: 'moon', x: T.x + 22, y: T.y - 36, r: 13, c: '#fff6c8', life: 44 }); yield* wait(7); yield* this.lunge(u, 22, 2); Sound.sfx('slash');
-    K13.arc(this, { x: T.x + 12, y: T.y }, 30, Math.PI * 1.3, Math.PI * 0.45, c, 14, 16, { grow: 4 }); K13.cut(this, { x: T.x - 10, y: T.y + 4 }, 1.9, 30, c, 6, 10); if (low) { Sound.sfx('crit'); K13.spike(this, T, 30, ['#ffd040', '#ffffff', OL13], 4, 14, { rot: 0.78, inner: 0.2 }); }
-    K13.hit(this, T, c, low ? 1 : 0); yield* wait(5); },
-  *h(S, U, T) { const c = S.col, low = K13.low(this.tgtV, 0.5); Sound.sfx('slash'); K13.arc(this, { x: T.x - 12, y: T.y }, 30, -Math.PI * 0.3, Math.PI * 0.55, c, 14, 16, { grow: 4 }); K13.cut(this, { x: T.x + 10, y: T.y + 4 }, 1.25, 30, c, 6, 10);
-    if (low) { Sound.sfx('crit'); K13.spike(this, T, 30, ['#ffd040', '#ffffff', OL13], 4, 14, { rot: 0, inner: 0.2 }); } K13.hit(this, T, c, low ? 1 : 0); yield* wait(8); } });
 redo13('t_axSpin', 't11_axSpin', { col: C13.axe,
   *f(S, U, T, u, t) { const c = S.col, L = K13.views(this, t).map(v => this.center(v)).sort((a, b) => a.x - b.x), G = T; Sound.sfx('wind');
     for (let i = 0; i < 4; i++) K13.ghost(this, Math.cos(i * 1.57) * 10, Math.sin(i * 1.57) * 4, '#ffb060', 8 + i * 3, 0.4); yield* this.lunge(u, 16, 3);
@@ -23803,72 +23794,7 @@ redo13('t_fsQi', 't11_fsQi', { col: C13.chi,
     Sound.sfx('wind'); const p = this.spawn({ k: 'k13orb', x: A.x, y: A.y, r: 8, c: c[0], h: c[1], o: c[2], trail: 8, pulse: 1, life: 12 }); p.upd = q => { const k = clamp(q.t / 10, 0, 1); q.x = lerp(A.x, T.x, k) + Math.sin(q.t * 1.2) * 5; q.y = lerp(A.y, T.y, k); };
     for (let i = 0; i < 5; i++) { yield* wait(2); this.spawn({ k: 'k13ring', x: p.x, y: p.y, r0: 3, r1: 10, w: 2, c: c[0], h: c[1], o: c[2], life: 8 }); }
     Sound.sfx('hitSuper'); for (let k = 0; k < 3; k++) K13.ring(this, T, 4 + k * 4, 30 + k * 12, c, 4 - k, 12 + k * 3); K13.hit(this, T, c, 1); yield* wait(12); } });
-redo13('t_fsThrough', 't11_fsThrough', { col: C13.chi,
-  *f(S, U, T, u, t) { const c = S.col, v = K13.views(this, t)[0], a = ang13(U, T); yield* this.lunge(u, 26, 3); Sound.sfx('heavy'); K13.poly(this, { x: T.x - Math.cos(a) * 12, y: T.y - Math.sin(a) * 12 }, SH13.palm(c[0]), { life: 10, rot: a + Math.PI / 2, sc: 1.1 });
-    K13.ring(this, T, 4, 22, c, 3, 10); yield* wait(4); Sound.sfx('quake');
-    for (let k = 0; k < 3; k++) { const P = { x: T.x + Math.cos(a) * (10 + k * 14), y: T.y + Math.sin(a) * (10 + k * 14) }; this.spawn({ k: 'k13arc', x: P.x, y: P.y, r: 14 + k * 6, a0: a - 1.1, a1: a + 1.1, w: 5 - k, c: c[0], h: c[1], o: c[2], grow: 3, life: 12 }); yield* wait(2); }
-    if (v && v.off) { const o = v.off; yield* tween(4, q => { o.x = Math.cos(a) * 6 * q; o.y = Math.sin(a) * 6 * q; }); yield* tween(6, q => { o.x = Math.cos(a) * 6 * (1 - q); o.y = Math.sin(a) * 6 * (1 - q); }); o.x = 0; o.y = 0; }
-    for (let i = 0; i < 3; i++) this.star(T.x + rnd(-14, 14), T.y - 26 + rnd(-4, 4), '#fff0a0', 18); K13.hit(this, T, c, 0); yield* wait(8); } });
-redo13('t_zjQuake', 't11_zjQuake', { col: C13.chi,
-  *f(S, U, T, u) { const c = S.col, hu = this.core.byId.H, full = !!(hu && hu.max && hu.max.chi && (hu.res.chi || 0) >= hu.max.chi); K13.dark(this, 0.5, 52, '#140a00'); Sound.sfx('charge');
-    this.spawn({ k: 'pillar', x: U.x, y: U.y + 22, w: 16, h: 90, c: c[0], life: 24 }); K13.motes(this, { x: U.x, y: U.y + 10 }, { x: U.x, y: U.y - 20 }, c, 14, 16); yield* wait(10);
-    const palm = K13.poly(this, { x: T.x, y: -50 }, SH13.palm(c[0]), { life: 34, sc: 3 }); palm.upd = q => { const k = clamp((q.t - 2) / 8, 0, 1); q.y = lerp(-50, T.y - 10, k * k); };
-    yield* this.lunge(u, 20, 3); yield* wait(5); Sound.sfx('quake'); this.shake = Math.max(this.shake, 16); K13.flash(this, '#fff0c0', 0.45, 8);
-    for (let i = 0; i < 6; i++) zig9(this, T.x, T.y + 26, T.x + (i - 2.5) * 30, T.y + 46, '#3a2000', 4, 5, 26); this.spawn({ k: 'shock', x: T.x, y: T.y + 28, r0: 8, r1: 90, c: c[0], life: 20 });
-    Sound.sfx('crit'); K13.spike(this, T, 44, C13.gold, 4, 18, { rot: 0.785, inner: 0.18 }); K13.hit(this, T, c, 1);
-    if (full) { yield* wait(4); this.spawn({ k: 'pillar', x: T.x, y: T.y + 28, w: 26, h: 200, c: '#fff0b0', life: 20 }); K13.flash(this, '#ffffff', 0.5, 8); K13.ring(this, T, 8, 60, C13.gold, 5, 16); }
-    yield* wait(12); } });
 const tip13 = b => { const H = b.center(b.H); return { x: H.x + 18, y: H.y - 28 }; };
-const arrow13 = function* (b, T, c, i) { const A = tip13(b), P = { x: T.x + [-8, 8, 0][i % 3], y: T.y + [4, -2, 0][i % 3] }, rot = ang13(A, P) + Math.PI / 2; Sound.sfx('charge');
-  b.spawn({ k: 'glow', x: A.x, y: A.y, r: 12, c: c[0], life: 8 }); const ar = K13.poly(b, A, SH13.arrow(c[0]), { life: 8, rot, sc: 1.9 }); ar.upd = q => { const k = clamp(q.t / 6, 0, 1); q.x = lerp(A.x, P.x, k); q.y = lerp(A.y, P.y, k); };
-  for (let k = 1; k < 6; k++) b.spawn({ k: 'k13orb', x: lerp(A.x, P.x, k / 6), y: lerp(A.y, P.y, k / 6), r: 2, c: c[0], h: c[1], o: c[2], trail: 1, life: 6 + k }); yield* wait(6); Sound.sfx('hit'); K13.hit(b, P, c, 0); };
-redo13('t_stArrows', 't11_stArrows', { col: C13.arc,
-  *f(S, U, T) { K13.ring(this, tip13(this), 18, 4, S.col, 2, 10); yield* wait(4); yield* arrow13(this, T, S.col, 0); yield* wait(3); },
-  *h(S, U, T, u, i) { yield* arrow13(this, T, S.col, i); if (i >= 2) { yield* wait(3); Sound.sfx('heal'); K13.motes(this, T, this.center(this.H), C13.mp, 10, 16); yield* wait(12); } else yield* wait(3); } });
-redo13('t_stLance', 't11_stLance', { col: C13.mana,
-  *f(S, U, T) { const c = S.col, H = this.center(this.H), A = { x: H.x + 14, y: H.y - 38 }, rot = ang13(A, T) + Math.PI / 2; Sound.sfx('charge');
-    this.spawn({ k: 'glow', x: A.x, y: A.y, r: 22, c: c[0], life: 16 }); const sp = K13.poly(this, A, SH13.spear(c[0], '#dfe8ff'), { life: 30, rot, s0: 0.2, s1: 1.5, grow: 8 }); K13.ring(this, A, 30, 4, c, 2, 12); yield* wait(12);
-    Sound.sfx('wind'); sp.upd = q => { const k = clamp((q.t - 12) / 5, 0, 1); q.x = lerp(A.x, T.x + (T.x - A.x) * 0.3, k); q.y = lerp(A.y, T.y + (T.y - A.y) * 0.3, k); };
-    K13.beam(this, A, { x: T.x + (T.x - A.x) * 0.3, y: T.y + (T.y - A.y) * 0.3 }, c, 7, 16, 5); yield* wait(4);
-    Sound.sfx('crit'); this.spawn({ k: 'rune', x: T.x, y: T.y, r: 20, c: c[0], c2: c[1], n: 8, poly: 6, sq: 1, life: 14 }); for (let i = 0; i < 6; i++) { const an = i * 1.05; K13.cut(this, { x: T.x + Math.cos(an) * 14, y: T.y + Math.sin(an) * 14 }, an, 14, c, 3, 14); }
-    K13.hit(this, T, c, 1); yield* wait(12); } });
-redo13('t_stWall', 't11_stWall', { col: C13.ward,
-  *f(S) { const c = S.col, H = this.center(this.H), O = { x: H.x, y: H.y + 14 }; Sound.sfx('shield');
-    for (const [R, fill, al] of [[34, 'rgba(122,208,255,0.9)', 1], [46, 'rgba(160,220,255,0.45)', 0.85]]) { const n = Math.round(R * 0.62);
-      for (let i = 0; i <= n; i++) { const an = Math.PI + Math.PI * i / n, x = O.x + Math.cos(an) * R, y = O.y + Math.sin(an) * R * 1.05; const p = K13.poly(this, { x, y }, SH13.hex(5.5, fill), { life: 50, s0: 0, s1: 1, grow: 4, o: c[2], al }); p.t = -Math.round(Math.abs(i - n / 2) * 1.2) - (R > 40 ? 6 : 0); } }
-    yield* wait(14); Sound.sfx('charge'); this.spawn({ k: 'glow', x: H.x, y: H.y - 8, r: 40, c: c[0], life: 34 }); K13.ring(this, { x: H.x, y: H.y - 10 }, 10, 44, c, 3, 16); yield* wait(24); } });
-redo13('t_stImpact', 't11_stImpact', { col: C13.arc,
-  *f(S, U, T, u, t) { const c = S.col, v = K13.views(this, t)[0], chg = !!(v && v.charging); const A = tip13(this); Sound.sfx('charge');
-    const b0 = this.spawn({ k: 'k13orb', x: A.x, y: A.y, r: 10, c: c[0], h: c[1], o: c[2], trail: 1, life: 10 }); b0.upd = q => { q.r = 10 - q.t * 0.4; }; yield* wait(8);
-    yield* K13.orb(this, A, T, c, 6, 7, 0, { trail: 8, ease: 1 }); Sound.sfx('quake'); this.shake = Math.max(this.shake, 10);
-    for (let k = 0; k < 4; k++) K13.ring(this, T, 6 + k * 4, 34 + k * 12, c, 5 - k, 12 + k * 2);
-    if (v && v.off) { const o = v.off; yield* tween(3, q => { o.y = -8 * q; }); yield* tween(6, q => { o.y = -8 * (1 - q); }); o.y = 0; }
-    if (chg) { Sound.sfx('hitSuper'); for (let i = 0; i < 14; i++) this.spawn({ k: 'k13orb', x: T.x, y: T.y, r: 2.5, c: '#ff9a30', h: '#fff0c0', o: OL13, trail: 3, vx: Math.cos(i * 0.45) * 3, vy: Math.sin(i * 0.45) * 3, life: 16 }); K13.flash(this, '#ffb060', 0.3, 6); }
-    K13.hit(this, T, c, chg ? 1 : 0); yield* wait(10); } });
-redo13('t_stStorm', 't11_stStorm', { col: C13.storm,
-  *f(S, U, T, u, t) { const c = S.col, L = K13.views(this, t).map(v => this.center(v)); K13.dark(this, 0.45, 48, '#0c0418'); Sound.sfx('wind');
-    for (let i = 0; i < 16; i++) this.spawn({ k: 'k13orb', x: T.x - 76 + i * 10 + rnd(-3, 3), y: T.y - 44 + (i % 2) * 7 + rnd(-3, 3), r: rnd(9, 14), c: i % 3 ? '#3e2e58' : '#2c2042', h: '#5e4c80', o: OL13, trail: 1, vx: rnd(-2, 2) / 10, life: 50 });
-    yield* wait(8); for (let k = 0; k < 2; k++) for (const P of L) { const x0 = P.x + rnd(-10, 10), pts = []; let xx = x0; for (let y = T.y - 40; y < P.y + 6; y += 8) { pts.push([xx, y]); xx += rnd(-7, 7); } pts.push([P.x, P.y]);
-      for (let j = 1; j < pts.length; j++) this.spawn({ k: 'k13beam', x1: pts[j - 1][0], y1: pts[j - 1][1], x2: pts[j][0], y2: pts[j][1], w: 5, c: c[0], h: c[1], o: c[2], grow: 1, life: 10 });
-      Sound.sfx('thunder'); K13.hit(this, P, c, k); K13.flash(this, '#d0a0ff', 0.2, 4); yield* wait(4); }
-    yield* wait(10); } });
-redo13('t_stHaste', 't11_stHaste', { col: C13.time,
-  *f(S) { const c = S.col, H = this.center(this.H), P = { x: H.x, y: H.y - 34 }; Sound.sfx('charge'); const clk = this.spawn({ k: 'k13clock', x: P.x, y: P.y, r: 22, c: c[0], h: c[1], sp: 0.05, life: 44 });
-    clk.upd = q => { q.sp = q.t < 26 ? 0.05 + q.t * 0.012 : 0; }; for (let i = 0; i < 4; i++) { K13.streaks(this, H.y - 30, H.y + 20, -1, c, 4, 10); Sound.sfx('tick'); yield* wait(5); }
-    K13.ghost(this, -12, 0, '#60f0f0', 14, 0.45); K13.ghost(this, -22, 0, '#60f0f0', 12, 0.3); yield* wait(6);
-    Sound.sfx('crit'); clk.m0 = (clk.m0 || 0) + 0.52; K13.ring(this, P, 6, 34, c, 3, 12); K13.spike(this, { x: P.x, y: P.y - 22 }, 10, c, 4, 12); yield* wait(14); } });
-redo13('t_stFinale', 't11_stFinale', { col: C13.finale,
-  *f(S, U, T) { const c = S.col, H = this.center(this.H), A = tip13(this), hu = this.core.byId.H, mp = Math.max(10, (this.H && this.H.mp) || 0, hu && hu.max ? hu.max.mp * 0.6 : 0), R = clamp(8 + mp / 5, 12, 22); K13.dark(this, 0.55, 60, '#020818'); Sound.sfx('charge');
-    const orb = this.spawn({ k: 'k13orb', x: A.x, y: A.y - 8, r: 2, c: c[0], h: c[1], o: c[2], trail: 1, pulse: 1, life: 32 }); orb.upd = q => { q.r = Math.min(R, 2 + q.t * R / 18); };
-    for (let k = 0; k < 5; k++) { K13.motes(this, { x: H.x, y: H.y + 8 }, { x: A.x, y: A.y - 8 }, C13.mp, 12, 14); this.spawn({ k: 'k13beam', x1: H.x + rnd(-10, 10), y1: H.y + rnd(0, 14), x2: A.x, y2: A.y - 8, w: 2, c: C13.mp[0], h: C13.mp[1], o: OL13, grow: 4, life: 10 }); yield* wait(5); }
-    yield* wait(6); Sound.sfx('thunder'); K13.beam(this, { x: A.x, y: A.y - 8 }, T, c, R * 1.3 + 4, 20, 3); K13.flash(this, '#c0e0ff', 0.5, 8); yield* wait(4);
-    Sound.sfx('quake'); this.shake = Math.max(this.shake, 16); for (let k = 0; k < 3; k++) K13.ring(this, T, 6, 40 + k * 18 + R * 2, c, 6 - k * 2, 16 + k * 3); K13.spike(this, T, 30 + R * 2, c, 12, 18); K13.hit(this, T, c, 1); yield* wait(14); } });
-redo13('t_stMax', 't11_stMax', { col: C13.max,
-  *f(S) { const c = S.col, H = this.center(this.H); Sound.sfx('charge'); this.spawn({ k: 'rune', x: H.x, y: H.y + 20, r: 32, c: c[0], c2: c[1], n: 10, poly: 5, life: 54 }); this.spawn({ k: 'pillar', x: H.x, y: H.y + 22, w: 20, h: 110, c: c[0], life: 40 });
-    for (let k = 0; k < 2; k++) { K13.ring(this, { x: H.x, y: H.y - 34 - k * 12 }, 4, 18 - k * 4, c, 3, 40 - k * 6, 0.35); this.spawn({ k: 'rune', x: H.x, y: H.y - 34 - k * 12, r: 18 - k * 4, c: c[0], c2: c[1], n: 6, poly: 3, sq: 0.35, dir: k ? -1 : 1, life: 46 - k * 6 }); Sound.sfx('tick'); yield* wait(5); }
-    for (let i = 0; i < 12; i++) this.spawn({ k: 'k13spike', x: H.x + rnd(-16, 16), y: H.y + rnd(-4, 18), r0: 2, r1: 6, n: 4, c: c[0], h: c[1], o: c[2], rot: 0, inner: 0.25, vy: -rnd(10, 18) / 10, life: 16 });
-    yield* wait(8); Sound.sfx('statUp');
-    for (let i = 0; i < 8; i++) this.spawn({ k: 'k13orb', x: H.x + rnd(-12, 12), y: H.y + rnd(-8, 4), r: 3, c: C13.mp[0], h: C13.mp[1], o: OL13, trail: 5, vx: rnd(-6, 6) / 10, vy: 0.4, g: 0.12, life: 22 }); yield* wait(18); } });
 redo13('t_zjFourFold', 't11_zjFourFold', { col: C13.arc,
   *f(S, U, T) { const A = tip13(this), E = ['火', '水', '雷', '草'].map(k => EL13[k]); Sound.sfx('charge'); const orbs = E.map((c, i) => { const p = this.spawn({ k: 'k13orb', x: A.x, y: A.y, r: 5, c: c[0], h: c[1], o: c[2], trail: 4, life: 22 + i * 9 }); p.upd = q => { if (q.go) return; const an = q.t * 0.35 + i * Math.PI / 2; q.x = A.x + Math.cos(an) * 16; q.y = A.y - 6 + Math.sin(an) * 9; }; return p; });
     yield* wait(12);
@@ -23879,9 +23805,6 @@ redo13('t_zjFourFold', 't11_zjFourFold', { col: C13.arc,
       if (i === 3) { Sound.sfx('leaf'); for (let j = 0; j < 12; j++) { const an = j * 0.52; this.spawn({ k: 'img', img: LEAF_IMG, x: P.x + Math.cos(an) * 18, y: P.y + Math.sin(an) * 10, vx: -Math.sin(an) * 2, vy: Math.cos(an) * 1.1 - 0.4, fade: 1, life: 20 }); } }
       K13.hit(this, P, c, i === 3 ? 1 : 0); yield* wait(4); }
     yield* wait(8); } });
-redoSp13('法杖', 0, { col: C13.arc,
-  *f(S, U, T) { const c = S.col; Sound.sfx('charge'); this.spawn({ k: 'rune', x: T.x, y: T.y + 26, r: 26, c: c[0], c2: c[1], n: 8, poly: 4, life: 30 }); K13.ring(this, { x: T.x, y: T.y + 26 }, 30, 8, c, 3, 12, 0.35); yield* wait(10);
-    Sound.sfx('hitSuper'); this.spawn({ k: 'pillar', x: T.x, y: T.y + 28, w: 22, h: 150, c: c[0], life: 20 }); K13.beam(this, { x: T.x, y: T.y + 26 }, { x: T.x, y: T.y - 70 }, c, 10, 14, 3); this.shake = Math.max(this.shake, 10); K13.hit(this, T, c, 1); yield* wait(12); } });
 redoSp13('法杖', 2, { col: C13.gold,
   *f(S) { const c = S.col, A = tip13(this); Sound.sfx('tick'); for (let i = 0; i < 8; i++) { const an = i * Math.PI / 4, P0 = { x: A.x + Math.cos(an) * 34, y: A.y + Math.sin(an) * 26 }, p = this.spawn({ k: 'k13spike', x: P0.x, y: P0.y, r0: 3, r1: 6, n: 4, c: c[0], h: c[1], o: c[2], rot: 0.78, inner: 0.3, life: 12 }); p.upd = q => { const k = clamp(q.t / 10, 0, 1); q.x = lerp(P0.x, A.x, k); q.y = lerp(P0.y, A.y, k); }; }
     yield* wait(11); Sound.sfx('crit'); K13.spike(this, A, 26, c, 4, 20, { rot: 0, inner: 0.16 }); K13.ring(this, A, 4, 26, c, 3, 12); yield* wait(6);
@@ -23934,4 +23857,396 @@ redoSp13('雙盾', 0, { col: C13.shield,
     yield* wait(5); Sound.sfx('heavy'); K13.spike(this, P, 18, C13.gold, 8, 10); this.sparks(P.x, P.y, 12, ['#ffffff', '#ffe070'], 3, 14);
     const a = ang13(P, T); for (let k = 0; k < 4; k++) { const sw = this.spawn({ k: 'k13arc', x: P.x, y: P.y, r: 10, a0: a - 0.75, a1: a + 0.75, w: 8, c: '#ffe58a', h: '#ffffff', o: c[2], grow: 2, life: 16 }); sw.upd = q => { q.r = 10 + q.t * 5; }; Sound.sfx('buzz'); yield* wait(3); }
     yield* wait(4); for (let i = 0; i < 3; i++) this.star(T.x + rnd(-14, 14), T.y - 28 + rnd(-4, 4), '#fff0a0', 20); K13.hit(this, T, c, 0); yield* wait(10); } });
+function shieldMode13(st = Game.st) { if (!st || !st.equip) return null; const w = gearBy(st.equip.weapon, st), o = gearBy(st.equip.shield, st); if (!w || !o) return null;
+  const W = GEAR[w.b], O = GEAR[o.b]; return W && O && W.slot === 'weapon' && ['劍', '斧', '短刀'].includes(W.kind) && O.slot === 'shield' ? '單手盾' : null; }
+{ const _eo = BR.elementOf; BR.elementOf = function (core, u, sk) { const el = _eo(core, u, sk); return sk && sk.metadata && sk.metadata.wsp === 'burstEl' && (!el || el === '一般') ? '火' : el; }; }
+const blockPV13 = mul => v => ({ triggers: [{ on: EVT.DAMAGE, phase: 'PRE', role: 'tgt', cond: { srcSide: 'enemy', hasPower: 1 },
+  chance: ctx => Math.min(45, v) / 100 + (ctx.owner && ctx.core.hasStatus(ctx.owner, 'osBlock13') && !ctx.core.hasStatus(ctx.owner, 'osHold13') ? 0.3 : 0),
+  effects: [{ type: 'modify', mul, note: 'block' }, { type: 'message', key: 'block', target: 'self' }] }] });
+defPut('passives', 'block', { make: blockPV13(0.6), metadata: { n: '格擋' }, tags: [], override: 1 });
+PV('blockS13', blockPV13(0.45), { n: '格擋（盾衛）' });
+{ const _hs = heroStats; heroStats = function (st = Game.st) { const s = _hs(st); if (st && shieldMode13(st)) { const n = trLv11('單手盾:mast', st); if (n && s.block) s.block += 2 * n; } return s; }; }
+{ const _hs = BB.heroSpec; BB.heroSpec = function (st, cfg) { const s = _hs.call(this, st, cfg); if (st && shieldMode13(st) && trLv11('單手盾:trait', st)) for (const p of s.passives) if (p.key === 'block') p.key = 'blockS13'; return s; }; }
+if (typeof CTR12 !== 'undefined') CTR12.why.osCtr13 = ['盾反', 'block'];
+if (typeof BUFF12 !== 'undefined') Object.assign(BUFF12, { elemUp13: { n: '元素增幅', k: 'atk', tip: '魔攻↑↑・弱點 +20%' }, osHold13: { n: '堅守', k: 'def', tip: '這回合受傷 −50%' },
+  osBlock13: { n: '格擋↑', k: 'def', tip: '下一回合格擋率 +30%' }, osCtr13: { n: '盾反', k: 'ctr', tip: '格擋成功就反擊' } });
+if (typeof BATTLE_HELP !== 'undefined') { const b = BATTLE_HELP.find(q => q[0] === '武器技能'); if (b && Array.isArray(b[1]) && !b[1].some(t => /單手盾/.test(t))) b[1].push('劍・斧・短刀配盾的時候，多一棵「單手盾」技能樹（盾撞・堅守・盾反），跟主武器的樹一起用。'); }
+const PXF = {
+  sq(x, X, Y, s, c) { x.fillStyle = c; const h = s >> 1; x.fillRect(Math.round(X) - h, Math.round(Y) - h, s, s); },
+  pts(x0, y0, x1, y1) { x0 = Math.round(x0); y0 = Math.round(y0); x1 = Math.round(x1); y1 = Math.round(y1); const P = [], dx = Math.abs(x1 - x0), sx = x0 < x1 ? 1 : -1, dy = -Math.abs(y1 - y0), sy = y0 < y1 ? 1 : -1; let e = dx + dy, n = 0;
+    for (;;) { P.push([x0, y0]); if ((x0 === x1 && y0 === y1) || ++n > 600) break; const e2 = 2 * e; if (e2 >= dy) { e += dy; x0 += sx; } if (e2 <= dx) { e += dx; y0 += sy; } } return P; },
+  line(x, x0, y0, x1, y1, c, s = 1) { x.fillStyle = c; const h = s >> 1; for (const [a, b] of PXF.pts(x0, y0, x1, y1)) x.fillRect(a - h, b - h, s, s); },
+  line3(x, x0, y0, x1, y1, col, s = 2) { PXF.line(x, x0, y0, x1, y1, col[2] || OL13, s + 2); PXF.line(x, x0, y0, x1, y1, col[0], s); if (s >= 2 && col[1]) PXF.line(x, x0, y0, x1, y1, col[1], 1); },
+  path3(x, P, col, s = 2) { for (let i = 1; i < P.length; i++) PXF.line(x, P[i - 1][0], P[i - 1][1], P[i][0], P[i][1], col[2] || OL13, s + 2);
+    for (let i = 1; i < P.length; i++) PXF.line(x, P[i - 1][0], P[i - 1][1], P[i][0], P[i][1], col[0], s); if (s >= 2 && col[1]) for (let i = 1; i < P.length; i++) PXF.line(x, P[i - 1][0], P[i - 1][1], P[i][0], P[i][1], col[1], 1); },
+  ell(x, cx, cy, rx, ry, c) { x.fillStyle = c; cx = Math.round(cx); cy = Math.round(cy); const R = Math.ceil(ry); for (let dy = -R; dy <= R; dy++) { const k = 1 - (dy * dy) / Math.max(0.01, ry * ry); if (k < 0) continue; const w = Math.floor(rx * Math.sqrt(k) + 0.35); x.fillRect(cx - w, cy + dy, 2 * w + 1, 1); } },
+  disc(x, cx, cy, r, c) { PXF.ell(x, cx, cy, r, r, c); },
+  ring(x, cx, cy, r, c, s = 1, fl = 1, a0 = 0, a1 = Math.PI * 2) { x.fillStyle = c; const n = Math.max(8, Math.round(Math.abs(a1 - a0) * r * 1.3)), h = s >> 1, seen = new Set();
+    for (let i = 0; i <= n; i++) { const an = a0 + (a1 - a0) * i / n, X = Math.round(cx + Math.cos(an) * r), Y = Math.round(cy + Math.sin(an) * r * fl), k = X * 4096 + Y; if (seen.has(k)) continue; seen.add(k); x.fillRect(X - h, Y - h, s, s); } },
+  poly(x, P, c) { x.fillStyle = c; let y0 = Infinity, y1 = -Infinity; for (const q of P) { if (q[1] < y0) y0 = q[1]; if (q[1] > y1) y1 = q[1]; }
+    for (let y = Math.floor(y0); y <= Math.ceil(y1); y++) { const yc = y + 0.5, xs = []; for (let i = 0, j = P.length - 1; i < P.length; j = i++) { const ax = P[i][0], ay = P[i][1], bx = P[j][0], by = P[j][1]; if ((ay > yc) !== (by > yc)) xs.push(ax + (yc - ay) * (bx - ax) / (by - ay)); }
+      xs.sort((a, b) => a - b); for (let k = 0; k + 1 < xs.length; k += 2) { const a = Math.round(xs[k]), b = Math.round(xs[k + 1]); if (b > a) x.fillRect(a, y, b - a, 1); } } },
+  polyO(x, P, c, o = OL13) { for (const [dx, dy] of [[-1, 0], [1, 0], [0, -1], [0, 1]]) PXF.poly(x, P.map(q => [q[0] + dx, q[1] + dy]), o); PXF.poly(x, P, c); },
+  spr(x, img, X, Y, sc = 1) { if (!img) return; x.imageSmoothingEnabled = false; const w = img.width * sc, h = img.height * sc; x.drawImage(img, Math.round(X - w / 2), Math.round(Y - h / 2), w, h); },
+};
+const PXS = (rows, pal) => spriteFrom(rows, Object.assign({ k: OL13 }, pal));
+const PXV = rows => rows.slice().reverse(); // upside down
+const PXI = {
+  glint: PXS(['...w...', '...w...', '..wyw..', 'wwyyyww', '..wyw..', '...w...', '...w...'], { w: '#ffffff', y: '#ffe070' }),
+  glintS: PXS(['..w..', '.wyw.', 'wyyyw', '.wyw.', '..w..'], { w: '#ffffff', y: '#ffe070' }),
+  flameA: PXS(['...k...', '..krk..', '..krok.', '.kroork', '.kroyok', 'kroyyok', 'kroywok', 'kroyyok', '.kroook', '.kkkkk.'], { r: '#d8361a', o: '#ff8a1e', y: '#ffd84a', w: '#fff8d0' }),
+  ice: PXS(['...w...', '.w.c.w.', '..ccc..', 'wcccccw', '..ccc..', '.w.c.w.', '...w...'], { w: '#ffffff', c: '#9ad8ff' }),
+  leaf: PXS(['..kk.', '.kglk', 'kgglk', 'kggk.', '.kk..'], { g: '#3aa040', l: '#b8f080' }),
+  cloud: PXS(['........kkkk............', '......kkllllkk..kkk.....', '....kkllllllllkkllkk....', '..kkmllllmmlllllllllkk..', '.kmmmmlmmmmmmllmmmmmmmk.',
+    'kdmmmmmmmmmmmmmmmmmmmmdk', 'kddmmmdddmmmmmddmmmdddk.', '.kdddddddddddddddddddk..', '..kkkkkkkkkkkkkkkkkkk...'], { d: '#3a3a56', m: '#5e5e80', l: '#8a8ab0' }),
+  shield: PXS(['kkkkkkkkkkkkk', 'ksssssssssssk', 'ksbbbbbbbbbSk', 'ksbbbbgbbbbSk', 'ksbbbgggbbbSk', 'ksbbbbgbbbbSk', 'ksbbbbgbbbbSk', 'ksbbbbgbbbBSk',
+    '.ksbbbgbbBSk.', '.ksbbbgbbBSk.', '..ksbbgbBSk..', '..ksbbbBBSk..', '...ksbBBSk...', '....ksSSk....', '.....kkk.....'], { s: '#d8e2f2', S: '#7a88a8', b: '#3a6ad0', B: '#26449a', g: '#ffd040' }),
+  fist: PXS(['.kkkkkkk.', 'kYYkYYkYk', 'kyykyykyk', 'kyykyykyk', 'kkkkkkkyk', 'kYYYYYkyk', 'kyyyyyyyk', 'kdyyyyydk', '.kdddddk.', '.kkkkkkk.'], { Y: '#ffe08a', y: '#ffb020', d: '#c07010' }),
+  daggerDn: PXS(['.kkk.', '.kbk.', '.kbk.', 'kgggk', 'kwssk', 'kwssk', 'kwssk', 'kwssk', '.kwsk', '.kwk.', '..k..'], { b: '#3a2050', g: '#8a5ad0', w: '#ffffff', s: '#b8a8d8' }),
+  moon: PXS(['...kkkkk...', '.kkwyyykk..', 'kwyyykk....', 'kwyyk......', 'kwyyk......', 'kwyyk......', 'kwyyk......', 'kwyyk......', 'kwyyykk....', '.kkwyyykk..', '...kkkkk...'], { w: '#fffbe0', y: '#f4e27a' }),
+  rock: PXS(['.kkkk.', 'kRRrrk', 'kRrrdk', 'krrddk', '.kkkk.'], { R: '#d0a878', r: '#a07848', d: '#6a4a2a' }),
+  skull: PXS(['.kkkkk.', 'kwwwwwk', 'kwkwkwk', 'kwwwwwk', '.kwkwk.', '.kkkkk.'], { w: '#ffe0e0' }),
+  bubble: PXS(['.kkk.', 'kgwgk', 'kgggk', 'kgggk', '.kkk.'], { g: '#7ad048', w: '#e8ffd0' }),
+  zap: PXS(['..kk', '.kyk', 'kyk.', 'kyyk', '.kyk', 'kyk.', 'kk..'], { y: '#ffe040' }),
+  dizzy: PXS(['..k..', '.kyk.', 'kyyyk', '.kyk.', '..k..'], { y: '#ffe060' }),
+  gem: c => PXS(['..k..', '.kwk.', 'kwcck', 'kccck', 'kcdck', '.kdk.', '..k..'], { w: '#ffffff', c: c[0], d: c[2] }),
+};
+PXI.flameB = flipCanvas(PXI.flameA);
+PXI.plate = PXS(['kkkkkkkkkkkkk', 'kwwwwwwwwwwwk', 'kwssssgssssSk', 'kwsWssgssssSk', 'kwsssggssssSk', 'kwsssgggsssSk', 'kwssssgssssSk', 'kwssssgsssSSk', '.kwsssgssSSk.', '.kwsssgssSSk.', '..kwssgsSSk..', '...kwsgSSk...', '....kwgSk....', '.....kkk.....'], { w: '#f0f4fa', s: '#b0bccc', S: '#7a8498', W: '#ffffff', g: '#6a7488' });
+PXI.half = (img, right) => { const w = Math.ceil(img.width / 2), c = mkCanvas(w, img.height), g = c.getContext('2d'); g.drawImage(img, right ? -Math.floor(img.width / 2) : 0, 0); return c; };
+PXI.plateL = PXI.half(PXI.plate, 0); PXI.plateR = PXI.half(PXI.plate, 1);
+PXI.upCh = c => PXS(['...k...', '..kck..', '.kcwck.', 'kck.kck', 'kk...kk'], { c, w: '#ffffff' });
+PXI.dnCh = c => PXS(PXV(['...k...', '..kck..', '.kcwck.', 'kck.kck', 'kk...kk']), { c, w: '#ffffff' });
+const PXC = {
+  steel: ['#c8d4e8', '#ffffff', OL13], blade: ['#e8f0ff', '#ffffff', '#1a1430'], venom: ['#5ad048', '#e0ffc0', '#0a2a0a'], volt: ['#ffd820', '#ffffff', '#3a2a00'], blood: ['#e8263e', '#ffd0d8', '#2a0410'],
+  shade: ['#8a5ad0', '#efe0ff', '#12061e'], moon: ['#f4e27a', '#ffffff', '#1c1a3a'], gold: ['#ffcc33', '#fffbe0', '#3a2806'], chi: ['#ffb020', '#fff6d0', '#3a2000'], wind: ['#bfe8ff', '#ffffff', '#0a2a3a'],
+  fire: ['#ff5a20', '#ffe08a', '#3a0a00'], fire2: ['#ff9a30', '#fff6c0', '#5a1800'], ice: ['#5ab8ff', '#e8f8ff', '#061a40'], leaf: ['#3aa040', '#c8f8a0', '#06300a'], azure: ['#3a8aff', '#d8ecff', '#06163a'],
+  wood: ['#8a5a2a', '#c8904a', '#2a1406'], red: ['#ff3a2a', '#ffe0c0', '#2a0600'], rock: ['#a07848', '#d0a878', '#2a1a0a'], blue: ['#3a6ad0', '#c8e0ff', '#0a1440'],
+};
+const EL13PX = { 火: PXC.fire, 水: PXC.ice, 雷: PXC.volt, 草: PXC.leaf };
+Object.assign(HERO_PK, {
+  p13spr(x, p, a) { if (p.t < (p.delay || 0)) return; if (p.blink !== 0 && a < 0.28 && p.t % 2) return; const F = p.frames || [p.img], i = p.fps ? (p.once ? Math.min(F.length - 1, Math.floor(p.t / p.fps)) : Math.floor(p.t / p.fps) % F.length) : 0;
+    if (p.al != null) x.globalAlpha = p.al; PXF.spr(x, F[i], p.x, p.y, p.sc || 1); },
+  p13line(x, p, a) { if (p.t < (p.delay || 0)) return; const t = p.t - (p.delay || 0), G = p.grow || 3, Hd = p.hold ?? G, g = clamp(t / G, 0, 1), tl = p.keep ? 0 : clamp((t - Hd) / Math.max(1, p.life - (p.delay || 0) - Hd), 0, 1);
+    const X0 = lerp(p.x1, p.x2, tl), Y0 = lerp(p.y1, p.y2, tl), X1 = lerp(p.x1, p.x2, g), Y1 = lerp(p.y1, p.y2, g); if (Math.abs(X1 - X0) + Math.abs(Y1 - Y0) < 1) return;
+    if (p.blink && a < 0.3 && p.t % 2) return; if (p.thin) PXF.line(x, X0, Y0, X1, Y1, p.c[0], p.s || 1); else PXF.line3(x, X0, Y0, X1, Y1, p.c, p.s || 2); },
+  p13arc(x, p, a) { if (p.t < (p.delay || 0)) return; const t = p.t - (p.delay || 0), G = p.grow || 4, g = clamp(t / G, 0, 1), tl = clamp((t - G - (p.hold || 0)) / Math.max(1, p.life - (p.delay || 0) - G - (p.hold || 0)), 0, 1), A0 = lerp(p.a0, p.a1, tl * 0.92), A1 = lerp(p.a0, p.a1, g);
+    if (Math.abs(A1 - A0) < 0.03) return; const n = Math.max(6, Math.ceil(Math.abs(A1 - A0) * p.r * (p.fl && p.fl < 1 ? 0.8 : 1))), fl = p.fl || 1, Wd = p.w || 4, P = [];
+    for (let i = 0; i <= n; i++) { const u = i / n, an = A0 + (A1 - A0) * u, w = Math.max(1, Math.round(Wd * Math.sin(Math.PI * (0.08 + u * 0.84)) * (1 - tl * 0.5))); P.push([p.x + Math.cos(an) * p.r, p.y + Math.sin(an) * p.r * fl, w]); }
+    for (const [X, Y, w] of P) PXF.sq(x, X, Y, w + 2, p.c[2] || OL13); for (const [X, Y, w] of P) PXF.sq(x, X, Y, w, p.c[0]); for (const [X, Y, w] of P) if (w >= 3) PXF.sq(x, X, Y, 1, p.c[1]); },
+  p13ring(x, p, a) { if (p.t < (p.delay || 0)) return; const t = p.t - (p.delay || 0), L = p.life - (p.delay || 0), e = 1 - Math.pow(1 - clamp(t / L, 0, 1), 2), r = lerp(p.r0, p.r1, e), s = a > 0.5 ? (p.s || 2) : Math.max(1, (p.s || 2) - 1);
+    if (a < 0.25 && p.t % 2) return; if (p.c[2] !== null) PXF.ring(x, p.x, p.y, r, p.c[2] || OL13, s + 2, p.fl || 1); PXF.ring(x, p.x, p.y, r, a > 0.45 ? p.c[0] : (p.c[3] || p.c[0]), s, p.fl || 1); },
+  p13burst(x, p, a) { if (p.t < (p.delay || 0)) return; const t = p.t - (p.delay || 0), L = p.life - (p.delay || 0), R = p.r || 12, R1 = R * (0.45 + 0.55 * clamp(t / 3, 0, 1)), R0 = R * 0.85 * clamp((t - 1) / Math.max(1, L - 1), 0, 1), s = p.s || 2;
+    if (t < 3) { PXF.disc(x, p.x, p.y, Math.max(2, R * 0.3) + 1, p.c[2] || OL13); PXF.disc(x, p.x, p.y, Math.max(2, R * 0.3), t < 2 ? '#ffffff' : p.c[0]); }
+    const D = (p.n || 8) === 4 ? [[1, 0], [0, 1], [-1, 0], [0, -1]] : [[1, 0], [1, 1], [0, 1], [-1, 1], [-1, 0], [-1, -1], [0, -1], [1, -1]];
+    for (const pass of [0, 1, 2]) D.forEach(([dx, dy], i) => { const k = (dx && dy ? 0.72 : 1) * (p.n === 8 && i % 2 ? 0.8 : 1), x0 = p.x + dx * R0 * k, y0 = p.y + dy * R0 * k, x1 = p.x + dx * R1 * k, y1 = p.y + dy * R1 * k; if (Math.abs(x1 - x0) + Math.abs(y1 - y0) < 1) return;
+      if (pass === 0) PXF.line(x, x0, y0, x1, y1, p.c[2] || OL13, s + 2); else if (pass === 1) PXF.line(x, x0, y0, x1, y1, p.c[0], s); else if (s >= 2) PXF.line(x, x0, y0, x1, y1, p.c[1], 1); }); },
+  p13px(x, p, a) { if (p.t < (p.delay || 0)) return; const C = p.cols || [p.c], i = Math.min(C.length - 1, Math.floor((1 - a) * C.length)); if (p.blink && a < 0.25 && p.t % 2) return; if (p.o) PXF.sq(x, p.x, p.y, (p.s || 2) + 2, p.o); PXF.sq(x, p.x, p.y, p.s || 2, C[i]); },
+  p13orb(x, p, a) { if (p.t < (p.delay || 0)) return; const Hs = p.hist || (p.hist = []); Hs.push([p.x, p.y]); if (Hs.length > (p.trail || 6)) Hs.shift(); const C = p.c;
+    Hs.forEach(([q, w], i) => { if (i === Hs.length - 1) return; const k = (i + 1) / Hs.length, r = Math.max(1, Math.round(p.r * k * 0.75)); PXF.disc(x, q, w, r, i % 2 ? C[1] : C[2]); });
+    const r = p.r + (p.pulse && p.t % 4 < 2 ? 1 : 0); PXF.disc(x, p.x, p.y, r + 1, C[0]); PXF.disc(x, p.x, p.y, r, C[1]); PXF.disc(x, p.x, p.y, Math.max(1, r - 1.5), C[2]); PXF.disc(x, p.x - Math.round(r * 0.3), p.y - Math.round(r * 0.3), Math.max(1, Math.round(r * 0.4)), C[3]); },
+  p13bolt(x, p, a) { if (p.t < (p.delay || 0)) return; if (p.t > 4 && p.t % 3 === 1) return; const n = Math.max(2, Math.ceil(p.pts.length * clamp((p.t - (p.delay || 0) + 1) / (p.grow || 2), 0, 1))); PXF.path3(x, p.pts.slice(0, n), p.c, p.s || 2); },
+  p13poly(x, p, a) { if (p.t < (p.delay || 0)) return; if (p.blink !== 0 && a < 0.28 && p.t % 2) return; const r = (p.rot || 0) + (p.vr || 0) * p.t, sc = p.sc || 1, cs = Math.cos(r), sn = Math.sin(r);
+    for (const s of p.shapes) { const P = s.pts.map(([u, v]) => [p.x + (u * cs - v * sn) * sc, p.y + (u * sn + v * cs) * sc]); if (s.o === null) PXF.poly(x, P, s.c); else PXF.polyO(x, P, s.c, s.o || OL13); } },
+  p13spear(x, p, a) { if (p.t < (p.delay || 0)) return; if (p.blink && a < 0.28 && p.t % 2) return; const ux = Math.cos(p.ang), uy = Math.sin(p.ang), nx = -uy, ny = ux, sc = p.sc || 1, L = (p.len || 44) * sc, hl = (p.hl || 10) * sc, hw = (p.hw || 3.6) * sc, X = p.x, Y = p.y, sh = p.shaft || PXC.wood, hd = p.c || PXC.steel, sw = Math.max(2, Math.round(2 * sc));
+    const bx = X - ux * L, by = Y - uy * L, sx = X - ux * hl * 0.55, sy = Y - uy * hl * 0.55; PXF.line(x, bx, by, sx, sy, sh[2], sw + 2); PXF.line(x, bx, by, sx, sy, sh[0], sw); PXF.line(x, bx + nx * 0.6, by + ny * 0.6, sx + nx * 0.6, sy + ny * 0.6, sh[1], 1);
+    const head = [[X + ux * hl * 0.5, Y + uy * hl * 0.5], [X - ux * hl * 0.15 + nx * hw, Y - uy * hl * 0.15 + ny * hw], [X - ux * hl * 0.55, Y - uy * hl * 0.55], [X - ux * hl * 0.15 - nx * hw, Y - uy * hl * 0.15 - ny * hw]];
+    PXF.polyO(x, head, hd[0], hd[2]); PXF.line(x, X - ux * hl * 0.4, Y - uy * hl * 0.4, X + ux * hl * 0.35, Y + uy * hl * 0.35, hd[1], 1);
+    if (p.tuft) for (const s2 of [-1, 1]) { const tx = sx - ux * 3 * sc + nx * s2 * 2.5 * sc, ty = sy - uy * 3 * sc + ny * s2 * 2.5 * sc; PXF.line(x, sx - ux * sc, sy - uy * sc, tx, ty, OL13, sw + 2); PXF.line(x, sx - ux * sc, sy - uy * sc, tx, ty, p.tuft, sw); } },
+  p13dagger(x, p, a) { if (p.t < (p.delay || 0)) return; if (p.blink !== 0 && a < 0.28 && p.t % 2) return; const ux = Math.cos(p.ang), uy = Math.sin(p.ang), nx = -uy, ny = ux, sc = p.sc || 1, bl = 13 * sc, bw = 2.6 * sc, X = p.x, Y = p.y, c = p.c || PXC.steel;
+    const Bx = X - ux * bl, By = Y - uy * bl, gl = 6 * sc, Gx = Bx - ux * gl, Gy = By - uy * gl, gw = 4.5 * sc, gc = p.gc || '#e0b040', s2 = Math.max(2, Math.round(2 * sc));
+    PXF.line(x, Bx, By, Gx, Gy, OL13, s2 + 2); PXF.line(x, Bx, By, Gx, Gy, p.grip || '#6a3a20', s2); PXF.sq(x, Gx - ux, Gy - uy, s2 + 3, OL13); PXF.sq(x, Gx - ux, Gy - uy, s2 + 1, gc);
+    PXF.line(x, Bx + nx * gw, By + ny * gw, Bx - nx * gw, By - ny * gw, OL13, s2 + 2); PXF.line(x, Bx + nx * gw, By + ny * gw, Bx - nx * gw, By - ny * gw, gc, s2);
+    PXF.polyO(x, [[X + ux, Y + uy], [Bx + ux * 2 + nx * bw, By + uy * 2 + ny * bw], [Bx + nx * bw * 0.8, By + ny * bw * 0.8], [Bx - nx * bw * 0.8, By - ny * bw * 0.8], [Bx + ux * 2 - nx * bw, By + uy * 2 - ny * bw]], c[0], c[2] || OL13);
+    PXF.line(x, Bx + ux * 2 + nx * Math.max(1, bw * 0.4), By + uy * 2 + ny * Math.max(1, bw * 0.4), X - ux * 2, Y - uy * 2, c[1], 1); },
+  p13vine(x, p, a) { const g = clamp(p.t / (p.grow || 6), 0, 1), N = 16, P = [], dx = p.x2 - p.x1, dy = p.y2 - p.y1, L = Math.hypot(dx, dy) || 1, nx = -dy / L, ny = dx / L;
+    for (let i = 0; i <= N * g; i++) { const u = i / N, w = Math.sin(u * Math.PI * (p.waves || 2.5) + p.t * 0.25) * (p.amp || 6) * Math.sin(Math.PI * u); P.push([p.x1 + dx * u + nx * w, p.y1 + dy * u + ny * w]); }
+    if (P.length < 2) return; if (p.blink && a < 0.28 && p.t % 2) return; PXF.path3(x, P, p.c, p.s || 2); P.forEach((q, i) => { if (i % 4 === 2) PXF.spr(x, PXI.leaf, q[0] + (i % 8 === 2 ? 4 : -4), q[1] - 3, 2); }); },
+  p13crack(x, p, a) { if (p.t < (p.delay || 0)) return; const n = Math.max(2, Math.ceil(p.pts.length * clamp((p.t - (p.delay || 0) + 1) / (p.grow || 6), 0, 1))), P = p.pts.slice(0, n);
+    const s = p.s || 1; for (let i = 1; i < P.length; i++) PXF.line(x, P[i - 1][0], P[i - 1][1], P[i][0], P[i][1], p.o || '#1a0c00', s + 2); const glow = a > 0.35 || p.t % 2 ? p.c : (p.c2 || p.c); for (let i = 1; i < P.length; i++) PXF.line(x, P[i - 1][0], P[i - 1][1], P[i][0], P[i][1], glow, s); },
+  p13shadow(x, p, a) { const g = clamp(p.t / (p.grow || 6), 0, 1), rx = lerp(p.r0 || 4, p.rx, g), ry = rx * (p.fl || 0.3); if (a < 0.25 && p.t % 2) return; PXF.ell(x, p.x, p.y, rx + 1, ry + 1, p.o || '#0a0418'); PXF.ell(x, p.x, p.y, rx, ry, p.c || '#2a1844'); },
+  p13col(x, p, a) { if (p.t < (p.delay || 0)) return; const t = p.t - (p.delay || 0), g = clamp(t / (p.grow || 4), 0, 1), h = Math.round(p.h * g), w = Math.max(1, Math.round(p.w * (a > 0.5 ? 1 : a * 2))); if (a < 0.25 && p.t % 2) return;
+    x.fillStyle = p.c[2] || OL13; x.fillRect(Math.round(p.x - w / 2) - 1, Math.round(p.y - h), w + 2, h); x.fillStyle = p.c[0]; x.fillRect(Math.round(p.x - w / 2), Math.round(p.y - h), w, h); if (w >= 3) { x.fillStyle = p.c[1]; x.fillRect(Math.round(p.x - w / 6), Math.round(p.y - h), Math.max(1, Math.round(w / 3)), h); } },
+});
+const PX13 = {
+  hero(b) { return b.center(b.H); },
+  hand(b) { const H = b.center(b.H); return { x: H.x + 9, y: H.y - 12 }; }, // the weapon hand (the hero is seen from behind, weapon on the right)
+  tip(b) { const H = b.center(b.H); return { x: H.x + 16, y: H.y - 30 }; }, // the staff's tip
+  foes(b, t) { return K13.views(b, t).filter(v => v && !v.gone).map(v => ({ v, P: b.center(v) })); },
+  dir(A, B) { const dx = B.x - A.x, dy = B.y - A.y, L = Math.hypot(dx, dy) || 1; return { ux: dx / L, uy: dy / L, nx: -dy / L, ny: dx / L, L, ang: Math.atan2(dy, dx) }; },
+  line(b, A, B, col, s = 2, life = 10, o = {}) { return b.spawn(Object.assign({ k: 'p13line', x1: A.x, y1: A.y, x2: B.x, y2: B.y, c: col, s, life }, o)); },
+  arc(b, P, r, a0, a1, col, w = 4, life = 12, o = {}) { return b.spawn(Object.assign({ k: 'p13arc', x: P.x, y: P.y, r, a0, a1, c: col, w, life }, o)); },
+  ring(b, P, r0, r1, col, s = 2, life = 12, o = {}) { return b.spawn(Object.assign({ k: 'p13ring', x: P.x, y: P.y, r0, r1, c: col, s, life }, o)); },
+  burst(b, P, r, col, life = 10, o = {}) { return b.spawn(Object.assign({ k: 'p13burst', x: P.x, y: P.y, r, c: col, life }, o)); },
+  spr(b, img, P, o = {}) { return b.spawn(Object.assign({ k: 'p13spr', img, x: P.x, y: P.y, life: 20 }, o)); },
+  bits(b, P, n, cols, spd = 2, g = 0.15, life = 18, o = {}) { for (let i = 0; i < n; i++) { const an = o.ang != null ? o.ang + rnd(-10, 10) / 10 * (o.spread || 0.6) : Math.random() * Math.PI * 2, v = spd * (0.5 + Math.random() * 0.7);
+      b.spawn({ k: 'p13px', x: P.x + rnd(-2, 2), y: P.y + rnd(-2, 2), vx: Math.cos(an) * v, vy: Math.sin(an) * v - (o.up || 0), g, s: o.s || (i % 3 ? 2 : 3), cols, o: o.o, life: life + rnd(-3, 3), blink: 1 }); } },
+  hit(b, P, col, big = 0) { PX13.burst(b, P, big ? 18 : 12, col, big ? 12 : 9, { s: big ? 3 : 2 }); PX13.bits(b, P, big ? 10 : 6, [col[1], col[0], col[0]], big ? 2.6 : 2, 0.12, 14, { s: 3 }); b.shake = Math.max(b.shake || 0, big ? 8 : 3); },
+  zig(A, B, n = 7, amp = 6) { const P = [[A.x, A.y]], d = PX13.dir(A, B); for (let i = 1; i < n; i++) { const u = i / n, w = (Math.random() * 2 - 1) * amp; P.push([A.x + (B.x - A.x) * u + d.nx * w, A.y + (B.y - A.y) * u + d.ny * w]); } P.push([B.x, B.y]); return P; },
+  spear(b, A, B, o = {}) { const d = PX13.dir(A, B), F = o.frames || 4, over = o.over ?? 6, hold = o.hold ?? 4, back = o.back ?? 4, L = o.len || 46, X1 = B.x + d.ux * over, Y1 = B.y + d.uy * over;
+    const p = b.spawn({ k: 'p13spear', x: A.x, y: A.y, ang: d.ang, len: L, sc: o.sc || 1.3, hl: o.hl || 11, hw: o.hw || 4, c: o.c || PXC.steel, shaft: o.shaft || PXC.wood, tuft: o.tuft === undefined ? '#d02a2a' : o.tuft, life: F + hold + back + 1 });
+    p.upd = q => { const t = q.t, k = t < F ? t / F : t < F + hold ? 1 : 1 - (t - F - hold) / back * 0.6; q.x = lerp(A.x, X1, k * k * (3 - 2 * k)); q.y = lerp(A.y, Y1, k * k * (3 - 2 * k)); }; return p; },
+  dStab(b, P, o = {}) { const A = o.from || PX13.hand(b), d = PX13.dir(A, P), L = o.len || 24, S0 = { x: P.x - d.ux * L, y: P.y - d.uy * L }, E = { x: P.x + d.ux * (o.over ?? 3), y: P.y + d.uy * (o.over ?? 3) }, F = o.frames || 3;
+    const p = b.spawn({ k: 'p13dagger', x: S0.x, y: S0.y, ang: d.ang, sc: o.sc || 1, c: o.c || PXC.steel, gc: o.gc, life: F + (o.hold ?? 6) + 4, delay: o.delay || 0 }); p.upd = q => { const k = clamp((q.t - (o.delay || 0)) / F, 0, 1); q.x = lerp(S0.x, E.x, k); q.y = lerp(S0.y, E.y, k); };
+    if (o.trail !== 0) PX13.line(b, { x: S0.x - d.ux * 8, y: S0.y - d.uy * 8 }, { x: E.x - d.ux * 10, y: E.y - d.uy * 10 }, o.tc || [o.c ? o.c[1] : '#ffffff'], 1, F + 5, { thin: 1, grow: F, hold: F + 1, delay: o.delay || 0 }); return p; },
+  dSlash(b, C, r, a0, a1, col, o = {}) { const F = o.frames || 4, fl = o.fl || 1, dir = a1 > a0 ? 1 : -1;
+    PX13.arc(b, C, r, a0, a1, col, o.w || 4, o.life || 13, { grow: F, fl, delay: o.delay || 0 });
+    const p = b.spawn({ k: 'p13dagger', x: C.x, y: C.y, ang: 0, sc: o.sc || 1, c: o.blade || PXC.steel, gc: o.gc, life: F + 5, delay: o.delay || 0 });
+    p.upd = q => { const k = clamp((q.t - (o.delay || 0)) / F, 0, 1), an = lerp(a0, a1, k); q.x = C.x + Math.cos(an) * r; q.y = C.y + Math.sin(an) * r * fl; q.ang = Math.atan2(Math.cos(an) * fl * dir, -Math.sin(an) * dir); }; return p; },
+  speed(b, A, B, col, n = 6, life = 8) { const d = PX13.dir(A, B); for (let i = 0; i < n; i++) { const off = (i - (n - 1) / 2) * 5 + rnd(-1, 1), s0 = rnd(0, 20), len = rnd(14, 26), P0 = { x: A.x + d.nx * off + d.ux * s0, y: A.y + d.ny * off + d.uy * s0 };
+      b.spawn({ k: 'p13line', x1: P0.x, y1: P0.y, x2: P0.x + d.ux * len, y2: P0.y + d.uy * len, c: [i % 2 ? col[0] : col[1]], thin: 1, s: 1, grow: 2, life: life + rnd(-2, 2), delay: rnd(0, 3) }); } },
+};
+const OSH13 = '#120c22';
+const BLADE_V13 = ['#7ad048', '#e0ffc0', '#0a2a0a'], BLADE_R13 = ['#e8e0f0', '#ffffff', '#2a0410'], BLADE_S13 = ['#b8a8d8', '#ffffff', '#12061e'];
+const spark13 = (b, P, col, r = 8) => { PX13.burst(b, P, r, col, 9, { n: 4 }); PX13.spr(b, PXI.glintS, P, { life: 8 }); };
+const drip13 = (b, P, n = 4, w = 16) => { for (let i = 0; i < n; i++) b.spawn({ k: 'p13px', x: P.x + rnd(-w, w), y: P.y + rnd(-4, 4), vx: 0, vy: 0.3, g: 0.12, s: 3, cols: ['#b8ff80', '#5ad048', '#2a8a2a'], o: '#0a2a0a', life: 22 + rnd(0, 6), delay: rnd(0, 4) }); };
+const bubbles13 = (b, P, n = 3) => { for (let i = 0; i < n; i++) PX13.spr(b, PXI.bubble, { x: P.x + rnd(-14, 14), y: P.y + rnd(-6, 8) }, { sc: 2, vy: -0.45, life: 22 + rnd(0, 8), delay: i * 3 }); };
+const zaps13 = (b, P, n = 3) => { for (let i = 0; i < n; i++) PX13.spr(b, PXI.zap, { x: P.x + rnd(-16, 16), y: P.y + rnd(-14, 10) }, { sc: 2, life: 18, delay: i * 2 }); };
+const tgt13 = (b, t) => K13.views(b, t)[0] || b.tgtV;
+const b13dot = (b, P, c) => b.spawn({ k: 'p13px', x: P.x, y: P.y, s: 2, cols: ['#ffffff', c], o: OSH13, life: 16 });
+const vanish13 = (b, n = 24) => { const v = b.H, H = PX13.hero(b); PX13.bits(b, H, 14, ['#3a1a4a', '#6a3a8a', '#1a0a24'], 1.4, -0.03, 16, { s: 4 }); if (!v || !v.off) return; const y0 = v.off.y; v.off.y = 400; b.spawn({ k: 'p13nil', life: n + 1, upd: q => { if (q.t >= n) v.off.y = y0; } }); };
+const xSlash13 = (b, P, side, col, blade, o = {}) => { const r = o.r || 22, C = { x: P.x - side * r * 0.64, y: P.y + r * 0.55 }, a0 = side > 0 ? -1.75 : -Math.PI + 1.75, a1 = side > 0 ? 0.17 : -Math.PI - 0.17;
+  return PX13.dSlash(b, C, r, a0, a1, col, Object.assign({ blade, w: 5 }, o)); };
+redo13('t_dgVenom', 't11_dgVenom', { col: PXC.venom,
+  *f(S, U, T, u) { drip13(this, PX13.hand(this), 3, 3); Sound.sfx('poison'); yield* this.lunge(u, 16, 2); Sound.sfx('slash');
+    xSlash13(this, T, 1, S.col, BLADE_V13); yield* wait(3); drip13(this, T, 6); spark13(this, T, S.col); yield* wait(10); },
+  *h(S, U, T) { Sound.sfx('slash'); xSlash13(this, T, -1, S.col, BLADE_V13); yield* wait(3); drip13(this, T, 6); bubbles13(this, T, 3); spark13(this, T, S.col, 10); yield* wait(12); } });
+redo13('t_dgQuick', 't11_dgQuick', { col: PXC.blade,
+  *f(S, U, T, u) { Sound.sfx('wind'); for (let i = 1; i <= 3; i++) K13.ghost(this, 0, i * 5, '#bfe8ff', 6 + i * 2, 0.45 - i * 0.1); PX13.speed(this, U, T, PXC.wind, 6, 8);
+    yield* this.lunge(u, 26, 2); Sound.sfx('slash'); PX13.dStab(this, T, { len: 30, sc: 1.4, frames: 2, hold: 6 }); yield* wait(2); spark13(this, T, S.col, 10); PX13.spr(this, PXI.glint, { x: T.x + 2, y: T.y - 2 }, { life: 10 }); yield* wait(8);
+    const H = PX13.hero(this); Sound.sfx('wind'); PX13.arc(this, { x: H.x, y: H.y + 14 }, 20, Math.PI * 0.2, Math.PI * 2.1, PXC.wind, 3, 18, { fl: 0.35, grow: 10 }); yield* wait(14); } });
+const rot13 = (b, T, i, ps) => { const off = [[-8, -6], [8, -2], [-4, 6], [4, 0]][i % 4], P = { x: T.x + off[0], y: T.y + off[1] }; Sound.sfx('slash'); PX13.dStab(b, P, { len: 22, sc: 1.4, frames: 2, hold: 4, c: ps ? BLADE_V13 : PXC.steel });
+  spark13(b, P, ps ? PXC.venom : PXC.blade, ps ? 11 : 7); if (ps) { PX13.bits(b, P, 6, ['#b8ff80', '#5ad048', '#2a8a2a'], 2, 0.1, 14, { s: 3 }); Sound.sfx('poison'); } };
+redo13('t_dgRot', 't11_dgRot', { col: PXC.venom,
+  *f(S, U, T, u, t) { const v = tgt13(this, t), ps = !!(v && v.st && v.st.psn); if (ps) { bubbles13(this, T, 4); K13.tint(v, '#40c040', 0.35, 34); } yield* this.lunge(u, 22, 2); rot13(this, T, 0, ps); yield* wait(5); },
+  *h(S, U, T, u, i) { const v = this.tgtV, ps = !!(v && v.st && v.st.psn); rot13(this, T, i, ps); if (i === 3) { yield* wait(2); PX13.hit(this, T, ps ? PXC.venom : PXC.blade, 0); } yield* wait(i === 3 ? 12 : 5); } });
+redo13('t_dgReap', 't11_dgReap', { col: PXC.blood,
+  *f(S, U, T, u, t) { const c = S.col, v = tgt13(this, t), low = K13.low(v, 0.5), H = PX13.hero(this);
+    Sound.sfx('wind'); vanish13(this, 30); if (low) K13.dark(this, 0.45, 44, '#1a0006'); yield* wait(6); K13.ghost(this, T.x - H.x, T.y - H.y + 30, '#401020', 18, 0.6); yield* wait(4);
+    Sound.sfx('crit'); PX13.dStab(this, T, { from: { x: T.x - 30, y: T.y - 30 }, len: 26, sc: 2, frames: 3, hold: 10, c: BLADE_R13, gc: '#c02030' }); yield* wait(3);
+    PX13.burst(this, T, low ? 18 : 13, c, 13, { s: 3 }); PX13.bits(this, T, 10, ['#ff6070', '#e8263e', '#7a0a1a'], 2.4, 0.14, 18, { s: 3 }); this.shake = Math.max(this.shake, low ? 8 : 5);
+    if (low) { yield* wait(4); Sound.sfx('crit'); PX13.dStab(this, T, { from: { x: T.x + 30, y: T.y - 30 }, len: 26, sc: 2, frames: 3, hold: 8, c: BLADE_R13, gc: '#c02030' }); PX13.spr(this, PXI.skull, { x: T.x, y: T.y - 36 }, { sc: 2, vy: -0.2, life: 34 }); K13.flash(this, '#ff1030', 0.3, 6); }
+    yield* wait(16); } });
+redo13('t_dgNeedle', 't11_dgNeedle', { col: PXC.volt,
+  *f(S, U, T) { const A = PX13.hand(this); Sound.sfx('tick'); PX13.spr(this, PXI.glintS, A, { life: 6 }); yield* wait(3);
+    for (const [dx, dy] of [[-8, -4], [7, -7], [0, 5]]) { const P = { x: T.x + dx, y: T.y + dy }; PX13.line(this, A, P, ['#ffe040', '#ffffff', '#3a2a00'], 1, 9, { grow: 3, hold: 3 }); b13dot(this, P, '#ffe040'); yield* wait(2); }
+    yield* wait(2); Sound.sfx('buzz'); zaps13(this, T, 4); PX13.burst(this, T, 10, S.col, 10, { n: 4 }); yield* wait(14); } });
+const BLOOM13 = ['#d060d8', '#ffe0fa', '#2a0626'], BLOOMST13 = { psn: PXC.venom, par: PXC.volt, brn: PXC.fire };
+const aSlash13 = (b, P, ang, col, blade, o = {}) => { const r = o.r || 26, nx = -Math.sin(ang), ny = Math.cos(ang), C = { x: P.x - nx * r, y: P.y - ny * r }, th = Math.atan2(ny, nx), sp = o.span || 1.5;
+  return PX13.dSlash(b, C, r, th - sp / 2, th + sp / 2, col, Object.assign({ blade, w: 5 }, o)); };
+const petal13 = (b, T, i, c) => { Sound.sfx('slash'); aSlash13(b, T, i * Math.PI / 5 + 0.3, c, PXC.steel, { r: 30, frames: 3, life: 24 }); };
+redo13('t_dgBloom', 't11_dgBloom', { col: BLOOM13,
+  *f(S, U, T, u) { yield* this.lunge(u, 22, 2); petal13(this, T, 0, S.col); yield* wait(4); },
+  *h(S, U, T, u, i) { petal13(this, T, i, S.col); if (i < 4) { yield* wait(4); return; }
+    yield* wait(5); const v = this.tgtV, L = Object.keys(BLOOMST13).filter(k => v && v.st && v.st[k]);
+    if (!L.length) { PX13.hit(this, T, S.col, 0); yield* wait(10); return; }
+    for (const k of L) { const c = BLOOMST13[k]; Sound.sfx(k === 'par' ? 'buzz' : k === 'brn' ? 'fire' : 'poison'); PX13.burst(this, T, 20, c, 14, { s: 3 }); PX13.bits(this, T, 10, [c[1], c[0], c[0]], 2.6, 0.08, 16, { s: 3 }); this.shake = Math.max(this.shake, 6); yield* wait(9); }
+    yield* wait(6); } });
+redo13('t_dgStitch', 't11_dgStitch', { col: PXC.shade,
+  *f(S, U, T, u, t) { const c = S.col, v = tgt13(this, t), foot = v && v.foot ? v.foot : T.y + 24, A = PX13.hand(this); Sound.sfx('wind');
+    this.spawn({ k: 'p13shadow', x: T.x, y: foot - 1, r0: 8, rx: 30, fl: 0.28, grow: 10, c: '#2a1844', o: '#0a0418', life: 48 });
+    for (const dx of [-17, 0, 17]) { const P = { x: T.x + dx, y: foot - 10 }, p = this.spawn({ k: 'p13dagger', x: A.x, y: A.y, ang: Math.PI / 2, sc: 1.4, c: BLADE_S13, gc: '#8a5ad0', grip: '#3a2050', life: 48 }); p.upd = q => { const k = clamp(q.t / 5, 0, 1); q.x = lerp(A.x, P.x, k); q.y = lerp(A.y, P.y, k) - Math.sin(Math.PI * k) * 14; q.ang = k < 1 ? Math.atan2(P.y - A.y + 30 * (k - 0.5), P.x - A.x) : Math.PI / 2; }; Sound.sfx('tick'); yield* wait(2); }
+    yield* wait(5); Sound.sfx('statDown');
+    for (let i = 0; i < 2; i++) { const x0 = T.x - 8 + i * 16; PX13.line(this, { x: x0 - 4, y: foot - 4 }, { x: x0 + 4, y: foot + 2 }, ['#d0b0ff'], 1, 34, { thin: 1, grow: 2, keep: 1 }); PX13.line(this, { x: x0 + 4, y: foot - 4 }, { x: x0 - 4, y: foot + 2 }, ['#d0b0ff'], 1, 34, { thin: 1, grow: 2, keep: 1, delay: 2 }); }
+    for (const dx of [-10, 0, 10]) this.spawn({ k: 'p13crack', pts: PX13.zig({ x: T.x + dx, y: foot - 2 }, { x: T.x + dx * 0.4, y: T.y - 6 }, 5, 3), c: '#a070e0', c2: '#3a2050', o: '#0a0418', grow: 6, life: 26, delay: 4 });
+    K13.tint(v, '#2a1844', 0.6, 36); yield* wait(20); } });
+const fang13px = (b, T, side, low) => { Sound.sfx('slash'); xSlash13(b, T, side, PXC.moon, ['#fff6c8', '#ffffff', '#1c1a3a'], { r: 28, w: 7, frames: 4, life: 18 });
+  if (low) { Sound.sfx('crit'); PX13.spr(b, PXI.glint, { x: T.x - side * 6, y: T.y - 8 }, { sc: 2, life: 14, delay: 3 }); PX13.burst(b, T, 16, PXC.gold, 12, { s: 3, delay: 3 }); } else PX13.burst(b, T, 10, PXC.moon, 10, { delay: 3 }); b.shake = Math.max(b.shake, low ? 6 : 3); };
+redo13('t_zjMoonFang', 't11_zjMoonFang', { col: PXC.moon,
+  *f(S, U, T, u, t) { const v = tgt13(this, t), low = K13.low(v, 0.5); K13.dark(this, 0.5, 46, '#04061a'); Sound.sfx('charge'); PX13.spr(this, PXI.moon, { x: T.x + 30, y: T.y - 38 }, { sc: 2, life: 46 }); yield* wait(7);
+    yield* this.lunge(u, 22, 2); fang13px(this, T, 1, low); yield* wait(9); },
+  *h(S, U, T) { fang13px(this, T, -1, K13.low(this.tgtV, 0.5)); yield* wait(14); } });
+redoSp13('短刀', 0, { col: PXC.venom,
+  *f(S, U, T, u) { yield* this.lunge(u, 16, 2); Sound.sfx('slash');
+    for (const s of [-1, 1]) { const A = { x: T.x + s * 3, y: T.y + s * 22 }, B = { x: T.x + s * 3, y: T.y + s * 2 }, p = this.spawn({ k: 'p13dagger', x: A.x, y: A.y, ang: s < 0 ? Math.PI / 2 : -Math.PI / 2, c: BLADE_V13, life: 14 }); p.upd = q => { const k = clamp(q.t / 3, 0, 1); q.x = lerp(A.x, B.x, k); q.y = lerp(A.y, B.y, k); }; }
+    yield* wait(3); Sound.sfx('poison'); drip13(this, T, 7, 6); bubbles13(this, T, 2); spark13(this, T, S.col, 10); yield* wait(12); } });
+redoSp13('短刀', 1, { col: PXC.shade,
+  *f(S, U, T, u) { const H = PX13.hero(this); Sound.sfx('wind'); vanish13(this, 24); yield* wait(4); K13.ghost(this, T.x - H.x, T.y - H.y + 30, '#2a1844', 16, 0.6); yield* wait(4); Sound.sfx('crit');
+    PX13.dStab(this, T, { from: { x: T.x + 26, y: T.y - 26 }, sc: 2, frames: 3, hold: 8, c: BLADE_S13, gc: '#8a5ad0' }); yield* wait(3); PX13.spr(this, PXI.glint, T, { sc: 2, life: 14 }); PX13.burst(this, T, 16, PXC.gold, 12, { s: 3 }); this.shake = Math.max(this.shake, 6); yield* wait(14); } });
+const thrust13 = (b, P, o = {}) => { const A = o.from || PX13.hand(b); PX13.spear(b, A, P, o); PX13.speed(b, A, P, o.lines || PXC.wind, o.n || 4, 8); Sound.sfx(o.snd || 'slash'); };
+const plate13 = (b, P, d, life = 16) => PX13.spr(b, PXI.plate, { x: P.x - d.ux * 6, y: P.y - d.uy * 6 }, { life, blink: 0 });
+const platePop13 = (b, P, d, pl) => { if (pl) pl.life = pl.t + 1; const C = { x: P.x - d.ux * 6, y: P.y - d.uy * 6 }; for (const s of [-1, 1]) PX13.spr(b, s < 0 ? PXI.plateL : PXI.plateR, { x: C.x + s * 4, y: C.y }, { vx: s * 1.3, vy: -1.2, g: 0.16, life: 20 });
+  PX13.bits(b, C, 6, ['#ffffff', '#b0bccc', '#7a8498'], 2, 0.14, 14, { s: 3 }); };
+{ const _wa = FX.wAtk; FX.wAtk = function* (U, T, u) { const k = this._thKind || '', c = WTH12[this._thT] || WTH12.steel, col = [c[0], c[1], OSH13];
+    if (k === '長槍') { yield* this.lunge(u, 10, 2); thrust13(this, T, { over: 4, c: col }); yield* wait(5); PX13.burst(this, T, 9, col, 9); yield* wait(6); return; }
+    if (k === '短刀') { yield* this.lunge(u, 12, 2); Sound.sfx('slash'); PX13.dStab(this, T, { len: 22, sc: 1.4, frames: 2, hold: 5 }); yield* wait(2); spark13(this, T, col, 8); yield* wait(6); return; }
+    return yield* _wa.call(this, U, T, u); }; }
+{ const _sg = segSwing; segSwing = function* (b, s, C, i, kind) { if (kind !== '短刀') return yield* _sg(b, s, C, i, kind); const c = WTH12[b._thT] || WTH12.steel; yield* b.lunge(s, 6, 2); Sound.sfx('slash');
+    const P = { x: C.x + [6, -6, 0][i % 3], y: C.y + [-4, 4, 0][i % 3] }; PX13.dStab(b, P, { len: 20, sc: 1.4, frames: 2, hold: 4 }); yield* wait(2); spark13(b, P, [c[0], c[1], OSH13], 7); yield* wait(4); }; }
+redo13('t_spPierce', 't11_spPierce', { col: PXC.steel,
+  *f(S, U, T, u) { const d = PX13.dir(PX13.hand(this), T), pl = plate13(this, T, d, 60); yield* this.lunge(u, 14, 2); thrust13(this, T, { over: 18, frames: 4, hold: 6 }); yield* wait(3);
+    Sound.sfx('hitSuper'); platePop13(this, T, d, pl); PX13.burst(this, { x: T.x + d.ux * 16, y: T.y + d.uy * 16 }, 10, PXC.steel, 10, { delay: 2 }); PX13.hit(this, T, PXC.steel, 0); yield* wait(12); } });
+redo13('t_spDash', 't11_spDash', { col: PXC.wind,
+  *f(S, U, T, u, t) { Sound.sfx('wind'); for (let i = 1; i <= 3; i++) K13.ghost(this, 0, i * 6, '#9ae8ff', 6 + i * 2, 0.45 - i * 0.1); yield* this.lunge(u, 26, 2); thrust13(this, T, { frames: 3, hold: 3, n: 7 }); yield* wait(4);
+    PX13.hit(this, T, PXC.steel, 0); Sound.sfx('statDown'); for (const dx of [-14, 14]) PX13.spr(this, PXI.dnCh('#3a8aff'), { x: T.x + dx, y: T.y - 30 }, { vy: 0.5, life: 22 }); yield* wait(14); } });
+redo13('t_spSweep', 't11_spSweep', { col: PXC.steel,
+  *f(S, U, T, u, t) { const L = PX13.foes(this, t).sort((a, q) => a.P.x - q.P.x), C = { x: T.x, y: T.y + 14 }, R = Math.max(70, (L.length ? Math.max(...L.map(q => Math.abs(q.P.x - T.x))) : 0) + 22);
+    yield* this.lunge(u, 12, 2); Sound.sfx('wind'); PX13.arc(this, C, R, Math.PI * 1.02, Math.PI * 1.98, PXC.wind, 5, 16, { fl: 0.32, grow: 8 });
+    const sp = this.spawn({ k: 'p13spear', x: C.x - R, y: C.y, ang: -Math.PI / 2, len: 40, hl: 11, hw: 4, c: PXC.steel, shaft: PXC.wood, tuft: '#d02a2a', life: 10 }); sp.upd = q => { const an = Math.PI * (1.02 + 0.96 * clamp(q.t / 8, 0, 1)); q.x = C.x + Math.cos(an) * R; q.y = C.y + Math.sin(an) * R * 0.32; q.ang = an + Math.PI / 2; };
+    let k = 0; for (let f = 0; f < 9; f++) { const an = Math.PI * (1.02 + 0.96 * f / 8), X = C.x + Math.cos(an) * R; while (k < L.length && L[k].P.x <= X + 4) { const P = L[k].P; Sound.sfx('hit'); PX13.hit(this, P, PXC.steel, 0); PX13.bits(this, { x: P.x, y: P.y + 20 }, 6, ['#d0b080', '#a08050', '#6a5030'], 1.6, 0.16, 16, { up: 1 }); k++; } yield; }
+    yield* wait(10); } });
+const tri13 = function* (b, T, i) { const off = [[-6, -10], [6, -1], [0, 8]][i % 3], P = { x: T.x + off[0], y: T.y + off[1] }, d = PX13.dir(PX13.hand(b), P); thrust13(b, P, { frames: 3, hold: 3, back: 3, over: 10 }); yield* wait(3);
+  PX13.bits(b, P, 6, ['#ffffff', '#b0bccc', '#7a8498'], 2, 0.14, 14, { s: 3, ang: d.ang, spread: 0.7 }); PX13.burst(b, P, i === 2 ? 14 : 10, PXC.steel, 10, { s: i === 2 ? 3 : 2 }); };
+redo13('t_spTriple', 't11_spTriple', { col: PXC.steel,
+  *f(S, U, T, u) { yield* this.lunge(u, 16, 2); yield* tri13(this, T, 0); yield* wait(4); },
+  *h(S, U, T, u, i) { yield* tri13(this, T, i); yield* wait(i === 2 ? 12 : 5); } });
+redo13('t_spBreak', 't11_spBreak', { col: PXC.steel,
+  *f(S, U, T, u, t) { const v = tgt13(this, t), chg = !!(v && v.st && v.st.charging), d = PX13.dir(PX13.hand(this), T);
+    const pls = [-1, 0, 1].map(s => plate13(this, { x: T.x + d.nx * s * 15, y: T.y + d.ny * s * 15 }, d, 60));
+    if (chg) for (let i = 0; i < 8; i++) { const an = i * Math.PI / 4; PX13.spr(this, PXI.glintS, { x: T.x + Math.cos(an) * 20, y: T.y + Math.sin(an) * 16 }, { life: 12 }); }
+    yield* this.lunge(u, 18, 3); thrust13(this, T, { over: 10, frames: 4, hold: 6, hl: 14, hw: 5, len: 50 }); yield* wait(3); Sound.sfx('hitSuper');
+    [-1, 0, 1].forEach((s, i) => platePop13(this, { x: T.x + d.nx * s * 15, y: T.y + d.ny * s * 15 }, d, pls[i])); PX13.hit(this, T, PXC.steel, 1);
+    if (chg) { yield* wait(2); Sound.sfx('crit'); PX13.burst(this, T, 22, PXC.fire2, 14, { s: 3 }); K13.flash(this, '#ffb060', 0.3, 6); }
+    yield* wait(12); } });
+redo13('t_spGuard', 't11_spGuard', { col: PXC.steel,
+  *f(S, U) { const H = PX13.hero(this), C = { x: H.x, y: H.y - 10 }; Sound.sfx('wind');
+    const sp = this.spawn({ k: 'p13spear', x: C.x, y: C.y - 24, ang: -Math.PI / 2, len: 48, hl: 11, hw: 4, c: PXC.steel, shaft: PXC.wood, tuft: '#d02a2a', life: 34 });
+    sp.upd = q => { const k = clamp(q.t / 16, 0, 1), an = -Math.PI / 2 + k * Math.PI * 4 + (k >= 1 ? 0.6 : 0); q.ang = an; q.x = C.x + Math.cos(an) * 24; q.y = C.y + Math.sin(an) * 24 * 0.6; };
+    PX13.arc(this, C, 26, -Math.PI / 2, Math.PI * 1.5, PXC.wind, 3, 16, { fl: 0.6, grow: 8 }); yield* wait(8); PX13.arc(this, C, 26, -Math.PI / 2, Math.PI * 1.5, PXC.wind, 3, 14, { fl: 0.6, grow: 7 }); yield* wait(9);
+    Sound.sfx('shield'); PX13.spr(this, PXI.shield, { x: H.x, y: H.y - 18 }, { sc: 2, life: 18 }); PX13.ring(this, { x: H.x, y: H.y + 16 }, 6, 30, PXC.blue, 2, 16, { fl: 0.35 });
+    for (const dx of [-18, 18]) PX13.spr(this, PXI.upCh('#7ab8ff'), { x: H.x + dx, y: H.y }, { vy: -0.6, life: 20 }); yield* wait(4);
+    PX13.spr(this, PXI.glint, { x: C.x + Math.cos(-Math.PI / 2 + 0.6) * 24 + 8, y: C.y + Math.sin(-Math.PI / 2 + 0.6) * 14 - 4 }, { life: 14 }); yield* wait(10); } });
+const many13 = function* (b, T, i, n = 2) { for (let k = 0; k < n; k++) { const P = { x: T.x + rnd(-10, 10), y: T.y + rnd(-10, 8) }, A = PX13.hand(b); PX13.spear(b, { x: A.x + rnd(-8, 8), y: A.y + rnd(-2, 4) }, P, { frames: 3, hold: 2, back: 3, over: 6, tuft: k ? null : '#d02a2a' }); }
+  Sound.sfx('slash'); yield* wait(3); PX13.burst(b, T, i === 5 ? 16 : 9, PXC.steel, 10, { s: i === 5 ? 3 : 2 }); if (i === 5) PX13.hit(b, T, PXC.steel, 1); };
+redo13('t_spThousand', 't11_spThousand', { col: PXC.steel,
+  *f(S, U, T, u) { PX13.speed(this, U, T, PXC.wind, 10, 14); yield* this.lunge(u, 18, 2); yield* many13(this, T, 0, 3); yield* wait(2); },
+  *h(S, U, T, u, i) { PX13.speed(this, PX13.hero(this), T, PXC.wind, 3, 6); yield* many13(this, T, i, 2); yield* wait(i === 5 ? 12 : 2); } });
+Object.assign(HERO_PK, { p13helix(x, p, a) { const d = p.d, Hd = { x: p.hx(), y: p.hy() }, L = Math.hypot(Hd.x - p.x1, Hd.y - p.y1); if (L < 4) return; if (a < 0.25 && p.t % 2) return; const n = Math.max(6, Math.round(L / 2));
+    for (const pass of [0, 1]) for (const ph of [0, Math.PI]) { let q0 = null; for (let i = 0; i <= n; i++) { const u = i / n, th = u * L / 7 - p.t * 0.8 + ph, w = Math.sin(th) * 7 * Math.min(1, u * 3), X = p.x1 + (Hd.x - p.x1) * u + d.nx * w, Y = p.y1 + (Hd.y - p.y1) * u + d.ny * w, front = Math.cos(th) > 0;
+      if (q0) { if (pass === 0) PXF.line(x, q0[0], q0[1], X, Y, OSH13, 4); else PXF.line(x, q0[0], q0[1], X, Y, front ? p.c[1] : p.c[0], 2); } q0 = [X, Y]; } } } });
+redo13('t_spSpiral', 't11_spSpiral', { col: PXC.azure,
+  *f(S, U, T, u, t) { const c = S.col, v = tgt13(this, t), brk = K13.broken(v), A = PX13.hand(this), d = PX13.dir(A, T); yield* this.lunge(u, 18, 3); Sound.sfx('wind');
+    const sp = PX13.spear(this, A, T, { over: 26, frames: 7, hold: 8, back: 4, hl: 13, hw: 5, len: 50, c: PXC.steel }); this.spawn({ k: 'p13helix', x1: A.x, y1: A.y, d, c, hx: () => sp.x, hy: () => sp.y, life: 18 });
+    yield* wait(5); Sound.sfx('hitSuper'); PX13.hit(this, T, c, 1); for (let i = 0; i < 10; i++) { const an = d.ang + Math.PI / 2 * (i % 2 ? 1 : -1) + rnd(-4, 4) / 10, vv = 1.6 + Math.random(); this.spawn({ k: 'p13px', x: T.x, y: T.y, vx: Math.cos(an) * vv + d.ux * 1.2, vy: Math.sin(an) * vv + d.uy * 1.2, g: 0.08, s: 2, cols: [c[1], c[0], '#7a88a8'], o: OSH13, life: 16 }); }
+    PX13.burst(this, { x: T.x + d.ux * 22, y: T.y + d.uy * 22 }, 10, c, 10); if (brk) { yield* wait(3); Sound.sfx('crit'); PX13.burst(this, T, 22, PXC.gold, 14, { s: 3 }); }
+    yield* wait(12); } });
+const JUMP13 = new Set(['t_zjAzure', 't_zjMeteor']);
+function* leap13(b) { const v = b.H; if (!v || !v.off) return; Sound.sfx('jump'); PX13.ring(b, { x: PX13.hero(b).x, y: HERO_FOOT - 2 }, 4, 26, PXC.wind, 2, 14, { fl: 0.3 }); PX13.bits(b, { x: PX13.hero(b).x, y: HERO_FOOT - 2 }, 8, ['#d0b080', '#a08050'], 1.6, 0.14, 14, { up: 1 });
+  for (let i = 1; i <= 3; i++) K13.ghost(b, 0, -i * 16, '#9ae8ff', 6 + i * 3, 0.4); v.air13 = 1; v.airT13 = 0; v.drop13 = 1; yield* tween(8, q => { v.off.y = -170 * q * q; }); v.drop13 = 0;
+  for (let i = 0; i < 5; i++) PX13.line(b, { x: PX13.hero(b).x - 8 + i * 4, y: 40 + i * 8 }, { x: PX13.hero(b).x - 8 + i * 4, y: 10 + i * 8 }, ['#bfe8ff'], 1, 8, { thin: 1, grow: 2, delay: i }); yield* wait(6); }
+HERO_PK.p13nil = () => {};
+function dropAnim13(b, frames = 6) { const v = b.H; if (!v || !v.off) return; v.drop13 = 1; v.off.y = -170; const end = () => { v.off.y = 0; v.air13 = 0; v.drop13 = 0; };
+  b.spawn({ k: 'p13nil', life: frames + 3, upd: q => { const k = clamp(q.t / frames, 0, 1); if (v.drop13) v.off.y = -170 * (1 - k * k); if (k >= 1 && v.drop13) end(); } }); return end; }
+{ const H = Battle.prototype.handlers, _ch = H.CHARGE; H.CHARGE = function* (e, s, t, P) { this.leap13 = !!(s && s.hero && JUMP13.has(P.skill)); try { yield* _ch.call(this, e, s, t, P); } finally { this.leap13 = false; } };
+  const _fc = FX.charge; FX.charge = function* (U, ...a) { if (this.leap13) { this.leap13 = false; yield* leap13(this); return; } yield* _fc.call(this, U, ...a); };
+  const _sg = H.statusGone; H.statusGone = function* (e, s, t, P, ex) { if (t && t.hero && P.status === 'airborne' && t.air13) { if (P.why === 'release') { t.air13 = 3; t.airT13 = 0; } else { t.air13 = 0; t.off.y = 0; } } yield* _sg.call(this, e, s, t, P, ex); };
+  const _up = Battle.prototype.update; Battle.prototype.update = function () { _up.call(this); const v = this.H; if (!v || !v.air13 || !v.off || v.drop13) return; v.airT13 = (v.airT13 || 0) + 1; if (v.air13 === 1 && v.st && v.st.airborne) v.air13 = 2;
+    v.off.y = -170; if ((v.air13 === 1 && v.airT13 > 300) || (v.air13 === 3 && v.airT13 > 120)) { v.air13 = 0; v.off.y = 0; } }; }
+redo13('t_zjAzure', 't11_zjAzure', { col: PXC.azure,
+  *f(S, U, T, u, t) { const c = S.col, v = tgt13(this, t), foot = v && v.foot ? v.foot : T.y + 24, A = { x: T.x + 6, y: -30 }; Sound.sfx('wind');
+    for (let i = 0; i < 3; i++) PX13.line(this, { x: T.x + 6 + (i - 1) * 5, y: -20 }, { x: T.x + (i - 1) * 3, y: T.y - 10 }, c, i === 1 ? 3 : 1, 14, { grow: 5, hold: 6, delay: i }); const sp = PX13.spear(this, A, { x: T.x, y: T.y }, { frames: 6, hold: 10, back: 1, over: 4, hl: 15, hw: 5, len: 54, c: PXC.steel });
+    const dr = dropAnim13(this, 8); yield* wait(6); Sound.sfx('quake'); this.shake = Math.max(this.shake, 12); K13.flash(this, '#d8ecff', 0.35, 6); PX13.hit(this, T, c, 1);
+    PX13.ring(this, { x: T.x, y: foot }, 6, 46, c, 2, 18, { fl: 0.3 }); PX13.ring(this, { x: T.x, y: foot }, 4, 30, PXC.wind, 1, 14, { fl: 0.3, delay: 3 });
+    for (const s of [-1, 1]) PX13.arc(this, { x: T.x + s * 6, y: T.y - 4 }, 24, s > 0 ? -Math.PI * 0.75 : -Math.PI * 0.25, s > 0 ? Math.PI * 0.1 : Math.PI * 0.9, c, 4, 16, { grow: 4 });
+    for (let i = 0; i < 6; i++) PX13.spr(this, PXI.rock, { x: T.x + rnd(-14, 14), y: foot - 2 }, { vx: rnd(-16, 16) / 10, vy: -rnd(16, 30) / 10, g: 0.16, life: 24 });
+    yield* wait(12); if (dr) dr(); } });
+redo13('t_zjMeteor', 't11_zjMeteor', { col: PXC.azure,
+  *f(S, U, T, u, t) { const c = S.col, L = PX13.foes(this, t); K13.dark(this, 0.35, 60, '#040a1a'); Sound.sfx('charge');
+    for (const { v, P } of L) { const A = { x: P.x - 40 + rnd(-6, 6), y: -20 }; const p = this.spawn({ k: 'p13orb', x: A.x, y: A.y, r: 6, c: [OSH13, c[0], c[1], '#ffffff'], trail: 12, life: 10 }); p.upd = q => { const k = clamp(q.t / 8, 0, 1); q.x = lerp(A.x, P.x, k); q.y = lerp(A.y, P.y, k); };
+      yield* wait(8); Sound.sfx('rock'); PX13.hit(this, P, c, 0); PX13.ring(this, { x: P.x, y: (v.foot || P.y + 24) }, 4, 26, c, 2, 14, { fl: 0.3 }); for (let i = 0; i < 3; i++) PX13.spr(this, PXI.rock, { x: P.x + rnd(-10, 10), y: (v.foot || P.y + 24) - 2 }, { vx: rnd(-14, 14) / 10, vy: -rnd(12, 24) / 10, g: 0.16, life: 20 }); yield* wait(2); }
+    const A = { x: T.x - 30, y: -30 }; Sound.sfx('wind'); PX13.spear(this, A, T, { frames: 7, hold: 10, back: 1, over: 2, hl: 15, hw: 5, len: 54 }); const p = this.spawn({ k: 'p13orb', x: A.x, y: A.y, r: 7, c: [OSH13, c[0], c[1], '#ffffff'], trail: 10, pulse: 1, life: 10 });
+    p.upd = q => { const k = clamp(q.t / 7, 0, 1); q.x = lerp(A.x, T.x, k); q.y = lerp(A.y, T.y, k); }; const dr = dropAnim13(this, 9); yield* wait(7);
+    Sound.sfx('quake'); this.shake = Math.max(this.shake, 14); K13.flash(this, '#d8ecff', 0.4, 8); PX13.burst(this, T, 26, c, 16, { s: 3 }); PX13.ring(this, { x: T.x, y: T.y + 24 }, 8, 80, c, 2, 20, { fl: 0.3 }); for (const { P } of L) PX13.hit(this, P, c, 1);
+    yield* wait(14); if (dr) dr(); } });
+redoSp13('長槍', 0, { col: PXC.red,
+  *f(S, U, T, u) { const A = PX13.hand(this), d = PX13.dir(A, T); yield* this.lunge(u, 14, 2); thrust13(this, T, { over: 26, frames: 4, hold: 6 }); yield* wait(3); Sound.sfx('crit');
+    PX13.line(this, T, { x: T.x + d.ux * 34, y: T.y + d.uy * 34 }, S.col, 2, 12, { grow: 3, hold: 4 }); PX13.burst(this, T, 14, S.col, 12, { s: 3 }); PX13.bits(this, { x: T.x + d.ux * 14, y: T.y + d.uy * 14 }, 8, ['#ffe0c0', '#ff3a2a', '#7a0a0a'], 2, 0.1, 14, { ang: d.ang, spread: 0.5 }); yield* wait(12); } });
+redoSp13('長槍', 1, { col: PXC.steel,
+  *f(S, U, T, u, t) { const L = PX13.foes(this, t).sort((a, q) => a.P.x - q.P.x), y0 = T.y; Sound.sfx('wind');
+    const sp = this.spawn({ k: 'p13spear', x: -20, y: y0, ang: 0, len: 44, hl: 11, hw: 4, c: PXC.steel, shaft: PXC.wood, tuft: '#d02a2a', life: 22 }); let k = 0;
+    sp.upd = q => { const X = lerp(-20, W + 30, q.t / 20), an = q.t * 0.9; q.ang = an; q.x = X + Math.cos(an) * 22; q.y = y0 + Math.sin(an) * 22; q.cx = X; };
+    for (let f = 0; f < 21; f++) { const X = lerp(-20, W + 30, f / 20); if (f % 2) PX13.arc(this, { x: X, y: y0 }, 22, f * 0.9 - 1.2, f * 0.9, PXC.wind, 2, 6, { grow: 1 }); while (k < L.length && L[k].P.x <= X) { Sound.sfx('slash'); PX13.hit(this, L[k].P, PXC.steel, 0); k++; } yield; }
+    yield* wait(8); } });
+redoSp13('長槍', 2, { col: PXC.gold,
+  *f(S) { const H = PX13.hero(this), A = { x: H.x + 12, y: H.y - 40 }; Sound.sfx('wind'); for (let i = 0; i < 3; i++) PX13.bits(this, { x: H.x - 2, y: H.y - 22 }, 3, ['#ffffff', '#d8ecff', '#a8c0e0'], 0.6, -0.02, 18, { s: 3, ang: -Math.PI / 2, spread: 0.7 });
+    yield* wait(8); this.spawn({ k: 'p13spear', x: A.x, y: A.y, ang: -Math.PI / 2 + 0.3, len: 44, hl: 11, hw: 4, c: PXC.steel, shaft: PXC.wood, tuft: '#d02a2a', life: 30 });
+    Sound.sfx('tick'); PX13.ring(this, A, 26, 2, S.col, 2, 14); yield* wait(8); Sound.sfx('crit'); PX13.spr(this, PXI.glint, A, { sc: 2, life: 10 }); yield* wait(8); PX13.spr(this, PXI.glint, A, { sc: 3, life: 12 }); yield* wait(12); } });
+const PALM13 = PXS(['..k.k.k.k..', '.kykykykyk.', '.kykykykyk.', '.kykykykyk.', 'kkyyyyyyyk.', 'kyyyyyyyyk.', '.kkyyyyyyk.', '..kyyyyyyk.', '..kyyyyyk..', '...kkkkk...'], { y: '#ffcc33' });
+redo13('t_fsThrough', 't11_fsThrough', { col: PXC.chi,
+  *f(S, U, T, u, t) { const c = S.col, v = tgt13(this, t), A = PX13.hand(this), d = PX13.dir(A, T), P0 = { x: T.x - d.ux * 12, y: T.y - d.uy * 12 }; plate13(this, T, d, 40);
+    yield* this.lunge(u, 24, 2); Sound.sfx('heavy'); const f = PX13.spr(this, PXI.fist, A, { sc: 2, life: 14 }); f.upd = q => { const k = clamp(q.t / 4, 0, 1); q.x = lerp(A.x, P0.x, k); q.y = lerp(A.y, P0.y, k); }; yield* wait(4);
+    PX13.burst(this, P0, 10, c, 9, { n: 4 }); this.shake = Math.max(this.shake, 5); yield* wait(3); Sound.sfx('quake');
+    for (let k = 0; k < 3; k++) { const P = { x: T.x + d.ux * (8 + k * 10), y: T.y + d.uy * (8 + k * 10) }; PX13.ring(this, P, 3 + k * 2, 12 + k * 6, c, 2, 12, { fl: 0.55, delay: k * 2 }); }
+    const g = PX13.spr(this, PXI.fist, T, { sc: 2, al: 0.55, life: 12, delay: 2 }); g.upd = q => { const k = clamp((q.t - 2) / 8, 0, 1); q.x = T.x + d.ux * 30 * k; q.y = T.y + d.uy * 30 * k; };
+    if (v && v.off) { const o = v.off; yield* tween(3, q => { o.x = d.ux * 5 * q; o.y = d.uy * 5 * q; }); yield* tween(6, q => { o.x = d.ux * 5 * (1 - q); o.y = d.uy * 5 * (1 - q); }); o.x = 0; o.y = 0; }
+    PX13.bits(this, { x: T.x + d.ux * 20, y: T.y + d.uy * 20 }, 8, [c[1], c[0], '#c07010'], 2, 0.06, 14, { ang: d.ang, spread: 0.6 }); yield* wait(10); } });
+redo13('t_zjQuake', 't11_zjQuake', { col: PXC.chi,
+  *f(S, U, T, u, t) { const c = S.col, v = tgt13(this, t), hu = this.core.byId.H, full = !!(hu && hu.max && hu.max.chi && (hu.res.chi || 0) >= hu.max.chi), H = PX13.hero(this), foot = v && v.foot ? v.foot : T.y + 24, A = PX13.hand(this);
+    K13.dark(this, 0.5, 64, '#140a00'); Sound.sfx('charge'); for (let i = 0; i < 14; i++) { const an = i * Math.PI / 7, P0 = { x: A.x + Math.cos(an) * 26, y: A.y + Math.sin(an) * 20 }, p = this.spawn({ k: 'p13px', x: P0.x, y: P0.y, s: 2, cols: [c[1], c[0]], o: OSH13, life: 12 }); p.upd = q => { const k = clamp(q.t / 10, 0, 1); q.x = lerp(P0.x, A.x, k); q.y = lerp(P0.y, A.y, k); }; }
+    yield* wait(10); PX13.spr(this, PXI.glint, A, { sc: 2, life: 10 }); yield* this.lunge(u, 10, 2); Sound.sfx('heavy');
+    const G0 = { x: H.x + 4, y: HERO_FOOT - 18 }; PX13.burst(this, G0, 12, c, 10, { n: 4 }); PX13.ring(this, G0, 3, 20, c, 2, 12, { fl: 0.3 }); this.shake = Math.max(this.shake, 6);
+    PX13.spr(this, PALM13, G0, { sc: 2, life: 40 }); this.spawn({ k: 'p13crack', pts: PX13.zig(G0, { x: T.x, y: foot }, 9, 4), c: '#ffcc33', c2: '#ff8a1e', s: 2, grow: 9, life: 50 }); Sound.sfx('rock'); yield* wait(9);
+    Sound.sfx('quake'); this.shake = Math.max(this.shake, 16); K13.flash(this, '#fff0c0', 0.4, 8);
+    for (let i = 0; i < 6; i++) { const an = Math.PI * (0.05 + i * 0.18) + (i % 2 ? 0 : Math.PI), R = 26 + rnd(0, 12); this.spawn({ k: 'p13crack', pts: PX13.zig({ x: T.x, y: foot }, { x: T.x + Math.cos(an) * R, y: foot + Math.sin(an) * R * 0.3 }, 4, 3), c: '#ffcc33', c2: '#ff8a1e', s: 2, grow: 4, life: 40 }); }
+    for (const dx of [-16, 0, 16]) this.spawn({ k: 'p13col', x: T.x + dx, y: foot, w: dx ? 5 : 8, h: dx ? 60 : 90, c, grow: 4, life: 20, delay: dx ? 2 : 0 });
+    for (let i = 0; i < 8; i++) PX13.spr(this, PXI.rock, { x: T.x + rnd(-18, 18), y: foot - 2 }, { vx: rnd(-20, 20) / 10, vy: -rnd(18, 36) / 10, g: 0.16, life: 28 });
+    PX13.ring(this, { x: T.x, y: foot }, 8, 70, c, 2, 20, { fl: 0.3 }); Sound.sfx('crit'); PX13.burst(this, T, 24, PXC.gold, 16, { s: 3 }); PX13.spr(this, PXI.glint, { x: T.x + 12, y: T.y - 14 }, { sc: 3, life: 18 });
+    if (full) { yield* wait(5); this.spawn({ k: 'p13col', x: T.x, y: foot, w: 18, h: 220, c: ['#fff6c0', '#ffffff', '#3a2800'], grow: 3, life: 22 }); K13.flash(this, '#ffffff', 0.5, 8); }
+    yield* wait(16); } });
+const fireBall13 = function* (b, A, P, r = 4, n = 9) { const c = [OSH13, '#d8361a', '#ff8a1e', '#ffe08a'], p = b.spawn({ k: 'p13orb', x: A.x, y: A.y, r, c, trail: 7, pulse: 1, life: n + 1 });
+  p.upd = q => { const k = clamp(q.t / n, 0, 1); q.x = lerp(A.x, P.x, k); q.y = lerp(A.y, P.y, k); if (q.t % 2 === 0) b.spawn({ k: 'p13px', x: q.x + rnd(-2, 2), y: q.y + rnd(-2, 2), vx: rnd(-3, 3) / 10, vy: -0.3, s: 2, cols: ['#ffe08a', '#ff8a1e', '#d8361a', '#5a1800'], life: 12 }); }; yield* wait(n); };
+const flames13 = (b, P, n = 3, w = 14) => { for (let i = 0; i < n; i++) PX13.spr(b, i % 2 ? PXI.flameB : PXI.flameA, { x: P.x + rnd(-w, w), y: P.y + rnd(-6, 8) }, { frames: [PXI.flameA, PXI.flameB], fps: 3, vy: -0.25, life: 20 + rnd(0, 6), delay: i * 2 }); };
+redo13('t_stArrows', 't11_stArrows', { col: PXC.fire,
+  *f(S, U, T) { const A = PX13.tip(this); Sound.sfx('fire'); flames13(this, A, 2, 3); yield* wait(5); yield* fireBall13(this, A, T, 6, 10);
+    Sound.sfx('fire'); PX13.burst(this, T, 14, PXC.fire, 12, { s: 3 }); flames13(this, T, 3); PX13.bits(this, T, 8, ['#ffe08a', '#ff8a1e', '#d8361a'], 1.6, -0.04, 18); this.shake = Math.max(this.shake, 4); yield* wait(12); } });
+const ICICLE13 = [{ pts: [[0, -12], [3, -2], [2, 9], [0, 11], [-2, 9], [-3, -2]], c: '#9ad8ff', o: '#061a40' }, { pts: [[0, -10], [1, -2], [0, 8], [-1, -2]], c: '#ffffff', o: null }];
+redo13('t_stLance', 't11_stLance', { col: PXC.ice,
+  *f(S, U, T) { const A = PX13.tip(this), d = PX13.dir(A, T); Sound.sfx('water'); const ic = this.spawn({ k: 'p13poly', x: A.x, y: A.y, rot: d.ang + Math.PI / 2, sc: 0.3, shapes: ICICLE13, life: 18 });
+    ic.upd = q => { if (q.t < 8) q.sc = 0.5 + 1.1 * q.t / 8; else { const k = clamp((q.t - 8) / 5, 0, 1); q.sc = 1.6; q.x = lerp(A.x, T.x, k); q.y = lerp(A.y, T.y, k); } };
+    for (let i = 0; i < 6; i++) { const P0 = { x: A.x + rnd(-14, 14), y: A.y + rnd(-12, 12) }, q0 = this.spawn({ k: 'p13px', x: P0.x, y: P0.y, s: 2, cols: ['#ffffff', '#9ad8ff'], o: OSH13, life: 8 }); q0.upd = q => { const k = clamp(q.t / 7, 0, 1); q.x = lerp(P0.x, A.x, k); q.y = lerp(P0.y, A.y, k); }; } yield* wait(13); ic.life = ic.t + 1;
+    Sound.sfx('hit'); PX13.burst(this, T, 12, PXC.ice, 11); PX13.bits(this, T, 10, ['#ffffff', '#9ad8ff', '#3aa0ff'], 2.2, 0.12, 16, { s: 2 }); for (let i = 0; i < 4; i++) PX13.spr(this, PXI.ice, { x: T.x + rnd(-16, 16), y: T.y + rnd(-14, 12) }, { life: 18, delay: i * 2 });
+    yield* wait(12); } });
+const GEMS13 = () => [PXI.gem(PXC.fire), PXI.gem(PXC.ice), PXI.gem(PXC.volt), PXI.gem(PXC.leaf)];
+const gemSc13 = 2;
+redo13('t_stWall', 't11_stWall', { col: PXC.ice,
+  *f(S) { const H = PX13.hero(this), C = { x: H.x, y: H.y - 4 }, G = GEMS13(), col = [PXC.fire, PXC.ice, PXC.volt, PXC.leaf]; Sound.sfx('charge');
+    G.forEach((g, i) => { const p = PX13.spr(this, g, C, { sc: gemSc13, life: 30 }); p.upd = q => { const an = i * Math.PI / 2 + q.t * 0.21, R = Math.min(26, q.t * 3); q.x = C.x + Math.cos(an) * R; q.y = C.y + Math.sin(an) * R * 0.75; }; });
+    yield* wait(12); Sound.sfx('shield'); col.forEach((c, i) => PX13.arc(this, C, 26, i * Math.PI / 2, (i + 1) * Math.PI / 2 + 0.05, c, 3, 26, { fl: 0.75, grow: 5, hold: 12 }));
+    for (let i = 0; i < 6; i++) PX13.spr(this, PXI.glintS, { x: C.x + Math.cos(i * 1.05) * 26, y: C.y + Math.sin(i * 1.05) * 19 }, { life: 10, delay: 6 + i * 2 }); yield* wait(22); } });
+const bolt13 = (b, P, s = 2, life = 12) => b.spawn({ k: 'p13bolt', pts: PX13.zig({ x: P.x + rnd(-10, 10), y: -6 }, P, 8, 7), c: PXC.volt, s, grow: 2, life });
+redo13('t_stImpact', 't11_stImpact', { col: PXC.volt,
+  *f(S, U, T, u, t) { const v = tgt13(this, t), chg = !!(v && v.st && v.st.charging), A = PX13.tip(this); Sound.sfx('buzz'); zaps13(this, A, 2); yield* wait(6);
+    K13.dark(this, 0.3, 12, '#0a0a20'); Sound.sfx('thunder'); bolt13(this, T, chg ? 3 : 2, 12); K13.flash(this, '#fff6a0', 0.35, 4); PX13.burst(this, T, chg ? 20 : 13, PXC.volt, 12, { s: 3 }); zaps13(this, T, 3); this.shake = Math.max(this.shake, chg ? 10 : 6);
+    if (chg) { yield* wait(4); bolt13(this, { x: T.x + 6, y: T.y }, 3, 12); K13.flash(this, '#ffffff', 0.35, 4); } yield* wait(12); } });
+redo13('t_stStorm', 't11_stStorm', { col: PXC.fire,
+  *f(S, U, T, u, t) { const L = PX13.foes(this, t).sort((a, q) => a.P.x - q.P.x), y0 = T.y + 18; Sound.sfx('fire'); flames13(this, PX13.tip(this), 2, 3); yield* wait(4); let k = 0;
+    for (let f = 0; f < 22; f++) { const X = lerp(-14, W + 14, f / 21); if (f % 2 === 0) for (let j = 0; j < 3; j++) PX13.spr(this, PXI.flameA, { x: X + rnd(-6, 6), y: y0 - j * 9 + rnd(-2, 2) }, { frames: [PXI.flameA, PXI.flameB], fps: 2, sc: j === 0 ? 2 : 1, vy: -0.3, life: 14 });
+      while (k < L.length && L[k].P.x <= X) { Sound.sfx('fire'); const P = L[k].P; PX13.burst(this, P, 12, PXC.fire, 10); flames13(this, P, 3, 12); k++; } yield; }
+    yield* wait(10); } });
+const PLUS13 = PXS(['.kkk.', 'kkgkk', 'kgggk', 'kkgkk', '.kkk.'], { g: '#7af060' });
+redo13('t_stHaste', 't11_stHaste', { col: PXC.leaf,
+  *f(S, U, T) { const A = PX13.tip(this), H = PX13.hero(this); Sound.sfx('leaf'); this.spawn({ k: 'p13vine', x1: A.x, y1: A.y, x2: T.x, y2: T.y, c: PXC.leaf, s: 3, amp: 8, waves: 2.5, grow: 7, life: 24 }); yield* wait(7);
+    Sound.sfx('slash'); PX13.burst(this, T, 12, PXC.leaf, 11); for (let i = 0; i < 6; i++) PX13.spr(this, PXI.leaf, T, { sc: 2, vx: rnd(-20, 20) / 10, vy: -rnd(6, 20) / 10, g: 0.08, life: 20 }); yield* wait(6);
+    Sound.sfx('heal'); for (let i = 0; i < 10; i++) { const P0 = { x: T.x + rnd(-10, 10), y: T.y + rnd(-8, 8) }, p = this.spawn({ k: 'p13px', x: P0.x, y: P0.y, s: 2, cols: ['#c8f8a0', '#7af060'], o: '#06300a', life: 16, delay: i }); p.upd = q => { const k = clamp((q.t - i) / 12, 0, 1); q.x = lerp(P0.x, H.x, k * k); q.y = lerp(P0.y, H.y - 6, k * k); }; }
+    yield* wait(12); for (const [dx, dy] of [[-12, -10], [12, -16], [0, -24]]) PX13.spr(this, PLUS13, { x: H.x + dx, y: H.y + dy }, { sc: 2, vy: -0.4, life: 20 }); yield* wait(12); } });
+redo13('t_stFinale', 't11_stFinale', { col: PXC.volt,
+  *f(S, U, T, u, t) { const L = PX13.foes(this, t); K13.dark(this, 0.4, 70, '#06061a'); Sound.sfx('wind'); const cl = PX13.spr(this, PXI.cloud, { x: T.x, y: 6 }, { sc: 3, life: 64 }); cl.upd = q => { q.y = Math.min(34, 6 + q.t * 3); };
+    yield* wait(10); for (const { P } of L) { Sound.sfx('thunder'); this.spawn({ k: 'p13bolt', pts: PX13.zig({ x: P.x + rnd(-6, 6), y: 44 }, P, 6, 6), c: PXC.volt, s: 2, grow: 2, life: 12 }); PX13.burst(this, P, 12, PXC.volt, 11); zaps13(this, P, 2); yield* wait(3); }
+    K13.flash(this, '#fff6a0', 0.3, 4); this.shake = Math.max(this.shake, 8); yield* wait(8); },
+  *h(S, U, T) { Sound.sfx('thunder'); this.spawn({ k: 'p13bolt', pts: PX13.zig({ x: T.x + rnd(-6, 6), y: 44 }, T, 6, 6), c: PXC.volt, s: 3, grow: 2, life: 12 }); PX13.burst(this, T, 14, PXC.volt, 12, { s: 3 }); zaps13(this, T, 2); K13.flash(this, '#ffffff', 0.25, 3); this.shake = Math.max(this.shake, 6); yield* wait(8); } });
+redo13('t_stMax', 't11_stMax', { col: PXC.ice,
+  *f(S) { const H = PX13.hero(this), F = { x: H.x, y: HERO_FOOT - 4 }, A = PX13.tip(this), G = GEMS13(); Sound.sfx('charge');
+    PX13.ring(this, F, 30, 30, ['#c890ff', '#ffffff', OSH13], 1, 40, { fl: 0.32 }); PX13.ring(this, F, 20, 20, ['#c890ff', '#ffffff', OSH13], 1, 40, { fl: 0.32 }); yield* wait(6);
+    G.forEach((g, i) => { const P0 = { x: F.x + Math.cos(i * Math.PI / 2) * 30, y: F.y + Math.sin(i * Math.PI / 2) * 10 }, p = PX13.spr(this, g, P0, { sc: gemSc13, life: 22 }); p.upd = q => { const k = clamp(q.t / 18, 0, 1); q.x = lerp(P0.x, A.x, k * k); q.y = lerp(P0.y, A.y, k) - Math.sin(Math.PI * k) * 10; }; });
+    yield* wait(18); Sound.sfx('statUp'); PX13.spr(this, PXI.glint, A, { sc: 2, life: 12 }); [PXC.fire, PXC.ice, PXC.volt, PXC.leaf].forEach((c, i) => PX13.ring(this, A, 6, 22, c, 1, 10, { delay: 3 + i * 2 }));
+    for (const dx of [-18, 18]) PX13.spr(this, PXI.upCh('#c890ff'), { x: H.x + dx, y: H.y }, { vy: -0.6, life: 20 }); yield* wait(16); } });
+redoSp13('法杖', 0, { col: PXC.fire,
+  *f(S, U, T) { const hu = this.core.byId.H, el = { 火: 1, 水: 1, 雷: 1, 草: 1 }[hu && hu.data.welem] ? hu.data.welem : '火', c = EL13PX[el], A = PX13.tip(this); Sound.sfx('charge');
+    const p = this.spawn({ k: 'p13orb', x: A.x, y: A.y, r: 3, c: [OSH13, c[0], c[1], '#ffffff'], trail: 8, pulse: 1, life: 26 }); p.upd = q => { if (q.t < 10) q.r = 3 + q.t * 0.4; else { const k = clamp((q.t - 10) / 8, 0, 1); q.x = lerp(A.x, T.x, k); q.y = lerp(A.y, T.y, k); } }; yield* wait(18); p.life = p.t + 1;
+    Sound.sfx(el === '火' ? 'fire' : el === '水' ? 'water' : el === '雷' ? 'thunder' : 'leaf'); PX13.burst(this, T, 22, c, 14, { s: 3 }); this.shake = Math.max(this.shake, 8);
+    if (el === '火') flames13(this, T, 4, 16); else if (el === '水') for (let i = 0; i < 5; i++) PX13.spr(this, PXI.ice, { x: T.x + rnd(-18, 18), y: T.y + rnd(-14, 12) }, { life: 18, delay: i * 2 }); else if (el === '雷') zaps13(this, T, 5); else for (let i = 0; i < 7; i++) PX13.spr(this, PXI.leaf, T, { vx: rnd(-22, 22) / 10, vy: -rnd(6, 20) / 10, g: 0.08, life: 20 });
+    yield* wait(14); } });
+redo13('t_osBash', 't11_osBash', { col: PXC.blue,
+  *f(S, U, T, u) { const H = PX13.hero(this), A = { x: H.x - 8, y: H.y - 12 }, d = PX13.dir(A, T), P0 = { x: T.x - d.ux * 8, y: T.y - d.uy * 8 }; const sh = PX13.spr(this, PXI.shield, A, { sc: 2, life: 26, blink: 0 });
+    sh.upd = q => { const t = q.t - 6, k = t < 0 ? 0 : t < 4 ? t / 4 : 1 - clamp((t - 7) / 8, 0, 1) * 0.8; q.x = lerp(A.x, P0.x, k); q.y = lerp(A.y, P0.y, k); }; Sound.sfx('wind');
+    yield* wait(5); PX13.speed(this, A, T, PXC.wind, 5, 8); yield* this.lunge(u, 22, 2); Sound.sfx('heavy'); PX13.hit(this, T, PXC.blue, 1); PX13.bits(this, T, 6, ['#ffffff', '#c8d4e8', '#7a88a8'], 2.2, 0.14, 14, { s: 3 }); yield* wait(14); } });
+redo13('t_osHold', 't11_osHold', { col: PXC.blue,
+  *f(S) { const H = PX13.hero(this), A = { x: H.x - 8, y: H.y - 10 }, P = { x: H.x, y: H.y - 24 }, sh = PX13.spr(this, PXI.shield, A, { sc: 2, life: 34, blink: 0 });
+    sh.upd = q => { const k = clamp(q.t / 4, 0, 1); q.x = lerp(A.x, P.x, k); q.y = lerp(A.y, P.y - 6, k) + (q.t >= 4 ? Math.min(6, (q.t - 4) * 3) : 0); }; Sound.sfx('wind');
+    yield* wait(6); Sound.sfx('shield'); this.shake = Math.max(this.shake, 4); const F = { x: H.x, y: HERO_FOOT - 3 }; PX13.ring(this, F, 4, 30, PXC.steel, 2, 14, { fl: 0.3 }); PX13.bits(this, F, 8, ['#d0b080', '#a08050', '#6a5030'], 1.6, 0.14, 16, { up: 1 });
+    yield* wait(4); PX13.spr(this, PXI.glint, { x: P.x - 6, y: P.y - 8 }, { sc: 2, life: 12 }); yield* wait(18); } });
+redo13('t_osCounter', 't11_osCounter', { col: PXC.gold,
+  *f(S) { const H = PX13.hero(this), P = { x: H.x, y: H.y - 20 }; Sound.sfx('shield'); PX13.spr(this, PXI.shield, P, { sc: 2, life: 30, blink: 0 }); yield* wait(4);
+    Sound.sfx('wind'); for (const s of [0, Math.PI]) PX13.arc(this, P, 22, s - Math.PI / 2, s + Math.PI * 0.9, PXC.gold, 3, 18, { fl: 0.85, grow: 8 }); yield* wait(10);
+    Sound.sfx('crit'); for (const [dx, dy] of [[-12, -14], [12, -14], [0, 14]]) PX13.spr(this, PXI.glint, { x: P.x + dx, y: P.y + dy }, { life: 12 }); PX13.burst(this, P, 14, PXC.gold, 10, { n: 4 }); yield* wait(14); } });
 </script>

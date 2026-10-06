@@ -1,4 +1,4 @@
-// node strip.js  KINDS=0,1  ONLY=t_sdEye,sp5_0  TAG=before  → fxs/<TAG>/<skill>.png (frames during the hero's effect + a few after)
+// node tools/fxstrip.js  KINDS=0,1  ONLY=t_sdEye,sp5_0  OUT=dir  [EVERY=1 MAXF=60]  → frames of each hero effect (EVERY: capture every n ticks; MAXF: frames per skill)
 const { chromium } = require('/home/claude/.npm-global/lib/node_modules/playwright');
 const fs = require('fs'), path = require('path'), { execFileSync } = require('child_process');
 const OUT = path.join(process.env.OUT || '/tmp/fxstrip', process.env.TAG || 'cur'); // frames of each hero skill's effect (and its later hits) fs.mkdirSync(OUT, { recursive: true });
@@ -33,7 +33,7 @@ const OUT = path.join(process.env.OUT || '/tmp/fxstrip', process.env.TAG || 'cur
       const key = cur; const want = !ONLY || ONLY.some(o => key.startsWith(o) || o === key);
       if (!want) continue;
       const L = frames[key] || (frames[key] = { n: 0, list: [] });
-      if (s.fx) { after = 0; if (tick % 3 === 0 && L.list.length < 32) L.list.push(await ev(() => document.getElementById('screen').toDataURL())); }
+      if (s.fx) { after = 0; if (tick % (+process.env.EVERY || 3) === 0 && L.list.length < (+process.env.MAXF || 32)) L.list.push(await ev(() => document.getElementById('screen').toDataURL())); }
       else if (L.list.length && after < 30) { after++; if (after % 6 === 0) L.list.push(await ev(() => document.getElementById('screen').toDataURL())); }
     }
     const all = await ev(() => window.__all || []), names = await ev(ids => ids.map(id => Game.scene && Game.scene.skillName ? id : id), all);

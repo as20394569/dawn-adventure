@@ -8,7 +8,7 @@ module.exports = async (g) => {
     const T = tr11(st); const mk = (b, q = 3) => { GEAR11_GLAM = false; const x = makeGear(b, q); GEAR11_GLAM = true; return x; };
     const equip = kind => { let w, off = null;
       if (kind === '雙刀') { w = mk(BASE11.weapon.短刀[4]); off = mk(BASE11.weapon.短刀[3]); } else if (kind === '雙劍') { w = mk(BASE11.weapon.劍[4]); off = mk(BASE11.weapon.劍[3]); }
-      else if (kind === '雙盾') { w = mk(BASE11.shield[4]); off = mk(BASE11.shield[3]); } else w = mk(BASE11.weapon[kind][4]);
+      else if (kind === '雙盾') { w = mk(BASE11.shield[4]); off = mk(BASE11.shield[3]); } else if (kind === '單手盾') { w = mk(BASE11.weapon.劍[4]); off = mk(BASE11.shield[3]); } else w = mk(BASE11.weapon[kind][4]);
       st.equip.weapon = w.u; st.equip.shield = off ? off.u : null; };
     const setLv = (lvOf = () => 1) => { T.lv = {}; for (const kind of TREE_KINDS11) for (const r of TREE11[kind].sk) T.lv['t_' + r[1]] = lvOf(r[1]); };
     const build = (kind, seed = 5, rounds = 1, foeKind = 'elite') => { equip(kind); const S = heroStats(st); st.hp = S.hp; st.mp = S.mp;
@@ -58,7 +58,7 @@ module.exports = async (g) => {
       let n = 0, did = 0; BAI.decide = function (core, u, oo) { if (u.hero) { const sid = (o.seq ? o.seq[n++] : null) || 't_' + id; if (!did && o.pre) { did = 1; o.pre(core, H, F); } if (!o.seq) n++; return { type: 'skill', skill: sid, targets: [DEF.skills[sid].target === 'self' ? H.id : F.id] }; } return o.foeAct ? D0.call(this, core, u, oo) : { type: 'wait' }; };
       try { c.start(true); } finally { BAI.decide = D0; } return { c, H, F, log: c.log.filter(e => !e.cancelled) }; };
     const hitsOf = (r, id) => r.log.filter(e => e.type === EVT.HIT && e.src === 'H' && e.payload.skill === 't_' + id).length;
-    const HITS = { sdTwin: 2, sdFlow: 5, dgVenom: 2, dgRot: 4, dgBloom: 5, spTriple: 3, spThousand: 6, fsTriple: 3, fsKick: 3, fsStorm: 8, stArrows: 3, tmChain: 3, gnRapid: 2, gnSpray: 3, gnBarrage: 6, ddSpin: 4, ddCross: 2, ddDance: 7, ddGale: 12, ddFang: 2, dsMoon: 2, dsWhirl: 2, dsPhantom: 6, dsStar: 2 };
+    const HITS = { sdTwin: 2, sdFlow: 5, dgVenom: 2, dgRot: 4, dgBloom: 5, spTriple: 3, spThousand: 6, fsTriple: 3, fsKick: 3, fsStorm: 8, stFinale: 2, tmChain: 3, gnRapid: 2, gnSpray: 3, gnBarrage: 6, ddSpin: 4, ddCross: 2, ddDance: 7, ddGale: 12, ddFang: 2, dsMoon: 2, dsWhirl: 2, dsPhantom: 6, dsStar: 2 };
     const kindOf = id => TREE_KINDS11.find(k => TREE11[k].sk.some(r => r[1] === id));
     const badHits = []; for (const id in HITS) { const r = fight(kindOf(id), id); const n = hitsOf(r, id); if (n !== HITS[id]) badHits.push(DEF.skills['t_' + id].name + ' ' + n + '/' + HITS[id]); }
     ok('段數（' + Object.keys(HITS).length + ' 招多段，疾風百刃比對手快時 12 段）', !badHits.length, badHits.join('、'));
@@ -78,11 +78,17 @@ module.exports = async (g) => {
       const dots = r.log.filter(e => e.type === EVT.DAMAGE && e.tgts[0] === r.F.id && !String(e.payload.skill || '').startsWith('t_')).map(e => e.payload.amount); ok('碎殼掌 裂甲（物防 −1 階、每回合 3%，菁英照算）', cr > 0 && dots.includes(3000), '裂甲 ' + cr + ' 次，回合末傷害 ' + JSON.stringify(dots.slice(0, 3)) + '（最大 HP 100000）'); }
     { const r = fight('短刀', 'dgBloom', { pre: (c, H, F) => { c.applyStatus(H, F, 'psn', {}); } }); const extra = r.log.filter(e => e.type === EVT.DAMAGE && e.src === 'H' && e.tgts[0] === r.F.id).length - 5, gone = !r.c.hasStatus(r.F, 'psn');
       ok('千刃毒華 引爆中毒：追加傷害並消除', extra >= 1 && gone, '追加 ' + extra + ' 次，中毒' + (gone ? '已消除' : '還在')); }
-    { const a = fight('法杖', 'stFinale', { mp: 60 }), b = fight('法杖', 'stFinale', { mp: 20 }); const dmg = r => r.log.filter(e => e.type === EVT.DAMAGE && e.src === 'H' && e.payload.skill === 't_stFinale').reduce((x, e) => x + e.payload.amount, 0);
-      const pay = r => r.log.filter(e => e.type === EVT.COST_PAY && e.src === 'H').map(e => JSON.stringify(e.payload)).join(' '); ok('魔力終曲 用掉全部 MP、MP 越多越痛', dmg(a) > dmg(b) * 2, 'MP60 → ' + dmg(a) + '、MP20 → ' + dmg(b) + '，付出 ' + pay(a) + ' / ' + pay(b)); }
+    { const v = rate('stArrows', 'brn'); ok('火球 20% 灼傷', v > 0.05 && v < 0.42, Math.round(v * 100) + '%'); }
+    { const E = { stArrows: '火', stLance: '水', stImpact: '雷', stStorm: '火', stHaste: '草', stFinale: '雷' }, bad = Object.keys(E).filter(k => DEF.skills['t_' + k].el !== E[k]); ok('法杖的元素：火球火・冰錐水・落雷雷・炎浪火・藤鞭草・雷暴雷', !bad.length, bad.join(',')); }
+    { const r = fight('法杖', 'stFinale'); const v = DEF.skills.t_stFinale; ok('雷暴：全體 2 段（各 45）', v.target === 'all_enemies' && v.power === 45 && hitsOf(r, 'stFinale') === 2, v.target + ' ' + v.power + ' ' + hitsOf(r, 'stFinale')); }
+    { const ok1 = DEF.statuses.elemUp13 && DEF.statuses.elemUp13.mods[0].mulWeak === 1.2 && DEF.skills.t_stMax.effects.some(e => effGet(e).status === 'elemUp13'); const r = fight('法杖', 'stMax', { rounds: 4, seq: ['t_stMax', 'attack', 'attack', 'attack'] }); const on = r.c.hasStatus(r.H, 'elemUp13');
+      ok('元素增幅：魔攻 +2、弱點 +20%，3 回合後結束', ok1 && !on, on ? '4 回合後還在' : ''); }
+    { const sp = DEF.skills[spId11('法杖', 0, 3, 1)], c0 = build('法杖'), el = BR.elementOf(c0.c, c0.H, sp); ok('元素迸發：武器沒屬性時是火', el === (c0.H.data.welem || '火'), el + '（武器 ' + (c0.H.data.welem || '無') + '）'); }
+    { const ice = DEF.skills.t_stLance.effects.map(effGet).find(e => e.status === 'frozen'); ok('冰錐 10% 凍結、頭目不會', !!ice && ice.chance === 0.1 && ice.cond.tgtBoss === 0); }
     const mpGain = (r, id) => r.log.filter(e => e.type === EVT.RESOURCE_CHANGE && e.payload.res === 'mp' && e.tgts[0] === 'H' && e.payload.change > 0 && e.payload.why && !/regen|round/.test(String(e.payload.why))).reduce((x, e) => x + e.payload.change, 0); const mpWhy = r => r.log.filter(e => e.type === EVT.RESOURCE_CHANGE && e.payload.res === 'mp' && e.tgts[0] === 'H').map(e => e.payload.why + ':' + e.payload.change).join(' ');
     { const r = fight('拳套', 'fsTriple', { mp: 10 }); ok('三連拳 每段回 2 MP', mpGain(r) === 6, '+' + mpGain(r) + '（' + mpWhy(r) + '）'); }
-    { const r = fight('法杖', 'stArrows', { mp: 10 }); ok('魔力箭 回 4 MP', mpGain(r) === 4, '+' + mpGain(r)); }
+    { const r = fight('法杖', 'stHaste', { setup: (c, H) => { H.res.hp = 1; } }); const d = r.log.filter(e => e.type === EVT.DAMAGE && e.src === 'H' && e.payload.skill === 't_stHaste').reduce((x, e) => x + e.payload.amount, 0), h = r.log.filter(e => e.type === EVT.HEAL && e.tgts[0] === 'H').reduce((x, e) => x + (e.payload.amount || 0), 0);
+      ok('藤鞭 回復傷害 25% 的 HP', d > 0 && Math.abs(h - Math.floor(d * 0.25)) <= 2, '傷害 ' + d + '，回 ' + h); }
     { const r = fight('魔導書', 'tmDrain', { mp: 10 }); const d = r.log.filter(e => e.type === EVT.DAMAGE && e.src === 'H' && e.payload.skill === 't_tmDrain').reduce((x, e) => x + e.payload.amount, 0); ok('吸魔咒 回復傷害 25% 的 MP', Math.abs(mpGain(r) - Math.floor(d * 0.25)) <= 1, '傷害 ' + d + '，回 MP ' + mpGain(r)); }
     { const r = fight('斧', 'axBlood', { rounds: 2, seq: ['t_axBlood', 't_axSplit'], setup: (c, H) => { H.res.hp = Math.floor(H.max.hp / 2); } }); const h = r.log.filter(e => e.type === EVT.HEAL && e.tgts[0] === 'H' && e.payload.kind === 'drain').length; ok('狂戰之血 攻擊回血', h > 0, '回血 ' + h + ' 次'); }
     const counters = r => r.log.filter(e => e.type === EVT.DAMAGE && e.src === 'H' && e.tgts[0] === r.F.id && !String(e.payload.skill || '').startsWith('t_')).length;
@@ -102,6 +108,23 @@ module.exports = async (g) => {
       ok('劍的特性：會心對護盾 ×2 → ×3', s0 === 2 && s1 === 3, '沒特性 ×' + s0 + '、有特性 ×' + s1);
       // 長槍的特性（打部位 +30%）在 tools/s3check.js
     }
+    /* ===== v12.33 單手盾 ===== */
+    { const sv = { ...st.equip }; const set = (w, o) => { st.equip.weapon = w ? mk(w).u : null; st.equip.shield = o ? mk(o).u : null; };
+      set(BASE11.weapon.劍[4], BASE11.shield[3]); const a = shieldMode13(st), av = BB.available(st).includes('t_osBash'); set(BASE11.shield[4], BASE11.shield[3]); const b = shieldMode13(st); set(BASE11.weapon.長槍[4], null); const c = shieldMode13(st); set(BASE11.weapon.短刀[4], BASE11.weapon.短刀[3]); const d = shieldMode13(st);
+      Object.assign(st.equip, sv); ok('單手盾：劍＋盾才有（雙盾・長槍・雙刀沒有），招式用得到', a === '單手盾' && !b && !c && !d && av, [a, b, c, d, av].join('/')); }
+    { const k = '單手盾'; const blk = () => { equip(k); return heroStats(st).block; }; const b0 = blk(); T.lv[k + ':mast'] = 5; const b1 = blk(); delete T.lv[k + ':mast'];
+      const key = () => { const { H } = build(k); return (H.passives || []).map(p => p.key).filter(x => /^block/.test(x)).join(','); }; const k0 = key(); T.lv[k + ':trait'] = 1; const k1 = key(); delete T.lv[k + ':trait'];
+      ok('護盾精通 Lv5 格擋 +10%、盾衛換成 −55% 的格擋', b1 - b0 === 10 && k0 === 'block' && k1 === 'blockS13' && DEF.passives.blockS13.make(10).triggers[0].effects[0].mul === 0.45, b0 + '→' + b1 + '，' + k0 + '→' + k1); }
+    { const r = (atk, def) => { const { c, H, F } = build('單手盾'); H.lv = 500; H.stats.atk = atk; H.stats.def = def; F.stats.def = 600; F.max.hp = F.res.hp = 100000; return pv(c, H, F, 't_osBash'); }, a = r(1700, 0), b = r(1000, 1000);
+      ok('盾撞：攻擊力加上物防的 70%', Math.abs(b / a - 1) < 0.01, '物攻 1000＋物防 1000 → ' + b + '、物攻 1700 → ' + a); }
+    { const r = fight('單手盾', 'osHold', { foeAct: 1, rounds: 1 }), held = r.c.hasStatus(r.H, 'osHold13'), nb = r.c.statusOf(r.H, 'osBlock13');
+      ok('堅守：搶先、這回合 −50%、下一回合格擋 +30%', DEF.skills.t_osHold.prio === 1 && DEF.statuses.osHold13.mods[0].mul === 0.5 && !!nb && DEF.statuses.osBlock13.tick === 'owner_action_start', '堅守' + (held ? '還在' : '已結束') + '，格擋↑ ' + (nb ? nb.dur : '無')); }
+    { let blocks = 0, ctr = 0, bad = 0; for (let sd = 1; sd <= 12; sd++) { const r = fight('單手盾', 'osCounter', { foeAct: 1, rounds: 3, seed: sd, seq: ['t_osCounter', 't_osBash', 't_osBash'] });
+        const L = r.log.filter(e => e.type === EVT.DAMAGE && e.tgts[0] === 'H' && e.src === r.F.id); for (const e of L) if ((e.payload.notes || []).includes('block')) blocks++;
+        const C = r.log.filter(e => e.type === EVT.DAMAGE && e.src === 'H' && e.payload.skill === 'counter_strike'); ctr += C.length; }
+      ok('盾反：格擋成功時反擊', ctr > 0 && ctr <= blocks, '格擋 ' + blocks + ' 次、反擊 ' + ctr + ' 次'); }
+    { const r = fight('劍', 'sdFrenzy', { rounds: 5, seq: ['t_sdFrenzy', 'attack', 'attack', 'attack', 'attack'] }); const on = r.c.hasStatus(r.H, 'frenzy11'), ex = r.log.filter(e => e.type === EVT.STATUS_EXPIRE && e.payload.status === 'frenzy11').length;
+      ok('狂刃 3 回合後結束（以前不會結束）', !on && ex === 1, on ? '5 回合後還在' : '結束 ' + ex + ' 次'); }
     BR.VARIANCE = V0;
     return out.join('\n') + '\n\n' + out.filter(x => x.startsWith('PASS')).length + '/' + out.length + ' PASS';
   }, save));

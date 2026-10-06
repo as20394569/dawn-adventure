@@ -5,7 +5,7 @@
      （v276 玩家：「按方向鍵很容易切換到」→ 清單裡按 ←→ 不再換樹；要用方向鍵換樹，在清單最上面按 ↑ 移到分頁列，再按 ←→，↓ 或 A 回清單。）
    · 「這次進來點的可以免費退」：這次進技能樹之後加的點，按標題列的「↩退點」（或 Select 鍵）一次收回 1 點，從最後加的開始退
      （連帶恢復特技的裝備和技能編排）；離開技能樹或用了「重置技能點」之後就不能退了（之前的照舊用重置）。 */
-function* treeScreen11Tabs(start) { const st = Game.st, kinds = () => { const K = TREE_KINDS11.filter(k => (!TREE11[k].dual || (typeof dualTab12 === 'function' ? dualTab12(k, st) : dualOn11(st))) && (typeof kindOn13 !== 'function' || kindOn13(k))); return typeof DUAL_TAB12 !== 'undefined' && !K.some(k => TREE11[k].dual) ? K.concat(DUAL_TAB12) : K; };
+function* treeScreen11Tabs(start) { const st = Game.st, kinds = () => { const K = TREE_KINDS11.filter(k => (!TREE11[k].dual || (typeof dualTab12 === 'function' ? dualTab12(k, st) : dualOn11(st))) && (typeof kindOn13 !== 'function' || kindOn13(k))); K.sort((a, b) => (TREE11[a].common ? 1 : 0) - (TREE11[b].common ? 1 : 0)); return typeof DUAL_TAB12 !== 'undefined' && !K.some(k => TREE11[k].dual && k !== '單手盾') ? K.concat(DUAL_TAB12) : K; };
   let ti = Math.max(0, kinds().indexOf(start || curKinds11(st)[0] || '劍')), onTabs = false; const selBy = {}, undo = [], VIS = 9, LY = 36;
   const selOf = k => selBy[k] || 0, tabY = 22, tabH = 13;
   const undoOne = () => { const u = undo.pop(); if (!u) return false; const T = tr11(st), v = (T.lv[u.key] || 0) - 1;

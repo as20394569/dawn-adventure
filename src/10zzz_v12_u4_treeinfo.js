@@ -10,7 +10,7 @@ function treeInfoParts12(kind, N, st = Game.st) { const T = TREE11[kind], lv = N
   if (N.t === 'sk') { const D = DEF.skills[N.key], lvx = Math.max(1, lv), mp = (D.costs || []).find(c => c.res === 'mp');
     const pw = D.power && !D.powerOf ? Math.round(D.power * (1 + 0.1 * (lvx - 1))) : null, mpv = mp ? (mp.all ? '全部 MP' : 'MP ' + (D.power ? mp.amount : Math.max(0, Math.round(mp.amount * (1 - 0.1 * (lvx - 1)))))) : '';
     const cd = Math.max(0, (D.cooldown || 0) - (!D.power && lvx >= 5 ? 1 : 0));
-    P.tags.push(D.cat === '變' ? '輔助' : D.cat === '物' ? '物理' : '魔法'); if (pw) P.tags.push('威力 ' + pw + (D.hits ? '×' + D.hits[0] : '')); if (mpv) P.tags.push(mpv); if (cd) P.tags.push('冷卻 ' + cd);
+    P.tags.push(D.cat === '變' || !D.power ? '輔助' : D.cat === '物' ? '物理' : '魔法'); if (pw) P.tags.push('威力 ' + pw + (D.hits ? '×' + D.hits[0] : '')); if (mpv) P.tags.push(mpv); if (cd) P.tags.push('冷卻 ' + cd);
     if (D.prio) P.tags.push('搶先'); if (D.target === 'all_enemies') P.tags.push('全體'); if (D.charge) P.tags.push('蓄力');
     P.text = D.desc || ''; }
   else if (N.t === 'sp') { const [n, k] = T.sp[N.j]; P.tags = ['特技', '普攻累積後自動發動']; P.text = '「' + n + '」' + SP_TXT11[k] + '。威力跟著武器的階級。';

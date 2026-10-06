@@ -20,15 +20,18 @@ Object.assign(BR.FORMULA, {
   off11: c => 40 * ((c.src && c.src.data && c.src.data.offMul11) || 0.6),
   shield11: c => { const u = c.src; return u && u.data && u.data.shield11 ? Math.max(0.5, (u.stats.def * u.data.shield11) / Math.max(1, u.stats.atk)) : 1; },
 });
-const ST11 = (id, n, o) => defPut('statuses', id, { tags: o.tags || ['buff'], duration: o.dur || 'owner_actions', stack: o.stack || 'refresh', metadata: { n }, mods: o.mods || [], triggers: o.triggers || [] });
+// v12.33: these never counted down before (no tick) — 狂刃・迴槍架勢・架劍… stayed the whole battle; now N 回合 = the owner's next N actions, 「這回合」 = until the owner's next action
+const ST11 = (id, n, o) => { const du = o.dur || 'owner_actions'; return defPut('statuses', id, { tags: o.tags || ['buff'], duration: du, stack: o.stack || 'refresh', metadata: { n }, mods: o.mods || [], triggers: o.triggers || [],
+  ...(du === 'owner_actions' ? { tick: 'owner_action_end' } : du === 'until_own_action' ? { clearAt: 'owner_action_start' } : {}) }); };
 ST11('nextPow11', '蓄勢', { dur: 'until_used', mods: [{ stage: 'status', who: 'attacker', mul: 1.3, cond: { hasPower: 1 } }], triggers: [{ on: EVT.SKILL_SUCCESS, phase: 'POST', role: 'src', cond: { hasPower: 1 }, effects: [{ type: 'remove_status', target: 'self', status: 'nextPow11' }] }] });
 ST11('frenzy11', '狂刃', { mods: [{ stage: 'attacker', who: 'attacker', critAdd: 20 }] });
 ST11('roar11', '狂吼', { mods: [{ stage: 'final', who: 'defender', mul: 0.9, cond: { hasPower: 1 } }] });
 ST11('blood11', '狂戰之血', { mods: [{ stage: 'final', who: 'defender', mul: 1.15, cond: { hasPower: 1 } }], triggers: [{ on: EVT.DAMAGE, phase: 'POST', role: 'src', cond: { hasPower: 1, tgtSide: 'enemy' }, effects: [{ type: 'heal', target: 'self', ofEvent: 0.15, kind: 'drain', quiet: 1 }] }] });
 ST11('spearGuard11', '迴槍架勢', { triggers: [{ on: EVT.DAMAGE, phase: 'POST', role: 'tgt', cond: { srcSide: 'enemy', hasPower: 1, ownerAlive: 1 }, limit: { perAction: 1 }, effects: [{ type: 'counter', mul: { f: 'cnt11', v: 50 }, why: 'spear11' }] }] });
 ST11('crack11', '裂甲', { tags: ['debuff'], triggers: [{ on: EVT.ROUND_END, effects: [{ type: 'damage', target: 'self', pctMax: 0.03, bossMul: 1 / 3, kind: 'dot', tags: ['dot'] }] }] });
-ST11('mwall11', '法力屏障', { mods: [{ stage: 'final', who: 'defender', mul: 0.6, cond: { cat: '特', hasPower: 1 } }, { stage: 'final', who: 'defender', mul: 0.8, cond: { cat: '物', hasPower: 1 } }] });
+ST11('mwall11', '元素屏障', { mods: [{ stage: 'final', who: 'defender', mul: 0.6, cond: { cat: '特', hasPower: 1 } }, { stage: 'final', who: 'defender', mul: 0.8, cond: { cat: '物', hasPower: 1 } }] });
 ST11('maxim11', '魔導極限', { mods: [{ stage: 'base', costMul: 1.5, res: 'mp' }] });
+ST11('elemUp13', '元素增幅', { mods: [{ stage: 'talent', who: 'attacker', mulWeak: 1.2 }] });
 ST11('pageGuard11', '守護之頁', { mods: [{ stage: 'final', who: 'defender', mul: 0.7, cond: { hasPower: 1 } }] });
 ST11('evade11', '疾風之歌', { mods: [{ stage: 'defender', who: 'defender', accAdd: -10 }] });
 ST11('harm11', '守護和聲', { mods: [{ stage: 'final', who: 'defender', mul: 0.75, cond: { hasPower: 1 } }] });
@@ -107,15 +110,16 @@ const TREE11 = {
       ['2c', 'fsQi', '氣勁彈', 75, 0, 1, 5, 0, '遠距的氣功彈，用物攻和魔攻較高的一項計算。', { cls: 'bolt', catOf: (core, u) => (u.stats.spa > u.stats.atk ? '特' : '物') }],
       ['3a', 'fsStorm', '狂嵐拳', 14, 8, 3, 10, 0, '八段連打，最後一段削 1 格護盾。', { cls: 'strike', after: [{ type: 'hunt_chip', target: 'cast_targets', n: 1, cond: { tgtAlive: 1 }, why: 'tree11' }] }],
       ['3b', 'fsThrough', '透勁', 120, 0, 2, 9, 0, '無視 40% 物防，50% 退縮。', { cls: 'strike', pierceDef: 0.4, effects: DMG11(FL11(0.5)) }]] },
-  法杖: { attr: ['int', 1], cat: '特', trait: '打中弱點的傷害再 +15%', mast: '杖術精通', third: ['省力', '技能有 4%／級的機率不花 MP'], sp: [['魔力迸發', 'burst'], ['魔力湧泉', 'mana'], ['星輝', 'crit']],
-    sk: [['1a', 'stArrows', '魔力箭', 22, 3, 0, 4, 0, '三支魔力箭，回 2 MP。', { cls: 'bolt', after: [{ type: 'resource', target: 'self', res: 'mp', amount: 2, why: 'arrows11' }] }],
-      ['1b', 'stLance', '魔力槍', 70, 0, 1, 5, 0, '魔法長槍，50% 讓對手魔防 −1。', { cls: 'bolt', effects: DMG11(SG11({ spd: -1 }, 0.5)) }],
-      ['1c', 'stWall', '法力屏障', 0, 0, 3, 5, 0, '2 回合受到的魔法傷害 −40%、物理傷害 −20%。', { effects: [{ type: 'status', target: 'self', status: 'mwall11', dur: 2 }] }],
-      ['2a', 'stImpact', '魔力衝擊', 80, 0, 1, 6, 0, '30% 退縮；對蓄力中的對手威力 ×1.5。', { cls: 'bolt', mods: [MUL11(1.5, { tgtStatus: 'charging' })], effects: DMG11(FL11(0.3)) }],
-      ['2b', 'stStorm', '魔力風暴', 65, 0, 2, 7, 1, '攻擊全體，30% 讓對手魔防 −1。', { effects: DMG11(SG11({ spd: -1 }, 0.3)) }],
-      ['2c', 'stHaste', '時之加速', 0, 0, 4, 6, 0, '速度 +2 階，所有技能冷卻 −1。', { effects: [SELF11({ spe: 2 }), { type: 'cooldown', target: 'self', how: 'all', n: 1, why: 'haste11' }] }],
-      ['3a', 'stFinale', '魔力終曲', 50, 0, 4, 10, 0, '用掉全部 MP（至少 10），每 1 MP 威力 +5（最多 250）。', { cls: 'bolt', costs: [{ res: 'mp', all: true, min: 10 }], powerOf: 'finale11' }],
-      ['3b', 'stMax', '魔導極限', 0, 0, 5, 8, 0, '3 回合魔攻 +2 階，這段時間技能 MP +50%。', { effects: [SELF11({ spa: 2 }), { type: 'status', target: 'self', status: 'maxim11', dur: 3 }] }]] },
+  法杖: { attr: ['int', 1], cat: '特', trait: '打中弱點的傷害再 +15%', mast: '杖術精通', third: ['省力', '技能有 4%／級的機率不花 MP'], sp: [['元素迸發', 'burstEl'], ['魔力湧泉', 'mana'], ['星輝', 'crit']],
+    // v12.33（玩家 2026-10-06「法杖技能重製要偏元素方向」→ 各招固定元素；key 不變，舊存檔的等級照留）
+    sk: [['1a', 'stArrows', '火球', 60, 0, 0, 4, 0, '火屬性魔法，20% 灼傷。', { cls: 'bolt', el: '火', effects: DMG11(STA11('brn', 0.2)) }],
+      ['1b', 'stLance', '冰錐', 55, 0, 1, 5, 0, '水屬性魔法，10% 凍結（跳過下一次行動；頭目不會凍結）。', { cls: 'bolt', el: '水', effects: DMG11(STA11('frozen', 0.1, { cond: { tgtAlive: 1, tgtBoss: 0 } })) }],
+      ['1c', 'stWall', '元素屏障', 0, 0, 3, 5, 0, '張開護盾：最大 HP 25%，魔法傷害全部吸收、物理吸收一半，2 回合。', { effects: [{ type: 'status', target: 'self', status: 'mwall11', dur: 2 }] }],
+      ['2a', 'stImpact', '落雷', 75, 0, 1, 6, 0, '雷屬性魔法，20% 麻痺；對蓄力中的對手威力 ×1.5。', { cls: 'bolt', el: '雷', mods: [MUL11(1.5, { tgtStatus: 'charging' })], effects: DMG11(STA11('par', 0.2)) }],
+      ['2b', 'stStorm', '炎浪', 60, 0, 2, 7, 1, '火屬性魔法打全體，10% 灼傷。', { el: '火', effects: DMG11(STA11('brn', 0.1)) }],
+      ['2c', 'stHaste', '藤鞭', 60, 0, 4, 6, 0, '草屬性魔法，回復傷害 25% 的 HP。', { cls: 'bolt', el: '草', after: [{ type: 'heal', target: 'self', ofCast: 0.25, kind: 'drain', quiet: 1 }] }],
+      ['3a', 'stFinale', '雷暴', 45, 2, 4, 10, 1, '雷屬性魔法打全體 2 段（各 45），20% 麻痺。', { el: '雷', after: [STA11('par', 0.2, { target: 'cast_targets' })] }],
+      ['3b', 'stMax', '元素增幅', 0, 0, 5, 8, 0, '3 回合魔攻 +2 階，打中弱點的傷害再 +20%。', { effects: [SELF11({ spa: 2 }), { type: 'status', target: 'self', status: 'elemUp13', dur: 3 }] }]] },
   魔導書: { attr: ['int', 1], cat: '特', trait: '技能 MP −20%（第三階段：慣性的變化減半）', mast: '魔導書精通', third: ['回魔', '每回合回最大 MP 的 1%／級'], sp: [['飛頁', 'strike'], ['縛頁', 'slow'], ['智慧之泉', 'mana']],
     sk: [['1a', 'tmCurse', '咒言', 55, 0, 0, 4, 0, '魔法攻擊，40% 讓對手物攻 −1。', { cls: 'bolt', effects: DMG11(SG11({ atk: -1 }, 0.4)) }],
       ['1b', 'tmSlow', '遲滯咒', 0, 0, 2, 4, 0, '對手速度 −2 階（一定命中）。', { target: 'enemy', effects: [SG11({ spe: -2 })] }],
@@ -215,6 +219,16 @@ const CM11 = {
 };
 for (const k in CM11) TREE11[k] = { common: 1, attr: ['str', 1], cat: CM11[k].cat, nodes: CM11[k].nodes, sk: CM11[k].sk, sp: [] };
 const COMMON11 = Object.keys(CM11);
+/* v12.33 單手盾（玩家 2026-10-06「單手盾新增小技能樹」→ 3 招＋2 被動）：劍・斧・短刀＋盾的時候出現，跟主武器的樹一起用（像雙持）。放在最後，前面各棵樹的編號不變。 */
+ST11('osHold13', '堅守', { dur: 'until_own_action', mods: [{ stage: 'final', who: 'defender', mul: 0.5, cond: { hasPower: 1 } }] });
+ST11('osBlock13', '堅守', {}); DEF.statuses.osBlock13.tick = 'owner_action_start'; // 「下一回合」: from the next own action to the one after
+ST11('osCtr13', '盾反', { triggers: [{ on: EVT.DAMAGE, phase: 'POST', role: 'tgt', cond: { srcSide: 'enemy', hasPower: 1, ownerAlive: 1, blocked13: 1 }, limit: { perAction: 1 }, effects: [{ type: 'counter', mul: { f: 'cnt11', v: 60 }, why: 'osCtr13' }] }] });
+Object.assign(COND, { blocked13: (c, v) => !!c.ev && ((c.ev.payload && c.ev.payload.notes) || []).includes('block') === !!v });
+BR.FORMULA.osBash13 = c => (c.src.stats.atk + 0.7 * c.src.stats.def) / Math.max(1, c.src.stats.atk);
+TREE11['單手盾'] = { dual: 1, attr: ['vit', 1], cat: '物', trait: '盾衛：格擋時受到的傷害再 −15%（−40% → −55%）', mast: '護盾精通', mastD: '格擋率 +2%／級', sp: [],
+  sk: [['1a', 'osBash', '盾撞', 50, 0, 1, 4, 0, '用盾撞過去（攻擊力加上物防的 70%），30% 退縮。', { cls: 'strike', mods: [{ stage: 'skill', who: 'attacker', atkMul: { f: 'osBash13' } }], effects: DMG11(FL11(0.3)) }],
+    ['1b', 'osHold', '堅守', 0, 0, 3, 3, 0, '搶先；這回合受到的傷害 −50%，下一回合格擋率 +30%。', { prio: 1, effects: [{ type: 'status', target: 'self', status: 'osHold13' }, { type: 'status', target: 'self', status: 'osBlock13', dur: 2 }] }],
+    ['2b', 'osCounter', '盾反', 0, 0, 4, 5, 0, '2 回合內，格擋成功時反擊（威力 60）。', { effects: [{ type: 'status', target: 'self', status: 'osCtr13', dur: 2 }] }]] };
 const TREE_KINDS11 = Object.keys(TREE11), DUAL_KINDS11 = TREE_KINDS11.filter(k => TREE11[k].dual);
 const POS_LV11 = { 1: 1, 2: 15, 3: 30, 4: 35 }, POS_LVD11 = POS_LV11; // 雙持樹跟一般的樹一樣（原本 15／25／35）；第四段＝絕技
 const SK_TREE11 = {}; // skill id → [kind, pos]
@@ -239,11 +253,11 @@ const treeOf11 = id => SK_TREE11[id] || null;
 const treeSkillKey11 = id => id.slice(2);
 
 /* ---------- specials: one skill per special, weapon tier and physical / magic ---------- */
-const SPN11 = { burst: 4, crit: 3, defdown: 3, psn: 4, surecrit: 4, haste: 3, chip: 3, atkup: 4, flinch50: 3, pierce: 4, aoe: 4, multi2: 4, mana: 3, guard: 4, strike: 3, slow: 3, flinch20: 3, power: 4, heal: 4, multi2crit: 4, flinch30: 3 };
-const SP_TXT11 = { burst: '強力追擊', crit: '下一次攻擊必定會心', defdown: '追擊，對手物防 −1', psn: '追擊，60% 中毒', surecrit: '追擊，必定會心', haste: '速度 +1 階，回 10% MP', chip: '追擊，削 1 格護盾', atkup: '物攻 +1 階',
+const SPN11 = { burst: 4, burstEl: 4, crit: 3, defdown: 3, psn: 4, surecrit: 4, haste: 3, chip: 3, atkup: 4, flinch50: 3, pierce: 4, aoe: 4, multi2: 4, mana: 3, guard: 4, strike: 3, slow: 3, flinch20: 3, power: 4, heal: 4, multi2crit: 4, flinch30: 3 };
+const SP_TXT11 = { burst: '強力追擊', burstEl: '強力追擊，帶武器的屬性（武器沒屬性時是火）', crit: '下一次攻擊必定會心', defdown: '追擊，對手物防 −1', psn: '追擊，60% 中毒', surecrit: '追擊，必定會心', haste: '速度 +1 階，回 10% MP', chip: '追擊，削 1 格護盾', atkup: '物攻 +1 階',
   flinch50: '追擊，50% 退縮', pierce: '追擊，無視物防', aoe: '追擊全體', multi2: '兩段追擊', mana: '回 20% MP', guard: '2 回合受到的傷害 −40%', strike: '追擊一次', slow: '對手速度 −1 階', flinch20: '音波追擊，20% 退縮',
   power: '物攻・魔攻各 +1 階', heal: '回 15% HP', multi2crit: '兩段追擊，容易會心', flinch30: '追擊，30% 退縮' };
-const spPow11 = (k, t) => ({ burst: 40 + 10 * t, strike: 30 + 8 * t, multi2: 20 + 5 * t, multi2crit: 20 + 5 * t, surecrit: 30 + 8 * t, pierce: 30 + 6 * t })[k] ?? (['defdown', 'psn', 'chip', 'flinch50', 'flinch30', 'flinch20', 'aoe'].includes(k) ? 25 + 6 * t : 0);
+const spPow11 = (k, t) => ({ burst: 40 + 10 * t, burstEl: 40 + 10 * t, strike: 30 + 8 * t, multi2: 20 + 5 * t, multi2crit: 20 + 5 * t, surecrit: 30 + 8 * t, pierce: 30 + 6 * t })[k] ?? (['defdown', 'psn', 'chip', 'flinch50', 'flinch30', 'flinch20', 'aoe'].includes(k) ? 25 + 6 * t : 0);
 const spId11 = (kind, j, t, mag) => 'wsp11_' + TREE_KINDS11.indexOf(kind) + '_' + j + '_' + t + (mag ? 'm' : '');
 for (const kind of TREE_KINDS11) TREE11[kind].sp.forEach(([n, k], j) => { for (let t = 1; t <= 7; t++) for (const mag of [0, 1]) {
   const p = spPow11(k, t), id = spId11(kind, j, t, mag), hurt = p > 0, base = { n, t: '一般', cat: mag ? '特' : '物', pow: p, acc: null };
@@ -291,7 +305,7 @@ function dualMode11(st = Game.st) { const w = gearBy(st.equip && st.equip.weapon
   if (W.slot === 'shield') return '雙盾'; if (!o || GEAR[o.b].slot !== 'weapon') return null; const O = GEAR[o.b];
   if (W.kind === '短刀' && O.kind === '短刀') return '雙刀'; if (W.kind === '劍' && O.kind === '劍') return '雙劍'; return null; }
 const mainKind11 = (st = Game.st) => { const w = gearBy(st.equip && st.equip.weapon, st); return w && GEAR[w.b].slot === 'weapon' && TREE11[GEAR[w.b].kind] ? GEAR[w.b].kind : null; };
-const curKinds11 = (st = Game.st) => [mainKind11(st), dualMode11(st)].filter(Boolean);
+const curKinds11 = (st = Game.st) => [mainKind11(st), dualMode11(st), typeof shieldMode13 === 'function' ? shieldMode13(st) : null].filter(Boolean);
 function nodeState11(kind, N, st = Game.st) { const lv = trLv11(N.key, st);
   if (TREE11[kind].dual && !dualOn11(st)) return { ok: false, why: '還不能學' };
   if (lv >= N.max) return { ok: false, why: '已經學滿', full: 1 };
@@ -314,7 +328,7 @@ BB.slots = function (st = Game.st) { const av = BB.available(st), learned = lear
 { const _nm = BB.nameOf; BB.nameOf = function (st, id) { const T = treeOf11(id); if (!T) return _nm.call(this, st, id); const D = DEF.skills[id]; return D.name + (activeKinds11(st).includes(T[0]) ? '' : '（' + T[0] + '）'); }; }
 { const _so = BB.sourceOf; BB.sourceOf = function (st, id) { const T = treeOf11(id); return T ? T[0] + '技能樹 Lv' + trLv11(id, st) : _so.call(this, st, id); }; }
 { const _si = BB.skillInfo; BB.skillInfo = function (st, id) { const T = treeOf11(id); if (!T) return _si.call(this, st, id); return treeSkillText11(id, st); }; }
-function treeSkillText11(id, st = Game.st) { const D = DEF.skills[id], lv = Math.max(1, trLv11(id, st)), kind = D.cat === '變' ? '輔助' : D.cat === '物' ? '物理' : '魔法', mp = (D.costs || []).find(c => c.res === 'mp');
+function treeSkillText11(id, st = Game.st) { const D = DEF.skills[id], lv = Math.max(1, trLv11(id, st)), kind = D.cat === '變' || !D.power ? '輔助' : D.cat === '物' ? '物理' : '魔法', mp = (D.costs || []).find(c => c.res === 'mp');
   const pw = D.power && !D.powerOf ? Math.round(D.power * (1 + 0.1 * (lv - 1))) : null, mpv = mp ? (mp.all ? '全部 MP' : 'MP' + (D.power ? mp.amount : Math.max(0, Math.round(mp.amount * (1 - 0.1 * (lv - 1)))))) : '';
   const cd = Math.max(0, (D.cooldown || 0) - (!D.power && lv >= 5 ? 1 : 0));
   return kind + (pw ? '・威力' + pw + (D.hits ? '×' + D.hits[0] : '') : '') + (mpv ? '・' + mpv : '') + (cd ? '・冷卻' + cd : '') + (D.prio ? '・搶先' : '') + (D.target === 'all_enemies' ? '・全體' : '') + (D.charge ? '・蓄力' : '') + '　' + D.desc + '　【' + treeOf11(id)[0] + '技能樹 Lv' + lv + '】'; }
@@ -433,9 +447,9 @@ function* equipPick11(sl, fit) {
     if (!((sl === 'shield' || sl === 'weapon') && dualOn11(st))) { yield* _ep.call(this, sl); if (dualFix11(st)) { clampHP(); yield* say('副手的武器跟主手不同種，卸下了。'); } return; }
     if (sl === 'shield' && clsV7(st.cls) === 'otherworlder') { Sound.sfx('bump'); yield* say('異界勇者不能使用副手。'); return; }
     if (sl === 'shield' && !shieldOk(st)) { Sound.sfx('bump'); yield* say('雙手武器不能用副手。\n（劍、斧、短刀、盾才能配副手）'); return; }
-    const m0 = dualMode11(st); yield* equipPick11(sl, sl === 'weapon' ? mainOk11 : offOk11);
+    const mode = () => dualMode11(st) || (typeof shieldMode13 === 'function' ? shieldMode13(st) : null), m0 = mode(); yield* equipPick11(sl, sl === 'weapon' ? mainOk11 : offOk11);
     if (typeof shieldFix === 'function' && shieldFix(st)) { clampHP(); yield* say('雙手武器不能配副手，副手卸下了。'); } if (dualFix11(st)) { clampHP(); yield* say('副手的武器跟主手不同種，卸下了。'); }
-    const m = dualMode11(st); if (m && m !== m0) yield* say('現在是「' + m + '」！' + (trLeft11(st) > 0 ? '\n（選單→技能→武器技能樹 可以學' + m + '的招式）' : '')); }; }
+    const m = mode(); if (m && m !== m0) yield* say('現在是「' + m + '」！' + (trLeft11(st) > 0 ? '\n（選單→技能→武器技能樹 可以學' + m + '的招式）' : '')); }; }
 { const _so = startOverworld; startOverworld = function (...a) { if (Game.st) dualFix11(Game.st); return _so.apply(this, a); }; }
 
 /* ---------- 雙持：戰鬥中的樣子（現有的武器圖和盾牌圖） ----------

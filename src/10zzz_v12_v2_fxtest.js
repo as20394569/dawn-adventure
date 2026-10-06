@@ -14,6 +14,7 @@ function fxtSetup13(kind) { const st = Game.st, T = tr11(st), base = fxtBase13(k
   const mk = b => { GEAR11_GLAM = false; try { return makeGear(b, 3).u; } finally { GEAR11_GLAM = true; } };
   st.gear = []; st.equip = { ...(st.equip || {}), weapon: null, shield: null };
   if (kind === '雙盾') { st.equip.weapon = mk(BASE11.shield[4]); st.equip.shield = mk(BASE11.shield[4]); }
+  else if (kind === '單手盾') { st.equip.weapon = mk(BASE11.weapon['劍'][4]); st.equip.shield = mk(BASE11.shield[4]); }
   else if (base) { st.equip.weapon = mk(BASE11.weapon[base][4]); st.equip.shield = mk(BASE11.weapon[base][4]); }
   else st.equip.weapon = mk(BASE11.weapon[common ? '劍' : kind][4]);
   st.hp = heroStats(st).hp; st.mp = heroStats(st).mp; }
