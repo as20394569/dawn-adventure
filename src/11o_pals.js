@@ -63,3 +63,11 @@ TITLES.push({ id: 'pal13friend', n: '魔物之友', d: '有 20 種小夥伴。',
 ACHIEVEMENTS.push({ id: 'pal13_1', n: '第一個小夥伴', d: '讓魔物成為小夥伴。', cat: '探索', ok: st => palKinds13(st) >= 1 },
   { id: 'pal13_10', n: '熱鬧的旅途', d: '有 10 種小夥伴。', cat: '探索', ok: st => palKinds13(st) >= 10 });
 GROW12.push(['小夥伴', '在野外打贏時，偶爾會有魔物想跟著你。答應的話，牠會在地圖上跟在你身後（不參加戰鬥）。背包「重要」裡的夥伴名冊可以換要帶哪一隻。']);
+// the pal sniffs out treasure: within 2 tiles of an × on a map you carry, a "!" pops over its head (and once, a line)
+Overworld.prototype.palSniff13 = function () { const st = this.st, p = this.p, T = st && st.tm13; if (!T || !T.own.length || !this.pal) return false;
+  return T.own.some(k => { const S = TMAP13[k]; return S.m === this.map.id && Math.max(Math.abs(S.x - p.x), Math.abs(S.y - p.y)) <= 2; }); };
+{ const _pd = Overworld.prototype.palDraw13; Overworld.prototype.palDraw13 = function (x, camX, camY) { _pd.call(this, x, camX, camY); const q = this.pal;
+    if (q && this.palSniff13() && Math.floor(this.t / 20) % 3 !== 2) { const im = palImg13(q.sp), h = im ? im.c.height : 16; x.drawImage(EXCLAIM, Math.round(q.px) - camX + 5, Math.round(q.py) - camY + 15 - h - 12); } }; }
+{ const _u = Overworld.prototype.update; Overworld.prototype.update = function (...a) { const r = _u.apply(this, a), st = this.st;
+    if (st && !this.script && !UI.stack.length && this.pal && !st.flags.palSniff13 && this.palSniff13()) { st.flags.palSniff13 = 1; const n = (SPECIES[this.pal.sp] || {}).n || '小夥伴'; this.run(say('（' + n + '好像聞到了什麼……\n藏寶圖的 × 就在附近！）')); }
+    return r; }; }
