@@ -45,7 +45,7 @@ GOAL9.push({ map: 'maplePass', when: f => f.passIn && !f.passCamp, x: 11, y: 6, 
 for (const k of Object.keys(CAMP12).concat(['grenPass', 'grenCamp'])) { const _e = Events[k]; if (!_e) continue; const who = CAMP12[k] ? CAMP12[k].name : '格倫';
   Events[k] = function* (...a) { Game.restSpot9 = who; try { return yield* _e.apply(this, a); } finally { Game.restSpot9 = 0; } }; }
 { Overworld.prototype.whiteout = function* () {
-    const st = this.st; Game.fade = 1; this.camDY = 0; this.bossGlow = 0; const lost = Math.floor(st.money / 2); st.money -= lost;
+    const st = this.st; Game.fade = 1; this.camDY = 0; this.bossGlow = 0; const lost = Game.keepGold13 ? 0 : Math.floor(st.money / 2); st.money -= lost;
     Sound.stop(); UI.clear();
     const box = { draw(x) { x.fillStyle = '#000'; x.fillRect(0, 0, W, H); } }; UI.push(box);
     Game.fade = 0;

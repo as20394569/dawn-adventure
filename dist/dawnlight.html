@@ -7889,7 +7889,7 @@ class TitleScene {
     x.drawImage(this.logo, Math.round(W / 2 - this.logo.width / 2), 6 + bob);
     Font.drawC(x, '～異世界冒險RPG～', W / 2, 52 + bob, '#ffe0a0', '#3a1428');
     if (this.stage === 'press' && Math.floor(this.t / 30) % 2 === 0) Font.drawC(x, '按 A 鍵開始', W / 2, 232, '#ffffff', '#1a1024');
-    Font.drawR(x, 'v12.44', W - 3, H - 13, '#b890b0', null);
+    Font.drawR(x, 'v12.45', W - 3, H - 13, '#b890b0', null);
   }
 }
 class IntroScene {
@@ -20822,7 +20822,7 @@ GOAL9.push({ map: 'maplePass', when: f => f.passIn && !f.passCamp, x: 11, y: 6, 
 for (const k of Object.keys(CAMP12).concat(['grenPass', 'grenCamp'])) { const _e = Events[k]; if (!_e) continue; const who = CAMP12[k] ? CAMP12[k].name : '格倫';
   Events[k] = function* (...a) { Game.restSpot9 = who; try { return yield* _e.apply(this, a); } finally { Game.restSpot9 = 0; } }; }
 { Overworld.prototype.whiteout = function* () {
-    const st = this.st; Game.fade = 1; this.camDY = 0; this.bossGlow = 0; const lost = Math.floor(st.money / 2); st.money -= lost;
+    const st = this.st; Game.fade = 1; this.camDY = 0; this.bossGlow = 0; const lost = Game.keepGold13 ? 0 : Math.floor(st.money / 2); st.money -= lost;
     Sound.stop(); UI.clear();
     const box = { draw(x) { x.fillStyle = '#000'; x.fillRect(0, 0, W, H); } }; UI.push(box);
     Game.fade = 0;
@@ -25297,4 +25297,18 @@ TITLES.push({ id: 'tm13hunter', n: '尋寶家', d: '找到 12 個寶藏。', st:
 ACHIEVEMENTS.push({ id: 'tm13_first', n: '第一個寶藏', d: '照著藏寶圖挖到寶藏。', cat: '探索', ok: st => tmFound13(st) >= 1 },
   { id: 'tm13_all', n: '藏寶圖大師', d: '找到全部 16 個寶藏。', cat: '探索', ok: st => tmFound13(st) >= TMAP_KEYS13.length });
 GROW12.push(['藏寶圖', '萌芽鎮南邊的尋寶人巴克會送你第一張藏寶圖。打倒魔物偶爾會撿到別張（菁英比較常有）。站在 × 的地方按 A 挖，能挖到金錢、果實和秘傳之書。']);
+{ const _bs = Overworld.prototype.battleScript; Overworld.prototype.battleScript = function* (cfg, ...a) {
+    const st = this.st, big = st && cfg && (cfg.kind === 'boss' || cfg.kind === 'elite') && !cfg.fxtest && !cfg.arena13 && !(typeof ARENA_ON13 !== 'undefined' && ARENA_ON13);
+    if (!big) return yield* _bs.call(this, cfg, ...a);
+    const snap = JSON.stringify(st);
+    while (true) { const R = { again: false }, prev = Game.retry13; Game.retry13 = R; let r;
+      try { r = yield* _bs.call(this, cfg, ...a); } finally { Game.retry13 = prev; }
+      if (!(r === 'lose' && R.again)) return r;
+      const o = JSON.parse(snap); for (const k of Object.keys(st)) delete st[k]; Object.assign(st, o); st.retry13 = (st.retry13 || 0) + 1; } }; }
+{ const _wo = Overworld.prototype.whiteout; Overworld.prototype.whiteout = function* (...a) { const R = Game.retry13;
+    if (!R) return yield* _wo.apply(this, a);
+    Game.retry13 = null; Sound.stop(); UI.clear(); const box = { draw(x) { x.fillStyle = '#000'; x.fillRect(0, 0, W, H); } }; UI.push(box); Game.fade = 0; let c;
+    try { c = yield* ask(this.st.name + '眼前一片漆黑……\n要再挑戰一次嗎？\n（回到這場戰鬥開始前）', ['再挑戰', '回去準備']); } finally { UI.remove(box); }
+    if (c === 0) { R.again = true; Game.fade = 1; return; }
+    Game.keepGold13 = 1; try { yield* _wo.apply(this, a); } finally { Game.keepGold13 = 0; } }; }
 </script>
