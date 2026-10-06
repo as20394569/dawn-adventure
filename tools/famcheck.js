@@ -6,7 +6,7 @@ module.exports = async (g) => {
     const G = __game; G.Game.st = JSON.parse(s); const st = G.Game.st; st.status = null; startOverworld(); st.money = 5000;
     const out = [], ok = (name, cond, info) => out.push((cond ? 'PASS ' : 'FAIL ') + name + (info != null ? '  — ' + info : ''));
     const wild = new Set(); for (const id in MAPS) for (const e of MAPS[id].encounters || []) for (const r of e.table || []) wild.add(r[0]);
-    const pick = fam => [...wild].filter(sp => SPECIES[sp] && SPECIES[sp].fam === fam && !SPECIES[sp].boss && !SPECIES[sp].elite && !SPECIES[sp].rare)[0];
+    const pick = fam => [...wild].filter(sp => SPECIES[sp] && SPECIES[sp].fam === fam && !SPECIES[sp].boss && !SPECIES[sp].elite && !SPECIES[sp].rare && !(typeof BEH_OF12 !== 'undefined' && ['split', 'fake', 'shell'].includes(BEH_OF12[sp])))[0];
     const texts = c => c.log.filter(e => e.type === EVT.MESSAGE).map(e => e.payload.text || '').join('|');
     const used = (c, id) => c.log.filter(e => e.type === EVT.SKILL_USE && e.payload.skill === id).length;
     const run = (fam, n = 2, seed = 7, o = {}) => { const sp = o.sp || pick(fam); if (!sp) return null; const S = JSON.parse(JSON.stringify(st)); S.hp = heroStats(st).hp;
@@ -21,7 +21,7 @@ module.exports = async (g) => {
     { const r = any('insect', c => /孵出了/.test(texts(c)), { weak: 0.3, n: 1, setup: c => { const F = c.units.find(u => u.side === 'B'); F.res.hp = Math.floor(F.max.hp * 0.45); } }); ok('蟲族 孵化：HP 一半以下孵出一隻', r && /孵出了/.test(texts(r.c)) && r.c.units.filter(u => u.side === 'B').length === 2, r && r.sp); }
     { const healed = c => c.log.some(e => e.type === EVT.HEAL && c.byId[e.tgts[0]] && c.byId[e.tgts[0]].side === 'B'); const r = any('plant', healed, { weak: 0.3, n: 2, setup: c => { for (const F of c.units.filter(u => u.side === 'B')) F.res.hp = Math.floor(F.max.hp * 0.6); } }); ok('植物 扎根：沒被打到的回 HP', r && healed(r.c), r && r.sp); }
     { const r = any('bird', c => used(c, 'f14_fly') > 0, { weak: 0.3, n: 1 }); const fly = r && r.c.log.some(e => e.type === EVT.STATUS_APPLY && e.payload.status === 'fly14'); ok('飛禽 高飛：飛上天（fly14）', r && used(r.c, 'f14_fly') > 0 && fly, r && r.sp); }
-    { const r = any('ooze', c => /分裂/.test(texts(c)), { n: 1, setup: c => { const F = c.units.find(u => u.side === 'B'); F.max.hp = F.res.hp = 1000; c.byId.H.stats.atk *= 25; c.byId.H.stats.spa *= 25; c.byId.H.stats.crit = 0; } }); ok('軟泥 分裂：一下打掉 30% 以上就分裂', r && /分裂/.test(texts(r.c)), r && r.sp); }
+    { const r = any('ooze', c => /分裂/.test(texts(c)), { n: 1, setup: c => { const F = c.units.find(u => u.side === 'B'); F.max.hp = F.res.hp = 1000; c.byId.H.stats.atk *= 40; c.byId.H.stats.spa *= 40; c.byId.H.stats.crit = 0; } }); ok('軟泥 分裂：一下打掉 35% 以上就分裂', r && /分裂/.test(texts(r.c)), r && r.sp); }
     { const r = any('aquatic', c => used(c, 'f14_dive') > 0, { weak: 0.3, n: 1 }); ok('水棲 潛水', r && used(r.c, 'f14_dive') > 0, r && r.sp); }
     { const r = any('construct', c => used(c, 'f14_guard') > 0, { weak: 0.3, n: 1 }); ok('構造體 架盾（每 3 次行動）', r && used(r.c, 'f14_guard') > 0, r && r.sp); }
     { const r = any('human', c => used(c, 'f14_steal') > 0, { weak: 0.2, n: 1 }); const tx = r && texts(r.c); ok('人類 順手牽羊：偷錢、下一回合逃跑或被打倒', r && used(r.c, 'f14_steal') > 0 && /偷走了/.test(tx) && (r.c.units.some(u => u.side === 'B' && (u.fled || u.down))), r && r.sp + ' ' + (tx || '').slice(0, 80)); }
@@ -40,6 +40,7 @@ module.exports = async (g) => {
     { const sp = [...wild].find(q => SPECIES[q] && !SPECIES[q].boss && (DEF.enemies[q] || {}).skills && DEF.enemies[q].skills.filter(id => DEF.skills[id] && DEF.skills[id].power).length >= 2), S = JSON.parse(JSON.stringify(st)), c = BB.build({ sp, lv: 20, kind: 'wild', seed: 6, maxRounds: 2 }, S), F = c.units.find(u => u.side === 'B');
       c.applyStatus(c.byId.H, F, 'silence14', {}); const pw = F.skills.filter(id => DEF.skills[id] && DEF.skills[id].power && !DEF.skills[id].charge).map(id => DEF.skills[id].power), cmd = BAI.decide(c, F);
       ok('沉默：只用最弱的招', cmd.type === 'skill' && DEF.skills[cmd.skill].power === Math.min(...pw), sp + ' ' + cmd.skill); }
+    { const sp = Object.keys(BEH_OF12).find(q => BEH_OF12[q] === 'split' && SPECIES[q]), S = JSON.parse(JSON.stringify(st)), c = BB.build({ sp, lv: 20, kind: 'wild', seed: 4, maxRounds: 1 }, S); ok('有自己招牌的（史萊姆分裂）不重複套種族習性', !c.units.find(u => u.side === 'B').data.fam14, sp); }
     ok('沒有錯誤', !BV2.errors.length, BV2.errors.slice(-3).join(' | '));
     return out.join('\n') + '\n' + out.filter(l => l.startsWith('PASS')).length + '/' + out.length + ' PASS';
   }, save));

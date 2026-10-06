@@ -60,7 +60,9 @@ defPut('mechanics', 'fam14_spirit', { mods: [{ stage: 'defender', who: 'defender
 defPut('mechanics', 'fam14_human', { triggers: [{ key: 'f14thief', on: EVT.ESCAPE, phase: 'POST', role: 'tgt', whenDown: 1, effects: [{ type: 'thiefGone14' }] }] });
 // who gets them: wild monsters only (not elites, bosses, summons, scripted units)
 { const _ue = BD.unitForEnemy; BD.unitForEnemy = function (core, sp, lv, kind, side, idx, o = {}) { const s = _ue.call(this, core, sp, lv, kind, side, idx, o); if (!s || kind !== 'wild' || s.data.script || (typeof window !== 'undefined' && window.NOFAM14)) return s;
-    const fam = (SPECIES[sp] || {}).fam; if (!FAM_TRAIT14[fam]) return s; s.data.fam14 = fam; const mech = s.data.mechanics || (s.data.mechanics = []);
+    const fam = (SPECIES[sp] || {}).fam; if (!FAM_TRAIT14[fam]) return s;
+    // v12.79: species that already have their own trick (v12.0.8b 招牌行為) of the same kind keep only that one: 分裂（史萊姆）・裝死（骷髏）・縮殼（烏龜・蝸牛）
+    if (typeof BEH_OF12 !== 'undefined' && ['split', 'fake', 'shell'].includes(BEH_OF12[sp])) return s; s.data.fam14 = fam; const mech = s.data.mechanics || (s.data.mechanics = []);
     if (DEF.mechanics['fam14_' + fam] && !mech.includes('fam14_' + fam)) mech.push('fam14_' + fam);
     if (fam === 'dragon') { const b = huntBest11(s.skills), cid = b && huntClone11(b); if (cid) s.skills[s.skills.indexOf(b)] = cid; }
     return s; }; }
@@ -127,7 +129,8 @@ function intentOf14(core, u, cmd) {
     if (!f.tutIntent14 && e.payload.round === 1 && !(typeof FXT13 !== 'undefined' && FXT13.on)) { f.tutIntent14 = 1; yield* this.msg('（魔物頭上的圖示是牠這回合要做的事。數字是預估傷害，橘色是重擊——這時候按「防禦」最划算。）', { hold: 90 }); } }; }
 
 /* ---------- 說明 ---------- */
-famText = function (sp) { const S = SPECIES[sp] || {}, F = FAMILIES[S.fam] || {}, tr = FAM_TRAIT14[S.fam] && !S.boss && !S.elite ? '・' + FAM_TRAIT14[S.fam] : '';
+famText = function (sp) { const S = SPECIES[sp] || {}, F = FAMILIES[S.fam] || {}, beh = typeof BEH_OF12 !== 'undefined' ? BEH_OF12[sp] : null, own = beh && ['split', 'fake', 'shell'].includes(beh);
+  const tr = S.boss || S.elite ? '' : (own ? '' : FAM_TRAIT14[S.fam] ? '・' + FAM_TRAIT14[S.fam] : '') + (beh && typeof BEH_N12 !== 'undefined' ? '・' + BEH_N12[beh] : '');
   return (F.n || '') + tr + (F.immune && F.immune.length ? '　不會' + F.immune.map(q => IMM_N14[q] || q).join('・') : ''); };
 dexWeak11 = function (sp) { return famText(sp) || '—'; };
 if (typeof BATTLE_HELP !== 'undefined') BATTLE_HELP.unshift(['魔物的下一步', ['每隻魔物頭上的圖示，是牠這回合要做的事：劍＝攻擊（數字是預估傷害，橘色是重擊，最好防禦）、綠箭頭＝強化、紫箭頭＝削弱、毒滴＝異常、十字＝補血、盾＝架盾、黃箭頭＝逃跑。',

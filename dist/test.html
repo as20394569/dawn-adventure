@@ -7896,7 +7896,7 @@ class TitleScene {
     x.drawImage(this.logo, Math.round(W / 2 - this.logo.width / 2), 6 + bob);
     Font.drawC(x, '～異世界冒險RPG～', W / 2, 52 + bob, '#ffe0a0', '#3a1428');
     if (this.stage === 'press' && Math.floor(this.t / 30) % 2 === 0) Font.drawC(x, '按 A 鍵開始', W / 2, 232, '#ffffff', '#1a1024');
-    Font.drawR(x, 'v12.78', W - 3, H - 13, '#b890b0', null);
+    Font.drawR(x, 'v12.79', W - 3, H - 13, '#b890b0', null);
   }
 }
 class IntroScene {
@@ -26514,7 +26514,8 @@ defPut('mechanics', 'fam14_undead', { triggers: [{ key: 'f14undFall', on: EVT.DA
 defPut('mechanics', 'fam14_spirit', { mods: [{ stage: 'defender', who: 'defender', accAdd: -20, cond: { cat: '物' } }], triggers: [] });
 defPut('mechanics', 'fam14_human', { triggers: [{ key: 'f14thief', on: EVT.ESCAPE, phase: 'POST', role: 'tgt', whenDown: 1, effects: [{ type: 'thiefGone14' }] }] });
 { const _ue = BD.unitForEnemy; BD.unitForEnemy = function (core, sp, lv, kind, side, idx, o = {}) { const s = _ue.call(this, core, sp, lv, kind, side, idx, o); if (!s || kind !== 'wild' || s.data.script || (typeof window !== 'undefined' && window.NOFAM14)) return s;
-    const fam = (SPECIES[sp] || {}).fam; if (!FAM_TRAIT14[fam]) return s; s.data.fam14 = fam; const mech = s.data.mechanics || (s.data.mechanics = []);
+    const fam = (SPECIES[sp] || {}).fam; if (!FAM_TRAIT14[fam]) return s;
+    if (typeof BEH_OF12 !== 'undefined' && ['split', 'fake', 'shell'].includes(BEH_OF12[sp])) return s; s.data.fam14 = fam; const mech = s.data.mechanics || (s.data.mechanics = []);
     if (DEF.mechanics['fam14_' + fam] && !mech.includes('fam14_' + fam)) mech.push('fam14_' + fam);
     if (fam === 'dragon') { const b = huntBest11(s.skills), cid = b && huntClone11(b); if (cid) s.skills[s.skills.indexOf(b)] = cid; }
     return s; }; }
@@ -26573,7 +26574,8 @@ function intentOf14(core, u, cmd) {
     _dr.call(this, x); for (const v of this.foes()) if (v.st.dive14 && !v.gone) { const t = this.t || 0; for (let i = 0; i < 3; i++) { const r = 8 + ((t / 2 + i * 7) % 20); x.fillStyle = 'rgba(200,235,255,' + (0.6 - r / 40).toFixed(2) + ')'; x.fillRect(Math.round(v.x - r), Math.round(v.foot - 1), 2 * r, 1); } } }; }
 { const H = Battle.prototype.handlers, _rs = H.ROUND_START; H.ROUND_START = function* (e, ...a) { yield* _rs.call(this, e, ...a); const f = (Game.st || {}).flags || {};
     if (!f.tutIntent14 && e.payload.round === 1 && !(typeof FXT13 !== 'undefined' && FXT13.on)) { f.tutIntent14 = 1; yield* this.msg('（魔物頭上的圖示是牠這回合要做的事。數字是預估傷害，橘色是重擊——這時候按「防禦」最划算。）', { hold: 90 }); } }; }
-famText = function (sp) { const S = SPECIES[sp] || {}, F = FAMILIES[S.fam] || {}, tr = FAM_TRAIT14[S.fam] && !S.boss && !S.elite ? '・' + FAM_TRAIT14[S.fam] : '';
+famText = function (sp) { const S = SPECIES[sp] || {}, F = FAMILIES[S.fam] || {}, beh = typeof BEH_OF12 !== 'undefined' ? BEH_OF12[sp] : null, own = beh && ['split', 'fake', 'shell'].includes(beh);
+  const tr = S.boss || S.elite ? '' : (own ? '' : FAM_TRAIT14[S.fam] ? '・' + FAM_TRAIT14[S.fam] : '') + (beh && typeof BEH_N12 !== 'undefined' ? '・' + BEH_N12[beh] : '');
   return (F.n || '') + tr + (F.immune && F.immune.length ? '　不會' + F.immune.map(q => IMM_N14[q] || q).join('・') : ''); };
 dexWeak11 = function (sp) { return famText(sp) || '—'; };
 if (typeof BATTLE_HELP !== 'undefined') BATTLE_HELP.unshift(['魔物的下一步', ['每隻魔物頭上的圖示，是牠這回合要做的事：劍＝攻擊（數字是預估傷害，橘色是重擊，最好防禦）、綠箭頭＝強化、紫箭頭＝削弱、毒滴＝異常、十字＝補血、盾＝架盾、黃箭頭＝逃跑。',
@@ -26629,5 +26631,24 @@ if (typeof GROW12 !== 'undefined') GROW12.push(['接招', '每棵技能樹都有
     if (id === 'fly14') yield* this.msg(t.n + '飛上了高空！', { hold: 16 });
     if (id === 'dive14') yield* this.msg(t.n + '潛進了水裡！', { hold: 16 });
     if (id === 'cguard14') yield* this.msg(t.n + '架起了防禦！', { hold: 16 }); }; }
+const PACE14 = { enc: 0.75, exp: 1.2, champ: 0.06, champLv: 8, S: 0.3, A: 0.15, streak: 0.05, streakMax: 0.25 };
+for (const id in MAPS) for (const e of MAPS[id].encounters || []) if (e && typeof e.rate === 'number' && !e.pace14) { e.rate = Math.round(e.rate * PACE14.enc * 1000) / 1000; e.pace14 = 1; }
+if (typeof mapCache !== 'undefined') for (const k in mapCache) delete mapCache[k];
+{ const _bs = Overworld.prototype.battleScript; Overworld.prototype.battleScript = function* (cfg, ...a) {
+    const st = this.st; if (cfg && cfg.kind === 'wild' && !cfg.roam12 && !cfg.champ12 && !cfg.wxMon && !cfg.id && typeof CHAMP_KEYS12 !== 'undefined' && st && st.lv >= PACE14.champLv && !(SPECIES[cfg.sp] || {}).rare && chance(PACE14.champ)) cfg = { ...cfg, champ12: pick(CHAMP_KEYS12) };
+    return yield* _bs.call(this, cfg, ...a); }; }
+function rate14(b) { const core = b.core, H = core && core.byId.H; if (!H) return null; const foes = core.units.filter(u => u.side === 'B' && !u.minion).length || 1, R = core.round || 1;
+  const taken = core.log.filter(e => e.type === EVT.DAMAGE && !e.cancelled && e.tgts[0] === H.id).reduce((s, e) => s + (e.payload.amount || 0), 0), pct = taken / Math.max(1, H.max.hp);
+  const g = R <= foes + 1 && pct <= 0.2 ? 'S' : R <= foes * 2 + 1 && pct <= 0.5 ? 'A' : 'B'; return { g, R, pct }; }
+{ const _ge = Battle.prototype.gainExp; Battle.prototype.gainExp = function* (a) { const st = Game.st, cfg = this.cfg || {};
+    if (cfg.kind !== 'wild' || this.rated14 || !st) return yield* _ge.call(this, a); this.rated14 = 1; const r = rate14(this); if (!r) return yield* _ge.call(this, a);
+    let bonus = 0; if (r.g === 'S') { st.rateStreak14 = (st.rateStreak14 || 0) + 1; bonus = PACE14.S + Math.min(PACE14.streakMax, PACE14.streak * (st.rateStreak14 - 1)); } else { st.rateStreak14 = 0; if (r.g === 'A') bonus = PACE14.A; }
+    st.rateBest14 = Math.max(st.rateBest14 || 0, st.rateStreak14 || 0); this.rate14 = r;
+    yield* this.msg('評價 ' + r.g + '（' + r.R + ' 回合・受傷 ' + Math.round(r.pct * 100) + '%）' + (bonus ? '：經驗值 +' + Math.round(bonus * 100) + '%' : '') + (r.g === 'S' && st.rateStreak14 > 1 ? '（連續 S ×' + st.rateStreak14 + '）' : ''), { hold: 40 });
+    return yield* _ge.call(this, Math.max(1, Math.floor(a * PACE14.exp * (1 + bonus)))); }; }
+ACHIEVEMENTS.push({ id: 'rate_s10', n: '完美戰鬥', d: '野外戰鬥連續 10 次拿到評價 S。', cat: '戰鬥', ok: st => (st.rateBest14 || 0) >= 10 },
+  { id: 'champ_30', n: '強化魔物獵人', d: '打倒 30 隻強化魔物。', cat: '戰鬥', ok: st => (st.champ12N || 0) >= 30 });
+if (typeof BATTLE_HELP !== 'undefined') { const P = BATTLE_HELP.find(q => q[0] === '魔物的下一步'); if (P) P[1].push('野外戰鬥的評價：S＝回合數不超過魔物數＋1、受傷不到 20%（經驗 +30%，連續 S 再加）；A＝回合數不超過魔物數×2＋1、受傷不到 50%（+15%）。'); }
+if (typeof GROW12 !== 'undefined') GROW12.push(['戰鬥評價', '野外戰鬥打完會給評價：打得快又沒怎麼受傷是 S（經驗 +30%，連續 S 每次再 +5%，最多 +25%），A 是 +15%。強化魔物（名字前面有詞綴、身上發光）隨機遇敵也會出現，獎勵加倍。']);
 </script>
 </body></html>
