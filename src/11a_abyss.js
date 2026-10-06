@@ -28,9 +28,13 @@ const ABY_MON13 = { // key: [name, base, family role, dex]
   abySoul13: ['深淵亡魂', 'bladeGhost', 'mage', '沒能回到原來世界的冒險者的魂。手裡還握著斷掉的劍。'],
 };
 const ABY_LORD13 = 'riftLord13';
+// late wild monsters copy the tuned panel of a 黯滅要塞-era monster with the same role (the raw ch2Panel formula is about twice as strong as the tuned ones)
+const LATE_PANEL13 = (role, mul = 1) => { const ref = { phys: 'duskKnight', tank: 'duskKnight', mage: 'shadowMage', fast: 'voidHound' }[role] || 'duskKnight', P = { ...(MON_PANEL[ref] || ch2Panel(36, role, 'wild')) };
+  if (role === 'phys') { P.atk = Math.round(P.atk * 1.2); P.def = Math.round(P.def * 0.9); }
+  for (const k of ['hp', 'atk', 'def', 'spa', 'spd']) if (P[k]) P[k] = Math.round(P[k] * mul); return P; };
 for (const k in ABY_MON13) { const [n, b, role, dex] = ABY_MON13[k], B = SPECIES[b]; if (!B) { bvErr('aby13', 'base ' + b); continue; }
   SPECIES[k] = { ...B, n, elite: 0, boss: 0, rare: 0, exp: Math.round((B.exp || 40) * 1.3), gold: Math.max(2, B.gold || 2), dex, aby13: 1 };
-  MON_PANEL[k] = ch2Panel(46, role, 'wild');
+  MON_PANEL[k] = LATE_PANEL13(role, 1.1);
   HD_RIG_OF[k] = chibiOwn(b) ? b : (HD_RIG_OF[b] || b); if (typeof HD_RIG_OF_PENDING !== 'undefined') HD_RIG_OF_PENDING[k] = HD_RIG_OF[k];
   if (ART[b]) ART[k] = artRecolor(ART[b], 0, 1, 1); else if (ART[HD_RIG_OF[k]]) ART[k] = ART[HD_RIG_OF[k]];
   const E = DEF.enemies[b]; defPut('enemies', k, { tags: ['foe', 'fam:' + (B.fam || 'beast')], skills: E ? E.skills.slice() : ['m_tackle'], fam: B.fam, trait: null, profile: E ? E.profile : 'brute', script: null, metadata: { n } }); }

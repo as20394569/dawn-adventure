@@ -551,6 +551,8 @@
    "frostField掉落池",
    "iceCave掉落池",
    "cave6_frostField掉落池",
+   "coralCoast13掉落池",
+   "wreckCove13掉落池",
    "重戰掉落:frostQueen",
    "重戰掉落:iceMammoth"
   ],
@@ -559,18 +561,24 @@
    "iceCave掉落池",
    "iceCave寶箱",
    "cave6_frostField掉落池",
+   "coralCoast13掉落池",
+   "wreckCove13掉落池",
    "重戰掉落:iceMammoth"
   ],
   "glacierStaff": [
    "frostField掉落池",
    "iceCave掉落池",
    "cave6_frostField掉落池",
+   "coralCoast13掉落池",
+   "wreckCove13掉落池",
    "重戰掉落:frostLich",
    "重戰掉落:frostQueen",
    "重戰掉落:iceMammoth",
    "frostField掉落池(魔導士)",
    "iceCave掉落池(魔導士)",
    "cave6_frostField掉落池(魔導士)",
+   "coralCoast13掉落池(魔導士)",
+   "wreckCove13掉落池(魔導士)",
    "重戰掉落:frostQueen(魔導士)",
    "重戰掉落:iceMammoth(魔導士)"
   ],
@@ -580,6 +588,8 @@
    "iceCave掉落池",
    "cave6_frostField精英掉落",
    "cave6_frostField掉落池",
+   "coralCoast13掉落池",
+   "wreckCove13掉落池",
    "重戰掉落:snowBear",
    "重戰掉落:frostLich",
    "重戰掉落:iceMammoth"
@@ -588,6 +598,8 @@
    "frostField掉落池",
    "iceCave掉落池",
    "cave6_frostField掉落池",
+   "coralCoast13掉落池",
+   "wreckCove13掉落池",
    "重戰掉落:frostQueen"
   ],
   "snowBoots": [
@@ -595,6 +607,8 @@
    "frostField寶箱",
    "iceCave掉落池",
    "cave6_frostField掉落池",
+   "coralCoast13掉落池",
+   "wreckCove13掉落池",
    "重戰掉落:snowBear"
   ],
   "iceCharm": [
@@ -602,6 +616,8 @@
    "iceCave掉落池",
    "iceCave寶箱",
    "cave6_frostField掉落池",
+   "coralCoast13掉落池",
+   "wreckCove13掉落池",
    "重戰掉落:snowBear",
    "重戰掉落:frostLich"
   ],
@@ -609,6 +625,8 @@
    "emberPass掉落池",
    "lavaTunnel掉落池",
    "cave6_emberPass掉落池",
+   "coralCoast13掉落池",
+   "wreckCove13掉落池",
    "重戰掉落:youngDragon",
    "重戰掉落:magmaNewt"
   ],
@@ -617,23 +635,31 @@
    "lavaTunnel掉落池",
    "lavaTunnel寶箱",
    "cave6_emberPass掉落池",
+   "coralCoast13掉落池",
+   "wreckCove13掉落池",
    "重戰掉落:magmaNewt"
   ],
   "volcanoStaff": [
    "emberPass掉落池",
    "lavaTunnel掉落池",
    "cave6_emberPass掉落池",
+   "coralCoast13掉落池",
+   "wreckCove13掉落池",
    "重戰掉落:lavaGiant",
    "重戰掉落:magmaNewt",
    "emberPass掉落池(魔導士)",
    "lavaTunnel掉落池(魔導士)",
    "cave6_emberPass掉落池(魔導士)",
+   "coralCoast13掉落池(魔導士)",
+   "wreckCove13掉落池(魔導士)",
    "重戰掉落:youngDragon(魔導士)",
    "重戰掉落:magmaNewt(魔導士)",
    "emberPass掉落池(魔導士)",
    "lavaTunnel掉落池(魔導士)",
    "lavaTunnel寶箱(魔導士)",
    "cave6_emberPass掉落池(魔導士)",
+   "coralCoast13掉落池(魔導士)",
+   "wreckCove13掉落池(魔導士)",
    "重戰掉落:magmaNewt(魔導士)"
   ],
   "salamanderHelm": [
@@ -641,6 +667,8 @@
    "emberPass寶箱",
    "lavaTunnel掉落池",
    "cave6_emberPass掉落池",
+   "coralCoast13掉落池",
+   "wreckCove13掉落池",
    "重戰掉落:youngDragon",
    "重戰掉落:magmaNewt"
   ],
@@ -648,6 +676,8 @@
    "emberPass掉落池",
    "lavaTunnel掉落池",
    "cave6_emberPass掉落池",
+   "coralCoast13掉落池",
+   "wreckCove13掉落池",
    "重戰掉落:lavaGiant"
   ],
   "lavaBoots": [
@@ -656,6 +686,8 @@
    "lavaTunnel掉落池",
    "cave6_emberPass精英掉落",
    "cave6_emberPass掉落池",
+   "coralCoast13掉落池",
+   "wreckCove13掉落池",
    "重戰掉落:lavaGiant"
   ],
   "emberCharm": [
@@ -663,42 +695,62 @@
    "lavaTunnel掉落池",
    "lavaTunnel寶箱",
    "cave6_emberPass掉落池",
+   "coralCoast13掉落池",
+   "wreckCove13掉落池",
    "重戰掉落:youngDragon"
   ],
   "duskSword": [
-   "duskFort1掉落池"
+   "duskFort1掉落池",
+   "coralCoast13掉落池",
+   "wreckCove13掉落池"
   ],
   "shadowDagger": [
-   "duskFort1掉落池"
+   "duskFort1掉落池",
+   "coralCoast13掉落池",
+   "wreckCove13掉落池"
   ],
   "voidStaff": [
    "duskFort1掉落池",
+   "coralCoast13掉落池",
+   "wreckCove13掉落池",
    "重戰掉落:shadowGeneral",
    "duskFort1掉落池(魔導士)",
+   "coralCoast13掉落池(魔導士)",
+   "wreckCove13掉落池(魔導士)",
    "重戰掉落:shadowGeneral(魔導士)",
    "影將莫爾德掉落(魔導士)"
   ],
   "duskHelm": [
    "duskFort1掉落池",
    "duskFort1寶箱",
+   "coralCoast13掉落池",
+   "wreckCove13掉落池",
    "重戰掉落:duskCaptain"
   ],
   "duskPlate": [
    "duskFort1掉落池",
+   "coralCoast13掉落池",
+   "wreckCove13掉落池",
    "重戰掉落:duskCaptain",
    "重戰掉落:shadowGeneral"
   ],
   "shadowRobe": [
    "duskFort1掉落池",
+   "coralCoast13掉落池",
+   "wreckCove13掉落池",
    "重戰掉落:victorDemon"
   ],
   "voidBoots": [
    "duskFort1掉落池",
    "duskFort1寶箱",
+   "coralCoast13掉落池",
+   "wreckCove13掉落池",
    "重戰掉落:duskCaptain"
   ],
   "voidRing": [
    "duskFort1掉落池",
+   "coralCoast13掉落池",
+   "wreckCove13掉落池",
    "重戰掉落:victorDemon",
    "重戰掉落:shadowGeneral"
   ],
@@ -901,6 +953,8 @@
    "重戰掉落:victorDemon",
    "重戰掉落:gatekeeper(魔導士)",
    "duskFort1掉落池(魔導士)",
+   "coralCoast13掉落池(魔導士)",
+   "wreckCove13掉落池(魔導士)",
    "重戰掉落:duskCaptain(魔導士)",
    "黯滅騎士長掉落(魔導士)"
   ],
@@ -975,6 +1029,8 @@
    "iceCave掉落池(魔導士)",
    "iceCave寶箱(魔導士)",
    "cave6_frostField掉落池(魔導士)",
+   "coralCoast13掉落池(魔導士)",
+   "wreckCove13掉落池(魔導士)",
    "重戰掉落:iceMammoth(魔導士)"
   ],
   "frostTiara": [
@@ -1098,6 +1154,9 @@
    "劇情/任務"
   ],
   "bondCharm": [
+   "劇情/任務"
+  ],
+  "tideShell13": [
    "劇情/任務"
   ],
   "dawnStaff": [
@@ -1325,7 +1384,8 @@
    "starShrine採集",
    "jadeCreek採集",
    "maplePass採集",
-   "cave6_lake採集"
+   "cave6_lake採集",
+   "coralCoast13採集"
   ],
   "wisdomFruit": [
    "forest寶箱",
@@ -1453,6 +1513,7 @@
    "魔物:戰場食屍鬼",
    "魔物:流沙骸骨",
    "魔物:亡國將軍",
+   "魔物:溺亡水手",
    "分解"
   ],
   "elixir": [
@@ -1470,6 +1531,8 @@
    "cave6_swamp寶箱",
    "cave6_goldPlains寶箱",
    "cave6_emberPass寶箱",
+   "coralCoast13寶箱",
+   "wreckCove13寶箱",
    "行商",
    "道具店(魔像後)",
    "迴廊兌換",
@@ -1500,6 +1563,8 @@
    "cave6_goldPlains寶箱",
    "cave6_frostField寶箱",
    "cave6_emberPass寶箱",
+   "coralCoast13寶箱",
+   "wreckCove13寶箱",
    "委託獎勵",
    "委託獎勵",
    "委託獎勵"
@@ -1517,7 +1582,8 @@
    "魔物:無頭騎士",
    "魔物:怨靈之母",
    "魔物:深淵亡魂",
-   "魔物:無頭騎士長"
+   "魔物:無頭騎士長",
+   "魔物:霧之怨靈"
   ],
   "hiEther": [
    "lake寶箱",
@@ -1544,6 +1610,8 @@
    "lake採集",
    "lake採集",
    "cave6_lake寶箱",
+   "coralCoast13採集",
+   "coralCoast13採集",
    "魔物:月光水精",
    "魔物:流浪的魔劍士",
    "魔物:銀鱗水龍",
@@ -1591,7 +1659,9 @@
    "魔物:月光苔精",
    "魔物:泥沼蛞蝓",
    "魔物:沼底洞之主",
-   "魔物:裂界軟泥"
+   "魔物:裂界軟泥",
+   "魔物:深海鰻",
+   "魔物:霧笛魔女「賽蓮」"
   ],
   "banditCloth": [
    "northRoad寶箱",
@@ -1637,6 +1707,9 @@
    "emberPass寶箱",
    "lavaTunnel寶箱",
    "starShrine寶箱",
+   "harbor13寶箱",
+   "coralCoast13寶箱",
+   "wreckCove13寶箱",
    "委託獎勵",
    "委託獎勵",
    "委託獎勵"
@@ -1745,6 +1818,14 @@
    "魔物:鏽甲兵",
    "魔物:鐵刺蝟"
   ],
+  "attrReset": [
+   "coralCoast13寶箱",
+   "道具店"
+  ],
+  "talentReset": [
+   "wreckCove13寶箱",
+   "道具店"
+  ],
   "burnHeal": [
    "道具店"
   ],
@@ -1759,12 +1840,6 @@
   "returnWing": [
    "道具店",
    "鐵匠配方"
-  ],
-  "attrReset": [
-   "道具店"
-  ],
-  "talentReset": [
-   "道具店"
   ],
   "rope": [
    "行商",
@@ -1792,6 +1867,7 @@
    "魔物:蘆葦鷺",
    "魔物:穀倉鴞",
    "魔物:夜盜鴉",
+   "魔物:海霧鴞",
    "分解",
    "分解"
   ],
@@ -1833,7 +1909,10 @@
    "魔物:苔甲龜",
    "魔物:樹皮甲蟲",
    "魔物:溪蝦兵",
-   "魔物:刺背犰狳"
+   "魔物:刺背犰狳",
+   "魔物:潮汐蝦兵",
+   "魔物:珊瑚甲龜",
+   "魔物:浪花蟹"
   ],
   "emberCore": [
    "魔物:火燼精",
@@ -1996,6 +2075,12 @@
    "劇情/任務"
   ],
   "ledger12": [
+   "劇情/任務"
+  ],
+  "earplug13": [
+   "劇情/任務"
+  ],
+  "tideScale13": [
    "劇情/任務"
   ]
  },
