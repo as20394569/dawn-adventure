@@ -7889,7 +7889,7 @@ class TitleScene {
     x.drawImage(this.logo, Math.round(W / 2 - this.logo.width / 2), 6 + bob);
     Font.drawC(x, '～異世界冒險RPG～', W / 2, 52 + bob, '#ffe0a0', '#3a1428');
     if (this.stage === 'press' && Math.floor(this.t / 30) % 2 === 0) Font.drawC(x, '按 A 鍵開始', W / 2, 232, '#ffffff', '#1a1024');
-    Font.drawR(x, 'v12.57', W - 3, H - 13, '#b890b0', null);
+    Font.drawR(x, 'v12.58', W - 3, H - 13, '#b890b0', null);
   }
 }
 class IntroScene {
@@ -25364,6 +25364,11 @@ function packMat13(mats) { const st = Game.st, M = st && MAPS[st.map], S = new S
   if (S.size) return pick([...S]);
   const F = (mats || []).filter(k => ITEMS[k] && ITEMS[k].cat !== '魚' && !/^pr_/.test(k) && MATCAT11[k]); return pick(F.length ? F : mats); }
 { const _aa = advAnnounce; advAnnounce = function* (...a) { const st = Game.st; if (st && (st.ncv12 || st.cls === NC12)) { st.flags.advTold = 1; return; } return yield* _aa.apply(this, a); }; }
+{ const _m = Battle.prototype.msg; Battle.prototype.msg = function* (text, ...a) { const st = Game.st;
+    if (typeof text === 'string' && st && (st.ncv12 || st.cls === NC12)) {
+      if (/^獲得了1點天賦點！MP也全部恢復了|^MP全部恢復了。（(下一級會得到天賦點|天賦點已達上限)/.test(text)) text = 'MP全部恢復，技能點 +' + (typeof LVPTS11 !== 'undefined' ? LVPTS11 : 2) + '！\n（選單→技能樹）';
+      else if (/天賦覺醒/.test(text)) return; else text = ncTxt12(text); }
+    return yield* _m.call(this, text, ...a); }; }
 const PAL13 = { CHANCE: 0.015, SCALE: 4 };
 const pal13 = (st = Game.st) => st.pal13 || (st.pal13 = { got: {}, on: null });
 const palKinds13 = (st = Game.st) => Object.keys(pal13(st).got).filter(k => SPECIES[k]).length;
