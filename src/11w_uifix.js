@@ -35,3 +35,6 @@ if (typeof BATTLE_HELP !== 'undefined') for (const b of BATTLE_HELP) {
 
 /* 讀檔時 HP・MP 不超過上限（裝備換過的舊存檔會出現「HP 159/151」） */
 { const _so = startOverworld; startOverworld = function (...a) { const st = Game.st; if (st && st.equip) { try { const h = heroStats(st); if (st.hp > h.hp) st.hp = h.hp; if (st.mp != null && st.mp > h.mp) st.mp = h.mp; } catch (e) {} } return _so.apply(this, a); }; }
+
+/* 用詞：道具說明的「恢復」統一成「回復」（狀態・效果都寫回復） */
+for (const k in ITEMS) { const it = ITEMS[k]; if (it && typeof it.d === 'string' && /恢復\d|恢復[^原]/.test(it.d)) it.d = it.d.replace(/恢復(?!原狀)/g, '回復'); }

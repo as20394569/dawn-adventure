@@ -44,7 +44,7 @@ function wKindLines12(g, P) { const B = GEAR[g.b], k = B.kind, st = Game.st, mag
 function shieldLines12(g, P) { P('【盾】拿在副手', HEAD_C12, 9);
   P('主手也拿盾＝雙盾：普攻「盾擊」打兩下，攻擊力改看物防。', EXP_C12, 9, 8); }
 // 重甲・輕裝・法衣: per piece, and what the hero wears now
-const ARM_EACH12 = { 重甲: [['受到會心傷害', -12, '%'], ['速度', -3, '%']], 輕裝: [['迴避', 2, '%'], ['首回合速度', 10, '%']], 法衣: [['每回合回 MP', 1, '%'], ['受到魔法傷害', -4, '%']] };
+const ARM_EACH12 = { 重甲: [['受到會心傷害', -12, '%'], ['速度', -3, '%']], 輕裝: [['迴避', 2, '%'], ['第一回合速度', 10, '%']], 法衣: [['每回合回 MP', 1, '%'], ['受到魔法傷害', -4, '%']] };
 function armLines12(g, P) { const t = GEAR[g.b].arm9, E = ARM_EACH12[t]; if (!E) return; const fmt = (n) => E.map(([a, v, u]) => a + ' ' + (v * n > 0 ? '+' : '−') + Math.abs(v * n) + u).join('、');
   P('【防具】' + t + '（頭・身・腳每件疊加）', HEAD_C12, 9); P('每件：' + fmt(1), EXP_C12, 9, 8);
   const n = (typeof arm9Count === 'function' ? arm9Count(Game.st) : {})[t] || 0; P(n ? '身上 ' + n + ' 件：' + fmt(n) : '身上沒有穿' + t, EXP_C12, 9, 8); }

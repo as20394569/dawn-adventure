@@ -155,9 +155,9 @@ Events.rod13 = function* () { const st = Game.st, f = st.flags;
 MAPS.town.npcs.push({ id: 'rod13', x: 2, y: 19, dir: 'up', look: 'fisher13', name: '釣魚老伯羅德' }); delete mapCache.town;
 NPC_ROLES.任務.push('rod13'); if (typeof NPC_WHERE !== 'undefined') NPC_WHERE.rod13 = '萌芽鎮・池塘邊';
 // the handbook gets a 釣魚紀錄 page once you have a rod (same menu as 10zzx_v12_r9a_gear, one more line)
-handbookScreen12 = function* () {
+handbookScreen12 = function* () { let hi = 0;
   while (true) { const late = (Game.st.flags.ch2 || 0) >= 10, fish = rodOf13() >= 0, opts = ['任務', '圖鑑', '紀錄', '變強的方法', '效果一覽'].concat(fish ? ['釣魚紀錄'] : []).concat(late ? ['還能做什麼'] : []).concat(['返回']);
-    const r = yield* ask('冒險手冊', opts), o = opts[r];
+    const r = yield* ask('冒險手冊', opts, { index: hi }), o = opts[r]; hi = Math.max(0, r); // v12.66: the cursor stays on the page you came back from
     if (o === '任務') yield* questScreen(); else if (o === '圖鑑') yield* dexScreen(); else if (o === '紀錄') yield* recordScreen();
     else if (o === '變強的方法') { const G = typeof growList12 === 'function' ? growList12() : GROW12; while (true) { const k = yield* ask('變強的方法', G.map(q => q[0]).concat('返回')); if (k < 0 || k >= G.length) break; yield* say(G[k][1]); } }
     else if (o === '效果一覽') yield* listScreen9('效果一覽', effectLines9());

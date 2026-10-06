@@ -123,7 +123,7 @@ function* sayAll(list, o = {}) { for (const s of list) yield* say(s, o); }
 function* choose(items, o = {}) { const m = new Menu(items, o); UI.push(m); while (!m.done) { m.update(); yield; } UI.remove(m); return m.result; }
 function* ask(text, opts = ['是', '否'], o = {}) {
   const t = new TextBox(text, { ...o, keep: true }); UI.push(t); while (!t.done) { t.update(); yield; }
-  const r = yield* choose(opts, { x: o.mx, y: o.my, style: o.style === 'battle' ? 'cmd' : 'menu', cancel: o.cancel !== false });
+  const r = yield* choose(opts, { x: o.mx, y: o.my, style: o.style === 'battle' ? 'cmd' : 'menu', cancel: o.cancel !== false, index: o.index || 0 });
   UI.remove(t); return r;
 }
 function* yesNo(text, o = {}) { const r = yield* ask(text, ['是', '否'], o); return r === 0; }

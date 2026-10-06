@@ -106,7 +106,7 @@ function* loreScreen() {
     yield* sayAll(LORE[have[r]][2]);
   }
 }
-{ const _rs = recordScreen; recordScreen = function* () { const r = yield* ask('要看什麼？', ['地圖・成就・稱號', '世界的記載', '對話紀錄']); if (r === 0) yield* _rs(); else if (r === 1) yield* loreScreen(); else if (r === 2) yield* dlgLogScreen(); }; }
+recordScreen = function* () { let i = 0; while (true) { const r = yield* ask('紀錄', ['地圖・成就', '稱號', '世界的記載', '對話紀錄', '返回'], { index: i }); i = Math.max(0, r); if (r === 0) yield* recordBase13(); else if (r === 1) yield* titleScreen(); else if (r === 2) yield* loreScreen(); else if (r === 3) yield* dlgLogScreen(); else return; } }; // v12.66: one level, B comes back here
 if (typeof ACHIEVEMENTS !== 'undefined') ACHIEVEMENTS.push({ id: 'loreAll', n: '世界的記錄者', d: '讀完所有的「記載之石」。', cat: '探索', ok: st => loreCount(st) >= loreTotal() });
 
 /* ---------- the chancellor and the black order ---------- */

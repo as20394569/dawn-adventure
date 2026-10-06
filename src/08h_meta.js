@@ -27,7 +27,7 @@ function* titleScreen() {
     st.title = st.title === T.id ? null : T.id; Sound.sfx('select');
   }
 }
-{ const _rs = recordScreen; recordScreen = function* () { const r = yield* ask('要看什麼？', ['地圖・成就', '稱號']); if (r === 0) yield* _rs(); else if (r === 1) yield* titleScreen(); }; }
+const recordBase13 = recordScreen; // v12.66: 紀錄 is one flat chooser now (09zd)
 
 // ---- new achievements ----
 ACHIEVEMENTS.find(a => a.id === 'gold').ok = st => (st.gear || []).some(g => g.q >= 4);

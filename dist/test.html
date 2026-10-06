@@ -4254,7 +4254,7 @@ function* sayAll(list, o = {}) { for (const s of list) yield* say(s, o); }
 function* choose(items, o = {}) { const m = new Menu(items, o); UI.push(m); while (!m.done) { m.update(); yield; } UI.remove(m); return m.result; }
 function* ask(text, opts = ['是', '否'], o = {}) {
   const t = new TextBox(text, { ...o, keep: true }); UI.push(t); while (!t.done) { t.update(); yield; }
-  const r = yield* choose(opts, { x: o.mx, y: o.my, style: o.style === 'battle' ? 'cmd' : 'menu', cancel: o.cancel !== false });
+  const r = yield* choose(opts, { x: o.mx, y: o.my, style: o.style === 'battle' ? 'cmd' : 'menu', cancel: o.cancel !== false, index: o.index || 0 });
   UI.remove(t); return r;
 }
 function* yesNo(text, o = {}) { const r = yield* ask(text, ['是', '否'], o); return r === 0; }
@@ -7891,7 +7891,7 @@ class TitleScene {
     x.drawImage(this.logo, Math.round(W / 2 - this.logo.width / 2), 6 + bob);
     Font.drawC(x, '～異世界冒險RPG～', W / 2, 52 + bob, '#ffe0a0', '#3a1428');
     if (this.stage === 'press' && Math.floor(this.t / 30) % 2 === 0) Font.drawC(x, '按 A 鍵開始', W / 2, 232, '#ffffff', '#1a1024');
-    Font.drawR(x, 'v12.66', W - 3, H - 13, '#b890b0', null);
+    Font.drawR(x, 'v12.67', W - 3, H - 13, '#b890b0', null);
   }
 }
 class IntroScene {
@@ -8455,7 +8455,7 @@ function* titleScreen() {
     st.title = st.title === T.id ? null : T.id; Sound.sfx('select');
   }
 }
-{ const _rs = recordScreen; recordScreen = function* () { const r = yield* ask('要看什麼？', ['地圖・成就', '稱號']); if (r === 0) yield* _rs(); else if (r === 1) yield* titleScreen(); }; }
+const recordBase13 = recordScreen; // v12.66: 紀錄 is one flat chooser now (09zd)
 ACHIEVEMENTS.find(a => a.id === 'gold').ok = st => (st.gear || []).some(g => g.q >= 4);
 ACHIEVEMENTS.push(
   { id: 'lake', n: '湖之主', d: '打倒銀鱗水龍。', ok: st => st.flags.wyrm },
@@ -12658,7 +12658,7 @@ function* loreScreen() {
     yield* sayAll(LORE[have[r]][2]);
   }
 }
-{ const _rs = recordScreen; recordScreen = function* () { const r = yield* ask('要看什麼？', ['地圖・成就・稱號', '世界的記載', '對話紀錄']); if (r === 0) yield* _rs(); else if (r === 1) yield* loreScreen(); else if (r === 2) yield* dlgLogScreen(); }; }
+recordScreen = function* () { let i = 0; while (true) { const r = yield* ask('紀錄', ['地圖・成就', '稱號', '世界的記載', '對話紀錄', '返回'], { index: i }); i = Math.max(0, r); if (r === 0) yield* recordBase13(); else if (r === 1) yield* titleScreen(); else if (r === 2) yield* loreScreen(); else if (r === 3) yield* dlgLogScreen(); else return; } }; // v12.66: one level, B comes back here
 if (typeof ACHIEVEMENTS !== 'undefined') ACHIEVEMENTS.push({ id: 'loreAll', n: '世界的記錄者', d: '讀完所有的「記載之石」。', cat: '探索', ok: st => loreCount(st) >= loreTotal() });
 { const _k = Events.king; Events.king = function* (ow) {
     const st = Game.st, f = st.flags, n0 = ch2(), pass0 = !!f.northPass;
@@ -13825,7 +13825,7 @@ function* orbDexScreen() {
   yield* listScreen('寶珠圖鑑　' + keys.filter(seen).length + '/' + keys.length, () => keys.map(k => ({ ic: typeof orbIcon === 'function' ? orbIcon(k) : null, t: (typeof orbIcon === 'function' && orbIcon(k) ? '' : ORB_A[k] ? '◆' : '◇') + (ORB_A[k] || ORB_P[k]).n, r: seen(k) ? '已取得' : '', col: seen(k) ? (ORB_A[k] ? '#c8f0ff' : UIC.warm) : UIC.dis })),
     i => { const k = keys[i]; if (!k) return []; const o = { k, x: 0, e: [], lv: 1 }; return [[orbInfo(o), UIC.text], ['取得：' + ((ORB_SRC[k] || []).join('、') || '？？？'), '#c8b0ff', 8], ...(ORB_A[k] ? [['進化：強攻 ' + evoOptText(o, 0, 'A') + '→' + evoOptText(o, 1, 'A') + '／附加 ' + evoOptText(o, 0, 'B') + '→' + evoOptText(o, 1, 'B'), UIC.muted, 8]] : [])]; });
 }
-{ const _dx = dexScreen; dexScreen = function* () { const r = yield* ask('要看什麼？', ['魔物圖鑑', '頭目・菁英']); if (r === 0) yield* _dx(); else if (r === 1) yield* bossDexScreen(); else if (r === 2) yield* orbDexScreen(); }; }
+{ const _dx = dexScreen; dexScreen = function* () { let i = 0; while (true) { const r = yield* ask('圖鑑', ['魔物圖鑑', '頭目・菁英', '各地圖的魔物', '返回'], { index: i }); i = Math.max(0, r); if (r === 0) yield* _dx(); else if (r === 1) yield* bossDexScreen(); else if (r === 2) yield* dexMaps12(); else return; } }; } // v12.66: one level (各地圖的魔物 moved here from 10zzv)
 function matSrc(k) { const B = FOE_SPOTS.find(e => BOSS_MAT[e.sp] === k); if (B) return SPECIES[B.sp].n; for (const s in SPECIES) if (SPECIES[s].mat === k) { const m = typeof spawnMaps === 'function' ? spawnMaps(s) : []; if (m.length) return SPECIES[s].n; } return ''; }
 askFight = function* (sp, lv, key, kind, extra) { // the choice sits inside the message box, so the card can use the whole upper screen
   const card = encounterCard(sp, lv, key, kind, extra); UI.push(card);
@@ -19516,9 +19516,6 @@ function* dexCheck12() { const st = Game.st, got = st.dexRw12 || (st.dexRw12 = {
     const [items, gold] = DEX_REWARD12[grp]; for (const [k, n] of items) st.bag[k] = (st.bag[k] || 0) + n; st.money += gold; Sound.jingle('item');
     yield* say('【圖鑑】' + MAPS[id].name + '的魔物全部遇過了！\n得到了' + items.map(([k, n]) => ITEMS[k].n + (n > 1 ? '×' + n : '')).join('、') + '和' + gold + ' G！'); } }
 { const _bs = Overworld.prototype.battleScript; Overworld.prototype.battleScript = function* (...a) { const r = yield* _bs.apply(this, a); yield* dexCheck12(); return r; }; }
-{ const _ds = dexScreen; dexScreen = function* () { const st = Game.st;
-    while (true) { const r = yield* ask('要看哪一頁？', ['魔物一覽', '各地圖的魔物', '關閉']); if (r === 0) yield* _ds(); else if (r === 1) yield* dexMaps12(); else return;
-      if (r === 0) return; } }; }
 function* dexMaps12() { const st = Game.st;
   while (true) { const L = DEXMAP12.filter(([id]) => MAPS[id]), opts = L.map(([id]) => { const n = dexSeen12(id, st), m = dexOf12(id).length, done = (st.dexRw12 || {})[id];
       return { t: MAPS[id].name, r: '已遇過 ' + n + '／' + m + (done ? ' ✓' : ''), col: done ? UIC.dis : n >= m ? UIC.warm : UIC.text }; });
@@ -23427,7 +23424,7 @@ function wKindLines12(g, P) { const B = GEAR[g.b], k = B.kind, st = Game.st, mag
   if (pair) P('兩手都拿' + k + '＝' + pair[0] + '：副手也出手（威力 ' + pair[1] + '%）', EXP_C12, 9, 8); }
 function shieldLines12(g, P) { P('【盾】拿在副手', HEAD_C12, 9);
   P('主手也拿盾＝雙盾：普攻「盾擊」打兩下，攻擊力改看物防。', EXP_C12, 9, 8); }
-const ARM_EACH12 = { 重甲: [['受到會心傷害', -12, '%'], ['速度', -3, '%']], 輕裝: [['迴避', 2, '%'], ['首回合速度', 10, '%']], 法衣: [['每回合回 MP', 1, '%'], ['受到魔法傷害', -4, '%']] };
+const ARM_EACH12 = { 重甲: [['受到會心傷害', -12, '%'], ['速度', -3, '%']], 輕裝: [['迴避', 2, '%'], ['第一回合速度', 10, '%']], 法衣: [['每回合回 MP', 1, '%'], ['受到魔法傷害', -4, '%']] };
 function armLines12(g, P) { const t = GEAR[g.b].arm9, E = ARM_EACH12[t]; if (!E) return; const fmt = (n) => E.map(([a, v, u]) => a + ' ' + (v * n > 0 ? '+' : '−') + Math.abs(v * n) + u).join('、');
   P('【防具】' + t + '（頭・身・腳每件疊加）', HEAD_C12, 9); P('每件：' + fmt(1), EXP_C12, 9, 8);
   const n = (typeof arm9Count === 'function' ? arm9Count(Game.st) : {})[t] || 0; P(n ? '身上 ' + n + ' 件：' + fmt(n) : '身上沒有穿' + t, EXP_C12, 9, 8); }
@@ -25071,9 +25068,9 @@ Events.rod13 = function* () { const st = Game.st, f = st.flags;
   else if (r === 1) yield* sayAll(['羅德：「稀有的魚，綠色的地方很窄，指針也快。別急，看準了再按。」', '羅德：「月光魚和瘴氣燈籠魚只在晚上出來。」', '羅德：「各地的水域之主，要有好釣竿才釣得到。碧溪谷、銀月湖、幽光沼澤、冰晶洞窟、珊瑚海岸……」']); };
 MAPS.town.npcs.push({ id: 'rod13', x: 2, y: 19, dir: 'up', look: 'fisher13', name: '釣魚老伯羅德' }); delete mapCache.town;
 NPC_ROLES.任務.push('rod13'); if (typeof NPC_WHERE !== 'undefined') NPC_WHERE.rod13 = '萌芽鎮・池塘邊';
-handbookScreen12 = function* () {
+handbookScreen12 = function* () { let hi = 0;
   while (true) { const late = (Game.st.flags.ch2 || 0) >= 10, fish = rodOf13() >= 0, opts = ['任務', '圖鑑', '紀錄', '變強的方法', '效果一覽'].concat(fish ? ['釣魚紀錄'] : []).concat(late ? ['還能做什麼'] : []).concat(['返回']);
-    const r = yield* ask('冒險手冊', opts), o = opts[r];
+    const r = yield* ask('冒險手冊', opts, { index: hi }), o = opts[r]; hi = Math.max(0, r); // v12.66: the cursor stays on the page you came back from
     if (o === '任務') yield* questScreen(); else if (o === '圖鑑') yield* dexScreen(); else if (o === '紀錄') yield* recordScreen();
     else if (o === '變強的方法') { const G = typeof growList12 === 'function' ? growList12() : GROW12; while (true) { const k = yield* ask('變強的方法', G.map(q => q[0]).concat('返回')); if (k < 0 || k >= G.length) break; yield* say(G[k][1]); } }
     else if (o === '效果一覽') yield* listScreen9('效果一覽', effectLines9());
@@ -25836,5 +25833,6 @@ if (typeof BATTLE_HELP !== 'undefined') for (const b of BATTLE_HELP) {
     return m === st.map ? { map: m, spot: { x: o[0], y: o[1], name: EXT_AREA[m].name }, what: '前往' + EXT_AREA[m].name } : { map: m, what: '前往' + MAPS[m].name + '的祕境' }; }; }
 { const _eq = extraQuests; extraQuests = function (st, L) { _eq(st, L); const q = L.find(q => q.n === '祕境探索'); if (q && q.rw === '每處：寶箱、採集點、天氣祠') q.rw = '每處都有寶箱、採集點、天氣祠'; }; }
 { const _so = startOverworld; startOverworld = function (...a) { const st = Game.st; if (st && st.equip) { try { const h = heroStats(st); if (st.hp > h.hp) st.hp = h.hp; if (st.mp != null && st.mp > h.mp) st.mp = h.mp; } catch (e) {} } return _so.apply(this, a); }; }
+for (const k in ITEMS) { const it = ITEMS[k]; if (it && typeof it.d === 'string' && /恢復\d|恢復[^原]/.test(it.d)) it.d = it.d.replace(/恢復(?!原狀)/g, '回復'); }
 </script>
 </body></html>

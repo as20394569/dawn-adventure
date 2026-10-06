@@ -59,9 +59,7 @@ function* dexCheck12() { const st = Game.st, got = st.dexRw12 || (st.dexRw12 = {
     yield* say('【圖鑑】' + MAPS[id].name + '的魔物全部遇過了！\n得到了' + items.map(([k, n]) => ITEMS[k].n + (n > 1 ? '×' + n : '')).join('、') + '和' + gold + ' G！'); } }
 { const _bs = Overworld.prototype.battleScript; Overworld.prototype.battleScript = function* (...a) { const r = yield* _bs.apply(this, a); yield* dexCheck12(); return r; }; }
 // the dex: a second page, each field map with how many of its monsters you have met
-{ const _ds = dexScreen; dexScreen = function* () { const st = Game.st;
-    while (true) { const r = yield* ask('要看哪一頁？', ['魔物一覽', '各地圖的魔物', '關閉']); if (r === 0) yield* _ds(); else if (r === 1) yield* dexMaps12(); else return;
-      if (r === 0) return; } }; }
+// (v12.66: 各地圖的魔物 is in the 圖鑑 chooser itself — 09zs)
 function* dexMaps12() { const st = Game.st;
   while (true) { const L = DEXMAP12.filter(([id]) => MAPS[id]), opts = L.map(([id]) => { const n = dexSeen12(id, st), m = dexOf12(id).length, done = (st.dexRw12 || {})[id];
       return { t: MAPS[id].name, r: '已遇過 ' + n + '／' + m + (done ? ' ✓' : ''), col: done ? UIC.dis : n >= m ? UIC.warm : UIC.text }; });
