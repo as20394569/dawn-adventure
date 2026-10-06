@@ -35,7 +35,7 @@ const LATE_PANEL13 = (role, mul = 1) => { const ref = { phys: 'duskKnight', tank
 for (const k in ABY_MON13) { const [n, b, role, dex] = ABY_MON13[k], B = SPECIES[b]; if (!B) { bvErr('aby13', 'base ' + b); continue; }
   SPECIES[k] = { ...B, n, elite: 0, boss: 0, rare: 0, exp: Math.round((B.exp || 40) * 1.3), gold: Math.max(2, B.gold || 2), dex, aby13: 1 };
   MON_PANEL[k] = LATE_PANEL13(role, 1.1);
-  HD_RIG_OF[k] = chibiOwn(b) ? b : (HD_RIG_OF[b] || b); if (typeof HD_RIG_OF_PENDING !== 'undefined') HD_RIG_OF_PENDING[k] = HD_RIG_OF[k];
+  HD_RIG_OF[k] = (BATTLE_PXC[b] || chibiOwn(b)) ? b : (HD_RIG_OF[b] || b); if (typeof HD_RIG_OF_PENDING !== 'undefined') HD_RIG_OF_PENDING[k] = HD_RIG_OF[k];
   if (ART[b]) ART[k] = artRecolor(ART[b], 0, 1, 1); else if (ART[HD_RIG_OF[k]]) ART[k] = ART[HD_RIG_OF[k]];
   const E = DEF.enemies[b]; defPut('enemies', k, { tags: ['foe', 'fam:' + (B.fam || 'beast')], skills: E ? E.skills.slice() : ['m_tackle'], fam: B.fam, trait: null, profile: E ? E.profile : 'brute', script: null, metadata: { n } }); }
 // 裂界之主: the 異界守門者 gone dark and violet

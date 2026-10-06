@@ -33,16 +33,16 @@ const SEA13 = { // key: [name, base, [hue, sat ×, light ×], role, panel level,
 const SIREN13 = 'siren13', SEA_MUL13 = 0.95; // v12.65: the shore and the cove ×0.95 (fair gear T7 q3 at the map's level won only 4/12 in 沉船灣)
 for (const k in SEA13) { const [n, b, look, role, plv, dex] = SEA13[k], B = SPECIES[b]; if (!B) { if (typeof bvErr === 'function') bvErr('ch3', 'base ' + b); continue; }
   SPECIES[k] = { ...B, n, elite: 0, boss: 0, rare: 0, exp: Math.round((B.exp || 40) * 1.4), gold: Math.max(3, B.gold || 3), dex, ch3: 1 };
-  MON_PANEL[k] = LATE_PANEL13(role, SEA_MUL13); HD_RIG_OF[k] = chibiOwn(b) ? b : (HD_RIG_OF[b] || b); if (typeof HD_RIG_OF_PENDING !== 'undefined') HD_RIG_OF_PENDING[k] = HD_RIG_OF[k];
+  MON_PANEL[k] = LATE_PANEL13(role, SEA_MUL13); HD_RIG_OF[k] = (BATTLE_PXC[b] || chibiOwn(b)) ? b : (HD_RIG_OF[b] || b); if (typeof HD_RIG_OF_PENDING !== 'undefined') HD_RIG_OF_PENDING[k] = HD_RIG_OF[k];
   if (ART[b]) ART[k] = artRecolor(ART[b], look[0], look[1], look[2]); else if (ART[HD_RIG_OF[k]]) ART[k] = ART[HD_RIG_OF[k]];
   const E = DEF.enemies[b]; defPut('enemies', k, { tags: ['foe', 'fam:' + (B.fam || 'beast')], skills: E ? E.skills.slice() : ['m_tackle'], fam: B.fam, trait: null, profile: E ? E.profile : 'brute', script: null, metadata: { n } }); }
 // 霧笛魔女「賽蓮」: the swamp witch's picture, sea-coloured
 { const b = 'bogWitch', B = SPECIES[b];
   SPECIES[SIREN13] = { ...B, n: '霧笛魔女「賽蓮」', boss: 1, elite: 0, fam: 'spirit', exp: 2800, gold: 0, drop: null, ch3: 1, learn: [], dex: '在沉船灣唱歌的魔女。她的歌讓霧不會散，也讓聽到的人沉沉睡去。她說，自己是在替「潮將」看守這片海。' };
-  { const P = MON_PANEL.frostQueen || ch2Panel(40, 'mage', 'boss'); MON_PANEL[SIREN13] = { ...P, hp: Math.round(P.hp * 0.9), spa: Math.round(P.spa * 0.9) }; } HD_RIG_OF[SIREN13] = chibiOwn(b) ? b : (HD_RIG_OF[b] || b); if (typeof HD_RIG_OF_PENDING !== 'undefined') HD_RIG_OF_PENDING[SIREN13] = HD_RIG_OF[SIREN13];
+  { const P = MON_PANEL.frostQueen || ch2Panel(40, 'mage', 'boss'); MON_PANEL[SIREN13] = { ...P, hp: Math.round(P.hp * 0.9), spa: Math.round(P.spa * 0.9) }; } HD_RIG_OF[SIREN13] = (BATTLE_PXC[b] || chibiOwn(b)) ? b : (HD_RIG_OF[b] || b); if (typeof HD_RIG_OF_PENDING !== 'undefined') HD_RIG_OF_PENDING[SIREN13] = HD_RIG_OF[SIREN13];
   if (ART[b]) ART[SIREN13] = artRecolor(ART[b], 150, 1.1, 1.0); }
 const SEA_LOOK13 = k => k === SIREN13 ? [150, 1.1, 1.0] : SEA13[k] && SEA13[k][2];
-{ const _ci = chibiImage; chibiImage = function (k) { const L = SEA_LOOK13(k); if (!L) return _ci(k); if (CHIBI_VAR[k]) return CHIBI_VAR[k]; const src = _ci(k === SIREN13 ? 'bogWitch' : SEA13[k][1]); if (!src || src.ok === false || !(src.complete !== false)) return src;
+{ const _ci = chibiImage; chibiImage = function (k) { const L = SEA_LOOK13(k); if (!L || chibiOwn(k)) return _ci(k); if (CHIBI_VAR[k]) return CHIBI_VAR[k]; const src = _ci(k === SIREN13 ? 'bogWitch' : SEA13[k][1]); if (!src || src.ok === false || !(src.complete !== false)) return src;
     const [dh, ks, kl] = L, c = mkCanvas(src.width, src.height), x = c.getContext('2d'); x.drawImage(src, 0, 0); const id = x.getImageData(0, 0, c.width, c.height), d = id.data;
     for (let i = 0; i < d.length; i += 4) { if (!d[i + 3]) continue; const [h, s, l] = rgb2hsl(d[i], d[i + 1], d[i + 2]), [r, g, bb] = hex2rgb(hsl2hex(h + dh, Math.min(1, s * ks), Math.min(1, l * kl))); d[i] = r; d[i + 1] = g; d[i + 2] = bb; }
     x.putImageData(id, 0, 0); c.ok = true; return CHIBI_VAR[k] = c; }; }
@@ -206,7 +206,7 @@ Object.assign(Events, {
 const SEA_SHOP13 = ['superPotion', 'megaPotion', 'megaEther', 'elixir', 'antidote', 'awakening', 'parlyzHeal', 'burnHeal', 'returnWing'].filter(k => ITEMS[k] || GEAR[k]);
 // the chapter card
 function* ch3Card(ow) { Sound.stop(); UI.clear(); const box = { draw(x) { x.fillStyle = '#000'; x.fillRect(0, 0, W, H); } }; yield* fadeOut(30); UI.push(box); Game.fade = 0;
-  for (const s of ['第三章「東方的海」\n—— 序章 完 ——', '霧散了。\n但在海的另一邊，「潮將」正在集結。', '曙光的旅程，還沒有結束。\n\n（第三章　製作中）']) yield* say(s, { style: 'dark', y: 98 });
+  for (const s of ['第三章「東方的海」\n—— 序章 完 ——', '霧散了。\n但在海的另一邊，「潮將」正在集結。', '曙光的旅程，還沒有結束。\n\n（港務長瑪蓮在等你。準備好就去港務所吧）']) yield* say(s, { style: 'dark', y: 98 });
   UI.remove(box); ow.load(ow.map.id, ow.p.x, ow.p.y, ow.p.dir, true); yield* fadeIn(30); }
 NPC_ROLES.任務.push('harborMaster13', 'fisher13', 'liaPort13'); NPC_ROLES.回復.push('seaInnkeeper13'); NPC_ROLES.商店.push('seaClerk13'); NPC_ROLES.情報.push('harborClerk13', 'seaKid13', 'seaKidHappy13', 'seaDad13', 'sailor13', 'seaGran13', 'seaInnGuest13', 'wreckDoor13', 'coachH13', 'mast13a', 'mast13b', 'mast13c', 'mast13d');
 if (typeof NPC_WHERE !== 'undefined') Object.assign(NPC_WHERE, { harborMaster13: '潮鳴港・港務所', fisher13: '珊瑚海岸', liaPort13: '潮鳴港', seaInnkeeper13: '潮鳴港・海鷗旅店', seaClerk13: '潮鳴港・商店' });
@@ -214,6 +214,6 @@ if (typeof NPC_WHERE !== 'undefined') Object.assign(NPC_WHERE, { harborMaster13:
 /* ---------- the quest log and the trophies ---------- */
 { const _eq = extraQuests; extraQuests = function (st, L) { _eq(st, L); const n = ch3(st); if (!n) return;
     const T = { 1: '【推薦Lv44〜】東方的港町被濃霧困住了。搭王都的馬車去潮鳴港，找港務長瑪蓮。', 2: '【推薦Lv44〜】到潮鳴港的港務所，找港務長瑪蓮。', 3: '到潮鳴港東邊的珊瑚海岸，找老漁夫巴特。',
-      4: '穿過珊瑚海岸，到最南端的沉船灣，找出霧和歌聲的源頭。（建議Lv47以上）', 5: '霧散了。回潮鳴港，向港務長瑪蓮報告。', 6: '完成：潮鳴港的霧散了。……「潮將」在海的另一邊。（第三章 製作中）' };
+      4: '穿過珊瑚海岸，到最南端的沉船灣，找出霧和歌聲的源頭。（建議Lv47以上）', 5: '霧散了。回潮鳴港，向港務長瑪蓮報告。', 6: '完成：潮鳴港的霧散了。……「潮將」在海的另一邊。' };
     L.push({ n: '第三章 序章「東方的海」', t: T[Math.min(6, n)], done: n >= 6, rw: '潮鳴貝殼・20000 G', cat: '主線' }); }; }
 ACHIEVEMENTS.push({ id: 'ch3_fog', n: '霧散之港', d: '讓潮鳴港的霧散去。', cat: '探索', ok: st => ch3(st) >= 6 });

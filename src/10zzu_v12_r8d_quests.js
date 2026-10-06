@@ -32,7 +32,7 @@ const BOUNTY_LOOK12 = { n: '懸賞', c: '#ff9a3a' };
 for (const k in BOUNTY12) { const [n, b, look, role, lv] = BOUNTY12[k], B = SPECIES[b]; if (!B) continue;
   SPECIES[k] = { ...B, n, elite: 1, rare: 0, exp: 90 + 5 * lv, gold: 0, dex: '懸賞告示上的魔物。比一般的' + B.n + '大上一號，也兇得多。' };
   MON_PANEL[k] = typeof ch1Panel === 'function' ? ch1Panel(lv, role, 'elite') : { ...MON_PANEL[b], lv };
-  HD_RIG_OF[k] = chibiOwn(b) ? b : (HD_RIG_OF[b] || b); if (ART[b]) ART[k] = artRecolor(ART[b], look[0], look[1], look[2]); else if (ART[HD_RIG_OF[k]]) ART[k] = ART[HD_RIG_OF[k]];
+  HD_RIG_OF[k] = (BATTLE_PXC[b] || chibiOwn(b)) ? b : (HD_RIG_OF[b] || b); if (ART[b]) ART[k] = artRecolor(ART[b], look[0], look[1], look[2]); else if (ART[HD_RIG_OF[k]]) ART[k] = ART[HD_RIG_OF[k]];
   if (typeof HD_RIG_OF_PENDING !== 'undefined') HD_RIG_OF_PENDING[k] = HD_RIG_OF[k];
   const E = DEF.enemies[b]; defPut('enemies', k, { tags: ['foe', 'fam:' + (B.fam || 'beast')], skills: E ? E.skills.slice() : ['m_tackle'], fam: B.fam, trait: null, profile: E ? E.profile : 'brute', script: null, metadata: { n } });
   ELITE_TEXT[k] = ['懸賞魔物「' + n + '」！']; }

@@ -5,7 +5,7 @@ const MOONK13 = 'moonKing13';
 { const b = 'moonSprite', B = SPECIES[b];
   if (B) { SPECIES[MOONK13] = { ...B, n: '月光精靈王', boss: 1, elite: 0, rare: 0, exp: 1400, gold: 0, drop: null, learn: [], dex: '住在月影神殿深處的精靈之王。五百年來，一直在等能照著月亮的一生點燈的人。' };
     { const P = MON_PANEL.silverWyrm || ch2Panel(20, 'mage', 'boss'); MON_PANEL[MOONK13] = { ...P, hp: Math.round(P.hp * 1.1), atk: Math.round(P.atk * 0.8), spa: Math.round(P.spa * 1.1) }; }
-    HD_RIG_OF[MOONK13] = chibiOwn(b) ? b : (HD_RIG_OF[b] || b); if (typeof HD_RIG_OF_PENDING !== 'undefined') HD_RIG_OF_PENDING[MOONK13] = HD_RIG_OF[MOONK13]; // (the lake's own boss 銀鱗水龍, a little stronger in magic: the raw ch2Panel is about twice the tuned bosses)
+    HD_RIG_OF[MOONK13] = (BATTLE_PXC[b] || chibiOwn(b)) ? b : (HD_RIG_OF[b] || b); if (typeof HD_RIG_OF_PENDING !== 'undefined') HD_RIG_OF_PENDING[MOONK13] = HD_RIG_OF[MOONK13]; // (the lake's own boss 銀鱗水龍, a little stronger in magic: the raw ch2Panel is about twice the tuned bosses)
     if (ART[b]) ART[MOONK13] = artRecolor(ART[b], -165, 0.9, 1.12); } else if (typeof bvErr === 'function') bvErr('moon13', 'base moonSprite'); }
 { const _ci = chibiImage; chibiImage = function (k) { if (k !== MOONK13) return _ci(k); if (CHIBI_VAR[k]) return CHIBI_VAR[k]; const src = _ci('moonSprite'); if (!src || src.ok === false || !(src.complete !== false)) return src;
     const c = mkCanvas(src.width, src.height), x = c.getContext('2d'); x.drawImage(src, 0, 0); const id = x.getImageData(0, 0, c.width, c.height), d = id.data;

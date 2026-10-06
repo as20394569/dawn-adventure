@@ -83,7 +83,7 @@ module.exports = async (g) => {
       const tgt = (t, what) => { if (!MAPS[t[0]]) bad('地圖', id, what, '目標地圖不存在', t[0]); else if (!walk(t[0], t[1], t[2]) && !(getMap(t[0]).rows[t[2]] || '')[t[1]]?.match(/[D:]/)) bad('地圖', id, what, '落點不可走', t.join(',')); };
       for (const w of d.edgeWarps || []) tgt(w.to, 'edgeWarp'); if (d.exit) tgt(d.exit.to, 'exit'); if (d.southWarp) tgt(d.southWarp.to, 'southWarp'); if (d.northWarp) tgt(d.northWarp.to, 'northWarp');
       for (const b of d.buildings || []) if (!MAPS[b.to[0]]) bad('地圖', id, '門的目標不存在', b.to[0]);
-      for (const n of d.npcs || []) { if (!walk(id, n.x, n.y)) bad('地圖', id, 'NPC站在牆裡', n.id); if (!Events[n.id]) warn('地圖', id, 'NPC沒有對話事件', n.id); }
+      for (const n of d.npcs || []) { if (!walk(id, n.x, n.y) && n.look !== 'ship14') bad('地圖', id, 'NPC站在牆裡', n.id); if (!Events[n.id]) warn('地圖', id, 'NPC沒有對話事件', n.id); }
       for (const e of d.elites || []) { if (!walk(id, e.x, e.y)) bad('地圖', id, '精英站在牆裡', e.id); if (!SPECIES[e.sp]) bad('地圖', id, '精英魔物不存在', e.sp); if (!ELITE_TEXT[e.id]) warn('地圖', id, '精英缺登場台詞', e.id); }
       for (const it of d.items || []) { if (!walk(id, it.x, it.y)) bad('地圖', id, '寶箱在牆裡', it.id); if (it.item && !ITEMS[it.item] && !GEAR[it.item]) bad('地圖', id, '寶箱內容不存在', it.item); }
       for (const ga of d.gathers || []) { if (!walk(id, ga.x, ga.y)) bad('地圖', id, '採集點在牆裡', ga.id); if (!ITEMS[ga.mat]) bad('地圖', id, '採集素材不存在'); }

@@ -6,7 +6,7 @@ const MIRROR13 = 'mirrorGolem13';
 { const b = 'crystalGolem', B = SPECIES[b];
   if (B) { SPECIES[MIRROR13] = { ...B, n: '冰鏡魔像', boss: 1, elite: 0, rare: 0, exp: 2400, gold: 0, drop: null, learn: [], dex: '冰鏡洞窟最深處的魔像。全身的冰像鏡子一樣，映出來的不是你的臉，而是你的影子。' };
     { const P = MON_PANEL.harvestGolem || ch2Panel(28, 'tank', 'boss'); MON_PANEL[MIRROR13] = { ...P }; }
-    HD_RIG_OF[MIRROR13] = chibiOwn(b) ? b : (HD_RIG_OF[b] || b); if (typeof HD_RIG_OF_PENDING !== 'undefined') HD_RIG_OF_PENDING[MIRROR13] = HD_RIG_OF[MIRROR13];
+    HD_RIG_OF[MIRROR13] = (BATTLE_PXC[b] || chibiOwn(b)) ? b : (HD_RIG_OF[b] || b); if (typeof HD_RIG_OF_PENDING !== 'undefined') HD_RIG_OF_PENDING[MIRROR13] = HD_RIG_OF[MIRROR13];
     if (ART[b]) ART[MIRROR13] = artRecolor(ART[b], -70, 0.8, 1.15); } else if (typeof bvErr === 'function') bvErr('ice13', 'base crystalGolem'); }
 { const _ci = chibiImage; chibiImage = function (k) { if (k !== MIRROR13) return _ci(k); if (CHIBI_VAR[k]) return CHIBI_VAR[k]; const src = _ci('crystalGolem'); if (!src || src.ok === false || !(src.complete !== false)) return src;
     const c = mkCanvas(src.width, src.height), x = c.getContext('2d'); x.drawImage(src, 0, 0); const id = x.getImageData(0, 0, c.width, c.height), d = id.data;
