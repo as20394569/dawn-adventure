@@ -104,7 +104,7 @@ const Font = (() => {
           const lc = [...line]; let carry = '';
           // v284: a number like 「×1.5」「−12%」「Lv30」 stays in one piece (「技能樹的技能效果的文字編排不好」)
           if (WORD.test(ch) && WORD.test(lc[lc.length - 1])) { let j = lc.length; while (j > 0 && WORD.test(lc[j - 1])) j--; if (j > 0 && lc.length - j <= 8) carry = lc.splice(j).join(''); }
-          if (!carry && NOSTART.includes(ch) && lc.length > 1) carry = lc.pop();
+          if (!carry && NOSTART.includes(ch) && lc.length > 1) { carry = lc.pop(); while (lc.length > 1 && NOSTART.includes(carry[0])) carry = lc.pop() + carry; } // v12.42: 「吧。）」 moves together (「。）」 used to start the next line)
           while (lc.length > 1 && NOEND.includes(lc[lc.length - 1])) carry = lc.pop() + carry;
           if (carry) { lines.push(lc.join('')); line = carry; w = width(carry, size); }
           else { lines.push(line); line = ''; w = 0; if (ch === ' ') continue; }

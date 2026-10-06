@@ -318,7 +318,7 @@ const Font = (() => {
         if (w + cw > maxW && line) {
           const lc = [...line]; let carry = '';
           if (WORD.test(ch) && WORD.test(lc[lc.length - 1])) { let j = lc.length; while (j > 0 && WORD.test(lc[j - 1])) j--; if (j > 0 && lc.length - j <= 8) carry = lc.splice(j).join(''); }
-          if (!carry && NOSTART.includes(ch) && lc.length > 1) carry = lc.pop();
+          if (!carry && NOSTART.includes(ch) && lc.length > 1) { carry = lc.pop(); while (lc.length > 1 && NOSTART.includes(carry[0])) carry = lc.pop() + carry; } // v12.42: 「吧。）」 moves together (「。）」 used to start the next line)
           while (lc.length > 1 && NOEND.includes(lc[lc.length - 1])) carry = lc.pop() + carry;
           if (carry) { lines.push(lc.join('')); line = carry; w = width(carry, size); }
           else { lines.push(line); line = ''; w = 0; if (ch === ' ') continue; }
@@ -7889,7 +7889,7 @@ class TitleScene {
     x.drawImage(this.logo, Math.round(W / 2 - this.logo.width / 2), 6 + bob);
     Font.drawC(x, '～異世界冒險RPG～', W / 2, 52 + bob, '#ffe0a0', '#3a1428');
     if (this.stage === 'press' && Math.floor(this.t / 30) % 2 === 0) Font.drawC(x, '按 A 鍵開始', W / 2, 232, '#ffffff', '#1a1024');
-    Font.drawR(x, 'v12.0.1', W - 3, H - 13, '#b890b0', null);
+    Font.drawR(x, 'v12.42', W - 3, H - 13, '#b890b0', null);
   }
 }
 class IntroScene {
@@ -25125,5 +25125,19 @@ NPC_ROLES.商店.push('chef13'); if (typeof NPC_WHERE !== 'undefined') NPC_WHERE
 ACHIEVEMENTS.push({ id: 'cook13_all', n: '旅店的常客', d: '九道料理全部做過一次。', cat: '探索', ok: st => DISH_KEYS13.every(k => ((st.cookSeen13 || {})[k])) });
 { const _c = Events.chef13; Events.chef13 = function* (...a) { const st = Game.st, before = { ...st.bag }; const r = yield* _c.apply(this, a); for (const k of DISH_KEYS13) if ((st.bag[k] || 0) > (before[k] || 0)) (st.cookSeen13 || (st.cookSeen13 = {}))[k] = 1; return r; }; }
 GROW12.push(['料理', '萌芽鎮、王都、潮鳴港的旅店有廚師。拿魚和素材點數（木料・藥材・魔素）去做菜，在野外吃了以後，接下來幾場戰鬥會有加成（傷害、經驗值、會心、速度、回復……）。同時只能有一道菜。']);
+const firstSkill13 = kind => { const N = treeNodes11(kind).find(q => q.t === 'sk' && !q.pre && !q.flag); return N ? N : null; };
+{ const _as = applyStartClass; applyStartClass = function (k) { _as(k); const st = Game.st, kind = mainKind11 ? mainKind11(st) : null, T = tr11(st); if (!kind || !TREE11[kind]) return;
+    const N = firstSkill13(kind); if (!N || T.lv[N.key]) return; T.lv[N.key] = 1; st.trRef11 = (st.trRef11 || 0) + 1; BB.slots(st); st.first13 = N.key; }; }
+{ const _say = say; say = function* (text, o) { const st = Game.st;
+    if (typeof text === 'string' && st && st.first13 && /打開選單的「技能樹」用技能點學招式|每個職業都有自己的核心資源/.test(text) && DEF.skills[st.first13]) { const nm = DEF.skills[st.first13].name; st.first13 = null;
+      text = (typeof ncTxt12 === 'function' ? ncTxt12(text) : text) + '\n（你已經學會了第一招「' + nm + '」。戰鬥中選「技能」就能用。）'; }
+    return yield* _say(text, o); }; }
+const trHint13 = st => { const n = trLeft11(st), a = typeof attrAvail === 'function' ? attrAvail(st) : 0;
+  if (n >= 2) return '（技能樹還有 ' + n + ' 點沒用！打開選單→「技能樹」學新的招式，打菁英和頭目會輕鬆很多。）';
+  if (a >= 3) return '（還有 ' + a + ' 點屬性點沒分配。打開選單→「屬性」分配，或選「推薦配點」。）'; return null; };
+{ const _wo = Overworld.prototype.whiteout; Overworld.prototype.whiteout = function* (...a) { const st = this.st, h = st && trHint13(st), arena = typeof ARENA_ON13 !== 'undefined' && ARENA_ON13; yield* _wo.apply(this, a); if (h && !arena) yield* say(h); }; }
+{ const _bs = Overworld.prototype.battleScript; Overworld.prototype.battleScript = function* (cfg, ...a) { const r = yield* _bs.call(this, cfg, ...a), st = Game.st;
+    if (r === 'win' && st && !st.flags.trTip13 && trLeft11(st) >= 4) { st.flags.trTip13 = 1; yield* say('（技能點累積了 ' + trLeft11(st) + ' 點！打開選單→「技能樹」，就能學新的招式或加強學過的招式。）'); }
+    return r; }; }
 </script>
 </body></html>
