@@ -75,4 +75,14 @@ const { chromium } = require('/home/claude/.npm-global/lib/node_modules/playwrig
       ow.run(fishReel13('fish13_marlin')); __game.step(37); });
     await crop('s8'); }
 
+  // 9. the ice cave: slide across the ice (v12.52)
+  if (want('s9')) { await base({ map: 'mirrorCave13', x: 6, y: 10, dir: 'right', cls: 'swordsman', lv: 30, flags: { deep: 1 } });
+    await p.evaluate(() => { const st = Game.st; st.ach = {}; for (const A of ACHIEVEMENTS) st.ach[A.id] = 1; const ow = Game.scene; ow.script = null; UI.clear(); Game.noEnc = 1; Game.toastQ = []; __game.step(10); Game.toastQ = []; __game.step(2); });
+    await crop('s9'); }
+  // 10. a pal following you, sniffing out the treasure map's × (v12.48 / v12.44)
+  if (want('s10')) { await base({ map: 'windHills', x: 6, y: 36, dir: 'left', cls: 'swordsman', lv: 9, flags: { deep: 1, tm13: 1, palSniff13: 1 } });
+    await p.evaluate(() => { const st = Game.st; st.ach = {}; for (const A of ACHIEVEMENTS) st.ach[A.id] = 1; st.clock = 400; st.wx = { [wxKey('windHills')]: { k: 'clear', until: 1e9 } }; st.pal13 = { got: { curlySheep: 1, piglet: 1 }, on: 'curlySheep' }; st.tm13 = { own: ['t3'], got: {} }; const ow = Game.scene; ow.script = null; UI.clear(); Game.noEnc = 1; ow.load('windHills', 6, 36, 'left'); __game.step(4);
+      __game.Input.set('left', true); __game.step(26); __game.Input.set('left', false); __game.step(40); UI.clear(); Game.toastQ = []; Game.wxBanner = null; __game.step(4); });
+    await crop('s10'); }
+
   await b.close(); })();
