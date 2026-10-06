@@ -109,7 +109,7 @@ Battle.prototype.handlers = {
       Sound.sfx(up ? 'statUp' : 'statDown'); yield* FX[up ? 'statUpFx' : 'statDownFx'].call(this, C); yield* this.msg(t.n + '的' + nm + (Math.abs(P.delta) >= 2 ? '大幅' : '') + (up ? '提升了！' : '降低了！') + (P.dur ? '（' + P.dur + '回合）' : ''), { hold: 24 }); return; }
     switch (id) {
       case 'wet': { const nx = this.core.log[this.cur]; if (!was && !(nx && nx.type === EVT.MESSAGE && nx.payload.key === 'flood_wet')) yield* this.msg(t.n + '全身濕透了！', { hold: 18 }); break; }
-      case 'tangle': yield* this.msg(t.n + '被藤蔓纏住了！（怕火）', { hold: 22 }); break;
+      case 'tangle': yield* this.msg(t.n + '被藤蔓纏住了！', { hold: 22 }); break;
       case 'barrier': yield* FX.barrier.call(this, C); yield* this.msg(t.n + '展開了魔法護盾！', { hold: 22 }); break;
       case 'smoke': { const sk = this.cast && this.cast.D, smk = this.itemCtx || !sk || /煙|霧/.test((sk.name || '') + (sk.desc || '')); yield* this.msg(t.n + (smk ? '躲進了煙幕裡！（比較難被打中）' : '的迴避提升了！（比較難被打中）'), { hold: 22 }); break; } // v12.68: 心眼・殘影步 have no smoke
       case 'critNext': yield* this.msg(t.n + '集中精神！下一擊必定會心！', { hold: 20 }); break;

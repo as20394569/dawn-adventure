@@ -34,6 +34,10 @@ module.exports = async (g) => {
       ['長槍', 'spBreak', '對蓄力中 ×1.5', st_('F', 'charging', { data: {} }), 1.5],
       ['長槍', 'spSpiral', '對破防再 +30%', st_('F', 'broken'), 1.3],
       ['法杖', 'stImpact', '對蓄力中 ×1.5', st_('F', 'charging', { data: {} }), 1.5],
+      ['劍', 'sdFlow', '對流血 ×1.3', st_('F', 'bleed14'), 1.3],
+      ['雙劍', 'dsPhantom', '對流血 ×1.25', st_('F', 'bleed14'), 1.25],
+      ['拳套', 'fsThrough', '對裂甲 ×1.3', st_('F', 'crack11'), 1.3],
+      ['法杖', 'stLance', '對魔防下降 ×1.4', st_('F', 'stage_spd', { delta: -1, dur: 3 }), 1.4],
       ['魔導書', 'tmForbid', '對手 2 項能力下降 +30%', both(st_('F', 'stage_def', { delta: -1, dur: 3 }), st_('F', 'stage_spe', { delta: -1, dur: 3 })), 1.3],
       ['樂器', 'inEcho', '對手中毒時 ×1.4', st_('F', 'psn'), 1.4],
       ['樂器', 'inEcho', '對手能力下降時 ×1.4', st_('F', 'stage_atk', { delta: -1, dur: 3 }), 1.4],
@@ -80,7 +84,12 @@ module.exports = async (g) => {
       ok('千刃亂舞 引爆中毒：追加傷害並消除', extra >= 1 && gone, '追加 ' + extra + ' 次，中毒' + (gone ? '已消除' : '還在')); }
     // v12.76 法杖改回魔力招、元素系統拿掉
     { const e = DEF.skills.t_stLance.effects.map(effGet).find(e => e.type === 'stage' && e.stats && e.stats.spd === -1); ok('魔力槍 50% 魔防 −1', !!e && e.chance === 0.5); }
-    { const v = rate('stImpact', 'flinch'); ok('魔力衝擊 30% 退縮', v > 0.12 && v < 0.5, Math.round(v * 100) + '%'); }
+    // v12.78 接招：新異常（對手是菁英：暈眩 → 延後、沉默 1 次）
+    { const v = rate('sdTwin', 'bleed14'); ok('疾風二連 每段 30% 流血（兩段至少一次約 51%）', v > 0.25 && v < 0.8, Math.round(v * 100) + '%'); }
+    { const v = rate('axCrush', 'delay'); ok('碎盾擊 40% 暈眩（菁英改成延後）', v > 0.2 && v < 0.62, Math.round(v * 100) + '%'); }
+    { const v = rate('stImpact', 'silence14'); ok('魔力衝擊 40% 沉默', v > 0.2 && v < 0.62, Math.round(v * 100) + '%'); }
+    { const r = fight('劍', 'sdTwin', { rounds: 3, seq: ['t_sdTwin', 'attack', 'attack'], foeAct: 1, pre: (c, H, F) => { c.applyStatus(H, F, 'bleed14', {}); } }); const d = r.log.filter(e => e.type === EVT.DAMAGE && e.tgts[0] === r.F.id && (e.payload.kind === 'dot' || (e.tags || []).includes('dot'))).length;
+      ok('流血：魔物每次行動完扣血', d >= 1, d + ' 次'); }
     { const D = DEF.skills.t_stFinale; ok('魔力終曲：用掉全部 MP，每 1 MP 威力 +5（最多 250）', D.costs.some(c => c.all) && BR.FORMULA.finale11({ spent: 40 }) === 200 && BR.FORMULA.finale11({ spent: 90 }) === 250); }
     { const E = DEF.skills.t_stHaste.effects.map(effGet); ok('時之加速：速度 +2、全部冷卻 −1', E.some(e => e.type === 'stage' && e.stats.spe === 2) && E.some(e => e.type === 'cooldown' && e.how === 'all')); }
     { const r = fight('法杖', 'stMax', { rounds: 4, seq: ['t_stMax', 'attack', 'attack', 'attack'] }); const on = r.c.hasStatus(r.H, 'maxim11'); ok('魔導極限：MP +50%，3 回合後結束', DEF.statuses.maxim11.mods.some(m => m.costMul === 1.5) && !on, on ? '4 回合後還在' : ''); }

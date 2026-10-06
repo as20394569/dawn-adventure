@@ -5890,7 +5890,7 @@ Battle.prototype.handlers = {
       Sound.sfx(up ? 'statUp' : 'statDown'); yield* FX[up ? 'statUpFx' : 'statDownFx'].call(this, C); yield* this.msg(t.n + '的' + nm + (Math.abs(P.delta) >= 2 ? '大幅' : '') + (up ? '提升了！' : '降低了！') + (P.dur ? '（' + P.dur + '回合）' : ''), { hold: 24 }); return; }
     switch (id) {
       case 'wet': { const nx = this.core.log[this.cur]; if (!was && !(nx && nx.type === EVT.MESSAGE && nx.payload.key === 'flood_wet')) yield* this.msg(t.n + '全身濕透了！', { hold: 18 }); break; }
-      case 'tangle': yield* this.msg(t.n + '被藤蔓纏住了！（怕火）', { hold: 22 }); break;
+      case 'tangle': yield* this.msg(t.n + '被藤蔓纏住了！', { hold: 22 }); break;
       case 'barrier': yield* FX.barrier.call(this, C); yield* this.msg(t.n + '展開了魔法護盾！', { hold: 22 }); break;
       case 'smoke': { const sk = this.cast && this.cast.D, smk = this.itemCtx || !sk || /煙|霧/.test((sk.name || '') + (sk.desc || '')); yield* this.msg(t.n + (smk ? '躲進了煙幕裡！（比較難被打中）' : '的迴避提升了！（比較難被打中）'), { hold: 22 }); break; } // v12.68: 心眼・殘影步 have no smoke
       case 'critNext': yield* this.msg(t.n + '集中精神！下一擊必定會心！', { hold: 20 }); break;
@@ -7896,7 +7896,7 @@ class TitleScene {
     x.drawImage(this.logo, Math.round(W / 2 - this.logo.width / 2), 6 + bob);
     Font.drawC(x, '～異世界冒險RPG～', W / 2, 52 + bob, '#ffe0a0', '#3a1428');
     if (this.stage === 'press' && Math.floor(this.t / 30) % 2 === 0) Font.drawC(x, '按 A 鍵開始', W / 2, 232, '#ffffff', '#1a1024');
-    Font.drawR(x, 'v12.77', W - 3, H - 13, '#b890b0', null);
+    Font.drawR(x, 'v12.78', W - 3, H - 13, '#b890b0', null);
   }
 }
 class IntroScene {
@@ -26542,7 +26542,7 @@ const INT_PX14 = {
   down: PXS(['.......', 'kkkkkk.', '....kk.', '...kk..', '..kk...', '.kkkkkk', '.......'], { }),
 };
 const INT_COL14 = { atk: '#ffffff', heavy: '#ffb050', buff: '#9af08a', debuff: '#d8b0ff', ail: '#c8f080', heal: '#8af0a0', guard: '#a8c8ff', flee: '#ffe080', summon: '#f0d8a0', hide: '#c8cce0', fly: '#9ae0ff', dive: '#8ad0ff', steal: '#ffd060', down: '#b0b0c0' };
-const AIL_N14 = { psn: '毒', par: '麻痺', slp: '睡眠', brn: '灼傷', frozen: '凍結', flinch: '退縮', wet: '潮濕' };
+const AIL_N14 = { psn: '毒', par: '麻痺', slp: '睡眠', brn: '灼傷', frozen: '凍結', bleed14: '流血', stun14: '暈眩', silence14: '沉默' }; // 退縮 is a small chance on many attacks: left out so the labels stay short
 function intentOf14(core, u, cmd) {
   if (!cmd || !u || !core.isUp(u)) return null; if (core.hasStatus(u, 'rise14')) return { k: 'down', t: '倒地' };
   if (u.data.fam14 === 'spirit') return { k: 'hide', t: '' };
@@ -26579,4 +26579,54 @@ dexWeak11 = function (sp) { return famText(sp) || '—'; };
 if (typeof BATTLE_HELP !== 'undefined') BATTLE_HELP.unshift(['魔物的下一步', ['每隻魔物頭上的圖示，是牠這回合要做的事：劍＝攻擊（數字是預估傷害，橘色是重擊，最好防禦）、綠箭頭＝強化、紫箭頭＝削弱、毒滴＝異常、十字＝補血、盾＝架盾、黃箭頭＝逃跑。',
   '種族習性：' + Object.keys(FAM_TRAIT14).filter(k => FAMILIES[k]).map(k => FAMILIES[k].n + '「' + FAM_TRAIT14[k] + '」' + FAM_TRAIT_D14[k]).join('；') + '。（菁英・頭目照自己的打法）']]);
 if (typeof GROW12 !== 'undefined') GROW12.push(['魔物的下一步', '戰鬥中魔物頭上會顯示牠這回合要做的事和預估傷害。橘色的重擊就防禦；要逃跑的小偷、會分裂的軟泥、躲起來的鳥和魚，先處理誰都不一樣。每個種族都有自己的習性，看圖鑑的種族欄。']);
+Object.assign(COND, {
+  ownerBig14: (c, v) => !!c.owner && !!(c.owner.boss || c.owner.elite) === !!v,
+  tgtSpdDown14: (c, v) => !!c.tgt && (((c.core.statusOf(c.tgt, 'stage_spd') || {}).stacks || 0) < 0) === !!v,
+});
+defPut('statuses', 'bleed14', { tags: ['debuff', 'dot'], duration: 'owner_actions', durDefault: 3, tick: 'owner_action_end', stack: 'refresh', metadata: { n: '流血' }, mods: [],
+  triggers: [{ key: 'bleed14a', on: EVT.ACTION_END, phase: 'POST', role: 'src', cond: { ownerAlive: 1, ownerBig14: 0 }, effects: [{ type: 'damage', target: 'self', pctMax: 0.05, kind: 'dot', tags: ['dot'] }] },
+    { key: 'bleed14b', on: EVT.ACTION_END, phase: 'POST', role: 'src', cond: { ownerAlive: 1, ownerBig14: 1 }, effects: [{ type: 'damage', target: 'self', pctMax: 0.015, kind: 'dot', tags: ['dot'] }] }] });
+defPut('statuses', 'stun14', { tags: ['debuff'], duration: 'next_action', stack: 'none', metadata: { n: '暈眩' }, blockAction: (core, u) => { core.removeStatus(u, 'stun14', 'used'); return 'stun14'; } });
+defPut('statuses', 'silence14', { tags: ['debuff'], duration: 'owner_actions', durDefault: 2, tick: 'owner_action_end', stack: 'refresh', metadata: { n: '沉默' }, mods: [], triggers: [] });
+CANCEL_TXT.stun14 = '頭昏眼花，無法行動！';
+Object.assign(STATUS_INFO, { bleed14: ['血', '#d03848'], stun14: ['暈', '#d8a820'], silence14: ['默', '#8a64d0'] });
+Object.assign(BADGE_OF, { bleed14: 'bleed14', stun14: 'stun14', silence14: 'silence14' });
+if (typeof BUFF12 !== 'undefined') Object.assign(BUFF12, { bleed14: { n: '流血', k: 'deb', tip: '每次行動扣血' }, stun14: { n: '暈眩', k: 'deb', tip: '跳過下一次行動' }, silence14: { n: '沉默', k: 'deb', tip: '只能用最弱的招' },
+  fly14: { n: '高飛', k: 'spd', tip: '物理 40% 落空・下一下 ×1.3' }, dive14: { n: '潛水', k: 'def', tip: '單體攻擊只剩 40%' }, cguard14: { n: '架盾', k: 'def', tip: '受傷 −50%' }, rise14: { n: '倒地', k: 'deb', tip: '下回合會站起來' } });
+{ const _d = BAI.decide; BAI.decide = function (core, u, o = {}) { if (u.hero || !core.hasStatus(u, 'silence14') || core.hasStatus(u, 'charging')) return _d.call(this, core, u, o);
+    const H = core.foesOf(u)[0], dm = u.skills.filter(id => DEF.skills[id] && DEF.skills[id].power && !DEF.skills[id].charge).sort((a, b) => DEF.skills[a].power - DEF.skills[b].power);
+    const id = dm[0] || (DEF.skills.m_tackle ? 'm_tackle' : null); return id ? { type: 'skill', skill: id, targets: H ? [H.id] : [] } : { type: 'wait' }; }; }
+const STUN14 = p => [{ type: 'status', status: 'stun14', chance: p, secondary: true, cond: { tgtAlive: 1, tgtBig: 0 } }, { type: 'status', status: 'delay', chance: p, secondary: true, cond: { tgtAlive: 1, tgtBig: 1 } }];
+const SIL14 = p => [{ type: 'status', status: 'silence14', chance: p, secondary: true, dur: 2, cond: { tgtAlive: 1, tgtBig: 0 } }, { type: 'status', status: 'silence14', chance: p, secondary: true, dur: 1, cond: { tgtAlive: 1, tgtBig: 1 } }];
+function combo14(id, o) { const D = DEF.skills[id]; if (!D) { bvErr('v12.78', 'skill ' + id); return; } let k = 0; const reg = ef => effRegister('skill:' + id + '#b' + (k++), ef);
+  if (o.dropStatus) D.effects = D.effects.filter(e => (effGet(e) || {}).status !== o.dropStatus);
+  if (o.addEffects) D.effects = D.effects.concat(o.addEffects.map(reg));
+  if (o.addAfter) D.after = (D.after || []).concat(o.addAfter.map(reg));
+  if (o.mods) D.mods = (D.mods || []).concat(o.mods);
+  if (o.desc) { D.desc = o.desc; if (MOVES[id]) MOVES[id].d = o.desc; const T = treeOf11(id); if (T) { const r = TREE11[T[0]].sk.find(r => 't_' + r[1] === id); if (r) r[8] = o.desc; } } }
+combo14('t_sdTwin', { addEffects: [{ type: 'status', status: 'bleed14', chance: 0.3, secondary: true, cond: { tgtAlive: 1 } }], desc: '兩段快斬，每段 30% 流血；自己速度 +1。' });
+combo14('t_sdFlow', { mods: [MUL11(1.3, { tgtStatus: 'bleed14' })], desc: '五段連斬；對流血的對手每段 ×1.3，會心的那段對護盾傷害再 ×1.5。' });
+combo14('t_dsMoon', { addEffects: [{ type: 'status', status: 'bleed14', chance: 0.25, secondary: true, cond: { tgtAlive: 1 } }], desc: '兩把劍交叉斬，會心率 +15%，每段 25% 流血。' });
+combo14('t_dsPhantom', { mods: [MUL11(1.25, { tgtStatus: 'bleed14' })], desc: '六段連斬；每次會心，後面每段威力 +10%；對流血的對手每段 ×1.25。' });
+combo14('t_axCrush', { addEffects: STUN14(0.4), desc: '對護盾傷害 ×3，40% 暈眩（菁英・頭目：延後）。' });
+combo14('t_fsThrough', { dropStatus: 'flinch', addEffects: STUN14(0.5), mods: [MUL11(1.3, { tgtStatus: 'crack11' })], desc: '用肩膀整個人撞上去，無視 40% 物防，50% 暈眩（菁英・頭目：延後）；對裂甲的對手威力 ×1.3。' });
+combo14('t_stImpact', { dropStatus: 'flinch', addEffects: SIL14(0.4), desc: '40% 沉默（2 次行動只能用最弱的招；菁英・頭目 1 次）；對蓄力中的對手威力 ×1.5。' });
+combo14('t_stLance', { mods: [MUL11(1.4, { tgtSpdDown14: 1 })], desc: '魔力凝成的長槍，50% 讓對手魔防 −1；對魔防下降的對手威力 ×1.4。' });
+combo14('t_shBash', { dropStatus: 'flinch', addEffects: STUN14(0.35), desc: '用兩面盾砸，35% 暈眩（菁英・頭目：延後）。' });
+combo14('t_osBash', { dropStatus: 'flinch', addEffects: STUN14(0.35), desc: '用盾撞過去（攻擊力加上物防的 70%），35% 暈眩（菁英・頭目：延後）。' });
+combo14('t_dgBloom', { addAfter: [{ type: 'damage', target: 'cast_targets', power: 40, cond: { tgtStatus: 'bleed14', tgtAlive: 1 }, kind: 'burst11' }, { type: 'remove_status', target: 'cast_targets', status: 'bleed14', why: 'burst11' }],
+  desc: '五段亂斬；最後引爆對手身上的中毒、麻痺、灼傷、流血，每一種追加威力 40 的傷害並消除。' });
+{ const _io = intentOf14; intentOf14 = function (core, u, cmd) { if (u && core.hasStatus(u, 'stun14')) return { k: 'down', t: '暈眩' }; return _io(core, u, cmd); }; }
+if (typeof BATTLE_HELP !== 'undefined') { const P = BATTLE_HELP.find(q => q[0] === '魔物的下一步'); if (P) P[1].push('異常：流血（每次行動扣血）・暈眩（跳過下一次行動，菁英・頭目延後）・沉默（只能用最弱的招）。看到重擊就打暈牠，看到補血・強化就讓牠沉默。'); }
+if (typeof GROW12 !== 'undefined') GROW12.push(['接招', '每棵技能樹都有「先鋪後收」：劍・雙劍先上流血，流光連斬・幻影連斬吃流血；斧・拳套・盾能打暈；法杖能讓魔物沉默，魔力槍吃魔防下降；拳套的震山擊吃裂甲；短刀吃中毒，千刃亂舞一次引爆。']);
+{ const H = Battle.prototype.handlers, _ap = H.STATUS_APPLY; H.STATUS_APPLY = function* (e, s, t, P) {
+    const id = P && P.status; if (!t || P.failed || P.cleared || !['bleed14', 'stun14', 'silence14', 'fly14', 'dive14', 'cguard14'].includes(id)) return yield* _ap.call(this, e, s, t, P);
+    t.st[id] = P.stacks ?? 1; const C = this.center(t), head = { x: C.x, y: Math.round(t.foot - t.bbh) };
+    if (id === 'bleed14') { Sound.sfx('slash'); for (let i = 0; i < 6; i++) this.spawn({ k: 'p13px', x: C.x + rnd(-8, 8), y: C.y + rnd(-10, 4), vx: rnd(-10, 10) / 10, vy: -rnd(4, 14) / 10, g: 0.14, s: 2, cols: ['#ff6a6a', '#d03848', '#7a1020'], o: '#2a0408', life: 22, delay: i }); yield* this.msg(t.n + '流血了！', { hold: 18 }); }
+    if (id === 'stun14') { Sound.sfx('hit'); for (let i = 0; i < 3; i++) { const p = PX13.spr(this, PXI.dizzy, head, { sc: 2, life: 30 }); p.upd = q => { const an = q.t * 0.25 + i * 2.09; q.x = head.x + Math.cos(an) * 12; q.y = head.y - 4 + Math.sin(an) * 4; }; } yield* wait(10); yield* this.msg(t.n + '暈頭轉向了！（跳過下一次行動）', { hold: 22 }); }
+    if (id === 'silence14') { Sound.sfx('statDown'); const c = ['#c8a0ff', '#ffffff', '#1a0838']; PX13.line(this, { x: head.x - 7, y: head.y + 4 }, { x: head.x + 7, y: head.y + 14 }, c, 3, 26); PX13.line(this, { x: head.x + 7, y: head.y + 4 }, { x: head.x - 7, y: head.y + 14 }, c, 3, 26, { delay: 3 }); yield* wait(8);
+      yield* this.msg(t.n + '被沉默了！（只能用最弱的招）', { hold: 22 }); }
+    if (id === 'fly14') yield* this.msg(t.n + '飛上了高空！', { hold: 16 });
+    if (id === 'dive14') yield* this.msg(t.n + '潛進了水裡！', { hold: 16 });
+    if (id === 'cguard14') yield* this.msg(t.n + '架起了防禦！', { hold: 16 }); }; }
 </script>

@@ -34,6 +34,12 @@ module.exports = async (g) => {
       ok('下一步：每個計畫都判斷得出圖示', !bad.length, bad.slice(0, 3).join(' | ')); }
     { const S = JSON.parse(JSON.stringify(st)), c = BB.build({ sp: pick('beast'), lv: 30, kind: 'wild', seed: 4, maxRounds: 3 }, S); c.planRound(); const u = c.alive('B')[0], I = intentOf14(c, u, { type: 'skill', skill: u.skills.find(id => DEF.skills[id] && DEF.skills[id].power) || 'm_tackle', targets: ['H'] });
       ok('下一步：攻擊有預估傷害', I && /^\d+/.test(I.t) && (I.k === 'atk' || I.k === 'heavy'), JSON.stringify(I)); }
+    // v12.78 暈眩・沉默（一般魔物）
+    { const S = JSON.parse(JSON.stringify(st)), c = BB.build({ sp: pick('beast'), lv: 20, kind: 'wild', seed: 6, maxRounds: 1 }, S); c.data.heroPolicy = 'smart'; const F = c.units.find(u => u.side === 'B'); c.byId.H.stats.spe = 999; c.applyStatus(c.byId.H, F, 'stun14', {}); c.start(true);
+      ok('暈眩：跳過下一次行動', c.log.some(e => e.type === EVT.ACTION_CANCEL && e.payload.why === 'stun14')); }
+    { const sp = [...wild].find(q => SPECIES[q] && !SPECIES[q].boss && (DEF.enemies[q] || {}).skills && DEF.enemies[q].skills.filter(id => DEF.skills[id] && DEF.skills[id].power).length >= 2), S = JSON.parse(JSON.stringify(st)), c = BB.build({ sp, lv: 20, kind: 'wild', seed: 6, maxRounds: 2 }, S), F = c.units.find(u => u.side === 'B');
+      c.applyStatus(c.byId.H, F, 'silence14', {}); const pw = F.skills.filter(id => DEF.skills[id] && DEF.skills[id].power && !DEF.skills[id].charge).map(id => DEF.skills[id].power), cmd = BAI.decide(c, F);
+      ok('沉默：只用最弱的招', cmd.type === 'skill' && DEF.skills[cmd.skill].power === Math.min(...pw), sp + ' ' + cmd.skill); }
     ok('沒有錯誤', !BV2.errors.length, BV2.errors.slice(-3).join(' | '));
     return out.join('\n') + '\n' + out.filter(l => l.startsWith('PASS')).length + '/' + out.length + ' PASS';
   }, save));

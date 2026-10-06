@@ -91,7 +91,7 @@ const INT_PX14 = {
   down: PXS(['.......', 'kkkkkk.', '....kk.', '...kk..', '..kk...', '.kkkkkk', '.......'], { }),
 };
 const INT_COL14 = { atk: '#ffffff', heavy: '#ffb050', buff: '#9af08a', debuff: '#d8b0ff', ail: '#c8f080', heal: '#8af0a0', guard: '#a8c8ff', flee: '#ffe080', summon: '#f0d8a0', hide: '#c8cce0', fly: '#9ae0ff', dive: '#8ad0ff', steal: '#ffd060', down: '#b0b0c0' };
-const AIL_N14 = { psn: '毒', par: '麻痺', slp: '睡眠', brn: '灼傷', frozen: '凍結', flinch: '退縮', wet: '潮濕' };
+const AIL_N14 = { psn: '毒', par: '麻痺', slp: '睡眠', brn: '灼傷', frozen: '凍結', bleed14: '流血', stun14: '暈眩', silence14: '沉默' }; // 退縮 is a small chance on many attacks: left out so the labels stay short
 // what a planned command means for the hero
 function intentOf14(core, u, cmd) {
   if (!cmd || !u || !core.isUp(u)) return null; if (core.hasStatus(u, 'rise14')) return { k: 'down', t: '倒地' };
