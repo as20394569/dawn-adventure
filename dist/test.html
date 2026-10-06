@@ -7889,7 +7889,7 @@ class TitleScene {
     x.drawImage(this.logo, Math.round(W / 2 - this.logo.width / 2), 6 + bob);
     Font.drawC(x, '～異世界冒險RPG～', W / 2, 52 + bob, '#ffe0a0', '#3a1428');
     if (this.stage === 'press' && Math.floor(this.t / 30) % 2 === 0) Font.drawC(x, '按 A 鍵開始', W / 2, 232, '#ffffff', '#1a1024');
-    Font.drawR(x, 'v12.58', W - 3, H - 13, '#b890b0', null);
+    Font.drawR(x, 'v12.59', W - 3, H - 13, '#b890b0', null);
   }
 }
 class IntroScene {
@@ -19941,7 +19941,7 @@ summaryScreen = function* () {
     else { const SK = skillList(st), VIS = 7; drawWin(x, 4, 24, 168, VIS * 19 + 8, 'menu'); const t0 = clamp(mi - 3, 0, Math.max(0, SK.length - VIS));
       if (!SK.length) Font.draw(x, '還沒有學會技能。（選單→技能）', 12, 30, UIC.muted, UIC.textSh, 11);
       SK.slice(t0, t0 + VIS).forEach((id, k) => { const i = t0 + k, mv = MOVES[id], Y = 28 + k * 19; if (i === mi) selBar(x, 6, Y, 164, 17);
-        if (id === '_passive') { x.fillStyle = shade(UIC.warm, -0.45); x.fillRect(14, Y + 2, 30, 13); Font.drawC(x, '被動', 29, midY(Y + 2, 13, 9), '#ffffff', UIC.textSh, 9); Font.draw(x, '職業・武器被動', 52, Y + 1, UIC.warm, UIC.textSh, 10); return; }
+        if (id === '_passive') { x.fillStyle = shade(UIC.warm, -0.45); x.fillRect(14, Y + 2, 30, 13); Font.drawC(x, '被動', 29, midY(Y + 2, 13, 9), '#ffffff', UIC.textSh, 9); Font.draw(x, '武器・飾品的被動', 52, Y + 1, UIC.warm, UIC.textSh, 10); return; }
         const sig = !!(mv && mv.sig), e = typeof BB !== 'undefined' ? BB.skillObj(st, id) : null, tag = sig ? '招式' : e && !e.learned ? '學習' : '技能', col = sig ? '#c8a050' : e && !e.learned ? '#8a7cff' : UIC.accent;
         x.fillStyle = shade(col, -0.45); x.fillRect(14, Y + 2, 30, 13); Font.drawC(x, tag, 29, midY(Y + 2, 13, 9), '#ffffff', UIC.textSh, 9);
         const nm = typeof BB !== 'undefined' ? BB.nameOf(st, id) : mv.n, rt = BB.costLabel(st, id);
@@ -25369,6 +25369,15 @@ function packMat13(mats) { const st = Game.st, M = st && MAPS[st.map], S = new S
       if (/^獲得了1點天賦點！MP也全部恢復了|^MP全部恢復了。（(下一級會得到天賦點|天賦點已達上限)/.test(text)) text = 'MP全部恢復，技能點 +' + (typeof LVPTS11 !== 'undefined' ? LVPTS11 : 2) + '！\n（選單→技能樹）';
       else if (/天賦覺醒/.test(text)) return; else text = ncTxt12(text); }
     return yield* _m.call(this, text, ...a); }; }
+{ const _dp = drawPassiveInfo; drawPassiveInfo = function (x, st, X, Y, w) { if (!st || !(st.ncv12 || st.cls === NC12)) return _dp(x, st, X, Y, w);
+    const k = typeof mainWKey === 'function' ? mainWKey(st) : null, mk = typeof mainKind11 === 'function' ? mainKind11(st) : null, dm = typeof dualMode11 === 'function' ? dualMode11(st) : null;
+    const L = [['主武器　' + (mk || '—') + (dm ? '（' + dm + '）' : ''), UIC.warm, 10]];
+    if (typeof trTotal11 === 'function') { const tot = trTotal11(st), left = trLeft11(st); L.push(['技能樹：用了 ' + (tot - left) + '／' + tot + ' 點' + (left ? '（還有 ' + left + ' 點）' : ''), left ? UIC.accent : '#c9cfe4', 9]); }
+    const tr = equippedGear(st).map(g => GEAR[g.b] && GEAR[g.b].trait && ACC_TRAIT[GEAR[g.b].trait]).filter(Boolean).map(T => T[0]);
+    L.push(['飾品特性：' + (tr.length ? tr.join('・') : '（沒有）'), tr.length ? UIC.text : UIC.muted, 9]);
+    if (k && typeof WSK !== 'undefined' && WSK[k]) L.push(['特技「' + WSK[k].s.n + '」普通攻擊' + wsN(WSK[k].s, st) + '層發動', '#ffd860', 9]);
+    const R = []; for (const [t, col, z0] of L) { let z = z0; while (z > 8 && Font.width(t, z) > w) z--; if (Font.width(t, z) <= w) R.push([t, col, z]); else for (const s of Font.wrap(t, w, 8)) R.push([s, col, 8]); }
+    const dy = R.length > 5 ? 13 : 15; R.forEach(([t, col, z], i) => Font.draw(x, t, X, Y + i * dy + (i ? 1 : 0), col, UIC.textSh, z)); }; }
 const PAL13 = { CHANCE: 0.015, SCALE: 4 };
 const pal13 = (st = Game.st) => st.pal13 || (st.pal13 = { got: {}, on: null });
 const palKinds13 = (st = Game.st) => Object.keys(pal13(st).got).filter(k => SPECIES[k]).length;

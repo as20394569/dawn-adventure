@@ -104,7 +104,7 @@ summaryScreen = function* () {
     else { const SK = skillList(st), VIS = 7; drawWin(x, 4, 24, 168, VIS * 19 + 8, 'menu'); const t0 = clamp(mi - 3, 0, Math.max(0, SK.length - VIS));
       if (!SK.length) Font.draw(x, '還沒有學會技能。（選單→技能）', 12, 30, UIC.muted, UIC.textSh, 11);
       SK.slice(t0, t0 + VIS).forEach((id, k) => { const i = t0 + k, mv = MOVES[id], Y = 28 + k * 19; if (i === mi) selBar(x, 6, Y, 164, 17);
-        if (id === '_passive') { x.fillStyle = shade(UIC.warm, -0.45); x.fillRect(14, Y + 2, 30, 13); Font.drawC(x, '被動', 29, midY(Y + 2, 13, 9), '#ffffff', UIC.textSh, 9); Font.draw(x, '職業・武器被動', 52, Y + 1, UIC.warm, UIC.textSh, 10); return; }
+        if (id === '_passive') { x.fillStyle = shade(UIC.warm, -0.45); x.fillRect(14, Y + 2, 30, 13); Font.drawC(x, '被動', 29, midY(Y + 2, 13, 9), '#ffffff', UIC.textSh, 9); Font.draw(x, '武器・飾品的被動', 52, Y + 1, UIC.warm, UIC.textSh, 10); return; }
         const sig = !!(mv && mv.sig), e = typeof BB !== 'undefined' ? BB.skillObj(st, id) : null, tag = sig ? '招式' : e && !e.learned ? '學習' : '技能', col = sig ? '#c8a050' : e && !e.learned ? '#8a7cff' : UIC.accent;
         x.fillStyle = shade(col, -0.45); x.fillRect(14, Y + 2, 30, 13); Font.drawC(x, tag, 29, midY(Y + 2, 13, 9), '#ffffff', UIC.textSh, 9);
         const nm = typeof BB !== 'undefined' ? BB.nameOf(st, id) : mv.n, rt = BB.costLabel(st, id);
