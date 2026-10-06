@@ -815,6 +815,9 @@
    "oldField掉落池",
    "cave6_oldField掉落池"
   ],
+  "creekFlute13": [
+   "sluice13寶箱"
+  ],
   "primerTome": [
    "道具店"
   ],
@@ -1281,6 +1284,7 @@
    "windHills寶箱",
    "maplePass寶箱",
    "oldField寶箱",
+   "sluice13寶箱",
    "行商",
    "迴廊兌換",
    "委託獎勵",
