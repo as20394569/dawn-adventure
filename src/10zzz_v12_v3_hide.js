@@ -7,7 +7,7 @@
 const HIDE_K13 = ['樂器', '魔導書', '火槍'], SWAP_K13 = { 樂器: '法杖', 魔導書: '法杖', 火槍: '劍' };
 function kindOn13(k) { return !HIDE_K13.includes(k); }
 const hidG13 = k => { const G = k && GEAR[k]; return !!(G && G.slot === 'weapon' && HIDE_K13.includes(G.kind)); };
-const swapOf13 = k => { const G = GEAR[k], t = clamp((G && G.t) || 1, 1, 7); return BASE11.weapon[SWAP_K13[G.kind]][t - 1]; };
+const swapOf13 = k => { const G = GEAR[k], t = clamp((G && G.t) || 1, 1, 8); return BASE11.weapon[SWAP_K13[G.kind]][t - 1]; };
 // the first weapon to pick
 for (let i = START_KINDS12.length - 1; i >= 0; i--) if (!kindOn13(START_KINDS12[i])) START_KINDS12.splice(i, 1);
 // drops come from the maps' gear pools

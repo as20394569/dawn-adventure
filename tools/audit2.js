@@ -54,7 +54,7 @@ module.exports = async (g) => {
     const fxUse = {}; for (const k in MOVES) if (!MOVES[k].foe && !MOVES[k].tpl) (fxUse[MOVES[k].fx] = fxUse[MOVES[k].fx] || []).push(MOVES[k].n); for (const f in fxUse) if (fxUse[f].length > 1 && !(f === 'slash' && fxUse[f].includes('攻擊'))) warn('主角特效重複使用', f, fxUse[f].join('、'));
     // ---------- GEAR ----------
     for (const k in GEAR) { const e = GEAR[k];
-      if (!['weapon', 'shield', 'head', 'body', 'feet', 'acc'].includes(e.slot)) bad('裝備', k, '部位無效'); if (!(e.t >= 1 && e.t <= 7)) bad('裝備', k, '階級無效');
+      if (!['weapon', 'shield', 'head', 'body', 'feet', 'acc'].includes(e.slot)) bad('裝備', k, '部位無效'); if (!(e.t >= 1 && e.t <= 8)) bad('裝備', k, '階級無效'); // v12.70: T8
       for (const s in e.st || {}) if (!STATS.includes(s) && !(s === 'mp' && (e.kind === '魔導書' || e.kind === '樂器'))) bad('裝備', k, '數值欄位無效', s);
       for (const s in e.sp || {}) { if (!SPK.includes(s)) bad('裝備', k, '特殊欄位無效', s); }
       if (e.sp && e.sp.vs && !FAMILIES[e.sp.vs[0]]) bad('裝備', k, '對種族無效', e.sp.vs[0]); if (e.sp && e.sp.resist && !ELEM.includes(e.sp.resist[0])) bad('裝備', k, '抗性屬性無效');

@@ -5758,10 +5758,11 @@ Battle.prototype.victory = function* () {
 };
 Battle.prototype.mainId = function () { const u = this.core.units.find(q => q.side === 'B'); return u ? u.id : null; };
 Battle.prototype.mainView = function () { return this.views[this.mainId()] || this.F; };
+const LV_MAX13 = 60; // v12.70: 第三章 raises the level cap 50 → 60
 Battle.prototype.gainExp = function* (amount) {
   const st = Game.st; yield* this.msg(st.name + '獲得了' + amount + '點經驗值！', { hold: 20 });
   let remaining = amount; Sound.expStart();
-  while (remaining > 0 && st.lv < 50) {
+  while (remaining > 0 && st.lv < LV_MAX13) {
     const lo = expForLevel(st.lv), hi = expForLevel(st.lv + 1), step = Math.min(remaining, hi - st.exp), from = st.exp, to = st.exp + step, fr = clamp(Math.ceil(step / (hi - lo) * 50), 6, 50);
     for (let i = 1; i <= fr; i++) { this.disp.exp = lerp(from, to, i / fr); Sound.expStep((this.disp.exp - lo) / (hi - lo)); yield; }
     st.exp = to; this.disp.exp = to; remaining -= step;
@@ -7670,7 +7671,7 @@ class TitleScene {
     x.drawImage(this.logo, Math.round(W / 2 - this.logo.width / 2), 6 + bob);
     Font.drawC(x, '～異世界冒險RPG～', W / 2, 52 + bob, '#ffe0a0', '#3a1428');
     if (this.stage === 'press' && Math.floor(this.t / 30) % 2 === 0) Font.drawC(x, '按 A 鍵開始', W / 2, 232, '#ffffff', '#1a1024');
-    Font.drawR(x, 'v12.69', W - 3, H - 13, '#b890b0', null);
+    Font.drawR(x, 'v12.70', W - 3, H - 13, '#b890b0', null);
   }
 }
 class IntroScene {
@@ -10975,7 +10976,7 @@ for (const k of armoryStock({ flags: { colossus: 1, frostQueen: 1, lavaGiant: 1 
 const BP_STORY = [[st => (st.flags.qHorn || 0) >= 2, new Set((typeof RECIPES_V20 !== 'undefined' ? RECIPES_V20 : []).map(R => R.out))], [st => ch2(st) >= 2, new Set((typeof RECIPES_CH2 !== 'undefined' ? RECIPES_CH2 : []).map(R => R.out))]];
 for (const [, S] of BP_STORY) for (const k of S) BP_RARE.delete(k);
 for (const k of ['uniform', 'schoolShoes']) BP_RARE.add(k);
-const smithRank = (st = Game.st) => Math.min(7, 2 + Math.floor(Math.max(0, (st.lv || 1) - 4) / 6));
+const smithRank = (st = Game.st) => (st.lv || 1) >= 52 ? 8 : Math.min(7, 2 + Math.floor(Math.max(0, (st.lv || 1) - 4) / 6)); // v12.70: T8 from Lv52 (第三章)
 function bpKnown(k, st = Game.st) {
   if (!GEAR[k] || !GEAR_RECIPE[k]) return false; if (st.bp && st.bp[k]) return true;
   for (const [f, S] of BP_STORY) if (S.has(k)) return f(st) && GEAR[k].t <= smithRank(st) + 1;
@@ -21105,23 +21106,31 @@ function bagToPts11(st = Game.st, tierOf = k => MATT11[k] || 1, only = null) { c
     st.bag[k] -= n; if (!st.bag[k]) delete st.bag[k]; const c = MATCAT11[k]; got[c] = (got[c] || 0) + n * tierPts11(tierOf(k)); }
   ptsPay11(got, st, 1); return got; }
 const BASEMUL11 = 1.2;
-const WB11 = { 劍: { atk: [4, 6, 9, 12, 15, 18, 22] }, 短刀: { atk: [3, 5, 8, 10, 13, 15, 18], spe: [1, 1, 2, 2, 3, 3, 4] }, 斧: { atk: [5, 8, 11, 14, 18, 21, 25] }, 長槍: { atk: [4, 7, 10, 12, 16, 19, 22] },
-  拳套: { atk: [3, 5, 8, 10, 13, 15, 18], spe: [1, 2, 2, 3, 3, 4, 5] }, 法杖: { spa: [4, 7, 10, 12, 15, 18, 22] }, 魔導書: { spa: [3, 5, 8, 10, 13, 16, 19], mp: [8, 10, 14, 16, 20, 24, 28] },
-  樂器: { spa: [3, 5, 8, 10, 13, 15, 18], mp: [6, 8, 12, 14, 17, 20, 24] }, 火槍: { atk: [4, 6, 9, 11, 14, 17, 20] } };
+const WB11 = { 劍: { atk: [4, 6, 9, 12, 15, 18, 22, 26] }, 短刀: { atk: [3, 5, 8, 10, 13, 15, 18, 21], spe: [1, 1, 2, 2, 3, 3, 4, 5] }, 斧: { atk: [5, 8, 11, 14, 18, 21, 25, 29] }, 長槍: { atk: [4, 7, 10, 12, 16, 19, 22, 25] },
+  拳套: { atk: [3, 5, 8, 10, 13, 15, 18, 21], spe: [1, 2, 2, 3, 3, 4, 5, 6] }, 法杖: { spa: [4, 7, 10, 12, 15, 18, 22, 26] }, 魔導書: { spa: [3, 5, 8, 10, 13, 16, 19, 22], mp: [8, 10, 14, 16, 20, 24, 28, 32] },
+  樂器: { spa: [3, 5, 8, 10, 13, 15, 18, 21], mp: [6, 8, 12, 14, 17, 20, 24, 28] }, 火槍: { atk: [4, 6, 9, 11, 14, 17, 20, 23] } };
 const AB11 = {
-  重甲: { head: { def: [2, 3, 5, 6, 8, 9, 11], spd: [1, 1, 2, 3, 3, 4, 5] }, body: { def: [4, 6, 9, 12, 15, 18, 21], spd: [1, 2, 3, 4, 5, 6, 7], hp: [0, 0, 2, 4, 5, 5, 6] }, feet: { def: [2, 3, 4, 5, 6, 7, 8], spe: [1, 2, 3, 3, 4, 4, 5] } },
-  輕裝: { head: { def: [1, 2, 3, 4, 5, 6, 7], spd: [1, 2, 3, 3, 4, 5, 6], spe: [1, 1, 2, 2, 2, 3, 3] }, body: { def: [3, 5, 7, 9, 11, 14, 17], spd: [2, 3, 5, 6, 7, 8, 10], spe: [1, 1, 2, 2, 3, 3, 4] }, feet: { def: [1, 2, 2, 3, 4, 4, 5], spe: [3, 4, 5, 6, 7, 8, 10] } },
-  法衣: { head: { def: [1, 2, 3, 4, 4, 5, 6], spd: [2, 3, 4, 5, 6, 7, 9], spa: [0, 0, 1, 1, 2, 2, 3] }, body: { def: [2, 3, 5, 7, 8, 10, 11], spd: [3, 5, 8, 11, 13, 16, 18], spa: [0, 1, 1, 2, 3, 3, 4] }, feet: { def: [1, 1, 2, 3, 3, 4, 5], spe: [2, 3, 4, 5, 6, 7, 8], spd: [1, 2, 2, 3, 4, 4, 5] } } };
-const SB11 = { def: [2, 3, 5, 6, 8, 10, 12], hp: [2, 3, 5, 5, 7, 8, 9], spd: [1, 2, 3, 5, 7, 8, 10] }, SBLOCK11 = [8, 10, 12, 13, 14, 15, 16];
-const WNAME11 = { 劍: '萌芽鎮鐵劍 砂漠彎刀 騎士團長劍 月光劍 王國騎士劍 黃銅發條劍 星辰之劍', 短刀: '獵刀 晨霧短刀 蠍尾短刀 月牙短刀 宮廷短劍 冰晶短刀 暗影短刀', 斧: '伐木斧 野豬戰斧 岩角戰斧 裂地戰斧 新月斧 霜嶺巨斧 泰坦巨斧',
-  長槍: '見習長槍 鐵頭長槍 疾風槍 龍鱗槍 ★王國騎士槍 霜牙槍 天龍槍', 拳套: '布纏拳套 鐵指虎 岩拳套 氣功拳套 虎爪 熔拳套 星辰拳套', 法杖: '見習魔杖 礦晶短杖 古岩符文杖 湖霧法杖 宮廷魔杖 齒輪魔杖 星見法杖',
-  魔導書: '入門魔導書 森之書 古岩魔導書 亡者之書 賢者之書 霜華魔導書 星典', 樂器: '木笛 旅人魯特琴 翠之豎琴 月光琴 風之號角 冰弦豎琴 星詠之琴', 火槍: '軟木塞槍 黃銅短銃 蒸汽步槍 連發齒輪槍 雷管砲 機巧火槍 星爆砲' };
-const ANAME11 = { 重甲: ['萌芽鎮衛兵盔 旅人皮甲 旅人皮靴', '礦工頭燈盔 獵人皮甲 鐵趾工靴', '騎士團鐵盔 鎖子甲 騎士團護脛', '骸骨頭盔 鉗蟹甲 古代戰靴', '騎士團頭盔 騎士團鎧甲 騎士團長靴', '鐘塔護盔 熔岩重鎧 熔岩靴', '黯滅頭盔 黯滅重鎧 虛空長靴'],
-  輕裝: ['旅人布帽 學生制服 學生皮鞋', '獵人羽帽 狼王披風 獵人軟靴', '沙漠頭巾 夜翼斗篷 影行靴', '蘆葦斗笠 流浪者斗篷 鱷皮長靴', '灰狼兜帽 黑羽斗篷 麥田靴', '雪原兜帽 雪人毛皮甲 彈簧靴', '★流星兜帽 星空之衣 流星靴'],
-  法衣: ['荊棘花冠 晨霧斗篷 晨霧長靴', '螢菇帽 蛙皮斗篷 羽翼之靴', '魔女帽 蛛絲法袍 流沙靴', '稜鏡之冠 符文披風 湖畔長靴', '★宮廷法冠 宮廷長袍 沼澤長靴', '霜之后冠 裂界法衣 裂界靴', '星之冠 暗影長袍 ★暗影長靴'] };
-const SNAME11 = '木製圓盾 鐵製小盾 騎士團鳶盾 水晶盾 黃銅齒輪盾 冰晶鏡盾 星辰聖盾';
+  重甲: { head: { def: [2, 3, 5, 6, 8, 9, 11, 13], spd: [1, 1, 2, 3, 3, 4, 5, 6] }, body: { def: [4, 6, 9, 12, 15, 18, 21, 24], spd: [1, 2, 3, 4, 5, 6, 7, 8], hp: [0, 0, 2, 4, 5, 5, 6, 7] }, feet: { def: [2, 3, 4, 5, 6, 7, 8, 9], spe: [1, 2, 3, 3, 4, 4, 5, 6] } },
+  輕裝: { head: { def: [1, 2, 3, 4, 5, 6, 7, 8], spd: [1, 2, 3, 3, 4, 5, 6, 7], spe: [1, 1, 2, 2, 2, 3, 3, 4] }, body: { def: [3, 5, 7, 9, 11, 14, 17, 20], spd: [2, 3, 5, 6, 7, 8, 10, 12], spe: [1, 1, 2, 2, 3, 3, 4, 5] }, feet: { def: [1, 2, 2, 3, 4, 4, 5, 6], spe: [3, 4, 5, 6, 7, 8, 10, 12] } },
+  法衣: { head: { def: [1, 2, 3, 4, 4, 5, 6, 7], spd: [2, 3, 4, 5, 6, 7, 9, 11], spa: [0, 0, 1, 1, 2, 2, 3, 4] }, body: { def: [2, 3, 5, 7, 8, 10, 11, 12], spd: [3, 5, 8, 11, 13, 16, 18, 20], spa: [0, 1, 1, 2, 3, 3, 4, 5] }, feet: { def: [1, 1, 2, 3, 3, 4, 5, 6], spe: [2, 3, 4, 5, 6, 7, 8, 9], spd: [1, 2, 2, 3, 4, 4, 5, 6] } } };
+const SB11 = { def: [2, 3, 5, 6, 8, 10, 12, 14], hp: [2, 3, 5, 5, 7, 8, 9, 10], spd: [1, 2, 3, 5, 7, 8, 10, 12] }, SBLOCK11 = [8, 10, 12, 13, 14, 15, 16, 17];
+const WNAME11 = { 劍: '萌芽鎮鐵劍 砂漠彎刀 騎士團長劍 月光劍 王國騎士劍 黃銅發條劍 星辰之劍 蒼潮之劍', 短刀: '獵刀 晨霧短刀 蠍尾短刀 月牙短刀 宮廷短劍 冰晶短刀 暗影短刀 浪刃短刀', 斧: '伐木斧 野豬戰斧 岩角戰斧 裂地戰斧 新月斧 霜嶺巨斧 泰坦巨斧 怒濤巨斧',
+  長槍: '見習長槍 鐵頭長槍 疾風槍 龍鱗槍 ★王國騎士槍 霜牙槍 天龍槍 海神三叉戟', 拳套: '布纏拳套 鐵指虎 岩拳套 氣功拳套 虎爪 熔拳套 星辰拳套 珊瑚拳套', 法杖: '見習魔杖 礦晶短杖 古岩符文杖 湖霧法杖 宮廷魔杖 齒輪魔杖 星見法杖 深海法杖',
+  魔導書: '入門魔導書 森之書 古岩魔導書 亡者之書 賢者之書 霜華魔導書 星典 潮汐之書', 樂器: '木笛 旅人魯特琴 翠之豎琴 月光琴 風之號角 冰弦豎琴 星詠之琴 人魚豎琴', 火槍: '軟木塞槍 黃銅短銃 蒸汽步槍 連發齒輪槍 雷管砲 機巧火槍 星爆砲 漩渦砲' };
+const ANAME11 = { 重甲: ['萌芽鎮衛兵盔 旅人皮甲 旅人皮靴', '礦工頭燈盔 獵人皮甲 鐵趾工靴', '騎士團鐵盔 鎖子甲 騎士團護脛', '骸骨頭盔 鉗蟹甲 古代戰靴', '騎士團頭盔 騎士團鎧甲 騎士團長靴', '鐘塔護盔 熔岩重鎧 熔岩靴', '黯滅頭盔 黯滅重鎧 虛空長靴', '潮紋重盔 深潮重鎧 深潮戰靴'],
+  輕裝: ['旅人布帽 學生制服 學生皮鞋', '獵人羽帽 狼王披風 獵人軟靴', '沙漠頭巾 夜翼斗篷 影行靴', '蘆葦斗笠 流浪者斗篷 鱷皮長靴', '灰狼兜帽 黑羽斗篷 麥田靴', '雪原兜帽 雪人毛皮甲 彈簧靴', '★流星兜帽 星空之衣 流星靴', '海風頭巾 浪行者外衣 浪行靴'],
+  法衣: ['荊棘花冠 晨霧斗篷 晨霧長靴', '螢菇帽 蛙皮斗篷 羽翼之靴', '魔女帽 蛛絲法袍 流沙靴', '稜鏡之冠 符文披風 湖畔長靴', '★宮廷法冠 宮廷長袍 沼澤長靴', '霜之后冠 裂界法衣 裂界靴', '星之冠 暗影長袍 ★暗影長靴', '珍珠冠 人魚法衣 泡沫長靴'] };
+const SNAME11 = '木製圓盾 鐵製小盾 騎士團鳶盾 水晶盾 黃銅齒輪盾 冰晶鏡盾 星辰聖盾 潮紋大盾';
 const NEW11 = { '王國騎士槍': ['royalLance11', 'weapon', '龍鱗槍', '王國騎士團的長槍，槍身刻著王家的紋章。'], '流星兜帽': ['meteorHood11', 'head', '雪原兜帽', '縫著星屑的輕兜帽，跑起來像拖著一道光。'],
-  '宮廷法冠': ['courtMitre11', 'head', '稜鏡之冠', '宮廷魔導士戴的法冠，鑲著聚魔的寶石。'], '暗影長靴': ['shadowBoots11', 'feet', '虛空長靴', '踩進影子裡也不會發出聲音的長靴。'] };
+  '宮廷法冠': ['courtMitre11', 'head', '稜鏡之冠', '宮廷魔導士戴的法冠，鑲著聚魔的寶石。'], '暗影長靴': ['shadowBoots11', 'feet', '虛空長靴', '踩進影子裡也不會發出聲音的長靴。'],
+  '蒼潮之劍': ['tideSword13', 'weapon', '星辰之劍', '刀身像海浪一樣泛著藍光的長劍。揮下去的時候聽得到浪聲。'], '浪刃短刀': ['waveDagger13', 'weapon', '暗影短刀', '刀刃彎得像浪頭的短刀。輕得像一片水花。'],
+  '怒濤巨斧': ['surgeAxe13', 'weapon', '泰坦巨斧', '用沉船的龍骨和深海的鐵打成的巨斧。'], '海神三叉戟': ['tridentSpear13', 'weapon', '天龍槍', '傳說中海神用的三叉戟的仿製品。尖端總是濕的。'],
+  '珊瑚拳套': ['coralFist13', 'weapon', '星辰拳套', '用堅硬的紅珊瑚包住的拳套。'], '深海法杖': ['deepStaff13', 'weapon', '星見法杖', '杖頭封著一顆從深海撈起來的發光珠子。'],
+  '潮汐之書': ['tideTome13', 'weapon', '星典', '記載著潮起潮落的魔導書。翻開的時候書頁會一起一伏。'], '人魚豎琴': ['merHarp13', 'weapon', '星詠之琴', '琴弦用人魚的頭髮做的豎琴——至少賣的人是這麼說的。'],
+  '漩渦砲': ['vortexGun13', 'weapon', '星爆砲', '砲管裡刻著漩渦紋的大砲。打出去的子彈會轉。'],
+  '潮紋重盔': ['tideHelm13', 'head', '黯滅頭盔', '刻著潮水紋路的重盔。'], '深潮重鎧': ['tideMail13', 'body', '黯滅重鎧', '用深海鐵和貝殼板打成的重鎧。'], '深潮戰靴': ['tideGreaves13', 'feet', '虛空長靴', '泡在海水裡也不會生鏽的戰靴。'],
+  '海風頭巾': ['seaBandana13', 'head', '流星兜帽', '水手愛綁的頭巾。風再大也不會鬆。'], '浪行者外衣': ['waveCoat13', 'body', '星空之衣', '在甲板上跑來跑去也不會被勾到的輕外衣。'], '浪行靴': ['waveBoots13', 'feet', '流星靴', '踩在濕木板上也不會滑倒的靴子。'],
+  '珍珠冠': ['pearlCrown13', 'head', '星之冠', '串著深海珍珠的法冠。'], '人魚法衣': ['merRobe13', 'body', '暗影長袍', '像魚鱗一樣閃著光的法衣。'], '泡沫長靴': ['foamBoots13', 'feet', '暗影長靴', '走起路來會留下一串小泡泡的長靴。'] };
 const SLOTN11 = { head: '頭', body: '身', feet: '腳' }, SLOTI11 = { head: 0, body: 1, feet: 2 };
 const BASE11 = { weapon: {}, armor: { 重甲: { head: [], body: [], feet: [] }, 輕裝: { head: [], body: [], feet: [] }, 法衣: { head: [], body: [], feet: [] } }, shield: [] }, BASESET11 = new Set();
 { const byN = {}; for (const k in GEAR) { const G = GEAR[k]; if (G.slot && G.slot !== 'acc' && !byN[G.n]) byN[G.n] = k; }
@@ -21135,11 +21144,12 @@ const BASE11 = { weapon: {}, armor: { 重甲: { head: [], body: [], feet: [] }, 
       Object.assign(G, { t: i + 1, st: scale(WB11[kind], i + 1), sp: {}, kind, base11: 1, price: 400 * (i + 1) }); delete G.fx; delete G.elem; delete G.skill; BASESET11.add(k); return k; }); }
   for (const s in ANAME11) ANAME11[s].forEach((row, i) => row.split(' ').forEach((n, j) => { const sl = ['head', 'body', 'feet'][j], k = mk(n, sl); if (!k) return; const G = GEAR[k];
       Object.assign(G, { slot: sl, t: i + 1, st: scale(AB11[s][sl], i + 1), sp: {}, arm9: s, kind: s, base11: 1, price: G.price || 300 * (i + 1) }); delete G.fx; BASE11.armor[s][sl][i] = k; BASESET11.add(k); }));
+  if (!byN['潮紋大盾'] && byN['星辰聖盾']) { const S = GEAR[byN['星辰聖盾']]; GEAR.tideShield13 = { ...S, n: '潮紋大盾', d: '浮雕著潮水紋的大盾。擋下的攻擊像打在浪上一樣被卸開。' }; byN['潮紋大盾'] = 'tideShield13'; } // v12.70 T8
   BASE11.shield = SNAME11.split(' ').map((n, i) => { const k = byN[n]; if (!k) { bvErr('r9w', 'shield ' + n); return null; } const G = GEAR[k];
     Object.assign(G, { t: i + 1, st: scale(SB11, i + 1), sp: { block: SBLOCK11[i] }, base11: 1 }); delete G.fx; BASESET11.add(k); return k; }); }
 const isBase11 = k => BASESET11.has(k);
 if (typeof UNIQUE_W !== 'undefined') for (const k of BASESET11) delete UNIQUE_W[k];
-function base11Of(k) { const G = GEAR[k]; if (!G || G.slot === 'acc') return k; if (isBase11(k)) return k; const t = clamp(G.t || 1, 1, 7);
+function base11Of(k) { const G = GEAR[k]; if (!G || G.slot === 'acc') return k; if (isBase11(k)) return k; const t = clamp(G.t || 1, 1, 8);
   if (G.slot === 'weapon') { const L = BASE11.weapon[G.kind]; return (L && L[t - 1]) || BASE11.weapon['劍'][t - 1]; }
   if (G.slot === 'shield') return BASE11.shield[t - 1];
   const s = G.arm9 || (G.slot === 'feet' ? '輕裝' : '重甲'); return BASE11.armor[s] && BASE11.armor[s][G.slot] ? BASE11.armor[s][G.slot][t - 1] : k; }
@@ -21226,7 +21236,8 @@ const matTut12 = function* (show) { const st = Game.st; if (st.flags.tutMat12) r
     if (r && Object.keys(got).length) r.text = matLine12(got); return r; }; }
 const CRAFTCAT11 = { 劍: ['金屬', '獸材'], 短刀: ['獸材', '金屬'], 斧: ['金屬', '木料'], 長槍: ['木料', '金屬'], 拳套: ['獸材', '布料'], 法杖: ['木料', '魔素'], 魔導書: ['布料', '魔素'], 樂器: ['木料', '布料'], 火槍: ['金屬', '木料'],
   重甲: ['金屬', '獸材'], 輕裝: ['獸材', '布料'], 法衣: ['布料', '魔素'], 盾: ['金屬', '木料'] };
-const craftCost11 = (group, t) => { const [a, b] = CRAFTCAT11[group], m = smithCut11(); return { pts: { [a]: Math.round(8 * t * m), [b]: Math.round(4 * t * m) }, gold: 100 * t }; }; // v12.26：10t/5t → 8t/4t
+const craftCost11 = (group, t) => { const [a, b] = CRAFTCAT11[group], m = smithCut11(); return { pts: { [a]: Math.round(8 * t * m), [b]: Math.round(4 * t * m) }, gold: 100 * t, items: t >= 8 ? (WNAME11[group] ? { starShard: 1 } : group === '盾' ? { riftShard: 1 } : { starDust: 2 }) : {} }; }; // v12.70: T8 also needs a star / rift material (kept for 第三章)
+const itemsHave13 = (I, st = Game.st) => Object.entries(I || {}).every(([k, n]) => (st.bag[k] || 0) >= n), itemsText13 = I => Object.entries(I || {}).map(([k, n]) => ITEMS[k].n + '×' + n).join('、'); // v12.26：10t/5t → 8t/4t
 const craftTop11 = (st = Game.st) => smithRank(st);
 function* ptsBar11(f) { const scr = { draw(x) { drawWin(x, 4, 2, 168, 30, 'menu'); const P = pts11(); PTS11.forEach((c, i) => { const X = 10 + (i % 3) * 54, Y = 6 + Math.floor(i / 3) * 12; Font.draw(x, c, X, Y, PTS_COL11[c], UIC.textSh, 9); Font.drawR(x, String(P[c]), X + 50, Y, UIC.text, UIC.textSh, 9); }); } };
   UI.push(scr); try { return yield* f; } finally { UI.remove(scr); } }
@@ -21239,15 +21250,16 @@ function* craft11() { const st = Game.st;
       group = S[s]; const slot = ['head', 'body', 'feet'][sl]; pick = t => BASE11.armor[group][slot][t - 1]; }
     else { group = '盾'; pick = t => BASE11.shield[t - 1]; }
     const T = []; for (let t = 1; t <= top; t++) T.push(t);
-    const opts = T.map(t => { const k = pick(t), c = craftCost11(group, t); return { t: 'T' + t + ' ' + GEAR[k].n, r: Object.entries(c.pts).map(([a, n]) => a + n).join('・'), dis: !ptsHave11(c.pts) || st.money < c.gold }; });
-    const ti = yield* choose(opts.concat({ t: '返回' }), { title: group + '：選階級' }); if (ti < 0 || ti >= T.length) continue;
+    const opts = T.map(t => { const k = pick(t), c = craftCost11(group, t); return { t: 'T' + t + ' ' + GEAR[k].n + (Object.keys(c.items).length ? '＊' : ''), r: Object.entries(c.pts).map(([a, n]) => a + n).join('・'), dis: !ptsHave11(c.pts) || st.money < c.gold || !itemsHave13(c.items) }; });
+    const ti = yield* choose(opts.concat({ t: '返回' }), { title: group + '：選階級' + (top >= 8 ? '　＊＋' + itemsText13(craftCost11(group, 8).items) : '') }); if (ti < 0 || ti >= T.length) continue;
     const t = T[ti], k = pick(t), c = craftCost11(group, t), B = GEAR[k];
     const [a] = gearLines({ b: k, q: 1, en11: {} });
-    if (!(yield* yesNo('打造「' + B.n + '」？（T' + t + '・' + a + '）\n需要：' + ptsText11(c.pts) + ' 點、' + c.gold + ' G' + '\n（品質隨機：品質越好，基本數值越高、潛力越多、晶石孔越多）'))) continue;
+    if (!(yield* yesNo('打造「' + B.n + '」？（T' + t + '・' + a + '）\n需要：' + ptsText11(c.pts) + ' 點、' + c.gold + ' G' + (Object.keys(c.items).length ? '、' + itemsText13(c.items) : '') + '\n（品質隨機：品質越好，基本數值越高、潛力越多、晶石孔越多）'))) continue;
     if (!ptsHave11(c.pts) || st.money < c.gold) { Sound.sfx('bump'); yield* matShort12('點數或金錢不夠喔。'); continue; }
+    if (!itemsHave13(c.items)) { Sound.sfx('bump'); yield* say('還少' + itemsText13(c.items) + '。\n（第三章的海上找得到）'); continue; }
     let q2 = false; const rare = Object.keys(st.bag).filter(i => /^pr_/.test(i) && st.bag[i] > 0 && ITEMS[i]);
     if (rare.length) { const p = yield* ask('要放稀有部位嗎？（品質抽兩次，取好的那次）', rare.map(i => ITEMS[i].n + '（有' + st.bag[i] + '）').concat('不放')); if (p >= 0 && p < rare.length) { st.bag[rare[p]]--; if (!st.bag[rare[p]]) delete st.bag[rare[p]]; q2 = true; } }
-    ptsPay11(c.pts); st.money -= c.gold; const lv = smith11(st).lv; let q = rollQ11(lv); if (q2) q = Math.max(q, rollQ11(lv));
+    ptsPay11(c.pts); st.money -= c.gold; for (const [ik, n] of Object.entries(c.items || {})) { st.bag[ik] -= n; if (st.bag[ik] <= 0) delete st.bag[ik]; } const lv = smith11(st).lv; let q = rollQ11(lv); if (q2) q = Math.max(q, rollQ11(lv));
     GEAR11_GLAM = false; const g = makeGear(k, q); GEAR11_GLAM = true; g.pot = POT11[q] + (lv - 1); g.c11 = { ...c.pts };
     Sound.sfx('rock'); yield* say('鏘！鏘！鏘！'); Sound.jingle(q >= 3 ? 'levelup' : 'item'); yield* say('打好了！' + gearName(g) + '\n潛力 ' + g.pot + (crySlots11(g) ? '・晶石孔 ' + crySlots11(g) : ''));
     const up = smithExp11(3 * t); if (up) { Sound.jingle('levelup'); yield* say('鍛冶熟練升到了 Lv' + up + '！\n（打造的潛力 +1、花的點數 −2%' + ([4, 7, 10].includes(up) ? '、紅・金更容易出' : '') + '）'); }
@@ -22530,7 +22542,7 @@ if (typeof BATTLE_HELP !== 'undefined') {
 const WARD12 = {
   hero: { pct: 0.20, abs: 0.5, turns: 1 },
   node: 0.15,                                   // 先盾（護身樹）：開場護盾 +15%
-  shieldT: t => 0.06 + 0.02 * clamp(t || 1, 1, 7), // 盾牌的開場護盾：T1 8% … T7 20%
+  shieldT: t => 0.06 + 0.02 * clamp(t || 1, 1, 8), // 盾牌的開場護盾：T1 8% … T7 20%
   sp: { pct: 0.25, abs: 0.75 },                 // 特技 鋼壁・鐵骨
   holy: { pct: 0.30, abs: 0.75 },               // 聖壁衝鋒
   mwall: { pct: 0.25, abs: { 特: 1, 物: 0.5 }, turns: 2, lv: 0.03 }, // 法力屏障（每級 +3%）
@@ -23403,7 +23415,7 @@ if (fxtest13()) { const _tm = TitleScene.prototype.menu; TitleScene.prototype.me
 const HIDE_K13 = ['樂器', '魔導書', '火槍'], SWAP_K13 = { 樂器: '法杖', 魔導書: '法杖', 火槍: '劍' };
 function kindOn13(k) { return !HIDE_K13.includes(k); }
 const hidG13 = k => { const G = k && GEAR[k]; return !!(G && G.slot === 'weapon' && HIDE_K13.includes(G.kind)); };
-const swapOf13 = k => { const G = GEAR[k], t = clamp((G && G.t) || 1, 1, 7); return BASE11.weapon[SWAP_K13[G.kind]][t - 1]; };
+const swapOf13 = k => { const G = GEAR[k], t = clamp((G && G.t) || 1, 1, 8); return BASE11.weapon[SWAP_K13[G.kind]][t - 1]; };
 for (let i = START_KINDS12.length - 1; i >= 0; i--) if (!kindOn13(START_KINDS12[i])) START_KINDS12.splice(i, 1);
 for (const id in MAPS) { const P = MAPS[id].gearPool; if (!P) continue; for (let i = P.length - 1; i >= 0; i--) { const k = P[i]; if (hidG13(k) || (GEAR[k] && hidG13(base11Of(k)))) P.splice(i, 1); } }
 { const _df = dropFits12; dropFits12 = function (k, sp) { if (hidG13(k) || (GEAR[k] && hidG13(base11Of(k)))) return false; return _df(k, sp); }; }
@@ -24942,7 +24954,7 @@ const ptsPot13 = st => { const f = { ...st, bag: { ...st.bag }, pt11: { ...pts11
 const tierOf13 = g => { if (!g) return 0; for (const k in BASE11.weapon) { const i = BASE11.weapon[k].indexOf(g.b); if (i >= 0) return i + 1; }
   for (const s in BASE11.armor) for (const sl in BASE11.armor[s]) { const i = BASE11.armor[s][sl].indexOf(g.b); if (i >= 0) return i + 1; } const i = BASE11.shield.indexOf(g.b); return i >= 0 ? i + 1 : 0; };
 const groupOf13 = g => { if (!g) return null; for (const k in BASE11.weapon) if (BASE11.weapon[k].includes(g.b)) return k; for (const s in BASE11.armor) for (const sl in BASE11.armor[s]) if (BASE11.armor[s][sl].includes(g.b)) return s; return BASE11.shield.includes(g.b) ? '盾' : null; };
-function craftHint13(st = Game.st) { const P = ptsPot13(st), top = craftTop11(st), can = (grp, t) => { const c = craftCost11(grp, t), p = c.pts; return st.money >= c.gold && PTS11.every(x => (P[x] || 0) >= (p[x] || 0)); };
+function craftHint13(st = Game.st) { const P = ptsPot13(st), top = craftTop11(st), can = (grp, t) => { const c = craftCost11(grp, t), p = c.pts; return st.money >= c.gold && PTS11.every(x => (P[x] || 0) >= (p[x] || 0)) && (typeof itemsHave13 !== 'function' || itemsHave13(c.items, st)); };
   const SLOT = [['weapon', '武器'], ['body', '身體防具'], ['head', '頭部防具'], ['feet', '腳部防具'], ['shield', '盾']];
   for (const [sl, nm] of SLOT) { const g = gearBy(st.equip[sl], st), grp = groupOf13(g), t0 = tierOf13(g); if (!grp || !t0 || !CRAFTCAT11[grp]) continue;
     for (let t = top; t > t0; t--) if (can(grp, t)) return { t, text: '（打不贏的時候，可以去鐵匠把素材換成點數，打造 T' + t + ' 的' + (sl === 'weapon' ? grp : nm) + '。現在的是 T' + t0 + '。）' }; }
@@ -25629,3 +25641,11 @@ Battle.prototype.ordLabel13 = function (v) { const nm = v.n || '?'; if (v.hero) 
     const near = this.pops.filter(q => q !== p && q.t < 30 && Math.abs(q.x - p.x) < 22 && Math.abs(q.y - p.y) < 12).length; if (near) { p.y -= 12 * near; p.x += (near % 2 ? 9 : -9); } }; }
 { const T = { hollowArmor: { def: 38, atk: 33 }, obsidianTurtle: { def: 42, hp: 92, atk: 44 }, volcanoHawk: { atk: 38 }, sentinel: { def: 46, spa: 22 }, voidHound: { spe: 46, atk: 28 } };
   for (const k in T) { const P = MON_PANEL[k]; if (!P) { if (typeof bvErr === 'function') bvErr('tune13', k); continue; } Object.assign(P, T[k]); } }
+if (typeof SHIELDS !== 'undefined') SHIELDS.tideShield13 = ['潮紋大盾', 8, {}, 17, {}, null, ['#123a5a', '#2f78a8', '#a8f0ff'], ''];
+const T8W13 = ['tideSword13', 'waveDagger13', 'surgeAxe13', 'tridentSpear13', 'coralFist13', 'deepStaff13', 'tideTome13', 'merHarp13', 'vortexGun13'];
+function seaTint13(im) { const c = mkCanvas(im.width, im.height), x = c.getContext('2d'); x.drawImage(im, 0, 0); const id = x.getImageData(0, 0, c.width, c.height), d = id.data;
+  for (let i = 0; i < d.length; i += 4) { if (!d[i + 3]) continue; const [h, s, l] = rgb2hsl(d[i], d[i + 1], d[i + 2]); if (s < 0.12) continue; const [r, g, b] = hex2rgb(hsl2hex(185 + (h % 40) - 20, Math.min(1, s * 1.1), l)); d[i] = r; d[i + 1] = g; d[i + 2] = b; }
+  x.putImageData(id, 0, 0); c.ok = true; return c; }
+if (typeof WEAPON_PX !== 'undefined') for (const k of T8W13) { const src = WEAPON_PX[k]; if (!src) continue;
+  const done = () => { try { WEAPON_PX[k] = seaTint13(src); } catch (e) { } };
+  if (src.ok || (src.complete && src.naturalWidth) || src.getContext) done(); else src.addEventListener('load', () => setTimeout(done, 0)); }

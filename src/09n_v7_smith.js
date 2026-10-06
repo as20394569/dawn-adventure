@@ -29,7 +29,7 @@ for (const k of armoryStock({ flags: { colossus: 1, frostQueen: 1, lavaGiant: 1 
 const BP_STORY = [[st => (st.flags.qHorn || 0) >= 2, new Set((typeof RECIPES_V20 !== 'undefined' ? RECIPES_V20 : []).map(R => R.out))], [st => ch2(st) >= 2, new Set((typeof RECIPES_CH2 !== 'undefined' ? RECIPES_CH2 : []).map(R => R.out))]];
 for (const [, S] of BP_STORY) for (const k of S) BP_RARE.delete(k);
 for (const k of ['uniform', 'schoolShoes']) BP_RARE.add(k);
-const smithRank = (st = Game.st) => Math.min(7, 2 + Math.floor(Math.max(0, (st.lv || 1) - 4) / 6));
+const smithRank = (st = Game.st) => (st.lv || 1) >= 52 ? 8 : Math.min(7, 2 + Math.floor(Math.max(0, (st.lv || 1) - 4) / 6)); // v12.70: T8 from Lv52 (第三章)
 function bpKnown(k, st = Game.st) {
   if (!GEAR[k] || !GEAR_RECIPE[k]) return false; if (st.bp && st.bp[k]) return true;
   for (const [f, S] of BP_STORY) if (S.has(k)) return f(st) && GEAR[k].t <= smithRank(st) + 1;

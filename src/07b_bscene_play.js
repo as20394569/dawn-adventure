@@ -206,10 +206,11 @@ Battle.prototype.victory = function* () {
 };
 Battle.prototype.mainId = function () { const u = this.core.units.find(q => q.side === 'B'); return u ? u.id : null; };
 Battle.prototype.mainView = function () { return this.views[this.mainId()] || this.F; };
+const LV_MAX13 = 60; // v12.70: 第三章 raises the level cap 50 → 60
 Battle.prototype.gainExp = function* (amount) {
   const st = Game.st; yield* this.msg(st.name + '獲得了' + amount + '點經驗值！', { hold: 20 });
   let remaining = amount; Sound.expStart();
-  while (remaining > 0 && st.lv < 50) {
+  while (remaining > 0 && st.lv < LV_MAX13) {
     const lo = expForLevel(st.lv), hi = expForLevel(st.lv + 1), step = Math.min(remaining, hi - st.exp), from = st.exp, to = st.exp + step, fr = clamp(Math.ceil(step / (hi - lo) * 50), 6, 50);
     for (let i = 1; i <= fr; i++) { this.disp.exp = lerp(from, to, i / fr); Sound.expStep((this.disp.exp - lo) / (hi - lo)); yield; }
     st.exp = to; this.disp.exp = to; remaining -= step;

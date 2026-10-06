@@ -23,7 +23,7 @@ const ptsPot13 = st => { const f = { ...st, bag: { ...st.bag }, pt11: { ...pts11
 const tierOf13 = g => { if (!g) return 0; for (const k in BASE11.weapon) { const i = BASE11.weapon[k].indexOf(g.b); if (i >= 0) return i + 1; }
   for (const s in BASE11.armor) for (const sl in BASE11.armor[s]) { const i = BASE11.armor[s][sl].indexOf(g.b); if (i >= 0) return i + 1; } const i = BASE11.shield.indexOf(g.b); return i >= 0 ? i + 1 : 0; };
 const groupOf13 = g => { if (!g) return null; for (const k in BASE11.weapon) if (BASE11.weapon[k].includes(g.b)) return k; for (const s in BASE11.armor) for (const sl in BASE11.armor[s]) if (BASE11.armor[s][sl].includes(g.b)) return s; return BASE11.shield.includes(g.b) ? '盾' : null; };
-function craftHint13(st = Game.st) { const P = ptsPot13(st), top = craftTop11(st), can = (grp, t) => { const c = craftCost11(grp, t), p = c.pts; return st.money >= c.gold && PTS11.every(x => (P[x] || 0) >= (p[x] || 0)); };
+function craftHint13(st = Game.st) { const P = ptsPot13(st), top = craftTop11(st), can = (grp, t) => { const c = craftCost11(grp, t), p = c.pts; return st.money >= c.gold && PTS11.every(x => (P[x] || 0) >= (p[x] || 0)) && (typeof itemsHave13 !== 'function' || itemsHave13(c.items, st)); };
   const SLOT = [['weapon', '武器'], ['body', '身體防具'], ['head', '頭部防具'], ['feet', '腳部防具'], ['shield', '盾']];
   for (const [sl, nm] of SLOT) { const g = gearBy(st.equip[sl], st), grp = groupOf13(g), t0 = tierOf13(g); if (!grp || !t0 || !CRAFTCAT11[grp]) continue;
     for (let t = top; t > t0; t--) if (can(grp, t)) return { t, text: '（打不贏的時候，可以去鐵匠把素材換成點數，打造 T' + t + ' 的' + (sl === 'weapon' ? grp : nm) + '。現在的是 T' + t0 + '。）' }; }
