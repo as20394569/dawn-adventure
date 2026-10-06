@@ -24,6 +24,7 @@ function bkPanel13(title, opt) { const wrap = document.createElement('div'); wra
   const row = document.createElement('div'); row.setAttribute('style', 'display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end'); box.appendChild(row);
   const res = { done: false, value: null, ta, msg, close() { wrap.remove(); this.done = true; } };
   for (const [label, fn] of opt.buttons) { const b = document.createElement('button'); b.type = 'button'; b.textContent = label; b.setAttribute('style', 'font-size:14px;padding:8px 14px;border-radius:6px;border:1px solid #3a4262;background:#1f2747;color:#eef1f8;cursor:pointer'); b.onclick = () => fn(res); row.appendChild(b); }
+  for (const ev of ['keydown', 'keyup']) wrap.addEventListener(ev, e => e.stopPropagation()); // the game's window handlers would swallow Backspace, Space, arrows … in the text box
   wrap.appendChild(box); document.body.appendChild(wrap); Input.clearAll(); return res; }
 
 function* bkExport13(n) { const st = slotLoad13(n); if (!st) { yield* say('「存檔 ' + n + '」是空的。'); return; }

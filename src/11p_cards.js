@@ -39,6 +39,7 @@ Events.cards13 = function* () { const st = Game.st, f = st.flags;
     if (r === 1) { yield* sayAll(['米菈：「十字鍵選牌，A 翻開。」', '米菈：「翻開的兩張一樣就留著；不一樣的話會蓋回去，算翻錯一次。」', '米菈：「記住翻過的牌在哪裡，就是訣竅！」']); continue; }
     if (r !== 0) { yield* say('米菈：「下次再來喔～」'); return; }
     if (st.money < CARD13.COST) { yield* say('米菈：「哎呀，錢不夠呢。」'); return; }
+    if (cardFaces13(st).length < 8) { yield* say('米菈：「牌還沒準備好……等一下再來吧。」'); return; }
     st.money -= CARD13.COST; Sound.sfx('select'); const R = yield* cardGame13(); if (!R) return;
     const g = R.pairs * CARD13.PAIR + (R.clear ? CARD13.CLEAR : 0); st.money += g; st.cards13 = st.cards13 || { best: 0, clears: 0 }; st.cards13.best = Math.max(st.cards13.best, R.pairs);
     if (R.clear) { st.cards13.clears++; if (R.miss <= 3) st.cards13.sharp = 1; }

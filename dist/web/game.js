@@ -7668,7 +7668,7 @@ class TitleScene {
     x.drawImage(this.logo, Math.round(W / 2 - this.logo.width / 2), 6 + bob);
     Font.drawC(x, '～異世界冒險RPG～', W / 2, 52 + bob, '#ffe0a0', '#3a1428');
     if (this.stage === 'press' && Math.floor(this.t / 30) % 2 === 0) Font.drawC(x, '按 A 鍵開始', W / 2, 232, '#ffffff', '#1a1024');
-    Font.drawR(x, 'v12.55', W - 3, H - 13, '#b890b0', null);
+    Font.drawR(x, 'v12.56', W - 3, H - 13, '#b890b0', null);
   }
 }
 class IntroScene {
@@ -23312,7 +23312,7 @@ const rareName13 = k => { if (!k || !GEAR[k]) return ''; const b = typeof base11
     return r; }; }
 { const _fd = foeDropLines; foeDropLines = function (sp, key, kind) { const L = _fd(sp, key, kind); if (kind && kind !== 'wild') return L; const k = rareOf13(sp); if (k) L.push('稀有：' + rareName13(k) + '（金・虹，2%）'); return L; }; }
 { const _bs = Overworld.prototype.battleScript; Overworld.prototype.battleScript = function* (cfg, ...a) { const st = this.st || Game.st;
-    if (cfg && cfg.kind === 'boss' && !cfg.rematch && BOSS_UP13[cfg.sp] && st && cfg.lv - (st.lv || 1) >= 3) {
+    if (cfg && cfg.kind === 'boss' && !cfg.rematch && !Game.retrying13 && BOSS_UP13[cfg.sp] && st && cfg.lv - (st.lv || 1) >= 3) { // (v12.56: not again on 再挑戰)
       const n = cfg.lv - st.lv; if (!(yield* yesNo('（' + ((SPECIES[cfg.sp] || {}).n || '頭目') + ' Lv' + cfg.lv + '，比你高 ' + n + ' 級，會很辛苦。\n附近的洞窟是挑戰區，可以先去練等、刷裝備。還是要打嗎？）'))) return 'run'; }
     return yield* _bs.call(this, cfg, ...a); }; }
 if (typeof GROW12 !== 'undefined') GROW12.push(['練等與刷寶', '主線頭目比路上的魔物高 2〜4 級，打之前可以先練等。各區域旁邊的洞窟是「挑戰區」：魔物高 3〜5 級，掉裝備・稀有掉落的機率加倍。比魔物高 1〜2 級經驗照拿，再高就慢慢變少（最少 30%）。每種野外魔物都有自己的稀有掉落（金色或虹色，2%），圖鑑和遭遇時都看得到。']);
@@ -25050,8 +25050,10 @@ function* tmapDig13(id) { const st = Game.st, T = tm13(st), S = TMAP13[id];
 { const _in = Overworld.prototype.interact; Overworld.prototype.interact = function () { const r = _in.call(this); if (r || this.script) return r;
     const st = this.st, p = this.p; if (!st || !st.tm13 || !p) return r; const id = st.tm13.own.find(k => TMAP13[k].m === st.map && TMAP13[k].x === p.x && TMAP13[k].y === p.y);
     if (id) { this.run(tmapDig13(id)); return true; } return r; }; }
+{ const _ss = Game.setScene; Game.setScene = function (s) { if (typeof Battle !== 'undefined' && s instanceof Battle) Game.lastBattle13 = s; return _ss.call(this, s); }; }
+const realCfg13 = cfg => (Game.lastBattle13 && Game.lastBattle13.cfg) || cfg;
 { const _bs = Overworld.prototype.battleScript; Overworld.prototype.battleScript = function* (cfg, ...a) { const r = yield* _bs.call(this, cfg, ...a), st = Game.st;
-    if (r === 'win' && st && cfg && st.flags.tm13 && MAPS[st.map] && MAPS[st.map].outdoor && !(typeof ARENA_ON13 !== 'undefined' && ARENA_ON13)) {
+    if (r === 'win' && st && cfg && st.flags.tm13 && MAPS[st.map] && MAPS[st.map].outdoor && !(typeof ARENA_ON13 !== 'undefined' && ARENA_ON13)) { cfg = realCfg13(cfg);
       const ch = cfg.kind === 'elite' ? 0.25 : cfg.kind === 'wild' ? 0.03 : 0, id = Math.random() < ch ? tmRoll13(st) : null;
       if (id && tmGive13(id, st)) { yield* itemGet('撿到了一張藏寶圖！\n（角落寫著「' + MAPS[TMAP13[id].m].name + '」）'); } }
     return r; }; }
@@ -25078,19 +25080,21 @@ TITLES.push({ id: 'tm13hunter', n: '尋寶家', d: '找到 12 個寶藏。', st:
 ACHIEVEMENTS.push({ id: 'tm13_first', n: '第一個寶藏', d: '照著藏寶圖挖到寶藏。', cat: '探索', ok: st => tmFound13(st) >= 1 },
   { id: 'tm13_all', n: '藏寶圖大師', d: '找到全部 16 個寶藏。', cat: '探索', ok: st => tmFound13(st) >= TMAP_KEYS13.length });
 GROW12.push(['藏寶圖', '萌芽鎮南邊的尋寶人巴克會送你第一張藏寶圖。打倒魔物偶爾會撿到別張（菁英比較常有）。站在 × 的地方按 A 挖，能挖到金錢、果實和秘傳之書。']);
+const retryPut13 = (a, b) => { for (const k of Object.keys(a)) if (!(k in b)) delete a[k];
+  for (const k in b) { const x = a[k], y = b[k]; if (x && y && typeof x === 'object' && typeof y === 'object' && Array.isArray(x) === Array.isArray(y)) { if (Array.isArray(y)) x.length = y.length; retryPut13(x, y); } else a[k] = y; } };
 { const _bs = Overworld.prototype.battleScript; Overworld.prototype.battleScript = function* (cfg, ...a) {
     const st = this.st, big = st && cfg && (cfg.kind === 'boss' || cfg.kind === 'elite') && !cfg.fxtest && !cfg.arena13 && !(typeof ARENA_ON13 !== 'undefined' && ARENA_ON13);
     if (!big) return yield* _bs.call(this, cfg, ...a);
     const snap = JSON.stringify(st);
     while (true) { const R = { again: false }, prev = Game.retry13; Game.retry13 = R; let r;
-      try { r = yield* _bs.call(this, cfg, ...a); } finally { Game.retry13 = prev; }
+      try { r = yield* _bs.call(this, cfg, ...a); } finally { Game.retry13 = prev; Game.retrying13 = false; }
       if (!(r === 'lose' && R.again)) return r;
-      const o = JSON.parse(snap); for (const k of Object.keys(st)) delete st[k]; Object.assign(st, o); st.retry13 = (st.retry13 || 0) + 1; st.rngSeed = ((st.rngSeed || 1) ^ (Date.now() & 0x7fffffff) ^ (st.retry13 * 0x9e3779b9)) >>> 0; } }; } // (a new roll of the dice on a retry: the snapshot alone would replay the same battle)
+      retryPut13(st, JSON.parse(snap)); Game.retrying13 = true; st.retry13 = (st.retry13 || 0) + 1; st.rngSeed = ((st.rngSeed || 1) ^ (Date.now() & 0x7fffffff) ^ (st.retry13 * 0x9e3779b9)) >>> 0; } }; } // (a new roll of the dice on a retry: the snapshot alone would replay the same battle)
 { const _wo = Overworld.prototype.whiteout; Overworld.prototype.whiteout = function* (...a) { const R = Game.retry13;
     if (!R) return yield* _wo.apply(this, a);
     Game.retry13 = null; Sound.stop(); UI.clear(); const box = { draw(x) { x.fillStyle = '#000'; x.fillRect(0, 0, W, H); } }; UI.push(box); Game.fade = 0; let c;
     try { c = yield* ask(this.st.name + '眼前一片漆黑……\n要再挑戰一次嗎？\n（回到這場戰鬥開始前）', ['再挑戰', '回去準備']); } finally { UI.remove(box); }
-    if (c === 0) { R.again = true; Game.fade = 1; return; }
+    if (c === 0) { R.again = true; Game.fade = 0; return; }
     Game.keepGold13 = 1; try { yield* _wo.apply(this, a); } finally { Game.keepGold13 = 0; } }; }
 { const _tl = todoLines12; todoLines12 = function (st = Game.st) { const L = _tl(st), P = (t, c, i) => L.push([t, c, 10, i ? 6 : 0]);
     P('其他玩法', UIC.accent);
@@ -25161,7 +25165,7 @@ Overworld.prototype.palDraw13 = function (x, camX, camY) { const q = this.pal, i
 { const _dc = Overworld.prototype.drawChar; Overworld.prototype.drawChar = function (x, e, frames, camX, camY) {
     if (e !== this.p || !this.pal || this.hideHero) return _dc.call(this, x, e, frames, camX, camY);
     if (this.pal.py <= e.py) { this.palDraw13(x, camX, camY); _dc.call(this, x, e, frames, camX, camY); } else { _dc.call(this, x, e, frames, camX, camY); this.palDraw13(x, camX, camY); } }; }
-{ const _bs = Overworld.prototype.battleScript; Overworld.prototype.battleScript = function* (cfg, ...a) { const r = yield* _bs.call(this, cfg, ...a), st = Game.st;
+{ const _bs = Overworld.prototype.battleScript; Overworld.prototype.battleScript = function* (cfg, ...a) { const r = yield* _bs.call(this, cfg, ...a), st = Game.st; cfg = realCfg13(cfg);
     if (r !== 'win' || !st || !cfg || cfg.kind !== 'wild' || !st.flags.license || (typeof ARENA_ON13 !== 'undefined' && ARENA_ON13)) return r;
     const sp = cfg.sp, S = SPECIES[sp], P = pal13(st); if (!S || S.elite || S.boss || S.bty13 || P.got[sp] || !palImg13(sp)) return r;
     if (!(Game.palForce13 || Math.random() < PAL13.CHANCE)) return r;
@@ -25195,7 +25199,7 @@ Overworld.prototype.palSniff13 = function () { const st = this.st, p = this.p, T
 { const _u = Overworld.prototype.update; Overworld.prototype.update = function (...a) { const r = _u.apply(this, a), st = this.st;
     if (st && !this.script && !UI.stack.length && this.pal && !st.flags.palSniff13 && this.palSniff13()) { st.flags.palSniff13 = 1; const n = (SPECIES[this.pal.sp] || {}).n || '小夥伴'; this.run(say('（' + n + '好像聞到了什麼……\n藏寶圖的 × 就在附近！）')); }
     return r; }; }
-{ const _bs = Overworld.prototype.battleScript; Overworld.prototype.battleScript = function* (cfg, ...a) { const r = yield* _bs.call(this, cfg, ...a), st = Game.st, P = st && st.pal13;
+{ const _bs = Overworld.prototype.battleScript; Overworld.prototype.battleScript = function* (cfg, ...a) { const r = yield* _bs.call(this, cfg, ...a), st = Game.st, P = st && st.pal13; cfg = realCfg13(cfg);
     if (r === 'win' && P && P.on && SPECIES[P.on] && cfg && cfg.kind === 'wild' && Math.random() < 0.05 && !(typeof ARENA_ON13 !== 'undefined' && ARENA_ON13)) {
       const lv = st.lv || 1, pool = lv < 15 ? ['potion', 'potion', 'superPotion', 'ether'] : lv < 30 ? ['superPotion', 'ether', 'megaPotion', 'hiEther'] : ['megaPotion', 'hiEther', 'elixir', 'megaEther'];
       const k = pool[Math.floor(Math.random() * pool.length)]; if (ITEMS[k]) { st.bag[k] = (st.bag[k] || 0) + 1; Sound.sfx('item'); yield* say('（' + SPECIES[P.on].n + '叼來了一個' + ITEMS[k].n + '！）'); } }
@@ -25236,6 +25240,7 @@ Events.cards13 = function* () { const st = Game.st, f = st.flags;
     if (r === 1) { yield* sayAll(['米菈：「十字鍵選牌，A 翻開。」', '米菈：「翻開的兩張一樣就留著；不一樣的話會蓋回去，算翻錯一次。」', '米菈：「記住翻過的牌在哪裡，就是訣竅！」']); continue; }
     if (r !== 0) { yield* say('米菈：「下次再來喔～」'); return; }
     if (st.money < CARD13.COST) { yield* say('米菈：「哎呀，錢不夠呢。」'); return; }
+    if (cardFaces13(st).length < 8) { yield* say('米菈：「牌還沒準備好……等一下再來吧。」'); return; }
     st.money -= CARD13.COST; Sound.sfx('select'); const R = yield* cardGame13(); if (!R) return;
     const g = R.pairs * CARD13.PAIR + (R.clear ? CARD13.CLEAR : 0); st.money += g; st.cards13 = st.cards13 || { best: 0, clears: 0 }; st.cards13.best = Math.max(st.cards13.best, R.pairs);
     if (R.clear) { st.cards13.clears++; if (R.miss <= 3) st.cards13.sharp = 1; }
@@ -25249,7 +25254,8 @@ ACHIEVEMENTS.push({ id: 'cards13_clear', n: '翻牌高手', d: '翻牌遊戲全�
 const MOONK13 = 'moonKing13';
 { const b = 'moonSprite', B = SPECIES[b];
   if (B) { SPECIES[MOONK13] = { ...B, n: '月光精靈王', boss: 1, elite: 0, rare: 0, exp: 1400, gold: 0, drop: null, learn: [], dex: '住在月影神殿深處的精靈之王。五百年來，一直在等能照著月亮的一生點燈的人。' };
-    { const P = MON_PANEL.silverWyrm || ch2Panel(20, 'mage', 'boss'); MON_PANEL[MOONK13] = { ...P, hp: Math.round(P.hp * 1.1), atk: Math.round(P.atk * 0.8), spa: Math.round(P.spa * 1.1) }; } // the lake's own boss (銀鱗水龍), a little stronger in magic (the raw ch2Panel is about twice the tuned bosses) HD_RIG_OF[MOONK13] = chibiOwn(b) ? b : (HD_RIG_OF[b] || b); if (typeof HD_RIG_OF_PENDING !== 'undefined') HD_RIG_OF_PENDING[MOONK13] = HD_RIG_OF[MOONK13];
+    { const P = MON_PANEL.silverWyrm || ch2Panel(20, 'mage', 'boss'); MON_PANEL[MOONK13] = { ...P, hp: Math.round(P.hp * 1.1), atk: Math.round(P.atk * 0.8), spa: Math.round(P.spa * 1.1) }; }
+    HD_RIG_OF[MOONK13] = chibiOwn(b) ? b : (HD_RIG_OF[b] || b); if (typeof HD_RIG_OF_PENDING !== 'undefined') HD_RIG_OF_PENDING[MOONK13] = HD_RIG_OF[MOONK13]; // (the lake's own boss 銀鱗水龍, a little stronger in magic: the raw ch2Panel is about twice the tuned bosses)
     if (ART[b]) ART[MOONK13] = artRecolor(ART[b], -165, 0.9, 1.12); } else if (typeof bvErr === 'function') bvErr('moon13', 'base moonSprite'); }
 { const _ci = chibiImage; chibiImage = function (k) { if (k !== MOONK13) return _ci(k); if (CHIBI_VAR[k]) return CHIBI_VAR[k]; const src = _ci('moonSprite'); if (!src || src.ok === false || !(src.complete !== false)) return src;
     const c = mkCanvas(src.width, src.height), x = c.getContext('2d'); x.drawImage(src, 0, 0); const id = x.getImageData(0, 0, c.width, c.height), d = id.data;
@@ -25334,6 +25340,7 @@ function bkPanel13(title, opt) { const wrap = document.createElement('div'); wra
   const row = document.createElement('div'); row.setAttribute('style', 'display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end'); box.appendChild(row);
   const res = { done: false, value: null, ta, msg, close() { wrap.remove(); this.done = true; } };
   for (const [label, fn] of opt.buttons) { const b = document.createElement('button'); b.type = 'button'; b.textContent = label; b.setAttribute('style', 'font-size:14px;padding:8px 14px;border-radius:6px;border:1px solid #3a4262;background:#1f2747;color:#eef1f8;cursor:pointer'); b.onclick = () => fn(res); row.appendChild(b); }
+  for (const ev of ['keydown', 'keyup']) wrap.addEventListener(ev, e => e.stopPropagation()); // the game's window handlers would swallow Backspace, Space, arrows … in the text box
   wrap.appendChild(box); document.body.appendChild(wrap); Input.clearAll(); return res; }
 function* bkExport13(n) { const st = slotLoad13(n); if (!st) { yield* say('「存檔 ' + n + '」是空的。'); return; }
   let code; try { code = yield* bkAwait13(bkEncode13(st)); } catch (e) { yield* say('做不出代碼……（' + e.message + '）'); return; }
@@ -25401,7 +25408,10 @@ const ICE_TILE13 = [0, 1, 2].map(v => { const c = mkCanvas(16, 16), x = c.getCon
   x.fillStyle = '#7fb8d4'; if (v === 2) { x.fillRect(2, 11, 4, 1); x.fillRect(6, 12, 2, 1); } return c; });
 { const _dt = Overworld.prototype.drawTile; Overworld.prototype.drawTile = function (x, c, tx, ty, sx, sy, f, f2) { if (c !== 'I') return _dt.call(this, x, c, tx, ty, sx, sy, f, f2);
     x.drawImage(ICE_TILE13[hash2(tx, ty) % 3], sx, sy); if ((this.t + tx * 7 + ty * 13) % 140 < 6) { x.fillStyle = 'rgba(255,255,255,0.7)'; x.fillRect(sx + 7, sy + 5, 2, 2); } }; }
-{ const _os = Overworld.prototype.onStep; Overworld.prototype.onStep = function (...a) { const r = _os.apply(this, a), p = this.p; if (this.map && this.map.d.ice13 && p) p.slide13 = this.tileAt(p.x, p.y) === 'I' ? p.dir : null; return r; }; }
+{ const _os = Overworld.prototype.onStep; Overworld.prototype.onStep = function (...a) { const r = _os.apply(this, a), p = this.p; if (!this.map || !this.map.d.ice13 || !p) return r;
+    p.slide13 = this.tileAt(p.x, p.y) === 'I' ? p.dir : null;
+    if (p.slide13 && !this.script && !UI.stack.length) { const x0 = p.x, y0 = p.y; this.tryMove(p.slide13, true); if (!p.moving && p.x === x0 && p.y === y0) p.slide13 = null; }
+    return r; }; }
 { const _u = Overworld.prototype.update; Overworld.prototype.update = function (...a) { const p = this.p;
     if (p && p.slide13 && !p.moving && !this.script && !UI.stack.length && this.map && this.map.d.ice13) { const x0 = p.x, y0 = p.y; this.tryMove(p.slide13, true);
       if (!p.moving && p.x === x0 && p.y === y0) p.slide13 = null; else { this.t++; return; } }
@@ -25449,6 +25459,7 @@ const sluiceDone13 = (st = Game.st) => SLUICE13.plates.every(([x, y]) => bd13(st
     else if (!this.st.flags.sluice13) { x.fillStyle = '#2a3a5a'; x.fillRect(sx, sy, 16, 16); x.fillStyle = '#7a8aa8'; for (let i = 1; i < 16; i += 4) x.fillRect(sx + i, sy, 2, 16); x.fillStyle = '#4a6a9a'; x.fillRect(sx, sy + 6, 16, 2); } }; }
 { const _tm = Overworld.prototype.tryMove; Overworld.prototype.tryMove = function (d, run) { const p = this.p;
     if (this.map && this.map.d.sok13 && p && !p.moving) { const [dx, dy] = DIRS[d], nx = p.x + dx, ny = p.y + dy, e = this.npcs.find(n => n.boulder13 && n.x === nx && n.y === ny);
+      if (e && this.st.flags.sluice13) { p.dir = d; this.st.dir = d; return _tm.call(this, d, run); } // the gate is open: the boulders stay on their plates (pushing them could wall off the treasure room)
       if (e) { const bx = nx + dx, by = ny + dy, c = this.tileAt(bx, by), ok = (c === 's' || c === 'q') && by >= SLUICE13.rows[0] && by <= SLUICE13.rows[1] && !this.entityAt(bx, by);
         if (!ok) { p.dir = d; this.st.dir = d; return _tm.call(this, d, run); }
         const i = +e.id.split('_')[1]; bd13(this.st)[i] = [bx, by]; e.x = e.hx = e.tx = bx; e.y = e.hy = e.ty = by; Sound.sfx('rock');

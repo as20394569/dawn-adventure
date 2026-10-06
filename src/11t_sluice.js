@@ -38,6 +38,7 @@ const sluiceDone13 = (st = Game.st) => SLUICE13.plates.every(([x, y]) => bd13(st
 // pushing: walking into a boulder moves it one tile if the tile behind it is free floor inside the room
 { const _tm = Overworld.prototype.tryMove; Overworld.prototype.tryMove = function (d, run) { const p = this.p;
     if (this.map && this.map.d.sok13 && p && !p.moving) { const [dx, dy] = DIRS[d], nx = p.x + dx, ny = p.y + dy, e = this.npcs.find(n => n.boulder13 && n.x === nx && n.y === ny);
+      if (e && this.st.flags.sluice13) { p.dir = d; this.st.dir = d; return _tm.call(this, d, run); } // the gate is open: the boulders stay on their plates (pushing them could wall off the treasure room)
       if (e) { const bx = nx + dx, by = ny + dy, c = this.tileAt(bx, by), ok = (c === 's' || c === 'q') && by >= SLUICE13.rows[0] && by <= SLUICE13.rows[1] && !this.entityAt(bx, by);
         if (!ok) { p.dir = d; this.st.dir = d; return _tm.call(this, d, run); }
         const i = +e.id.split('_')[1]; bd13(this.st)[i] = [bx, by]; e.x = e.hx = e.tx = bx; e.y = e.hy = e.ty = by; Sound.sfx('rock');

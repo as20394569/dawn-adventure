@@ -98,8 +98,11 @@ function* tmapDig13(id) { const st = Game.st, T = tm13(st), S = TMAP13[id];
     if (id) { this.run(tmapDig13(id)); return true; } return r; }; }
 
 /* ---------- 撿到：野外戰鬥勝利 3%、菁英 25% ---------- */
+// the fight that really happened: inner wrappers can swap the foe (weather monsters, roaming elites), so read the Battle's own config
+{ const _ss = Game.setScene; Game.setScene = function (s) { if (typeof Battle !== 'undefined' && s instanceof Battle) Game.lastBattle13 = s; return _ss.call(this, s); }; }
+const realCfg13 = cfg => (Game.lastBattle13 && Game.lastBattle13.cfg) || cfg;
 { const _bs = Overworld.prototype.battleScript; Overworld.prototype.battleScript = function* (cfg, ...a) { const r = yield* _bs.call(this, cfg, ...a), st = Game.st;
-    if (r === 'win' && st && cfg && st.flags.tm13 && MAPS[st.map] && MAPS[st.map].outdoor && !(typeof ARENA_ON13 !== 'undefined' && ARENA_ON13)) {
+    if (r === 'win' && st && cfg && st.flags.tm13 && MAPS[st.map] && MAPS[st.map].outdoor && !(typeof ARENA_ON13 !== 'undefined' && ARENA_ON13)) { cfg = realCfg13(cfg);
       const ch = cfg.kind === 'elite' ? 0.25 : cfg.kind === 'wild' ? 0.03 : 0, id = Math.random() < ch ? tmRoll13(st) : null;
       if (id && tmGive13(id, st)) { yield* itemGet('撿到了一張藏寶圖！\n（角落寫著「' + MAPS[TMAP13[id].m].name + '」）'); } }
     return r; }; }

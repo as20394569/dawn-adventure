@@ -33,7 +33,7 @@ Overworld.prototype.palDraw13 = function (x, camX, camY) { const q = this.pal, i
     if (this.pal.py <= e.py) { this.palDraw13(x, camX, camY); _dc.call(this, x, e, frames, camX, camY); } else { _dc.call(this, x, e, frames, camX, camY); this.palDraw13(x, camX, camY); } }; }
 
 /* ---------- 想跟著你：野外戰鬥勝利 1.5%（還沒有的種類） ---------- */
-{ const _bs = Overworld.prototype.battleScript; Overworld.prototype.battleScript = function* (cfg, ...a) { const r = yield* _bs.call(this, cfg, ...a), st = Game.st;
+{ const _bs = Overworld.prototype.battleScript; Overworld.prototype.battleScript = function* (cfg, ...a) { const r = yield* _bs.call(this, cfg, ...a), st = Game.st; cfg = realCfg13(cfg);
     if (r !== 'win' || !st || !cfg || cfg.kind !== 'wild' || !st.flags.license || (typeof ARENA_ON13 !== 'undefined' && ARENA_ON13)) return r;
     const sp = cfg.sp, S = SPECIES[sp], P = pal13(st); if (!S || S.elite || S.boss || S.bty13 || P.got[sp] || !palImg13(sp)) return r;
     if (!(Game.palForce13 || Math.random() < PAL13.CHANCE)) return r;
@@ -72,7 +72,7 @@ Overworld.prototype.palSniff13 = function () { const st = this.st, p = this.p, T
     if (st && !this.script && !UI.stack.length && this.pal && !st.flags.palSniff13 && this.palSniff13()) { st.flags.palSniff13 = 1; const n = (SPECIES[this.pal.sp] || {}).n || '小夥伴'; this.run(say('（' + n + '好像聞到了什麼……\n藏寶圖的 × 就在附近！）')); }
     return r; }; }
 // the pal sometimes brings something back after a won fight (5%): a potion early on, better things later
-{ const _bs = Overworld.prototype.battleScript; Overworld.prototype.battleScript = function* (cfg, ...a) { const r = yield* _bs.call(this, cfg, ...a), st = Game.st, P = st && st.pal13;
+{ const _bs = Overworld.prototype.battleScript; Overworld.prototype.battleScript = function* (cfg, ...a) { const r = yield* _bs.call(this, cfg, ...a), st = Game.st, P = st && st.pal13; cfg = realCfg13(cfg);
     if (r === 'win' && P && P.on && SPECIES[P.on] && cfg && cfg.kind === 'wild' && Math.random() < 0.05 && !(typeof ARENA_ON13 !== 'undefined' && ARENA_ON13)) {
       const lv = st.lv || 1, pool = lv < 15 ? ['potion', 'potion', 'superPotion', 'ether'] : lv < 30 ? ['superPotion', 'ether', 'megaPotion', 'hiEther'] : ['megaPotion', 'hiEther', 'elixir', 'megaEther'];
       const k = pool[Math.floor(Math.random() * pool.length)]; if (ITEMS[k]) { st.bag[k] = (st.bag[k] || 0) + 1; Sound.sfx('item'); yield* say('（' + SPECIES[P.on].n + '叼來了一個' + ITEMS[k].n + '！）'); } }

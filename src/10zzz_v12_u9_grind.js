@@ -40,7 +40,7 @@ const rareName13 = k => { if (!k || !GEAR[k]) return ''; const b = typeof base11
 { const _fd = foeDropLines; foeDropLines = function (sp, key, kind) { const L = _fd(sp, key, kind); if (kind && kind !== 'wild') return L; const k = rareOf13(sp); if (k) L.push('稀有：' + rareName13(k) + '（金・虹，2%）'); return L; }; }
 // 3. a main boss well above you: go back and train first?
 { const _bs = Overworld.prototype.battleScript; Overworld.prototype.battleScript = function* (cfg, ...a) { const st = this.st || Game.st;
-    if (cfg && cfg.kind === 'boss' && !cfg.rematch && BOSS_UP13[cfg.sp] && st && cfg.lv - (st.lv || 1) >= 3) {
+    if (cfg && cfg.kind === 'boss' && !cfg.rematch && !Game.retrying13 && BOSS_UP13[cfg.sp] && st && cfg.lv - (st.lv || 1) >= 3) { // (v12.56: not again on 再挑戰)
       const n = cfg.lv - st.lv; if (!(yield* yesNo('（' + ((SPECIES[cfg.sp] || {}).n || '頭目') + ' Lv' + cfg.lv + '，比你高 ' + n + ' 級，會很辛苦。\n附近的洞窟是挑戰區，可以先去練等、刷裝備。還是要打嗎？）'))) return 'run'; }
     return yield* _bs.call(this, cfg, ...a); }; }
 if (typeof GROW12 !== 'undefined') GROW12.push(['練等與刷寶', '主線頭目比路上的魔物高 2〜4 級，打之前可以先練等。各區域旁邊的洞窟是「挑戰區」：魔物高 3〜5 級，掉裝備・稀有掉落的機率加倍。比魔物高 1〜2 級經驗照拿，再高就慢慢變少（最少 30%）。每種野外魔物都有自己的稀有掉落（金色或虹色，2%），圖鑑和遭遇時都看得到。']);

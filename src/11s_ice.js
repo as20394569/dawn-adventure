@@ -52,7 +52,11 @@ const ICE_TILE13 = [0, 1, 2].map(v => { const c = mkCanvas(16, 16), x = c.getCon
 { const _dt = Overworld.prototype.drawTile; Overworld.prototype.drawTile = function (x, c, tx, ty, sx, sy, f, f2) { if (c !== 'I') return _dt.call(this, x, c, tx, ty, sx, sy, f, f2);
     x.drawImage(ICE_TILE13[hash2(tx, ty) % 3], sx, sy); if ((this.t + tx * 7 + ty * 13) % 140 < 6) { x.fillStyle = 'rgba(255,255,255,0.7)'; x.fillRect(sx + 7, sy + 5, 2, 2); } }; }
 // a finished step on ice keeps going the same way; a step onto plain ground stops
-{ const _os = Overworld.prototype.onStep; Overworld.prototype.onStep = function (...a) { const r = _os.apply(this, a), p = this.p; if (this.map && this.map.d.ice13 && p) p.slide13 = this.tileAt(p.x, p.y) === 'I' ? p.dir : null; return r; }; }
+{ const _os = Overworld.prototype.onStep; Overworld.prototype.onStep = function (...a) { const r = _os.apply(this, a), p = this.p; if (!this.map || !this.map.d.ice13 || !p) return r;
+    p.slide13 = this.tileAt(p.x, p.y) === 'I' ? p.dir : null;
+    // keep going right away (the rest of this frame's update would otherwise read the d-pad and let you turn on the ice)
+    if (p.slide13 && !this.script && !UI.stack.length) { const x0 = p.x, y0 = p.y; this.tryMove(p.slide13, true); if (!p.moving && p.x === x0 && p.y === y0) p.slide13 = null; }
+    return r; }; }
 { const _u = Overworld.prototype.update; Overworld.prototype.update = function (...a) { const p = this.p;
     if (p && p.slide13 && !p.moving && !this.script && !UI.stack.length && this.map && this.map.d.ice13) { const x0 = p.x, y0 = p.y; this.tryMove(p.slide13, true);
       if (!p.moving && p.x === x0 && p.y === y0) p.slide13 = null; else { this.t++; return; } }
