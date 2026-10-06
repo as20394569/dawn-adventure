@@ -19,13 +19,18 @@
     const sn = D.spot && D.spot.name; let best = null, bi = 1e9; if (sn) { let i = t.indexOf(sn); if (i < 0 && sn.length > 3) i = t.indexOf(sn.slice(-2)); bi = i >= 0 ? i : -1; } // the original already found the person (王都的騎士雷恩 by 雷恩): only something named earlier beats it
     for (const c of C) { const i = t.indexOf(c.name); if (i >= 0 && i < bi) { bi = i; best = c; } } // a boss named before the person wins (打倒磨石魔像，救出漢斯)
     // another map named in the text before anything on this map (到晨霧道路西側的碧溪谷 while standing on 晨霧道路) → that map is the real destination
-    let far = null; for (const id in MAPS) { const nm = MAPS[id].name; if (!nm || nm.length < 2 || nm === d.name) continue; const i = t.indexOf(nm); if (i >= 0 && i > (q.t || '').indexOf(d.name) && i < bi && (!far || i < far.i)) far = { i, map: mapIdByName(nm) || id, nm }; }
+    const sep9 = i => !/[和、與跟及→]/.test((q.t || '').slice((q.t || '').indexOf(d.name) + d.name.length, i).replace(/（[^）]*）/g, '')); // v12.62: 「A和B」「A。→ 交給C」 are separate goals, not 「A西側的B」
+    let far = null; for (const id in MAPS) { const nm = MAPS[id].name; if (!nm || nm.length < 2 || nm === d.name) continue; const i = t.indexOf(nm); if (i >= 0 && i > (q.t || '').indexOf(d.name) && i < bi && (!far || i < far.i) && sep9(i)) far = { i, map: mapIdByName(nm) || id, nm }; }
     let alt = far && far.map !== st.map && mapRoute(st.map, far.map) ? { i: far.i, r: { map: far.map, what: '前往' + far.nm } } : null;
     // a person named after this map who lives inside one of its houses (把清泉草帶回風車丘陵的漢斯家)
-    for (const e of spkIndex()) { if (e.map === st.map || (e.show && !e.show(st))) continue; const i = t.indexOf(e.name); if (i >= 0 && i > (q.t || '').indexOf(d.name) && i < bi && (!alt || i < alt.i) && mapRoute(st.map, e.map)) alt = { i, r: { map: e.map, spot: e, what: '找' + e.name } }; }
+    for (const e of spkIndex()) { if (e.map === st.map || (e.show && !e.show(st))) continue; const i = t.indexOf(e.name); if (i >= 0 && i > (q.t || '').indexOf(d.name) && i < bi && (!alt || i < alt.i) && sep9(i) && mapRoute(st.map, e.map)) alt = { i, r: { map: e.map, spot: e, what: '找' + e.name } }; }
     if (alt) return alt.r;
+    // v12.62: the named place is a thing (風車小屋) with the map's boss standing guard next to it → point at the boss
+    if (best && d.boss && !(st.flags || {})[d.boss.flag || 'golem'] && SPECIES[d.boss.sp] && typeof PORTRAIT_PROPS !== 'undefined' && (() => { const n = ((ow && ow.map && ow.map.id === D.map && ow.npcs) || d.npcs || []).find(n => n.x === best.x && n.y === best.y); return n && PORTRAIT_PROPS.has(n.look); })() && Math.abs(d.boss.x - best.x) + Math.abs(d.boss.y - best.y) <= 6)
+      return { ...D, spot: { x: d.boss.x, y: d.boss.y, name: SPECIES[d.boss.sp].n }, what: '找' + SPECIES[d.boss.sp].n };
     if (best) return { ...D, spot: best, what: (/^前往/.test(D.what) || D.spot ? '找' : D.what) + (best.full || best.name) };
     for (const g of GOAL9) if (g.map === D.map && g.when(st.flags || {})) return { ...D, spot: { x: g.x, y: g.y, name: g.name }, what: '前往' + g.name };
+    if (d.boss && !D.spot && !(st.flags || {})[d.boss.flag || 'golem']) return { ...D, spot: { x: d.boss.x, y: d.boss.y, name: '深處' }, what: '前往' + d.name + '的深處' }; // v12.62: nothing named on this map, but its boss is still there (王都地下水道 → 溝鼠王)
     return D; }; }
 // places named in a quest that are not a person or a landmark (碧溪谷的源頭)
 const GOAL9 = [{ map: 'jadeCreek', when: f => f.creekQ === 1 && !f.creekTop, x: 18, y: 6, name: '源頭' }];

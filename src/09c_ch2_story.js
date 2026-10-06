@@ -102,7 +102,8 @@ function syncRecipesCh2(st = Game.st) { for (const R of RECIPES_CH2) { const i =
 { const _eq = extraQuests; extraQuests = function (st, L) {
     _eq(st, L); const f = st.flags, n = ch2(st); if (!n && !f.golem) return;
     const T = !n ? '王都派來的騎士雷恩正在萌芽鎮找你。（村長家附近）' : n === 1 ? '往北穿過北方街道，前往王都艾爾德蘭。（萌芽鎮的馬車也能直接送你到北方街道）' : n === 2 ? '到王都北邊的王城，謁見國王阿爾德里克。'
-      : n === 3 ? '找回兩個「時之齒輪」：王都地下水道（王都西南的水道入口）和金穗平原的風車小屋。（' + gearCount(st) + '/2）→ 交給鐘錶師艾德' + (gearCount(st) >= 2 ? '　★兩個都找到了！' : '')
+      : n === 3 ? (gearCount(st) >= 2 ? '兩個「時之齒輪」都找到了！交給王都的鐘錶師艾德。（2/2）' : f.gearSewer ? '找回另一個「時之齒輪」：金穗平原的風車小屋。（1/2）→ 交給鐘錶師艾德' : f.gearPlains ? '找回另一個「時之齒輪」：王都地下水道（王都西南的水道入口）。（1/2）→ 交給鐘錶師艾德'
+        : '找回兩個「時之齒輪」：王都地下水道（王都西南的水道入口）和金穗平原的風車小屋。（0/2）→ 交給鐘錶師艾德') // v12.62: the text names only what is left, so the guide follows it
       : n === 4 ? '曙光鐘塔的門開了。登上鐘樓，重新啟動曙光鐘。' : n === 5 ? (f.northPass ? '宰相逃往北方。穿過霜語雪原，前往冰晶洞窟——北方山道被冰封住了。' : '回到王城向國王報告。')
       : n === 6 ? '北方山道解凍了。越過赤焰山道，進入熔岩坑道。' : n === 7 ? '火之印打開了要塞之門。穿過熔岩坑道深處，攻入黯滅要塞。' : n === 8 ? '宰相倒下了。登上要塞的王座之間，打倒影將莫爾德。'
       : n === 9 ? '取回了曙光之心。回到曙光鐘塔的鐘樓，敲響曙光鐘。' : '完成：曙光鐘再次響起，影將被封印了。';
@@ -170,7 +171,7 @@ Object.assign(Events, {
       yield* sayAll(['……你就是曙光之印的持有者嗎。', '我是這個國家的國王，阿爾德里克。', '五百年前，黯滅之王札爾格斯率領「四將」侵略這片大地。', '初代勇者敲響了王都的「曙光鐘」，用鐘聲的力量把四將一一封印。',
         '但是……五十年前，鐘停了。', '從那天起，封印一年比一年弱。北境要塞裡的「影將莫爾德」，最近開始甦醒了。', '要讓鐘重新響起，需要驅動鐘塔的兩個「時之齒輪」。']);
       yield* sayAll(['宰相維克托：「陛下，齒輪的下落已經查到了。」', '「一個被地下水道的溝鼠王偷走了……另一個，在金穗平原的風車小屋裡。」', '「……不過，那麼危險的事，交給一個孩子真的好嗎？」']);
-      yield* sayAll(['國王：「曙光之印選擇了他。這就足夠了。」', '拜託你了，異界的勇者。齒輪找到了，就交給鐘塔旁邊的鐘錶師艾德。', '（王都西南角有地下水道的入口；金穗平原在王都的西門外。）']); saveGame(); return;
+      yield* sayAll(['國王：「曙光之印選擇了他。這就足夠了。」', '拜託你了，異界的勇者。齒輪找到了，就交給王城東邊的鐘錶師艾德。', '（王都西南角有地下水道的入口；金穗平原在王都的西門外。）']); saveGame(); return;
     }
     if (n === 5 && !f.northPass) {
       f.northPass = 1; st.bag.northPass = 1;
@@ -238,7 +239,7 @@ Object.assign(Events, {
     if (res === 'win') { f.ratKing = 1; f.gearSewer = 1; st.bag.timeGear = (st.bag.timeGear || 0) + 1; ow.boss = null; yield* say('溝鼠王倒下了。'); yield* itemGet(st.name + '取回了「時之齒輪」！（' + gearCount(st) + '/2）'); ow.load('capSewer', ow.p.x, ow.p.y, ow.p.dir, true); saveGame(); }
   },
   /* ----- 金穗平原 ----- */
-  *windmill() { yield* say(Game.st.flags.harvestGolem ? '風車又開始轉了。' : '風車小屋。風車被什麼東西卡住了，一動也不動……'); },
+  *windmill() { yield* say(Game.st.flags.harvestGolem ? '風車又開始轉了。' : '風車小屋。風車被什麼東西卡住了，一動也不動……\n旁邊那個麥稈做的大傢伙，一直守在這裡。'); },
   *harvestBoss(ow) {
     const st = Game.st, f = st.flags; if (f.harvestGolem) return;
     if (ch2() < 3) { yield* say('一座用麥稈和木頭做的巨大魔像，一動也不動地守在風車前。'); return; }

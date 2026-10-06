@@ -131,6 +131,9 @@ Events.royalKnight = function* (ow) {
     '關道和再過去的古戰場，魔物都比這一帶強。準備好再出發吧。（建議Lv17以上）']);
   yield* say('馬車夫在村長家旁邊等你。我先回王都覆命了！'); ow.load('town', ow.p.x, ow.p.y, ow.p.dir, true); saveGame();
 };
+// v12.62: short of the fare (after a few defeats the money is halved) → the coachman takes what you have, so you are never stuck in 萌芽鎮
+function* coachPay13(st) { if (st.money >= 200) { st.money -= 200; return true; }
+  if (!(yield* yesNo('哎呀，車資不夠呢……\n算了，身上的 ' + st.money + ' G 就好。要搭嗎？'))) return false; st.money = 0; return true; }
 ch2Coach = function* (ow, here) {
   const st = Game.st, f = st.flags, opt = [], gate = v81Gate(st);
   if (here !== 'town') opt.push(['萌芽鎮', 'town', 19, 6]);
@@ -139,8 +142,8 @@ ch2Coach = function* (ow, here) {
   if (here !== 'capital' && (st.vis || {}).capital) opt.push(['王都艾爾德蘭', 'capital', 5, 27]);
   if (here !== 'frostVillage' && (st.vis || {}).frostVillage) opt.push(['霜語村', 'frostVillage', 2, 13]);
   const r = yield* ask('要去哪裡呢？（車資 200 G）', opt.map(o => o[0]).concat(['不用了']));
-  if (r < 0 || r >= opt.length) return; if (st.money < 200) { yield* say('哎呀，車資不夠呢。'); return; }
-  st.money -= 200; const [, m, x, y] = opt[r]; Sound.sfx('run'); yield* fadeOut(20); ow.load(m, x, y, m === 'maplePass' ? 'up' : 'down'); yield* wait(10); yield* fadeIn(20);
+  if (r < 0 || r >= opt.length) return; if (!(yield* coachPay13(st))) return;
+  const [, m, x, y] = opt[r]; Sound.sfx('run'); yield* fadeOut(20); ow.load(m, x, y, m === 'maplePass' ? 'up' : 'down'); yield* wait(10); yield* fadeIn(20);
   if (m === 'maplePass' && !f.passIn) yield* passIntro(ow);
 };
 { const _ct = Events.coachT; Events.coachT = function* (ow) { if (!v81Gate(Game.st)) return yield* _ct.call(this, ow); yield* say('往北方街道的關道被封住了……只能先送你到楓紅關道口。'); yield* ch2Coach(ow, 'town'); }; }

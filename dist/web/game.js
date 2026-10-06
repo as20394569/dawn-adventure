@@ -7668,7 +7668,7 @@ class TitleScene {
     x.drawImage(this.logo, Math.round(W / 2 - this.logo.width / 2), 6 + bob);
     Font.drawC(x, '～異世界冒險RPG～', W / 2, 52 + bob, '#ffe0a0', '#3a1428');
     if (this.stage === 'press' && Math.floor(this.t / 30) % 2 === 0) Font.drawC(x, '按 A 鍵開始', W / 2, 232, '#ffffff', '#1a1024');
-    Font.drawR(x, 'v12.61', W - 3, H - 13, '#b890b0', null);
+    Font.drawR(x, 'v12.62', W - 3, H - 13, '#b890b0', null);
   }
 }
 class IntroScene {
@@ -9753,7 +9753,8 @@ function syncRecipesCh2(st = Game.st) { for (const R of RECIPES_CH2) { const i =
 { const _eq = extraQuests; extraQuests = function (st, L) {
     _eq(st, L); const f = st.flags, n = ch2(st); if (!n && !f.golem) return;
     const T = !n ? '王都派來的騎士雷恩正在萌芽鎮找你。（村長家附近）' : n === 1 ? '往北穿過北方街道，前往王都艾爾德蘭。（萌芽鎮的馬車也能直接送你到北方街道）' : n === 2 ? '到王都北邊的王城，謁見國王阿爾德里克。'
-      : n === 3 ? '找回兩個「時之齒輪」：王都地下水道（王都西南的水道入口）和金穗平原的風車小屋。（' + gearCount(st) + '/2）→ 交給鐘錶師艾德' + (gearCount(st) >= 2 ? '　★兩個都找到了！' : '')
+      : n === 3 ? (gearCount(st) >= 2 ? '兩個「時之齒輪」都找到了！交給王都的鐘錶師艾德。（2/2）' : f.gearSewer ? '找回另一個「時之齒輪」：金穗平原的風車小屋。（1/2）→ 交給鐘錶師艾德' : f.gearPlains ? '找回另一個「時之齒輪」：王都地下水道（王都西南的水道入口）。（1/2）→ 交給鐘錶師艾德'
+        : '找回兩個「時之齒輪」：王都地下水道（王都西南的水道入口）和金穗平原的風車小屋。（0/2）→ 交給鐘錶師艾德') // v12.62: the text names only what is left, so the guide follows it
       : n === 4 ? '曙光鐘塔的門開了。登上鐘樓，重新啟動曙光鐘。' : n === 5 ? (f.northPass ? '宰相逃往北方。穿過霜語雪原，前往冰晶洞窟——北方山道被冰封住了。' : '回到王城向國王報告。')
       : n === 6 ? '北方山道解凍了。越過赤焰山道，進入熔岩坑道。' : n === 7 ? '火之印打開了要塞之門。穿過熔岩坑道深處，攻入黯滅要塞。' : n === 8 ? '宰相倒下了。登上要塞的王座之間，打倒影將莫爾德。'
       : n === 9 ? '取回了曙光之心。回到曙光鐘塔的鐘樓，敲響曙光鐘。' : '完成：曙光鐘再次響起，影將被封印了。';
@@ -9815,7 +9816,7 @@ Object.assign(Events, {
       yield* sayAll(['……你就是曙光之印的持有者嗎。', '我是這個國家的國王，阿爾德里克。', '五百年前，黯滅之王札爾格斯率領「四將」侵略這片大地。', '初代勇者敲響了王都的「曙光鐘」，用鐘聲的力量把四將一一封印。',
         '但是……五十年前，鐘停了。', '從那天起，封印一年比一年弱。北境要塞裡的「影將莫爾德」，最近開始甦醒了。', '要讓鐘重新響起，需要驅動鐘塔的兩個「時之齒輪」。']);
       yield* sayAll(['宰相維克托：「陛下，齒輪的下落已經查到了。」', '「一個被地下水道的溝鼠王偷走了……另一個，在金穗平原的風車小屋裡。」', '「……不過，那麼危險的事，交給一個孩子真的好嗎？」']);
-      yield* sayAll(['國王：「曙光之印選擇了他。這就足夠了。」', '拜託你了，異界的勇者。齒輪找到了，就交給鐘塔旁邊的鐘錶師艾德。', '（王都西南角有地下水道的入口；金穗平原在王都的西門外。）']); saveGame(); return;
+      yield* sayAll(['國王：「曙光之印選擇了他。這就足夠了。」', '拜託你了，異界的勇者。齒輪找到了，就交給王城東邊的鐘錶師艾德。', '（王都西南角有地下水道的入口；金穗平原在王都的西門外。）']); saveGame(); return;
     }
     if (n === 5 && !f.northPass) {
       f.northPass = 1; st.bag.northPass = 1;
@@ -9877,7 +9878,7 @@ Object.assign(Events, {
     const res = yield* ow.battleScript({ sp: 'ratKing', lv: MAPS.capSewer.boss.lv, kind: 'boss' });
     if (res === 'win') { f.ratKing = 1; f.gearSewer = 1; st.bag.timeGear = (st.bag.timeGear || 0) + 1; ow.boss = null; yield* say('溝鼠王倒下了。'); yield* itemGet(st.name + '取回了「時之齒輪」！（' + gearCount(st) + '/2）'); ow.load('capSewer', ow.p.x, ow.p.y, ow.p.dir, true); saveGame(); }
   },
-  *windmill() { yield* say(Game.st.flags.harvestGolem ? '風車又開始轉了。' : '風車小屋。風車被什麼東西卡住了，一動也不動……'); },
+  *windmill() { yield* say(Game.st.flags.harvestGolem ? '風車又開始轉了。' : '風車小屋。風車被什麼東西卡住了，一動也不動……\n旁邊那個麥稈做的大傢伙，一直守在這裡。'); },
   *harvestBoss(ow) {
     const st = Game.st, f = st.flags; if (f.harvestGolem) return;
     if (ch2() < 3) { yield* say('一座用麥稈和木頭做的巨大魔像，一動也不動地守在風車前。'); return; }
@@ -12209,6 +12210,8 @@ Events.royalKnight = function* (ow) {
     '關道和再過去的古戰場，魔物都比這一帶強。準備好再出發吧。（建議Lv17以上）']);
   yield* say('馬車夫在村長家旁邊等你。我先回王都覆命了！'); ow.load('town', ow.p.x, ow.p.y, ow.p.dir, true); saveGame();
 };
+function* coachPay13(st) { if (st.money >= 200) { st.money -= 200; return true; }
+  if (!(yield* yesNo('哎呀，車資不夠呢……\n算了，身上的 ' + st.money + ' G 就好。要搭嗎？'))) return false; st.money = 0; return true; }
 ch2Coach = function* (ow, here) {
   const st = Game.st, f = st.flags, opt = [], gate = v81Gate(st);
   if (here !== 'town') opt.push(['萌芽鎮', 'town', 19, 6]);
@@ -12217,8 +12220,8 @@ ch2Coach = function* (ow, here) {
   if (here !== 'capital' && (st.vis || {}).capital) opt.push(['王都艾爾德蘭', 'capital', 5, 27]);
   if (here !== 'frostVillage' && (st.vis || {}).frostVillage) opt.push(['霜語村', 'frostVillage', 2, 13]);
   const r = yield* ask('要去哪裡呢？（車資 200 G）', opt.map(o => o[0]).concat(['不用了']));
-  if (r < 0 || r >= opt.length) return; if (st.money < 200) { yield* say('哎呀，車資不夠呢。'); return; }
-  st.money -= 200; const [, m, x, y] = opt[r]; Sound.sfx('run'); yield* fadeOut(20); ow.load(m, x, y, m === 'maplePass' ? 'up' : 'down'); yield* wait(10); yield* fadeIn(20);
+  if (r < 0 || r >= opt.length) return; if (!(yield* coachPay13(st))) return;
+  const [, m, x, y] = opt[r]; Sound.sfx('run'); yield* fadeOut(20); ow.load(m, x, y, m === 'maplePass' ? 'up' : 'down'); yield* wait(10); yield* fadeIn(20);
   if (m === 'maplePass' && !f.passIn) yield* passIntro(ow);
 };
 { const _ct = Events.coachT; Events.coachT = function* (ow) { if (!v81Gate(Game.st)) return yield* _ct.call(this, ow); yield* say('往北方街道的關道被封住了……只能先送你到楓紅關道口。'); yield* ch2Coach(ow, 'town'); }; }
@@ -20540,12 +20543,16 @@ for (const k of DN_KEYS12) k[0] = k[0] / 2;
     for (const L of (typeof LANDMARK12 !== 'undefined' && LANDMARK12[D.map]) || []) if (L.n) C.push({ name: L.n, x: L.x, y: L.y });
     const sn = D.spot && D.spot.name; let best = null, bi = 1e9; if (sn) { let i = t.indexOf(sn); if (i < 0 && sn.length > 3) i = t.indexOf(sn.slice(-2)); bi = i >= 0 ? i : -1; } // the original already found the person (王都的騎士雷恩 by 雷恩): only something named earlier beats it
     for (const c of C) { const i = t.indexOf(c.name); if (i >= 0 && i < bi) { bi = i; best = c; } } // a boss named before the person wins (打倒磨石魔像，救出漢斯)
-    let far = null; for (const id in MAPS) { const nm = MAPS[id].name; if (!nm || nm.length < 2 || nm === d.name) continue; const i = t.indexOf(nm); if (i >= 0 && i > (q.t || '').indexOf(d.name) && i < bi && (!far || i < far.i)) far = { i, map: mapIdByName(nm) || id, nm }; }
+    const sep9 = i => !/[和、與跟及→]/.test((q.t || '').slice((q.t || '').indexOf(d.name) + d.name.length, i).replace(/（[^）]*）/g, '')); // v12.62: 「A和B」「A。→ 交給C」 are separate goals, not 「A西側的B」
+    let far = null; for (const id in MAPS) { const nm = MAPS[id].name; if (!nm || nm.length < 2 || nm === d.name) continue; const i = t.indexOf(nm); if (i >= 0 && i > (q.t || '').indexOf(d.name) && i < bi && (!far || i < far.i) && sep9(i)) far = { i, map: mapIdByName(nm) || id, nm }; }
     let alt = far && far.map !== st.map && mapRoute(st.map, far.map) ? { i: far.i, r: { map: far.map, what: '前往' + far.nm } } : null;
-    for (const e of spkIndex()) { if (e.map === st.map || (e.show && !e.show(st))) continue; const i = t.indexOf(e.name); if (i >= 0 && i > (q.t || '').indexOf(d.name) && i < bi && (!alt || i < alt.i) && mapRoute(st.map, e.map)) alt = { i, r: { map: e.map, spot: e, what: '找' + e.name } }; }
+    for (const e of spkIndex()) { if (e.map === st.map || (e.show && !e.show(st))) continue; const i = t.indexOf(e.name); if (i >= 0 && i > (q.t || '').indexOf(d.name) && i < bi && (!alt || i < alt.i) && sep9(i) && mapRoute(st.map, e.map)) alt = { i, r: { map: e.map, spot: e, what: '找' + e.name } }; }
     if (alt) return alt.r;
+    if (best && d.boss && !(st.flags || {})[d.boss.flag || 'golem'] && SPECIES[d.boss.sp] && typeof PORTRAIT_PROPS !== 'undefined' && (() => { const n = ((ow && ow.map && ow.map.id === D.map && ow.npcs) || d.npcs || []).find(n => n.x === best.x && n.y === best.y); return n && PORTRAIT_PROPS.has(n.look); })() && Math.abs(d.boss.x - best.x) + Math.abs(d.boss.y - best.y) <= 6)
+      return { ...D, spot: { x: d.boss.x, y: d.boss.y, name: SPECIES[d.boss.sp].n }, what: '找' + SPECIES[d.boss.sp].n };
     if (best) return { ...D, spot: best, what: (/^前往/.test(D.what) || D.spot ? '找' : D.what) + (best.full || best.name) };
     for (const g of GOAL9) if (g.map === D.map && g.when(st.flags || {})) return { ...D, spot: { x: g.x, y: g.y, name: g.name }, what: '前往' + g.name };
+    if (d.boss && !D.spot && !(st.flags || {})[d.boss.flag || 'golem']) return { ...D, spot: { x: d.boss.x, y: d.boss.y, name: '深處' }, what: '前往' + d.name + '的深處' }; // v12.62: nothing named on this map, but its boss is still there (王都地下水道 → 溝鼠王)
     return D; }; }
 const GOAL9 = [{ map: 'jadeCreek', when: f => f.creekQ === 1 && !f.creekTop, x: 18, y: 6, name: '源頭' }];
 { const _mg = mapGraph; let done9 = null; mapGraph = function () { const G = _mg(); if (G === done9) return G; done9 = G;
@@ -24620,7 +24627,7 @@ if (typeof MAP_G !== 'undefined') MAP_G = null;
     if (ch3(st) < 1) return yield* _cc.call(this, ow, here);
     const r = yield* ask('要去哪裡呢？（車資 200 G）', [here === 'harbor13' ? '王都艾爾德蘭' : '潮鳴港（東方的港町）', '其他地方', '不用了']); if (r < 0 || r === 2) return;
     if (r === 1) return yield* _cc.call(this, ow, here);
-    if (st.money < 200) { yield* say('哎呀，車資不夠呢。'); return; } st.money -= 200; Sound.sfx('run'); yield* fadeOut(20);
+    if (!(yield* coachPay13(st))) return; Sound.sfx('run'); yield* fadeOut(20);
     if (here === 'harbor13') ow.load('capital', 5, 27, 'down'); else ow.load('harbor13', 3, 7, 'right'); yield* wait(10); yield* fadeIn(20);
     if (here !== 'harbor13') yield* ch3Arrive(ow); }; }
 Events.coachH13 = function* (ow) { yield* ch2Coach(ow, 'harbor13'); };
@@ -25550,3 +25557,11 @@ const RUMOR13 = [
     const ks = [...new Set((st.slots || []).map(id => (treeOf11(id) || [])[0]).filter(k => k && TREE11[k] && !TREE11[k].common))];
     if (!ks.length) return yield* _cm.apply(this, a);
     const k = ks[0], m = mainKind11(st); yield* this.msg((m ? '「' + m + '」還沒有學會任何招式。' : '現在沒有可以用的招式。') + '\n（' + k + '的招式要拿' + k + '才能用）'); return null; }; }
+{ const _ep = equipPick; equipPick = function* (sl) { const st = Game.st, k0 = sl === 'weapon' && typeof mainKind11 === 'function' ? mainKind11(st) : null, s0 = (st.slots || []).slice();
+    yield* _ep.call(this, sl);
+    const k1 = sl === 'weapon' && k0 ? mainKind11(st) : null; if (!k1 || k1 === k0) return;
+    const by = st.slotsBy13 || (st.slotsBy13 = {}), tk = id => (treeOf11(id) || [])[0], common = id => { const k = tk(id); return !k || !!(TREE11[k] || {}).common; };
+    by[k0] = s0; const fits = id => common(id) || tk(id) === k1 || tk(id) === PAIR11[k1]; // another weapon's moves can't be used anyway
+    const next = (by[k1] || s0).filter(fits); for (const id of learnedTree11(st)) if (tk(id) === k1 && !next.includes(id) && next.length < BB.SLOTS) next.push(id);
+    st.slots = next; BB.slots(st);
+    if (st.slots.some(id => tk(id) === k1) && st.slots.join() !== s0.join()) yield* say('技能欄換成了「' + k1 + '」的招式。'); }; }

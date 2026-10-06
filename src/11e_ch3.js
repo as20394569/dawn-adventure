@@ -131,7 +131,7 @@ if (typeof MAP_G !== 'undefined') MAP_G = null;
     if (ch3(st) < 1) return yield* _cc.call(this, ow, here);
     const r = yield* ask('要去哪裡呢？（車資 200 G）', [here === 'harbor13' ? '王都艾爾德蘭' : '潮鳴港（東方的港町）', '其他地方', '不用了']); if (r < 0 || r === 2) return;
     if (r === 1) return yield* _cc.call(this, ow, here);
-    if (st.money < 200) { yield* say('哎呀，車資不夠呢。'); return; } st.money -= 200; Sound.sfx('run'); yield* fadeOut(20);
+    if (!(yield* coachPay13(st))) return; Sound.sfx('run'); yield* fadeOut(20);
     if (here === 'harbor13') ow.load('capital', 5, 27, 'down'); else ow.load('harbor13', 3, 7, 'right'); yield* wait(10); yield* fadeIn(20);
     if (here !== 'harbor13') yield* ch3Arrive(ow); }; }
 Events.coachH13 = function* (ow) { yield* ch2Coach(ow, 'harbor13'); };
