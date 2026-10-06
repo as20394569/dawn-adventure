@@ -208,7 +208,7 @@ delete BADGE_OF.barrier;
   const _sg = H.statusGone; H.statusGone = function* (e, s, t, P, expire) { if (!t || P.status !== 'barrier') return yield* _sg.call(this, e, s, t, P, expire);
     delete t.st.barrier; delete t.st.ward; if (P.why === 'down') return; const C = this.center(t);
     if (P.why === 'broken') { Sound.sfx('rock'); if (this.sparks) this.sparks(C.x, C.y, 12, ['#c8e0ff', '#80a8e0'], 2.8); yield* this.msg(t.n + '的護盾被打破了！', { hold: 20 }); }
-    else yield* this.msg(t.n + '的護盾消失了。', { hold: 18 }); };
+    else yield* this.msg(t.n + '的護盾消失了。' + (!t.hero && t.charging ? '（沒能打破，蓄力繼續）' : ''), { hold: 18 }); };
   const _dm = H.DAMAGE; H.DAMAGE = function* (e, s, t, P) {
     if (t && P.ward > 0) { t.st.ward = P.wardLeft || 0; Sound.sfx('shield'); const C = this.center(t); this.spawn({ k: 'hex', x: C.x, y: C.y, r0: 22, r1: 10, c: '#a8d8ff', life: 10 });
       this.popNum(t, '盾 −' + P.ward, '#a8e0ff', P.wardMul > 1 ? '×' + P.wardMul : null, { small: true, dy: P.amount > 0 ? -14 : 0 }); }
@@ -221,7 +221,8 @@ function drawWardTag12(x, X, Y, n, turns, hero) { const s = String(n), w = Math.
     const cs = F && F.st && F.st.charging; if (wd && ch) F.st.charging = 0; try { _pb.call(this, x, F, a0); } finally { if (wd && ch) F.st.charging = cs; }
     if (!wd) return; const a = a0 * (F.plateA ?? 1); if (a <= 0) return; x.globalAlpha = a; const py = 6, pe = plateExtra(), w = 120, X = (W - w) / 2;
     drawWardTag12(x, 2, py + 12, F.st.ward); const r = clamp(F.st.ward / (F.st.wardMax || 1), 0, 1); x.fillStyle = '#7ec8ff'; x.fillRect(X + 7, py + 28, Math.round((w - 14) * r), 1);
-    if (!F.broken) Font.drawC(x, ch ? '蓄力中！打破護盾就能打斷' : '護盾中：打破就破防', W / 2, py + 45 + pe, ch ? (Math.floor(this.t / 8) % 2 ? '#ff7a6a' : '#a8e0ff') : '#a8e0ff', '#000000', 10);
+    if (!F.broken) { const lt = ch ? '蓄力中！這回合打破護盾就能打斷' : '護盾：牠下次行動前打破就破防', lw = Font.width(lt, 10) + 10; x.fillStyle = 'rgba(6,8,18,0.72)'; x.fillRect(Math.round(W / 2 - lw / 2), py + 46 + pe, Math.round(lw), 13); // v12.68: a dark strip so damage numbers don't garble it
+      Font.drawC(x, lt, W / 2, py + 45 + pe, ch ? (Math.floor(this.t / 8) % 2 ? '#ff7a6a' : '#a8e0ff') : '#a8e0ff', '#000000', 10); }
     x.globalAlpha = 1; }; }
 { const _ps = Battle.prototype.drawPlateSmall; Battle.prototype.drawPlateSmall = function (x, v, a, i, n) { _ps.call(this, x, v, a, i, n); if (!(v && v.st && v.st.ward > 0) || a <= 0) return;
     const sw = Math.floor((W - 4) / Math.max(1, n)), w = Math.min(n >= 3 ? 56 : 80, sw - 2), X = Math.round(clamp(v.x - w / 2, 2 + i * sw, 2 + i * sw + sw - 2 - w));

@@ -24,7 +24,7 @@ Battle.prototype.handlers = {
     if (P.why === 'cost') { if (s.hero) yield* this.msg((P.res === 'sgp' ? '招式點不夠，' : 'MP不夠，') + s.n + '改用普通攻擊！', { hold: 26 }); }
     else if (P.why === 'used') yield* this.msg('但是什麼都沒有發生……'); else if (P.why === 'miss') { this.dropAnn(); yield* this.msg('但是失敗了！', { hold: 22 }); } },
   *CHARGE(e, s, t, P) { const D = DEF.skills[P.skill]; if (!D || !s) return; if (!s.hero) { this.focus = s; this.banner = { s: D.name, t: 0, life: 70, strong: true, charge: true }; }
-    yield* this.announce(s.n + '使用了' + this.skillName(P.skill, s.id) + '！'); yield* (s.hero ? FX.charge : MFX.mcharge).call(this, this.center(s));
+    yield* this.announce(s.n + (s.hero ? '使用了' + this.skillName(P.skill, s.id) + '！' : '開始蓄力「' + this.skillName(P.skill, s.id) + '」！')); yield* (s.hero ? FX.charge : MFX.mcharge).call(this, this.center(s)); // v12.68: a monster's wind-up is not the hit
     yield* this.msg(s.n + (D.chargeMsg || (D.airborne ? '高高跳了起來！' : '正在凝聚力量！'))); if (!s.hero && !this.warned) { this.warned = true; yield* this.msg(D.warn || '（它發出了危險的光芒……下回合會發動強力的攻擊！）'); } },
   *SKILL_USE(e, s, t, P) {
     const D = DEF.skills[P.skill]; if (!D || !s) return; const name = this.skillName(P.skill, s.id), tg = e.tgts.map(id => this.views[id]).filter(Boolean), foeTg = tg.filter(v => v.hero !== s.hero), hu = this.core.byId.H;
@@ -89,7 +89,7 @@ Battle.prototype.handlers = {
     if (!t || !(P.amount > 0)) return; const a = P.amount, C = this.center(t), kind = P.kind;
     if (kind === 'drain' && s && this.cast && this.cast.D && this.tgtV) yield* FX.drainBack.call(this, this.center(this.tgtV), C); else if (kind !== 'regen' && kind !== 'drain') { Sound.sfx('heal'); yield* FX.heal.call(this, C); }
     this.popNum(t, '+' + a, '#7aff9a', null, { small: 1 }); yield* this.animHP(t, Math.min(t.maxhp, t.hp + a));
-    const txt = kind === 'drain' ? '吸取了' + a + '點HP！' : kind === 'guardHeal' ? t.n + '的守護之心回復了HP！' : kind === 'ally' ? t.n + '回復了' + a + '點HP！' : kind === 'regen' ? null : this.itemCtx ? t.n + '回復了' + a + '點HP！' : t.n + '的HP恢復了！';
+    const txt = kind === 'drain' ? t.n + '吸取了' + a + '點HP！' : kind === 'guardHeal' ? t.n + '的守護之心回復了HP！' : kind === 'ally' ? t.n + '回復了' + a + '點HP！' : kind === 'regen' ? null : this.itemCtx ? t.n + '回復了' + a + '點HP！' : t.n + '的HP恢復了！';
     if (txt) yield* this.msg(txt, { hold: 22 }); },
   *COST_PAY() {},
   *RESOURCE_CHANGE(e, s, t, P) {
@@ -111,7 +111,7 @@ Battle.prototype.handlers = {
       case 'wet': { const nx = this.core.log[this.cur]; if (!was && !(nx && nx.type === EVT.MESSAGE && nx.payload.key === 'flood_wet')) yield* this.msg(t.n + '全身濕透了！', { hold: 18 }); break; }
       case 'tangle': yield* this.msg(t.n + '被藤蔓纏住了！（怕火）', { hold: 22 }); break;
       case 'barrier': yield* FX.barrier.call(this, C); yield* this.msg(t.n + '展開了魔法護盾！', { hold: 22 }); break;
-      case 'smoke': yield* this.msg(t.n + '躲進了煙幕裡！（比較難被打中）', { hold: 22 }); break;
+      case 'smoke': { const sk = this.cast && this.cast.D, smk = this.itemCtx || !sk || /煙|霧/.test((sk.name || '') + (sk.desc || '')); yield* this.msg(t.n + (smk ? '躲進了煙幕裡！（比較難被打中）' : '的迴避提升了！（比較難被打中）'), { hold: 22 }); break; } // v12.68: 心眼・殘影步 have no smoke
       case 'critNext': yield* this.msg(t.n + '集中精神！下一擊必定會心！', { hold: 20 }); break;
       case 'frozen': Sound.sfx('charge'); yield* this.msg(t.n + '的時間被凍結了！', { hold: 22 }); break;
       case 'mirror': Sound.sfx('charge'); t.tint = { c: '#c8f4ff', a: 0.6 }; yield* wait(14); t.tint = null; yield* this.msg(t.n + '的表面變得像鏡子一樣！'); if (!this.mirrorTold) { this.mirrorTold = 1; yield* this.msg('（這段時間魔法攻擊會被反射回來！用物理攻擊或防禦吧。）'); } break;
@@ -167,7 +167,7 @@ Battle.prototype.handlers = {
     this.sparks(C.x, C.y, 26, ['#ffe070', '#ffffff', '#80c8ff'], 3.4, 26, 0.12); this.pops.push({ x: C.x, y: C.y - 44, s: 'BREAK!', c: '#ffd040', t: 0, big: 1 }); this.anim(t, 'hurt', 30, true);
     yield* wait(16); t.A.hold = false; yield* this.msg(t.n + '破防了！');
     if (!Game.st.flags.tutBreak) { Game.st.flags.tutBreak = 1; yield* this.msg('（破防中的魔物無法行動，受到的傷害也會提高。持續到下一回合結束。）'); } },
-  *SKILL_SUCCESS(e, s, t, P) { const cs = this.cast, by = cs && cs.by ? Object.keys(cs.by) : []; if (cs && cs.id === P.cast && by.length === 1 && cs.hits > 1) yield* this.msg(cs.hits + '連擊！合計' + cs.total + '點傷害！', { hold: 22 }); },
+  *SKILL_SUCCESS(e, s, t, P) { const cs = this.cast, by = cs && cs.by ? Object.keys(cs.by) : []; if (cs && cs.id === P.cast && by.length === 1 && cs.hits > 1) yield* this.msg(cs.hits + '連擊！' + (cs.total > 0 ? '合計' + cs.total + '點傷害！' : '全部打在護盾上！'), { hold: 22 }); },
   *SKILL_SELECT() {}, *BATTLE_START() {}, *BATTLE_END() {}, *EFFECT_DONE() {},
 };
 
@@ -227,12 +227,12 @@ Battle.prototype.levelUp = function* () {
   for (let i = 0; i < 24; i++) { this.H.tint.a = Math.sin(i / 24 * Math.PI) * 0.8; tb.update(); yield; } this.H.tint = null;
   while (!tb.done) { tb.update(); yield; }
   let showTotal = false; const rowsL = st.attr ? [['HP', before.hp, after.hp], ['MP', before.mp, after.mp], ['物攻', before.atk, after.atk], ['物防', before.def, after.def], ['魔攻', before.spa, after.spa], ['魔防', before.spd, after.spd], ['速度', before.spe, after.spe]] : [['HP', before.hp, after.hp]].concat(ATTRS.map(k => [ATTR_NAMES[k], bA[k], aA[k]]));
-  const win = { draw: x => { drawWin(x, 80, 34, 90, 122, 'menu'); rowsL.forEach(([n, b, a], i) => { const Y = 38 + i * 16; Font.draw(x, n, 90, Y, UIC.muted, UIC.textSh); const d = a - b; Font.drawR(x, showTotal ? String(a) : d > 0 ? '+' + d : '—', 162, Y, showTotal ? UIC.text : d > 0 ? UIC.accent : UIC.dis, UIC.textSh); }); } };
+  const win = { draw: x => { drawWin(x, 80, 34, 90, 122, 'menu'); rowsL.forEach(([n, b, a], i) => { const Y = 38 + i * 16; Font.draw(x, n, 90, Y, UIC.muted, UIC.textSh); const d = a - b; Font.drawR(x, showTotal ? String(a) : d > 0 ? '+' + d : '—', 162, Y, showTotal ? UIC.text : d > 0 ? UIC.accent : UIC.dis, UIC.textSh); if (showTotal && d > 0) Font.drawR(x, '+' + d, 136, Y + 2, UIC.accent, UIC.textSh, 8); }); } }; // v12.68: the gain stays next to the total
   UI.push(win); yield* waitA(); showTotal = true; Sound.sfx('cursor'); yield* waitA(); UI.remove(win); UI.remove(tb);
   st.mp = after.mp; this.H.maxmp = after.mp; this.H.mp = st.mp; st.skp = 0; st.tp = 0;
   const cap = typeof TP_CAP !== 'undefined' ? TP_CAP : 99, raw = typeof tpRaw === 'function' ? tpRaw(st) : 0;
   yield* this.msg(raw > cap ? 'MP全部恢復了。（天賦點已達上限' + cap + '點）' : st.lv % 2 === 0 ? '獲得了1點天賦點！MP也全部恢復了。（選單→天賦）' : 'MP全部恢復了。（下一級會得到天賦點）', { hold: 40 });
-  const gain = (typeof attrAvail === 'function' ? attrAvail(st) : 0) - atB; if (st.attr && gain > 0) { Sound.sfx('item'); yield* this.msg('獲得了' + gain + '點屬性點！（目前' + attrAvail(st) + '點，選單→屬性 分配）', { hold: 40 }); }
+  const gain = (typeof attrAvail === 'function' ? attrAvail(st) : 0) - atB; if (st.attr && gain > 0) { Sound.sfx('item'); yield* this.msg('獲得了' + gain + '點屬性點！（目前' + attrAvail(st) + '點，選單→屬性分配）', { hold: 40 }); }
   if (st.lv === 14 && !(st.flags && st.flags.deep)) yield* this.msg('到達Lv14了！去找萌芽鎮的村長，進行「天賦覺醒」吧。', { hold: 40 });
   if (Sound.current !== 'victory' && this.core.result && this.core.result.outcome === 'win') Sound.play('victory');
 };

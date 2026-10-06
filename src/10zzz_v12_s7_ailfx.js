@@ -32,7 +32,7 @@ function ailTag12(x, X, Y, v, right) { const k = ailOf12(v); if (!k) return 0; c
     x.globalAlpha = a; const w = 120, X = (W - w) / 2, pe = plateExtra(); ailTag12(x, X + w - 4, 6 + 33 + pe, F, true); x.globalAlpha = 1; }; }
 { const _ps = Battle.prototype.drawPlateSmall; Battle.prototype.drawPlateSmall = function (x, v, a, i, n) { _ps.call(this, x, v, a, i, n); if (!v || a <= 0 || !ailOf12(v)) return;
     const sw = Math.floor((W - 4) / Math.max(1, n)), w = Math.min(n >= 3 ? 56 : 80, sw - 2), X = Math.round(clamp(v.x - w / 2, 2 + i * sw, 2 + i * sw + sw - 2 - w));
-    x.globalAlpha = a; ailTag12(x, X, 4 + 36, v); x.globalAlpha = 1; }; }
+    x.globalAlpha = a; ailTag12(x, Math.max(X, 18), 4 + 36, v); x.globalAlpha = 1; }; } // v12.68: clear of the turn-order boxes on the left (it looked like the hero's)
 { const _db = Battle.prototype.drawBoxH; Battle.prototype.drawBoxH = function (x) { _db.call(this, x); const Hv = this.H; if (!Hv || !ailOf12(Hv) || Math.round(this.boxH) >= BH) return;
     const C = this.center(Hv); ailTag12(x, Math.max(2, Math.round(C.x - 66 + Hv.off.x)), Math.round(HERO_FOOT - 28 + Hv.off.y), Hv); }; }
 // the turns left come from the battle's own status (refreshed after every played action)

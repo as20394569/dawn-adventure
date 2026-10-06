@@ -159,7 +159,7 @@ if (typeof giveReward === 'function') { const _gr = giveReward; giveReward = fun
 
 /* ---------- 戰鬥後：拿到的素材（v12.17：素材先放背包，到鐵匠「素材換點數」才換；訊息統一寫「狼皮（獸材 +2）」） ---------- */
 const matVal12 = k => tierPts11(MATT11[k] || 1);
-const matLine12 = o => Object.keys(o).filter(k => o[k] > 0 && ITEMS[k]).map(k => ITEMS[k].n + (o[k] > 1 ? '×' + o[k] : '') + (MATCAT11[k] ? '（' + MATCAT11[k] + ' +' + o[k] * matVal12(k) + '）' : '')).join('、');
+const matLine12 = o => Object.keys(o).filter(k => o[k] > 0 && ITEMS[k]).map(k => ITEMS[k].n + (o[k] > 1 ? '×' + o[k] : '') + (MATCAT11[k] ? '（可換' + MATCAT11[k] + o[k] * matVal12(k) + '點）' : '')).join('、');
 const MATMUTE12 = /^(得到了素材|（晶石）多撿到了素材|又撿到了素材|（幸運）多撿到了|(頭目|菁英)留下了素材)/;
 const matTut12 = function* (show) { const st = Game.st; if (st.flags.tutMat12) return; st.flags.tutMat12 = 1; yield* show('（素材會放進背包。到鐵匠選「素材換點數」，就能換成打造・賦予用的點數；括號裡是換得到的點數。任務要的素材換的時候會自動留著。）'); };
 { const H = Battle.prototype, _m = H.msg; H.msg = function* (t, o) { if (this._mute11 && typeof t === 'string' && MATMUTE12.test(t)) return; return yield* _m.call(this, t, o); }; }

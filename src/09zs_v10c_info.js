@@ -15,17 +15,17 @@ function foeDropLines(sp, key, kind) {
 }
 function famText(sp) { const F = FAMILIES[SPECIES[sp].fam] || {}; return (F.weak && F.weak.length ? '弱：' + F.weak.join('') : '') + (F.resist && F.resist.length ? '　抗：' + F.resist.join('') : '') + (F.immune && F.immune.length ? '　免疫' + F.immune.map(q => ({ psn: '毒', par: '麻', slp: '眠', brn: '燒' })[q] || q).join('') : ''); }
 encounterCard = function (sp, lv, key, kind, extra) {
-  const pic = typeof chibiPortrait === 'function' && chibiPortrait(sp) || battlePortrait(sp), stars = dangerStars(lv), mv = foeMoves(sp, lv, kind).map(id => MOVES[id]).filter(Boolean);
+  const pic = typeof chibiPortrait === 'function' && chibiPortrait(sp) || battlePortrait(sp), stars = dangerStars(lv), mv = foeMoves(sp, lv, kind).map(id => MOVES[id]).filter(Boolean).filter((m, i, A) => A.findIndex(q => q.n === m.n) === i); // v12.68: no move listed twice
   const mvTxt = mv.map(m => (m.charge ? '⚠' : '') + m.n).join('・'), mvL = Font.wrap(mvTxt, W - 36, 9).slice(0, 3), dropL = foeDropLines(sp, key, kind).flatMap(t => Font.wrap(t, W - 36, 8)).slice(0, 6);
   return { draw(x) {
-    const X = 6, Y = 4, w = W - 12, h = 70 + 12 + mvL.length * 11 + 13 + dropL.length * 10 + 5; drawPanel(x, X, Y, w, h, kind === 'boss' ? '#ff6b7a' : '#ffc46b'); // v10.5: the last drop line fits inside
+    const X = 6, Y = 4, w = W - 12, h = 70 + 12 + mvL.length * 11 + 13 + dropL.length * 10 + 8; drawPanel(x, X, Y, w, h, kind === 'boss' ? '#ff6b7a' : '#ffc46b'); // v10.5: the last drop line fits inside
     Font.drawC(x, (kind === 'boss' ? '頭目' : '菁英魔物') + (extra ? '・' + extra : ''), W / 2, Y + 2, kind === 'boss' ? '#ff9aa4' : '#ffd890', UIC.textSh, 9);
     x.fillStyle = 'rgba(10,12,24,0.7)'; x.fillRect(X + 6, Y + 16, 50, 50);
     if (pic) { const s = Math.min(1, 48 / pic.height, 48 / pic.width); x.imageSmoothingEnabled = false; x.drawImage(pic, Math.round(X + 31 - pic.width * s / 2), Math.round(Y + 65 - pic.height * s), Math.round(pic.width * s), Math.round(pic.height * s)); }
     const tx = X + 62; Font.draw(x, SPECIES[sp].n, tx, Y + 15, UIC.text, UIC.textSh, 11); Font.draw(x, 'Lv' + lv + '・' + famName(SPECIES[sp].fam), tx, Y + 29, UIC.muted, UIC.textSh, 9);
     let s = ''; for (let i = 0; i < 5; i++) s += i < stars ? '★' : '☆'; Font.draw(x, '危險度 ' + s, tx, Y + 41, stars >= 4 ? '#ff7a7a' : stars === 3 ? '#ffd070' : '#9ad890', UIC.textSh, 9);
-    { const ft = famText(sp) || '沒有明顯弱點'; let fz = 9; while (fz > 7 && Font.width(ft, fz) > W - tx - 10) fz--; Font.draw(x, ft, tx, Y + 53, '#8ad0ff', UIC.textSh, fz); }
-    let y = Y + 70; Font.draw(x, '【招式】' + (mv.some(m => m.charge) ? '　⚠＝蓄力大招，記得防禦' : ''), X + 8, y, UIC.accent, UIC.textSh, 9); y += 12;
+    { const ft = famText(sp) || '沒有明顯弱點', aw = W - tx - 10; let fz = 9; while (fz > 8 && Font.width(ft, fz) > aw) fz--; if (Font.width(ft, fz) <= aw) Font.draw(x, ft, tx, Y + 53, '#8ad0ff', UIC.textSh, fz); else Font.wrap(ft, aw, 8).slice(0, 2).forEach((l, i) => Font.draw(x, l, tx, Y + 50 + i * 9, '#8ad0ff', UIC.textSh, 8)); } // v12.68: two lines instead of running off the card
+    let y = Y + 70; { const CH = mv.filter(m => m.charge), nd = CH.some(m => /無視「防禦」|無視防禦/.test((m.warn || '') + (m.d || ''))); Font.draw(x, '【招式】' + (CH.length ? (nd ? '　⚠＝蓄力大招（看蓄力時的提示）' : '　⚠＝蓄力大招，記得防禦') : ''), X + 8, y, UIC.accent, UIC.textSh, 9); } y += 12; // v12.68: 豐收之刻 can't be blocked
     mvL.forEach(l => { Font.draw(x, l, X + 12, y, '#e8f0ff', UIC.textSh, 9); y += 11; });
     Font.draw(x, '【掉落】', X + 8, y + 1, UIC.accent, UIC.textSh, 9); y += 13; dropL.forEach(l => { Font.draw(x, l, X + 12, y, '#c8b0ff', UIC.textSh, 8); y += 10; });
   } };

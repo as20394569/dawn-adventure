@@ -49,7 +49,7 @@ for (const k of Object.keys(CAMP12).concat(['grenPass', 'grenCamp'])) { const _e
     Sound.stop(); UI.clear();
     const box = { draw(x) { x.fillStyle = '#000'; x.fillRect(0, 0, W, H); } }; UI.push(box);
     Game.fade = 0;
-    yield* say(st.name + '眼前一片漆黑……', { style: 'dark', y: 98 });
+    if (!Game.keepGold13) yield* say(st.name + '眼前一片漆黑……', { style: 'dark', y: 98 }); // v12.68: after 「回去準備」 it was said twice
     if (lost) yield* say('慌亂之中弄丟了' + lost + ' G……', { style: 'dark', y: 98 });
     UI.remove(box); Game.fade = 1;
     healHero(); const r = st.respawn; this.load(r.map, r.x, r.y, r.dir, true);

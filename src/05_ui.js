@@ -303,10 +303,10 @@ function* bagScreen(mode = 'field') { // returns item id used (battle) or null
   // v10.7.1 (player: 「背包要能看到寶珠跟寶石」): 寶珠 lists every orb (socketed or not), 寶石 the enchant stones
   let tab = 0, idx = 0; const tabs = mode === 'battle' ? ['道具'] : ['道具', '裝備', '素材', '重要']; // v12: 寶珠・寶石 tabs removed (orbs and enchant cancelled)
   const orbsSorted = () => typeof orbList === 'function' ? orbList(Game.st).slice().sort((a, b) => (!!orbHost(b) - !!orbHost(a)) || (isActiveOrb(b) - isActiveOrb(a)) || orbDef(a).n.localeCompare(orbDef(b).n)) : [];
-  const listFor = t => tabs[t] === '裝備' ? gearSort() : tabs[t] === '寶珠' ? orbsSorted() : bagList(it => tabs[t] === '道具' ? (!it.key && !it.mat && it.use !== 'enchant' && (mode !== 'battle' || (it.use !== 'boost' && it.use !== 'tp'))) : tabs[t] === '寶石' ? it.use === 'enchant' : tabs[t] === '素材' ? !!it.mat : !!it.key);
+  const listFor = t => tabs[t] === '裝備' ? gearSort() : tabs[t] === '寶珠' ? orbsSorted() : bagList(it => tabs[t] === '道具' ? (!it.key && !it.mat && it.use !== 'enchant' && (mode !== 'battle' || !['boost', 'tp', 'reset', 'food13'].includes(it.use))) : tabs[t] === '寶石' ? it.use === 'enchant' : tabs[t] === '素材' ? !!it.mat : !!it.key);
   const VIS = 7;
   const scr = { touchBack: true, draw(x) {
-    screenBG(x); headerBar(x, '背包'); Font.drawR(x, Game.st.money + ' G', W - 6, 2, UIC.warm, UIC.textSh);
+    screenBG(x); headerBar(x, '背包'); if (mode === 'battle' && Game.scene && Game.scene.core && Game.scene.core.byId.H) { const u = Game.scene.core.byId.H; Font.drawR(x, 'HP ' + u.res.hp + '/' + u.max.hp + '　MP ' + (u.res.mp ?? 0) + '/' + (u.max.mp ?? 0), W - 6, 4, UIC.text, UIC.textSh, 9); } else Font.drawR(x, Game.st.money + ' G', W - 6, 2, UIC.warm, UIC.textSh); // v12.68: in battle, HP/MP instead of money
     const tw = Math.floor(171 / tabs.length); tabs.forEach((t, i) => { const X = 4 + i * tw; drawBtn(x, X, 23, tw - 3, 15, i === tab); Font.drawC(x, t, X + (tw - 3) / 2, midY(23, 15, 11), i === tab ? UIC.text : UIC.muted, UIC.textSh, 11); });
     const list = listFor(tab), gear = tabs[tab] === '裝備', orbT = tabs[tab] === '寶珠'; drawWin(x, 4, 40, 168, VIS * 18 + 10, 'menu');
     if (!list.length) Font.draw(x, '（空空如也）', 20, 46, UIC.muted, UIC.textSh);

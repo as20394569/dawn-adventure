@@ -211,7 +211,7 @@ lootHint = function (key, sp) { const first = !((Game.st.kills || {})[key]), sig
   return PARTS11[sp] ? '再戰：部位、經驗、金錢' : '再戰：經驗、金錢' + ((SPECIES[sp] || {}).mat && ITEMS[SPECIES[sp].mat] ? '、' + ITEMS[SPECIES[sp].mat].n : ''); };
 // the first charge explains both answers once
 { const H = Battle.prototype.handlers, _c = H.CHARGE; H.CHARGE = function* (e, s, t, P) { yield* _c.call(this, e, s, t, P);
-    if (s && !s.hero && (s.elite || s.boss) && !Game.st.flags.tutCharge11) { Game.st.flags.tutCharge11 = 1; yield* this.msg('（蓄力大招：選「防禦」可以擋下七成傷害；也可以在牠出手前打破牠張開的護盾（弱點・會心對護盾加倍），打出「破防」直接打斷。）', { wait: true }); } }; }
+    if (s && !s.hero && (s.elite || s.boss) && !Game.st.flags.tutCharge11 && !/無視「防禦」/.test((DEF.skills[P.skill] || {}).warn || '')) { /* v12.68: not right after 「豐收之刻會無視「防禦」」 */ Game.st.flags.tutCharge11 = 1; yield* this.msg('（蓄力大招：選「防禦」可以擋下七成傷害；也可以在牠出手前打破牠張開的護盾（弱點・會心對護盾加倍），打出「破防」直接打斷。）', { wait: true }); } }; }
 { const H = Battle.prototype.handlers, _b = H.BREAK; H.BREAK = function* (e, s, t, P) { const had = Game.st.flags.tutBreak; Game.st.flags.tutBreak = 1; yield* _b.call(this, e, s, t, P);
     if (!had && t) yield* this.msg('（破防：下一次行動被跳過，受到的傷害 +50%。破防越多，部位掉得越多！）', { wait: true }); }; }
 

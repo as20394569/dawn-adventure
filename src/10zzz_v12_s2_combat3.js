@@ -99,8 +99,8 @@ let PART_PICK11 = null;
 { const _pb = Battle.prototype.drawPlateBig; Battle.prototype.drawPlateBig = function (x, F, a0) { _pb.call(this, x, F, a0); const u = F && F.u; if (!u || !(u.elite || u.boss)) return;
     const a = a0 * (F.plateA ?? 1); if (a <= 0) return; x.globalAlpha = a; const py = 6, pe = plateExtra(), I = u.data.in11 || { b: 100, p: 100, m: 100 };
     // v12.27（畫面精簡）：只列出偏離 100 的那幾類（剛開戰三類都是 100，就不畫）
-    [['普', 'b'], ['物', 'p'], ['魔', 'm']].filter(([n, k]) => Math.round(I[k]) !== 100).forEach(([n, k], j) => { const v = Math.round(I[k]), Y = py + 25 + j * 9; x.fillStyle = 'rgba(10,8,20,0.78)'; x.fillRect(2, Y, 25, 8);
-      Font.draw(x, n, 3, Y - 2, UIC.muted, UIC.textSh, 7); Font.drawR(x, String(v), 26, Y - 2, v > 100 ? '#8af08a' : v < 100 ? '#ff7a6a' : UIC.text, UIC.textSh, 7); });
+    [['普', 'b'], ['物', 'p'], ['魔', 'm']].filter(([n, k]) => Math.round(I[k]) !== 100).forEach(([n, k], j) => { const v = Math.round(I[k]), Y = py + 22 + j * 10; x.fillStyle = 'rgba(10,8,20,0.82)'; x.fillRect(2, Y, 34, 9); // v12.68: 8 px with %, the label brighter
+      Font.draw(x, n, 3, Y - 2, '#c9cfe4', UIC.textSh, 8); Font.drawR(x, v + '%', 35, Y - 2, v > 100 ? '#8af08a' : v < 100 ? '#ff7a6a' : UIC.text, UIC.textSh, 8); });
     const P = u.boss && F.broken && partsOf11(u); if (P) { const w = 120, X = (W - w) / 2, Y = py + 57 + pe;
       P.forEach((p, k) => { const cx = X + k * 62, r = clamp(p.hp / p.max, 0, 1); x.fillStyle = 'rgba(10,8,20,0.8)'; x.fillRect(cx, Y, 58, 11);
         Font.draw(x, p.n, cx + 2, Y - 1, p.gone ? UIC.dis : '#ffd070', UIC.textSh, 8); if (p.gone) Font.drawR(x, '打壞', cx + 56, Y - 1, '#ff7a6a', UIC.textSh, 7);

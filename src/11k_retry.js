@@ -16,6 +16,6 @@ const retryPut13 = (a, b) => { for (const k of Object.keys(a)) if (!(k in b)) de
 { const _wo = Overworld.prototype.whiteout; Overworld.prototype.whiteout = function* (...a) { const R = Game.retry13;
     if (!R) return yield* _wo.apply(this, a);
     Game.retry13 = null; Sound.stop(); UI.clear(); const box = { draw(x) { x.fillStyle = '#000'; x.fillRect(0, 0, W, H); } }; UI.push(box); Game.fade = 0; let c;
-    try { c = yield* ask(this.st.name + '眼前一片漆黑……\n要再挑戰一次嗎？\n（回到這場戰鬥開始前）', ['再挑戰', '回去準備']); } finally { UI.remove(box); }
+    try { c = yield* ask(this.st.name + '眼前一片漆黑……要再挑戰嗎？\n再挑戰：回到這場戰鬥開始前\n回去準備：醒來，錢不會少', ['再挑戰', '回去準備']); } finally { UI.remove(box); }
     if (c === 0) { R.again = true; Game.fade = 0; return; }
     Game.keepGold13 = 1; try { yield* _wo.apply(this, a); } finally { Game.keepGold13 = 0; } }; }
