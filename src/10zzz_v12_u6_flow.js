@@ -22,6 +22,6 @@ PV('wbal13', v => ({ mods: [{ stage: 'final', who: 'attacker', mul: v, cond: { h
 { const _hs = BB.heroSpec; BB.heroSpec = function (st, cfg) { const s = _hs.call(this, st, cfg); if (!st) return s; const k = dualMode11(st) || mainKind11(st), v = wbalMul13(k, st.lv || 1);
     if (v !== 1) s.passives.push({ key: 'wbal13', v, src: 'tree' }); return s; }; }
 { const _wm = wardMul12; wardMul12 = function (core, s, t, P) { const m = _wm(core, s, t, P); return P && P.cat === '特' ? m * WBAL13.magicWard : m; }; }
-{ const fx = t => typeof t === 'string' ? t.replace('弱點和會心對護盾加倍，', '弱點和會心對護盾加倍、魔法攻擊 ×1.5，') : t;
+{ const fx = t => typeof t === 'string' ? t.replace('會心對護盾加倍，', '會心對護盾加倍、魔法攻擊 ×1.5，') : t;
   if (typeof WARD_HELP12 !== 'undefined') for (let i = 0; i < WARD_HELP12.length; i++) WARD_HELP12[i] = fx(WARD_HELP12[i]);
   if (typeof GROW12 !== 'undefined') for (const q of GROW12) q[1] = fx(q[1]); }

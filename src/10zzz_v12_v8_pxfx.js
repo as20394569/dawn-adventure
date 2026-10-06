@@ -242,69 +242,85 @@ redo13('t_zjQuake', 't11_zjQuake', { col: PXC.chi,
       yield* tween(3, q => { o.y = -6 * Math.sin(Math.PI * q); }); o.y = 0; } else yield* wait(16);
     yield* wait(12); } });
 
-// ---------- 法杖（元素）----------
-const fireBall13 = function* (b, A, P, r = 4, n = 9) { const c = [OSH13, '#d8361a', '#ff8a1e', '#ffe08a'], p = b.spawn({ k: 'p13orb', x: A.x, y: A.y, r, c, trail: 7, pulse: 1, life: n + 1 });
-  p.upd = q => { const k = clamp(q.t / n, 0, 1); q.x = lerp(A.x, P.x, k); q.y = lerp(A.y, P.y, k); if (q.t % 2 === 0) b.spawn({ k: 'p13px', x: q.x + rnd(-2, 2), y: q.y + rnd(-2, 2), vx: rnd(-3, 3) / 10, vy: -0.3, s: 2, cols: ['#ffe08a', '#ff8a1e', '#d8361a', '#5a1800'], life: 12 }); }; yield* wait(n); };
-const flames13 = (b, P, n = 3, w = 14) => { for (let i = 0; i < n; i++) PX13.spr(b, i % 2 ? PXI.flameB : PXI.flameA, { x: P.x + rnd(-w, w), y: P.y + rnd(-6, 8) }, { frames: [PXI.flameA, PXI.flameB], fps: 3, vy: -0.25, life: 20 + rnd(0, 6), delay: i * 2 }); };
-// 火球：火屬性，20% 灼傷 → 杖尖冒火，一顆像素火球拖著火星飛過去，炸開成火焰（對手身上燒起幾團小火）
-redo13('t_stArrows', 't11_stArrows', { col: PXC.fire,
-  *f(S, U, T) { const A = PX13.tip(this); Sound.sfx('fire'); flames13(this, A, 2, 3); yield* wait(5); yield* fireBall13(this, A, T, 6, 10);
-    Sound.sfx('fire'); PX13.burst(this, T, 14, PXC.fire, 12, { s: 3 }); flames13(this, T, 3); PX13.bits(this, T, 8, ['#ffe08a', '#ff8a1e', '#d8361a'], 1.6, -0.04, 18); this.shake = Math.max(this.shake, 4); yield* wait(12); } });
-// 冰錐：水屬性，10% 凍結 → 杖尖凝出一根冰錐（越長越大），射過去碎成冰晶，對手身邊亮起雪花
-const ICICLE13 = [{ pts: [[0, -12], [3, -2], [2, 9], [0, 11], [-2, 9], [-3, -2]], c: '#9ad8ff', o: '#061a40' }, { pts: [[0, -10], [1, -2], [0, 8], [-1, -2]], c: '#ffffff', o: null }];
-redo13('t_stLance', 't11_stLance', { col: PXC.ice,
-  *f(S, U, T) { const A = PX13.tip(this), d = PX13.dir(A, T); Sound.sfx('water'); const ic = this.spawn({ k: 'p13poly', x: A.x, y: A.y, rot: d.ang + Math.PI / 2, sc: 0.3, shapes: ICICLE13, life: 18 });
-    ic.upd = q => { if (q.t < 8) q.sc = 0.5 + 1.1 * q.t / 8; else { const k = clamp((q.t - 8) / 5, 0, 1); q.sc = 1.6; q.x = lerp(A.x, T.x, k); q.y = lerp(A.y, T.y, k); } };
-    for (let i = 0; i < 6; i++) { const P0 = { x: A.x + rnd(-14, 14), y: A.y + rnd(-12, 12) }, q0 = this.spawn({ k: 'p13px', x: P0.x, y: P0.y, s: 2, cols: ['#ffffff', '#9ad8ff'], o: OSH13, life: 8 }); q0.upd = q => { const k = clamp(q.t / 7, 0, 1); q.x = lerp(P0.x, A.x, k); q.y = lerp(P0.y, A.y, k); }; } yield* wait(13); ic.life = ic.t + 1;
-    Sound.sfx('hit'); PX13.burst(this, T, 12, PXC.ice, 11); PX13.bits(this, T, 10, ['#ffffff', '#9ad8ff', '#3aa0ff'], 2.2, 0.12, 16, { s: 2 }); for (let i = 0; i < 4; i++) PX13.spr(this, PXI.ice, { x: T.x + rnd(-16, 16), y: T.y + rnd(-14, 12) }, { life: 18, delay: i * 2 });
-    yield* wait(12); } });
-// 元素屏障：張開護盾（最大 HP 25%，魔法全吸收、物理吸收一半），2 回合 → 火・水・雷・草四顆元素寶石繞著主角轉一圈，拉出一道四色的光環，光環上閃著亮點
-const GEMS13 = () => [PXI.gem(PXC.fire), PXI.gem(PXC.ice), PXI.gem(PXC.volt), PXI.gem(PXC.leaf)];
-const gemSc13 = 2;
-redo13('t_stWall', 't11_stWall', { col: PXC.ice,
-  *f(S) { const H = PX13.hero(this), C = { x: H.x, y: H.y - 4 }, G = GEMS13(), col = [PXC.fire, PXC.ice, PXC.volt, PXC.leaf]; Sound.sfx('charge');
-    G.forEach((g, i) => { const p = PX13.spr(this, g, C, { sc: gemSc13, life: 30 }); p.upd = q => { const an = i * Math.PI / 2 + q.t * 0.21, R = Math.min(26, q.t * 3); q.x = C.x + Math.cos(an) * R; q.y = C.y + Math.sin(an) * R * 0.75; }; });
-    yield* wait(12); Sound.sfx('shield'); col.forEach((c, i) => PX13.arc(this, C, 26, i * Math.PI / 2, (i + 1) * Math.PI / 2 + 0.05, c, 3, 26, { fl: 0.75, grow: 5, hold: 12 }));
-    for (let i = 0; i < 6; i++) PX13.spr(this, PXI.glintS, { x: C.x + Math.cos(i * 1.05) * 26, y: C.y + Math.sin(i * 1.05) * 19 }, { life: 10, delay: 6 + i * 2 }); yield* wait(22); } });
-// 落雷：雷屬性，20% 麻痺；對蓄力中的對手威力 ×1.5 → 杖尖冒電花，天上劈下一道鋸齒狀的閃電，打中的地方炸出電花；對手正在蓄力時落下兩道、再大一圈
-const bolt13 = (b, P, s = 2, life = 12) => b.spawn({ k: 'p13bolt', pts: PX13.zig({ x: P.x + rnd(-10, 10), y: -6 }, P, 8, 7), c: PXC.volt, s, grow: 2, life });
-redo13('t_stImpact', 't11_stImpact', { col: PXC.volt,
-  *f(S, U, T, u, t) { const v = tgt13(this, t), chg = !!(v && v.st && v.st.charging), A = PX13.tip(this); Sound.sfx('buzz'); zaps13(this, A, 2); yield* wait(6);
-    K13.dark(this, 0.3, 12, '#0a0a20'); Sound.sfx('thunder'); bolt13(this, T, chg ? 3 : 2, 12); K13.flash(this, '#fff6a0', 0.35, 4); PX13.burst(this, T, chg ? 20 : 13, PXC.volt, 12, { s: 3 }); zaps13(this, T, 3); this.shake = Math.max(this.shake, chg ? 10 : 6);
-    if (chg) { yield* wait(4); bolt13(this, { x: T.x + 6, y: T.y }, 3, 12); K13.flash(this, '#ffffff', 0.35, 4); } yield* wait(12); } });
-// 炎浪：火屬性打全體，10% 灼傷 → 一排火焰像浪一樣從左邊捲到右邊，經過的每一隻都被火吞掉、冒出火星
-redo13('t_stStorm', 't11_stStorm', { col: PXC.fire,
-  *f(S, U, T, u, t) { const L = PX13.foes(this, t).sort((a, q) => a.P.x - q.P.x), y0 = T.y + 18; Sound.sfx('fire'); flames13(this, PX13.tip(this), 2, 3); yield* wait(4); let k = 0;
-    for (let f = 0; f < 22; f++) { const X = lerp(-14, W + 14, f / 21); if (f % 2 === 0) for (let j = 0; j < 3; j++) PX13.spr(this, PXI.flameA, { x: X + rnd(-6, 6), y: y0 - j * 9 + rnd(-2, 2) }, { frames: [PXI.flameA, PXI.flameB], fps: 2, sc: j === 0 ? 2 : 1, vy: -0.3, life: 14 });
-      while (k < L.length && L[k].P.x <= X) { Sound.sfx('fire'); const P = L[k].P; PX13.burst(this, P, 12, PXC.fire, 10); flames13(this, P, 3, 12); k++; } yield; }
-    yield* wait(10); } });
-// 藤鞭：草屬性，回復傷害 25% 的 HP → 杖尖長出一條帶葉子的藤蔓抽過去、葉片飛散；綠色的光點從對手身上流回主角，主角身邊冒出「＋」（回復）
-const PLUS13 = PXS(['.kkk.', 'kkgkk', 'kgggk', 'kkgkk', '.kkk.'], { g: '#7af060' });
-redo13('t_stHaste', 't11_stHaste', { col: PXC.leaf,
-  *f(S, U, T) { const A = PX13.tip(this), H = PX13.hero(this); Sound.sfx('leaf'); this.spawn({ k: 'p13vine', x1: A.x, y1: A.y, x2: T.x, y2: T.y, c: PXC.leaf, s: 3, amp: 8, waves: 2.5, grow: 7, life: 24 }); yield* wait(7);
-    Sound.sfx('slash'); PX13.burst(this, T, 12, PXC.leaf, 11); for (let i = 0; i < 6; i++) PX13.spr(this, PXI.leaf, T, { sc: 2, vx: rnd(-20, 20) / 10, vy: -rnd(6, 20) / 10, g: 0.08, life: 20 }); yield* wait(6);
-    Sound.sfx('heal'); for (let i = 0; i < 10; i++) { const P0 = { x: T.x + rnd(-10, 10), y: T.y + rnd(-8, 8) }, p = this.spawn({ k: 'p13px', x: P0.x, y: P0.y, s: 2, cols: ['#c8f8a0', '#7af060'], o: '#06300a', life: 16, delay: i }); p.upd = q => { const k = clamp((q.t - i) / 12, 0, 1); q.x = lerp(P0.x, H.x, k * k); q.y = lerp(P0.y, H.y - 6, k * k); }; }
-    yield* wait(12); for (const [dx, dy] of [[-12, -10], [12, -16], [0, -24]]) PX13.spr(this, PLUS13, { x: H.x + dx, y: H.y + dy }, { sc: 2, vy: -0.4, life: 20 }); yield* wait(12); } });
-// 雷暴：雷屬性打全體 2 段（各 45），20% 麻痺 → 魔物頭上捲起一片雷雲，第一段每一隻都被劈一道；第二段再劈一次
-redo13('t_stFinale', 't11_stFinale', { col: PXC.volt,
-  *f(S, U, T, u, t) { const L = PX13.foes(this, t); K13.dark(this, 0.4, 70, '#06061a'); Sound.sfx('wind'); const cl = PX13.spr(this, PXI.cloud, { x: T.x, y: 6 }, { sc: 3, life: 64 }); cl.upd = q => { q.y = Math.min(34, 6 + q.t * 3); };
-    yield* wait(10); for (const { P } of L) { Sound.sfx('thunder'); this.spawn({ k: 'p13bolt', pts: PX13.zig({ x: P.x + rnd(-6, 6), y: 44 }, P, 6, 6), c: PXC.volt, s: 2, grow: 2, life: 12 }); PX13.burst(this, P, 12, PXC.volt, 11); zaps13(this, P, 2); yield* wait(3); }
-    K13.flash(this, '#fff6a0', 0.3, 4); this.shake = Math.max(this.shake, 8); yield* wait(8); },
-  *h(S, U, T) { Sound.sfx('thunder'); this.spawn({ k: 'p13bolt', pts: PX13.zig({ x: T.x + rnd(-6, 6), y: 44 }, T, 6, 6), c: PXC.volt, s: 3, grow: 2, life: 12 }); PX13.burst(this, T, 14, PXC.volt, 12, { s: 3 }); zaps13(this, T, 2); K13.flash(this, '#ffffff', 0.25, 3); this.shake = Math.max(this.shake, 6); yield* wait(8); } });
-// 元素增幅：3 回合魔攻 +2、打中弱點的傷害 +20% → 主角腳下亮起像素魔法陣，四顆元素寶石從陣的四邊升起、匯進杖尖，杖尖閃白光；身邊冒出紫色的往上箭頭（魔攻提升）
-redo13('t_stMax', 't11_stMax', { col: PXC.ice,
-  *f(S) { const H = PX13.hero(this), F = { x: H.x, y: HERO_FOOT - 4 }, A = PX13.tip(this), G = GEMS13(); Sound.sfx('charge');
-    PX13.ring(this, F, 30, 30, ['#c890ff', '#ffffff', OSH13], 1, 40, { fl: 0.32 }); PX13.ring(this, F, 20, 20, ['#c890ff', '#ffffff', OSH13], 1, 40, { fl: 0.32 }); yield* wait(6);
-    G.forEach((g, i) => { const P0 = { x: F.x + Math.cos(i * Math.PI / 2) * 30, y: F.y + Math.sin(i * Math.PI / 2) * 10 }, p = PX13.spr(this, g, P0, { sc: gemSc13, life: 22 }); p.upd = q => { const k = clamp(q.t / 18, 0, 1); q.x = lerp(P0.x, A.x, k * k); q.y = lerp(P0.y, A.y, k) - Math.sin(Math.PI * k) * 10; }; });
-    yield* wait(18); Sound.sfx('statUp'); PX13.spr(this, PXI.glint, A, { sc: 2, life: 12 }); [PXC.fire, PXC.ice, PXC.volt, PXC.leaf].forEach((c, i) => PX13.ring(this, A, 6, 22, c, 1, 10, { delay: 3 + i * 2 }));
+// ---------- 法杖（魔力）----------
+// v12.76（玩家 2026-10-07「法杖的技能改回不要偏元素化」）：全部改成紫白色的魔力；每招的註解寫它畫了什麼（照招式的動作，不照名字）
+const MANA14 = ['#a070ff', '#f4ecff', '#1a0838'], MANA14B = ['#6a8cff', '#e8f0ff', '#0a1440'], MANA_PX14 = ['#ffffff', '#d8c0ff', '#a070ff'];
+const manaOrb14 = (b, P, r = 4, o = {}) => b.spawn(Object.assign({ k: 'p13orb', x: P.x, y: P.y, r, c: [OSH13, '#5a2ab0', MANA14[0], MANA14[1]], trail: 6, pulse: 1, life: 20 }, o));
+const manaSpark14 = (b, P, n = 6) => PX13.bits(b, P, n, MANA_PX14, 1.8, 0.05, 16, { s: 2 });
+// MP 流回主角：藍色的光點從主角四周被吸回身上
+const mpBack14 = (b, n = 8) => { const H = PX13.hero(b); for (let i = 0; i < n; i++) { const P0 = { x: H.x + rnd(-26, 26), y: H.y + rnd(-34, 4) }, p = b.spawn({ k: 'p13px', x: P0.x, y: P0.y, s: 2, cols: ['#ffffff', '#8ab8ff', '#3a6ad0'], o: '#061a40', life: 16, delay: i });
+  p.upd = q => { const k = clamp((q.t - i) / 12, 0, 1); q.x = lerp(P0.x, H.x, k * k); q.y = lerp(P0.y, H.y - 8, k * k); }; } };
+// 魔法陣：兩圈壓扁的光環＋四個繞著轉的亮點（F＝陣的中心，在腳下）
+const runeCircle14 = (b, F, r, life, o = {}) => { PX13.ring(b, F, r, r, MANA14, 1, life, { fl: 0.32, ...o }); PX13.ring(b, F, r * 0.66, r * 0.66, MANA14, 1, life, { fl: 0.32, ...o });
+  for (let i = 0; i < 4; i++) { const p = PX13.spr(b, PXI.glintS || PXI.glint, F, { life, delay: o.delay || 0 }); p.upd = q => { const an = i * Math.PI / 2 + q.t * 0.12; q.x = F.x + Math.cos(an) * r * 0.83; q.y = F.y + Math.sin(an) * r * 0.83 * 0.32; }; } };
+const dart14 = (b, A, T, w = 5) => { PX13.thr(b, A, T, MANA14, w, 10, { grow: 4, hold: 2, over: 2 }); const o = manaOrb14(b, A, 2, { trail: 4, life: 6 }); o.upd = q => { const k = clamp(q.t / 4, 0, 1); q.x = lerp(A.x, T.x, k); q.y = lerp(A.y, T.y, k); }; };
+// 魔力箭：三支魔力箭，回 MP → 杖尖亮起紫光，一支細長尖頭的魔力箭飛過去打中對手；第二、三支從杖尖上下一點的地方接連射出；最後藍色的光點流回主角（回 MP）
+redo13('t_stArrows', 't11_stArrows', { col: MANA14,
+  *f(S, U, T) { const A = PX13.tip(this); Sound.sfx('mana'); PX13.spr(this, PXI.glint, A, { life: 8 }); yield* wait(4); dart14(this, A, T); yield* wait(4);
+    Sound.sfx('arcane'); PX13.burst(this, T, 9, MANA14, 8, { n: 4 }); manaSpark14(this, T, 4); yield* wait(3); },
+  *h(S, U, T, u, i) { const A = PX13.tip(this); dart14(this, { x: A.x - 4, y: A.y + (i === 1 ? -8 : 8) }, { x: T.x + rnd(-4, 4), y: T.y + rnd(-5, 5) }); yield* wait(4);
+    Sound.sfx('arcane'); PX13.burst(this, T, i === 2 ? 12 : 9, MANA14, 8, { n: i === 2 ? 8 : 4 }); manaSpark14(this, T, 4);
+    if (i === 2) { yield* wait(4); Sound.sfx('heal'); mpBack14(this, 8); yield* wait(12); } else yield* wait(3); } });
+// 魔力槍：魔力凝成的長槍，50% 魔防 −1 → 杖尖旁邊光點聚過來，一根紫白色的光之長槍由短變長凝聚成形，然後整支射出、刺中對手，打中的地方爆開、碎光往前噴
+const LANCE14 = [{ pts: [[0, -16], [3, -8], [2, 12], [-2, 12], [-3, -8]], c: MANA14[0], o: MANA14[2] }, { pts: [[0, -14], [1, -6], [0, 10], [-1, -6]], c: MANA14[1], o: null }];
+redo13('t_stLance', 't11_stLance', { col: MANA14,
+  *f(S, U, T) { const A = PX13.tip(this), d = PX13.dir(A, T); Sound.sfx('mana'); const ln = this.spawn({ k: 'p13poly', x: A.x, y: A.y, rot: d.ang + Math.PI / 2, sc: 0.3, shapes: LANCE14, life: 22 });
+    ln.upd = q => { if (q.t < 9) q.sc = 0.4 + 1.2 * q.t / 9; else { const k = clamp((q.t - 9) / 4, 0, 1); q.sc = 1.6; q.x = lerp(A.x, T.x, k); q.y = lerp(A.y, T.y, k); } };
+    for (let i = 0; i < 6; i++) { const P0 = { x: A.x + rnd(-16, 16), y: A.y + rnd(-14, 14) }, q0 = this.spawn({ k: 'p13px', x: P0.x, y: P0.y, s: 2, cols: ['#ffffff', '#c8a8ff'], o: OSH13, life: 9 }); q0.upd = q => { const k = clamp(q.t / 8, 0, 1); q.x = lerp(P0.x, A.x, k); q.y = lerp(P0.y, A.y, k); }; }
+    yield* wait(12); PX13.speed(this, A, T, MANA14, 4, 6); yield* wait(1); ln.life = ln.t + 1;
+    Sound.sfx('arcane'); PX13.hit(this, T, MANA14, 1); PX13.bits(this, T, 8, MANA_PX14, 2.4, 0.08, 16, { s: 2, ang: d.ang, spread: 0.5 }); yield* wait(12); } });
+// 法力屏障：張開護盾 → 主角腳下亮起魔法陣，紫白色的光從腳下一層層往上包住主角，最後合成一個光罩，光罩邊緣閃著亮點
+redo13('t_stWall', 't11_stWall', { col: MANA14,
+  *f(S) { const H = PX13.hero(this), C = { x: H.x, y: H.y - 6 }, F = { x: H.x, y: HERO_FOOT - 4 }; Sound.sfx('mana'); runeCircle14(this, F, 26, 34); yield* wait(6);
+    for (let i = 0; i < 6; i++) PX13.arc(this, { x: C.x, y: F.y - 4 - i * 9 }, 26 - Math.abs(i - 2.5) * 2, Math.PI, Math.PI * 2, MANA14, 2, 22, { fl: 0.35, delay: i * 2, grow: 3, hold: 8 });
+    yield* wait(12); Sound.sfx('shield'); PX13.ring(this, C, 28, 28, MANA14, 2, 24, { fl: 0.95 });
+    for (let i = 0; i < 6; i++) PX13.spr(this, PXI.glintS || PXI.glint, { x: C.x + Math.cos(i * 1.05) * 28, y: C.y + Math.sin(i * 1.05) * 27 }, { life: 10, delay: 4 + i * 2 }); yield* wait(22); } });
+// 魔力衝擊：30% 退縮；打蓄力中的對手 ×1.5 → 杖往前一推，杖尖的魔力球壓縮變小變亮，射出去打中對手爆成一圈衝擊波（畫面震）；對手正在蓄力時多兩圈、白光一閃
+redo13('t_stImpact', 't11_stImpact', { col: MANA14,
+  *f(S, U, T, u, t) { const v = tgt13(this, t), chg = !!(v && v.st && v.st.charging), A = PX13.tip(this); yield* this.lunge(u, 8, 2); Sound.sfx('mana');
+    const o = manaOrb14(this, A, 6, { life: 22 }); o.upd = q => { if (q.t < 8) q.r = 6 - q.t * 0.4; else { const k = clamp((q.t - 8) / 6, 0, 1); q.r = 4; q.x = lerp(A.x, T.x, k); q.y = lerp(A.y, T.y, k); } }; yield* wait(14); o.life = o.t + 1;
+    Sound.sfx('heavy'); PX13.hit(this, T, MANA14, 1); PX13.ring(this, T, 6, 34, MANA14, 2, 14); this.shake = Math.max(this.shake, chg ? 10 : 6);
+    if (chg) { K13.flash(this, '#ffffff', 0.35, 4); PX13.ring(this, T, 10, 48, MANA14, 3, 16, { delay: 3 }); PX13.ring(this, T, 14, 60, MANA14B, 2, 18, { delay: 6 }); } yield* wait(14); } });
+// 魔力風暴：攻擊全體 → 每一隻魔物身邊捲起紫色的魔力漩渦（三圈光弧繞著轉、碎光被捲上去），最後每一隻身上炸開
+redo13('t_stStorm', 't11_stStorm', { col: MANA14,
+  *f(S, U, T, u, t) { const L = PX13.foes(this, t); Sound.sfx('wind'); PX13.spr(this, PXI.glint, PX13.tip(this), { life: 8 }); yield* wait(4);
+    for (const { P } of L) for (let j = 0; j < 3; j++) { const a = this.spawn({ k: 'p13arc', x: P.x, y: P.y, r: 18 + j * 6, a0: j * 2, a1: j * 2 + Math.PI * 0.9, c: j === 1 ? MANA14B : MANA14, w: 3, life: 26, fl: 0.45, grow: 3, hold: 14, delay: j * 2 }); a.upd = q => { q.a0 += 0.32; q.a1 += 0.32; }; }
+    for (const { P } of L) for (let i = 0; i < 8; i++) { const an0 = i * 0.8, p = this.spawn({ k: 'p13px', x: P.x, y: P.y, s: 2, cols: MANA_PX14, o: OSH13, life: 24 }); p.upd = q => { const an = an0 + q.t * 0.35, R = 26 - q.t * 0.8; q.x = P.x + Math.cos(an) * R; q.y = P.y + Math.sin(an) * R * 0.5 - q.t * 0.6; }; }
+    yield* wait(18); for (const { P } of L) { Sound.sfx('arcane'); PX13.hit(this, P, MANA14, 0); yield* wait(2); } yield* wait(10); } });
+// 時之加速：速度 +2、全部技能冷卻 −1 → 主角身後浮出一個像素時鐘（圓框＋刻度），長短指針飛快地轉；主角身邊拉出殘影和速度線，最後藍色的往上箭頭（速度提升）
+redo13('t_stHaste', 't11_stHaste', { col: MANA14B,
+  *f(S) { const H = PX13.hero(this), C = { x: H.x, y: H.y - 12 }; Sound.sfx('mana'); PX13.ring(this, C, 22, 22, MANA14B, 2, 36);
+    for (let i = 0; i < 12; i++) { const an = i * Math.PI / 6; this.spawn({ k: 'p13px', x: C.x + Math.cos(an) * 17, y: C.y + Math.sin(an) * 17, s: i % 3 ? 1 : 3, cols: ['#e8f0ff'], o: i % 3 ? null : '#0a1440', life: 36 }); }
+    for (const [L0, sp, s] of [[16, 0.6, 2], [10, 0.15, 3]]) { const hd = this.spawn({ k: 'p13line', x1: C.x, y1: C.y, x2: C.x, y2: C.y - L0, c: MANA14B, s, life: 34, grow: 1, keep: 1 }); hd.upd = q => { const an = -Math.PI / 2 + q.t * sp; q.x2 = C.x + Math.cos(an) * L0; q.y2 = C.y + Math.sin(an) * L0; }; }
+    for (let i = 0; i < 4; i++) { Sound.sfx('tick'); yield* wait(4); }
+    for (const dx of [-14, -7]) K13.ghost(this, dx, 0, '#c8d8ff', 12, 0.35); PX13.speed(this, { x: H.x + 34, y: H.y - 8 }, { x: H.x - 34, y: H.y - 8 }, PXC.wind, 6, 10); Sound.sfx('wind'); yield* wait(10);
+    Sound.sfx('statUp'); for (const dx of [-18, 18]) PX13.spr(this, PXI.upCh('#8ab8ff'), { x: H.x + dx, y: H.y }, { vy: -0.6, life: 20 }); yield* wait(14); } });
+// 魔力終曲：用掉全部 MP，越多越痛 → 畫面變暗，主角身上的藍色魔力光點全部被抽進杖尖，杖尖的魔力球越漲越大；一道又粗又長的魔力光柱轟過去，打中的地方大爆炸、白光一閃、畫面震
+redo13('t_stFinale', 't11_stFinale', { col: MANA14,
+  *f(S, U, T) { const A = PX13.tip(this), H = PX13.hero(this); Sound.sfx('charge'); K13.dark(this, 0.35, 60, '#06041a');
+    for (let i = 0; i < 16; i++) { const P0 = { x: H.x + rnd(-24, 24), y: H.y + rnd(-30, 10) }, p = this.spawn({ k: 'p13px', x: P0.x, y: P0.y, s: 2, cols: ['#ffffff', '#8ab8ff', '#3a6ad0'], o: '#061a40', life: 18, delay: i }); p.upd = q => { const k = clamp((q.t - i) / 14, 0, 1); q.x = lerp(P0.x, A.x, k * k); q.y = lerp(P0.y, A.y, k * k); }; }
+    const o = manaOrb14(this, A, 2, { life: 34, trail: 1 }); o.upd = q => { q.r = Math.min(9, 2 + q.t * 0.3); }; yield* wait(26); o.life = o.t + 1;
+    Sound.sfx('hitSuper'); PX13.thr(this, A, T, MANA14, 12, 18, { grow: 3, hold: 8, over: 6 }); PX13.thr(this, A, T, [MANA14[1], '#ffffff', MANA14[0]], 6, 18, { grow: 3, hold: 8, over: 6 });
+    yield* wait(3); K13.flash(this, '#ffffff', 0.45, 5); PX13.hit(this, T, MANA14, 1); PX13.ring(this, T, 8, 44, MANA14, 3, 16); PX13.ring(this, T, 4, 30, MANA14B, 2, 14, { delay: 3 });
+    PX13.bits(this, T, 12, MANA_PX14, 3, 0.1, 18, { s: 3 }); this.shake = Math.max(this.shake, 12); yield* wait(16); } });
+// 魔導極限：3 回合魔攻 +2、技能 MP +50% → 主角腳下展開魔法陣，三根紫色的光柱從陣裡升起、光點往上飄，杖尖閃白光；身邊冒出紫色的往上箭頭（魔攻提升）
+redo13('t_stMax', 't11_stMax', { col: MANA14,
+  *f(S) { const H = PX13.hero(this), F = { x: H.x, y: HERO_FOOT - 4 }, A = PX13.tip(this); Sound.sfx('charge'); runeCircle14(this, F, 32, 42); yield* wait(8);
+    for (const dx of [-14, 0, 14]) this.spawn({ k: 'p13col', x: F.x + dx, y: F.y, h: 70, w: dx ? 3 : 5, c: MANA14, grow: 6, life: 24, delay: dx ? 3 : 0 });
+    for (let i = 0; i < 10; i++) this.spawn({ k: 'p13px', x: F.x + rnd(-22, 22), y: F.y - rnd(0, 10), vy: -rnd(8, 16) / 10, s: 2, cols: MANA_PX14, life: 22, delay: i * 2 });
+    yield* wait(14); Sound.sfx('statUp'); PX13.spr(this, PXI.glint, A, { sc: 2, life: 12 }); PX13.ring(this, A, 6, 24, MANA14, 1, 12);
     for (const dx of [-18, 18]) PX13.spr(this, PXI.upCh('#c890ff'), { x: H.x + dx, y: H.y }, { vy: -0.6, life: 20 }); yield* wait(16); } });
-// 特技・元素迸發：強力追擊，帶武器的屬性（沒屬性時是火）→ 一顆那個屬性顏色的大元素球飛過去炸開（火是火焰、水是冰晶、雷是電花、草是葉子）
-redoSp13('法杖', 0, { col: PXC.fire,
-  *f(S, U, T) { const hu = this.core.byId.H, el = { 火: 1, 水: 1, 雷: 1, 草: 1 }[hu && hu.data.welem] ? hu.data.welem : '火', c = EL13PX[el], A = PX13.tip(this); Sound.sfx('charge');
-    const p = this.spawn({ k: 'p13orb', x: A.x, y: A.y, r: 3, c: [OSH13, c[0], c[1], '#ffffff'], trail: 8, pulse: 1, life: 26 }); p.upd = q => { if (q.t < 10) q.r = 3 + q.t * 0.4; else { const k = clamp((q.t - 10) / 8, 0, 1); q.x = lerp(A.x, T.x, k); q.y = lerp(A.y, T.y, k); } }; yield* wait(18); p.life = p.t + 1;
-    Sound.sfx(el === '火' ? 'fire' : el === '水' ? 'water' : el === '雷' ? 'thunder' : 'leaf'); PX13.burst(this, T, 22, c, 14, { s: 3 }); this.shake = Math.max(this.shake, 8);
-    if (el === '火') flames13(this, T, 4, 16); else if (el === '水') for (let i = 0; i < 5; i++) PX13.spr(this, PXI.ice, { x: T.x + rnd(-18, 18), y: T.y + rnd(-14, 12) }, { life: 18, delay: i * 2 }); else if (el === '雷') zaps13(this, T, 5); else for (let i = 0; i < 7; i++) PX13.spr(this, PXI.leaf, T, { vx: rnd(-22, 22) / 10, vy: -rnd(6, 20) / 10, g: 0.08, life: 20 });
-    yield* wait(14); } });
+// 魔力奔流（絕技）：四道魔力光束接連打出 → 杖尖周圍浮出四顆魔力球繞著轉，一顆接一顆化成光束射向對手（角度一道道不同），每道打中都爆開；第四道最粗、白光一閃
+redo13('t_zjFourFold', 't11_zjFourFold', { col: MANA14,
+  *f(S, U, T) { const A = PX13.tip(this); Sound.sfx('charge'); const orbs = [0, 1, 2, 3].map(i => { const p = manaOrb14(this, A, 4, { trail: 4, life: 60 }); p.upd = q => { if (q.go) return; const an = q.t * 0.35 + i * Math.PI / 2; q.x = A.x + Math.cos(an) * 16; q.y = A.y - 6 + Math.sin(an) * 9; }; return p; });
+    yield* wait(12);
+    for (let i = 0; i < 4; i++) { const p = orbs[i], P0 = { x: p.x, y: p.y }, big = i === 3, c = i % 2 ? MANA14B : MANA14, P = { x: T.x + [-6, 6, 0, 0][i], y: T.y + [-4, 4, -6, 0][i] }; p.go = 1; p.life = p.t + 1; Sound.sfx('mana');
+      PX13.thr(this, P0, P, big ? MANA14 : c, big ? 8 : 4, 12, { grow: 3, hold: 4, over: 4 }); yield* wait(3);
+      Sound.sfx(big ? 'hitSuper' : 'arcane'); PX13.hit(this, P, c, big ? 1 : 0); if (big) { K13.flash(this, '#ffffff', 0.35, 4); PX13.ring(this, T, 6, 40, MANA14, 2, 14); } yield* wait(big ? 12 : 5); } } });
+// 特技・魔力迸發：強力追擊 → 杖尖凝出一顆魔力球（越長越大），飛過去炸成一大圈紫白色的光環和碎光
+redoSp13('法杖', 0, { col: MANA14,
+  *f(S, U, T) { const A = PX13.tip(this); Sound.sfx('mana'); const p = manaOrb14(this, A, 3, { trail: 8, life: 26 }); p.upd = q => { if (q.t < 10) q.r = 3 + q.t * 0.4; else { const k = clamp((q.t - 10) / 8, 0, 1); q.x = lerp(A.x, T.x, k); q.y = lerp(A.y, T.y, k); } }; yield* wait(18); p.life = p.t + 1;
+    Sound.sfx('hitSuper'); PX13.burst(this, T, 22, MANA14, 14, { s: 3 }); PX13.ring(this, T, 6, 40, MANA14, 2, 16); manaSpark14(this, T, 10); this.shake = Math.max(this.shake, 8); yield* wait(14); } });
 
 // ---------- 單手盾 ----------
 // 盾撞：攻擊力加上物防的 70%，30% 退縮 → 主角舉盾（像素盾牌）整個撞上去，撞到的地方爆出藍白的衝擊和碎屑，盾牌彈回

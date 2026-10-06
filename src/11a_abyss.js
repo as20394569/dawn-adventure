@@ -189,7 +189,7 @@ Object.assign(Events, {
 
 /* ---------- 裂界看守人：碎片換東西 ---------- */
 const ABY_ACC13 = { // key: [name, trait, trait name, effect text, cost (星之碎片), description]
-  abyEye13: ['深淵之瞳', '洞察', '打中弱點後，下一次攻擊必定會心', 8, '在深淵最暗的地方睜著的眼睛，凝成了一顆紫色的寶石。'],
+  abyEye13: ['深淵之瞳', '洞察', '對手 HP 低於一半時，會心率 +20%', 8, '在深淵最暗的地方睜著的眼睛，凝成了一顆紫色的寶石。'],
   abySand13: ['裂界沙漏', '裂時', '回合開始時 15% 機率所有技能冷卻 −1', 10, '沙子往上流的沙漏。拿著它，時間偶爾會往回走一點點。'],
   abyCrown13: ['星辰之冠', '星輝', '會心傷害 +30%', 12, '用星之碎片串成的小冠。會心的那一下，會帶著星光。'],
   abyCharm13: ['虛空護符', '虛障', '每場戰鬥第一次受到的傷害 −50%', 10, '護符的中間是一小片虛空。打過來的力道，有一半會掉進去。'],
@@ -201,7 +201,7 @@ const ABY_ACC_ST13 = { abyEye13: { hp: 15, atk: 8, spa: 8, def: 3, spd: 3 }, aby
 { const ref = GEAR.qHeroCrest || GEAR.voidRing; for (const k in ABY_ACC13) { const [n, tn, td, , d] = ABY_ACC13[k];
     GEAR[k] = { n, slot: 'acc', t: 7, st: { ...ABY_ACC_ST13[k] }, sp: k === 'abyCrown13' ? { crit: 5 } : {}, fx: [k], trait: k, kind: '飾品', d, look: ref && ref.look };
     ACC_TRAIT[k] = [tn, td, [n]]; if (typeof SPECIALS !== 'undefined') SPECIALS[k] = { n: tn, d: td + '。', cat: { abyEye13: '攻擊', abySand13: '資源', abyCrown13: '攻擊', abyCharm13: '防禦', abyRing13: '回復', abySeal13: '防禦' }[k] }; if (typeof BP_RARE !== 'undefined') BP_RARE.add(k); } }
-PV('fx.abyEye13', v => ({ triggers: [{ on: EVT.DAMAGE, phase: 'POST', role: 'src', cond: { weakHit: 1, evHit: 1, tgtSide: 'enemy', hasPower: 1 }, limit: { perAction: 1 }, effects: [{ type: 'status', target: 'self', status: 'critNext', quiet: 1 }] }] }), { n: '洞察' });
+PV('fx.abyEye13', v => ({ mods: [{ stage: 'talent', who: 'attacker', critAdd: 20, cond: { tgtHpBelow: 0.5, hasPower: 1 } }] }), { n: '洞察' }); // v12.76: 原本「打中弱點後必定會心」
 PV('fx.abySand13', v => ({ triggers: [{ on: EVT.ROUND_START, phase: 'POST', cond: { ownerAlive: 1 }, chance: 0.15, effects: [{ type: 'cooldown', target: 'self', how: 'all', n: 1, why: 'abySand13' }] }] }), { n: '裂時' });
 PV('fx.abyCrown13', v => ({}), { n: '星輝' });
 PV('fx.abyCharm13', v => ({ triggers: [{ on: EVT.DAMAGE, phase: 'PRE', role: 'tgt', cond: { srcSide: 'enemy', hasPower: 1 }, limit: { perBattle: 1 }, effects: [{ type: 'modify', mul: 0.5, note: 'abyCharm13' }, { type: 'message', target: 'self', text: '虛空護符吸走了一半的衝擊！' }] }] }), { n: '虛障' });

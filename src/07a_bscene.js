@@ -18,7 +18,7 @@ const BV_TEXT = {
   status_resist: s => s + '憑著意志力撐住了！',
   ally_gren: () => ['格倫從旁殺了出來！「……讓開，小鬼！」', '格倫：「看好了——這才叫劈！」', '格倫：「哼，還站得起來？那就再來一斧！」'][rnd(0, 2)],
   ally_lia: () => ['莉婭趕到了！「撐住——騎士團的急救術！」', '莉婭：「我來掩護你！先把傷口包好！」', '莉婭：「勇者可不能在這裡倒下！」'][rnd(0, 2)],
-  flood_wet: (s, t) => t + '被大水淋得全身濕透！',
+  flood_wet: (s, t) => t + '被大水淋得全身濕透！（速度變慢）',
   ignite: () => '纏繞的藤蔓燒了起來！燎原！',
   shock: (s, t) => '潮濕的身體導電了！' + t + '感電了！',
   new_stance: s => s + '擺出了新的架勢！',
@@ -335,13 +335,13 @@ class Battle {
     const VIS = list.length, X = 8, w = W - 16, Y = 58 - Math.max(0, VIS - 4) * 14, rowH = 14, h = 18 + VIS * rowH + 4, DY = Y + h + 2, DH = BH - 18 - DY, foe = this.core.alive('B')[0];
     const info = (x, m) => {
       Font.drawR(x, 'MP ' + Math.round(this.H.mp) + '/' + this.H.maxmp, X + w - 8, Y + 2, '#8ab8ff', UIC.textSh, 9);
-      const id = list[m.i], D = DEF.skills[id], ob = BB.skillObj(st, id), mv = MOVES[id] ? skillMove(id) : null, c = TYPE_COL[D.el] || '#9a9aa8'; drawWin(x, X, DY, w, DH, 'menu');
+      const id = list[m.i], D = DEF.skills[id], ob = BB.skillObj(st, id), mv = MOVES[id] ? skillMove(id) : null, c = ({ 物: '#ffb070', 特: '#b090ff' })[D.cat] || '#9a9aa8'; drawWin(x, X, DY, w, DH, 'menu');
       const fit = (t, sz, maxW) => { let z = sz; while (z > 7 && Font.width(t, z) > maxW) z--; return z; };
       const can = this.canUse(id), est = can.ok && D.power && foe ? this.estimate(id, foe.id) : 0, L = X + 8, R = X + w - 8;
       const tgt = D.target === 'all_enemies' ? (D.chain ? '・連鎖' : '・全體') : '', learn = ob && !D.tags.includes('sig') ? (!ob.learned ? '・學會' + Math.min(ob.x || 0, BB.learnN(id)) + '/' + BB.learnN(id) : orbStage(ob) < 2 ? '・練度' + (ob.x || 0) + '/' + evoAt(ob) : '') : '';
       const cT = can.ok ? this.costText(id) : (can.short || '不可用'), t1W = w - 30 - Font.width(cT, 9), aT = typeof skillAttrTag === 'function' && skillAttrTag(id) ? '・' + skillAttrTag(id) : '';
       // v12.0.9k (player: 「字體是否縮小或移除」): when the line is too long even at the smallest size, drop 練度 first, then the attribute bonus (技能編排 shows both)
-      const t1P = [(D.tags.includes('sig') ? '職業招式・' : '') + (D.el === '一般' ? '無屬性' : D.el + '屬性') + '・' + (D.cat === '變' ? '輔助' : D.cat === '物' ? '物理' : '魔法') + tgt, aT, learn]; while (t1P.length > 1 && Font.width(t1P.join(''), 8) > t1W) t1P.pop(); const t1 = t1P.join('');
+      const t1P = [(D.tags.includes('sig') ? '職業招式・' : '') + (D.cat === '變' ? '輔助' : D.cat === '物' ? '物理' : '魔法') + tgt, aT, learn]; while (t1P.length > 1 && Font.width(t1P.join(''), 8) > t1W) t1P.pop(); const t1 = t1P.join('');
       x.fillStyle = c; x.fillRect(L, DY + 6, 4, 4); Font.draw(x, t1, L + 7, DY + 1, '#c9cfe4', UIC.textSh, fit(t1, 9, w - 30 - Font.width(cT, 9))); Font.drawR(x, cT, R, DY + 1, can.ok ? '#8ab8ff' : UIC.bad, UIC.textSh, 9);
       let y = DY + 14;
       if (D.power) { const pw = mv && typeof powTxt === 'function' ? powTxt(mv) : '威力' + D.power, eT = est ? '預估≈' + est : ''; x.fillStyle = 'rgba(200,160,80,0.35)'; x.fillRect(L, DY + 13, w - 16, 1);

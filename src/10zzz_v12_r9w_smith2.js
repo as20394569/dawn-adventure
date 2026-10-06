@@ -231,15 +231,12 @@ function* enchant11(g) { const st = Game.st, t = GEAR[g.b].t || 1;
   while (true) { const pot = potOf11(g), used = potUsed11(g), left = pot - used, en = g.en11 || (g.en11 = {});
     const keys = Object.keys(EN11).filter(k => enOk11(g, k)), wpn = GEAR[g.b].slot === 'weapon';
     const opts = keys.map(k => { const E = EN11[k], n = en[k] || 0, c = enStepCost11(g, k); return { t: E[0] + (n ? ' +' + E[1] * n + E[2] : ''), r: n >= E[6] ? '已滿' : '潛力' + E[3] + '・' + E[4] + c[E[4]], dis: n >= E[6] || left < E[3] }; });
-    if (wpn) opts.push({ t: '屬性' + (g.el ? '：' + g.el : ''), r: g.el ? '已選' : '潛力' + ELPOT11 + '・魔素' + enElCost11(g).魔素, dis: !!g.el || left < ELPOT11 });
     opts.push({ t: '清掉重來', r: '退一半點數' }, { t: '完成' });
     const r = yield* choose(opts, { title: GEAR[g.b].n + '　潛力 ' + used + '/' + pot }); if (r < 0 || r === opts.length - 1) return;
     if (r === opts.length - 2) { if (!used) { yield* say('還沒有賦予任何能力。'); continue; } if (!(yield* yesNo('把賦予全部清掉嗎？（退回一半點數，潛力回滿）'))) continue;
       const back = {}; for (const c in g.e11 || {}) back[c] = Math.floor(g.e11[c] / 2); ptsPay11(back, st, 1); g.en11 = {}; delete g.el; g.e11 = {}; clampHP(); Sound.sfx('cancel'); yield* say('清掉了。' + (Object.keys(back).length ? '退回 ' + ptsText11(back) + ' 點。' : '')); continue; }
     let cost, apply;
-    if (wpn && r === keys.length) { if (g.el) continue; const e = yield* ask('要賦予哪個屬性？（普通攻擊和武器技能都會變成這個屬性）', EL11.concat('取消')); if (e < 0 || e >= 4) continue; cost = enElCost11(g); apply = () => { g.el = EL11[e]; };
-      if (left < ELPOT11) { yield* say('潛力不夠了。'); continue; } }
-    else { const k = keys[r], E = EN11[k]; if ((en[k] || 0) >= E[6]) { yield* say('這項已經加到上限了。'); continue; } if (left < E[3]) { yield* say('潛力不夠了。'); continue; } cost = enStepCost11(g, k); apply = () => { en[k] = (en[k] || 0) + 1; }; }
+    { const k = keys[r], E = EN11[k]; if ((en[k] || 0) >= E[6]) { yield* say('這項已經加到上限了。'); continue; } if (left < E[3]) { yield* say('潛力不夠了。'); continue; } cost = enStepCost11(g, k); apply = () => { en[k] = (en[k] || 0) + 1; }; }
     if (!ptsHave11(cost)) { Sound.sfx('bump'); yield* matShort12('點數不夠喔。（需要 ' + ptsText11(cost) + '）'); continue; }
     ptsPay11(cost); const E11 = g.e11 || (g.e11 = {}); for (const c in cost) E11[c] = (E11[c] || 0) + cost[c]; apply(); clampHP(); Sound.sfx('item');
     const up = smithExp11(1); if (up) { Sound.jingle('levelup'); yield* say('鍛冶熟練升到了 Lv' + up + '！'); } } }

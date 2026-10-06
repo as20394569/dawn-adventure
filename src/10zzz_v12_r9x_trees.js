@@ -29,9 +29,8 @@ ST11('roar11', '狂吼', { mods: [{ stage: 'final', who: 'defender', mul: 0.9, c
 ST11('blood11', '狂戰之血', { mods: [{ stage: 'final', who: 'defender', mul: 1.15, cond: { hasPower: 1 } }], triggers: [{ on: EVT.DAMAGE, phase: 'POST', role: 'src', cond: { hasPower: 1, tgtSide: 'enemy' }, effects: [{ type: 'heal', target: 'self', ofEvent: 0.15, kind: 'drain', quiet: 1 }] }] });
 ST11('spearGuard11', '迴槍架勢', { triggers: [{ on: EVT.DAMAGE, phase: 'POST', role: 'tgt', cond: { srcSide: 'enemy', hasPower: 1, ownerAlive: 1 }, limit: { perAction: 1 }, effects: [{ type: 'counter', mul: { f: 'cnt11', v: 50 }, why: 'spear11' }] }] });
 ST11('crack11', '裂甲', { tags: ['debuff'], triggers: [{ on: EVT.ROUND_END, effects: [{ type: 'damage', target: 'self', pctMax: 0.03, bossMul: 1 / 3, kind: 'dot', tags: ['dot'] }] }] });
-ST11('mwall11', '元素屏障', { mods: [{ stage: 'final', who: 'defender', mul: 0.6, cond: { cat: '特', hasPower: 1 } }, { stage: 'final', who: 'defender', mul: 0.8, cond: { cat: '物', hasPower: 1 } }] });
+ST11('mwall11', '法力屏障', { mods: [{ stage: 'final', who: 'defender', mul: 0.6, cond: { cat: '特', hasPower: 1 } }, { stage: 'final', who: 'defender', mul: 0.8, cond: { cat: '物', hasPower: 1 } }] });
 ST11('maxim11', '魔導極限', { mods: [{ stage: 'base', costMul: 1.5, res: 'mp' }] });
-ST11('elemUp13', '元素增幅', { mods: [{ stage: 'talent', who: 'attacker', mulWeak: 1.2 }] });
 ST11('pageGuard11', '守護之頁', { mods: [{ stage: 'final', who: 'defender', mul: 0.7, cond: { hasPower: 1 } }] });
 ST11('evade11', '疾風之歌', { mods: [{ stage: 'defender', who: 'defender', accAdd: -10 }] });
 ST11('harm11', '守護和聲', { mods: [{ stage: 'final', who: 'defender', mul: 0.75, cond: { hasPower: 1 } }] });
@@ -110,16 +109,16 @@ const TREE11 = {
       ['2c', 'fsQi', '氣勁彈', 75, 0, 1, 5, 0, '遠距的氣功彈，用物攻和魔攻較高的一項計算。', { cls: 'bolt', catOf: (core, u) => (u.stats.spa > u.stats.atk ? '特' : '物') }],
       ['3a', 'fsStorm', '狂嵐拳', 14, 8, 3, 10, 0, '八段連打，最後一段削 1 格護盾。', { cls: 'strike', after: [{ type: 'hunt_chip', target: 'cast_targets', n: 1, cond: { tgtAlive: 1 }, why: 'tree11' }] }],
       ['3b', 'fsThrough', '震山擊', 120, 0, 2, 9, 0, '用肩膀整個人撞上去，無視 40% 物防，50% 退縮。', { cls: 'strike', pierceDef: 0.4, effects: DMG11(FL11(0.5)) }]] },
-  法杖: { attr: ['int', 1], cat: '特', trait: '打中弱點的傷害再 +15%', mast: '杖術精通', third: ['省力', '技能有 4%／級的機率不花 MP'], sp: [['元素迸發', 'burstEl'], ['魔力湧泉', 'mana'], ['星輝', 'crit']],
-    // v12.33（玩家 2026-10-06「法杖技能重製要偏元素方向」→ 各招固定元素；key 不變，舊存檔的等級照留）
-    sk: [['1a', 'stArrows', '火球', 60, 0, 0, 4, 0, '火屬性魔法，20% 灼傷。', { cls: 'bolt', el: '火', effects: DMG11(STA11('brn', 0.2)) }],
-      ['1b', 'stLance', '冰錐', 55, 0, 1, 5, 0, '水屬性魔法，10% 凍結（跳過下一次行動；頭目不會凍結）。', { cls: 'bolt', el: '水', effects: DMG11(STA11('frozen', 0.1, { cond: { tgtAlive: 1, tgtBoss: 0 } })) }],
-      ['1c', 'stWall', '元素屏障', 0, 0, 3, 5, 0, '張開護盾：最大 HP 25%，魔法傷害全部吸收、物理吸收一半，2 回合。', { effects: [{ type: 'status', target: 'self', status: 'mwall11', dur: 2 }] }],
-      ['2a', 'stImpact', '落雷', 75, 0, 1, 6, 0, '雷屬性魔法，20% 麻痺；對蓄力中的對手威力 ×1.5。', { cls: 'bolt', el: '雷', mods: [MUL11(1.5, { tgtStatus: 'charging' })], effects: DMG11(STA11('par', 0.2)) }],
-      ['2b', 'stStorm', '炎浪', 60, 0, 2, 7, 1, '火屬性魔法打全體，10% 灼傷。', { el: '火', effects: DMG11(STA11('brn', 0.1)) }],
-      ['2c', 'stHaste', '藤鞭', 60, 0, 4, 6, 0, '草屬性魔法，回復傷害 25% 的 HP。', { cls: 'bolt', el: '草', after: [{ type: 'heal', target: 'self', ofCast: 0.25, kind: 'drain', quiet: 1 }] }],
-      ['3a', 'stFinale', '雷暴', 45, 2, 4, 10, 1, '雷屬性魔法打全體 2 段（各 45），20% 麻痺。', { el: '雷', after: [STA11('par', 0.2, { target: 'cast_targets' })] }],
-      ['3b', 'stMax', '元素增幅', 0, 0, 5, 8, 0, '3 回合魔攻 +2 階，打中弱點的傷害再 +20%。', { effects: [SELF11({ spa: 2 }), { type: 'status', target: 'self', status: 'elemUp13', dur: 3 }] }]] },
+  法杖: { attr: ['int', 1], cat: '特', trait: '魔法傷害無視對手 15% 魔防', mast: '杖術精通', third: ['省力', '技能有 4%／級的機率不花 MP'], sp: [['魔力迸發', 'burst'], ['魔力湧泉', 'mana'], ['星輝', 'crit']],
+    // v12.76（玩家 2026-10-07「法杖的技能改回不要偏元素化」）：改回 v12.32 以前的魔力招（key 不變，舊存檔的等級照留）；元素系統整個拿掉（12f）
+    sk: [['1a', 'stArrows', '魔力箭', 22, 3, 0, 4, 0, '三支魔力箭，回 2 MP。', { cls: 'bolt', after: [{ type: 'resource', target: 'self', res: 'mp', amount: 2, why: 'arrows11' }] }],
+      ['1b', 'stLance', '魔力槍', 70, 0, 1, 5, 0, '魔力凝成的長槍，50% 讓對手魔防 −1。', { cls: 'bolt', effects: DMG11(SG11({ spd: -1 }, 0.5)) }],
+      ['1c', 'stWall', '法力屏障', 0, 0, 3, 5, 0, '張開護盾：最大 HP 25%，魔法傷害全部吸收、物理吸收一半，2 回合。', { effects: [{ type: 'status', target: 'self', status: 'mwall11', dur: 2 }] }],
+      ['2a', 'stImpact', '魔力衝擊', 80, 0, 1, 6, 0, '30% 退縮；對蓄力中的對手威力 ×1.5。', { cls: 'bolt', mods: [MUL11(1.5, { tgtStatus: 'charging' })], effects: DMG11(FL11(0.3)) }],
+      ['2b', 'stStorm', '魔力風暴', 65, 0, 2, 7, 1, '攻擊全體，30% 讓對手魔防 −1。', { effects: DMG11(SG11({ spd: -1 }, 0.3)) }],
+      ['2c', 'stHaste', '時之加速', 0, 0, 4, 6, 0, '速度 +2 階，所有技能冷卻 −1。', { effects: [SELF11({ spe: 2 }), { type: 'cooldown', target: 'self', how: 'all', n: 1, why: 'haste11' }] }],
+      ['3a', 'stFinale', '魔力終曲', 50, 0, 4, 10, 0, '用掉全部 MP（至少 10），每 1 MP 威力 +5（最多 250）。', { cls: 'bolt', costs: [{ res: 'mp', all: true, min: 10 }], powerOf: 'finale11' }],
+      ['3b', 'stMax', '魔導極限', 0, 0, 5, 8, 0, '3 回合魔攻 +2 階，這段時間技能 MP +50%。', { effects: [SELF11({ spa: 2 }), { type: 'status', target: 'self', status: 'maxim11', dur: 3 }] }]] },
   魔導書: { attr: ['int', 1], cat: '特', trait: '技能 MP −20%（第三階段：慣性的變化減半）', mast: '魔導書精通', third: ['回魔', '每回合回最大 MP 的 1%／級'], sp: [['飛頁', 'strike'], ['縛頁', 'slow'], ['智慧之泉', 'mana']],
     sk: [['1a', 'tmCurse', '咒言', 55, 0, 0, 4, 0, '魔法攻擊，40% 讓對手物攻 −1。', { cls: 'bolt', effects: DMG11(SG11({ atk: -1 }, 0.4)) }],
       ['1b', 'tmSlow', '遲滯咒', 0, 0, 2, 4, 0, '對手速度 −2 階（一定命中）。', { target: 'enemy', effects: [SG11({ spe: -2 })] }],
@@ -180,7 +179,7 @@ Object.assign(COND, { srcChiFull11: (c, v) => !!c.src && (c.src.max.chi || 0) > 
 Object.assign(BR.FORMULA, { ironLaw11: c => (c.src.stats.atk + c.src.stats.def) / Math.max(1, c.src.stats.atk), song12: c => 1 + 0.15 * ((c.src && c.src.statuses.filter(s => DEF.statuses[s.id] && DEF.statuses[s.id].group === 'stage' && s.stacks > 0).length) || 0) });
 const ZJ11 = {
   劍: [['4a', 'zjSky', '一刀天斷', 150, 0, 4, 14, 0, '搶先的一刀，必定會心。', { prio: 1, mods: [CRIT11] }],
-    ['4b', 'zjRune', '星紋魔劍', 95, 0, 4, 14, 0, '用物攻、魔攻較高的一邊計算；再追加 2 段武器屬性的魔法（各 40），回復傷害 10% 的 MP。', { unlock: 'spellbladeOk', catOf: MAXATK11,
+    ['4b', 'zjRune', '星紋魔劍', 95, 0, 4, 14, 0, '用物攻、魔攻較高的一邊計算；再追加 2 段魔法（各 40），回復傷害 10% 的 MP。', { unlock: 'spellbladeOk', catOf: MAXATK11,
       after: [{ type: 'damage', target: 'cast_targets', power: 40, cat: '特', cond: { tgtAlive: 1 } }, { type: 'damage', target: 'cast_targets', power: 40, cat: '特', cond: { tgtAlive: 1 } }, { type: 'resource', target: 'self', res: 'mp', ofCast: 0.1, why: 'drain' }] }]],
   雙劍: [['4a', 'zjSwallow', '迴燕雙斷', 130, 0, 4, 14, 0, '迴身的一斬，必定會心。', { mods: [CRIT11] }],
     ['4b', 'zjObsidian', '黑曜終劍', 160, 0, 5, 16, 0, '用物攻、魔攻較高的一邊計算的終結一劍。', { unlock: 'spellbladeOk', catOf: MAXATK11 }]],
@@ -188,12 +187,12 @@ const ZJ11 = {
   雙刀: [['4a', 'zjBloom', '旋花飛刃', 50, 2, 4, 14, 1, '飛刃像花瓣一樣旋轉，打全體 2 段。', {}]],
   斧: [['4a', 'zjIronLaw', '鐵律重斧', 110, 0, 4, 14, 0, '攻擊力用「物攻＋物防」計算，50% 讓對手物防 −1。', { cls: 'strike', mods: [{ stage: 'skill', who: 'attacker', atkMul: { f: 'ironLaw11' } }], effects: DMG11(SG11({ def: -1 }, 0.5)) }]],
   雙盾: [['4a', 'zjHolyWall', '聖壁衝鋒', 50, 0, 3, 10, 0, '消耗全部守勢（至少 2），每點威力 +15；之後展開護盾（守勢 4 以上 3 格，否則 2 格）。', { cls: 'strike', costs: [{ res: 'stance', all: 1, min: 2 }, { res: 'mp', amount: 10 }], powerOf: 'guardStrike', after: [{ type: 'status', target: 'self', status: 'barrier', dur: { f: 'shieldDur' } }] }]],
-  法杖: [['4a', 'zjFourFold', '四象奔流', 45, 0, 4, 16, 0, '火、水、雷、草各打一段魔法（各 45）。', { cls: 'bolt', effects: ['火', '水', '雷', '草'].map(el => ({ type: 'damage', el, cond: { tgtAlive: 1 } })) }]],
-  魔導書: [['4a', 'zjStarPage', '星辰墜頁', 120, 0, 4, 16, 1, '星光化成書頁落下打全體，帶武器的屬性。', {}]],
+  法杖: [['4a', 'zjFourFold', '魔力奔流', 45, 0, 4, 16, 0, '四道魔力光束接連打出（各 45）。', { cls: 'bolt', effects: [1, 2, 3, 4].map(i => (i > 1 ? { type: 'damage', cond: { tgtAlive: 1 } } : { type: 'damage' })) }]],
+  魔導書: [['4a', 'zjStarPage', '星辰墜頁', 120, 0, 4, 16, 1, '星光化成書頁落下打全體。', {}]],
   樂器: [['4a', 'zjOverture', '迴響序曲', 0, 0, 4, 10, 0, '物攻・魔攻 +1 階（3 回合），回復 15% HP，特技 +1 層。', { unlock: 'clsBard', effects: [SELF11({ atk: 1, spa: 1 }), { type: 'heal', target: 'self', pct: 0.15 }, { type: 'resource', target: 'self', res: 'wc', amount: 1, why: 'song' }] }],
     ['4b', 'zjFinale', '終章頌歌', 90, 0, 4, 14, 1, '打全體（魔法）；自己每有 1 種能力提升，威力 +15%。', { unlock: 'clsBard', mods: [{ stage: 'skill', who: 'attacker', powMul: { f: 'song12' } }] }]],
   火槍: [['4a', 'zjGearGun', '齒輪砲台', 90, 0, 4, 14, 0, '砲擊並設置砲台（3 發）；砲台每回合結束自動射擊一隻魔物（威力 40）。', { unlock: 'clsMachinist', after: [{ type: 'turret_set' }] }],
-    ['4b', 'zjRedShell', '赤焰彈', 85, 0, 3, 10, 0, '火屬性的燃燒彈，50% 灼傷。', { unlock: 'clsMachinist', el: '火', effects: DMG11(STA11('brn', 0.5)) }]],
+    ['4b', 'zjRedShell', '赤焰彈', 85, 0, 3, 10, 0, '燃燒彈，50% 灼傷。', { unlock: 'clsMachinist', effects: DMG11(STA11('brn', 0.5)) }]],
   拳套: [['4a', 'zjThousand', '千手寸勁', 35, 3, 3, 10, 0, '3 段；每有 1 點氣多 1 段，用掉全部的氣。', { unlock: 'clsMonk', cls: 'strike', costs: [{ res: 'chi', all: 1, min: 0 }, { res: 'mp', amount: 10 }], hitsOf: (core, u, cmd) => 3 + (cmd.spent || 0) }],
     ['4b', 'zjQuake', '沖天拳', 170, 0, 4, 14, 0, '一記上勾拳把對手打上半空，必定會心；氣滿時威力再 +50%。', { unlock: 'clsMonk', cls: 'strike', mods: [CRIT11, MUL11(1.5, { srcChiFull11: 1 })] }]],
   長槍: [['4a', 'zjAzure', '蒼龍躍', 185, 0, 4, 14, 0, '跳到空中（大部分攻擊打不到），下一次行動落下。', { unlock: 'clsDragoon', cls: 'pierce', charge: 1, airborne: 1 }],
@@ -203,7 +202,7 @@ for (const k in ZJ11) TREE11[k].sk.push(...ZJ11[k]);
 // 共通樹：[id, 名字, 最高等級, 段, 說明, 效果]；效果 p＝百分比能力、f＝固定值、big／regen／mpRegen＝戰鬥被動、tal＝沿用原本天賦的效果
 const CM11 = {
   戰技: { cat: '物', nodes: [['cmAtk', '剛力', 5, 1, '物攻 +2%／級', { p: { atk: 2 } }], ['cmSpa', '靈力', 5, 1, '魔攻 +2%／級', { p: { spa: 2 } }], ['cmCrit', '銳眼', 5, 1, '會心率 +1%／級', { f: { crit: 1 } }],
-      ['cmWeak', '識破', 5, 2, '打中弱點的傷害 +3%／級', { f: { weakUp: 3 } }], ['cmBig', '屠巨', 5, 2, '對菁英・頭目的傷害 +3%／級', { big: 3 }], ['cmChase', '追斬', 1, 2, '會心命中後追加一擊（威力 20），每次行動 1 次', { tal: 'swordsman.0.1.0' }],
+      ['cmWeak', '識破', 5, 2, '會心傷害 +5%／級', { f: { critDmg: 5 } }], ['cmBig', '屠巨', 5, 2, '對菁英・頭目的傷害 +3%／級', { big: 3 }], ['cmChase', '追斬', 1, 2, '會心命中後追加一擊（威力 20），每次行動 1 次', { tal: 'swordsman.0.1.0' }],
       ['cmFirst', '先機', 1, 2, '每場第一回合一定第一個行動', { tal: 'swordsman.2.0.1' }], ['cmLast', '死戰', 1, 3, 'HP 越低傷害越高（最多 +35%）', { tal: 'swordsman.1.2.0' }],
       ['cmFlow', '連舞', 1, 3, '連續使用不同技能每次 +1 段，每段傷害 +6%（最多 3 段）；重複同一招或防禦就中斷', { tal: 'swordsman.0.0.1' }]],
     sk: [['3a', 'cmDawn', '晨曦之刃', 120, 0, 4, 14, 0, '吸取傷害的 20% HP，會心率加倍；用什麼武器都能用。', { unlock: 'hiddenCls', critX: 2, after: [{ type: 'heal', target: 'self', ofCast: 0.2, kind: 'drain', quiet: 1 }] }],
@@ -351,7 +350,7 @@ PV('tr11', (v, u) => { const mods = [], triggers = [];
   if (T.has('短刀')) mods.push({ stHit: 15 });
   if (T.has('斧')) triggers.push({ on: EVT.DAMAGE, phase: 'POST', role: 'src', cond: { tag: 'basic', evHit: 1, tgtSide: 'enemy' }, limit: { perAction: 1 }, effects: [{ type: 'hunt_chip', target: 'event_target', n: 1, why: 'axe11' }] });
   if (T.has('長槍')) mods.push({ stage: 'equipment', who: 'attacker', mul: 1.2, cond: { tgtStatus: 'broken', hasPower: 1 } });
-  if (T.has('法杖') && DEF.passives.weakUp) { const r = DEF.passives.weakUp.make(15, u); mods.push(...(r.mods || [])); triggers.push(...(r.triggers || [])); }
+  if (T.has('法杖')) mods.push({ stage: 'attacker', who: 'attacker', defMul: 0.85, cond: { cat: '特', hasPower: 1 } }); // v12.76: 魔法傷害無視 15% 魔防（原本是打弱點 +15%）
   if (T.has('魔導書')) mods.push({ costMul: 0.8, res: 'mp' });
   if (T.has('樂器')) mods.push({ tr11Long: 1 });
   if (T.has('火槍')) mods.push({ stage: 'attacker', who: 'attacker', firstRoundPrio: 1 });

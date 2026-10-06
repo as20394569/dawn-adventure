@@ -190,7 +190,7 @@ if (ACC_TRAIT.breaker) ACC_TRAIT.breaker[1] = '對魔物護盾的傷害 +35%'; i
   START_TXT12.劍 = '均衡的近身武器，會心打護盾特別痛。'; START_TXT12.斧 = '一擊很重，普攻打護盾更痛。';
   if (SPECIALS.deathWard) SPECIALS.deathWard.d = '每場戰鬥一次：HP 低於 30% 時張開護盾（最大 HP 30%、全部吸收、2 回合）。'; }
 const WARD_HELP12 = ['護盾：主角的護盾照最大 HP 的比例張開，打過來的傷害有一部分（通常一半）先打在護盾上；到自己下一次行動前有效（有的招會更久）。',
-  '魔物的護盾：菁英・頭目蓄力時、HP 掉到一定程度時、每隔幾回合會張開護盾，打在上面的傷害不扣血。在牠下次行動前打破 → 破防！弱點和會心對護盾加倍，有的招式和裝備也特別會破盾。',
+  '魔物的護盾：菁英・頭目蓄力時、HP 掉到一定程度時、每隔幾回合會張開護盾，打在上面的傷害不扣血。在牠下次行動前打破 → 破防！會心對護盾加倍，有的招式和裝備也特別會破盾。',
   '破防：跳過牠下一次行動、受到的傷害 +50%、打斷蓄力，頭目還能打部位。打不破的話，蓄力大招就選「防禦」。'];
 if (typeof BATTLE_HELP !== 'undefined') { for (const b of BATTLE_HELP) if (Array.isArray(b[1])) b[1] = b[1].filter(t => typeof t !== 'string' || !/^破防：/.test(t)).map(t => typeof t === 'string' ? t.replace('魔法護盾：受到的傷害減少40%。', '護盾：張開時，打過來的傷害有一部分先打在護盾上。') : t);
   const P = BATTLE_HELP.find(q => q[0] === '如何避免'); if (P) P[1].splice(1, 0, '破防：在魔物的護盾消失前把它打破（詳見「護盾」那一頁）。'); BATTLE_HELP.push(['護盾', WARD_HELP12]); }
@@ -204,7 +204,7 @@ delete BADGE_OF.barrier;
     const d = P.data || {}, C = this.center(t); t.st.barrier = 1; t.st.ward = Math.round(d.amt || 0); t.st.wardMax = Math.round(d.max || d.amt || 1); t.st.wardTurns = d.turns || 1;
     if (P.quiet) return; yield* FX.barrier.call(this, C);
     yield* this.msg(t.n + (P.refreshed ? '的護盾變強了！' : '張開了護盾！') + '（' + t.st.ward + '）', { hold: 22 });
-    const f = Game.st.flags; if (!t.hero && !f.tutWard12) { f.tutWard12 = 1; yield* this.msg('（魔物張開了護盾！打在護盾上的傷害不扣血。在牠下次行動前打破它就會「破防」：弱點和會心對護盾加倍。）', { wait: true }); } };
+    const f = Game.st.flags; if (!t.hero && !f.tutWard12) { f.tutWard12 = 1; yield* this.msg('（魔物張開了護盾！打在護盾上的傷害不扣血。在牠下次行動前打破它就會「破防」：會心對護盾加倍。）', { wait: true }); } };
   const _sg = H.statusGone; H.statusGone = function* (e, s, t, P, expire) { if (!t || P.status !== 'barrier') return yield* _sg.call(this, e, s, t, P, expire);
     delete t.st.barrier; delete t.st.ward; if (P.why === 'down') return; const C = this.center(t);
     if (P.why === 'broken') { Sound.sfx('rock'); if (this.sparks) this.sparks(C.x, C.y, 12, ['#c8e0ff', '#80a8e0'], 2.8); yield* this.msg(t.n + '的護盾被打破了！', { hold: 20 }); }

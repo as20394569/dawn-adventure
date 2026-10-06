@@ -49,7 +49,7 @@ const GEAR = {
   crystalHeart: { n: '水晶之心', slot: 'acc', t: 4, st: { hp: 8, atk: 2, spa: 2 }, sp: { crit: 5 }, d: '水晶魔像的核心，閃耀著異界的光芒。' },
 };
 const STATK = ['hp', 'atk', 'def', 'spa', 'spd', 'spe'];
-const SP_NAMES = { crit: '會心', hit: '命中', eva: '迴避', drain: '吸血', elem: '屬性傷害' };
+const SP_NAMES = { crit: '會心', hit: '命中', eva: '迴避', drain: '吸血', elem: '傷害加成' };
 const AFF_T = ['一般', '火', '水', '草', '雷', '岩', '毒', '飛'];
 const AFFIX_COUNT = [0, 0, 1, 2, 2]; // 藍0 紫1 紅2 金2
 function rollAffixes(n, slot = 'acc', tier = 1) {

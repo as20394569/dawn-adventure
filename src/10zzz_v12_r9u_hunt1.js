@@ -163,7 +163,7 @@ EFFECT_TYPES.hunt_p2 = { exec(core, ef, ctx) { const u = ctx.owner; if (!u || u.
   core.emit(EVT.PHASE, { src: u, tgts: [u], payload: { phase: u.data.phase || 0, key: 'hunt2' } }, () => { u.data.hunt2 = 1;
     const src = huntBest11(u.skills), cid = src && huntClone11(src); if (cid) { u.data.hunt2Skill = cid; const i = u.skills.indexOf(src); if (i >= 0) u.skills[i] = cid; else u.skills.push(cid); } }); } };
 defPut('mechanics', 'hunt2', { triggers: [{ on: EVT.ACTION_END, phase: 'POST', cond: { ownerHpBelow: 0.5, ownerAlive: 1, dataNot: ['hunt2', 1] }, prio: 7, effects: [{ type: 'hunt_p2' }] }] });
-PHASE_TXT.hunt2 = n => [n + '進入了後半戰！弱點改變了！'].concat(Game.st.flags.tutHunt2 ? [] : (Game.st.flags.tutHunt2 = 1, ['（頭目 HP 剩一半時會換弱點，還會多一招蓄力大招。後半戰打出破防，會多掉稀有部位！）']));
+PHASE_TXT.hunt2 = n => [n + '進入了後半戰！'].concat(Game.st.flags.tutHunt2 ? [] : (Game.st.flags.tutHunt2 = 1, ['（頭目 HP 剩一半時進入後半戰，會多一招蓄力大招。後半戰打出破防，會多掉稀有部位！）']));
 
 /* ---------- 魔物的戰鬥資料：護盾、蓄力招、後半戰 ---------- */
 // bosses were over in 6–10 rounds and barely hurt (sims, Lv16–20 hero with same-tier 紫 gear): HP ×1.3, attack ×1.2; a few early ones evened out
@@ -218,6 +218,6 @@ lootHint = function (key, sp) { const first = !((Game.st.kills || {})[key]), sig
 /* ---------- 說明 ---------- */
 if (typeof BATTLE_HELP !== 'undefined') {
   const P = BATTLE_HELP.find(q => q[0] === '如何避免'); if (P) { P[1] = P[1].map(t => /^防禦：/.test(t) ? t.replace('傷害減半，', '傷害減半（菁英・頭目的蓄力大招減少七成），') : t);
-    if (!P[1].some(t => /^破防：/.test(t))) P[1].splice(1, 0, '破防：菁英 3 格、頭目 5 格護盾，打中弱點或會心各削 1 格。削光就破防：跳過下一次行動、受到的傷害 +50%、打斷蓄力，還會多掉部位。'); }
-  const Q = BATTLE_HELP.find(q => q[0] === '魔物變強的時候'); if (Q && !Q[1].some(t => /後半戰/.test(t))) Q[1].splice(1, 0, '頭目的HP剩一半時進入後半戰：弱點改變，還多一招蓄力大招。');
+    if (!P[1].some(t => /^破防：/.test(t))) P[1].splice(1, 0, '破防：菁英 3 格、頭目 5 格護盾，打出會心削 1 格。削光就破防：跳過下一次行動、受到的傷害 +50%、打斷蓄力，還會多掉部位。'); }
+  const Q = BATTLE_HELP.find(q => q[0] === '魔物變強的時候'); if (Q && !Q[1].some(t => /後半戰/.test(t))) Q[1].splice(1, 0, '頭目的HP剩一半時進入後半戰：多一招蓄力大招。');
 }

@@ -114,20 +114,20 @@ B12_SCRIPT.clockColossus = function (core, u) { const h = u.data.clock12 || 9;
 
 /* ---------- 霜之女王：冰霜 stacks (3 → 凍結); 防禦 or a fire hit clears them ---------- */
 EFFECT_TYPES.frost12 = { exec(core, ef, ctx, tg) { for (const t of tg) { if (!t || !t.hero || !core.isUp(t)) continue;
-  if (ef.clear) { if (t.data.frost12) { t.data.frost12 = 0; core.emit(EVT.MESSAGE, { src: t, tgts: [t], payload: { key: null, text: ef.why === 'fire' ? '火焰融化了身上的冰霜！' : '防禦架勢抖落了身上的冰霜！' } }); } continue; }
+  if (ef.clear) { if (t.data.frost12) { t.data.frost12 = 0; core.emit(EVT.MESSAGE, { src: t, tgts: [t], payload: { key: null, text: ef.why === 'crit' ? '會心一擊震碎了身上的冰霜！' : '防禦架勢抖落了身上的冰霜！' } }); } continue; }
   t.data.frost12 = (t.data.frost12 || 0) + 1;
   if (t.data.frost12 >= 3) { t.data.frost12 = 0; core.applyStatus(ctx.owner, t, 'frozen', {}); core.emit(EVT.MESSAGE, { src: t, tgts: [t], payload: { key: null, text: '冰霜累積到 3 層，' + t.name + '被凍住了！' } }); }
-  else core.emit(EVT.MESSAGE, { src: t, tgts: [t], payload: { key: null, text: '冰霜累積了（' + t.data.frost12 + '／3）。防禦或火屬性攻擊可以清掉。' } }); } } };
+  else core.emit(EVT.MESSAGE, { src: t, tgts: [t], payload: { key: null, text: '冰霜累積了（' + t.data.frost12 + '／3）。防禦或打出會心可以清掉。' } }); } } };
 defPut('mechanics', 'b12_frostQueen', { make: u => ({ triggers: [
   { on: EVT.DAMAGE, phase: 'POST', role: 'src', cond: { element: '水', hasPower: 1, tgtAlive: 1, tgtSide: 'enemy' }, limit: { perAction: 1 }, prio: 3, effects: [{ type: 'frost12', target: 'event_target' }] },
   { on: EVT.DEFEND, phase: 'POST', role: 'enemy_src', prio: 3, effects: [{ type: 'frost12', clear: 1, why: 'guard', target: 'all_enemies' }] },
-  { on: EVT.DAMAGE, phase: 'POST', role: 'tgt', cond: { srcSide: 'enemy', evEl: '火', hasPower: 1 }, limit: { perAction: 1 }, prio: 3, effects: [{ type: 'frost12', clear: 1, why: 'fire', target: 'all_enemies' }] }] }) });
+  { on: EVT.DAMAGE, phase: 'POST', role: 'tgt', cond: { srcSide: 'enemy', crit: 1, hasPower: 1 }, limit: { perAction: 1 }, prio: 3, effects: [{ type: 'frost12', clear: 1, why: 'crit', target: 'all_enemies' }] }] }) });
 
 /* ---------- 熔岩巨人：熔岩甲 (physical damage −15%) until a water hit cools it (3 of its actions) · round 2: 大噴發 140, HP −25% (10zzj) ---------- */
 defPut('statuses', 'cooled12', { tags: ['debuff'], duration: 'owner_actions', durDefault: 3, tick: 'owner_action_end', stack: 'refresh', metadata: { n: '冷卻' } });
 defPut('mechanics', 'b12_lavaGiant', { make: u => ({ mods: [{ stage: 'final', who: 'defender', mul: 0.85, cond: { cat: '物', hasPower: 1, ownerLacksStatus: 'cooled12' } }], triggers: [
-  { on: EVT.ROUND_START, phase: 'POST', cond: { round: 1, ownerAlive: 1 }, prio: 2, effects: [{ type: 'message', target: 'self', text: '熔岩巨人全身覆蓋著熔岩甲！（物理攻擊的效果會變差……用水屬性讓牠冷卻！）' }] },
-  { on: EVT.DAMAGE, phase: 'POST', role: 'tgt', cond: { srcSide: 'enemy', evEl: '水', hasPower: 1, ownerAlive: 1 }, limit: { perAction: 1 }, prio: 3, effects: [{ type: 'status', status: 'cooled12', target: 'self', dur: 3 }, { type: 'message', target: 'self', text: '熔岩甲冷卻變硬、裂開了！物理攻擊現在有效！' }] }] }) });
+  { on: EVT.ROUND_START, phase: 'POST', cond: { round: 1, ownerAlive: 1 }, prio: 2, effects: [{ type: 'message', target: 'self', text: '熔岩巨人全身覆蓋著熔岩甲！（物理攻擊的效果會變差……打出會心就能讓熔岩甲裂開！）' }] },
+  { on: EVT.DAMAGE, phase: 'POST', role: 'tgt', cond: { srcSide: 'enemy', crit: 1, hasPower: 1, ownerAlive: 1 }, limit: { perAction: 1 }, prio: 3, effects: [{ type: 'status', status: 'cooled12', target: 'self', dur: 3 }, { type: 'message', target: 'self', text: '會心一擊打裂了熔岩甲！物理攻擊現在有效！' }] }] }) });
 
 /* ---------- 魔人維克托：copies the skill you used last round (×0.8) ---------- */
 defPut('mechanics', 'b12_victorDemon', { make: u => ({ mods: [{ stage: 'skill', costMul: 0 }, { stage: 'skill', who: 'attacker', mul: 0.8, cond: { notTag: 'monster_skill' } }] }) });

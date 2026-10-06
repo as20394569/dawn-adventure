@@ -10,18 +10,18 @@
 /* ---------- 晶石資料 ---------- */
 const CRY_T11 = { w: '武器', a: '防具', c: '飾品', u: '通用' };
 const CRY11 = { // sp: [type, series, effects]   effect = [key, ★1 value, extra]
-  wolf: ['w', '連擊', [['double', 15]]], bandit: ['w', '連擊', [['double', 20], ['spe', 3]]], crystalCrayfish: ['w', '連擊', [['double', 25], ['typeUp', 10, '水']]],
-  rockPangolin: ['a', '荊棘', [['thorns', 15]]], flower: ['a', '荊棘', [['thorns', 20], ['def', 4]]], youngDragon: ['a', '荊棘', [['thorns', 30], ['def', 8], ['fireRes', 10]]],
+  wolf: ['w', '連擊', [['double', 15]]], bandit: ['w', '連擊', [['double', 20], ['spe', 3]]], crystalCrayfish: ['w', '連擊', [['double', 25], ['crit', 3]]],
+  rockPangolin: ['a', '荊棘', [['thorns', 15]]], flower: ['a', '荊棘', [['thorns', 20], ['def', 4]]], youngDragon: ['a', '荊棘', [['thorns', 30], ['def', 8], ['hp', 5]]],
   mossGiant: ['a', '再生', [['regen', 2]]], rootSpider: ['a', '再生', [['regen', 3], ['spe', -3]]], silverWyrm: ['a', '再生', [['regen', 3], ['hp', 6]]],
   hydra: ['a', '再生', [['regen', 4], ['psnRes', 30]]], snowBear: ['a', '再生', [['regen', 4.5], ['hp', 8], ['spe', -5]]],
   rockRhino: ['w', '削防', [['defDown', 25]]], banditBoss: ['w', '削防', [['defDown', 30], ['atk', 4]]], wraithGeneral: ['w', '削防', [['defDown', 35], ['crit', 3]]],
   ramGhost: ['w', '削防', [['defDown', 40], ['atk', 6], ['spe', -4]]], harvestGolem: ['w', '削防', [['defDown', 40], ['brokenDmg', 15]]],
   iceMammoth: ['w', '削防', [['pierce', 20]]], duskCaptain: ['w', '削防', [['pierce', 30], ['atk', 8]]],
-  duneWorm: ['c', '背水', [['back', 20]]], magmaNewt: ['c', '背水', [['back', 28], ['typeUp', 10, '火']]], lavaGiant: ['c', '背水', [['back', 35], ['hp', -5]]], shadowGeneral: ['c', '背水', [['back', 45], ['hp', -8]]],
+  duneWorm: ['c', '背水', [['back', 20]]], magmaNewt: ['c', '背水', [['back', 28], ['crit', 3]]], lavaGiant: ['c', '背水', [['back', 35], ['hp', -5]]], shadowGeneral: ['c', '背水', [['back', 45], ['hp', -8]]],
   millGolem: ['a', '速度', [['spe', 5]]], sandGargoyle: ['c', '速度', [['spe', 10]]], lizardChief: ['a', '速度', [['spe', 12], ['firstEva', 10]]],
   clockKnight: ['w', '速度', [['first', 1]]], clockColossus: ['c', '速度', [['initiative', 1], ['spe', 8]]],
   croc: ['a', '守護', [['guardHeal', 8]]], golem: ['a', '守護', [['endure', 1]]], rockBeetle: ['a', '守護', [['endure', 1], ['def', 6], ['spe', -4]]], boneKnight: ['a', '守護', [['deathWard', 1], ['def', 6]]],
-  blackCatfish: ['w', '魔力', [['typeUp', 12, '水']]], glowToad: ['a', '魔力', [['mpGuard', 8]]], moonJelly: ['w', '魔力', [['siphon', 3]]], bogWitch: ['a', '魔力', [['freecast', 10]]],
+  blackCatfish: ['w', '魔力', [['spa', 6]]], glowToad: ['a', '魔力', [['mpGuard', 8]]], moonJelly: ['w', '魔力', [['siphon', 3]]], bogWitch: ['a', '魔力', [['freecast', 10]]],
   frostLich: ['w', '魔力', [['siphon', 4], ['spa', 5]]], frostQueen: ['a', '魔力', [['mpGuard', 10], ['spd', 6]]], victorDemon: ['c', '魔力', [['siphon', 5], ['spa', 8], ['def', -5]]],
   mireEel: ['a', '影步', [['shadowStep', 1], ['eva', 3]]], blackFeather: ['a', '影步', [['shadowStep', 1], ['eva', 6]]],
   boarKing: ['a', '奮戰', [['fervor', 2]]], hideoutBear: ['a', '奮戰', [['fervor', 3], ['def', -3]]],
@@ -42,7 +42,7 @@ function cryEffText11(e, v) { const k = e[0];
     pierce: '物理攻擊無視 ' + v + '% 物防', back: 'HP 越低傷害越高（最多 +' + v + '%）', first: '第一回合一定先行動', initiative: '用搶先技能後，下回合第一次攻擊 +20%', firstEva: '第一回合迴避 +' + v,
     guardHeal: '防禦時回復 ' + v + '% HP', endure: '每場 1 次撐住（剩 1 HP）', deathWard: '每場 1 次：HP 低於 30% 時得到 2 回合護盾', mpGuard: '防禦時回復 ' + v + '% MP',
     siphon: '普攻命中回復 ' + v + ' MP', freecast: '技能 ' + v + '% 機率不花 MP', shadowStep: '閃過攻擊時反擊', fervor: '攻擊後物攻或魔攻 +1（每場最多 ' + v + ' 次）',
-    elemRes: '受到的屬性傷害 −' + v + '%', spellblade: '物理攻擊加上魔攻的 ' + v + '%；魔法攻擊加上物攻的 ' + v + '%', brokenDmg: '對破防中的魔物傷害 +' + v + '%',
+    elemRes: '受到的魔法傷害 −' + v + '%', spellblade: '物理攻擊加上魔攻的 ' + v + '%；魔法攻擊加上物攻的 ' + v + '%', brokenDmg: '對破防中的魔物傷害 +' + v + '%',
     typeUp: e[2] + '屬性傷害 +' + v + '%', fireRes: '受到的火屬性傷害 −' + v + '%', psnRes: '中毒抗性 +' + v + '%', gold: '戰鬥金錢 +' + v + '%', matUp: '素材點數 +' + v + '%',
     crit: '會心 ' + pm11(v), eva: '迴避 ' + pm11(v), all: '全部能力 +' + v + '%' })[k] || k; }
 const cryText11 = (sp, star = 1) => CRY11[sp][2].map(e => cryEffText11(e, cryVal11(e, star))).join('；');

@@ -22,7 +22,7 @@ function powFormula(id, st = Game.st) {
   else L.push('威力 ' + m.pow);
   L.push('＝普攻的' + Math.round(m.pow / MOVES.attack.pow * 100) + '%' + (m.hits ? '，' + (Array.isArray(m.hits) ? m.hits.join('～') : m.hits) + '段' : ''));
   L.push('傷害≈威力×你的' + stat + '÷對手' + vsD + '（再依等級放大）');
-  L.push('再乘：屬性相剋・會心×1.5・亂數85～100%');
+  L.push('再乘：會心×1.5・亂數85～100%');
   return L.join('\n');
 }
 // the chief's first orb follows the class

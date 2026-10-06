@@ -29,7 +29,7 @@ const EXP_C12 = '#aab8d0', HEAD_C12 = '#ffd890';
 const EN_EXP12 = { atk: n => '整體物攻 ×' + (1 + n / 100).toFixed(2), spa: n => '整體魔攻 ×' + (1 + n / 100).toFixed(2), def: n => '整體物防 ×' + (1 + n / 100).toFixed(2), spd: n => '整體魔防 ×' + (1 + n / 100).toFixed(2),
   hp: n => '整體最大 HP ×' + (1 + n / 100).toFixed(2), crit: () => '會心時傷害 ×1.5', spe: () => '速度快的先行動', stRes: () => '中毒・麻痺・睡眠等異常有這個機率擋下', heal: () => '回復技能・道具的回復量提高' };
 const SP_EXP12 = { crit: () => '會心時傷害 ×1.5', hit: () => '比較不會打空', eva: () => '比較容易閃過攻擊', drain: () => '打出傷害的這個比例回復 HP（合計最多 20%）',
-  elem: () => '火・水・雷・草・毒・岩屬性的攻擊更痛', block: () => '被攻擊時有這個機率格擋，那一下傷害 −40%', critDmg: () => '會心的那一下再更痛', stHit: () => '讓對手中異常的機率提高',
+  elem: () => '造成的傷害提高', block: () => '被攻擊時有這個機率格擋，那一下傷害 −40%', critDmg: () => '會心的那一下再更痛', stHit: () => '讓對手中異常的機率提高',
   stRes: () => '中毒・麻痺・睡眠等異常有這個機率擋下', healUp: () => '回復技能・道具的回復量提高' };
 const elExp12 = (el, magic) => '普攻和無屬性的' + (magic ? '魔法' : '物理') + '招式變' + el + '屬性；打弱' + el + ' ×1.5、抗' + el + ' ×0.6';
 // a weapon's kind: what it reads, its basic attack, its tree and trait, two in hand

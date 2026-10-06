@@ -22,7 +22,7 @@ const mul = (v, cond, stage = 'talent', who = 'attacker') => ({ stage, who, mul:
 const once = (on, role, cond, effects, extra = {}) => ({ on, role, cond, effects, limit: { perAction: 1 }, ...extra });
 /* ---------- damage modifiers ---------- */
 PV('dmgUp', v => ({ mods: [mul(v, { hasPower: 1 })] }), { n: '傷害加成' });
-PV('elem', v => ({ mods: [mul(v, { hasPower: 1, element: ['火', '水', '雷', '草', '毒', '岩'] }, 'equipment')] }));
+PV('elem', v => ({ mods: [mul(v, { hasPower: 1 }, 'equipment')] })); // v12.76: 屬性傷害 → 全部傷害（元素系統拿掉了）
 PV('fireUp', v => ({ mods: [mul(v, { element: '火' }, 'equipment')] }));
 PV('boltUp', v => ({ mods: [mul(v, { element: '雷' }, 'equipment')] }));
 PV('vs', v => ({ mods: (v || []).map(([fam, p]) => mul(p, { tgtFam: fam }, 'equipment')) }));
@@ -49,7 +49,7 @@ PV('fx.pierce', v => ({ mods: [{ stage: 'attacker', who: 'attacker', defMul: 0.7
 PV('fx.swift', v => ({ mods: [{ stage: 'attacker', who: 'attacker', speMul: 1.15 }] }));
 PV('fx.first', v => ({ mods: [{ stage: 'attacker', who: 'attacker', firstRoundPrio: 1 }] }));
 /* ---------- defence ---------- */
-PV('elemRes', v => ({ mods: [{ stage: 'defender', who: 'defender', mul: 1 - v / 100, cond: { element: ['火', '水', '草', '雷'] } }] }));
+PV('elemRes', v => ({ mods: [{ stage: 'defender', who: 'defender', mul: 1 - v / 100, cond: { cat: '特', hasPower: 1 } }] })); // v12.76: 屬性 → 魔法
 PV('guardPlus', v => ({ mods: [{ stage: 'defender', who: 'defender', mul: 0.7, cond: { guarding: 1, hasPower: 1 } }] }));
 PV('block', v => ({ triggers: [{ on: EVT.DAMAGE, phase: 'PRE', role: 'tgt', cond: { srcSide: 'enemy', hasPower: 1 }, chance: Math.min(45, v) / 100,
   effects: [{ type: 'modify', mul: 0.6, note: 'block' }, { type: 'message', key: 'block', target: 'self' }] }] }), { n: '格擋' });

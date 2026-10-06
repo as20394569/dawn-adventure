@@ -111,17 +111,7 @@ redo13('t_fsQi', 't11_fsQi', { col: C13.chi,
 
 /* ---------------- 法杖 ---------------- */
 const tip13 = b => { const H = b.center(b.H); return { x: H.x + 18, y: H.y - 28 }; };
-// 四象奔流：火、水、雷、草各打一段 → 四顆元素球繞著杖轉，再一顆顆打出去：火炸開、水濺起、雷劈下、草葉捲起
-redo13('t_zjFourFold', 't11_zjFourFold', { col: C13.arc,
-  *f(S, U, T) { const A = tip13(this), E = ['火', '水', '雷', '草'].map(k => EL13[k]); Sound.sfx('charge'); const orbs = E.map((c, i) => { const p = this.spawn({ k: 'k13orb', x: A.x, y: A.y, r: 5, c: c[0], h: c[1], o: c[2], trail: 4, life: 22 + i * 9 }); p.upd = q => { if (q.go) return; const an = q.t * 0.35 + i * Math.PI / 2; q.x = A.x + Math.cos(an) * 16; q.y = A.y - 6 + Math.sin(an) * 9; }; return p; });
-    yield* wait(12);
-    for (let i = 0; i < 4; i++) { const c = E[i], p = orbs[i], P0 = { x: p.x, y: p.y }, P = { x: T.x + [-8, 8, 0, 0][i], y: T.y + [0, 0, -4, 6][i] }; p.go = 1; p.upd = q => { const k = clamp((q.t - q.t0) / 5, 0, 1); q.x = lerp(P0.x, P.x, k); q.y = lerp(P0.y, P.y, k); }; p.t0 = p.t; p.life = p.t + 6; yield* wait(5);
-      if (i === 0) { Sound.sfx('fire'); for (let j = 0; j < 10; j++) this.spawn({ k: 'flame', x: P.x + rnd(-10, 10), y: P.y + rnd(-4, 10), vy: -1.6, s: rnd(3, 5), life: rnd(12, 18) }); }
-      if (i === 1) { Sound.sfx('water'); for (let j = 0; j < 12; j++) this.spawn({ k: 'circ', x: P.x, y: P.y, vx: rnd(-24, 24) / 10, vy: -rnd(10, 30) / 10, g: 0.18, r: rnd(2, 3), c: j % 2 ? c[0] : c[1], life: 20 }); }
-      if (i === 2) { Sound.sfx('thunder'); const pts = []; let xx = P.x; for (let y = 0; y < P.y; y += 10) { pts.push([xx, y]); xx += rnd(-6, 6); } pts.push([P.x, P.y]); for (let j = 1; j < pts.length; j++) this.spawn({ k: 'k13beam', x1: pts[j - 1][0], y1: pts[j - 1][1], x2: pts[j][0], y2: pts[j][1], w: 3, c: c[0], h: c[1], o: c[2], grow: 1, life: 8 }); }
-      if (i === 3) { Sound.sfx('leaf'); for (let j = 0; j < 12; j++) { const an = j * 0.52; this.spawn({ k: 'img', img: LEAF_IMG, x: P.x + Math.cos(an) * 18, y: P.y + Math.sin(an) * 10, vx: -Math.sin(an) * 2, vy: Math.cos(an) * 1.1 - 0.4, fade: 1, life: 20 }); } }
-      K13.hit(this, P, c, i === 3 ? 1 : 0); yield* wait(4); }
-    yield* wait(8); } });
+// 魔力奔流（原本的四象奔流）：v12.76 改成魔力光束，特效在 v8 的法杖段
 // 特技・星輝：下一次攻擊必定會心 → 星光從四周聚進杖尖、閃出一顆大四芒星，再化成準星飄到對手身上
 redoSp13('法杖', 2, { col: C13.gold,
   *f(S) { const c = S.col, A = tip13(this); Sound.sfx('tick'); for (let i = 0; i < 8; i++) { const an = i * Math.PI / 4, P0 = { x: A.x + Math.cos(an) * 34, y: A.y + Math.sin(an) * 26 }, p = this.spawn({ k: 'k13spike', x: P0.x, y: P0.y, r0: 3, r1: 6, n: 4, c: c[0], h: c[1], o: c[2], rot: 0.78, inner: 0.3, life: 12 }); p.upd = q => { const k = clamp(q.t / 10, 0, 1); q.x = lerp(P0.x, A.x, k); q.y = lerp(P0.y, A.y, k); }; }

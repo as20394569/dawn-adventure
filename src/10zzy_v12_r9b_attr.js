@@ -48,7 +48,7 @@ const fmt9 = v => (Math.round(v * 10) / 10).toString();
 function stats9(st = Game.st) { const s = heroStats(st);
   return [['HP', st.hp + '/' + s.hp, 'hp'], ['MP', (st.mp ?? s.mp) + '/' + s.mp, 'mp'], ['物攻', s.atk, 'atk'], ['物防', s.def, 'def'], ['魔攻', s.spa, 'spa'], ['魔防', s.spd, 'spd'], ['速度', s.spe, 'spe'], ['會心率', fmt9(s.crit) + '%', 'crit'],
     ['會心傷害', Math.round(150 * (1 + (s.critDmg || 0) / 100)) + '%', 'critDmg'], ['命中', '+' + fmt9(s.hit) + '%', 'hit'], ['迴避', fmt9(s.eva) + '%', 'eva'], ['吸血', Math.min(20, s.drain || 0) + '%', 'drain'],
-    ['屬性傷害', '+' + (s.elem || 0) + '%', 'elem'], ['異常命中', '+' + fmt9(s.stHit || 0) + '%', 'stHit'], ['異常抗性', fmt9(Math.min(80, s.stRes || 0)) + '%', 'stRes'], ['回復量', '+' + fmt9(s.healUp || 0) + '%', 'healUp']]; }
+    ['傷害加成', '+' + (s.elem || 0) + '%', 'elem'], ['異常命中', '+' + fmt9(s.stHit || 0) + '%', 'stHit'], ['異常抗性', fmt9(Math.min(80, s.stRes || 0)) + '%', 'stRes'], ['回復量', '+' + fmt9(s.healUp || 0) + '%', 'healUp']]; }
 function statFormula9(key, st = Game.st) { const s = heroStats(st), a = heroAttr(st), L = st.lv, eq = eqBonus(st), rest = (tot, ...parts) => tot - parts.reduce((x, y) => x + y, 0), A = s.arm9 || {};
   const line = (base, e, other, extra = []) => [base, ...(e ? ['＋裝備 ' + fmt9(e)] : []), ...(Math.abs(other) >= 0.05 ? ['＋技能樹・晶石・武器等 ' + fmt9(other)] : []), ...extra];
   const B = { hp: Math.floor(6 + L * 1.8 + a.vit * 1.6), mp: Math.floor(8 + L * LV_GROW.mp + a.int * (LV_GROW.mpInt ?? 1.5)), atk: Math.floor(a.str + a.dex / 2), def: Math.floor(a.vit * 1.5 + a.agi * 0.5), spa: Math.floor(a.int * 1.2 + a.dex / 3), spd: Math.floor((a.int + a.vit) * 0.8), spe: Math.floor(a.agi * 1.5) };
@@ -61,7 +61,7 @@ function statFormula9(key, st = Game.st) { const s = heroStats(st), a = heroAttr
   if (key === 'hit') { const b = a.dex * 0.5, e = gearSp9(st, 'hit'); return line('靈巧×0.5＝' + fmt9(b), e, rest(s.hit, b, e), ['命中率＝招式命中＋這個數字−對手迴避']); }
   if (key === 'eva') { const b = a.agi * 0.4 + a.luk * 0.1, e = gearSp9(st, 'eva'), l = 2 * (A.輕裝 || 0); return line('敏捷×0.4＋幸運×0.1＝' + fmt9(b), e, rest(s.eva, b, e, l), l ? ['＋輕裝 ' + A.輕裝 + ' 件 ' + l] : []); }
   if (key === 'drain') { const e = gearSp9(st, 'drain'); return line('造成傷害的這個比例回復 HP（上限 20%）', e, rest(s.drain || 0, e)); }
-  if (key === 'elem') { const e = gearSp9(st, 'elem'); return line('火、水、雷、草、毒、岩屬性的傷害提高', e, rest(s.elem || 0, e)); }
+  if (key === 'elem') { const e = gearSp9(st, 'elem'); return line('造成的傷害提高', e, rest(s.elem || 0, e)); }
   if (key === 'stHit') { const b = over10(a.dex), e = gearSp9(st, 'stHit'); return line('靈巧超過 10 的部分每點 +1 → ' + b, e, rest(s.stHit || 0, b, e), ['讓魔物陷入異常、能力下降的機率 ×（1＋這個%）']); }
   if (key === 'stRes') { const b = 0.5 * over10(a.vit), e = gearSp9(st, 'stRes'); return line('體力超過 10 的部分每點 +0.5 → ' + fmt9(b), e, rest(s.stRes || 0, b, e), ['被施加異常狀態時擋下的機率（上限 80%）']); }
   if (key === 'healUp') { const b = 0.5 * over10(a.vit), e = gearSp9(st, 'healUp'); return line('體力超過 10 的部分每點 +0.5 → ' + fmt9(b), e, rest(s.healUp || 0, b, e), ['回復技能、再生、藥水的回復量']); }

@@ -10,7 +10,7 @@ const OG14 = {
   斧: ['5a', 'ogAxe', '天崩地裂', 150, 0, 7, 38, 1, '蓄力 1 回合，把斧頭砸進地面打全體；對破防中的對手威力 ×1.5，30% 退縮。', { charge: 1, cls: 'strike', mods: [MUL11(1.5, { tgtStatus: 'broken' })], effects: DMG11(FL11(0.3)) }],
   長槍: ['5a', 'ogSpear', '貫日神槍', 130, 0, 6, 34, 1, '化成一道光貫穿全部魔物，無視 60% 物防。', { cls: 'pierce', pierceDef: 0.6 }],
   拳套: ['5a', 'ogFist', '百烈崩拳', 18, 10, 6, 32, 0, '十段連打（各 18），無視 30% 物防，每段 10% 退縮。', { cls: 'strike', pierceDef: 0.3, effects: DMG11(FL11(0.1)) }],
-  法杖: ['5a', 'ogStaff', '元素終焉', 50, 0, 7, 40, 1, '火、水、雷、草四道魔法依序打全體（各 50）。', { cls: 'bolt', effects: ['火', '水', '雷', '草'].map(el => ({ type: 'damage', el, cond: { tgtAlive: 1 } })) }],
+  法杖: ['5a', 'ogStaff', '天穹魔陣', 50, 0, 7, 40, 1, '在全部魔物腳下展開魔法陣，連爆四次（各 50）。', { cls: 'bolt', effects: [1, 2, 3, 4].map(i => (i > 1 ? { type: 'damage', cond: { tgtAlive: 1 } } : { type: 'damage' })) }],
   雙刀: ['5a', 'ogDual', '幻影千迴', 30, 4, 6, 34, 1, '殘影在魔物之間穿梭，打全體 4 段（各 30），每段 15% 中毒。', { effects: DMG11(STA11('psn', 0.15)) }],
   雙劍: ['5a', 'ogTwin', '雙龍十字', 110, 2, 6, 34, 0, '兩道巨大的十字斬（各 110），會心率 +30%，對護盾傷害 ×2。', { mods: [{ stage: 'skill', who: 'attacker', critAdd: 30 }] }],
   雙盾: ['5a', 'ogWall', '聖域壁壘', 0, 0, 7, 30, 0, '張開聖盾 3 回合（最大 HP 40%、吸收 75%）；這段時間被攻擊就反擊（威力 50）。',
@@ -68,18 +68,13 @@ redo13('t_ogFist', 't11_ogFist', { col: OGC14.chi,
     if (!last) { Sound.sfx('hit'); PX13.spr(this, PXI.fist, { x: T.x + o[0], y: T.y + o[1] }, { sc: 2, life: 7 }); PX13.burst(this, { x: T.x + o[0], y: T.y + o[1] }, 7, S.col, 6, { n: 4 }); this.shake = Math.max(this.shake, 2); yield* wait(2); return; }
     yield* wait(2); Sound.sfx('hitSuper'); PX13.spr(this, PXI.fist, T, { sc: 3, life: 12 }); PX13.hit(this, T, S.col, 1);
     for (const [img, dx] of [[PXI.plateL, -1], [PXI.plateR, 1]]) PX13.spr(this, img, { x: T.x + dx * 4, y: T.y + 6 }, { sc: 2, vx: dx * 1.6, vy: -1.2, g: 0.14, life: 20 }); yield* wait(12); } });
-// 元素終焉：火、水、雷、草四道魔法依序打全體 → 主角腳下四顆元素寶石升起繞圈；一道火牆從左燒到右，接著冰晶砸在每一隻身上、落雷劈在每一隻身上、藤蔓從地面捲起每一隻
-redo13('t_ogStaff', 't11_ogStaff', { col: PXC.fire,
-  *f(S, U, T, u, t) { const H = PX13.hero(this), C = { x: H.x, y: H.y - 4 }, G = GEMS13(); Sound.sfx('charge'); K13.dark(this, 0.35, 120, '#0a0614');
-    G.forEach((g, i) => { const p = PX13.spr(this, g, C, { sc: gemSc13, life: 26 }); p.upd = q => { const an = i * Math.PI / 2 + q.t * 0.25, R = Math.min(24, q.t * 3); q.x = C.x + Math.cos(an) * R; q.y = C.y - q.t * 0.6 + Math.sin(an) * R * 0.7; }; });
-    yield* wait(14); const L = ogFoes14(this, t).sort((a, q) => a.P.x - q.P.x), y0 = T.y + 18; let k = 0; Sound.sfx('fire');
-    for (let f = 0; f < 16; f++) { const X = lerp(-14, W + 14, f / 15); if (f % 2 === 0) for (let j = 0; j < 3; j++) PX13.spr(this, PXI.flameA, { x: X + rnd(-6, 6), y: y0 - j * 9 + rnd(-2, 2) }, { frames: [PXI.flameA, PXI.flameB], fps: 2, sc: j === 0 ? 2 : 1, vy: -0.3, life: 12 });
-      while (k < L.length && L[k].P.x <= X) { PX13.burst(this, L[k].P, 12, PXC.fire, 10); k++; } yield; }
-    yield* wait(3); Sound.sfx('water'); for (const { P } of L) { const p = PX13.spr(this, PXI.ice, { x: P.x, y: P.y - 50 }, { sc: 3, life: 10 }); p.upd = q => { q.y = Math.min(P.y, P.y - 50 + q.t * 9); }; }
-    yield* wait(6); for (const { P } of L) { PX13.burst(this, P, 12, PXC.ice, 10); PX13.bits(this, P, 6, ['#ffffff', '#9ad8ff'], 2, 0.14, 12, { s: 2 }); } yield* wait(6);
-    for (const { P } of L) { Sound.sfx('thunder'); this.spawn({ k: 'p13bolt', pts: PX13.zig({ x: P.x + rnd(-6, 6), y: 0 }, P, 6, 6), c: PXC.volt, s: 2, grow: 2, life: 12 }); PX13.burst(this, P, 12, PXC.volt, 11); yield* wait(2); }
-    K13.flash(this, '#fff6a0', 0.25, 4); this.shake = Math.max(this.shake, 6); yield* wait(6);
-    Sound.sfx('leaf'); for (const { v, P } of L) this.spawn({ k: 'p13vine', x1: P.x - 18, y1: ogFoot14(v, P), x2: P.x + 4, y2: P.y - 12, c: PXC.leaf, s: 2, grow: 6, amp: 6, life: 22 }); yield* wait(7); for (const { P } of L) PX13.hit(this, P, PXC.leaf, 1); yield* wait(8); } });
+// 天穹魔陣：全部魔物腳下展開魔法陣，連爆四次 → 畫面一暗，杖尖一亮，每一隻魔物腳下各亮起一個轉動的魔法陣；接著光柱從陣裡往上衝四次（一次比一次粗、紫藍交替），每次都在魔物身上炸開，最後一次白光一閃、畫面震
+redo13('t_ogStaff', 't11_ogStaff', { col: MANA14,
+  *f(S, U, T, u, t) { const L = ogFoes14(this, t), A = PX13.tip(this); Sound.sfx('charge'); K13.dark(this, 0.4, 110, '#06041a'); PX13.spr(this, PXI.glint, A, { sc: 2, life: 12 });
+    for (const { v, P } of L) runeCircle14(this, { x: P.x, y: ogFoot14(v, P) }, 26, 96); yield* wait(16);
+    for (let n = 0; n < 4; n++) { const last = n === 3; Sound.sfx(last ? 'hitSuper' : 'arcane');
+      for (const { v, P } of L) { const F = { x: P.x, y: ogFoot14(v, P) }; this.spawn({ k: 'p13col', x: F.x, y: F.y, h: 90, w: 4 + n * 3, c: n % 2 ? MANA14B : MANA14, grow: 3, life: 12 }); PX13.burst(this, P, 10 + n * 3, MANA14, 9, { s: last ? 3 : 2 }); }
+      this.shake = Math.max(this.shake, 3 + n * 2); if (last) K13.flash(this, '#ffffff', 0.4, 5); yield* wait(last ? 16 : 8); } } });
 // 幻影千迴：殘影在魔物之間穿梭，打全體 4 段 → 主角留下好幾個殘影，一道道淡紫色的刀光在每一隻魔物之間來回劃過（每段換方向），中毒的綠色毒液濺出來
 redo13('t_ogDual', 't11_ogDual', { col: OGC14.shade,
   *f(S, U, T, u, t) { for (const dx of [-14, 14, 0]) K13.ghost(this, dx, -4, '#c8a0ff', 12, 0.4); Sound.sfx('wind'); yield* this.lunge(u, 20, 2);

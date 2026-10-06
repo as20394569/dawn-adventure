@@ -16,8 +16,8 @@ PV('earplug13', v => ({ triggers: [{ on: EVT.STATUS_APPLY, phase: 'PRE', role: '
 { const _hs = BB.heroSpec; BB.heroSpec = function (st, cfg) { const s = _hs.call(this, st, cfg); if (st && st.bag && st.bag.earplug13) s.passives.push({ key: 'earplug13', v: 1, src: 'other' }); return s; }; }
 // the reward: 潮鳴貝殼 (trait 潮音: water damage taken −25%)
 GEAR.tideShell13 = { n: '潮鳴貝殼', slot: 'acc', t: 7, st: { hp: 30, spd: 6, def: 4, atk: 4, spa: 4 }, sp: {}, fx: ['tide13'], trait: 'tide13', kind: '飾品', d: '潮鳴港的港務長送的大貝殼。貼在耳邊，聽得到很遠很遠的浪聲。', look: (GEAR.qHeroCrest || {}).look };
-PV('fx.tide13', v => ({ mods: [{ stage: 'defender', who: 'defender', mul: 0.75, cond: { element: ['水'] } }] }), { n: '潮音' });
-ACC_TRAIT.tide13 = ['潮音', '受到的水屬性傷害 −25%', ['潮鳴貝殼']]; if (typeof SPECIALS !== 'undefined') SPECIALS.tide13 = { n: '潮音', d: '受到的水屬性傷害 −25%。', cat: '防禦' };
+PV('fx.tide13', v => ({ triggers: [{ on: EVT.ROUND_END, phase: 'POST', cond: { ownerAlive: 1, foesHaveBoss: 0 }, effects: [{ type: 'heal', target: 'self', pct: 0.03, kind: 'regen', quiet: 1 }] }, { on: EVT.ROUND_END, phase: 'POST', cond: { ownerAlive: 1, foesHaveBoss: 1 }, effects: [{ type: 'heal', target: 'self', pct: 0.02, kind: 'regen', quiet: 1 }] }] }), { n: '潮音' }); // v12.76: 水傷害 −25% → 回合結束回 HP
+ACC_TRAIT.tide13 = ['潮音', '回合結束回復 3% HP（打頭目時 2%）', ['潮鳴貝殼']]; if (typeof SPECIALS !== 'undefined') SPECIALS.tide13 = { n: '潮音', d: '回合結束回復 3% HP（打頭目時 2%）。', cat: '回復' };
 if (typeof BP_RARE !== 'undefined') BP_RARE.add('tideShell13');
 
 /* ---------- monsters: the shore and the cave (recoloured Q-version pictures) ---------- */

@@ -347,7 +347,7 @@ const ACC_TRAIT = {
   thrift: ['省力', '技能 12% 機率不花 MP', ['公會的印信']],
   fervor: ['奮戰', '攻擊後物攻或魔攻 +1（每場最多 2 次）', ['古王印戒', '火種護符', '格倫的護腕']],
   will: ['異常抗性', '異常狀態成功率 −20%', ['藥草香囊', '鎮魂鈴']],
-  elemGuard: ['元素抗性', '屬性傷害 −12%', ['水晶之心', '蜥鱗護符', '冰晶護符']],
+  elemGuard: ['魔法抗性', '受到的魔法傷害 −12%', ['水晶之心', '蜥鱗護符', '冰晶護符']],
   wisdom: ['智慧', '戰鬥經驗值 +50%', ['旅人護符', '學者的單片眼鏡']],
   fortune: ['幸運', '戰鬥金錢 +50%、掉落率提升', ['行商人徽章', '礦工的提燈']],
   manaSiphon: ['魔力汲取', '普攻命中回復 4 MP', ['靈光提燈', '宰相的魔戒']],
@@ -362,7 +362,7 @@ PV('fx.hunter', v => ({ mods: [{ stage: 'equipment', who: 'attacker', mul: 1.15,
 PV('fx.meditate', v => ({ triggers: [{ on: EVT.ROUND_END, phase: 'POST', cond: { ownerAlive: 1 }, effects: [{ type: 'resource', target: 'self', res: 'mp', pct: 0.02, min: 1, why: 'meditate' }] }] }));
 PV('fx.thrift', () => FREECAST(0.12));
 PV('fx.will', v => ({ mods: [{ statusRes: 20 }] }));
-PV('fx.elemGuard', v => ({ mods: [{ stage: 'defender', who: 'defender', mul: 0.88, cond: { element: ['火', '水', '雷', '草', '毒', '岩', '飛', '光', '暗', '冰', '風'] } }] }));
+PV('fx.elemGuard', v => ({ mods: [{ stage: 'defender', who: 'defender', mul: 0.88, cond: { cat: '特', hasPower: 1 } }] })); // v12.76: 元素抗性 → 魔法抗性
 PV('fx.resonance', (v, u) => ({ rules: u.cls === 'otherworlder' ? { max_insight: 1, insightMax: 1 } : u.cls === 'ranger' ? { markMax: 1 } : u.cls === 'machinist' ? { turretMax: 1 } : DEF.classes[u.cls] && DEF.classes[u.cls].res ? { ['max_' + DEF.classes[u.cls].res]: 1 } : {} }));
 PV('fx.timeSand', v => ({ triggers: [{ on: EVT.COOLDOWN, phase: 'POST', role: 'src', cond: { evSetCd: 1 }, chance: 0.2, effects: [{ type: 'cooldown', target: 'self', how: 'longest', n: 1, why: 'timeSand' }] }] }));
 PV('fx.initiative', v => ({ triggers: [{ on: EVT.ROUND_START, phase: 'POST', cond: { ownerHasStatus: 'prio_used' }, effects: [{ type: 'status', target: 'self', status: 'first_strike', quiet: 1 }] }] }));

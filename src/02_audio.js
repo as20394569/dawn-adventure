@@ -230,6 +230,9 @@ const Sound = (() => {
   function thump(f0, f1, dur, vol, t = 0) { if (!ac) return; const T = ac.currentTime + t; const o = ac.createOscillator(); o.type = 'sine'; o.frequency.setValueAtTime(f0, T); o.frequency.exponentialRampToValueAtTime(f1, T + dur);
     const g = ac.createGain(); g.gain.setValueAtTime(vol, T); g.gain.exponentialRampToValueAtTime(0.001, T + dur); o.connect(g); g.connect(sfxG); o.start(T); o.stop(T + dur + 0.02); }
   const snap = (vol = 0.3, t = 0) => noise(0.025, vol, 'highpass', 2500, null, t);
+  // v12.76: a soft-attack low rumble (thunder) — swells in, then rolls away
+  function rumble(dur, vol, f0, f1, t = 0, att = 0.1) { if (!ac) return; const T = ac.currentTime + t, s = ac.createBufferSource(); s.buffer = noiseBuf; const f = ac.createBiquadFilter(); f.type = 'lowpass'; f.Q.value = 0.7; f.frequency.setValueAtTime(f0, T); f.frequency.exponentialRampToValueAtTime(f1, T + dur);
+    const g = ac.createGain(); g.gain.setValueAtTime(0.0001, T); g.gain.linearRampToValueAtTime(vol, T + att); g.gain.exponentialRampToValueAtTime(0.001, T + dur); s.connect(f); f.connect(g); g.connect(sfxG); s.loop = true; s.start(T, Math.random() * 0.4); s.stop(T + dur + 0.05); }
   function ring(f, dur, vol, t = 0) { if (!ac) return; const T = ac.currentTime + t;
     for (const [m, v, k] of [[1, 1, 'triangle'], [2.76, 0.5, 'sine'], [5.4, 0.3, 'sine']]) { const o = ac.createOscillator(); o.type = k; o.frequency.value = f * m; const g = ac.createGain(); g.gain.setValueAtTime(vol * v, T); g.gain.exponentialRampToValueAtTime(0.001, T + dur / m * 1.6); o.connect(g); g.connect(sfxG); o.start(T); o.stop(T + dur * 1.6 + 0.02); } }
   function duck(depth, hold) { if (!ac || !Game.settings.music) return; const T = ac.currentTime, g = musG.gain; g.cancelScheduledValues(T); g.setValueAtTime(g.value, T); g.linearRampToValueAtTime(0.6 * depth, T + 0.02); g.setValueAtTime(0.6 * depth, T + hold); g.linearRampToValueAtTime(0.6, T + hold + 0.35); }
@@ -269,7 +272,11 @@ const Sound = (() => {
     slash: () => { noise(0.16, 0.38, 'bandpass', 700, 5200); snap(0.22, 0.1); ring(2600, 0.16, 0.05, 0.1); },
     fire: () => { noise(0.5, 0.35, 'bandpass', 300, 2200, 0, crunch); thump(95, 40, 0.35, 0.4); for (let i = 0; i < 6; i++) noise(0.02, 0.2, 'highpass', 4000, null, 0.05 + Math.random() * 0.4); },
     water: () => { [0, 1, 2, 3].forEach(i => sweep(500 + i * 90, 1200 + i * 90, 0.06, 'triangle', .5, .15, i * 0.06)); noise(0.2, .15, 'bandpass', 1200, 500, .1); },
-    thunder: () => { snap(0.5); noise(0.08, 0.5, 'highpass', 1500, null, 0, crunch); noise(0.9, 0.5, 'lowpass', 4000, 70, 0.04, crunch); sweep(75, 30, 0.7, 'sawtooth', .5, .12); thump(70, 28, 0.6, 0.6, 0.03); duck(0.35, 0.35); },
+    // v12.76（玩家：「雷聲不太協調」）：原本是一下爆音＋鋸齒波的嗡嗡聲。改成真的雷：近的是「啪」一聲裂響接著低沉的滾雷，遠的（野外下雷雨）只有慢慢湧上來、一波一波的悶雷
+    thunder: () => { noise(0.05, 0.42, 'highpass', 2200); noise(0.12, 0.3, 'bandpass', 1800, 600, 0.01); rumble(1.5, 0.42, 900, 70, 0.04, 0.05); rumble(1.1, 0.24, 420, 50, 0.4, 0.15); thump(62, 30, 0.7, 0.45, 0.03); duck(0.45, 0.4); },
+    thunderFar: () => { rumble(2.2, 0.26, 520, 45, 0, 0.35); rumble(1.4, 0.18, 360, 40, 0.75, 0.25); thump(48, 28, 1.2, 0.25, 0.2); },
+    mana: () => { sweep(520, 1500, 0.22, 'triangle', .5, .1); sweep(780, 2250, 0.22, 'sine', .5, .05, 0.03); [0, 1, 2].forEach(i => sweep(2400 + i * 420, 2600 + i * 420, 0.05, 'p', .25, .035, 0.12 + i * 0.045)); },
+    arcane: () => { noise(0.14, 0.28, 'bandpass', 2400, 700); ring(1180, 0.22, 0.07); thump(140, 55, 0.16, 0.45); },
     leaf: () => { [0, 1, 2, 3, 4].forEach(i => noise(0.05, 0.15, 'highpass', 5000, null, i * 0.05)); },
     rock: () => { [0, 1, 2].forEach(i => { noise(0.2, 0.45, 'lowpass', 1000, 150, i * 0.11, crunch); thump(130, 40, 0.18, 0.55, i * 0.11); }); },
     wind: () => noise(0.5, 0.25, 'bandpass', 500, 3000),

@@ -6,13 +6,11 @@
    Weather monsters (item 4) join a quarter of the encounters in their weather and drop that element's 附魔石 more often.
    The 天氣祠 in every new area (09zu) has a different event per weather, and when rain clears a rainbow may appear
    (EXP +20% for 100 steps). */
+// v12.76（玩家：「天氣玩家反應不明顯」）：戰鬥加成（屬性 ±%、命中、速度）全部拿掉——數字太小感覺不到，元素系統也拿掉了。
+// 天氣改成看得到、遇得到：畫面加強（雨絲＋水花、雷雨的閃電和遠雷、雪、霧、沙塵、晴天的雲影），提示寫這種天氣才出現的魔物（d 在 WX_MON 之後填）
 const WEATHER = {
-  clear: { n: '晴', col: '#ffd060', d: '火+15%、水−10%', mul: { 火: 1.15, 水: 0.9 } },
-  rain: { n: '雨', col: '#80b8ff', d: '水・雷+20%、火−20%', mul: { 水: 1.2, 雷: 1.2, 火: 0.8 } },
-  storm: { n: '雷雨', col: '#ffe060', d: '雷+30%、水+10%、火−20%', mul: { 雷: 1.3, 水: 1.1, 火: 0.8 } },
-  fog: { n: '霧', col: '#c8d0e0', d: '雙方命中−10%、毒+15%', acc: 10, mul: { 毒: 1.15 } },
-  snow: { n: '雪', col: '#e8f4ff', d: '水+15%、火−10%、雙方速度−10%', spe: 0.9, mul: { 水: 1.15, 火: 0.9 } },
-  sand: { n: '沙塵', col: '#e0b070', d: '岩+20%、雙方命中−5%', acc: 5, mul: { 岩: 1.2 } },
+  clear: { n: '晴', col: '#ffd060', d: '' }, rain: { n: '雨', col: '#80b8ff', d: '' }, storm: { n: '雷雨', col: '#ffe060', d: '' },
+  fog: { n: '霧', col: '#c8d0e0', d: '' }, snow: { n: '雪', col: '#e8f4ff', d: '' }, sand: { n: '沙塵', col: '#e0b070', d: '' },
 };
 const WX_TABLE = {
   base: { clear: 50, rain: 25, fog: 15, storm: 10 }, north: { snow: 55, clear: 20, fog: 15, storm: 10 }, canyon: { clear: 50, sand: 40, storm: 10 },
@@ -43,14 +41,38 @@ function wxIcon(x, k, X, Y) { const c = WEATHER[k].col; x.fillStyle = c;
   else if (k === 'fog') { for (const [q, w] of [[2, 9], [5, 7], [8, 9]]) x.fillRect(X + 1 + (q % 3), Y + q, w, 1); }
   else if (k === 'snow') { x.fillRect(X + 5, Y + 1, 1, 9); x.fillRect(X + 1, Y + 5, 9, 1); x.fillRect(X + 3, Y + 3, 1, 1); x.fillRect(X + 7, Y + 3, 1, 1); x.fillRect(X + 3, Y + 7, 1, 1); x.fillRect(X + 7, Y + 7, 1, 1); }
   else { for (let i = 0; i < 5; i++) x.fillRect(X + 1 + i * 2, Y + 3 + (i % 3) * 2, 2, 1); } }
+// v12.76: pixel weather (fillRect only, 2-pixel drops so they read at the field's zoom) — stronger than before so you notice it
+const wxH14 = n => { n = (n ^ 61) ^ (n >>> 16); n = (n + (n << 3)) | 0; n ^= n >>> 4; n = Math.imul(n, 0x27d4eb2d); return ((n ^ (n >>> 15)) >>> 0) / 4294967296; };
+const WX_BOLT14 = {}; // the bolt of the current cycle
+// a soft stepped blob (fog patch / cloud shadow): rows of rects, wider in the middle, edges a little fainter
+function wxBlob14(x, X, Y, w, h, rgb, a) { const rows = Math.max(3, Math.round(h / 4)); for (let r = 0; r < rows; r++) { const u = (r + 0.5) / rows * 2 - 1, k = Math.sqrt(Math.max(0, 1 - u * u)), rw = Math.round(w * (0.35 + 0.65 * k));
+    x.fillStyle = 'rgba(' + rgb + ',' + (a * (0.55 + 0.45 * k)).toFixed(3) + ')'; x.fillRect(Math.round(X + (w - rw) / 2), Math.round(Y + r * 4), rw, 4); } }
 function wxOverlay(x, k, t, w, h) {
-  if (k === 'rain' || k === 'storm') { const n = k === 'storm' ? 70 : 45; x.strokeStyle = k === 'storm' ? 'rgba(190,210,255,0.55)' : 'rgba(170,200,255,0.45)'; x.lineWidth = 1; x.beginPath();
-    for (let i = 0; i < n; i++) { const px = (i * 47 + t * 3) % (w + 30) - 15, py = (i * 83 + t * 9) % (h + 20) - 10; x.moveTo(px, py); x.lineTo(px - 3, py + 8); } x.stroke();
-    x.fillStyle = 'rgba(20,30,60,0.12)'; x.fillRect(0, 0, w, h); if (k === 'storm' && t % 280 < 6) { x.fillStyle = 'rgba(255,255,240,' + (t % 280 < 3 ? 0.5 : 0.25) + ')'; x.fillRect(0, 0, w, h); if (t % 280 === 0 && Game.scene instanceof Overworld) Sound.sfx('thunder'); } }
-  else if (k === 'snow') { x.fillStyle = 'rgba(255,255,255,0.85)'; for (let i = 0; i < 40; i++) { const px = (i * 53 + Math.sin((t + i * 20) / 30) * 12 + t * 0.4) % w, py = (i * 71 + t * 0.9) % h; x.fillRect(Math.round(px), Math.round(py), i % 3 ? 1 : 2, i % 3 ? 1 : 2); } x.fillStyle = 'rgba(220,235,255,0.08)'; x.fillRect(0, 0, w, h); }
-  else if (k === 'fog') { x.fillStyle = 'rgba(225,230,240,0.2)'; x.fillRect(0, 0, w, h); for (let i = 0; i < 5; i++) { const y = ((i * 61 + t * 0.25) % (h + 40)) - 20; x.fillStyle = 'rgba(255,255,255,0.1)'; x.fillRect(0, Math.round(y), w, 16); } }
-  else if (k === 'sand') { x.fillStyle = 'rgba(200,150,80,0.2)'; x.fillRect(0, 0, w, h); x.fillStyle = 'rgba(240,210,150,0.55)'; for (let i = 0; i < 40; i++) { const px = (i * 37 + t * 4) % (w + 20) - 10, py = (i * 53 + t * 1.5) % h; x.fillRect(Math.round(px), Math.round(py), 4, 1); } }
-  else if (k === 'clear') { x.fillStyle = 'rgba(255,230,160,0.05)'; x.fillRect(0, 0, w, h); }
+  if (k === 'rain' || k === 'storm') { const storm = k === 'storm', n = storm ? 80 : 55;
+    x.fillStyle = storm ? 'rgba(12,18,44,0.28)' : 'rgba(20,30,60,0.18)'; x.fillRect(0, 0, w, h);
+    for (let i = 0; i < n; i++) { const sp = 8 + (i % 3) * 2, len = 6 + (i % 3) * 3, px = Math.round((i * 47 + t * (storm ? 3 : 2)) % (w + 30)) - 15, py = Math.round((i * 83 + t * sp) % (h + 24)) - 12;
+      x.fillStyle = i % 4 ? (storm ? 'rgba(200,215,255,0.55)' : 'rgba(180,205,255,0.5)') : 'rgba(235,242,255,0.75)'; for (let j = 0; j < len; j += 3) x.fillRect(px - Math.round(j / 3), py + j, 2, 3); }
+    // splashes: little crowns on the ground that pop and fade
+    for (let i = 0; i < (storm ? 18 : 12); i++) { const c = Math.floor((t + i * 7) / 14), ph = (t + i * 7) % 14, sx = Math.floor(wxH14(c * 31 + i) * w) & ~1, sy = Math.floor(wxH14(c * 17 + i * 3 + 5) * h) & ~1;
+      x.fillStyle = 'rgba(225,238,255,' + (0.75 - ph * 0.05).toFixed(2) + ')'; const r = 2 + (ph >> 1); x.fillRect(sx - r, sy, 2, 2); x.fillRect(sx + r, sy, 2, 2); if (ph < 5) x.fillRect(sx, sy - 2 - ph * 2, 2, 2); }
+    if (storm) { // lightning: one irregular moment in every 5 seconds — a bright bolt across the sky with a white flash, then (in the field) the far thunder a little later
+      const P = 300, c = Math.floor(t / P), at = 40 + Math.floor(wxH14(c * 7 + 3) * 200), dt = t % P - at;
+      if (dt >= 0 && dt < 9) { let B = WX_BOLT14[c]; if (!B) { for (const q in WX_BOLT14) delete WX_BOLT14[q]; let bx = 30 + Math.floor(wxH14(c * 11) * (w - 60)); B = WX_BOLT14[c] = [[bx, 0]]; const end = Math.floor(h * (0.3 + wxH14(c * 13) * 0.3));
+          for (let y = 0; y < end; y += 8) { bx += Math.round((wxH14(c * 5 + y) - 0.5) * 18); B.push([bx, y + 8]); } }
+        if (dt < 2 || (dt >= 4 && dt < 6)) { x.fillStyle = 'rgba(255,255,240,' + (dt < 2 ? 0.34 : 0.18) + ')'; x.fillRect(0, 0, w, h); }
+        if (dt < 6) for (const [ow, col] of [[6, 'rgba(150,170,255,0.55)'], [3, '#ffffff']]) { x.fillStyle = col; for (let i = 1; i < B.length; i++) { const [x0, y0] = B[i - 1], [x1, y1] = B[i];
+          for (let q = 0; q <= 8; q++) { const X = Math.round(x0 + (x1 - x0) * q / 8), Y = Math.round(y0 + (y1 - y0) * q / 8); x.fillRect(X - (ow >> 1), Y - 1, ow, 3); } } } }
+      if (dt === 22 && Game.scene instanceof Overworld && !UI.stack.length) Sound.sfx('thunderFar'); } }
+  else if (k === 'snow') { x.fillStyle = 'rgba(220,235,255,0.12)'; x.fillRect(0, 0, w, h);
+    for (let i = 0; i < 64; i++) { const near = i % 4 === 0, s = near ? 4 : i % 3 ? 2 : 3, vy = near ? 1.4 : 0.6 + (i % 3) * 0.25, px = (i * 53 + Math.sin((t + i * 20) / (near ? 22 : 30)) * (near ? 16 : 10) + t * (near ? 0.6 : 0.3)) % w, py = (i * 71 + t * vy) % h;
+      x.fillStyle = near ? 'rgba(255,255,255,0.95)' : 'rgba(240,248,255,0.85)'; const X = Math.round(px), Y = Math.round(py); x.fillRect(X, Y, s, s); if (near) { x.fillStyle = 'rgba(210,228,255,0.9)'; x.fillRect(X + 1, Y + 1, 2, 2); } } }
+  else if (k === 'fog') { x.fillStyle = 'rgba(222,228,238,0.22)'; x.fillRect(0, 0, w, h);
+    for (let i = 0; i < 8; i++) { const bw = 120 + (i % 3) * 50, bh = 24 + (i % 2) * 16, X = ((i * 97 + t * (0.18 + (i % 3) * 0.08)) % (w + bw)) - bw, Y = (i * 73) % h; wxBlob14(x, X, Y, bw, bh, '245,248,255', 0.16 + (i % 3) * 0.04); } }
+  else if (k === 'sand') { x.fillStyle = 'rgba(200,150,80,0.26)'; x.fillRect(0, 0, w, h);
+    for (let i = 0; i < 50; i++) { const L = 4 + (i % 4) * 3, px = Math.round((i * 37 + t * (4 + (i % 3))) % (w + 20)) - 10, py = Math.round((i * 53 + t * 1.5 + Math.sin((t + i * 9) / 14) * 4) % h) & ~1; x.fillStyle = i % 5 ? 'rgba(240,210,150,0.6)' : 'rgba(255,235,190,0.85)'; x.fillRect(px, py, L, 2); }
+    for (let i = 0; i < 3; i++) { const X = ((i * 151 + t * 2.4) % (w + 180)) - 180, Y = (i * 167 + 40) % h; wxBlob14(x, X, Y, 180, 48, '214,170,100', 0.16); } }
+  else if (k === 'clear') { x.fillStyle = 'rgba(255,230,160,0.05)'; x.fillRect(0, 0, w, h);
+    for (let i = 0; i < 2; i++) { const cw = 170 + i * 40, X = ((i * 211 + t * (0.22 + i * 0.07)) % (w + cw + 60)) - cw - 30, Y = (i * 197 + 60) % (h - 80); wxBlob14(x, X, Y, cw, 56, '20,30,40', 0.09); } }
 }
 { const _d = Overworld.prototype.draw; Overworld.prototype.draw = function (x) {
     _d.call(this, x); const st = this.st, k = wxNow(st); if (!k) return; wxOverlay(x, k, this.t, W, H);
@@ -79,7 +101,9 @@ const WX_MON = {
 for (const k in WX_MON) { const [sp, n, fam, lv, role, moves, look, dex, el] = WX_MON[k]; if (SPECIES[sp]) continue;
   SPECIES[sp] = { n, fam, base: CH2_ROLE[role].map(v => Math.round(v * 80)), exp: Math.round((5 * lv + 28) * 1.3), gold: Math.round(lv * 1.6), learn: moves.map((m, i) => [i === 3 ? 12 : 1, m]).filter(([, m]) => MOVES[m]), dex, wxOnly: k };
   MON_PANEL[sp] = ch2Panel(lv, role, 'wild'); const [b, dh, ks, kl] = look; PLACEHOLDER[sp] = look; HD_RIG_OF[sp] = HD_RIG_OF[b] || b; const base = ART[b] ? b : PLACEHOLDER[b] && PLACEHOLDER[b][0]; if (ART[base]) ART[sp] = artRecolor(ART[base], dh, ks, kl); SP_EL[sp] = el; }
-// a weather monster keeps the level of the encounter it replaced; its stone drops more often
+// v12.76: the weather's line names the monster that only comes out in it
+{ const WHEN = { clear: '晴天', rain: '下雨天', storm: '雷雨天', fog: '起霧的時候', snow: '下雪天', sand: '沙塵暴的時候' }; for (const k in WX_MON) WEATHER[k].d = WHEN[k] + '才會出現「' + WX_MON[k][1] + '」'; }
+// a weather monster keeps the level of the encounter it replaced
 
 /* ---------- 天氣祠: one event per weather period ---------- */
 function* wshrineEvent(ow, ent) {

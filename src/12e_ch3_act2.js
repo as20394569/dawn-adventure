@@ -18,7 +18,7 @@ for (const k in REEF14) { const [n, bases, look, role, moves, mat, dex] = REEF14
   islePut14(k, n, b, look, B.fam || 'aquatic', moves, mat, dex, { exp: Math.round((B.exp || 100) * 1.5), gold: Math.max(18, B.gold || 18) }); if (SPECIES[k]) MON_PANEL[k] = LATE_PANEL13(role, SEA_MUL13); }
 islePut14(GHOSTCAP14, '幽靈船長', 'wraithGeneral', [140, 0.8, 1.1], 'undead', ['m_darkSlash', 'm_soulSip', 'm_wail', 'm_hex'], 'deepPearl14',
   '二十年前沉在沉月礁的船的船長。潮將的力量把他叫醒以後，他就一直站在礁上，看著霧角群島的方向。', { elite: 1, exp: 820, gold: 0 });
-{ const P = { ...(MON_PANEL.fallenStar || ch2Panel(44, 'phys', 'elite')) }; for (const [s, m] of Object.entries({ hp: 1.45, atk: 1.05, def: 1.0, spa: 1.2 })) if (P[s]) P[s] = Math.round(P[s] * m); MON_PANEL[GHOSTCAP14] = P; }
+{ const P = { ...(MON_PANEL.fallenStar || ch2Panel(44, 'phys', 'elite')) }; for (const [s, m] of Object.entries({ hp: 2.1, atk: 1.45, def: 1.0, spa: 1.6 })) if (P[s]) P[s] = Math.round(P[s] * m); MON_PANEL[GHOSTCAP14] = P; }
 ELITE_TEXT[GHOSTCAP14] = ['（礁石上的破船裡，亮起了一盞綠色的燈……）', '幽靈船長：「……誰？離那個貝殼遠一點！」'];
 if (typeof STORY_ELITES12 !== 'undefined') STORY_ELITES12.push(GHOSTCAP14);
 if (typeof CHIBI_FLOAT !== 'undefined') for (const k of ['tideSpirit14', 'anglerfish14', GHOSTCAP14]) CHIBI_FLOAT.add(k);
@@ -44,7 +44,7 @@ EFFECT_TYPES.callTide14 = { exec(core, ef, ctx) { const u = ctx.owner; EFFECT_TY
 { const b = 'shadowGeneral', B = SPECIES[b] || SPECIES.boneKnight;
   SPECIES[OTTO14] = { ...B, n: '深海騎士 歐托', fam: 'undead', boss: 1, elite: 0, exp: 3600, gold: 0, drop: null, ch3: 1, mat: 'tideScaleM14', learn: ['m14_halberd', 'm14_abyssWave', 'm14_vortexWall', 'm14_judgment', 'm14_callTide'].map(m => [1, m]),
     dex: '守護海淵神殿的騎士。五百年前和曙光軍作戰時沉進了海底，被潮將撿了回去。他說，他只是在遵守最後一道命令。' };
-  { const P = MON_PANEL.shadowGeneral || ch2Panel(44, 'phys', 'boss'); MON_PANEL[OTTO14] = { ...P, hp: Math.round(P.hp * 0.95) }; }
+  { const P = MON_PANEL.shadowGeneral || ch2Panel(44, 'phys', 'boss'); MON_PANEL[OTTO14] = { ...P, hp: Math.round(P.hp * 1.5), atk: Math.round(P.atk * 1.45), spa: Math.round(P.spa * 1.45) }; } // v12.76: 影將的面板是 Lv40 的，6/6・1〜2 瓶太輕鬆 → 頭目該要 4 瓶左右
   HD_RIG_OF[OTTO14] = (BATTLE_PXC[b] || chibiOwn(b)) ? b : (HD_RIG_OF[b] || b); if (typeof HD_RIG_OF_PENDING !== 'undefined') HD_RIG_OF_PENDING[OTTO14] = HD_RIG_OF[OTTO14]; if (ART[b]) ART[OTTO14] = artRecolor(ART[b], 180, 1.1, 1.0);
   ISLE_LOOK14[OTTO14] = [HD_RIG_OF[OTTO14], [180, 1.1, 1.0]]; }
 defPut('enemies', OTTO14, { tags: ['foe', 'fam:undead'], skills: ['m14_halberd', 'm14_abyssWave', 'm14_vortexWall', 'm14_judgment', 'm14_callTide'], fam: 'undead', trait: null, profile: 'brute', script: null, metadata: { n: '深海騎士 歐托' } });
