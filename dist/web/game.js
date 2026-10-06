@@ -7675,7 +7675,7 @@ class TitleScene {
     x.drawImage(this.logo, Math.round(W / 2 - this.logo.width / 2), 6 + bob);
     Font.drawC(x, '～異世界冒險RPG～', W / 2, 52 + bob, '#ffe0a0', '#3a1428');
     if (this.stage === 'press' && Math.floor(this.t / 30) % 2 === 0) Font.drawC(x, '按 A 鍵開始', W / 2, 232, '#ffffff', '#1a1024');
-    Font.drawR(x, 'v12.80', W - 3, H - 13, '#b890b0', null);
+    Font.drawR(x, 'v12.81', W - 3, H - 13, '#b890b0', null);
   }
 }
 class IntroScene {
@@ -17543,7 +17543,7 @@ Battle.prototype.drawPops = function (x) {
   for (const p of this.pops) { const life = p.big ? 60 : 44, a = p.t > life - 12 ? (life - p.t) / 12 : 1, rise = p.big ? Math.min(10, p.t * 0.6) : Math.min(16, p.t * 1.2), sz = (p.big ? 16 : p.small ? 10 : 13) + (p.strong ? 4 : 0);
     const t = p.t, pop = t < 3 ? 0.6 + t * 0.3 : t < 9 ? 1.5 - (t - 3) / 12 : 1, hop = t < 6 ? Math.sin(t / 6 * Math.PI) * (p.strong ? 6 : 3) : 0, fz = Math.round(sz * pop);
     x.globalAlpha = clamp(a, 0, 1); const Y = p.y - rise - hop; for (const [dx, dy] of [[-1, 0], [1, 0], [0, -1], [0, 1], [1, 1]]) Font.drawC(x, p.s, p.x + dx, Y + dy, '#1a0a10', null, fz); Font.drawC(x, p.s, p.x, Y, p.c, null, fz);
-    if (p.tag) Font.drawC(x, p.tag, p.x, Y - 11 - (p.strong ? 3 : 0), p.c, '#000000', p.strong ? 10 : 8); x.globalAlpha = 1; }
+    if (p.tag) { const ts = p.strong ? 10 : 8; Font.drawC(x, p.tag, p.x, Math.min(Y - 11 - (p.strong ? 3 : 0), Math.round(Y + 8 - fz / 2 - ts / 2 - 9)), p.c, '#000000', ts); } /* v12.81: the tag stays above the number while it pops big */ x.globalAlpha = 1; }
 };
 const B12_FAM = new Set(Object.values(FAM_TECH).flat().concat(['m_dominate']));
 const B12_DROP = { crystalGolem: ['m_rumble'] }; // a boss's move that now belongs to another boss
@@ -26430,3 +26430,47 @@ ACHIEVEMENTS.push({ id: 'rate_s10', n: '完美戰鬥', d: '野外戰鬥連續 10
   { id: 'champ_30', n: '強化魔物獵人', d: '打倒 30 隻強化魔物。', cat: '戰鬥', ok: st => (st.champ12N || 0) >= 30 });
 if (typeof BATTLE_HELP !== 'undefined') { const P = BATTLE_HELP.find(q => q[0] === '魔物的下一步'); if (P) P[1].push('野外戰鬥的評價：S＝回合數不超過魔物數＋1、受傷不到 20%（經驗 +30%，連續 S 再加）；A＝回合數不超過魔物數×2＋1、受傷不到 50%（+15%）。'); }
 if (typeof GROW12 !== 'undefined') GROW12.push(['戰鬥評價', '野外戰鬥打完會給評價：打得快又沒怎麼受傷是 S（經驗 +30%，連續 S 每次再 +5%，最多 +25%），A 是 +15%。強化魔物（名字前面有詞綴、身上發光）隨機遇敵也會出現，獎勵加倍。']);
+const POPW14 = { max: 4, burst: 24, gap: 3, ease: 0.35 };
+const isWordPop14 = s => typeof s === 'string' && /[　-鿿！-～]/.test(s);
+const wordLife14 = p => (p.big ? 60 : 44);
+const wordSz14 = p => (p.big ? 16 : p.small ? 10 : 13);
+{ const _pn = Battle.prototype.popNum; Battle.prototype.popNum = function (v, s, c, tag, o = {}) {
+    const all = this.pops, word = !!v && isWordPop14(s) && !tag;
+    const add = (o2) => { this.pops = all.filter(q => !q.w14); const n0 = this.pops.length; try { _pn.call(this, v, s, c, tag, o2); } finally { const A = this.pops.slice(n0); this.pops = all.concat(A); return A; } };
+    if (!word) { add(o); return; }
+    const str = String(s), live = all.filter(q => q.w14 && q.u14 === v && q.t < wordLife14(q) - 12);
+    if (live.some(q => q.s === str)) return; // the same words are still showing
+    { const m = !o.big && /^(.{2})提升$/.exec(str); if (m && live.some(q => q.s.startsWith(m[1]))) return; } // 「迴避提升」 right under 「迴避 +30%」 says nothing new
+    if (v.hero && str === '反擊！') return; // the hero's 「✕反擊」 sign already says it (and the word ran into the foe's damage number)
+    let big = !!o.big; const small = !big && !!o.small, burst = live.length && this.t - (v.wt14 ?? -99) <= POPW14.burst;
+    if (big && burst && live.some(q => q.big)) { if (/[↑↓]+！$/.test(str)) return; big = false; } // a second title in one go: 「迴避↑！」 is said by its tip already, others go normal size
+    const A = add({ ...o, big, small }); for (const p of A) { p.w14 = 1; p.u14 = v; p.big = big; p.small = small; p.strong = false; } v.wt14 = this.t;
+    const L = this.pops.filter(q => q.w14 && q.u14 === v && q.t < wordLife14(q) - 12);
+    for (let i = 0; i < L.length - POPW14.max; i++) L[i].t = wordLife14(L[i]) - 12; // too many lines: the oldest fade out
+  }; }
+function pillLeft14(b, v) { if (!v.hero || typeof buffPills12 !== 'function') return W; const L = buffPills12(b, v).slice(0, 5); if (!L.length) return W;
+  const X = Math.min(W - 4, Math.round(b.center(v).x + 30 + ((v.off || {}).x || 0))); return Math.min(...L.map(([s, k, t]) => Math.min(X, W - 2 - pillW12(s, t)))); }
+function layoutWords14(b, v, L) {
+  const C = b.center(v), off = v.off || { x: 0, y: 0 }, cx = C.x + (off.x || 0), newest = L[L.length - 1];
+  let bottom0 = (v.hero ? C.y - 18 : C.y - 48) + (off.y || 0);
+  for (const q of b.pops) if (!q.w14 && Math.abs(q.x - cx) < 70 && q.t < (q.big ? 60 : 44)) { const sz = (q.big ? 16 : q.small ? 10 : 13) + (q.strong ? 4 : 0), peak = q.y - (q.big ? 10 : 16) + 8 - sz * 0.55 - (q.tag ? 12 : 3); if (peak - POPW14.gap < bottom0 && peak > bottom0 - 40) bottom0 = peak - POPW14.gap; }
+  const K = b.ctr12; if (K && K.v === v && v.hero && !v.gone) bottom0 = Math.min(bottom0, Math.round(C.y - 40 + (off.y || 0)) - POPW14.gap); // the 「反擊」 sign over the hero
+  v.bot14 = newest !== v.botP14 ? bottom0 : Math.min(v.bot14, bottom0); v.botP14 = newest; // numbers fading out don't make the column bounce down
+  let bottom = v.bot14 - Math.min(8, newest.t * 0.5);
+  const right = Math.min(W - 4, pillLeft14(b, v) - 3);
+  for (const p of L) { let z = wordSz14(p); while (z > 8 && Font.width(p.s, z) * 1.15 > right - 4) z--; p.fs14 = z; } // too wide for the room left of the pills: smaller letters
+  for (let i = L.length - 1; i >= 0; i--) { const p = L[i], sz = p.fs14, top = bottom - sz;
+    p.ly = p.ly == null ? top + 6 : p.ly + (top - p.ly) * POPW14.ease; if (Math.abs(p.ly - top) < 0.3) p.ly = top;
+    const w = Font.width(p.s, sz) * 1.15; p.lx = clamp(Math.min(cx, right - w / 2), 4 + w / 2, W - 4 - w / 2);
+    bottom = top - POPW14.gap; }
+  for (let i = L.length - 2; i >= 0; i--) L[i].ly = Math.min(L[i].ly, L[i + 1].ly - L[i].fs14 - POPW14.gap); } // a new line comes in: the older ones make room at once
+{ const _pn = Battle.prototype.popNum; Battle.prototype.popNum = function (v, s, c, tag, o = {}) { const n0 = this.pops.length; _pn.call(this, v, s, c, tag, o); const p = this.pops[this.pops.length - 1];
+    if (!v || !v.hero || !p || this.pops.length === n0 || p.w14) return; const r = pillLeft14(this, v) - 3; if (r >= W) return; const w = Font.width(p.s, (p.big ? 16 : p.small ? 10 : 13) + 4) * 1.15; if (p.x + w / 2 > r) p.x = Math.max(4 + w / 2, r - w / 2); }; }
+{ const _dp = Battle.prototype.drawPops; Battle.prototype.drawPops = function (x) {
+    const all = this.pops, G = new Map(); for (const p of all) if (p.w14) { const g = G.get(p.u14); if (g) g.push(p); else G.set(p.u14, [p]); }
+    this.pops = all.filter(p => !p.w14); try { _dp.call(this, x); } finally { this.pops = all; }
+    for (const [v, L] of G) { layoutWords14(this, v, L);
+      for (const p of L) { const life = wordLife14(p), t = p.t, a = t > life - 12 ? (life - t) / 12 : Math.min(1, 0.45 + t * 0.2), sz = p.fs14 || wordSz14(p);
+        const sc = t < 3 ? 0.75 + t * 0.13 : t < 8 ? 1.14 - (t - 3) * 0.028 : 1, fz = Math.max(7, Math.round(sz * sc)), Y = Math.round(p.ly + sz / 2 - 8);
+        x.globalAlpha = clamp(a, 0, 1); for (const [dx, dy] of [[-1, 0], [1, 0], [0, -1], [0, 1], [1, 1]]) Font.drawC(x, p.s, p.lx + dx, Y + dy, '#1a0a10', null, fz); Font.drawC(x, p.s, p.lx, Y, p.c, null, fz); }
+      x.globalAlpha = 1; } }; }
