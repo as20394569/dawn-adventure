@@ -84,7 +84,7 @@ const CH3_ROWS = {
 for (const id in CH3_ROWS) { const R = CH3_ROWS[id]; if (R.some(r => r.length !== R[0].length) && typeof bvErr === 'function') bvErr('ch3', 'rows ' + id); }
 const LATE_GEAR13 = () => { const S = new Set(); for (const m of ['emberPass', 'lavaTunnel', 'duskFort1', 'duskFort2', 'iceCave', 'frostField']) for (const k of (MAPS[m] && MAPS[m].gearPool) || []) if (GEAR[k]) S.add(k); return [...S]; };
 MAPS.harbor13 = { name: '潮鳴港', music: 'lake', outdoor: 1, border: 'T', popup: 1, theme: 'beach13', rows: CH3_ROWS.harbor13, type: '城鎮',
-  buildings: [{ kind: 'seaInn13', x: 2, y: 1, w: 5, h: 4, door: 2, to: ['seaInn13', 4, 6], sign: 1 }, { kind: 'seaShop13', x: 8, y: 1, w: 5, h: 4, door: 2, to: ['seaShop13', 4, 6], sign: 1 }, { kind: 'seaHouse13', x: 14, y: 1, w: 5, h: 4, door: 2, to: ['harborOffice13', 4, 6] }],
+  buildings: [{ kind: 'seaInn13', x: 2, y: 1, w: 5, h: 4, door: 2, to: ['seaInn13', 4, 6], sign: 1, signAs: 'inn' }, { kind: 'seaShop13', x: 8, y: 1, w: 5, h: 4, door: 2, to: ['seaShop13', 4, 6], sign: 1, signAs: 'shop' }, { kind: 'seaHouse13', x: 14, y: 1, w: 5, h: 4, door: 2, to: ['harborOffice13', 4, 6] }],
   signs: { '3,8': '「潮鳴港」\n海風帶著鹽味的東方港町。\n→ 珊瑚海岸（建議Lv44以上）' },
   edgeWarps: [{ dir: 'right', at: [6], to: ['coralCoast13', 0, 3, 'right'] }],
   npcs: [
@@ -105,7 +105,6 @@ MAPS.harborOffice13 = CH2_ROOM(['xxxxxxxxxx', 'xkkxwwxkkx', 'nnnnnnnnKK', 'CCCCC
   [{ id: 'harborMaster13', x: 2, y: 2, dir: 'down', look: 'harborMaster13', name: '港務長瑪蓮' }, { id: 'harborClerk13', x: 6, y: 4, dir: 'right', look: 'sailor13', name: '港務所的水手' }], { name: '港務所', music: 'lake', back: ['harbor13', 16, 5], type: '室內' });
 MAPS.coralCoast13 = { name: '珊瑚海岸', music: 'lake', outdoor: 1, border: 'T', battleBg: 'beach13', popup: 1, theme: 'beach13', fog13: 1, rows: CH3_ROWS.coralCoast13, type: '野外',
   edgeWarps: [{ dir: 'left', at: [3], to: ['harbor13', 19, 6, 'left'] }],
-  gate: { x: 10, y: 33, to: ['wreckCove13', 10, 24] }, // (for the route finder: the cave mouth is an NPC, below)
   signs: {}, npcs: [
     { id: 'fisher13', x: 15, y: 10, dir: 'left', look: 'fisher13', name: '老漁夫巴特' },
     { id: 'wreckDoor13', x: 10, y: 34, dir: 'down', look: 'caveDoor', name: '沉船灣' },

@@ -107,7 +107,7 @@ function* fishReel13(key) { const st = Game.st, r = key === 'treasure' ? 0 : FIS
     if (b.bite) { x.fillStyle = '#ffc46b'; Font.drawC(x, '！', X, Y - 16, '#ffc46b', '#101018', 12); } }; }
 
 function* fishCast13(ow, tx, ty) { const st = Game.st, p = ow.p;
-  if (LAVA13.has(ow.map.id)) { yield* say('這是岩漿……魚不可能住在這種地方。'); return; }
+  if (LAVA13.has(ow.map.id) || ow.map.d.theme === 'lava') { yield* say('這是岩漿……魚不可能住在這種地方。'); return; }
   const w = fishWater13(ow.map.id); if (!w) { yield* say('這裡的水好像沒有魚。'); return; }
   ow.bob13 = { map: ow.map.id, x: tx, y: ty, bite: false }; Sound.sfx('wind'); Input.clearAll();
   try { const wait0 = 50 + Math.floor(Math.random() * 110);

@@ -59,7 +59,9 @@ function* arenaRun13(ow, R) { const st = Game.st, A = arenaSt(st), first = !A.cl
   try {
     for (let i = 0; i < N; i++) { const f = R.fights[i], kind = f.kind || 'wild';
       Sound.sfx('charge'); yield* say('第' + (i + 1) + '戰：' + arenaFoeName13(f) + '！' + (i === N - 1 ? '\n（最後一戰！）' : ''));
+      const sps = [f.sp].concat(f.extra || []), had = sps.map(s => (st.kills || {})[s]); // arena fights must not use up the world fights' first-kill blueprints
       const res = yield* ow.battleScript({ sp: f.sp, lv: R.lv, kind, id: f.sp, rematch: kind !== 'wild', noMats: 1, noCard: 1, roam12: 1, arena13: R.id, extra: (f.extra || []).map(s => [s, R.lv]) });
+      sps.forEach((s, i) => { if (!had[i] && st.kills) delete st.kills[s]; });
       if (res !== 'win') { ARENA_ON13 = null; healHero(); yield* sayAll(['……很可惜！' + R.n + '挑戰失敗。（打贏了 ' + won + '／' + N + ' 場）', '別灰心，休息好了再來挑戰吧！（體力和魔力都恢復了）']); return; }
       won++;
       if (i < N - 1) { const S = heroStats(st); st.hp = Math.min(S.hp, st.hp + Math.ceil(S.hp * 0.3)); st.mp = Math.min(S.mp, (st.mp || 0) + Math.ceil(S.mp * 0.3)); Sound.sfx('heal'); yield* say('觀眾的歡呼聲！（HP・MP 回復了 30%）'); } }

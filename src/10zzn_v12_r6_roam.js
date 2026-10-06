@@ -120,4 +120,4 @@ Overworld.prototype.roamFight12 = function* (e, theyCame) {
 }
 // 玩家勾的：地圖變大、戰鬥變多，每場經驗值稍微調低（×0.85），到頭目時的等級跟以前差不多
 const ROAM_EXP12 = 0.85;
-{ const _ge = Battle.prototype.gainExp; Battle.prototype.gainExp = function* (a) { yield* _ge.call(this, this.cfg && this.cfg.roam12 ? Math.max(1, Math.round(a * ROAM_EXP12)) : a); }; }
+{ const _ge = Battle.prototype.gainExp; Battle.prototype.gainExp = function* (a) { yield* _ge.call(this, this.cfg && this.cfg.roam12 && !this.cfg.arena13 ? Math.max(1, Math.round(a * ROAM_EXP12)) : a); }; }

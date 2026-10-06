@@ -1231,9 +1231,9 @@ function buildBuilding(b) {
     const sx = ax + 1, sy = ay + 3; x.fillStyle = '#2e2e36'; x.fillRect(sx + 1, ay + 1, 1, 2); x.fillRect(sx + 8, ay + 1, 1, 2);
     x.fillStyle = B_OUT; x.fillRect(sx - 1, sy - 1, 12, 11); x.fillStyle = '#9a6a3c'; x.fillRect(sx, sy, 10, 9); x.fillStyle = '#b8844e'; x.fillRect(sx, sy, 10, 1); x.fillStyle = '#7a5030'; x.fillRect(sx, sy + 4, 10, 1);
     const P = (pts, col) => { for (const [a, bb] of pts) px(x, sx + a, sy + bb, col); };
-    if (b.kind === 'shop') { P([[4, 1], [5, 1], [4, 2], [5, 2], [3, 3], [6, 3], [2, 4], [7, 4], [2, 5], [7, 5], [2, 6], [7, 6], [3, 7], [4, 7], [5, 7], [6, 7]], '#f0e8d0'); P([[3, 4], [4, 4], [5, 4], [6, 4], [3, 5], [4, 5], [5, 5], [6, 5], [3, 6], [4, 6], [5, 6], [6, 6]], '#e05050'); P([[4, 4]], '#ffb0a0'); }
-    if (b.kind === 'inn') { P([[2, 2], [3, 2], [4, 2], [5, 2], [6, 2]], '#ffffff'); P([[2, 3], [3, 3], [4, 3], [5, 3], [6, 3], [2, 4], [3, 4], [4, 4], [5, 4], [6, 4], [2, 5], [3, 5], [4, 5], [5, 5], [6, 5], [2, 6], [3, 6], [4, 6], [5, 6], [6, 6], [3, 7], [4, 7], [5, 7]], '#e8b040'); P([[7, 3], [8, 3], [8, 4], [8, 5], [7, 6]], '#e8b040'); P([[3, 3], [3, 4], [3, 5]], '#f8d880'); }
-    if (b.kind === 'elder') { P([[2, 1], [3, 1], [4, 1], [5, 1], [6, 1], [7, 1], [2, 2], [7, 2], [2, 3], [7, 3], [2, 4], [7, 4], [3, 5], [6, 5], [3, 6], [6, 6], [4, 7], [5, 7]], '#e8c048'); P([[3, 2], [4, 2], [5, 2], [6, 2], [3, 3], [4, 3], [5, 3], [6, 3], [3, 4], [4, 4], [5, 4], [6, 4], [4, 5], [5, 5], [4, 6], [5, 6]], '#3a58a0'); P([[4, 3], [5, 3], [4, 4], [5, 4]], '#e8c048'); }
+    if ((b.signAs || b.kind) === 'shop') { P([[4, 1], [5, 1], [4, 2], [5, 2], [3, 3], [6, 3], [2, 4], [7, 4], [2, 5], [7, 5], [2, 6], [7, 6], [3, 7], [4, 7], [5, 7], [6, 7]], '#f0e8d0'); P([[3, 4], [4, 4], [5, 4], [6, 4], [3, 5], [4, 5], [5, 5], [6, 5], [3, 6], [4, 6], [5, 6], [6, 6]], '#e05050'); P([[4, 4]], '#ffb0a0'); }
+    if ((b.signAs || b.kind) === 'inn') { P([[2, 2], [3, 2], [4, 2], [5, 2], [6, 2]], '#ffffff'); P([[2, 3], [3, 3], [4, 3], [5, 3], [6, 3], [2, 4], [3, 4], [4, 4], [5, 4], [6, 4], [2, 5], [3, 5], [4, 5], [5, 5], [6, 5], [2, 6], [3, 6], [4, 6], [5, 6], [6, 6], [3, 7], [4, 7], [5, 7]], '#e8b040'); P([[7, 3], [8, 3], [8, 4], [8, 5], [7, 6]], '#e8b040'); P([[3, 3], [3, 4], [3, 5]], '#f8d880'); }
+    if ((b.signAs || b.kind) === 'elder') { P([[2, 1], [3, 1], [4, 1], [5, 1], [6, 1], [7, 1], [2, 2], [7, 2], [2, 3], [7, 3], [2, 4], [7, 4], [3, 5], [6, 5], [3, 6], [6, 6], [4, 7], [5, 7]], '#e8c048'); P([[3, 2], [4, 2], [5, 2], [6, 2], [3, 3], [4, 3], [5, 3], [6, 3], [3, 4], [4, 4], [5, 4], [6, 4], [4, 5], [5, 5], [4, 6], [5, 6]], '#3a58a0'); P([[4, 3], [5, 3], [4, 4], [5, 4]], '#e8c048'); }
   }
   return c;
 }
@@ -7668,7 +7668,7 @@ class TitleScene {
     x.drawImage(this.logo, Math.round(W / 2 - this.logo.width / 2), 6 + bob);
     Font.drawC(x, '～異世界冒險RPG～', W / 2, 52 + bob, '#ffe0a0', '#3a1428');
     if (this.stage === 'press' && Math.floor(this.t / 30) % 2 === 0) Font.drawC(x, '按 A 鍵開始', W / 2, 232, '#ffffff', '#1a1024');
-    Font.drawR(x, 'v12.56', W - 3, H - 13, '#b890b0', null);
+    Font.drawR(x, 'v12.57', W - 3, H - 13, '#b890b0', null);
   }
 }
 class IntroScene {
@@ -17930,7 +17930,7 @@ Overworld.prototype.roamFight12 = function* (e, theyCame) {
   };
 }
 const ROAM_EXP12 = 0.85;
-{ const _ge = Battle.prototype.gainExp; Battle.prototype.gainExp = function* (a) { yield* _ge.call(this, this.cfg && this.cfg.roam12 ? Math.max(1, Math.round(a * ROAM_EXP12)) : a); }; }
+{ const _ge = Battle.prototype.gainExp; Battle.prototype.gainExp = function* (a) { yield* _ge.call(this, this.cfg && this.cfg.roam12 && !this.cfg.arena13 ? Math.max(1, Math.round(a * ROAM_EXP12)) : a); }; }
 const M6_PAL = { dew: ['#2a6aa0', '#8ad0f0', '#f0ffff'], fluff: ['#9a9aa0', '#e8e8e0', '#ffffff'], firefly: ['#3a5a10', '#c8f050', '#ffffc0'], sand: ['#7a4a20', '#d8a060', '#f8e0b0'],
   smoke: ['#3a3a44', '#8a8a98', '#d8d8e0'], moon: ['#3a4a8a', '#a8c0ff', '#ffffff'], maple: ['#8a2010', '#e86a2a', '#ffc070'], gecko: ['#3a5a3a', '#8ab080', '#e0f0d0'], ice: ['#2a5a8a', '#8ad0f0', '#eaffff'],
   ash: ['#3a2a2a', '#8a5a40', '#ffb060'], lava: ['#6a1408', '#e8501a', '#ffd070'], shell: ['#5a5a6a', '#b0a8c0', '#f0eaf8'], rust: ['#5a2a10', '#b0602a', '#f0b080'], crystal: ['#2a5a7a', '#8ae0f0', '#ffffff'],
@@ -24142,7 +24142,8 @@ function abyApply(fl, run) { const S = abySt(), F = genAbyFloor(fl, run), M = MA
 function* abyGoto(ow, fl) { const st = Game.st, S = abySt(st), F = abyApply(fl, S.run || 1); yield* ow.warp(ABY13.map, F.start[0], F.start[1], 'up');
   if (F.boss) yield* say('第' + fl + '層……空氣很沉重。深處有強大的氣息。');
   else if (F.anom !== 'calm') { const A = ABY_ANOM13[F.anom]; yield* say('第' + fl + '層・裂界異象「' + A[0] + '」\n' + A[1] + '。'); } }
-function abyNewRun(st) { const S = abySt(st); S.run = (S.run || 0) + 1; for (const k in st.flags) if (/^aby13_\d+_|^aby13b_\d+$|^aby13r_\d+$/.test(k)) delete st.flags[k]; }
+function abyNewRun(st) { const S = abySt(st); S.run = (S.run || 0) + 1; const refill = (st.steps || 0) - (S.chestStep ?? -1e9) >= 1500; if (refill) S.chestStep = st.steps || 0;
+  for (const k in st.flags) if ((refill && /^aby13_\d+_/.test(k)) || /^aby13b_\d+$|^aby13r_\d+$|^aby13h_/.test(k)) delete st.flags[k]; }
 { const _ld = Overworld.prototype.load; Overworld.prototype.load = function (id, x, y, dir, silent) { if (id === ABY13.map) { const st = Game.st, S = abySt(st);
       if (!abyOpen(st) || !S.floor) return _ld.call(this, 'ruins', 7, 2, 'down', silent); if (MAPS[ABY13.map]._key !== (S.run || 1) + ':' + S.floor) abyApply(S.floor, S.run || 1); }
     const r = _ld.call(this, id, x, y, dir, silent); if (id === ABY13.map) this.npcs = this.npcs.filter(n => n.id !== 'stele'); return r; }; }
@@ -24165,11 +24166,13 @@ Overworld.prototype.abyStairs = function* () { const st = Game.st, S = abySt(st)
   yield* abyGoto(this, fl + 1); };
 Object.assign(Events, {
   *abyExit(ow) { if (yield* yesNo('要離開裂界深淵，回到古岩遺跡嗎？\n（下次從檢查點重新開始）')) yield* ow.warp('ruins', 7, 2, 'down'); },
-  *abyRest(ow) { const st = Game.st, fl = abySt(st).floor; if (st.flags['aby13h_' + fl + '_' + abySt(st).run]) { yield* say('回復之光已經變得很淡了。'); return; }
-    if (!(yield* yesNo('溫暖的光從裂縫透進來……要休息一下嗎？'))) return; st.flags['aby13h_' + fl + '_' + abySt(st).run] = 1; yield* healRitual('體力和魔力都恢復了！'); },
+  *abyRest(ow) { const st = Game.st, fl = abySt(st).floor; if (st.flags['aby13h_' + fl]) { yield* say('回復之光已經變得很淡了。'); return; }
+    if (!(yield* yesNo('溫暖的光從裂縫透進來……要休息一下嗎？'))) return; st.flags['aby13h_' + fl] = 1; yield* healRitual('體力和魔力都恢復了！'); },
   *abyBoss(ow) { const st = Game.st, S = abySt(st), bd = MAPS[ABY13.map].boss, fl = S.floor; if (!bd || st.flags[bd.flag]) return;
     if (!(yield* askFight(bd.sp, bd.lv, bd.sp, 'boss', '裂界深淵' + fl + 'F'))) return;
-    const res = yield* ow.battleScript({ sp: bd.sp, lv: bd.lv, kind: 'boss', id: bd.sp, rematch: bd.sp !== ABY_LORD13 || (st.kills || {})[bd.sp] > 0, noMats: 0 });
+    const had = (st.kills || {})[bd.sp]; // (a rematch here must not use up the world fight's first-kill blueprint)
+    const res = yield* ow.battleScript({ sp: bd.sp, lv: bd.lv, kind: 'boss', id: bd.sp, rematch: bd.sp !== ABY_LORD13 || (st.kills || {})[bd.sp] > 0, noMats: 0, noCard: 1 });
+    if (bd.sp !== ABY_LORD13 && !had && st.kills) delete st.kills[bd.sp];
     if (res !== 'win') return; st.flags[bd.flag] = 1; ow.boss = null; S.cp = Math.max(S.cp || 0, Math.min(25, fl));
     const first = !S.boss[fl]; S.boss[fl] = (S.boss[fl] || 0) + 1; const n = first ? 3 + Math.floor(fl / 10) : 1; st.bag.starShard = (st.bag.starShard || 0) + n; Sound.jingle('item'); yield* itemGet('得到了星之碎片×' + n + '！');
     if (bd.sp === ABY_LORD13) { const firstLord = !st.flags.aby13Lord; st.flags.aby13Lord = 1; if (firstLord) { st.bag.starShard += 7; yield* sayAll(['裂界之主崩塌了。牠胸口的門扉慢慢關上，裂縫裡的風停了下來。', '門扉的碎片裡，有一顆特別亮的星之碎片。（星之碎片 +7）', '（裂界深淵 踏破！之後也能繼續挑戰——每一趟的形狀都會不一樣。）']); } }
@@ -24286,7 +24289,9 @@ function* arenaRun13(ow, R) { const st = Game.st, A = arenaSt(st), first = !A.cl
   try {
     for (let i = 0; i < N; i++) { const f = R.fights[i], kind = f.kind || 'wild';
       Sound.sfx('charge'); yield* say('第' + (i + 1) + '戰：' + arenaFoeName13(f) + '！' + (i === N - 1 ? '\n（最後一戰！）' : ''));
+      const sps = [f.sp].concat(f.extra || []), had = sps.map(s => (st.kills || {})[s]); // arena fights must not use up the world fights' first-kill blueprints
       const res = yield* ow.battleScript({ sp: f.sp, lv: R.lv, kind, id: f.sp, rematch: kind !== 'wild', noMats: 1, noCard: 1, roam12: 1, arena13: R.id, extra: (f.extra || []).map(s => [s, R.lv]) });
+      sps.forEach((s, i) => { if (!had[i] && st.kills) delete st.kills[s]; });
       if (res !== 'win') { ARENA_ON13 = null; healHero(); yield* sayAll(['……很可惜！' + R.n + '挑戰失敗。（打贏了 ' + won + '／' + N + ' 場）', '別灰心，休息好了再來挑戰吧！（體力和魔力都恢復了）']); return; }
       won++;
       if (i < N - 1) { const S = heroStats(st); st.hp = Math.min(S.hp, st.hp + Math.ceil(S.hp * 0.3)); st.mp = Math.min(S.mp, (st.mp || 0) + Math.ceil(S.mp * 0.3)); Sound.sfx('heal'); yield* say('觀眾的歡呼聲！（HP・MP 回復了 30%）'); } }
@@ -24564,7 +24569,7 @@ const CH3_ROWS = {
 for (const id in CH3_ROWS) { const R = CH3_ROWS[id]; if (R.some(r => r.length !== R[0].length) && typeof bvErr === 'function') bvErr('ch3', 'rows ' + id); }
 const LATE_GEAR13 = () => { const S = new Set(); for (const m of ['emberPass', 'lavaTunnel', 'duskFort1', 'duskFort2', 'iceCave', 'frostField']) for (const k of (MAPS[m] && MAPS[m].gearPool) || []) if (GEAR[k]) S.add(k); return [...S]; };
 MAPS.harbor13 = { name: '潮鳴港', music: 'lake', outdoor: 1, border: 'T', popup: 1, theme: 'beach13', rows: CH3_ROWS.harbor13, type: '城鎮',
-  buildings: [{ kind: 'seaInn13', x: 2, y: 1, w: 5, h: 4, door: 2, to: ['seaInn13', 4, 6], sign: 1 }, { kind: 'seaShop13', x: 8, y: 1, w: 5, h: 4, door: 2, to: ['seaShop13', 4, 6], sign: 1 }, { kind: 'seaHouse13', x: 14, y: 1, w: 5, h: 4, door: 2, to: ['harborOffice13', 4, 6] }],
+  buildings: [{ kind: 'seaInn13', x: 2, y: 1, w: 5, h: 4, door: 2, to: ['seaInn13', 4, 6], sign: 1, signAs: 'inn' }, { kind: 'seaShop13', x: 8, y: 1, w: 5, h: 4, door: 2, to: ['seaShop13', 4, 6], sign: 1, signAs: 'shop' }, { kind: 'seaHouse13', x: 14, y: 1, w: 5, h: 4, door: 2, to: ['harborOffice13', 4, 6] }],
   signs: { '3,8': '「潮鳴港」\n海風帶著鹽味的東方港町。\n→ 珊瑚海岸（建議Lv44以上）' },
   edgeWarps: [{ dir: 'right', at: [6], to: ['coralCoast13', 0, 3, 'right'] }],
   npcs: [
@@ -24585,7 +24590,6 @@ MAPS.harborOffice13 = CH2_ROOM(['xxxxxxxxxx', 'xkkxwwxkkx', 'nnnnnnnnKK', 'CCCCC
   [{ id: 'harborMaster13', x: 2, y: 2, dir: 'down', look: 'harborMaster13', name: '港務長瑪蓮' }, { id: 'harborClerk13', x: 6, y: 4, dir: 'right', look: 'sailor13', name: '港務所的水手' }], { name: '港務所', music: 'lake', back: ['harbor13', 16, 5], type: '室內' });
 MAPS.coralCoast13 = { name: '珊瑚海岸', music: 'lake', outdoor: 1, border: 'T', battleBg: 'beach13', popup: 1, theme: 'beach13', fog13: 1, rows: CH3_ROWS.coralCoast13, type: '野外',
   edgeWarps: [{ dir: 'left', at: [3], to: ['harbor13', 19, 6, 'left'] }],
-  gate: { x: 10, y: 33, to: ['wreckCove13', 10, 24] }, // (for the route finder: the cave mouth is an NPC, below)
   signs: {}, npcs: [
     { id: 'fisher13', x: 15, y: 10, dir: 'left', look: 'fisher13', name: '老漁夫巴特' },
     { id: 'wreckDoor13', x: 10, y: 34, dir: 'down', look: 'caveDoor', name: '沉船灣' },
@@ -24784,7 +24788,7 @@ function* fishReel13(key) { const st = Game.st, r = key === 'treasure' ? 0 : FIS
     x.fillStyle = 'rgba(255,255,255,0.5)'; x.fillRect(X - 4, Y + 3, 9, 1); x.fillStyle = '#141420'; x.fillRect(X - 2, Y - 3, 5, 6); x.fillStyle = '#e83a3a'; x.fillRect(X - 1, Y - 2, 3, 2); x.fillStyle = '#f8f8f8'; x.fillRect(X - 1, Y, 3, 2);
     if (b.bite) { x.fillStyle = '#ffc46b'; Font.drawC(x, '！', X, Y - 16, '#ffc46b', '#101018', 12); } }; }
 function* fishCast13(ow, tx, ty) { const st = Game.st, p = ow.p;
-  if (LAVA13.has(ow.map.id)) { yield* say('這是岩漿……魚不可能住在這種地方。'); return; }
+  if (LAVA13.has(ow.map.id) || ow.map.d.theme === 'lava') { yield* say('這是岩漿……魚不可能住在這種地方。'); return; }
   const w = fishWater13(ow.map.id); if (!w) { yield* say('這裡的水好像沒有魚。'); return; }
   ow.bob13 = { map: ow.map.id, x: tx, y: ty, bite: false }; Sound.sfx('wind'); Input.clearAll();
   try { const wait0 = 50 + Math.floor(Math.random() * 110);
@@ -24888,7 +24892,7 @@ PV('food13_rice', v => ({}), { n: '料理' });
 { const _hs = BB.heroSpec; BB.heroSpec = function (st, cfg) { const s = _hs.call(this, st, cfg), F = foodOf13(st); if (F && DISH13[F.k]) s.passives.push({ key: 'food13_' + DISH13[F.k][2], v: 1, src: 'other' }); return s; }; }
 { const _ge = Battle.prototype.gainExp; Battle.prototype.gainExp = function* (amount) { const F = foodOf13(Game.st); return yield* _ge.call(this, F && DISH13[F.k] && DISH13[F.k][2] === 'rice' ? Math.round(amount * 1.2) : amount); }; }
 { const _bs = Overworld.prototype.battleScript; Overworld.prototype.battleScript = function* (cfg, ...a) { const st = Game.st, F = foodOf13(st), r = yield* _bs.call(this, cfg, ...a);
-    if (F && st.food13 === F) { F.n--; if (F.n <= 0) { delete st.food13; yield* say('（' + DISH13[F.k][0] + '的效果消失了。）'); } } return r; }; }
+    if (F && st.food13 === F) { F.n--; if (F.n <= 0) { delete st.food13; if (r !== 'lose') yield* say('（' + DISH13[F.k][0] + '的效果消失了。）'); } } return r; }; }
 LOOKS.chef13 = { style: 'long', H: '#5a3a24', h: '#7a5234', j: '#9a7050', Y: '#f8f8f4', y: '#d8d8d0', R: '#f0f0ea', r: '#c8c8c0', P: '#3a3a48' };
 Events.chef13 = function* () { const st = Game.st;
   if (!st.flags.chef13Met) { st.flags.chef13Met = 1; yield* sayAll(['廚師：「肚子餓了嗎？拿食材來，我幫你做菜！」', '廚師：「魚、蝦，再加一點木料、藥材、魔素……吃了我的菜，接下來幾場戰鬥都會有精神。」', '廚師：「不過一次只能吃一道喔，吃新的會蓋掉舊的。」']); }

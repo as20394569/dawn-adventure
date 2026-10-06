@@ -145,7 +145,9 @@ function abyApply(fl, run) { const S = abySt(), F = genAbyFloor(fl, run), M = MA
 function* abyGoto(ow, fl) { const st = Game.st, S = abySt(st), F = abyApply(fl, S.run || 1); yield* ow.warp(ABY13.map, F.start[0], F.start[1], 'up');
   if (F.boss) yield* say('第' + fl + '層……空氣很沉重。深處有強大的氣息。');
   else if (F.anom !== 'calm') { const A = ABY_ANOM13[F.anom]; yield* say('第' + fl + '層・裂界異象「' + A[0] + '」\n' + A[1] + '。'); } }
-function abyNewRun(st) { const S = abySt(st); S.run = (S.run || 0) + 1; for (const k in st.flags) if (/^aby13_\d+_|^aby13b_\d+$|^aby13r_\d+$/.test(k)) delete st.flags[k]; }
+// v12.57: the chests come back only after a while (1500 steps): leaving and coming back used to refill 1F's chests for free
+function abyNewRun(st) { const S = abySt(st); S.run = (S.run || 0) + 1; const refill = (st.steps || 0) - (S.chestStep ?? -1e9) >= 1500; if (refill) S.chestStep = st.steps || 0;
+  for (const k in st.flags) if ((refill && /^aby13_\d+_/.test(k)) || /^aby13b_\d+$|^aby13r_\d+$|^aby13h_/.test(k)) delete st.flags[k]; }
 // a save made inside the abyss comes back to the same floor (same run, same layout)
 { const _ld = Overworld.prototype.load; Overworld.prototype.load = function (id, x, y, dir, silent) { if (id === ABY13.map) { const st = Game.st, S = abySt(st);
       if (!abyOpen(st) || !S.floor) return _ld.call(this, 'ruins', 7, 2, 'down', silent); if (MAPS[ABY13.map]._key !== (S.run || 1) + ':' + S.floor) abyApply(S.floor, S.run || 1); }
@@ -171,11 +173,13 @@ Overworld.prototype.abyStairs = function* () { const st = Game.st, S = abySt(st)
   yield* abyGoto(this, fl + 1); };
 Object.assign(Events, {
   *abyExit(ow) { if (yield* yesNo('要離開裂界深淵，回到古岩遺跡嗎？\n（下次從檢查點重新開始）')) yield* ow.warp('ruins', 7, 2, 'down'); },
-  *abyRest(ow) { const st = Game.st, fl = abySt(st).floor; if (st.flags['aby13h_' + fl + '_' + abySt(st).run]) { yield* say('回復之光已經變得很淡了。'); return; }
-    if (!(yield* yesNo('溫暖的光從裂縫透進來……要休息一下嗎？'))) return; st.flags['aby13h_' + fl + '_' + abySt(st).run] = 1; yield* healRitual('體力和魔力都恢復了！'); },
+  *abyRest(ow) { const st = Game.st, fl = abySt(st).floor; if (st.flags['aby13h_' + fl]) { yield* say('回復之光已經變得很淡了。'); return; }
+    if (!(yield* yesNo('溫暖的光從裂縫透進來……要休息一下嗎？'))) return; st.flags['aby13h_' + fl] = 1; yield* healRitual('體力和魔力都恢復了！'); },
   *abyBoss(ow) { const st = Game.st, S = abySt(st), bd = MAPS[ABY13.map].boss, fl = S.floor; if (!bd || st.flags[bd.flag]) return;
     if (!(yield* askFight(bd.sp, bd.lv, bd.sp, 'boss', '裂界深淵' + fl + 'F'))) return;
-    const res = yield* ow.battleScript({ sp: bd.sp, lv: bd.lv, kind: 'boss', id: bd.sp, rematch: bd.sp !== ABY_LORD13 || (st.kills || {})[bd.sp] > 0, noMats: 0 });
+    const had = (st.kills || {})[bd.sp]; // (a rematch here must not use up the world fight's first-kill blueprint)
+    const res = yield* ow.battleScript({ sp: bd.sp, lv: bd.lv, kind: 'boss', id: bd.sp, rematch: bd.sp !== ABY_LORD13 || (st.kills || {})[bd.sp] > 0, noMats: 0, noCard: 1 });
+    if (bd.sp !== ABY_LORD13 && !had && st.kills) delete st.kills[bd.sp];
     if (res !== 'win') return; st.flags[bd.flag] = 1; ow.boss = null; S.cp = Math.max(S.cp || 0, Math.min(25, fl));
     const first = !S.boss[fl]; S.boss[fl] = (S.boss[fl] || 0) + 1; const n = first ? 3 + Math.floor(fl / 10) : 1; st.bag.starShard = (st.bag.starShard || 0) + n; Sound.jingle('item'); yield* itemGet('得到了星之碎片×' + n + '！');
     if (bd.sp === ABY_LORD13) { const firstLord = !st.flags.aby13Lord; st.flags.aby13Lord = 1; if (firstLord) { st.bag.starShard += 7; yield* sayAll(['裂界之主崩塌了。牠胸口的門扉慢慢關上，裂縫裡的風停了下來。', '門扉的碎片裡，有一顆特別亮的星之碎片。（星之碎片 +7）', '（裂界深淵 踏破！之後也能繼續挑戰——每一趟的形狀都會不一樣。）']); } }

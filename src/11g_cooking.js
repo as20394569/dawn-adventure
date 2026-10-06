@@ -52,7 +52,7 @@ PV('food13_rice', v => ({}), { n: '料理' });
 { const _ge = Battle.prototype.gainExp; Battle.prototype.gainExp = function* (amount) { const F = foodOf13(Game.st); return yield* _ge.call(this, F && DISH13[F.k] && DISH13[F.k][2] === 'rice' ? Math.round(amount * 1.2) : amount); }; }
 // one battle used up per fight (won, lost or fled)
 { const _bs = Overworld.prototype.battleScript; Overworld.prototype.battleScript = function* (cfg, ...a) { const st = Game.st, F = foodOf13(st), r = yield* _bs.call(this, cfg, ...a);
-    if (F && st.food13 === F) { F.n--; if (F.n <= 0) { delete st.food13; yield* say('（' + DISH13[F.k][0] + '的效果消失了。）'); } } return r; }; }
+    if (F && st.food13 === F) { F.n--; if (F.n <= 0) { delete st.food13; if (r !== 'lose') yield* say('（' + DISH13[F.k][0] + '的效果消失了。）'); } } return r; }; }
 
 /* ---------- the cooks ---------- */
 LOOKS.chef13 = { style: 'long', H: '#5a3a24', h: '#7a5234', j: '#9a7050', Y: '#f8f8f4', y: '#d8d8d0', R: '#f0f0ea', r: '#c8c8c0', P: '#3a3a48' };
