@@ -9,5 +9,6 @@
     try { P('・料理：做過 ' + DISH_KEYS13.filter(k => (st.cookSeen13 || {})[k]).length + '／' + DISH_KEYS13.length + ' 道', UIC.text, 1); } catch (e) { }
     try { P('・藏寶圖：' + (st.flags.tm13 ? '找到 ' + tmFound13(st) + '／' + TMAP_KEYS13.length + ' 個' : '找萌芽鎮南邊的巴克'), UIC.text, 1); } catch (e) { }
     try { P('・小夥伴：' + palKinds13(st) + ' 種', UIC.text, 1); } catch (e) { }
+    try { const f = st.flags, n = [f.sluice13, f.wr13a, f.moonKing13, f.mirror13].filter(Boolean).length; P('・隱藏的迷宮：' + n + '／4', UIC.text, 1); } catch (e) { }
     try { P('・翻牌遊戲：' + (st.cards13 ? (st.cards13.clears ? '全部翻完 ' + st.cards13.clears + ' 次' : '最多 ' + st.cards13.best + '／8 對') : '王都南邊廣場的米菈'), UIC.text, 1); } catch (e) { }
     return L; }; }
