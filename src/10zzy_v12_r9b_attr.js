@@ -78,12 +78,12 @@ function activeLines9(st = Game.st) { const s = heroStats(st), L = [], H = t => 
   if (!L.length) P('目前沒有生效中的效果。', UIC.muted);
   return L; }
 summaryScreen = function* () {
-  let page = 0, mi = 0, si = 0, top = 0; const NP = 4, TITLES = ['冒險者資料', '戰鬥數值', '生效中的效果', '技能一覽'];
+  let page = 0, mi = 0, si = 0, top = 0; const NP = 4, TITLES = ['冒險者資料', '戰鬥數值', '生效中的效果', '裝備中的技能'];
   const skillList = st => (st.cls && typeof classPassiveNode === 'function' ? ['_passive'] : []).concat(typeof summarySkills === 'function' ? summarySkills(st) : learnedSkills(st));
   let AL = null;
   const scr = { draw(x) {
     const st = Game.st, s = heroStats(); screenBG(x);
-    headerBar(x, TITLES[page]); if (page === 3) Font.draw(x, 'MP ' + (st.mp ?? s.mp) + '/' + s.mp, 66, 5, UIC.blue || UIC.accent, UIC.textSh, 8);
+    headerBar(x, TITLES[page]); if (page === 3) Font.draw(x, 'MP ' + (st.mp ?? s.mp) + '/' + s.mp, Math.max(66, 18 + Font.width(TITLES[page])), 5, UIC.blue || UIC.accent, UIC.textSh, 8);
     Font.drawR(x, '← ' + (page + 1) + '/' + NP + ' →', W - 6, 2, UIC.muted, UIC.textSh);
     if (page === 0) { heroCard(x, st); const a = heroAttr(st), th = s.th9 || {};
       drawWin(x, 4, 98, 168, 62, 'menu');

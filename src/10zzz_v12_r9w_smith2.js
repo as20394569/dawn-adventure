@@ -195,7 +195,7 @@ function* craft11() { const st = Game.st;
     const top = craftTop11(st), r = yield* ask('要打什麼？（能打到 T' + top + '）', ['武器', '防具', '盾', '返回']); if (r < 0 || r === 3) return;
     let group, pick;
     if (r === 0) { const K = Object.keys(WNAME11).filter(q => typeof kindOn13 !== 'function' || kindOn13(q)), k = yield* ask('哪一種武器？', K.concat('返回')); if (k < 0 || k >= K.length) continue; group = K[k]; pick = t => BASE11.weapon[group][t - 1]; }
-    else if (r === 1) { const S = ['重甲', '輕裝', '法衣'], s = yield* ask('哪一系？\n重甲：物防高　輕裝：帶速度　法衣：魔防高', S.concat('返回')); if (s < 0 || s >= 3) continue; const sl = yield* ask('哪個部位？', ['頭', '身', '腳', '返回']); if (sl < 0 || sl >= 3) continue;
+    else if (r === 1) { const S = ['重甲', '輕裝', '法衣'], s = yield* ask('哪一系？\n重甲：物防高　輕裝：帶速度\n法衣：魔防高', S.concat('返回')); if (s < 0 || s >= 3) continue; const sl = yield* ask('哪個部位？', ['頭', '身', '腳', '返回']); if (sl < 0 || sl >= 3) continue;
       group = S[s]; const slot = ['head', 'body', 'feet'][sl]; pick = t => BASE11.armor[group][slot][t - 1]; }
     else { group = '盾'; pick = t => BASE11.shield[t - 1]; }
     const T = []; for (let t = 1; t <= top; t++) T.push(t);
@@ -237,7 +237,7 @@ function* enchantMenu11() { const st = Game.st;
 
 /* ---------- 鐵匠：分解・幻化 ---------- */
 function* salvage11() { const st = Game.st;
-  while (true) { const g = yield* gearPicker('分解：選裝備（裝備中的不行）', () => gearSort().filter(q => !isEquipped(q)), (x, q, Y) => { const b = salvageBack11(q); Font.draw(x, '退回：' + (ptsText11(b) || '沒有點數'), 12, Y, UIC.accent, UIC.textSh, 9); });
+  while (true) { const g = yield* gearPicker('分解：選裝備', () => gearSort().filter(q => !isEquipped(q)), (x, q, Y) => { const b = salvageBack11(q); Font.draw(x, '退回：' + (ptsText11(b) || '沒有點數'), 12, Y, UIC.accent, UIC.textSh, 9); });
     if (!g) return; const b = salvageBack11(g); if (!(yield* yesNo('分解「' + GEAR[g.b].n + '」嗎？\n退回 ' + (ptsText11(b) || '0') + ' 點。'))) continue;
     for (const sp of (g.cr11 || [])) if (typeof cryUnsocket11 === 'function') cryUnsocket11(sp, st); st.gear = st.gear.filter(q => q !== g); ptsPay11(b, st, 1); Sound.sfx('rock'); yield* say('分解好了。' + (ptsText11(b) ? '退回 ' + ptsText11(b) + ' 點。' : '')); } }
 function salvageBack11(g) { const B = GEAR[g.b], t = B.t || 1, o = {}; let src = g.c11;
@@ -245,7 +245,7 @@ function salvageBack11(g) { const B = GEAR[g.b], t = B.t || 1, o = {}; let src =
   for (const c in src) o[c] = (o[c] || 0) + Math.floor(src[c] / 2); for (const c in g.e11 || {}) o[c] = (o[c] || 0) + Math.floor(g.e11[c] / 2); for (const c in o) if (!o[c]) delete o[c]; return o; }
 const glamList11 = g => { const B = GEAR[g.b], G = glam11(); return Object.keys(G).filter(k => G[k] && GEAR[k] && GEAR[k].slot === B.slot && (B.slot !== 'weapon' || GEAR[k].kind === B.kind)).sort((a, b) => (GEAR[a].t || 0) - (GEAR[b].t || 0)); };
 function* glamour11() { const st = Game.st;
-  while (true) { const g = yield* gearPicker('幻化：選裝備（只換樣子）', () => gearSort().filter(q => GEAR[q.b].slot !== 'acc'), (x, q, Y) => { Font.draw(x, '外觀：' + (q.gl && GEAR[q.gl] ? GEAR[q.gl].n : '原本的樣子') + '（可選 ' + glamList11(q).length + '）', 12, Y, '#d8b8ff', UIC.textSh, 9); });
+  while (true) { const g = yield* gearPicker('幻化：選裝備', () => gearSort().filter(q => GEAR[q.b].slot !== 'acc'), (x, q, Y) => { Font.draw(x, '外觀：' + (q.gl && GEAR[q.gl] ? GEAR[q.gl].n : '原本的樣子') + '（可選 ' + glamList11(q).length + '）', 12, Y, '#d8b8ff', UIC.textSh, 9); });
     if (!g) return; const L = glamList11(g); if (!L.length) { yield* say('這一種還沒有可以幻化的外觀。\n退場裝備的外觀：舊存檔有的、寶箱和任務給的、頭目和菁英的招牌裝備（回憶石碑「困難」以上打贏）都會解鎖。'); continue; }
     const r = yield* choose([{ t: '原本的樣子' }].concat(L.map(k => ({ t: GEAR[k].n, r: 'T' + (GEAR[k].t || 1) }))).concat({ t: '返回' }), { title: GEAR[g.b].n + '的外觀' });
     if (r < 0 || r > L.length) continue; if (r === 0) delete g.gl; else g.gl = L[r - 1]; Sound.sfx('item'); yield* say('外觀換成了「' + (g.gl ? GEAR[g.gl].n : GEAR[g.b].n) + '」。'); } }

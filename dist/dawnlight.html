@@ -306,9 +306,9 @@ const Font = (() => {
     ctx.drawImage(out, Math.round(x - 2), Math.round(y - 2));
     return out;
   }
-  const NOSTART = '。，、！？」』）】〕］〉》：；…～．％%,.!?)'; // v268: 】％ 也不放行首
+  const NOSTART = '。，、！？」』）】〕］〉》：；…～．％%,.!?)／'; // v268: 】％ 也不放行首
   const NOEND = '（「『【〔［〈《(';                                 // v268: 開括號不留在行尾
-  const WORD = /[0-9A-Za-z.%×+\-−~～]/;                              // v284: 數字・英數連在一起不拆開
+  const WORD = /[0-9A-Za-z.%×+\-−~～\/]/;                              // v284: 數字・英數連在一起不拆開
   function wrap(str, maxW, size) {
     const lines = [];
     for (const para of String(str).split('\n')) {
@@ -319,6 +319,7 @@ const Font = (() => {
           const lc = [...line]; let carry = '';
           if (WORD.test(ch) && WORD.test(lc[lc.length - 1])) { let j = lc.length; while (j > 0 && WORD.test(lc[j - 1])) j--; if (j > 0 && lc.length - j <= 8) carry = lc.splice(j).join(''); }
           if (!carry && NOSTART.includes(ch) && lc.length > 1) { carry = lc.pop(); while (lc.length > 1 && NOSTART.includes(carry[0])) carry = lc.pop() + carry; } // v12.42: 「吧。）」 moves together (「。）」 used to start the next line)
+          if (carry && WORD.test(carry[0])) while (lc.length > 1 && WORD.test(lc[lc.length - 1]) && carry.length < 10) carry = lc.pop() + carry; // v12.66: 「−12%；」 — pulling 「%」 off the line used to leave 「−1」 behind
           while (lc.length > 1 && NOEND.includes(lc[lc.length - 1])) carry = lc.pop() + carry;
           if (carry) { lines.push(lc.join('')); line = carry; w = width(carry, size); }
           else { lines.push(line); line = ''; w = 0; if (ch === ' ') continue; }
@@ -4433,7 +4434,7 @@ function* bagScreen(mode = 'field') { // returns item id used (battle) or null
     if (UI.stack.some(w => w instanceof TextBox)) { /* v12.0.1: a message box sits over this panel (its window is see-through), so the details step aside instead of showing through the text */ }
     else if (list[idx] && orbT) { const o = list[idx], h = orbHost(o); Font.draw(x, '【' + (isActiveOrb(o) ? '主動寶珠' : '被動寶珠') + '】', 10, 182, isActiveOrb(o) ? UIC.warm : '#8ad0ff', UIC.textSh, 10);
       Font.drawR(x, h ? '鑲在：' + GEAR[h.b].n : '到鐵匠舖鑲嵌', 166, 182, h ? UIC.accent : UIC.muted, UIC.textSh, 10); Font.wrap(orbInfo(o), 154, 10).slice(0, 4).forEach((l, i) => Font.draw(x, l, 10, 197 + i * 13, UIC.text, UIC.textSh, 10)); }
-    else if (list[idx]) { if (gear) drawGearDetail(x, list[idx], 182, 68); else { const k0 = list[idx], it = ITEMS[k0]; Font.draw(x, '【' + (it.use === 'enchant' ? '附魔寶石・到鐵匠舖使用' : it.cat) + '】', 10, 182, it.use === 'enchant' ? UIC.warm : ITEM_CAT_COL[it.cat] || UIC.muted, UIC.textSh, 10); if (it.mat) Font.drawR(x, '採集熟練度 Lv' + gatherLv(), 166, 182, UIC.accent, UIC.textSh, 10); const src = it.mat ? matSourceText(k0) : ''; drawFitText(x, it.d, 12, 197, 152, src ? 36 : 52, 11); /* v12.0.1: long descriptions shrink instead of being cut */ if (src) Font.draw(x, Font.wrap('取得：' + src, 156, 10)[0], 10, 234, UIC.warm, UIC.textSh, 10); } }
+    else if (list[idx]) { if (gear) drawGearDetail(x, list[idx], 182, 68); else { const k0 = list[idx], it = ITEMS[k0]; Font.draw(x, '【' + (it.use === 'enchant' ? '附魔寶石・到鐵匠舖使用' : it.cat) + '】', 10, 182, it.use === 'enchant' ? UIC.warm : ITEM_CAT_COL[it.cat] || UIC.muted, UIC.textSh, 10); if (it.mat && typeof GATHER_KINDS !== 'undefined' && Object.values(GATHER_KINDS).some(G => G && (G[1] === k0 || (G[3] || []).some(([m]) => m === k0)))) Font.drawR(x, '採集熟練度 Lv' + gatherLv(), 166, 182, UIC.accent, UIC.textSh, 10); const src = it.mat && !/來源：/.test(it.d || '') ? matSourceText(k0) : ''; /* v12.66: the description already lists 來源; 採集熟練度 only on things you can gather */ drawFitText(x, it.d, 12, 197, 152, src ? 36 : 52, 11); /* v12.0.1: long descriptions shrink instead of being cut */ if (src) Font.draw(x, Font.wrap('取得：' + src, 156, 10)[0], 10, 234, UIC.warm, UIC.textSh, 10); } }
   } };
   UI.push(scr); let result = null;
   while (true) {
@@ -4513,14 +4514,14 @@ function* equipScreen() {
   UI.remove(scr);
 }
 function* optionsScreen() {
-  let idx = 0; const labels = ['文字速度', '背景音樂', '音效', '自動存檔', '戰鬥美術', '怪物造型', '對話文字', '跑步', '戰鬥速度', '畫面', '戰鬥說明', '關閉'], N = labels.length, HELP = N - 2, TOG = ['music', 'sfx', 'autosave', 'hdArt', 'chibi', 'bigText', 'autoRun', 'bspd', 'zoom'], RH = N > 11 ? 17 : 18;
+  let idx = 0; const labels = ['文字速度', '背景音樂', '音效', '自動存檔', '戰鬥美術', '怪物造型', '對話文字', '跑步', '戰鬥速度', '畫面', '戰鬥說明', '關閉'], N = labels.length, HELP = N - 2, TOG = ['music', 'sfx', 'autosave', 'hdArt', 'chibi', 'bigText', 'autoRun', 'bspd', 'zoom'], RH = 16; // v12.66: rows 16 high so the help line fits under the list
   const val = i => i === 0 ? ['慢', '普通', '快'][Game.settings.text] : TOG[i - 1] === 'hdArt' ? (Game.settings.hdArt !== false ? '新版' : '舊版') : TOG[i - 1] === 'chibi' ? (Game.settings.chibi !== false ? 'Q版' : '寫實') : TOG[i - 1] === 'chibiHero' ? (Game.settings.chibiHero !== false ? 'Q版' : '原版') : TOG[i - 1] === 'bigText' ? (Game.settings.bigText ? '大' : '標準') : TOG[i - 1] === 'autoRun' ? (Game.settings.autoRun !== false ? '按住方向鍵' : '按住B鍵') : TOG[i - 1] === 'bspd' ? (Game.settings.bspd === 2 ? '×2' : '普通') : TOG[i - 1] === 'zoom' ? (Game.settings.zoom !== false ? '放大' : '標準') : i < N - 1 ? (Game.settings[TOG[i - 1]] ? '開' : '關') : '';
   const scr = { draw(x) {
     screenBG(x); headerBar(x, '設定');
-    drawWin(x, 4, 30, 168, N * RH + 12, 'menu');
-    labels.forEach((l, i) => { const Y = 36 + i * RH; if (i === idx) selBar(x, 6, Y - 1, 164, 17); Font.draw(x, l, 14, Y, UIC.text, UIC.textSh); if (i === HELP) Font.drawR(x, 'A 查看 ▶', 164, Y, UIC.accent, UIC.textSh); else if (i < N - 1) Font.drawR(x, '← ' + val(i) + ' →', 164, Y, UIC.accent, UIC.textSh); });
-    const Y2 = 30 + N * RH + 16; if (Y2 > 232) return; drawWin(x, 4, Y2, 168, Math.min(70, 252 - Y2), 'menu'); Font.draw(x, '← → 切換設定　B 鍵返回', 14, Y2 + 3, UIC.muted, UIC.textSh, 11);
-    Font.wrap('自動存檔：換地圖、打完戰鬥、每走100步時自動記錄，關閉網頁時也會記錄。', 150, 10).slice(0, 3).forEach((l, i) => Font.draw(x, l, 14, Y2 + 18 + i * 12, UIC.muted, UIC.textSh, 10));
+    drawWin(x, 4, 24, 168, N * RH + 10, 'menu');
+    labels.forEach((l, i) => { const Y = 29 + i * RH; if (i === idx) selBar(x, 6, Y - 1, 164, 16); Font.draw(x, l, 14, Y, UIC.text, UIC.textSh); if (i === HELP) Font.drawR(x, 'A 查看 ▶', 164, Y, UIC.accent, UIC.textSh); else if (i < N - 1) Font.drawR(x, '← ' + val(i) + ' →', 164, Y, UIC.accent, UIC.textSh); });
+    const Y2 = 24 + N * RH + 12; drawWin(x, 4, Y2, 168, 252 - Y2, 'menu'); const HT = ['對話文字出現的速度。', '背景音樂的開關。', '音效的開關。', '換地圖、打完戰鬥、每走 100 步時自動記錄。', '戰鬥中主角和魔物的畫風。', '魔物的樣子：Q版或寫實。', '對話框的字：標準或大。', '方向鍵按住一下子就自動跑起來。', '戰鬥動畫的速度（×2 加快一倍）。', '地圖畫面放大 1.5 倍，或顯示更大的範圍。', '戰鬥規則的說明（13 頁）。', '回到選單。'][idx] || '';
+    Font.draw(x, HT, 12, Y2 + 4, UIC.muted, UIC.textSh, typeof fitSize === 'function' ? fitSize(HT, 152, 10, 8) : 9);
   } };
   UI.push(scr);
   while (true) {
@@ -4567,7 +4568,7 @@ function* shopBuy(stock) {
       if (it.once && Game.st.bag[k]) { UI.remove(scr); yield* say(it.key ? '你已經有' + it.n + '了。' : it.n + '一次只能帶一個喔。'); UI.push(scr); continue; }
       if (maxQ < 1) { UI.remove(scr); yield* say('錢不夠喔。'); UI.push(scr); continue; }
       if (!isG && !it.once) {
-        const q = { draw(x) { drawWin(x, 80, TB_Y - 32, 94, 30, 'menu'); Font.draw(x, '×' + String(qty).padStart(2, '0'), 90, TB_Y - 25, UIC.text, UIC.textSh); Font.drawR(x, priceFor(k, qty) + 'G', 166, TB_Y - 25, UIC.warm, UIC.textSh); } };
+        const q = { draw(x) { drawWin(x, 90, 4, 82, 30, 'menu'); Font.draw(x, '×' + String(qty).padStart(2, '0'), 98, 11, UIC.text, UIC.textSh); Font.drawR(x, priceFor(k, qty) + 'G', 166, 11, UIC.warm, UIC.textSh); } }; // v12.66: up next to the money (it used to cover the last row of the list)
         UI.push(q); let ok = false;
         while (true) { if (Input.repeat('up')) { qty = qty >= maxQ ? 1 : qty + 1; Sound.sfx('cursor'); } if (Input.repeat('down')) { qty = qty <= 1 ? maxQ : qty - 1; Sound.sfx('cursor'); } if (Input.repeat('right')) { qty = Math.min(maxQ, qty + 10); Sound.sfx('cursor'); } if (Input.repeat('left')) { qty = Math.max(1, qty - 10); Sound.sfx('cursor'); } if (Input.pressed('a')) { Input.consume('a'); ok = true; break; } if (Input.pressed('b')) { Input.consume('b'); break; } yield; }
         UI.remove(q); if (!ok) continue;
@@ -4589,7 +4590,7 @@ function* shopSell() {
     const list = listNow(); drawWin(x, 4, 36, 168, VIS * 18 + 10, 'menu');
     if (!list.length) Font.draw(x, '沒有可以賣的東西', 14, 42, UIC.muted, UIC.textSh);
     const top = Math.max(0, Math.min(idx - 3, list.length - VIS));
-    list.slice(top, top + VIS).forEach((k, i) => { const Y = 40 + i * 18; if (top + i === idx) selBar(x, 6, Y - 1, 164, 17); Font.draw(x, nameOf(k), 14, Y, typeof k === 'string' ? UIC.text : gCol(k), UIC.textSh); Font.drawR(x, priceK(k) + 'G', 164, Y, UIC.warm, UIC.textSh); });
+    const R = typeof reserved11 === 'function' ? reserved11(st) : {}; list.slice(top, top + VIS).forEach((k, i) => { const Y = 40 + i * 18, q = typeof k === 'string' && R[k] > 0; if (top + i === idx) selBar(x, 6, Y - 1, 164, 17); Font.draw(x, nameOf(k), 14, Y, typeof k === 'string' ? UIC.text : gCol(k), UIC.textSh); if (q) Font.draw(x, '任務', 14 + Font.width(nameOf(k)) + 3, Y + 2, UIC.bad, UIC.textSh, 8); Font.drawR(x, priceK(k) + 'G' + (typeof k === 'string' && st.bag[k] > 1 ? '／個' : ''), 164, Y, UIC.warm, UIC.textSh); }); /* v12.66: quest materials are marked; the price is per piece */
     drawWin(x, 4, TB_Y + 1, W - 8, TB_H - 2, 'ow'); const k = list[idx];
     if (k && typeof k !== 'string') drawGearDetail(x, k, TB_Y + 3, 54); else { Font.draw(x, list.length ? '要賣哪一樣東西呢？' : '目前沒有可以賣的東西。', 12, TB_Y + 7, UIC.text, UIC.textSh); Font.draw(x, '（裝備中和金色的裝備不能賣）', 12, TB_Y + 23, UIC.muted, UIC.textSh); }
   } };
@@ -4600,7 +4601,7 @@ function* shopSell() {
     if (Input.pressed('b')) { Input.consume('b'); Sound.sfx('cancel'); break; }
     if (Input.pressed('a') && list[idx]) {
       Input.consume('a'); const k = list[idx]; UI.remove(scr); const nm = typeof k === 'string' ? ITEMS[k].n : GEAR[k.b].n, pr = priceK(k);
-      const yes = yield* yesNo(nm + '可以用' + pr + 'G收購，要賣嗎？');
+      const R = typeof reserved11 === 'function' ? reserved11(st) : {}, yes = yield* yesNo(nm + '可以用' + pr + 'G收購，要賣嗎？' + (typeof k === 'string' && R[k] > 0 && st.bag[k] <= R[k] ? '\n（這是任務要用的東西）' : ''));
       if (yes) { if (typeof k === 'string') st.bag[k]--; else st.gear = st.gear.filter(g => g !== k); st.money += pr; Sound.sfx('save'); yield* say('謝謝！收下了' + nm + '。'); }
       UI.push(scr);
     }
@@ -4849,7 +4850,7 @@ equipScreen = function* () {
       Font.draw(x, EQUIP_SLOTS[sl], 12, Y + 2, UIC.accent, UIC.textSh, 10); Font.draw(x, g ? GEAR[g.b].n + (g.e ? ' +' + g.e : '') : '（空）', 44, Y + 1, g ? gCol(g) : UIC.dis, UIC.textSh, 11); if (g && (GEAR[g.b].fx || []).length) Font.drawR(x, '★', 164, Y + 1, UIC.warm, UIC.textSh, 10);
       touchRegion(6, Y, 164, 18, () => { if (idx === i) tapKey('a'); else idx = i; }); });
     const Y0 = 22 + slots.length * 19 + 10, g = gearBy(st.equip[slots[idx]]); drawWin(x, 4, Y0, 168, H - Y0 - 4, 'menu');
-    if (!g) { Font.draw(x, '這個部位沒有裝備。按A選擇要裝上的東西。', 10, Y0 + 6, UIC.muted, UIC.textSh, typeof fitSize === 'function' ? fitSize('這個部位沒有裝備。按A選擇要裝上的東西。', 156, 10, 7) : 8); const s = heroStats(); [['物攻', s.atk], ['物防', s.def], ['魔攻', s.spa], ['魔防', s.spd], ['速度', s.spe], ['會心', s.crit.toFixed(1) + '%']].forEach(([a, b], i) => { const X = 10 + (i % 3) * 54, Y = Y0 + 30 + Math.floor(i / 3) * 16; Font.draw(x, a, X, Y, UIC.muted, UIC.textSh, 10); Font.drawR(x, String(b), X + 48, Y, UIC.text, UIC.textSh, 10); }); dollPreview(x, heroLookOf(st), 130, Y0 + 30, 1); return; }
+    if (!g) { Font.draw(x, '這個部位沒有裝備。按A選擇要裝上的東西。', 10, Y0 + 6, UIC.muted, UIC.textSh, typeof fitSize === 'function' ? fitSize('這個部位沒有裝備。按A選擇要裝上的東西。', 156, 10, 7) : 8); const s = heroStats(); [['物攻', s.atk], ['物防', s.def], ['魔攻', s.spa], ['魔防', s.spd], ['速度', s.spe], ['會心', s.crit.toFixed(1) + '%']].forEach(([a, b], i) => { const X = 10 + (i % 2) * 56, Y = Y0 + 26 + Math.floor(i / 2) * 15; /* v12.66: 2 columns, the doll on the right used to cover the third */ Font.draw(x, a, X, Y, UIC.muted, UIC.textSh, 10); Font.drawR(x, String(b), X + 48, Y, UIC.text, UIC.textSh, 10); }); dollPreview(x, heroLookOf(st), 130, Y0 + 30, 1); return; }
     Font.draw(x, gearName(g), 10, Y0 + 3, gCol(g), UIC.textSh); const L = gearInfoLines(g), end = drawInfoLines(x, L, 10, Y0 + 19, H - 20);
     if (end < L.length) Font.drawR(x, '▶ 查看全部', 166, H - 17, UIC.accent, UIC.textSh, 9);
     touchRegion(4, Y0, 168, H - Y0 - 4, () => tapKey('right'));
@@ -4859,11 +4860,12 @@ equipScreen = function* () {
     if (Input.repeat('up')) { idx = (idx + slots.length - 1) % slots.length; Sound.sfx('cursor'); } if (Input.repeat('down')) { idx = (idx + 1) % slots.length; Sound.sfx('cursor'); }
     if (Input.pressed('b')) { Input.consume('b'); Sound.sfx('cancel'); break; }
     if (Input.pressed('right')) { const g = gearBy(st.equip[slots[idx]]); if (g) { Sound.sfx('select'); UI.remove(scr); yield* gearInfoScreen(g); UI.push(scr); } }
-    if (Input.pressed('a')) { Input.consume('a'); Sound.sfx('select'); UI.remove(scr); yield* equipPick(slots[idx]); UI.push(scr); }
+    if (Input.pressed('a')) { Input.consume('a'); Sound.sfx('select'); UI.remove(scr); Game.eqQ13 = []; let Q = []; try { yield* equipPick(slots[idx]); } finally { UI.push(scr); Q = Game.eqQ13 || []; Game.eqQ13 = null; } for (const t of Q) yield* say(t); } // v12.66: messages from changing gear show over this screen, not over the map
     yield;
   }
   UI.remove(scr);
 };
+function* eqSay13(t) { if (Game.eqQ13) Game.eqQ13.push(t); else yield* say(t); }
 function* equipPick(sl) {
   const st = Game.st, cur = gearBy(st.equip[sl]);
   const own = gearSort().filter(g => GEAR[g.b].slot === SLOT_OF(sl) && (!isEquipped(g) || g === cur));
@@ -7889,7 +7891,7 @@ class TitleScene {
     x.drawImage(this.logo, Math.round(W / 2 - this.logo.width / 2), 6 + bob);
     Font.drawC(x, '～異世界冒險RPG～', W / 2, 52 + bob, '#ffe0a0', '#3a1428');
     if (this.stage === 'press' && Math.floor(this.t / 30) % 2 === 0) Font.drawC(x, '按 A 鍵開始', W / 2, 232, '#ffffff', '#1a1024');
-    Font.drawR(x, 'v12.65', W - 3, H - 13, '#b890b0', null);
+    Font.drawR(x, 'v12.66', W - 3, H - 13, '#b890b0', null);
   }
 }
 class IntroScene {
@@ -8445,9 +8447,9 @@ function* titleScreen() {
   while (true) {
     const items = TITLES.map(T => { const on = titleOk(T.id), eq = st.title === T.id; return { t: (eq ? '★' : '') + (on ? T.n : '？？？'), col: on ? (eq ? UIC.warm : UIC.text) : UIC.dis }; });
     const info = { draw(x) { const T = TITLES[idx]; drawWin(x, 4, 172, 168, 80, 'menu'); if (!T) return; const on = titleOk(T.id); Font.draw(x, on ? T.n : '？？？', 12, 175, on ? UIC.warm : UIC.dis, UIC.textSh);
-      Font.draw(x, '條件：' + T.d, 12, 192, UIC.text, UIC.textSh, 10); Font.draw(x, '效果：' + Object.entries(T.st).map(([k, v]) => (STAT_NAMES[k] || { crit: '會心', elem: '屬性傷害' }[k] || k) + '+' + v + (['crit', 'elem'].includes(k) ? '%' : '')).join('、'), 12, 207, UIC.accent, UIC.textSh, 10);
+      Font.draw(x, '條件：' + T.d, 12, 192, UIC.text, UIC.textSh, 10); { const ef = '效果：' + Object.entries(T.st).map(([k, v]) => (STAT_NAMES[k] || { crit: '會心', elem: '屬性傷害' }[k] || k) + '+' + v + (['crit', 'elem'].includes(k) ? '%' : '')).join('、'); Font.draw(x, ef, 12, 207, UIC.accent, UIC.textSh, typeof fitSize === 'function' ? fitSize(ef, 154, 10, 7) : 9); }
       Font.draw(x, '裝備一個稱號就能得到效果。', 12, 226, UIC.muted, UIC.textSh, 9); } };
-    UI.push(info); const r = yield* choose(items, { x: 4, y: 4, w: 168, h: 164, index: idx, onMove: i => idx = i }); UI.remove(info);
+    UI.push(info); const r = yield* choose(items, { x: 4, y: 4, w: 168, visible: 9, title: '稱號', index: idx, onMove: i => idx = i }); UI.remove(info); // v12.66: 18 titles ran over the info panel → scrolls
     if (r < 0) return; idx = r; const T = TITLES[r];
     if (!titleOk(T.id)) { yield* say('還沒有取得這個稱號。'); continue; }
     st.title = st.title === T.id ? null : T.id; Sound.sfx('select');
@@ -9145,7 +9147,7 @@ function* attrScreen() {
       Font.draw(x, l1, 46, 145, UIC.text, UIC.textSh, z1); Font.draw(x, l2, 12, 156, '#ffd890', UIC.textSh, z2); Font.draw(x, ATTR_HELP_NOTE, 12, 166, UIC.muted, UIC.textSh, z3); }
     const s = heroStats(st); DER.forEach(([n, key, u], r) => { const X = 12 + (r % 2) * 80, Y = 178 + Math.floor(r / 2) * 12, v = s[key], d = Math.round((v - s0[key]) * 10) / 10;
       Font.draw(x, n, X, Y, UIC.muted, UIC.textSh, 10); Font.drawR(x, (u ? (Math.round(v * 10) / 10) : v) + (u || ''), X + 52, Y, UIC.text, UIC.textSh, 10); if (d) Font.draw(x, (d > 0 ? '+' : '') + d, X + 55, Y + 1, d > 0 ? UIC.good : UIC.bad, UIC.textSh, 8); });
-    Font.drawR(x, '▶加點　◀取消　B確定', 166, 239, UIC.muted, UIC.textSh, 8);
+    Font.drawR(x, '▶加點　◀減回　B結束', 166, 239, UIC.muted, UIC.textSh, 8);
   } };
   UI.push(scr);
   while (true) {
@@ -9156,7 +9158,9 @@ function* attrScreen() {
     if (!k && Input.pressed('a')) { Input.consume('a');
       if (i === ATTRS.length) { if (attrAvail(st) > 0) { const b4 = { ...st.attr }; attrAuto(st); for (const q of ATTRS) { const dq = (st.attr[q] || 0) - (b4[q] || 0); if (dq) add[q] = (add[q] || 0) + dq; } Sound.sfx('statUp'); clampHP(); } else Sound.sfx('bump'); }
       else { const have = (st.bag && st.bag.attrReset) || 0; if (!attrSpent(st)) { Sound.sfx('bump'); } else if (!have) { UI.remove(scr); yield* say('重置屬性需要「重生之水」。\n（萌芽鎮和王都的道具店有賣）'); UI.push(scr); } else { UI.remove(scr); const ok = yield* yesNo('要喝下重生之水，把所有屬性點收回來重新分配嗎？\n（持有' + have + '瓶，會用掉1瓶）'); if (ok) { st.bag.attrReset--; st.attrFreeReset = 0; st.attr = {}; for (const q of ATTRS) delete add[q]; Sound.sfx('cancel'); clampHP(); } UI.push(scr); } } }
-    if (Input.pressed('b')) { Input.consume('b'); Sound.sfx('cancel'); break; }
+    if (Input.pressed('b')) { Input.consume('b'); Sound.sfx('cancel'); const n = ATTRS.reduce((t, q) => t + (add[q] > 0 ? add[q] : 0), 0); // v12.66: B used to keep the new points without asking
+      if (!n) break; const r = yield* ask('這次加的屬性要確定嗎？', ['確定', '取消這次的加點', '繼續分配']); if (r === 0) break;
+      if (r === 1) { for (const q of ATTRS) if (add[q] > 0) { st.attr[q] -= add[q]; add[q] = 0; } clampHP(); break; } }
     yield;
   }
   UI.remove(scr); clampHP();
@@ -11880,8 +11884,8 @@ dexScreen = function* () {
     if (seen(k)) { const cp = typeof dexPortrait === 'function' && dexPortrait(k); x.imageSmoothingEnabled = false;
       if (cp) { const q = Math.min(1, 72 / cp.width, 72 / cp.height), pw = Math.round(cp.width * q), ph = Math.round(cp.height * q); x.drawImage(cp, Math.round(44 - pw / 2), 244 - ph, pw, ph); } else { const im = battleSprite(k); x.drawImage(im, 0, 0, im.width, im.height, 8, 172, 72, 72); }
       const sp = SPECIES[k]; famBadge(x, sp.fam, 86, 170, 38); Font.draw(x, sp.rare ? '稀有' : sp.elite ? '菁英' : sp.boss ? '頭目' : '野生', 128, 168, sp.rare ? '#ffd84a' : sp.boss ? UIC.bad : sp.elite ? UIC.warm : UIC.muted, UIC.textSh);
-      { const t = typeof dexWeak11 === 'function' ? dexWeak11(k) : famLine(sp.fam); let z = 10; while (z > 7 && Font.width(t, z) > 84) z--; Font.draw(x, t, 86, 184, UIC.warm, UIC.textSh, z); } drawFitText(x, sp.dex || '', 86, 198, 82, 40, 11); /* v12.0.1: shrink instead of cutting the third line */
-      drawBtn(x, 106, 230, 62, 16, true); Font.drawC(x, 'A：詳細資料', 137, 230, UIC.accent, UIC.textSh, 9); touchRegion(4, 164, 168, 88, () => tapKey('a')); }
+      { const t = typeof dexWeak11 === 'function' ? dexWeak11(k) : famLine(sp.fam); let z = 10; while (z > 7 && Font.width(t, z) > 84) z--; Font.draw(x, t, 86, 184, UIC.warm, UIC.textSh, z); } drawFitText(x, sp.dex || '', 86, 197, 82, 36, 11); /* v12.0.1: shrink instead of cutting the third line; v12.66: stops above the button */
+      drawBtn(x, 106, 235, 62, 14, true); Font.drawC(x, 'A：詳細資料', 137, 235.5, UIC.accent, UIC.textSh, 9); touchRegion(4, 164, 168, 88, () => tapKey('a')); }
     else Font.draw(x, '還沒有遇見過這種魔物。', 14, 170, UIC.muted, UIC.textSh);
   } };
   UI.push(scr);
@@ -16628,19 +16632,20 @@ skillTreeScreen = function* () {
     return R; };
   const pend = id => { const e = BB.skillObj(st, id); return !!(e && id.startsWith('o_') && orbPending(e)); };
   const right = id => { const cd = DEF.skills[id].cooldown; return cd ? 'CD' + cd : ''; }; // v12.0.2: progress is the 練度 bar beside it
+  const tree13 = id => typeof treeOf11 === 'function' && !!treeOf11(id); // v12.66: tree skills have no 練度 bar → the MP and CD go there
   const scr = { draw(x) {
-    screenBG(x); headerBar(x, '技能編排');
+    screenBG(x); headerBar(x, '技能編排'); { const n = (st.slots || []).filter(Boolean).length; Font.drawR(x, '裝備中 ' + n + '／' + BB.SLOTS + '　＋＝還沒放', W - 6, 4, UIC.muted, UIC.textSh, 8); }
     const L = rows(), VIS = 9, i = Math.min(sel, Math.max(0, L.length - 1)), top = clamp(i - 4, 0, Math.max(0, L.length - VIS));
     drawWin(x, 4, 22, 168, VIS * 16 + 8, 'menu'); if (!L.length) Font.draw(x, '還沒有技能。', 12, 28, UIC.muted, UIC.textSh, 10);
     L.slice(top, top + VIS).forEach((R, k) => { const Y = 26 + k * 16; if (top + k === i) selBar(x, 6, Y - 1, 164, 15);
       if (R.sig) { Font.draw(x, '★' + DEF.skills[R.sig].name, 12, Y - 1, '#ffd860', UIC.textSh, 10); Font.drawR(x, BB.costLabel(st, R.sig), 166, Y, UIC.muted, UIC.textSh, 8); }
       else if (R.slot !== undefined) { Font.draw(x, String(R.slot + 1), 12, Y - 1, UIC.muted, UIC.textSh, 9);
-        if (R.id) { const e = BB.skillObj(st, R.id); Font.draw(x, BB.nameOf(st, R.id) + (pend(R.id) ? ' ！' : ''), 22, Y - 1, '#c8f0ff', UIC.textSh, 10); Font.drawR(x, right(R.id), 132, Y, UIC.muted, UIC.textSh, 8); if (typeof drawMastery12 === 'function') drawMastery12(x, 136, Y + 5, 30, masteryOf12(st, R.id)); }
+        if (R.id) { const e = BB.skillObj(st, R.id); Font.draw(x, BB.nameOf(st, R.id) + (pend(R.id) ? ' ！' : ''), 22, Y - 1, '#c8f0ff', UIC.textSh, 10); if (tree13(R.id)) Font.drawR(x, BB.costLabel(st, R.id), 166, Y, UIC.muted, UIC.textSh, 8); else Font.drawR(x, right(R.id), 132, Y, UIC.muted, UIC.textSh, 8); if (typeof drawMastery12 === 'function') drawMastery12(x, 136, Y + 5, 30, masteryOf12(st, R.id)); }
         else Font.draw(x, '（空的技能槽）', 22, Y - 1, UIC.dis, UIC.textSh, 10); }
-      else if (R.spare) { Font.draw(x, '＋' + BB.nameOf(st, R.spare) + (pend(R.spare) ? ' ！' : ''), 12, Y - 1, UIC.text, UIC.textSh, 10); Font.drawR(x, right(R.spare), 132, Y, UIC.muted, UIC.textSh, 8); if (typeof drawMastery12 === 'function') drawMastery12(x, 136, Y + 5, 30, masteryOf12(st, R.spare)); }
+      else if (R.spare) { Font.draw(x, '＋' + BB.nameOf(st, R.spare) + (pend(R.spare) ? ' ！' : ''), 12, Y - 1, UIC.text, UIC.textSh, 10); if (tree13(R.spare)) Font.drawR(x, BB.costLabel(st, R.spare), 166, Y, UIC.muted, UIC.textSh, 8); else Font.drawR(x, right(R.spare), 132, Y, UIC.muted, UIC.textSh, 8); if (typeof drawMastery12 === 'function') drawMastery12(x, 136, Y + 5, 30, masteryOf12(st, R.spare)); }
       else if (R.next) { Font.draw(x, '？' + (DEF.skills[R.next[0]] || {}).name, 12, Y - 1, UIC.dis, UIC.textSh, 10); Font.drawR(x, 'Lv' + R.next[1] + '學會', 166, Y, UIC.dis, UIC.textSh, 8); } });
     if (top > 0) x.drawImage(UPARROW, 86, 23); if (top + VIS < L.length) x.drawImage(DOWNARROW, 86, 22 + VIS * 16 + 3);
-    const Y0 = 22 + VIS * 16 + 12, R = L[i]; drawWin(x, 4, Y0, 168, 252 - Y0, 'menu'); let txt = '', fid = null;
+    const Y0 = 22 + VIS * 16 + 12, R = L[i]; if (scr.asking13) return; drawWin(x, 4, Y0, 168, 252 - Y0, 'menu'); let txt = '', fid = null; // v12.66: no description under the 更換／取下 question
     if (R && R.sig) { fid = R.sig; txt = BB.skillInfo(st, R.sig) + '\n（職業招式固定在第一格）'; }
     else if (R && R.slot !== undefined) { fid = R.id; txt = R.id ? BB.skillInfo(st, R.id) + (pend(R.id) ? '　按A可以進化！' : '') + '\nA：更換／取下' : '把技能放進這一格，戰鬥中就能使用（最多' + BB.SLOTS + '個）。技能來自武器和共通的技能樹，用技能點學。'; }
     else if (R && R.spare) { fid = R.spare; txt = BB.skillInfo(st, R.spare) + '\nA：放進技能槽'; }
@@ -16659,7 +16664,7 @@ skillTreeScreen = function* () {
       if (R && R.slot !== undefined) {
         const spare = BB.available(st).filter(id => !BB.slots(st).includes(id)), opts = [];
         if (R.id && pend(R.id)) opts.push('進化'); opts.push('更換'); if (R.id) opts.push('取下');
-        const r = yield* ask(R.id ? '「' + BB.nameOf(st, R.id) + '」' : '技能槽' + (R.slot + 1), opts.concat('返回')), op = opts[r];
+        scr.asking13 = true; let r; try { r = yield* ask(R.id ? '「' + BB.nameOf(st, R.id) + '」要怎麼做？' : '技能槽' + (R.slot + 1), opts.concat('返回')); } finally { scr.asking13 = false; } const op = opts[r];
         if (op === '進化') yield* full(orbEvolveFlow(BB.skillObj(st, R.id)));
         else if (op === '更換') { const id = yield* pickSkill('放進技能槽' + (R.slot + 1), spare); if (id) { if (R.id) BB.unslot(st, R.id); BB.setSlot(st, R.slot, id); Sound.sfx('select'); } }
         else if (op === '取下') { BB.unslot(st, R.id); Sound.sfx('cancel'); } }
@@ -19918,12 +19923,12 @@ function activeLines9(st = Game.st) { const s = heroStats(st), L = [], H = t => 
   if (!L.length) P('目前沒有生效中的效果。', UIC.muted);
   return L; }
 summaryScreen = function* () {
-  let page = 0, mi = 0, si = 0, top = 0; const NP = 4, TITLES = ['冒險者資料', '戰鬥數值', '生效中的效果', '技能一覽'];
+  let page = 0, mi = 0, si = 0, top = 0; const NP = 4, TITLES = ['冒險者資料', '戰鬥數值', '生效中的效果', '裝備中的技能'];
   const skillList = st => (st.cls && typeof classPassiveNode === 'function' ? ['_passive'] : []).concat(typeof summarySkills === 'function' ? summarySkills(st) : learnedSkills(st));
   let AL = null;
   const scr = { draw(x) {
     const st = Game.st, s = heroStats(); screenBG(x);
-    headerBar(x, TITLES[page]); if (page === 3) Font.draw(x, 'MP ' + (st.mp ?? s.mp) + '/' + s.mp, 66, 5, UIC.blue || UIC.accent, UIC.textSh, 8);
+    headerBar(x, TITLES[page]); if (page === 3) Font.draw(x, 'MP ' + (st.mp ?? s.mp) + '/' + s.mp, Math.max(66, 18 + Font.width(TITLES[page])), 5, UIC.blue || UIC.accent, UIC.textSh, 8);
     Font.drawR(x, '← ' + (page + 1) + '/' + NP + ' →', W - 6, 2, UIC.muted, UIC.textSh);
     if (page === 0) { heroCard(x, st); const a = heroAttr(st), th = s.th9 || {};
       drawWin(x, 4, 98, 168, 62, 'menu');
@@ -21454,7 +21459,7 @@ function* craft11() { const st = Game.st;
     const top = craftTop11(st), r = yield* ask('要打什麼？（能打到 T' + top + '）', ['武器', '防具', '盾', '返回']); if (r < 0 || r === 3) return;
     let group, pick;
     if (r === 0) { const K = Object.keys(WNAME11).filter(q => typeof kindOn13 !== 'function' || kindOn13(q)), k = yield* ask('哪一種武器？', K.concat('返回')); if (k < 0 || k >= K.length) continue; group = K[k]; pick = t => BASE11.weapon[group][t - 1]; }
-    else if (r === 1) { const S = ['重甲', '輕裝', '法衣'], s = yield* ask('哪一系？\n重甲：物防高　輕裝：帶速度　法衣：魔防高', S.concat('返回')); if (s < 0 || s >= 3) continue; const sl = yield* ask('哪個部位？', ['頭', '身', '腳', '返回']); if (sl < 0 || sl >= 3) continue;
+    else if (r === 1) { const S = ['重甲', '輕裝', '法衣'], s = yield* ask('哪一系？\n重甲：物防高　輕裝：帶速度\n法衣：魔防高', S.concat('返回')); if (s < 0 || s >= 3) continue; const sl = yield* ask('哪個部位？', ['頭', '身', '腳', '返回']); if (sl < 0 || sl >= 3) continue;
       group = S[s]; const slot = ['head', 'body', 'feet'][sl]; pick = t => BASE11.armor[group][slot][t - 1]; }
     else { group = '盾'; pick = t => BASE11.shield[t - 1]; }
     const T = []; for (let t = 1; t <= top; t++) T.push(t);
@@ -21491,7 +21496,7 @@ function* enchantMenu11() { const st = Game.st;
   while (true) { const g = yield* gearPicker('賦予：選裝備', () => gearSort(), (x, q, Y) => { const u = potUsed11(q), p = potOf11(q); Font.draw(x, '潛力 ' + u + '/' + p + (q.el ? '　' + q.el + '屬性' : ''), 12, Y, u >= p ? UIC.muted : '#ffe08a', UIC.textSh, 10); });
     if (!g) return; yield* enchant11(g); } }
 function* salvage11() { const st = Game.st;
-  while (true) { const g = yield* gearPicker('分解：選裝備（裝備中的不行）', () => gearSort().filter(q => !isEquipped(q)), (x, q, Y) => { const b = salvageBack11(q); Font.draw(x, '退回：' + (ptsText11(b) || '沒有點數'), 12, Y, UIC.accent, UIC.textSh, 9); });
+  while (true) { const g = yield* gearPicker('分解：選裝備', () => gearSort().filter(q => !isEquipped(q)), (x, q, Y) => { const b = salvageBack11(q); Font.draw(x, '退回：' + (ptsText11(b) || '沒有點數'), 12, Y, UIC.accent, UIC.textSh, 9); });
     if (!g) return; const b = salvageBack11(g); if (!(yield* yesNo('分解「' + GEAR[g.b].n + '」嗎？\n退回 ' + (ptsText11(b) || '0') + ' 點。'))) continue;
     for (const sp of (g.cr11 || [])) if (typeof cryUnsocket11 === 'function') cryUnsocket11(sp, st); st.gear = st.gear.filter(q => q !== g); ptsPay11(b, st, 1); Sound.sfx('rock'); yield* say('分解好了。' + (ptsText11(b) ? '退回 ' + ptsText11(b) + ' 點。' : '')); } }
 function salvageBack11(g) { const B = GEAR[g.b], t = B.t || 1, o = {}; let src = g.c11;
@@ -21499,7 +21504,7 @@ function salvageBack11(g) { const B = GEAR[g.b], t = B.t || 1, o = {}; let src =
   for (const c in src) o[c] = (o[c] || 0) + Math.floor(src[c] / 2); for (const c in g.e11 || {}) o[c] = (o[c] || 0) + Math.floor(g.e11[c] / 2); for (const c in o) if (!o[c]) delete o[c]; return o; }
 const glamList11 = g => { const B = GEAR[g.b], G = glam11(); return Object.keys(G).filter(k => G[k] && GEAR[k] && GEAR[k].slot === B.slot && (B.slot !== 'weapon' || GEAR[k].kind === B.kind)).sort((a, b) => (GEAR[a].t || 0) - (GEAR[b].t || 0)); };
 function* glamour11() { const st = Game.st;
-  while (true) { const g = yield* gearPicker('幻化：選裝備（只換樣子）', () => gearSort().filter(q => GEAR[q.b].slot !== 'acc'), (x, q, Y) => { Font.draw(x, '外觀：' + (q.gl && GEAR[q.gl] ? GEAR[q.gl].n : '原本的樣子') + '（可選 ' + glamList11(q).length + '）', 12, Y, '#d8b8ff', UIC.textSh, 9); });
+  while (true) { const g = yield* gearPicker('幻化：選裝備', () => gearSort().filter(q => GEAR[q.b].slot !== 'acc'), (x, q, Y) => { Font.draw(x, '外觀：' + (q.gl && GEAR[q.gl] ? GEAR[q.gl].n : '原本的樣子') + '（可選 ' + glamList11(q).length + '）', 12, Y, '#d8b8ff', UIC.textSh, 9); });
     if (!g) return; const L = glamList11(g); if (!L.length) { yield* say('這一種還沒有可以幻化的外觀。\n退場裝備的外觀：舊存檔有的、寶箱和任務給的、頭目和菁英的招牌裝備（回憶石碑「困難」以上打贏）都會解鎖。'); continue; }
     const r = yield* choose([{ t: '原本的樣子' }].concat(L.map(k => ({ t: GEAR[k].n, r: 'T' + (GEAR[k].t || 1) }))).concat({ t: '返回' }), { title: GEAR[g.b].n + '的外觀' });
     if (r < 0 || r > L.length) continue; if (r === 0) delete g.gl; else g.gl = L[r - 1]; Sound.sfx('item'); yield* say('外觀換成了「' + (g.gl ? GEAR[g.gl].n : GEAR[g.b].n) + '」。'); } }
@@ -21947,14 +21952,14 @@ function* equipPick11(sl, fit) {
     yield; }
   UI.remove(scr); }
 { const _ep = equipPick; equipPick = function* (sl) { const st = Game.st;
-    if (!((sl === 'shield' || sl === 'weapon') && dualOn11(st))) { yield* _ep.call(this, sl); if (dualFix11(st)) { clampHP(); yield* say('副手的武器跟主手不同種，卸下了。'); } return; }
-    if (sl === 'shield' && clsV7(st.cls) === 'otherworlder') { Sound.sfx('bump'); yield* say('異界勇者不能使用副手。'); return; }
-    if (sl === 'shield' && !shieldOk(st)) { Sound.sfx('bump'); yield* say('雙手武器不能用副手。\n（劍、斧、短刀、盾才能配副手）'); return; }
+    if (!((sl === 'shield' || sl === 'weapon') && dualOn11(st))) { yield* _ep.call(this, sl); if (dualFix11(st)) { clampHP(); yield* eqSay13('副手的武器跟主手不同種，卸下了。'); } return; }
+    if (sl === 'shield' && clsV7(st.cls) === 'otherworlder') { Sound.sfx('bump'); yield* eqSay13('異界勇者不能使用副手。'); return; }
+    if (sl === 'shield' && !shieldOk(st)) { Sound.sfx('bump'); yield* eqSay13('雙手武器不能用副手。\n（劍、斧、短刀、盾才能配副手）'); return; }
     const mode = () => dualMode11(st) || (typeof shieldMode13 === 'function' ? shieldMode13(st) : null), m0 = mode(), k0 = mainKind11(st); yield* equipPick11(sl, sl === 'weapon' ? mainOk11 : offOk11);
-    if (typeof shieldFix === 'function' && shieldFix(st)) { clampHP(); yield* say('雙手武器不能配副手，副手卸下了。'); } if (dualFix11(st)) { clampHP(); yield* say('副手的武器跟主手不同種，卸下了。'); }
-    const m = mode(); if (m && m !== m0) yield* say('現在是「' + m + '」！' + (trLeft11(st) > 0 ? '\n（選單→技能→武器技能樹 可以學' + m + '的招式）' : ''));
+    if (typeof shieldFix === 'function' && shieldFix(st)) { clampHP(); yield* eqSay13('雙手武器不能配副手，副手卸下了。'); } if (dualFix11(st)) { clampHP(); yield* eqSay13('副手的武器跟主手不同種，卸下了。'); }
+    const m = mode(); if (m && m !== m0) yield* eqSay13('現在是「' + m + '」！' + (trLeft11(st) > 0 ? '\n（選單→技能→武器技能樹 可以學' + m + '的招式）' : ''));
     else { const k1 = mainKind11(st); if (sl === 'weapon' && k0 && k1 && k1 !== k0 && kindPts13(k0, st) > 0 && !kindPts13(k1, st)) // v12.61: switched to a tree with nothing learned
-      yield* say('換成「' + k1 + '」了。' + k0 + '的招式，要拿' + k0 + '才能用。\n' + (trLeft11(st) > 0 ? '（選單→技能樹 可以學' + k1 + '的招式）' : '（技能樹的「重置」能把點數收回來，第一次免費）')); } }; }
+      yield* eqSay13('換成「' + k1 + '」了。' + k0 + '的招式，要拿' + k0 + '才能用。\n' + (trLeft11(st) > 0 ? '（選單→技能樹 可以學' + k1 + '的招式）' : '（技能樹的「重置」能把點數收回來，第一次免費）')); } }; }
 { const _so = startOverworld; startOverworld = function (...a) { if (Game.st) dualFix11(Game.st); return _so.apply(this, a); }; }
 const HAND11 = { L: { idle1: [11.5, 38.5], idle2: [11.5, 39.5], attack1: [10.5, 37.5], attack2: [13.5, 35], cast1: [9.5, 27.5], hurt1: [9.5, 34.5], guard1: [11.5, 32.5] },
   R: { idle1: [26.5, 37.5], idle2: [26.5, 38.5], attack1: [28.5, 27.5], attack2: [28.5, 26.5], cast1: [26.5, 37.5], hurt1: [27.5, 34.5], guard1: [27.5, 31.5] } };
@@ -22036,7 +22041,7 @@ if (typeof BATTLE_HELP !== 'undefined') for (const b of BATTLE_HELP) {
 { const _el = effectLines9; effectLines9 = function () { const L = _el(), i = L.findIndex(l => /^【武器被動】/.test(l[0])); if (i >= 0) L.splice(i);
     const H = t => L.push([t, UIC.accent, 10, 0]), P = t => { for (const l of Font.wrap(t, 150, 10)) L.push([l, UIC.text, 10, 6]); };
     H('【賦予】（每一格；點數 × 裝備階級）'); for (const k in EN11) { const E = EN11[k]; P(E[0] + '：+' + E[1] + E[2] + '，潛力 ' + E[3] + '・' + E[4] + ' ' + E[5] + '（上限 +' + E[1] * E[6] + E[2] + '）'); } P('屬性（只有武器）：火・水・雷・草選一種，潛力 ' + ELPOT11 + '・魔素 ' + ELPTS11);
-    H('【武器種特性】（技能樹裡學）'); for (const k of TREE_KINDS11) if (typeof kindOn13 !== 'function' || kindOn13(k)) P(k + '：' + TREE11[k].trait);
+    H('【武器種特性】（技能樹裡學）'); for (const k of TREE_KINDS11) if (!TREE11[k].common && TREE11[k].trait && (typeof kindOn13 !== 'function' || kindOn13(k))) P(k + '：' + TREE11[k].trait);
     return L; }; }
 const sl11 = (b, T, a, len, S, w = 5, life = 12) => { const dx = Math.cos(a) * len, dy = Math.sin(a) * len; ln9(b, T.x - dx, T.y - dy, T.x + dx, T.y + dy, S.col[0], S.col[1], w, life); };
 const th11 = (b, U, T, S, w = 4, over = 14) => { const a = Math.atan2(T.y - U.y, T.x - U.x); ln9(b, T.x - Math.cos(a) * 34, T.y - Math.sin(a) * 34, T.x + Math.cos(a) * over, T.y + Math.sin(a) * over, S.col[0], S.col[1], w); };
@@ -23202,7 +23207,7 @@ function* matShort12(msg) { const P = matPreview12();
   if (Object.keys(P.got).length) { yield* matConvert12(msg + '\n背包裡還有素材。'); return; }
   yield* say(msg + '\n點數：' + (ptsText11(pts11()) || '0') + '\n打倒魔物、採集、開寶箱拿到素材，再到這裡換成點數。'); }
 smithMenu = function* (f) { const st = Game.st;
-  if (!st.flags.tutSmith11) { st.flags.tutSmith11 = 1; yield* say('（鐵匠改版了！）\n打造：用素材點數打底裝，品質決定基本數值、潛力和晶石孔。\n賦予：用潛力和點數把能力加上去。\n素材換點數：把背包裡的素材換成點數。'); }
+  if (!st.flags.tutSmith11) { st.flags.tutSmith11 = 1; yield* say('打造：用素材點數打底裝，品質決定基本數值、潛力和晶石孔。\n賦予：用潛力和點數把能力加上去。\n素材換點數：把背包裡的素材換成點數。'); } // v12.66: 「（鐵匠改版了！）」 was shown to every new player
   yield* ptsBar11((function* () {
     while (true) { const S = smith11(st), P = matPreview12(st), n = Object.values(P.got).reduce((a, b) => a + b, 0);
       const hasCry = Object.keys(cryOwn11(st) || {}).length > 0, hasGl = Object.keys(glam11(st) || {}).length > 0;
@@ -25175,7 +25180,7 @@ const slotKey13 = n => n === 1 ? SAVE_KEY : SAVE_KEY + '_s' + n;
 const slotLoad13 = n => { try { const s = localStorage.getItem(slotKey13(n)); return s ? JSON.parse(s) : null; } catch (e) { return null; } };
 try { const l = +localStorage.getItem(SAVE_KEY + '_last'); if (l >= 1 && l <= SLOTS13) SLOT13 = l; } catch (e) { }
 if (!fxtest13()) {
-  saveGame = function () { try { localStorage.setItem(slotKey13(SLOT13), JSON.stringify(Game.st)); try { localStorage.setItem(SAVE_KEY + '_last', String(SLOT13)); } catch (e) { } return true; } catch (e) { return false; } };
+  saveGame = function () { try { if (Game.st) Game.st.savedAt13 = Date.now(); localStorage.setItem(slotKey13(SLOT13), JSON.stringify(Game.st)); try { localStorage.setItem(SAVE_KEY + '_last', String(SLOT13)); } catch (e) { } return true; } catch (e) { return false; } };
   loadGame = function () { return slotLoad13(SLOT13); };
 }
 const slotTime13 = s => { const m = Math.floor((s.time || 0) / 3600); return Math.floor(m / 60) + '小時' + (m % 60) + '分'; };
@@ -25185,7 +25190,9 @@ function* pickSlot13(title, mode) {
   let cur = SLOT13 - 1; if (mode === 'load' && !S[cur]) cur = Math.max(0, S.findIndex(s => s)); if (mode === 'new' && S.some(s => !s)) cur = S.findIndex(s => !s); // a new adventure starts on an empty slot
   const box = { draw(x) { if (cur >= SLOTS13) return; const s = S[cur]; drawWin(x, 8, 104, W - 16, 44, 'menu');
       if (!s) { Font.draw(x, '空的欄位', 16, 120, UIC.muted, UIC.textSh); return; }
-      Font.draw(x, s.name + '　Lv' + s.lv, 16, 109, UIC.text, UIC.textSh); Font.draw(x, (MAPS[s.map] || {}).name || '', 16, 122, UIC.warm, UIC.textSh, 10); Font.draw(x, '遊玩時間 ' + slotTime13(s), 16, 134, UIC.muted, UIC.textSh, 10); } };
+      Font.draw(x, s.name + '　Lv' + s.lv, 16, 109, UIC.text, UIC.textSh); Font.draw(x, (MAPS[s.map] || {}).name || '', 16, 122, UIC.warm, UIC.textSh, 10); Font.draw(x, '遊玩時間 ' + slotTime13(s), 16, 134, UIC.muted, UIC.textSh, 10);
+      if (s.savedAt13) { const d = new Date(s.savedAt13), p2 = v => String(v).padStart(2, '0'); Font.drawR(x, (d.getMonth() + 1) + '/' + d.getDate() + ' ' + p2(d.getHours()) + ':' + p2(d.getMinutes()), W - 14, 134, UIC.muted, UIC.textSh, 9); } // v12.66: when it was saved
+      { const a = typeof actOf === 'function' ? actOf(s) : 0; if (a && typeof ACTS !== 'undefined' && ACTS[a]) Font.drawR(x, (s.flags && s.flags.ch3) ? '第三章' : ACTS[a][0], W - 14, 122, UIC.accent, UIC.textSh, 9); } } };
   UI.push(box);
   try { const r = yield* choose(items, { title, x: 8, y: 152, w: W - 16, index: cur, cancel: true, onMove: i => { cur = i; } }); return r >= 0 && r < SLOTS13 ? r + 1 : 0; }
   finally { UI.remove(box); } }
@@ -25202,10 +25209,10 @@ if (!fxtest13()) TitleScene.prototype.menu = function* () {
       SLOT13 = n; const st = loadGame(); if (!st) continue; Game.st = st; yield* fadeOut(20); startOverworld(); Game.sys.push(fadeIn(20)); return; }
     if (o === '新的冒險') { let n = 1;
       if (any.length) { n = yield* pickSlot13('要用哪一個欄位？', 'new'); if (!n) continue; const s = slotLoad13(n);
-        if (s && !(yield* yesNo('要覆蓋「存檔 ' + n + '」（' + s.name + ' Lv' + s.lv + '）嗎？\n舊的記錄會在下次存檔時消失。'))) continue; }
+        if (s && !(yield* yesNo('要覆蓋「存檔 ' + n + '」嗎？（' + s.name + ' Lv' + s.lv + '）\n舊的記錄會在下次存檔時消失。'))) continue; }
       SLOT13 = n; Game.pendingNew = { diff: 2, carry: null }; yield* fadeOut(24); Game.setScene(new IntroScene()); return; }
   } };
-{ const _say = say; say = function* (text, o) { if (typeof text === 'string' && / 把冒險記錄了下來！$|把冒險記錄了下來！$/.test(text) && !fxtest13()) text += '（存檔 ' + SLOT13 + '）'; return yield* _say(text, o); }; }
+{ const _say = say; say = function* (text, o) { if (typeof text === 'string' && / 把冒險記錄了下來！$|把冒險記錄了下來！$/.test(text) && !fxtest13()) text += '\n（存檔 ' + SLOT13 + '）'; return yield* _say(text, o); }; }
 function tmapShot13(id, x, y, cw = 144, ch = 96) {
   const ow = Game.ow; if (!ow || !ow.st) return null; const st = ow.st;
   const K = ['map', 'p', 'npcs', 'elites', 'items', 'boss', 'conn', 'popup', 'camDY', 'camX', 'camY', 'doorAnim', 'hideHero', 'bob13', 'anim'], keep = {}; for (const k of K) keep[k] = ow[k];
@@ -25387,7 +25394,7 @@ function packMat13(mats) { const st = Game.st, M = st && MAPS[st.map], S = new S
     const L = [['主武器　' + (mk || '—') + (dm ? '（' + dm + '）' : ''), UIC.warm, 10]];
     if (typeof trTotal11 === 'function') { const tot = trTotal11(st), left = trLeft11(st); L.push(['技能樹：用了 ' + (tot - left) + '／' + tot + ' 點' + (left ? '（還有 ' + left + ' 點）' : ''), left ? UIC.accent : '#c9cfe4', 9]); }
     const tr = equippedGear(st).map(g => GEAR[g.b] && GEAR[g.b].trait && ACC_TRAIT[GEAR[g.b].trait]).filter(Boolean).map(T => T[0]);
-    L.push(['飾品特性：' + (tr.length ? tr.join('・') : '（沒有）'), tr.length ? UIC.text : UIC.muted, 9]);
+    { const C = {}; for (const t of tr) C[t] = (C[t] || 0) + 1; const T2 = Object.keys(C).map(t => t + (C[t] > 1 ? '×' + C[t] : '')); L.push(['飾品特性：' + (T2.length ? T2.join('・') : '（沒有）'), T2.length ? UIC.text : UIC.muted, 9]); } // v12.66: 「堅守回復×2」 instead of the name twice
     if (k && typeof WSK !== 'undefined' && WSK[k]) L.push(['特技「' + WSK[k].s.n + '」普通攻擊' + wsN(WSK[k].s, st) + '層發動', '#ffd860', 9]);
     const R = []; for (const [t, col, z0] of L) { let z = z0; while (z > 8 && Font.width(t, z) > w) z--; if (Font.width(t, z) <= w) R.push([t, col, z]); else for (const s of Font.wrap(t, w, 8)) R.push([s, col, 8]); }
     const dy = R.length > 5 ? 13 : 15; R.forEach(([t, col, z], i) => Font.draw(x, t, X, Y + i * dy + (i ? 1 : 0), col, UIC.textSh, z)); }; }
@@ -25785,7 +25792,7 @@ const RUMOR13 = [
     by[k0] = s0; const fits = id => common(id) || tk(id) === k1 || tk(id) === PAIR11[k1]; // another weapon's moves can't be used anyway
     const next = (by[k1] || s0).filter(fits); for (const id of learnedTree11(st)) if (tk(id) === k1 && !next.includes(id) && next.length < BB.SLOTS) next.push(id);
     st.slots = next; BB.slots(st);
-    if (st.slots.some(id => tk(id) === k1) && st.slots.join() !== s0.join()) yield* say('技能欄換成了「' + k1 + '」的招式。'); }; }
+    if (st.slots.some(id => tk(id) === k1) && st.slots.join() !== s0.join()) yield* eqSay13('技能欄換成了「' + k1 + '」的招式。'); }; }
 const GUIDE13 = [
   { step: 4, map: 'clockTower2', name: '鐘樓', boss: 1, spot: '曙光鐘' },
   { step: 5, when: f => !f.northPass, map: 'castle', name: '王城', spot: '國王阿爾德里克' },
@@ -25808,4 +25815,25 @@ const GUIDE13 = [
     if ((f.ch2 || 0) >= 10 && !(typeof ch3 === 'function' ? ch3(st) : f.ch3)) L.push({ n: '第三章 序章「東方的海」', t: '【推薦Lv44〜】國王阿爾德里克有事找你。到王城謁見國王吧。（莉婭從東方回來了）', done: false, rw: '潮鳴貝殼・20000 G', cat: '主線' }); }; }
 QUEST_CATS['第三章 序章「東方的海」'] = '主線'; // the list used to file it under 支線 (05_ui sets q.cat from QUEST_CATS)
 { const _ok = coachOk9; coachOk9 = function (from, to, st = Game.st) { if (to === 'harbor13' && from !== to && COACH9[from] && typeof ch3 === 'function' && ch3(st) >= 1) return true; return _ok(from, to, st); }; }
+{ const _sm = startMenu; startMenu = function* (...a) { Game.inMenu13 = (Game.inMenu13 || 0) + 1; try { return yield* _sm.apply(this, a); } finally { Game.inMenu13--; } }; }
+{ const _dp = dlgLogPush; dlgLogPush = function (name, text) { if (Game.inMenu13 > 0) return; return _dp(name, text); }; }
+{ const _cl = BB.costLabel; BB.costLabel = function (st, id, core, u) { const D = DEF.skills[id];
+    if (core || !D || D.power || typeof treeOf11 !== 'function' || !treeOf11(id)) return _cl.call(this, st, id, core, u);
+    const lv = Math.max(1, trLv11(id, st)), P = []; for (const c of D.costs || []) P.push(RES12_NAME(c.res) + (c.all ? (c.min ? '≥' + c.min : '') : c.res === 'mp' ? Math.max(0, Math.round(c.amount * (1 - 0.1 * (lv - 1)))) : c.amount));
+    const cd = Math.max(0, (D.cooldown || 0) - (lv >= 5 ? 1 : 0)); if (cd > 0) P.push('CD' + cd); return P.join(' '); }; }
+if (DEF.passives.faSpirit) { const _mk = DEF.passives.faSpirit.make; DEF.passives.faSpirit.make = (v, u) => { const r = _mk(v, u) || {}; if (r.triggers && r.triggers.length) return r;
+    return { triggers: [{ on: EVT.BATTLE_START, phase: 'POST', prio: -10, effects: ['wc', 'chi', 'stance'].map(res => ({ type: 'resource', target: 'self', res, amount: 1, why: 'start' })) }] }; }; }
+if (typeof FA9 !== 'undefined' && FA9.f_spirit) FA9.f_spirit[4] = () => '開場特技 +1 層（拳套的氣、雙盾的守勢也 +1）';
+if (typeof BATTLE_HELP !== 'undefined') for (const b of BATTLE_HELP) {
+  if (b[0] === '技能與冷卻') b[1] = b[1].map(t => t.replace('選單→技能→技能編排：最多放 4 個技能。', '選單→技能：最多放 4 個技能。'));
+  if (b[0] === '多隻魔物') b[1] = b[1].map(t => /^範圍技能/.test(t) ? '範圍技能（旋刃、迴旋斧、炎浪…）一次打中全部，多個目標時每隻×75%。' : t);
+  if (b[0] === '武器技能') b[1] = ['每種武器有自己的技能樹，只能用身上武器那棵樹的招。技能點＝等級×2＋主線頭目。', '特技：在技能樹學會、裝上一個。普攻累積層數，滿了自動發動（右下角的◆）。', '普攻不花 MP，命中回復 15% 的 MP；技能冷卻中就用普攻。', '短刀普攻 2 段、雙持時副手也出手。武器的屬性在鐵匠賦予。', '劍・斧・短刀配盾時，多一棵「單手盾」技能樹。']; }
+{ const _ms = matSourceText; matSourceText = function (m) { const P = typeof PART_OF11 !== 'undefined' && PART_OF11[m]; if (P && SPECIES[P.sp]) return SPECIES[P.sp].n + (P.rare ? '（稀有部位）' : '（打倒就掉）'); return _ms(m); }; }
+{ const _qd = questDest; questDest = function (q, st = Game.st) {
+    if (!q || q.n !== '祕境探索' || q.done || typeof EXT_OPEN === 'undefined' || !st) return _qd(q, st);
+    const L = Object.keys(EXT_OPEN).filter(m => !extSeen(m, st) && st.vis && st.vis[m]); if (!L.length) return _qd(q, st);
+    const m = L.includes(st.map) ? st.map : nearestMap(L, st), o = EXT_OPEN[m]; if (!m || !o) return _qd(q, st);
+    return m === st.map ? { map: m, spot: { x: o[0], y: o[1], name: EXT_AREA[m].name }, what: '前往' + EXT_AREA[m].name } : { map: m, what: '前往' + MAPS[m].name + '的祕境' }; }; }
+{ const _eq = extraQuests; extraQuests = function (st, L) { _eq(st, L); const q = L.find(q => q.n === '祕境探索'); if (q && q.rw === '每處：寶箱、採集點、天氣祠') q.rw = '每處都有寶箱、採集點、天氣祠'; }; }
+{ const _so = startOverworld; startOverworld = function (...a) { const st = Game.st; if (st && st.equip) { try { const h = heroStats(st); if (st.hp > h.hp) st.hp = h.hp; if (st.mp != null && st.mp > h.mp) st.mp = h.mp; } catch (e) {} } return _so.apply(this, a); }; }
 </script>

@@ -17,7 +17,7 @@
     by[k0] = s0; const fits = id => common(id) || tk(id) === k1 || tk(id) === PAIR11[k1]; // another weapon's moves can't be used anyway
     const next = (by[k1] || s0).filter(fits); for (const id of learnedTree11(st)) if (tk(id) === k1 && !next.includes(id) && next.length < BB.SLOTS) next.push(id);
     st.slots = next; BB.slots(st);
-    if (st.slots.some(id => tk(id) === k1) && st.slots.join() !== s0.join()) yield* say('技能欄換成了「' + k1 + '」的招式。'); }; }
+    if (st.slots.some(id => tk(id) === k1) && st.slots.join() !== s0.join()) yield* eqSay13('技能欄換成了「' + k1 + '」的招式。'); }; }
 
 /* 3. 第四幕以後主線的指引（v12.63）：說明寫的是「鐘樓」「王城」「王座之間」，不是地圖的全名，指引找不到或指回一樓。
       這幾步直接指定目的地：鐘塔開門後 → 鐘樓的時計巨像／曙光鐘；回王城報告 → 國王；要塞 → 王座的影將莫爾德；敲響曙光鐘 → 鐘樓的曙光鐘。 */

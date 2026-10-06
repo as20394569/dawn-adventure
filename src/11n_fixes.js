@@ -19,7 +19,7 @@ function packMat13(mats) { const st = Game.st, M = st && MAPS[st.map], S = new S
     const L = [['主武器　' + (mk || '—') + (dm ? '（' + dm + '）' : ''), UIC.warm, 10]];
     if (typeof trTotal11 === 'function') { const tot = trTotal11(st), left = trLeft11(st); L.push(['技能樹：用了 ' + (tot - left) + '／' + tot + ' 點' + (left ? '（還有 ' + left + ' 點）' : ''), left ? UIC.accent : '#c9cfe4', 9]); }
     const tr = equippedGear(st).map(g => GEAR[g.b] && GEAR[g.b].trait && ACC_TRAIT[GEAR[g.b].trait]).filter(Boolean).map(T => T[0]);
-    L.push(['飾品特性：' + (tr.length ? tr.join('・') : '（沒有）'), tr.length ? UIC.text : UIC.muted, 9]);
+    { const C = {}; for (const t of tr) C[t] = (C[t] || 0) + 1; const T2 = Object.keys(C).map(t => t + (C[t] > 1 ? '×' + C[t] : '')); L.push(['飾品特性：' + (T2.length ? T2.join('・') : '（沒有）'), T2.length ? UIC.text : UIC.muted, 9]); } // v12.66: 「堅守回復×2」 instead of the name twice
     if (k && typeof WSK !== 'undefined' && WSK[k]) L.push(['特技「' + WSK[k].s.n + '」普通攻擊' + wsN(WSK[k].s, st) + '層發動', '#ffd860', 9]);
     const R = []; for (const [t, col, z0] of L) { let z = z0; while (z > 8 && Font.width(t, z) > w) z--; if (Font.width(t, z) <= w) R.push([t, col, z]); else for (const s of Font.wrap(t, w, 8)) R.push([s, col, 8]); }
     const dy = R.length > 5 ? 13 : 15; R.forEach(([t, col, z], i) => Font.draw(x, t, X, Y + i * dy + (i ? 1 : 0), col, UIC.textSh, z)); }; }

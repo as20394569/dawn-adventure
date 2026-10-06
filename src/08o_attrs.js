@@ -78,7 +78,7 @@ function* attrScreen() {
       Font.draw(x, l1, 46, 145, UIC.text, UIC.textSh, z1); Font.draw(x, l2, 12, 156, '#ffd890', UIC.textSh, z2); Font.draw(x, ATTR_HELP_NOTE, 12, 166, UIC.muted, UIC.textSh, z3); }
     const s = heroStats(st); DER.forEach(([n, key, u], r) => { const X = 12 + (r % 2) * 80, Y = 178 + Math.floor(r / 2) * 12, v = s[key], d = Math.round((v - s0[key]) * 10) / 10;
       Font.draw(x, n, X, Y, UIC.muted, UIC.textSh, 10); Font.drawR(x, (u ? (Math.round(v * 10) / 10) : v) + (u || ''), X + 52, Y, UIC.text, UIC.textSh, 10); if (d) Font.draw(x, (d > 0 ? '+' : '') + d, X + 55, Y + 1, d > 0 ? UIC.good : UIC.bad, UIC.textSh, 8); });
-    Font.drawR(x, '▶加點　◀取消　B確定', 166, 239, UIC.muted, UIC.textSh, 8);
+    Font.drawR(x, '▶加點　◀減回　B結束', 166, 239, UIC.muted, UIC.textSh, 8);
   } };
   UI.push(scr);
   while (true) {
@@ -89,7 +89,9 @@ function* attrScreen() {
     if (!k && Input.pressed('a')) { Input.consume('a');
       if (i === ATTRS.length) { if (attrAvail(st) > 0) { const b4 = { ...st.attr }; attrAuto(st); for (const q of ATTRS) { const dq = (st.attr[q] || 0) - (b4[q] || 0); if (dq) add[q] = (add[q] || 0) + dq; } Sound.sfx('statUp'); clampHP(); } else Sound.sfx('bump'); }
       else { const have = (st.bag && st.bag.attrReset) || 0; if (!attrSpent(st)) { Sound.sfx('bump'); } else if (!have) { UI.remove(scr); yield* say('重置屬性需要「重生之水」。\n（萌芽鎮和王都的道具店有賣）'); UI.push(scr); } else { UI.remove(scr); const ok = yield* yesNo('要喝下重生之水，把所有屬性點收回來重新分配嗎？\n（持有' + have + '瓶，會用掉1瓶）'); if (ok) { st.bag.attrReset--; st.attrFreeReset = 0; st.attr = {}; for (const q of ATTRS) delete add[q]; Sound.sfx('cancel'); clampHP(); } UI.push(scr); } } }
-    if (Input.pressed('b')) { Input.consume('b'); Sound.sfx('cancel'); break; }
+    if (Input.pressed('b')) { Input.consume('b'); Sound.sfx('cancel'); const n = ATTRS.reduce((t, q) => t + (add[q] > 0 ? add[q] : 0), 0); // v12.66: B used to keep the new points without asking
+      if (!n) break; const r = yield* ask('這次加的屬性要確定嗎？', ['確定', '取消這次的加點', '繼續分配']); if (r === 0) break;
+      if (r === 1) { for (const q of ATTRS) if (add[q] > 0) { st.attr[q] -= add[q]; add[q] = 0; } clampHP(); break; } }
     yield;
   }
   UI.remove(scr); clampHP();

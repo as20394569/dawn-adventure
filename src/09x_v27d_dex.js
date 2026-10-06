@@ -86,8 +86,8 @@ dexScreen = function* () {
     if (seen(k)) { const cp = typeof dexPortrait === 'function' && dexPortrait(k); x.imageSmoothingEnabled = false;
       if (cp) { const q = Math.min(1, 72 / cp.width, 72 / cp.height), pw = Math.round(cp.width * q), ph = Math.round(cp.height * q); x.drawImage(cp, Math.round(44 - pw / 2), 244 - ph, pw, ph); } else { const im = battleSprite(k); x.drawImage(im, 0, 0, im.width, im.height, 8, 172, 72, 72); }
       const sp = SPECIES[k]; famBadge(x, sp.fam, 86, 170, 38); Font.draw(x, sp.rare ? '稀有' : sp.elite ? '菁英' : sp.boss ? '頭目' : '野生', 128, 168, sp.rare ? '#ffd84a' : sp.boss ? UIC.bad : sp.elite ? UIC.warm : UIC.muted, UIC.textSh);
-      { const t = typeof dexWeak11 === 'function' ? dexWeak11(k) : famLine(sp.fam); let z = 10; while (z > 7 && Font.width(t, z) > 84) z--; Font.draw(x, t, 86, 184, UIC.warm, UIC.textSh, z); } drawFitText(x, sp.dex || '', 86, 198, 82, 40, 11); /* v12.0.1: shrink instead of cutting the third line */
-      drawBtn(x, 106, 230, 62, 16, true); Font.drawC(x, 'A：詳細資料', 137, 230, UIC.accent, UIC.textSh, 9); touchRegion(4, 164, 168, 88, () => tapKey('a')); }
+      { const t = typeof dexWeak11 === 'function' ? dexWeak11(k) : famLine(sp.fam); let z = 10; while (z > 7 && Font.width(t, z) > 84) z--; Font.draw(x, t, 86, 184, UIC.warm, UIC.textSh, z); } drawFitText(x, sp.dex || '', 86, 197, 82, 36, 11); /* v12.0.1: shrink instead of cutting the third line; v12.66: stops above the button */
+      drawBtn(x, 106, 235, 62, 14, true); Font.drawC(x, 'A：詳細資料', 137, 235.5, UIC.accent, UIC.textSh, 9); touchRegion(4, 164, 168, 88, () => tapKey('a')); }
     else Font.draw(x, '還沒有遇見過這種魔物。', 14, 170, UIC.muted, UIC.textSh);
   } };
   UI.push(scr);

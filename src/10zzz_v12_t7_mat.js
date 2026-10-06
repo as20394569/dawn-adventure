@@ -19,7 +19,7 @@ function* matShort12(msg) { const P = matPreview12();
   yield* say(msg + '\n點數：' + (ptsText11(pts11()) || '0') + '\n打倒魔物、採集、開寶箱拿到素材，再到這裡換成點數。'); }
 // the smith: 素材換點數
 smithMenu = function* (f) { const st = Game.st;
-  if (!st.flags.tutSmith11) { st.flags.tutSmith11 = 1; yield* say('（鐵匠改版了！）\n打造：用素材點數打底裝，品質決定基本數值、潛力和晶石孔。\n賦予：用潛力和點數把能力加上去。\n素材換點數：把背包裡的素材換成點數。'); }
+  if (!st.flags.tutSmith11) { st.flags.tutSmith11 = 1; yield* say('打造：用素材點數打底裝，品質決定基本數值、潛力和晶石孔。\n賦予：用潛力和點數把能力加上去。\n素材換點數：把背包裡的素材換成點數。'); } // v12.66: 「（鐵匠改版了！）」 was shown to every new player
   yield* ptsBar11((function* () {
     while (true) { const S = smith11(st), P = matPreview12(st), n = Object.values(P.got).reduce((a, b) => a + b, 0);
       // v12.27（精簡）：晶石要有晶石、幻化要有解鎖的外觀才出現在選單

@@ -450,14 +450,14 @@ function* equipPick11(sl, fit) {
     yield; }
   UI.remove(scr); }
 { const _ep = equipPick; equipPick = function* (sl) { const st = Game.st;
-    if (!((sl === 'shield' || sl === 'weapon') && dualOn11(st))) { yield* _ep.call(this, sl); if (dualFix11(st)) { clampHP(); yield* say('副手的武器跟主手不同種，卸下了。'); } return; }
-    if (sl === 'shield' && clsV7(st.cls) === 'otherworlder') { Sound.sfx('bump'); yield* say('異界勇者不能使用副手。'); return; }
-    if (sl === 'shield' && !shieldOk(st)) { Sound.sfx('bump'); yield* say('雙手武器不能用副手。\n（劍、斧、短刀、盾才能配副手）'); return; }
+    if (!((sl === 'shield' || sl === 'weapon') && dualOn11(st))) { yield* _ep.call(this, sl); if (dualFix11(st)) { clampHP(); yield* eqSay13('副手的武器跟主手不同種，卸下了。'); } return; }
+    if (sl === 'shield' && clsV7(st.cls) === 'otherworlder') { Sound.sfx('bump'); yield* eqSay13('異界勇者不能使用副手。'); return; }
+    if (sl === 'shield' && !shieldOk(st)) { Sound.sfx('bump'); yield* eqSay13('雙手武器不能用副手。\n（劍、斧、短刀、盾才能配副手）'); return; }
     const mode = () => dualMode11(st) || (typeof shieldMode13 === 'function' ? shieldMode13(st) : null), m0 = mode(), k0 = mainKind11(st); yield* equipPick11(sl, sl === 'weapon' ? mainOk11 : offOk11);
-    if (typeof shieldFix === 'function' && shieldFix(st)) { clampHP(); yield* say('雙手武器不能配副手，副手卸下了。'); } if (dualFix11(st)) { clampHP(); yield* say('副手的武器跟主手不同種，卸下了。'); }
-    const m = mode(); if (m && m !== m0) yield* say('現在是「' + m + '」！' + (trLeft11(st) > 0 ? '\n（選單→技能→武器技能樹 可以學' + m + '的招式）' : ''));
+    if (typeof shieldFix === 'function' && shieldFix(st)) { clampHP(); yield* eqSay13('雙手武器不能配副手，副手卸下了。'); } if (dualFix11(st)) { clampHP(); yield* eqSay13('副手的武器跟主手不同種，卸下了。'); }
+    const m = mode(); if (m && m !== m0) yield* eqSay13('現在是「' + m + '」！' + (trLeft11(st) > 0 ? '\n（選單→技能→武器技能樹 可以學' + m + '的招式）' : ''));
     else { const k1 = mainKind11(st); if (sl === 'weapon' && k0 && k1 && k1 !== k0 && kindPts13(k0, st) > 0 && !kindPts13(k1, st)) // v12.61: switched to a tree with nothing learned
-      yield* say('換成「' + k1 + '」了。' + k0 + '的招式，要拿' + k0 + '才能用。\n' + (trLeft11(st) > 0 ? '（選單→技能樹 可以學' + k1 + '的招式）' : '（技能樹的「重置」能把點數收回來，第一次免費）')); } }; }
+      yield* eqSay13('換成「' + k1 + '」了。' + k0 + '的招式，要拿' + k0 + '才能用。\n' + (trLeft11(st) > 0 ? '（選單→技能樹 可以學' + k1 + '的招式）' : '（技能樹的「重置」能把點數收回來，第一次免費）')); } }; }
 { const _so = startOverworld; startOverworld = function (...a) { if (Game.st) dualFix11(Game.st); return _so.apply(this, a); }; }
 
 /* ---------- 雙持：戰鬥中的樣子（現有的武器圖和盾牌圖） ----------
@@ -549,5 +549,5 @@ if (typeof BATTLE_HELP !== 'undefined') for (const b of BATTLE_HELP) {
 { const _el = effectLines9; effectLines9 = function () { const L = _el(), i = L.findIndex(l => /^【武器被動】/.test(l[0])); if (i >= 0) L.splice(i);
     const H = t => L.push([t, UIC.accent, 10, 0]), P = t => { for (const l of Font.wrap(t, 150, 10)) L.push([l, UIC.text, 10, 6]); };
     H('【賦予】（每一格；點數 × 裝備階級）'); for (const k in EN11) { const E = EN11[k]; P(E[0] + '：+' + E[1] + E[2] + '，潛力 ' + E[3] + '・' + E[4] + ' ' + E[5] + '（上限 +' + E[1] * E[6] + E[2] + '）'); } P('屬性（只有武器）：火・水・雷・草選一種，潛力 ' + ELPOT11 + '・魔素 ' + ELPTS11);
-    H('【武器種特性】（技能樹裡學）'); for (const k of TREE_KINDS11) if (typeof kindOn13 !== 'function' || kindOn13(k)) P(k + '：' + TREE11[k].trait);
+    H('【武器種特性】（技能樹裡學）'); for (const k of TREE_KINDS11) if (!TREE11[k].common && TREE11[k].trait && (typeof kindOn13 !== 'function' || kindOn13(k))) P(k + '：' + TREE11[k].trait);
     return L; }; }

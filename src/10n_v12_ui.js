@@ -87,19 +87,20 @@ skillTreeScreen = function* () {
     return R; };
   const pend = id => { const e = BB.skillObj(st, id); return !!(e && id.startsWith('o_') && orbPending(e)); };
   const right = id => { const cd = DEF.skills[id].cooldown; return cd ? 'CD' + cd : ''; }; // v12.0.2: progress is the 練度 bar beside it
+  const tree13 = id => typeof treeOf11 === 'function' && !!treeOf11(id); // v12.66: tree skills have no 練度 bar → the MP and CD go there
   const scr = { draw(x) {
-    screenBG(x); headerBar(x, '技能編排');
+    screenBG(x); headerBar(x, '技能編排'); { const n = (st.slots || []).filter(Boolean).length; Font.drawR(x, '裝備中 ' + n + '／' + BB.SLOTS + '　＋＝還沒放', W - 6, 4, UIC.muted, UIC.textSh, 8); }
     const L = rows(), VIS = 9, i = Math.min(sel, Math.max(0, L.length - 1)), top = clamp(i - 4, 0, Math.max(0, L.length - VIS));
     drawWin(x, 4, 22, 168, VIS * 16 + 8, 'menu'); if (!L.length) Font.draw(x, '還沒有技能。', 12, 28, UIC.muted, UIC.textSh, 10);
     L.slice(top, top + VIS).forEach((R, k) => { const Y = 26 + k * 16; if (top + k === i) selBar(x, 6, Y - 1, 164, 15);
       if (R.sig) { Font.draw(x, '★' + DEF.skills[R.sig].name, 12, Y - 1, '#ffd860', UIC.textSh, 10); Font.drawR(x, BB.costLabel(st, R.sig), 166, Y, UIC.muted, UIC.textSh, 8); }
       else if (R.slot !== undefined) { Font.draw(x, String(R.slot + 1), 12, Y - 1, UIC.muted, UIC.textSh, 9);
-        if (R.id) { const e = BB.skillObj(st, R.id); Font.draw(x, BB.nameOf(st, R.id) + (pend(R.id) ? ' ！' : ''), 22, Y - 1, '#c8f0ff', UIC.textSh, 10); Font.drawR(x, right(R.id), 132, Y, UIC.muted, UIC.textSh, 8); if (typeof drawMastery12 === 'function') drawMastery12(x, 136, Y + 5, 30, masteryOf12(st, R.id)); }
+        if (R.id) { const e = BB.skillObj(st, R.id); Font.draw(x, BB.nameOf(st, R.id) + (pend(R.id) ? ' ！' : ''), 22, Y - 1, '#c8f0ff', UIC.textSh, 10); if (tree13(R.id)) Font.drawR(x, BB.costLabel(st, R.id), 166, Y, UIC.muted, UIC.textSh, 8); else Font.drawR(x, right(R.id), 132, Y, UIC.muted, UIC.textSh, 8); if (typeof drawMastery12 === 'function') drawMastery12(x, 136, Y + 5, 30, masteryOf12(st, R.id)); }
         else Font.draw(x, '（空的技能槽）', 22, Y - 1, UIC.dis, UIC.textSh, 10); }
-      else if (R.spare) { Font.draw(x, '＋' + BB.nameOf(st, R.spare) + (pend(R.spare) ? ' ！' : ''), 12, Y - 1, UIC.text, UIC.textSh, 10); Font.drawR(x, right(R.spare), 132, Y, UIC.muted, UIC.textSh, 8); if (typeof drawMastery12 === 'function') drawMastery12(x, 136, Y + 5, 30, masteryOf12(st, R.spare)); }
+      else if (R.spare) { Font.draw(x, '＋' + BB.nameOf(st, R.spare) + (pend(R.spare) ? ' ！' : ''), 12, Y - 1, UIC.text, UIC.textSh, 10); if (tree13(R.spare)) Font.drawR(x, BB.costLabel(st, R.spare), 166, Y, UIC.muted, UIC.textSh, 8); else Font.drawR(x, right(R.spare), 132, Y, UIC.muted, UIC.textSh, 8); if (typeof drawMastery12 === 'function') drawMastery12(x, 136, Y + 5, 30, masteryOf12(st, R.spare)); }
       else if (R.next) { Font.draw(x, '？' + (DEF.skills[R.next[0]] || {}).name, 12, Y - 1, UIC.dis, UIC.textSh, 10); Font.drawR(x, 'Lv' + R.next[1] + '學會', 166, Y, UIC.dis, UIC.textSh, 8); } });
     if (top > 0) x.drawImage(UPARROW, 86, 23); if (top + VIS < L.length) x.drawImage(DOWNARROW, 86, 22 + VIS * 16 + 3);
-    const Y0 = 22 + VIS * 16 + 12, R = L[i]; drawWin(x, 4, Y0, 168, 252 - Y0, 'menu'); let txt = '', fid = null;
+    const Y0 = 22 + VIS * 16 + 12, R = L[i]; if (scr.asking13) return; drawWin(x, 4, Y0, 168, 252 - Y0, 'menu'); let txt = '', fid = null; // v12.66: no description under the 更換／取下 question
     if (R && R.sig) { fid = R.sig; txt = BB.skillInfo(st, R.sig) + '\n（職業招式固定在第一格）'; }
     else if (R && R.slot !== undefined) { fid = R.id; txt = R.id ? BB.skillInfo(st, R.id) + (pend(R.id) ? '　按A可以進化！' : '') + '\nA：更換／取下' : '把技能放進這一格，戰鬥中就能使用（最多' + BB.SLOTS + '個）。技能來自武器和共通的技能樹，用技能點學。'; }
     else if (R && R.spare) { fid = R.spare; txt = BB.skillInfo(st, R.spare) + '\nA：放進技能槽'; }
@@ -118,7 +119,7 @@ skillTreeScreen = function* () {
       if (R && R.slot !== undefined) {
         const spare = BB.available(st).filter(id => !BB.slots(st).includes(id)), opts = [];
         if (R.id && pend(R.id)) opts.push('進化'); opts.push('更換'); if (R.id) opts.push('取下');
-        const r = yield* ask(R.id ? '「' + BB.nameOf(st, R.id) + '」' : '技能槽' + (R.slot + 1), opts.concat('返回')), op = opts[r];
+        scr.asking13 = true; let r; try { r = yield* ask(R.id ? '「' + BB.nameOf(st, R.id) + '」要怎麼做？' : '技能槽' + (R.slot + 1), opts.concat('返回')); } finally { scr.asking13 = false; } const op = opts[r];
         if (op === '進化') yield* full(orbEvolveFlow(BB.skillObj(st, R.id)));
         else if (op === '更換') { const id = yield* pickSkill('放進技能槽' + (R.slot + 1), spare); if (id) { if (R.id) BB.unslot(st, R.id); BB.setSlot(st, R.slot, id); Sound.sfx('select'); } }
         else if (op === '取下') { BB.unslot(st, R.id); Sound.sfx('cancel'); } }

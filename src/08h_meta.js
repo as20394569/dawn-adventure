@@ -19,9 +19,9 @@ function* titleScreen() {
   while (true) {
     const items = TITLES.map(T => { const on = titleOk(T.id), eq = st.title === T.id; return { t: (eq ? '★' : '') + (on ? T.n : '？？？'), col: on ? (eq ? UIC.warm : UIC.text) : UIC.dis }; });
     const info = { draw(x) { const T = TITLES[idx]; drawWin(x, 4, 172, 168, 80, 'menu'); if (!T) return; const on = titleOk(T.id); Font.draw(x, on ? T.n : '？？？', 12, 175, on ? UIC.warm : UIC.dis, UIC.textSh);
-      Font.draw(x, '條件：' + T.d, 12, 192, UIC.text, UIC.textSh, 10); Font.draw(x, '效果：' + Object.entries(T.st).map(([k, v]) => (STAT_NAMES[k] || { crit: '會心', elem: '屬性傷害' }[k] || k) + '+' + v + (['crit', 'elem'].includes(k) ? '%' : '')).join('、'), 12, 207, UIC.accent, UIC.textSh, 10);
+      Font.draw(x, '條件：' + T.d, 12, 192, UIC.text, UIC.textSh, 10); { const ef = '效果：' + Object.entries(T.st).map(([k, v]) => (STAT_NAMES[k] || { crit: '會心', elem: '屬性傷害' }[k] || k) + '+' + v + (['crit', 'elem'].includes(k) ? '%' : '')).join('、'); Font.draw(x, ef, 12, 207, UIC.accent, UIC.textSh, typeof fitSize === 'function' ? fitSize(ef, 154, 10, 7) : 9); }
       Font.draw(x, '裝備一個稱號就能得到效果。', 12, 226, UIC.muted, UIC.textSh, 9); } };
-    UI.push(info); const r = yield* choose(items, { x: 4, y: 4, w: 168, h: 164, index: idx, onMove: i => idx = i }); UI.remove(info);
+    UI.push(info); const r = yield* choose(items, { x: 4, y: 4, w: 168, visible: 9, title: '稱號', index: idx, onMove: i => idx = i }); UI.remove(info); // v12.66: 18 titles ran over the info panel → scrolls
     if (r < 0) return; idx = r; const T = TITLES[r];
     if (!titleOk(T.id)) { yield* say('還沒有取得這個稱號。'); continue; }
     st.title = st.title === T.id ? null : T.id; Sound.sfx('select');

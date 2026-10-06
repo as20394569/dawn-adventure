@@ -80,7 +80,7 @@ equipScreen = function* () {
       Font.draw(x, EQUIP_SLOTS[sl], 12, Y + 2, UIC.accent, UIC.textSh, 10); Font.draw(x, g ? GEAR[g.b].n + (g.e ? ' +' + g.e : '') : '（空）', 44, Y + 1, g ? gCol(g) : UIC.dis, UIC.textSh, 11); if (g && (GEAR[g.b].fx || []).length) Font.drawR(x, '★', 164, Y + 1, UIC.warm, UIC.textSh, 10);
       touchRegion(6, Y, 164, 18, () => { if (idx === i) tapKey('a'); else idx = i; }); });
     const Y0 = 22 + slots.length * 19 + 10, g = gearBy(st.equip[slots[idx]]); drawWin(x, 4, Y0, 168, H - Y0 - 4, 'menu');
-    if (!g) { Font.draw(x, '這個部位沒有裝備。按A選擇要裝上的東西。', 10, Y0 + 6, UIC.muted, UIC.textSh, typeof fitSize === 'function' ? fitSize('這個部位沒有裝備。按A選擇要裝上的東西。', 156, 10, 7) : 8); const s = heroStats(); [['物攻', s.atk], ['物防', s.def], ['魔攻', s.spa], ['魔防', s.spd], ['速度', s.spe], ['會心', s.crit.toFixed(1) + '%']].forEach(([a, b], i) => { const X = 10 + (i % 3) * 54, Y = Y0 + 30 + Math.floor(i / 3) * 16; Font.draw(x, a, X, Y, UIC.muted, UIC.textSh, 10); Font.drawR(x, String(b), X + 48, Y, UIC.text, UIC.textSh, 10); }); dollPreview(x, heroLookOf(st), 130, Y0 + 30, 1); return; }
+    if (!g) { Font.draw(x, '這個部位沒有裝備。按A選擇要裝上的東西。', 10, Y0 + 6, UIC.muted, UIC.textSh, typeof fitSize === 'function' ? fitSize('這個部位沒有裝備。按A選擇要裝上的東西。', 156, 10, 7) : 8); const s = heroStats(); [['物攻', s.atk], ['物防', s.def], ['魔攻', s.spa], ['魔防', s.spd], ['速度', s.spe], ['會心', s.crit.toFixed(1) + '%']].forEach(([a, b], i) => { const X = 10 + (i % 2) * 56, Y = Y0 + 26 + Math.floor(i / 2) * 15; /* v12.66: 2 columns, the doll on the right used to cover the third */ Font.draw(x, a, X, Y, UIC.muted, UIC.textSh, 10); Font.drawR(x, String(b), X + 48, Y, UIC.text, UIC.textSh, 10); }); dollPreview(x, heroLookOf(st), 130, Y0 + 30, 1); return; }
     Font.draw(x, gearName(g), 10, Y0 + 3, gCol(g), UIC.textSh); const L = gearInfoLines(g), end = drawInfoLines(x, L, 10, Y0 + 19, H - 20);
     if (end < L.length) Font.drawR(x, '▶ 查看全部', 166, H - 17, UIC.accent, UIC.textSh, 9);
     touchRegion(4, Y0, 168, H - Y0 - 4, () => tapKey('right'));
@@ -90,11 +90,13 @@ equipScreen = function* () {
     if (Input.repeat('up')) { idx = (idx + slots.length - 1) % slots.length; Sound.sfx('cursor'); } if (Input.repeat('down')) { idx = (idx + 1) % slots.length; Sound.sfx('cursor'); }
     if (Input.pressed('b')) { Input.consume('b'); Sound.sfx('cancel'); break; }
     if (Input.pressed('right')) { const g = gearBy(st.equip[slots[idx]]); if (g) { Sound.sfx('select'); UI.remove(scr); yield* gearInfoScreen(g); UI.push(scr); } }
-    if (Input.pressed('a')) { Input.consume('a'); Sound.sfx('select'); UI.remove(scr); yield* equipPick(slots[idx]); UI.push(scr); }
+    if (Input.pressed('a')) { Input.consume('a'); Sound.sfx('select'); UI.remove(scr); Game.eqQ13 = []; let Q = []; try { yield* equipPick(slots[idx]); } finally { UI.push(scr); Q = Game.eqQ13 || []; Game.eqQ13 = null; } for (const t of Q) yield* say(t); } // v12.66: messages from changing gear show over this screen, not over the map
     yield;
   }
   UI.remove(scr);
 };
+// a message from inside equipPick: shown after the equip screen is back (when there is one)
+function* eqSay13(t) { if (Game.eqQ13) Game.eqQ13.push(t); else yield* say(t); }
 function* equipPick(sl) {
   const st = Game.st, cur = gearBy(st.equip[sl]);
   const own = gearSort().filter(g => GEAR[g.b].slot === SLOT_OF(sl) && (!isEquipped(g) || g === cur));

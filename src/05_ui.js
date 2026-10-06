@@ -321,7 +321,7 @@ function* bagScreen(mode = 'field') { // returns item id used (battle) or null
     if (UI.stack.some(w => w instanceof TextBox)) { /* v12.0.1: a message box sits over this panel (its window is see-through), so the details step aside instead of showing through the text */ }
     else if (list[idx] && orbT) { const o = list[idx], h = orbHost(o); Font.draw(x, '【' + (isActiveOrb(o) ? '主動寶珠' : '被動寶珠') + '】', 10, 182, isActiveOrb(o) ? UIC.warm : '#8ad0ff', UIC.textSh, 10);
       Font.drawR(x, h ? '鑲在：' + GEAR[h.b].n : '到鐵匠舖鑲嵌', 166, 182, h ? UIC.accent : UIC.muted, UIC.textSh, 10); Font.wrap(orbInfo(o), 154, 10).slice(0, 4).forEach((l, i) => Font.draw(x, l, 10, 197 + i * 13, UIC.text, UIC.textSh, 10)); }
-    else if (list[idx]) { if (gear) drawGearDetail(x, list[idx], 182, 68); else { const k0 = list[idx], it = ITEMS[k0]; Font.draw(x, '【' + (it.use === 'enchant' ? '附魔寶石・到鐵匠舖使用' : it.cat) + '】', 10, 182, it.use === 'enchant' ? UIC.warm : ITEM_CAT_COL[it.cat] || UIC.muted, UIC.textSh, 10); if (it.mat) Font.drawR(x, '採集熟練度 Lv' + gatherLv(), 166, 182, UIC.accent, UIC.textSh, 10); const src = it.mat ? matSourceText(k0) : ''; drawFitText(x, it.d, 12, 197, 152, src ? 36 : 52, 11); /* v12.0.1: long descriptions shrink instead of being cut */ if (src) Font.draw(x, Font.wrap('取得：' + src, 156, 10)[0], 10, 234, UIC.warm, UIC.textSh, 10); } }
+    else if (list[idx]) { if (gear) drawGearDetail(x, list[idx], 182, 68); else { const k0 = list[idx], it = ITEMS[k0]; Font.draw(x, '【' + (it.use === 'enchant' ? '附魔寶石・到鐵匠舖使用' : it.cat) + '】', 10, 182, it.use === 'enchant' ? UIC.warm : ITEM_CAT_COL[it.cat] || UIC.muted, UIC.textSh, 10); if (it.mat && typeof GATHER_KINDS !== 'undefined' && Object.values(GATHER_KINDS).some(G => G && (G[1] === k0 || (G[3] || []).some(([m]) => m === k0)))) Font.drawR(x, '採集熟練度 Lv' + gatherLv(), 166, 182, UIC.accent, UIC.textSh, 10); const src = it.mat && !/來源：/.test(it.d || '') ? matSourceText(k0) : ''; /* v12.66: the description already lists 來源; 採集熟練度 only on things you can gather */ drawFitText(x, it.d, 12, 197, 152, src ? 36 : 52, 11); /* v12.0.1: long descriptions shrink instead of being cut */ if (src) Font.draw(x, Font.wrap('取得：' + src, 156, 10)[0], 10, 234, UIC.warm, UIC.textSh, 10); } }
   } };
   UI.push(scr); let result = null;
   while (true) {
@@ -404,14 +404,14 @@ function* equipScreen() {
 }
 /* ---------- Options ---------- */
 function* optionsScreen() {
-  let idx = 0; const labels = ['文字速度', '背景音樂', '音效', '自動存檔', '戰鬥美術', '怪物造型', '對話文字', '跑步', '戰鬥速度', '畫面', '戰鬥說明', '關閉'], N = labels.length, HELP = N - 2, TOG = ['music', 'sfx', 'autosave', 'hdArt', 'chibi', 'bigText', 'autoRun', 'bspd', 'zoom'], RH = N > 11 ? 17 : 18;
+  let idx = 0; const labels = ['文字速度', '背景音樂', '音效', '自動存檔', '戰鬥美術', '怪物造型', '對話文字', '跑步', '戰鬥速度', '畫面', '戰鬥說明', '關閉'], N = labels.length, HELP = N - 2, TOG = ['music', 'sfx', 'autosave', 'hdArt', 'chibi', 'bigText', 'autoRun', 'bspd', 'zoom'], RH = 16; // v12.66: rows 16 high so the help line fits under the list
   const val = i => i === 0 ? ['慢', '普通', '快'][Game.settings.text] : TOG[i - 1] === 'hdArt' ? (Game.settings.hdArt !== false ? '新版' : '舊版') : TOG[i - 1] === 'chibi' ? (Game.settings.chibi !== false ? 'Q版' : '寫實') : TOG[i - 1] === 'chibiHero' ? (Game.settings.chibiHero !== false ? 'Q版' : '原版') : TOG[i - 1] === 'bigText' ? (Game.settings.bigText ? '大' : '標準') : TOG[i - 1] === 'autoRun' ? (Game.settings.autoRun !== false ? '按住方向鍵' : '按住B鍵') : TOG[i - 1] === 'bspd' ? (Game.settings.bspd === 2 ? '×2' : '普通') : TOG[i - 1] === 'zoom' ? (Game.settings.zoom !== false ? '放大' : '標準') : i < N - 1 ? (Game.settings[TOG[i - 1]] ? '開' : '關') : '';
   const scr = { draw(x) {
     screenBG(x); headerBar(x, '設定');
-    drawWin(x, 4, 30, 168, N * RH + 12, 'menu');
-    labels.forEach((l, i) => { const Y = 36 + i * RH; if (i === idx) selBar(x, 6, Y - 1, 164, 17); Font.draw(x, l, 14, Y, UIC.text, UIC.textSh); if (i === HELP) Font.drawR(x, 'A 查看 ▶', 164, Y, UIC.accent, UIC.textSh); else if (i < N - 1) Font.drawR(x, '← ' + val(i) + ' →', 164, Y, UIC.accent, UIC.textSh); });
-    const Y2 = 30 + N * RH + 16; if (Y2 > 232) return; drawWin(x, 4, Y2, 168, Math.min(70, 252 - Y2), 'menu'); Font.draw(x, '← → 切換設定　B 鍵返回', 14, Y2 + 3, UIC.muted, UIC.textSh, 11);
-    Font.wrap('自動存檔：換地圖、打完戰鬥、每走100步時自動記錄，關閉網頁時也會記錄。', 150, 10).slice(0, 3).forEach((l, i) => Font.draw(x, l, 14, Y2 + 18 + i * 12, UIC.muted, UIC.textSh, 10));
+    drawWin(x, 4, 24, 168, N * RH + 10, 'menu');
+    labels.forEach((l, i) => { const Y = 29 + i * RH; if (i === idx) selBar(x, 6, Y - 1, 164, 16); Font.draw(x, l, 14, Y, UIC.text, UIC.textSh); if (i === HELP) Font.drawR(x, 'A 查看 ▶', 164, Y, UIC.accent, UIC.textSh); else if (i < N - 1) Font.drawR(x, '← ' + val(i) + ' →', 164, Y, UIC.accent, UIC.textSh); });
+    const Y2 = 24 + N * RH + 12; drawWin(x, 4, Y2, 168, 252 - Y2, 'menu'); const HT = ['對話文字出現的速度。', '背景音樂的開關。', '音效的開關。', '換地圖、打完戰鬥、每走 100 步時自動記錄。', '戰鬥中主角和魔物的畫風。', '魔物的樣子：Q版或寫實。', '對話框的字：標準或大。', '方向鍵按住一下子就自動跑起來。', '戰鬥動畫的速度（×2 加快一倍）。', '地圖畫面放大 1.5 倍，或顯示更大的範圍。', '戰鬥規則的說明（13 頁）。', '回到選單。'][idx] || '';
+    Font.draw(x, HT, 12, Y2 + 4, UIC.muted, UIC.textSh, typeof fitSize === 'function' ? fitSize(HT, 152, 10, 8) : 9);
   } };
   UI.push(scr);
   while (true) {
@@ -459,7 +459,7 @@ function* shopBuy(stock) {
       if (it.once && Game.st.bag[k]) { UI.remove(scr); yield* say(it.key ? '你已經有' + it.n + '了。' : it.n + '一次只能帶一個喔。'); UI.push(scr); continue; }
       if (maxQ < 1) { UI.remove(scr); yield* say('錢不夠喔。'); UI.push(scr); continue; }
       if (!isG && !it.once) {
-        const q = { draw(x) { drawWin(x, 80, TB_Y - 32, 94, 30, 'menu'); Font.draw(x, '×' + String(qty).padStart(2, '0'), 90, TB_Y - 25, UIC.text, UIC.textSh); Font.drawR(x, priceFor(k, qty) + 'G', 166, TB_Y - 25, UIC.warm, UIC.textSh); } };
+        const q = { draw(x) { drawWin(x, 90, 4, 82, 30, 'menu'); Font.draw(x, '×' + String(qty).padStart(2, '0'), 98, 11, UIC.text, UIC.textSh); Font.drawR(x, priceFor(k, qty) + 'G', 166, 11, UIC.warm, UIC.textSh); } }; // v12.66: up next to the money (it used to cover the last row of the list)
         UI.push(q); let ok = false;
         while (true) { if (Input.repeat('up')) { qty = qty >= maxQ ? 1 : qty + 1; Sound.sfx('cursor'); } if (Input.repeat('down')) { qty = qty <= 1 ? maxQ : qty - 1; Sound.sfx('cursor'); } if (Input.repeat('right')) { qty = Math.min(maxQ, qty + 10); Sound.sfx('cursor'); } if (Input.repeat('left')) { qty = Math.max(1, qty - 10); Sound.sfx('cursor'); } if (Input.pressed('a')) { Input.consume('a'); ok = true; break; } if (Input.pressed('b')) { Input.consume('b'); break; } yield; }
         UI.remove(q); if (!ok) continue;
@@ -481,7 +481,7 @@ function* shopSell() {
     const list = listNow(); drawWin(x, 4, 36, 168, VIS * 18 + 10, 'menu');
     if (!list.length) Font.draw(x, '沒有可以賣的東西', 14, 42, UIC.muted, UIC.textSh);
     const top = Math.max(0, Math.min(idx - 3, list.length - VIS));
-    list.slice(top, top + VIS).forEach((k, i) => { const Y = 40 + i * 18; if (top + i === idx) selBar(x, 6, Y - 1, 164, 17); Font.draw(x, nameOf(k), 14, Y, typeof k === 'string' ? UIC.text : gCol(k), UIC.textSh); Font.drawR(x, priceK(k) + 'G', 164, Y, UIC.warm, UIC.textSh); });
+    const R = typeof reserved11 === 'function' ? reserved11(st) : {}; list.slice(top, top + VIS).forEach((k, i) => { const Y = 40 + i * 18, q = typeof k === 'string' && R[k] > 0; if (top + i === idx) selBar(x, 6, Y - 1, 164, 17); Font.draw(x, nameOf(k), 14, Y, typeof k === 'string' ? UIC.text : gCol(k), UIC.textSh); if (q) Font.draw(x, '任務', 14 + Font.width(nameOf(k)) + 3, Y + 2, UIC.bad, UIC.textSh, 8); Font.drawR(x, priceK(k) + 'G' + (typeof k === 'string' && st.bag[k] > 1 ? '／個' : ''), 164, Y, UIC.warm, UIC.textSh); }); /* v12.66: quest materials are marked; the price is per piece */
     drawWin(x, 4, TB_Y + 1, W - 8, TB_H - 2, 'ow'); const k = list[idx];
     if (k && typeof k !== 'string') drawGearDetail(x, k, TB_Y + 3, 54); else { Font.draw(x, list.length ? '要賣哪一樣東西呢？' : '目前沒有可以賣的東西。', 12, TB_Y + 7, UIC.text, UIC.textSh); Font.draw(x, '（裝備中和金色的裝備不能賣）', 12, TB_Y + 23, UIC.muted, UIC.textSh); }
   } };
@@ -492,7 +492,7 @@ function* shopSell() {
     if (Input.pressed('b')) { Input.consume('b'); Sound.sfx('cancel'); break; }
     if (Input.pressed('a') && list[idx]) {
       Input.consume('a'); const k = list[idx]; UI.remove(scr); const nm = typeof k === 'string' ? ITEMS[k].n : GEAR[k.b].n, pr = priceK(k);
-      const yes = yield* yesNo(nm + '可以用' + pr + 'G收購，要賣嗎？');
+      const R = typeof reserved11 === 'function' ? reserved11(st) : {}, yes = yield* yesNo(nm + '可以用' + pr + 'G收購，要賣嗎？' + (typeof k === 'string' && R[k] > 0 && st.bag[k] <= R[k] ? '\n（這是任務要用的東西）' : ''));
       if (yes) { if (typeof k === 'string') st.bag[k]--; else st.gear = st.gear.filter(g => g !== k); st.money += pr; Sound.sfx('save'); yield* say('謝謝！收下了' + nm + '。'); }
       UI.push(scr);
     }
