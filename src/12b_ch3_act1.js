@@ -180,7 +180,7 @@ MAPS.chiefHouse14 = CH2_ROOM(['xxxxxxxxxx', 'xwxkkxxwxx', 'nnnnnnnnBn', 'nQQnnnn
   [{ id: 'chief14', x: 4, y: 2, dir: 'down', look: 'chief14', name: '珂拉村長' }, { id: 'chiefKid14', x: 6, y: 5, dir: 'left', look: 'kid', name: '村長的孫子' }], { name: '貝殼村村長家', music: 'lake', back: ['shellVillage14', 21, 5], type: '室內' });
 MAPS.mistcapeCoast14 = { name: '霧角海岸', music: 'lake', outdoor: 1, border: 'T', battleBg: 'beach13', popup: 1, theme: 'beach13', rows: CH3B_ROWS.mistcapeCoast14, type: '野外',
   edgeWarps: [{ dir: 'left', at: [3], to: ['shellVillage14', 25, 6, 'left'] }],
-  signs: { '9,34': '往南：沉月礁\n礁石之間的路，被不退的潮水淹著。' },
+  signs: { '9,34': '往南：沉月礁' },
   elites: [{ id: CRAB14, sp: CRAB14, lv: 54, x: 10, y: 30, dir: 'up', sight: 3 }],
   triggers: [{ id: 'reefPath14', x: 10, y: 35 }],
   npcs: [],
@@ -262,8 +262,8 @@ Object.assign(Events, {
       yield* sayAll(['珂拉：「巨鉗蟹王被打倒了？……真的嗎！」', '珂拉：「這下，往沉月礁的路就通了。」', '珂拉：「這是村子的一點心意。這顆星星的碎片，是很久以前掉在島上的流星。鐵匠說，拿來打造武器最合適。」']);
       st.money += g; st.bag.starShard = (st.bag.starShard || 0) + 1; Sound.jingle('item'); yield* itemGet('得到了謝禮 ' + g + ' G 和「星之碎片」！');
       yield* sayAll(['珂拉：「沉月礁平常是一片露出海面的礁石。可是現在潮水不退，礁石之間的路全都淹在水裡。」', '珂拉：「傳說礁上有一個『潮音貝』，敲響它，海水就會退下……可是沒有人知道它在哪裡。」', '莉婭：「我們去找找看！」']);
-      yield* say('（沉月礁：第三章的下一次更新開放）'); saveGame(); return; }
-    yield* say('珂拉：「沉月礁……就拜託你們了。」\n（沉月礁：第三章的下一次更新開放）'); },
+      yield* say('（往霧角海岸的最南端走，就是沉月礁。去找潮音貝吧）'); saveGame(); return; }
+    yield* say('珂拉：「沉月礁……就拜託你們了。」'); },
   *chiefKid14() { yield* say(ch3m() >= 5 ? '村長的孫子：「奶奶今天笑了！她說海很快就不會生氣了。」' : '村長的孫子：「奶奶每天晚上都坐在窗邊看海。……她說，海在生氣。」'); },
   *liaVillage14() { const n = ch3m(); yield* say(n <= 2 ? '莉婭：「村長家在最右邊那棟。先去問問看吧。」' : n === 3 ? '莉婭：「霧角海岸在村子的東邊。……巨鉗蟹王，聽起來好大一隻。」' : n === 4 ? '莉婭：「快回去告訴村長吧！」' : '莉婭：「沉月礁……潮音貝……我們一定找得到的！」'); },
   *shellFisher14() { yield* say(ch3m() >= 4 ? '漁夫：「巨鉗蟹王被打倒了？那些螃蟹終於不會再爬進村子裡了！」' : '漁夫：「潮水一直不退，漁船全被沖進村子裡了。……你看，我的船卡在屋頂上。」'); },
