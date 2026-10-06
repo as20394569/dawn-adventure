@@ -305,6 +305,8 @@ function dualMode11(st = Game.st) { const w = gearBy(st.equip && st.equip.weapon
   if (W.slot === 'shield') return '雙盾'; if (!o || GEAR[o.b].slot !== 'weapon') return null; const O = GEAR[o.b];
   if (W.kind === '短刀' && O.kind === '短刀') return '雙刀'; if (W.kind === '劍' && O.kind === '劍') return '雙劍'; return null; }
 const mainKind11 = (st = Game.st) => { const w = gearBy(st.equip && st.equip.weapon, st); return w && GEAR[w.b].slot === 'weapon' && TREE11[GEAR[w.b].kind] ? GEAR[w.b].kind : null; };
+// v12.61: points already spent in one weapon's tree (its trait, mastery and skills)
+const kindPts13 = (kind, st = Game.st) => { let n = 0; for (const [k, v] of Object.entries(tr11(st).lv)) if (v && (k.startsWith(kind + ':') || (SK_TREE11[k] && SK_TREE11[k][0] === kind))) n += v; return n; };
 const curKinds11 = (st = Game.st) => [mainKind11(st), dualMode11(st), typeof shieldMode13 === 'function' ? shieldMode13(st) : null].filter(Boolean);
 function nodeState11(kind, N, st = Game.st) { const lv = trLv11(N.key, st);
   if (TREE11[kind].dual && !dualOn11(st)) return { ok: false, why: '還不能學' };
@@ -433,6 +435,10 @@ function* equipPick11(sl, fit) {
     Font.draw(x, '裝上後的變化' + (m ? '（' + m + '）' : ''), 10, Y0 + 3, UIC.accent, UIC.textSh, 10);
     if (!d.length) Font.draw(x, '能力沒有變化', 12, Y0 + 17, UIC.muted, UIC.textSh, 10);
     d.slice(0, 8).forEach(([k, v], i) => { const X = 12 + (i % 2) * 62, Y = Y0 + 17 + Math.floor(i / 2) * 13; Font.draw(x, (k === 'mp' ? 'MP' : k === 'crit' ? '會心' : STAT_NAMES[k]), X, Y, UIC.muted, UIC.textSh, 10); Font.drawR(x, (v > 0 ? '+' : '') + v + (k === 'crit' ? '%' : ''), X + 56, Y, v > 0 ? UIC.good : UIC.bad, UIC.textSh, 10); });
+    // v12.61: a weapon of another kind swaps the skill tree — say so before the player equips it
+    if (sl === 'weapon' && o.g && GEAR[o.g.b].slot === 'weapon') { const k0 = mainKind11(st), k1 = GEAR[o.g.b].kind;
+      if (TREE11[k1] && k0 && k1 !== k0) { const p0 = kindPts13(k0, st), p1 = kindPts13(k1, st); Font.draw(x, '技能樹換成「' + k1 + '」（' + p1 + '點）', 10, Y0 + 75, p1 ? UIC.accent : UIC.bad, UIC.textSh, 10);
+        if (p0) Font.draw(x, k0 + '的招式要拿' + k0 + '才能用', 10, Y0 + 89, UIC.muted, UIC.textSh, 10); } }
     if (o.g) Font.drawR(x, '→ 詳情', 166, H - 17, UIC.accent, UIC.textSh, 9);
   } };
   UI.push(scr);
@@ -447,9 +453,11 @@ function* equipPick11(sl, fit) {
     if (!((sl === 'shield' || sl === 'weapon') && dualOn11(st))) { yield* _ep.call(this, sl); if (dualFix11(st)) { clampHP(); yield* say('副手的武器跟主手不同種，卸下了。'); } return; }
     if (sl === 'shield' && clsV7(st.cls) === 'otherworlder') { Sound.sfx('bump'); yield* say('異界勇者不能使用副手。'); return; }
     if (sl === 'shield' && !shieldOk(st)) { Sound.sfx('bump'); yield* say('雙手武器不能用副手。\n（劍、斧、短刀、盾才能配副手）'); return; }
-    const mode = () => dualMode11(st) || (typeof shieldMode13 === 'function' ? shieldMode13(st) : null), m0 = mode(); yield* equipPick11(sl, sl === 'weapon' ? mainOk11 : offOk11);
+    const mode = () => dualMode11(st) || (typeof shieldMode13 === 'function' ? shieldMode13(st) : null), m0 = mode(), k0 = mainKind11(st); yield* equipPick11(sl, sl === 'weapon' ? mainOk11 : offOk11);
     if (typeof shieldFix === 'function' && shieldFix(st)) { clampHP(); yield* say('雙手武器不能配副手，副手卸下了。'); } if (dualFix11(st)) { clampHP(); yield* say('副手的武器跟主手不同種，卸下了。'); }
-    const m = mode(); if (m && m !== m0) yield* say('現在是「' + m + '」！' + (trLeft11(st) > 0 ? '\n（選單→技能→武器技能樹 可以學' + m + '的招式）' : '')); }; }
+    const m = mode(); if (m && m !== m0) yield* say('現在是「' + m + '」！' + (trLeft11(st) > 0 ? '\n（選單→技能→武器技能樹 可以學' + m + '的招式）' : ''));
+    else { const k1 = mainKind11(st); if (sl === 'weapon' && k0 && k1 && k1 !== k0 && kindPts13(k0, st) > 0 && !kindPts13(k1, st)) // v12.61: switched to a tree with nothing learned
+      yield* say('換成「' + k1 + '」了。' + k0 + '的招式，要拿' + k0 + '才能用。\n' + (trLeft11(st) > 0 ? '（選單→技能樹 可以學' + k1 + '的招式）' : '（技能樹的「重置」能把點數收回來，第一次免費）')); } }; }
 { const _so = startOverworld; startOverworld = function (...a) { if (Game.st) dualFix11(Game.st); return _so.apply(this, a); }; }
 
 /* ---------- 雙持：戰鬥中的樣子（現有的武器圖和盾牌圖） ----------
