@@ -81,7 +81,9 @@ function* tmapView13(start = 0) {
       if (n > 1 && Input.repeat('left')) { i = (i - 1 + n) % n; Sound.sfx('cursor'); }
       if (n > 1 && Input.repeat('right')) { i = (i + 1) % n; Sound.sfx('cursor'); } } }
   finally { UI.remove(box); } }
-{ const _bg = bagScreen; bagScreen = function* (mode, ...a) { const was = Game.inBag13; Game.inBag13 = mode !== 'battle'; try { return yield* _bg.call(this, mode, ...a); } finally { Game.inBag13 = was; } }; }
+// the treasure maps go to the top of 重要物品 (same bag object, keys re-ordered)
+const tmFirst13 = (st = Game.st) => { const b = st && st.bag; if (!b || !b.tmap13 || Object.keys(b)[0] === 'tmap13') return; const n = b.tmap13, rest = { ...b }; delete rest.tmap13; for (const k of Object.keys(b)) delete b[k]; b.tmap13 = n; Object.assign(b, rest); };
+{ const _bg = bagScreen; bagScreen = function* (mode, ...a) { const was = Game.inBag13; Game.inBag13 = mode !== 'battle'; tmFirst13(); try { return yield* _bg.call(this, mode, ...a); } finally { Game.inBag13 = was; } }; }
 { const _say = say; say = function* (text, o) { if (Game.inBag13 && text === ITEMS.tmap13.d && Game.st && tm13(Game.st).own.length) return yield* tmapView13(0); return yield* _say(text, o); }; }
 
 /* ---------- 挖：站在 × 的那一格按 A（面前有東西的話先照舊） ---------- */

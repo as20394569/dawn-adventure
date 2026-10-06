@@ -5098,7 +5098,7 @@ class Overworld {
       if (res !== 'win') return;
       if (i < n - 1) { Sound.sfx('exclaim'); this.p.excl = 24; yield* wait(24); yield* say('又有魔物衝過來了！（' + (i + 2) + '/' + n + '）'); }
     }
-    const g = 60 * n * Math.ceil(st.lv / 4), mats = Object.keys(ITEMS).filter(k => ITEMS[k].mat && k !== 'crystal'), mt = pick(mats);
+    const g = 60 * n * Math.ceil(st.lv / 4), mats = Object.keys(ITEMS).filter(k => ITEMS[k].mat && k !== 'crystal'), mt = packMat13(mats);
     st.money += g; st.bag[mt] = (st.bag[mt] || 0) + 2; st.packs = (st.packs || 0) + 1; Sound.jingle('item');
     yield* say('擊退了魔物群！額外獲得' + g + ' G和' + ITEMS[mt].n + '×2！');
   }
@@ -7889,7 +7889,7 @@ class TitleScene {
     x.drawImage(this.logo, Math.round(W / 2 - this.logo.width / 2), 6 + bob);
     Font.drawC(x, '～異世界冒險RPG～', W / 2, 52 + bob, '#ffe0a0', '#3a1428');
     if (this.stage === 'press' && Math.floor(this.t / 30) % 2 === 0) Font.drawC(x, '按 A 鍵開始', W / 2, 232, '#ffffff', '#1a1024');
-    Font.drawR(x, 'v12.46', W - 3, H - 13, '#b890b0', null);
+    Font.drawR(x, 'v12.47', W - 3, H - 13, '#b890b0', null);
   }
 }
 class IntroScene {
@@ -18137,7 +18137,7 @@ Overworld.prototype.roamFight12 = function* (e, theyCame) {
     if (i < n - 1) { Sound.sfx('exclaim'); this.p.excl = 24; yield* wait(24); yield* say('又有魔物衝過來了！（' + (i + 2) + '/' + n + '）'); }
   }
   if (res === 'win') { this.roamDrop12(e);
-    if (n > 1) { const g = 60 * n * Math.ceil(st.lv / 4), mats = Object.keys(ITEMS).filter(k => ITEMS[k].mat && k !== 'crystal'), mt = pick(mats); st.money += g; st.bag[mt] = (st.bag[mt] || 0) + 2; st.packs = (st.packs || 0) + 1; Sound.jingle('item'); yield* say('擊退了魔物群！額外獲得' + g + ' G和' + ITEMS[mt].n + '×2！'); } }
+    if (n > 1) { const g = 60 * n * Math.ceil(st.lv / 4), mats = Object.keys(ITEMS).filter(k => ITEMS[k].mat && k !== 'crystal'), mt = packMat13(mats); st.money += g; st.bag[mt] = (st.bag[mt] || 0) + 2; st.packs = (st.packs || 0) + 1; Sound.jingle('item'); yield* say('擊退了魔物群！額外獲得' + g + ' G和' + ITEMS[mt].n + '×2！'); } }
   else if (this.elites.includes(e)) { e.calmUntil = (st.steps || 0) + ROAM12.CALM; const [hx, hy] = e.home; if (this.roamFree12(hx, hy, e) && !(hx === p.x && hy === p.y)) { e.x = e.tx = hx; e.y = e.ty = hy; e.px = hx * 16; e.py = hy * 16; } e.moving = false; }
 };
 { const _dm = Overworld.prototype.drawMon; Overworld.prototype.drawMon = function (x, e, camX, camY) {
@@ -25258,7 +25258,8 @@ function* tmapView13(start = 0) {
       if (n > 1 && Input.repeat('left')) { i = (i - 1 + n) % n; Sound.sfx('cursor'); }
       if (n > 1 && Input.repeat('right')) { i = (i + 1) % n; Sound.sfx('cursor'); } } }
   finally { UI.remove(box); } }
-{ const _bg = bagScreen; bagScreen = function* (mode, ...a) { const was = Game.inBag13; Game.inBag13 = mode !== 'battle'; try { return yield* _bg.call(this, mode, ...a); } finally { Game.inBag13 = was; } }; }
+const tmFirst13 = (st = Game.st) => { const b = st && st.bag; if (!b || !b.tmap13 || Object.keys(b)[0] === 'tmap13') return; const n = b.tmap13, rest = { ...b }; delete rest.tmap13; for (const k of Object.keys(b)) delete b[k]; b.tmap13 = n; Object.assign(b, rest); };
+{ const _bg = bagScreen; bagScreen = function* (mode, ...a) { const was = Game.inBag13; Game.inBag13 = mode !== 'battle'; tmFirst13(); try { return yield* _bg.call(this, mode, ...a); } finally { Game.inBag13 = was; } }; }
 { const _say = say; say = function* (text, o) { if (Game.inBag13 && text === ITEMS.tmap13.d && Game.st && tm13(Game.st).own.length) return yield* tmapView13(0); return yield* _say(text, o); }; }
 function* tmapDig13(id) { const st = Game.st, T = tm13(st), S = TMAP13[id];
   Sound.sfx('rock'); yield* wait(14); Sound.sfx('rock'); yield* wait(14);
@@ -25346,5 +25347,10 @@ NPC_ROLES.任務.push('seaDad13', 'seaGran13', 'sailor13');
       yield* sayAll(['老爺爺：「……這個字，是小潮？」', '（老爺爺把信讀了好幾遍。）', '老爺爺：「五十年了……她還記得那棵樹啊。」', '老爺爺：「謝謝你，孩子。這是我年輕時存下來的，拿去吧。」']);
       yield* say('完成了委託「五十年前的信」！'); yield* giveReward(COMMISSIONS.c38.reward); })();
     return _nc(id, ow, ent); }; }
+function packMat13(mats) { const st = Game.st, M = st && MAPS[st.map], S = new Set();
+  for (const e of (M && M.encounters) || []) for (const r of e.table || []) { const sp = SPECIES[r[0]]; if (sp && sp.mat && ITEMS[sp.mat] && sp.mat !== 'crystal') S.add(sp.mat); }
+  if (S.size) return pick([...S]);
+  const F = (mats || []).filter(k => ITEMS[k] && ITEMS[k].cat !== '魚' && !/^pr_/.test(k) && MATCAT11[k]); return pick(F.length ? F : mats); }
+{ const _aa = advAnnounce; advAnnounce = function* (...a) { const st = Game.st; if (st && (st.ncv12 || st.cls === NC12)) { st.flags.advTold = 1; return; } return yield* _aa.apply(this, a); }; }
 </script>
 </body></html>

@@ -104,7 +104,7 @@ Overworld.prototype.roamFight12 = function* (e, theyCame) {
     if (i < n - 1) { Sound.sfx('exclaim'); this.p.excl = 24; yield* wait(24); yield* say('又有魔物衝過來了！（' + (i + 2) + '/' + n + '）'); }
   }
   if (res === 'win') { this.roamDrop12(e);
-    if (n > 1) { const g = 60 * n * Math.ceil(st.lv / 4), mats = Object.keys(ITEMS).filter(k => ITEMS[k].mat && k !== 'crystal'), mt = pick(mats); st.money += g; st.bag[mt] = (st.bag[mt] || 0) + 2; st.packs = (st.packs || 0) + 1; Sound.jingle('item'); yield* say('擊退了魔物群！額外獲得' + g + ' G和' + ITEMS[mt].n + '×2！'); } }
+    if (n > 1) { const g = 60 * n * Math.ceil(st.lv / 4), mats = Object.keys(ITEMS).filter(k => ITEMS[k].mat && k !== 'crystal'), mt = packMat13(mats); st.money += g; st.bag[mt] = (st.bag[mt] || 0) + 2; st.packs = (st.packs || 0) + 1; Sound.jingle('item'); yield* say('擊退了魔物群！額外獲得' + g + ' G和' + ITEMS[mt].n + '×2！'); } }
   else if (this.elites.includes(e)) { e.calmUntil = (st.steps || 0) + ROAM12.CALM; const [hx, hy] = e.home; if (this.roamFree12(hx, hy, e) && !(hx === p.x && hy === p.y)) { e.x = e.tx = hx; e.y = e.ty = hy; e.px = hx * 16; e.py = hy * 16; } e.moving = false; }
 };
 // drawn from the battle idle frame at half size, hopping when it moves
