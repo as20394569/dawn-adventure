@@ -7668,7 +7668,7 @@ class TitleScene {
     x.drawImage(this.logo, Math.round(W / 2 - this.logo.width / 2), 6 + bob);
     Font.drawC(x, '～異世界冒險RPG～', W / 2, 52 + bob, '#ffe0a0', '#3a1428');
     if (this.stage === 'press' && Math.floor(this.t / 30) % 2 === 0) Font.drawC(x, '按 A 鍵開始', W / 2, 232, '#ffffff', '#1a1024');
-    Font.drawR(x, 'v12.63', W - 3, H - 13, '#b890b0', null);
+    Font.drawR(x, 'v12.64', W - 3, H - 13, '#b890b0', null);
   }
 }
 class IntroScene {
@@ -12374,7 +12374,7 @@ Ch2EndingScene.prototype.draw = function (x) {
   const lines = [['曙光冒險', 'big'], ['終幕「曙光之鐘」', 'sub'], [''], ['五十年來停止的鐘，'], ['再一次響起。'], [''], ['影將莫爾德'], ['消失在北境的黑暗裡，'], ['但他留下了一句話——'], ['「魔王大人'], ['很快就會醒來。」'], [''],
     ['萌芽鎮的風車，'], ['今天也在轉。'], ...(f.noraBread ? [['諾拉的麵包店'], ['在王都開張了。']] : [['諾拉說，下次'], ['要去王都賣麵粉。']]), ...(f.grenTrust ? [['格倫當上了'], ['關道驛站的站長。']] : [['楓紅關道的驛站'], ['重新蓋好了。']]), ['莉婭成為了'], ['正式的騎士。'], [''],
     ['剩下的三將——'], ['東方的海、'], ['南方的沙漠、'], ['天空之上。'], ['還有，'], ['異界之門的另一邊。'], ...(f.homeChoice === 0 ? [['門的另一邊，'], ['有人在等你回家。']] : f.homeChoice === 1 ? [['不過，你已經'], ['找到了新的家。']] : []), [''], ['曙光的旅程，'], ['還沒有結束。'], [''], ['— 冒險記錄 —', 'sub'], ['旅人　' + st.name], ['等級　Lv' + st.lv], ['世界的記載　' + loreCount(st) + '／' + loreTotal()],
-    ['遊玩時間　' + Math.floor(mins / 60) + '小時' + (mins % 60) + '分'], [''], ['第一季　完', 'sub'], ['第三章　製作中', 'sub'], ['（之後的冒險會繼續更新）', 'sub'], [''], ['按A繼續冒險', 'hint']];
+    ['遊玩時間　' + Math.floor(mins / 60) + '小時' + (mins % 60) + '分'], [''], ['第一季　完', 'sub'], ['第三章 序章「東方的海」', 'sub'], ['（莉婭回來了。到王城見國王吧）', 'sub'], [''], ['按A繼續冒險', 'hint']];
   let yy = H + 10 - this.y; this.maxY = H + 10 + lines.length * 18 - 230;
   for (const [s, k] of lines) {
     if (k === 'big') { if (!this.logo) this.logo = makeLogo(s, 2); x.drawImage(this.logo, Math.round(W / 2 - this.logo.width / 2), yy - 8); yy += 36; continue; }
@@ -25583,3 +25583,7 @@ const GUIDE13 = [
     const f = st.flags || {}; if (!f.innTip13 && (f.ch2 || 0) >= 1 && st.map !== m0 && ['home', 'inn'].includes(st.map) && typeof mapDist === 'function' && mapDist(m0, 'town') >= 2) {
       f.innTip13 = 1; yield* say('（在各地的旅館或營地休息過，倒下時就會在那裡醒來，不用從萌芽鎮走回去。）'); }
     return r; }; }
+{ const _eq = extraQuests; extraQuests = function (st, L) { _eq(st, L); const f = st.flags || {};
+    if ((f.ch2 || 0) >= 10 && !(typeof ch3 === 'function' ? ch3(st) : f.ch3)) L.push({ n: '第三章 序章「東方的海」', t: '【推薦Lv44〜】國王阿爾德里克有事找你。到王城謁見國王吧。（莉婭從東方回來了）', done: false, rw: '潮鳴貝殼・20000 G', cat: '主線' }); }; }
+QUEST_CATS['第三章 序章「東方的海」'] = '主線'; // the list used to file it under 支線 (05_ui sets q.cat from QUEST_CATS)
+{ const _ok = coachOk9; coachOk9 = function (from, to, st = Game.st) { if (to === 'harbor13' && from !== to && COACH9[from] && typeof ch3 === 'function' && ch3(st) >= 1) return true; return _ok(from, to, st); }; }

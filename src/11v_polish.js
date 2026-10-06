@@ -42,3 +42,13 @@ const GUIDE13 = [
     const f = st.flags || {}; if (!f.innTip13 && (f.ch2 || 0) >= 1 && st.map !== m0 && ['home', 'inn'].includes(st.map) && typeof mapDist === 'function' && mapDist(m0, 'town') >= 2) {
       f.innTip13 = 1; yield* say('（在各地的旅館或營地休息過，倒下時就會在那裡醒來，不用從萌芽鎮走回去。）'); }
     return r; }; }
+
+/* 5. 破關後、第三章序章還沒開始時，任務清單多一條「到王城謁見國王」（v12.64）。
+      以前破關後主線顯示「完成」，片尾又寫「第三章 製作中」，不知道序章已經可以玩（要先去見國王）。 */
+{ const _eq = extraQuests; extraQuests = function (st, L) { _eq(st, L); const f = st.flags || {};
+    if ((f.ch2 || 0) >= 10 && !(typeof ch3 === 'function' ? ch3(st) : f.ch3)) L.push({ n: '第三章 序章「東方的海」', t: '【推薦Lv44〜】國王阿爾德里克有事找你。到王城謁見國王吧。（莉婭從東方回來了）', done: false, rw: '潮鳴貝殼・20000 G', cat: '主線' }); }; }
+QUEST_CATS['第三章 序章「東方的海」'] = '主線'; // the list used to file it under 支線 (05_ui sets q.cat from QUEST_CATS)
+
+/* 6. 第三章：還沒去過潮鳴港時，指引算不出「搭馬車去潮鳴港」的路（馬車只認去過的地方），「前往潮鳴港」沒有箭頭（v12.64）。
+      序章開始後（ch3 ≥ 1）任何一站的馬車都能去潮鳴港（跟 11e 的馬車選單一樣）。 */
+{ const _ok = coachOk9; coachOk9 = function (from, to, st = Game.st) { if (to === 'harbor13' && from !== to && COACH9[from] && typeof ch3 === 'function' && ch3(st) >= 1) return true; return _ok(from, to, st); }; }
