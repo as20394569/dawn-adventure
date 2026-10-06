@@ -7891,7 +7891,7 @@ class TitleScene {
     x.drawImage(this.logo, Math.round(W / 2 - this.logo.width / 2), 6 + bob);
     Font.drawC(x, '～異世界冒險RPG～', W / 2, 52 + bob, '#ffe0a0', '#3a1428');
     if (this.stage === 'press' && Math.floor(this.t / 30) % 2 === 0) Font.drawC(x, '按 A 鍵開始', W / 2, 232, '#ffffff', '#1a1024');
-    Font.drawR(x, 'v12.68', W - 3, H - 13, '#b890b0', null);
+    Font.drawR(x, 'v12.69', W - 3, H - 13, '#b890b0', null);
   }
 }
 class IntroScene {
@@ -25848,5 +25848,7 @@ Battle.prototype.ordLabel13 = function (v) { const nm = v.n || '?'; if (v.hero) 
   const c = [...base].find(q => !others.some(o => o.includes(q))) || [...base].find(q => !others.some(o => o[0] === q)) || base[0]; return c + suf; };
 { const _pn = Battle.prototype.popNum; Battle.prototype.popNum = function (v, s, c, tag, o = {}) { const n0 = this.pops.length; _pn.call(this, v, s, c, tag, o); const p = this.pops[this.pops.length - 1]; if (!p || this.pops.length === n0) return;
     const near = this.pops.filter(q => q !== p && q.t < 30 && Math.abs(q.x - p.x) < 22 && Math.abs(q.y - p.y) < 12).length; if (near) { p.y -= 12 * near; p.x += (near % 2 ? 9 : -9); } }; }
+{ const T = { hollowArmor: { def: 38, atk: 33 }, obsidianTurtle: { def: 42, hp: 92, atk: 44 }, volcanoHawk: { atk: 38 }, sentinel: { def: 46, spa: 22 }, voidHound: { spe: 46, atk: 28 } };
+  for (const k in T) { const P = MON_PANEL[k]; if (!P) { if (typeof bvErr === 'function') bvErr('tune13', k); continue; } Object.assign(P, T[k]); } }
 </script>
 </body></html>
