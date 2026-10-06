@@ -62,7 +62,7 @@ function* palScreen13() { const st = Game.st, P = pal13(st), K = Object.keys(P.g
 TITLES.push({ id: 'pal13friend', n: '魔物之友', d: '有 20 種小夥伴。', st: { hp: 10, spd: 1 }, ok: st => palKinds13(st) >= 20 });
 ACHIEVEMENTS.push({ id: 'pal13_1', n: '第一個小夥伴', d: '讓魔物成為小夥伴。', cat: '探索', ok: st => palKinds13(st) >= 1 },
   { id: 'pal13_10', n: '熱鬧的旅途', d: '有 10 種小夥伴。', cat: '探索', ok: st => palKinds13(st) >= 10 });
-GROW12.push(['小夥伴', '在野外打贏時，偶爾會有魔物想跟著你。答應的話，牠會在地圖上跟在你身後（不參加戰鬥）。背包「重要」裡的夥伴名冊可以換要帶哪一隻。']);
+GROW12.push(['小夥伴', '在野外打贏時，偶爾會有魔物想跟著你。答應的話，牠會在地圖上跟在你身後（不參加戰鬥），偶爾還會叼來藥水。背包「重要」裡的夥伴名冊可以換要帶哪一隻。']);
 // the pal sniffs out treasure: within 2 tiles of an × on a map you carry, a "!" pops over its head (and once, a line)
 Overworld.prototype.palSniff13 = function () { const st = this.st, p = this.p, T = st && st.tm13; if (!T || !T.own.length || !this.pal) return false;
   return T.own.some(k => { const S = TMAP13[k]; return S.m === this.map.id && Math.max(Math.abs(S.x - p.x), Math.abs(S.y - p.y)) <= 2; }); };
@@ -70,4 +70,10 @@ Overworld.prototype.palSniff13 = function () { const st = this.st, p = this.p, T
     if (q && this.palSniff13() && Math.floor(this.t / 20) % 3 !== 2) { const im = palImg13(q.sp), h = im ? im.c.height : 16; x.drawImage(EXCLAIM, Math.round(q.px) - camX + 5, Math.round(q.py) - camY + 15 - h - 12); } }; }
 { const _u = Overworld.prototype.update; Overworld.prototype.update = function (...a) { const r = _u.apply(this, a), st = this.st;
     if (st && !this.script && !UI.stack.length && this.pal && !st.flags.palSniff13 && this.palSniff13()) { st.flags.palSniff13 = 1; const n = (SPECIES[this.pal.sp] || {}).n || '小夥伴'; this.run(say('（' + n + '好像聞到了什麼……\n藏寶圖的 × 就在附近！）')); }
+    return r; }; }
+// the pal sometimes brings something back after a won fight (5%): a potion early on, better things later
+{ const _bs = Overworld.prototype.battleScript; Overworld.prototype.battleScript = function* (cfg, ...a) { const r = yield* _bs.call(this, cfg, ...a), st = Game.st, P = st && st.pal13;
+    if (r === 'win' && P && P.on && SPECIES[P.on] && cfg && cfg.kind === 'wild' && Math.random() < 0.05 && !(typeof ARENA_ON13 !== 'undefined' && ARENA_ON13)) {
+      const lv = st.lv || 1, pool = lv < 15 ? ['potion', 'potion', 'superPotion', 'ether'] : lv < 30 ? ['superPotion', 'ether', 'megaPotion', 'hiEther'] : ['megaPotion', 'hiEther', 'elixir', 'megaEther'];
+      const k = pool[Math.floor(Math.random() * pool.length)]; if (ITEMS[k]) { st.bag[k] = (st.bag[k] || 0) + 1; Sound.sfx('item'); yield* say('（' + SPECIES[P.on].n + '叼來了一個' + ITEMS[k].n + '！）'); } }
     return r; }; }

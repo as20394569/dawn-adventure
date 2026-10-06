@@ -37,3 +37,15 @@ Object.assign(Events, {
 });
 (NPC_ROLES.事件 || NPC_ROLES.情報).push('warpDoor13'); if (typeof NPC_WHERE !== 'undefined') NPC_WHERE.warpDoor13 = '落日峽谷・北邊';
 ACHIEVEMENTS.push({ id: 'warp13', n: '轉移陣的盡頭', d: '在古代轉移陣找到轉移石墜飾。', cat: '探索', ok: st => !!st.flags.wr13a });
+
+/* ---------- 街頭詩人米諾的傳聞：還沒找到的隱藏迷宮，一次唱一個 ---------- */
+const RUMOR13 = [
+  ['sluice13', 1, '♪ 碧溪谷的北邊～有扇老舊的水門～　兩顆大石頭～壓住兩塊石板～', '……聽說推對了，水門就會打開喔。'],
+  ['wr13a', 10, '♪ 落日峽谷的岩壁上～紫色的光一閃一閃～　踩上去～就到了別的房間～', '……那是古代的轉移陣。迷路了也沒關係，每一個都能走回來。'],
+  ['moonKing13', 18, '♪ 銀月湖的北邊～滿月的石門～　只在夜裡打開～', '……四座石燈，要照月亮的一生點亮。這是吟遊詩人之間的秘密。'],
+  ['mirror13', 26, '♪ 霜語雪原的北邊～冰做的洞窟～　一滑就停不下來～', '……聽說最深處有一尊會映出影子的魔像。'],
+];
+{ const _cb = Events.capBard; Events.capBard = function* (...a) { const st = Game.st, f = st.flags;
+    const R = RUMOR13.find(([fl, lv]) => !f[fl] && (st.lv || 1) >= lv && !(st.rumor13 || {})[fl]);
+    if (!R) return yield* _cb.apply(this, a);
+    (st.rumor13 || (st.rumor13 = {}))[R[0]] = 1; yield* sayAll(['街頭詩人：「冒險者？要不要聽一首新歌？」', R[2], R[3]]); }; }
