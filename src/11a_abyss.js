@@ -239,6 +239,6 @@ TITLES.push({ id: 'aby13walker', n: '深淵行者', d: '在裂界深淵到達第
   { id: 'aby13lord', n: '裂界踏破者', d: '打倒裂界之主。', st: { atk: 3, spa: 3, def: 3, spd: 3 }, ok: st => !!st.flags.aby13Lord });
 { const _eq = extraQuests; extraQuests = function (st, L) { _eq(st, L); if (!abyOpen(st)) return; const S = abySt(st);
     L.push({ n: '裂界深淵', t: st.flags.aby13Lord ? '完成：打倒了第 30 層的裂界之主。（最高紀錄 ' + (S.best || 0) + '層，之後也能繼續挑戰）' : st.flags.aby13Seen ? '往裂界深淵的最深處前進。最高紀錄：' + (S.best || 0) + '層（檢查點 ' + (S.cp || 0) + '層）。' : '曙光鐘響起之後，古岩遺跡的異界之門好像醒過來了……',
-      done: !!st.flags.aby13Lord, rw: '裂界碎片・星之碎片・星塵 → 裂界看守人的飾品', cat: '破關後' }); }; }
+      done: !!st.flags.aby13Lord, rw: '裂界碎片・星之碎片・星塵 → 裂界看守人的飾品', cat: '支線' }); }; }
 if (typeof BATTLE2_MAPS !== 'undefined') BATTLE2_MAPS.add(ABY13.map); if (typeof FINAL_SONG !== 'undefined') FINAL_SONG[ABY_LORD13] = 'final';
 if (typeof EXPLORE !== 'undefined') EXPLORE[ABY13.map] = EXPLORE[ABY13.map] || '裂界深淵';
