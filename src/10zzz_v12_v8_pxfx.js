@@ -1,8 +1,8 @@
 /* ===================== v12.33 像素特效重做（玩家 2026-10-06：「短刀的攻擊技能都不行」「長槍完全不行」、透勁・裂地神掌第二次還是不行、法杖改元素、單手盾新樹） =====================
    問題是「不像那種武器」「形狀粗糙，跟像素畫風不搭」→ 全部用 10zzz_v12_v7 的像素工具重畫（每一格對齊像素，不用平滑的向量線）：
-   · 短刀（v12.33b 玩家：「短刀盡量斬跟刺為主」）：不畫刀，只有刀光（月牙）和刺痕（尖的光）；毒・麻痺用刀光顏色和一點點小圖案。
+   · 短刀（v12.34 玩家：「短刀全部重製 以快速斬擊為主」，改名＋改特效）：不畫刀，每招都是快速的月牙刀光；毒・麻痺用刀光顏色和一點點小圖案。
    · 長槍（v12.33b 玩家：「長槍希望不要有實體」）：不畫槍，突刺是一道又長又尖的光；穿甲＝光從背後透出去、噴出護甲碎片。
-   · 拳套：透勁＝像素拳頭打在護甲上，護甲沒碎、震波從背後穿出去；裂地神掌（v12.33b 第 3 次）＝三層金色掌勁波正面衝進對手，接著對手腳下裂開、碎石噴起（不畫手）。
+   · 拳套（v12.34 改名改特效）：震山擊（原透勁）＝整個人肩撞上去、震波從背後穿出去；沖天拳（原裂地神掌）＝上勾拳把對手打上半空、金光往上衝。
    · 法杖：每招有固定元素——火球・冰錐・落雷・炎浪・藤鞭・雷暴，元素屏障・元素增幅用四色元素寶石。
    · 單手盾：像素盾牌撞過去、立在面前、格擋反擊的金光。
    每招的註解寫它照技能文字畫了什麼。 */
@@ -25,68 +25,79 @@ const cSlash13 = (b, C, r, a0, a1, col, o = {}) => { const fl = o.fl || 1, F = o
 const xSlash13 = (b, P, side, col, o = {}) => { const r = o.r || 22, C = { x: P.x - side * r * 0.64, y: P.y + r * 0.55 }; return cSlash13(b, C, r, side > 0 ? -1.75 : -Math.PI + 1.75, side > 0 ? 0.17 : -Math.PI - 0.17, col, o); };
 // a slash through P along direction ang (a shallow crescent whose middle is P)
 const aSlash13 = (b, P, ang, col, o = {}) => { const r = o.r || 26, nx = -Math.sin(ang), ny = Math.cos(ang), C = { x: P.x - nx * r, y: P.y - ny * r }, th = Math.atan2(ny, nx), sp = o.span || 1.5; return cSlash13(b, C, r, th - sp / 2, th + sp / 2, col, o); };
-// 淬刃：兩段斬，每段 30% 中毒 → 兩道交叉的綠色刀光斬過身體，刀光甩出幾滴毒液
+// v12.34（玩家：「短刀全部重製 以快速斬擊為主」，改名＋改特效，數字不變）：每一招都是又快又短的月牙刀光（2 格就劃完），用顏色・刀數・位置分出每一招
+// a quick slash through P along direction ang
+const qSlash13 = (b, P, ang, col, o = {}) => aSlash13(b, P, ang, col, Object.assign({ r: 26, span: 1.5, w: 6, frames: 2, life: 12 }, o));
+const wisps13 = (b, P, col, n = 3) => { for (let i = 0; i < n; i++) { const y = P.y - 10 + i * 9 + rnd(-2, 2), x0 = P.x - 22 + rnd(-4, 4); PX13.line(b, { x: x0, y }, { x: x0 + 14 + rnd(0, 8), y: y - 3 }, [col[1]], 1, 9, { thin: 1, grow: 2, delay: i }); } };
+// 毒風斬：兩段快斬，每段 30% 中毒 → 綠色的風刃一刀斜劈、一刀反手，刀光旁帶著風痕，甩出兩三滴毒液
 redo13('t_dgVenom', 't11_dgVenom', { col: PXC.venom,
-  *f(S, U, T, u) { yield* this.lunge(u, 16, 2); Sound.sfx('slash'); xSlash13(this, T, 1, S.col); yield* wait(3); drip13(this, T, 3); spark13(this, T, S.col); yield* wait(10); },
-  *h(S, U, T) { Sound.sfx('slash'); xSlash13(this, T, -1, S.col); yield* wait(3); drip13(this, T, 3); bubbles13(this, T, 1); spark13(this, T, S.col, 10); yield* wait(12); } });
-// 迅刺：搶先突刺，自己速度 +1 → 殘影和速度線、一道又快又直的刺光（刺點閃光）；刺完腳邊捲起一圈小風（速度提升）
+  *f(S, U, T, u) { yield* this.lunge(u, 16, 2); Sound.sfx('slash'); xSlash13(this, T, 1, S.col, { r: 28, w: 6, frames: 2, life: 13 }); wisps13(this, T, S.col); yield* wait(2); drip13(this, T, 2); spark13(this, T, S.col); yield* wait(9); },
+  *h(S, U, T) { Sound.sfx('slash'); xSlash13(this, T, -1, S.col, { r: 28, w: 6, frames: 2, life: 13 }); wisps13(this, T, S.col); yield* wait(2); drip13(this, T, 2); bubbles13(this, T, 1); spark13(this, T, S.col, 10); yield* wait(11); } });
+// 迅風斬：搶先的一記快斬，自己速度 +1 → 殘影和速度線衝過去，一道又寬又平的白色快斬橫過對手；斬完腳邊捲起一圈風、兩個往上的小箭頭（速度提升）
 redo13('t_dgQuick', 't11_dgQuick', { col: BLADE13,
   *f(S, U, T, u) { Sound.sfx('wind'); for (let i = 1; i <= 3; i++) K13.ghost(this, 0, i * 5, '#bfe8ff', 6 + i * 2, 0.45 - i * 0.1); PX13.speed(this, U, T, PXC.wind, 6, 8);
-    yield* this.lunge(u, 26, 2); Sound.sfx('slash'); PX13.stab(this, T, S.col, { len: 36, w: 4, grow: 1, hold: 4, life: 12 }); yield* wait(2); spark13(this, T, S.col, 10); yield* wait(8);
-    const H = PX13.hero(this); Sound.sfx('wind'); PX13.arc(this, { x: H.x, y: H.y + 14 }, 18, Math.PI * 0.2, Math.PI * 2.1, PXC.wind, 2, 16, { fl: 0.35, grow: 10 }); yield* wait(12); } });
-// 蝕毒連刺：四段刺擊；對中毒的對手每段 ×1.4 → 四下快刺打在不同位置；對手中毒時刺光變綠、每一刺濺出綠色碎點，身上冒一兩個毒泡
-const rot13 = (b, T, i, ps) => { const off = [[-8, -6], [8, -2], [-4, 6], [4, 0]][i % 4], P = { x: T.x + off[0], y: T.y + off[1] }; Sound.sfx('slash'); PX13.stab(b, P, ps ? PXC.venom : BLADE13, { len: 26, w: 3, grow: 1, hold: 3, life: 10 });
+    yield* this.lunge(u, 26, 2); Sound.sfx('slash'); qSlash13(this, T, 0.1, S.col, { r: 52, span: 1.55, w: 7, life: 14 }); yield* wait(2); spark13(this, T, S.col, 10); yield* wait(8);
+    const H = PX13.hero(this); Sound.sfx('statUp'); PX13.arc(this, { x: H.x, y: H.y + 14 }, 18, Math.PI * 0.2, Math.PI * 2.1, PXC.wind, 2, 16, { fl: 0.35, grow: 10 }); for (const dx of [-16, 16]) PX13.spr(this, PXI.upCh('#4ee0a0'), { x: H.x + dx, y: H.y + 6 }, { vy: -0.6, life: 18 }); yield* wait(12); } });
+// 殘影步：2 回合迴避 +30%，下一次攻擊威力 +30% → 主角左右閃出兩道殘影、腳下一圈風，最後手上一閃（下一擊會更重）
+redo13('t_dgShade', 't11_dgShade', { col: PXC.wind,
+  *f(S) { const H = PX13.hero(this); Sound.sfx('wind'); for (const [dx, l] of [[-14, 14], [14, 14], [-26, 18], [26, 18]]) K13.ghost(this, dx, 0, '#9ae8ff', l, 0.45); PX13.arc(this, { x: H.x, y: H.y + 14 }, 22, Math.PI * 0.1, Math.PI * 2.2, S.col, 2, 18, { fl: 0.35, grow: 10 });
+    for (const s of [-1, 1]) PX13.line(this, { x: H.x + s * 10, y: H.y - 6 }, { x: H.x + s * 30, y: H.y - 6 }, [S.col[1]], 1, 10, { thin: 1, grow: 3 }); yield* wait(12); Sound.sfx('tick'); PX13.spr(this, PXI.glint, PX13.hand(this), { life: 14 }); yield* wait(12); } });
+// 蝕毒連斬：四段快斬；對中毒的對手每段 ×1.4 → 四道短的快斬左右交錯劃在不同位置；對手中毒時刀光變綠、每一斬濺出綠色碎點，身上冒一兩個毒泡
+const rot13 = (b, T, i, ps) => { const off = [[-8, -6], [8, -2], [-4, 6], [4, 0]][i % 4], P = { x: T.x + off[0], y: T.y + off[1] }; Sound.sfx('slash'); qSlash13(b, P, [0.5, 2.6, -0.4, 2.2][i % 4], ps ? PXC.venom : BLADE13, { r: 20, w: 5, life: 11 });
   spark13(b, P, ps ? PXC.venom : BLADE13, ps ? 10 : 7); if (ps) { PX13.bits(b, P, 4, ['#b8ff80', '#5ad048', '#2a8a2a'], 1.8, 0.1, 12, { s: 2 }); Sound.sfx('poison'); } };
 redo13('t_dgRot', 't11_dgRot', { col: PXC.venom,
-  *f(S, U, T, u, t) { const v = tgt13(this, t), ps = !!(v && v.st && v.st.psn); if (ps) { bubbles13(this, T, 2); K13.tint(v, '#40c040', 0.35, 34); } yield* this.lunge(u, 22, 2); rot13(this, T, 0, ps); yield* wait(5); },
-  *h(S, U, T, u, i) { const v = this.tgtV, ps = !!(v && v.st && v.st.psn); rot13(this, T, i, ps); if (i === 3) { yield* wait(2); PX13.hit(this, T, ps ? PXC.venom : BLADE13, 0); } yield* wait(i === 3 ? 12 : 5); } });
-// 索命刺：對 HP 一半以下 ×1.5，容易會心 → 主角化成影子消失、出現在對手面前，一道又深又長的紅色刺光斜斜扎進要害；對手 HP 一半以下時畫面暗下、再補一刺成十字、頭上一個小骷髏
+  *f(S, U, T, u, t) { const v = tgt13(this, t), ps = !!(v && v.st && v.st.psn); if (ps) { bubbles13(this, T, 2); K13.tint(v, '#40c040', 0.35, 34); } yield* this.lunge(u, 22, 2); rot13(this, T, 0, ps); yield* wait(4); },
+  *h(S, U, T, u, i) { const v = this.tgtV, ps = !!(v && v.st && v.st.psn); rot13(this, T, i, ps); if (i === 3) { yield* wait(2); PX13.hit(this, T, ps ? PXC.venom : BLADE13, 0); } yield* wait(i === 3 ? 12 : 4); } });
+// 斷命斬：對 HP 一半以下 ×1.5，容易會心 → 主角化成影子消失、在對手面前現身，一道又大又粗的紅色刀光斬過要害；對手 HP 一半以下時畫面暗下、反手再補一刀成交叉、頭上一個小骷髏
 redo13('t_dgReap', 't11_dgReap', { col: PXC.blood,
   *f(S, U, T, u, t) { const c = S.col, v = tgt13(this, t), low = K13.low(v, 0.5), H = PX13.hero(this);
-    Sound.sfx('wind'); vanish13(this, 30); if (low) K13.dark(this, 0.45, 44, '#1a0006'); yield* wait(6); K13.ghost(this, T.x - H.x, T.y - H.y + 30, '#401020', 18, 0.6); yield* wait(4);
-    Sound.sfx('crit'); PX13.stab(this, T, c, { from: { x: T.x - 40, y: T.y - 40 }, len: 44, w: 5, grow: 2, hold: 8, life: 18, over: 5 }); yield* wait(2);
-    PX13.burst(this, T, low ? 18 : 13, c, 13, { s: 3 }); PX13.bits(this, T, 8, ['#ff6070', '#e8263e', '#7a0a1a'], 2.4, 0.14, 16, { s: 2 }); this.shake = Math.max(this.shake, low ? 8 : 5);
-    if (low) { yield* wait(4); Sound.sfx('crit'); PX13.stab(this, T, c, { from: { x: T.x + 40, y: T.y - 40 }, len: 44, w: 5, grow: 2, hold: 8, life: 16, over: 5 }); PX13.spr(this, PXI.skull, { x: T.x, y: T.y - 34 }, { vy: -0.2, life: 30 }); K13.flash(this, '#ff1030', 0.3, 6); }
-    yield* wait(16); } });
-// 麻痺針：搶先，60% 麻痺 → 手一甩，三道細長的黃色刺光一閃扎進對手，扎中的地方冒兩個小電花
+    Sound.sfx('wind'); vanish13(this, 28); if (low) K13.dark(this, 0.45, 42, '#1a0006'); yield* wait(6); K13.ghost(this, T.x - H.x, T.y - H.y + 30, '#401020', 16, 0.6); yield* wait(3);
+    Sound.sfx('crit'); xSlash13(this, T, 1, c, { r: 34, w: 8, frames: 2, life: 16 }); yield* wait(2); PX13.burst(this, T, low ? 18 : 13, c, 13, { s: 3 }); PX13.bits(this, T, 8, ['#ff6070', '#e8263e', '#7a0a1a'], 2.4, 0.14, 16, { s: 2 }); this.shake = Math.max(this.shake, low ? 8 : 5);
+    if (low) { yield* wait(3); Sound.sfx('crit'); xSlash13(this, T, -1, c, { r: 34, w: 8, frames: 2, life: 16 }); PX13.spr(this, PXI.skull, { x: T.x, y: T.y - 34 }, { vy: -0.2, life: 30 }); K13.flash(this, '#ff1030', 0.3, 6); }
+    yield* wait(14); } });
+// 雷痺斬：搶先的帶電快斬，60% 麻痺 → 一閃衝過去，一道黃色的快斬，刀光上爆出幾個小電花
 redo13('t_dgNeedle', 't11_dgNeedle', { col: PXC.volt,
-  *f(S, U, T) { const A = PX13.hand(this); Sound.sfx('tick'); PX13.spr(this, PXI.glintS, A, { life: 6 }); yield* wait(3);
-    for (const [dx, dy] of [[-8, -4], [7, -7], [0, 5]]) { const P = { x: T.x + dx, y: T.y + dy }; PX13.stab(this, P, S.col, { from: A, len: 40, w: 2, grow: 2, hold: 3, life: 10 }); yield* wait(2); }
-    yield* wait(2); Sound.sfx('buzz'); zaps13(this, T, 2); PX13.burst(this, T, 9, S.col, 10, { n: 4 }); yield* wait(14); } });
-// 千刃毒華：五段亂斬，最後引爆對手身上的中毒・麻痺・灼傷 → 五道刀光從不同角度斬過；最後一刀時，對手身上的每一種異常各炸開一團那個顏色的光
+  *f(S, U, T, u) { PX13.speed(this, U, T, PXC.volt, 4, 7); yield* this.lunge(u, 22, 2); Sound.sfx('slash'); xSlash13(this, T, -1, S.col, { r: 26, w: 6, frames: 2, life: 13 }); yield* wait(2);
+    Sound.sfx('buzz'); for (const [dx, dy] of [[-12, -10], [0, 0], [12, 10]]) PX13.spr(this, PXI.zap, { x: T.x + dx, y: T.y + dy }, { life: 14 }); spark13(this, T, S.col, 10); yield* wait(14); } });
+// 千刃亂舞：五段亂斬，最後引爆對手身上的中毒・麻痺・灼傷 → 五道快斬從五個角度連劃；最後一刀時，對手身上的每一種異常各炸開一團那個顏色的光
 const BLOOM13 = ['#e8a0f0', '#ffffff', '#2a0626'], BLOOMST13 = { psn: PXC.venom, par: PXC.volt, brn: PXC.fire };
-const petal13 = (b, T, i, c) => { Sound.sfx('slash'); aSlash13(b, T, i * Math.PI / 5 + 0.3, c, { r: 30, frames: 3, life: 18 }); };
+const petal13 = (b, T, i, c) => { Sound.sfx('slash'); qSlash13(b, T, i * Math.PI / 5 + 0.3, c, { r: 30, span: 1.5, life: 16 }); };
 redo13('t_dgBloom', 't11_dgBloom', { col: BLOOM13,
-  *f(S, U, T, u) { yield* this.lunge(u, 22, 2); petal13(this, T, 0, S.col); yield* wait(4); },
-  *h(S, U, T, u, i) { petal13(this, T, i, S.col); if (i < 4) { yield* wait(4); return; }
+  *f(S, U, T, u) { yield* this.lunge(u, 22, 2); petal13(this, T, 0, S.col); yield* wait(3); },
+  *h(S, U, T, u, i) { petal13(this, T, i, S.col); if (i < 4) { yield* wait(3); return; }
     yield* wait(5); const v = this.tgtV, L = Object.keys(BLOOMST13).filter(k => v && v.st && v.st[k]);
     if (!L.length) { PX13.hit(this, T, S.col, 0); yield* wait(10); return; }
     for (const k of L) { const c = BLOOMST13[k]; Sound.sfx(k === 'par' ? 'buzz' : k === 'brn' ? 'fire' : 'poison'); PX13.burst(this, T, 20, c, 14, { s: 3 }); PX13.bits(this, T, 8, [c[1], c[0], c[0]], 2.4, 0.08, 14, { s: 2 }); this.shake = Math.max(this.shake, 6); yield* wait(9); }
     yield* wait(6); } });
-// 影縫：搶先，讓對手這回合不能行動 → 對手腳下的影子擴開，三道紫黑的刺光從上往下扎進影子，影子上留下兩個縫線般的叉，對手變暗、不能動
+// 縛影斬：搶先斬向對手的影子，讓牠這回合不能行動 → 對手腳下的影子擴開，一道紫色的快斬貼著地面橫劃過影子，影子上留下兩個縫線般的叉，對手變暗、不能動
 redo13('t_dgStitch', 't11_dgStitch', { col: SHADE13,
   *f(S, U, T, u, t) { const c = S.col, v = tgt13(this, t), foot = v && v.foot ? v.foot : T.y + 24; Sound.sfx('wind');
-    this.spawn({ k: 'p13shadow', x: T.x, y: foot - 1, r0: 8, rx: 30, fl: 0.28, grow: 10, c: '#2a1844', o: '#0a0418', life: 46 }); yield* wait(5);
-    for (const dx of [-16, 0, 16]) { Sound.sfx('slash'); PX13.thr(this, { x: T.x + dx * 1.4, y: foot - 40 }, { x: T.x + dx, y: foot }, c, 3, 14, { grow: 2, hold: 6, over: 0 }); yield* wait(2); }
-    yield* wait(4); Sound.sfx('statDown');
+    this.spawn({ k: 'p13shadow', x: T.x, y: foot - 1, r0: 8, rx: 30, fl: 0.28, grow: 8, c: '#2a1844', o: '#0a0418', life: 44 }); yield* this.lunge(u, 18, 2);
+    Sound.sfx('slash'); cSlash13(this, { x: T.x, y: foot - 8 }, 34, Math.PI * 0.95, Math.PI * 0.05, c, { fl: 0.32, w: 6, frames: 3, life: 18 }); yield* wait(4); Sound.sfx('statDown');
     for (let i = 0; i < 2; i++) { const x0 = T.x - 8 + i * 16; PX13.line(this, { x: x0 - 3, y: foot - 3 }, { x: x0 + 3, y: foot + 2 }, ['#d0b0ff'], 1, 30, { thin: 1, grow: 2, keep: 1 }); PX13.line(this, { x: x0 + 3, y: foot - 3 }, { x: x0 - 3, y: foot + 2 }, ['#d0b0ff'], 1, 30, { thin: 1, grow: 2, keep: 1, delay: 2 }); }
     K13.tint(v, '#2a1844', 0.6, 36); yield* wait(20); } });
-// 月影雙牙：2 段；對 HP 一半以下的對手每段必定會心 → 夜色暗下、角落一彎小新月，兩道月牙色的刀光一左一右斬過身體（雙牙）；HP 一半以下時每一段都閃出金色的會心星光
-const fang13px = (b, T, side, low) => { Sound.sfx('slash'); xSlash13(b, T, side, PXC.moon, { r: 28, w: 7, frames: 4, life: 18 });
-  if (low) { Sound.sfx('crit'); PX13.spr(b, PXI.glint, { x: T.x - side * 6, y: T.y - 8 }, { sc: 2, life: 14, delay: 3 }); PX13.burst(b, T, 16, PXC.gold, 12, { s: 3, delay: 3 }); } else PX13.burst(b, T, 10, PXC.moon, 10, { delay: 3 }); b.shake = Math.max(b.shake, low ? 6 : 3); };
+// 月影雙斬：2 段快斬；對 HP 一半以下的對手每段必定會心 → 夜色暗下、角落一彎小新月，兩道月牙色的刀光一左一右斬過身體；HP 一半以下時每一段都閃出金色的會心星光
+const fang13px = (b, T, side, low) => { Sound.sfx('slash'); xSlash13(b, T, side, PXC.moon, { r: 28, w: 7, frames: 2, life: 16 });
+  if (low) { Sound.sfx('crit'); PX13.spr(b, PXI.glint, { x: T.x - side * 6, y: T.y - 8 }, { sc: 2, life: 14, delay: 2 }); PX13.burst(b, T, 16, PXC.gold, 12, { s: 3, delay: 2 }); } else PX13.burst(b, T, 10, PXC.moon, 10, { delay: 2 }); b.shake = Math.max(b.shake, low ? 6 : 3); };
 redo13('t_zjMoonFang', 't11_zjMoonFang', { col: PXC.moon,
-  *f(S, U, T, u, t) { const v = tgt13(this, t), low = K13.low(v, 0.5); K13.dark(this, 0.5, 46, '#04061a'); Sound.sfx('charge'); PX13.spr(this, PXI.moon, { x: T.x + 30, y: T.y - 38 }, { life: 46 }); yield* wait(7);
-    yield* this.lunge(u, 22, 2); fang13px(this, T, 1, low); yield* wait(9); },
+  *f(S, U, T, u, t) { const v = tgt13(this, t), low = K13.low(v, 0.5); K13.dark(this, 0.5, 44, '#04061a'); Sound.sfx('charge'); PX13.spr(this, PXI.moon, { x: T.x + 30, y: T.y - 38 }, { life: 44 }); yield* wait(7);
+    yield* this.lunge(u, 22, 2); fang13px(this, T, 1, low); yield* wait(8); },
   *h(S, U, T) { fang13px(this, T, -1, K13.low(this.tgtV, 0.5)); yield* wait(14); } });
-// 特技・蛇吻：追擊，60% 中毒 → 上下兩道綠色刺光像毒牙一樣同時咬進去，滴下幾滴毒液
+// 特技・蛇牙斬：追擊，60% 中毒 → 上下兩道綠色的快斬像蛇的上下顎一樣合起來，滴下兩三滴毒液
 redoSp13('短刀', 0, { col: PXC.venom,
   *f(S, U, T, u) { yield* this.lunge(u, 16, 2); Sound.sfx('slash');
-    for (const s of [-1, 1]) PX13.thr(this, { x: T.x + s * 3, y: T.y + s * 26 }, { x: T.x + s * 3, y: T.y + s * 2 }, S.col, 3, 12, { grow: 2, hold: 5, over: 0 });
-    yield* wait(3); Sound.sfx('poison'); drip13(this, T, 4, 5); spark13(this, T, S.col, 10); yield* wait(12); } });
-// 特技・影襲：追擊，必定會心 → 主角化成影子消失、影子在對手面前現身，一道紫黑的刺光；金色的會心星光
+    cSlash13(this, { x: T.x, y: T.y - 16 }, 18, Math.PI * 0.1, Math.PI * 0.9, S.col, { w: 5, frames: 2, life: 12 }); cSlash13(this, { x: T.x, y: T.y + 16 }, 18, -Math.PI * 0.9, -Math.PI * 0.1, S.col, { w: 5, frames: 2, life: 12 });
+    yield* wait(3); Sound.sfx('poison'); drip13(this, T, 3, 5); spark13(this, T, S.col, 10); yield* wait(12); } });
+// 特技・瞬影斬：追擊，必定會心 → 主角化成影子消失、在對手面前現身，一道紫色快斬；金色的會心星光
 redoSp13('短刀', 1, { col: SHADE13,
-  *f(S, U, T, u) { const H = PX13.hero(this); Sound.sfx('wind'); vanish13(this, 24); yield* wait(4); K13.ghost(this, T.x - H.x, T.y - H.y + 30, '#2a1844', 16, 0.6); yield* wait(4); Sound.sfx('crit');
-    PX13.stab(this, T, S.col, { from: { x: T.x + 36, y: T.y - 36 }, len: 40, w: 5, grow: 2, hold: 6, life: 16, over: 5 }); yield* wait(2); PX13.spr(this, PXI.glint, T, { sc: 2, life: 14 }); PX13.burst(this, T, 16, PXC.gold, 12, { s: 3 }); this.shake = Math.max(this.shake, 6); yield* wait(14); } });
+  *f(S, U, T, u) { const H = PX13.hero(this); Sound.sfx('wind'); vanish13(this, 22); yield* wait(4); K13.ghost(this, T.x - H.x, T.y - H.y + 30, '#2a1844', 14, 0.6); yield* wait(3); Sound.sfx('crit');
+    xSlash13(this, T, -1, S.col, { r: 30, w: 7, frames: 2, life: 15 }); yield* wait(2); PX13.spr(this, PXI.glint, T, { sc: 2, life: 14 }); PX13.burst(this, T, 16, PXC.gold, 12, { s: 3 }); this.shake = Math.max(this.shake, 6); yield* wait(14); } });
+// 特技・疾風步：速度 +1 階，回 10% MP → 主角身邊捲起兩道風、殘影往後拉，兩個往上的綠色小箭頭（速度提升），藍色光點流回主角（回 MP）
+redoSp13('短刀', 2, { col: PXC.wind,
+  *f(S) { const H = PX13.hero(this), C = { x: H.x, y: H.y - 6 }; Sound.sfx('wind'); for (const s of [0, Math.PI]) PX13.arc(this, C, 22, s, s + Math.PI * 1.2, S.col, 3, 16, { fl: 0.55, grow: 8 });
+    K13.ghost(this, 0, 10, '#9ae8ff', 12, 0.45); K13.ghost(this, 0, 20, '#9ae8ff', 14, 0.3); yield* wait(8); Sound.sfx('statUp'); for (const dx of [-16, 16]) PX13.spr(this, PXI.upCh('#4ee0a0'), { x: H.x + dx, y: H.y + 6 }, { vy: -0.6, life: 18 });
+    for (let i = 0; i < 8; i++) { const P0 = { x: H.x + rnd(-26, 26), y: H.y - 30 + rnd(-10, 10) }, p = this.spawn({ k: 'p13px', x: P0.x, y: P0.y, s: 2, cols: ['#e0f0ff', '#58a8ff'], o: OSH13, life: 14, delay: i }); p.upd = q => { const k = clamp((q.t - i) / 10, 0, 1); q.x = lerp(P0.x, H.x, k); q.y = lerp(P0.y, H.y, k); }; }
+    yield* wait(18); } });
 
 // ---------- 長槍 ----------
 // v12.33b（玩家：「長槍希望不要有實體」）：不畫槍，全部是突刺的光——一道又長又尖的光刺出去、速度線、刺穿時光從背後透出
@@ -95,13 +106,13 @@ const SPEAR13 = ['#d8ecff', '#ffffff', '#0a1a3a'];
 const thrust13 = (b, P, o = {}) => { const A = o.from || PX13.hand(b), d = PX13.dir(A, P); PX13.thr(b, A, P, o.c || SPEAR13, o.w || 6, o.life || 13, { grow: o.grow || 3, hold: o.hold ?? 4, over: o.over ?? 4, cut: o.cut ?? 0.3, delay: o.delay || 0 });
   if (o.lines !== 0) PX13.speed(b, A, P, o.lines || PXC.wind, o.n || 4, 8); Sound.sfx(o.snd || 'slash'); return d; };
 const shards13 = (b, P, d, n = 6) => PX13.bits(b, P, n, ['#ffffff', '#b0bccc', '#7a8498'], 2, 0.14, 14, { s: 2, ang: d.ang, spread: 0.8 });
-// 普通攻擊：長槍一刺（一道突刺的光）、短刀一刺（一道短刺光，第二段也是）；顏色照武器屬性
+// 普通攻擊：長槍一刺（一道突刺的光）、短刀兩下快斬（月牙刀光）；顏色照武器屬性
 { const _wa = FX.wAtk; FX.wAtk = function* (U, T, u) { const k = this._thKind || '', c = WTH12[this._thT] || WTH12.steel, col = [c[0], c[1], OSH13];
     if (k === '長槍') { yield* this.lunge(u, 10, 2); thrust13(this, T, { c: col }); yield* wait(4); PX13.burst(this, T, 9, col, 9); yield* wait(6); return; }
-    if (k === '短刀') { yield* this.lunge(u, 12, 2); Sound.sfx('slash'); PX13.stab(this, T, col, { len: 28, w: 3, grow: 1, hold: 4, life: 11 }); yield* wait(2); spark13(this, T, col, 8); yield* wait(6); return; }
+    if (k === '短刀') { yield* this.lunge(u, 12, 2); Sound.sfx('slash'); xSlash13(this, T, 1, col, { r: 22, w: 5, frames: 2, life: 11 }); yield* wait(2); spark13(this, T, col, 8); yield* wait(6); return; }
     return yield* _wa.call(this, U, T, u); }; }
 { const _sg = segSwing; segSwing = function* (b, s, C, i, kind) { if (kind !== '短刀') return yield* _sg(b, s, C, i, kind); const c = WTH12[b._thT] || WTH12.steel, col = [c[0], c[1], OSH13]; yield* b.lunge(s, 6, 2); Sound.sfx('slash');
-    const P = { x: C.x + [6, -6, 0][i % 3], y: C.y + [-4, 4, 0][i % 3] }; PX13.stab(b, P, col, { len: 24, w: 3, grow: 1, hold: 3, life: 10 }); yield* wait(2); spark13(b, P, col, 7); yield* wait(4); }; }
+    const P = { x: C.x + [6, -6, 0][i % 3], y: C.y + [-4, 4, 0][i % 3] }; xSlash13(b, P, i % 2 ? 1 : -1, col, { r: 22, w: 5, frames: 2, life: 11 }); yield* wait(2); spark13(b, P, col, 7); yield* wait(4); }; }
 // 穿甲刺：無視 30% 物防 → 一道長長的突刺光刺穿對手、從背後透出去，刺中的地方噴出灰色的護甲碎片
 redo13('t_spPierce', 't11_spPierce', { col: SPEAR13,
   *f(S, U, T, u) { yield* this.lunge(u, 14, 2); const d = thrust13(this, T, { over: 26, hold: 6, life: 16 }); yield* wait(3);
@@ -200,38 +211,36 @@ redoSp13('長槍', 2, { col: PXC.gold,
     yield* wait(10); Sound.sfx('crit'); PX13.spr(this, PXI.glint, A, { sc: 2, life: 10 }); yield* wait(8); PX13.spr(this, PXI.glint, A, { sc: 3, life: 12 }); yield* wait(12); } });
 
 // ---------- 拳套 ----------
-// an armour plate (pixel sprite) in front of P (透勁: the force goes through it and it stays whole)
-const plate13 = (b, P, d, life = 16) => PX13.spr(b, PXI.plate, { x: P.x - d.ux * 6, y: P.y - d.uy * 6 }, { life, blink: 0 });
 const PALM13 = PXS(['..k.k.k.k..', '.kykykykyk.', '.kykykykyk.', '.kykykykyk.', 'kkyyyyyyyk.', 'kyyyyyyyyk.', '.kkyyyyyyk.', '..kyyyyyyk.', '..kyyyyyk..', '...kkkkk...'], { y: '#ffcc33' });
-// 透勁：無視 40% 物防，50% 退縮 → 像素拳頭打在對手面前的護甲上：護甲沒碎，震波卻穿過去，從對手背後一圈一圈擴出去（拳頭的殘影也從背後透出），對手被震得往後一晃
+// 震山擊（原本的透勁，v12.34 玩家：「透勁不好做就重製」→ 改名改特效，數字不變）：用肩膀整個人撞上去，無視 40% 物防，50% 退縮
+//   → 主角壓低身子、腳下揚塵，帶著一串殘影整個人撞上去；撞上的瞬間大爆光，三道弧形的震波穿過對手、從牠背後推出去（無視物防），對手被撞得往後滑再站回來
 redo13('t_fsThrough', 't11_fsThrough', { col: PXC.chi,
-  *f(S, U, T, u, t) { const c = S.col, v = tgt13(this, t), A = PX13.hand(this), d = PX13.dir(A, T), P0 = { x: T.x - d.ux * 12, y: T.y - d.uy * 12 }; plate13(this, T, d, 40);
-    yield* this.lunge(u, 24, 2); Sound.sfx('heavy'); const f = PX13.spr(this, PXI.fist, A, { sc: 2, life: 14 }); f.upd = q => { const k = clamp(q.t / 4, 0, 1); q.x = lerp(A.x, P0.x, k); q.y = lerp(A.y, P0.y, k); }; yield* wait(4);
-    PX13.burst(this, P0, 10, c, 9, { n: 4 }); this.shake = Math.max(this.shake, 5); yield* wait(3); Sound.sfx('quake');
-    for (let k = 0; k < 3; k++) { const P = { x: T.x + d.ux * (8 + k * 10), y: T.y + d.uy * (8 + k * 10) }; PX13.ring(this, P, 3 + k * 2, 12 + k * 6, c, 2, 12, { fl: 0.55, delay: k * 2 }); }
-    const g = PX13.spr(this, PXI.fist, T, { sc: 2, al: 0.55, life: 12, delay: 2 }); g.upd = q => { const k = clamp((q.t - 2) / 8, 0, 1); q.x = T.x + d.ux * 30 * k; q.y = T.y + d.uy * 30 * k; };
-    if (v && v.off) { const o = v.off; yield* tween(3, q => { o.x = d.ux * 5 * q; o.y = d.uy * 5 * q; }); yield* tween(6, q => { o.x = d.ux * 5 * (1 - q); o.y = d.uy * 5 * (1 - q); }); o.x = 0; o.y = 0; }
-    PX13.bits(this, { x: T.x + d.ux * 20, y: T.y + d.uy * 20 }, 8, [c[1], c[0], '#c07010'], 2, 0.06, 14, { ang: d.ang, spread: 0.6 }); yield* wait(10); } });
-// 裂地神掌：必定會心；氣滿時威力再 +50%（v12.33b 第 3 次重做，玩家選「掌勁直擊」：不畫手）→ 畫面暗下、金色的氣聚到掌心，
-//   主角一掌推出：三層金色的掌勁波一層疊一層正面衝進對手（越衝越大、帶著速度線），打中時金色爆光和會心大星、對手被震得往後一晃；
-//   接著對手腳下的地面裂開：裂縫往四面散開、碎石噴起；氣滿時再追一道更粗的掌勁、地面噴出金色氣柱、畫面一閃
-const palmWave13 = (b, A, T, c, o = {}) => { const d = PX13.dir(A, T), F = o.frames || 6;
-  for (let k = 0; k < 3; k++) { const w = b.spawn({ k: 'p13wave', x: A.x, y: A.y, ang: d.ang, r: 12, span: 1.25, w: (o.w || 6) - k, c, life: F + 6, delay: k * 2 });
-    w.upd = q => { const kk = clamp((q.t - k * 2) / F, 0, 1), r = lerp(12, (o.r || 30) - k * 4, kk); q.r = r; q.x = lerp(A.x, T.x, kk) - d.ux * r; q.y = lerp(A.y, T.y, kk) - d.uy * r; }; }
-  PX13.speed(b, A, T, c, 6, 10); };
+  *f(S, U, T, u, t) { const c = S.col, v = tgt13(this, t), H = PX13.hero(this), d = PX13.dir(H, T), F0 = { x: H.x, y: HERO_FOOT - 3 };
+    Sound.sfx('heavy'); PX13.bits(this, F0, 8, ['#d0b080', '#a08050', '#6a5030'], 1.4, 0.14, 14, { up: 1 }); yield* wait(4);
+    Sound.sfx('wind'); for (let i = 1; i <= 4; i++) K13.ghost(this, d.ux * i * 12, d.uy * i * 12, '#ffd080', 6 + i * 2, 0.5 - i * 0.08); PX13.speed(this, H, T, c, 8, 10);
+    yield* this.lunge(u, 46, 3); Sound.sfx('hitSuper'); this.shake = Math.max(this.shake, 10); K13.flash(this, '#fff0c0', 0.3, 5); PX13.burst(this, T, 20, c, 13, { s: 3 });
+    for (let k = 0; k < 3; k++) { const w = this.spawn({ k: 'p13wave', x: T.x, y: T.y, ang: d.ang, r: 8, span: 1.7, w: 5 - k, c, life: 14, delay: 2 + k * 2 });
+      w.upd = q => { const kk = clamp((q.t - 2 - k * 2) / 8, 0, 1), r = lerp(8, 20 + k * 5, kk), D = lerp(0, 16 + k * 12, kk); q.r = r; q.x = T.x + d.ux * D - d.ux * r * 0.6; q.y = T.y + d.uy * D - d.uy * r * 0.6; }; }
+    PX13.bits(this, { x: T.x + d.ux * 18, y: T.y + d.uy * 18 }, 8, [c[1], c[0], '#c07010'], 2.2, 0.06, 14, { s: 2, ang: d.ang, spread: 0.6 });
+    if (v && v.off) { const o = v.off; yield* tween(3, q => { o.x = d.ux * 10 * q; o.y = d.uy * 10 * q; }); yield* wait(3); yield* tween(7, q => { o.x = d.ux * 10 * (1 - q); o.y = d.uy * 10 * (1 - q); }); o.x = 0; o.y = 0; }
+    PX13.bits(this, { x: T.x, y: (v && v.foot) || T.y + 24 }, 6, ['#d0b080', '#a08050', '#6a5030'], 1.4, 0.14, 14, { up: 1 }); yield* wait(10); } });
+// 沖天拳（原本的裂地神掌，v12.34 改名改特效，數字不變）：一記上勾拳把對手打上半空，必定會心；氣滿時威力再 +50%
+//   → 金色的氣聚到拳上，主角衝到對手面前一記上勾拳（像素拳頭往上打）：一道金光從對手腳下往上衝、對手被打飛到半空再摔下來，打中的那一下是會心的金色大星；
+//   氣滿時往上衝的是一根又粗又高的金色氣柱、畫面一閃
 redo13('t_zjQuake', 't11_zjQuake', { col: PXC.chi,
-  *f(S, U, T, u, t) { const c = S.col, v = tgt13(this, t), hu = this.core.byId.H, full = !!(hu && hu.max && hu.max.chi && (hu.res.chi || 0) >= hu.max.chi), foot = v && v.foot ? v.foot : T.y + 24, A = PX13.hand(this), d = PX13.dir(A, T);
-    K13.dark(this, 0.5, 64, '#140a00'); Sound.sfx('charge'); for (let i = 0; i < 14; i++) { const an = i * Math.PI / 7, P0 = { x: A.x + Math.cos(an) * 26, y: A.y + Math.sin(an) * 20 }, p = this.spawn({ k: 'p13px', x: P0.x, y: P0.y, s: 2, cols: [c[1], c[0]], o: OSH13, life: 12 }); p.upd = q => { const k = clamp(q.t / 10, 0, 1); q.x = lerp(P0.x, A.x, k); q.y = lerp(P0.y, A.y, k); }; }
-    yield* wait(10); PX13.spr(this, PXI.glint, A, { sc: 2, life: 8 }); yield* this.lunge(u, 12, 2); Sound.sfx('heavy'); palmWave13(this, A, T, c, { r: 36, w: 7 }); yield* wait(7);
-    Sound.sfx('crit'); this.shake = Math.max(this.shake, 12); K13.flash(this, '#fff0c0', 0.4, 6); PX13.burst(this, T, 24, PXC.gold, 16, { s: 3 }); PX13.spr(this, PXI.glint, { x: T.x + 12, y: T.y - 14 }, { sc: 3, life: 18 });
-    PX13.bits(this, T, 10, [c[1], c[0], '#c07010'], 2.6, 0.08, 16, { s: 2, ang: d.ang, spread: 0.9 });
-    if (v && v.off) { const o = v.off; yield* tween(3, q => { o.x = d.ux * 6 * q; o.y = d.uy * 6 * q; }); yield* tween(6, q => { o.x = d.ux * 6 * (1 - q); o.y = d.uy * 6 * (1 - q); }); o.x = 0; o.y = 0; } else yield* wait(9);
-    Sound.sfx('quake'); this.shake = Math.max(this.shake, 14);
-    for (let i = 0; i < 6; i++) { const an = Math.PI * (0.05 + i * 0.18) + (i % 2 ? 0 : Math.PI), R = 24 + rnd(0, 12); this.spawn({ k: 'p13crack', pts: PX13.zig({ x: T.x, y: foot }, { x: T.x + Math.cos(an) * R, y: foot + Math.sin(an) * R * 0.3 }, 4, 3), c: '#ffcc33', c2: '#ff8a1e', s: 2, grow: 4, life: 40 }); }
-    PX13.ring(this, { x: T.x, y: foot }, 8, 60, c, 2, 18, { fl: 0.3 }); for (let i = 0; i < 8; i++) PX13.spr(this, PXI.rock, { x: T.x + rnd(-18, 18), y: foot - 2 }, { vx: rnd(-20, 20) / 10, vy: -rnd(18, 34) / 10, g: 0.16, life: 26 });
-    if (full) { yield* wait(5); Sound.sfx('hitSuper'); palmWave13(this, A, T, ['#fff6c0', '#ffffff', '#3a2800'], { r: 44, w: 9, frames: 5 }); yield* wait(6);
-      this.spawn({ k: 'p13col', x: T.x, y: foot, w: 16, h: 200, c: ['#fff6c0', '#ffffff', '#3a2800'], grow: 3, life: 20 }); K13.flash(this, '#ffffff', 0.5, 8); PX13.burst(this, T, 28, PXC.gold, 14, { s: 3 }); }
-    yield* wait(16); } });
+  *f(S, U, T, u, t) { const c = S.col, v = tgt13(this, t), hu = this.core.byId.H, full = !!(hu && hu.max && hu.max.chi && (hu.res.chi || 0) >= hu.max.chi), foot = v && v.foot ? v.foot : T.y + 24, A = PX13.hand(this);
+    K13.dark(this, 0.45, 60, '#140a00'); Sound.sfx('charge'); for (let i = 0; i < 12; i++) { const an = i * Math.PI / 6, P0 = { x: A.x + Math.cos(an) * 24, y: A.y + Math.sin(an) * 18 }, p = this.spawn({ k: 'p13px', x: P0.x, y: P0.y, s: 2, cols: [c[1], c[0]], o: OSH13, life: 12 }); p.upd = q => { const k = clamp(q.t / 10, 0, 1); q.x = lerp(P0.x, A.x, k); q.y = lerp(P0.y, A.y, k); }; }
+    yield* wait(10); PX13.spr(this, PXI.glint, A, { sc: 2, life: 8 }); yield* this.lunge(u, 30, 2);
+    Sound.sfx('crit'); this.shake = Math.max(this.shake, 12); K13.flash(this, '#fff0c0', 0.35, 5);
+    PX13.thr(this, { x: T.x, y: foot + 4 }, { x: T.x, y: T.y - 64 }, full ? ['#fff6c0', '#ffffff', '#3a2800'] : c, full ? 12 : 8, 16, { grow: 4, hold: 6, over: 0 });
+    this.spawn({ k: 'p13col', x: T.x, y: foot, w: full ? 18 : 9, h: full ? 220 : 110, c: full ? ['#fff6c0', '#ffffff', '#3a2800'] : c, grow: 3, life: full ? 20 : 14 });
+    const fs = PX13.spr(this, PXI.fist, { x: T.x, y: T.y + 14 }, { sc: 2, life: 12 }); fs.upd = q => { const k = clamp(q.t / 5, 0, 1); q.y = lerp(T.y + 14, T.y - 34, 1 - (1 - k) * (1 - k)); };
+    PX13.burst(this, { x: T.x, y: T.y - 8 }, 24, PXC.gold, 16, { s: 3 }); PX13.spr(this, PXI.glint, { x: T.x + 12, y: T.y - 22 }, { sc: 3, life: 18 }); if (full) { K13.flash(this, '#ffffff', 0.5, 8); PX13.burst(this, { x: T.x, y: T.y - 30 }, 28, PXC.gold, 14, { s: 3, delay: 3 }); }
+    PX13.bits(this, { x: T.x, y: T.y - 10 }, 10, [c[1], c[0], '#c07010'], 2.2, 0.1, 16, { s: 2, ang: -Math.PI / 2, spread: 0.8 });
+    if (v && v.off) { const o = v.off; yield* tween(5, q => { o.y = -40 * (1 - (1 - q) * (1 - q)); }); yield* wait(5); yield* tween(6, q => { o.y = -40 * (1 - q * q); }); o.y = 0;
+      Sound.sfx('quake'); this.shake = Math.max(this.shake, 8); PX13.ring(this, { x: T.x, y: foot }, 6, 34, PXC.rock, 2, 14, { fl: 0.3 }); PX13.bits(this, { x: T.x, y: foot }, 8, ['#d0b080', '#a08050', '#6a5030'], 1.6, 0.14, 16, { up: 1 });
+      yield* tween(3, q => { o.y = -6 * Math.sin(Math.PI * q); }); o.y = 0; } else yield* wait(16);
+    yield* wait(12); } });
 
 // ---------- 法杖（元素）----------
 const fireBall13 = function* (b, A, P, r = 4, n = 9) { const c = [OSH13, '#d8361a', '#ff8a1e', '#ffe08a'], p = b.spawn({ k: 'p13orb', x: A.x, y: A.y, r, c, trail: 7, pulse: 1, life: n + 1 });

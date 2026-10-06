@@ -42,7 +42,7 @@ module.exports = async (g) => {
       ['雙劍', 'dsPhantom', '3 次會心後 +30%', st_('H', 'phantom11', { delta: 3 }), 1.3],
       ['雙盾', 'shCrash', '對破防 ×1.5', st_('F', 'broken'), 1.5],
       ['雙盾', 'shRam', '2 層盾勢 +50%', st_('H', 'bulk11', { delta: 2 }), 1.5],
-      ['短刀', 'dgQuick', '掠影步之後 +30%（蓄勢）', st_('H', 'nextPow11'), 1.3, 1],
+      ['短刀', 'dgQuick', '殘影步之後 +30%（蓄勢）', st_('H', 'nextPow11'), 1.3, 1],
     ];
     for (const [kind, id, what, on, want, abs] of A) { const r = ratio(kind, id, on, abs); ok('倍率 ' + DEF.skills['t_' + id].name + '：' + what, Math.abs(r - want) < 0.03, '實測 ×' + r.toFixed(3)); }
     // pierce
@@ -69,15 +69,15 @@ module.exports = async (g) => {
       ok('破盾倍率（劈山・破陣槍・貫通彈・盾突・破綻突・狂嵐拳 ×2、碎盾擊 ×3）', !bad.length && base === 1, bad.join('、') + '（普通招式 ×' + base + '）'); }
     const stApplied = (r, sid, who = 'F') => r.log.filter(e => e.type === EVT.STATUS_APPLY && e.payload.status === sid && e.tgts[0] === (who === 'F' ? r.F.id : 'H')).length;
     const rate = (id, sid, seeds = 40) => { let n = 0; for (let s = 1; s <= seeds; s++) if (stApplied(fight(kindOf(id), id, { seed: s }), sid)) n++; return n / seeds; };
-    { const v = rate('dgVenom', 'psn'); ok('淬刃 每段 30% 中毒（兩段至少一次約 51%）', v > 0.3 && v < 0.75, Math.round(v * 100) + '%'); }
-    { const v = rate('dgNeedle', 'par'); ok('麻痺針 60% 麻痺', v > 0.4 && v < 0.8, Math.round(v * 100) + '%'); }
+    { const v = rate('dgVenom', 'psn'); ok('毒風斬 每段 30% 中毒（兩段至少一次約 51%）', v > 0.3 && v < 0.75, Math.round(v * 100) + '%'); }
+    { const v = rate('dgNeedle', 'par'); ok('雷痺斬 60% 麻痺', v > 0.4 && v < 0.8, Math.round(v * 100) + '%'); }
     { const v = rate('gnPara', 'par'); ok('麻痺彈 60% 麻痺', v > 0.4 && v < 0.8, Math.round(v * 100) + '%'); }
     { const v = rate('ddDance', 'psn'); ok('燕舞亂刃 每段 10% 中毒（七段至少一次約 52%）', v > 0.3 && v < 0.75, Math.round(v * 100) + '%'); }
     { const v = rate('axQuake', 'flinch'); ok('震地擊 30% 退縮', v > 0.12 && v < 0.5, Math.round(v * 100) + '%'); }
     { const r = fight('拳套', 'fsShell', { rounds: 2 }); const cr = stApplied(r, 'crack11'), dot = r.log.filter(e => e.type === EVT.DAMAGE && e.tgts[0] === r.F.id && e.payload.skill == null && e.root && String(e.root).includes('crack')).length;
       const dots = r.log.filter(e => e.type === EVT.DAMAGE && e.tgts[0] === r.F.id && !String(e.payload.skill || '').startsWith('t_')).map(e => e.payload.amount); ok('碎殼掌 裂甲（物防 −1 階、每回合 3%，菁英照算）', cr > 0 && dots.includes(3000), '裂甲 ' + cr + ' 次，回合末傷害 ' + JSON.stringify(dots.slice(0, 3)) + '（最大 HP 100000）'); }
     { const r = fight('短刀', 'dgBloom', { pre: (c, H, F) => { c.applyStatus(H, F, 'psn', {}); } }); const extra = r.log.filter(e => e.type === EVT.DAMAGE && e.src === 'H' && e.tgts[0] === r.F.id).length - 5, gone = !r.c.hasStatus(r.F, 'psn');
-      ok('千刃毒華 引爆中毒：追加傷害並消除', extra >= 1 && gone, '追加 ' + extra + ' 次，中毒' + (gone ? '已消除' : '還在')); }
+      ok('千刃亂舞 引爆中毒：追加傷害並消除', extra >= 1 && gone, '追加 ' + extra + ' 次，中毒' + (gone ? '已消除' : '還在')); }
     { const v = rate('stArrows', 'brn'); ok('火球 20% 灼傷', v > 0.05 && v < 0.42, Math.round(v * 100) + '%'); }
     { const E = { stArrows: '火', stLance: '水', stImpact: '雷', stStorm: '火', stHaste: '草', stFinale: '雷' }, bad = Object.keys(E).filter(k => DEF.skills['t_' + k].el !== E[k]); ok('法杖的元素：火球火・冰錐水・落雷雷・炎浪火・藤鞭草・雷暴雷', !bad.length, bad.join(',')); }
     { const r = fight('法杖', 'stFinale'); const v = DEF.skills.t_stFinale; ok('雷暴：全體 2 段（各 45）', v.target === 'all_enemies' && v.power === 45 && hitsOf(r, 'stFinale') === 2, v.target + ' ' + v.power + ' ' + hitsOf(r, 'stFinale')); }
@@ -95,7 +95,7 @@ module.exports = async (g) => {
     for (const [id, what] of [['spGuard', '迴槍架勢 被打反擊'], ['dsParry', '架劍 被打反擊'], ['shFort', '不落要塞 被打反擊']]) { const r = fight(kindOf(id), id, { foeAct: 1, rounds: 1 }); const foeHit = r.log.filter(e => e.type === EVT.DAMAGE && e.tgts[0] === 'H' && e.src === r.F.id).length; ok(what, counters(r) > 0 || !foeHit, '對手打中 ' + foeHit + ' 次、反擊 ' + counters(r) + ' 次'); }
     { const r = fight('雙劍', 'dsDance', { rounds: 2, seq: ['t_dsDance', 't_dsMoon'] }); const f = r.log.filter(e => e.type === EVT.DAMAGE && e.src === 'H' && e.payload.skill == null || (e.type === EVT.DAMAGE && e.src === 'H' && (e.tags || []).includes('follow'))).length; ok('雙劍舞陣 攻擊後副手追加一斬', f > 0, '追加 ' + f + ' 次'); }
     { const r = fight('魔導書', 'tmStop', { foeAct: 1, rounds: 2, foeKind: 'elite' }); const acts = r.log.filter(e => e.type === EVT.SKILL_USE && e.src === r.F.id).length; ok('時之停滯 菁英跳過下一次行動', acts <= 1, '兩回合裡對手行動 ' + acts + ' 次'); }
-    { const r = fight('短刀', 'dgStitch', { foeAct: 1, rounds: 1 }); const acts = r.log.filter(e => e.type === EVT.SKILL_USE && e.src === r.F.id).length; ok('影縫 這回合不能行動', acts === 0, '對手行動 ' + acts + ' 次'); }
+    { const r = fight('短刀', 'dgStitch', { foeAct: 1, rounds: 1 }); const acts = r.log.filter(e => e.type === EVT.SKILL_USE && e.src === r.F.id).length; ok('縛影斬 這回合不能行動', acts === 0, '對手行動 ' + acts + ' 次'); }
     { const r = fight('雙盾', 'shStance', { foeAct: 1, rounds: 3, seq: ['t_shStance', 't_shBash', 't_shBash'] }); const s = r.c.statusOf(r.H, 'bulk11'); ok('雙盾架勢 被打得到盾勢', !!s && s.stacks >= 1, '盾勢 ' + (s ? s.stacks : 0) + ' 層'); }
     { const dq = o => { const r = fight('拳套', 'fsQi', { setup: (c, H) => { H.stats.atk = 300; H.stats.spa = o; } }); return r.log.filter(e => e.type === EVT.DAMAGE && e.src === 'H' && e.payload.skill === 't_fsQi').map(e => e.payload.amount + e.payload.cat).join(','); };
       const hi = dq(1200), lo = dq(50); ok('氣勁彈（實戰）用物攻和魔攻較高的一項', parseInt(hi) > parseInt(lo) * 2 && /特/.test(hi) && /物/.test(lo), '魔攻高 ' + hi + '／魔攻低 ' + lo); }
