@@ -25,11 +25,12 @@ function* pickSlot13(title, mode) {
 if (!fxtest13()) TitleScene.prototype.menu = function* () {
   while (true) {
     const any = []; for (let n = 1; n <= SLOTS13; n++) if (slotLoad13(n)) any.push(n); this.hasSave = any.length > 0;
-    const opts = any.length ? ['繼續冒險', '新的冒險', '設定'] : ['新的冒險', '設定'];
+    const opts = any.length ? ['繼續冒險', '新的冒險', '存檔備份', '設定'] : ['新的冒險', '存檔備份', '設定'];
     const r = yield* choose(opts, { x: 38, y: 168, w: 100, cancel: true });
     if (r < 0) { this.stage = 'press'; return; }
     const o = opts[r];
     if (o === '設定') { yield* optionsScreen(); continue; }
+    if (o === '存檔備份') { yield* backupScreen13(); continue; }
     if (o === '繼續冒險') { let n = any[0]; if (any.length > 1) { n = yield* pickSlot13('讀取哪一個存檔？', 'load'); if (!n) continue; }
       SLOT13 = n; const st = loadGame(); if (!st) continue; Game.st = st; yield* fadeOut(20); startOverworld(); Game.sys.push(fadeIn(20)); return; }
     if (o === '新的冒險') { let n = 1;

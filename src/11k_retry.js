@@ -9,7 +9,7 @@
     while (true) { const R = { again: false }, prev = Game.retry13; Game.retry13 = R; let r;
       try { r = yield* _bs.call(this, cfg, ...a); } finally { Game.retry13 = prev; }
       if (!(r === 'lose' && R.again)) return r;
-      const o = JSON.parse(snap); for (const k of Object.keys(st)) delete st[k]; Object.assign(st, o); st.retry13 = (st.retry13 || 0) + 1; } }; }
+      const o = JSON.parse(snap); for (const k of Object.keys(st)) delete st[k]; Object.assign(st, o); st.retry13 = (st.retry13 || 0) + 1; st.rngSeed = ((st.rngSeed || 1) ^ (Date.now() & 0x7fffffff) ^ (st.retry13 * 0x9e3779b9)) >>> 0; } }; } // (a new roll of the dice on a retry: the snapshot alone would replay the same battle)
 { const _wo = Overworld.prototype.whiteout; Overworld.prototype.whiteout = function* (...a) { const R = Game.retry13;
     if (!R) return yield* _wo.apply(this, a);
     Game.retry13 = null; Sound.stop(); UI.clear(); const box = { draw(x) { x.fillStyle = '#000'; x.fillRect(0, 0, W, H); } }; UI.push(box); Game.fade = 0; let c;

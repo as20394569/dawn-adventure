@@ -7668,7 +7668,7 @@ class TitleScene {
     x.drawImage(this.logo, Math.round(W / 2 - this.logo.width / 2), 6 + bob);
     Font.drawC(x, '～異世界冒險RPG～', W / 2, 52 + bob, '#ffe0a0', '#3a1428');
     if (this.stage === 'press' && Math.floor(this.t / 30) % 2 === 0) Font.drawC(x, '按 A 鍵開始', W / 2, 232, '#ffffff', '#1a1024');
-    Font.drawR(x, 'v12.50', W - 3, H - 13, '#b890b0', null);
+    Font.drawR(x, 'v12.51', W - 3, H - 13, '#b890b0', null);
   }
 }
 class IntroScene {
@@ -24954,11 +24954,12 @@ function* pickSlot13(title, mode) {
 if (!fxtest13()) TitleScene.prototype.menu = function* () {
   while (true) {
     const any = []; for (let n = 1; n <= SLOTS13; n++) if (slotLoad13(n)) any.push(n); this.hasSave = any.length > 0;
-    const opts = any.length ? ['繼續冒險', '新的冒險', '設定'] : ['新的冒險', '設定'];
+    const opts = any.length ? ['繼續冒險', '新的冒險', '存檔備份', '設定'] : ['新的冒險', '存檔備份', '設定'];
     const r = yield* choose(opts, { x: 38, y: 168, w: 100, cancel: true });
     if (r < 0) { this.stage = 'press'; return; }
     const o = opts[r];
     if (o === '設定') { yield* optionsScreen(); continue; }
+    if (o === '存檔備份') { yield* backupScreen13(); continue; }
     if (o === '繼續冒險') { let n = any[0]; if (any.length > 1) { n = yield* pickSlot13('讀取哪一個存檔？', 'load'); if (!n) continue; }
       SLOT13 = n; const st = loadGame(); if (!st) continue; Game.st = st; yield* fadeOut(20); startOverworld(); Game.sys.push(fadeIn(20)); return; }
     if (o === '新的冒險') { let n = 1;
@@ -25084,7 +25085,7 @@ GROW12.push(['藏寶圖', '萌芽鎮南邊的尋寶人巴克會送你第一張�
     while (true) { const R = { again: false }, prev = Game.retry13; Game.retry13 = R; let r;
       try { r = yield* _bs.call(this, cfg, ...a); } finally { Game.retry13 = prev; }
       if (!(r === 'lose' && R.again)) return r;
-      const o = JSON.parse(snap); for (const k of Object.keys(st)) delete st[k]; Object.assign(st, o); st.retry13 = (st.retry13 || 0) + 1; } }; }
+      const o = JSON.parse(snap); for (const k of Object.keys(st)) delete st[k]; Object.assign(st, o); st.retry13 = (st.retry13 || 0) + 1; st.rngSeed = ((st.rngSeed || 1) ^ (Date.now() & 0x7fffffff) ^ (st.retry13 * 0x9e3779b9)) >>> 0; } }; } // (a new roll of the dice on a retry: the snapshot alone would replay the same battle)
 { const _wo = Overworld.prototype.whiteout; Overworld.prototype.whiteout = function* (...a) { const R = Game.retry13;
     if (!R) return yield* _wo.apply(this, a);
     Game.retry13 = null; Sound.stop(); UI.clear(); const box = { draw(x) { x.fillStyle = '#000'; x.fillRect(0, 0, W, H); } }; UI.push(box); Game.fade = 0; let c;
@@ -25307,3 +25308,46 @@ MOON_LAMPS13.forEach(([x, y, ph], i) => {
 (NPC_ROLES.事件 || NPC_ROLES.情報).push('moonGate13', 'moonRiddle13', 'moonDoor13', ...MOON_LAMPS13.flatMap((_, i) => ['moonLamp13_' + i, 'moonLampLit13_' + i]));
 if (typeof NPC_WHERE !== 'undefined') NPC_WHERE.moonGate13 = '銀月湖畔・北邊';
 ACHIEVEMENTS.push({ id: 'moon13', n: '月影神殿', d: '打倒月影神殿的月光精靈王。', cat: '戰鬥', ok: st => !!st.flags.moonKing13 });
+const BK13 = { pfx1: 'DAWN1:', pfx0: 'DAWN0:' };
+const u8ToB64 = u8 => { let s = ''; for (let i = 0; i < u8.length; i += 0x8000) s += String.fromCharCode.apply(null, u8.subarray(i, i + 0x8000)); return btoa(s); };
+const b64ToU8 = b64 => { const s = atob(b64), u = new Uint8Array(s.length); for (let i = 0; i < s.length; i++) u[i] = s.charCodeAt(i); return u; };
+async function bkEncode13(obj) { const json = JSON.stringify(obj), bytes = new TextEncoder().encode(json);
+  if (typeof CompressionStream === 'function') { const cs = new Blob([bytes]).stream().pipeThrough(new CompressionStream('gzip')); const buf = new Uint8Array(await new Response(cs).arrayBuffer()); return BK13.pfx1 + u8ToB64(buf); }
+  return BK13.pfx0 + u8ToB64(bytes); }
+async function bkDecode13(code) { code = String(code || '').replace(/\s+/g, '');
+  let bytes; if (code.startsWith(BK13.pfx1)) { if (typeof DecompressionStream !== 'function') throw new Error('這個瀏覽器不能讀壓縮的代碼'); const ds = new Blob([b64ToU8(code.slice(BK13.pfx1.length))]).stream().pipeThrough(new DecompressionStream('gzip')); bytes = new Uint8Array(await new Response(ds).arrayBuffer()); }
+  else if (code.startsWith(BK13.pfx0)) bytes = b64ToU8(code.slice(BK13.pfx0.length)); else throw new Error('不是曙光冒險的存檔代碼');
+  const st = JSON.parse(new TextDecoder().decode(bytes)); if (!st || typeof st !== 'object' || !st.name || !st.lv || !st.map) throw new Error('代碼裡沒有存檔'); return st; }
+function* bkAwait13(p) { let done = false, val, err; p.then(v => { val = v; done = true; }, e => { err = e; done = true; }); while (!done) yield; if (err) throw err; return val; }
+function bkPanel13(title, opt) { const wrap = document.createElement('div'); wrap.setAttribute('style', 'position:fixed;inset:0;z-index:20;display:flex;align-items:center;justify-content:center;background:rgba(5,6,12,.78);padding:16px;font-family:var(--pix,sans-serif)');
+  const box = document.createElement('div'); box.setAttribute('style', 'width:min(420px,100%);background:#141a30;border:1px solid #3a4262;border-radius:8px;padding:14px;color:#eef1f8;display:flex;flex-direction:column;gap:10px');
+  const h = document.createElement('div'); h.textContent = title; h.setAttribute('style', 'font-size:16px;color:#ffc46b'); box.appendChild(h);
+  if (opt.note) { const n = document.createElement('div'); n.textContent = opt.note; n.setAttribute('style', 'font-size:12px;color:#8a93b3;line-height:1.5'); box.appendChild(n); }
+  const ta = document.createElement('textarea'); ta.value = opt.text || ''; ta.readOnly = !!opt.readOnly; ta.placeholder = opt.placeholder || ''; ta.setAttribute('style', 'width:100%;height:140px;box-sizing:border-box;background:#0d1020;color:#cfe;border:1px solid #3a4262;border-radius:4px;font-size:11px;padding:6px;word-break:break-all;-webkit-user-select:text;user-select:text'); box.appendChild(ta);
+  const msg = document.createElement('div'); msg.setAttribute('style', 'font-size:12px;color:#6ee7d2;min-height:16px'); box.appendChild(msg);
+  const row = document.createElement('div'); row.setAttribute('style', 'display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end'); box.appendChild(row);
+  const res = { done: false, value: null, ta, msg, close() { wrap.remove(); this.done = true; } };
+  for (const [label, fn] of opt.buttons) { const b = document.createElement('button'); b.type = 'button'; b.textContent = label; b.setAttribute('style', 'font-size:14px;padding:8px 14px;border-radius:6px;border:1px solid #3a4262;background:#1f2747;color:#eef1f8;cursor:pointer'); b.onclick = () => fn(res); row.appendChild(b); }
+  wrap.appendChild(box); document.body.appendChild(wrap); Input.clearAll(); return res; }
+function* bkExport13(n) { const st = slotLoad13(n); if (!st) { yield* say('「存檔 ' + n + '」是空的。'); return; }
+  let code; try { code = yield* bkAwait13(bkEncode13(st)); } catch (e) { yield* say('做不出代碼……（' + e.message + '）'); return; }
+  const P = bkPanel13('存檔 ' + n + '：' + st.name + ' Lv' + st.lv, { text: code, readOnly: true, note: '把這段代碼存在安全的地方（例如備忘錄）。之後在「存檔備份→貼上代碼」放回來，就能接著玩。',
+    buttons: [['複製', r => { const ok = () => { r.msg.textContent = '複製好了！'; }; const fb = () => { try { r.ta.select(); document.execCommand('copy'); ok(); } catch (e) { r.msg.textContent = '請長按代碼，全選後複製。'; } };
+        try { navigator.clipboard.writeText(code).then(ok, fb); } catch (e) { fb(); } }],
+      ['下載檔案', r => { try { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([code], { type: 'text/plain' })); a.download = 'dawn_save_' + n + '.txt'; document.body.appendChild(a); a.click(); a.remove(); r.msg.textContent = '已經開始下載。'; } catch (e) { r.msg.textContent = '這裡不能下載，請改用「複製」。'; } }],
+      ['關閉', r => r.close()]] });
+  while (!P.done) yield; Input.clearAll(); }
+function* bkImport13(n) { let st = null;
+  const P = bkPanel13('貼上存檔代碼（放進「存檔 ' + n + '」）', { placeholder: 'DAWN1:……', note: '貼上之前備份的代碼，或選擇下載的存檔檔案。',
+    buttons: [['選擇檔案', r => { const f = document.createElement('input'); f.type = 'file'; f.accept = '.txt,text/plain'; f.onchange = () => { const file = f.files && f.files[0]; if (!file) return; file.text().then(t => { r.ta.value = t.trim(); r.msg.textContent = '讀進來了，按「讀取」。'; }, () => { r.msg.textContent = '讀不到這個檔案。'; }); }; f.click(); }],
+      ['讀取', r => { r.msg.textContent = '讀取中……'; bkDecode13(r.ta.value).then(v => { st = v; r.close(); }, e => { r.msg.textContent = '讀不出來：' + e.message; }); }],
+      ['取消', r => r.close()]] });
+  while (!P.done) yield; Input.clearAll(); if (!st) return false;
+  const old = slotLoad13(n); if (!(yield* yesNo('讀到了：' + st.name + ' Lv' + st.lv + '（' + ((MAPS[st.map] || {}).name || '') + '）\n要放進「存檔 ' + n + '」嗎？' + (old ? '\n（會蓋掉 ' + old.name + ' Lv' + old.lv + '）' : '')))) return false;
+  try { localStorage.setItem(slotKey13(n), JSON.stringify(st)); } catch (e) { yield* say('存不進去……（瀏覽器的儲存空間不能用）'); return false; }
+  Sound.sfx('save'); yield* say('放進「存檔 ' + n + '」了！'); return true; }
+function* backupScreen13() {
+  while (true) { const r = yield* ask('存檔備份：瀏覽器的資料被清掉時，存檔也會跟著不見。定期備份比較安心。', ['複製存檔代碼', '貼上存檔代碼', '返回']);
+    if (r === 0) { const n = yield* pickSlot13('要備份哪一個存檔？', 'load'); if (n) yield* bkExport13(n); }
+    else if (r === 1) { const n = yield* pickSlot13('要放進哪一個欄位？', 'new'); if (n) yield* bkImport13(n); }
+    else return; } }
