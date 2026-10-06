@@ -254,7 +254,7 @@ Object.assign(Events, {
 { const _ql = questList; questList = function (st = Game.st) {
     const L = _ql(st), f = st.flags, n = f.ch2 || 0, M = L.find(q => q.n === '第二章：曙光的王都');
     if (M && !M.done) {
-      const rec = n === 0 ? '17' : n === 1 ? (v81Gate(st) ? null : '22〜25') : n === 3 ? '24〜28' : n === 4 ? '28〜31' : n === 5 ? (f.northPass ? '30〜34' : null) : n === 6 ? '33〜37' : n === 7 ? '37〜38' : n === 8 ? '39〜40' : null;
+      const rec = n === 0 ? '17' : n === 1 ? (v81Gate(st) ? null : '22〜25') : n === 3 ? '24〜29' : n === 4 ? '28〜33' : n === 5 ? (f.northPass ? '30〜36' : null) : n === 6 ? '33〜38' : n === 7 ? '37〜39' : n === 8 ? '39〜41' : null; // v12.63: the top of each range is the act's boss level −2 (the bosses went up 3〜4 levels in v12.30; at the old top you were already warned 「比頭目低 3 級」)
       if (n === 1 && v81Gate(st)) M.t = '【推薦Lv17〜23】往北方街道的關道被封鎖了。請萌芽鎮的馬車夫湯姆送你到楓紅關道，穿過古戰場，前往北方街道。';
       else if (rec) M.t = '【推薦Lv' + rec + '】' + M.t;
     }
