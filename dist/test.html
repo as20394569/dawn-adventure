@@ -24279,7 +24279,7 @@ const ABY_TINT13 = k => k === ABY_LORD13 ? [276, 0.12, 0.3, 0.8] : [268, 0.2, 0.
     const b = k === ABY_LORD13 ? 'gatekeeper' : ABY_MON13[k][1], src = _ci(b); if (!src || src.ok === false || !(src.complete !== false)) return src;
     const [hue, keep, sAdd, lMul] = ABY_TINT13(k), c = mkCanvas(src.width, src.height), x = c.getContext('2d'); x.drawImage(src, 0, 0); const id = x.getImageData(0, 0, c.width, c.height), d = id.data;
     for (let i = 0; i < d.length; i += 4) { if (!d[i + 3]) continue; const [h, s, l] = rgb2hsl(d[i], d[i + 1], d[i + 2]); let dh = ((h - hue + 540) % 360) - 180;
-      const grey = s < 0.12, nh = grey ? hue : hue + dh * keep, ns = grey ? sAdd + s : Math.min(1, s * 0.85 + sAdd), nl = Math.min(1, l * lMul + (k === ABY_LORD13 && l > 0.8 ? 0.1 : 0));
+      const grey = s < 0.12, lord = k === ABY_LORD13, nh = lord ? hue + dh * 0.05 : grey ? hue : hue + dh * keep, ns = lord ? 0.55 : grey ? sAdd + s : Math.min(1, s * 0.85 + sAdd), nl = lord ? Math.min(0.88, 0.05 + l * 0.72) : Math.min(1, l * lMul); // the lord: one even violet (the gatekeeper's stone half and gold half used to come out grey and pink)
       const [r, g, bb] = hex2rgb(hsl2hex(nh, Math.min(1, ns), nl)); d[i] = r; d[i + 1] = g; d[i + 2] = bb; }
     x.putImageData(id, 0, 0); c.ok = true; return CHIBI_VAR[k] = c; }; }
 MOVES.m_riftCall13 = { n: '裂界召喚', t: '一般', cat: '變', pow: 0, acc: null, pp: 10, fx: 'mbuff', foe: 1, cls: 'buff', d: '撕開裂縫，叫一隻裂界種出來。裂縫開著的時候，自己受到的傷害 −40%。' };

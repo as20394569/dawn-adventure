@@ -26,16 +26,20 @@ const { chromium } = require('/home/claude/.npm-global/lib/node_modules/playwrig
     await crop('s2'); }
 
   // 3. class card: ten classes
-  if (want('s3')) { await base({ map: 'guild', x: 5, y: 6, cls: 'swordsman', lv: 25, flags: { deep: 1 } }).catch(e => console.log(e.message));
-    await run("classCardScreen(['swordsman','mage','guardian','ranger','bard','machinist','monk','dragoon','otherworlder','spellblade'], { title: '轉職', cancel: true, look: heroLookOf(Game.st) })", ['right', 'right', 'right', 'right', 'right', 'right', 'right'], 60);
-    await p.evaluate(() => __game.step(60)); await crop('s3'); }
+  // 3. a weapon's skill tree (v12: classes retired, every weapon has its own tree)
+  if (want('s3')) { await base({ map: 'route', x: 10, y: 30, cls: 'swordsman', lv: 32, flags: { deep: 1, dual11: 1 } });
+    await p.evaluate(() => { const st = Game.st, kind = '劍'; GEAR11_GLAM = false; const g = makeGear(BASE11.weapon[kind][5], 3, 0.95); GEAR11_GLAM = true; st.equip.weapon = g.u;
+      const T = tr11(st); T.lv = {}; let pts = trTotal11(st) - 8; for (const N of treeNodes11(kind).filter(N => N.lv <= st.lv)) { if (pts <= 0) break; if (N.pre && !T.lv[N.pre]) continue; const v = Math.min(N.max, N.t === 'sk' ? 3 : 1); T.lv[N.key] = v; pts -= v; }
+      if (T.lv[kind + ':sp0']) T.eq[kind] = 0; });
+    await run("treeScreen11('劍')", ['down', 'down', 'down', 'down', 'down'], 40); await crop('s3'); }
 
-  // 4. talents
-  if (want('s4')) { await base({ map: 'route', x: 10, y: 30, cls: 'swordsman', lv: 30, flags: { deep: 1 } });
-    await p.evaluate(() => { const st = Game.st; st.tp = 2; TAL12.pick(0, 0, 0); TAL12.pick(0, 1, 1); TAL12.pick(0, 2, 0); TAL12.pick(1, 0, 1); TAL12.pick(1, 1, 0); TAL12.pick(2, 0, 0); TAL12.pick(0, -1, 0); });
-    await run('talentScreen()', ['down', 'down', 'down', 'down'], 40); await crop('s4'); }
+  // 4. after the ending: the 30th floor of 裂界深淵, 裂界之主
+  if (want('s4')) { await base({ map: 'ruins', x: 7, y: 5, cls: 'swordsman', lv: 50, flags: { deep: 1, ch2: 10, gateOpen: 1, golem: 1 } });
+    await p.evaluate(() => { const st = Game.st; abySt(st).run = 1; abyApply(30, 1); Game.scene.load('abyss13', 7, 5, 'up'); __game.step(20); const ow = Game.scene; ow.script = null; UI.clear();
+      ow.run(ow.battleScript({ sp: ABY_LORD13, lv: 50, kind: 'boss', id: ABY_LORD13, rematch: 1 })); });
+    for (let i = 0; i < 120; i++) { const ok = await p.evaluate(() => { if (Game.scene.constructor.name !== 'Battle') { if (UI.stack.some(w => w.items || w.lines)) __game.press('a', 2, 6); else __game.step(10); return false; } __game.step(10); return UI.stack.some(x => x.constructor.name === 'Menu'); }); if (ok) break; }
+    await p.evaluate(() => __game.step(30)); await crop('s4'); }
 
-  // 5. smith
   if (want('s5')) { await base({ map: 'town', x: 10, y: 10, cls: 'swordsman', lv: 26, flags: { deep: 1 } });
     await p.evaluate(() => { const st = Game.st; st.gear = []; st.equip = {}; const pickB = (slot, re) => Object.keys(GEAR).filter(k => GEAR[k].slot === slot && (GEAR[k].t || 0) <= 5 && !GEAR[k].trait && (!re || re.test(GEAR[k].n))).sort((a, b) => (GEAR[b].t || 0) - (GEAR[a].t || 0));
       console.log('slots', [...new Set(Object.values(GEAR).map(g => g.slot))].join(','));
@@ -59,4 +63,16 @@ const { chromium } = require('/home/claude/.npm-global/lib/node_modules/playwrig
       st.wsh = st.wsh || {}; st.wsh[M] = 0; st.extSeen = { [M]: 1 }; st.dex = st.dex || {}; if (d.rare) st.dex[d.rare[0]] = { seen: 1, won: 1 };
       const L = LORE.map((l, i) => [l, i]).filter(([l]) => l[0] === M); st.lore = st.lore || {}; L.forEach(([, i]) => st.lore[i] = 1); }, M);
     await run('recordScreen()', ['a', 'a'], 30); await crop('s6'); }
+  // 7. 王都競技場: the gold rank under the open sky
+  if (want('s7')) { await base({ map: 'guild', x: 5, y: 5, cls: 'swordsman', lv: 36, flags: { deep: 1 } });
+    await p.evaluate(() => { const ow = Game.scene; ow.script = null; UI.clear(); ARENA_ON13 = ARENA13[2]; ow.run(ow.battleScript({ sp: 'crystalGolem', lv: 34, kind: 'boss', id: 'crystalGolem', rematch: 1, noCard: 1, noMats: 1 })); });
+    for (let i = 0; i < 120; i++) { const ok = await p.evaluate(() => { if (Game.scene.constructor.name !== 'Battle') { if (UI.stack.some(w => w.items || w.lines)) __game.press('a', 2, 6); else __game.step(10); return false; } __game.step(10); return UI.stack.some(x => x.constructor.name === 'Menu'); }); if (ok) break; }
+    await p.evaluate(() => __game.step(30)); await crop('s7'); await p.evaluate(() => { ARENA_ON13 = null; }); }
+
+  // 8. fishing off the pier at 潮鳴港
+  if (want('s8')) { await base({ map: 'harbor13', x: 10, y: 12, dir: 'left', cls: 'swordsman', lv: 42, flags: { deep: 1, ch2: 10, ch3: 6, siren13: 1 } });
+    await p.evaluate(() => { const st = Game.st; st.bag.rod13 = 1; st.bag.rod13b = 1; const ow = Game.scene; ow.script = null; UI.clear(); ow.p.dir = 'left'; ow.bob13 = { map: 'harbor13', x: 9, y: 12, bite: false };
+      ow.run(fishReel13('fish13_marlin')); __game.step(37); });
+    await crop('s8'); }
+
   await b.close(); })();
