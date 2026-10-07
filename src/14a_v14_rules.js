@@ -50,7 +50,7 @@ KD.scale = (core, u) => { if (!u || u.side !== 'B' || (u.data && u.data.k14s)) r
 { const _d = BR.damage; BR.damage = function (core, src, tgt, skill, o = {}) {
     if (!KD.on(core) || !tgt || !tgt.hero || !src || src.hero) return _d.call(this, core, src, tgt, skill, o);
     const lv = src.lv || 1, S = tgt.stats; tgt.stats = { ...S, def: KD.tab(KD.REF.def, lv), spd: KD.tab(KD.REF.spd, lv), hp: KD.tab(KD.REF.hp, lv) };
-    let r; try { r = _d.call(this, core, src, tgt, skill, o); } finally { tgt.stats = S; }
+    let r; try { r = _d.call(this, core, src, tgt, skill, { ...o, preview: true, noCrit: true }); } finally { tgt.stats = S; } // v14.10: no 85〜100% roll and no crit — what the intent says is what lands
     const m = KD.dmgK(lv) * (stkK(src, 'weak15') ? 0.75 : 1) * (stkK(tgt, 'vuln15') ? 1.5 : 1); return { ...r, amount: Math.max(1, Math.round(r.amount * m)) }; }; }
 // fixed monster damage (rocks, thorns…) the same way
 { const D = EFFECT_TYPES.damage, _x = D.exec; D.exec = function (core, ef, ctx, tg) { const a = ctx && ctx.owner;

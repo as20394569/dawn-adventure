@@ -8,7 +8,7 @@ const stkH = (b, id) => stkK(b.core.byId.H, id);
 { const _main = BPK.main; BPK.main = function* () { if (KD.on(this.core) && !this.run15) this.initK(); return yield* _main.call(this); }; }
 BPK.initK = function () { const st = Game.st, core = this.core, H = core.byId.H; this.k14 = true; core.data.cb14 = this; this.cls = KD.clsKey(st);
   this.pile = shuffle15(KD.deck(st).map(c => ({ ...c })), () => core.rng.next()); this.hand = []; this.disc = []; this.exh = [];
-  Object.assign(this, { energy: 0, si: 0, nextDraw: 0, nextEn: 0, turnR: 0, sel: -1, tgtMode: 0, tapK: null, cardsN: 0, atkN: 0, sklN: 0, fillSi: 0, twice: 0, dupNext: 0, fb: 0, dealt: 0, turns: 0 });
+  Object.assign(this, { energy: 0, si: 0, nextDraw: 0, nextEn: 0, turnR: 0, sel: -1, tgtMode: 0, tapK: null, cardsN: 0, atkN: 0, sklN: 0, fillSi: 0, twice: 0, dupNext: 0, fb: 0, dealt: 0, turns: 0, masterN: 0 });
   const ids = new Set(['k14_end']); for (const id in KD.CARDS) ids.add('k14_' + id); H.skills = [...ids]; };
 BPK.Hu = function () { return this.core.byId.H; };
 // v14.7 (玩家：「戰鬥時怪物消失」): cards run inside the core before their events are played, so a full sync() here hid a monster the moment
@@ -16,7 +16,7 @@ BPK.Hu = function () { return this.core.byId.H; };
 // Mid-action syncs now leave who is gone to the faint / flee animations (play() still does the full sync afterwards).
 BPK.syncK = function () { const keep = []; for (const id in this.views) { const v = this.views[id]; keep.push([v, v.gone, v.alpha, v.plateA]); }
   this.sync(); for (const [v, g, a, pa] of keep) { v.gone = g; v.alpha = a; v.plateA = pa; } };
-BPK.addSi = function (n) { this.si = Math.min(3, this.si + n); };
+BPK.addSi = function (n) { this.si = Math.min(3, this.si + n); this.siGain = (this.siGain || 0) + n; };
 BPK.drawN = function (n) { for (let i = 0; i < n; i++) { if (this.hand.length >= KD.HAND) break; if (!this.pile.length) { if (!this.disc.length) break; this.pile = shuffle15(this.disc, () => this.core.rng.next()); this.disc = []; } this.hand.push(this.pile.pop()); } };
 BPK.addHand = function (id, up) { if (this.hand.length < KD.HAND) this.hand.push({ id, up: up ? 1 : 0 }); else this.disc.push({ id, up: up ? 1 : 0 }); };
 BPK.copyBest = function () { const L = this.hand.filter(c => KD.CARDS[c.id].rar !== 'T'); if (!L.length) return; const c = L.sort((a, b) => KD.cost(b) - KD.cost(a))[0]; this.addHand(c.id, c.up); };
@@ -28,7 +28,7 @@ BPK.startTurnK = function () { const core = this.core, H = this.Hu(), notes = []
   if (stkK(H, 'blk15')) H.statuses = H.statuses.filter(s => s.id !== 'blk15');
   const g = stkK(H, 'pwGuard15') + stkK(H, 'pwRock14'); if (g) KD.block(core, H, g);
   const k = stkK(H, 'pwKindle14'); if (k) for (const t of core.alive('B')) KD.add(core, H, t, 'burn14', k);
-  const vic = stkK(H, 'pwVictor14'); if (vic && H.res.hp > 1) { core.dealDamage(null, H, Math.min(vic, H.res.hp - 1), { kind: 'fixed', cat: 'fixed', min: 1, tags: ['self', 'card14'] }); this.energy++; }
+  const vic = stkK(H, 'pwVictor14'); if (vic) { kLose(this, core, vic); this.energy++; } /* v14.10: 失去 HP 也觸發狂暴；1 HP 時一樣給能量 */
   const A = KD.ailments(core, H); if (A.en) { this.energy = Math.max(0, this.energy - A.en); notes.push(...A.out); }
   this.silenced = core.hasStatus(H, 'silence14'); if (this.silenced) notes.push('被沉默了：不能用技能卡');
   this.drawN(KD.DRAW + this.nextDraw + stkK(H, 'pwMoon14') + (this.turns === 1 && this.cls === 'rg' ? 2 : 0)); this.nextDraw = 0;
@@ -39,9 +39,10 @@ BPK.okK = function (c) { return !this.whyK(c); };
 /* ---------- the hero's command: the hand of cards ---------- */
 { const _cmd = BPK.command; BPK.command = function* () { if (!this.k14) return yield* _cmd.call(this);
     const core = this.core, H = this.Hu();
-    if (this.turnR !== core.round) { this.turnR = core.round; this.startTurnK(); const f = Game.st && Game.st.flags; if (f && !f.tutK14 && !Game.autoPlay) { f.tutK14 = 1;
+    if (this.turnR !== core.round) { this.turnR = core.round; this.meteorDue = stkK(H, 'chgM14') > 0; this.startTurnK(); const f = Game.st && Game.st.flags; if (f && !f.tutK14 && !Game.autoPlay) { f.tutK14 = 1;
         yield* this.msg('（卡牌戰鬥：每回合 3 能量、抽 5 張。點一張卡看說明，再點一次出牌；出完牌按「結束」，魔物才照頭上的圖示行動。）', { wait: true }); } }
-    if (stkK(H, 'chgM14')) { this.idle = false; core.data.card14Now = { id: 'mg_meteorHit' }; core.data.skill14 = 'k14_mg_meteorHit'; return { type: 'skill', skill: 'k14_mg_meteorHit', targets: [] }; }
+    if (this.meteorDue && stkK(H, 'chgM14')) { this.meteorDue = false; this.idle = false; /* v14.10: only at the start of the next turn (it used to fall the moment the card was played) */
+      core.data.card14Now = { id: 'mg_meteorHit' }; core.data.skill14 = 'k14_mg_meteorHit'; return { type: 'skill', skill: 'k14_mg_meteorHit', targets: [] }; }
     if (Game.autoPlay) { for (let i = 0; i < 3; i++) yield; const a = Game.autoPlay(this); if (a && a.cmd) return a.cmd; const r = a && a.k ? a : this.autoK(a); if (r.cmd) return r.cmd; this.tapK = r; }
     while (true) {
       this.idle = true; const n = this.hand.length;
@@ -84,12 +85,12 @@ BPK.runCard = function (c, ctx) { const core = this.core, C = KD.CARDS[c.id], v 
   let times = 1; if (C.type === 'atk' && c.id !== 'mg_meteorHit') { if (this.twice) { times = 2; this.twice = 0; } if (stkK(H, 'pwPhantom14') && !this.phantomUsed) { times++; this.phantomUsed = 1; } }
   if (this.dupNext && C.type !== 'pow' && c.id !== 'lg_crystal') { times++; this.dupNext = 0; }
   this.fb = 0; if (C.type === 'atk') { if (this.cls === 'bk' && (H.res.hp <= H.max.hp / 2 || stkK(H, 'pwAsura14'))) this.fb += 3; const nx = stkK(H, 'nxa14'); if (nx) { this.fb += nx; core.removeStatus(H, 'nxa14', 'used'); } }
-  const si2 = this.cls === 'sw' && C.type === 'atk' && this.si >= 3; core.data.si2 = si2; this.dealt = 0;
+  const si2 = this.cls === 'sw' && C.type === 'atk' && this.si >= 3; core.data.si2 = si2; this.dealt = 0; this.siGain = 0; this.fbDone = new Set();
   for (let k = 0; k < times; k++) { if (!core.isUp(H) || !core.alive('B').length) break; C.run(this, core, tg, v); if (C.tg === 'all') tg = core.alive('B'); }
-  core.data.si2 = false; this.fb = 0;
-  if (C.type === 'atk') { this.atkN++; if (this.cls === 'sw') { if (si2) this.si = 0; else this.addSi(1); } if (this.fillSi) { this.si = 3; this.fillSi = 0; }
-    const m = stkK(H, 'pwMaster15'); if (m && this.atkN % 3 === 0) { this.drawN(m); this.energy += m; this.noteK('劍聖之心：抽 ' + m + '、能量 +' + m); }
-    const bl = stkK(H, 'pwBlood14'); if (bl && this.dealt > 0) KD.heal(core, H, this.dealt * bl / 100); }
+  core.data.si2 = false; this.fb = 0; this.fbDone = null;
+  if (C.type === 'atk') { this.atkN++; if (this.cls === 'sw') { if (si2) this.si = Math.min(3, this.siGain); else this.addSi(1); } /* 燕返 used as the ×2 card keeps its own 劍意 +1 */ if (this.fillSi) { this.si = 3; this.fillSi = 0; }
+    const m = stkK(H, 'pwMaster15'); if (m) this.masterN = (this.masterN || 0) + 1; if (m && this.masterN % 3 === 0) { /* counts attacks since the power was played, across turns */ this.drawN(m); this.energy += m; this.noteK('劍聖之心：抽 ' + m + '、能量 +' + m); }
+    const bl = stkK(H, 'pwBlood14'); if (bl && this.dealt > 0) KD.heal(core, H, Math.max(1, Math.round(this.dealt * bl / 100))); }
   if (C.type === 'skl') { this.sklN++; if (this.cls === 'mg' && this.sklN === 1) this.drawN(1); const s = stkK(H, 'pwStatic14'); if (s) { const t = kRand(core); if (t) KD.hit(core, H, t, s, { el: '雷', cat: '特' }); } }
   if (C.rar !== 'T') this.cardsN++; this.syncK(); };
 BPK.endTurnK = function () { const core = this.core, H = this.Hu(); if (stkK(H, 'tstr14')) core.removeStatus(H, 'tstr14', 'expire');
@@ -184,6 +185,7 @@ BPK.pileView = function* (w) { const L = (w === 'disc' ? this.disc : this.pile).
       if (scroll > 0) touchRegion(0, 0, W, 16, () => { scroll--; }); Font.drawC(x, '關閉', W * 0.75, 244, '#e8e4f4', '#000', 9); touchRegion(W / 2, 236, W / 2, 20, () => { done = true; }); } };
   UI.push(ui); while (!done) { yield; if (Input.pressed('b') || Input.pressed('a')) done = true; if (Input.pressed('down') && (scroll + 4) * 4 < L.length) scroll++; if (Input.pressed('up') && scroll > 0) scroll--; } UI.remove(ui); Input.consume('a', 'b'); };
 /* ---------- a card picture: cost, name, icon, the key numbers; the class colour along the bottom ---------- */
+KD.shortL = (C, v) => { const L = C.short(v).slice(); if (C.exhaust && !L.includes('消耗') && L.length < 3) L.push('消耗'); return L; }; // v14.10: every 消耗 card says so on its face
 KD.drawCard = function (x, c, X, Y, w, h, o = {}) { const C = KD.CARDS[c.id]; if (!C) return; const T = KD.TYPE[C.type], v = KD.val(c), big = w >= 46, CL = KD.CLASSES[C.cls], gold = C.rar === 'L', qst = C.rar === 'Q', edge = gold ? '#ffb040' : qst ? '#5ce0b8' : null;
   x.fillStyle = '#0c0814'; x.fillRect(X - 1, Y - 1, w + 2, h + 2); x.fillStyle = T.bg; x.fillRect(X, Y, w, h);
   x.fillStyle = 'rgba(255,255,255,0.05)'; x.fillRect(X + 1, Y + 1, w - 2, Math.round(h * 0.4));
@@ -196,13 +198,13 @@ KD.drawCard = function (x, c, X, Y, w, h, o = {}) { const C = KD.CARDS[c.id]; if
     x.fillStyle = 'rgba(0,0,0,0.35)'; x.fillRect(X + 1, Y + ah + 1, w - 2, 1);
     const r = big ? 6 : 5; x.fillStyle = '#0c0814'; x.beginPath(); x.arc(X + r, Y + r, r, 0, 7); x.fill(); x.fillStyle = o.dim ? '#6a5a40' : '#ffb030'; x.beginPath(); x.arc(X + r, Y + r, r - 1, 0, 7); x.fill(); Font.drawC(x, String(KD.cost(c)), X + r, Y + r - 8, '#1a0c00', null, big ? 9 : 8);
     const nm = KD.name(c); let fz = big ? 9 : 8; while (fz > 6 && Font.width(nm, fz) > w - 3) fz--; const ny = Y + ah + 1; Font.drawC(x, nm, X + w / 2, ny, c.up ? '#a8ffa0' : '#fff4e0', '#000', fz);
-    const ly = ny + (big ? 11 : 9); C.short(v).forEach((s, k) => { let q = big ? 8 : 7; while (q > 6 && Font.width(s, q) > w - 3) q--; Font.drawC(x, s, X + w / 2, ly + k * (big ? 10 : sm ? 8 : 9), '#e8e4f4', '#000', q); });
+    const ly = ny + (big ? 11 : 9), SL = KD.shortL(C, v), st3 = big ? 10 : sm ? 8 : 9, yMax = Y + h - (big && h >= 74 ? 8 : 3); SL.forEach((s, k) => { if (k >= 2 && ly + k * st3 + 12 > yMax) return; /* a 3rd line only where it fits (the big card) */ let q = big ? 8 : 7; while (q > 6 && Font.width(s, q) > w - 3) q--; Font.drawC(x, s, X + w / 2, ly + k * st3, '#e8e4f4', '#000', q); });
     if (big && h >= 74) Font.drawC(x, C.cls === 'nt' ? (gold ? '傳說' : qst ? '任務' : '共通') : CL ? CL.n : '', X + w / 2, Y + h - 12, edge || (CL ? CL.c : '#c8c8d8'), '#000', 7);
     if (o.dim) { x.fillStyle = 'rgba(0,0,0,0.38)'; x.fillRect(X, Y, w, h); } return; }
   const r = big ? 6 : 5; x.fillStyle = '#0c0814'; x.beginPath(); x.arc(X + r, Y + r, r, 0, 7); x.fill(); x.fillStyle = o.dim ? '#6a5a40' : '#ffb030'; x.beginPath(); x.arc(X + r, Y + r, r - 1, 0, 7); x.fill(); Font.drawC(x, String(KD.cost(c)), X + r, Y + r - 8, '#1a0c00', null, big ? 9 : 8);
   const nm = KD.name(c); let fz = big ? 9 : 8; while (fz > 6 && Font.width(nm, fz) > w - 4) fz--; const sm = !big && w < 36, ny = Y + (big ? 12 : sm ? 8 : 9); Font.drawC(x, nm, X + w / 2, ny, c.up ? '#a8ffa0' : '#fff4e0', '#000', fz);
   const z = big && h >= 74 ? 2 : 1, ic = KD.ICON[KD.iconOf(c.id)], iy = ny + (big ? 11 : sm ? 8 : 9); if (ic) x.drawImage(ic, Math.round(X + w / 2 - 6.5 * z), iy, 13 * z, 13 * z);
-  const ly = iy + 13 * z + (big ? 1 : 0); C.short(v).forEach((s, k) => { let q = big ? 8 : 7; while (q > 6 && Font.width(s, q) > w - 3) q--; Font.drawC(x, s, X + w / 2, ly + k * (big ? 10 : sm ? 8 : 9), '#e8e4f4', '#000', q); });
+  const ly = iy + 13 * z + (big ? 1 : 0), SL = KD.shortL(C, v), st3 = big ? 10 : sm ? 8 : 9, yMax = Y + h - (big && h >= 74 ? 8 : 3); SL.forEach((s, k) => { if (k >= 2 && ly + k * st3 + 12 > yMax) return; /* a 3rd line only where it fits (the big card) */ let q = big ? 8 : 7; while (q > 6 && Font.width(s, q) > w - 3) q--; Font.drawC(x, s, X + w / 2, ly + k * st3, '#e8e4f4', '#000', q); });
   if (big && h >= 74) Font.drawC(x, C.cls === 'nt' ? (gold ? '傳說' : qst ? '任務' : '共通') : CL ? CL.n : '', X + w / 2, Y + h - 12, edge || (CL ? CL.c : '#c8c8d8'), '#000', 7);
   if (o.dim) { x.fillStyle = 'rgba(0,0,0,0.38)'; x.fillRect(X, Y, w, h); } };
 /* ---------- after a battle ---------- */
