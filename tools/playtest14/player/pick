@@ -1,0 +1,7 @@
+#!/bin/bash
+# pick the card offer like a careful player: best rarity, skip when the deck is big and the offer is only common
+S=/tmp/claude-0/-home-claude--/1ac51525-de24-5872-9bf6-4fc024f0c0db/scratchpad; G=$S/pp/g
+$G ev "() => { const P = window.__pk; if (!P) return 'no offer'; const RW = { C: 1, U: 2, R: 3, L: 4, Q: 3 }; let bi = 0; P.ids.forEach((id, i) => { if ((RW[KD.CARDS[id].rar] || 0) > (RW[KD.CARDS[P.ids[bi]].rar] || 0)) bi = i; });
+  const n = KD.deck(__game.Game.st).length, best = KD.CARDS[P.ids[bi]], skip = n >= 22 && best.rar === 'C'; const G = __game;
+  const txt = P.title + '：' + P.ids.map(id => KD.CARDS[id].n + '(' + KD.CARDS[id].rar + ')').join('/') + ' → ' + (skip ? '跳過' : best.n);
+  if (skip) G.press('b', 2, 6); else { for (let i = 0; i <= bi; i++) G.press('right', 2, 3); G.press('a', 2, 6); } window.__pk = null; return txt; }"

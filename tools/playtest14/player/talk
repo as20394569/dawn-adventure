@@ -1,0 +1,9 @@
+#!/bin/bash
+# tap through dialogue; stop at a menu or when free; prints each line once
+G=/tmp/claude-0/-home-claude--/1ac51525-de24-5872-9bf6-4fc024f0c0db/scratchpad/pp/g; last=""
+for i in $(seq 1 ${1:-120}); do s=$($G st)
+  if echo "$s" | grep -q 'Menu\['; then echo "MENU $s"; exit; fi
+  t=$(echo "$s" | grep -o 'TextBox\\"[^\\]*' | head -1)
+  if [ -z "$t" ]; then if echo "$s" | grep -q '"ui":""'; then $G step 30 >/dev/null; s2=$($G st); if echo "$s2" | grep -q '"ui":""'; then echo "FREE $s2"; exit; fi; else $G step 10 >/dev/null; fi; continue; fi
+  [ "$t" != "$last" ] && echo "${t#TextBox\\\"}"; last="$t"; $G tap 88 230 4 >/dev/null; $G step 16 >/dev/null
+done; echo "LIMIT $($G st)"

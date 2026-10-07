@@ -33,9 +33,9 @@ KD.offer = (cls, kind, n = 3, rng = Math.random) => { const W = KD.RW[kind] || K
   return out; };
 // three cards on the screen: tap one to read it, tap again (or 「選這張」) to take it; 「跳過」 takes none
 KD.pick3 = function* (ids, title, o = {}) { const S = { sel: -1, done: false, res: null }, cw = 50, ch = 78, gap = 6, X0 = Math.round((W - (ids.length * cw + (ids.length - 1) * gap)) / 2), Y = 52;
-  const ui = { draw: x => { x.fillStyle = 'rgba(6,4,14,0.9)'; x.fillRect(0, 0, W, H); Font.drawC(x, title, W / 2, 14, '#ffe0a0', '#000', 11); if (o.sub) Font.drawC(x, o.sub, W / 2, 30, '#c8c0e0', '#000', 8);
+  const ui = { draw: x => { x.fillStyle = '#06040e'; x.fillRect(0, 0, W, H); Font.drawC(x, title, W / 2, 14, '#ffe0a0', '#000', 11); if (o.sub) Font.drawC(x, o.sub, W / 2, 30, '#c8c0e0', '#000', 8);
       ids.forEach((id, i) => { const X = X0 + i * (cw + gap), up = S.sel === i ? 6 : 0; KD.drawCard(x, { id, up: o.up ? 1 : 0 }, X, Y - up, cw, ch, { on: S.sel === i }); touchRegion(X, Y - up, cw, ch, () => { if (S.sel === i) S.res = id, S.done = true; else S.sel = i; }); });
-      const id = ids[S.sel]; if (id) { const C = KD.CARDS[id], c = { id, up: o.up ? 1 : 0 }; Font.draw(x, KD.name(c) + '　' + KD.TYPE[C.type].n + '・' + KD.cost(c) + ' 能量・' + KD.RAR[C.rar].n, 8, 138, KD.RAR[C.rar].c, '#000', 9);
+      const id = ids[S.sel]; if (id) { const C = KD.CARDS[id], c = { id, up: o.up ? 1 : 0 }; Font.draw(x, KD.name(c) + '　' + KD.typeN(c) + '・' + KD.cost(c) + ' 能量・' + KD.RAR[C.rar].n, 8, 138, KD.RAR[C.rar].c, '#000', 9);
         wrap15(KD.desc(c), W - 16, 9).slice(0, 4).forEach((L, k) => Font.draw(x, L, 8, 152 + k * 12, '#e8e4f4', '#000', 9));
         x.fillStyle = '#c86030'; x.fillRect(W / 2 - 60, 206, 56, 18); Font.drawC(x, o.okText || '選這張', W / 2 - 32, 208, '#fff4e0', '#000', 10); touchRegion(W / 2 - 60, 206, 56, 18, () => { S.res = id; S.done = true; }); }
       else Font.drawC(x, '點卡片看說明', W / 2, 150, '#8a93b3', '#000', 9);
@@ -109,15 +109,16 @@ KD.isTown = (st = Game.st) => { const M = MAPS[st.map]; return !!M && !(M.encoun
       if (Game.homeWarp && Game.ow) { Game.homeWarp = 0; yield* Game.ow.homeWarp(); }
     } finally { Game.inMenu13--; } }; }
 // a grid of cards (deck, workshop, shop, removal): returns the tapped index when `act` is given, else just browses
-KD.grid = function* (title, cards, o = {}) { const S = { sel: -1, scroll: 0, done: false, res: -1 }, cw = 38, ch = 54, cols = 4, vis = o.rows || 3, top = o.top || 22;
+KD.grid = function* (title, cards, o = {}) { const S = { sel: -1, scroll: 0, done: false, res: -1 }, cw = 38, ch = 54, cols = 4, gap = o.tag ? 13 : 5, vis = o.tag ? Math.min(2, o.rows || 2) : (o.rows || 3), top = o.top || 22; // v14.9: a price line under each card needs its own gap (the next row used to cover it)
   const ui = { draw: x => { screenBG(x); headerBar(x, title); if (o.right) Font.drawR(x, o.right(), W - 6, 4, UIC.muted, UIC.textSh, 9);
-      const rows = Math.ceil(cards.length / cols); for (let i = 0; i < cards.length; i++) { const r = Math.floor(i / cols) - S.scroll; if (r < 0 || r >= vis) continue; const X = 6 + (i % cols) * (cw + 4), Y = top + r * (ch + 5);
+      const rows = Math.ceil(cards.length / cols); for (let i = 0; i < cards.length; i++) { const r = Math.floor(i / cols) - S.scroll; if (r < 0 || r >= vis) continue; const X = 6 + (i % cols) * (cw + 4), Y = top + r * (ch + gap);
         if (o.hide && o.hide(cards[i])) { x.fillStyle = '#0c0814'; x.fillRect(X - 1, Y - 1, cw + 2, ch + 2); x.fillStyle = '#241c34'; x.fillRect(X, Y, cw, ch); x.fillStyle = '#3a3050'; x.fillRect(X + 3, Y + 3, cw - 6, ch - 6); Font.drawC(x, '？', X + cw / 2, Y + ch / 2 - 8, '#6a6088', null, 12); }
         else KD.drawCard(x, cards[i], X, Y, cw, ch, { on: S.sel === i, dim: o.dim ? o.dim(cards[i], i) : false }); if (o.tag) { const t = o.tag(cards[i], i); if (t) Font.drawC(x, t, X + cw / 2, Y + ch + 1, '#ffe0a0', '#000', 7); }
+        if (o.badge) { const t = o.badge(cards[i], i); if (t) { const bw = Math.ceil(Font.width(t, 7)) + 4; x.fillStyle = 'rgba(10,8,20,0.88)'; x.fillRect(X + cw - bw - 1, Y + 1, bw, 9); Font.drawR(x, t, X + cw - 3, Y, '#ffe8a0', '#000', 7); } }
         touchRegion(X, Y, cw, ch, () => { if (S.sel === i && o.act) { S.res = i; S.done = true; } else S.sel = i; }); }
       if (S.scroll > 0) { Font.drawC(x, '▲', W / 2, top - 8, '#c8a050', null, 8); touchRegion(40, top - 10, W - 80, 10, () => { S.scroll--; }); }
-      const by = top + vis * (ch + 5); if (S.scroll + vis < rows) { Font.drawC(x, '▼', W / 2, by - 4, '#c8a050', null, 8); touchRegion(40, by - 6, W - 80, 10, () => { S.scroll++; }); }
-      const c = cards[S.sel] && !(o.hide && o.hide(cards[S.sel])) ? cards[S.sel] : null; const dy = by + 6; if (c) { const C = KD.CARDS[c.id]; Font.draw(x, KD.name(c) + '　' + KD.TYPE[C.type].n + '・' + KD.cost(c) + ' 能量', 6, dy, KD.RAR[C.rar].c, '#000', 9);
+      const by = top + vis * (ch + gap); if (S.scroll + vis < rows) { Font.drawC(x, '▼', W / 2, by - 4, '#c8a050', null, 8); touchRegion(40, by - 6, W - 80, 10, () => { S.scroll++; }); }
+      const c = cards[S.sel] && !(o.hide && o.hide(cards[S.sel])) ? cards[S.sel] : null; const dy = by + 6; if (c) { const C = KD.CARDS[c.id]; Font.draw(x, KD.name(c) + '　' + KD.typeN(c) + '・' + KD.cost(c) + ' 能量', 6, dy, KD.RAR[C.rar].c, '#000', 9);
         wrap15((o.detail ? o.detail(c) : KD.desc(c)), W - 12, 8).slice(0, 3).forEach((L, k) => Font.draw(x, L, 6, dy + 12 + k * 10, '#e8e4f4', '#000', 8)); if (o.act) Font.drawR(x, o.act(c), W - 6, H - 12, '#a8e0ff', '#000', 8); }
       else Font.draw(x, o.hint || '點卡片看說明。', 6, dy + 4, UIC.muted, UIC.textSh, 8);
       x.fillStyle = '#4a3a50'; x.fillRect(4, H - 16, 36, 14); Font.drawC(x, '返回', 22, H - 15, '#e8e4f4', '#000', 9); touchRegion(4, H - 16, 36, 14, () => { S.done = true; }); } };
@@ -126,12 +127,13 @@ KD.grid = function* (title, cards, o = {}) { const S = { sel: -1, scroll: 0, don
     if (S.sel >= 0) { const r = Math.floor(S.sel / cols); if (r < S.scroll) S.scroll = r; if (r >= S.scroll + vis) S.scroll = r - vis + 1; } if (Input.pressed('a') && S.sel >= 0 && o.act) { S.res = S.sel; S.done = true; } }
   UI.remove(ui); Input.consume('a', 'b'); return S.res; };
 KD.sorted = L => L.slice().sort((a, b) => 'atkskpow'.indexOf(KD.CARDS[a.id].type.slice(0, 2)) - 'atkskpow'.indexOf(KD.CARDS[b.id].type.slice(0, 2)) || KD.cost(a) - KD.cost(b) || (a.id < b.id ? -1 : 1) || (b.up || 0) - (a.up || 0));
-KD.deckScreen = function* () { const st = Game.st; yield* KD.grid('牌組・' + KD.clsOf(st).n, KD.sorted(KD.deck(st)), { right: () => KD.deck(st).length + ' 張', rows: 3 }); };
+KD.deckScreen = function* () { const st = Game.st, G = []; for (const c of KD.sorted(KD.deck(st))) { const g = G[G.length - 1]; if (g && g.id === c.id && (g.up || 0) === (c.up || 0)) g.n++; else G.push({ id: c.id, up: c.up || 0, n: 1 }); } // v14.9: the same card shows once with ×N (a 60-card deck used to be 15 pages of 斬擊)
+  yield* KD.grid('牌組・' + KD.clsOf(st).n, G, { right: () => KD.deck(st).length + ' 張', rows: 3, badge: c => c.n > 1 ? '×' + c.n : '' }); };
 KD.statusScreen = function* () { const st = Game.st, CL = KD.clsOf(st), K = KD.state(st), D = KD.deck(st); let done = false;
   const cnt = t => D.filter(c => KD.CARDS[c.id].type === t).length;
   const ui = { draw: x => { screenBG(x); headerBar(x, '冒險者資料'); x.drawImage(heroFramesFor(st).down[0], 0, 0, 16, 22, 10, 26, 32, 44);
       Font.draw(x, st.name, 48, 26, UIC.text, UIC.textSh, 12); Font.draw(x, CL.n, 48, 42, CL.c, UIC.textSh, 11); Font.draw(x, 'HP ' + st.hp + ' / ' + KD.maxHp(st), 48, 58, UIC.good, UIC.textSh, 10);
-      Font.draw(x, '（職業 ' + CL.hp + '＋頭目 ' + (K.hpPlus || 0) + '）', 48, 72, UIC.muted, UIC.textSh, 8);
+      { const bo = st.boost || {}, bl = (typeof KD.BOOST_HP === 'number' ? KD.BOOST_HP : 0) * ((bo.vit || 0) + (bo.str || 0)); Font.draw(x, '（職業 ' + CL.hp + '＋頭目 ' + (K.hpPlus || 0) + (bl ? '＋祝福 ' + bl : '') + '）', 48, 72, UIC.muted, UIC.textSh, 8); }
       Font.draw(x, '職業能力「' + CL.ab + '」', 8, 90, '#ffd090', UIC.textSh, 10); wrap15(CL.abd, W - 16, 9).forEach((L, k) => Font.draw(x, L, 8, 104 + k * 11, UIC.text, UIC.textSh, 9));
       Font.draw(x, '牌組 ' + D.length + ' 張（攻擊 ' + cnt('atk') + '・技能 ' + cnt('skl') + '・能力 ' + cnt('pow') + '）', 8, 136, UIC.text, UIC.textSh, 9);
       Font.draw(x, '升級過的卡 ' + D.filter(c => c.up).length + ' 張', 8, 150, UIC.muted, UIC.textSh, 9); Font.draw(x, '打倒的頭目 ' + KD.bossN(st), 8, 164, UIC.muted, UIC.textSh, 9); Font.draw(x, '金幣 ' + st.money + ' G', 8, 178, UIC.warm, UIC.textSh, 9);

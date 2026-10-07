@@ -161,17 +161,18 @@ BPK.discardAnim = function () { this.hand.forEach((c, i) => this.ghostK(c, c.ax 
     for (const g of this.ghosts || []) { const k = Math.min(1, ++g.t / g.T), e = 1 - Math.pow(1 - k, 3), s = 1 + (g.s1 - 1) * e, X = lerp(g.x0, g.x1, e), Y = lerp(g.y0, g.y1, e);
       x.globalAlpha = g.fade ? Math.max(0, Math.min(1, (1 - k) * 2.2)) : 1; KD.drawCard(x, g.c, Math.round(X), Math.round(Y), Math.round(32 * s), Math.round(50 * s), {}); x.globalAlpha = 1; }
     this.ghosts = (this.ghosts || []).filter(g => g.t < g.T);
-    const N = this.note16; if (N && N.t++ < 70) { const s = N.s.length > 22 ? N.s.slice(0, 22) + '…' : N.s, w = Math.min(W - 8, Font.width(s, 9) + 12); x.globalAlpha = Math.min(1, (70 - N.t) / 12); x.fillStyle = 'rgba(10,8,20,0.85)'; x.fillRect((W - w) / 2, 40, w, 14); Font.drawC(x, s, W / 2, 41, '#fff4d8', '#000', 9); x.globalAlpha = 1; } }; }
+    const N = this.note16; if (N && N.t++ < 70) { const s = N.s.length > 22 ? N.s.slice(0, 22) + '…' : N.s, w = Math.min(W - 8, Font.width(s, 9) + 12); x.globalAlpha = Math.min(1, (70 - N.t) / 12); x.fillStyle = 'rgba(10,8,20,0.85)'; x.fillRect((W - w) / 2, 157, w, 14); Font.drawC(x, s, W / 2, 158, '#fff4d8', '#000', 9); /* v14.9: was y 40, on top of the boss plate and the monsters' intents */ x.globalAlpha = 1; } }; }
 BPK.handK = function (x) { const n = this.hand.length, cw = 32, ch = 50, Y = 204, my = this.core.need && this.core.need.unit && this.core.need.unit.hero && this.idle, f = this.fK || 0;
   const order = [...Array(n).keys()].filter(i => i !== this.sel).concat(this.sel >= 0 && this.sel < n ? [this.sel] : []);
   for (const i of order) { const c = this.hand[i], P = this.handPos(i, n), up = i === this.sel ? 10 : 0; if (c.at != null && f < c.at) continue;
     c.ax = c.ax == null ? P.x : c.ax + (P.x - c.ax) * 0.35; c.ay = c.ay == null ? Y - up : c.ay + (Y - up - c.ay) * 0.35; if (Math.abs(c.ax - P.x) < 0.5) c.ax = P.x; if (Math.abs(c.ay - (Y - up)) < 0.5) c.ay = Y - up;
     KD.drawCard(x, c, Math.round(c.ax), Math.round(c.ay), cw, ch, { dim: !this.okK(c), on: i === this.sel });
     if (my) touchRegion(P.x, Y - up, i === n - 1 || i === this.sel ? cw : Math.ceil(P.step), ch, () => { this.tapK = { k: 'card', i }; }); }
-  if (this.sel >= 0 && this.hand[this.sel]) { const c = this.hand[this.sel], C = KD.CARDS[c.id], T = KD.TYPE[C.type], K = KD.keyLines(c);
+  if (this.tgtMode && my) { const s = '點要打的那一隻魔物', w = Font.width(s, 8) + 10; x.fillStyle = 'rgba(30,24,44,0.92)'; x.fillRect((W - w) / 2, 142, w, 12); Font.drawC(x, s, W / 2, 142, '#ffe8a0', '#000', 8); }
+  else if (this.sel >= 0 && this.hand[this.sel]) { const c = this.hand[this.sel], C = KD.CARDS[c.id], T = KD.TYPE[C.type], K = KD.keyLines(c);
     if (K.length) { const kh = K.length * 10 + 4; x.fillStyle = 'rgba(30,24,44,0.94)'; x.fillRect(8, 122 - kh, W - 16, kh); K.forEach((t, k) => Font.draw(x, t, 12, 122 - kh + 1 + k * 10, '#c8c0e0', '#000', 7)); }
     x.fillStyle = 'rgba(12,8,24,0.94)'; x.fillRect(8, 124, W - 16, 48); x.fillStyle = KD.RAR[C.rar].c; x.fillRect(8, 124, W - 16, 1);
-    Font.draw(x, KD.name(c) + '　' + T.n + '・' + KD.cost(c) + ' 能量', 12, 125, c.up ? '#a8ffa0' : '#fff0d0', '#000', 9);
+    Font.draw(x, KD.name(c) + '　' + KD.typeN(c) + '・' + KD.cost(c) + ' 能量', 12, 125, c.up ? '#a8ffa0' : '#fff0d0', '#000', 9);
     wrap15(KD.desc(c), W - 26, 8).slice(0, 3).forEach((L, k) => Font.draw(x, L, 12, 137 + k * 10, '#e8e4f4', '#000', 8));
     Font.drawR(x, this.tgtMode ? '點魔物出牌' : '再點一次出牌', W - 12, 163, '#a8e0ff', '#000', 7); }
   if (this.tgtMode && my) for (const f2 of this.foes()) { const C = this.center(f2); if (f2.id === this.tgtId) { x.strokeStyle = '#ffe070'; x.lineWidth = 1; x.strokeRect(C.x - 20, C.y - 22, 40, 44); } touchRegion(C.x - 24, C.y - 30, 48, 60, () => { this.tapK = { k: 'tgt', id: f2.id }; }); } };

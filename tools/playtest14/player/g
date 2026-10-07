@@ -1,0 +1,13 @@
+#!/bin/bash
+# g ev 'js' | g tap x y [after] | g key k [n] [after] | g shot name | g step n | g errs | g st
+H=127.0.0.1:${PORT:-9333}; C="curl -s --noproxy *"
+case "$1" in
+  ev) $C -X POST --data-binary "$2" "$H/ev";;
+  tap) $C "$H/tap?x=$2&y=$3&after=${4:-8}";;
+  key) $C "$H/key?k=$2&n=${3:-2}&after=${4:-6}";;
+  shot) $C "$H/shot?name=$2";;
+  step) $C "$H/step?n=$2";;
+  errs) $C "$H/errs";;
+  st) $C -X POST --data-binary "() => { const G = __game, s = G.Game.scene, st = G.Game.st; return { sc: s && s.constructor.name, map: st && st.map, x: st && st.x, y: st && st.y, hp: st && st.hp, money: st && st.money, ui: G.UI.stack.map(w => w.constructor.name + (w.items ? '[' + w.items.map(i => i.t).join('/') + ']' : '') + (w.lines ? '\"' + w.lines.join('|').slice(0, 80) + '\"' : '')).join(' ; ') }; }" "$H/ev";;
+esac
+echo

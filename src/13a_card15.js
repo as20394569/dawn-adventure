@@ -221,7 +221,7 @@ const H0_15 = H;
 const TYPE15 = { atk: { n: '攻擊', c: '#d05038', bg: '#3a1a1c' }, skl: { n: '技能', c: '#4a80d8', bg: '#16203a' }, pow: { n: '能力', c: '#d8a830', bg: '#33280c' } };
 const RAR15 = { start: '#8a8a9a', C: '#c0c8d8', U: '#58b8ff', R: '#ffb040' };
 const POT15 = { heal: { n: '回復藥：回 20 HP', c: '#e05050' }, str: { n: '力量藥水：這場戰鬥力量 +2', c: '#ff9a30' }, blk: { n: '鐵壁藥水：12 格擋', c: '#5a8ae0' } };
-function wrap15(s, w, sz) { const out = []; let cur = ''; for (const ch of s) { if (Font.width(cur + ch, sz) > w) { out.push(cur); cur = ch; } else cur += ch; } if (cur) out.push(cur); return out; }
+function wrap15(s, w, sz) { const out = []; let cur = ''; for (const ch of s) { if (cur && /[。，、！？）」』：；…]/.test(ch)) { cur += ch; continue; } /* v14.9: closing punctuation hangs on the line instead of starting a new one alone */ if (Font.width(cur + ch, sz) > w) { out.push(cur); cur = ch; } else cur += ch; } if (cur) out.push(cur); return out; }
 function drawCard15(x, c, X, Y, w, h, o = {}) { const C = CARD15[c.id], T = TYPE15[C.type], v = cardVal15(c), big = w >= 44;
   x.fillStyle = '#0c0814'; x.fillRect(X - 1, Y - 1, w + 2, h + 2); x.fillStyle = T.bg; x.fillRect(X, Y, w, h); x.fillStyle = o.on ? '#ffe070' : T.c; x.fillRect(X, Y, w, 1); x.fillRect(X, Y + h - 1, w, 1); x.fillRect(X, Y, 1, h); x.fillRect(X + w - 1, Y, 1, h);
   x.fillStyle = RAR15[C.rar]; x.fillRect(X + w - 4, Y + 2, 2, 2);

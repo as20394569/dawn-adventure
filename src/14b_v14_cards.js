@@ -11,6 +11,8 @@ KD.CLASSES = {
 KD.CLS_ORDER = ['sw', 'rg', 'mg', 'bk'];
 KD.RAR = { B: { n: '基本', c: '#9a9aaa' }, C: { n: '普通', c: '#d0d8e8' }, U: { n: '稀有', c: '#58b8ff' }, R: { n: '史詩', c: '#c878ff' }, L: { n: '傳說', c: '#ffb040' }, Q: { n: '任務', c: '#5ce0b8' }, T: { n: '衍生', c: '#9a9aaa' } };
 KD.TYPE = { atk: { n: '攻擊', c: '#d05038', bg: '#3a1a1c' }, skl: { n: '技能', c: '#4a80d8', bg: '#16203a' }, pow: { n: '能力', c: '#d8a830', bg: '#33280c' } };
+// v14.9: attack cards say whether they are 物理 or 魔法 (monsters' 物防／魔防 and the families' resistances go by it)
+KD.typeN = c => { const C = KD.CARDS[c.id]; if (!C) return ''; const T = KD.TYPE[C.type]; if (C.type !== 'atk') return T.n; const D = DEF.skills['k14_' + c.id]; return T.n + (D && D.cat === '特' ? '（魔法）' : '（物理）'); };
 KD.CARDS = {};
 const KC = (id, cls, n, type, rar, cost, fx, tg, b, u, desc, short, run, o = {}) => { KD.CARDS[id] = { id, cls, n, type, rar, cost, fx, tg, b, u, desc, short, run, ...o }; };
 /* ---------- helpers the cards use (cb = the battle screen, core = the battle core, tg = the chosen target(s), v = this card's numbers) ---------- */

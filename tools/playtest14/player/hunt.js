@@ -1,0 +1,5 @@
+() => { window.__hunt = () => { const G = __game, ow = G.Game.scene; if (!ow.p) return 'no-ow'; const P = ow.p, L = (ow.roam12 && ow.roam12.list) || []; if (!L.length) return 'none';
+  const key = (x, y) => x + ',' + y, seen = { [key(P.x, P.y)]: 1 }, q = [[P.x, P.y, 0]], mons = new Set(L.map(e => key(Math.round(e.x), Math.round(e.y))));
+  while (q.length) { const [x, y, d] = q.shift(); for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const nx = x + dx, ny = y + dy, k = key(nx, ny); if (mons.has(k)) { const r = __walk(x, y); if (r !== 'done') return r; const dir = dx > 0 ? 'right' : dx < 0 ? 'left' : dy > 0 ? 'down' : 'up'; for (let i = 0; i < 6; i++) { G.Input.set(dir, true); G.step(4); G.Input.set(dir, false); G.step(2); if (G.Game.scene !== ow) return 'battle'; } for (let i = 0; i < 40; i++) { G.step(3); if (G.Game.scene !== ow) return 'battle'; } return 'touched-no-battle'; }
+      if (seen[k] || nx < 0 || ny < 0 || nx >= ow.map.w || ny >= ow.map.h) continue; seen[k] = 1; if (ow.tileAt(nx, ny) === 'L' || ow.solidAt(nx, ny) || ow.map.doors[k]) continue; q.push([nx, ny, d + 1]); } }
+  return 'unreachable'; }; return 'ok'; }

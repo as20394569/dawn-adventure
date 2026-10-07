@@ -1,0 +1,6 @@
+#!/bin/bash
+# wait until it is my turn (idle with a hand) or the battle is over; tap through text on the way; then print the battle state
+S=/tmp/claude-0/-home-claude--/1ac51525-de24-5872-9bf6-4fc024f0c0db/scratchpad; G=$S/pp/g
+for i in $(seq 1 150); do r=$($G ev "() => { const G = __game, b = G.Game.scene; if (b.constructor.name !== 'Battle') return 'OVER'; const tb = G.UI.stack.find(w => w.lines); if (tb) return 'TEXT ' + tb.lines.join(''); if (G.UI.stack.length) return 'UI ' + G.UI.stack.map(w => w.constructor.name).join(); if (b.core.result) return 'RESULT'; if (b.idle && b.hand && b.hand.length && b.core.need && b.core.need.unit && b.core.need.unit.hero) return 'MY'; return 'WAIT'; }")
+  case "$r" in *MY*) $G step 20 >/dev/null; $G ev "$(cat $S/pp/bs.js)" | sed 's/\\n/\n/g'; exit;; *OVER*) echo OVER; exit;; *TEXT*) echo "$r"; $G tap 88 230 20 >/dev/null;; *UI*|*RESULT*) echo "$r"; exit;; *) $G step 15 >/dev/null;; esac; done
+echo TIMEOUT

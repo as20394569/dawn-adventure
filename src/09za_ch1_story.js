@@ -249,7 +249,7 @@ Object.assign(Events, {
     yield* say(f.creekQ === 3 ? '諾拉：「爸爸好起來了！……那個，緞帶你有戴著嗎？」' : f.creekQ === 1 ? '諾拉：「清泉草長在碧溪谷的最上游……拜託你了。」' : (f.hillsQ || 0) >= 2 ? '諾拉：「真的很謝謝你！……爸爸說，要把最好的麵粉留給你。」' : '諾拉：「爸爸在山頂……拜託你了！」');
   },
   creekEnter(ow) {
-    const st = Game.st, f = st.flags; if (f.creekIn || !f.creekQ) return null;
+    const st = Game.st, f = st.flags; if (f.creekIn || !f.creekQ || f.creekTop) return null; // v14.9: not on the way back from the cleaned source
     return (function* () {
       f.creekIn = 1; yield* wait(10);
       yield* sayAll(['溪水是黑色的。水面上漂著一層油亮的光，好幾條魚翻著白肚浮在岸邊……']);

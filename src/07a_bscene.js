@@ -186,7 +186,7 @@ class Battle {
     const fam = FAMILIES[F.fam], rev = this.revealed(F); if (fam && fam.weak.length) { const s = '弱 ' + (rev ? fam.weak.join('・') : '？'); x.fillStyle = 'rgba(10,8,20,0.7)'; const tw = Font.width(s, 8) + 8; x.fillRect(X + 4, py + 33 + pe, tw, 11); Font.draw(x, s, X + 8, py + 30.5 + pe, rev ? '#ffd070' : UIC.muted, UIC.textSh, 8); }
     if (UI_PX.icons && UI_PX.icons.ok) drawStageIcons(x, F, (W + w) / 2 - 4 - Math.min(4, BR.STAT_KEYS.filter(k => F.st['stage_' + k]).length) * (ICON_SZ + 2), py + 34 + pe);
     if (F.broken) Font.drawC(x, '— 破防中 —', W / 2, py + 45 + pe, Math.floor(this.t / 6) % 2 ? '#ffd040' : '#ff8a50', '#000000', 10);
-    else if (F.charging) Font.drawC(x, '蓄力中！下回合發動', W / 2, py + 45 + pe, Math.floor(this.t / 8) % 2 ? '#ff5a5a' : '#ffb0a0', '#000000', 10);
+    else if (F.charging && !this.k14) Font.drawC(x, '蓄力中！下回合發動', W / 2, py + 45 + pe, Math.floor(this.t / 8) % 2 ? '#ff5a5a' : '#ffb0a0', '#000000', 10);
     x.globalAlpha = 1;
   }
   drawPlateSmall(x, v, a, i, n) {

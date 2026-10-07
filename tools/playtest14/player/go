@@ -1,0 +1,11 @@
+#!/bin/bash
+# go x y : walk there like a player; wild battles on the way are auto-played (logged with HP), story text is printed
+S=/tmp/claude-0/-home-claude--/1ac51525-de24-5872-9bf6-4fc024f0c0db/scratchpad; G=$S/pp/g
+for i in $(seq 1 30); do s=$($G st)
+  if echo "$s" | grep -q '"sc":"Battle"'; then f=$($G ev "() => { const c = __game.Game.scene.core; return c ? c.side('B').map(u => u.name + ' Lv' + u.lv + ' ' + u.max.hp + 'HP').join('+') : ''; }"); h0=$(echo "$s" | grep -o '"hp":[0-9]*'); $G ev "() => { __game.Game.autoPlay = () => null; return 1; }" >/dev/null
+    for k in $(seq 1 400); do r=$($G ev "() => { const G = __game, b = G.Game.scene; if (b.constructor.name !== 'Battle') return 'OVER'; const tb = G.UI.stack.find(w => w.lines); if (tb) { G.press('a', 2, 2); return 'T'; } if (G.UI.stack.length) return 'UI ' + G.UI.stack.map(w => w.constructor.name).join(); G.step(10); return 'W'; }"); case "$r" in *OVER*) break;; *UI*) echo "  $($S/pp/pick)";; esac; done
+    $G ev "() => { __game.Game.autoPlay = null; return 1; }" >/dev/null; echo "  BATTLE $f  hp ${h0#*:} -> $($G st | grep -o '"hp":[0-9]*' | cut -d: -f2)"; continue; fi
+  if echo "$s" | grep -q 'Menu\[\|"ui":"Object'; then echo "STOP $s"; exit; fi
+  if echo "$s" | grep -q 'TextBox'; then $S/pp/talk 40 | grep -v '^FREE'; continue; fi
+  r=$($G ev "() => __walk($1, $2)"); case "$r" in *done*) echo "ARRIVED $($G st | cut -c1-120)"; exit;; *nopath*) echo "NOPATH $r"; exit;; esac; $G step 10 >/dev/null
+done; echo "GAVEUP $($G st)"

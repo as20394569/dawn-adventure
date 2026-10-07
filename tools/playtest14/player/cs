@@ -1,0 +1,8 @@
+#!/bin/bash
+# cs name : canvas-only screenshot (exact game pixels, 704x1024 → saved half size 352x512)
+S=/tmp/claude-0/-home-claude--/1ac51525-de24-5872-9bf6-4fc024f0c0db/scratchpad
+curl -s --noproxy '*' -X POST --data-binary "() => { __game.step(0); return document.getElementById('screen').toDataURL(); }" 127.0.0.1:9333/ev | python3 -c "
+import sys,json,base64,io
+from PIL import Image
+d=json.load(sys.stdin); im=Image.open(io.BytesIO(base64.b64decode(d.split(',')[1]))); im=im.resize((im.width//2, im.height//2), Image.NEAREST); im.save('$S/pp/shots/$1.png')"
+echo "$1"
