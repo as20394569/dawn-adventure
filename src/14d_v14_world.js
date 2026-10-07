@@ -8,10 +8,12 @@ KD.state = (st = Game.st) => { if (!st) return { cls: 'sw', decks: {}, hpPlus: 0
 KD.clsKey = (st = Game.st) => { const k = KD.state(st).cls; return KD.CLASSES[k] ? k : 'sw'; };
 KD.clsOf = (st = Game.st) => KD.CLASSES[KD.clsKey(st)];
 KD.startDeck = cls => { const out = []; for (const [id, n] of KD.CLASSES[cls].start) for (let i = 0; i < n; i++) out.push({ id, up: 0 }); return out; };
-KD.deck = (st = Game.st) => { const K = KD.state(st), k = KD.clsKey(st); if (!K.decks[k] || !K.decks[k].length) K.decks[k] = KD.startDeck(k); K.decks[k] = K.decks[k].filter(c => KD.CARDS[c.id]); return K.decks[k]; };
+KD.deck = (st = Game.st) => { const K = KD.state(st), k = KD.clsKey(st); if (!K.decks[k] || !K.decks[k].length) { K.decks[k] = KD.startDeck(k); KD.markSeen(K, K.decks[k]); } K.decks[k] = K.decks[k].filter(c => KD.CARDS[c.id]); return K.decks[k]; };
+KD.markSeen = (K, L) => { K.seen = K.seen || {}; for (const c of L) K.seen[c.id] = 1; };
 KD.maxHp = (st = Game.st) => KD.clsOf(st).hp + (KD.state(st).hpPlus || 0);
 KD.bossN = (st = Game.st) => Object.keys(KD.state(st).boss).length;
-KD.addCard = (st, c) => { KD.deck(st).push({ id: c.id || c, up: c.up ? 1 : 0 }); };
+KD.addCard = (st, c) => { const id = c.id || c; KD.deck(st).push({ id, up: c.up ? 1 : 0 }); const K = KD.state(st); (K.seen = K.seen || {})[id] = 1; };
+KD.wildRate = (cfg = {}, st = Game.st) => Math.min(0.8, 0.3 + (cfg.aevGold ? 0.2 : 0) + (cfg.aevExp && !cfg.aevGold ? 0.2 : 0) + (st && /^cave6_/.test(st.map || '') ? 0.15 : 0));
 KD.gW = lv => Math.round(KD.tab([[1, 25], [7, 64], [12, 168], [17, 400], [22, 600], [30, 700], [45, 700], [60, 780]], lv));
 KD.price = (rar, st = Game.st) => Math.round(KD.gW(st.lv || 1) * ({ C: 3, U: 5, R: 10, L: 20 }[rar] || 3) / 5) * 5;
 KD.gearGold = g => { try { return Math.max(10, typeof gearSell === 'function' ? gearSell(g) : 50 * (g.q || 1)); } catch (e) { return 50; } };
@@ -27,11 +29,11 @@ KD.offer = (cls, kind, n = 3, rng = Math.random) => { const W = KD.RW[kind] || K
     const L = (rng() < 0.25 && nt.length) || !mine.length ? nt : mine; if (L.length) out.push(L[Math.floor(rng() * L.length)]); }
   return out; };
 // three cards on the screen: tap one to read it, tap again (or 「選這張」) to take it; 「跳過」 takes none
-KD.pick3 = function* (ids, title, o = {}) { const S = { sel: -1, done: false, res: null }, cw = 50, ch = 72, gap = 6, X0 = Math.round((W - (ids.length * cw + (ids.length - 1) * gap)) / 2), Y = 52;
+KD.pick3 = function* (ids, title, o = {}) { const S = { sel: -1, done: false, res: null }, cw = 50, ch = 78, gap = 6, X0 = Math.round((W - (ids.length * cw + (ids.length - 1) * gap)) / 2), Y = 52;
   const ui = { draw: x => { x.fillStyle = 'rgba(6,4,14,0.9)'; x.fillRect(0, 0, W, H); Font.drawC(x, title, W / 2, 14, '#ffe0a0', '#000', 11); if (o.sub) Font.drawC(x, o.sub, W / 2, 30, '#c8c0e0', '#000', 8);
       ids.forEach((id, i) => { const X = X0 + i * (cw + gap), up = S.sel === i ? 6 : 0; KD.drawCard(x, { id, up: o.up ? 1 : 0 }, X, Y - up, cw, ch, { on: S.sel === i }); touchRegion(X, Y - up, cw, ch, () => { if (S.sel === i) S.res = id, S.done = true; else S.sel = i; }); });
-      const id = ids[S.sel]; if (id) { const C = KD.CARDS[id], c = { id, up: o.up ? 1 : 0 }; Font.draw(x, KD.name(c) + '　' + KD.TYPE[C.type].n + '・' + KD.cost(c) + ' 能量・' + KD.RAR[C.rar].n, 8, 134, KD.RAR[C.rar].c, '#000', 9);
-        wrap15(KD.desc(c), W - 16, 9).slice(0, 4).forEach((L, k) => Font.draw(x, L, 8, 148 + k * 12, '#e8e4f4', '#000', 9));
+      const id = ids[S.sel]; if (id) { const C = KD.CARDS[id], c = { id, up: o.up ? 1 : 0 }; Font.draw(x, KD.name(c) + '　' + KD.TYPE[C.type].n + '・' + KD.cost(c) + ' 能量・' + KD.RAR[C.rar].n, 8, 138, KD.RAR[C.rar].c, '#000', 9);
+        wrap15(KD.desc(c), W - 16, 9).slice(0, 4).forEach((L, k) => Font.draw(x, L, 8, 152 + k * 12, '#e8e4f4', '#000', 9));
         x.fillStyle = '#c86030'; x.fillRect(W / 2 - 60, 206, 56, 18); Font.drawC(x, o.okText || '選這張', W / 2 - 32, 208, '#fff4e0', '#000', 10); touchRegion(W / 2 - 60, 206, 56, 18, () => { S.res = id; S.done = true; }); }
       else Font.drawC(x, '點卡片看說明', W / 2, 150, '#8a93b3', '#000', 9);
       if (!o.noSkip) { x.fillStyle = '#4a3a50'; x.fillRect(W / 2 + 4, 206, 56, 18); Font.drawC(x, '跳過', W / 2 + 32, 208, '#e8e4f4', '#000', 10); touchRegion(W / 2 + 4, 206, 56, 18, () => { S.res = null; S.done = true; }); } } };
@@ -49,7 +51,7 @@ KD.showCard = function* (id, title) { let done = false, t = 0; const ui = { draw
 KD.battleRewards = function* (b) { const st = Game.st, K = KD.state(st), cfg = b.cfg || {}, kind = cfg.kind || 'wild', sp = cfg.id || (b.F && b.F.sp), rng = () => b.core.rng.next();
   if (kind === 'boss' && sp && !cfg.rematch && !K.boss[sp] && KD.BOSS_CARD[sp]) { K.boss[sp] = 1; K.hpPlus = (K.hpPlus || 0) + 5; st.hp = Math.min(KD.maxHp(st), st.hp + 5); Sound.jingle('levelup');
     yield* b.msg('打倒了頭目！最大 HP +5（現在 ' + KD.maxHp(st) + '）', { keep14: 1, hold: 40 }); const lg = KD.BOSS_CARD[sp]; KD.addCard(st, { id: lg }); yield* KD.showCard(lg, '得到了傳說卡！'); KD.dress(st); }
-  const k = kind === 'boss' ? 'boss' : kind === 'elite' || cfg.champ12 ? 'elite' : rng() < 0.3 ? 'wild' : null; if (!k) return;
+  const k = kind === 'boss' ? 'boss' : kind === 'elite' || cfg.champ12 ? 'elite' : rng() < KD.wildRate(cfg, st) ? 'wild' : null; if (!k) return;
   yield* KD.pickFlow(KD.offer(KD.clsKey(st), k, 3, rng), k === 'boss' ? '頭目的獎勵：選一張卡' : k === 'elite' ? '菁英的獎勵：選一張卡' : '得到了卡牌！選一張', { sub: '加入「' + KD.clsOf(st).n + '」的牌組' }); };
 /* ---------- the look: the class's weapon (better-looking as more bosses fall) ---------- */
 KD.dress = (st = Game.st) => { const CL = KD.clsOf(st), L = (typeof BASE11 !== 'undefined' && BASE11.weapon[CL.wkind]) || []; if (!L.length) return; const t = Math.max(0, Math.min(L.length - 1, Math.floor(KD.bossN(st) / 2)));
@@ -65,7 +67,7 @@ classSelectScreen = function* () { while (true) { const i = yield* ask('選一�
 KD.KIND_CLS = { 劍: 'sw', 雙劍: 'sw', 單手盾: 'sw', 雙盾: 'sw', 長槍: 'sw', 短刀: 'rg', 雙刀: 'rg', 火槍: 'rg', 法杖: 'mg', 魔導書: 'mg', 樂器: 'mg', 斧: 'bk', 拳套: 'bk' };
 KD.migrate = (st) => { if (!st || st.k14) return null; const kind = typeof mainKind11 === 'function' ? mainKind11(st) : null, K = KD.state(st); K.cls = KD.KIND_CLS[kind] || 'sw'; K.old = 1;
   for (const sp in KD.BOSS_CARD) if (st.dex && st.dex[sp] && st.dex[sp].won > 0) { K.boss[sp] = 1; K.hpPlus += 5; }
-  const deck = KD.deck(st); for (const sp in K.boss) deck.push({ id: KD.BOSS_CARD[sp], up: 0 });
+  const deck = KD.deck(st); for (const sp in K.boss) deck.push({ id: KD.BOSS_CARD[sp], up: 0 }); KD.markSeen(K, deck);
   let gold = 0; const keep = new Set(Object.values(st.equip || {})); st.gear = (st.gear || []).filter(g => { if (keep.has(g.u)) { g.k14c = 1; return true; } gold += KD.gearGold(g); return false; });
   for (const k in st.bag || {}) { const it = ITEMS[k]; if (it && ['mp', 'boost', 'tp', 'reset'].includes(it.use) && st.bag[k] > 0) { gold += Math.round((it.price || 100) * 0.5) * st.bag[k]; delete st.bag[k]; } }
   if (st.flags) { st.flags.tutMat12 = 1; const told = st.flags.zjTold12 || (st.flags.zjTold12 = {}); for (const q in KD.TEACH) if (st.flags[q]) told[q] = 1; }
@@ -107,11 +109,12 @@ KD.isTown = (st = Game.st) => { const M = MAPS[st.map]; return !!M && !(M.encoun
 KD.grid = function* (title, cards, o = {}) { const S = { sel: -1, scroll: 0, done: false, res: -1 }, cw = 38, ch = 54, cols = 4, vis = o.rows || 3, top = o.top || 22;
   const ui = { draw: x => { screenBG(x); headerBar(x, title); if (o.right) Font.drawR(x, o.right(), W - 6, 4, UIC.muted, UIC.textSh, 9);
       const rows = Math.ceil(cards.length / cols); for (let i = 0; i < cards.length; i++) { const r = Math.floor(i / cols) - S.scroll; if (r < 0 || r >= vis) continue; const X = 6 + (i % cols) * (cw + 4), Y = top + r * (ch + 5);
-        KD.drawCard(x, cards[i], X, Y, cw, ch, { on: S.sel === i, dim: o.dim ? o.dim(cards[i], i) : false }); if (o.tag) { const t = o.tag(cards[i], i); if (t) Font.drawC(x, t, X + cw / 2, Y + ch + 1, '#ffe0a0', '#000', 7); }
+        if (o.hide && o.hide(cards[i])) { x.fillStyle = '#0c0814'; x.fillRect(X - 1, Y - 1, cw + 2, ch + 2); x.fillStyle = '#241c34'; x.fillRect(X, Y, cw, ch); x.fillStyle = '#3a3050'; x.fillRect(X + 3, Y + 3, cw - 6, ch - 6); Font.drawC(x, '？', X + cw / 2, Y + ch / 2 - 8, '#6a6088', null, 12); }
+        else KD.drawCard(x, cards[i], X, Y, cw, ch, { on: S.sel === i, dim: o.dim ? o.dim(cards[i], i) : false }); if (o.tag) { const t = o.tag(cards[i], i); if (t) Font.drawC(x, t, X + cw / 2, Y + ch + 1, '#ffe0a0', '#000', 7); }
         touchRegion(X, Y, cw, ch, () => { if (S.sel === i && o.act) { S.res = i; S.done = true; } else S.sel = i; }); }
       if (S.scroll > 0) { Font.drawC(x, '▲', W / 2, top - 8, '#c8a050', null, 8); touchRegion(40, top - 10, W - 80, 10, () => { S.scroll--; }); }
       const by = top + vis * (ch + 5); if (S.scroll + vis < rows) { Font.drawC(x, '▼', W / 2, by - 4, '#c8a050', null, 8); touchRegion(40, by - 6, W - 80, 10, () => { S.scroll++; }); }
-      const c = cards[S.sel]; const dy = by + 6; if (c) { const C = KD.CARDS[c.id]; Font.draw(x, KD.name(c) + '　' + KD.TYPE[C.type].n + '・' + KD.cost(c) + ' 能量', 6, dy, KD.RAR[C.rar].c, '#000', 9);
+      const c = cards[S.sel] && !(o.hide && o.hide(cards[S.sel])) ? cards[S.sel] : null; const dy = by + 6; if (c) { const C = KD.CARDS[c.id]; Font.draw(x, KD.name(c) + '　' + KD.TYPE[C.type].n + '・' + KD.cost(c) + ' 能量', 6, dy, KD.RAR[C.rar].c, '#000', 9);
         wrap15((o.detail ? o.detail(c) : KD.desc(c)), W - 12, 8).slice(0, 3).forEach((L, k) => Font.draw(x, L, 6, dy + 12 + k * 10, '#e8e4f4', '#000', 8)); if (o.act) Font.drawR(x, o.act(c), W - 6, H - 12, '#a8e0ff', '#000', 8); }
       else Font.draw(x, o.hint || '點卡片看說明。', 6, dy + 4, UIC.muted, UIC.textSh, 8);
       x.fillStyle = '#4a3a50'; x.fillRect(4, H - 16, 36, 14); Font.drawC(x, '返回', 22, H - 15, '#e8e4f4', '#000', 9); touchRegion(4, H - 16, 36, 14, () => { S.done = true; }); } };
@@ -181,7 +184,7 @@ KD.workshop = function* () { const st = Game.st;
     st.money -= p; st.bag[m] -= 2; if (!st.bag[m]) delete st.bag[m]; c.up = 1; Sound.sfx('levelup'); yield* say('「' + KD.CARDS[c.id].n + '」升級成「' + KD.name(c) + '」了！'); } };
 { const _sm = smithMenu; smithMenu = function* (...a) { if (Game.noV14) return yield* _sm.apply(this, a); yield* say('這裡是卡牌工坊。花點金幣和素材，可以把卡升級。'); yield* KD.workshop(); }; }
 /* ---------- texts ---------- */
-if (typeof GROW12 !== 'undefined') { GROW12.length = 0; GROW12.push(['卡牌戰鬥', '每回合 3 能量、抽 5 張。連出好幾張卡後按「結束」，魔物才照頭上的意圖行動。'], ['拿卡', '打怪有機會掉卡（三選一），菁英和頭目一定會掉。商店也能買卡。'], ['刪卡', '商店可以付錢刪掉弱的卡，牌組越精簡，好卡越常抽到。'],
+if (typeof GROW12 !== 'undefined') { for (let i = GROW12.length - 1; i >= 0; i--) if (/裝備|天賦|技能|打造|強化|屬性|晶石|賦予|幻化|武器|等級|Lv|經驗|MP|練等|刷寶/.test(GROW12[i][0] + GROW12[i][1])) GROW12.splice(i, 1); GROW12.unshift(['卡牌戰鬥', '每回合 3 能量、抽 5 張。連出好幾張卡後按「結束」，魔物才照頭上的意圖行動。'], ['拿卡', '打怪有機會掉卡（三選一），菁英和頭目一定會掉。商店也能買卡。'], ['刪卡', '商店可以付錢刪掉弱的卡，牌組越精簡，好卡越常抽到。'],
   ['升級', '鐵匠的卡牌工坊：金幣＋素材 2 個，把卡升級（數字變大，有些費用變少）。'], ['頭目', '第一次打倒頭目：最大 HP +5、得到牠的傳說卡。'], ['轉職', '在城鎮的選單「職業」可以轉職，每個職業有自己的牌組。']); }
 if (typeof BATTLE_HELP !== 'undefined') { BATTLE_HELP.length = 0; BATTLE_HELP.push(['卡牌戰鬥', ['點一張卡看說明，再點一次出牌（打單體的卡再點要打的魔物）。', '出完牌按「結束」，魔物才行動。格擋到你下一回合開始時消失。', '道具不花能量。點左下「牌庫」、右下「棄牌」可以看裡面的卡。']],
   ['狀態', ['力量：每段傷害 +1。虛弱：造成的傷害 −25%。易傷：受到的傷害 +50%。', '毒：回合結束失去 HP，然後 −1。燃燒：回合結束失去 HP，不會減少。']]); }
