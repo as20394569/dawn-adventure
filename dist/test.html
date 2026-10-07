@@ -7896,7 +7896,7 @@ class TitleScene {
     x.drawImage(this.logo, Math.round(W / 2 - this.logo.width / 2), 6 + bob);
     Font.drawC(x, '～異世界冒險RPG～', W / 2, 52 + bob, '#ffe0a0', '#3a1428');
     if (this.stage === 'press' && Math.floor(this.t / 30) % 2 === 0) Font.drawC(x, '按 A 鍵開始', W / 2, 232, '#ffffff', '#1a1024');
-    Font.drawR(x, 'v14.6', W - 3, H - 13, '#b890b0', null);
+    Font.drawR(x, 'v14.7', W - 3, H - 13, '#b890b0', null);
   }
 }
 class IntroScene {
@@ -27280,6 +27280,8 @@ BPK.initK = function () { const st = Game.st, core = this.core, H = core.byId.H;
   Object.assign(this, { energy: 0, si: 0, nextDraw: 0, nextEn: 0, turnR: 0, sel: -1, tgtMode: 0, tapK: null, cardsN: 0, atkN: 0, sklN: 0, fillSi: 0, twice: 0, dupNext: 0, fb: 0, dealt: 0, turns: 0 });
   const ids = new Set(['k14_end']); for (const id in KD.CARDS) ids.add('k14_' + id); H.skills = [...ids]; };
 BPK.Hu = function () { return this.core.byId.H; };
+BPK.syncK = function () { const keep = []; for (const id in this.views) { const v = this.views[id]; keep.push([v, v.gone, v.alpha, v.plateA]); }
+  this.sync(); for (const [v, g, a, pa] of keep) { v.gone = g; v.alpha = a; v.plateA = pa; } };
 BPK.addSi = function (n) { this.si = Math.min(3, this.si + n); };
 BPK.drawN = function (n) { for (let i = 0; i < n; i++) { if (this.hand.length >= KD.HAND) break; if (!this.pile.length) { if (!this.disc.length) break; this.pile = shuffle15(this.disc, () => this.core.rng.next()); this.disc = []; } this.hand.push(this.pile.pop()); } };
 BPK.addHand = function (id, up) { if (this.hand.length < KD.HAND) this.hand.push({ id, up: up ? 1 : 0 }); else this.disc.push({ id, up: up ? 1 : 0 }); };
@@ -27296,7 +27298,7 @@ BPK.startTurnK = function () { const core = this.core, H = this.Hu(), notes = []
   this.silenced = core.hasStatus(H, 'silence14'); if (this.silenced) notes.push('被沉默了：不能用技能卡');
   this.drawN(KD.DRAW + this.nextDraw + stkK(H, 'pwMoon14') + (this.turns === 1 && this.cls === 'rg' ? 2 : 0)); this.nextDraw = 0;
   const lk = stkK(H, 'pwLurk14'); for (let i = 0; i < lk; i++) this.addHand('tk_shiv');
-  if (notes.length) this.noteK(notes.join('　')); this.sync(); };
+  if (notes.length) this.noteK(notes.join('　')); this.syncK(); };
 BPK.whyK = function (c) { const C = KD.CARDS[c.id]; if (KD.cost(c) > this.energy) return '能量不夠'; if (this.silenced && C.type === 'skl') return '被沉默了，不能用技能卡'; return null; };
 BPK.okK = function (c) { return !this.whyK(c); };
 { const _cmd = BPK.command; BPK.command = function* () { if (!this.k14) return yield* _cmd.call(this);
@@ -27351,7 +27353,7 @@ BPK.runCard = function (c, ctx) { const core = this.core, C = KD.CARDS[c.id], v 
     const m = stkK(H, 'pwMaster15'); if (m && this.atkN % 3 === 0) { this.drawN(m); this.energy += m; this.noteK('劍聖之心：抽 ' + m + '、能量 +' + m); }
     const bl = stkK(H, 'pwBlood14'); if (bl && this.dealt > 0) KD.heal(core, H, this.dealt * bl / 100); }
   if (C.type === 'skl') { this.sklN++; if (this.cls === 'mg' && this.sklN === 1) this.drawN(1); const s = stkK(H, 'pwStatic14'); if (s) { const t = kRand(core); if (t) KD.hit(core, H, t, s, { el: '雷', cat: '特' }); } }
-  if (C.rar !== 'T') this.cardsN++; this.sync(); };
+  if (C.rar !== 'T') this.cardsN++; this.syncK(); };
 BPK.endTurnK = function () { const core = this.core, H = this.Hu(); if (stkK(H, 'tstr14')) core.removeStatus(H, 'tstr14', 'expire');
   const o = stkK(H, 'pwOtto14'); if (o) { const t = kRand(core); if (t) { core.data.skill14 = 'k14_lg_otto'; KD.hit(core, H, t, o); } } };
 { const _dd = BattleCore.prototype.dealDamage; BattleCore.prototype.dealDamage = function (src, tgt, amount, info = {}) {
@@ -27764,7 +27766,7 @@ for (const id in KD.CARDS) if (KD.CARDS[id].quest) KD.regCard(id);
     const nb = stkK(H, 'nxb14'); if (nb) { core.removeStatus(H, 'nxb14', 'used'); KD.block(core, H, nb); }
     const rg = stkK(H, 'pwRegen14'); if (rg) KD.heal(core, H, rg);
     const ry = stkK(H, 'pwRoyal14'); if (ry) KD.add(core, H, H, 'str15', ry);
-    this.sync(); }; }
+    this.syncK(); }; }
 { const _dd = BattleCore.prototype.dealDamage; BattleCore.prototype.dealDamage = function (src, tgt, amount, info = {}) {
     if (!KD.on(this) || !tgt || !tgt.hero) return _dd.call(this, src, tgt, amount, info);
     if (stkK(tgt, 'safe14') && amount > 0 && !(info.tags || []).includes('self')) { const cb = this.data.cb14; if (cb) cb.noteK('平安：沒有受傷'); return null; }
@@ -27834,7 +27836,7 @@ COND.v14on = c => KD.on(c.core);
       effects: [{ type: 'status', status: 'cooled12', target: 'self', dur: 3 }, { type: 'message', target: 'self', text: '水打在熔岩甲上，冒出大量蒸氣——熔岩甲裂開了！' }] }); return r; }; } }
 if (typeof CHAMP12 !== 'undefined') { CHAMP12.hard.d = '受到的傷害 −30%'; CHAMP12.swift.d = '動作很快：每回合獲得格擋'; CHAMP12.rage.d = '攻擊 +30%；HP 一半以下再 +20%'; CHAMP12.thorn.d = '被物理攻擊打中時 30% 反擊'; }
 { const _h = KD.hit; KD.hit = function (core, a, t, base, o = {}) { if (t && t.data && t.data.champ12 === 'hard' && a && a.hero) o = { ...o, mul: (o.mul || 1) * 0.7 }; return _h.call(this, core, a, t, base, o); }; }
-{ const _st = BPK.startTurnK; BPK.startTurnK = function () { _st.call(this); const core = this.core; for (const f of core.alive('B')) if (f.data && f.data.champ12 === 'swift') KD.block(core, f, Math.max(3, Math.round(f.max.hp * 0.12))); this.sync(); }; }
+{ const _st = BPK.startTurnK; BPK.startTurnK = function () { _st.call(this); const core = this.core; for (const f of core.alive('B')) if (f.data && f.data.champ12 === 'swift') KD.block(core, f, Math.max(3, Math.round(f.max.hp * 0.12))); this.syncK(); }; }
 KD.TXT.unshift([/得到了天賦之書(?:×\d+)?！強化費用永久半價！/g, '以後升級卡的費用永久半價！'], [/得到了天賦之書(?:×\d+)?！/g, '得到了一份謝禮！'], [/和天賦之書(?:×\d+)?/g, ''],
   [/這是師父留下的天賦之書，送給你吧。以後強化的費用，我只收一半！/g, '這是師父留下的一點心意，送給你吧。以後升級卡的費用，我只收一半！']);
 KD.TXT.push([/以後帶素材來，峽谷和沼澤的裝備我都能打了。/g, '以後帶素材來，我幫你把卡升級。'], [/可以在背包裡裝備。/g, ''], [/恢復HP、MP並記錄/g, '恢復HP並記錄'],

@@ -11,6 +11,11 @@ BPK.initK = function () { const st = Game.st, core = this.core, H = core.byId.H;
   Object.assign(this, { energy: 0, si: 0, nextDraw: 0, nextEn: 0, turnR: 0, sel: -1, tgtMode: 0, tapK: null, cardsN: 0, atkN: 0, sklN: 0, fillSi: 0, twice: 0, dupNext: 0, fb: 0, dealt: 0, turns: 0 });
   const ids = new Set(['k14_end']); for (const id in KD.CARDS) ids.add('k14_' + id); H.skills = [...ids]; };
 BPK.Hu = function () { return this.core.byId.H; };
+// v14.7 (玩家：「戰鬥時怪物消失」): cards run inside the core before their events are played, so a full sync() here hid a monster the moment
+// a card killed it — it vanished while the card was still flying, the hit landed on empty ground, then it popped back to fall over.
+// Mid-action syncs now leave who is gone to the faint / flee animations (play() still does the full sync afterwards).
+BPK.syncK = function () { const keep = []; for (const id in this.views) { const v = this.views[id]; keep.push([v, v.gone, v.alpha, v.plateA]); }
+  this.sync(); for (const [v, g, a, pa] of keep) { v.gone = g; v.alpha = a; v.plateA = pa; } };
 BPK.addSi = function (n) { this.si = Math.min(3, this.si + n); };
 BPK.drawN = function (n) { for (let i = 0; i < n; i++) { if (this.hand.length >= KD.HAND) break; if (!this.pile.length) { if (!this.disc.length) break; this.pile = shuffle15(this.disc, () => this.core.rng.next()); this.disc = []; } this.hand.push(this.pile.pop()); } };
 BPK.addHand = function (id, up) { if (this.hand.length < KD.HAND) this.hand.push({ id, up: up ? 1 : 0 }); else this.disc.push({ id, up: up ? 1 : 0 }); };
@@ -28,7 +33,7 @@ BPK.startTurnK = function () { const core = this.core, H = this.Hu(), notes = []
   this.silenced = core.hasStatus(H, 'silence14'); if (this.silenced) notes.push('被沉默了：不能用技能卡');
   this.drawN(KD.DRAW + this.nextDraw + stkK(H, 'pwMoon14') + (this.turns === 1 && this.cls === 'rg' ? 2 : 0)); this.nextDraw = 0;
   const lk = stkK(H, 'pwLurk14'); for (let i = 0; i < lk; i++) this.addHand('tk_shiv');
-  if (notes.length) this.noteK(notes.join('　')); this.sync(); };
+  if (notes.length) this.noteK(notes.join('　')); this.syncK(); };
 BPK.whyK = function (c) { const C = KD.CARDS[c.id]; if (KD.cost(c) > this.energy) return '能量不夠'; if (this.silenced && C.type === 'skl') return '被沉默了，不能用技能卡'; return null; };
 BPK.okK = function (c) { return !this.whyK(c); };
 /* ---------- the hero's command: the hand of cards ---------- */
@@ -86,7 +91,7 @@ BPK.runCard = function (c, ctx) { const core = this.core, C = KD.CARDS[c.id], v 
     const m = stkK(H, 'pwMaster15'); if (m && this.atkN % 3 === 0) { this.drawN(m); this.energy += m; this.noteK('劍聖之心：抽 ' + m + '、能量 +' + m); }
     const bl = stkK(H, 'pwBlood14'); if (bl && this.dealt > 0) KD.heal(core, H, this.dealt * bl / 100); }
   if (C.type === 'skl') { this.sklN++; if (this.cls === 'mg' && this.sklN === 1) this.drawN(1); const s = stkK(H, 'pwStatic14'); if (s) { const t = kRand(core); if (t) KD.hit(core, H, t, s, { el: '雷', cat: '特' }); } }
-  if (C.rar !== 'T') this.cardsN++; this.sync(); };
+  if (C.rar !== 'T') this.cardsN++; this.syncK(); };
 BPK.endTurnK = function () { const core = this.core, H = this.Hu(); if (stkK(H, 'tstr14')) core.removeStatus(H, 'tstr14', 'expire');
   const o = stkK(H, 'pwOtto14'); if (o) { const t = kRand(core); if (t) { core.data.skill14 = 'k14_lg_otto'; KD.hit(core, H, t, o); } } };
 // 不死鳥: the first blow that would knock the hero out leaves 1 HP, then back to half

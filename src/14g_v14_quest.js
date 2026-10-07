@@ -53,7 +53,7 @@ for (const id in KD.CARDS) if (KD.CARDS[id].quest) KD.regCard(id);
     const nb = stkK(H, 'nxb14'); if (nb) { core.removeStatus(H, 'nxb14', 'used'); KD.block(core, H, nb); }
     const rg = stkK(H, 'pwRegen14'); if (rg) KD.heal(core, H, rg);
     const ry = stkK(H, 'pwRoyal14'); if (ry) KD.add(core, H, H, 'str15', ry);
-    this.sync(); }; }
+    this.syncK(); }; }
 // 勇者的護符: no damage until the hero's next turn (losing HP to your own cards still happens) · 沙漠玫瑰: a monster's attack is answered
 { const _dd = BattleCore.prototype.dealDamage; BattleCore.prototype.dealDamage = function (src, tgt, amount, info = {}) {
     if (!KD.on(this) || !tgt || !tgt.hero) return _dd.call(this, src, tgt, amount, info);

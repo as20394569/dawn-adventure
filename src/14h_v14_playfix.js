@@ -33,7 +33,7 @@ COND.v14on = c => KD.on(c.core);
 /* ---------- 強化魔物：【堅硬】受到的傷害 −30%，【飛快】每回合開始獲得格擋（最大 HP 的 12%） ---------- */
 if (typeof CHAMP12 !== 'undefined') { CHAMP12.hard.d = '受到的傷害 −30%'; CHAMP12.swift.d = '動作很快：每回合獲得格擋'; CHAMP12.rage.d = '攻擊 +30%；HP 一半以下再 +20%'; CHAMP12.thorn.d = '被物理攻擊打中時 30% 反擊'; }
 { const _h = KD.hit; KD.hit = function (core, a, t, base, o = {}) { if (t && t.data && t.data.champ12 === 'hard' && a && a.hero) o = { ...o, mul: (o.mul || 1) * 0.7 }; return _h.call(this, core, a, t, base, o); }; }
-{ const _st = BPK.startTurnK; BPK.startTurnK = function () { _st.call(this); const core = this.core; for (const f of core.alive('B')) if (f.data && f.data.champ12 === 'swift') KD.block(core, f, Math.max(3, Math.round(f.max.hp * 0.12))); this.sync(); }; }
+{ const _st = BPK.startTurnK; BPK.startTurnK = function () { _st.call(this); const core = this.core; for (const f of core.alive('B')) if (f.data && f.data.champ12 === 'swift') KD.block(core, f, Math.max(3, Math.round(f.max.hp * 0.12))); this.syncK(); }; }
 /* ---------- more old wording (rewards, the smith, the inn) ---------- */
 // 天賦之書 turns into gold (用不到的道具): the line that hands it over must not read 「得到了！」 after the old rule takes the word out
 KD.TXT.unshift([/得到了天賦之書(?:×\d+)?！強化費用永久半價！/g, '以後升級卡的費用永久半價！'], [/得到了天賦之書(?:×\d+)?！/g, '得到了一份謝禮！'], [/和天賦之書(?:×\d+)?/g, ''],
