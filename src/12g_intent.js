@@ -121,7 +121,7 @@ function intentOf14(core, u, cmd) {
 { const _db = Battle.prototype.drawBoxF; Battle.prototype.drawBoxF = function (x) { _db.call(this, x); const core = this.core; if (!core || !core.plan || (typeof FXT13 !== 'undefined' && FXT13.on)) return;
     for (const v of this.foes()) { const u = core.byId[v.id]; if (!u || v.gone || v.alpha < 0.5 || v.st.charging) continue; const I = intentOf14(core, u, core.plan[v.id] || (core.hasStatus(u, 'rise14') ? {} : null)); if (!I) continue;
       const iw = 11; // v12.85: pixel icons, drawn 1:1
-      const img = INT_PX14[I.k] || INT_PX14.atk, col = INT_COL14[I.k], tw = I.t ? Math.ceil(Font.width(I.t, 8)) + 3 : 0, w = iw + 2 + tw, X = Math.round(v.x + v.off.x - w / 2), Y = Math.round(v.foot - v.bbh - 17 + v.sink * (v.sink < 0 ? 1 : 0));
+      const img = INT_PX14[I.k] || INT_PX14.atk, col = INT_COL14[I.k], tw = I.t ? Math.ceil(Font.width(I.t, 8)) + 3 : 0, w = iw + 2 + tw, X = Math.round(clamp(v.x + v.off.x - w / 2, 17, W - w - 2)), Y = Math.round(v.foot - v.bbh - 17 + v.sink * (v.sink < 0 ? 1 : 0));
       x.fillStyle = 'rgba(8,6,18,0.78)'; x.fillRect(X - 1, Y, w + 2, 13); x.fillStyle = I.k === 'heavy' ? '#ff9a40' : 'rgba(255,255,255,0.18)'; x.fillRect(X - 1, Y + 12, w + 2, 1);
       if (img) { x.imageSmoothingEnabled = false; x.drawImage(img, X, Y + 1); } if (I.t) Font.draw(x, I.t, X + iw + 2, Y, col, UIC.textSh, 8); } }; }
 // 高飛 floats the monster up, 潛水 sinks it (the image is clipped at its feet) with a ripple

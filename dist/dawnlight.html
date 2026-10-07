@@ -7896,7 +7896,7 @@ class TitleScene {
     x.drawImage(this.logo, Math.round(W / 2 - this.logo.width / 2), 6 + bob);
     Font.drawC(x, '～異世界冒險RPG～', W / 2, 52 + bob, '#ffe0a0', '#3a1428');
     if (this.stage === 'press' && Math.floor(this.t / 30) % 2 === 0) Font.drawC(x, '按 A 鍵開始', W / 2, 232, '#ffffff', '#1a1024');
-    Font.drawR(x, 'v14.7', W - 3, H - 13, '#b890b0', null);
+    Font.drawR(x, 'v14.8', W - 3, H - 13, '#b890b0', null);
   }
 }
 class IntroScene {
@@ -26569,7 +26569,7 @@ function intentOf14(core, u, cmd) {
 { const _db = Battle.prototype.drawBoxF; Battle.prototype.drawBoxF = function (x) { _db.call(this, x); const core = this.core; if (!core || !core.plan || (typeof FXT13 !== 'undefined' && FXT13.on)) return;
     for (const v of this.foes()) { const u = core.byId[v.id]; if (!u || v.gone || v.alpha < 0.5 || v.st.charging) continue; const I = intentOf14(core, u, core.plan[v.id] || (core.hasStatus(u, 'rise14') ? {} : null)); if (!I) continue;
       const iw = 11; // v12.85: pixel icons, drawn 1:1
-      const img = INT_PX14[I.k] || INT_PX14.atk, col = INT_COL14[I.k], tw = I.t ? Math.ceil(Font.width(I.t, 8)) + 3 : 0, w = iw + 2 + tw, X = Math.round(v.x + v.off.x - w / 2), Y = Math.round(v.foot - v.bbh - 17 + v.sink * (v.sink < 0 ? 1 : 0));
+      const img = INT_PX14[I.k] || INT_PX14.atk, col = INT_COL14[I.k], tw = I.t ? Math.ceil(Font.width(I.t, 8)) + 3 : 0, w = iw + 2 + tw, X = Math.round(clamp(v.x + v.off.x - w / 2, 17, W - w - 2)), Y = Math.round(v.foot - v.bbh - 17 + v.sink * (v.sink < 0 ? 1 : 0));
       x.fillStyle = 'rgba(8,6,18,0.78)'; x.fillRect(X - 1, Y, w + 2, 13); x.fillStyle = I.k === 'heavy' ? '#ff9a40' : 'rgba(255,255,255,0.18)'; x.fillRect(X - 1, Y + 12, w + 2, 1);
       if (img) { x.imageSmoothingEnabled = false; x.drawImage(img, X, Y + 1); } if (I.t) Font.draw(x, I.t, X + iw + 2, Y, col, UIC.textSh, 8); } }; }
 { const _dr = Battle.prototype.draw; Battle.prototype.draw = function (x) { for (const v of this.foes()) { if (v.A && v.A.state === 'faint') continue; const want = v.st.fly14 ? -20 : v.st.dive14 ? Math.round((v.bbh || 48) * 0.7) : 0;
@@ -27866,8 +27866,40 @@ KD.CHG14 = 1;
 { const _db = Battle.prototype.drawBoxF; Battle.prototype.drawBoxF = function (x) { _db.call(this, x); const core = this.core; if (!this.k14 || !core || (typeof FXT13 !== 'undefined' && FXT13.on)) return; const H = core.byId.H; if (!H) return;
     for (const v of this.foes()) { const u = core.byId[v.id]; if (!u || v.gone || v.alpha < 0.5 || !v.st.charging) continue; const S = (u.statuses || []).find(s => s.id === 'charging'), D = S && S.data && DEF.skills[S.data.skill]; if (!D || !D.power) continue;
       let n = 0; try { const hits = D.hits ? Math.round((D.hits[0] + D.hits[1]) / 2) : 1; n = BR.damage(core, u, H, D, { preview: true, noCrit: true }).amount * hits; } catch (e) { continue; } if (!n) continue;
-      const iw = 11, t = String(n), img = INT_PX14.heavy || INT_PX14.atk, col = INT_COL14.heavy, w = iw + 2 + Math.ceil(Font.width(t, 8)) + 3, X = Math.round(v.x + v.off.x - w / 2), Y = Math.round(v.foot - v.bbh - 17 + v.sink * (v.sink < 0 ? 1 : 0));
+      const iw = 11, t = String(n), img = INT_PX14.heavy || INT_PX14.atk, col = INT_COL14.heavy, w = iw + 2 + Math.ceil(Font.width(t, 8)) + 3, X = Math.round(clamp(v.x + v.off.x - w / 2, 17, W - w - 2)), Y = Math.round(v.foot - v.bbh - 17 + v.sink * (v.sink < 0 ? 1 : 0));
       x.fillStyle = 'rgba(8,6,18,0.78)'; x.fillRect(X - 1, Y, w + 2, 13); x.fillStyle = '#ff9a40'; x.fillRect(X - 1, Y + 12, w + 2, 1); if (img) { x.imageSmoothingEnabled = false; x.drawImage(img, X, Y + 1); } Font.draw(x, t, X + iw + 2, Y, col, UIC.textSh, 8); } }; }
 { const C = EFFECT_TYPES.counter; if (C) { const _x = C.exec; C.exec = function (core, ef, ctx, ...a) { const u = ctx && ctx.owner;
     if (KD.on(core) && u && ef && (ef.why === 'stance12' || ef.why === 'scale12')) { if (u.data.cnt14 === core.round) return; u.data.cnt14 = core.round; } return _x.call(this, core, ef, ctx, ...a); }; } }
+KD.hitsN = D => (D && D.hits ? Math.max(1, Math.round((D.hits[0] + D.hits[1]) / 2)) : 1);
+for (const id in DEF.skills) { const D = DEF.skills[id]; if (!D || !D.hits || D.hits[1] <= D.hits[0] || D.hitsOf || /^k14_/.test(id)) continue; const a = D.hits[0], b = D.hits[1];
+  D.hitsOf = (core, u) => (KD.on(core) && u && !u.hero ? Math.round((a + b) / 2) : core.rng.int(a, b)); }
+KD.FOE_BLK_SKIP = /^(k14_|f14_fly|f14_dive|f14_steal|m_mimic14)/;
+KD.foeBlk = (core, u, cmd) => { if (!KD.on(core) || !u || u.hero || !cmd) return 0;
+  if (cmd.type !== 'defend') { if (cmd.type !== 'skill') return 0; const D = DEF.skills[cmd.skill]; if (!D || D.power || KD.FOE_BLK_SKIP.test(cmd.skill)) return 0; }
+  if (u.boss || u.elite || (u.data && u.data.elite)) return 0; // elites and bosses play their own scripts (shields, phases): they get 越戰越勇 instead
+  return Math.max(1, Math.round(KD.tab(KD.DMG_TGT, u.lv || 1))); };
+{ const _ea = BattleCore.prototype.endAction; BattleCore.prototype.endAction = function (cmd, executed) {
+    try { if (executed && cmd && !cmd.reaction && KD.on(this)) { const u = this.byId[cmd.actor]; if (u && !u.hero && this.isUp(u) && !this.ended()) { const n = KD.foeBlk(this, u, cmd); if (n) KD.block(this, u, n); } } } catch (e) { /* never break the turn over a bonus */ }
+    return _ea.call(this, cmd, executed); }; }
+KD.RAGE_EVERY = 3;
+KD.rageN = u => (u.boss || u.elite || (u.data && u.data.elite) ? 1 : 0);
+{ const _re = BattleCore.prototype.roundEnd; BattleCore.prototype.roundEnd = function () {
+    if (KD.on(this) && this.round > 0 && this.round % KD.RAGE_EVERY === 0 && !this.ended()) for (const u of this.alive('B')) { const n = KD.rageN(u); if (!n || u.minion) continue;
+      KD.add(this, u, u, 'str15', n); this.emit(EVT.MESSAGE, { src: u, tgts: [u], payload: { key: null, text: '（' + u.name + '越戰越勇！力量 +' + n + '）' } }); }
+    return _re.call(this); }; }
+{ const _d = BR.damage; BR.damage = function (core, src, tgt, skill, o = {}) { const r = _d.call(this, core, src, tgt, skill, o);
+    if (!KD.on(core) || !r || !tgt || !tgt.hero || !src || src.hero || !(r.amount > 0)) return r; const s = stkK(src, 'str15'); if (!s) return r;
+    return { ...r, amount: r.amount + Math.round(s * (stkK(src, 'weak15') ? 0.75 : 1) * (stkK(tgt, 'vuln15') ? 1.5 : 1)) }; }; }
+{ const _io = intentOf14; intentOf14 = function (core, u, cmd) { const I = _io(core, u, cmd); if (!I || !KD.on(core) || !cmd || !u) return I;
+    const D = cmd.type === 'skill' ? DEF.skills[cmd.skill] : null;
+    if (D && D.power && (I.k === 'atk' || I.k === 'heavy') && /^\d+/.test(I.t || '')) { const h = KD.hitsN(D), n = parseInt(I.t, 10), rest = I.t.replace(/^\d+/, '');
+      let t = h > 1 ? Math.round(n / h) + '×' + h : String(n); t += rest;
+      if (!rest && (D.effects || []).concat(D.after || []).map(e => (typeof e === 'string' ? DEF.effects[e] : e) || {}).some(e => e.type === 'stage' && e.target !== 'self' && e.stats && Object.values(e.stats).some(v => v < 0))) t += '+削弱';
+      return { ...I, t }; }
+    if (I.k !== 'hide' && I.k !== 'guard' && KD.foeBlk(core, u, cmd)) return { ...I, t: (I.t ? I.t + '+' : '') + '盾' };
+    return I; }; }
+{ const _db = Battle.prototype.drawBoxF; Battle.prototype.drawBoxF = function (x) { _db.call(this, x); if (!this.k14 || this.boxF < -20) return;
+    for (const v of this.foes()) { const b = v.st && v.st.blk15; if (!b || v.alpha < 0.5) continue; const s = String(b), tw = Math.ceil(Font.width(s, 8)), w = 13 + 2 + tw + 3, X = Math.round(clamp(v.x + v.off.x - w / 2, 2, W - w - 2)), Y = Math.round(v.foot + 2);
+      x.fillStyle = 'rgba(10,20,48,0.82)'; x.fillRect(X, Y, w, 13); x.fillStyle = '#7ab8ff'; x.fillRect(X, Y + 12, w, 1); x.imageSmoothingEnabled = false; x.drawImage(KD.ICON.shield, X + 1, Y); Font.draw(x, s, X + 15, Y + 0.5, '#bfe0ff', '#000', 8); } }; }
+if (typeof BATTLE_HELP !== 'undefined') BATTLE_HELP.push(['魔物', ['頭上的圖示是牠這回合要做的事：數字是預估傷害（6×3＝每段 6、打 3 段），「+盾」是同時獲得格擋（數字顯示在牠腳下）。', '菁英和頭目越戰越勇：每 3 回合力量 +1。']]);
 </script>
