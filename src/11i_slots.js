@@ -14,11 +14,11 @@ const slotTime13 = s => { const m = Math.floor((s.time || 0) / 3600); return Mat
 // the slot list, with the chosen slot's details in a window above it; returns 1..3, or 0 for 返回
 function* pickSlot13(title, mode) {
   const S = []; for (let n = 1; n <= SLOTS13; n++) S.push(slotLoad13(n));
-  const items = S.map((s, i) => ({ t: '存檔 ' + (i + 1), r: s ? s.name + ' Lv' + s.lv : '（空）', dis: mode === 'load' && !s })).concat({ t: '返回' });
+  const items = S.map((s, i) => ({ t: '存檔 ' + (i + 1), r: s ? s.name + ' ' + KD.slotTag(s) : '（空）', dis: mode === 'load' && !s })).concat({ t: '返回' });
   let cur = SLOT13 - 1; if (mode === 'load' && !S[cur]) cur = Math.max(0, S.findIndex(s => s)); if (mode === 'new' && S.some(s => !s)) cur = S.findIndex(s => !s); // a new adventure starts on an empty slot
   const box = { draw(x) { if (cur >= SLOTS13) return; const s = S[cur]; drawWin(x, 8, 104, W - 16, 44, 'menu');
       if (!s) { Font.draw(x, '空的欄位', 16, 120, UIC.muted, UIC.textSh); return; }
-      Font.draw(x, s.name + '　Lv' + s.lv, 16, 109, UIC.text, UIC.textSh); Font.draw(x, (MAPS[s.map] || {}).name || '', 16, 122, UIC.warm, UIC.textSh, 10); Font.draw(x, '遊玩時間 ' + slotTime13(s), 16, 134, UIC.muted, UIC.textSh, 10);
+      Font.draw(x, s.name + '　' + KD.slotTag(s), 16, 109, UIC.text, UIC.textSh); Font.draw(x, (MAPS[s.map] || {}).name || '', 16, 122, UIC.warm, UIC.textSh, 10); Font.draw(x, '遊玩時間 ' + slotTime13(s), 16, 134, UIC.muted, UIC.textSh, 10);
       if (s.savedAt13) { const d = new Date(s.savedAt13), p2 = v => String(v).padStart(2, '0'); Font.drawR(x, (d.getMonth() + 1) + '/' + d.getDate() + ' ' + p2(d.getHours()) + ':' + p2(d.getMinutes()), W - 14, 134, UIC.muted, UIC.textSh, 9); } // v12.66: when it was saved
       { const a = typeof actOf === 'function' ? actOf(s) : 0; if (a && typeof ACTS !== 'undefined' && ACTS[a]) Font.drawR(x, (s.flags && s.flags.ch3) ? '第三章' : ACTS[a][0], W - 14, 122, UIC.accent, UIC.textSh, 9); } } };
   UI.push(box);
@@ -37,7 +37,7 @@ if (!fxtest13()) TitleScene.prototype.menu = function* () {
       SLOT13 = n; const st = loadGame(); if (!st) continue; Game.st = st; yield* fadeOut(20); startOverworld(); Game.sys.push(fadeIn(20)); return; }
     if (o === '新的冒險') { let n = 1;
       if (any.length) { n = yield* pickSlot13('要用哪一個欄位？', 'new'); if (!n) continue; const s = slotLoad13(n);
-        if (s && !(yield* yesNo('要覆蓋「存檔 ' + n + '」嗎？（' + s.name + ' Lv' + s.lv + '）\n舊的記錄會在下次存檔時消失。'))) continue; }
+        if (s && !(yield* yesNo('要覆蓋「存檔 ' + n + '」嗎？（' + s.name + ' ' + KD.slotTag(s) + '）\n舊的記錄會在下次存檔時消失。'))) continue; }
       SLOT13 = n; Game.pendingNew = { diff: 2, carry: null }; yield* fadeOut(24); Game.setScene(new IntroScene()); return; }
   } };
 // the save message says which slot

@@ -6,7 +6,7 @@ const path = require('path');
   const b = await chromium.launch(); const p = await b.newPage({ viewport: { width: 760, height: 560 } });
   const errs = []; p.on('pageerror', e => errs.push('PAGEERROR ' + e.message + '\n' + e.stack)); p.on('console', m => { if (m.type() === 'error' && !m.text().includes('ERR_TUNNEL')) errs.push(m.text()); });
   await p.goto('file://' + path.resolve('dist/test.html')); await p.waitForTimeout(300);
-  await p.evaluate(() => { __game.Game.paused = true; __game.setScale(2); });
+  await p.evaluate(nv => { __game.Game.paused = true; __game.setScale(2); if (nv) __game.Game.noV14 = true; }, !!process.env.NOV14);
   const api = {
     ev: (fn, arg) => p.evaluate(fn, arg),
     step: n => p.evaluate(n => __game.step(n), n),

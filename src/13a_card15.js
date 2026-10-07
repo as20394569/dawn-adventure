@@ -7,7 +7,7 @@
 const C15 = { HP: 70, EN: 3, DRAW: 5, HAND_MAX: 10 };
 EVT.CARD15 = 'CARD15'; EVT_SET.add('CARD15');
 for (const k of ['card15', 'card15end', 'mon15']) EFFECT_TYPES[k] = EFFECT_TYPES[k] || { exec() {} }; // filled in below (registered first so the effect table accepts them)
-const c15On = core => !!(core && core.data && core.data.card15);
+const c15On = core => !!(core && core.data && (core.data.card15 || core.data.v14));
 /* ---------- statuses ---------- */
 defPut('statuses', 'blk15', { tags: ['buff'], duration: 'battle', stack: 'add', max: 999, metadata: { n: '格擋' } });
 defPut('statuses', 'str15', { tags: ['buff'], duration: 'battle', stack: 'add', max: 99, metadata: { n: '力量' } });
@@ -125,7 +125,7 @@ EFFECT_TYPES.mon15 = { exec(core, ef, ctx) { const u = ctx.owner, mv = ef.mv, H 
 // the monsters follow their pattern (planned at the start of the round, shown over their heads)
 { const _d = BAI.decide; BAI.decide = function (core, u, o) { if (!c15On(core) || !u.data.pat15) return _d.call(this, core, u, o);
     const L = u.data.pat15, id = L[(u.data.pi15 || 0) % L.length]; u.data.pi15 = (u.data.pi15 || 0) + 1; return { type: 'skill', skill: id, targets: DEF.skills[id].target === 'self' ? [] : ['H'] }; }; }
-{ const _io = intentOf14; intentOf14 = function (core, u, cmd) { if (!c15On(core)) return _io(core, u, cmd); if (!cmd || !u || !core.isUp(u) || cmd.type !== 'skill') return null;
+{ const _io = intentOf14; intentOf14 = function (core, u, cmd) { if (!(core && core.data && core.data.card15)) return _io(core, u, cmd); if (!cmd || !u || !core.isUp(u) || cmd.type !== 'skill') return null;
     const D = DEF.skills[cmd.skill], ef = D && (typeof D.effects[0] === 'string' ? DEF.effects[D.effects[0]] : D.effects[0]), mv = ef && ef.mv; if (!mv) return null; const H = core.byId.H;
     if (mv.needChg && !stk15(u, 'chg15')) return { k: 'down', t: '打斷了' };
     if (mv.k === 'atk') { const n = dmg15(u, H, mv.d), h = mv.hits || 1; return { k: n * h >= 15 ? 'heavy' : 'atk', t: n + (h > 1 ? '×' + h : '') + (mv.weak ? '+虛弱' : mv.bleed ? '+流血' : '') }; }
