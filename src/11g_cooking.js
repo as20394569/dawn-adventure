@@ -19,10 +19,11 @@ const DISH_KEYS13 = Object.keys(DISH13);
 const foodOf13 = (st = Game.st) => st && st.food13 && st.food13.n > 0 ? st.food13 : null;
 // ingredients: an item or a group (take from whichever you have most of)
 // (v12 turns gathered herbs, wheat, dew… into 素材點數 the moment you pick them up, so the side ingredients are points)
-const foodHave13 = (g, st = Game.st) => /^pt:/.test(g) ? (pts11(st)[g.slice(3)] || 0) : (FOOD_GROUP13[g] || [g]).reduce((a, k) => a + ((st.bag || {})[k] || 0), 0);
-const foodName13 = g => /^pt:/.test(g) ? g.slice(3) + '點數' : FOOD_GROUPN13[g] || (ITEMS[g] ? ITEMS[g].n : g);
+const matsOf13 = (cat, st = Game.st) => Object.keys(st.bag || {}).filter(k => (st.bag[k] || 0) > 0 && typeof MATCAT11 !== 'undefined' && MATCAT11[k] === cat && ITEMS[k] && !ITEMS[k].key); // v14.11: the card version has no smith points
+const foodHave13 = (g, st = Game.st) => /^pt:/.test(g) ? ((!Game.noV14 && st && st.k14) ? matsOf13(g.slice(3), st).reduce((a, k) => a + st.bag[k], 0) : (pts11(st)[g.slice(3)] || 0)) : (FOOD_GROUP13[g] || [g]).reduce((a, k) => a + ((st.bag || {})[k] || 0), 0);
+const foodName13 = g => /^pt:/.test(g) ? g.slice(3) + ((!Game.noV14 && Game.st && Game.st.k14) ? '類素材' : '點數') : FOOD_GROUPN13[g] || (ITEMS[g] ? ITEMS[g].n : g);
 const canCook13 = (k, st = Game.st) => DISH13[k][1].every(([g, n]) => foodHave13(g, st) >= n);
-function cookTake13(k, st = Game.st) { for (const [g, n0] of DISH13[k][1]) { if (/^pt:/.test(g)) { ptsPay11({ [g.slice(3)]: n0 }, st); continue; } let n = n0; while (n > 0) { const L = (FOOD_GROUP13[g] || [g]).filter(q => (st.bag[q] || 0) > 0).sort((a, b) => st.bag[b] - st.bag[a]); if (!L.length) break; st.bag[L[0]]--; n--; } } }
+function cookTake13(k, st = Game.st) { for (const [g, n0] of DISH13[k][1]) { if (/^pt:/.test(g)) { if (!Game.noV14 && st.k14) { let n = n0; while (n > 0) { const L = matsOf13(g.slice(3), st).sort((a, b) => st.bag[b] - st.bag[a]); if (!L.length) break; st.bag[L[0]]--; n--; } } else ptsPay11({ [g.slice(3)]: n0 }, st); continue; } let n = n0; while (n > 0) { const L = (FOOD_GROUP13[g] || [g]).filter(q => (st.bag[q] || 0) > 0).sort((a, b) => st.bag[b] - st.bag[a]); if (!L.length) break; st.bag[L[0]]--; n--; } } }
 for (const k of DISH_KEYS13) { const [n, , , b, t] = DISH13[k]; ITEMS[k] = { n, use: 'food13', price: 0, sell: 40, cat: '回復', d: '料理。在野外吃，接下來 ' + b + ' 場戰鬥：' + t + '。（同時只能有一道菜）' }; }
 // the icon: a bowl with the dish in it
 for (const k of DISH_KEYS13) { const [c1, c2] = DISH13[k][5], c = mkCanvas(16, 16), x = c.getContext('2d');

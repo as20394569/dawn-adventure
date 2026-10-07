@@ -1,0 +1,1 @@
+module.exports = async (g) => { g.log((await g.ev(() => { const G = __game; G.Game.st = newGameState('測'); startOverworld(); return GROW12.map(q => '◆' + q[0] + '：' + q[1]).concat(BATTLE_HELP.map(p => '■' + p[0] + '：' + p[1].join(' / '))); })).join('\n')); };
