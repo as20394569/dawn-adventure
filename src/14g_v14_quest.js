@@ -102,3 +102,7 @@ KD.TXT.push([/【獨家】([^、]+?)的設計圖/g, '【獨家】任務卡「$1�
 { const _rt = rewardText; rewardText = function (r) { const t = _rt(r); return Game.noV14 ? t : KD.fixTxt(t); }; }
 // achievement
 ACHIEVEMENTS.push({ id: 'k14_q10', cat: '收集', n: '任務達人', d: '拿到 10 張任務卡。', ok: st => !!st.k14 && Object.keys(st.k14.qc || {}).length >= 10 });
+// 「還能做什麼」: the card collection
+{ const _tl = todoLines12; todoLines12 = function (st = Game.st) { const L = _tl(st); if (Game.noV14 || !st || !st.k14) return L; const P = t => L.push([t, UIC.text, 10, 6]);
+    try { P('・任務卡：' + Object.keys(st.k14.qc || {}).length + '／' + KD.QUEST.length + ' 張'); P('・傳說卡：' + KD.bossN(st) + '／' + Object.keys(KD.BOSS_CARD).length + ' 張'); P('・卡牌圖鑑：' + Math.round(KD.dexPct(st) * 100) + '%'); } catch (e) { }
+    return L; }; }
