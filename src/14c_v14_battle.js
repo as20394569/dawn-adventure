@@ -2,7 +2,7 @@
    沿用原本的戰鬥畫面（魔物圖、特效、跳字、魔物頭上的意圖），下方換成手牌。
    · 每回合 3 能量、抽 5 張（手牌上限 10）；點一張卡看說明，再點一次出牌；打單體的卡再點要打的魔物
    · 出完牌按「結束」，魔物才行動；格擋到你下一回合開始時消失
-   · 道具不花能量；可以逃跑（頭目戰不行） */
+   · 道具不花能量，每回合 1 次（v14.6）；可以逃跑（頭目戰不行） */
 const BPK = Battle.prototype;
 const stkH = (b, id) => stkK(b.core.byId.H, id);
 { const _main = BPK.main; BPK.main = function* () { if (KD.on(this.core) && !this.run15) this.initK(); return yield* _main.call(this); }; }
@@ -19,7 +19,7 @@ BPK.gainMaxHp = function (n) { const st = Game.st, K = KD.state(st); K.hpPlus = 
 BPK.noteK = function (s) { this.note16 = { s: String(s), t: 0 }; };
 /* ---------- the start of the hero's turn ---------- */
 BPK.startTurnK = function () { const core = this.core, H = this.Hu(), notes = []; this.turns++;
-  this.energy = KD.EN + this.nextEn + stkK(H, 'pwMax14'); this.nextEn = 0; Object.assign(this, { cardsN: 0, atkN: 0, sklN: 0, tgtMode: 0, sel: -1, twice: 0, dupNext: 0, phantomUsed: 0 });
+  this.energy = KD.EN + this.nextEn + stkK(H, 'pwMax14'); this.nextEn = 0; Object.assign(this, { cardsN: 0, atkN: 0, sklN: 0, tgtMode: 0, sel: -1, twice: 0, dupNext: 0, phantomUsed: 0, itemN: 0 });
   if (stkK(H, 'blk15')) H.statuses = H.statuses.filter(s => s.id !== 'blk15');
   const g = stkK(H, 'pwGuard15') + stkK(H, 'pwRock14'); if (g) KD.block(core, H, g);
   const k = stkK(H, 'pwKindle14'); if (k) for (const t of core.alive('B')) KD.add(core, H, t, 'burn14', k);
@@ -48,7 +48,7 @@ BPK.okK = function (c) { return !this.whyK(c); };
       if (act.k === 'back') { this.tgtMode = 0; this.sel = -1; continue; }
       if (act.k === 'pile') { this.idle = false; yield* this.pileView(act.w); continue; }
       if (act.k === 'end') { this.idle = false; this.discardAnim(); this.disc.push(...this.hand); this.hand = []; this.sel = -1; core.data.card14Now = null; return { type: 'skill', skill: 'k14_end', targets: [] }; }
-      if (act.k === 'item') { this.idle = false; const it = yield* bagScreen('battle'); if (!it) continue; if (!DEF.items[it]) { this.noteK('現在不能使用這個道具'); continue; } return { type: 'item', item: it }; }
+      if (act.k === 'item') { if (this.itemN) { this.noteK('道具每回合只能用 1 次'); Sound.sfx('buzz'); continue; } this.idle = false; const it = yield* bagScreen('battle'); if (!it) continue; if (!DEF.items[it]) { this.noteK('現在不能使用這個道具'); continue; } this.itemN = 1; return { type: 'item', item: it }; }
       if (act.k === 'run') { if (this.anyBoss()) { this.noteK('不能從這場戰鬥中逃走！'); Sound.sfx('buzz'); continue; } this.idle = false; this.disc.push(...this.hand); this.hand = []; return { type: 'run' }; }
       if (act.k === 'card') { if (this.sel !== act.i) { this.sel = act.i; this.tgtMode = 0; Sound.sfx('cursor'); continue; }
         const c = this.hand[act.i]; if (!c) continue; const why = this.whyK(c); if (why) { this.noteK(why); Sound.sfx('buzz'); continue; }
@@ -63,7 +63,7 @@ BPK.playK = function (i, tgt) { const c = this.hand[i], C = KD.CARDS[c.id]; this
   return { type: 'skill', skill: 'k14_' + c.id, targets: tgt ? [tgt] : [] }; };
 // tests / bots (Game.autoPlay returning {type:…}): items and running pass through; otherwise the best card it can pay for
 BPK.autoK = function (a) { const core = this.core, H = this.Hu(), foes = core.alive('B'), hp = H.res.hp / H.max.hp;
-  if (a && a.type === 'item' && (a.item || a.id)) return { cmd: { type: 'item', item: a.item || a.id } };
+  if (a && a.type === 'item' && (a.item || a.id) && !this.itemN) { this.itemN = 1; return { cmd: { type: 'item', item: a.item || a.id } }; }
   if (a && a.type === 'run' && !this.anyBoss()) { this.disc.push(...this.hand); this.hand = []; return { cmd: { type: 'run' } }; }
   const I = foes.map(f => typeof intentOf14 === 'function' ? intentOf14(core, f, core.plan && core.plan[f.id]) : null).filter(Boolean), hits = I.some(q => q.k === 'atk' || q.k === 'heavy'), heavy = I.some(q => q.k === 'heavy'), blk = stkK(H, 'blk15');
   let best = -1, bv = 0; this.hand.forEach((c, i) => { if (!this.okK(c)) return; const C = KD.CARDS[c.id], v = KD.val(c), cost = Math.max(0.5, KD.cost(c));
@@ -142,7 +142,7 @@ KD.keyLines = c => { const d = KD.desc(c), out = []; for (const [re, t] of KD.KE
     if (this.cls === 'sw') { for (let i = 0; i < 3; i++) { x.fillStyle = i < this.si ? (this.si >= 3 ? '#ffe070' : '#ff9a40') : '#3a3048'; x.fillRect(bx + 26 + i * 6, Y + 16, 4, 5); } if (this.si >= 3) Font.draw(x, '×2', bx + 46, Y + 14, '#ffe070', '#000', 7); }
     const my = this.core.need && this.core.need.unit && this.core.need.unit.hero && this.idle, stuck = my && this.hand.every(c => !this.okK(c));
     const btn = (X, w, s, col, fn) => { x.fillStyle = my ? col : '#3a3040'; x.fillRect(X, Y + 1, w, 15); Font.drawC(x, s, X + w / 2, Y + 2, '#fff4e0', '#000', 9); if (my) touchRegion(X, Y + 1, w, 15, fn); };
-    btn(116, 22, '道具', '#3a6a50', () => { this.tapK = { k: 'item' }; }); btn(140, 12, '逃', '#5a4a60', () => { this.tapK = { k: 'run' }; });
+    btn(116, 22, '道具', this.itemN ? '#3a4a44' : '#3a6a50', () => { this.tapK = { k: 'item' }; }); btn(140, 12, '逃', '#5a4a60', () => { this.tapK = { k: 'run' }; });
     btn(154, 21, '結束', stuck ? (Math.sin(fK / 5) > 0 ? '#ff9a40' : '#c86030') : '#c86030', () => { this.tapK = { k: 'end' }; }); if (stuck) { x.strokeStyle = 'rgba(255,224,112,' + (0.5 + 0.5 * Math.sin(fK / 5)).toFixed(2) + ')'; x.strokeRect(153.5, Y + 0.5, 22, 16); }
     Font.draw(x, '牌庫 ' + this.pile.length, 116, Y + 15, '#a8a0c0', '#000', 7); Font.drawR(x, '棄牌 ' + this.disc.length, W - 2, Y + 15, '#a8a0c0', '#000', 7);
     if (my) { touchRegion(114, Y + 16, 30, 9, () => { this.tapK = { k: 'pile', w: 'pile' }; }); touchRegion(146, Y + 16, 30, 9, () => { this.tapK = { k: 'pile', w: 'disc' }; }); } }; }
@@ -186,11 +186,11 @@ KD.drawCard = function (x, c, X, Y, w, h, o = {}) { const C = KD.CARDS[c.id]; if
   x.fillStyle = KD.RAR[C.rar].c; x.fillRect(X + w - 4, Y + 2, 2, 2);
   const art = KD.ART && KD.ART[c.id] && KD.ART[c.id].ok ? KD.ART[c.id] : null;
   if (art) { // v14.2 the card's picture along the top (the hand shows its middle 30×18; big cards the whole 48×32)
-    const aw = Math.min(48, w - 2), ah = big ? 32 : w >= 36 ? 22 : 16, sm = !big && w < 36; x.drawImage(art, Math.round((48 - aw) / 2), Math.round((32 - ah) / 2), aw, ah, X + Math.round((w - aw) / 2), Y + 1, aw, ah);
+    const aw = Math.min(48, w - 2), ah = big ? 32 : w >= 36 ? 20 : 16, sm = !big && w < 36; x.drawImage(art, Math.round((48 - aw) / 2), Math.round((32 - ah) / 2), aw, ah, X + Math.round((w - aw) / 2), Y + 1, aw, ah);
     x.fillStyle = 'rgba(0,0,0,0.35)'; x.fillRect(X + 1, Y + ah + 1, w - 2, 1);
     const r = big ? 6 : 5; x.fillStyle = '#0c0814'; x.beginPath(); x.arc(X + r, Y + r, r, 0, 7); x.fill(); x.fillStyle = o.dim ? '#6a5a40' : '#ffb030'; x.beginPath(); x.arc(X + r, Y + r, r - 1, 0, 7); x.fill(); Font.drawC(x, String(KD.cost(c)), X + r, Y + r - 8, '#1a0c00', null, big ? 9 : 8);
     const nm = KD.name(c); let fz = big ? 9 : 8; while (fz > 6 && Font.width(nm, fz) > w - 3) fz--; const ny = Y + ah + 1; Font.drawC(x, nm, X + w / 2, ny, c.up ? '#a8ffa0' : '#fff4e0', '#000', fz);
-    const ly = ny + (big ? 11 : sm ? 9 : 10); C.short(v).forEach((s, k) => { let q = big ? 8 : 7; while (q > 6 && Font.width(s, q) > w - 3) q--; Font.drawC(x, s, X + w / 2, ly + k * (big ? 10 : sm ? 8 : 9), '#e8e4f4', '#000', q); });
+    const ly = ny + (big ? 11 : 9); C.short(v).forEach((s, k) => { let q = big ? 8 : 7; while (q > 6 && Font.width(s, q) > w - 3) q--; Font.drawC(x, s, X + w / 2, ly + k * (big ? 10 : sm ? 8 : 9), '#e8e4f4', '#000', q); });
     if (big && h >= 74) Font.drawC(x, C.cls === 'nt' ? (gold ? '傳說' : qst ? '任務' : '共通') : CL ? CL.n : '', X + w / 2, Y + h - 12, edge || (CL ? CL.c : '#c8c8d8'), '#000', 7);
     if (o.dim) { x.fillStyle = 'rgba(0,0,0,0.38)'; x.fillRect(X, Y, w, h); } return; }
   const r = big ? 6 : 5; x.fillStyle = '#0c0814'; x.beginPath(); x.arc(X + r, Y + r, r, 0, 7); x.fill(); x.fillStyle = o.dim ? '#6a5a40' : '#ffb030'; x.beginPath(); x.arc(X + r, Y + r, r - 1, 0, 7); x.fill(); Font.drawC(x, String(KD.cost(c)), X + r, Y + r - 8, '#1a0c00', null, big ? 9 : 8);

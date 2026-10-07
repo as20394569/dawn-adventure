@@ -96,7 +96,8 @@ KD.qScript = function* (L) { const st = Game.st, K = KD.state(st), old = !K.qv &
     if (!Game.noV14 && st && st.k14 && st.flags && !this.script && !UI.stack.length && !Game.trans) { const L = KD.qPending(st);
       if (L.length) { for (const q of L) KD.qTake(st, q[1]); this.run(KD.qScript(L)); return; } st.k14.qv = 2; }
     return _u.apply(this, a); }; }
-{ const _ng = newGameState; newGameState = function (...a) { const st = _ng.apply(this, a); if (st && st.k14) st.k14.qv = 2; return st; }; }
+// a new game: no 重生之水 (no attributes any more; it used to turn into 1500 G) and pocket money for a card or two, not for a set of gear
+{ const _ng = newGameState; newGameState = function (...a) { const st = _ng.apply(this, a); if (st && st.k14) { st.k14.qv = 2; if (st.bag) delete st.bag.attrReset; st.money = 300; } return st; }; }
 // texts: the old 「設計圖」 wording of the board's exclusive rewards
 KD.TXT.push([/【獨家】([^、]+?)的設計圖/g, '【獨家】任務卡「$1」'], [/獨家報酬「([^」]+)」的設計圖！/g, '獨家報酬「$1」！']);
 { const _rt = rewardText; rewardText = function (r) { const t = _rt(r); return Game.noV14 ? t : KD.fixTxt(t); }; }

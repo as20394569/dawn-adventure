@@ -84,7 +84,7 @@ KD.catchupScript = function* (gold) { const st = Game.st, K = KD.state(st), CL =
 // gear that turns up anyway (quests, chests, events) becomes a card pick
 KD.sweep = (st = Game.st) => { if (!st || !st.gear) return []; const keep = new Set(Object.values(st.equip || {})), out = []; st.gear = st.gear.filter(g => { if (keep.has(g.u) || g.k14c) return true; out.push(g); return false; }); return out; };
 KD.sweepScript = function* (L) { const st = Game.st; for (const g of L) { const nm = (typeof gearName === 'function' ? gearName(g) : (GEAR[g.b] || {}).n) || '裝備', q = g.q || 1;
-    yield* say('（' + nm + '換成了卡牌獎勵。）'); yield* KD.pickFlow(KD.offer(KD.clsKey(st), q >= 4 ? 'boss' : q >= 3 ? 'elite' : 'wild'), '卡牌獎勵：選一張', { sub: '加入「' + KD.clsOf(st).n + '」的牌組' }); } };
+    yield* say('（' + nm + '換成了卡牌獎勵。）'); yield* KD.pickFlow(KD.offer(KD.clsKey(st), q >= 4 ? 'elite' : 'wild'), '卡牌獎勵：選一張', { sub: '加入「' + KD.clsOf(st).n + '」的牌組' }); } };
 { const _u = Overworld.prototype.update; Overworld.prototype.update = function (...a) { const r = _u.apply(this, a);
     if (!Game.noV14 && Game.scene === this && !this.script && !UI.stack.length && Game.st && Game.st.k14) { const L = KD.sweep(); if (L.length) this.run(KD.sweepScript(L)); } return r; }; }
 /* ---------- the menu ---------- */
@@ -176,20 +176,21 @@ KD.removeFlow = function* () { const st = Game.st, D = KD.deck(st);
 // the goods: no gear, no MP potions, no fruits / books / resets
 { const _sb = shopBuy; shopBuy = function* (stock, ...a) { if (Game.noV14 || !Array.isArray(stock)) return yield* _sb.call(this, stock, ...a); const L = stock.filter(k => !GEAR[k] && !(ITEMS[k] && ['mp', 'boost', 'tp', 'reset'].includes(ITEMS[k].use))); return yield* _sb.call(this, L, ...a); }; }
 /* ---------- the smith: 卡牌工坊 (upgrade a card: gold + 2 materials) ---------- */
-KD.upPrice = (st = Game.st) => Math.round(KD.gW(st.lv || 1) * 2 / 5) * 5;
+// v14.6 each upgrade at the workshop costs a little more than the last (2× the area's wild-fight gold, +0.5× per upgrade so far)
+KD.upPrice = (st = Game.st) => Math.round(KD.gW(st.lv || 1) * (2 + 0.5 * ((st.k14 && st.k14.upN) || 0)) / 5) * 5;
 KD.mats = (st = Game.st) => Object.keys(st.bag || {}).filter(k => st.bag[k] > 0 && ((typeof MATCAT11 !== 'undefined' && MATCAT11[k]) || (ITEMS[k] && ITEMS[k].use == null && ITEMS[k].price === 0 && !/^(pt_|pr_)/.test(k)))).sort((a, b) => st.bag[b] - st.bag[a]);
 KD.workshop = function* () { const st = Game.st;
   while (true) { const D = KD.deck(st), L = KD.sorted(D).filter(KD.canUp), p = KD.upPrice(st), M = KD.mats(st), m = M[0], have = m ? st.bag[m] : 0;
     if (!L.length) { yield* say('牌組裡的卡都升級過了！'); return; }
-    const r = yield* KD.grid('卡牌工坊', L, { right: () => p + 'G＋素材2', act: () => '再點一次：升級', detail: c => '升級後：' + KD.desc({ id: c.id, up: 1 }) + (KD.CARDS[c.id].upCost != null ? '（費用 ' + KD.CARDS[c.id].upCost + '）' : ''), hint: '每張卡可以升級一次（' + p + ' G＋任意素材 2 個）。' });
+    const r = yield* KD.grid('卡牌工坊', L, { right: () => p + 'G＋素材2', act: () => '再點一次：升級', detail: c => '升級後：' + KD.desc({ id: c.id, up: 1 }) + (KD.CARDS[c.id].upCost != null ? '（費用 ' + KD.CARDS[c.id].upCost + '）' : ''), hint: '升級 ' + p + ' G＋素材 2 個（越升越貴）' });
     if (r < 0) return; const c = L[r]; if (st.money < p) { Sound.sfx('buzz'); yield* say('金幣不夠（要 ' + p + ' G）。'); continue; } if (!m || have < 2) { Sound.sfx('buzz'); yield* say('素材不夠（要 2 個同樣的素材）。打怪會掉素材。'); continue; }
     if (!(yield* yesNo('花 ' + p + ' G 和 2 個「' + ITEMS[m].n + '」升級「' + KD.CARDS[c.id].n + '」嗎？'))) continue;
-    st.money -= p; st.bag[m] -= 2; if (!st.bag[m]) delete st.bag[m]; c.up = 1; Sound.sfx('levelup'); yield* say('「' + KD.CARDS[c.id].n + '」升級成「' + KD.name(c) + '」了！'); } };
+    st.money -= p; st.bag[m] -= 2; if (!st.bag[m]) delete st.bag[m]; c.up = 1; st.k14.upN = (st.k14.upN || 0) + 1; Sound.sfx('levelup'); yield* say('「' + KD.CARDS[c.id].n + '」升級成「' + KD.name(c) + '」了！'); } };
 { const _sm = smithMenu; smithMenu = function* (...a) { if (Game.noV14) return yield* _sm.apply(this, a); yield* say('這裡是卡牌工坊。花點金幣和素材，可以把卡升級。'); yield* KD.workshop(); }; }
 /* ---------- texts ---------- */
 if (typeof GROW12 !== 'undefined') { for (let i = GROW12.length - 1; i >= 0; i--) if (/裝備|天賦|技能|打造|強化|屬性|晶石|賦予|幻化|武器|等級|Lv|經驗|MP|練等|刷寶/.test(GROW12[i][0] + GROW12[i][1])) GROW12.splice(i, 1); GROW12.unshift(['卡牌戰鬥', '每回合 3 能量、抽 5 張。連出好幾張卡後按「結束」，魔物才照頭上的意圖行動。'], ['拿卡', '打怪有機會掉卡（三選一），菁英和頭目一定會掉。商店也能買卡。'], ['刪卡', '商店可以付錢刪掉弱的卡，牌組越精簡，好卡越常抽到。'],
   ['升級', '鐵匠的卡牌工坊：金幣＋素材 2 個，把卡升級（數字變大，有些費用變少）。'], ['頭目', '第一次打倒頭目：最大 HP +5、得到牠的傳說卡。'], ['轉職', '在城鎮的選單「職業」可以轉職，每個職業有自己的牌組。']); }
-if (typeof BATTLE_HELP !== 'undefined') { BATTLE_HELP.length = 0; BATTLE_HELP.push(['卡牌戰鬥', ['點一張卡看說明，再點一次出牌（打單體的卡再點要打的魔物）。', '出完牌按「結束」，魔物才行動。格擋到你下一回合開始時消失。', '道具不花能量。點左下「牌庫」、右下「棄牌」可以看裡面的卡。']],
+if (typeof BATTLE_HELP !== 'undefined') { BATTLE_HELP.length = 0; BATTLE_HELP.push(['卡牌戰鬥', ['點一張卡看說明，再點一次出牌（打單體的卡再點要打的魔物）。', '出完牌按「結束」，魔物才行動。格擋到你下一回合開始時消失。', '道具不花能量，每回合可以用 1 次。點「牌庫」、「棄牌」可以看裡面的卡。']],
   ['狀態', ['力量：每段傷害 +1。虛弱：造成的傷害 −25%。易傷：受到的傷害 +50%。', '毒：回合結束失去 HP，然後 −1。燃燒：回合結束失去 HP，不會減少。']]); }
 // lines that talk about levels or gear
 KD.TXT = [[/（建議\s*Lv\.?\s*\d+(?:\s*[〜~～-]\s*\d+)?\s*(?:以上)?）/g, ''], [/（裝備請找鐵匠打造喔）/g, ''], [/建議等級\s*Lv\.?\s*\d+(?:\s*[〜~～-]\s*\d+)?/g, ''], [/（可換[^）]*點）/g, ''],
