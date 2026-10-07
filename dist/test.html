@@ -26996,8 +26996,10 @@ class CardTitle15 {
     Font.drawC(x, '～卡牌試玩版～', W / 2, 78, '#ffe0a0', '#3a1428', 11); ['一幕 9 層、劍士一個職業', '每回合 3 能量、抽 5 張', '打倒鐵斧格倫就通關'].forEach((s, i) => Font.drawC(x, s, W / 2, 112 + i * 14, '#e8e4f4', '#000', 9));
     if (Math.floor(this.t / 30) % 2 === 0) Font.drawC(x, '點一下開始', W / 2, 200, '#ffffff', '#1a1024', 10); touchRegion(0, 0, W, H, () => { this.go = 1; }); Font.drawR(x, 'demo v13.0', W - 3, H - 13, '#b890b0', null); }
 }
-function startCardDemo15() { const st = newGameState('小晨'); Game.st = st; try { const g = makeGear('ironSword', 2); g.u = ++st.gid; st.gear.push(g); st.equip.weapon = g.u; } catch (e) { } Game.setScene(new CardTitle15()); }
-if (typeof window !== 'undefined' && window.CARD_DEMO) startCardDemo15();
+function startCardDemo15() { const st = newGameState('小晨'); st.card15 = 1; Game.st = st; try { const g = makeGear('ironSword', 2); g.u = ++st.gid; st.gear.push(g); st.equip.weapon = g.u; } catch (e) { } Game.setScene(new CardTitle15()); }
+if (typeof window !== 'undefined' && window.CARD_DEMO) { const _ss = Game.setScene;
+  Game.setScene = function (s) { if (s && (s instanceof TitleScene || s instanceof IntroScene || s instanceof Overworld)) { if (!Game.st || !Game.st.card15) { const st = newGameState('小晨'); st.card15 = 1; Game.st = st; try { const g = makeGear('ironSword', 2); g.u = ++st.gid; st.gear.push(g); st.equip.weapon = g.u; } catch (e) { } } s = new CardTitle15(); } return _ss.call(this, s); };
+  startCardDemo15(); }
 { const _sp = syncPadVisibility; syncPadVisibility = function () { if (window.CARD_DEMO) { const on = document.body.classList.contains('battle'); if (!on) { document.body.classList.add('battle'); requestAnimationFrame(() => { fitScreen(); setTimeout(fitScreen, 60); }); } return; } return _sp(); }; }
 </script>
 </body></html>
