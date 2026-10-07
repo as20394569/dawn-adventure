@@ -178,26 +178,26 @@ BPK.pileView = function* (w) { const L = (w === 'disc' ? this.disc : this.pile).
       if (scroll > 0) touchRegion(0, 0, W, 16, () => { scroll--; }); Font.drawC(x, '關閉', W * 0.75, 244, '#e8e4f4', '#000', 9); touchRegion(W / 2, 236, W / 2, 20, () => { done = true; }); } };
   UI.push(ui); while (!done) { yield; if (Input.pressed('b') || Input.pressed('a')) done = true; if (Input.pressed('down') && (scroll + 4) * 4 < L.length) scroll++; if (Input.pressed('up') && scroll > 0) scroll--; } UI.remove(ui); Input.consume('a', 'b'); };
 /* ---------- a card picture: cost, name, icon, the key numbers; the class colour along the bottom ---------- */
-KD.drawCard = function (x, c, X, Y, w, h, o = {}) { const C = KD.CARDS[c.id]; if (!C) return; const T = KD.TYPE[C.type], v = KD.val(c), big = w >= 46, CL = KD.CLASSES[C.cls], gold = C.rar === 'L';
+KD.drawCard = function (x, c, X, Y, w, h, o = {}) { const C = KD.CARDS[c.id]; if (!C) return; const T = KD.TYPE[C.type], v = KD.val(c), big = w >= 46, CL = KD.CLASSES[C.cls], gold = C.rar === 'L', qst = C.rar === 'Q', edge = gold ? '#ffb040' : qst ? '#5ce0b8' : null;
   x.fillStyle = '#0c0814'; x.fillRect(X - 1, Y - 1, w + 2, h + 2); x.fillStyle = T.bg; x.fillRect(X, Y, w, h);
   x.fillStyle = 'rgba(255,255,255,0.05)'; x.fillRect(X + 1, Y + 1, w - 2, Math.round(h * 0.4));
-  x.fillStyle = o.on ? '#ffe070' : gold ? '#ffb040' : T.c; x.fillRect(X, Y, w, 1); x.fillRect(X, Y + h - 1, w, 1); x.fillRect(X, Y, 1, h); x.fillRect(X + w - 1, Y, 1, h);
-  x.fillStyle = gold ? '#ffb040' : CL ? CL.c : '#8a8a9a'; x.fillRect(X + 2, Y + h - 3, w - 4, 1);
+  x.fillStyle = o.on ? '#ffe070' : edge || T.c; x.fillRect(X, Y, w, 1); x.fillRect(X, Y + h - 1, w, 1); x.fillRect(X, Y, 1, h); x.fillRect(X + w - 1, Y, 1, h);
+  x.fillStyle = edge || (CL ? CL.c : '#8a8a9a'); x.fillRect(X + 2, Y + h - 3, w - 4, 1);
   x.fillStyle = KD.RAR[C.rar].c; x.fillRect(X + w - 4, Y + 2, 2, 2);
   const art = KD.ART && KD.ART[c.id] && KD.ART[c.id].ok ? KD.ART[c.id] : null;
   if (art) { // v14.2 the card's picture along the top (the hand shows its middle 30×18; big cards the whole 48×32)
-    const aw = Math.min(48, w - 2), ah = big ? 32 : w >= 36 ? 22 : 18; x.drawImage(art, Math.round((48 - aw) / 2), Math.round((32 - ah) / 2), aw, ah, X + Math.round((w - aw) / 2), Y + 1, aw, ah);
+    const aw = Math.min(48, w - 2), ah = big ? 32 : w >= 36 ? 22 : 16, sm = !big && w < 36; x.drawImage(art, Math.round((48 - aw) / 2), Math.round((32 - ah) / 2), aw, ah, X + Math.round((w - aw) / 2), Y + 1, aw, ah);
     x.fillStyle = 'rgba(0,0,0,0.35)'; x.fillRect(X + 1, Y + ah + 1, w - 2, 1);
     const r = big ? 6 : 5; x.fillStyle = '#0c0814'; x.beginPath(); x.arc(X + r, Y + r, r, 0, 7); x.fill(); x.fillStyle = o.dim ? '#6a5a40' : '#ffb030'; x.beginPath(); x.arc(X + r, Y + r, r - 1, 0, 7); x.fill(); Font.drawC(x, String(KD.cost(c)), X + r, Y + r - 8, '#1a0c00', null, big ? 9 : 8);
     const nm = KD.name(c); let fz = big ? 9 : 8; while (fz > 6 && Font.width(nm, fz) > w - 3) fz--; const ny = Y + ah + 1; Font.drawC(x, nm, X + w / 2, ny, c.up ? '#a8ffa0' : '#fff4e0', '#000', fz);
-    const ly = ny + (big ? 11 : 10); C.short(v).forEach((s, k) => { let q = big ? 8 : 7; while (q > 6 && Font.width(s, q) > w - 3) q--; Font.drawC(x, s, X + w / 2, ly + k * (big ? 10 : 9), '#e8e4f4', '#000', q); });
-    if (big && h >= 74) Font.drawC(x, C.cls === 'nt' ? (gold ? '傳說' : '共通') : CL ? CL.n : '', X + w / 2, Y + h - 12, gold ? '#ffb040' : CL ? CL.c : '#c8c8d8', '#000', 7);
+    const ly = ny + (big ? 11 : sm ? 9 : 10); C.short(v).forEach((s, k) => { let q = big ? 8 : 7; while (q > 6 && Font.width(s, q) > w - 3) q--; Font.drawC(x, s, X + w / 2, ly + k * (big ? 10 : sm ? 8 : 9), '#e8e4f4', '#000', q); });
+    if (big && h >= 74) Font.drawC(x, C.cls === 'nt' ? (gold ? '傳說' : qst ? '任務' : '共通') : CL ? CL.n : '', X + w / 2, Y + h - 12, edge || (CL ? CL.c : '#c8c8d8'), '#000', 7);
     if (o.dim) { x.fillStyle = 'rgba(0,0,0,0.38)'; x.fillRect(X, Y, w, h); } return; }
   const r = big ? 6 : 5; x.fillStyle = '#0c0814'; x.beginPath(); x.arc(X + r, Y + r, r, 0, 7); x.fill(); x.fillStyle = o.dim ? '#6a5a40' : '#ffb030'; x.beginPath(); x.arc(X + r, Y + r, r - 1, 0, 7); x.fill(); Font.drawC(x, String(KD.cost(c)), X + r, Y + r - 8, '#1a0c00', null, big ? 9 : 8);
-  const nm = KD.name(c); let fz = big ? 9 : 8; while (fz > 6 && Font.width(nm, fz) > w - 4) fz--; const ny = Y + (big ? 12 : 9); Font.drawC(x, nm, X + w / 2, ny, c.up ? '#a8ffa0' : '#fff4e0', '#000', fz);
-  const z = big && h >= 74 ? 2 : 1, ic = KD.ICON[KD.iconOf(c.id)], iy = ny + (big ? 11 : 9); if (ic) x.drawImage(ic, Math.round(X + w / 2 - 6.5 * z), iy, 13 * z, 13 * z);
-  const ly = iy + 13 * z + (big ? 1 : 0); C.short(v).forEach((s, k) => { let q = big ? 8 : 7; while (q > 6 && Font.width(s, q) > w - 3) q--; Font.drawC(x, s, X + w / 2, ly + k * (big ? 10 : 9), '#e8e4f4', '#000', q); });
-  if (big && h >= 74) Font.drawC(x, C.cls === 'nt' ? (gold ? '傳說' : '共通') : CL ? CL.n : '', X + w / 2, Y + h - 12, gold ? '#ffb040' : CL ? CL.c : '#c8c8d8', '#000', 7);
+  const nm = KD.name(c); let fz = big ? 9 : 8; while (fz > 6 && Font.width(nm, fz) > w - 4) fz--; const sm = !big && w < 36, ny = Y + (big ? 12 : sm ? 8 : 9); Font.drawC(x, nm, X + w / 2, ny, c.up ? '#a8ffa0' : '#fff4e0', '#000', fz);
+  const z = big && h >= 74 ? 2 : 1, ic = KD.ICON[KD.iconOf(c.id)], iy = ny + (big ? 11 : sm ? 8 : 9); if (ic) x.drawImage(ic, Math.round(X + w / 2 - 6.5 * z), iy, 13 * z, 13 * z);
+  const ly = iy + 13 * z + (big ? 1 : 0); C.short(v).forEach((s, k) => { let q = big ? 8 : 7; while (q > 6 && Font.width(s, q) > w - 3) q--; Font.drawC(x, s, X + w / 2, ly + k * (big ? 10 : sm ? 8 : 9), '#e8e4f4', '#000', q); });
+  if (big && h >= 74) Font.drawC(x, C.cls === 'nt' ? (gold ? '傳說' : qst ? '任務' : '共通') : CL ? CL.n : '', X + w / 2, Y + h - 12, edge || (CL ? CL.c : '#c8c8d8'), '#000', 7);
   if (o.dim) { x.fillStyle = 'rgba(0,0,0,0.38)'; x.fillRect(X, Y, w, h); } };
 /* ---------- after a battle ---------- */
 // no levels any more: experience still counts quietly (area events and some old checks read it)

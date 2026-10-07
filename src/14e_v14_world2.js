@@ -45,15 +45,15 @@ if (Events.abyKeeper) { const _ak = Events.abyKeeper; Events.abyKeeper = functio
 { const gone = new Set(['enh5', 'gold', 'cls2', 'lv20', 'rainbow', 'master', 'allMaster']); for (let i = ACHIEVEMENTS.length - 1; i >= 0; i--) if (gone.has(ACHIEVEMENTS[i].id)) ACHIEVEMENTS.splice(i, 1);
   const sb = ACHIEVEMENTS.find(a => a.id === 'spellblade'); if (sb) sb.d = '打贏流浪的魔劍士。';
   const legN = st => { const K = KD.state(st); let n = 0; for (const k in K.decks) n += K.decks[k].filter(c => KD.CARDS[c.id] && KD.CARDS[c.id].rar === 'L').length; return n; };
-  ACHIEVEMENTS.push({ id: 'k14_deck30', n: '大牌組', d: '牌組達到 30 張。', ok: st => !!st.k14 && KD.deck(st).length >= 30 },
-    { id: 'k14_up10', n: '千錘百鍊', d: '牌組裡升級過的卡達到 10 張。', ok: st => !!st.k14 && KD.deck(st).filter(c => c.up).length >= 10 },
-    { id: 'k14_rem5', n: '去蕪存菁', d: '刪卡 5 次。', ok: st => !!st.k14 && (st.k14.rem || 0) >= 5 },
-    { id: 'k14_cls4', n: '全能的旅人', d: '四個職業都用過。', ok: st => !!st.k14 && KD.CLS_ORDER.every(k => st.k14.decks[k]) },
-    { id: 'k14_leg5', n: '傳說收藏家', d: '擁有 5 張傳說卡。', ok: st => !!st.k14 && legN(st) >= 5 },
-    { id: 'k14_dex50', n: '卡牌學者', d: '卡牌圖鑑收集達到 50%。', ok: st => !!st.k14 && KD.dexPct(st) >= 0.5 }); }
+  ACHIEVEMENTS.push({ id: 'k14_deck30', cat: '收集', n: '大牌組', d: '牌組達到 30 張。', ok: st => !!st.k14 && KD.deck(st).length >= 30 },
+    { id: 'k14_up10', cat: '成長', n: '千錘百鍊', d: '牌組裡升級過的卡達到 10 張。', ok: st => !!st.k14 && KD.deck(st).filter(c => c.up).length >= 10 },
+    { id: 'k14_rem5', cat: '成長', n: '去蕪存菁', d: '刪卡 5 次。', ok: st => !!st.k14 && (st.k14.rem || 0) >= 5 },
+    { id: 'k14_cls4', cat: '成長', n: '全能的旅人', d: '四個職業都用過。', ok: st => !!st.k14 && KD.CLS_ORDER.every(k => st.k14.decks[k]) },
+    { id: 'k14_leg5', cat: '收集', n: '傳說收藏家', d: '擁有 5 張傳說卡。', ok: st => !!st.k14 && legN(st) >= 5 },
+    { id: 'k14_dex50', cat: '收集', n: '卡牌學者', d: '卡牌圖鑑收集達到 50%。', ok: st => !!st.k14 && KD.dexPct(st) >= 0.5 }); }
 /* ---------- 卡牌圖鑑 ---------- */
 KD.dexList = () => Object.keys(KD.CARDS).filter(id => !KD.CARDS[id].hidden && KD.CARDS[id].rar !== 'T').sort((a, b) => { const A = KD.CARDS[a], B = KD.CARDS[b], O = ['sw', 'rg', 'mg', 'bk', 'nt'];
-  return (A.rar === 'L') - (B.rar === 'L') || O.indexOf(A.cls) - O.indexOf(B.cls) || 'BCURL'.indexOf(A.rar) - 'BCURL'.indexOf(B.rar) || A.cost - B.cost || (a < b ? -1 : 1); });
+  const g = q => q.rar === 'L' ? 1 : q.rar === 'Q' ? 2 : 0; return g(A) - g(B) || O.indexOf(A.cls) - O.indexOf(B.cls) || 'BCURL'.indexOf(A.rar) - 'BCURL'.indexOf(B.rar) || A.cost - B.cost || (a < b ? -1 : 1); });
 KD.dexPct = (st = Game.st) => { const L = KD.dexList(), S = KD.state(st).seen || {}; return L.filter(id => S[id]).length / L.length; };
 KD.dexScreen = function* () { const st = Game.st, S = KD.state(st).seen || {}, L = KD.dexList();
   yield* KD.grid('卡牌圖鑑', L.map(id => ({ id })), { right: () => L.filter(id => S[id]).length + '／' + L.length, hide: c => !S[c.id], hint: '拿到過的卡會記在這裡（「？」是還沒拿過的）。' }); };

@@ -9,7 +9,7 @@ KD.CLASSES = {
   bk: { n: '狂戰士', hp: 85, wkind: '斧', c: '#e06048', ab: '血怒', abd: 'HP 低於一半時，攻擊卡傷害 +3。', d: '扣自己的 HP 換傷害，力量越疊越痛。', start: [['bk_chop', 5], ['bk_defend', 4], ['bk_split', 1]] },
 };
 KD.CLS_ORDER = ['sw', 'rg', 'mg', 'bk'];
-KD.RAR = { B: { n: '基本', c: '#9a9aaa' }, C: { n: '普通', c: '#d0d8e8' }, U: { n: '稀有', c: '#58b8ff' }, R: { n: '史詩', c: '#c878ff' }, L: { n: '傳說', c: '#ffb040' }, T: { n: '衍生', c: '#9a9aaa' } };
+KD.RAR = { B: { n: '基本', c: '#9a9aaa' }, C: { n: '普通', c: '#d0d8e8' }, U: { n: '稀有', c: '#58b8ff' }, R: { n: '史詩', c: '#c878ff' }, L: { n: '傳說', c: '#ffb040' }, Q: { n: '任務', c: '#5ce0b8' }, T: { n: '衍生', c: '#9a9aaa' } };
 KD.TYPE = { atk: { n: '攻擊', c: '#d05038', bg: '#3a1a1c' }, skl: { n: '技能', c: '#4a80d8', bg: '#16203a' }, pow: { n: '能力', c: '#d8a830', bg: '#33280c' } };
 KD.CARDS = {};
 const KC = (id, cls, n, type, rar, cost, fx, tg, b, u, desc, short, run, o = {}) => { KD.CARDS[id] = { id, cls, n, type, rar, cost, fx, tg, b, u, desc, short, run, ...o }; };
@@ -202,11 +202,12 @@ KD.name = c => KD.CARDS[c.id].n + (c.up ? '+' : '');
 KD.desc = c => KD.CARDS[c.id].desc(KD.val(c));
 KD.canUp = c => !c.up && KD.CARDS[c.id] && KD.CARDS[c.id].rar !== 'T';
 // the cards a class can find (its own + 共通; 傳說 only from bosses)
-KD.pool = (cls, rar) => Object.keys(KD.CARDS).filter(id => { const C = KD.CARDS[id]; return (C.cls === cls || C.cls === 'nt') && C.rar === rar && !C.hidden && !C.boss; });
+KD.pool = (cls, rar) => Object.keys(KD.CARDS).filter(id => { const C = KD.CARDS[id]; return (C.cls === cls || C.cls === 'nt') && C.rar === rar && !C.hidden && !C.boss && !C.quest; });
 /* ---------- one battle skill per card (the battle screen plays its effect; the core runs the card) ---------- */
 for (const k of ['card14', 'card14end']) EFFECT_TYPES[k] = EFFECT_TYPES[k] || { exec() {} };
 defPut('effects', 'k14_play', { type: 'card14' }); defPut('effects', 'k14_endfx', { type: 'card14end' });
-for (const id in KD.CARDS) { const C = KD.CARDS[id], T = DEF.skills.t_sdBreak, cat = C.cat || (C.cls === 'mg' ? '特' : '物');
+KD.regCard = id => { const C = KD.CARDS[id], T = DEF.skills.t_sdBreak, cat = C.cat || (C.cls === 'mg' ? '特' : '物');
   defPut('skills', 'k14_' + id, { ...T, id: 'k14_' + id, name: C.n, desc: '', power: C.type === 'atk' ? 1 : 0, target: C.tg === 'enemy' ? 'enemy' : C.tg === 'self' ? 'self' : 'all_enemies', noHitRoll: true, costs: [], cooldown: 0, hits: null, charge: false, prio: 0,
-    effects: ['k14_play'], after: [], mods: [], fx: C.fx, el: C.el || '一般', cat, tags: ['skill', C.type === 'atk' ? (cat === '特' ? 'magic' : 'phys') : 'support'], metadata: { card14: id }, override: true }); }
+    effects: ['k14_play'], after: [], mods: [], fx: C.fx, el: C.el || '一般', cat, tags: ['skill', C.type === 'atk' ? (cat === '特' ? 'magic' : 'phys') : 'support'], metadata: { card14: id }, override: true }); };
+for (const id in KD.CARDS) KD.regCard(id);
 defPut('skills', 'k14_end', { ...DEF.skills.t_sdBreak, id: 'k14_end', name: '結束回合', desc: '', power: 0, target: 'self', noHitRoll: true, costs: [], cooldown: 0, hits: null, charge: false, prio: 0, effects: ['k14_endfx'], after: [], mods: [], fx: null, tags: ['skill', 'support'], metadata: {}, override: true });

@@ -8,11 +8,14 @@ KD.state = (st = Game.st) => { if (!st) return { cls: 'sw', decks: {}, hpPlus: 0
 KD.clsKey = (st = Game.st) => { const k = KD.state(st).cls; return KD.CLASSES[k] ? k : 'sw'; };
 KD.clsOf = (st = Game.st) => KD.CLASSES[KD.clsKey(st)];
 KD.startDeck = cls => { const out = []; for (const [id, n] of KD.CLASSES[cls].start) for (let i = 0; i < n; i++) out.push({ id, up: 0 }); return out; };
-KD.deck = (st = Game.st) => { const K = KD.state(st), k = KD.clsKey(st); if (!K.decks[k] || !K.decks[k].length) { K.decks[k] = KD.startDeck(k); KD.markSeen(K, K.decks[k]); } K.decks[k] = K.decks[k].filter(c => KD.CARDS[c.id]); return K.decks[k]; };
+KD.deck = (st = Game.st) => { const K = KD.state(st), k = KD.clsKey(st); if (!K.decks[k] || !K.decks[k].length) { K.decks[k] = KD.startDeck(k); KD.markSeen(K, K.decks[k]); } K.decks[k] = K.decks[k].filter(c => KD.CARDS[c.id]); KD.syncU(K, k, K.decks[k]); return K.decks[k]; };
+// v14.2 one-of-a-kind cards (頭目傳說卡・任務卡) belong to the hero, not the class: every class's deck gets each one once (a removed one stays removed)
+KD.uniq = K => Object.keys(K.boss || {}).map(sp => KD.BOSS_CARD[sp]).concat(Object.keys(K.qc || {})).filter(id => KD.CARDS[id]);
+KD.syncU = (K, k, D) => { const G = (K.gave = K.gave || {})[k] || (K.gave[k] = {}); for (const id of KD.uniq(K)) { if (G[id]) continue; G[id] = 1; if (!D.some(c => c.id === id)) D.push({ id, up: 0 }); (K.seen = K.seen || {})[id] = 1; } };
 KD.markSeen = (K, L) => { K.seen = K.seen || {}; for (const c of L) K.seen[c.id] = 1; };
 KD.maxHp = (st = Game.st) => KD.clsOf(st).hp + (KD.state(st).hpPlus || 0);
 KD.bossN = (st = Game.st) => Object.keys(KD.state(st).boss).length;
-KD.addCard = (st, c) => { const id = c.id || c; KD.deck(st).push({ id, up: c.up ? 1 : 0 }); const K = KD.state(st); (K.seen = K.seen || {})[id] = 1; };
+KD.addCard = (st, c) => { const id = c.id || c, C = KD.CARDS[id], D = KD.deck(st); if (!(C && (C.boss || C.quest) && D.some(q => q.id === id))) D.push({ id, up: c.up ? 1 : 0 }); const K = KD.state(st); (K.seen = K.seen || {})[id] = 1; };
 KD.wildRate = (cfg = {}, st = Game.st) => Math.min(0.8, 0.3 + (cfg.aevGold ? 0.2 : 0) + (cfg.aevExp && !cfg.aevGold ? 0.2 : 0) + (st && /^cave6_/.test(st.map || '') ? 0.15 : 0));
 KD.gW = lv => Math.round(KD.tab([[1, 25], [7, 64], [12, 168], [17, 400], [22, 600], [30, 700], [45, 700], [60, 780]], lv));
 KD.price = (rar, st = Game.st) => Math.round(KD.gW(st.lv || 1) * ({ C: 3, U: 5, R: 10, L: 20 }[rar] || 3) / 5) * 5;
@@ -67,7 +70,7 @@ classSelectScreen = function* () { while (true) { const i = yield* ask('選一�
 KD.KIND_CLS = { 劍: 'sw', 雙劍: 'sw', 單手盾: 'sw', 雙盾: 'sw', 長槍: 'sw', 短刀: 'rg', 雙刀: 'rg', 火槍: 'rg', 法杖: 'mg', 魔導書: 'mg', 樂器: 'mg', 斧: 'bk', 拳套: 'bk' };
 KD.migrate = (st) => { if (!st || st.k14) return null; const kind = typeof mainKind11 === 'function' ? mainKind11(st) : null, K = KD.state(st); K.cls = KD.KIND_CLS[kind] || 'sw'; K.old = 1;
   for (const sp in KD.BOSS_CARD) if (st.dex && st.dex[sp] && st.dex[sp].won > 0) { K.boss[sp] = 1; K.hpPlus += 5; }
-  const deck = KD.deck(st); for (const sp in K.boss) deck.push({ id: KD.BOSS_CARD[sp], up: 0 }); KD.markSeen(K, deck);
+  const deck = KD.deck(st); KD.markSeen(K, deck);
   let gold = 0; const keep = new Set(Object.values(st.equip || {})); st.gear = (st.gear || []).filter(g => { if (keep.has(g.u)) { g.k14c = 1; return true; } gold += KD.gearGold(g); return false; });
   for (const k in st.bag || {}) { const it = ITEMS[k]; if (it && ['mp', 'boost', 'tp', 'reset'].includes(it.use) && st.bag[k] > 0) { gold += Math.round((it.price || 100) * 0.5) * st.bag[k]; delete st.bag[k]; } }
   if (st.flags) { st.flags.tutMat12 = 1; const told = st.flags.zjTold12 || (st.flags.zjTold12 = {}); for (const q in KD.TEACH) if (st.flags[q]) told[q] = 1; }
