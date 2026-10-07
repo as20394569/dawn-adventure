@@ -5596,7 +5596,7 @@ class Battle {
     const rim = F.boss ? '#ff6b7a' : F.elite ? '#ffc46b' : F.rare ? '#ffd84a' : '#8a93b3', tag = F.rare ? '稀有' : F.boss ? '頭目' : F.elite ? '菁英' : '';
     x.globalAlpha = a; if (!uiPlate(x, X, py, w, 33 + pe, F)) { x.fillStyle = 'rgba(10,8,20,0.75)'; x.fillRect(X, py, w, 33); x.fillStyle = rim; x.fillRect(X + 2, py, w - 4, 1); x.fillRect(X + 2, py + 32, w - 4, 1); x.fillRect(X, py + 2, 1, 29); x.fillRect(X + w - 1, py + 2, 1, 29); }
     Font.draw(x, F.n, X + 6, py + 1, UIC.text, UIC.textSh, 10); if (tag) Font.drawR(x, tag, X + w - 6, py + 2, rim, UIC.textSh, 8);
-    let lx = Font.draw(x, 'Lv' + F.lv, X + 6, py + 14, UIC.muted, UIC.textSh, 8); if (FAMILIES[F.fam]) lx = Font.draw(x, '・' + FAMILIES[F.fam].n, lx + 1, py + 14, FAMILIES[F.fam].c, UIC.textSh, 8);
+    const noLv = (!Game.noV14 && Game.st && Game.st.k14); let lx = noLv ? X + 5 : Font.draw(x, 'Lv' + F.lv, X + 6, py + 14, UIC.muted, UIC.textSh, 8); if (FAMILIES[F.fam]) lx = Font.draw(x, (noLv ? '' : '・') + FAMILIES[F.fam].n, lx + 1, py + 14, FAMILIES[F.fam].c, UIC.textSh, 8);
     const bs = this.badges(F); badgeRow(x, bs.slice(0, 3), X + w - 6 - Math.min(3, bs.length) * 18, py + 14);
     const r = clamp(F.hp / F.maxhp, 0, 1); if (!uiBar(x, X + 7, py + 30, w - 14, r, r > 0.25 ? 'foe' : 'low')) { x.fillStyle = '#1a1024'; x.fillRect(X + 6, py + 27, w - 12, 3); x.fillStyle = r > 0.5 ? '#e0504a' : r > 0.2 ? '#ff8a3a' : '#ffd040'; x.fillRect(X + 6, py + 27, Math.round((w - 12) * r), 3); }
     if (F.brkMax) drawShieldBadge(x, X - 16, py + 9, F.brk, F.broken > 0, F.flash > 0 && Math.floor(F.flash / 3) % 2);
@@ -5610,7 +5610,7 @@ class Battle {
     if (a <= 0) return; const sw = Math.floor((W - 4) / Math.max(1, n)), w = Math.min(n >= 3 ? 56 : 80, sw - 2), X = Math.round(clamp(v.x - w / 2, 2 + i * sw, 2 + i * sw + sw - 2 - w)), py = 4, on = this.pickV === v; // v12.0.9f: each plate stays in its own slot (two foes close together used to overlap)
     const rim = on ? '#ffd860' : v.boss ? '#ff6b7a' : v.elite ? '#ffc46b' : v.rare ? '#ffd84a' : v.minion ? '#b08a6a' : '#8a93b3';
     x.globalAlpha = a; x.fillStyle = 'rgba(10,8,20,0.78)'; x.fillRect(X, py, w, 22); x.fillStyle = rim; x.fillRect(X + 1, py, w - 2, 1); x.fillRect(X + 1, py + 21, w - 2, 1); x.fillRect(X, py + 1, 1, 20); x.fillRect(X + w - 1, py + 1, 1, 20);
-    let z = 9; while (z > 7 && Font.width(v.n, z) > w - 24) z--; Font.draw(x, v.n, X + 3, py - 1, on ? '#ffe8b0' : UIC.text, UIC.textSh, z); Font.drawR(x, 'Lv' + v.lv, X + w - 3, py, UIC.muted, UIC.textSh, 7);
+    let z = 9; while (z > 7 && Font.width(v.n, z) > w - 24) z--; Font.draw(x, v.n, X + 3, py - 1, on ? '#ffe8b0' : UIC.text, UIC.textSh, z); if (!(!Game.noV14 && Game.st && Game.st.k14)) Font.drawR(x, 'Lv' + v.lv, X + w - 3, py, UIC.muted, UIC.textSh, 7);
     const r = clamp(v.hp / v.maxhp, 0, 1); x.fillStyle = '#1a1024'; x.fillRect(X + 3, py + 15, w - 6, 3); x.fillStyle = r > 0.5 ? '#e0504a' : r > 0.2 ? '#ff8a3a' : '#ffd040'; x.fillRect(X + 3, py + 15, Math.round((w - 6) * r), 3);
     if (v.brkMax) { for (let k = 0; k < v.brkMax; k++) { x.fillStyle = v.broken ? '#ff6050' : k < v.brk ? '#8ad0ff' : '#2a3048'; x.fillRect(X + 3 + k * 4, py + 11, 3, 2); } }
     const bs = this.badges(v).slice(0, n >= 3 ? 2 : 3); if (bs.length) badgeRow(x, bs, X + w - 2 - bs.length * (ICON_SZ + 2), py + 24);
@@ -5625,7 +5625,7 @@ class Battle {
     const Y = Math.round(this.boxH), st = Game.st, Hv = this.H; if (Y >= BH) return;
     const r = clamp(Hv.hp / Hv.maxhp, 0, 1), mr = clamp(Hv.mp / (Hv.maxmp || 1), 0, 1), my = Y + 6;
     if (!uiHud(x, 0, Y - 3, W, BH - Y + 4)) { x.fillStyle = 'rgba(12,10,22,0.9)'; x.fillRect(0, Y, W, BH - Y); x.fillStyle = '#c8a050'; x.fillRect(0, Y, W, 1); }
-    const cx = Font.draw(x, st.name, 4, Y, UIC.text, UIC.textSh, 9); Font.draw(x, 'Lv' + st.lv, cx + 2, Y + 2, '#c8a050', UIC.textSh, 7);
+    const cx = Font.draw(x, st.name, 4, Y, UIC.text, UIC.textSh, 9); if (!(!Game.noV14 && Game.st && Game.st.k14)) Font.draw(x, 'Lv' + st.lv, cx + 2, Y + 2, '#c8a050', UIC.textSh, 7);
     Font.draw(x, 'HP', 62, Y + 2, '#ff9a8a', UIC.textSh, 7); if (!uiBar(x, 76, my, 28, r, r > 0.25 ? 'hp' : 'low')) { x.fillStyle = '#241018'; x.fillRect(74, my, 30, 3); x.fillStyle = r > 0.5 ? '#5ad07a' : r > 0.2 ? '#ffc040' : '#ff5a5a'; x.fillRect(74, my, Math.round(30 * r), 3); } Font.drawR(x, Math.ceil(Hv.hp) + '', 122, Y + 1, r <= 0.2 ? UIC.bad : UIC.text, UIC.textSh, 8);
     Font.draw(x, 'MP', 127, Y + 2, '#8ab8ff', UIC.textSh, 7); if (!uiBar(x, 141, my, 19, mr, 'mp')) { x.fillStyle = '#101a30'; x.fillRect(139, my, 21, 3); x.fillStyle = '#5aa8ff'; x.fillRect(139, my, Math.round(21 * mr), 3); } Font.drawR(x, Math.round(Hv.mp) + '', 174, Y + 1, '#b8d4ff', UIC.textSh, 8);
     const bs = this.badges(Hv), C = this.center(Hv), nS = Math.min(4, BR.STAT_KEYS.filter(k => Hv.st['stage_' + k]).length), iw = (typeof ICON_SZ !== 'undefined' ? ICON_SZ : 12) + 2;
