@@ -27440,6 +27440,15 @@ KD.drawCard = function (x, c, X, Y, w, h, o = {}) { const C = KD.CARDS[c.id]; if
   x.fillStyle = o.on ? '#ffe070' : gold ? '#ffb040' : T.c; x.fillRect(X, Y, w, 1); x.fillRect(X, Y + h - 1, w, 1); x.fillRect(X, Y, 1, h); x.fillRect(X + w - 1, Y, 1, h);
   x.fillStyle = gold ? '#ffb040' : CL ? CL.c : '#8a8a9a'; x.fillRect(X + 2, Y + h - 3, w - 4, 1);
   x.fillStyle = KD.RAR[C.rar].c; x.fillRect(X + w - 4, Y + 2, 2, 2);
+  const art = KD.ART && KD.ART[c.id] && KD.ART[c.id].ok ? KD.ART[c.id] : null;
+  if (art) { // v14.2 the card's picture along the top (the hand shows its middle 30×18; big cards the whole 48×32)
+    const aw = Math.min(48, w - 2), ah = big ? 32 : w >= 36 ? 22 : 18; x.drawImage(art, Math.round((48 - aw) / 2), Math.round((32 - ah) / 2), aw, ah, X + Math.round((w - aw) / 2), Y + 1, aw, ah);
+    x.fillStyle = 'rgba(0,0,0,0.35)'; x.fillRect(X + 1, Y + ah + 1, w - 2, 1);
+    const r = big ? 6 : 5; x.fillStyle = '#0c0814'; x.beginPath(); x.arc(X + r, Y + r, r, 0, 7); x.fill(); x.fillStyle = o.dim ? '#6a5a40' : '#ffb030'; x.beginPath(); x.arc(X + r, Y + r, r - 1, 0, 7); x.fill(); Font.drawC(x, String(KD.cost(c)), X + r, Y + r - 8, '#1a0c00', null, big ? 9 : 8);
+    const nm = KD.name(c); let fz = big ? 9 : 8; while (fz > 6 && Font.width(nm, fz) > w - 3) fz--; const ny = Y + ah + 1; Font.drawC(x, nm, X + w / 2, ny, c.up ? '#a8ffa0' : '#fff4e0', '#000', fz);
+    const ly = ny + (big ? 11 : 10); C.short(v).forEach((s, k) => { let q = big ? 8 : 7; while (q > 6 && Font.width(s, q) > w - 3) q--; Font.drawC(x, s, X + w / 2, ly + k * (big ? 10 : 9), '#e8e4f4', '#000', q); });
+    if (big && h >= 74) Font.drawC(x, C.cls === 'nt' ? (gold ? '傳說' : '共通') : CL ? CL.n : '', X + w / 2, Y + h - 12, gold ? '#ffb040' : CL ? CL.c : '#c8c8d8', '#000', 7);
+    if (o.dim) { x.fillStyle = 'rgba(0,0,0,0.38)'; x.fillRect(X, Y, w, h); } return; }
   const r = big ? 6 : 5; x.fillStyle = '#0c0814'; x.beginPath(); x.arc(X + r, Y + r, r, 0, 7); x.fill(); x.fillStyle = o.dim ? '#6a5a40' : '#ffb030'; x.beginPath(); x.arc(X + r, Y + r, r - 1, 0, 7); x.fill(); Font.drawC(x, String(KD.cost(c)), X + r, Y + r - 8, '#1a0c00', null, big ? 9 : 8);
   const nm = KD.name(c); let fz = big ? 9 : 8; while (fz > 6 && Font.width(nm, fz) > w - 4) fz--; const ny = Y + (big ? 12 : 9); Font.drawC(x, nm, X + w / 2, ny, c.up ? '#a8ffa0' : '#fff4e0', '#000', fz);
   const z = big && h >= 74 ? 2 : 1, ic = KD.ICON[KD.iconOf(c.id)], iy = ny + (big ? 11 : 9); if (ic) x.drawImage(ic, Math.round(X + w / 2 - 6.5 * z), iy, 13 * z, 13 * z);
@@ -27704,5 +27713,7 @@ KD.TXT.push([/【推薦Lv[^】]*】/g, ''], [/[。，]?\s*推薦Lv\d+(?:\s*[〜~
 { const _ig = itemGet; itemGet = function* (text, ...a) { return yield* _ig.call(this, KD.fixTxt(text), ...a); }; }
 for (const f of ['draw', 'drawC', 'drawR']) { const _f = Font[f]; Font[f] = function (x, s, ...a) { if (typeof s === 'string' && s.indexOf('Lv') >= 0 && !Game.noV14 && /推薦Lv|建議Lv/.test(s)) s = KD.fixTxt(s); return _f.call(this, x, s, ...a); }; }
 { const _as = applyStartClass; applyStartClass = function (k) { _as(k); if (Game.st) Game.st.first13 = null; }; }
+KD.ART_SRC = {};
+KD.ART = {}; for (const k in KD.ART_SRC) { const im = new Image(); im.onload = () => { im.ok = true; }; im.src = KD.ART_SRC[k]; KD.ART[k] = im; }
 </script>
 </body></html>
