@@ -9,7 +9,7 @@ module.exports = async (g) => {
     for (const k of KD.CLS_ORDER) { const n = Object.keys(KD.CARDS).filter(id => KD.CARDS[id].cls === k && !KD.CARDS[id].hidden && KD.CARDS[id].rar !== 'T').length; ok(KD.CLASSES[k].n + '的卡 ≥ 25 張', n >= 25, n); }
     ok('每個主線頭目都有傳說卡', ['banditBoss', 'duneWorm', 'golem', 'crystalGolem', 'silverWyrm', 'hydra', 'ratKing', 'harvestGolem', 'clockColossus', 'frostQueen', 'lavaGiant', 'victorDemon', 'shadowGeneral'].every(s => KD.BOSS_CARD[s]));
     ok('三選一：三張不重複', [0, 1, 2, 3, 4].every(i => { const L = KD.offer(KD.CLS_ORDER[i % 4], ['wild', 'elite', 'boss', 'catch'][i % 4]); return L.length === 3 && new Set(L).size === 3; }));
-    ok('換算：Lv25 一般魔物 HP 約 45、傷害約 10', Math.abs(KD.tab(KD.HP_TGT, 25) - 45) < 2 && Math.abs(KD.tab(KD.DMG_TGT, 25) - 10.5) < 1);
+    ok('換算：Lv25 一般魔物 HP 約 41、傷害約 10.5', Math.abs(KD.tab(KD.HP_TGT, 25) - 41) < 2 && Math.abs(KD.tab(KD.DMG_TGT, 25) - 10.5) < 1);
     return out.join('\n'); }));
   // play every card once
   await g.ev(s => { const G = __game; G.Game.st = JSON.parse(s); const st = G.Game.st; st.status = null; KD.migrate(st); KD.state(st).catchup = 0; startOverworld(); G.Game.fade = 0; G.Game.noEnc = 1;

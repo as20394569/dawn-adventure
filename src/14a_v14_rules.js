@@ -15,8 +15,8 @@ KD.HP_TYP = [[1, 17], [2, 19], [7, 31], [12, 59], [17, 92], [22, 139], [27, 189]
 KD.REF = { hp: [[1, 17], [10, 44], [20, 95], [30, 120], [50, 145], [70, 175]], def: [[1, 13], [10, 26], [20, 55], [30, 80], [50, 100], [70, 125]], spd: [[1, 8], [10, 15], [20, 37], [30, 48], [50, 52], [70, 65]] };
 KD.FRAC = [[1, 0.14], [10, 0.165], [25, 0.17], [32, 0.26], [40, 0.27], [47, 0.2], [55, 0.22], [70, 0.22]];
 // what the card game wants: a typical wild monster's HP and one attack's damage, by area level
-KD.HP_TGT = [[1, 12], [10, 24], [20, 38], [30, 52], [40, 66], [50, 80], [60, 92], [70, 104]];
-KD.DMG_TGT = [[1, 5], [10, 8], [20, 10], [30, 11], [40, 13], [50, 15], [60, 17], [70, 19]];
+KD.HP_TGT = [[1, 12], [10, 24], [20, 36], [30, 46], [40, 55], [50, 64], [60, 72], [70, 80]];
+KD.DMG_TGT = [[1, 5], [10, 8], [20, 10], [30, 11], [40, 12], [50, 13], [60, 14], [70, 15]];
 KD.hpK = lv => KD.tab(KD.HP_TGT, lv) / KD.tab(KD.HP_TYP, lv);
 KD.dmgK = lv => KD.tab(KD.DMG_TGT, lv) / (KD.tab(KD.FRAC, lv) * KD.tab(KD.REF.hp, lv));
 // the demo's statuses (格擋・力量・虛弱・易傷・流血) work in v14 battles too (13a's c15On checks core.data.v14)
@@ -43,7 +43,7 @@ const stkK = (u, id) => (typeof stk15 === 'function' ? stk15(u, id) : 0);
 // monsters: HP rescaled by their level (minions called in later too)
 // a monster tougher than the area's usual one keeps that edge, but compressed (×5 HP → ×3.3) so elite / boss fights don't drag
 KD.scale = (core, u) => { if (!u || u.side !== 'B' || (u.data && u.data.k14s)) return; u.data = u.data || {}; u.data.k14s = 1; const lv = u.lv || 1, ratio = u.max.hp / KD.tab(KD.HP_TYP, lv), r = u.res.hp / Math.max(1, u.max.hp);
-  u.max.hp = Math.max(1, Math.round(KD.tab(KD.HP_TGT, lv) * (ratio > 1 ? Math.pow(ratio, 0.75) : ratio))); u.res.hp = Math.max(1, Math.round(u.max.hp * r)); };
+  u.max.hp = Math.max(1, Math.round(KD.tab(KD.HP_TGT, lv) * (ratio > 1 ? Math.pow(ratio, 0.7) : ratio))); u.res.hp = Math.max(1, Math.round(u.max.hp * r)); };
 { const _b = BB.build; BB.build = function (cfg, st = Game.st) { const core = _b.call(this, cfg, st); if (KD.use(cfg)) { core.data.v14 = true; for (const u of core.side('B')) KD.scale(core, u); } return core; }; }
 { const _au = BattleCore.prototype.addUnit; BattleCore.prototype.addUnit = function (spec, ...a) { const r = _au.call(this, spec, ...a); if (KD.on(this)) for (const u of this.units) if (u.side === 'B') KD.scale(this, u); return r; }; }
 // monster → hero: the RPG formula against a standard hero of the monster's level, then into card numbers
