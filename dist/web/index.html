@@ -1,3 +1,4 @@
+<meta charset="utf-8">
 <title>曙光冒險</title>
 <meta name="description" content="手機直式遊玩的像素風異世界冒險 RPG。">
 <meta name="theme-color" content="#0b0d16">
@@ -217,8 +218,11 @@ FROM, OUT OF THE USE OR INABILITY TO USE THE FONT SOFTWARE OR FROM
 OTHER DEALINGS IN THE FONT SOFTWARE.
 
 -->
-<!-- The game's code is in the separate file game.js (published next to this page), with art in hd/ and px/.
-     Edit game.js, not this page, and keep this page small: the shared-link viewer (people not logged in)
-     fails to open pages over ~3.2MB, while separate files load fine. Bump ?v= when game.js changes. -->
-<script src="game.js?v=1b1a017819" onerror="document.body.insertAdjacentHTML('beforeend','<p style=&quot;position:fixed;inset:auto 0 40% 0;text-align:center;color:#eef1f8;font:16px sans-serif&quot;>遊戲檔載入失敗，請重新整理頁面。</p>')"></script>
+<!-- The game's code is in the separate files game1.js, game2.js, ... (published next to this page, run in order),
+     with art in hd/ and px/. Keep this page small and every piece under 2,000,000 bytes: the shared-link viewer
+     (people not logged in) fails on pages over ~3.2MB and showed "Couldn't load this Artifact" once one game.js
+     passed 5,000,000 bytes. tools/split_publish.py makes the pieces; ?v= changes with each piece. -->
+<script src="game1.js?v=3391bbe012" onerror="if(!window.__gf){window.__gf=1;document.body.insertAdjacentHTML('beforeend','<p style=&quot;position:fixed;inset:auto 0 40% 0;text-align:center;color:#eef1f8;font:16px sans-serif&quot;>遊戲檔載入失敗，請重新整理頁面。</p>')}"></script>
+<script src="game2.js?v=835db5ec97" onerror="if(!window.__gf){window.__gf=1;document.body.insertAdjacentHTML('beforeend','<p style=&quot;position:fixed;inset:auto 0 40% 0;text-align:center;color:#eef1f8;font:16px sans-serif&quot;>遊戲檔載入失敗，請重新整理頁面。</p>')}"></script>
+<script src="game3.js?v=3cb4e7fdb2" onerror="if(!window.__gf){window.__gf=1;document.body.insertAdjacentHTML('beforeend','<p style=&quot;position:fixed;inset:auto 0 40% 0;text-align:center;color:#eef1f8;font:16px sans-serif&quot;>遊戲檔載入失敗，請重新整理頁面。</p>')}"></script>
 
