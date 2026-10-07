@@ -167,12 +167,5 @@ print('shields', len(sd))
 ss = {os.path.basename(f)[:-4]: pal_rows(f) for f in sorted(glob.glob(os.path.join(root, 'art', 'battle', 'shields_side', '*.png'))) if 'preview' not in f}
 js += 'const SHIELD_SIDE_ROWS = ' + json.dumps(ss, separators=(',', ':')) + ';\n'
 print('side shields', len(ss))
-# v12.82 (Codex task AP): 64×88 high-resolution weapon art (menus, loot, the weapon in the hero's hand in battle)
-def png_small(f):
-    im = Image.open(f).convert('RGBA'); b = io.BytesIO()
-    im.save(b, 'PNG', optimize=True); return 'data:image/png;base64,' + base64.b64encode(b.getvalue()).decode()
-wh = {os.path.basename(f)[:-4]: png_small(f) for f in sorted(glob.glob(os.path.join(root, 'art', 'battle', 'weapons_hd', '*.png'))) if 'preview' not in f}
-js += 'const WEAPON_HD_SRC = ' + json.dumps(wh, separators=(',', ':')) + ';\n'
-print('weapons hd', len(wh), sum(len(v) for v in wh.values()) // 1024, 'KB')
 open(os.path.join(root, 'src', '07id_sprites.js'), 'w').write(js)
 print('embedded', len(d), 'sprites', sum(len(v) for v in d.values()) // 1024, 'KB')
