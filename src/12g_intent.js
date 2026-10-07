@@ -77,20 +77,23 @@ defPut('mechanics', 'fam14_human', { triggers: [{ key: 'f14thief', on: EVT.ESCAP
     return _d.call(this, core, u, o); }; }
 
 /* ---------- 下一步：魔物頭上的圖示 ---------- */
+// v12.85: native 11px pixel icons in the game's own style (the smooth Codex AO icons did not fit — player)
+const INT_PAL14 = {"w": "#f4f4fa", "s": "#b0b8d0", "g": "#7c84a0", "y": "#ffe070", "Y": "#d09a28", "n": "#b07040", "N": "#6a3c20", "o": "#ffb050", "O": "#e0602a", "r": "#ff5a48", "R": "#a82828", "G": "#7ae868", "E": "#2e9a40", "L": "#d0ffc0", "b": "#7ab8ff", "B": "#3a68d0", "c": "#d0f4ff", "p": "#c890ff", "P": "#7040b8", "q": "#e8d0ff", "d": "#c8cce0", "D": "#8a90a8", "m": "#f4ecd8", "M": "#c0ae88", "T": "#9ad048", "U": "#5a8a28"};
 const INT_PX14 = {
-  atk: PXS(['......kk.', '.....kwk.', '....kwk..', 'k..kwk...', 'kkkwk....', '.kkk.....', '.kkk.....', 'kk.kk....', 'k....... '], { w: '#e8e8f0' }),
-  buff: PXS(['...k...', '..kgk..', '.kgggk.', 'kkgggkk', '..kgk..', '..kgk..', '..kkk..'], { g: '#7af060' }),
-  debuff: PXS(['..kkk..', '..kpk..', '..kpk..', 'kkpppkk', '.kpppk.', '..kpk..', '...k...'], { p: '#c890ff' }),
-  ail: PXS(['...k...', '..kgk..', '.kgggk.', 'kgggggk', 'kgwgggk', '.kgggk.', '..kkk..'], { g: '#9ad048', w: '#e8ffd0' }),
-  heal: PXS(['..kkk..', '..kgk..', 'kkkgkkk', 'kgggggk', 'kkkgkkk', '..kgk..', '..kkk..'], { g: '#5ae070' }),
-  guard: PXS(['kkkkkkk', 'kbbwbbk', 'kbbwbbk', 'kbbbbbk', '.kbbbk.', '..kbk..', '...k...'], { b: '#6a9aff', w: '#e8f0ff' }),
-  flee: PXS(['..k....', '.kyk...', 'kyyyk..', '.kyyyyk', 'kyyyk..', '.kyk...', '..k....'], { y: '#ffe060' }),
-  summon: PXS(['..kkk..', '.kwwwk.', 'kwwgwwk', 'kwgggwk', 'kwwgwwk', '.kwwwk.', '..kkk..'], { w: '#f0e8d0', g: '#e09a40' }),
-  hide: PXS(['.kkkk..', 'kwwwwk.', 'kk..wk.', '...kwk.', '..kwk..', '..kk...', '..kwk..'], { w: '#d0d4e8' }),
-  fly: PXS(['k.....k', 'kk...kk', 'kck.kck', 'kcckcck', '.kcccck', '..kcck.', '...kk..'], { c: '#9ae0ff' }),
-  dive: PXS(['.......', '.kk.kk.', 'kcckcck', 'k..k..k', '.kk.kk.', 'kcckcck', 'k..k..k'], { c: '#5ab8ff' }),
-  steal: PXS(['..kkk..', '.kyyyk.', 'kyywyyk', 'kyyyyyk', 'kyyyyyk', '.kyyyk.', '..kkk..'], { y: '#ffc040', w: '#fff6c0' }),
-  down: PXS(['.......', 'kkkkkk.', '....kk.', '...kk..', '..kk...', '.kkkkkk', '.......'], { }),
+  atk: PXS([".........k.", "........kwk", ".......kwsk", "......kwsk.", "...k.kwsk..", "..kYkwsk...", "...kYkk....", "..knkYk....", ".knk.k.....", "kYk........", ".k........."], INT_PAL14),
+  heavy: PXS(["..k......k.", ".krk....kok", "krkrk..koOk", ".krk..koOk.", "..kk.koOk..", "..kYkoOk...", "...kYkk....", "..knkYk....", ".knk.k.....", "kYk........", ".k........."], INT_PAL14),
+  buff: PXS([".....k.....", "....kLk....", "...kLGGk...", "..kLGGGEk..", ".kLGGGGEEk.", "..kkLGEkk..", "...kLGEk...", "...kLGEk...", "...kLGEk...", "...kEEEk...", "....kkk...."], INT_PAL14),
+  debuff: PXS(["....kkk....", "...kqpPk...", "...kqpPk...", "...kqpPk...", "..kkqpPkk..", ".kqpppppPk.", "..kqpppPk..", "...kqpPk...", "....kPk....", ".....k.....", "..........."], INT_PAL14),
+  ail: PXS([".....k.....", "....kTk....", "....kTk....", "...kTTTk...", "..kTTTTTk..", ".kTwTTTTTk.", ".kTwTTTTUk.", ".kTTTTTTUk.", "..kTTTTUk..", "...kUUUk...", "....kkk...."], INT_PAL14),
+  heal: PXS(["....kkk....", "...kGGGk...", "...kGLGk...", ".kkkGGGkkk.", "kGGGGLGGGGk", "kGLLLLLLLGk", "kGGGGLGGGEk", "kEEEGGGEEEk", ".kkkGGEkkk.", "...kEEEk...", "....kkk...."], INT_PAL14),
+  guard: PXS(["..kkkkkkk..", ".kYYYYYYYk.", ".kYbbcbBYk.", ".kYbbcbBYk.", ".kYcccccYk.", ".kYbbcbBYk.", "..kYbcBYk..", "..kYbcBYk..", "...kYbYk...", "....kYk....", ".....k....."], INT_PAL14),
+  flee: PXS(["...........", "......k....", ".....kyk...", ".k..kkyyk..", "kdkkyyyyyk.", ".k.kyyyyyyk", "kdkkyyyyYk.", ".k..kkyYk..", ".....kYk...", "......k....", "..........."], INT_PAL14),
+  summon: PXS(["....kkk....", "...kmmmk...", "..kmmmmmk..", ".kmmmmmmMk.", ".kmmmmmmMk.", "kmNmmmNmmMk", "kmmNmNmNmMk", "kmmmNmmmNMk", ".kmmmmmmMk.", "..kMMMMMk..", "...kkkkk..."], INT_PAL14),
+  hide: PXS(["...kkkk....", "..kddddk...", ".kddkkddk..", "..kk.kddk..", "....kddk...", "...kddk....", "...kddk....", "....kk.....", "...kddk....", "...kddk....", "....kk....."], INT_PAL14),
+  fly: PXS([".k.......k.", "kck.....kck", "kcck...kcck", "kcbck.kcbck", "kccbckcbcck", ".kcccbccck.", "..kccbcck..", "...kcbck...", "....kbk....", ".....k.....", "..........."], INT_PAL14),
+  dive: PXS(["...........", "..kk...kk..", ".kbbk.kbbk.", "kbccbkbccbk", ".kkkbbbkkk.", "..kkkkkkk..", ".kBBk.kBBk.", "kBbbBkBbbBk", ".kkkBBBkkk.", "....kkk....", "..........."], INT_PAL14),
+  steal: PXS(["....k.k....", "...kNkNk...", "....kNk....", "...kYYYk...", "..kYyyYYk..", ".kYyYYYYYk.", ".kYYYyYYYk.", ".kYYyYyYOk.", ".kYYYyYOOk.", "..kOOOOOk..", "...kkkkk..."], INT_PAL14),
+  down: PXS(["..k........", ".kyk...k...", "kyyyk.kyk..", ".kyk.kyyyk.", "..kk..kyk..", "..kyk..k...", ".kyyyk.k...", "..kyk.kyk..", "...k.kyyyk.", "......kyk..", ".......k..."], INT_PAL14),
 };
 const INT_COL14 = { atk: '#ffffff', heavy: '#ffb050', buff: '#9af08a', debuff: '#d8b0ff', ail: '#c8f080', heal: '#8af0a0', guard: '#a8c8ff', flee: '#ffe080', summon: '#f0d8a0', hide: '#c8cce0', fly: '#9ae0ff', dive: '#8ad0ff', steal: '#ffd060', down: '#b0b0c0' };
 const AIL_N14 = { psn: '毒', par: '麻痺', slp: '睡眠', brn: '灼傷', frozen: '凍結', bleed14: '流血', stun14: '暈眩', silence14: '沉默' }; // 退縮 is a small chance on many attacks: left out so the labels stay short
@@ -117,10 +120,10 @@ function intentOf14(core, u, cmd) {
 }
 { const _db = Battle.prototype.drawBoxF; Battle.prototype.drawBoxF = function (x) { _db.call(this, x); const core = this.core; if (!core || !core.plan || (typeof FXT13 !== 'undefined' && FXT13.on)) return;
     for (const v of this.foes()) { const u = core.byId[v.id]; if (!u || v.gone || v.alpha < 0.5 || v.st.charging) continue; const I = intentOf14(core, u, core.plan[v.id] || (core.hasStatus(u, 'rise14') ? {} : null)); if (!I) continue;
-      const hdKey = 'intent_' + I.k, hd = UI_PX.icons_hd && UI_PX.icons_hd.ok && ICON_HD_IDX[hdKey] !== undefined, iw = hd ? 12 : 9; // v12.79: Codex task AO icons (the 7-pixel ones stay as a fallback)
-      const img = INT_PX14[I.k === 'heavy' ? 'atk' : I.k], col = INT_COL14[I.k], tw = I.t ? Math.ceil(Font.width(I.t, 8)) + 3 : 0, w = iw + 2 + tw, X = Math.round(v.x + v.off.x - w / 2), Y = Math.round(v.foot - v.bbh - 17 + v.sink * (v.sink < 0 ? 1 : 0));
+      const iw = 11; // v12.85: pixel icons, drawn 1:1
+      const img = INT_PX14[I.k] || INT_PX14.atk, col = INT_COL14[I.k], tw = I.t ? Math.ceil(Font.width(I.t, 8)) + 3 : 0, w = iw + 2 + tw, X = Math.round(v.x + v.off.x - w / 2), Y = Math.round(v.foot - v.bbh - 17 + v.sink * (v.sink < 0 ? 1 : 0));
       x.fillStyle = 'rgba(8,6,18,0.78)'; x.fillRect(X - 1, Y, w + 2, 13); x.fillStyle = I.k === 'heavy' ? '#ff9a40' : 'rgba(255,255,255,0.18)'; x.fillRect(X - 1, Y + 12, w + 2, 1);
-      if (hd) drawIcon(x, hdKey, X, Y); else if (img) { x.imageSmoothingEnabled = false; x.drawImage(img, X + 1, Y + 3); } if (I.t) Font.draw(x, I.t, X + iw + 2, Y, col, UIC.textSh, 8); } }; }
+      if (img) { x.imageSmoothingEnabled = false; x.drawImage(img, X, Y + 1); } if (I.t) Font.draw(x, I.t, X + iw + 2, Y, col, UIC.textSh, 8); } }; }
 // 高飛 floats the monster up, 潛水 sinks it (the image is clipped at its feet) with a ripple
 { const _dr = Battle.prototype.draw; Battle.prototype.draw = function (x) { for (const v of this.foes()) { if (v.A && v.A.state === 'faint') continue; const want = v.st.fly14 ? -20 : v.st.dive14 ? Math.round((v.bbh || 48) * 0.7) : 0;
       if (v.sink !== want && (v.st.fly14 || v.st.dive14 || v.lift14)) { v.sink += Math.sign(want - v.sink) * Math.min(3, Math.abs(want - v.sink)); v.lift14 = v.sink !== 0 ? 1 : 0; } }
