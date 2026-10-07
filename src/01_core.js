@@ -1,7 +1,8 @@
 'use strict';
 /* ===================== CORE: constants, utils, font, input, coroutines ===================== */
-const W = 176, H = 256, TS = 16;
-const TB_H = 60, TB_Y = H - TB_H; // bottom text box area (3 lines)
+const W = 176, TS = 16, H_BASE = 256; let H = H_BASE; // v14.12: the battle screen grows taller on a tall phone (KD.setH); everything else stays 176×256
+const TB_H = 60; let TB_Y = H - TB_H; // bottom text box area (3 lines)
+const bxE = () => Math.max(0, H - H_BASE); // how much taller than 256 the screen is right now
 const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
 const rnd = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
 const chance = p => Math.random() < p;
@@ -154,3 +155,6 @@ const Game = {
 function* fadeOut(n = 16, color = '#000') { Game.fadeColor = color; yield* tween(n, t => Game.fade = t); Game.fade = 1; }
 function* fadeIn(n = 16) { yield* tween(n, t => Game.fade = 1 - t); Game.fade = 0; }
 function* flashScreen(n = 8, color = '#fff') { Game.flashColor = color; yield* tween(n, t => Game.flash = 1 - t); Game.flash = 0; }
+// v14.12 (最小字級 8): text that is too wide for its box is squeezed sideways instead of drawn smaller
+function fontFit(x, s, X, Y, maxW, col, sh, size = 8, align = 'l') { s = String(s); const w = Font.width(s, size), k = w > maxW && w > 0 ? maxW / w : 1, x0 = align === 'c' ? X - w * k / 2 : align === 'r' ? X - w * k : X;
+  if (k === 1) { Font.draw(x, s, x0, Y, col, sh, size); return x0 + w; } x.save(); x.translate(x0, 0); x.scale(k, 1); Font.draw(x, s, 0, Y, col, sh, size); x.restore(); return x0 + w * k; }

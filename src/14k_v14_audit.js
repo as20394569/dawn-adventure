@@ -195,6 +195,7 @@ KD.debName = D => { const st = {}; for (const x of (D && (D.effects || []).conca
   return st.def || st.spd ? '+易傷' : '+虛弱'; };
 { const _io = intentOf14; intentOf14 = function (core, u, cmd) { const I = _io(core, u, cmd); if (!I || !KD.on(core) || typeof I.t !== 'string') return I;
     if (I.t.indexOf('+削弱') >= 0) return { ...I, t: I.t.replace('+削弱', KD.debName(cmd && cmd.type === 'skill' ? DEF.skills[cmd.skill] : null)) };
+    if (I.k === 'debuff' && /^削弱/.test(I.t)) return { ...I, t: I.t.replace('削弱', KD.debName(cmd && cmd.type === 'skill' ? DEF.skills[cmd.skill] : null).slice(1)) }; // v14.12: a debuff move says which
     const m = I.k === 'steal' && I.t.match(/^偷錢 (\d+)$/); if (m) return { ...I, t: m[1] + '+偷錢' }; // the number is the blow; it steals gold too
     return I; }; }
 if (typeof BATTLE_HELP !== 'undefined') { const P = BATTLE_HELP.find(p => p[0] === '魔物'); if (P) P[1][0] = P[1][0].replace('「+盾」是同時獲得格擋（數字顯示在牠腳下）。', '「+盾」是同時獲得格擋（數字顯示在牠腳下），「+易傷」「+虛弱」是打中後附加的。'); }
