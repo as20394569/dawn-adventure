@@ -1245,7 +1245,7 @@ class TitleScene {
     x.drawImage(this.logo, Math.round(W / 2 - this.logo.width / 2), 6 + bob);
     Font.drawC(x, '～異世界冒險RPG～', W / 2, 52 + bob, '#ffe0a0', '#3a1428');
     if (this.stage === 'press' && Math.floor(this.t / 30) % 2 === 0) Font.drawC(x, '按 A 鍵開始', W / 2, 232, '#ffffff', '#1a1024');
-    Font.drawR(x, 'v14.18', W - 3, H - 13, '#b890b0', null);
+    Font.drawR(x, 'v14.19', W - 3, H - 13, '#b890b0', null);
   }
 }
 class IntroScene {
@@ -5303,3 +5303,8 @@ Events.spring = function* () {
   st.respawn = { map: 'route', x: 7, y: 4, dir: 'left' }; yield* fadeOut(8); st.hp = Math.max(st.hp, Math.ceil(s.hp / 2)); st.mp = Math.max(st.mp ?? 0, Math.ceil(s.mp / 2)); Sound.jingle('heal'); yield* wait(30); yield* fadeIn(8);
   yield* say('好甜的泉水！體力恢復到一半了。');
 };
+if (Events.priest) { const _pr = Events.priest; Events.priest = function* (ow) {
+    const _yn = yesNo; let asked = false; yesNo = function* (t, o) { if (!asked && t.startsWith('要接受祝福')) { asked = true; yesNo = _yn; const st = Game.st, c = restCost(st, 10); if (!(yield* _yn('要接受祝福（恢復HP、MP並記錄）嗎？\n（奉獻' + c + ' G）', o))) return false; st.money -= Math.min(c, st.money); return true; } return yield* _yn(t, o); };
+    try { return yield* _pr(ow); } finally { yesNo = _yn; }
+  };
+}

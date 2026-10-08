@@ -1,8 +1,3 @@
-if (Events.priest) { const _pr = Events.priest; Events.priest = function* (ow) {
-    const _yn = yesNo; let asked = false; yesNo = function* (t, o) { if (!asked && t.startsWith('要接受祝福')) { asked = true; yesNo = _yn; const st = Game.st, c = restCost(st, 10); if (!(yield* _yn('要接受祝福（恢復HP、MP並記錄）嗎？\n（奉獻' + c + ' G）', o))) return false; st.money -= Math.min(c, st.money); return true; } return yield* _yn(t, o); };
-    try { return yield* _pr(ow); } finally { yesNo = _yn; }
-  };
-}
 const QUEST_GEAR = {
   qTravelCharm: ['旅人護符', 1, { hp: 6, def: 1 }, {}, ['guardHeal'], '寄信的謝禮。讓人想起回家的路。'],
   qHerbPouch: ['藥師香囊', 2, { hp: 10, spd: 2 }, {}, ['regen'], '裝滿藥草的香囊，聞了就覺得傷口不痛了。'],

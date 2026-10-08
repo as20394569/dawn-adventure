@@ -208,8 +208,9 @@ BPK.pileView = function* (w) { const L = (w === 'disc' ? this.disc : this.pile).
 /* ---------- a card picture: cost, name, icon, the key numbers; the class colour along the bottom ---------- */
 KD.shortL = (C, v) => { const L = C.short(v).slice(); if (C.exhaust && !L.includes('消耗') && L.length < 3) L.push('消耗'); return L; }; // v14.10: every 消耗 card says so on its face
 /* v14.18 卡面＝方案 3「滿版插畫」（玩家選的：曙光冒險-卡面改版提案-方案3；換掉 v14.16 的「名字在最上面」）
-   · 上半：卡圖滿版（大卡 ×2），頂端一條卡種色；左上＝費用圓（橘框），旁邊＝斬突打／火水雷；卡名壓在圖的下緣，圖往下漸暗
-   · 下半：大數字（傷害金色・格擋藍色）＋「傷害／格擋」小字，其他效果寫成「・易傷 2」；大卡：右上＝卡種膠囊，最下面＝職業（左）・稀有度星星（右）
+   v14.19 修正（提案文件最上面的「修正」一節）：插圖一律 1 倍——大卡整張不裁（左右空的地方填卡種暗色）、小卡高 18〜20 置中裁；
+   圖上只留左上角的費用圈：斬突打／火水雷方塊回到數字左邊（v14.16 的位置），卡名移到圖下面自己一行，大卡的卡種膠囊在卡名那行右邊；漸暗只剩圖的最下面 5px
+   · 由上到下：卡種色帶 → 插圖 → 卡名 → 大數字（傷害金色・格擋藍色）＋「傷害／格擋」→「・易傷 2」小字 → 大卡：職業（左）・稀有度星星（右）
    · 傳說卡金框＋光、裝備卡銀框（2 px）、選到的卡黃框＋光 */
 KD.C3 = { body: '#1b1e28', line: '#3a3f52', dmg: '#ffd27a', blk: '#8ec8ff', lab: '#8a90a4', sub: '#a8aec0', txt: '#c4c9d6', top: '#e8ecf4', foot: '#7a8094', off: '#3a3e4c',
   pill: { atk: '#f4907a', skl: '#9cc0f6', pow: '#f6d878' }, stars: { B: 1, T: 1, C: 1, U: 2, Q: 2, R: 3, L: 3 } };
@@ -223,27 +224,30 @@ KD.drawCard = function (x, c, X, Y, w, h, o = {}) { const C = KD.CARDS[c.id]; if
   // the frame: a glow for the picked card and the legends, rounded corners
   if (o.on || gold) KD.rr3(x, X - 2, Y - 2, w + 4, h + 4, o.on ? 'rgba(255,224,112,0.45)' : 'rgba(255,176,64,0.4)');
   KD.rr3(x, X - 1, Y - 1, w + 2, h + 2, o.on ? '#ffe070' : '#07060c'); KD.rr3(x, X, Y, w, h, edge); KD.rr3(x, X + 1, Y + 1, w - 2, h - 2, P.body);
-  // ① the picture, edge to edge (×2 on the biggest cards), darkening into the card at its foot
-  const L = KD.shortL(C, v), N = KD.numOf(L[0]), rest = N ? L.slice(1) : L, z2 = w >= 56 ? 2 : 1, nz = big ? 13 : 10, nrow = nz + 2;
-  const ax = X + 1, ay = Y + 1, aw = w - 2, ah = Math.max(16, Math.min(32 * z2, big ? h - 46 : h - 25)), art = KD.ART && KD.ART[c.id] && KD.ART[c.id].ok ? KD.ART[c.id] : null;
+  // ① the type strip on top; under it the picture at its own size (1×): whole on a big card (the sides filled with the type's dark colour), centred and cropped on a small one
+  const L = KD.shortL(C, v), N = KD.numOf(L[0]), rest = N ? L.slice(1) : L, nz = big ? 13 : 10, nrow = big ? 15 : 11, sh = big ? 3 : 2, nh = big ? 12 : 10;
+  const ax = X + 1, aw = w - 2, ay = Y + 1 + sh, ah = big ? 32 : h >= 58 ? 20 : 18, art = KD.ART && KD.ART[c.id] && KD.ART[c.id].ok ? KD.ART[c.id] : null;
+  if (gold) { const s = x.createLinearGradient(ax, 0, ax + aw, 0); s.addColorStop(0, '#ffcf6a'); s.addColorStop(0.5, '#ff9a2a'); s.addColorStop(1, '#ffe08a'); x.fillStyle = s; } else x.fillStyle = T.c; x.fillRect(ax, Y + 1, aw, sh);
   x.fillStyle = T.bg; x.fillRect(ax, ay, aw, ah); x.save(); x.beginPath(); x.rect(ax, ay, aw, ah); x.clip(); x.imageSmoothingEnabled = false;
-  if (art) x.drawImage(art, Math.round(ax + (aw - 48 * z2) / 2), Math.round(ay + (ah - 32 * z2) / 2), 48 * z2, 32 * z2);
-  else { const ic = KD.ICON[KD.iconOf(c.id)], k = big ? 2 : 1; if (ic) x.drawImage(ic, Math.round(ax + aw / 2 - 6.5 * k), Math.round(ay + (ah - 13 * k) / 2 - 3), 13 * k, 13 * k); }
-  const fh = Math.round(ah * 0.45), g = x.createLinearGradient(0, ay + ah - fh, 0, ay + ah); g.addColorStop(0, 'rgba(27,30,40,0)'); g.addColorStop(0.6, 'rgba(27,30,40,0.85)'); g.addColorStop(1, P.body); x.fillStyle = g; x.fillRect(ax, ay + ah - fh, aw, fh);
+  if (art) { const sw = Math.min(48, aw), sh2 = Math.min(32, ah); x.drawImage(art, Math.round((48 - sw) / 2), Math.round((32 - sh2) / 2), sw, sh2, Math.round(ax + (aw - sw) / 2), ay, sw, sh2); }
+  else { const ic = KD.ICON[KD.iconOf(c.id)], k = big ? 2 : 1; if (ic) x.drawImage(ic, Math.round(ax + aw / 2 - 6.5 * k), Math.round(ay + (ah - 13 * k) / 2), 13 * k, 13 * k); }
+  { const g = x.createLinearGradient(0, ay + ah - 5, 0, ay + ah); g.addColorStop(0, 'rgba(27,30,40,0)'); g.addColorStop(1, 'rgba(27,30,40,0.85)'); x.fillStyle = g; x.fillRect(ax, ay + ah - 5, aw, 5); } // only the last 5 px fade
   if (gold) { const s = x.createLinearGradient(ax, ay, ax + aw, ay + ah); s.addColorStop(0.3, 'rgba(255,230,160,0)'); s.addColorStop(0.45, 'rgba(255,230,160,0.22)'); s.addColorStop(0.6, 'rgba(255,230,160,0)'); x.fillStyle = s; x.fillRect(ax, ay, aw, ah); }
-  if (gold) { const s = x.createLinearGradient(ax, 0, ax + aw, 0); s.addColorStop(0, '#ffcf6a'); s.addColorStop(0.5, '#ff9a2a'); s.addColorStop(1, '#ffe08a'); x.fillStyle = s; } else x.fillStyle = T.c; x.fillRect(ax, ay, aw, big ? 3 : 2); x.restore();
-  x.fillStyle = edge; x.fillRect(ax, ay, 1, 1); x.fillRect(ax + aw - 1, ay, 1, 1); // the frame's rounded corners, over the picture
+  x.restore(); x.fillStyle = edge; x.fillRect(ax, Y + 1, 1, 1); x.fillRect(ax + aw - 1, Y + 1, 1, 1); // the frame's rounded corners, over the strip
   if (gear && !o.on) { x.fillStyle = '#8a94ae'; x.fillRect(X + 1, Y + 1, w - 2, 1); x.fillRect(X + 1, Y + h - 2, w - 2, 1); x.fillRect(X + 1, Y + 1, 1, h - 2); x.fillRect(X + w - 2, Y + 1, 1, h - 2); }
-  // ② the cost, and next to it 斬・突・打／火・水・雷; on a big card the card type on the right
-  const r = big ? 6 : 5.5, cx = X + 2 + r, cy = Y + 3 + r, at = KD.atOf(c.id); KD.coin3(x, cx, cy, r, KD.cost(c), o.dim); if (at) KD.atBox(x, Math.round(cx + r + 3), Math.round(cy - 4), at);
-  if (big) { const s = T.n, pw = Math.ceil(Font.width(s, 8)) + 4, px = X + w - 3 - pw, py = Y + 4; KD.rr3(x, px, py, pw, 11, 'rgba(12,14,20,0.78)'); Font.drawC(x, s, px + pw / 2, midY(py, 11, 8), gold ? P.dmg : P.pill[C.type], null, 8); }
-  // ③ the name on the picture's lower edge (from the left: in the hand the left part is what shows)
-  const nm = KD.name(c), lx = Math.max(X + 3, x0 + 2); Font.w('700', () => { const z = big && Font.width(nm, 9) <= aw - 4 ? 9 : 8; fontFit(x, nm, lx, midY(ay + ah - 12, 11, z), Math.max(6, xr - lx + 1), c.up ? '#a8ffa0' : '#ffffff', '#000', z); });
-  // ④ the number and what it is; the other effects small
-  let ly = ay + ah + 1; const lim = Y + h - (foot ? 13 : 2), room = xr - lx + 1;
-  if (N && ly + nrow <= Y + h - 1) { const col = N.lab === '格擋' ? P.blk : P.dmg, ny = midY(ly, nrow, nz); const nw = Font.w('700', () => { const q = Font.width(N.s, nz); fontFit(x, N.s, lx, ny, room, col, '#000', nz); return Math.min(q, room); });
-    if (nw + 2 + Font.width(N.lab, 8) <= room) Font.draw(x, N.lab, lx + nw + 2, ny + (big ? 2 : 1), P.lab, null, 8); ly += nrow; }
-  rest.forEach((s, k) => { if (ly + 9 > lim) return; const first = !N && k === 0, t = N && Font.width('・' + s, 8) <= room ? '・' + s : s; fontFit(x, t, lx, midY(ly, 9, 8), room, first ? P.top : N ? P.sub : P.txt, '#000', 8); ly += 9; });
+  // ② the cost: the only thing on the picture (its top-left corner)
+  const r = big ? 6 : 5.5; KD.coin3(x, X + 2 + r, ay + 1 + r, r, KD.cost(c), o.dim);
+  // ③ the name under the picture, a line of its own (from the left: in the hand the left part is what shows); a big card's type on that line's right
+  const nm = KD.name(c), lx = Math.max(X + 3, x0 + 2), ny0 = ay + ah; let nr = xr;
+  if (big) { const s = T.n, pw = Math.ceil(Font.width(s, 8)) + 4, px = X + w - 3 - pw; KD.rr3(x, px, ny0 + 1, pw, 11, 'rgba(12,14,20,0.78)'); Font.drawC(x, s, px + pw / 2, midY(ny0 + 1, 11, 8), gold ? P.dmg : P.pill[C.type], null, 8); nr = Math.min(nr, px - 3); }
+  if (ny0 + nh <= Y + h) Font.w('700', () => { const z = big && Font.width(nm, 9) <= nr - lx + 1 ? 9 : 8; fontFit(x, nm, lx, midY(ny0 + (big ? 1 : 0), nh - (big ? 1 : 0), z), Math.max(6, nr - lx + 1), c.up ? '#a8ffa0' : '#ffffff', '#000', z); });
+  // ④ 斬・突・打／火・水・雷 left of the number (v14.16's place), the number and what it is; the other effects small
+  let ly = ny0 + nh; const lim = Y + h - (foot ? 13 : 1), at = KD.atOf(c.id), boxOn = at && vw >= 14;
+  if (N && ly + nrow <= Y + h - 1) { if (boxOn) KD.atBox(x, lx, ly + Math.round((nrow - 9) / 2), at); const nx = boxOn ? lx + 11 : lx, room = xr - nx + 1, col = N.lab === '格擋' ? P.blk : P.dmg, ny = midY(ly, nrow, nz);
+    const nw = Font.w('700', () => { const q = Font.width(N.s, nz); fontFit(x, N.s, nx, ny, room, col, '#000', nz); return Math.min(q, room); });
+    if (nw + 2 + Font.width(N.lab, 8) <= room) Font.draw(x, N.lab, nx + nw + 2, ny + (big ? 2 : 1), P.lab, null, 8); ly += nrow; }
+  rest.forEach((s, k) => { const first = !N && k === 0, box = first && boxOn, lh = box ? 11 : 9; if (ly + lh > lim) return; if (box) KD.atBox(x, lx, ly + 1, at);
+    const tx = box ? lx + 11 : lx, room = xr - tx + 1, t = N && Font.width('・' + s, 8) <= room ? '・' + s : s; fontFit(x, t, tx, midY(ly, lh, 8), room, first ? P.top : N ? P.sub : P.txt, '#000', 8); ly += lh; });
   // ⑤ a big card's foot: the class on the left, the rarity in stars on the right
   if (foot) { const fy = Y + h - 12; x.fillStyle = '#2a2e3c'; x.fillRect(X + 3, fy, w - 6, 1);
     Font.draw(x, gear ? '裝備' : C.cls === 'nt' ? (qst ? '任務' : '通用') : CL ? CL.n : '', X + 3, midY(fy + 1, 10, 8), gear ? '#c8d0e0' : P.foot, null, 8);
