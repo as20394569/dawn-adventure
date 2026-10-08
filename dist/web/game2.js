@@ -964,17 +964,18 @@ const Events = {
       yield* sayAll(['……你的眼神變了呢。', '最近魔物越來越凶暴，古岩遺跡的魔像也甦醒了。', '門會在這個時候打開……恐怕，魔王的封印正在減弱。', '嗯？你的手……在發光！', '這是「異界人之力」，和初代勇者一樣的力量。', '不過，這股力量還沒有形狀。', '把手放在這塊古老的石板上。力量會回應你的心，化成你要走的道路。']);
       yield* fadeOut(16, '#ffffff'); Game.fade = 0; Sound.sfx('charge'); const k = yield* classSelectScreen();
       applyStartClass(k); Game.fadeColor = '#ffffff'; Game.fade = 1; Sound.jingle('levelup'); yield* fadeIn(30); Game.fadeColor = '#000';
-      const C = CLASSES[k], S = CLASS_START[k];
-      yield* itemGet(st.name + '覺醒成為了' + C.n + '！');
-      yield* say({ swordsman: '劍士的道路啊……這把練習木劍就交給你了。', mage: '魔導士的道路啊……這把魔杖是我年輕時用的，交給你了。', guardian: '守護者的道路啊……這把木劍和布帽給你，別逞強喔。', ranger: '遊俠的道路啊……這把獵刀是村裡獵人送的，拿去吧。' }[k]);
-      st.flags.license = 1; st.bag.license = 1; yield* itemGet('得到了' + S.gear.filter(b => b !== 'guardBadge').map(b => GEAR[b].n).join('和') + '、護身符和冒險者證！');
+      const C = CLASSES[k], S = CLASS_START[k], K14 = !Game.noV14 && typeof KD !== 'undefined' && st.k14 ? KD.clsKey(st) : null, CN = K14 ? KD.CLASSES[K14].n : C.n; // v14.13: the card classes (no gear: the weapon is only the hero's look)
+      yield* itemGet(st.name + '覺醒成為了' + CN + '！');
+      if (K14) yield* say({ sw: '劍士的道路啊……這把劍就交給你了。', rg: '盜賊的道路啊……這把短刀是村裡獵人送的，拿去吧。', mg: '法師的道路啊……這根法杖是我年輕時用的，交給你了。', bk: '狂戰士的道路啊……這把斧頭給你，別逞強喔。' }[K14] + '打倒的頭目越多，它會變得越威風。');
+      else yield* say({ swordsman: '劍士的道路啊……這把練習木劍就交給你了。', mage: '魔導士的道路啊……這把魔杖是我年輕時用的，交給你了。', guardian: '守護者的道路啊……這把木劍和布帽給你，別逞強喔。', ranger: '遊俠的道路啊……這把獵刀是村裡獵人送的，拿去吧。' }[k]);
+      st.flags.license = 1; st.bag.license = 1; yield* itemGet(K14 ? '得到了冒險者證！' : '得到了' + S.gear.filter(b => b !== 'guardBadge').map(b => GEAR[b].n).join('和') + '、護身符和冒險者證！');
       yield* say('還有這些傷藥，帶在身上吧。'); st.bag.potion = (st.bag.potion || 0) + 5; yield* itemGet('得到了傷藥×5！');
       yield* sayAll(['技能來自職業和武器。用過之後要「冷卻」幾次行動才能再用；冷卻的時候就用普通攻擊，不花MP，還會回復MP。', '每個職業都有自己的核心資源，戰鬥中會累積起來，用來施放' + CLASSES[k].n + '的職業招式。']);
       const ap = ow && ow.npcs.find(n => n.id === 'apprentice');
       if (ap) { ap.dir = 'left'; yield* say('學徒：「村長爺爺！讓我幫忙！我在院子裡養了一隻練習用的泡泡姆！」');
         if (yield* yesNo('要和泡泡姆練習一場嗎？')) { const res = yield* ow.battleScript({ sp: 'slime', lv: 1, kind: 'wild' }); if (res === 'win') yield* say('學徒：「好厲害！這就是異界人之力！」'); else yield* say('學徒：「泡、泡泡姆，下手輕一點啦！」'); healHero(); }
         else yield* say('學徒：「那下次再練習吧！」'); }
-      yield* sayAll(['從今天起，你就是萌芽鎮的冒險者了。', '去吧，異世界的' + C.n + '。願曙光指引你的道路。']);
+      yield* sayAll(['從今天起，你就是萌芽鎮的冒險者了。', '去吧，異世界的' + CN + '。願曙光指引你的道路。']);
       return;
     }
     { const n = st.flags.ch2 || 0; // v12.0.1: the elder follows chapter 2 instead of repeating the golem talk forever
@@ -982,7 +983,7 @@ const Events = {
       if (n >= 5) { yield* sayAll(['宰相是魔王的手下？……連王都都不安全了啊。', '北境很冷，多帶點藥再出發吧。']); return; }
       if (n >= 1) { yield* sayAll(['國王陛下在等你。王都就在北方街道的盡頭。', '……累了就回來。這裡永遠是你的家。']); return; } }
     if (st.flags.golem) { yield* sayAll(['……你在門的另一邊，看到了魔王城？', '果然，札爾格斯正在甦醒。', '你手上的「曙光之印」，是初代勇者留下的印記。它選中了你。', '魔王城在遙遠的北方。你還需要更多的力量和夥伴。', '在那之前，先把這一帶的魔物清理乾淨，好好鍛鍊吧。'].concat(st.flags.boneKnight ? [] : ['……對了，聽說魔像倒下後，遺跡的石板下面出現了往地底的樓梯。', '那裡是古王的墓穴。亡者怕火，別忘了帶上火系的武器或技能。'])); return; }
-    yield* sayAll(['古岩魔像被魔王的瘴氣侵蝕，才會暴走。牠是「構造體」魔物，最怕水和草的攻擊。', '累了就去旅店休息，別太勉強自己。']);
+    yield* sayAll(['古岩魔像被魔王的瘴氣侵蝕，才會暴走。牠是「構造體」魔物，' + (!Game.noV14 && typeof KD !== 'undefined' && KD.weakOf ? '弱點聽說是「' + KD.weakOf('golem', true).join('・') + '」。' : '最怕水和草的攻擊。'), '累了就去旅店休息，別太勉強自己。']);
   },
   *apprentice() { const n = Game.st.flags.ch2 || 0; if (n >= 1) { yield* say(n >= 10 ? '聽說王都的鐘是你敲響的！我以後也要去王都看看！' : '你要去王都了嗎！回來要跟我說鐘塔長什麼樣子喔！'); return; } yield* say(Game.st.flags.golem ? '你真的打倒魔像了！我以後也要變得和你一樣強！' : '村長爺爺說，異世界來的人都很強！是真的嗎？'); },
   *gatekeeper() { const n = Game.st.flags.ch2 || 0; yield* say(n >= 10 ? '聽說王都的鐘又響了！是你做的吧？' : n >= 1 ? '聽說你要去王都了？好羨慕喔！路上小心！' : Game.st.flags.license ? '你就是那個從異世界來的人？好厲害！路上小心喔！' : '前面就是晨霧道路，外面有魔物喔！沒有冒險者證的人不能出鎮。'); },
@@ -1233,7 +1234,7 @@ class TitleScene {
     x.drawImage(this.logo, Math.round(W / 2 - this.logo.width / 2), 6 + bob);
     Font.drawC(x, '～異世界冒險RPG～', W / 2, 52 + bob, '#ffe0a0', '#3a1428');
     if (this.stage === 'press' && Math.floor(this.t / 30) % 2 === 0) Font.drawC(x, '按 A 鍵開始', W / 2, 232, '#ffffff', '#1a1024');
-    Font.drawR(x, 'v14.13', W - 3, H - 13, '#b890b0', null);
+    Font.drawR(x, 'v14.14', W - 3, H - 13, '#b890b0', null);
   }
 }
 class IntroScene {

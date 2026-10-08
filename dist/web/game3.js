@@ -9495,6 +9495,11 @@ KD.centered = fn => function* (...a) { const _push = UI.push; UI.push = function
     return _push.apply(this, arguments); };
   try { return yield* fn.apply(this, a); } finally { UI.push = _push; } };
 KD.pick3 = KD.centered(KD.pick3); KD.showCard = KD.centered(KD.showCard);
+KD.heroFoot = () => { const b = Game.scene; if (!Game.noV14 && b instanceof Battle && b.core && KD.on(b.core)) return KD.BL().hudY - 2; return 200 + bxE(); };
+{ const _r = render; render = function () { const f = KD.heroFoot(); if (f !== HERO_FOOT) { HERO_FOOT = f; HERO_Y = f - 64; HBAR_Y = f + 5; } return _r.apply(this, arguments); }; }
+{ const H = Battle.prototype.handlers, _su = H.SKILL_USE; H.SKILL_USE = function* (e, s, t, P) { const id = P && P.skill && /^k14_/.test(P.skill) ? P.skill.slice(4) : null, C = id && KD.CARDS[id];
+    if (this.k14 && s && s.hero && C && C.type === 'atk' && e.tgts && e.tgts.some(x => x !== 'H')) { this.tgtV = this.views[e.tgts.find(x => x !== 'H')] || this.tgtV; yield* this.lunge(s, 12, 4); }
+    return yield* _su.call(this, e, s, t, P); }; }
 KD.PHYS = ['斬', '突', '打']; KD.ELEM = ['火', '水', '雷'];
 KD.ATC = { 斬: ['#e8eaf4', '#3c3e58'], 突: ['#b8f4a8', '#1c3c24'], 打: ['#ffc888', '#4c2c12'], 火: ['#ffb878', '#5c1c10'], 水: ['#98d4ff', '#123462'], 雷: ['#fff070', '#4c3c06'] };
 const AT16 = { sw_gap: '突', sw_bash: '打', sw_wall: '打', rg_venom: '斬', rg_quick: '斬', rg_rot: '斬', rg_reap: '斬', rg_dance: '斬', rg_bloom: '斬', rg_stitch: '斬', rg_needle: '雷',

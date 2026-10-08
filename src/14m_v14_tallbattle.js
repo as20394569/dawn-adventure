@@ -22,3 +22,10 @@ KD.centered = fn => function* (...a) { const _push = UI.push; UI.push = function
     return _push.apply(this, arguments); };
   try { return yield* fn.apply(this, a); } finally { UI.push = _push; } };
 KD.pick3 = KD.centered(KD.pick3); KD.showCard = KD.centered(KD.showCard);
+// v14.13: the hero stands on the field, just above the HP / energy row (玩家：「戰鬥中好像玩家變成不必要了」— the hero was drawn under the hand and the HUD)
+KD.heroFoot = () => { const b = Game.scene; if (!Game.noV14 && b instanceof Battle && b.core && KD.on(b.core)) return KD.BL().hudY - 2; return 200 + bxE(); };
+{ const _r = render; render = function () { const f = KD.heroFoot(); if (f !== HERO_FOOT) { HERO_FOOT = f; HERO_Y = f - 64; HBAR_Y = f + 5; } return _r.apply(this, arguments); }; }
+// …and steps toward the monster when an attack card goes off
+{ const H = Battle.prototype.handlers, _su = H.SKILL_USE; H.SKILL_USE = function* (e, s, t, P) { const id = P && P.skill && /^k14_/.test(P.skill) ? P.skill.slice(4) : null, C = id && KD.CARDS[id];
+    if (this.k14 && s && s.hero && C && C.type === 'atk' && e.tgts && e.tgts.some(x => x !== 'H')) { this.tgtV = this.views[e.tgts.find(x => x !== 'H')] || this.tgtV; yield* this.lunge(s, 12, 4); }
+    return yield* _su.call(this, e, s, t, P); }; }
