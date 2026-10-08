@@ -9269,3 +9269,4 @@ const cryCost11 = (sp, star) => { const t = cryTier11(sp); return star === 1 ? {
 const cryCan11 = (c, st = Game.st) => st.money >= c.gold && Object.entries(c.mats).every(([k, n]) => (st.bag[k] || 0) >= n);
 const cryCostText11 = c => Object.entries(c.mats).map(([k, n]) => ITEMS[k].n + '×' + n + '（有' + (Game.st.bag[k] || 0) + '）').join('、') + '、' + c.gold + ' G';
 const cryNext11 = sp => { const L = CRY_SER11[CRY11[sp][1]]; if (!L) return null; const i = L.indexOf(sp); return i >= 0 && i < L.length - 1 ? L[i + 1] : null; };
+const cryPrev11 = sp => { const L = CRY_SER11[CRY11[sp][1]]; if (!L) return null; const i = L.indexOf(sp); return i > 0 ? L[i - 1] : null; };

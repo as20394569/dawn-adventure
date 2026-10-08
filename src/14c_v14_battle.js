@@ -114,7 +114,7 @@ const HK = H_BASE;
 // v14.12 battle layout: the hand, the bar above it and the card text hang from the bottom of the screen (taller on a tall phone)
 // v14.24 (設計稿〈曙光冒險 戰鬥畫面重新設計〉): the hand 33×56 (35×62 on a tall screen), the bar 23 high above it (its top line = hudY); the card text and the notes at the top of the screen
 // v14.25（玩家：「合理運用空間」→ 魔物往上、手牌變高）: the hand 33×74 (35×80 on a tall screen); the monsters stand so their plates end just above the bar (14u)
-KD.BL = () => { const E = bxE(), big = E >= 30, ch = big ? 80 : 74, cw = big ? 35 : 33, handY = H - ch - 3, hudY = handY - 26;
+KD.BL = () => { const E = bxE(), big = E >= 30, ch = big ? 62 : 56, cw = big ? 32 : 30, /* v14.27: the hand smaller (玩家選 B 30×56; was 33×74 / 35×80) */ handY = H - ch - 3, hudY = handY - 26;
   return { E, cw, ch, handY, hudY, noteY: 13, tgtY: 13, detB: hudY - 3, tall: E >= 40 }; };
 // v14.21 text centred in a box: the middle of the line sits exactly on cy (玩家：「字一定要置中」)
 KD.tc = (x, s, cx, cy, col, sh, z, maxW = 999) => fontFit(x, String(s), cx, cy - 8, maxW, col, sh, z, 'c');
@@ -196,9 +196,9 @@ BPK.handK = function (x) { this.detTop16 = null; this.detBot16 = null; const LB 
     KD.drawCard(x, c, Math.round(c.ax), Math.round(c.ay), cw, ch, { dim: !this.okK(c), on: i === this.sel, visX0: i === this.sel ? 0 : Math.max(0, Math.min(l0, cw - 14)), vis: i === this.sel ? cw : Math.max(14, r0 - l0) });
     if (my) touchRegion(P.x, Y, i === n - 1 || i === this.sel ? cw : Math.ceil(P.step), ch, () => { this.tapK = { k: 'card', i }; }); }
   // v14.25（玩家：「合理運用空間」→ 選了「選到的卡放大浮在手牌上」）：選到的卡放大成大卡（整句說明在卡上），從手牌的位置往上浮；旁邊一個框寫關鍵字和「再點一次出牌」
-  if (this.sel >= 0 && this.hand[this.sel]) { const c = this.hand[this.sel], Q = KD.UI, K = KD.keyLines(c), P = this.handPos(this.sel, n), bw = 60, bh = 110, bx = Math.round(clamp(P.x + cw / 2 - bw / 2, 3, W - 3 - bw)), by = H - 3 - bh;
+  if (this.sel >= 0 && this.hand[this.sel]) { const c = this.hand[this.sel], Q = KD.UI, K = KD.keyLines(c), P = this.handPos(this.sel, n), bw = 60, bh = Math.max(84, H - 3 - (LB.hudY - 2)), /* v14.27: no taller than the bar and the hand, so it never covers the monsters' plates (玩家選「大卡不放圖」) */ bx = Math.round(clamp(P.x + cw / 2 - bw / 2, 3, W - 3 - bw)), by = H - 3 - bh;
     x.fillStyle = 'rgba(6,6,12,0.55)'; x.fillRect(0, LB.hudY, W, H - LB.hudY); // the bar and the other cards step back
-    KD.drawCard(x, c, bx, by, bw, bh, { on: true, dim: !this.okK(c) });
+    KD.drawCard(x, c, bx, by, bw, bh, { on: true, dim: !this.okK(c), noArt: true });
     // the side panel: what to do, then the key words (small, grey)
     const left = bx >= W - bx - bw, px = left ? 3 : bx + bw + 4, pw = left ? bx - 7 : W - 3 - px, hint = this.tgtMode ? '點魔物出牌' : '再點一次出牌';
     if (pw >= 40) { const L = []; for (const t of K) L.push(...wrap15(t, pw - 8, Q.S)); const ln = L.slice(0, Math.floor((bh - 20) / 7)), ph = 15 + (ln.length ? ln.length * 7 + 4 : 0), py = H - 3 - ph;
@@ -227,7 +227,7 @@ KD.shortL = (C, v) => { const L = C.short(v).slice(); if (C.exhaust && !L.includ
    v14.21（玩家看了手機截圖：「字體先縮小…卡片文字也縮小 最重要一點 字一定要置中」）：卡面的字全部置中、縮小一號（小卡 卡名 7・數字 9・小字 6；大卡 卡名 9・數字 13・句子 7）
    v14.22（玩家：「卡片字體也縮小」）：再小一號——小卡 卡名 6・數字 8・小字 5・費用 6；大卡 卡名 8・數字 11・句子 6・卡種 6・職業 6・費用 7 */
 KD.C3 = { body: '#1b1e28', line: '#33374a', dmg: '#ffd27a', blk: '#8ec8ff', kw: '#ff9a6a', lab: '#8a90a4', sub: '#a8aec0', txt: '#c4c9d6', top: '#e8ecf4', foot: '#7a8094', off: '#3a3e4c',
-  zs: { name: 5, num: 10, nrow: 10, lab: 5, lrow: 6, line: 5, cost: 6, r: 4.5 }, zt: { name: 5, num: 12, nrow: 13, lab: 5, lrow: 6, line: 5, cost: 6, r: 4.5 }, /* v14.26: zs = a small card (牌組・牌庫), zt = the tall battle hand */ zb: { name: 8, num: 13, nrow: 14, lab: 6, lrow: 7, sent: 6, pill: 6, foot: 6, cost: 7, r: 5.5 }, // the face's text sizes
+  zs: { name: 5, num: 10, nrow: 10, lab: 5, lrow: 6, line: 5, cost: 6, r: 4.5 }, zt: { name: 5, num: 12, nrow: 13, lab: 5, lrow: 6, line: 5, cost: 6, r: 4.5 }, zh: { name: 5, num: 8, nrow: 8, lab: 5, lrow: 6, line: 5, cost: 6, r: 4.5 }, /* v14.27: zh = the battle hand (≤34 wide), its number smaller (玩家：數字也縮小) */ /* v14.26: zs = a small card (牌組・牌庫), zt = the tall battle hand */ zb: { name: 8, num: 13, nrow: 14, lab: 6, lrow: 7, sent: 6, pill: 6, foot: 6, cost: 7, r: 5.5 }, // the face's text sizes
   pill: { atk: '#f4907a', skl: '#9cc0f6', pow: '#f6d878' }, stars: { B: 1, T: 1, C: 1, U: 2, Q: 2, R: 3, L: 3 } };
 KD.numOf = s => { const m = /^(傷害|格擋)?\s*(\d+)( ?×\d+)?$/.exec(s || ''); return m && (m[1] || m[3]) ? { lab: m[1] || '傷害', s: m[2] + (m[3] ? m[3].trim() : '') } : null; };
 // a box with its corners clipped (k = 1 or 2 px), drawn in bands so a see-through colour isn't laid twice
@@ -261,15 +261,16 @@ KD.drawCard = function (x, c, X, Y, w, h, o = {}) { const C = KD.CARDS[c.id]; if
   if (o.on || gold) KD.rr3(x, X - 2, Y - 2, w + 4, h + 4, o.on ? 'rgba(255,224,112,0.45)' : 'rgba(255,176,64,0.4)', kc);
   KD.rr3(x, X - 1, Y - 1, w + 2, h + 2, o.on ? '#ffe070' : '#07060c', kc); KD.rr3(x, X, Y, w, h, edge, kc); KD.rr3(x, X + 1, Y + 1, w - 2, h - 2, P.body, kc);
   // ① the picture: nothing written on it but the cost (and a big card's type)
-  const ax = X + 1, ay = Y + 1, aw = w - 2, ah = big ? clamp(h - 72, 28, 44) : tall ? h - 41 : Math.max(14, h - 38), sc = ah > 32 || big ? ah / 32 : 1, art = KD.ART && KD.ART[c.id] && KD.ART[c.id].ok ? KD.ART[c.id] : null;
+  const ax = X + 1, ay = Y + 1, aw = w - 2, Z = big ? P.zb : (o.z || (tall ? P.zt : w <= 34 ? P.zh : P.zs)), ah = big ? (o.noArt ? 15 : clamp(h - 72, 28, 44)) : tall ? h - 41 : Math.max(14, h - 28 - Z.nrow), sc = ah > 32 || big ? ah / 32 : 1, art = KD.ART && KD.ART[c.id] && KD.ART[c.id].ok ? KD.ART[c.id] : null;
   x.fillStyle = T.bg; x.fillRect(ax, ay, aw, ah); x.save(); x.beginPath(); x.rect(ax, ay, aw, ah); x.clip(); x.imageSmoothingEnabled = false;
-  if (art) x.drawImage(art, Math.round(ax + (aw - 48 * sc) / 2), Math.round(ay + (ah - 32 * sc) / 2), Math.round(48 * sc), Math.round(32 * sc));
+  if (o.noArt) { /* v14.27: the picked card's big copy has no picture (it covered the monsters' plates) — a strip for the cost and the type */ }
+  else if (art) x.drawImage(art, Math.round(ax + (aw - 48 * sc) / 2), Math.round(ay + (ah - 32 * sc) / 2), Math.round(48 * sc), Math.round(32 * sc));
   else { const ic = KD.ICON[KD.iconOf(c.id)], k = big ? 2 : 1; if (ic) x.drawImage(ic, Math.round(ax + aw / 2 - 6.5 * k), Math.round(ay + (ah - 13 * k) / 2), 13 * k, 13 * k); }
   if (gold) { const s = x.createLinearGradient(ax, ay, ax + aw, ay + ah); s.addColorStop(0.3, 'rgba(255,230,160,0)'); s.addColorStop(0.45, 'rgba(255,230,160,0.22)'); s.addColorStop(0.6, 'rgba(255,230,160,0)'); x.fillStyle = s; x.fillRect(ax, ay, aw, ah); }
   const tc = gold ? (() => { const s = x.createLinearGradient(ax, 0, ax + aw, 0); s.addColorStop(0, '#ffcf6a'); s.addColorStop(0.5, '#ff9a2a'); s.addColorStop(1, '#ffe08a'); return s; })() : T.c; x.fillStyle = tc; x.fillRect(ax, ay, aw, 2); x.restore();
   x.fillStyle = edge; x.fillRect(ax, ay, kc, 1); x.fillRect(ax + aw - kc, ay, kc, 1); if (kc > 1) { x.fillRect(ax, ay + 1, 1, 1); x.fillRect(ax + aw - 1, ay + 1, 1, 1); } // the rounded corners, over the picture
   if (gear && !o.on) { x.fillStyle = '#8a94ae'; x.fillRect(X + 2, Y + 1, w - 4, 1); x.fillRect(X + 2, Y + h - 2, w - 4, 1); x.fillRect(X + 1, Y + 2, 1, h - 4); x.fillRect(X + w - 2, Y + 2, 1, h - 4); }
-  const Z = big ? P.zb : (o.z || (tall ? P.zt : P.zs)), r = Z.r; KD.coin3(x, X + (big ? 3 : 2) + r, Y + (big ? 4 : 3) + r, r, KD.cost(c), o.dim, Z.cost);
+  const r = Z.r; KD.coin3(x, X + (big ? 3 : 2) + r, Y + (big ? 4 : 3) + r, r, KD.cost(c), o.dim, Z.cost);
   if (big) { const s = T.n, pw = Math.ceil(Font.width(s, 6)) + 5, px = X + w - 3 - pw; KD.rr3(x, px, Y + 4, pw, 9, 'rgba(12,14,20,0.75)'); KD.tc(x, s, px + pw / 2, Y + 8.5, gold ? P.dmg : P.pill[C.type], null, 6); }
   // ② the name on a band of its own, the type's colour along its top
   const nb = ay + ah, nh = big ? 12 : 9, nm = KD.name(c); x.fillStyle = '#10121a'; x.fillRect(ax, nb, aw, nh); x.fillStyle = tc; x.fillRect(ax, nb, aw, 1);
