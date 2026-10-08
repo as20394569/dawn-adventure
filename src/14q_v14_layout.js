@@ -16,7 +16,7 @@ const kOn16 = b => !!(b && (b.k14 || (b.core && KD.on(b.core))) && !Game.noV14);
     try { return _dr.call(this, x); } finally { Hv.blink = b0; } }; }
 // the old pills beside the hero / the old ailment and ward tags: the status row above the HP bar instead
 { const _db = Battle.prototype.drawBoxH; Battle.prototype.drawBoxH = function (x) { if (!kOn16(this)) return _db.call(this, x); const Hv = this.H, sv = Hv && Hv.st; if (Hv && sv) Hv.st = { blk15: sv.blk15 }; try { _db.call(this, x); } finally { if (Hv) Hv.st = sv; }
-    if (!Hv || !sv || this.boxF < -20) return; const L = KD.chips16(sv, true); if (!L.length) return; const LB = KD.BL(), X = this.chipX16 || 60; KD.chipRow16(x, L, X, LB.hudY + 14, 121 - X, 'l'); }; } // v14.24: in the bar, after the class name
+    if (!Hv || !sv || this.boxF < -20) return; const L = KD.chips16(sv, true); if (!L.length) return; const LB = KD.BL(), X = this.chipX16 || 60; KD.chipRow16(x, L, X, LB.hudY + 14, (this.chipR16 || 121) - X, 'l'); }; } // v14.24: in the bar, after the class name
 
 /* ---------- 狀態的小字 ---------- */
 KD.CHIP16 = [['blk15', '盾', '#bfe0ff', '#14284a'], ['str15', '力', '#ffb0a0', '#4a1810'], ['tstr14', '力', '#ffb0a0', '#4a1810'], ['pois14', '毒', '#a8f088', '#16361a'], ['burn14', '燒', '#ffc078', '#4a2008'],
@@ -39,7 +39,7 @@ KD.chipRow16 = (x, L, X, Y, maxW, align) => { const ws = L.map(([s]) => KD.chipW
     ids.forEach((id, i) => { const v = this.views[id]; if (!v || v.gone || X > W - 52) return; const past = i < done, on = i === cur, hero = v.hero, ch = this.ordLabel13 ? this.ordLabel13(v) : (v.n || '?').slice(0, 1);
       x.globalAlpha = past ? 0.4 : 1; x.fillStyle = on ? '#ffd860' : hero ? '#3a6aa0' : '#7a2a34'; x.fillRect(X, Y, 10, 9); x.fillStyle = '#0b0d18'; x.fillRect(X + 1, Y + 1, 8, 7);
       KD.tc(x, ch, X + 5, Y + 4.5, on ? '#ffe8b0' : hero ? '#bfe0ff' : '#ffc8c8', UIC.textSh, 6, 8); x.globalAlpha = 1; if (on) { x.fillStyle = '#ffd860'; x.fillRect(X + 3, Y + 10, 4, 1); } X += 11; }); }; }
-{ const _wi = wxIcon; wxIcon = function (x, k, X, Y) { const b = Game.scene; if (b instanceof Battle && kOn16(b) && X === W - 13 && Y === 46) { X = W - 31; Y = 22; } return _wi(x, k, X, Y); }; }
+{ const _wi = wxIcon; wxIcon = function (x, k, X, Y) { const b = Game.scene; if (b instanceof Battle && kOn16(b) && X === W - 13 && Y === 46) { X = W - 31; Y = 1; } /* v14.25: the top row, beside ×2 */ return _wi(x, k, X, Y); }; }
 
 /* ---------- 名牌：兩行 ---------- */
 KD.plate16 = function (x, v, X, Y, w, on, a) { if (a <= 0) return; const u = this.core.byId[v.id], rim = on ? '#ffd860' : v.boss ? '#ff6b7a' : v.elite ? '#ffc46b' : v.rare ? '#ffd84a' : v.minion ? '#b08a6a' : '#8a93b3', h = 18; /* v14.21: 18 high (was 23), 7 / 6 size */

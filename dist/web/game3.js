@@ -5761,7 +5761,7 @@ const bTopOK12 = () => { const t = UI.stack[UI.stack.length - 1]; return !t || t
     if (Input.pressed('select') && bTopOK12()) { Input.consume('select'); bSpdToggle12(); }
     if (bFast12() && S.fast12 && S.script && !UI.stack.some(w => w instanceof Menu)) { for (const k of Input.keys) Input.p[k] = false; S.update(); } }; }
 Battle.prototype.drawSpd12 = function (x) {
-  if (this.boxF < -20 || !bTopOK12()) return; const on = bFast12(), X = W - 17, Y = 22, w = 14, h = 9; /* v14.21: 14×9, 6 size */ // under the name plates (three plates fill the top row); v12.0.9h: smaller (player: 「戰鬥速度x2 按鈕縮小」)
+  if (this.boxF < -20 || !bTopOK12()) return; const on = bFast12(), X = W - 17, Y = this.k14 ? 2 : 22, w = 14, h = 9; /* v14.21: 14×9, 6 size */ // under the name plates (three plates fill the top row); v12.0.9h: smaller (player: 「戰鬥速度x2 按鈕縮小」)
   if (KD.pan) KD.pan(x, X, Y, w, h, on ? '#f0a030' : null); else { x.fillStyle = '#14121c'; x.fillRect(X, Y, w, h); } // v14.24: the battle screen's panel
   KD.tc(x, '×2', X + w / 2, Y + h / 2, on ? '#ffe8b0' : UIC.muted, UIC.textSh, 5);
   touchRegion(X - 5, Y - 4, w + 8, h + 8, bSpdToggle12); // the tap area stays a little bigger than the button
@@ -9270,3 +9270,4 @@ function cryLines11(g) { const L = [], n = crySlots11(g); if (!n) return L; cons
   const C = (g.cr11 || []).filter(sp => O[sp] && CRY11[sp]).slice(0, n);
   for (const sp of C) L.push(['◆' + cryName11(sp) + '★' + O[sp] + '：' + cryText11(sp, O[sp]), '#9ad8ff']);
   if (C.length < n) L.push(['◇ 空的晶石孔 ×' + (n - C.length), UIC.muted]); return L; }
+{ const _gi = gearInfoLines; gearInfoLines = function (g, wrapW = 150) { const L = _gi(g, wrapW); return L.concat(cryLines11(g)); }; }

@@ -72,3 +72,8 @@ KD.pops24 = function (x) { const L = this.pops, Q = KD.UI, LB = KD.BL();
     const T = p.tag && KD.TAG24[p.tag]; if (T) { const w = Math.ceil(Font.w('700', () => Font.width(p.tag, Q.S))) + 6, ty = Math.round(cy - z / 2 - 7); x.fillStyle = '#1a0a10'; x.fillRect(Math.round(p.x - w / 2) - 1, ty - 1, w + 2, 9); x.fillStyle = T[0]; x.fillRect(Math.round(p.x - w / 2), ty, w, 7); Font.w('700', () => KD.tc(x, p.tag, p.x, ty + 3.5, T[1], null, Q.S)); }
     x.globalAlpha = 1; } };
 { const _dp = Battle.prototype.drawPops; Battle.prototype.drawPops = function (x) { if (!this.k14) return _dp.call(this, x); KD.pops24.call(this, x); }; }
+
+/* ---------- v14.25 魔物往上（玩家：「合理運用空間」）：名牌剛好停在下方欄上面，上方的空白讓給手牌 ---------- */
+KD.lift24 = b => { const F = b.foes(); if (!F.length) return; const dy = KD.BL().hudY - 35 - Math.max(...F.map(v => v.foot)); if (dy) for (const v of F) v.foot += dy; };
+{ const _ly = Battle.prototype.layout; Battle.prototype.layout = function (snap) { _ly.call(this, snap); if (this.k14) KD.lift24(this); }; }
+{ const _ik = Battle.prototype.initK; Battle.prototype.initK = function () { const r = _ik.call(this); KD.lift24(this); return r; }; } // the first layout runs before the card battle starts

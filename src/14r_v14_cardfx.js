@@ -8,8 +8,8 @@ KD.TYPE_GLOW = { atk: '#ff6a4a', skl: '#6aa8ff', pow: '#ffd050' };
 KD.cardBack = (x, X, Y, w, h) => { x.fillStyle = '#0c0814'; x.fillRect(X - 1, Y - 1, w + 2, h + 2); x.fillStyle = '#241a44'; x.fillRect(X, Y, w, h); x.fillStyle = '#c8a050'; x.fillRect(X, Y, w, 1); x.fillRect(X, Y + h - 1, w, 1); x.fillRect(X, Y, 1, h); x.fillRect(X + w - 1, Y, 1, h);
   x.fillStyle = '#3a2c66'; x.fillRect(X + 3, Y + 3, w - 6, h - 6); const cx = X + w / 2, cy = Y + h / 2, r = Math.min(w, h) * 0.22; x.fillStyle = '#ffd878'; x.beginPath(); x.moveTo(cx, cy - r); x.lineTo(cx + r * 0.7, cy); x.lineTo(cx, cy + r); x.lineTo(cx - r * 0.7, cy); x.closePath(); x.fill();
   x.fillStyle = '#3a2c66'; x.fillRect(Math.round(cx - 1), Math.round(cy - 1), 2, 2); };
-KD.pileXY = () => { const LB = KD.BL(); return { x: 124, y: LB.hudY + 16 }; };
-KD.discXY = () => { const LB = KD.BL(); return { x: W - 20, y: LB.hudY + 16 }; };
+KD.pileXY = () => { const LB = KD.BL(); return { x: 86, y: LB.hudY + 17 }; }; // v14.25: 牌庫・棄牌 sit at the right end of the bar's second row
+KD.discXY = () => { const LB = KD.BL(); return { x: 112, y: LB.hudY + 17 }; };
 
 /* ---------- 抽卡：從牌庫飛來、翻面 ---------- */
 { const _dn = BPK.drawN; BPK.drawN = function (n) { const shuffle = this.k14 && this.pile.length < n && this.disc.length > 0, h0 = this.hand.length; _dn.call(this, n); if (!this.k14) return;
