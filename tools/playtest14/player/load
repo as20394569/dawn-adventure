@@ -1,7 +1,0 @@
-#!/bin/bash
-# load <save.json>: put that state into the driver page and install the helpers
-S=/tmp/claude-0/-home-claude--/1ac51525-de24-5872-9bf6-4fc024f0c0db/scratchpad; G=$S/pp/g
-python3 -c "import json,sys; print(json.dumps(open('$1').read()))" > $S/pp/_st.txt
-$G ev "() => { const G = __game; if (!G.__s1) { const s = G.step.bind(G); G.__s1 = s; G.step = n => { if (!n) return s(0); for (let i = 0; i < n; i++) s(1); }; } G.Game.st = JSON.parse($(cat $S/pp/_st.txt)); G.Game.st.status = null; startOverworld(); G.Game.fade = 0; G.step(30); return G.Game.st.map + ' ' + G.Game.st.x + ',' + G.Game.st.y; }"
-$G ev "$(cat $S/pp/walk.js)" >/dev/null; $G ev "$(cat $S/pp/hunt.js)" >/dev/null
-$G ev "() => { if (!window.__pkw) { window.__pkw = 1; const _p = KD.pick3; KD.pick3 = function* (ids, title, o) { window.__pk = { ids, title }; return yield* _p.call(this, ids, title, o); }; } return 'ok'; }" >/dev/null

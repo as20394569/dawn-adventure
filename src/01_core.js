@@ -1,8 +1,7 @@
 'use strict';
 /* ===================== CORE: constants, utils, font, input, coroutines ===================== */
-const W = 176, TS = 16, H_BASE = 256; let H = H_BASE; // v14.12: the battle screen grows taller on a tall phone (KD.setH); everything else stays 176×256
-const TB_H = 60; let TB_Y = H - TB_H; // bottom text box area (3 lines)
-const bxE = () => Math.max(0, H - H_BASE); // how much taller than 256 the screen is right now
+const W = 176, H = 256, TS = 16;
+const TB_H = 60, TB_Y = H - TB_H; // bottom text box area (3 lines)
 const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
 const rnd = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
 const chance = p => Math.random() < p;
@@ -65,10 +64,9 @@ const Font = (() => {
   // clear vector text for everything else (dialogue, menus, numbers)
   const FAMILY = '"Noto Sans TC","PingFang TC","Hiragino Sans","Microsoft JhengHei","Heiti TC","Noto Sans CJK TC",sans-serif';
   const SIZE = 12; const mctx = document.createElement('canvas').getContext('2d'); let wcache = new Map();
-  let WT = '500'; const fontStr = size => WT + ' ' + size + 'px ' + FAMILY; // v14.18: Font.w('700', fn) draws bold (the card face's name and number)
-  function withW(w, fn) { const o = WT; WT = w; try { return fn(); } finally { WT = o; } }
+  const fontStr = size => '500 ' + size + 'px ' + FAMILY;
   if (document.fonts) { const clear = () => { wcache = new Map(); }; document.fonts.addEventListener && document.fonts.addEventListener('loadingdone', clear); document.fonts.ready && document.fonts.ready.then(clear); }
-  function width(str, size = SIZE) { str = String(str); const k = WT + '|' + size + '|' + str; let w = wcache.get(k); if (w === undefined) { mctx.font = fontStr(size); w = mctx.measureText(str).width; wcache.set(k, w); } return w; }
+  function width(str, size = SIZE) { str = String(str); const k = size + '|' + str; let w = wcache.get(k); if (w === undefined) { mctx.font = fontStr(size); w = mctx.measureText(str).width; wcache.set(k, w); } return w; }
   function draw(ctx, str, x, y, col = '#404040', sh = null, size = SIZE) {
     str = String(str); if (!str) return x;
     const f = fontStr(size); if (ctx.font !== f) ctx.font = f; ctx.textBaseline = 'middle'; ctx.textAlign = 'left';
@@ -118,7 +116,7 @@ const Font = (() => {
     }
     return lines;
   }
-  return { width, draw, drawR, drawC, drawBig, wrap, glyph, widthPx, drawPx, w: withW };
+  return { width, draw, drawR, drawC, drawBig, wrap, glyph, widthPx, drawPx };
 })();
 
 /* ---------------- Input ---------------- */
@@ -156,6 +154,3 @@ const Game = {
 function* fadeOut(n = 16, color = '#000') { Game.fadeColor = color; yield* tween(n, t => Game.fade = t); Game.fade = 1; }
 function* fadeIn(n = 16) { yield* tween(n, t => Game.fade = 1 - t); Game.fade = 0; }
 function* flashScreen(n = 8, color = '#fff') { Game.flashColor = color; yield* tween(n, t => Game.flash = 1 - t); Game.flash = 0; }
-// v14.12 (最小字級 8): text that is too wide for its box is squeezed sideways instead of drawn smaller
-function fontFit(x, s, X, Y, maxW, col, sh, size = 8, align = 'l') { s = String(s); const w = Font.width(s, size), k = w > maxW && w > 0 ? maxW / w : 1, x0 = align === 'c' ? X - w * k / 2 : align === 'r' ? X - w * k : X;
-  if (k === 1) { Font.draw(x, s, x0, Y, col, sh, size); return x0 + w; } x.save(); x.translate(x0, 0); x.scale(k, 1); Font.draw(x, s, 0, Y, col, sh, size); x.restore(); return x0 + w * k; }

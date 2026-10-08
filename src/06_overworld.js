@@ -194,10 +194,10 @@ class Overworld {
     st.flags[it.id] = 1;
     if (it.gold) { st.money += it.gold; Sound.jingle('item'); yield* say(st.name + '撿到了' + it.gold + ' G！'); return; }
     const n = it.n || 1; let nm; if (GEAR[it.item]) nm = gearName(makeGear(classGear(it.item), it.q || 1)); else { st.bag[it.item] = (st.bag[it.item] || 0) + n; nm = ITEMS[it.item].n + (n > 1 ? '×' + n : ''); } const fr = Sound.jingle('item');
-    const tb = new TextBox(typeof KD !== 'undefined' && KD.fixTxt ? KD.fixTxt(st.name + '撿到了' + nm + '！') : st.name + '撿到了' + nm + '！'); UI.push(tb);
+    const tb = new TextBox(st.name + '撿到了' + nm + '！'); UI.push(tb);
     for (let i = 0; i < fr || !tb.done; i++) { if (i >= 30 || tb.state !== 'end') tb.update(); yield; if (tb.done && i >= fr) break; }
     UI.remove(tb);
-    if (!(GEAR[it.item] && (!Game.noV14 && Game.st && Game.st.k14))) yield* say(st.name + '把' + (ITEMS[it.item] ? ITEMS[it.item].n : '它') + '放進了' + (GEAR[it.item] ? '裝備欄。' : '背包。'));
+    yield* say(st.name + '把' + (ITEMS[it.item] ? ITEMS[it.item].n : '它') + '放進了' + (GEAR[it.item] ? '裝備欄。' : '背包。'));
   }
   *warp(id, x, y, dir, door) {
     Sound.sfx('door'); yield* fadeOut(12); this.load(id, x, y, dir); yield* wait(4); yield* fadeIn(12);

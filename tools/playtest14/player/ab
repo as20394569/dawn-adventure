@@ -1,6 +1,0 @@
-#!/bin/bash
-# auto-play the current battle to the end (cards by the test bot), pick a card if offered
-S=/tmp/claude-0/-home-claude--/1ac51525-de24-5872-9bf6-4fc024f0c0db/scratchpad; G=$S/pp/g
-$G ev "() => { __game.Game.autoPlay = () => null; window.__abE = 0; return 1; }" >/dev/null
-for k in $(seq 1 400); do r=$($G ev "() => { const G = __game, b = G.Game.scene; if (b.constructor.name !== 'Battle') return 'OVER'; const tb = G.UI.stack.find(w => w.lines); if (tb) { G.press('a', 2, 2); return 'T'; } if (G.UI.stack.length) return 'UI'; if (b.idle && !b.tapK && b.hand && b.hand.length && !window.__abE) { window.__abE = 1; b.tapK = { k: 'end' }; } G.step(10); return 'W'; }"); case "$r" in *OVER*) break;; *UI*) echo "  $($S/pp/pick)";; esac; done
-$G ev "() => { __game.Game.autoPlay = null; return 1; }" >/dev/null; $G st | cut -c1-120

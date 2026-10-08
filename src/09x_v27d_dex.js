@@ -36,28 +36,11 @@ function* dexDetail(list, idx) {
     TABS.forEach((t, i) => { const X = 4 + i * 57; drawBtn(x, X, 103, 54, 16, tab === i); Font.drawC(x, t, X + 27, 103, tab === i ? UIC.accent : UIC.text, UIC.textSh, 9); touchRegion(X, 101, 54, 20, () => { if (tab !== i) { tab = i; Sound.sfx('cursor'); } }); });
     drawWin(x, 4, 122, 168, 112, 'menu'); const L = [];
     if (tab === 0) Font.wrap(sp.dex || '（沒有記載）', 156, 11).slice(0, 8).forEach((l, i) => Font.draw(x, l, 10, 127 + i * 13, UIC.text, UIC.textSh, 11));
-    else if (tab === 1 && !Game.noV14 && Game.st && Game.st.k14) { // v14.11 卡牌版：沒有等級和六項能力，寫牠在卡牌戰鬥裡會做什麼
-      const fam = sp.fam, tn = typeof FAM_TRAIT14 !== 'undefined' ? FAM_TRAIT14[fam] : null, td = typeof FAM_TRAIT_D14 !== 'undefined' ? FAM_TRAIT_D14[fam] : null;
-      const T = [['種族：' + (typeof famName === 'function' ? famName(fam) : fam) + (tn ? '　特性「' + tn + '」' : ''), UIC.warm]]; if (td) T.push([td, UIC.text]);
-      if (typeof KD !== 'undefined' && KD.weakOf) { const W = KD.weakOf(k, !!(sp.boss || sp.elite)), seen = KD.wkSeen(k); T.push(['弱點：' + W.map(w => seen.includes(w) ? w : '？').join('・') + '　破防值 ' + KD.BRK[sp.boss ? 'boss' : sp.elite ? 'elite' : 'wild'][0], '#ffd070']); } // v14.13 弱點破防：打中過的弱點才寫出來
-      T.push([sp.boss || sp.elite ? '菁英・頭目：每 3 回合力量 +1（越戰越勇），有自己的蓄力大招和護盾。' : '不攻擊的回合會同時架盾（頭上寫「+盾」）。', UIC.muted]);
-      const mv = [...new Set((sp.learn || []).map(l => MOVES[l[1]] && MOVES[l[1]].n).filter(Boolean))]; T.push(['招式：' + (mv.join('、') || '—'), UIC.text]);
-      let Y = 127; for (const [t, c] of T) for (const l of Font.wrap(t, 156, 9)) { if (Y > 222) break; Font.draw(x, l, 10, Y, c, UIC.textSh, 9); Y += 11; }
-    }
     else if (tab === 1) {
       if (P) { Font.draw(x, '參考等級 Lv' + P.lv, 10, 126, UIC.muted, UIC.textSh, 9); const S = [['HP', P.hp, '#7fd88a'], ['物攻', P.atk, '#ff9a6a'], ['物防', P.def, '#e8c86a'], ['魔攻', P.spa, '#b890ff'], ['魔防', P.spd, '#7ab8ff'], ['速度', P.spe, '#6ee7d2']], MX = dexStatMax();
         S.forEach(([a, v, c], i) => { const Y = 139 + i * 11; Font.draw(x, a, 10, Y, UIC.muted, UIC.textSh, 9); x.fillStyle = '#10121e'; x.fillRect(38, Y + 4, 100, 5); x.fillStyle = c; x.fillRect(38, Y + 4, Math.max(2, Math.round(100 * Math.sqrt(Math.min(1, v / MX[i])))), 5); Font.drawR(x, String(v), 166, Y, UIC.text, UIC.textSh, 9); }); }
       const mv = [...new Set((sp.learn || []).map(l => MOVES[l[1]] && MOVES[l[1]].n).filter(Boolean))];
       Font.wrap('招式：' + (mv.join('、') || '—'), 156, 9).slice(0, 3).forEach((l, i) => Font.draw(x, l, 10, 208 + i * 10, UIC.text, UIC.textSh, 9));
-    } else if (!Game.noV14 && Game.st && Game.st.k14) { // v14.11 卡牌版的掉落：卡牌、素材、部位（沒有經驗值、晶石、裝備）
-      const big = info.big, lg = sp.boss && typeof KD !== 'undefined' && KD.BOSS_CARD[k] && KD.CARDS[KD.BOSS_CARD[k]];
-      L.push([big ? (sp.boss ? '卡牌：三選一＋第一次的傳說卡' : '卡牌：每次都有三選一') : '卡牌：打贏有機會三選一', UIC.warm]); if (lg) L.push(['傳說卡：「' + lg.n + '」', '#ffb040']);
-      const mat = sp.mat && ITEMS[sp.mat] ? ITEMS[sp.mat].n : null;
-      if (big && typeof PARTS11 !== 'undefined' && PARTS11[k]) for (const t of foeDropLines(k, null, sp.boss || PART_BOSS11[k] ? 'boss' : 'elite').filter(t => /^(部位|稀有)：/.test(t))) L.push([t, UIC.text]);
-      else if (big) L.push(['素材：' + (mat ? mat + '×' + (sp.boss ? 3 : 2) + '＋' : '') + '當地素材×' + (sp.boss ? 3 : 2) + '（每次必定）', UIC.text]);
-      else L.push(['素材：' + (mat ? mat + '（每次必定）' : '—'), UIC.text]);
-      L.push(['金錢：每次都有', UIC.muted]); L.push(['素材在鐵匠的卡牌工坊升級卡用（2 個）。', UIC.muted]);
-      let Y = 127; for (const [t, c] of L) for (const l of Font.wrap(t, 156, 9)) { if (Y > 222) break; Font.draw(x, l, 10, Y, c, UIC.textSh, 9); Y += 11; }
     } else {
       L.push(['經驗值 ' + (sp.exp || 0) + '　金錢 ' + (sp.gold || 0) + ' G', UIC.text]);
       const mat = sp.mat && ITEMS[sp.mat] ? ITEMS[sp.mat].n : null;

@@ -1,8 +1,0 @@
-#!/bin/bash
-# pc <hand index> [foe id] : tap the card twice (select, play); with a foe id, tap that monster when asked for a target
-S=/tmp/claude-0/-home-claude--/1ac51525-de24-5872-9bf6-4fc024f0c0db/scratchpad; G=$S/pp/g
-xy=$($G ev "() => { __game.step(0); const L = TouchR.filter(r => /k: 'card', i/.test(r.fn.toString())); const r = L[$1]; return r ? Math.round(r.x + r.w / 2) + ' ' + Math.round(r.y + r.h / 2) : ''; }" | tr -d '"')
-[ -z "$xy" ] && { echo "no card $1"; exit; }
-$G tap $xy 6 >/dev/null; $G tap $xy 8 >/dev/null
-if [ -n "$2" ]; then t=$($G ev "() => { const b = __game.Game.scene; if (!b.tgtMode) return ''; const C = b.center(b.views['$2']); return C.x + ' ' + C.y; }" | tr -d '"'); [ -n "$t" ] && $G tap $t 8 >/dev/null; fi
-$S/pp/bw | head -${N:-3}

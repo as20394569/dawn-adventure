@@ -47,7 +47,7 @@ Battle.prototype.drawOrder = function (x) {
   let y = Y0; const cur = ids.findIndex((id, i) => i >= done && this.views[id] && !this.views[id].gone);
   ids.forEach((id, i) => { const v = this.views[id]; if (!v || v.gone || y > 128) return; const past = i < done, on = i === cur, hero = v.hero, ch = this.ordLabel13 ? this.ordLabel13(v) : (v.n || '?').slice(0, 1) + (/[A-G]$/.test(v.n || '') ? v.n.slice(-1) : '');
     x.globalAlpha = past ? 0.4 : 1; x.fillStyle = on ? '#ffd860' : hero ? '#3a6aa0' : '#7a2a34'; x.fillRect(2, y, 14, 12); x.fillStyle = '#0b0d18'; x.fillRect(3, y + 1, 12, 10);
-    fontFit(x, ch, 9, midY(y, 12, 8), 12, on ? '#ffe8b0' : hero ? '#bfe0ff' : '#ffc8c8', UIC.textSh, 8, 'c'); x.globalAlpha = 1; y += 13; });
+    Font.drawC(x, ch, 9, midY(y, 12, ch.length > 1 ? 6 : 8), on ? '#ffe8b0' : hero ? '#bfe0ff' : '#ffc8c8', UIC.textSh, ch.length > 1 ? 6 : 8); x.globalAlpha = 1; y += 13; });
   if (cur >= 0) { const yy = Y0 + ids.slice(0, cur).filter(id => this.views[id] && !this.views[id].gone).length * 13; x.fillStyle = '#ffd860'; x.fillRect(17, yy + 4, 2, 4); }
 };
 { const _bf = Battle.prototype.drawBoxF; Battle.prototype.drawBoxF = function (x) { _bf.call(this, x); this.drawOrder(x); }; }

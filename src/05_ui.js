@@ -301,7 +301,7 @@ function* equipGearFlow(g) { // put an instance on; accessories pick a free/olde
 function* bagScreen(mode = 'field') { // returns item id used (battle) or null
   let bagTapSel = -1;
   // v10.7.1 (player: 「背包要能看到寶珠跟寶石」): 寶珠 lists every orb (socketed or not), 寶石 the enchant stones
-  let tab = 0, idx = 0; const tabs = mode === 'battle' ? ['道具'] : (!Game.noV14 && Game.st && Game.st.k14) ? ['道具', '素材', '重要'] : ['道具', '裝備', '素材', '重要']; // v12: 寶珠・寶石 tabs removed (orbs and enchant cancelled)
+  let tab = 0, idx = 0; const tabs = mode === 'battle' ? ['道具'] : ['道具', '裝備', '素材', '重要']; // v12: 寶珠・寶石 tabs removed (orbs and enchant cancelled)
   const orbsSorted = () => typeof orbList === 'function' ? orbList(Game.st).slice().sort((a, b) => (!!orbHost(b) - !!orbHost(a)) || (isActiveOrb(b) - isActiveOrb(a)) || orbDef(a).n.localeCompare(orbDef(b).n)) : [];
   const listFor = t => tabs[t] === '裝備' ? gearSort() : tabs[t] === '寶珠' ? orbsSorted() : bagList(it => tabs[t] === '道具' ? (!it.key && !it.mat && it.use !== 'enchant' && (mode !== 'battle' || !['boost', 'tp', 'reset', 'food13'].includes(it.use))) : tabs[t] === '寶石' ? it.use === 'enchant' : tabs[t] === '素材' ? !!it.mat : !!it.key);
   const VIS = 7;

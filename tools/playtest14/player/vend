@@ -1,6 +1,0 @@
-#!/bin/bash
-# after a battle: tap through, screenshot any card pick, report
-S=/tmp/claude-0/-home-claude--/1ac51525-de24-5872-9bf6-4fc024f0c0db/scratchpad; G=$S/pp/g
-for i in $(seq 1 40); do $G step 15 >/dev/null; s=$($G st); t=$(echo "$s" | grep -o 'TextBox\\"[^\\]*'); [ -n "$t" ] && { echo "${t#TextBox\\\"}"; $G tap 88 230 20 >/dev/null; continue; }
-  echo "$s" | grep -q '"ui":"Object"' && { echo "PICK (shot ${1:-pk})"; $S/pp/cs ${1:-pk} >/dev/null; exit; }
-  echo "$s" | grep -q '"sc":"Overworld"' && { echo "OW $(echo $s | grep -o '"hp":[0-9]*,"money":[0-9]*')"; exit; }; done

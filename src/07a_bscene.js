@@ -78,7 +78,7 @@ class Battle {
   // slots: with three monsters the boss / elite (the biggest) stands in the middle at the back
   layout(snap) { const L = this.foes(), n = Math.min(3, L.length), P = FOE_SLOTS[n] || FOE_SLOTS[1], rank = v => v.boss ? 0 : v.elite ? 1 : v.minion ? 3 : 2;
     const order = L.map((v, i) => [v, i]).sort((a, b) => rank(a[0]) - rank(b[0]) || a[1] - b[1]).map(a => a[0]), pos = n === 3 ? [1, 0, 2] : [0, 1, 2];
-    const dy = Math.round(bxE() * 0.6); order.forEach((v, k) => { const p = P[pos[k]] || P[P.length - 1]; v.tx = p[0]; v.foot = p[1] + dy; if (snap) v.x = p[0]; }); } // v14.12: a taller battle screen moves the monsters down with the ground
+    order.forEach((v, k) => { const p = P[pos[k]] || P[P.length - 1]; v.tx = p[0]; v.foot = p[1]; if (snap) v.x = p[0]; }); }
   vw(id) { return id ? this.views[id] : null; }
   nameOf(id) { const v = this.vw(id); return v ? v.n : ''; }
   skillName(id, uid) { const u = this.core.byId[uid], D = DEF.skills[id]; if (!D) return id; if (u && u.hero) { if (id === u.data.attackSkill) return u.data.attackName || D.name; if (u.data.skillNames && u.data.skillNames[id]) return u.data.skillNames[id]; if (id === u.data.wspSkill) return u.data.wspName || '特技'; } return D.name; }
@@ -111,25 +111,18 @@ class Battle {
   // the middle of several targets (area skills play their effect once over the whole group)
   groupOf(ids) { const vs = ids.map(id => this.views[id]).filter(Boolean); if (vs.length < 2) return vs[0]; const C = vs.map(v => this.center(v)); return { cx: Math.round(C.reduce((a, c) => a + c.x, 0) / C.length), cy: Math.round(C.reduce((a, c) => a + c.y, 0) / C.length), hero: false, group: vs }; }
   /* ---------- drawing ---------- */
-  // v14.12: monsters grow with the taller battle screen (one up to ×1.5, two ×1.3, three ×1.15), never wider than the screen or up into the name plates
-  foeScale(v, im, fw) { const E = bxE(); if (!E || !this.k14) return 1; const n = this.foes(true).filter(q => q.alpha > 0 && !q.gone).length || 1, bb = im.bb;
-    let s = 1 + Math.min(n === 1 ? 0.5 : n === 2 ? 0.3 : 0.15, E / 248); s = Math.max(1, Math.min(s, (W - 6) / Math.max(1, bb ? bb.w : fw), (v.foot - 56) / Math.max(1, bb ? bb.h : 48)));
-    v.msA = v.msA == null ? s : v.msA + (s - v.msA) * 0.12; return Math.abs(v.msA - s) < 0.005 ? (v.msA = s) : v.msA; }
   renderFoe(v, tint) { if (v.spx) return pxRender(v.A, v.spx, this.t, tint); if (v.spec) return hdRenderFoe(v.A, v.spec, this.t, tint); const im = battleSprite(v.sp); im.ds = im.ds || 1; return tint ? tinted(im, tint) : im; }
   draw(x) {
     const tStart = performance.now(), blit = (im, X, Y, w, h) => { const ds = im.ds || 1; x.imageSmoothingEnabled = !im.px && !HD_PIXEL; x.drawImage(im, X, Y, w ?? im.width * ds, h ?? im.height * ds); x.imageSmoothingEnabled = false; };
     if (!this.hd2d) hd2dInit(this); const LK = this.hd2d.L;
     const redraw = (A, im) => !im || A.state !== 'idle' || (this.t & 1) === 0 || A.cvD !== hdD();
     const sx = this.shake > 0 ? rnd(-3, 3) : 0, sy = this.shake > 0 ? rnd(-2, 2) : 0;
-    const BHd = BH + bxE(), sk = BHd / BH, stg = () => { x.translate(-(W * sk - W) / 2, 0); x.scale(sk, sk); }; // v14.12: the stage scales with the taller screen
-    x.save(); x.translate(sx, sy); x.save(); stg(); x.imageSmoothingEnabled = true; x.drawImage(hd2dStageFor(this), 0, 0, W, BH); x.imageSmoothingEnabled = false; hd2dMotes(this, x, false); x.restore();
+    x.save(); x.translate(sx, sy); x.imageSmoothingEnabled = true; x.drawImage(hd2dStageFor(this), 0, 0, W, BH); x.imageSmoothingEnabled = false; hd2dMotes(this, x, false);
     // monsters, far ones first
     const foes = this.foes(true).filter(v => v.alpha > 0).sort((a, b) => a.foot - b.foot);
     for (const v of foes) {
-      let im = v.img; if (redraw(v.A, im)) { im = this.renderFoe(v); hd2dLightActor(im, LK); v.img = im; }
+      let im = v.img; if (redraw(v.A, im)) { im = this.renderFoe(v); hd2dLightActor(im, LK); v.img = im; } v.bbh = (im.bb && im.bb.h) || 48;
       const ds = im.ds || 1, fw = im.width * ds, fh = im.height * ds, fx0 = v.x - (im.bb ? im.bb.cx : im.width / 2) + v.off.x, fy0 = v.foot - (im.bb ? im.bb.bot : im.height) + v.off.y + v.sink;
-      const ms = this.foeScale ? this.foeScale(v, im, fw) : 1; v.bbh = ((im.bb && im.bb.h) || 48) * ms; // v14.12: bigger on a taller battle screen (grows up from its feet)
-      x.save(); if (ms !== 1) { const ax = v.x + v.off.x; x.translate(ax, v.foot); x.scale(ms, ms); x.translate(-ax, -v.foot); }
       hd2dSoftShadow(x, v.x + v.off.x, v.foot - 1, (im.bb ? im.bb.w : 40) * 0.46, 5, 0.42 * v.alpha);
       if (!(v.blink > 0 && Math.floor(v.blink / 3) % 2)) {
         x.save(); x.beginPath(); x.rect(0, 0, W, v.foot + 3); x.clip(); x.globalAlpha = v.alpha;
@@ -138,7 +131,6 @@ class Battle {
         if (tn && tn.a > 0) { x.globalAlpha = tn.a * v.alpha; blit(this.renderFoe(v, tn.c), fx0, fy0, fw, fh); }
         x.restore();
       }
-      x.restore();
       if (v.st.shards > 0 && v.alpha > 0) { const C = this.center(v); for (let i = 0; i < v.st.shards; i++) { const an = this.t / 20 + i * Math.PI * 2 / 3, px0 = Math.round(C.x + Math.cos(an) * 40), py0 = Math.round(C.y + Math.sin(an) * 13); x.fillStyle = '#1a3050'; x.fillRect(px0 - 3, py0 - 5, 7, 11); x.fillStyle = '#9ae0ff'; x.fillRect(px0 - 2, py0 - 4, 5, 9); x.fillStyle = '#e8fbff'; x.fillRect(px0 - 1, py0 - 3, 2, 4); } }
     }
     // the hero (paper doll, back view)
@@ -150,17 +142,17 @@ class Battle {
       x.restore();
     }
     for (const p of this.fx) drawParticle(x, p);
-    if (!HD_QUALITY.low) { x.save(); stg(); hd2dMotes(this, x, true); hd2dShafts(this, x); hd2dBloom(this, x); x.restore(); }
+    if (!HD_QUALITY.low) { hd2dMotes(this, x, true); hd2dShafts(this, x); hd2dBloom(this, x); }
     this.drawOverlay(x); this.drawBoxF(x); this.drawBoxH(x); this.drawPops(x);
     x.restore();
-    const k = this.cfg && this.cfg.wx; if (k && typeof wxOverlay === 'function') { x.save(); x.beginPath(); x.rect(0, 0, W, this.k14 && typeof KD !== 'undefined' && KD.BL ? Math.min(BHd, KD.BL().hudY - 1) : BHd); x.clip(); /* v14.24: the rain stops at the card battle's bar (it fell over the HP bar) */ wxOverlay(x, k, this.t, W, BHd); x.restore(); wxIcon(x, k, W - 13, 46); } // v12.68: under the ×2 button (it covered the third name plate)
-    x.fillStyle = '#0b0d18'; x.fillRect(0, BHd, W, H - BHd); x.fillStyle = PANEL.edge; x.fillRect(0, BHd, W, 1);
+    const k = this.cfg && this.cfg.wx; if (k && typeof wxOverlay === 'function') { x.save(); x.beginPath(); x.rect(0, 0, W, BH); x.clip(); wxOverlay(x, k, this.t, W, BH); x.restore(); wxIcon(x, k, W - 13, 46); } // v12.68: under the ×2 button (it covered the third name plate)
+    x.fillStyle = '#0b0d18'; x.fillRect(0, BH, W, H - BH); x.fillStyle = PANEL.edge; x.fillRect(0, BH, W, 1);
     if (this.cover > 0) { x.fillStyle = '#000'; const h = Math.round(this.cover * (H / 2 + 1)); x.fillRect(0, 0, W, h); x.fillRect(0, H - h, W, h); }
     hdQualityTick(performance.now() - tStart);
   }
   drawOverlay(x) {
-    if (this.dim > 0.02 && this.focus) { const C = this.center(this.focus), g = x.createRadialGradient(C.x, C.y, 20, C.x, C.y, 120); g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(1, 'rgba(8,0,6,' + (this.dim * 0.8).toFixed(3) + ')'); x.fillStyle = g; x.fillRect(0, 0, W, BH + bxE()); }
-    if (this.red > 0) { x.fillStyle = 'rgba(210,20,30,' + (this.red / 16 * 0.32).toFixed(3) + ')'; x.fillRect(0, 0, W, BH + bxE()); }
+    if (this.dim > 0.02 && this.focus) { const C = this.center(this.focus), g = x.createRadialGradient(C.x, C.y, 20, C.x, C.y, 120); g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(1, 'rgba(8,0,6,' + (this.dim * 0.8).toFixed(3) + ')'); x.fillStyle = g; x.fillRect(0, 0, W, BH); }
+    if (this.red > 0) { x.fillStyle = 'rgba(210,20,30,' + (this.red / 16 * 0.32).toFixed(3) + ')'; x.fillRect(0, 0, W, BH); }
     // danger ring under the hero while a monster charges
     if (this.foes().some(v => v.charging && !v.broken && v.hp > 0)) { const p = (this.t % 40) / 40, cx = this.center(this.H).x, cy = HERO_FOOT - 3; x.save(); x.strokeStyle = 'rgba(255,50,60,' + (0.8 - p * 0.6).toFixed(2) + ')'; x.lineWidth = 1.5; x.beginPath(); x.ellipse(cx, cy, 18 + p * 16, 5 + p * 4, 0, 0, Math.PI * 2); x.stroke(); x.restore(); }
     // target cursor
@@ -187,21 +179,21 @@ class Battle {
     const rim = F.boss ? '#ff6b7a' : F.elite ? '#ffc46b' : F.rare ? '#ffd84a' : '#8a93b3', tag = F.rare ? '稀有' : F.boss ? '頭目' : F.elite ? '菁英' : '';
     x.globalAlpha = a; if (!uiPlate(x, X, py, w, 33 + pe, F)) { x.fillStyle = 'rgba(10,8,20,0.75)'; x.fillRect(X, py, w, 33); x.fillStyle = rim; x.fillRect(X + 2, py, w - 4, 1); x.fillRect(X + 2, py + 32, w - 4, 1); x.fillRect(X, py + 2, 1, 29); x.fillRect(X + w - 1, py + 2, 1, 29); }
     Font.draw(x, F.n, X + 6, py + 1, UIC.text, UIC.textSh, 10); if (tag) Font.drawR(x, tag, X + w - 6, py + 2, rim, UIC.textSh, 8);
-    const noLv = (!Game.noV14 && Game.st && Game.st.k14); let lx = noLv ? X + 5 : Font.draw(x, 'Lv' + F.lv, X + 6, py + 14, UIC.muted, UIC.textSh, 8); if (FAMILIES[F.fam]) lx = Font.draw(x, (noLv ? '' : '・') + FAMILIES[F.fam].n, lx + 1, py + 14, FAMILIES[F.fam].c, UIC.textSh, 8);
+    let lx = Font.draw(x, 'Lv' + F.lv, X + 6, py + 14, UIC.muted, UIC.textSh, 8); if (FAMILIES[F.fam]) lx = Font.draw(x, '・' + FAMILIES[F.fam].n, lx + 1, py + 14, FAMILIES[F.fam].c, UIC.textSh, 8);
     const bs = this.badges(F); badgeRow(x, bs.slice(0, 3), X + w - 6 - Math.min(3, bs.length) * 18, py + 14);
     const r = clamp(F.hp / F.maxhp, 0, 1); if (!uiBar(x, X + 7, py + 30, w - 14, r, r > 0.25 ? 'foe' : 'low')) { x.fillStyle = '#1a1024'; x.fillRect(X + 6, py + 27, w - 12, 3); x.fillStyle = r > 0.5 ? '#e0504a' : r > 0.2 ? '#ff8a3a' : '#ffd040'; x.fillRect(X + 6, py + 27, Math.round((w - 12) * r), 3); }
     if (F.brkMax) drawShieldBadge(x, X - 16, py + 9, F.brk, F.broken > 0, F.flash > 0 && Math.floor(F.flash / 3) % 2);
     const fam = FAMILIES[F.fam], rev = this.revealed(F); if (fam && fam.weak.length) { const s = '弱 ' + (rev ? fam.weak.join('・') : '？'); x.fillStyle = 'rgba(10,8,20,0.7)'; const tw = Font.width(s, 8) + 8; x.fillRect(X + 4, py + 33 + pe, tw, 11); Font.draw(x, s, X + 8, py + 30.5 + pe, rev ? '#ffd070' : UIC.muted, UIC.textSh, 8); }
     if (UI_PX.icons && UI_PX.icons.ok) drawStageIcons(x, F, (W + w) / 2 - 4 - Math.min(4, BR.STAT_KEYS.filter(k => F.st['stage_' + k]).length) * (ICON_SZ + 2), py + 34 + pe);
     if (F.broken) Font.drawC(x, '— 破防中 —', W / 2, py + 45 + pe, Math.floor(this.t / 6) % 2 ? '#ffd040' : '#ff8a50', '#000000', 10);
-    else if (F.charging && !this.k14) Font.drawC(x, '蓄力中！下回合發動', W / 2, py + 45 + pe, Math.floor(this.t / 8) % 2 ? '#ff5a5a' : '#ffb0a0', '#000000', 10);
+    else if (F.charging) Font.drawC(x, '蓄力中！下回合發動', W / 2, py + 45 + pe, Math.floor(this.t / 8) % 2 ? '#ff5a5a' : '#ffb0a0', '#000000', 10);
     x.globalAlpha = 1;
   }
   drawPlateSmall(x, v, a, i, n) {
     if (a <= 0) return; const sw = Math.floor((W - 4) / Math.max(1, n)), w = Math.min(n >= 3 ? 56 : 80, sw - 2), X = Math.round(clamp(v.x - w / 2, 2 + i * sw, 2 + i * sw + sw - 2 - w)), py = 4, on = this.pickV === v; // v12.0.9f: each plate stays in its own slot (two foes close together used to overlap)
     const rim = on ? '#ffd860' : v.boss ? '#ff6b7a' : v.elite ? '#ffc46b' : v.rare ? '#ffd84a' : v.minion ? '#b08a6a' : '#8a93b3';
     x.globalAlpha = a; x.fillStyle = 'rgba(10,8,20,0.78)'; x.fillRect(X, py, w, 22); x.fillStyle = rim; x.fillRect(X + 1, py, w - 2, 1); x.fillRect(X + 1, py + 21, w - 2, 1); x.fillRect(X, py + 1, 1, 20); x.fillRect(X + w - 1, py + 1, 1, 20);
-    let z = 9; while (z > 8 && Font.width(v.n, z) > w - 6) z--; fontFit(x, v.n, X + 3, py - 1, w - 6, on ? '#ffe8b0' : UIC.text, UIC.textSh, z); if (!(!Game.noV14 && Game.st && Game.st.k14)) Font.drawR(x, 'Lv' + v.lv, X + w - 3, py, UIC.muted, UIC.textSh, 7);
+    let z = 9; while (z > 7 && Font.width(v.n, z) > w - 24) z--; Font.draw(x, v.n, X + 3, py - 1, on ? '#ffe8b0' : UIC.text, UIC.textSh, z); Font.drawR(x, 'Lv' + v.lv, X + w - 3, py, UIC.muted, UIC.textSh, 7);
     const r = clamp(v.hp / v.maxhp, 0, 1); x.fillStyle = '#1a1024'; x.fillRect(X + 3, py + 15, w - 6, 3); x.fillStyle = r > 0.5 ? '#e0504a' : r > 0.2 ? '#ff8a3a' : '#ffd040'; x.fillRect(X + 3, py + 15, Math.round((w - 6) * r), 3);
     if (v.brkMax) { for (let k = 0; k < v.brkMax; k++) { x.fillStyle = v.broken ? '#ff6050' : k < v.brk ? '#8ad0ff' : '#2a3048'; x.fillRect(X + 3 + k * 4, py + 11, 3, 2); } }
     const bs = this.badges(v).slice(0, n >= 3 ? 2 : 3); if (bs.length) badgeRow(x, bs, X + w - 2 - bs.length * (ICON_SZ + 2), py + 24);
@@ -217,7 +209,7 @@ class Battle {
     const Y = Math.round(this.boxH), st = Game.st, Hv = this.H; if (Y >= BH) return;
     const r = clamp(Hv.hp / Hv.maxhp, 0, 1), mr = clamp(Hv.mp / (Hv.maxmp || 1), 0, 1), my = Y + 6;
     if (!uiHud(x, 0, Y - 3, W, BH - Y + 4)) { x.fillStyle = 'rgba(12,10,22,0.9)'; x.fillRect(0, Y, W, BH - Y); x.fillStyle = '#c8a050'; x.fillRect(0, Y, W, 1); }
-    const cx = Font.draw(x, st.name, 4, Y, UIC.text, UIC.textSh, 9); if (!(!Game.noV14 && Game.st && Game.st.k14)) Font.draw(x, 'Lv' + st.lv, cx + 2, Y + 2, '#c8a050', UIC.textSh, 7);
+    const cx = Font.draw(x, st.name, 4, Y, UIC.text, UIC.textSh, 9); Font.draw(x, 'Lv' + st.lv, cx + 2, Y + 2, '#c8a050', UIC.textSh, 7);
     Font.draw(x, 'HP', 62, Y + 2, '#ff9a8a', UIC.textSh, 7); if (!uiBar(x, 76, my, 28, r, r > 0.25 ? 'hp' : 'low')) { x.fillStyle = '#241018'; x.fillRect(74, my, 30, 3); x.fillStyle = r > 0.5 ? '#5ad07a' : r > 0.2 ? '#ffc040' : '#ff5a5a'; x.fillRect(74, my, Math.round(30 * r), 3); } Font.drawR(x, Math.ceil(Hv.hp) + '', 122, Y + 1, r <= 0.2 ? UIC.bad : UIC.text, UIC.textSh, 8);
     Font.draw(x, 'MP', 127, Y + 2, '#8ab8ff', UIC.textSh, 7); if (!uiBar(x, 141, my, 19, mr, 'mp')) { x.fillStyle = '#101a30'; x.fillRect(139, my, 21, 3); x.fillStyle = '#5aa8ff'; x.fillRect(139, my, Math.round(21 * mr), 3); } Font.drawR(x, Math.round(Hv.mp) + '', 174, Y + 1, '#b8d4ff', UIC.textSh, 8);
     // status + stat-stage icons beside the hero (left of the body, at hip height)

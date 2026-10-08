@@ -1,9 +1,0 @@
-#!/bin/bash
-# fe <elite sp>: walk next to that elite on this map, talk, accept the fight; MANUAL=1 stops at my first turn, else auto-plays
-S=/tmp/claude-0/-home-claude--/1ac51525-de24-5872-9bf6-4fc024f0c0db/scratchpad; G=$S/pp/g
-xy=$($G ev "() => { const ow = __game.Game.scene, e = (ow.elites || []).find(q => q.id === '$1' || (!q.id && q.sp === '$1')); if (!e) return ''; for (const [dx, dy, d] of [[0, 1, 'up'], [0, -1, 'down'], [1, 0, 'left'], [-1, 0, 'right']]) { const x = e.x + dx, y = e.y + dy; if (!ow.solidAt(x, y) && ow.tileAt(x, y) !== 'L') return x + ' ' + y + ' ' + d; } return ''; }" | tr -d '"')
-[ -z "$xy" ] && { echo "no elite $1"; exit; }; set -- $xy; $S/pp/go $1 $2; $G key $3 2 6 >/dev/null; $G key a 2 10 >/dev/null
-for i in $(seq 1 30); do s=$($G st); echo "$s" | grep -qF 'Menu[迎戰' && break; echo "$s" | grep -q '"sc":"Battle"' && break; t=$(echo "$s" | grep -o 'TextBox\\"[^\\]*'); [ -n "$t" ] && echo "${t#TextBox\\\"}"; [ -n "$t" ] && $G tap 88 60 15 >/dev/null || $G step 15 >/dev/null; done
-$G ev "() => { const m = __game.UI.stack.find(w => w.items && w.items.some(i => i.t === '迎戰')); if (m) m.i = 0; return 1; }" >/dev/null; $G key a 2 20 >/dev/null
-[ -n "$MANUAL" ] && { $G step 60 >/dev/null; $S/pp/bw; exit; }
-$G ev "() => { __game.Game.autoPlay = () => null; return 1; }" >/dev/null; $G step 60 >/dev/null; $S/pp/ab; $S/pp/vend; $S/pp/pick 2>/dev/null; $S/pp/talk 60
