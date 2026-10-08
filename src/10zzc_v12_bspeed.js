@@ -12,9 +12,9 @@ const bTopOK12 = () => { const t = UI.stack[UI.stack.length - 1]; return !t || t
     if (Input.pressed('select') && bTopOK12()) { Input.consume('select'); bSpdToggle12(); }
     if (bFast12() && S.fast12 && S.script && !UI.stack.some(w => w instanceof Menu)) { for (const k of Input.keys) Input.p[k] = false; S.update(); } }; }
 Battle.prototype.drawSpd12 = function (x) {
-  if (this.boxF < -20 || !bTopOK12()) return; const on = bFast12(), X = W - 19, Y = 28, w = 16, h = 10; // under the name plates (three plates fill the top row); v12.0.9h: smaller (player: 「戰鬥速度x2 按鈕縮小」)
+  if (this.boxF < -20 || !bTopOK12()) return; const on = bFast12(), X = W - 16, Y = 23, w = 14, h = 9; /* v14.21: 14×9, 6 size */ // under the name plates (three plates fill the top row); v12.0.9h: smaller (player: 「戰鬥速度x2 按鈕縮小」)
   x.globalAlpha = 0.92; x.fillStyle = on ? '#c8a050' : '#5a5040'; x.fillRect(X, Y, w, h); x.fillStyle = on ? '#3a2a10' : '#14121c'; x.fillRect(X + 1, Y + 1, w - 2, h - 2); x.globalAlpha = 1;
-  Font.drawC(x, '×2', X + w / 2, midY(Y, h, 8), on ? '#ffe8b0' : UIC.muted, UIC.textSh, 8);
+  KD.tc(x, '×2', X + w / 2, Y + h / 2, on ? '#ffe8b0' : UIC.muted, UIC.textSh, 6);
   touchRegion(X - 5, Y - 4, w + 8, h + 8, bSpdToggle12); // the tap area stays a little bigger than the button
 };
 { const _bf = Battle.prototype.drawBoxF; Battle.prototype.drawBoxF = function (x) { _bf.call(this, x); this.drawSpd12(x); }; }

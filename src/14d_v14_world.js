@@ -33,14 +33,14 @@ KD.offer = (cls, kind, n = 3, rng = Math.random) => { const W = KD.RW[kind] || K
     const L = (rng() < 0.25 && nt.length) || !mine.length ? nt : mine; if (L.length) out.push(L[Math.floor(rng() * L.length)]); }
   return out; };
 // three cards on the screen: tap one to read it, tap again (or 「選這張」) to take it; 「跳過」 takes none
-KD.pick3 = function* (ids, title, o = {}) { const S = { sel: -1, done: false, res: null }, cw = 54, ch = 120, gap = 5, X0 = Math.round((W - (ids.length * cw + (ids.length - 1) * gap)) / 2), Y = 36; // v14.20: bigger cards (was 50×78 at y 52) so the effect fits on the face
+KD.pick3 = function* (ids, title, o = {}) { const S = { sel: -1, done: false, res: null }, cw = 54, ch = 108, gap = 5, X0 = Math.round((W - (ids.length * cw + (ids.length - 1) * gap)) / 2), Y = 36; // v14.20: bigger cards (was 50×78 at y 52) so the effect fits on the face; v14.21: 108 high (the text is smaller)
   const ui = { draw: x => { x.fillStyle = '#06040e'; x.fillRect(0, 0, W, H); Font.drawC(x, title, W / 2, 6, '#ffe0a0', '#000', 11); if (o.sub) Font.drawC(x, o.sub, W / 2, 19, '#c8c0e0', '#000', 8);
       ids.forEach((id, i) => { const X = X0 + i * (cw + gap), up = S.sel === i ? 6 : 0; KD.drawCard(x, { id, up: o.up ? 1 : 0 }, X, Y - up, cw, ch, { on: S.sel === i }); touchRegion(X, Y - up, cw, ch, () => { if (S.sel === i) S.res = id, S.done = true; else S.sel = i; }); });
-      const id = ids[S.sel]; if (id) { const C = KD.CARDS[id], c = { id, up: o.up ? 1 : 0 }; { const tx = KD.atTag(x, c, 8, 162); fontFit(x, KD.name(c) + '　' + KD.typeN(c) + '・' + KD.cost(c) + ' 能量・' + KD.RAR[C.rar].n, tx, 162, W - 8 - tx, KD.RAR[C.rar].c, '#000', 9); }
-        wrap15(KD.desc(c), W - 16, 9).slice(0, 3).forEach((L, k) => Font.draw(x, L, 8, 176 + k * 12, '#e8e4f4', '#000', 9));
-        x.fillStyle = '#c86030'; x.fillRect(W / 2 - 60, 220, 56, 18); Font.drawC(x, o.okText || '選這張', W / 2 - 32, 222, '#fff4e0', '#000', 10); touchRegion(W / 2 - 60, 220, 56, 18, () => { S.res = id; S.done = true; }); }
-      else Font.drawC(x, '點卡片看說明', W / 2, 170, '#8a93b3', '#000', 9);
-      if (!o.noSkip) { x.fillStyle = '#4a3a50'; x.fillRect(W / 2 + 4, 220, 56, 18); Font.drawC(x, '跳過', W / 2 + 32, 222, '#e8e4f4', '#000', 10); touchRegion(W / 2 + 4, 220, 56, 18, () => { S.res = null; S.done = true; }); } } };
+      const id = ids[S.sel]; if (id) { const C = KD.CARDS[id], c = { id, up: o.up ? 1 : 0 }; { const tx = KD.atTag(x, c, 8, 157, 8); fontFit(x, KD.name(c) + '　' + KD.typeN(c) + '・' + KD.cost(c) + ' 能量・' + KD.RAR[C.rar].n, tx, 157 - 8, W - 8 - tx, KD.RAR[C.rar].c, '#000', 8); }
+        wrap15(KD.desc(c), W - 16, 8).slice(0, 4).forEach((L, k) => Font.draw(x, L, 8, 170 + k * 11 - 8, '#e8e4f4', '#000', 8));
+        x.fillStyle = '#c86030'; x.fillRect(W / 2 - 60, 220, 56, 18); KD.tc(x, o.okText || '選這張', W / 2 - 32, 229, '#fff4e0', '#000', 9); touchRegion(W / 2 - 60, 220, 56, 18, () => { S.res = id; S.done = true; }); }
+      else KD.tc(x, '點卡片看說明', W / 2, 160, '#8a93b3', '#000', 8);
+      if (!o.noSkip) { x.fillStyle = '#4a3a50'; x.fillRect(W / 2 + 4, 220, 56, 18); KD.tc(x, '跳過', W / 2 + 32, 229, '#e8e4f4', '#000', 9); touchRegion(W / 2 + 4, 220, 56, 18, () => { S.res = null; S.done = true; }); } } };
   UI.push(ui); Input.consume('a', 'b');
   while (!S.done) { yield; if (Input.pressed('left')) { S.sel = S.sel <= 0 ? ids.length - 1 : S.sel - 1; Sound.sfx('cursor'); } if (Input.pressed('right')) { S.sel = (S.sel + 1) % ids.length; Sound.sfx('cursor'); }
     if (Input.pressed('a') && S.sel >= 0) { S.res = ids[S.sel]; S.done = true; } if (Input.pressed('b') && !o.noSkip) { S.res = null; S.done = true; } }
@@ -122,7 +122,7 @@ KD.grid = function* (title, cards, o = {}) { const S = { sel: -1, scroll: 0, don
         touchRegion(X, Y, cw, ch, () => { if (S.sel === i && o.act) { S.res = i; S.done = true; } else S.sel = i; }); }
       if (S.scroll > 0) { Font.drawC(x, '▲', W / 2, top - 8, '#c8a050', null, 8); touchRegion(40, top - 10, W - 80, 10, () => { S.scroll--; }); }
       const by = top + vis * (ch + gap); if (S.scroll + vis < rows) { Font.drawC(x, '▼', W / 2, by - 4, '#c8a050', null, 8); touchRegion(40, by - 6, W - 80, 10, () => { S.scroll++; }); }
-      const c = cards[S.sel] && !(o.hide && o.hide(cards[S.sel])) ? cards[S.sel] : null; const dy = by + 6; if (c) { const C = KD.CARDS[c.id]; Font.draw(x, KD.name(c) + '　' + KD.typeN(c) + '・' + KD.cost(c) + ' 能量', KD.atTag(x, c, 6, dy), dy, KD.RAR[C.rar].c, '#000', 9);
+      const c = cards[S.sel] && !(o.hide && o.hide(cards[S.sel])) ? cards[S.sel] : null; const dy = by + 6; if (c) { const C = KD.CARDS[c.id]; { const tx = KD.atTag(x, c, 6, dy + 6, 8); Font.draw(x, KD.name(c) + '　' + KD.typeN(c) + '・' + KD.cost(c) + ' 能量', tx, dy - 2, KD.RAR[C.rar].c, '#000', 9); }
         wrap15((o.detail ? o.detail(c) : KD.desc(c)), W - 12, 8).slice(0, 3).forEach((L, k) => Font.draw(x, L, 6, dy + 12 + k * 10, '#e8e4f4', '#000', 8)); if (o.act) Font.drawR(x, o.act(c), W - 6, H - 12, '#a8e0ff', '#000', 8); }
       else Font.draw(x, o.hint || '點卡片看說明。', 6, dy + 4, UIC.muted, UIC.textSh, 8);
       x.fillStyle = '#4a3a50'; x.fillRect(4, H - 16, 36, 14); Font.drawC(x, '返回', 22, H - 15, '#e8e4f4', '#000', 9); touchRegion(4, H - 16, 36, 14, () => { S.done = true; }); } };
