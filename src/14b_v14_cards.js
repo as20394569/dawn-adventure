@@ -3,10 +3,10 @@
    卡：[id, 職業, 名字, 種類 atk/skl/pow, 稀有度 B/C/U/R/L/T, 費用, 特效, 目標 enemy/all/self/rand, 數值, 升級後數值, 說明, 手牌短字, 效果, 選項]
    稀有度：B 基本（起始牌組）、C 普通、U 稀有、R 史詩、L 傳說（頭目）、T 衍生（飛刀） */
 KD.CLASSES = {
-  sw: { n: '劍士', hp: 80, wkind: '劍', c: '#e8b048', ab: '劍意', abd: '每打出 3 張攻擊卡，下一張攻擊卡傷害 ×2。', d: '格擋、反擊、易傷，最好上手。', start: [['sw_strike', 5], ['sw_defend', 4], ['sw_break', 1]] },
-  rg: { n: '盜賊', hp: 70, wkind: '短刀', c: '#70d070', ab: '連擊', abd: '每回合每打出 3 張卡，得到 1 張「飛刀」。', d: '毒、飛刀、0 費牌，一回合出很多張。', start: [['rg_stab', 5], ['rg_defend', 4], ['rg_venom', 1]] },
+  sw: { n: '劍士', hp: 80, wkind: '劍', c: '#e8b048', ab: '看破', abd: '格擋完全擋下攻擊時看破 +1（最多 3）；下一張攻擊卡每層傷害 +4、破防值 −1。', d: '格擋、反擊、易傷，最好上手。', start: [['sw_strike', 5], ['sw_defend', 4], ['sw_break', 1]] },
+  rg: { n: '盜賊', hp: 70, wkind: '短刀', c: '#70d070', ab: '連擊・暗影', abd: '每回合每打出 3 張卡得到「飛刀」；攻擊每一下讓魔物疊 1 層影，疊到 5 層「影縛」：不能行動、破防值 −2。', d: '毒、飛刀、0 費牌，一回合出很多張。', start: [['rg_stab', 5], ['rg_defend', 4], ['rg_venom', 1]] },
   mg: { n: '法師', hp: 65, wkind: '法杖', c: '#78a8ff', ab: '元素反應', abd: '火・水・雷的卡會在魔物身上留下印記；換另一種元素的攻擊打中，引發反應。', d: '火・水・雷交替打出，引發元素反應。', start: [['mg_bolt', 1], ['mg_fire', 2], ['mg_frost', 2], ['mg_spark', 1], ['mg_shield', 4]] },
-  bk: { n: '狂戰士', hp: 85, wkind: '斧', c: '#e06048', ab: '血怒', abd: 'HP 一半以下時，攻擊卡傷害 +3。', d: '扣自己的 HP 換傷害，力量越疊越痛。', start: [['bk_chop', 5], ['bk_defend', 4], ['bk_split', 1]] },
+  bk: { n: '狂戰士', hp: 85, wkind: '斧', c: '#e06048', ab: '怒氣', abd: '受到傷害或自己扣血時怒氣 +1；滿 5 的下一回合「狂化」：能量 +1、攻擊傷害 ×1.5。', d: '扣自己的 HP 換傷害，力量越疊越痛。', start: [['bk_chop', 5], ['bk_defend', 4], ['bk_split', 1]] },
 };
 KD.CLS_ORDER = ['sw', 'rg', 'mg', 'bk'];
 KD.RAR = { B: { n: '基本', c: '#9a9aaa' }, C: { n: '普通', c: '#d0d8e8' }, U: { n: '稀有', c: '#58b8ff' }, R: { n: '史詩', c: '#c878ff' }, L: { n: '傳說', c: '#ffb040' }, Q: { n: '任務', c: '#5ce0b8' }, T: { n: '衍生', c: '#9a9aaa' } };
@@ -22,8 +22,8 @@ const kRand = core => { const L = kFoes(core); return L.length ? (L.length > 1 ?
 function kAtk(cb, core, tg, d, n = 1, o = {}) { const H = cb.Hu(); let tot = 0; const single = tg.length === 1 && !o.all;
   for (let i = 0; i < n; i++) { let L = (o.all ? kFoes(core) : tg).filter(t => core.isUp(t)); if (!L.length && single) { const f = kFoes(core); L = f.length ? [f[0]] : []; } if (!L.length) break;
     for (const t of L) { const fb1 = cb.fb && cb.fbDone ? (cb.fbDone.has(t.id) ? 0 : (cb.fbDone.add(t.id), cb.fb)) : (i === 0 ? cb.fb || 0 : 0); // v14.10: 血怒・下一擊加成 once per target per card (random-hit cards used to add it on every hit)
-      const flat = fb1 + (o.flatF ? o.flatF(t) : 0), mul = (o.mul || 1) * (o.mulF ? o.mulF(t) : 1) * (core.data.si2 ? 2 : 1);
-      const got = KD.hit(core, H, t, d, { ...o, i, n, flat, mul, crit: core.data.si2 }); tot += got; cb.dealt = (cb.dealt || 0) + got;
+      const flat = fb1 + (o.flatF ? o.flatF(t) : 0), mul = (o.mul || 1) * (o.mulF ? o.mulF(t) : 1) * (core.data.si2 ? 2 : 1) * (core.data.kz16 ? KD.KZ_MUL : 1);
+      const got = KD.hit(core, H, t, d, { ...o, i, n, flat, mul, crit: core.data.si2 || core.data.kp16 > 0 }); tot += got; cb.dealt = (cb.dealt || 0) + got;
       if (got > 0 && stkK(H, 'pwEnv14') && core.isUp(t)) KD.add(core, H, t, 'pois14', stkK(H, 'pwEnv14')); } }
   return tot; }
 const kAll = (cb, core, d, n = 1, o = {}) => kAtk(cb, core, kFoes(core), d, n, { ...o, all: true });
@@ -42,10 +42,10 @@ KC('sw_gap', 'sw', '破綻突', 'atk', 'C', 1, 't11_sdGap', 'enemy', { d: 7 }, {
 KC('sw_whirl', 'sw', '旋刃', 'atk', 'C', 1, 't11_sdWhirl', 'all', { d: 5 }, { d: 7 }, v => '對全體造成 ' + v.d + ' 傷害。', v => ['全體 ' + v.d], (cb, core, tg, v) => kAll(cb, core, v.d));
 KC('sw_bash', 'sw', '盾撞', 'atk', 'C', 1, 't11_osBash', 'enemy', { d: 5, b: 5 }, { d: 7, b: 7 }, v => '造成 ' + v.d + ' 傷害，獲得 ' + v.b + ' 格擋。', v => ['傷害 ' + v.d, '格擋 ' + v.b], (cb, core, tg, v) => { kAtk(cb, core, tg, v.d); kBlk(cb, core, v.b); });
 KC('sw_hold', 'sw', '堅守', 'skl', 'C', 1, 't11_osHold', 'self', { b: 8 }, { b: 11 }, v => '獲得 ' + v.b + ' 格擋；下回合多抽 1 張。', v => ['格擋 ' + v.b, '下回合抽1'], (cb, core, tg, v) => { kBlk(cb, core, v.b); cb.nextDraw++; });
-KC('sw_stance', 'sw', '架勢', 'skl', 'C', 1, 't11_dsParry', 'self', { b: 7 }, { b: 10 }, v => '獲得 ' + v.b + ' 格擋，劍意 +1。', v => ['格擋 ' + v.b, '劍意 +1'], (cb, core, tg, v) => { kBlk(cb, core, v.b); cb.addSi(1); });
+KC('sw_stance', 'sw', '架勢', 'skl', 'C', 1, 't11_dsParry', 'self', { b: 7 }, { b: 10 }, v => '獲得 ' + v.b + ' 格擋，看破 +1。', v => ['格擋 ' + v.b, '看破 +1'], (cb, core, tg, v) => { kBlk(cb, core, v.b); cb.addSi(1); });
 KC('sw_qi', 'sw', '劍氣', 'atk', 'C', 0, 'quickDraw', 'enemy', { d: 3 }, { d: 5 }, v => '造成 ' + v.d + ' 傷害。', v => ['傷害 ' + v.d], (cb, core, tg, v) => kAtk(cb, core, tg, v.d));
-KC('sw_breath', 'sw', '調息', 'skl', 'C', 0, 'focus', 'self', { c: 1 }, { c: 2 }, v => '抽 ' + v.c + ' 張，劍意 +1。', v => ['抽 ' + v.c, '劍意 +1'], (cb, core, tg, v) => { cb.drawN(v.c); cb.addSi(1); });
-KC('sw_eye', 'sw', '心眼', 'skl', 'C', 0, 't11_sdEye', 'self', { x: 2 }, { x: 3 }, v => '劍意 +' + v.x + '。消耗。', v => ['劍意 +' + v.x, '消耗'], (cb, core, tg, v) => cb.addSi(v.x), { exhaust: 1 });
+KC('sw_breath', 'sw', '調息', 'skl', 'C', 0, 'focus', 'self', { c: 1 }, { c: 2 }, v => '抽 ' + v.c + ' 張，看破 +1。', v => ['抽 ' + v.c, '看破 +1'], (cb, core, tg, v) => { cb.drawN(v.c); cb.addSi(1); });
+KC('sw_eye', 'sw', '心眼', 'skl', 'C', 0, 't11_sdEye', 'self', { x: 2 }, { x: 3 }, v => '看破 +' + v.x + '。消耗。', v => ['看破 +' + v.x, '消耗'], (cb, core, tg, v) => cb.addSi(v.x), { exhaust: 1 });
 KC('sw_cleave', 'sw', '斬鐵', 'atk', 'C', 2, 'powerSlash', 'enemy', { d: 14 }, { d: 18 }, v => '造成 ' + v.d + ' 傷害。', v => ['傷害 ' + v.d], (cb, core, tg, v) => kAtk(cb, core, tg, v.d));
 KC('sw_shield', 'sw', '舉盾', 'skl', 'C', 2, 'ironWall', 'self', { b: 15 }, { b: 20 }, v => '獲得 ' + v.b + ' 格擋。', v => ['格擋 ' + v.b], (cb, core, tg, v) => kBlk(cb, core, v.b));
 KC('sw_tread', 'sw', '踏步斬', 'atk', 'C', 1, 'c9_sw9Tread', 'enemy', { d: 6 }, { d: 8 }, v => '造成 ' + v.d + ' 傷害，抽 1 張。', v => ['傷害 ' + v.d, '抽 1'], (cb, core, tg, v) => { kAtk(cb, core, tg, v.d); cb.drawN(1); });
@@ -56,12 +56,12 @@ KC('sw_wind', 'sw', '劍風', 'atk', 'U', 1, 'gale', 'all', { d: 6, x: 1 }, { d:
 KC('sw_wall', 'sw', '鐵壁衝陣', 'atk', 'U', 2, 't11_ogShield', 'all', { d: 8, b: 8 }, { d: 11, b: 11 }, v => '對全體造成 ' + v.d + ' 傷害，獲得 ' + v.b + ' 格擋。', v => ['全體 ' + v.d, '格擋 ' + v.b], (cb, core, tg, v) => { kAll(cb, core, v.d); kBlk(cb, core, v.b); });
 KC('sw_guard', 'sw', '迎擊架勢', 'pow', 'U', 1, 't11_shStance', 'self', { x: 4 }, { x: 6 }, v => '能力：每回合開始獲得 ' + v.x + ' 格擋。', v => ['每回合', '格擋 ' + v.x], (cb, core, tg, v) => KD.add(core, cb.Hu(), cb.Hu(), 'pwGuard15', v.x));
 KC('sw_star', 'sw', '雙星十字', 'atk', 'U', 1, 't11_dsStar', 'enemy', { d: 5 }, { d: 6 }, v => '造成 ' + v.d + ' 傷害 2 次；敵人易傷時多打 1 次。', v => [v.d + ' ×2', '易傷 +1 次'], (cb, core, tg, v) => { const t = tg[0], vu = !!(t && stkK(t, 'vuln15')); kAtk(cb, core, tg, v.d, vu ? 3 : 2); });
-KC('sw_tsubame', 'sw', '燕返', 'atk', 'U', 1, 'c9_sw9Tsubame', 'enemy', { d: 4 }, { d: 5 }, v => '造成 ' + v.d + ' 傷害 2 次，劍意 +1。', v => [v.d + ' ×2', '劍意 +1'], (cb, core, tg, v) => { kAtk(cb, core, tg, v.d, 2); cb.addSi(1); });
+KC('sw_tsubame', 'sw', '燕返', 'atk', 'U', 1, 'c9_sw9Tsubame', 'enemy', { d: 4 }, { d: 5 }, v => '造成 ' + v.d + ' 傷害 2 次，看破 +1。', v => [v.d + ' ×2', '看破 +1'], (cb, core, tg, v) => { kAtk(cb, core, tg, v.d, 2); cb.addSi(1); });
 KC('sw_riposte', 'sw', '反擊斬', 'atk', 'U', 1, 'c9_sw9Riposte', 'enemy', { d: 6, x: 6 }, { d: 8, x: 8 }, v => '造成 ' + v.d + ' 傷害；你有格擋時再 +' + v.x + '。', v => ['傷害 ' + v.d, '有格擋 +' + v.x], (cb, core, tg, v) => kAtk(cb, core, tg, v.d + (stkK(cb.Hu(), 'blk15') ? v.x : 0)));
-KC('sw_sheathe', 'sw', '納刀', 'skl', 'U', 1, 'c9_sw9Sheathe', 'self', {}, {}, v => '劍意直接全滿。', v => ['劍意全滿'], (cb, core, tg, v) => cb.addSi(3), { upCost: 0 });
+KC('sw_sheathe', 'sw', '納刀', 'skl', 'U', 1, 'c9_sw9Sheathe', 'self', {}, {}, v => '看破直接全滿（3 層）。', v => ['看破全滿'], (cb, core, tg, v) => cb.addSi(3), { upCost: 0 });
 KC('sw_sky', 'sw', '一刀天斷', 'atk', 'R', 3, 't11_zjSky', 'enemy', { d: 32 }, { d: 42 }, v => '造成 ' + v.d + ' 傷害。', v => ['傷害 ' + v.d], (cb, core, tg, v) => kAtk(cb, core, tg, v.d));
 KC('sw_meteor', 'sw', '崩星劍', 'atk', 'R', 2, 't11_sdMeteor', 'enemy', { d: 24 }, { d: 30 }, v => '造成 ' + v.d + ' 傷害；對易傷的敵人 ×1.5。消耗。', v => ['傷害 ' + v.d, '消耗'], (cb, core, tg, v) => kAtk(cb, core, tg, v.d, 1, { mulF: t => stkK(t, 'vuln15') ? 1.5 : 1 }), { exhaust: 1 });
-KC('sw_thousand', 'sw', '破曉千斬', 'atk', 'R', 3, 't11_ogSword', 'enemy', { d: 4 }, { d: 5 }, v => '造成 ' + v.d + ' 傷害 6 次，之後劍意直接全滿。', v => [v.d + ' ×6', '劍意全滿'], (cb, core, tg, v) => { kAtk(cb, core, tg, v.d, 6); cb.fillSi = 1; });
+KC('sw_thousand', 'sw', '破曉千斬', 'atk', 'R', 3, 't11_ogSword', 'enemy', { d: 4 }, { d: 5 }, v => '造成 ' + v.d + ' 傷害 6 次，之後看破直接全滿。', v => [v.d + ' ×6', '看破全滿'], (cb, core, tg, v) => { kAtk(cb, core, tg, v.d, 6); cb.fillSi = 1; });
 KC('sw_master', 'sw', '劍聖之心', 'pow', 'R', 2, 't11_dsDance', 'self', {}, {}, v => '能力：每打出 3 張攻擊卡，抽 1 張、能量 +1。', v => ['攻擊3張', '抽1・能量1'], (cb, core, tg, v) => KD.add(core, cb.Hu(), cb.Hu(), 'pwMaster15', 1), { upCost: 1 });
 KC('sw_mujin', 'sw', '無塵', 'skl', 'R', 1, 'mikiri', 'self', {}, {}, v => '這回合下一張攻擊卡打兩次。', v => ['下一張攻擊', '打兩次'], (cb, core, tg, v) => { cb.twice = 1; }, { upCost: 0 });
 KC('sw_tenpu', 'sw', '天風', 'atk', 'R', 2, 'c9_sw9Tenpu', 'all', { d: 7 }, { d: 9 }, v => '對全體造成 ' + v.d + ' 傷害 2 次。', v => ['全體 ' + v.d + '×2'], (cb, core, tg, v) => kAll(cb, core, v.d, 2));
@@ -157,7 +157,7 @@ KC('bk_castle', 'bk', '崩城擊', 'atk', 'R', 3, 't11_axCastle', 'enemy', { d: 
 KC('bk_ogaxe', 'bk', '天崩地裂', 'atk', 'R', 3, 't11_ogAxe', 'all', { d: 20, x: 2 }, { d: 26, x: 2 }, v => '對全體造成 ' + v.d + ' 傷害，虛弱 ' + v.x + '。', v => ['全體 ' + v.d, '虛弱 ' + v.x], (cb, core, tg, v) => { kAll(cb, core, v.d); for (const t of kFoes(core)) KD.add(core, cb.Hu(), t, 'weak15', v.x); });
 KC('bk_upper', 'bk', '沖天拳', 'atk', 'R', 2, 't11_zjQuake', 'enemy', { d: 14 }, { d: 18 }, v => '造成 ' + v.d + ' 傷害；力量的加成算 3 次。', v => ['傷害 ' + v.d, '力量 ×3'], (cb, core, tg, v) => { const H = cb.Hu(); kAtk(cb, core, tg, v.d + 2 * (stkK(H, 'str15') + stkK(H, 'tstr14'))); });
 KC('bk_hundred', 'bk', '百烈崩拳', 'atk', 'R', 3, 't11_ogFist', 'enemy', { d: 2 }, { d: 3 }, v => '造成 ' + v.d + ' 傷害 10 次。', v => [v.d + ' ×10'], (cb, core, tg, v) => kAtk(cb, core, tg, v.d, 10));
-KC('bk_asura', 'bk', '阿修羅', 'pow', 'R', 2, 'bloodRage', 'self', {}, {}, v => '能力：「血怒」一直生效（不管 HP 多少）。', v => ['血怒', '一直生效'], (cb, core, tg, v) => KD.add(core, cb.Hu(), cb.Hu(), 'pwAsura14', 1), { upCost: 1 });
+KC('bk_asura', 'bk', '阿修羅', 'pow', 'R', 2, 'bloodRage', 'self', {}, {}, v => '能力：怒氣 4 就狂化。', v => ['怒氣 4', '就狂化'], (cb, core, tg, v) => KD.add(core, cb.Hu(), cb.Hu(), 'pwAsura14', 1), { upCost: 1 });
 KC('bk_limit', 'bk', '極限突破', 'skl', 'R', 1, 'statUpFx', 'self', {}, {}, v => '力量變成 2 倍。消耗。', v => ['力量 ×2', '消耗'], (cb, core, tg, v) => { const H = cb.Hu(), s = stkK(H, 'str15'); if (s > 0) KD.add(core, H, H, 'str15', s); }, { exhaust: 1, upCost: 0 });
 /* ====================== 共通（每個職業都能用） ====================== */
 KC('nt_dash', 'nt', '疾突', 'atk', 'C', 0, 't11_spDash', 'enemy', { d: 3 }, { d: 4 }, v => '造成 ' + v.d + ' 傷害，抽 1 張。', v => ['傷害 ' + v.d, '抽 1'], (cb, core, tg, v) => { kAtk(cb, core, tg, v.d); cb.drawN(1); });

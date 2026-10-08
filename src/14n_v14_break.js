@@ -50,7 +50,7 @@ KD.BRK_CARD = { bk_split: 2, bk_crush: 3 };
     let n = 0; const W = (t.data && t.data.wk16) || [];
     if (at && W.includes(at)) { n++; if (KD.wkFind(t, at)) core.emit(EVT.MESSAGE, { src: a, tgts: [t], payload: { key: 'wk16', text: '', at } }); }
     const once = core.data.brkOnce16 || (core.data.brkOnce16 = new Set()), key = id + '@' + t.id;
-    if (core.data.si2 && !once.has('si' + key)) { once.add('si' + key); n += 2; }
+    if (core.data.kp16 && !once.has('si' + key)) { once.add('si' + key); n += core.data.kp16; } // v14.16: 看破 (每層 −1)
     if (KD.BRK_CARD[id] && !once.has('bk' + key)) { once.add('bk' + key); n += KD.BRK_CARD[id]; }
     if (o.brk16) n += o.brk16;
     if (n) KD.chip(core, a, t, n);
@@ -96,7 +96,7 @@ KD.brkMini = (x, X, Y, n, broken) => { x.fillStyle = '#000'; x.fillRect(X - 1, Y
 /* ---------- 戰鬥說明・提示 ---------- */
 if (typeof BATTLE_HELP !== 'undefined') BATTLE_HELP.unshift(['弱點破防', ['每張攻擊卡有屬性（卡的右上角）：斬・突・打・火・水・雷。魔物名牌下面是牠的弱點，打中過才會亮出來（「？」＝還不知道）。',
   '打中弱點，名牌上的盾牌數字 −1；扣到 0 就「破防」：這回合不能行動，到你下回合結束前受到的傷害 ×1.5。破防後盾牌會回滿，菁英和頭目會越來越難破。',
-  '劍士劍意 ×2 的一擊、狂戰士的劈山和碎盾擊、法師的元素反應，不用打弱點也能扣盾牌。']]);
+  '劍士的看破（每層 −1）、盜賊的影縛（−2）、狂戰士的劈山和碎盾擊、法師的元素反應，不用打弱點也能扣盾牌。']]);
 { const H = Battle.prototype.handlers, _m = H.MESSAGE; H.MESSAGE = function* (e, s, t, P) { if (P && P.key === 'wk16') { if (t) { const C = this.center(t); this.pops.push({ x: C.x, y: C.y - 52, s: '弱點：' + P.at, c: KD.ATC[P.at][0], t: 0 }); Sound.sfx('select'); }
       const f = Game.st && Game.st.flags; if (f && !f.tutWk16) { f.tutWk16 = 1; yield* this.msg('（打中弱點了！名牌上的盾牌數字 −1，扣到 0 魔物就會破防。）', { hold: 90 }); } return; } return yield* _m.call(this, e, s, t, P); }; }
 // the card face: its attack type in the top-right corner (left of the rarity dot); on an overlapped hand card, at the right end of the strip that shows

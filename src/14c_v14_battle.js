@@ -65,7 +65,7 @@ BPK.okK = function (c) { return !this.whyK(c); };
     } }; }
 BPK.cycK = function (d) { const L = this.core.alive('B'), i = L.findIndex(f => f.id === this.tgtId); this.tgtId = L[(i + d + L.length) % L.length].id; this.focus = this.views[this.tgtId]; };
 BPK.playK = function (i, tgt) { const c = this.hand[i], C = KD.CARDS[c.id]; this.energy -= KD.cost(c); this.hand.splice(i, 1); this.sel = -1; this.idle = false;
-  if (C.type !== 'pow') (C.exhaust ? this.exh : this.disc).push(c); this.core.data.card14Now = c; this.core.data.skill14 = 'k14_' + c.id; Sound.sfx('select');
+  if (C.type !== 'pow') (C.exhaust && !(c.aw && KD.AW && KD.AW[c.id] && KD.AW[c.id].keep) ? this.exh : this.disc).push(c); /* 覺醒「不會消耗」 */ this.core.data.card14Now = c; this.core.data.skill14 = 'k14_' + c.id; Sound.sfx('select');
   return { type: 'skill', skill: 'k14_' + c.id, targets: tgt ? [tgt] : [] }; };
 // tests / bots (Game.autoPlay returning {type:…}): items and running pass through; otherwise the best card it can pay for
 BPK.autoK = function (a) { const core = this.core, H = this.Hu(), foes = core.alive('B'), hp = H.res.hp / H.max.hp;
@@ -82,14 +82,16 @@ EFFECT_TYPES.card14 = { exec(core, ef, ctx) { const cb = core.data.cb14, c = cor
 EFFECT_TYPES.card14end = { exec(core) { const cb = core.data.cb14; if (cb) cb.endTurnK(); } };
 BPK.runCard = function (c, ctx) { const core = this.core, C = KD.CARDS[c.id], v = KD.val(c), H = this.Hu();
   let tg = (ctx.targets || []).filter(t => t && t.side === 'B' && core.isUp(t)); if (C.tg === 'enemy' && !tg.length) { const f = core.alive('B'); if (f.length) tg = [f[0]]; } if (C.tg === 'all') tg = core.alive('B'); if (C.tg === 'self' || C.tg === 'rand') tg = [];
-  let times = 1; if (C.type === 'atk' && c.id !== 'mg_meteorHit') { if (this.twice) { times = 2; this.twice = 0; } if (stkK(H, 'pwPhantom14') && !this.phantomUsed) { times++; this.phantomUsed = 1; } }
+  let times = 1; if (C.type === 'atk' && c.id !== 'mg_meteorHit') { if (this.twice) { times = 2; this.twice = 0; } if (stkK(H, 'pwPhantom14') && (this.phantomUsed || 0) < (stkK(H, 'pwPhantomA16') ? 2 : 1)) { times++; this.phantomUsed = (this.phantomUsed || 0) + 1; } }
   if (this.dupNext && C.type !== 'pow' && c.id !== 'lg_crystal') { times++; this.dupNext = 0; }
-  this.fb = 0; if (C.type === 'atk') { if (this.cls === 'bk' && (H.res.hp <= H.max.hp / 2 || stkK(H, 'pwAsura14'))) this.fb += 3; const nx = stkK(H, 'nxa14'); if (nx) { this.fb += nx; core.removeStatus(H, 'nxa14', 'used'); } }
-  const si2 = this.cls === 'sw' && C.type === 'atk' && this.si >= 3; core.data.si2 = si2; this.dealt = 0; this.siGain = 0; this.fbDone = new Set();
+  /* v14.16: 劍士「看破」(each layer +4 on the next attack card, once per target; 破防值 −1 per layer, 14n) replaces 劍意 ×2; 狂戰士「血怒」 is gone (「怒氣」, 14t) */
+  const kp = this.cls === 'sw' && C.type === 'atk' ? (this.si || 0) : 0;
+  this.fb = 0; if (C.type === 'atk') { if (kp) this.fb += KD.KP_DMG * kp; const nx = stkK(H, 'nxa14'); if (nx) { this.fb += nx; core.removeStatus(H, 'nxa14', 'used'); } }
+  core.data.si2 = false; core.data.kp16 = kp; this.dealt = 0; this.siGain = 0; this.fbDone = new Set();
   for (let k = 0; k < times; k++) { if (!core.isUp(H) || !core.alive('B').length) break; C.run(this, core, tg, v); if (C.tg === 'all') tg = core.alive('B'); }
-  core.data.si2 = false; this.fb = 0; this.fbDone = null;
-  if (C.type === 'atk') { this.atkN++; if (this.cls === 'sw') { if (si2) this.si = Math.min(3, this.siGain); else this.addSi(1); } /* 燕返 used as the ×2 card keeps its own 劍意 +1 */ if (this.fillSi) { this.si = 3; this.fillSi = 0; }
-    const m = stkK(H, 'pwMaster15'); if (m) this.masterN = (this.masterN || 0) + 1; if (m && this.masterN % 3 === 0) { /* counts attacks since the power was played, across turns */ this.drawN(m); this.energy += m; this.noteK('劍聖之心：抽 ' + m + '、能量 +' + m); }
+  core.data.si2 = false; core.data.kp16 = 0; this.fb = 0; this.fbDone = null;
+  if (C.type === 'atk') { this.atkN++; if (kp) { this.si = Math.min(3, this.siGain); this.kpUsed16 = { n: kp, t: 0 }; } /* the 看破 is spent (a card that gives 看破 itself keeps that) */ if (this.fillSi) { this.si = 3; this.fillSi = 0; }
+    const m = stkK(H, 'pwMaster15'); if (m) this.masterN = (this.masterN || 0) + 1; if (m && this.masterN % (stkK(H, 'pwMasterA16') ? 2 : 3) === 0) { /* counts attacks since the power was played, across turns */ this.drawN(m); this.energy += m; this.noteK('劍聖之心：抽 ' + m + '、能量 +' + m); }
     const bl = stkK(H, 'pwBlood14'); if (bl && this.dealt > 0) KD.heal(core, H, Math.max(1, Math.round(this.dealt * bl / 100))); }
   if (C.type === 'skl') { this.sklN++; const s = stkK(H, 'pwStatic14'); if (s) { const t = kRand(core); if (t) KD.hit(core, H, t, s, { el: '雷', cat: '特' }); } }
   if (C.rar !== 'T') this.cardsN++;
@@ -140,7 +142,7 @@ KD.iconOf = id => { if (KD.ICON_OF[id]) return KD.ICON_OF[id]; const C = KD.CARD
   if (/虛弱|易傷|不能行動/.test(d)) return 'skull'; if (/能量 \+/.test(d)) return 'energy'; if (/抽/.test(d)) return 'cards'; return 'star'; };
 // the words a card uses, explained (shown above the card's text when it is picked)
 KD.KEYS = [[/格擋/, '格擋：擋下傷害，到你下一回合開始時消失。'], [/易傷/, '易傷：受到的傷害 +50%，每回合 −1。'], [/虛弱/, '虛弱：造成的傷害 −25%，每回合 −1。'], [/毒/, '毒：回合結束失去等同層數的 HP，然後 −1。'],
-  [/燃燒/, '燃燒：回合結束失去等同層數的 HP，不會減少。'], [/力量/, '力量：每段傷害 +1（每層）。'], [/消耗/, '消耗：打出後這場戰鬥不會再抽到。'], [/劍意/, '劍意：打出 3 張攻擊卡後，下一張攻擊 ×2。'],
+  [/燃燒/, '燃燒：回合結束失去等同層數的 HP，不會減少。'], [/力量/, '力量：每段傷害 +1（每層）。'], [/消耗/, '消耗：打出後這場戰鬥不會再抽到。'], [/看破/, '看破：格擋完全擋下攻擊時 +1（最多 3）；下一張攻擊卡每層傷害 +4、破防值 −1。'],
   [/飛刀/, '飛刀：0 費、4 傷害、消耗的小刀卡。'], [/蓄力/, '蓄力：下回合開始才發動。'], [/不能行動|定身/, '不能行動：這回合魔物什麼都不做。'], [/護盾/, '護盾：魔物身上的盾，會先擋下傷害。'], [/隨機/, '隨機：每一下各自挑一隻魔物打。'], [/^能力：/, '能力卡：打出後一直生效到戰鬥結束。']];
 KD.keyLines = c => { const d = KD.desc(c), out = []; for (const [re, t] of KD.KEYS) if (re.test(d)) out.push(t); return out.slice(0, 2); };
 { const _dbh = BPK.drawBoxH; BPK.drawBoxH = function (x) { if (!this.k14) return _dbh.call(this, x); const Hv = this.H, U = this.Hu(); if (!Hv || !U) return; const LB = KD.BL(), Y = LB.hudY, fK = this.fK || 0;
@@ -152,7 +154,7 @@ KD.keyLines = c => { const d = KD.desc(c), out = []; for (const [re, t] of KD.KE
     Font.drawC(x, hp + '/' + mh, bx + bw / 2, Y - 2, '#fff4f4', '#000', 9);
     const b = (Hv.st && Hv.st.blk15) || 0; if (b) { x.drawImage(KD.ICON.shield, bx + 57, Y + 12); Font.draw(x, String(b), bx + 71, Y + 12, '#bfe0ff', '#000', 9); } /* v14.15: under the HP bar, after the class (the bar is longer) */
     const CL = KD.CLASSES[this.cls] || {}; Font.draw(x, CL.n || '', bx, Y + 14, CL.c || '#ccc', '#000', 8);
-    if (this.cls === 'sw') { for (let i = 0; i < 3; i++) { x.fillStyle = i < this.si ? (this.si >= 3 ? '#ffe070' : '#ff9a40') : '#3a3048'; x.fillRect(bx + 28 + i * 6, Y + 16, 4, 5); } if (this.si >= 3) Font.draw(x, '×2', bx + 48, Y + 14, '#ffe070', '#000', 8); }
+    if (this.cls === 'sw') { for (let i = 0; i < 3; i++) { x.fillStyle = i < this.si ? '#8ad0ff' : '#3a3048'; x.fillRect(bx + 28 + i * 6, Y + 16, 4, 5); } if (this.si > 0) Font.draw(x, '+' + KD.KP_DMG * this.si, bx + 48, Y + 14, '#bfe6ff', '#000', 8); } /* v14.16: 看破 */
     if (this.cls === 'rg') { const q = (this.chainN || 0) % 3; for (let i = 0; i < 3; i++) { x.fillStyle = i < q ? '#70d070' : '#3a3048'; x.fillRect(bx + 28 + i * 6, Y + 16, 4, 5); } }
     const my = this.core.need && this.core.need.unit && this.core.need.unit.hero && this.idle, stuck = my && this.hand.every(c => !this.okK(c));
     const btn = (X, w, s, col, fn) => { x.fillStyle = my ? col : '#3a3040'; x.fillRect(X, Y + 1, w, 15); Font.drawC(x, s, X + w / 2, Y + 2, '#fff4e0', '#000', 9); if (my) touchRegion(X, Y + 1, w, 15, fn); };

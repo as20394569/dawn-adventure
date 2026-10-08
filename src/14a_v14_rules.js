@@ -31,7 +31,7 @@ KD.st('nxa14', '蓄勢', 'atk', '下一張攻擊牌傷害增加');
 KD.st('chgM14', '隕石', 'atk', '下回合開始落下');
 for (const [id, n, k, tip] of [['pwLurk14', '潛伏', 'atk', '每回合得到飛刀'], ['pwKnife14', '飛刀術', 'atk', '飛刀傷害增加'], ['pwEnv14', '淬毒之刃', 'deb', '攻擊時讓敵人中毒'], ['pwPhantom14', '幻影步', 'atk', '每回合第一張攻擊打兩次'],
   ['pwKindle14', '點燃', 'deb', '每回合開始讓全體燃燒'], ['pwStatic14', '靜電場', 'atk', '打技能牌時電擊敵人'], ['pwMax14', '魔導極限', 'atk', '每回合能量增加'], ['pwPhoenix14', '不死鳥', 'def', '倒下時復活一次'],
-  ['pwBlood14', '狂戰之血', 'atk', '攻擊時回復 HP'], ['pwRage14', '狂暴', 'atk', '失去 HP 時力量增加'], ['pwAsura14', '阿修羅', 'atk', '血怒一直生效'], ['pwVictor14', '魔人契約', 'atk', '每回合失去 HP、能量 +1'],
+  ['pwBlood14', '狂戰之血', 'atk', '攻擊時回復 HP'], ['pwRage14', '狂暴', 'atk', '失去 HP 時力量增加'], ['pwAsura14', '阿修羅', 'atk', '怒氣 4 就狂化'], ['pwVictor14', '魔人契約', 'atk', '每回合失去 HP、能量 +1'],
   ['pwMoon14', '月王冠', 'atk', '每回合多抽牌'], ['pwOtto14', '機關砲台', 'atk', '回合結束射擊敵人'], ['pwRock14', '岩之心', 'def', '每回合得到格擋']]) KD.st(id, n, k, tip);
 const stkK = (u, id) => (typeof stk15 === 'function' ? stk15(u, id) : 0);
 /* ---------- the hero: HP from the class, no stats, acts first ---------- */

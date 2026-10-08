@@ -148,7 +148,7 @@ KD.classScreen = function* () { const st = Game.st, K = KD.state(st), town = KD.
   const ui = { draw: x => { screenBG(x); headerBar(x, '職業'); Font.drawR(x, town ? '可以轉職' : '在城鎮才能轉職', W - 6, 4, town ? UIC.good : UIC.muted, UIC.textSh, 8);
       KD.CLS_ORDER.forEach((k, i) => { const C = KD.CLASSES[k], Y = 22 + i * 44, on = S.sel === i, cur = KD.clsKey(st) === k, d = K.decks[k];
         drawWin(x, 4, Y, W - 8, 41, on ? 'menu' : 'ow'); Font.draw(x, C.n, 10, Y + 2, C.c, UIC.textSh, 11); Font.draw(x, 'HP ' + C.hp, 60, Y + 4, UIC.good, UIC.textSh, 8); Font.drawR(x, cur ? '目前' : d ? '職業卡 ' + d.length + ' 張' : '還沒用過', W - 10, Y + 4, cur ? UIC.accent : UIC.muted, UIC.textSh, 8);
-        Font.draw(x, '「' + C.ab + '」' + C.abd, 10, Y + 17, UIC.text, UIC.textSh, 7); Font.draw(x, C.d, 10, Y + 28, UIC.muted, UIC.textSh, 7); touchRegion(4, Y, W - 8, 41, () => { if (S.sel === i) S.go = k; else S.sel = i; }); });
+        wrap15('「' + C.ab + '」' + C.abd, W - 22, 8).slice(0, 2).forEach((L, k) => fontFit(x, L, 10, Y + 14 + k * 11, W - 22, UIC.text, UIC.textSh, 8)); /* v14.16: the longer abilities wrap (font 8) */ touchRegion(4, Y, W - 8, 41, () => { if (S.sel === i) S.go = k; else S.sel = i; }); });
       Font.draw(x, town ? '點兩下轉職。每個職業有自己的牌組。' : '在沒有野生魔物的城鎮裡可以轉職。', 6, 202, UIC.muted, UIC.textSh, 8);
       x.fillStyle = '#4a3a50'; x.fillRect(4, H - 16, 36, 14); Font.drawC(x, '返回', 22, H - 15, '#e8e4f4', '#000', 9); touchRegion(4, H - 16, 36, 14, () => { S.done = true; }); } };
   UI.push(ui); Input.consume('a', 'b');
