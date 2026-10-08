@@ -9,13 +9,14 @@ KD.RX = { 水火: '蒸發', 火雷: '爆炸', 水雷: '感電' };
 KD.rxOf = (a, b) => KD.RX[[a, b].sort((p, q) => '水火雷'.indexOf(p) - '水火雷'.indexOf(q)).join('')] || null;
 KD.RXC = { 蒸發: '#e8f4ff', 爆炸: '#ff9a40', 感電: '#fff070' };
 KD.onRx = []; // (core, cb, t, rx, got) — the awakened cards hook in here (14p)
-KD.mark = (t, el, skill) => { if (!t || !t.data || !KD.ELEM.includes(el)) return; if (skill && t.data.mk16) return; t.data.mk16 = el; };
+KD.noRx16 = core => { const cb = (core && core.data && core.data.cb14) || Game.scene; return !!(cb && cb.k14 && cb.cls && cb.cls !== 'mg'); }; // v14.16: other classes can carry 火・水・雷 cards (a staff): only the mage leaves marks
+KD.mark = (t, el, skill) => { if (!t || !t.data || !KD.ELEM.includes(el) || KD.noRx16()) return; if (skill && t.data.mk16) return; t.data.mk16 = el; };
 // the first mark a mage leaves: one line of help (after the card, at the start of the next command)
 { const _cm = BPK.command; BPK.command = function* () { const f = Game.st && Game.st.flags, core = this.core; if (this.k14 && f && !f.tutMk16 && this.cls === 'mg' && core && core.alive('B').some(u => u.data && u.data.mk16) && !Game.autoPlay) { f.tutMk16 = 1; yield* this.msg('（魔物頭上出現了元素印記！換另一種元素的攻擊打中，就會引發反應：火＋水＝蒸發、火＋雷＝爆炸、水＋雷＝感電。）', { hold: 120 }); } return yield* _cm.apply(this, arguments); }; }
 { const _h = KD.hit; KD.hit = function (core, a, t, base, o = {}) {
     if (!KD.on(core) || !a || !a.hero || !t || t.hero || !core.isUp(t)) return _h.call(this, core, a, t, base, o);
     const id = String(core.data.skill14 || '').replace(/^k14_/, ''), at = o.at || core.data.at16 || (o.el && KD.ELEM.includes(o.el) ? o.el : null) || KD.atOf(id);
-    if (!KD.ELEM.includes(at)) return _h.call(this, core, a, t, base, o);
+    if (!KD.ELEM.includes(at) || KD.noRx16(core)) return _h.call(this, core, a, t, base, o);
     const mk = t.data.mk16, rx = mk && mk !== at ? KD.rxOf(mk, at) : null;
     if (!rx) { t.data.mk16 = at; return _h.call(this, core, a, t, base, { ...o, at }); }
     t.data.mk16 = null; core.data.rxN16 = (core.data.rxN16 || 0) + 1;

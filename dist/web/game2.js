@@ -966,7 +966,8 @@ const Events = {
       applyStartClass(k); Game.fadeColor = '#ffffff'; Game.fade = 1; Sound.jingle('levelup'); yield* fadeIn(30); Game.fadeColor = '#000';
       const C = CLASSES[k], S = CLASS_START[k], K14 = !Game.noV14 && typeof KD !== 'undefined' && st.k14 ? KD.clsKey(st) : null, CN = K14 ? KD.CLASSES[K14].n : C.n; // v14.13: the card classes (no gear: the weapon is only the hero's look)
       yield* itemGet(st.name + '覺醒成為了' + CN + '！');
-      if (K14) yield* say({ sw: '劍士的道路啊……這把劍就交給你了。', rg: '盜賊的道路啊……這把短刀是村裡獵人送的，拿去吧。', mg: '法師的道路啊……這根法杖是我年輕時用的，交給你了。', bk: '狂戰士的道路啊……這把斧頭給你，別逞強喔。' }[K14] + '打倒的頭目越多，它會變得越威風。');
+      if (K14) { yield* say({ sw: '劍士的道路啊……這把劍就交給你了。', rg: '盜賊的道路啊……這把短刀是村裡獵人送的，拿去吧。', mg: '法師的道路啊……這根法杖是我年輕時用的，交給你了。', bk: '狂戰士的道路啊……這把斧頭給你，別逞強喔。' }[K14] + '這套' + ({ sw: '重甲', rg: '輕裝', mg: '法衣', bk: '重甲' }[K14]) + '也穿上吧。');
+        if (st.k14 && st.k14.g16) yield* say('身上的裝備會變成戰鬥用的卡。\n到鐵匠那裡，可以打造新的裝備。'); }
       else yield* say({ swordsman: '劍士的道路啊……這把練習木劍就交給你了。', mage: '魔導士的道路啊……這把魔杖是我年輕時用的，交給你了。', guardian: '守護者的道路啊……這把木劍和布帽給你，別逞強喔。', ranger: '遊俠的道路啊……這把獵刀是村裡獵人送的，拿去吧。' }[k]);
       st.flags.license = 1; st.bag.license = 1; yield* itemGet(K14 ? '得到了冒險者證！' : '得到了' + S.gear.filter(b => b !== 'guardBadge').map(b => GEAR[b].n).join('和') + '、護身符和冒險者證！');
       yield* say('還有這些傷藥，帶在身上吧。'); st.bag.potion = (st.bag.potion || 0) + 5; yield* itemGet('得到了傷藥×5！');
@@ -1234,7 +1235,7 @@ class TitleScene {
     x.drawImage(this.logo, Math.round(W / 2 - this.logo.width / 2), 6 + bob);
     Font.drawC(x, '～異世界冒險RPG～', W / 2, 52 + bob, '#ffe0a0', '#3a1428');
     if (this.stage === 'press' && Math.floor(this.t / 30) % 2 === 0) Font.drawC(x, '按 A 鍵開始', W / 2, 232, '#ffffff', '#1a1024');
-    Font.drawR(x, 'v14.15', W - 3, H - 13, '#b890b0', null);
+    Font.drawR(x, 'v14.16', W - 3, H - 13, '#b890b0', null);
   }
 }
 class IntroScene {
@@ -12040,3 +12041,97 @@ function dnGhost12() { if (DN_CV12.ghost !== undefined) return DN_CV12.ghost; co
 { const _wo = wxOverlay; wxOverlay = function (x, k, t, w, h) { const st = Game.st, ph = st && dnOut12(st.map) ? dnPhase12(st) : 'day';
     if (ph === 'day' || !(Game.scene instanceof Overworld)) return _wo(x, k, t, w, h); x.save(); x.globalAlpha = ph === 'night' ? 0.4 : 0.7; try { _wo(x, k, t, w, h); } finally { x.restore(); } }; }
 const GLOW12 = { marshWisp: [124, 255, 160], battleWisp: [140, 190, 255], mistWisp: [200, 210, 255], lanternBog: [110, 255, 140], pumpkinLantern: [255, 170, 60], auroraSprite: [150, 255, 210], emberBat: [255, 110, 40], fireflySwarm: [220, 255, 120], moonFish: [210, 225, 255], thornMush: [210, 140, 255] };
+function owWorldPost(ow, x) {
+  const st = ow.st; if (!st || !ow.map || !dnOut12(st.map)) return;
+  const [col, Lt] = dnTint12(dnClock12(st)); if (col[0] >= 254 && col[1] >= 254 && col[2] >= 254) return;
+  const z = ow._zc ? ZOOM_F : 1, S = (wx, wy) => { let sx = wx - ow.camX, sy = wy - ow.camY; if (ow._zc) { sx = ow._zc[0] + (sx - ow._zc[0]) * z; sy = ow._zc[1] + (sy - ow._zc[1]) * z; } return [sx, sy]; };
+  const lights = [], warm = [], spots = [];
+  const add = (wx, wy, r, a, w) => { const [sx, sy] = S(wx, wy); if (sx < -r * z - 20 || sy < -r * z - 20 || sx > W + r * z + 20 || sy > H + r * z + 20) return; lights.push([sx, sy, r * z, a]); if (w) warm.push([sx, sy, r * z * 0.8, w]); };
+  const night = dnPhase12(st) === 'night', fl = 0.9 + 0.1 * Math.sin(ow.t * 0.31) * Math.sin(ow.t * 0.17);
+  if (!ow.hideHero) add(ow.p.px + 8, ow.p.py + 6, 32, 0.7 * Lt);
+  for (const { b } of ow.map.bimgs || []) { const winCols = []; for (let i = 0; i < b.w; i++) if (i !== b.door && (b.w <= 4 ? i === (b.door === 0 ? b.w - 1 : 0) || i === b.w - 1 && b.door !== b.w - 1 : (i === 1 || i === b.w - 2))) winCols.push(i);
+    const wy = b.y * 16 + b.h * 16 - 34; for (const i of winCols) { add(b.x * 16 + i * 16 + 8, wy + 12, 16, 0.6 * Lt, [255, 200, 110, 0.16 * Lt]); spots.push([b.x * 16 + i * 16 + 4, wy + 5, 8, 10]); } }
+  for (const n of ow.npcs) { if (n.look === 'lamppost12') { add(n.px + 8, n.py + 4, 30, 0.9 * Lt, [255, 210, 120, 0.26 * Lt]); spots.push([n.px + 6, n.py + 2, 4, 3, 1]); }
+    else if (n.look === 'campfire12') add(n.px + 8, n.py + 12, 36 * fl, 0.95 * Lt, [255, 150, 60, 0.3 * Lt * fl]);
+    else if (/^camp6_|^nightWatch12$/.test(n.id)) add(n.px + 8, n.py + 10, 18, 0.5 * Lt, n.id === 'nightWatch12' ? [255, 210, 120, 0.2 * Lt] : null); }
+  for (const it of ow.items) if (it.gather && (it.kind === 'mana' || it.kind === 'dew')) add(it.px + 8, it.py + 10, 16, 0.65 * Lt, [120, 190, 255, 0.25 * Lt]);
+  const eyes = [];
+  for (const e of ow.elites) { const g = GLOW12[e.sp]; add(e.px + 8, e.py + 6, g ? 26 : e.roam ? 13 : 18, (g ? 0.8 : 0.4) * Lt, g ? [...g, 0.28 * Lt] : null);
+    if (e.roam && e.img && e.img.big && Lt > 0.4) { const E = dnEyes12(e.sp); if (E) { const im = e.dir === 'right' ? e.img.flip : e.img.c, cx = Math.round(e.px) + 8, foot = Math.round(e.py) + 15, hop = e.moving ? Math.round(Math.sin(Math.min(1, e.prog / 16) * Math.PI) * 3) : (Math.floor((ow.t + e.x * 13) / 20) % 4 === 0 ? 1 : 0);
+      const ox = cx - (im.width >> 1), oy = foot - im.height - hop; for (const [px, py] of E.pts) eyes.push(S(ox + (e.dir === 'right' ? im.width - 1 - px : px), oy + py)); } } }
+  if (ow.boss) add(ow.boss.px + 8, ow.boss.py + 8, 24, 0.5 * Lt);
+  const cw = W * 2, ch = H * 2; if (!DN_CV12.c || DN_CV12.c.width !== cw) DN_CV12.c = mkCanvas(cw, ch);
+  const c = DN_CV12.c, g = c.getContext('2d'); g.setTransform(2, 0, 0, 2, 0, 0); g.globalCompositeOperation = 'source-over';
+  g.fillStyle = 'rgb(' + col.join(',') + ')'; g.fillRect(0, 0, W, H);
+  for (const [sx, sy, r, a] of lights) { if (a <= 0.01) continue; const gr = g.createRadialGradient(sx, sy, 0, sx, sy, r); gr.addColorStop(0, 'rgba(255,255,255,' + Math.min(1, a).toFixed(3) + ')'); gr.addColorStop(0.55, 'rgba(255,255,255,' + (a * 0.45).toFixed(3) + ')'); gr.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = gr; g.fillRect(sx - r, sy - r, r * 2, r * 2); }
+  x.save(); x.globalCompositeOperation = 'multiply'; x.imageSmoothingEnabled = true; x.drawImage(c, 0, 0, W, H);
+  x.globalCompositeOperation = 'lighter';
+  for (const [sx, sy, r, w] of warm) { const gr = x.createRadialGradient(sx, sy, 0, sx, sy, r); gr.addColorStop(0, 'rgba(' + w[0] + ',' + w[1] + ',' + w[2] + ',' + w[3].toFixed(3) + ')'); gr.addColorStop(1, 'rgba(' + w[0] + ',' + w[1] + ',' + w[2] + ',0)'); x.fillStyle = gr; x.fillRect(sx - r, sy - r, r * 2, r * 2); }
+  x.restore(); x.imageSmoothingEnabled = false;
+  if (Lt > 0.05) { x.save(); x.globalAlpha = Math.min(1, Lt * 1.1);
+    for (const [wx, wy, w, h, lamp] of spots) { const [sx, sy] = S(wx, wy); x.fillStyle = lamp ? '#fff0a8' : '#f8c868'; x.fillRect(Math.round(sx), Math.round(sy), Math.round(w * z), Math.round(h * z)); if (!lamp) { x.fillStyle = 'rgba(120,60,20,0.55)'; x.fillRect(Math.round(sx + w * z / 2 - 0.5), Math.round(sy), 1, Math.round(h * z)); x.fillRect(Math.round(sx), Math.round(sy + h * z / 2), Math.round(w * z), 1); } }
+    if (Lt > 0.4) for (const [sx, sy] of eyes) { x.fillStyle = 'rgba(255,240,150,0.35)'; x.fillRect(Math.round(sx - 1), Math.round(sy - 1), 3, 3); x.fillStyle = '#fff8c0'; x.fillRect(Math.round(sx), Math.round(sy), Math.max(1, Math.round(z)), Math.max(1, Math.round(z))); }
+    x.restore(); }
+  if (night) dnNightFx12(ow, x, S, z);
+}
+function dnNightFx12(ow, x, S, z) {
+  const st = ow.st, t = ow.t;
+  if (st.map === 'oldField') { const c = dnGhost12(); if (c) { x.save(); for (let i = 0; i < 5; i++) { const wx = 18 * 16 + ((t * 0.35 + i * 34) % (19 * 16)), wy = 17 * 16 + (i % 2) * 6 + 12, [sx, sy] = S(wx, wy); if (sx < -30 || sx > W + 30 || sy < -40 || sy > H + 20) continue;
+      x.globalAlpha = 0.45 + 0.15 * Math.sin(t * 0.05 + i); x.drawImage(c, Math.round(sx - c.width * z / 2), Math.round(sy - c.height * z - 2 * Math.sin(t * 0.08 + i)), Math.round(c.width * z), Math.round(c.height * z)); } x.restore(); } }
+  if (st.map === AURORA12.map) { const p = ow.p, d = Math.abs(p.x - AURORA12.x) + Math.abs(p.y - AURORA12.y); if (d <= AURORA12.see) { const a = 0.55 * (1 - d / (AURORA12.see + 2)); x.save(); x.globalCompositeOperation = 'lighter';
+      for (let k = 0; k < 3; k++) { const base = 18 + k * 14; x.beginPath(); for (let X = 0; X <= W; X += 4) { const Y = base + Math.sin(X / 23 + t / 40 + k * 1.7) * 9 + Math.sin(X / 9 + t / 25) * 3; X ? x.lineTo(X, Y) : x.moveTo(X, Y); }
+        for (let X = W; X >= 0; X -= 4) { const Y = base + 26 + Math.sin(X / 23 + t / 40 + k * 1.7) * 9; x.lineTo(X, Y); } x.closePath();
+        const gr = x.createLinearGradient(0, base - 10, 0, base + 36); const c0 = k === 1 ? '170,110,255' : '90,255,170'; gr.addColorStop(0, 'rgba(' + c0 + ',0)'); gr.addColorStop(0.4, 'rgba(' + c0 + ',' + (a * 0.55).toFixed(3) + ')'); gr.addColorStop(1, 'rgba(' + c0 + ',0)'); x.fillStyle = gr; x.fill(); }
+      x.restore(); } }
+}
+{ const _d = Overworld.prototype.draw; Overworld.prototype.draw = function (x) {
+    _d.call(this, x); const B = Game.dnBanner; if (!B || UI.stack.length || this.popup || Game.wxBanner || (Game.toastQ && Game.toastQ.length)) return;
+    B.t++; if (B.t > 150) { Game.dnBanner = null; return; } if (!dnOut12(this.st.map)) return;
+    const a = B.t < 10 ? B.t / 10 : B.t > 130 ? (150 - B.t) / 20 : 1, s1 = B.k === 'night' ? '天黑了' : '天亮了・第' + dnDay12(this.st) + '天', s2 = B.k === 'night' ? '夜行魔物出沒、路燈亮起' : '早晨', w = Math.max(Font.width(s1, 10), Font.width(s2, 9)) + 20;
+    x.globalAlpha = a; drawPanel(x, (W - w) / 2, 22, w, 30, null); Font.drawC(x, s1, W / 2, 23, B.k === 'night' ? '#9ab8ff' : '#ffd890', UIC.textSh, 10); Font.drawC(x, s2, W / 2, 36, UIC.text, UIC.textSh, 9); x.globalAlpha = 1;
+  }; }
+{ const _wi = wxIcon; wxIcon = function (x, k, X, Y) { if (k === 'clear' && Game.st && dnOut12(Game.st.map) && dnPhase12() === 'night') { x.fillStyle = '#e8ecff'; x.fillRect(X + 3, Y + 2, 5, 7); x.fillRect(X + 2, Y + 3, 1, 5); x.fillStyle = 'rgba(10,14,28,1)'; x.fillRect(X + 5, Y + 2, 3, 5); return; } return _wi(x, k, X, Y); }; }
+const DN_BATTLE12 = { dawn: [255, 226, 200], dusk: [255, 196, 156], night: [128, 140, 204] };
+function dnStage12(src, ph) {
+  const c = mkCanvas(src.width, src.height), g = c.getContext('2d'); g.drawImage(src, 0, 0);
+  if (ph === 'night') { // stars and the moon only where the picture is open sky (the brightest part of the upper stage)
+    let d = null; try { d = g.getImageData(0, 0, c.width, Math.round(c.height * 0.42)).data; } catch (e) { d = null; }
+    const lum = (x, y) => { if (!d) return 0; const i = (Math.round(y) * c.width + Math.round(x)) * 4; return 0.3 * d[i] + 0.59 * d[i + 1] + 0.11 * d[i + 2]; };
+    g.globalCompositeOperation = 'multiply'; g.fillStyle = 'rgb(' + DN_BATTLE12.night.join(',') + ')'; g.fillRect(0, 0, c.width, c.height); g.globalCompositeOperation = 'source-over';
+    const D = c.width / W; let seed = 7; const r = () => (seed = (seed * 9301 + 49297) % 233280) / 233280;
+    for (let i = 0; i < 90; i++) { const sx = r() * c.width, sy = r() * c.height * 0.4; if (lum(sx, sy) < 140) continue; g.fillStyle = 'rgba(255,255,236,' + (0.55 + r() * 0.45).toFixed(2) + ')'; const s = Math.max(1, Math.round(D * (r() < 0.2 ? 1.6 : 1))); g.fillRect(Math.round(sx), Math.round(sy), s, s); }
+    const mx = c.width * 0.84, my = c.height * 0.3, mr = 7 * D; if (lum(mx, my) > 150) { const gr = g.createRadialGradient(mx, my, mr * 0.6, mx, my, mr * 3); gr.addColorStop(0, 'rgba(230,236,255,0.35)'); gr.addColorStop(1, 'rgba(230,236,255,0)'); g.fillStyle = gr; g.fillRect(mx - mr * 3, my - mr * 3, mr * 6, mr * 6);
+      g.fillStyle = '#f4f2e0'; g.beginPath(); g.arc(mx, my, mr, 0, 7); g.fill(); g.fillStyle = 'rgba(200,196,170,0.6)'; g.beginPath(); g.arc(mx - mr * 0.3, my + mr * 0.2, mr * 0.25, 0, 7); g.fill(); }
+  } else { g.globalCompositeOperation = 'multiply'; g.fillStyle = 'rgb(' + DN_BATTLE12[ph].join(',') + ')'; g.fillRect(0, 0, c.width, c.height); }
+  return c;
+}
+{ const _sf = hd2dStageFor; hd2dStageFor = function (b) { const s = _sf(b), ph = b.cfg && b.cfg.dn; if (!ph || ph === 'day') return s; const S = b.hd2d;
+    if (S.dnSrc !== s || S.dnPh !== ph) { S.dnStage = dnStage12(s, ph); S.dnSrc = s; S.dnPh = ph; } return S.dnStage; }; }
+{ const _la = hd2dLightActor; hd2dLightActor = function (cv, L) { _la(cv, L); const b = Game.scene, ph = b && b.cfg && b.cfg.dn; if (!ph || ph === 'day') return;
+    const x = cv.getContext('2d'); x.save(); x.setTransform(1, 0, 0, 1, 0, 0); x.globalCompositeOperation = 'source-atop'; x.fillStyle = ph === 'night' ? 'rgba(36,48,110,0.26)' : ph === 'dusk' ? 'rgba(255,130,60,0.12)' : 'rgba(255,200,140,0.08)'; x.fillRect(0, 0, cv.width, cv.height); x.restore(); }; }
+{ const _sh = hd2dShafts; hd2dShafts = function (b, x) { if (b.cfg && b.cfg.dn === 'night') return; return _sh(b, x); }; }
+ITEMS.snowPelt.n = '雪原毛皮';
+ITEMS.beastFur = { n: '獸毛', mat: 1, price: 0, sell: 40, cat: '魔物素材', d: '野獸身上蓬鬆的毛。羊・貓・貂・狸・猿身上都有，可以紡成線，也能縫進皮革裡。' };
+for (const sp of ['curlySheep', 'nightCat', 'forestMarten', 'mapleTanuki', 'mountainApe', 'nightOtter']) { if (SPECIES[sp]) SPECIES[sp].mat = 'beastFur'; else bvErr('v12.31', 'beastFur ' + sp); }
+SPECIES.blackCatfish.mat = 'gel'; SPECIES.rockRhino.mat = 'stone'; BOSS_MAT.rockRhino = 'stone';
+for (const sp of ['crystalCroc', 'ruinWarden', 'miasmaWolf', 'lavaKnight']) { const k = BOSS_MAT[sp]; if (SPECIES[sp] && k && ITEMS[k]) SPECIES[sp].mat = k; else bvErr('v12.31', 'roam mat ' + sp); }
+const DUNGEON_ROAM12 = ['sewer', 'ruins', 'mine', 'catacomb', 'capSewer', 'clockTower1', 'iceCave', 'lavaTunnel', 'duskFort1', 'heroTomb'];
+for (const id of DUNGEON_ROAM12) if (MAPS[id] && MAPS[id].encounters && MAPS[id].encounters.length) { MAPS[id].roam12 = 1; if (typeof mapCache !== 'undefined') delete mapCache[id]; }
+const RESERVED_MATS12 = new Set(['riftShard', 'starShard', 'starDust']);
+const usesReserved12 = mats => !!mats && Object.keys(mats).some(m => RESERVED_MATS12.has(m));
+{ const _bk = bpKnown; bpKnown = function (k, st = Game.st) { if (GEAR_RECIPE[k] && usesReserved12(GEAR_RECIPE[k].mats)) return false; return _bk(k, st); }; }
+{ const _bl = bpList; bpList = function (tab, st = Game.st) { const L = _bl(tab, st); return tab === 3 ? L.filter(o => !(o.R && usesReserved12(o.R.mats))) : L; }; }
+const NIGHTISH12 = sp => (typeof M7_KEYS !== 'undefined' && M7_KEYS.has(sp)) || (typeof NIGHT_LEAN12 !== 'undefined' && NIGHT_LEAN12.has(sp));
+function sleepy12(sp, ph) { if (ph === 'dawn') return NIGHTISH12(sp); if (ph === 'dusk' || ph === 'night') return !NIGHTISH12(sp); return false; }
+const roamSleep12 = (e, ow) => { e.sleep12 = 1; e.aggro = false; e.chase = 0; e.timer = 1e9; };
+Overworld.prototype.roamNap12 = function (list, now) {
+  const st = this.st, ph = dnOut12(st.map) ? (now || dnPhase12(st)) : 'day';
+  for (const e of list) { if (e.rare || e.scare12 || e.sleep12) continue; if (sleepy12(e.sp, ph) && chance(0.5)) roamSleep12(e, this); }
+};
+{ const _sp = Overworld.prototype.roamSpawn12; Overworld.prototype.roamSpawn12 = function () { const L = _sp.call(this); this.roamNap12(L); return L; }; }
+{ const _ch = Overworld.prototype.dnChange12; Overworld.prototype.dnChange12 = function (was, now) {
+    const p = this.p, far = e => Math.abs(e.x - p.x) + Math.abs(e.y - p.y) > 7;
+    if (this.roam12) for (const e of this.roam12.list) if (e.sleep12 && (far(e) || !sleepy12(e.sp, dnOut12(this.st.map) ? now : 'day'))) { e.sleep12 = 0; e.timer = rnd(20, 80); e.aggro = chance(0.5) && e.lv >= (this.st.lv || 1) - 2; }
+    _ch.call(this, was, now); // (the ones out of sight may turn into another species here)
+    if (this.roam12) this.roamNap12(this.roam12.list.filter(far), now);
+  }; }

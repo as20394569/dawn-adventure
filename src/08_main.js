@@ -50,7 +50,8 @@ const Events = {
       applyStartClass(k); Game.fadeColor = '#ffffff'; Game.fade = 1; Sound.jingle('levelup'); yield* fadeIn(30); Game.fadeColor = '#000';
       const C = CLASSES[k], S = CLASS_START[k], K14 = !Game.noV14 && typeof KD !== 'undefined' && st.k14 ? KD.clsKey(st) : null, CN = K14 ? KD.CLASSES[K14].n : C.n; // v14.13: the card classes (no gear: the weapon is only the hero's look)
       yield* itemGet(st.name + '覺醒成為了' + CN + '！');
-      if (K14) yield* say({ sw: '劍士的道路啊……這把劍就交給你了。', rg: '盜賊的道路啊……這把短刀是村裡獵人送的，拿去吧。', mg: '法師的道路啊……這根法杖是我年輕時用的，交給你了。', bk: '狂戰士的道路啊……這把斧頭給你，別逞強喔。' }[K14] + '打倒的頭目越多，它會變得越威風。');
+      if (K14) { yield* say({ sw: '劍士的道路啊……這把劍就交給你了。', rg: '盜賊的道路啊……這把短刀是村裡獵人送的，拿去吧。', mg: '法師的道路啊……這根法杖是我年輕時用的，交給你了。', bk: '狂戰士的道路啊……這把斧頭給你，別逞強喔。' }[K14] + '這套' + ({ sw: '重甲', rg: '輕裝', mg: '法衣', bk: '重甲' }[K14]) + '也穿上吧。');
+        if (st.k14 && st.k14.g16) yield* say('身上的裝備會變成戰鬥用的卡。\n到鐵匠那裡，可以打造新的裝備。'); }
       else yield* say({ swordsman: '劍士的道路啊……這把練習木劍就交給你了。', mage: '魔導士的道路啊……這把魔杖是我年輕時用的，交給你了。', guardian: '守護者的道路啊……這把木劍和布帽給你，別逞強喔。', ranger: '遊俠的道路啊……這把獵刀是村裡獵人送的，拿去吧。' }[k]);
       st.flags.license = 1; st.bag.license = 1; yield* itemGet(K14 ? '得到了冒險者證！' : '得到了' + S.gear.filter(b => b !== 'guardBadge').map(b => GEAR[b].n).join('和') + '、護身符和冒險者證！');
       yield* say('還有這些傷藥，帶在身上吧。'); st.bag.potion = (st.bag.potion || 0) + 5; yield* itemGet('得到了傷藥×5！');
@@ -329,7 +330,7 @@ class TitleScene {
     x.drawImage(this.logo, Math.round(W / 2 - this.logo.width / 2), 6 + bob);
     Font.drawC(x, '～異世界冒險RPG～', W / 2, 52 + bob, '#ffe0a0', '#3a1428');
     if (this.stage === 'press' && Math.floor(this.t / 30) % 2 === 0) Font.drawC(x, '按 A 鍵開始', W / 2, 232, '#ffffff', '#1a1024');
-    Font.drawR(x, 'v14.15', W - 3, H - 13, '#b890b0', null);
+    Font.drawR(x, 'v14.16', W - 3, H - 13, '#b890b0', null);
   }
 }
 

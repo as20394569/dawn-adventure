@@ -100,7 +100,7 @@ if (typeof BATTLE_HELP !== 'undefined') BATTLE_HELP.unshift(['弱點破防', ['�
 { const H = Battle.prototype.handlers, _m = H.MESSAGE; H.MESSAGE = function* (e, s, t, P) { if (P && P.key === 'wk16') { if (t) { const C = this.center(t); this.pops.push({ x: C.x, y: C.y - 52, s: '弱點：' + P.at, c: KD.ATC[P.at][0], t: 0 }); Sound.sfx('select'); }
       const f = Game.st && Game.st.flags; if (f && !f.tutWk16) { f.tutWk16 = 1; yield* this.msg('（打中弱點了！名牌上的盾牌數字 −1，扣到 0 魔物就會破防。）', { hold: 90 }); } return; } return yield* _m.call(this, e, s, t, P); }; }
 // the card face: its attack type in the top-right corner (left of the rarity dot); on an overlapped hand card, at the right end of the strip that shows
-{ const _dc = KD.drawCard; KD.drawCard = function (x, c, X, Y, w, h, o = {}) { _dc.call(this, x, c, X, Y, w, h, o); const at = c && KD.atOf(c.id); if (!at) return;
+{ const _dc = KD.drawCard; KD.drawCard = function (x, c, X, Y, w, h, o = {}) { _dc.call(this, x, c, X, Y, w, h, o); const at = c && KD.atOf(c.id); if (!at || KD.atInFace) return;
     const vw = Math.min(w, o.vis || w); if (vw < 26) return; const bx = X + (o.visX0 || 0) + vw - 14; KD.atBox(x, bx, Y + 2, at); if (o.dim) { x.fillStyle = 'rgba(0,0,0,0.38)'; x.fillRect(bx - 1, Y + 1, 11, 11); } }; }
 // 頭目・菁英 stay as hard as before 破防 (玩家：頭目和菁英要維持難度): the class decks of the playtest bot, 15 fights × 4 classes —
 // with 破防 bosses lost ~2.5 actions a fight (HP left 66〜72% → 70〜87%); HP ×1.15 (bosses) / ×1.1 (elites) brings it back (64〜71%)

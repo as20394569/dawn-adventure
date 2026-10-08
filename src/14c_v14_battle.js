@@ -145,8 +145,10 @@ KD.KEYS = [[/格擋/, '格擋：擋下傷害，到你下一回合開始時消失
 KD.keyLines = c => { const d = KD.desc(c), out = []; for (const [re, t] of KD.KEYS) if (re.test(d)) out.push(t); return out.slice(0, 2); };
 { const _dbh = BPK.drawBoxH; BPK.drawBoxH = function (x) { if (!this.k14) return _dbh.call(this, x); const Hv = this.H, U = this.Hu(); if (!Hv || !U) return; const LB = KD.BL(), Y = LB.hudY, fK = this.fK || 0;
     x.fillStyle = 'rgba(10,8,20,0.62)'; x.fillRect(0, Y - 2, W, 27); x.fillStyle = 'rgba(10,8,20,0.92)'; x.fillRect(0, LB.handY - 3, W, H - LB.handY + 3);
-    const en = this.energy; x.fillStyle = '#2a1c08'; x.beginPath(); x.arc(13, Y + 11, 11.5, 0, 7); x.fill(); x.fillStyle = en ? '#ffb030' : '#6a5030'; x.beginPath(); x.arc(13, Y + 11, 10, 0, 7); x.fill(); x.fillStyle = en ? 'rgba(255,240,180,0.55)' : 'rgba(0,0,0,0)'; x.fillRect(8, Y + 3, 5, 2); Font.drawC(x, String(en), 13, Y + 1, '#1a0c00', null, 13); /* v14.15: bigger energy */
-    const bx = 27, bw = 86, hp = Math.max(0, Math.round(Hv.hp)), mh = U.max.hp; /* v14.15: longer HP bar (was 23 / 70) */ x.fillStyle = '#301018'; x.fillRect(bx, Y + 1, bw, 11); x.fillStyle = hp <= mh / 2 ? '#e05030' : '#c83838'; x.fillRect(bx, Y + 1, Math.round(bw * Math.min(1, hp / Math.max(1, mh))), 11);
+    { const CL0 = KD.CLASSES[this.cls] || {}, st = Game.st; x.fillStyle = '#0c0814'; x.fillRect(0, Y - 1, 27, 25); x.fillStyle = '#262038'; x.fillRect(1, Y, 25, 23); x.fillStyle = CL0.c || '#8a93b3'; x.fillRect(0, Y - 1, 27, 1); // v14.16: the hero's face (the paper doll: what is worn is what is in the deck)
+      if (st) { try { x.drawImage(heroFramesFor(st).down[0], 3, 2, 12, 11, 2, Y + 1, 24, 22); } catch (e) { /* no doll yet */ } } }
+    const en = this.energy, ex = 29, ey = Y + 16; x.fillStyle = '#2a1c08'; x.beginPath(); x.arc(ex, ey, 10, 0, 7); x.fill(); x.fillStyle = en ? '#ffb030' : '#6a5030'; x.beginPath(); x.arc(ex, ey, 8.5, 0, 7); x.fill(); x.fillStyle = en ? 'rgba(255,240,180,0.55)' : 'rgba(0,0,0,0)'; x.fillRect(ex - 5, ey - 6, 4, 2); Font.drawC(x, String(en), ex, midY(ey - 10, 21, 12), '#1a0c00', null, 12); /* v14.16: the energy sits on the face's corner */
+    const bx = 41, bw = 72, hp = Math.max(0, Math.round(Hv.hp)), mh = U.max.hp; /* v14.15: longer HP bar (was 23 / 70) */ x.fillStyle = '#301018'; x.fillRect(bx, Y + 1, bw, 11); x.fillStyle = hp <= mh / 2 ? '#e05030' : '#c83838'; x.fillRect(bx, Y + 1, Math.round(bw * Math.min(1, hp / Math.max(1, mh))), 11);
     Font.drawC(x, hp + '/' + mh, bx + bw / 2, Y - 2, '#fff4f4', '#000', 9);
     const b = (Hv.st && Hv.st.blk15) || 0; if (b) { x.drawImage(KD.ICON.shield, bx + 57, Y + 12); Font.draw(x, String(b), bx + 71, Y + 12, '#bfe0ff', '#000', 9); } /* v14.15: under the HP bar, after the class (the bar is longer) */
     const CL = KD.CLASSES[this.cls] || {}; Font.draw(x, CL.n || '', bx, Y + 14, CL.c || '#ccc', '#000', 8);
@@ -199,26 +201,42 @@ BPK.pileView = function* (w) { const L = (w === 'disc' ? this.disc : this.pile).
   UI.push(ui); while (!done) { yield; if (Input.pressed('b') || Input.pressed('a')) done = true; if (Input.pressed('down') && (scroll + Math.max(4, Math.floor((H - 40) / 58))) * 4 < L.length) scroll++; if (Input.pressed('up') && scroll > 0) scroll--; } UI.remove(ui); Input.consume('a', 'b'); };
 /* ---------- a card picture: cost, name, icon, the key numbers; the class colour along the bottom ---------- */
 KD.shortL = (C, v) => { const L = C.short(v).slice(); if (C.exhaust && !L.includes('消耗') && L.length < 3) L.push('消耗'); return L; }; // v14.10: every 消耗 card says so on its face
-KD.drawCard = function (x, c, X, Y, w, h, o = {}) { const C = KD.CARDS[c.id]; if (!C) return; const T = KD.TYPE[C.type], v = KD.val(c), big = w >= 46, CL = KD.CLASSES[C.cls], gold = C.rar === 'L', qst = C.rar === 'Q', edge = gold ? '#ffb040' : qst ? '#5ce0b8' : null;
-  // v14.12 (最小字級 8): no text under 8 — what is too wide is squeezed sideways; the lines that fit the card's height are drawn (3 on a tall hand card)
-  x.fillStyle = '#0c0814'; x.fillRect(X - 1, Y - 1, w + 2, h + 2); x.fillStyle = T.bg; x.fillRect(X, Y, w, h);
-  x.fillStyle = 'rgba(255,255,255,0.05)'; x.fillRect(X + 1, Y + 1, w - 2, Math.round(h * 0.4));
-  x.fillStyle = o.on ? '#ffe070' : edge || T.c; x.fillRect(X, Y, w, 1); x.fillRect(X, Y + h - 1, w, 1); x.fillRect(X, Y, 1, h); x.fillRect(X + w - 1, Y, 1, h);
-  x.fillStyle = edge || (CL ? CL.c : '#8a8a9a'); x.fillRect(X + 2, Y + h - 3, w - 4, 1);
-  x.fillStyle = KD.RAR[C.rar].c; x.fillRect(X + w - 4, Y + 2, 2, 2);
-  const art = KD.ART && KD.ART[c.id] && KD.ART[c.id].ok ? KD.ART[c.id] : null, r = big ? 6 : 5, nm = KD.name(c), vw = Math.min(w, o.vis || w), tw = vw - 4, tx = X + (o.visX0 || 0) + vw / 2, foot = big && h >= 74 ? Y + h - 10 : Y + h - 3; // vis: the part of an overlapped hand card that shows
-  const tall = !big && h >= 70, lines = (ly, step) => { KD.shortL(C, v).forEach((t, k) => { const y = ly + k * step; if (y + 12 > foot) return; fontFit(x, t, tx, y, tw, '#e8e4f4', '#000', tall ? 9 : 8, 'c'); }); }; /* v14.15: a tall hand card writes 9 */
-  const cost = () => { x.fillStyle = '#0c0814'; x.beginPath(); x.arc(X + r, Y + r, r, 0, 7); x.fill(); x.fillStyle = o.dim ? '#6a5a40' : '#ffb030'; x.beginPath(); x.arc(X + r, Y + r, r - 1, 0, 7); x.fill(); Font.drawC(x, String(KD.cost(c)), X + r, Y + r - 8, '#1a0c00', null, big ? 9 : 8); };
-  const nameAt = ny => { const fz = Font.width(nm, 9) <= tw ? 9 : 8; fontFit(x, nm, tx, ny, tw, c.up ? '#a8ffa0' : '#fff4e0', '#000', fz, 'c'); };
-  if (art) { // the card's picture along the top (a hand card shows its middle; big cards the whole 48×32)
-    const aw = Math.min(48, w - 2), ah = big ? 32 : h >= 70 ? 24 : h >= 54 ? 20 : 16; x.drawImage(art, Math.round((48 - aw) / 2), Math.round((32 - ah) / 2), aw, ah, X + Math.round((w - aw) / 2), Y + 1, aw, ah);
-    x.fillStyle = 'rgba(0,0,0,0.35)'; x.fillRect(X + 1, Y + ah + 1, w - 2, 1); cost();
-    const ny = Y + ah + 1; nameAt(ny); lines(ny + (big || tall ? 11 : 9), big || tall ? 10 : 9);
-  } else {
-    cost(); const ny = Y + (big ? 12 : 8); nameAt(ny);
-    const z = big && h >= 74 ? 2 : 1, ic = KD.ICON[KD.iconOf(c.id)], iy = ny + (big ? 11 : 9); if (ic) x.drawImage(ic, Math.round(X + w / 2 - 6.5 * z), iy, 13 * z, 13 * z);
-    lines(iy + 13 * z + (big ? 1 : -2), big ? 10 : 9); }
-  if (big && h >= 74) Font.drawC(x, C.cls === 'nt' ? (gold ? '傳說' : qst ? '任務' : '共通') : CL ? CL.n : '', X + w / 2, Y + h - 12, edge || (CL ? CL.c : '#c8c8d8'), '#000', 8);
+/* v14.16 卡面重新設計（玩家：「卡片的UI設計 感覺很怪 建議也重新設計」→ 選了樣張 B「數字大」、菱形的費用、裝備卡銀框）
+   · 上面是卡圖（整張寬），卡名寫在圖的下緣一條暗帶上
+   · 傷害・格擋寫成「圖示＋大數字」（多段：3×2），其他效果寫小字
+   · 費用是左上角的菱形寶石；裝備卡是銀色的框；稀有度是右下角的小色塊；大卡最下面寫職業（裝備・傳說・共通） */
+KD.TYPE.atk.bg2 = '#2a1014'; KD.TYPE.skl.bg2 = '#101a30'; KD.TYPE.pow.bg2 = '#2a200a';
+KD.numOf = s => { const m = /^(傷害|格擋)?\s*(\d+)( ?×\d+)?$/.exec(s || ''); return m && (m[1] || m[3]) ? { lab: m[1] || '傷害', s: m[2] + (m[3] ? m[3].trim() : '') } : null; };
+KD.gem = (x, cx, cy, n, r, dim) => { x.fillStyle = '#0c0814'; x.beginPath(); x.moveTo(cx, cy - r - 1); x.lineTo(cx + r + 1, cy); x.lineTo(cx, cy + r + 1); x.lineTo(cx - r - 1, cy); x.closePath(); x.fill();
+  x.fillStyle = dim ? '#6a5a40' : '#ffb030'; x.beginPath(); x.moveTo(cx, cy - r); x.lineTo(cx + r, cy); x.lineTo(cx, cy + r); x.lineTo(cx - r, cy); x.closePath(); x.fill(); if (!dim) { x.fillStyle = '#ffe8a0'; x.fillRect(Math.round(cx - 2), Math.round(cy - r + 2), 2, 2); }
+  const z = r >= 6 ? 9 : 8; Font.drawC(x, String(n), cx, midY(Math.round(cy - 6), 13, z), '#2a1000', null, z); };
+// v14.16 卡面的排法（玩家：「重點不是樣式 而是整個ui的位置」→ 選了「名字在最上面」）：
+//   最上面一條＝費用＋卡名；中間＝完整的卡圖（什麼都不壓在上面）；下面＝屬性方塊＋圖示＋數字；再下面＝其他效果（8 號字）
+KD.atInFace = 1; // the 斬・突・打 / 火・水・雷 box sits in the face's number row (14n no longer puts it on the picture)
+KD.drawCard = function (x, c, X, Y, w, h, o = {}) { const C = KD.CARDS[c.id]; if (!C) return; const T = KD.TYPE[C.type], v = KD.val(c), big = w >= 46, CL = KD.CLASSES[C.cls], gold = C.rar === 'L', qst = C.rar === 'Q', gear = !!c.g16;
+  const edge = o.on ? '#ffe070' : gold ? '#ffb040' : qst ? '#5ce0b8' : gear ? '#dfe4f0' : T.c, vw = Math.min(w, o.vis || w), x0 = X + (o.visX0 || 0), label = big && h >= 74, foot = label ? Y + h - 12 : Y + h - 3;
+  x.fillStyle = '#0c0814'; x.fillRect(X - 1, Y - 1, w + 2, h + 2); x.fillStyle = T.bg2 || T.bg; x.fillRect(X, Y, w, h);
+  // ① the top bar: the cost and the name
+  const bh = big ? 13 : 11, r = big ? 6 : 5, nx = X + Math.ceil(r * 2) + 3, nz = big && Font.width(KD.name(c), 9) <= w - (nx - X) - 3 ? 9 : 8; x.fillStyle = 'rgba(0,0,0,0.45)'; x.fillRect(X + 1, Y + 1, w - 2, bh);
+  const nr = Math.min(X + w - 2, x0 + vw - 1); fontFit(x, KD.name(c), nx + (nr - nx) / 2, Y + 1 + Math.round((bh - 11) / 2) - (nz === 9 ? 1 : 2), Math.max(6, nr - nx), c.up ? '#a8ffa0' : '#fff4e0', '#000', nz, 'c');
+  // ② the picture, whole and uncovered
+  const ay = Y + 1 + bh, ah = big ? (h >= 80 ? 32 : 28) : h >= 66 ? 24 : h >= 58 ? 21 : 17, aw = Math.min(48, w - 2), art = KD.ART && KD.ART[c.id] && KD.ART[c.id].ok ? KD.ART[c.id] : null;
+  x.fillStyle = 'rgba(0,0,0,0.3)'; x.fillRect(X + 1, ay, w - 2, ah);
+  if (art) x.drawImage(art, Math.round((48 - aw) / 2), Math.round((32 - Math.min(32, ah)) / 2), aw, Math.min(32, ah), X + Math.round((w - aw) / 2), ay, aw, Math.min(32, ah));
+  else { const ic = KD.ICON[KD.iconOf(c.id)], z = big ? 2 : 1; if (ic) x.drawImage(ic, Math.round(X + w / 2 - 6.5 * z), ay + Math.round((ah - 13 * z) / 2), 13 * z, 13 * z); }
+  x.fillStyle = edge; x.fillRect(X + 1, ay + ah, w - 2, 1);
+  // ③ the attack type, the icon and the number
+  const L = KD.shortL(C, v), N = KD.numOf(L[0]), at = KD.atOf(c.id), ry = ay + ah + 2, rx0 = x0 + 2, rx1 = Math.min(X + w - 2, x0 + vw - 1); let ly = ry;
+  if (at && vw >= 14) KD.atBox(x, rx0, ry + 2, at); const lx = at ? rx0 + 11 : rx0, cx = lx + (rx1 - lx) / 2;
+  if (N) { const ic = KD.ICON[N.lab === '格擋' ? 'shield' : KD.iconOf(c.id)], nz2 = big ? 12 : 10, room = rx1 - lx, nwid = Math.min(Font.width(N.s, nz2), room - (room >= 26 ? 14 : 0)), withIc = ic && room >= nwid + 14, gw = (withIc ? 14 : 0) + nwid, gx = Math.round(Math.max(lx, rx1 - gw - (big ? 4 : 1)));
+    if (withIc) x.drawImage(ic, gx, ry, 13, 13); fontFit(x, N.s, gx + (withIc ? 14 : 0), ry - (nz2 - 11) + (big ? 0 : 1), nwid, '#ffffff', '#000', nz2); ly = ry + 15; }
+  const rest = N ? L.slice(1) : L; rest.forEach((s, k) => { const first = !N && k === 0, X1 = first && at ? lx : rx0; if (ly + 9 > foot) return; fontFit(x, s, X1 + (rx1 - X1) / 2, ly, rx1 - X1, '#e0d8ee', '#000', 8, 'c'); ly += 9; });
+  // the frame (gear: silver, 2 px), the cost gem, the rarity chip, the class on a big card
+  x.fillStyle = edge; x.fillRect(X, Y, w, 1); x.fillRect(X, Y + h - 1, w, 1); x.fillRect(X, Y, 1, h); x.fillRect(X + w - 1, Y, 1, h);
+  if (gear && !o.on) { x.fillStyle = '#8a94ae'; x.fillRect(X + 1, Y + 1, w - 2, 1); x.fillRect(X + 1, Y + h - 2, w - 2, 1); x.fillRect(X + 1, Y + 1, 1, h - 2); x.fillRect(X + w - 2, Y + 1, 1, h - 2); }
+  KD.gem(x, X + r + 1, Y + 1 + bh / 2, KD.cost(c), r, o.dim);
+  x.fillStyle = KD.RAR[C.rar].c; if (vw >= w - 1) x.fillRect(X + w - 6, Y + h - 5, 3, 2);
+  if (label) Font.drawC(x, gear ? '裝備' : C.cls === 'nt' ? (gold ? '傳說' : qst ? '任務' : '共通') : CL ? CL.n : '', X + w / 2, Y + h - 12, gear ? '#dfe4f0' : gold ? '#ffb040' : qst ? '#5ce0b8' : CL ? CL.c : '#c8c8d8', '#000', 8);
   if (o.dim) { x.fillStyle = 'rgba(0,0,0,0.38)'; x.fillRect(X, Y, w, h); } };
 /* ---------- after a battle ---------- */
 // no levels any more: experience still counts quietly (area events and some old checks read it)

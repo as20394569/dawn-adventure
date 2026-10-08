@@ -8,7 +8,7 @@ KD.RW.epic = { R: 1 };
 KD.upOne = function* (title) { const st = Game.st, L = KD.sorted(KD.deck(st)).filter(KD.canUp); if (!L.length) { yield* say('牌組裡的卡都升級過了。'); return false; }
   const r = yield* KD.grid(title, L, { act: () => '再點一次：升級', detail: c => '升級後：' + KD.desc({ id: c.id, up: 1 }), hint: '選一張要升級的卡。' }); if (r < 0) return false;
   L[r].up = 1; Sound.sfx('levelup'); yield* say('「' + KD.CARDS[L[r].id].n + '」升級成「' + KD.name(L[r]) + '」了！'); return true; };
-KD.remOne = function* (title) { const st = Game.st, D = KD.deck(st); if (D.length <= 5) { yield* say('牌組太少了，不能再刪。'); return false; }
+KD.remOne = function* (title) { const st = Game.st, D = KD.deck(st); if (KD.remNo(st, D)) { yield* say(KD.remMsg(st)); return false; }
   const L = KD.sorted(D), r = yield* KD.grid(title, L, { act: () => '再點一次：刪掉', hint: '選一張要從牌組刪掉的卡。' }); if (r < 0) return false;
   const c = L[r]; D.splice(D.indexOf(c), 1); KD.state(st).rem = (KD.state(st).rem || 0) + 1; Sound.sfx('select'); yield* say('「' + KD.name(c) + '」從牌組裡拿掉了。'); return true; };
 /* ---------- 區域事件 ---------- */
@@ -45,7 +45,7 @@ if (Events.abyKeeper) { const _ak = Events.abyKeeper; Events.abyKeeper = functio
 { const gone = new Set(['enh5', 'gold', 'cls2', 'lv20', 'rainbow', 'master', 'allMaster']); for (let i = ACHIEVEMENTS.length - 1; i >= 0; i--) if (gone.has(ACHIEVEMENTS[i].id)) ACHIEVEMENTS.splice(i, 1);
   const sb = ACHIEVEMENTS.find(a => a.id === 'spellblade'); if (sb) sb.d = '打贏流浪的魔劍士。';
   const legN = st => { const K = KD.state(st); let n = 0; for (const k in K.decks) n += K.decks[k].filter(c => KD.CARDS[c.id] && KD.CARDS[c.id].rar === 'L').length; return n; };
-  ACHIEVEMENTS.push({ id: 'k14_deck30', cat: '收集', n: '大牌組', d: '牌組達到 30 張。', ok: st => !!st.k14 && KD.deck(st).length >= 30 },
+  ACHIEVEMENTS.push({ id: 'k14_deck30', cat: '收集', n: '大牌組', d: '牌組達到 30 張。', ok: st => !!st.k14 && KD.fullDeck(st).length >= 30 },
     { id: 'k14_up10', cat: '成長', n: '千錘百鍊', d: '牌組裡升級過的卡達到 10 張。', ok: st => !!st.k14 && KD.deck(st).filter(c => c.up).length >= 10 },
     { id: 'k14_rem5', cat: '成長', n: '去蕪存菁', d: '刪卡 5 次。', ok: st => !!st.k14 && (st.k14.rem || 0) >= 5 },
     { id: 'k14_cls4', cat: '成長', n: '全能的旅人', d: '四個職業都用過。', ok: st => !!st.k14 && KD.CLS_ORDER.every(k => st.k14.decks[k]) },

@@ -61,7 +61,7 @@ KD.addCls = (st, f) => { const K = KD.state(st), c = KD.clsKey(st); K[f] = K[f] 
 KD.removePrice = (st = Game.st) => Math.round(KD.gW(KD.pLv(st)) * (4 + Math.min(KD.REM_CAP, KD.byCls(st, 'remBy'))) / 5) * 5;
 KD.upPrice = (st = Game.st) => { const p = Math.round(KD.gW(KD.pLv(st)) * (2 + 0.5 * Math.min(KD.UP_CAP, KD.byCls(st, 'upBy'))) / 5) * 5; return st && st.flags && st.flags.q3res === 'keep' ? Math.max(5, Math.round(p / 10) * 5) : p; };
 KD.removeFlow = function* () { const st = Game.st, D = KD.deck(st);
-  if (D.length <= 5) { yield* say('牌組太少了，不能再刪。'); return; } const p = KD.removePrice(st); if (st.money < p) { Sound.sfx('buzz'); yield* say('刪卡要 ' + p + ' G，金幣不夠。'); return; }
+  if (KD.remNo(st, D)) { yield* say(KD.remMsg(st)); return; } const p = KD.removePrice(st); if (st.money < p) { Sound.sfx('buzz'); yield* say('刪卡要 ' + p + ' G，金幣不夠。'); return; }
   const L = KD.sorted(D), r = yield* KD.grid('刪卡（' + p + ' G）', L, { act: () => '再點一次：刪掉這張', hint: '選一張要從牌組刪掉的卡。' }); if (r < 0) return;
   const c = L[r]; if (!(yield* yesNo('花 ' + p + ' G 把「' + KD.name(c) + '」從牌組刪掉嗎？'))) return;
   st.money -= p; D.splice(D.indexOf(c), 1); KD.state(st).rem = (KD.state(st).rem || 0) + 1; KD.addCls(st, 'remBy'); Sound.sfx('select'); yield* say('「' + KD.name(c) + '」從牌組裡拿掉了。'); };

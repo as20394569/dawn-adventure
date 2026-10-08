@@ -12,6 +12,7 @@ KD.deck = (st = Game.st) => { const K = KD.state(st), k = KD.clsKey(st); if (!K.
 // v14.2 one-of-a-kind cards (頭目傳說卡・任務卡) belong to the hero, not the class: every class's deck gets each one once (a removed one stays removed)
 KD.uniq = K => Object.keys(K.boss || {}).map(sp => KD.BOSS_CARD[sp]).concat(Object.keys(K.qc || {})).filter(id => KD.CARDS[id]);
 KD.syncU = (K, k, D) => { const G = (K.gave = K.gave || {})[k] || (K.gave[k] = {}); for (const id of KD.uniq(K)) { if (G[id]) continue; G[id] = 1; if (!D.some(c => c.id === id)) D.push({ id, up: 0 }); (K.seen = K.seen || {})[id] = 1; } };
+KD.fullDeck = (st = Game.st) => KD.deck(st); KD.deckN = (st = Game.st) => KD.fullDeck(st).length; KD.remNo = (st, D) => D.length <= 5; KD.remMsg = () => '牌組太少了，不能再刪。'; // v14.16: 裝備卡 (14s)
 KD.markSeen = (K, L) => { K.seen = K.seen || {}; for (const c of L) K.seen[c.id] = 1; };
 KD.maxHp = (st = Game.st) => KD.clsOf(st).hp + (KD.state(st).hpPlus || 0);
 KD.bossN = (st = Game.st) => Object.keys(KD.state(st).boss).length;
@@ -89,20 +90,20 @@ KD.sweepScript = function* (L) { const st = Game.st; for (const g of L) { const 
     if (!Game.noV14 && Game.scene === this && !this.script && !UI.stack.length && Game.st && Game.st.k14) { const L = KD.sweep(); if (L.length) this.run(KD.sweepScript(L)); } return r; }; }
 /* ---------- the menu ---------- */
 KD.isTown = (st = Game.st) => { const M = MAPS[st.map]; return !!M && !(M.encounters || []).length && !M.boss; };
-{ const TILES = [['狀態', '職業・HP'], ['牌組', '查看卡牌'], ['冒險手冊', '任務・圖鑑・紀錄'], ['背包', '道具・素材'], ['職業', '轉職（城鎮）'], ['存檔', '記錄進度'], ['設定', '音量・速度'], ['關閉', '回到遊戲']];
+{ const TILES = [['狀態', '職業・HP'], ['牌組', '查看卡牌'], ['裝備', '換裝・看帶的卡'], ['冒險手冊', '任務・圖鑑・紀錄'], ['背包', '道具・素材'], ['職業', '轉職（城鎮）'], ['存檔', '記錄進度'], ['設定', '音量・速度'], ['關閉', '回到遊戲']];
   const _sm = startMenu; startMenu = function* (...a) { if (Game.noV14) return yield* _sm.apply(this, a); Game.inMenu13 = (Game.inMenu13 || 0) + 1;
     try { Sound.sfx('menu'); let idx = Game.menuIdx || 0;
       while (true) { const st = Game.st, CL = KD.clsOf(st), mh = KD.maxHp(st);
         const hdr = { draw(x) { x.fillStyle = 'rgba(8,10,20,0.78)'; x.fillRect(0, 0, W, H); drawWin(x, 4, 4, 168, 40, 'menu'); x.drawImage(heroFramesFor(st).down[0], 0, 0, 16, 22, 10, 8, 24, 33);
             const nx = Font.draw(x, st.name, 40, 3, UIC.text, UIC.textSh, 11); Font.draw(x, CL.n, nx + 4, 5, CL.c, UIC.textSh, 9);
-            Font.draw(x, 'HP ' + st.hp + '/' + mh, 40, 16, UIC.good, UIC.textSh, 9); Font.draw(x, '牌組 ' + KD.deck(st).length + ' 張', 100, 16, '#ffd090', UIC.textSh, 9); Font.drawR(x, st.money + ' G', 166, 27, UIC.warm, UIC.textSh, 9);
+            Font.draw(x, 'HP ' + st.hp + '/' + mh, 40, 16, UIC.good, UIC.textSh, 9); Font.draw(x, '牌組 ' + KD.deckN(st) + ' 張', 100, 16, '#ffd090', UIC.textSh, 9); Font.drawR(x, st.money + ' G', 166, 27, UIC.warm, UIC.textSh, 9);
             if (typeof dnMenuLoc12 === 'function') dnMenuLoc12(x, st, 40, 27, 166 - Font.width(st.money + ' G', 10)); else Font.draw(x, MAPS[st.map] ? MAPS[st.map].name || '' : '', 40, 27, UIC.muted, UIC.textSh, 9); } };
         UI.push(hdr);
         const items = TILES.map(([t, sub]) => ({ t: '', name: t, sub }));
         const r = yield* choose(items, { x: 4, y: 48, w: 168, h: 204, cols: 2, colW: 82, rowH: 40, ox: 4, oy: 3, buttons: true, style: 'menu', index: Math.min(idx, items.length - 1), drawExtra: (x, m) => { for (let k = 0; k < items.length; k++) { const c = k % 2, rr = Math.floor(k / 2), X = m.x + m.ox + c * m.colW, Y = m.y + m.oy + rr * m.rowH, on = k === m.i; Font.drawC(x, items[k].name, X + 39, Y + 4, on ? UIC.text : '#c9cfe4', UIC.textSh, 12); Font.drawC(x, items[k].sub, X + 39, Y + 20, on ? UIC.accent : UIC.muted, UIC.textSh, 8); } } });
         UI.remove(hdr);
         const name = r >= 0 ? TILES[r][0] : '關閉'; if (name === '關閉') break; idx = r; Game.menuIdx = r;
-        if (name === '狀態') yield* KD.statusScreen(); if (name === '牌組') yield* KD.deckScreen(); if (name === '冒險手冊') yield* handbookScreen12(); if (name === '職業') yield* KD.classScreen();
+        if (name === '狀態') yield* KD.statusScreen(); if (name === '牌組') yield* KD.deckScreen(); if (name === '裝備') yield* KD.equipScreen(); if (name === '冒險手冊') yield* handbookScreen12(); if (name === '職業') yield* KD.classScreen();
         if (name === '背包') { yield* bagScreen('field'); if (Game.homeWarp) break; }
         if (name === '存檔') { const ok = yield* yesNo('要記錄目前的冒險進度嗎？'); if (ok) { const good = saveGame(); if (good) { Sound.sfx('save'); yield* say(Game.st.name + '把冒險記錄了下來！'); } else yield* say('無法存檔……這個瀏覽器可能不允許儲存資料。'); } }
         if (name === '設定') yield* optionsScreen(); }
@@ -110,7 +111,10 @@ KD.isTown = (st = Game.st) => { const M = MAPS[st.map]; return !!M && !(M.encoun
     } finally { Game.inMenu13--; } }; }
 // a grid of cards (deck, workshop, shop, removal): returns the tapped index when `act` is given, else just browses
 KD.grid = function* (title, cards, o = {}) { const S = { sel: -1, scroll: 0, done: false, res: -1 }, cw = 38, ch = 54, cols = 4, gap = o.tag ? 13 : 5, vis = o.tag ? Math.min(2, o.rows || 2) : (o.rows || 3), top = o.top || 22; // v14.9: a price line under each card needs its own gap (the next row used to cover it)
+  if (o.tabs) S.tab = 0;
   const ui = { draw: x => { screenBG(x); headerBar(x, title); if (o.right) Font.drawR(x, o.right(), W - 6, 4, UIC.muted, UIC.textSh, 9);
+      if (o.tabs) o.tabs.forEach((T, i) => { const bw = 48, X = W - 4 - (o.tabs.length - i) * (bw + 2), on = S.tab === i; x.fillStyle = on ? '#c86030' : '#3a3050'; x.fillRect(X, 2, bw, 14); fontFit(x, T.n, X + bw / 2, 3, bw - 4, on ? '#fff4e0' : '#c8c0e0', '#000', 8, 'c'); // v14.16: 職業卡／裝備卡
+        touchRegion(X, 2, bw, 14, () => { if (S.tab !== i) { S.tab = i; cards = T.cards; S.sel = -1; S.scroll = 0; Sound.sfx('cursor'); } }); });
       const rows = Math.ceil(cards.length / cols); for (let i = 0; i < cards.length; i++) { const r = Math.floor(i / cols) - S.scroll; if (r < 0 || r >= vis) continue; const X = 6 + (i % cols) * (cw + 4), Y = top + r * (ch + gap);
         if (o.hide && o.hide(cards[i])) { x.fillStyle = '#0c0814'; x.fillRect(X - 1, Y - 1, cw + 2, ch + 2); x.fillStyle = '#241c34'; x.fillRect(X, Y, cw, ch); x.fillStyle = '#3a3050'; x.fillRect(X + 3, Y + 3, cw - 6, ch - 6); Font.drawC(x, '？', X + cw / 2, Y + ch / 2 - 8, '#6a6088', null, 12); }
         else KD.drawCard(x, cards[i], X, Y, cw, ch, { on: S.sel === i, dim: o.dim ? o.dim(cards[i], i) : false }); if (o.tag) { const t = o.tag(cards[i], i); if (t) Font.drawC(x, t, X + cw / 2, Y + ch + 1, '#ffe0a0', '#000', 7); }
@@ -129,7 +133,7 @@ KD.grid = function* (title, cards, o = {}) { const S = { sel: -1, scroll: 0, don
 KD.sorted = L => L.slice().sort((a, b) => 'atkskpow'.indexOf(KD.CARDS[a.id].type.slice(0, 2)) - 'atkskpow'.indexOf(KD.CARDS[b.id].type.slice(0, 2)) || KD.cost(a) - KD.cost(b) || (a.id < b.id ? -1 : 1) || (b.up || 0) - (a.up || 0));
 KD.deckScreen = function* () { const st = Game.st, G = []; for (const c of KD.sorted(KD.deck(st))) { const g = G[G.length - 1]; if (g && g.id === c.id && (g.up || 0) === (c.up || 0)) g.n++; else G.push({ id: c.id, up: c.up || 0, n: 1 }); } // v14.9: the same card shows once with ×N (a 60-card deck used to be 15 pages of 斬擊)
   yield* KD.grid('牌組・' + KD.clsOf(st).n, G, { right: () => KD.deck(st).length + ' 張', rows: 3, badge: c => c.n > 1 ? '×' + c.n : '' }); };
-KD.statusScreen = function* () { const st = Game.st, CL = KD.clsOf(st), K = KD.state(st), D = KD.deck(st); let done = false;
+KD.statusScreen = function* () { const st = Game.st, CL = KD.clsOf(st), K = KD.state(st), D = KD.fullDeck(st); let done = false;
   const cnt = t => D.filter(c => KD.CARDS[c.id].type === t).length;
   const ui = { draw: x => { screenBG(x); headerBar(x, '冒險者資料'); x.drawImage(heroFramesFor(st).down[0], 0, 0, 16, 22, 10, 26, 32, 44);
       Font.draw(x, st.name, 48, 26, UIC.text, UIC.textSh, 12); Font.draw(x, CL.n, 48, 42, CL.c, UIC.textSh, 11); Font.draw(x, 'HP ' + st.hp + ' / ' + KD.maxHp(st), 48, 58, UIC.good, UIC.textSh, 10);
@@ -137,13 +141,13 @@ KD.statusScreen = function* () { const st = Game.st, CL = KD.clsOf(st), K = KD.s
       Font.draw(x, '職業能力「' + CL.ab + '」', 8, 90, '#ffd090', UIC.textSh, 10); wrap15(CL.abd, W - 16, 9).forEach((L, k) => Font.draw(x, L, 8, 104 + k * 11, UIC.text, UIC.textSh, 9));
       Font.draw(x, '牌組 ' + D.length + ' 張（攻擊 ' + cnt('atk') + '・技能 ' + cnt('skl') + '・能力 ' + cnt('pow') + '）', 8, 136, UIC.text, UIC.textSh, 9);
       Font.draw(x, '升級過的卡 ' + D.filter(c => c.up).length + ' 張', 8, 150, UIC.muted, UIC.textSh, 9); Font.draw(x, '打倒的頭目 ' + KD.bossN(st), 8, 164, UIC.muted, UIC.textSh, 9); Font.draw(x, '金幣 ' + st.money + ' G', 8, 178, UIC.warm, UIC.textSh, 9);
-      Font.draw(x, '變強：打怪拿卡、商店買卡和刪卡、', 8, 200, UIC.muted, UIC.textSh, 8); Font.draw(x, '鐵匠的卡牌工坊升級卡。', 8, 211, UIC.muted, UIC.textSh, 8);
+      Font.draw(x, '變強：打怪拿卡、商店買卡和刪卡、', 8, 200, UIC.muted, UIC.textSh, 8); Font.draw(x, '鐵匠打造裝備、升級卡。', 8, 211, UIC.muted, UIC.textSh, 8);
       x.fillStyle = '#4a3a50'; x.fillRect(4, H - 16, 36, 14); Font.drawC(x, '返回', 22, H - 15, '#e8e4f4', '#000', 9); touchRegion(0, 0, W, H, () => { done = true; }); } };
   UI.push(ui); Input.consume('a', 'b'); while (!done) { yield; if (Input.pressed('a') || Input.pressed('b')) done = true; } UI.remove(ui); Input.consume('a', 'b'); };
 KD.classScreen = function* () { const st = Game.st, K = KD.state(st), town = KD.isTown(st); let S = { sel: KD.CLS_ORDER.indexOf(KD.clsKey(st)), done: false, go: null };
   const ui = { draw: x => { screenBG(x); headerBar(x, '職業'); Font.drawR(x, town ? '可以轉職' : '在城鎮才能轉職', W - 6, 4, town ? UIC.good : UIC.muted, UIC.textSh, 8);
       KD.CLS_ORDER.forEach((k, i) => { const C = KD.CLASSES[k], Y = 22 + i * 44, on = S.sel === i, cur = KD.clsKey(st) === k, d = K.decks[k];
-        drawWin(x, 4, Y, W - 8, 41, on ? 'menu' : 'ow'); Font.draw(x, C.n, 10, Y + 2, C.c, UIC.textSh, 11); Font.draw(x, 'HP ' + C.hp, 60, Y + 4, UIC.good, UIC.textSh, 8); Font.drawR(x, cur ? '目前' : d ? '牌組 ' + d.length + ' 張' : '還沒用過', W - 10, Y + 4, cur ? UIC.accent : UIC.muted, UIC.textSh, 8);
+        drawWin(x, 4, Y, W - 8, 41, on ? 'menu' : 'ow'); Font.draw(x, C.n, 10, Y + 2, C.c, UIC.textSh, 11); Font.draw(x, 'HP ' + C.hp, 60, Y + 4, UIC.good, UIC.textSh, 8); Font.drawR(x, cur ? '目前' : d ? '職業卡 ' + d.length + ' 張' : '還沒用過', W - 10, Y + 4, cur ? UIC.accent : UIC.muted, UIC.textSh, 8);
         Font.draw(x, '「' + C.ab + '」' + C.abd, 10, Y + 17, UIC.text, UIC.textSh, 7); Font.draw(x, C.d, 10, Y + 28, UIC.muted, UIC.textSh, 7); touchRegion(4, Y, W - 8, 41, () => { if (S.sel === i) S.go = k; else S.sel = i; }); });
       Font.draw(x, town ? '點兩下轉職。每個職業有自己的牌組。' : '在沒有野生魔物的城鎮裡可以轉職。', 6, 202, UIC.muted, UIC.textSh, 8);
       x.fillStyle = '#4a3a50'; x.fillRect(4, H - 16, 36, 14); Font.drawC(x, '返回', 22, H - 15, '#e8e4f4', '#000', 9); touchRegion(4, H - 16, 36, 14, () => { S.done = true; }); } };
@@ -168,7 +172,7 @@ KD.cardShop = function* () { const st = Game.st, S = KD.shopStock(st);
     if (r < 0) return; const q = L[r], p = KD.price(KD.CARDS[q.id].rar); if (st.money < p) { Sound.sfx('buzz'); yield* say('金幣不夠。'); continue; }
     st.money -= p; S.sold.push(q.i); KD.addCard(st, { id: q.id }); Sound.sfx('item'); yield* say('買下了「' + KD.CARDS[q.id].n + '」！（加入' + KD.clsOf(st).n + '的牌組）'); } };
 KD.removeFlow = function* () { const st = Game.st, D = KD.deck(st);
-  if (D.length <= 5) { yield* say('牌組太少了，不能再刪。'); return; } const p = KD.removePrice(st);
+  if (KD.remNo(st, D)) { yield* say(KD.remMsg(st)); return; } const p = KD.removePrice(st);
   const L = KD.sorted(D), r = yield* KD.grid('刪卡（' + p + ' G）', L, { act: () => '再點一次：刪掉這張', hint: '選一張要從牌組刪掉的卡。' }); if (r < 0) return;
   if (st.money < p) { Sound.sfx('buzz'); yield* say('金幣不夠。'); return; } const c = L[r]; if (!(yield* yesNo('花 ' + p + ' G 把「' + KD.name(c) + '」從牌組刪掉嗎？'))) return;
   st.money -= p; D.splice(D.indexOf(c), 1); KD.state(st).rem = (KD.state(st).rem || 0) + 1; Sound.sfx('select'); yield* say('「' + KD.name(c) + '」從牌組裡拿掉了。'); };

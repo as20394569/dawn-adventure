@@ -44,7 +44,7 @@ if (typeof BATTLE_HELP !== 'undefined') for (const p of BATTLE_HELP) p[1] = p[1]
 
 /* ---------- 素材・部位的說明 ---------- */
 if (typeof MATCAT11 !== 'undefined') for (const k in MATCAT11) { const I = ITEMS[k], D = I && Object.getOwnPropertyDescriptor(I, 'd'); if (!D || !D.get) continue;
-  Object.defineProperty(I, 'd', { configurable: true, enumerable: true, get() { const t = D.get.call(this); return KD.v14on() ? t.replace(/\n鐵匠「素材換點數」：[^\n]*/, '\n卡牌工坊：升級一張卡要 2 個') : t; }, set(v) { if (D.set) D.set.call(this, v); } }); }
+  Object.defineProperty(I, 'd', { configurable: true, enumerable: true, get() { const t = D.get.call(this); return KD.v14on() ? t.replace(/\n鐵匠「素材換點數」：(\S+) (\d+) 點/, '\n鐵匠：打造算「$1」$2 點；升級卡要 2 個').replace(/\n鐵匠「素材換點數」：[^\n]*/, '\n卡牌工坊：升級一張卡要 2 個') : t; }, set(v) { if (D.set) D.set.call(this, v); } }); }
 for (const k in ITEMS) { if (!/^(pt_|pr_)/.test(k)) continue; const I = ITEMS[k], d0 = I.d;
   Object.defineProperty(I, 'd', { configurable: true, enumerable: true, get: () => (!KD.v14on() ? d0 : String(d0).replace(/用來升級「[^」]*」[^。]*。|把牠的晶石[^。]*。|把「[^」]*」升到[^。]*。/g, '卡牌工坊升級卡可以用（2 個）。')), set: () => {} }); }
 
