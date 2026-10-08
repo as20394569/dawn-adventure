@@ -1,112 +1,3 @@
-{ const H = Battle.prototype.handlers;
-  const _hit = H.HIT; H.HIT = function* (e, s, t, P) { const D = DEF.skills[P.skill];
-    if (t && s && D && P.skill === 'sig_mage' && P.el) { yield* sigilBolt(this, this.center(s), this.center(t), P.el, P.hitIndex || 0); return; }
-    if (t && s && D && P.hitIndex > 0) { const C = this.center(t);
-      if (s.hero && D.tags.includes('basic')) { yield* segSwing(this, s, C, P.hitIndex, this._thKind || (typeof mainWKey === 'function' && GEAR[mainWKey()] ? GEAR[mainWKey()].kind : '')); return; }
-      if (D.hitFx && FX[D.hitFx]) { yield* FX[D.hitFx].call(this, this.center(s), C, s, P.hitIndex); return; } }
-    yield* _hit.call(this, e, s, t, P); };
-  const _use = H.SKILL_USE; H.SKILL_USE = function* (e, s, t, P) { const D = DEF.skills[P.skill];
-    if (s && s.hero && P.skill === 'sig_guardian' && this.core.rule(this.core.byId.H, 'sanctuary')) { this.cast = { id: P.cast, D, s, hits: 0, total: 0, said: {} };
-      yield* this.announce(s.n + '使用了' + this.skillName(P.skill, s.id) + '！'); yield* wait(6); const C = this.center(s); Sound.sfx('charge');
-      this.spawn({ k: 'ring', x: C.x, y: C.y + 18, r0: 34, r1: 6, c: '#ffe8a0', w: 2, life: 14, fl: 0.4 }); yield* FX.heal.call(this, C); return; }
-    if (s && s.hero && D && D.cat === '特' && D.power && s.st.elem_burst) { const C = this.center(s); Sound.sfx('hitSuper'); this.spawn({ k: 'flash', c: '#d8b0ff', a: 0.35, life: 8 });
-      for (const [i, c] of ['#ff7a30', '#3c9cf0', '#f8d030'].entries()) this.spawn({ k: 'ring', x: C.x, y: C.y, r0: 4 + i * 4, r1: 34 + i * 6, c, w: 2, life: 14 });
-      this.popNum(s, '元素爆發！', '#e8c8ff', null, { big: true, dy: -24 }); yield* wait(10); }
-    yield* _use.call(this, e, s, t, P); };
-  const _dmg = H.DAMAGE; H.DAMAGE = function* (e, s, t, P) {
-    if (t && P.kind === 'turret') yield* turretShotFx(this, this.turretMuzzle(), this.center(t));
-    else if (t && P.kind === 'detonate') { const C = this.center(t); Sound.sfx('hitSuper'); this.spawn({ k: 'flash', c: '#ff6050', a: 0.3, life: 8 });
-      this.spawn({ k: 'ring', x: C.x, y: C.y, r0: 4, r1: 36, c: '#ff5a4a', w: 3, life: 14 }); this.spawn({ k: 'ring', x: C.x, y: C.y, r0: 2, r1: 22, c: '#ffd0a0', w: 2, life: 10 });
-      this.spawn({ k: 'glow', x: C.x, y: C.y, r: 30, c: '#ff4030', life: 14 }); fxBurst(this, C.x, C.y, 18, ['#ff5a4a', '#ffd0a0', '#801818'], 3, 18, 0.06); this.shake = Math.max(this.shake, 8); yield* wait(10); }
-    yield* _dmg.call(this, e, s, t, P); };
-  const _ap = H.STATUS_APPLY; H.STATUS_APPLY = function* (e, s, t, P) { const id = P.status, was = t && t.st[id];
-    yield* _ap.call(this, e, s, t, P); if (!t || P.failed) return; const C = this.center(t);
-    if (id === 'turret' && P.delta > 0) { if (!(was > 0)) { this._turDrop = 12; Sound.sfx('rock'); yield* wait(12); const T = this.turretPos(); this.spawn({ k: 'ring', x: T.x, y: T.y, r0: 4, r1: 22, c: '#d8c8a0', w: 2, life: 12, fl: 0.3 }); fxBurst(this, T.x, T.y - 4, 8, ['#d8c8a0', '#a08060'], 1.6, 14, 0.08);
-        yield* this.msg(t.n + '設置了砲台！（彈藥 ' + P.stacks + '）', { hold: 22 }); }
-      else { const T = this.turretMuzzle(); Sound.sfx('charge'); this.sparks(T.x - 10, T.y + 14, 8, ['#fff0a0', '#ffd060'], 1.6, 14); yield* this.msg('砲台補滿了彈藥！（' + P.stacks + '）', { hold: 20 }); } }
-    else if (id === 'turret' && P.cleared) this._turGone = 14;
-    else if (id === 'hunt_mark' && P.delta > 0) this.spawn({ k: 'ring', x: C.x, y: C.y, r0: 16, r1: 4, c: '#ff6a6a', w: 2, life: 10 });
-    else if (id === 'elem_burst' && !was) { Sound.sfx('charge'); for (const [i, c] of ['#ff7a30', '#3c9cf0', '#f8d030'].entries()) this.spawn({ k: 'ring', x: C.x, y: C.y, r0: 30 - i * 6, r1: 4, c, w: 2, life: 14 });
-      yield* wait(8); yield* this.msg('咒印集齊了！下一個魔法技能「元素爆發」！', { hold: 22 }); } };
-  const _gone = H.statusGone; H.statusGone = function* (e, s, t, P, expire) { if (t && P.status === 'turret') this._turGone = 14; yield* _gone.call(this, e, s, t, P, expire); };
-  const _msg = H.MESSAGE; H.MESSAGE = function* (e, s, t, P) { if (P.key === 'insight' && t) { Sound.sfx('cursor'); this.popNum(t, '看破' + P.n, '#a8e8ff', null, { small: true, dy: -14 }); yield* wait(4); return; } yield* _msg.call(this, e, s, t, P); };
-}
-const RECIPE_FIX12 = {
-  ironSword: ['stone', 'hareFur'], huntKnife: ['stone', 'hareFur'], uniform: ['hareFur'], leather: ['hareFur'], schoolShoes: ['hareFur'],
-  guardBadge: ['stone'], swiftFeather: ['feather', 'hareFur'], wrapFist: ['hareFur'],
-  mistDagger: ['stone', 'frogSkin'], guardHelm: ['stone', 'hareFur'], hunterLeather: ['frogSkin', 'hareFur'],
-  mistBoots: ['frogSkin', 'hareFur'], herbPouch: ['herb', 'hareFur'], minerHelm: ['stone', 'emberCore'],
-  hunterCap: ['feather', 'hareFur', 'stone'], quartzWand: ['crystal', 'stone'], thornCrown: ['leaf', 'spore'],
-  ironSpear: ['stone', 'frogSkin'], ironKnuckle: ['stone', 'hareFur'], brassPistol: ['stone', 'emberCore'],
-  qHerbPouch: ['herb', 'leaf'], ironBuckler: ['stone', 'beetleShell', 'stone'], mistCloak: ['frogSkin', 'hareFur'],
-  knightSword: ['stone', 'crystal'], ruinStaff: ['stone', 'ectoplasm'], knightHelm: ['stone', 'crystal'], chainMail: ['stone'],
-  knightGreaves: ['stone', 'frogSkin'], thornRing: ['leaf', 'stone'], mossBracer: ['stone', 'leaf'], hunterOath: ['feather', 'hareFur'],
-  banditHood: ['banditCloth'], grenAxe: ['stone', 'banditCloth'], tideStaff: ['moonDew', 'crystal'], boneSaber: ['boneShard', 'stone'],
-  minerBoots: ['stone', 'frogSkin'], shadowBoots: ['batWing'], ruinMail: ['stone', 'boneShard'], magusStaff: ['crystal', 'ectoplasm'],
-  stolenTome: ['banditCloth', 'leaf'], giantCore: ['stone'], banditKnife: ['banditCloth'], grenBelt: ['banditCloth', 'stone'],
-  sandSaber: ['sandCrystal', 'scorpTail'], sandBoots: ['sandCrystal', 'harpyFeather'], rockFist: ['stone'], forestHarp: ['leaf'],
-  steamRifle: ['stone'], galeLance: ['harpyFeather'], golemShield: ['beetleShell', 'frogSkin', 'stone'],
-  dawnSword: ['emberCore', 'crystal'], moonCharm: ['moonDew'], crystalHeart: ['crystal'], masterBlade: ['stone', 'crystal'], masterStaff: ['crystal', 'rotWood'],
-  stormStaff: ['stinger', 'crystal'], kingsBlade: ['boneShard'], runeMantle: ['ectoplasm'], boneKnightMail: ['boneShard', 'stone'],
-  ancientGreaves: ['stone', 'boneShard'], kingsSeal: ['ectoplasm'], dawnStaff: ['emberCore', 'crystal'], deathTome: ['ectoplasm', 'boneShard'],
-  graveBlade: ['boneShard'], golemFist: ['stone', 'ectoplasm'], prismCrown: ['crystal', 'moonDew'], reedBoots: ['beetleShell', 'lizardScale'],
-  scaleCharm: ['lizardScale'], wandererCloak: ['mothDust'], moonBlade: ['moonDew'], reedHat: ['lizardScale', 'moonDew'], lakeBoots: ['lizardScale', 'moonDew'],
-  witchHat: ['bogMoss'], bogStaff: ['bogMoss', 'rotWood'], treantMail: ['rotWood'], mireBoots: ['bogMoss', 'frogSkin'], rhinoHelm: ['sandCrystal', 'stone'],
-  scaleSpear: ['lizardScale', 'stagHorn'], rockAxe: ['stone', 'stagHorn', 'stagHorn'], moonLyre: ['moonDew', 'silk'], gearRepeater: ['stone'],
-  quakeAxe: ['stone', 'boneShard'], tideRapier: ['moonDew', 'crystal'], qScholarLens: ['crystal', 'stone'], qGraveBell: ['ectoplasm', 'boneShard'],
-  crystalShield: ['crystal', 'silk', 'stone'], crabMail: ['beetleShell', 'lizardScale'], golemVisor: ['stone', 'ectoplasm'],
-  eclipseBlade: ['moonDew'], wyrmMail: ['lizardScale', 'moonDew'], wyrmFang: ['lizardScale', 'moonDew'], wyrmStaff: ['moonDew', 'lizardScale'],
-  wyrmShield: ['lizardScale', 'moonDew', 'stone'], gateKey: ['riftShard'], voidBlade: ['riftShard', 'wispFlame'], duneFang: ['sandCrystal'], wormCharm: ['sandCrystal'],
-  sandTome: ['sandCrystal', 'harpyFeather'], witchTome: ['bogMoss'], hydraScale: ['bogMoss', 'lizardScale'], hydraFang: ['bogMoss', 'spore'], hydraStaff: ['bogMoss', 'rotWood'],
-  royalSword: ['rustScrap', 'stone'], courtStaff: ['crystal'], royalHelm: ['rustScrap', 'stone'], royalMail: ['rustScrap', 'stone'], courtRobe: ['silk', 'moonDew'],
-  royalGreaves: ['rustScrap', 'crocHide'], royalBadge: ['stone', 'wheat'], wheatBoots: ['wheat', 'wolfPelt'], blackCloak: ['banditCloth'],
-  ratCrown: ['ratTail', 'rustScrap'], boarHelm: ['boarTusk', 'stone'], wolfTwin: ['wolfPelt', 'stone'], thunderFist: ['brassGear', 'stinger'], moonHarp: ['moonDew', 'silk'],
-  qLakeScale: ['lizardScale', 'moonDew'], qDesertRose: ['sandCrystal', 'cactusFruit'], windHorn: ['windStone'], tigerClaw: ['boarTusk', 'wolfPelt'],
-  boltCannon: ['rustScrap', 'stinger'], brassShield: ['brassGear', 'rustScrap', 'stone'],
-  frostTome: ['iceCrystal', 'snowPelt'], clockHelm: ['brassGear', 'rustScrap'], clockMail: ['brassGear', 'spring'], ancientWatch: ['brassGear', 'spring'],
-  frostBrand: ['iceCrystal', 'snowPelt'], frostHood: ['snowPelt'], salamanderHelm: ['salamanderScale', 'magmaStone'], magmaPlate: ['magmaStone', 'salamanderScale'],
-  harvestScythe: ['wheat'], chronoLance: ['brassGear'], colossusCore: ['brassGear'], bearMantle: ['snowPelt'], lichTome: ['iceCrystal', 'ectoplasm'],
-  frostTiara: ['iceCrystal', 'crystal'], lavaHeart: ['magmaStone', 'salamanderScale'], coreStaff: ['magmaStone', 'emberCore'], gearRifle: ['brassGear', 'magmaStone'],
-  iceHarp: ['iceCrystal', 'silk'], glacierAxe: ['iceCrystal', 'stone'], frostSpear: ['iceCrystal', 'snowPelt'], magmaFist: ['magmaStone', 'salamanderScale'],
-  frostShield: ['iceCrystal', 'crystal', 'stone'], lavaShield: ['magmaStone', 'salamanderScale', 'stone'], qGuildSeal: ['brassGear', 'stone'], qSnowFang: ['snowPelt', 'iceCrystal'],
-  shadowDagger: ['shadowCloth', 'voidShard'], voidStaff: ['voidShard', 'shadowCloth'], duskHelm: ['shadowCloth'], duskPlate: ['shadowCloth'], voidBoots: ['voidShard', 'shadowCloth'],
-  starSword: ['starShard', 'starDust'], starRobe: ['starDust', 'starShard'], duskBlade: ['shadowCloth', 'voidShard'], victorRing: ['voidShard', 'shadowCloth'],
-  moldBlade: ['shadowCloth'], starLance: ['starShard', 'starDust'], starFist: ['starShard', 'starDust'], starLyre: ['starDust', 'starShard'], starBlaster: ['starShard', 'brassGear'],
-  fallenLance: ['starShard', 'shadowCloth'], boneGreatsword: ['boneShard', 'shadowCloth'], starShield: ['starDust', 'starShard', 'stone'], shadowShield: ['shadowCloth', 'voidShard'],
-  starTome: ['starDust', 'starShard'], voidTome: ['voidShard'],
-};
-for (const k in RECIPE_FIX12) { const R = GEAR_RECIPE[k]; if (!R) { if (BV2.DEV) bvErr('v12', 'recipe ' + k + ' missing'); continue; }
-  const counts = Object.values(R.mats), keys = RECIPE_FIX12[k], m = {};
-  counts.forEach((n, i) => { const id = keys[Math.min(i, keys.length - 1)]; if (!ITEMS[id]) { bvErr('v12', 'recipe mat ' + id); return; } m[id] = (m[id] || 0) + n; });
-  R.mats = m; }
-Object.assign(MOVES, {
-  m12_wolfNip: { n: '疾咬', t: '一般', cat: '物', pow: 40, acc: 100, pp: 25, prio: 1, d: '一眨眼就撲上來咬一口。必定先出手。' },
-  m12_wolfClaw: { n: '撕爪', t: '一般', cat: '物', pow: 55, acc: 95, pp: 20, eff: { stat: { def: -1 }, p: 30 }, d: '用爪子撕開護具。有時降低對手的物防。' },
-  m12_wolfCall: { n: '呼伴長嚎', t: '一般', cat: '變', pp: 10, stat: { who: 'self', atk: 1, spe: 1 }, d: '長嚎呼喚同伴，草叢裡亮起好幾對眼睛。提升物攻和速度。' },
-  m12_wolfHunt: { n: '圍獵', t: '一般', cat: '物', pow: 70, acc: 95, pp: 10, d: '繞著獵物轉一圈，從背後撲咬。' },
-  m12_crocSnap: { n: '小顎咬', t: '一般', cat: '物', pow: 55, acc: 100, pp: 20, eff: { flinch: 1, p: 20 }, d: '用小小的嘴喀嚓咬下。有時讓對手退縮。' },
-  m12_crocSplash: { n: '水花甩尾', t: '水', cat: '物', pow: 55, acc: 95, pp: 15, eff: { stat: { spe: -1 }, p: 30 }, d: '甩尾巴打起一片水花。有時降低對手的速度。' },
-  m12_crocShoal: { n: '躲進淺灘', t: '水', cat: '變', pp: 10, stat: { who: 'self', def: 1, spd: 1 }, d: '縮進淺灘的水裡。提升物防和魔防。' },
-  m12_crocRoll: { n: '死亡翻滾', t: '一般', cat: '物', pow: 25, acc: 90, pp: 10, hits: [2, 3], d: '咬住對手在水裡打滾。連續攻擊 2～3 次。' },
-  m12_stumpBump: { n: '年輪撞擊', t: '草', cat: '物', pow: 45, acc: 100, pp: 20, eff: { flinch: 1, p: 20 }, d: '用結實的樹樁身體撞過來。有時讓對手退縮。' },
-  m12_stumpRoot: { n: '樹根絆腳', t: '草', cat: '物', pow: 35, acc: 95, pp: 15, eff: { stat: { spe: -1 }, p: 50 }, d: '從腳下伸出樹根把對手絆倒。常常降低對手的速度。' },
-  m12_stumpSprout: { n: '發芽', t: '草', cat: '變', pp: 10, heal: 0.25, d: '頭頂的嫩芽長出新葉。回復一些體力。' },
-  m12_stumpChips: { n: '木屑飛濺', t: '一般', cat: '物', pow: 50, acc: 100, pp: 15, d: '抖動身體，把木屑像石子一樣噴出去。' },
-  m12_pigTusk: { n: '小獠牙', t: '一般', cat: '物', pow: 50, acc: 100, pp: 20, eff: { flinch: 1, p: 20 }, d: '用剛長出來的小獠牙往上頂。有時讓對手退縮。' },
-  m12_pigSnort: { n: '哼哼威嚇', t: '一般', cat: '物', pow: 35, acc: 100, pp: 15, eff: { stat: { atk: -1 }, p: 100 }, d: '用鼻子噴氣再頂一下。降低對手的物攻。' },
-  m12_pigMud: { n: '泥巴打滾', t: '一般', cat: '變', pp: 10, stat: { who: 'self', def: 1 }, d: '在泥巴裡打滾，身上裹了一層硬泥。提升物防。' },
-  m12_pigRush: { n: '橫衝直撞', t: '一般', cat: '物', pow: 75, acc: 85, pp: 10, d: '低著頭一路衝過來。威力大，但常常撞歪。' },
-});
-for (const [k, c] of [['m12_wolfNip', 'bite'], ['m12_wolfClaw', 'claw'], ['m12_wolfCall', 'buff'], ['m12_wolfHunt', 'bite'], ['m12_crocSnap', 'bite'], ['m12_crocSplash', 'strike'],
-  ['m12_crocShoal', 'guard'], ['m12_crocRoll', 'bite'], ['m12_stumpBump', 'strike'], ['m12_stumpRoot', 'strike'], ['m12_stumpSprout', 'buff'], ['m12_stumpChips', 'proj'],
-  ['m12_pigTusk', 'pierce'], ['m12_pigSnort', 'debuff'], ['m12_pigMud', 'guard'], ['m12_pigRush', 'strike']]) {
-  Object.assign(MOVES[k], { cls: c, fx: k, foe: 1 }); (MON_CLASS[c] || (MON_CLASS[c] = [])).push(k);
-  if (k === 'm12_crocRoll') MOVES[k].hitFx = 'm12h_crocRoll';
-  const D = defPut('skills', k, skillFromMove(k, MOVES[k], { kind: 'skill', extraTags: ['monster_skill'] }));
-  D.cooldown = 0; // monster moves: no cooldown (10m)
-  D.effects = D.effects.map((ef, i) => effRegister('skill:' + k + '#e' + i, ef)); D.after = D.after.map((ef, i) => effRegister('skill:' + k + '#a' + i, ef));
-}
-MON_PK.m12rings = (x, p, a) => { const R = lerp(p.r0 || 6, p.r1 || 30, Math.min(1, p.t / p.life * 1.6)); x.globalAlpha = a; for (let i = 3; i >= 1; i--) mCirc(x, p.x, p.y, R * i / 3, i % 2 ? (p.c || '#a07a4a') : (p.c2 || '#e8c890')); };
 { const FUR = '#c09a64', FUR2 = '#f0d8a8', AMBER = '#f0b040', TOOTH = '#f8f4e0', CROC = '#6a8a3a', CROC2 = '#c8d070', CREEK = '#4aa0c0', CREEK2 = '#8ad0d8',
     BARK = '#8a6038', BARK2 = '#c8a070', SPROUT = '#8ac040', MUD = '#6a4a28', TUSK = '#f4efe0', DUST = '#a08a6a';
   function* crocRoll(B, T, i) { Sound.sfx('water'); for (let k = 0; k < 3; k++) mSpawn(B, 'mgouge', { x: T.x, y: T.y + 4, ang: (i * 3 + k) * 1.05, len: 40, w: 6, c: k % 2 ? CREEK : CROC, c2: k % 2 ? CREEK2 : CROC2, bend: 12, grow: 5, life: 14 });
@@ -9960,3 +9851,88 @@ Battle.prototype.drawPops = function (x) { if (typeof ctrBadge12 === 'function')
         x.save(); KB12.rr(x, tx, -5.5, tw, 9, 3); x.fillStyle = T[0]; x.fill(); x.restore(); KB12.tc(x, p.tag, tx + tw / 2, -1, T[1], KB12.S); }
       x.restore(); }); }
   const R = P.filter(p => KB12.RIB[p.s] && p.t < 60); if (R.length) KB12.ribbon(x, R[R.length - 1]); }; // the big event last, over everything
+const PZ12 = {
+  M: { 連擊: ['#8ee6ff', 'rgba(12,44,60,0.94)'], 重擊: ['#ff9a7a', 'rgba(64,22,14,0.94)'], 群攻: ['#ffd27a', 'rgba(64,44,10,0.94)'], 擾亂: ['#d6a8ff', 'rgba(42,22,64,0.94)'], '？': ['#a0a6ba', 'rgba(30,30,44,0.94)'] },
+  fam: { beast: '群攻', insect: '群攻', plant: '連擊', bird: '連擊', ooze: '擾亂', aquatic: '擾亂', construct: '重擊', human: '擾亂', undead: '重擊', spirit: '連擊' },
+  brk: 1.25, // 一般魔物破防時受到的傷害
+  sp: {}, // 個別魔物：sp → ['重擊']（第三階段再微調）
+  skc: {},
+};
+function pzFoe12(u) { if (!u || u.hero || u.side === 'A') return null; const o = PZ12.sp[u.sp]; if (o) return o; const f = PZ12.fam[u.fam || (typeof SPECIES !== 'undefined' && SPECIES[u.sp] || {}).fam]; return f ? [f] : null; }
+function pzSkill12(u, id) { const D = DEF.skills[id]; if (!D) return []; const tags = D.tags || [];
+  if (tags.includes('basic')) { const R = []; if (u && wardSum12(u, 'pzFist12')) R.push('連擊'); if (u && wardSum12(u, 'wAxe12')) R.push('重擊'); return R; }
+  if (PZ12.skc[id]) return PZ12.skc[id];
+  const R = [], efs = (D.effects || []).concat(D.after || []).map(effGet).filter(Boolean), aoe = D.target === 'all_enemies' || tags.includes('aoe'), foe = aoe || D.target === 'enemy';
+  if (foe && ((D.hits && D.hits[1] >= 2) || tags.includes('multi_hit') || D.hitsOf || efs.filter(e => e.type === 'damage').length >= 2)) R.push('連擊');
+  if (!aoe && D.target === 'enemy' && D.power > 0 && (D.power >= 80 || D.charge)) R.push('重擊');
+  if (aoe && D.power > 0) R.push('群攻');
+  if (foe && efs.some(e => e.target_rule === 'target' && ((e.type === 'status' && e.status !== 'barrier') || (e.type === 'stage' && Object.values(e.stats || {}).some(n => n < 0))))) R.push('擾亂');
+  return (PZ12.skc[id] = R); }
+const pzMatch12 = (u, id, t) => { const F = pzFoe12(t); if (!F) return null; const S = pzSkill12(u, id); return F.find(m => S.includes(m)) || null; };
+{ const D = DEF.passives.tr11, _mk = D.make; D.make = function (v, u) { const r = _mk.call(this, v, u), T = new Set((v && v.traits) || []); if (T.has('拳套')) r.mods.push({ pzFist12: 1 }); return r; }; }
+{ const P = BattleCore.prototype, _em = P.emit, _ea = P.endAction, _pr = P.prepare, _tk = P.tick, _tc = P.tickCooldowns;
+  P.emit = function (type, o = {}, main = null) {
+    if (type === EVT.HIT && !PZ12.off && o.src && o.src.hero && this.act && !this.act.reaction && o.tgts && o.tgts[0] && o.payload) { const t = o.tgts[0], m = pzMatch12(o.src, o.payload.skill, t); if (m) (this.pz12 || (this.pz12 = [])).push({ aid: this.act.action_id, t: t.id, m }); }
+    return _em.call(this, type, o, main); };
+  P.endAction = function (cmd, executed) {
+    const all = this.pz12 || [], L = cmd ? all.filter(r => r.aid === cmd.action_id) : []; if (L.length) this.pz12 = all.filter(r => r.aid !== cmd.action_id);
+    const u = cmd && this.byId[cmd.actor];
+    if (L.length && u && u.hero && !cmd.reaction && executed && !this.ended()) { let any = false; const seen = new Set();
+      for (const r of L) { if (seen.has(r.t)) continue; seen.add(r.t); const t = this.byId[r.t]; if (!t || !this.isUp(t) || this.hasStatus(t, 'broken') || wardFoe12(t) || t.data.pzDone12) continue;
+        this.emit(EVT.BREAK, { src: u, tgts: [t], tags: ['break', 'pz12'], payload: { pz: r.m } }, () => { t.data.pzDone12 = 1; t.data.brkN11 = (t.data.brkN11 || 0) + 1; this.applyStatus(u, t, 'broken', {}); this.removeStatus(t, 'charging', 'break'); this.removeStatus(t, 'airborne', 'break'); });
+        any = true; }
+      if (any && this.isUp(u) && !this.ended() && !this.alive('B').some(f => wardFoe12(f))) this.extraTurn(u, 'chase12'); } // 頭目・菁英還在場上：小兵照樣破防，但不給追擊
+    this._pzChase = !!(cmd && cmd.meta && cmd.meta.extra === 'chase12' && u && u.hero);
+    try { return _ea.call(this, cmd, executed); } finally { this._pzChase = false; } };
+  P.prepare = function (cmd) { const u = cmd && this.byId[cmd.actor]; this._pzChase = !!(cmd && cmd.meta && cmd.meta.extra === 'chase12' && u && u.hero); try { return _pr.call(this, cmd); } finally { this._pzChase = false; } };
+  P.tick = function (u, when) { if (this._pzChase && u && u.hero && (when === 'owner_action_start' || when === 'owner_action_end')) return; return _tk.call(this, u, when); };
+  P.tickCooldowns = function (u, ...a) { if (this._pzChase && u && u.hero) return; return _tc.call(this, u, ...a); }; }
+{ const _bm = BR.FORMULA.brokenMul; BR.FORMULA.brokenMul = c => c && c.tgt && !c.tgt.hero && !wardFoe12(c.tgt) && !PZ12.off ? PZ12.brk : _bm(c); }
+{ const _h = BAI.hero; BAI.hero = function (core, u, policy) { const d = _h.call(this, core, u, policy); if (!PZ12.bot || PZ12.off || policy === 'attack') return d;
+    const can = id => { const k = DEF.skills[id]; return k && !core.onCooldown(u, id) && (k.costs || []).every(c => (u.res[c.res] || 0) >= core.costOf(u, k, c)); };
+    const ids = [u.data.attackSkill || 'attack'].concat(u.data.slots || []).filter(can);
+    for (const f of core.foesOf(u)) { if (!core.isUp(f) || core.hasStatus(f, 'broken') || wardFoe12(f) || f.data.pzDone12) continue; const id = ids.find(q => pzMatch12(u, q, f)); if (id) return { type: 'skill', skill: id, targets: DEF.skills[id].target === 'enemy' ? [f.id] : [] }; }
+    return d; }; }
+{ const _wm = wardMul12; wardMul12 = function (core, s, t, P) { const m = _wm(core, s, t, P); if (PZ12.off || PZ12.noWard || !(s && s.hero && P && P.skill && pzMatch12(s, P.skill, t))) return m; return Math.min(m * 2, WARD12.mul.cap * (1 + wardSum12(s, 'wbrk12') / 100)); }; }
+const pzKnown12 = sp => !!(Game.st && Game.st.dex && Game.st.dex[sp] && Game.st.dex[sp].pz12);
+const pzBrokenV12 = (core, u) => { const B = Game.scene, v = B && B.core === core && B.views && B.views[u.id]; return v && v.st ? 'broken' in v.st : core.hasStatus(u, 'broken'); };
+const pzChase12 = B => !!(B && B.core && B.core.need && B.core.need.extra === 'chase12');
+KB12.RIB['追擊！'] = '追擊！再動一次';
+{ const _oe = Battle.prototype.onEvent; Battle.prototype.onEvent = function* (e) {
+    if (e && e.type === EVT.HIT && e.src && e.tgts && e.tgts[0] && e.payload && Game.st) { const s = this.core.byId[e.src], t = this.core.byId[e.tgts[0]];
+      if (s && s.hero && t && t.sp && pzMatch12(s, e.payload.skill, t)) { const D = Game.st.dex || (Game.st.dex = {}), d = D[t.sp] || (D[t.sp] = {}); if (!d.pz12) d.pz12 = 1; } }
+    return yield* _oe.call(this, e); }; }
+{ const H = Battle.prototype.handlers, _br = H.BREAK; H.BREAK = function* (e, s, t, P) {
+    if (!(e && e.tags && e.tags.includes('pz12'))) return yield* _br.call(this, e, s, t, P);
+    if (!t) return; const C = this.center(t); t.flash = 24; Sound.sfx('crit'); this.shake = Math.max(this.shake || 0, 14);
+    this.sparks(C.x, C.y, 18, ['#ffe070', '#ffffff', '#ffd27a'], 3, 22, 0.12); this.popNum(t, '破防！', '#ffd040', null, { big: 1 }); this.anim(t, 'hurt', 24, true);
+    yield* wait(12); if (t.A) t.A.hold = false; yield* this.msg('打中破綻！' + t.n + '破防了！', { hold: 22 });
+    const f = (Game.st || {}).flags || {}; if (!f.tutPz12b) { f.tutPz12b = 1; yield* this.msg('（打中破綻的魔物會破防：下一次不能行動、受到的傷害也提高。你還能馬上再動一次——追擊！）', { hold: 90 }); } };
+  const _ex = H.EXTRA_ACTION; H.EXTRA_ACTION = function* (e, s, t, P) { if (P && P.why === 'chase12') { if (P.queued && s) { Sound.sfx('select'); this.popNum(s, '追擊！', '#ffd860', null, { big: 1 }); } return; } if (_ex) return yield* _ex.call(this, e, s, t, P); };
+  const _rs = H.ROUND_START; H.ROUND_START = function* (e, ...a) { yield* _rs.call(this, e, ...a); const f = (Game.st || {}).flags || {};
+    if (!f.tutPz12 && f.tutIntent14 && e.payload.round === 1 && this.core.alive('B').some(u => pzFoe12(u)) && !(typeof FXT13 !== 'undefined' && FXT13.on)) { f.tutPz12 = 1; yield* this.msg('（名牌上的「破綻」是魔物怕的攻擊方式：連擊・重擊・群攻・擾亂。技能選單會標出每一招是哪一種。）', { hold: 90 }); } }; }
+{ const _sg = KB12.signs; KB12.signs = function (v, short) { const L = _sg.call(this, v, short); if (!v || v.hero || !short) return L; const u = (this.core && this.core.byId[v.id]) || v.u || v, F = pzFoe12(u);
+    if (!F || v.broken || (v.st && 'broken' in v.st)) return L; const k = pzKnown12(u.sp) ? F[0] : '？', c = PZ12.M[k] || PZ12.M['？'];
+    const hot = this._pzSk && k !== '？' && pzSkill12(this.core.byId.H, this._pzSk).includes(k); L.unshift(['破綻 ' + k, hot ? '#ffffff' : c[0], hot ? 'rgba(150,108,20,0.96)' : c[1]]); return L; }; }
+{ const _io = intentOf14; intentOf14 = function (core, u, cmd) { if (u && core && core.isUp(u) && pzBrokenV12(core, u)) return { k: 'down', t: '破防' }; return _io(core, u, cmd); }; }
+{ const _cb = KB12.cmdBtn; KB12.cmdBtn = (x, k, n, X, m, on) => { const B = Game.scene; if (!pzChase12(B)) return _cb(x, k, n, X, m, on);
+    const Y = m.y, w = 31, h = m.rowH, run = n === '逃跑';
+    KB12.panel(x, X, Y, w, h, { r: 5, rim: run ? 'rgba(255,255,255,0.10)' : on ? '#ffd860' : 'rgba(255,216,96,0.55)', lw: on ? 1.2 : 0.8, glow: on && !run ? 'rgba(255,216,96,0.7)' : null, top: on && !run ? 'rgba(92,70,30,0.92)' : null, bot: on && !run ? 'rgba(40,28,10,0.95)' : null });
+    KB12.icon(x, k, X + w / 2, Y + 11, run ? '#5a6070' : on ? '#ffe8b0' : '#d8d0b0'); KB12.tc(x, n, X + w / 2, Y + h - 8, run ? '#5a6070' : on ? '#fff2d8' : '#e0d8bc', KB12.M); }; }
+{ const B = Battle.prototype, _ab = B.anyBoss, _ms = B.msg; B.anyBoss = function () { return _ab.call(this) || (this._pzCmd && pzChase12(this)); };
+  B.msg = function (t, o) { if (t === '不能從這場戰鬥中逃走！' && this._pzCmd && pzChase12(this) && !_ab.call(this)) t = '追擊中不能逃跑！'; return _ms.call(this, t, o); };
+  const _cmd = B.command; B.command = function* () { this._pzCmd = true; try { return yield* _cmd.call(this); } finally { this._pzCmd = false; } };
+  const _cm = B.chooseMove; B.chooseMove = function* () { const hu = this.core.byId.H; this._pzList = hu.skills.filter(id => DEF.skills[id] && id !== hu.data.attackSkill); try { return yield* _cm.call(this); } finally { this._pzList = null; } };
+  const _pt = B.pickTarget; B.pickTarget = function* (sk) { this._pzSk = sk; try { return yield* _pt.call(this, sk); } finally { this._pzSk = null; } }; }
+{ const _ch = choose; choose = function* (items, o = {}) { const B = Game.scene;
+    if (o && o.title === '技能' && B && B._pzList && B._pzList.length === items.length && typeof o.drawExtra === 'function') { const L = B._pzList, de = o.drawExtra;
+      o = { ...o, drawExtra: (x, m) => { de(x, m); if (m.formula) return; const hu = B.core.byId.H, foes = B.core.alive('B'), known = new Set();
+        for (const f of foes) { const F = pzFoe12(f); if (F && pzKnown12(f.sp) && !B.core.hasStatus(f, 'broken')) F.forEach(k => known.add(k)); }
+        for (let k = 0; k < L.length; k++) { const r = Math.floor(k / m.cols) - m.scrollTop; if (r < 0 || r >= m.scrollMax) continue;
+          const X = m.x + m.ox, Y = m.y + m.oy + r * m.rowH, ks = pzSkill12(hu, L[k]); if (!ks.length) continue; const hot = ks.some(q => known.has(q));
+          if (hot) { x.save(); KB12.rr(x, m.x + 3, Y + 7 - Math.floor((m.rowH - 1) / 2), m.w - 6, m.rowH - 1, 3); x.strokeStyle = 'rgba(255,216,96,0.8)'; x.lineWidth = 0.7; x.stroke(); x.restore(); }
+          const it = items[k], R = m.x + m.w - 8 - (it.r ? Font.width(it.r, m.fs) + 4 : 0); let cx = X + Math.ceil(Font.width(it.t, m.fs)) + 4;
+          for (const q of ks) { const cw = KB12.chipW(q); if (cx + cw > R) break; const c = PZ12.M[q], lit = known.has(q); KB12.chip(x, q, cx, Y + 3, lit ? c[0] : '#9aa0b4', lit ? c[1] : 'rgba(30,32,46,0.94)'); cx += cw + 2; } } } };
+      return yield* _ch(items, o); }
+    return yield* _ch(items, o); }; }
+{ const _dw = dexWeak11; dexWeak11 = function (sp) { const t = _dw(sp), F = pzFoe12({ sp, fam: (SPECIES[sp] || {}).fam }); if (!F) return t; return '破綻 ' + (pzKnown12(sp) ? F.join('・') : '？') + (t && t !== '—' ? '　' + t : ''); }; }
