@@ -1245,7 +1245,7 @@ class TitleScene {
     x.drawImage(this.logo, Math.round(W / 2 - this.logo.width / 2), 6 + bob);
     Font.drawC(x, '～異世界冒險RPG～', W / 2, 52 + bob, '#ffe0a0', '#3a1428');
     if (this.stage === 'press' && Math.floor(this.t / 30) % 2 === 0) Font.drawC(x, '按 A 鍵開始', W / 2, 232, '#ffffff', '#1a1024');
-    Font.drawR(x, 'v14.25', W - 3, H - 13, '#b890b0', null);
+    Font.drawR(x, 'v14.26', W - 3, H - 13, '#b890b0', null);
   }
 }
 class IntroScene {
@@ -5334,3 +5334,9 @@ const COM_EX = {
 };
 for (const k in COM_EX) { const c = COMMISSIONS[k]; if (!c) continue; const E = COM_EX[k]; c.reward = { ...c.reward, items: { ...(c.reward.items || {}), ...(E.items || {}) } }; if (E.bp) c.reward.bp = E.bp; c.reward.ex = 1; }
 { const _rt = rewardText; rewardText = function (r) { const t = _rt(r); return r && r.bp ? (t ? t + '、' : '') + '【獨家】' + GEAR[r.bp].n + '的設計圖' : t; }; }
+{ const _gr = giveReward; giveReward = function* (r) {
+    const bp = r && r.bp; if (!bp) return yield* _gr(r);
+    yield* _gr({ ...r, bp: undefined }); gainBP(bp, 1); Sound.jingle('item'); yield* itemGet('獲得了獨家報酬「' + GEAR[bp].n + '」的設計圖！');
+  };
+}
+const STAR_MAX = 5, starStones = s => s + 1, starGold = (g, s) => 500 * GEAR[g.b].t * (s + 1);

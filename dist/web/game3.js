@@ -1,9 +1,3 @@
-{ const _gr = giveReward; giveReward = function* (r) {
-    const bp = r && r.bp; if (!bp) return yield* _gr(r);
-    yield* _gr({ ...r, bp: undefined }); gainBP(bp, 1); Sound.jingle('item'); yield* itemGet('獲得了獨家報酬「' + GEAR[bp].n + '」的設計圖！');
-  };
-}
-const STAR_MAX = 5, starStones = s => s + 1, starGold = (g, s) => 500 * GEAR[g.b].t * (s + 1);
 { const _ls = Battle.prototype.lootShow; Battle.prototype.lootShow = function* (g, head) {
     const st = Game.st; if (Game.smith11 || !g || !GEAR[g.b] || !bpKnown(g.b, st) || (g.q || 1) < 2) return yield* _ls.call(this, g, head);
     st.gear = (st.gear || []).filter(x => x !== g); const n = g.q >= 5 ? 3 : g.q >= 4 ? 2 : 1, R = st.refine || (st.refine = {}); R[g.b] = (R[g.b] || 0) + n;
@@ -9271,3 +9265,7 @@ function cryLines11(g) { const L = [], n = crySlots11(g); if (!n) return L; cons
   for (const sp of C) L.push(['◆' + cryName11(sp) + '★' + O[sp] + '：' + cryText11(sp, O[sp]), '#9ad8ff']);
   if (C.length < n) L.push(['◇ 空的晶石孔 ×' + (n - C.length), UIC.muted]); return L; }
 { const _gi = gearInfoLines; gearInfoLines = function (g, wrapW = 150) { const L = _gi(g, wrapW); return L.concat(cryLines11(g)); }; }
+const cryCost11 = (sp, star) => { const t = cryTier11(sp); return star === 1 ? { mats: { ['pt_' + sp]: 3 }, gold: 200 * t } : { mats: { ['pt_' + sp]: 5, ['pr_' + sp]: 1 }, gold: 600 * t }; };
+const cryCan11 = (c, st = Game.st) => st.money >= c.gold && Object.entries(c.mats).every(([k, n]) => (st.bag[k] || 0) >= n);
+const cryCostText11 = c => Object.entries(c.mats).map(([k, n]) => ITEMS[k].n + '×' + n + '（有' + (Game.st.bag[k] || 0) + '）').join('、') + '、' + c.gold + ' G';
+const cryNext11 = sp => { const L = CRY_SER11[CRY11[sp][1]]; if (!L) return null; const i = L.indexOf(sp); return i >= 0 && i < L.length - 1 ? L[i + 1] : null; };
