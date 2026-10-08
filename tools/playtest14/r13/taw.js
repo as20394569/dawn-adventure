@@ -51,6 +51,6 @@ module.exports = async (g) => {
   // 3. 不死鳥★
   await run({ sp: 'fieldMice', lv: 20, kind: 'wild' }, [
     `{ f: b => { for (const u of b.core.side('B')) { u.max.hp = 999; u.res.hp = 999; } return play(b, 'mg_phoenix', 0); }, c: b => 'phoenix' }`,
-    `{ f: b => { window.__fh = foe(b).res.hp; H(b).res.hp = 1; for (const s of H(b).statuses) if (s.id === 'blk15') s.stacks = 0; H(b).statuses = H(b).statuses.filter(s => s.id !== 'blk15'); window.__noheal = 1; return { k: 'end' }; }, c: b => { const lost = window.__fh - foe(b).res.hp; return (lost >= 20 && H(b).res.hp > 1 ? 'PASS' : 'FAIL') + ' 不死鳥★ 復活時全體 20：魔物少了 ' + lost + '，主角 HP ' + H(b).res.hp; } }`,
+    `{ f: b => { window.__fh = foe(b).res.hp; H(b).res.hp = 1; for (const s of H(b).statuses) if (s.id === 'blk15') s.stacks = 0; H(b).statuses = H(b).statuses.filter(s => s.id !== 'blk15'); window.__noheal = 1; b.core.dealDamage(foe(b), H(b), 50, { kind: 'hit', cat: '物', tags: [] }); return { k: 'end' }; }, c: b => { const lost = window.__fh - foe(b).res.hp; return (lost >= 20 && H(b).res.hp > 1 ? 'PASS' : 'FAIL') + ' 不死鳥★ 復活時全體 20：魔物少了 ' + lost + '，主角 HP ' + H(b).res.hp; } }`,
   ]);
 };

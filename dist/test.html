@@ -7907,7 +7907,7 @@ class TitleScene {
     x.drawImage(this.logo, Math.round(W / 2 - this.logo.width / 2), 6 + bob);
     Font.drawC(x, '～異世界冒險RPG～', W / 2, 52 + bob, '#ffe0a0', '#3a1428');
     if (this.stage === 'press' && Math.floor(this.t / 30) % 2 === 0) Font.drawC(x, '按 A 鍵開始', W / 2, 232, '#ffffff', '#1a1024');
-    Font.drawR(x, 'v14.14', W - 3, H - 13, '#b890b0', null);
+    Font.drawR(x, 'v14.15', W - 3, H - 13, '#b890b0', null);
   }
 }
 class IntroScene {
@@ -27398,7 +27398,7 @@ BPK.endTurnK = function () { const core = this.core, H = this.Hu(); if (stkK(H, 
   const _ms = BPK.msg; BPK.msg = function* (text, o = {}) { if (!this.k14 || /^（/.test(String(text)) || o.wait || o.keep14) return yield* _ms.call(this, text, o); this.noteK(text); yield* wait(Math.min(12, o.hold || 12)); }; }
 { const HD = BPK.handlers, _ex = HD.EXTRA_ACTION; HD.EXTRA_ACTION = function* (e, s, t, P) { if (P && P.why === 'card14') return; if (_ex) yield* _ex.call(this, e, s, t, P); }; }
 const HK = H_BASE;
-KD.BL = () => { const E = bxE(), ch = E >= 60 ? 64 : E >= 24 ? 58 : 52, cw = E >= 24 ? 35 : 33, handY = H - ch - 3, hudY = handY - 27;
+KD.BL = () => { const E = bxE(), ch = E >= 60 ? 68 : E >= 24 ? 60 : 52, /* v14.15: bigger hand (was 64 / 58) */ cw = E >= 24 ? 35 : 33, handY = H - ch - 3, hudY = handY - 27;
   return { E, cw, ch, handY, hudY, noteY: hudY - 19, tgtY: hudY - 34, detB: hudY - 3, tall: E >= 40 }; };
 const KD_PAL = {"w": "#f4f4fa", "s": "#b0b8d0", "g": "#7c84a0", "y": "#ffe070", "Y": "#d09a28", "n": "#b07040", "N": "#6a3c20", "o": "#ffb050", "O": "#e0602a", "r": "#ff5a48", "R": "#a82828", "G": "#7ae868", "E": "#2e9a40", "L": "#d0ffc0", "b": "#7ab8ff", "B": "#3a68d0", "c": "#d0f4ff", "p": "#c890ff", "P": "#7040b8", "q": "#e8d0ff", "d": "#c8cce0", "D": "#8a90a8", "m": "#f4ecd8", "M": "#c0ae88", "T": "#9ad048", "U": "#5a8a28", "h": "#ff8aa8", "H": "#d0405a", "f": "#fff0a0", "e": "#ffd0b0", "a": "#e0a070"};
 KD.ICON = {
@@ -27432,10 +27432,10 @@ KD.KEYS = [[/格擋/, '格擋：擋下傷害，到你下一回合開始時消失
 KD.keyLines = c => { const d = KD.desc(c), out = []; for (const [re, t] of KD.KEYS) if (re.test(d)) out.push(t); return out.slice(0, 2); };
 { const _dbh = BPK.drawBoxH; BPK.drawBoxH = function (x) { if (!this.k14) return _dbh.call(this, x); const Hv = this.H, U = this.Hu(); if (!Hv || !U) return; const LB = KD.BL(), Y = LB.hudY, fK = this.fK || 0;
     x.fillStyle = 'rgba(10,8,20,0.62)'; x.fillRect(0, Y - 2, W, 27); x.fillStyle = 'rgba(10,8,20,0.92)'; x.fillRect(0, LB.handY - 3, W, H - LB.handY + 3);
-    const en = this.energy; x.fillStyle = '#2a1c08'; x.beginPath(); x.arc(11, Y + 9, 9, 0, 7); x.fill(); x.fillStyle = en ? '#ffb030' : '#6a5030'; x.beginPath(); x.arc(11, Y + 9, 7.5, 0, 7); x.fill(); Font.drawC(x, String(en), 11, Y, '#1a0c00', null, 11);
-    const bx = 23, bw = 70, hp = Math.max(0, Math.round(Hv.hp)), mh = U.max.hp; x.fillStyle = '#301018'; x.fillRect(bx, Y + 1, bw, 11); x.fillStyle = hp <= mh / 2 ? '#e05030' : '#c83838'; x.fillRect(bx, Y + 1, Math.round(bw * Math.min(1, hp / Math.max(1, mh))), 11);
+    const en = this.energy; x.fillStyle = '#2a1c08'; x.beginPath(); x.arc(13, Y + 11, 11.5, 0, 7); x.fill(); x.fillStyle = en ? '#ffb030' : '#6a5030'; x.beginPath(); x.arc(13, Y + 11, 10, 0, 7); x.fill(); x.fillStyle = en ? 'rgba(255,240,180,0.55)' : 'rgba(0,0,0,0)'; x.fillRect(8, Y + 3, 5, 2); Font.drawC(x, String(en), 13, Y + 1, '#1a0c00', null, 13); /* v14.15: bigger energy */
+    const bx = 27, bw = 86, hp = Math.max(0, Math.round(Hv.hp)), mh = U.max.hp; /* v14.15: longer HP bar (was 23 / 70) */ x.fillStyle = '#301018'; x.fillRect(bx, Y + 1, bw, 11); x.fillStyle = hp <= mh / 2 ? '#e05030' : '#c83838'; x.fillRect(bx, Y + 1, Math.round(bw * Math.min(1, hp / Math.max(1, mh))), 11);
     Font.drawC(x, hp + '/' + mh, bx + bw / 2, Y - 2, '#fff4f4', '#000', 9);
-    const b = (Hv.st && Hv.st.blk15) || 0; if (b) { x.drawImage(KD.ICON.shield, bx + bw + 1, Y); Font.drawC(x, String(b), bx + bw + 21, Y - 2, '#bfe0ff', '#000', 9); }
+    const b = (Hv.st && Hv.st.blk15) || 0; if (b) { x.drawImage(KD.ICON.shield, bx + 57, Y + 12); Font.draw(x, String(b), bx + 71, Y + 12, '#bfe0ff', '#000', 9); } /* v14.15: under the HP bar, after the class (the bar is longer) */
     const CL = KD.CLASSES[this.cls] || {}; Font.draw(x, CL.n || '', bx, Y + 14, CL.c || '#ccc', '#000', 8);
     if (this.cls === 'sw') { for (let i = 0; i < 3; i++) { x.fillStyle = i < this.si ? (this.si >= 3 ? '#ffe070' : '#ff9a40') : '#3a3048'; x.fillRect(bx + 28 + i * 6, Y + 16, 4, 5); } if (this.si >= 3) Font.draw(x, '×2', bx + 48, Y + 14, '#ffe070', '#000', 8); }
     if (this.cls === 'rg') { const q = (this.chainN || 0) % 3; for (let i = 0; i < 3; i++) { x.fillStyle = i < q ? '#70d070' : '#3a3048'; x.fillRect(bx + 28 + i * 6, Y + 16, 4, 5); } }
@@ -27464,12 +27464,15 @@ BPK.handK = function (x) { const LB = KD.BL(), n = this.hand.length, cw = LB.cw,
     if (my) touchRegion(P.x, Y - up, i === n - 1 || i === this.sel ? cw : Math.ceil(P.step), ch, () => { this.tapK = { k: 'card', i }; }); }
   if (this.tgtMode && my) { const s = '點要打的那一隻魔物', fs = LB.tall ? 9 : 8, w = Font.width(s, fs) + 10; x.fillStyle = 'rgba(30,24,44,0.92)'; x.fillRect((W - w) / 2, LB.tgtY, w, fs + 4); Font.drawC(x, s, W / 2, LB.tgtY + (fs - 8) / 2, '#ffe8a0', '#000', fs); }
   else if (this.sel >= 0 && this.hand[this.sel]) { const c = this.hand[this.sel], C = KD.CARDS[c.id], T = KD.TYPE[C.type], K = KD.keyLines(c);
-    const fs = LB.tall ? 9 : 8, lh = fs + 2, D = wrap15(KD.desc(c), W - 26, fs).slice(0, LB.tall ? 4 : 3), ph = 14 + D.length * lh + 11, pY = LB.detB - ph;
-    if (K.length) { const kh = K.length * 10 + 4; x.fillStyle = 'rgba(30,24,44,0.94)'; x.fillRect(8, pY - 2 - kh, W - 16, kh); K.forEach((t, k) => fontFit(x, t, 12, pY - 2 - kh + 1 + k * 10, W - 24, '#c8c0e0', '#000', 8)); }
-    x.fillStyle = 'rgba(12,8,24,0.94)'; x.fillRect(8, pY, W - 16, ph); x.fillStyle = KD.RAR[C.rar].c; x.fillRect(8, pY, W - 16, 1);
-    fontFit(x, KD.name(c) + '　' + KD.typeN(c) + '・' + KD.cost(c) + ' 能量', 12, pY + 1, W - 24, c.up ? '#a8ffa0' : '#fff0d0', '#000', 9);
-    D.forEach((L, k) => Font.draw(x, L, 12, pY + 13 + k * lh, '#e8e4f4', '#000', fs));
-    Font.drawR(x, this.tgtMode ? '點魔物出牌' : '再點一次出牌', W - 12, pY + ph - 12, '#a8e0ff', '#000', 8); }
+    const top = Math.max(0, ...this.foes().filter(v => !v.gone).map(v => Math.round(v.foot) + (v.st && KD.chips16 && KD.chips16(v.st, false).length ? 14 : 3))) + 2;
+    let fs = LB.tall ? 9 : 8, lh = fs + 2, n = Math.max(2, Math.min(4, Math.floor((LB.detB - top - 16) / lh))), D = wrap15(KD.desc(c), W - 22, fs);
+    if (D.length > n && fs > 8) { fs = 8; lh = 10; n = Math.max(2, Math.min(4, Math.floor((LB.detB - top - 16) / lh))); D = wrap15(KD.desc(c), W - 22, fs); }
+    D = D.slice(0, n); const ph = 15 + D.length * lh + 2, pY = LB.detB - ph;
+    if (K.length && pY - 2 - (K.length * 10 + 4) >= top) { const kh = K.length * 10 + 4; x.fillStyle = 'rgba(30,24,44,0.94)'; x.fillRect(6, pY - 2 - kh, W - 12, kh); K.forEach((t, k) => fontFit(x, t, 10, pY - 2 - kh + 1 + k * 10, W - 20, '#c8c0e0', '#000', 8)); }
+    x.fillStyle = 'rgba(12,8,24,0.94)'; x.fillRect(6, pY, W - 12, ph); x.fillStyle = KD.RAR[C.rar].c; x.fillRect(6, pY, W - 12, 1);
+    const hint = this.tgtMode ? '點魔物出牌' : '再點一次出牌', hw = Math.ceil(Font.width(hint, 8)) + 4; Font.drawR(x, hint, W - 9, pY + 2, '#a8e0ff', '#000', 8);
+    fontFit(x, KD.name(c) + '　' + KD.typeN(c) + '・' + KD.cost(c) + ' 能量', 10, pY + 1, W - 20 - hw, c.up ? '#a8ffa0' : '#fff0d0', '#000', 9);
+    D.forEach((L, k) => Font.draw(x, L, 10, pY + 14 + k * lh, '#e8e4f4', '#000', fs)); }
   if (this.tgtMode && my) for (const f2 of this.foes()) { const C = this.center(f2); if (f2.id === this.tgtId) { x.strokeStyle = '#ffe070'; x.lineWidth = 1; x.strokeRect(C.x - 20, C.y - 22, 40, 44); } touchRegion(C.x - 24, C.y - 30, 48, 60, () => { this.tapK = { k: 'tgt', id: f2.id }; }); } };
 BPK.pileView = function* (w) { const L = (w === 'disc' ? this.disc : this.pile).slice().sort((a, b) => KD.cost(a) - KD.cost(b) || (a.id < b.id ? -1 : 1)); let done = false, scroll = 0;
   const ui = { draw: x => { x.fillStyle = 'rgba(8,6,16,0.94)'; x.fillRect(0, 0, W, H); Font.drawC(x, (w === 'disc' ? '棄牌' : '牌庫') + '（' + L.length + ' 張）' + (this.exh.length ? '　消耗 ' + this.exh.length : ''), W / 2, 4, '#ffe0a0', '#000', 10);
@@ -27485,13 +27488,13 @@ KD.drawCard = function (x, c, X, Y, w, h, o = {}) { const C = KD.CARDS[c.id]; if
   x.fillStyle = edge || (CL ? CL.c : '#8a8a9a'); x.fillRect(X + 2, Y + h - 3, w - 4, 1);
   x.fillStyle = KD.RAR[C.rar].c; x.fillRect(X + w - 4, Y + 2, 2, 2);
   const art = KD.ART && KD.ART[c.id] && KD.ART[c.id].ok ? KD.ART[c.id] : null, r = big ? 6 : 5, nm = KD.name(c), vw = Math.min(w, o.vis || w), tw = vw - 4, tx = X + (o.visX0 || 0) + vw / 2, foot = big && h >= 74 ? Y + h - 10 : Y + h - 3; // vis: the part of an overlapped hand card that shows
-  const lines = (ly, step) => { KD.shortL(C, v).forEach((t, k) => { const y = ly + k * step; if (y + 12 > foot) return; fontFit(x, t, tx, y, tw, '#e8e4f4', '#000', 8, 'c'); }); };
+  const tall = !big && h >= 70, lines = (ly, step) => { KD.shortL(C, v).forEach((t, k) => { const y = ly + k * step; if (y + 12 > foot) return; fontFit(x, t, tx, y, tw, '#e8e4f4', '#000', tall ? 9 : 8, 'c'); }); }; /* v14.15: a tall hand card writes 9 */
   const cost = () => { x.fillStyle = '#0c0814'; x.beginPath(); x.arc(X + r, Y + r, r, 0, 7); x.fill(); x.fillStyle = o.dim ? '#6a5a40' : '#ffb030'; x.beginPath(); x.arc(X + r, Y + r, r - 1, 0, 7); x.fill(); Font.drawC(x, String(KD.cost(c)), X + r, Y + r - 8, '#1a0c00', null, big ? 9 : 8); };
   const nameAt = ny => { const fz = Font.width(nm, 9) <= tw ? 9 : 8; fontFit(x, nm, tx, ny, tw, c.up ? '#a8ffa0' : '#fff4e0', '#000', fz, 'c'); };
   if (art) { // the card's picture along the top (a hand card shows its middle; big cards the whole 48×32)
-    const aw = Math.min(48, w - 2), ah = big ? 32 : h >= 54 ? 20 : 16; x.drawImage(art, Math.round((48 - aw) / 2), Math.round((32 - ah) / 2), aw, ah, X + Math.round((w - aw) / 2), Y + 1, aw, ah);
+    const aw = Math.min(48, w - 2), ah = big ? 32 : h >= 70 ? 24 : h >= 54 ? 20 : 16; x.drawImage(art, Math.round((48 - aw) / 2), Math.round((32 - ah) / 2), aw, ah, X + Math.round((w - aw) / 2), Y + 1, aw, ah);
     x.fillStyle = 'rgba(0,0,0,0.35)'; x.fillRect(X + 1, Y + ah + 1, w - 2, 1); cost();
-    const ny = Y + ah + 1; nameAt(ny); lines(ny + (big ? 11 : 9), big ? 10 : 9);
+    const ny = Y + ah + 1; nameAt(ny); lines(ny + (big || tall ? 11 : 9), big || tall ? 10 : 9);
   } else {
     cost(); const ny = Y + (big ? 12 : 8); nameAt(ny);
     const z = big && h >= 74 ? 2 : 1, ic = KD.ICON[KD.iconOf(c.id)], iy = ny + (big ? 11 : 9); if (ic) x.drawImage(ic, Math.round(X + w / 2 - 6.5 * z), iy, 13 * z, 13 * z);
@@ -27940,7 +27943,7 @@ KD.rageN = u => (u.boss || u.elite || (u.data && u.data.elite) ? 1 : 0);
       return { ...I, t }; }
     if (I.k !== 'hide' && I.k !== 'guard' && KD.foeBlk(core, u, cmd)) return { ...I, t: (I.t ? I.t + '+' : '') + '盾' };
     return I; }; }
-{ const _db = Battle.prototype.drawBoxF; Battle.prototype.drawBoxF = function (x) { _db.call(this, x); if (!this.k14 || this.boxF < -20) return;
+{ const _db = Battle.prototype.drawBoxF; Battle.prototype.drawBoxF = function (x) { _db.call(this, x); if (!this.k14 || this.boxF < -20 || KD.stRow16) return; /* v14.15: drawn with the statuses (14q) */
     for (const v of this.foes()) { const b = v.st && v.st.blk15; if (!b || v.alpha < 0.5) continue; const s = String(b), tw = Math.ceil(Font.width(s, 8)), w = 13 + 2 + tw + 3, X = Math.round(clamp(v.x + v.off.x - w / 2, 2, W - w - 2)), Y = Math.round(v.foot + 2);
       x.fillStyle = 'rgba(10,20,48,0.82)'; x.fillRect(X, Y, w, 13); x.fillStyle = '#7ab8ff'; x.fillRect(X, Y + 12, w, 1); x.imageSmoothingEnabled = false; x.drawImage(KD.ICON.shield, X + 1, Y); Font.draw(x, s, X + 15, Y + 0.5, '#bfe0ff', '#000', 8); } }; }
 if (typeof BATTLE_HELP !== 'undefined') BATTLE_HELP.push(['魔物', ['頭上的圖示是牠這回合要做的事：數字是預估傷害（6×3＝每段 6、打 3 段），「+盾」是同時獲得格擋（數字顯示在牠腳下）。', '菁英和頭目越戰越勇：每 3 回合力量 +1。']]);
@@ -28210,11 +28213,6 @@ KD.centered = fn => function* (...a) { const _push = UI.push; UI.push = function
     return _push.apply(this, arguments); };
   try { return yield* fn.apply(this, a); } finally { UI.push = _push; } };
 KD.pick3 = KD.centered(KD.pick3); KD.showCard = KD.centered(KD.showCard);
-KD.heroFoot = () => { const b = Game.scene; if (!Game.noV14 && b instanceof Battle && b.core && KD.on(b.core)) return KD.BL().hudY - 2; return 200 + bxE(); };
-{ const _r = render; render = function () { const f = KD.heroFoot(); if (f !== HERO_FOOT) { HERO_FOOT = f; HERO_Y = f - 64; HBAR_Y = f + 5; } return _r.apply(this, arguments); }; }
-{ const H = Battle.prototype.handlers, _su = H.SKILL_USE; H.SKILL_USE = function* (e, s, t, P) { const id = P && P.skill && /^k14_/.test(P.skill) ? P.skill.slice(4) : null, C = id && KD.CARDS[id];
-    if (this.k14 && s && s.hero && C && C.type === 'atk' && e.tgts && e.tgts.some(x => x !== 'H')) { this.tgtV = this.views[e.tgts.find(x => x !== 'H')] || this.tgtV; yield* this.lunge(s, 12, 4); }
-    return yield* _su.call(this, e, s, t, P); }; }
 KD.PHYS = ['斬', '突', '打']; KD.ELEM = ['火', '水', '雷'];
 KD.ATC = { 斬: ['#e8eaf4', '#3c3e58'], 突: ['#b8f4a8', '#1c3c24'], 打: ['#ffc888', '#4c2c12'], 火: ['#ffb878', '#5c1c10'], 水: ['#98d4ff', '#123462'], 雷: ['#fff070', '#4c3c06'] };
 const AT16 = { sw_gap: '突', sw_bash: '打', sw_wall: '打', rg_venom: '斬', rg_quick: '斬', rg_rot: '斬', rg_reap: '斬', rg_dance: '斬', rg_bloom: '斬', rg_stitch: '斬', rg_needle: '雷',
@@ -28287,8 +28285,6 @@ if (typeof BATTLE_HELP !== 'undefined') BATTLE_HELP.unshift(['弱點破防', ['�
   '劍士劍意 ×2 的一擊、狂戰士的劈山和碎盾擊、法師的元素反應，不用打弱點也能扣盾牌。']]);
 { const H = Battle.prototype.handlers, _m = H.MESSAGE; H.MESSAGE = function* (e, s, t, P) { if (P && P.key === 'wk16') { if (t) { const C = this.center(t); this.pops.push({ x: C.x, y: C.y - 52, s: '弱點：' + P.at, c: KD.ATC[P.at][0], t: 0 }); Sound.sfx('select'); }
       const f = Game.st && Game.st.flags; if (f && !f.tutWk16) { f.tutWk16 = 1; yield* this.msg('（打中弱點了！名牌上的盾牌數字 −1，扣到 0 魔物就會破防。）', { hold: 90 }); } return; } return yield* _m.call(this, e, s, t, P); }; }
-{ const _ds = Battle.prototype.drawSpd12; Battle.prototype.drawSpd12 = function (x) { if (!this.k14 || !this.multi || this.foes().length < 2) return _ds.call(this, x); x.save(); x.translate(0, 26); const _tr = touchRegion; touchRegion = (X, Y, w, h, fn) => _tr(X, Y + 26, w, h, fn);
-    try { return _ds.call(this, x); } finally { touchRegion = _tr; x.restore(); } }; }
 { const _dc = KD.drawCard; KD.drawCard = function (x, c, X, Y, w, h, o = {}) { _dc.call(this, x, c, X, Y, w, h, o); const at = c && KD.atOf(c.id); if (!at) return;
     const vw = Math.min(w, o.vis || w); if (vw < 26) return; const bx = X + (o.visX0 || 0) + vw - 14; KD.atBox(x, bx, Y + 2, at); if (o.dim) { x.fillStyle = 'rgba(0,0,0,0.38)'; x.fillRect(bx - 1, Y + 1, 11, 11); } }; }
 KD.BRK_HP = { boss: 1.15, elite: 1.1 };
@@ -28408,5 +28404,88 @@ KD.showAw = function* (c) { let done = false, t = 0; const ui = { draw: x => { x
     const xp = c.xp || 0; if (!xp) return; const vw = Math.min(w, o.vis || w), bx = X + (o.visX0 || 0) + 3, bw = vw - 6; if (bw < 6) return;
     x.fillStyle = 'rgba(0,0,0,0.6)'; x.fillRect(bx, Y + h - 6, bw, 2); x.fillStyle = '#78e0ff'; x.fillRect(bx, Y + h - 6, Math.max(1, Math.round(bw * Math.min(1, xp / KD.awNeed(c.id)))), 2); }; }
 if (typeof BATTLE_HELP !== 'undefined') BATTLE_HELP.push(['熟練・覺醒', ['每張卡打出一次熟練 +1（卡下緣的藍色細線）。熟練滿了，打贏那場戰鬥後「覺醒」：卡名加★，效果多一行。', '需要的次數：基本 20、普通 15、稀有 12、史詩 10。升級和覺醒可以都有。（目前法師的卡有覺醒）']]);
+KD.stRow16 = 1;
+const kOn16 = b => !!(b && (b.k14 || (b.core && KD.on(b.core))) && !Game.noV14);
+{ const _r = render; render = function () { const b = Game.scene; if (b instanceof Battle && kOn16(b) && b.core && KD.on(b.core)) { const f = KD.BL().hudY + 27; if (f !== HERO_FOOT) { HERO_FOOT = f; HERO_Y = f - 64; HBAR_Y = f + 5; } }
+    else { const f = 200 + bxE(); if (f !== HERO_FOOT) { HERO_FOOT = f; HERO_Y = 136 + bxE(); HBAR_Y = 205 + bxE(); } }
+    return _r.apply(this, arguments); }; }
+{ const _dr = Battle.prototype.draw; Battle.prototype.draw = function (x) { const Hv = this.H; if (!kOn16(this) || !Hv) return _dr.call(this, x); const b0 = Hv.blink; Hv.blink = 3; // the draw skips a blinking hero
+    try { return _dr.call(this, x); } finally { Hv.blink = b0; } }; }
+{ const _db = Battle.prototype.drawBoxH; Battle.prototype.drawBoxH = function (x) { if (!kOn16(this)) return _db.call(this, x); const Hv = this.H, sv = Hv && Hv.st; if (Hv && sv) Hv.st = { blk15: sv.blk15 }; try { _db.call(this, x); } finally { if (Hv) Hv.st = sv; }
+    if (!Hv || !sv || this.boxF < -20) return; const L = KD.chips16(sv, true); if (!L.length) return; const LB = KD.BL(); KD.chipRow16(x, L, 2, LB.hudY - 12, W - 4, 'l'); }; }
+KD.CHIP16 = [['blk15', '盾', '#bfe0ff', '#14284a'], ['str15', '力', '#ffb0a0', '#4a1810'], ['tstr14', '力', '#ffb0a0', '#4a1810'], ['pois14', '毒', '#a8f088', '#16361a'], ['burn14', '燒', '#ffc078', '#4a2008'],
+  ['bleed15', '血', '#ff9090', '#401010'], ['vuln15', '易', '#e0b8ff', '#2e1848'], ['weak15', '弱', '#c0cce0', '#222a3a'], ['nxa14', '勢', '#ffe080', '#3a3008']];
+KD.chips16 = (st, hero) => { const L = []; for (const [k, n, c, bg] of KD.CHIP16) { if (hero && k === 'blk15') continue; const v = st[k]; if (v > 0) L.push([n + v, c, bg]); } return L; };
+KD.chipW16 = s => Math.ceil(Font.width(s, 8)) + 4;
+KD.chipRow16 = (x, L, X, Y, maxW, align) => { const ws = L.map(([s]) => KD.chipW16(s)); const rows = [[]]; let w = 0;
+  L.forEach((q, i) => { if (w + ws[i] > maxW && rows[rows.length - 1].length) { rows.push([]); w = 0; } rows[rows.length - 1].push(i); w += ws[i] + 1; });
+  rows.forEach((R, r) => { const tw = R.reduce((a, i) => a + ws[i] + 1, -1); let z = align === 'c' ? Math.round(X - tw / 2) : X; for (const i of R) { const [s, c, bg] = L[i];
+      x.fillStyle = 'rgba(0,0,0,0.85)'; x.fillRect(z - 1, Y + r * 11 - 1, ws[i] + 2, 12); x.fillStyle = bg; x.fillRect(z, Y + r * 11, ws[i], 10); Font.draw(x, s, z + 2, Y + r * 11 - 3, c, null, 8); z += ws[i] + 1; } }); };
+{ const _db = Battle.prototype.drawBoxF; Battle.prototype.drawBoxF = function (x) { _db.call(this, x); if (!kOn16(this) || this.boxF < -20) return; const n = this.foes().length, sw = Math.floor((W - 4) / Math.max(1, n));
+    for (const v of this.foes()) { if (v.gone || v.alpha < 0.5 || !v.st) continue; const L = KD.chips16(v.st, false); if (!L.length) continue; KD.chipRow16(x, L, clamp(Math.round(v.x + v.off.x), 20, W - 20), Math.round(v.foot + 3), sw - 2, 'c'); } }; }
+{ const _do = Battle.prototype.drawOrder; Battle.prototype.drawOrder = function (x) { if (!kOn16(this)) return _do.call(this, x);
+    const O = this.order12; if (!O || !O.ids.length || this.boxF < -20) return; const done = O.done || 0, ids = O.ids, Y = 29; let X = 2; const cur = ids.findIndex((id, i) => i >= done && this.views[id] && !this.views[id].gone);
+    ids.forEach((id, i) => { const v = this.views[id]; if (!v || v.gone || X > W - 52) return; const past = i < done, on = i === cur, hero = v.hero, ch = this.ordLabel13 ? this.ordLabel13(v) : (v.n || '?').slice(0, 1);
+      x.globalAlpha = past ? 0.4 : 1; x.fillStyle = on ? '#ffd860' : hero ? '#3a6aa0' : '#7a2a34'; x.fillRect(X, Y, 14, 12); x.fillStyle = '#0b0d18'; x.fillRect(X + 1, Y + 1, 12, 10);
+      fontFit(x, ch, X + 7, midY(Y, 12, 8), 12, on ? '#ffe8b0' : hero ? '#bfe0ff' : '#ffc8c8', UIC.textSh, 8, 'c'); x.globalAlpha = 1; if (on) { x.fillStyle = '#ffd860'; x.fillRect(X + 5, Y + 13, 4, 2); } X += 15; }); }; }
+{ const _wi = wxIcon; wxIcon = function (x, k, X, Y) { const b = Game.scene; if (b instanceof Battle && kOn16(b) && X === W - 13 && Y === 46) { X = W - 31; Y = 30; } return _wi(x, k, X, Y); }; }
+KD.plate16 = function (x, v, X, Y, w, on, a) { if (a <= 0) return; const u = this.core.byId[v.id], rim = on ? '#ffd860' : v.boss ? '#ff6b7a' : v.elite ? '#ffc46b' : v.rare ? '#ffd84a' : v.minion ? '#b08a6a' : '#8a93b3', h = 23;
+  x.globalAlpha = a; x.fillStyle = 'rgba(10,8,20,0.8)'; x.fillRect(X, Y, w, h); x.fillStyle = rim; x.fillRect(X + 1, Y, w - 2, 1); x.fillRect(X + 1, Y + h - 1, w - 2, 1); x.fillRect(X, Y + 1, 1, h - 2); x.fillRect(X + w - 1, Y + 1, 1, h - 2);
+  const brk = v.max && v.max.brk ? (v.broken > 0 ? '破' : String(v.res.brk || 0)) : null, bw = brk ? 10 + Math.ceil(Font.width(brk, 8)) + 2 : 0, tag = w >= 90 ? (v.rare ? '稀有' : v.boss ? '頭目' : v.elite ? '菁英' : '') : '', tw = tag ? Math.ceil(Font.width(tag, 8)) + 4 : 0;
+  fontFit(x, v.n, X + 3, Y - 2, w - 6 - bw - tw, on ? '#ffe8b0' : UIC.text, UIC.textSh, 8); if (tag) Font.drawR(x, tag, X + w - 3 - bw, Y - 2, rim, UIC.textSh, 8);
+  if (brk) KD.brkMini(x, X + w - bw, Y + 2, v.res.brk || 0, v.broken > 0);
+  const W16 = (u && u.data && u.data.wk16) || [], ww = W16.length * 11, r = clamp(v.hp / v.maxhp, 0, 1), bx = X + 3, bwid = Math.max(8, w - 6 - ww - (ww ? 2 : 0));
+  x.fillStyle = '#1a1024'; x.fillRect(bx, Y + 15, bwid, 3); x.fillStyle = r > 0.5 ? '#e0504a' : r > 0.2 ? '#ff8a3a' : '#ffd040'; x.fillRect(bx, Y + 15, Math.round(bwid * r), 3);
+  if (v.st && v.st.ward > 0) { x.fillStyle = '#7ec8ff'; x.fillRect(bx, Y + 13, Math.round(bwid * clamp(v.st.ward / (v.st.wardMax || 1), 0, 1)), 1); }
+  if (ww) KD.wkRow(x, { sp: v.sp, data: u && u.data }, X + w - 2 - ww + 1, Y + 12);
+  x.globalAlpha = 1; };
+{ const B = Battle.prototype, _ps = B.drawPlateSmall, _pb = B.drawPlateBig;
+  B.drawPlateSmall = function (x, v, a, i, n) { if (!kOn16(this)) return _ps.call(this, x, v, a, i, n); const sw = Math.floor((W - 4) / Math.max(1, n)), w = Math.min(n >= 3 ? 56 : 80, sw - 2), X = Math.round(clamp(v.x - w / 2, 2 + i * sw, 2 + i * sw + sw - 2 - w));
+    KD.plate16.call(this, x, v, X, 3, w, this.pickV === v, a); };
+  B.drawPlateBig = function (x, F, a0) { if (!kOn16(this)) return _pb.call(this, x, F, a0); const w = 112; KD.plate16.call(this, x, F, Math.round((W - w) / 2), 3, w, false, a0 * (F.plateA != null ? F.plateA : 1)); }; }
+KD.TYPE_GLOW = { atk: '#ff6a4a', skl: '#6aa8ff', pow: '#ffd050' };
+KD.cardBack = (x, X, Y, w, h) => { x.fillStyle = '#0c0814'; x.fillRect(X - 1, Y - 1, w + 2, h + 2); x.fillStyle = '#241a44'; x.fillRect(X, Y, w, h); x.fillStyle = '#c8a050'; x.fillRect(X, Y, w, 1); x.fillRect(X, Y + h - 1, w, 1); x.fillRect(X, Y, 1, h); x.fillRect(X + w - 1, Y, 1, h);
+  x.fillStyle = '#3a2c66'; x.fillRect(X + 3, Y + 3, w - 6, h - 6); const cx = X + w / 2, cy = Y + h / 2, r = Math.min(w, h) * 0.22; x.fillStyle = '#ffd878'; x.beginPath(); x.moveTo(cx, cy - r); x.lineTo(cx + r * 0.7, cy); x.lineTo(cx, cy + r); x.lineTo(cx - r * 0.7, cy); x.closePath(); x.fill();
+  x.fillStyle = '#3a2c66'; x.fillRect(Math.round(cx - 1), Math.round(cy - 1), 2, 2); };
+KD.pileXY = () => { const LB = KD.BL(); return { x: 124, y: LB.hudY + 16 }; };
+KD.discXY = () => { const LB = KD.BL(); return { x: W - 20, y: LB.hudY + 16 }; };
+{ const _dn = BPK.drawN; BPK.drawN = function (n) { const shuffle = this.k14 && this.pile.length < n && this.disc.length > 0, h0 = this.hand.length; _dn.call(this, n); if (!this.k14) return;
+    const P = KD.pileXY(), f = this.fK || 0, LB = KD.BL(); if (shuffle) { const D = KD.discXY(); for (let i = 0; i < 6; i++) (this.cfx16 = this.cfx16 || []).push({ k: 'back', x0: D.x - 8, y0: D.y - 12, x1: P.x - 8, y1: P.y - 12, t: -i * 2, T: 12 }); this.noteK('洗牌'); Sound.sfx('leaf'); }
+    for (let i = h0, k = 0; i < this.hand.length; i++, k++) { const c = this.hand[i]; c.ax = P.x - LB.cw / 2; c.ay = P.y - LB.ch / 2; c.at = f + k * 3 + (shuffle ? 10 : 0); c.fl16 = c.at; } }; }
+{ const _dc = KD.drawCard; KD.drawCard = function (x, c, X, Y, w, h, o = {}) { const b = Game.scene, f = b && b.fK || 0;
+    if (!c || c.fl16 == null || !(b instanceof Battle)) return _dc.call(this, x, c, X, Y, w, h, o);
+    const p = (f - c.fl16) / 12; if (p >= 1) { c.fl16 = null; return _dc.call(this, x, c, X, Y, w, h, o); } if (p < 0) return;
+    if (p < 0.05 && !c.snd16) { c.snd16 = 1; Sound.sfx('tick'); }
+    const sx = Math.max(0.08, Math.abs(Math.cos(p * Math.PI))), cx = X + w / 2; x.save(); x.translate(cx, 0); x.scale(sx, 1); x.translate(-cx, 0);
+    try { if (p < 0.5) KD.cardBack(x, X, Y, w, h); else _dc.call(this, x, c, X, Y, w, h, { ...o, vis: w, visX0: 0 }); } finally { x.restore(); }
+    if (b.cfx16 && f % 2 === 0) b.cfx16.push({ k: 'spark', x: cx + rnd(-6, 6), y: Y + h / 2 + rnd(-8, 8), vx: rnd(-4, 4) / 10, vy: -rnd(2, 6) / 10, t: 0, T: 14, c: pick(['#ffe8a0', '#ffffff', '#c8b0ff']) }); }; }
+{ const _pk = BPK.playK; BPK.playK = function (i, tgt) { const c = this.hand[i], C = c && KD.CARDS[c.id], n0 = (this.ghosts || []).length; const r = _pk.call(this, i, tgt);
+    if (!this.k14 || !C) return r; const g = (this.ghosts || [])[n0]; if (!g) return r; const LB = KD.BL();
+    g.k16 = 1; g.T = 18; g.x1 = Math.round(W / 2 - LB.cw * 0.65); g.y1 = Math.round(KD.BL().hudY - LB.ch * 1.3 - 26); g.s1 = 1.3; g.col = KD.TYPE_GLOW[C.type]; g.exh = !!C.exhaust; g.pow = C.type === 'pow';
+    const ctr = v => { const P = this.center(v); return { x: P.x, y: P.y }; }, foes = this.foes().filter(v => !v.gone);
+    g.to = C.tg === 'all' || C.tg === 'rand' ? foes.map(ctr) : C.tg === 'enemy' ? [ctr(this.views[tgt] || foes[0] || this.H)].filter(Boolean) : [{ x: 70, y: LB.hudY + 6 }];
+    Sound.sfx('select'); return r; }; }
+{ const _dr = BPK.draw; BPK.draw = function (x) { if (!this.k14) return _dr.call(this, x); const mine = (this.ghosts || []).filter(g => g.k16); this.ghosts = (this.ghosts || []).filter(g => !g.k16);
+    try { _dr.call(this, x); } finally { this.ghosts = (this.ghosts || []).concat(mine); }
+    const LB = KD.BL(), F = this.cfx16 = this.cfx16 || [];
+    for (const g of mine) { g.t++; const k = Math.min(1, g.t / 10), e = 1 - Math.pow(1 - k, 3), s = 1 + (g.s1 - 1) * e, X = lerp(g.x0, g.x1, e), Y = lerp(g.y0, g.y1, e), w = Math.round(LB.cw * s), h = Math.round(LB.ch * s), fade = g.t <= 12 ? 1 : Math.max(0, 1 - (g.t - 12) / 6);
+      x.globalAlpha = fade; const glow = 0.5 + 0.5 * Math.sin(g.t / 2); x.fillStyle = g.col; x.globalAlpha = fade * (0.35 + 0.35 * glow); x.fillRect(Math.round(X) - 3, Math.round(Y) - 3, w + 6, h + 6); x.globalAlpha = fade;
+      KD.drawCard(x, g.c, Math.round(X), Math.round(Y), w, h, {}); if (g.exh && g.t > 6) { x.fillStyle = 'rgba(20,6,0,' + Math.min(0.6, (g.t - 6) / 10).toFixed(2) + ')'; x.fillRect(Math.round(X), Math.round(Y), w, h); }
+      if (g.t > 9 && g.t < 13) { x.fillStyle = '#ffffff'; x.globalAlpha = 0.5 * fade; x.fillRect(Math.round(X), Math.round(Y), w, h); } x.globalAlpha = 1;
+      const cx = X + w / 2, cy = Y + h / 2;
+      if (g.t === 12) { // the burst
+        for (const T of g.to || []) for (let i = 0; i < (g.to.length > 1 ? 7 : 12); i++) F.push({ k: 'shard', x: cx + rnd(-w / 3, w / 3), y: cy + rnd(-h / 3, h / 3), tx: T.x + rnd(-6, 6), ty: T.y + rnd(-6, 6), t: -i, T: 12, c: i % 3 ? g.col : '#ffffff', a: Math.random() * 6 });
+        for (const T of g.to || []) F.push({ k: 'ring', x: T.x, y: T.y, r0: 2, r1: 16, t: -12, T: 10, c: g.col });
+        if (g.pow) F.push({ k: 'ring', x: cx, y: cy, r0: 6, r1: 40, t: 0, T: 16, c: '#ffd050' });
+        if (g.exh) { for (let i = 0; i < 14; i++) F.push({ k: 'spark', x: cx + rnd(-w / 2, w / 2), y: cy + rnd(-h / 2, h / 2), vx: rnd(-3, 3) / 10, vy: -rnd(4, 12) / 10, t: 0, T: 20, c: pick(['#ff9a40', '#ff5020', '#ffd060']) }); F.push({ k: 'txt', s: '消耗', x: cx, y: cy - h / 2 - 4, t: 0, T: 26, c: '#ffb070' }); } } }
+    for (const g of mine) if (g.t >= g.T) this.ghosts.splice(this.ghosts.indexOf(g), 1);
+    for (const p of F) { p.t++; if (p.t < 0) continue; const k = p.t / p.T, a = Math.max(0, 1 - k); x.globalAlpha = Math.min(1, a * 1.4);
+      if (p.k === 'spark') { p.x += p.vx; p.y += p.vy; x.fillStyle = p.c; x.fillRect(Math.round(p.x), Math.round(p.y), 1, 1); }
+      else if (p.k === 'shard') { const e = k * k, X = lerp(p.x, p.tx, e) + Math.sin(k * Math.PI) * 10 * Math.cos(p.a), Y = lerp(p.y, p.ty, e) - Math.sin(k * Math.PI) * 14; x.fillStyle = p.c; x.fillRect(Math.round(X), Math.round(Y), 2, 2); x.globalAlpha *= 0.4; x.fillRect(Math.round(X - 1), Math.round(Y + 2), 1, 2); }
+      else if (p.k === 'ring') { const r = lerp(p.r0, p.r1, k); x.strokeStyle = p.c; x.lineWidth = 2; x.beginPath(); x.arc(p.x, p.y, r, 0, 7); x.stroke(); }
+      else if (p.k === 'txt') { Font.drawC(x, p.s, p.x, p.y - p.t * 0.4, p.c, '#000', 9); }
+      else if (p.k === 'back') { const e = 1 - Math.pow(1 - Math.min(1, k), 2); x.globalAlpha = 1; KD.cardBack(x, Math.round(lerp(p.x0, p.x1, e)), Math.round(lerp(p.y0, p.y1, e) - Math.sin(e * Math.PI) * 18), 16, 24); }
+      x.globalAlpha = 1; }
+    this.cfx16 = F.filter(p => p.t < p.T); }; }
 </script>
 </body></html>

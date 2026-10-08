@@ -44,7 +44,7 @@ KD.rageN = u => (u.boss || u.elite || (u.data && u.data.elite) ? 1 : 0);
     if (I.k !== 'hide' && I.k !== 'guard' && KD.foeBlk(core, u, cmd)) return { ...I, t: (I.t ? I.t + '+' : '') + '盾' };
     return I; }; }
 // a monster's block: a shield and the number under its feet
-{ const _db = Battle.prototype.drawBoxF; Battle.prototype.drawBoxF = function (x) { _db.call(this, x); if (!this.k14 || this.boxF < -20) return;
+{ const _db = Battle.prototype.drawBoxF; Battle.prototype.drawBoxF = function (x) { _db.call(this, x); if (!this.k14 || this.boxF < -20 || KD.stRow16) return; /* v14.15: drawn with the statuses (14q) */
     for (const v of this.foes()) { const b = v.st && v.st.blk15; if (!b || v.alpha < 0.5) continue; const s = String(b), tw = Math.ceil(Font.width(s, 8)), w = 13 + 2 + tw + 3, X = Math.round(clamp(v.x + v.off.x - w / 2, 2, W - w - 2)), Y = Math.round(v.foot + 2);
       x.fillStyle = 'rgba(10,20,48,0.82)'; x.fillRect(X, Y, w, 13); x.fillStyle = '#7ab8ff'; x.fillRect(X, Y + 12, w, 1); x.imageSmoothingEnabled = false; x.drawImage(KD.ICON.shield, X + 1, Y); Font.draw(x, s, X + 15, Y + 0.5, '#bfe0ff', '#000', 8); } }; }
 

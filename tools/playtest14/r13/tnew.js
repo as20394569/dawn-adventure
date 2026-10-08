@@ -6,7 +6,7 @@ module.exports = async (g) => {
     await g.ev(([s, cls, steps]) => { const G = __game; G.Game.st = JSON.parse(s); const st = G.Game.st; st.status = null; if (!st.k14) KD.migrate(st); const K = KD.state(st); K.catchup = 0; K.cls = cls; K.decks = {}; KD.deck(st);
       startOverworld(); G.Game.fade = 0; G.Game.noEnc = 1; KD.battleRewards = function* () {}; window.__on = 0;
       const T = window.__T = []; let i = 0, pend = null; const foe = b => b.core.alive('B')[0], H = b => b.core.byId.H;
-      const prep = b => { for (const u of b.core.side('B')) { u.statuses = u.statuses.filter(q => q.id !== 'blk15'); u.max.hp = Math.max(u.max.hp, 99999); u.res.hp = Math.max(u.res.hp, 99999); } };
+      const prep = b => { for (const u of b.core.side('B')) { u.statuses = u.statuses.filter(q => q.id !== 'blk15' && q.id !== 'broken' && q.id !== 'brkx16'); if (u.data) u.data.wk16 = []; u.max.hp = Math.max(u.max.hp, 99999); u.res.hp = Math.max(u.res.hp, 99999); } };
       const play = (b, id, up = 0) => { b.hand.unshift({ id, up }); const C = KD.CARDS[id], f = b.core.alive('B'); return { cmd: b.playK(0, C.tg === 'enemy' && f[0] ? f[0].id : null) }; };
       const shivs = b => b.hand.filter(c => c.id === 'tk_shiv').length;
       const hits = (b, m) => b.core.log.slice(m).filter(e => e.type === 'DAMAGE' && e.src === 'H').map(e => e.payload.amount);

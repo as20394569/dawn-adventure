@@ -109,7 +109,7 @@ BPK.endTurnK = function () { const core = this.core, H = this.Hu(); if (stkK(H, 
 /* ---------- drawing ---------- */
 const HK = H_BASE;
 // v14.12 battle layout: the hand, the bar above it and the card text hang from the bottom of the screen (taller on a tall phone)
-KD.BL = () => { const E = bxE(), ch = E >= 60 ? 64 : E >= 24 ? 58 : 52, cw = E >= 24 ? 35 : 33, handY = H - ch - 3, hudY = handY - 27;
+KD.BL = () => { const E = bxE(), ch = E >= 60 ? 68 : E >= 24 ? 60 : 52, /* v14.15: bigger hand (was 64 / 58) */ cw = E >= 24 ? 35 : 33, handY = H - ch - 3, hudY = handY - 27;
   return { E, cw, ch, handY, hudY, noteY: hudY - 19, tgtY: hudY - 34, detB: hudY - 3, tall: E >= 40 }; };
 // v14.1 card pictures: 16 pixel icons in the game's own style (13×13, drawn 1× in the hand, 2× on big cards)
 const KD_PAL = {"w": "#f4f4fa", "s": "#b0b8d0", "g": "#7c84a0", "y": "#ffe070", "Y": "#d09a28", "n": "#b07040", "N": "#6a3c20", "o": "#ffb050", "O": "#e0602a", "r": "#ff5a48", "R": "#a82828", "G": "#7ae868", "E": "#2e9a40", "L": "#d0ffc0", "b": "#7ab8ff", "B": "#3a68d0", "c": "#d0f4ff", "p": "#c890ff", "P": "#7040b8", "q": "#e8d0ff", "d": "#c8cce0", "D": "#8a90a8", "m": "#f4ecd8", "M": "#c0ae88", "T": "#9ad048", "U": "#5a8a28", "h": "#ff8aa8", "H": "#d0405a", "f": "#fff0a0", "e": "#ffd0b0", "a": "#e0a070"};
@@ -145,10 +145,10 @@ KD.KEYS = [[/格擋/, '格擋：擋下傷害，到你下一回合開始時消失
 KD.keyLines = c => { const d = KD.desc(c), out = []; for (const [re, t] of KD.KEYS) if (re.test(d)) out.push(t); return out.slice(0, 2); };
 { const _dbh = BPK.drawBoxH; BPK.drawBoxH = function (x) { if (!this.k14) return _dbh.call(this, x); const Hv = this.H, U = this.Hu(); if (!Hv || !U) return; const LB = KD.BL(), Y = LB.hudY, fK = this.fK || 0;
     x.fillStyle = 'rgba(10,8,20,0.62)'; x.fillRect(0, Y - 2, W, 27); x.fillStyle = 'rgba(10,8,20,0.92)'; x.fillRect(0, LB.handY - 3, W, H - LB.handY + 3);
-    const en = this.energy; x.fillStyle = '#2a1c08'; x.beginPath(); x.arc(11, Y + 9, 9, 0, 7); x.fill(); x.fillStyle = en ? '#ffb030' : '#6a5030'; x.beginPath(); x.arc(11, Y + 9, 7.5, 0, 7); x.fill(); Font.drawC(x, String(en), 11, Y, '#1a0c00', null, 11);
-    const bx = 23, bw = 70, hp = Math.max(0, Math.round(Hv.hp)), mh = U.max.hp; x.fillStyle = '#301018'; x.fillRect(bx, Y + 1, bw, 11); x.fillStyle = hp <= mh / 2 ? '#e05030' : '#c83838'; x.fillRect(bx, Y + 1, Math.round(bw * Math.min(1, hp / Math.max(1, mh))), 11);
+    const en = this.energy; x.fillStyle = '#2a1c08'; x.beginPath(); x.arc(13, Y + 11, 11.5, 0, 7); x.fill(); x.fillStyle = en ? '#ffb030' : '#6a5030'; x.beginPath(); x.arc(13, Y + 11, 10, 0, 7); x.fill(); x.fillStyle = en ? 'rgba(255,240,180,0.55)' : 'rgba(0,0,0,0)'; x.fillRect(8, Y + 3, 5, 2); Font.drawC(x, String(en), 13, Y + 1, '#1a0c00', null, 13); /* v14.15: bigger energy */
+    const bx = 27, bw = 86, hp = Math.max(0, Math.round(Hv.hp)), mh = U.max.hp; /* v14.15: longer HP bar (was 23 / 70) */ x.fillStyle = '#301018'; x.fillRect(bx, Y + 1, bw, 11); x.fillStyle = hp <= mh / 2 ? '#e05030' : '#c83838'; x.fillRect(bx, Y + 1, Math.round(bw * Math.min(1, hp / Math.max(1, mh))), 11);
     Font.drawC(x, hp + '/' + mh, bx + bw / 2, Y - 2, '#fff4f4', '#000', 9);
-    const b = (Hv.st && Hv.st.blk15) || 0; if (b) { x.drawImage(KD.ICON.shield, bx + bw + 1, Y); Font.drawC(x, String(b), bx + bw + 21, Y - 2, '#bfe0ff', '#000', 9); }
+    const b = (Hv.st && Hv.st.blk15) || 0; if (b) { x.drawImage(KD.ICON.shield, bx + 57, Y + 12); Font.draw(x, String(b), bx + 71, Y + 12, '#bfe0ff', '#000', 9); } /* v14.15: under the HP bar, after the class (the bar is longer) */
     const CL = KD.CLASSES[this.cls] || {}; Font.draw(x, CL.n || '', bx, Y + 14, CL.c || '#ccc', '#000', 8);
     if (this.cls === 'sw') { for (let i = 0; i < 3; i++) { x.fillStyle = i < this.si ? (this.si >= 3 ? '#ffe070' : '#ff9a40') : '#3a3048'; x.fillRect(bx + 28 + i * 6, Y + 16, 4, 5); } if (this.si >= 3) Font.draw(x, '×2', bx + 48, Y + 14, '#ffe070', '#000', 8); }
     if (this.cls === 'rg') { const q = (this.chainN || 0) % 3; for (let i = 0; i < 3; i++) { x.fillStyle = i < q ? '#70d070' : '#3a3048'; x.fillRect(bx + 28 + i * 6, Y + 16, 4, 5); } }
@@ -179,12 +179,16 @@ BPK.handK = function (x) { const LB = KD.BL(), n = this.hand.length, cw = LB.cw,
   if (this.tgtMode && my) { const s = '點要打的那一隻魔物', fs = LB.tall ? 9 : 8, w = Font.width(s, fs) + 10; x.fillStyle = 'rgba(30,24,44,0.92)'; x.fillRect((W - w) / 2, LB.tgtY, w, fs + 4); Font.drawC(x, s, W / 2, LB.tgtY + (fs - 8) / 2, '#ffe8a0', '#000', fs); }
   else if (this.sel >= 0 && this.hand[this.sel]) { const c = this.hand[this.sel], C = KD.CARDS[c.id], T = KD.TYPE[C.type], K = KD.keyLines(c);
     // v14.12: the card's text sits just above the bar (on a tall screen, under the monsters instead of over them), 8〜9 size
-    const fs = LB.tall ? 9 : 8, lh = fs + 2, D = wrap15(KD.desc(c), W - 26, fs).slice(0, LB.tall ? 4 : 3), ph = 14 + D.length * lh + 11, pY = LB.detB - ph;
-    if (K.length) { const kh = K.length * 10 + 4; x.fillStyle = 'rgba(30,24,44,0.94)'; x.fillRect(8, pY - 2 - kh, W - 16, kh); K.forEach((t, k) => fontFit(x, t, 12, pY - 2 - kh + 1 + k * 10, W - 24, '#c8c0e0', '#000', 8)); }
-    x.fillStyle = 'rgba(12,8,24,0.94)'; x.fillRect(8, pY, W - 16, ph); x.fillStyle = KD.RAR[C.rar].c; x.fillRect(8, pY, W - 16, 1);
-    fontFit(x, KD.name(c) + '　' + KD.typeN(c) + '・' + KD.cost(c) + ' 能量', 12, pY + 1, W - 24, c.up ? '#a8ffa0' : '#fff0d0', '#000', 9);
-    D.forEach((L, k) => Font.draw(x, L, 12, pY + 13 + k * lh, '#e8e4f4', '#000', fs));
-    Font.drawR(x, this.tgtMode ? '點魔物出牌' : '再點一次出牌', W - 12, pY + ph - 12, '#a8e0ff', '#000', 8); }
+    // v14.15: in the gap under the monsters (their feet and status row), the hint on the title line; as many lines as fit (2〜4)
+    const top = Math.max(0, ...this.foes().filter(v => !v.gone).map(v => Math.round(v.foot) + (v.st && KD.chips16 && KD.chips16(v.st, false).length ? 14 : 3))) + 2;
+    let fs = LB.tall ? 9 : 8, lh = fs + 2, n = Math.max(2, Math.min(4, Math.floor((LB.detB - top - 16) / lh))), D = wrap15(KD.desc(c), W - 22, fs);
+    if (D.length > n && fs > 8) { fs = 8; lh = 10; n = Math.max(2, Math.min(4, Math.floor((LB.detB - top - 16) / lh))); D = wrap15(KD.desc(c), W - 22, fs); }
+    D = D.slice(0, n); const ph = 15 + D.length * lh + 2, pY = LB.detB - ph;
+    if (K.length && pY - 2 - (K.length * 10 + 4) >= top) { const kh = K.length * 10 + 4; x.fillStyle = 'rgba(30,24,44,0.94)'; x.fillRect(6, pY - 2 - kh, W - 12, kh); K.forEach((t, k) => fontFit(x, t, 10, pY - 2 - kh + 1 + k * 10, W - 20, '#c8c0e0', '#000', 8)); }
+    x.fillStyle = 'rgba(12,8,24,0.94)'; x.fillRect(6, pY, W - 12, ph); x.fillStyle = KD.RAR[C.rar].c; x.fillRect(6, pY, W - 12, 1);
+    const hint = this.tgtMode ? '點魔物出牌' : '再點一次出牌', hw = Math.ceil(Font.width(hint, 8)) + 4; Font.drawR(x, hint, W - 9, pY + 2, '#a8e0ff', '#000', 8);
+    fontFit(x, KD.name(c) + '　' + KD.typeN(c) + '・' + KD.cost(c) + ' 能量', 10, pY + 1, W - 20 - hw, c.up ? '#a8ffa0' : '#fff0d0', '#000', 9);
+    D.forEach((L, k) => Font.draw(x, L, 10, pY + 14 + k * lh, '#e8e4f4', '#000', fs)); }
   if (this.tgtMode && my) for (const f2 of this.foes()) { const C = this.center(f2); if (f2.id === this.tgtId) { x.strokeStyle = '#ffe070'; x.lineWidth = 1; x.strokeRect(C.x - 20, C.y - 22, 40, 44); } touchRegion(C.x - 24, C.y - 30, 48, 60, () => { this.tapK = { k: 'tgt', id: f2.id }; }); } };
 // a look at the draw pile (shuffled order hidden: sorted) or the discard pile
 BPK.pileView = function* (w) { const L = (w === 'disc' ? this.disc : this.pile).slice().sort((a, b) => KD.cost(a) - KD.cost(b) || (a.id < b.id ? -1 : 1)); let done = false, scroll = 0;
@@ -203,13 +207,13 @@ KD.drawCard = function (x, c, X, Y, w, h, o = {}) { const C = KD.CARDS[c.id]; if
   x.fillStyle = edge || (CL ? CL.c : '#8a8a9a'); x.fillRect(X + 2, Y + h - 3, w - 4, 1);
   x.fillStyle = KD.RAR[C.rar].c; x.fillRect(X + w - 4, Y + 2, 2, 2);
   const art = KD.ART && KD.ART[c.id] && KD.ART[c.id].ok ? KD.ART[c.id] : null, r = big ? 6 : 5, nm = KD.name(c), vw = Math.min(w, o.vis || w), tw = vw - 4, tx = X + (o.visX0 || 0) + vw / 2, foot = big && h >= 74 ? Y + h - 10 : Y + h - 3; // vis: the part of an overlapped hand card that shows
-  const lines = (ly, step) => { KD.shortL(C, v).forEach((t, k) => { const y = ly + k * step; if (y + 12 > foot) return; fontFit(x, t, tx, y, tw, '#e8e4f4', '#000', 8, 'c'); }); };
+  const tall = !big && h >= 70, lines = (ly, step) => { KD.shortL(C, v).forEach((t, k) => { const y = ly + k * step; if (y + 12 > foot) return; fontFit(x, t, tx, y, tw, '#e8e4f4', '#000', tall ? 9 : 8, 'c'); }); }; /* v14.15: a tall hand card writes 9 */
   const cost = () => { x.fillStyle = '#0c0814'; x.beginPath(); x.arc(X + r, Y + r, r, 0, 7); x.fill(); x.fillStyle = o.dim ? '#6a5a40' : '#ffb030'; x.beginPath(); x.arc(X + r, Y + r, r - 1, 0, 7); x.fill(); Font.drawC(x, String(KD.cost(c)), X + r, Y + r - 8, '#1a0c00', null, big ? 9 : 8); };
   const nameAt = ny => { const fz = Font.width(nm, 9) <= tw ? 9 : 8; fontFit(x, nm, tx, ny, tw, c.up ? '#a8ffa0' : '#fff4e0', '#000', fz, 'c'); };
   if (art) { // the card's picture along the top (a hand card shows its middle; big cards the whole 48×32)
-    const aw = Math.min(48, w - 2), ah = big ? 32 : h >= 54 ? 20 : 16; x.drawImage(art, Math.round((48 - aw) / 2), Math.round((32 - ah) / 2), aw, ah, X + Math.round((w - aw) / 2), Y + 1, aw, ah);
+    const aw = Math.min(48, w - 2), ah = big ? 32 : h >= 70 ? 24 : h >= 54 ? 20 : 16; x.drawImage(art, Math.round((48 - aw) / 2), Math.round((32 - ah) / 2), aw, ah, X + Math.round((w - aw) / 2), Y + 1, aw, ah);
     x.fillStyle = 'rgba(0,0,0,0.35)'; x.fillRect(X + 1, Y + ah + 1, w - 2, 1); cost();
-    const ny = Y + ah + 1; nameAt(ny); lines(ny + (big ? 11 : 9), big ? 10 : 9);
+    const ny = Y + ah + 1; nameAt(ny); lines(ny + (big || tall ? 11 : 9), big || tall ? 10 : 9);
   } else {
     cost(); const ny = Y + (big ? 12 : 8); nameAt(ny);
     const z = big && h >= 74 ? 2 : 1, ic = KD.ICON[KD.iconOf(c.id)], iy = ny + (big ? 11 : 9); if (ic) x.drawImage(ic, Math.round(X + w / 2 - 6.5 * z), iy, 13 * z, 13 * z);

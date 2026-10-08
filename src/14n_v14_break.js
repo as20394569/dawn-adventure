@@ -99,9 +99,6 @@ if (typeof BATTLE_HELP !== 'undefined') BATTLE_HELP.unshift(['弱點破防', ['�
   '劍士劍意 ×2 的一擊、狂戰士的劈山和碎盾擊、法師的元素反應，不用打弱點也能扣盾牌。']]);
 { const H = Battle.prototype.handlers, _m = H.MESSAGE; H.MESSAGE = function* (e, s, t, P) { if (P && P.key === 'wk16') { if (t) { const C = this.center(t); this.pops.push({ x: C.x, y: C.y - 52, s: '弱點：' + P.at, c: KD.ATC[P.at][0], t: 0 }); Sound.sfx('select'); }
       const f = Game.st && Game.st.flags; if (f && !f.tutWk16) { f.tutWk16 = 1; yield* this.msg('（打中弱點了！名牌上的盾牌數字 −1，扣到 0 魔物就會破防。）', { hold: 90 }); } return; } return yield* _m.call(this, e, s, t, P); }; }
-// the 「×2」 speed button moves under the weakness row when there are several plates
-{ const _ds = Battle.prototype.drawSpd12; Battle.prototype.drawSpd12 = function (x) { if (!this.k14 || !this.multi || this.foes().length < 2) return _ds.call(this, x); x.save(); x.translate(0, 26); const _tr = touchRegion; touchRegion = (X, Y, w, h, fn) => _tr(X, Y + 26, w, h, fn);
-    try { return _ds.call(this, x); } finally { touchRegion = _tr; x.restore(); } }; }
 // the card face: its attack type in the top-right corner (left of the rarity dot); on an overlapped hand card, at the right end of the strip that shows
 { const _dc = KD.drawCard; KD.drawCard = function (x, c, X, Y, w, h, o = {}) { _dc.call(this, x, c, X, Y, w, h, o); const at = c && KD.atOf(c.id); if (!at) return;
     const vw = Math.min(w, o.vis || w); if (vw < 26) return; const bx = X + (o.visX0 || 0) + vw - 14; KD.atBox(x, bx, Y + 2, at); if (o.dim) { x.fillStyle = 'rgba(0,0,0,0.38)'; x.fillRect(bx - 1, Y + 1, 11, 11); } }; }
