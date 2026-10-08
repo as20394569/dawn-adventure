@@ -43,7 +43,7 @@ KD.markIcon = (x, X, Y, el, t) => { const C = KD.ATC[el], p = 0.5 + 0.5 * Math.s
     for (const v of this.foes()) { const u = core.byId[v.id]; if (!u || !u.data || !u.data.mk16 || v.gone || v.alpha < 0.5) continue;
       let w = 13; try { const I = intentOf14(core, u, core.plan && core.plan[v.id]); if (I && I.t) w = 13 + Math.ceil(Font.width(I.t, 8)) + 3; } catch (e) { }
       const X = Math.round(clamp(v.x + v.off.x - w / 2, 17, W - w - 2)) - 9, Y = Math.round(v.foot - v.bbh - 17 + v.sink * (v.sink < 0 ? 1 : 0)) + 6;
-      KD.markIcon(x, Math.max(8, X), Y, u.data.mk16, this.t); } }; }
+      if (!KD.UI24) KD.markIcon(x, Math.max(8, X), Y, u.data.mk16, this.t); /* v14.28: on the plate's status row instead (14u) */ } }; }
 { const H = Battle.prototype.handlers, _m = H.MESSAGE; H.MESSAGE = function* (e, s, t, P) { if (!P || P.key !== 'rx16') return yield* _m.call(this, e, s, t, P); if (!t) return;
     const C = this.center(t), rx = P.rx; this.pops.push({ x: C.x, y: C.y - 46, s: rx + '！', c: KD.RXC[rx], t: 0, big: 1 }); this.shake = Math.max(this.shake || 0, rx === '爆炸' ? 16 : 8);
     if (rx === '蒸發') { Sound.sfx('water'); for (let i = 0; i < 14; i++) this.spawn({ k: 'circ', x: C.x + rnd(-14, 14), y: C.y + rnd(-6, 10), vx: rnd(-6, 6) / 10, vy: -rnd(6, 16) / 10, r: rnd(2, 4), c: pick(['#ffffff', '#e0ecf4', '#c4d8e8']), life: 28 }); this.sparks(C.x, C.y, 10, ['#ffffff', '#a8d8ff'], 1.6, 18); }

@@ -1,10 +1,3 @@
-{ const _ls = Battle.prototype.lootShow; Battle.prototype.lootShow = function* (g, head) {
-    const st = Game.st; if (Game.smith11 || !g || !GEAR[g.b] || !bpKnown(g.b, st) || (g.q || 1) < 2) return yield* _ls.call(this, g, head);
-    st.gear = (st.gear || []).filter(x => x !== g); const n = g.q >= 5 ? 3 : g.q >= 4 ? 2 : 1, R = st.refine || (st.refine = {}); R[g.b] = (R[g.b] || 0) + n;
-    Sound.sfx('item'); yield* this.msg('得到了「' + GEAR[g.b].n + '」的精煉石×' + n + '！（持有' + R[g.b] + '）', { hold: 30 });
-    if (!st.flags.starTut) { st.flags.starTut = 1; yield* this.msg('（精煉石拿去給鐵匠，可以讓同名的裝備「升星」變強。）', { wait: true }); }
-  };
-}
 function* starFlow() {
   const st = Game.st, R = st.refine || (st.refine = {});
   while (true) {
@@ -9270,3 +9263,11 @@ const cryCan11 = (c, st = Game.st) => st.money >= c.gold && Object.entries(c.mat
 const cryCostText11 = c => Object.entries(c.mats).map(([k, n]) => ITEMS[k].n + '×' + n + '（有' + (Game.st.bag[k] || 0) + '）').join('、') + '、' + c.gold + ' G';
 const cryNext11 = sp => { const L = CRY_SER11[CRY11[sp][1]]; if (!L) return null; const i = L.indexOf(sp); return i >= 0 && i < L.length - 1 ? L[i + 1] : null; };
 const cryPrev11 = sp => { const L = CRY_SER11[CRY11[sp][1]]; if (!L) return null; const i = L.indexOf(sp); return i > 0 ? L[i - 1] : null; };
+function cryList11(st = Game.st) { const O = cryOwn11(st), ord = Object.keys(CRY11); return Object.keys(O).filter(sp => CRY11[sp] && O[sp]).sort((a, b) => ord.indexOf(a) - ord.indexOf(b)); }
+function cryInfo11(sp) { const st = Game.st, star = cryOwn11()[sp], g = cryHost11(sp), L = [];
+  L.push([cryName11(sp) + '　★' + star + '　' + CRY_T11[CRY11[sp][0]] + '用・' + CRY11[sp][1] + (CRY11[sp][1] === '單顆' ? '' : '系'), UIC.accent]);
+  L.push([cryText11(sp, star), UIC.text]);
+  if (star < 3) L.push(['升級到 ★' + (star + 1) + '：' + cryText11(sp, star + 1), UIC.muted]);
+  L.push([g ? '鑲在：' + gearName(g) : '還沒有鑲', g ? UIC.good : UIC.muted]);
+  const nx = cryNext11(sp); if (nx) L.push(['同系列下一顆：' + cryName11(nx), UIC.muted]);
+  return L; }

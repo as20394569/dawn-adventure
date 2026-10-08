@@ -1245,7 +1245,7 @@ class TitleScene {
     x.drawImage(this.logo, Math.round(W / 2 - this.logo.width / 2), 6 + bob);
     Font.drawC(x, '～異世界冒險RPG～', W / 2, 52 + bob, '#ffe0a0', '#3a1428');
     if (this.stage === 'press' && Math.floor(this.t / 30) % 2 === 0) Font.drawC(x, '按 A 鍵開始', W / 2, 232, '#ffffff', '#1a1024');
-    Font.drawR(x, 'v14.27', W - 3, H - 13, '#b890b0', null);
+    Font.drawR(x, 'v14.28', W - 3, H - 13, '#b890b0', null);
   }
 }
 class IntroScene {
@@ -5340,3 +5340,10 @@ for (const k in COM_EX) { const c = COMMISSIONS[k]; if (!c) continue; const E = 
   };
 }
 const STAR_MAX = 5, starStones = s => s + 1, starGold = (g, s) => 500 * GEAR[g.b].t * (s + 1);
+{ const _ls = Battle.prototype.lootShow; Battle.prototype.lootShow = function* (g, head) {
+    const st = Game.st; if (Game.smith11 || !g || !GEAR[g.b] || !bpKnown(g.b, st) || (g.q || 1) < 2) return yield* _ls.call(this, g, head);
+    st.gear = (st.gear || []).filter(x => x !== g); const n = g.q >= 5 ? 3 : g.q >= 4 ? 2 : 1, R = st.refine || (st.refine = {}); R[g.b] = (R[g.b] || 0) + n;
+    Sound.sfx('item'); yield* this.msg('得到了「' + GEAR[g.b].n + '」的精煉石×' + n + '！（持有' + R[g.b] + '）', { hold: 30 });
+    if (!st.flags.starTut) { st.flags.starTut = 1; yield* this.msg('（精煉石拿去給鐵匠，可以讓同名的裝備「升星」變強。）', { wait: true }); }
+  };
+}
