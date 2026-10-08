@@ -5,6 +5,8 @@
        有小牌子：「數字 單位」同一行＋下面一排小牌子；沒有小牌子：數字在上、單位在下，把效果區填滿
    · 大卡（選到的卡・選卡畫面）：圖的高度跟著說明的行數變——說明短圖就大、說明長圖就小，卡上不留空白 */
 KD.U28 = { 全體傷害: '全體', 隨機傷害: '隨機' };
+// v14.31 the small card's sizes in one place (玩家：「小卡圖中文字跟數字還是太大」)
+KD.Z28 = { name: 4, num: 6, lab: 4, chip: 4, cost: 4, nh: 7, r: 3, row: 9, chipH: 6 }; // v14.31: two sizes down (卡名・單位・小牌子 5→4、數字 8→6、費用 5→4); the parts shrink with them and the picture grows (手牌 26→30 高)
 KD.drawCard = function (x, c, X, Y, w, h, o = {}) { const C = KD.CARDS[c.id]; if (!C) return; const T = KD.TYPE[C.type], P = KD.C3, v = KD.val(c), big = w >= 46, gold = C.rar === 'L', qst = C.rar === 'Q', gear = !!c.g16, CL = KD.CLASSES[C.cls];
   const kc = big ? 2 : 1, edge = o.on ? '#ffe070' : gold ? '#ffcf6a' : qst ? '#5ce0b8' : gear ? '#dfe4f0' : P.line, B = (s, z) => Font.w('700', () => Font.width(s, z));
   // the frame (the picked card keeps its glow; that is the only thing outside the frame)
@@ -15,15 +17,15 @@ KD.drawCard = function (x, c, X, Y, w, h, o = {}) { const C = KD.CARDS[c.id]; if
   const lx = Math.max(ix + pd, v0 + 2), rx = Math.min(ix + iw - pd, v0 + vw - 2), cx = (lx + rx) / 2, tw = Math.max(8, rx - lx);
   // what the card says: the main number (with its unit) and the rest
   const L = KD.shortL(C, v), n0 = L.findIndex(s => KD.numOf(s)), ni = n0 >= 0 ? n0 : L.findIndex(s => KD.numOf28(s)), N = ni >= 0 ? KD.numOf28(L[ni]) : null, rest = L.filter((s, k) => k !== ni);
-  const zN = big ? 10 : 8, zL = 5, zC = 5, nh = big ? 12 : 9, zName = big ? 7 : 5;
+  const S = KD.Z28, zN = big ? 10 : S.num, zL = big ? 5 : S.lab, zC = S.chip, nh = big ? 12 : S.nh, zName = big ? 7 : S.name, EA = S.row + S.chipH + 2; /* EA: the small card's effect area */
   // ---- sizes of each part ----
   let ah, foot = 0, lines = 0, word = null, chips = [], inline = false, unit = N ? N.lab : '';
   if (big) { foot = h >= 74 ? 10 : 0; const mainH = N ? 12 : 0, maxL = KD.lines3(KD.desc(c), tw, 6), room = ih - nh - foot - 4;
     lines = Math.max(0, Math.min(maxL, Math.floor((room - mainH - (o.noArt ? 15 : 28)) / 8)));
     ah = o.noArt ? 15 : clamp(room - mainH - lines * 8, 28, 58); }
-  else { ah = ih - nh - 19;
+  else { ah = ih - nh - EA;
     if (!N && rest.length) word = rest.shift();
-    for (const s of rest) { const ww = Math.ceil(B(s, zC)) + 4; if (chips.reduce((a, q) => a + q[1] + 1, 0) + ww > tw) break; chips.push([s, ww]); }
+    for (const s of rest) { const ww = Math.ceil(B(s, zC)) + 3; if (chips.reduce((a, q) => a + q[1] + 1, 0) + ww > tw) break; chips.push([s, ww]); }
     if (N && chips.length) { const wn = B(N.s, zN); if (wn + 2 + B(unit, zL) <= tw) inline = true; else if (KD.U28[unit] && wn + 2 + B(KD.U28[unit], zL) <= tw) { inline = true; unit = KD.U28[unit]; } else { inline = true; unit = ''; } } }
   // ① the picture, the cost on it (and a big card's type)
   const art = KD.ART && KD.ART[c.id] && KD.ART[c.id].ok ? KD.ART[c.id] : null, sc = big ? ah / 32 : Math.max(1, ah / 32) /* a small card's picture stays 1× (pixel art is never shrunk; its sides are cut) */, tc = gold ? (() => { const s = x.createLinearGradient(ix, 0, ix + iw, 0); s.addColorStop(0, '#ffcf6a'); s.addColorStop(0.5, '#ff9a2a'); s.addColorStop(1, '#ffe08a'); return s; })() : T.c;
@@ -37,18 +39,18 @@ KD.drawCard = function (x, c, X, Y, w, h, o = {}) { const C = KD.CARDS[c.id]; if
   // ② the name on its own band, the type's colour along its top
   const nb = iy + ah, nm = KD.name(c); x.fillStyle = '#10121a'; x.fillRect(ix, nb, iw, nh); x.fillStyle = tc; x.fillRect(ix, nb, iw, 1);
   // v14.30（玩家：「卡片的費用跟技能裝備名詞不用遮住卡圖」）: the cost sits at the left end of the name band, the name in the rest of it; the type moved to the big card's footer
-  { const r = big ? 5 : 3.5, ccx = Math.max(ix + 1 + r + 0.5, v0 + 1 + r + 0.5), ccy = nb + 1 + (nh - 1) / 2; KD.coin3(x, ccx, ccy, r, KD.cost(c), o.dim, big ? 7 : 5);
-    const a0 = ccx + r + 2, a1 = rx, aw = Math.max(8, a1 - a0); let z = zName; while (z > 4 && B(nm, z) > aw) z -= 0.5; Font.w('700', () => KD.tc(x, nm, (a0 + a1) / 2, ccy, c.up ? '#a8ffa0' : '#ffffff', '#000', z, aw)); }
+  { const r = big ? 5 : S.r, ccx = Math.max(ix + 1 + r + 0.5, v0 + 1 + r + 0.5), ccy = nb + 1 + (nh - 1) / 2; KD.coin3(x, ccx, ccy, r, KD.cost(c), o.dim, big ? 7 : S.cost);
+    const a0 = ccx + r + 2, a1 = rx, aw = Math.max(8, a1 - a0); let z = zName; while (z > 3.5 && B(nm, z) > aw) z -= 0.5; Font.w('700', () => KD.tc(x, nm, (a0 + a1) / 2, ccy, c.up ? '#a8ffa0' : '#ffffff', '#000', z, aw)); }
   // ③ the words under the name
   const top = nb + nh, col = N ? KD.numCol28(N, P) : P.top;
-  const fitZ = (s, z) => { while (z > 4 && B(s, z) > tw) z -= 0.5; return z; };
-  if (!big) { const A = ih + iy - top; // the effect area (19 high on every small card)
-    if (inline) { const my = top + 1 + 5, wn = B(N.s, zN), wu = unit ? B(unit, zL) : 0, tot = wn + (unit ? 2 + wu : 0), x1 = cx - tot / 2;
-      Font.w('700', () => { KD.tc(x, N.s, x1 + wn / 2, my, col, '#000', zN); if (unit) KD.tc(x, unit, x1 + wn + 2 + wu / 2, my + 1, P.lab, null, zL); }); }
-    else if (N) { const blk = 9 + 6, y0 = top + Math.floor((A - blk) / 2); Font.w('700', () => { KD.tc(x, N.s, cx, y0 + 4.5, col, '#000', fitZ(N.s, zN), tw); KD.tc(x, unit, cx, y0 + 9 + 3, P.lab, null, fitZ(unit, zL), tw); }); }
-    else if (word) { const z = fitZ(word, 6), y = chips.length ? top + 1 + 5 : top + A / 2; Font.w('700', () => KD.tc(x, word, cx, y, P.top, '#000', z, tw)); }
-    if (chips.length) { const cy = top + A - 1 - 7, tot = chips.reduce((a, q) => a + q[1] + 1, -1); let zx = Math.round(cx - tot / 2);
-      for (const [s, ww] of chips) { const [bg, fc] = KD.chip26(s); x.fillStyle = bg; x.fillRect(zx, cy, ww, 7); Font.w('700', () => KD.tc(x, s, zx + ww / 2, cy + 3.5, fc, null, zC)); zx += ww + 1; } } }
+  const fitZ = (s, z) => { while (z > 3.5 && B(s, z) > tw) z -= 0.5; return z; };
+  if (!big) { const A = ih + iy - top; // the effect area (the same height on every small card)
+    if (inline) { const my = top + 1 + S.row / 2, wn = B(N.s, zN), wu = unit ? B(unit, zL) : 0, tot = wn + (unit ? 2 + wu : 0), x1 = cx - tot / 2;
+      Font.w('700', () => { KD.tc(x, N.s, x1 + wn / 2, my, col, '#000', zN); if (unit) KD.tc(x, unit, x1 + wn + 2 + wu / 2, my, P.lab, null, zL); }); }
+    else if (N) { const r1 = zN + 2, r2 = zL + 2, blk = r1 + r2, y0 = top + Math.floor((A - blk) / 2); Font.w('700', () => { KD.tc(x, N.s, cx, y0 + r1 / 2, col, '#000', fitZ(N.s, zN), tw); KD.tc(x, unit, cx, y0 + r1 + r2 / 2, P.lab, null, fitZ(unit, zL), tw); }); }
+    else if (word) { const z = fitZ(word, S.name + 1), y = chips.length ? top + 1 + S.row / 2 : top + A / 2; Font.w('700', () => KD.tc(x, word, cx, y, P.top, '#000', z, tw)); }
+    if (chips.length) { const ch2 = S.chipH, cy = top + A - 1 - ch2, tot = chips.reduce((a, q) => a + q[1] + 1, -1); let zx = Math.round(cx - tot / 2);
+      for (const [s, ww] of chips) { const [bg, fc] = KD.chip26(s); x.fillStyle = bg; x.fillRect(zx, cy, ww, ch2); Font.w('700', () => KD.tc(x, s, zx + ww / 2, cy + ch2 / 2, fc, null, zC)); zx += ww + 1; } } }
   else { const bot = iy + ih - foot - 1, mainH = N ? 12 : 0, blk = mainH + lines * 8, y0 = top + Math.max(1, Math.floor((bot - top - blk) / 2));
     if (N) { const wn = B(N.s, zN), wu = B(N.lab, zL), tot = wn + 3 + wu, x1 = cx - tot / 2; Font.w('700', () => { KD.tc(x, N.s, x1 + wn / 2, y0 + 6, col, '#000', zN); KD.tc(x, N.lab, x1 + wn + 3 + wu / 2, y0 + 7, P.lab, null, zL); }); }
     if (lines > 0) { x.save(); x.beginPath(); x.rect(ix, y0 + mainH, iw, lines * 8 + 1); x.clip(); KD.rich3(x, KD.desc(c), cx, y0 + mainH, tw, lines, P, 6, 8); x.restore(); }
