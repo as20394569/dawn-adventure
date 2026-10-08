@@ -111,3 +111,52 @@ KB12.RIB['追擊！'] = '追擊！再動一次';
     return yield* _ch(items, o); }; }
 // 圖鑑：破綻
 { const _dw = dexWeak11; dexWeak11 = function (sp) { const t = _dw(sp), F = pzFoe12({ sp, fam: (SPECIES[sp] || {}).fam }); if (!F) return t; return '破綻 ' + (pzKnown12(sp) ? F.join('・') : '？') + (t && t !== '—' ? '　' + t : ''); }; }
+
+/* ===================== v12.90 破綻與追擊（第二階段）：連殺（玩家：「第二階段開始」，2026-10-09） =====================
+   · 溢出：單發的招（一般攻擊也算）把魔物打倒時，多出來的傷害打到旁邊那隻（一招只轉一次）。連擊的招本來就會把後面幾段打到別隻。
+   · 總攻擊：場上 2 隻以上、全部同時破防時，「攻擊」變成金色的「總攻擊」：不花 MP，對全體各打一般攻擊的 2.5 倍（再加破防的傷害）。
+   · 連殺：同一次出手（含追擊）打倒 2 隻以上，上方橫帶「連殺×2」；一口氣清光是「全滅！」。第 2 隻起每多打倒一隻回 5% MP。
+   · 頭目・菁英在場上時沒有追擊、也沒有總攻擊（頭目戰保持難）。 */
+Object.assign(PZ12, { allMul: 2.5, chainMp: 0.05 });
+defPut('skills', 'pz_allout', { ...DEF.skills.attack, id: 'pz_allout', name: '總攻擊', desc: '全部的魔物都破防時才能用：對全體各打一般攻擊的 2.5 倍。', target: 'all_enemies', power: Math.round(DEF.skills.attack.power * PZ12.allMul / BR.AOE_MUL),
+  tags: DEF.skills.attack.tags.filter(t => t !== 'basic').concat(['aoe', 'pz12']), costs: [], cooldown: 0 });
+const pzAllOutCore12 = core => { const F = core.alive('B'); return !PZ12.off && F.length >= 2 && F.every(f => core.hasStatus(f, 'broken')) && !F.some(f => wardFoe12(f)); };
+const pzAllOut12 = B => !!(B && B.core && B.core.need && B.core.need.unit && B.core.need.unit.hero && pzAllOutCore12(B.core));
+{ const P = BattleCore.prototype, _sub = P.submit, _dd = P.dealDamage, _em2 = P.emit, _pr2 = P.prepare;
+  // 攻擊 while everything is broken → 總攻擊
+  P.submit = function (cmd) { const u = this.need && this.need.unit; if (u && u.hero && cmd && cmd.type === 'skill' && cmd.skill === (u.data.attackSkill || 'attack') && pzAllOutCore12(this)) cmd = { ...cmd, skill: 'pz_allout', targets: [] }; return _sub.call(this, cmd); };
+  // overflow: a single-shot hit that knocks a monster down passes the rest to the one beside it
+  P.dealDamage = function (src, tgt, amount, info = {}) { const hp0 = tgt && tgt.res ? tgt.res.hp : 0, e = _dd.call(this, src, tgt, amount, info);
+    if (!PZ12.off && e && src && src.hero && tgt && tgt.side === 'B' && tgt.down && this.act && !this.act.reaction && this.act.actor === src.id && !this.act.ofl12 && (info.kind || 'hit') === 'hit' && info.skill) {
+      const D = DEF.skills[info.skill], one = D && D.target === 'enemy' && !(D.hits && D.hits[1] >= 2) && !D.hitsOf && !(D.tags || []).includes('multi_hit'), over = Math.floor(amount) - hp0;
+      if (one && over > 0) { const L = this.alive('B'); if (L.length) { const nb = L.slice().sort((a, b) => Math.abs((a.slot || 0) - (tgt.slot || 0)) - Math.abs((b.slot || 0) - (tgt.slot || 0)))[0]; this.act.ofl12 = 1;
+        _dd.call(this, src, nb, over, { skill: info.skill, cat: info.cat || D.cat, kind: 'overflow', tags: ['overflow12'], min: 1 }); } } }
+    return e; };
+  // 連殺: count the hero's knock-downs in one go (its action and the 追擊 after it)
+  P.prepare = function (cmd) { const u = cmd && this.byId[cmd.actor]; if (u && u.hero && !cmd.reaction && !(cmd.meta && cmd.meta.extra === 'chase12')) this.kc12 = 0; return _pr2.call(this, cmd); };
+  P.emit = function (type, o = {}, main = null) { const e = _em2.call(this, type, o, main);
+    if (type === EVT.DOWN && !PZ12.off && o.src && o.src.hero && o.tgts && o.tgts[0] && o.tgts[0].side === 'B' && o.tgts[0].down && this.act && this.act.actor === o.src.id) {
+      this.kc12 = (this.kc12 || 0) + 1; if (this.kc12 >= 2 && this.isUp(o.src)) { const all = !this.alive('B').length;
+        if (o.src.res.mp < o.src.max.mp) this.changeRes(o.src, 'mp', Math.max(1, Math.ceil(o.src.max.mp * PZ12.chainMp)), { why: 'chain12:' + this.kc12 + (all ? ':all' : ''), force: 1 });
+        else this.emit(EVT.RESOURCE_CHANGE, { src: o.src, tgts: [o.src], payload: { res: 'mp', old: o.src.res.mp, change: 0, new: o.src.res.mp, why: 'chain12:' + this.kc12 + (all ? ':all' : '') } }, () => {}); } }
+    return e; }; }
+// the test bot uses 總攻擊 when it can
+{ const _h2 = BAI.hero; BAI.hero = function (core, u, policy) { if (PZ12.bot && !PZ12.off && policy !== 'attack' && pzAllOutCore12(core)) return { type: 'skill', skill: 'pz_allout', targets: [] }; return _h2.call(this, core, u, policy); }; }
+// scene
+KB12.RIB['總攻擊！'] = '總攻擊！'; KB12.RIB['全滅！'] = '全滅！'; for (let n = 2; n <= 6; n++) KB12.RIB['連殺×' + n] = '連殺×' + n;
+KB12.TAG['溢出'] = ['#8ee6ff', '#0c2c3c'];
+{ const H = Battle.prototype.handlers, _su = H.SKILL_USE, _dm = H.DAMAGE, _rc = H.RESOURCE_CHANGE;
+  H.SKILL_USE = function* (e, s, t, P) { if (P && P.skill === 'pz_allout' && s) { Sound.sfx('charge'); this.spawn({ k: 'flash', c: '#fff4c8', a: 0.6, life: 10 }); this.shake = Math.max(this.shake || 0, 18); this.popNum(s, '總攻擊！', '#ffd860', null, { big: 1 }); yield* wait(14); } return yield* _su.call(this, e, s, t, P); };
+  H.DAMAGE = function* (e, s, t, P) { if (!(P && (P.kind === 'overflow' || (e && e.tags && e.tags.includes('overflow12'))))) return yield* _dm.call(this, e, s, t, P);
+    if (t) { const C = this.center(t); Sound.sfx('slash'); this.sparks(C.x, C.y, 12, ['#8ee6ff', '#ffffff'], 2.6, 18, 0.1); } this._ofl12 = 1; try { yield* _dm.call(this, e, s, t, { ...P, kind: 'hit' }); } finally { this._ofl12 = 0; } };
+  H.RESOURCE_CHANGE = function* (e, s, t, P) { const m = P && typeof P.why === 'string' && /^chain12:(\d+)(:all)?/.exec(P.why);
+    if (m) { const n = +m[1], all = !!m[2], hv = t || s; Sound.sfx('crit'); if (hv) this.popNum(hv, all ? '全滅！' : '連殺×' + Math.min(6, n), '#ffd860', null, { big: 1 }); if (t) { t.res.mp = P.new; t.mp = P.new; if (P.change > 0) this.popNum(t, '+' + P.change + 'MP', '#8ab8ff', null, { small: 1, dy: 10 }); } yield* wait(10); return; }
+    return yield* _rc.call(this, e, s, t, P); };
+  const _pn = Battle.prototype.popNum; Battle.prototype.popNum = function (v, s, c, tag, o) { if (this._ofl12 && KB12.isNum(s) && !tag) tag = '溢出'; return _pn.call(this, v, s, c, tag, o); };
+  // 總攻擊 skips choosing a target
+  const _pt2 = Battle.prototype.pickTarget; Battle.prototype.pickTarget = function* (sk) { const hu = this.core.byId.H; if (sk === (hu.data.attackSkill || 'attack') && pzAllOut12(this)) { const F = this.core.alive('B'); return F[0] ? F[0].id : null; } return yield* _pt2.call(this, sk); }; }
+// the 攻擊 button turns into 總攻擊
+{ const _cb2 = KB12.cmdBtn; KB12.cmdBtn = (x, k, n, X, m, on) => { const B = Game.scene; if (n !== '攻擊' || !pzAllOut12(B)) return _cb2(x, k, n, X, m, on);
+    const Y = m.y, w = 31, h = m.rowH, t = (B && B.t) || 0, pulse = 0.65 + 0.35 * Math.sin(t / 6);
+    KB12.panel(x, X, Y, w, h, { r: 5, rim: '#ffd860', lw: on ? 1.4 : 1, glow: 'rgba(255,216,96,' + (on ? 0.95 : 0.55 * pulse).toFixed(2) + ')', top: 'rgba(120,88,20,0.95)', bot: 'rgba(60,40,6,0.97)' });
+    KB12.icon(x, k, X + w / 2, Y + 11, '#fff2c0'); KB12.tc(x, '總攻擊', X + w / 2, Y + h - 8, '#fff6dc', KB12.M, w - 3); }; }
