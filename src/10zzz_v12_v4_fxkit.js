@@ -79,10 +79,10 @@ const K13 = {
   ward(t) { return !!(t && t.st && t.st.barrier); },
   broken(t) { return !!(t && (t.broken || (t.st && t.st.broken))); },
   defDown(t) { return !!(t && t.st && t.st.stage_def < 0); },
-  tint(v, c, a, n) { if (!v) return; v.tint = { c, a }; v._t13 = n; },
+  tint(v, c, a, n) { if (!v) return; v.tint = v._t13o = { c, a }; v._t13 = n; },
 };
 // tints set with K13.tint wear off by themselves
-{ const _up = Battle.prototype.update; Battle.prototype.update = function () { _up.call(this); for (const v of Object.values(this.views || {})) if (v && v._t13 > 0 && --v._t13 === 0) v.tint = null; }; }
+{ const _up = Battle.prototype.update; Battle.prototype.update = function () { _up.call(this); for (const v of Object.values(this.views || {})) if (v && v._t13 > 0 && --v._t13 === 0) { if (v.tint === v._t13o) v.tint = null; v._t13o = null; } }; } // 2026-10-08: only take off its own tint (a monster's red warning glow set meanwhile was wiped and the battle stopped)
 // pixel icons
 const ICON13 = {
   eye: spriteFrom(['...kkkkk...', '.kkwwwwwkk.', 'kwwwyyywwwk', 'kwwyykyywwk', 'kwwwyyywwwk', '.kkwwwwwkk.', '...kkkkk...'], { k: '#120c22', w: '#ffffff', y: '#ffc030' }),

@@ -7,7 +7,7 @@ const BPK = Battle.prototype;
 const stkH = (b, id) => stkK(b.core.byId.H, id);
 { const _main = BPK.main; BPK.main = function* () { if (KD.on(this.core) && !this.run15) this.initK(); return yield* _main.call(this); }; }
 BPK.initK = function () { const st = Game.st, core = this.core, H = core.byId.H; this.k14 = true; core.data.cb14 = this; this.cls = KD.clsKey(st);
-  this.pile = shuffle15(KD.deck(st).map(c => ({ ...c })), () => core.rng.next()); this.hand = []; this.disc = []; this.exh = [];
+  this.pile = shuffle15(KD.deck(st).map(c => ({ ...c, src16: c })), () => core.rng.next()); /* src16: the deck's own card (熟練 counts on it, 14p) */ this.hand = []; this.disc = []; this.exh = [];
   Object.assign(this, { energy: 0, si: 0, nextDraw: 0, nextEn: 0, turnR: 0, sel: -1, tgtMode: 0, tapK: null, cardsN: 0, atkN: 0, sklN: 0, fillSi: 0, twice: 0, dupNext: 0, fb: 0, dealt: 0, turns: 0, masterN: 0 });
   const ids = new Set(['k14_end']); for (const id in KD.CARDS) ids.add('k14_' + id); H.skills = [...ids]; };
 BPK.Hu = function () { return this.core.byId.H; };
@@ -24,14 +24,14 @@ BPK.gainMaxHp = function (n) { const st = Game.st, K = KD.state(st); K.hpPlus = 
 BPK.noteK = function (s) { this.note16 = { s: String(s), t: 0 }; };
 /* ---------- the start of the hero's turn ---------- */
 BPK.startTurnK = function () { const core = this.core, H = this.Hu(), notes = []; this.turns++;
-  this.energy = KD.EN + this.nextEn + stkK(H, 'pwMax14'); this.nextEn = 0; Object.assign(this, { cardsN: 0, atkN: 0, sklN: 0, tgtMode: 0, sel: -1, twice: 0, dupNext: 0, phantomUsed: 0, itemN: 0 });
+  this.energy = KD.EN + this.nextEn + stkK(H, 'pwMax14'); this.nextEn = 0; Object.assign(this, { chainN: 0, cardsN: 0, atkN: 0, sklN: 0, tgtMode: 0, sel: -1, twice: 0, dupNext: 0, phantomUsed: 0, itemN: 0 });
   if (stkK(H, 'blk15')) H.statuses = H.statuses.filter(s => s.id !== 'blk15');
   const g = stkK(H, 'pwGuard15') + stkK(H, 'pwRock14'); if (g) KD.block(core, H, g);
   const k = stkK(H, 'pwKindle14'); if (k) for (const t of core.alive('B')) KD.add(core, H, t, 'burn14', k);
   const vic = stkK(H, 'pwVictor14'); if (vic) { kLose(this, core, vic); this.energy++; } /* v14.10: 失去 HP 也觸發狂暴；1 HP 時一樣給能量 */
   const A = KD.ailments(core, H); if (A.en) { this.energy = Math.max(0, this.energy - A.en); notes.push(...A.out); }
   this.silenced = core.hasStatus(H, 'silence14'); if (this.silenced) notes.push('被沉默了：不能用技能卡');
-  this.drawN(KD.DRAW + this.nextDraw + stkK(H, 'pwMoon14') + (this.turns === 1 && this.cls === 'rg' ? 2 : 0)); this.nextDraw = 0;
+  this.drawN(KD.DRAW + this.nextDraw + stkK(H, 'pwMoon14')); this.nextDraw = 0;
   const lk = stkK(H, 'pwLurk14'); for (let i = 0; i < lk; i++) this.addHand('tk_shiv');
   if (notes.length) this.noteK(notes.join('　')); this.syncK(); };
 BPK.whyK = function (c) { const C = KD.CARDS[c.id]; if (KD.cost(c) > this.energy) return '能量不夠'; if (this.silenced && C.type === 'skl') return '被沉默了，不能用技能卡'; return null; };
@@ -91,8 +91,10 @@ BPK.runCard = function (c, ctx) { const core = this.core, C = KD.CARDS[c.id], v 
   if (C.type === 'atk') { this.atkN++; if (this.cls === 'sw') { if (si2) this.si = Math.min(3, this.siGain); else this.addSi(1); } /* 燕返 used as the ×2 card keeps its own 劍意 +1 */ if (this.fillSi) { this.si = 3; this.fillSi = 0; }
     const m = stkK(H, 'pwMaster15'); if (m) this.masterN = (this.masterN || 0) + 1; if (m && this.masterN % 3 === 0) { /* counts attacks since the power was played, across turns */ this.drawN(m); this.energy += m; this.noteK('劍聖之心：抽 ' + m + '、能量 +' + m); }
     const bl = stkK(H, 'pwBlood14'); if (bl && this.dealt > 0) KD.heal(core, H, Math.max(1, Math.round(this.dealt * bl / 100))); }
-  if (C.type === 'skl') { this.sklN++; if (this.cls === 'mg' && this.sklN === 1) this.drawN(1); const s = stkK(H, 'pwStatic14'); if (s) { const t = kRand(core); if (t) KD.hit(core, H, t, s, { el: '雷', cat: '特' }); } }
-  if (C.rar !== 'T') this.cardsN++; this.syncK(); };
+  if (C.type === 'skl') { this.sklN++; const s = stkK(H, 'pwStatic14'); if (s) { const t = kRand(core); if (t) KD.hit(core, H, t, s, { el: '雷', cat: '特' }); } }
+  if (C.rar !== 'T') this.cardsN++;
+  if (this.cls === 'rg' && !C.hidden) { this.chainN = (this.chainN || 0) + 1; if (this.chainN % 3 === 0) { this.addHand('tk_shiv'); this.noteK('連擊：得到 1 張飛刀'); } } /* 盜賊「連擊」(2026-10-08)：飛刀也算一張 */
+  this.syncK(); };
 BPK.endTurnK = function () { const core = this.core, H = this.Hu(); if (stkK(H, 'tstr14')) core.removeStatus(H, 'tstr14', 'expire');
   const o = stkK(H, 'pwOtto14'); if (o) { const t = kRand(core); if (t) { core.data.skill14 = 'k14_lg_otto'; KD.hit(core, H, t, o); } } };
 // 不死鳥: the first blow that would knock the hero out leaves 1 HP, then back to half
@@ -149,6 +151,7 @@ KD.keyLines = c => { const d = KD.desc(c), out = []; for (const [re, t] of KD.KE
     const b = (Hv.st && Hv.st.blk15) || 0; if (b) { x.drawImage(KD.ICON.shield, bx + bw + 1, Y); Font.drawC(x, String(b), bx + bw + 21, Y - 2, '#bfe0ff', '#000', 9); }
     const CL = KD.CLASSES[this.cls] || {}; Font.draw(x, CL.n || '', bx, Y + 14, CL.c || '#ccc', '#000', 8);
     if (this.cls === 'sw') { for (let i = 0; i < 3; i++) { x.fillStyle = i < this.si ? (this.si >= 3 ? '#ffe070' : '#ff9a40') : '#3a3048'; x.fillRect(bx + 28 + i * 6, Y + 16, 4, 5); } if (this.si >= 3) Font.draw(x, '×2', bx + 48, Y + 14, '#ffe070', '#000', 8); }
+    if (this.cls === 'rg') { const q = (this.chainN || 0) % 3; for (let i = 0; i < 3; i++) { x.fillStyle = i < q ? '#70d070' : '#3a3048'; x.fillRect(bx + 28 + i * 6, Y + 16, 4, 5); } }
     const my = this.core.need && this.core.need.unit && this.core.need.unit.hero && this.idle, stuck = my && this.hand.every(c => !this.okK(c));
     const btn = (X, w, s, col, fn) => { x.fillStyle = my ? col : '#3a3040'; x.fillRect(X, Y + 1, w, 15); Font.drawC(x, s, X + w / 2, Y + 2, '#fff4e0', '#000', 9); if (my) touchRegion(X, Y + 1, w, 15, fn); };
     btn(116, 22, '道具', this.itemN ? '#3a4a44' : '#3a6a50', () => { this.tapK = { k: 'item' }; }); btn(140, 12, '逃', '#5a4a60', () => { this.tapK = { k: 'run' }; });

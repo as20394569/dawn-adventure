@@ -4,7 +4,7 @@ module.exports = async (g) => {
   const save = fs.readFileSync(process.env.SAVE, 'utf8');
   await g.ev(s => { const G = __game; G.Game.st = JSON.parse(s); const st = G.Game.st; st.status = null; if (!st.k14) KD.migrate(st); KD.state(st).catchup = 0; startOverworld(); G.Game.fade = 0; G.Game.noEnc = 1; KD.battleRewards = function* () {};
     const T = window.__T = []; let i = 0, pend = null; const foe = b => b.core.alive('B')[0], H = b => b.core.byId.H;
-    const prep = b => { const core = b.core; for (const u of core.side('B')) { u.statuses = u.statuses.filter(q => q.id !== 'blk15'); } b.energy = 9; };
+    const prep = b => { const core = b.core; for (const u of core.side('B')) { u.statuses = u.statuses.filter(q => q.id !== 'blk15' && q.id !== 'broken' && q.id !== 'brkx16'); if (u.data) u.data.wk16 = []; } b.energy = 9; }; // v14.13: no weaknesses / 破防 in these number checks
     const play = (b, id, up = 0) => { b.hand.unshift({ id, up }); const C = KD.CARDS[id], f = b.core.alive('B'); return { cmd: b.playK(0, C.tg === 'enemy' && f[0] ? f[0].id : null) }; };
     const S = [
       // 1-2: 血怒 on a random-hit card adds +3 once (control at full HP, then at 40% HP)
@@ -30,7 +30,7 @@ module.exports = async (g) => {
   g.log(await g.ev(() => { const d = (KD.state(__game.Game.st).hpPlus || 0) - window.__mh; return (d === 3 ? 'PASS' : 'FAIL') + ' 豐收之鐮 kill → max HP +' + d + ' (want 3)'; }));
   // second battle: meteor timing, 劍聖之心 across turns, 魔人契約 at 1 HP
   await g.ev(() => { const G = __game; window.__on = 0; const T = window.__T = []; let i = 0, pend = null; const foe = b => b.core.alive('B')[0], H = b => b.core.byId.H;
-    const prep = b => { for (const u of b.core.side('B')) { u.statuses = u.statuses.filter(q => q.id !== 'blk15'); u.max.hp = Math.max(u.max.hp, 99999); } b.energy = 9; H(b).res.hp = Math.max(H(b).res.hp, 2); };
+    const prep = b => { for (const u of b.core.side('B')) { u.statuses = u.statuses.filter(q => q.id !== 'blk15' && q.id !== 'broken' && q.id !== 'brkx16'); if (u.data) u.data.wk16 = []; u.max.hp = Math.max(u.max.hp, 99999); } b.energy = 9; H(b).res.hp = Math.max(H(b).res.hp, 2); };
     const play = (b, id, up = 0) => { b.hand.unshift({ id, up }); const C = KD.CARDS[id], f = b.core.alive('B'); return { cmd: b.playK(0, C.tg === 'enemy' && f[0] ? f[0].id : null) }; };
     const S = [
       { f: b => { prep(b); for (const u of b.core.side('B')) u.res.hp = 99999; return play(b, 'mg_meteor'); }, c: b => 'meteor cast' },

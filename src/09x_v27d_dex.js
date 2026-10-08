@@ -39,6 +39,7 @@ function* dexDetail(list, idx) {
     else if (tab === 1 && !Game.noV14 && Game.st && Game.st.k14) { // v14.11 卡牌版：沒有等級和六項能力，寫牠在卡牌戰鬥裡會做什麼
       const fam = sp.fam, tn = typeof FAM_TRAIT14 !== 'undefined' ? FAM_TRAIT14[fam] : null, td = typeof FAM_TRAIT_D14 !== 'undefined' ? FAM_TRAIT_D14[fam] : null;
       const T = [['種族：' + (typeof famName === 'function' ? famName(fam) : fam) + (tn ? '　特性「' + tn + '」' : ''), UIC.warm]]; if (td) T.push([td, UIC.text]);
+      if (typeof KD !== 'undefined' && KD.weakOf) { const W = KD.weakOf(k, !!(sp.boss || sp.elite)), seen = KD.wkSeen(k); T.push(['弱點：' + W.map(w => seen.includes(w) ? w : '？').join('・') + '　破防值 ' + KD.BRK[sp.boss ? 'boss' : sp.elite ? 'elite' : 'wild'][0], '#ffd070']); } // v14.13 弱點破防：打中過的弱點才寫出來
       T.push([sp.boss || sp.elite ? '菁英・頭目：每 3 回合力量 +1（越戰越勇），有自己的蓄力大招和護盾。' : '不攻擊的回合會同時架盾（頭上寫「+盾」）。', UIC.muted]);
       const mv = [...new Set((sp.learn || []).map(l => MOVES[l[1]] && MOVES[l[1]].n).filter(Boolean))]; T.push(['招式：' + (mv.join('、') || '—'), UIC.text]);
       let Y = 127; for (const [t, c] of T) for (const l of Font.wrap(t, 156, 9)) { if (Y > 222) break; Font.draw(x, l, 10, Y, c, UIC.textSh, 9); Y += 11; }
