@@ -1245,7 +1245,7 @@ class TitleScene {
     x.drawImage(this.logo, Math.round(W / 2 - this.logo.width / 2), 6 + bob);
     Font.drawC(x, '～異世界冒險RPG～', W / 2, 52 + bob, '#ffe0a0', '#3a1428');
     if (this.stage === 'press' && Math.floor(this.t / 30) % 2 === 0) Font.drawC(x, '按 A 鍵開始', W / 2, 232, '#ffffff', '#1a1024');
-    Font.drawR(x, 'v14.28', W - 3, H - 13, '#b890b0', null);
+    Font.drawR(x, 'v14.29', W - 3, H - 13, '#b890b0', null);
   }
 }
 class IntroScene {
@@ -5347,3 +5347,20 @@ const STAR_MAX = 5, starStones = s => s + 1, starGold = (g, s) => 500 * GEAR[g.b
     if (!st.flags.starTut) { st.flags.starTut = 1; yield* this.msg('（精煉石拿去給鐵匠，可以讓同名的裝備「升星」變強。）', { wait: true }); }
   };
 }
+function* starFlow() {
+  const st = Game.st, R = st.refine || (st.refine = {});
+  while (true) {
+    const g = yield* gearPicker('升星（精煉石）', () => gearSort().filter(q => (q.s || 0) < STAR_MAX && (R[q.b] || 0) > 0), (x, g, Y) => { const s = g.s || 0, need = starStones(s), c = starGold(g, s);
+      Font.draw(x, '★' + s + ' → ★' + (s + 1) + '　能力+6%', 12, Y, UIC.accent, UIC.textSh, 11); Font.draw(x, '精煉石 ' + (R[g.b] || 0) + ' / ' + need, 12, Y + 13, (R[g.b] || 0) >= need ? UIC.good : UIC.bad, UIC.textSh, 10); Font.drawR(x, c + ' G', 164, Y + 26, st.money >= c ? UIC.warm : UIC.bad, UIC.textSh, 11); });
+    if (!g) return; const s = g.s || 0, need = starStones(s), c = starGold(g, s);
+    if ((R[g.b] || 0) < need || st.money < c) { yield* say('精煉石或金錢不夠喔。（再打倒掉落這件裝備的魔物，就能拿到精煉石）'); continue; }
+    if (!(yield* yesNo('要讓' + gearShort(g) + '升星嗎？\n（精煉石×' + need + '、' + c + ' G，一定成功）'))) continue;
+    R[g.b] -= need; st.money -= c; g.s = s + 1; clampHP(); Sound.sfx('rock'); yield* say('鏘！鏘！鏘！'); Sound.jingle('levelup'); yield* say('升星成功！' + gearName(g) + '！');
+  }
+}
+{ const _ef = enhanceFlow; enhanceFlow = function* () {
+    const r = yield* ask('要做什麼？', ['強化（最高+10）', '升星（精煉石）', '取消']); if (r === 0) return yield* _ef(); if (r === 1) return yield* starFlow();
+  };
+}
+{ const _gi = gearInfoLines; gearInfoLines = function (g, w = 150) { const L = _gi(g, w), n = (Game.st && Game.st.refine || {})[g.b] || 0; if (g.s || n) L.splice(1, 0, ['★' + (g.s || 0) + '／' + STAR_MAX + '　精煉石' + n + '顆', '#ffd860', 10, 0]); return L; }; }
+{ const _ng = newGameState; newGameState = function (...a) { const st = _ng.apply(this, a); if (st) { st.balV = 1; st.refine = {}; } return st; }; }

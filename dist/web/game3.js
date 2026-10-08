@@ -1,20 +1,3 @@
-function* starFlow() {
-  const st = Game.st, R = st.refine || (st.refine = {});
-  while (true) {
-    const g = yield* gearPicker('升星（精煉石）', () => gearSort().filter(q => (q.s || 0) < STAR_MAX && (R[q.b] || 0) > 0), (x, g, Y) => { const s = g.s || 0, need = starStones(s), c = starGold(g, s);
-      Font.draw(x, '★' + s + ' → ★' + (s + 1) + '　能力+6%', 12, Y, UIC.accent, UIC.textSh, 11); Font.draw(x, '精煉石 ' + (R[g.b] || 0) + ' / ' + need, 12, Y + 13, (R[g.b] || 0) >= need ? UIC.good : UIC.bad, UIC.textSh, 10); Font.drawR(x, c + ' G', 164, Y + 26, st.money >= c ? UIC.warm : UIC.bad, UIC.textSh, 11); });
-    if (!g) return; const s = g.s || 0, need = starStones(s), c = starGold(g, s);
-    if ((R[g.b] || 0) < need || st.money < c) { yield* say('精煉石或金錢不夠喔。（再打倒掉落這件裝備的魔物，就能拿到精煉石）'); continue; }
-    if (!(yield* yesNo('要讓' + gearShort(g) + '升星嗎？\n（精煉石×' + need + '、' + c + ' G，一定成功）'))) continue;
-    R[g.b] -= need; st.money -= c; g.s = s + 1; clampHP(); Sound.sfx('rock'); yield* say('鏘！鏘！鏘！'); Sound.jingle('levelup'); yield* say('升星成功！' + gearName(g) + '！');
-  }
-}
-{ const _ef = enhanceFlow; enhanceFlow = function* () {
-    const r = yield* ask('要做什麼？', ['強化（最高+10）', '升星（精煉石）', '取消']); if (r === 0) return yield* _ef(); if (r === 1) return yield* starFlow();
-  };
-}
-{ const _gi = gearInfoLines; gearInfoLines = function (g, w = 150) { const L = _gi(g, w), n = (Game.st && Game.st.refine || {})[g.b] || 0; if (g.s || n) L.splice(1, 0, ['★' + (g.s || 0) + '／' + STAR_MAX + '　精煉石' + n + '顆', '#ffd860', 10, 0]); return L; }; }
-{ const _ng = newGameState; newGameState = function (...a) { const st = _ng.apply(this, a); if (st) { st.balV = 1; st.refine = {}; } return st; }; }
 function v71Migrate(st) {
   if (!st || (st.balV || 0) >= 1) return false; st.balV = 1; let note = [];
   if (st.attr) { for (const k in st.attr) st.attr[k] = Math.floor(st.attr[k] / 2); for (let g = 0; g < 200 && attrAvail(st) < 0; g++) { const k = Object.keys(st.attr).sort((a, b) => st.attr[b] - st.attr[a])[0]; if (!k || !st.attr[k]) break; st.attr[k]--; } note.push('屬性點改成每級1點，原本的分配減半了'); }
@@ -9271,3 +9254,20 @@ function cryInfo11(sp) { const st = Game.st, star = cryOwn11()[sp], g = cryHost1
   L.push([g ? '鑲在：' + gearName(g) : '還沒有鑲', g ? UIC.good : UIC.muted]);
   const nx = cryNext11(sp); if (nx) L.push(['同系列下一顆：' + cryName11(nx), UIC.muted]);
   return L; }
+function* cryPicker11(title, getList) {
+  let idx = 0; const VIS = 8;
+  const scr = { draw(x) { screenBG(x); headerBar(x, title); Font.drawR(x, Game.st.money + ' G', W - 6, 3, UIC.warm, UIC.textSh, 10); const L = getList(), O = cryOwn11();
+    if (typeof touchRegion === 'function') touchRegion(0, 0, W, H, () => {});
+    drawWin(x, 4, 22, 168, VIS * 16 + 8, 'menu'); if (!L.length) Font.draw(x, '（沒有可以選的晶石）', 14, 28, UIC.muted, UIC.textSh, 10);
+    const top = Math.max(0, Math.min(idx - 3, L.length - VIS)); L.slice(top, top + VIS).forEach((sp, i) => { const Y = 26 + i * 16; if (top + i === idx) selBar(x, 6, Y - 1, 164, 15);
+      let z = 10; const nm = cryName11(sp) + ' ★' + O[sp]; while (z > 8 && Font.width(nm, z) > 110) z--; Font.draw(x, nm, 12, Y - 1, cryHost11(sp) ? '#9ad8ff' : UIC.text, UIC.textSh, z);
+      Font.drawR(x, CRY_T11[CRY11[sp][0]], 166, Y, UIC.muted, UIC.textSh, 8);
+      if (typeof touchRegion === 'function') touchRegion(6, Y - 1, 164, 15, () => { if (idx === top + i) tapKey('a'); else { idx = top + i; Sound.sfx('cursor'); } }); });
+    if (top > 0) x.drawImage(UPARROW, 86, 23); if (top + VIS < L.length) x.drawImage(DOWNARROW, 86, 22 + VIS * 16 + 3);
+    const Y0 = 22 + VIS * 16 + 12; drawWin(x, 4, Y0, 168, 252 - Y0, 'menu'); const sp = L[idx]; if (!sp) return; let y = Y0 + 4;
+    for (const [t, c] of cryInfo11(sp)) for (const l of Font.wrap(t, 152, 9)) { if (y > 244) break; Font.draw(x, l, 10, y, c, UIC.textSh, 9); y += 11; } } };
+  UI.push(scr); let res = null;
+  while (true) { const L = getList(); if (idx >= L.length) idx = Math.max(0, L.length - 1);
+    if (Input.repeat('up') && idx > 0) { idx--; Sound.sfx('cursor'); } if (Input.repeat('down') && idx < L.length - 1) { idx++; Sound.sfx('cursor'); }
+    if (Input.pressed('a') && L[idx]) { Input.consume('a'); Sound.sfx('select'); res = L[idx]; break; } if (Input.pressed('b')) { Input.consume('b'); Sound.sfx('cancel'); break; } yield; }
+  UI.remove(scr); return res; }
