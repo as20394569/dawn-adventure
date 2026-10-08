@@ -217,14 +217,15 @@ KD.shortL = (C, v) => { const L = C.short(v).slice(); if (C.exhaust && !L.includ
    · 下半：大數字（傷害金・格擋藍）＋「傷害／格擋」；大卡寫整句效果（傷害・格擋數字上色、易傷・力量等橘色，放不下的最後一行「…」），小卡寫「・抽 1」短句
    · 大卡最下面：職業（左）・稀有度星星（右）；斬突打／火水雷不畫在卡面（玩家選的），寫在選到卡時的說明裡（KD.atTag）
    · 傳說卡金框＋光＋斜光、裝備卡銀框（2 px）、選到黃框＋光、不能出整張變暗
-   v14.21（玩家看了手機截圖：「字體先縮小…卡片文字也縮小 最重要一點 字一定要置中」）：卡面的字全部置中、縮小一號（小卡 卡名 7・數字 9・小字 6；大卡 卡名 9・數字 13・句子 7） */
+   v14.21（玩家看了手機截圖：「字體先縮小…卡片文字也縮小 最重要一點 字一定要置中」）：卡面的字全部置中、縮小一號（小卡 卡名 7・數字 9・小字 6；大卡 卡名 9・數字 13・句子 7）
+   v14.22（玩家：「卡片字體也縮小」）：再小一號——小卡 卡名 6・數字 8・小字 5・費用 6；大卡 卡名 8・數字 11・句子 6・卡種 6・職業 6・費用 7 */
 KD.C3 = { body: '#1b1e28', line: '#33374a', dmg: '#ffd27a', blk: '#8ec8ff', kw: '#ff9a6a', lab: '#8a90a4', sub: '#a8aec0', txt: '#c4c9d6', top: '#e8ecf4', foot: '#7a8094', off: '#3a3e4c',
   pill: { atk: '#f4907a', skl: '#9cc0f6', pow: '#f6d878' }, stars: { B: 1, T: 1, C: 1, U: 2, Q: 2, R: 3, L: 3 } };
 KD.numOf = s => { const m = /^(傷害|格擋)?\s*(\d+)( ?×\d+)?$/.exec(s || ''); return m && (m[1] || m[3]) ? { lab: m[1] || '傷害', s: m[2] + (m[3] ? m[3].trim() : '') } : null; };
 // a box with its corners clipped (k = 1 or 2 px), drawn in bands so a see-through colour isn't laid twice
 KD.rr3 = (x, X, Y, w, h, col, k = 1) => { x.fillStyle = col; for (let i = 0; i < k; i++) { x.fillRect(X + k - i, Y + i, w - 2 * (k - i), 1); x.fillRect(X + k - i, Y + h - 1 - i, w - 2 * (k - i), 1); } x.fillRect(X, Y + k, w, h - 2 * k); };
 KD.coin3 = (x, cx, cy, r, n, dim) => { x.fillStyle = dim ? '#6a5a40' : '#f0a030'; x.beginPath(); x.arc(cx, cy, r, 0, 7); x.fill(); x.fillStyle = 'rgba(12,14,20,0.9)'; x.beginPath(); x.arc(cx, cy, r - 1.25, 0, 7); x.fill();
-  const z = r >= 6 ? 8 : 7; Font.w('700', () => KD.tc(x, n, cx, cy, dim ? '#a09880' : '#ffffff', null, z)); };
+  const z = r >= 5.5 ? 7 : 6; Font.w('700', () => KD.tc(x, n, cx, cy, dim ? '#a09880' : '#ffffff', null, z)); };
 KD.star3 = (x, X, Y, col) => { x.fillStyle = col; x.fillRect(X + 2, Y, 1, 1); x.fillRect(X, Y + 1, 5, 1); x.fillRect(X + 1, Y + 2, 3, 1); x.fillRect(X + 1, Y + 3, 1, 1); x.fillRect(X + 3, Y + 3, 1, 1); x.fillRect(X, Y + 4, 1, 1); x.fillRect(X + 4, Y + 4, 1, 1); };
 // the effect sentence with its numbers and key words in colour; up to n lines, the last one ends in 「…」 when there is more
 KD.KW3 = /易傷|虛弱|中毒|毒|燃燒|力量|消耗|看破|飛刀|蓄力|不能行動|定身|護盾|影縛|暗影|怒氣|狂化|連擊/g;
@@ -258,20 +259,20 @@ KD.drawCard = function (x, c, X, Y, w, h, o = {}) { const C = KD.CARDS[c.id]; if
   x.fillStyle = edge; x.fillRect(ax, ay, kc, 1); x.fillRect(ax + aw - kc, ay, kc, 1); if (kc > 1) { x.fillRect(ax, ay + 1, 1, 1); x.fillRect(ax + aw - 1, ay + 1, 1, 1); } // the rounded corners, over the picture
   if (gear && !o.on) { x.fillStyle = '#8a94ae'; x.fillRect(X + 2, Y + 1, w - 4, 1); x.fillRect(X + 2, Y + h - 2, w - 4, 1); x.fillRect(X + 1, Y + 2, 1, h - 4); x.fillRect(X + w - 2, Y + 2, 1, h - 4); }
   // ② the cost on the top-left; a big card's type on the top-right
-  const r = big ? 6 : 4.5; KD.coin3(x, X + (big ? 3 : 2) + r, Y + (big ? 4 : 3) + r, r, KD.cost(c), o.dim);
-  if (big) { const s = T.n, pw = Math.ceil(Font.width(s, 7)) + 6, px = X + w - 3 - pw; KD.rr3(x, px, Y + 4, pw, 10, 'rgba(12,14,20,0.75)'); KD.tc(x, s, px + pw / 2, Y + 9, gold ? P.dmg : P.pill[C.type], null, 7); }
+  const r = big ? 5.5 : 4; KD.coin3(x, X + (big ? 3 : 2) + r, Y + (big ? 4 : 3) + r, r, KD.cost(c), o.dim);
+  if (big) { const s = T.n, pw = Math.ceil(Font.width(s, 6)) + 5, px = X + w - 3 - pw; KD.rr3(x, px, Y + 4, pw, 9, 'rgba(12,14,20,0.75)'); KD.tc(x, s, px + pw / 2, Y + 8.5, gold ? P.dmg : P.pill[C.type], null, 6); }
   // ③ the name, centred on the picture's lower edge (v14.21: everything on the face is centred — 玩家：「字一定要置中」; in the hand it centres in the part that shows)
-  const nm = KD.name(c); Font.w('700', () => { const z = big ? (Font.width(nm, 9) <= room ? 9 : 8) : 7; KD.tc(x, nm, cx, ay + ah - (big ? 7 : 5.5), c.up ? '#a8ffa0' : '#ffffff', '#000', z, Math.max(6, room)); });
+  const nm = KD.name(c); Font.w('700', () => { const z = big ? (Font.width(nm, 8) <= room ? 8 : 7) : 6; KD.tc(x, nm, cx, ay + ah - (big ? 6 : 5), c.up ? '#a8ffa0' : '#ffffff', '#000', z, Math.max(6, room)); });
   // ④ the big number and what it is; under it the effect: the whole sentence on a big card, short 「・抽 1」 lines on a small one
-  const L = KD.shortL(C, v), ni = big ? L.findIndex(s => KD.numOf(s)) : KD.numOf(L[0]) ? 0 : -1, N = ni >= 0 ? KD.numOf(L[ni]) : null, rest = L.filter((s, k) => k !== ni), nz = big ? 13 : 9, lz = big ? 7 : 6, nrow = big ? 16 : 10;
-  let ly = ay + ah + (big ? 1 : 0); const lim = Y + h - (foot ? 14 : 1);
+  const L = KD.shortL(C, v), ni = big ? L.findIndex(s => KD.numOf(s)) : KD.numOf(L[0]) ? 0 : -1, N = ni >= 0 ? KD.numOf(L[ni]) : null, rest = L.filter((s, k) => k !== ni), nz = big ? 11 : 8, lz = big ? 6 : 5, nrow = big ? 14 : 9; /* v14.22: one size down again (玩家：「卡片字體也縮小」) */
+  let ly = ay + ah + (big ? 1 : 0); const lim = Y + h - (foot ? 13 : 1);
   if (N && ly + nrow <= Y + h - 1) { const col = N.lab === '格擋' ? P.blk : P.dmg, cy = ly + nrow / 2, nw = Font.w('700', () => Font.width(N.s, nz)), lw = Font.width(N.lab, lz), both = nw + 2 + lw <= room, tw = both ? nw + 2 + lw : Math.min(nw, room), x1 = cx - tw / 2;
     Font.w('700', () => { fontFit(x, N.s, x1, cy - 8, room, col, '#000', nz); if (both) Font.draw(x, N.lab, x1 + nw + 2, cy - 8 + (nz - lz) * 0.32, P.lab, null, lz); }); ly += nrow; }
-  if (big) { const n = Math.floor((lim - ly) / 9); if (n > 0) { x.save(); x.beginPath(); x.rect(X + 1, ly, w - 2, n * 9 + 2); x.clip(); KD.rich3(x, KD.desc(c), X + w / 2, ly, w - 2 * pad - 2, n, P, 7, 9); x.restore(); } }
-  else rest.forEach((s, k) => { if (ly + 7 > lim) return; const first = !N && k === 0, t = N && Font.width('・' + s, 6) <= room ? '・' + s : s; Font.w('700', () => KD.tc(x, t, cx, ly + 3.5, first ? P.top : N ? P.sub : P.txt, '#000', 6, room)); ly += 7; });
+  if (big) { const n = Math.floor((lim - ly) / 8); if (n > 0) { x.save(); x.beginPath(); x.rect(X + 1, ly, w - 2, n * 8 + 2); x.clip(); KD.rich3(x, KD.desc(c), X + w / 2, ly, w - 2 * pad - 2, n, P, 6, 8); x.restore(); } }
+  else rest.forEach((s, k) => { if (ly + 6 > lim) return; const first = !N && k === 0, t = N && Font.width('・' + s, 5) <= room ? '・' + s : s; Font.w('700', () => KD.tc(x, t, cx, ly + 3, first ? P.top : N ? P.sub : P.txt, '#000', 5, room)); ly += 6; });
   // ⑤ a big card's foot: the class on the left, the rarity in stars on the right
-  if (foot) { const fy = Y + h - 12; x.fillStyle = '#262935'; x.fillRect(X + pad, fy, w - 2 * pad, 1);
-    Font.w('700', () => Font.draw(x, gear ? '裝備' : C.cls === 'nt' ? (qst ? '任務' : '通用') : CL ? CL.n : '', X + pad, fy + 5.5 - 8, gear ? '#c8d0e0' : P.foot, null, 7));
+  if (foot) { const fy = Y + h - 11; x.fillStyle = '#262935'; x.fillRect(X + pad, fy, w - 2 * pad, 1);
+    Font.w('700', () => Font.draw(x, gear ? '裝備' : C.cls === 'nt' ? (qst ? '任務' : '通用') : CL ? CL.n : '', X + pad, fy + 5 - 8, gear ? '#c8d0e0' : P.foot, null, 6));
     const n = P.stars[C.rar] || 1, rc = KD.RAR[C.rar].c; for (let i = 0; i < 3; i++) KD.star3(x, X + w - pad - (3 - i) * 6 + 1, fy + 3, i < n ? rc : P.off); }
   if (o.dim) KD.rr3(x, X, Y, w, h, 'rgba(0,0,0,0.38)', kc); };
 /* ---------- after a battle ---------- */

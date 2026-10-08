@@ -6277,7 +6277,7 @@ KD.C3 = { body: '#1b1e28', line: '#33374a', dmg: '#ffd27a', blk: '#8ec8ff', kw: 
 KD.numOf = s => { const m = /^(傷害|格擋)?\s*(\d+)( ?×\d+)?$/.exec(s || ''); return m && (m[1] || m[3]) ? { lab: m[1] || '傷害', s: m[2] + (m[3] ? m[3].trim() : '') } : null; };
 KD.rr3 = (x, X, Y, w, h, col, k = 1) => { x.fillStyle = col; for (let i = 0; i < k; i++) { x.fillRect(X + k - i, Y + i, w - 2 * (k - i), 1); x.fillRect(X + k - i, Y + h - 1 - i, w - 2 * (k - i), 1); } x.fillRect(X, Y + k, w, h - 2 * k); };
 KD.coin3 = (x, cx, cy, r, n, dim) => { x.fillStyle = dim ? '#6a5a40' : '#f0a030'; x.beginPath(); x.arc(cx, cy, r, 0, 7); x.fill(); x.fillStyle = 'rgba(12,14,20,0.9)'; x.beginPath(); x.arc(cx, cy, r - 1.25, 0, 7); x.fill();
-  const z = r >= 6 ? 8 : 7; Font.w('700', () => KD.tc(x, n, cx, cy, dim ? '#a09880' : '#ffffff', null, z)); };
+  const z = r >= 5.5 ? 7 : 6; Font.w('700', () => KD.tc(x, n, cx, cy, dim ? '#a09880' : '#ffffff', null, z)); };
 KD.star3 = (x, X, Y, col) => { x.fillStyle = col; x.fillRect(X + 2, Y, 1, 1); x.fillRect(X, Y + 1, 5, 1); x.fillRect(X + 1, Y + 2, 3, 1); x.fillRect(X + 1, Y + 3, 1, 1); x.fillRect(X + 3, Y + 3, 1, 1); x.fillRect(X, Y + 4, 1, 1); x.fillRect(X + 4, Y + 4, 1, 1); };
 KD.KW3 = /易傷|虛弱|中毒|毒|燃燒|力量|消耗|看破|飛刀|蓄力|不能行動|定身|護盾|影縛|暗影|怒氣|狂化|連擊/g;
 KD.rich3 = (x, s, cx, Y, w, n, P, z = 7, lh = 9) => { const col = new Array(s.length).fill(null); let m; const re = /(\d+)(?=\s*(?:[火水雷]屬性)?(傷害|格擋))/g;
@@ -6306,17 +6306,17 @@ KD.drawCard = function (x, c, X, Y, w, h, o = {}) { const C = KD.CARDS[c.id]; if
   if (gold) { const s = x.createLinearGradient(ax, 0, ax + aw, 0); s.addColorStop(0, '#ffcf6a'); s.addColorStop(0.5, '#ff9a2a'); s.addColorStop(1, '#ffe08a'); x.fillStyle = s; } else x.fillStyle = T.c; x.fillRect(ax, ay, aw, 2); x.restore();
   x.fillStyle = edge; x.fillRect(ax, ay, kc, 1); x.fillRect(ax + aw - kc, ay, kc, 1); if (kc > 1) { x.fillRect(ax, ay + 1, 1, 1); x.fillRect(ax + aw - 1, ay + 1, 1, 1); } // the rounded corners, over the picture
   if (gear && !o.on) { x.fillStyle = '#8a94ae'; x.fillRect(X + 2, Y + 1, w - 4, 1); x.fillRect(X + 2, Y + h - 2, w - 4, 1); x.fillRect(X + 1, Y + 2, 1, h - 4); x.fillRect(X + w - 2, Y + 2, 1, h - 4); }
-  const r = big ? 6 : 4.5; KD.coin3(x, X + (big ? 3 : 2) + r, Y + (big ? 4 : 3) + r, r, KD.cost(c), o.dim);
-  if (big) { const s = T.n, pw = Math.ceil(Font.width(s, 7)) + 6, px = X + w - 3 - pw; KD.rr3(x, px, Y + 4, pw, 10, 'rgba(12,14,20,0.75)'); KD.tc(x, s, px + pw / 2, Y + 9, gold ? P.dmg : P.pill[C.type], null, 7); }
-  const nm = KD.name(c); Font.w('700', () => { const z = big ? (Font.width(nm, 9) <= room ? 9 : 8) : 7; KD.tc(x, nm, cx, ay + ah - (big ? 7 : 5.5), c.up ? '#a8ffa0' : '#ffffff', '#000', z, Math.max(6, room)); });
-  const L = KD.shortL(C, v), ni = big ? L.findIndex(s => KD.numOf(s)) : KD.numOf(L[0]) ? 0 : -1, N = ni >= 0 ? KD.numOf(L[ni]) : null, rest = L.filter((s, k) => k !== ni), nz = big ? 13 : 9, lz = big ? 7 : 6, nrow = big ? 16 : 10;
-  let ly = ay + ah + (big ? 1 : 0); const lim = Y + h - (foot ? 14 : 1);
+  const r = big ? 5.5 : 4; KD.coin3(x, X + (big ? 3 : 2) + r, Y + (big ? 4 : 3) + r, r, KD.cost(c), o.dim);
+  if (big) { const s = T.n, pw = Math.ceil(Font.width(s, 6)) + 5, px = X + w - 3 - pw; KD.rr3(x, px, Y + 4, pw, 9, 'rgba(12,14,20,0.75)'); KD.tc(x, s, px + pw / 2, Y + 8.5, gold ? P.dmg : P.pill[C.type], null, 6); }
+  const nm = KD.name(c); Font.w('700', () => { const z = big ? (Font.width(nm, 8) <= room ? 8 : 7) : 6; KD.tc(x, nm, cx, ay + ah - (big ? 6 : 5), c.up ? '#a8ffa0' : '#ffffff', '#000', z, Math.max(6, room)); });
+  const L = KD.shortL(C, v), ni = big ? L.findIndex(s => KD.numOf(s)) : KD.numOf(L[0]) ? 0 : -1, N = ni >= 0 ? KD.numOf(L[ni]) : null, rest = L.filter((s, k) => k !== ni), nz = big ? 11 : 8, lz = big ? 6 : 5, nrow = big ? 14 : 9; /* v14.22: one size down again (玩家：「卡片字體也縮小」) */
+  let ly = ay + ah + (big ? 1 : 0); const lim = Y + h - (foot ? 13 : 1);
   if (N && ly + nrow <= Y + h - 1) { const col = N.lab === '格擋' ? P.blk : P.dmg, cy = ly + nrow / 2, nw = Font.w('700', () => Font.width(N.s, nz)), lw = Font.width(N.lab, lz), both = nw + 2 + lw <= room, tw = both ? nw + 2 + lw : Math.min(nw, room), x1 = cx - tw / 2;
     Font.w('700', () => { fontFit(x, N.s, x1, cy - 8, room, col, '#000', nz); if (both) Font.draw(x, N.lab, x1 + nw + 2, cy - 8 + (nz - lz) * 0.32, P.lab, null, lz); }); ly += nrow; }
-  if (big) { const n = Math.floor((lim - ly) / 9); if (n > 0) { x.save(); x.beginPath(); x.rect(X + 1, ly, w - 2, n * 9 + 2); x.clip(); KD.rich3(x, KD.desc(c), X + w / 2, ly, w - 2 * pad - 2, n, P, 7, 9); x.restore(); } }
-  else rest.forEach((s, k) => { if (ly + 7 > lim) return; const first = !N && k === 0, t = N && Font.width('・' + s, 6) <= room ? '・' + s : s; Font.w('700', () => KD.tc(x, t, cx, ly + 3.5, first ? P.top : N ? P.sub : P.txt, '#000', 6, room)); ly += 7; });
-  if (foot) { const fy = Y + h - 12; x.fillStyle = '#262935'; x.fillRect(X + pad, fy, w - 2 * pad, 1);
-    Font.w('700', () => Font.draw(x, gear ? '裝備' : C.cls === 'nt' ? (qst ? '任務' : '通用') : CL ? CL.n : '', X + pad, fy + 5.5 - 8, gear ? '#c8d0e0' : P.foot, null, 7));
+  if (big) { const n = Math.floor((lim - ly) / 8); if (n > 0) { x.save(); x.beginPath(); x.rect(X + 1, ly, w - 2, n * 8 + 2); x.clip(); KD.rich3(x, KD.desc(c), X + w / 2, ly, w - 2 * pad - 2, n, P, 6, 8); x.restore(); } }
+  else rest.forEach((s, k) => { if (ly + 6 > lim) return; const first = !N && k === 0, t = N && Font.width('・' + s, 5) <= room ? '・' + s : s; Font.w('700', () => KD.tc(x, t, cx, ly + 3, first ? P.top : N ? P.sub : P.txt, '#000', 5, room)); ly += 6; });
+  if (foot) { const fy = Y + h - 11; x.fillStyle = '#262935'; x.fillRect(X + pad, fy, w - 2 * pad, 1);
+    Font.w('700', () => Font.draw(x, gear ? '裝備' : C.cls === 'nt' ? (qst ? '任務' : '通用') : CL ? CL.n : '', X + pad, fy + 5 - 8, gear ? '#c8d0e0' : P.foot, null, 6));
     const n = P.stars[C.rar] || 1, rc = KD.RAR[C.rar].c; for (let i = 0; i < 3; i++) KD.star3(x, X + w - pad - (3 - i) * 6 + 1, fy + 3, i < n ? rc : P.off); }
   if (o.dim) KD.rr3(x, X, Y, w, h, 'rgba(0,0,0,0.38)', kc); };
 BPK.gainExp = function* (amount) { const st = Game.st; if (!this.k14) return; st.exp = (st.exp || 0) + amount; while (st.lv < (typeof LV_MAX13 !== 'undefined' ? LV_MAX13 : 60) && st.exp >= expForLevel(st.lv + 1)) st.lv++; };
