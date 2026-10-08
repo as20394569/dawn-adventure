@@ -1,9 +1,9 @@
 // battle screenshots on an iPhone-sized screen. env: SAVE CLS SP=sp,sp2 LV OUT=prefix PLAY=json [[cardId,targetIndex]...] AT=ms list KIND
-const { chromium } = require('/home/claude/.npm-global/lib/node_modules/playwright');
+const { chromium } = (() => { try { return require('playwright'); } catch (e) { return require('/home/claude/.npm-global/lib/node_modules/playwright'); } })();
 const fs = require('fs'), path = require('path');
 (async () => { const save = fs.readFileSync(process.env.SAVE, 'utf8'); const b = await chromium.launch(); const errs = [];
   const p = await b.newPage({ viewport: { width: +(process.env.VW || 390), height: +(process.env.VH || 844) }, deviceScaleFactor: 2, isMobile: !process.env.DESK, hasTouch: !process.env.DESK }); p.on('pageerror', e => errs.push(e.message));
-  await p.goto('file://' + path.resolve((process.env.ROOT || '/home/claude/dawn') + '/dist/test.html')); await p.waitForTimeout(400);
+  await p.goto('file://' + path.resolve((process.env.ROOT || require('path').resolve(__dirname, '../../..')) + '/dist/test.html')); await p.waitForTimeout(400);
   const SP = (process.env.SP || 'curlySheep').split(','), LV = +(process.env.LV || 20), PLAY = JSON.parse(process.env.PLAY || '[]');
   await p.evaluate(([s, cls, SP, LV, PLAY, kind, pre]) => { const G = __game; G.Game.st = JSON.parse(s); const st = G.Game.st; st.status = null; if (!st.k14) KD.migrate(st); const K = KD.state(st); K.catchup = 0; K.eqFix = 1; K.cls = cls; K.decks = {}; KD.deck(st);
       st.flags.tutK14 = 1; st.flags.tutIntent14 = 1; for (const k in st.bag) if (ITEMS[k] && /重生/.test(ITEMS[k].n)) delete st.bag[k]; startOverworld(); if (st.k14) { delete st.k14.g16msg; delete st.k14.newG16; } G.Game.fade = 0; G.Game.noEnc = 1; KD.battleRewards = function* () {};
