@@ -15,7 +15,7 @@ KD.drawCard = function (x, c, X, Y, w, h, o = {}) { const C = KD.CARDS[c.id]; if
   const lx = Math.max(ix + pd, v0 + 2), rx = Math.min(ix + iw - pd, v0 + vw - 2), cx = (lx + rx) / 2, tw = Math.max(8, rx - lx);
   // what the card says: the main number (with its unit) and the rest
   const L = KD.shortL(C, v), n0 = L.findIndex(s => KD.numOf(s)), ni = n0 >= 0 ? n0 : L.findIndex(s => KD.numOf28(s)), N = ni >= 0 ? KD.numOf28(L[ni]) : null, rest = L.filter((s, k) => k !== ni);
-  const zN = big ? 10 : 8, zL = 5, zC = 5, nh = big ? 11 : 8, zName = big ? 7 : 5;
+  const zN = big ? 10 : 8, zL = 5, zC = 5, nh = big ? 12 : 9, zName = big ? 7 : 5;
   // ---- sizes of each part ----
   let ah, foot = 0, lines = 0, word = null, chips = [], inline = false, unit = N ? N.lab : '';
   if (big) { foot = h >= 74 ? 10 : 0; const mainH = N ? 12 : 0, maxL = KD.lines3(KD.desc(c), tw, 6), room = ih - nh - foot - 4;
@@ -34,11 +34,11 @@ KD.drawCard = function (x, c, X, Y, w, h, o = {}) { const C = KD.CARDS[c.id]; if
   x.fillStyle = tc; x.fillRect(ix, iy, iw, 2); x.restore();
   x.fillStyle = edge; x.fillRect(ix, iy, kc, 1); x.fillRect(ix + iw - kc, iy, kc, 1); if (kc > 1) { x.fillRect(ix, iy + 1, 1, 1); x.fillRect(ix + iw - 1, iy + 1, 1, 1); } // the rounded corners, over the picture
   if (gear && !o.on) { x.fillStyle = '#8a94ae'; x.fillRect(X + 2, Y + 1, w - 4, 1); x.fillRect(X + 2, Y + h - 2, w - 4, 1); x.fillRect(X + 1, Y + 2, 1, h - 4); x.fillRect(X + w - 2, Y + 2, 1, h - 4); }
-  const r = big ? 5.5 : 4; KD.coin3(x, ix + 2 + r + (big ? 1 : 0), iy + 2 + r + (big ? 1 : 0), r, KD.cost(c), o.dim, big ? 7 : 6);
-  if (big) { const s = T.n, pw = Math.ceil(B(s, 5)) + 6, px = ix + iw - 2 - pw; KD.rr3(x, px, iy + 3, pw, 9, 'rgba(12,14,20,0.8)'); Font.w('700', () => KD.tc(x, s, px + pw / 2, iy + 7.5, gold ? P.dmg : P.pill[C.type], null, 5)); }
   // ② the name on its own band, the type's colour along its top
   const nb = iy + ah, nm = KD.name(c); x.fillStyle = '#10121a'; x.fillRect(ix, nb, iw, nh); x.fillStyle = tc; x.fillRect(ix, nb, iw, 1);
-  { let z = zName; while (z > 4 && B(nm, z) > tw) z -= 0.5; Font.w('700', () => KD.tc(x, nm, cx, nb + 1 + (nh - 1) / 2, c.up ? '#a8ffa0' : '#ffffff', '#000', z, tw)); }
+  // v14.30（玩家：「卡片的費用跟技能裝備名詞不用遮住卡圖」）: the cost sits at the left end of the name band, the name in the rest of it; the type moved to the big card's footer
+  { const r = big ? 5 : 3.5, ccx = Math.max(ix + 1 + r + 0.5, v0 + 1 + r + 0.5), ccy = nb + 1 + (nh - 1) / 2; KD.coin3(x, ccx, ccy, r, KD.cost(c), o.dim, big ? 7 : 5);
+    const a0 = ccx + r + 2, a1 = rx, aw = Math.max(8, a1 - a0); let z = zName; while (z > 4 && B(nm, z) > aw) z -= 0.5; Font.w('700', () => KD.tc(x, nm, (a0 + a1) / 2, ccy, c.up ? '#a8ffa0' : '#ffffff', '#000', z, aw)); }
   // ③ the words under the name
   const top = nb + nh, col = N ? KD.numCol28(N, P) : P.top;
   const fitZ = (s, z) => { while (z > 4 && B(s, z) > tw) z -= 0.5; return z; };
@@ -53,6 +53,7 @@ KD.drawCard = function (x, c, X, Y, w, h, o = {}) { const C = KD.CARDS[c.id]; if
     if (N) { const wn = B(N.s, zN), wu = B(N.lab, zL), tot = wn + 3 + wu, x1 = cx - tot / 2; Font.w('700', () => { KD.tc(x, N.s, x1 + wn / 2, y0 + 6, col, '#000', zN); KD.tc(x, N.lab, x1 + wn + 3 + wu / 2, y0 + 7, P.lab, null, zL); }); }
     if (lines > 0) { x.save(); x.beginPath(); x.rect(ix, y0 + mainH, iw, lines * 8 + 1); x.clip(); KD.rich3(x, KD.desc(c), cx, y0 + mainH, tw, lines, P, 6, 8); x.restore(); }
     if (foot) { const fy = iy + ih - foot; x.fillStyle = '#262935'; x.fillRect(ix + pd, fy, iw - 2 * pd, 1);
-      Font.w('700', () => Font.draw(x, gear ? '裝備' : C.cls === 'nt' ? (qst ? '任務' : '通用') : CL ? CL.n : '', ix + pd, fy + 5 - 8, gear ? '#c8d0e0' : P.foot, null, 5));
+      const cn = gear ? '裝備' : C.cls === 'nt' ? (qst ? '任務' : '通用') : CL ? CL.n : '', ce = ix + pd + Math.ceil(B(cn, 5)), se = ix + iw - pd - 18; Font.w('700', () => Font.draw(x, cn, ix + pd, fy + 5 - 8, gear ? '#c8d0e0' : P.foot, null, 5));
+      Font.w('700', () => KD.tc(x, T.n, (ce + se) / 2, fy + 5, gold ? P.dmg : P.pill[C.type], null, 5, se - ce - 2)); /* the type (攻擊・技能・能力) between the class and the stars, off the picture */
       const n = P.stars[C.rar] || 1, rc = KD.RAR[C.rar].c; for (let i = 0; i < 3; i++) KD.star3(x, ix + iw - pd - (3 - i) * 6 + 1, fy + 3, i < n ? rc : P.off); } }
   if (o.dim) KD.rr3(x, X, Y, w, h, 'rgba(0,0,0,0.38)', kc); };
