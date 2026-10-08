@@ -5580,8 +5580,8 @@ Battle.prototype.telegraph = function* (s, D) {
   const strong = (D.power || 0) >= 75 || ((s.boss || s.elite) && (D.power || 0) >= 60) || D.id === 'm_dominate' || D.charge;
   this.banner = { s: D.name, t: 0, life: strong ? 70 : 46, strong, charge: false }; if (!strong) return;
   Sound.sfx('charge'); this.dimT = 0.5; s.tint = { c: '#ff2030', a: 0 };
-  yield* tween(10, q => { s.tint.a = q * 0.45; }); if (D.charge) { this.shake = 12; Sound.sfx('quake'); }
-  yield* tween(8, q => { s.tint.a = 0.45 * (1 - q); }); s.tint = null;
+  const tn = s.tint; yield* tween(10, q => { tn.a = q * 0.45; }); if (D.charge) { this.shake = 12; Sound.sfx('quake'); }
+  yield* tween(8, q => { tn.a = 0.45 * (1 - q); }); if (s.tint === tn) s.tint = null;
 };
 Battle.prototype.handlers = {
   *ROUND_START(e) { this.round = e.payload.round; },
@@ -5726,7 +5726,7 @@ Battle.prototype.handlers = {
     if (P.key === 'raged' && s) { s.tint = { c: '#ff3020', a: 0.5 }; yield* wait(12); s.tint = null; }
     yield* this.msg(txt, { hold: P.hold || 24 }); },
   *PHASE(e, s, t, P) { if (!s) return; this.focus = s; const red = P.phase >= 2 || P.key === 'golem_core'; Sound.sfx(red ? 'quake' : 'charge'); if (red) this.shake = 30;
-    s.tint = { c: red ? '#ff1020' : '#ff6020', a: 0 }; yield* tween(16, q => s.tint.a = q * 0.6); yield* tween(16, q => s.tint.a = 0.6 * (1 - q)); s.tint = null;
+    const tn = s.tint = { c: red ? '#ff1020' : '#ff6020', a: 0 }; yield* tween(16, q => tn.a = q * 0.6); yield* tween(16, q => tn.a = 0.6 * (1 - q)); if (s.tint === tn) s.tint = null;
     for (const m of (PHASE_TXT[P.key] || (() => []))(s.n)) yield* this.msg(m, { hold: 30 }); },
   *SUMMON(e, s, t) {
     const u = this.core.byId[e.tgts[0]]; if (!u) return; const v = this.views[u.id] || this.mkView(u); v.hp = v.maxhp = u.max.hp; v.st = {}; v.alpha = 0; v.plateA = 0; v.gone = false;

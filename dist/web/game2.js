@@ -1233,7 +1233,7 @@ class TitleScene {
     x.drawImage(this.logo, Math.round(W / 2 - this.logo.width / 2), 6 + bob);
     Font.drawC(x, '～異世界冒險RPG～', W / 2, 52 + bob, '#ffe0a0', '#3a1428');
     if (this.stage === 'press' && Math.floor(this.t / 30) % 2 === 0) Font.drawC(x, '按 A 鍵開始', W / 2, 232, '#ffffff', '#1a1024');
-    Font.drawR(x, 'v14.12', W - 3, H - 13, '#b890b0', null);
+    Font.drawR(x, 'v14.13', W - 3, H - 13, '#b890b0', null);
   }
 }
 class IntroScene {
@@ -5180,6 +5180,7 @@ function* dexDetail(list, idx) {
     else if (tab === 1 && !Game.noV14 && Game.st && Game.st.k14) { // v14.11 卡牌版：沒有等級和六項能力，寫牠在卡牌戰鬥裡會做什麼
       const fam = sp.fam, tn = typeof FAM_TRAIT14 !== 'undefined' ? FAM_TRAIT14[fam] : null, td = typeof FAM_TRAIT_D14 !== 'undefined' ? FAM_TRAIT_D14[fam] : null;
       const T = [['種族：' + (typeof famName === 'function' ? famName(fam) : fam) + (tn ? '　特性「' + tn + '」' : ''), UIC.warm]]; if (td) T.push([td, UIC.text]);
+      if (typeof KD !== 'undefined' && KD.weakOf) { const W = KD.weakOf(k, !!(sp.boss || sp.elite)), seen = KD.wkSeen(k); T.push(['弱點：' + W.map(w => seen.includes(w) ? w : '？').join('・') + '　破防值 ' + KD.BRK[sp.boss ? 'boss' : sp.elite ? 'elite' : 'wild'][0], '#ffd070']); } // v14.13 弱點破防：打中過的弱點才寫出來
       T.push([sp.boss || sp.elite ? '菁英・頭目：每 3 回合力量 +1（越戰越勇），有自己的蓄力大招和護盾。' : '不攻擊的回合會同時架盾（頭上寫「+盾」）。', UIC.muted]);
       const mv = [...new Set((sp.learn || []).map(l => MOVES[l[1]] && MOVES[l[1]].n).filter(Boolean))]; T.push(['招式：' + (mv.join('、') || '—'), UIC.text]);
       let Y = 127; for (const [t, c] of T) for (const l of Font.wrap(t, 156, 9)) { if (Y > 222) break; Font.draw(x, l, 10, Y, c, UIC.textSh, 9); Y += 11; }
@@ -11970,3 +11971,71 @@ for (const m in LAMPS12) LAMPS12[m].forEach((_, i) => (NPC_ROLES.事件 || NPC_R
 ROUTE_LAMPS12.forEach((_, i) => (NPC_ROLES.事件 || NPC_ROLES.情報).push('lampR12_' + i, 'lampR12_' + i + 'on'));
 for (const id of CAMPFIRES12) (NPC_ROLES.事件 || NPC_ROLES.情報).push(id);
 for (const m of ['town', 'capital', 'frostVillage', 'route', 'canyon', 'maplePass', 'goldPlains', 'emberPass']) if (typeof mapCache !== 'undefined') delete mapCache[m];
+{ const _dg = doGather; doGather = function (kind, st = Game.st) { const r = _dg(kind, st);
+    if ((kind === 'mana' || kind === 'dew') && dnNight12(st)) { const m = GATHER_KINDS[kind][1]; st.bag[m] = (st.bag[m] || 0) + 1; r.text += '（夜晚＋' + ITEMS[m].n + '×1）'; }
+    return r; }; }
+{ const _dk = Events.oldDuke; if (_dk) Events.oldDuke = function* (ow) { const st = Game.st, E = evOf(st);
+    if (dnPhase12(st) === 'night' && E.dukeNight12 !== dnDay12(st)) { E.dukeNight12 = dnDay12(st);
+      yield* sayAll(['……你也看到了吧。丘上那一排藍色的影子。', '每到晚上，他們就會排好隊伍，從丘上走過去。跟三十年前一樣。', '我不怕。他們只是還在守著這裡。……我也是。']); }
+    return yield* _dk(ow); }; }
+const SCARE12 = { map: 'goldPlains', x: 30, y: 12 };
+Overworld.prototype.dnLoad12 = function () {
+  const st = this.st, id = st.map;
+  if (id === SCARE12.map && dnPhase12(st) === 'night' && !st.flags.scare12done && this.roam12 && !this.roam12.list.some(e => e.scare12)) {
+    const z = (MAPS[id].encounters || []).find(q => q.table.some(r => r[0] === 'scarecrow')) || (MAPS[id].encounters || [])[0], [lo, hi] = z ? zoneLv12(z) : [28, 30];
+    let spot = null; for (let r = 0; r < 4 && !spot; r++) for (let dy = -r; dy <= r && !spot; dy++) for (let dx = -r; dx <= r && !spot; dx++) if (this.roamFree12(SCARE12.x + dx, SCARE12.y + dy)) spot = [SCARE12.x + dx, SCARE12.y + dy];
+    const img = roamImg12('scarecrow');
+    if (spot && img) { const e = new Entity({ roam: 1, sp: 'scarecrow', lv: hi, enc: { table: [['scarecrow', lo, hi, 1]] }, pack: 3, x: spot[0], y: spot[1], dir: 'down', img, aggro: false, scare12: 1 });
+      e.home = [spot[0], spot[1], 'down']; e.timer = 60; this.roam12.list.push(e); this.elites.push(e);
+      if (!st.flags.scare12) { st.flags.scare12 = 1; this.run(say('（麥田那邊……好像有什麼在動。是稻草人？稻草人在走路？）')); } }
+  }
+};
+{ const _rf = Overworld.prototype.roamFight12; Overworld.prototype.roamFight12 = function* (e, ...a) {
+    yield* _rf.call(this, e, ...a);
+    if (e.scare12 && !this.elites.includes(e)) { const st = this.st; st.flags.scare12done = 1; st.bag.trainBook = (st.bag.trainBook || 0) + 1; st.bag.wheat = (st.bag.wheat || 0) + 5; Sound.jingle('item');
+      yield* say('打倒了走進麥田的稻草人！它們身上掉出了一本被麥穗夾住的書。'); yield* itemGet(st.name + '得到了修練之書和金麥穗×5！'); }
+  }; }
+const AURORA12 = { map: 'frostField', x: 30, y: 14, see: 9, r: 3 };
+Overworld.prototype.dnStep12 = function () {
+  const st = this.st, p = this.p, f = st.flags;
+  if (st.map === AURORA12.map && dnPhase12(st) === 'night' && Math.abs(p.x - AURORA12.x) + Math.abs(p.y - AURORA12.y) <= AURORA12.r && f.aurora12 >= 1 && st.auroraNight12 !== dnDay12(st)) {
+    st.auroraNight12 = dnDay12(st); st.auroraUntil = (st.steps || 0) + 200; const first = f.aurora12 === 1; f.aurora12 = 2; Sound.sfx('levelUp');
+    this.run(sayAll([first ? '……北邊的天空，綠色和紫色的光像布簾一樣慢慢飄動。這就是艾溫說的極光。' : '今晚的極光也很美。', '【極光的祝福】接下來200步，戰鬥經驗值+20%！']));
+  }
+};
+{ const _bs = Overworld.prototype.battleScript; Overworld.prototype.battleScript = function* (cfg, ...a) {
+    if (!cfg) return yield* _bs.call(this, cfg, ...a); const st = this.st;
+    let c = { ...cfg, dn: dnOut12(st.map) ? dnPhase12(st) : null };
+    if (st.auroraUntil > (st.steps || 0) && cfg.kind === 'wild') c.aevExp = (c.aevExp || 1) * 1.2;
+    return yield* _bs.call(this, c, ...a);
+  }; }
+{ const _eq = extraQuests; extraQuests = function (st, L) { _eq(st, L); const f = st.flags;
+    if (f.watch12) L.push({ n: '守夜人的燈', t: f.watch12 >= 2 ? '完成：晨霧道路的路燈都亮了。' : lampsLit12(st) >= 3 ? '三盞路燈都點亮了。回萌芽鎮告訴守夜人巴特吧（晚上才在）。' : '萌芽鎮的守夜人巴特拜託你：晚上把晨霧道路上熄掉的路燈點亮（' + lampsLit12(st) + '／3）。', done: f.watch12 >= 2, rw: '好傷藥×3、1000 G' });
+    if (f.scare12) L.push({ n: '麥田的稻草人', t: f.scare12done ? '完成：打倒了晚上走進麥田的稻草人。' : '晚上，金穗平原的麥田迷路裡有一群稻草人在走動。去打倒它們吧（晚上才會出現）。', done: !!f.scare12done, rw: '修練之書、金麥穗×5' });
+    if (f.aurora12) L.push({ n: '北境的極光', t: f.aurora12 >= 2 ? '完成：在霜語雪原的雪丘看到了極光。之後每天晚上去看，都能得到極光的祝福。' : '觀星的艾溫說，晚上在霜語雪原的雪丘看得到極光。', done: f.aurora12 >= 2, rw: '極光的祝福（200步內戰鬥經驗值+20%，每晚一次）' });
+  }; }
+const DN_KEYS12 = [[0, [92, 100, 168], 0.85], [150, [255, 214, 180], 0.2], [300, [255, 255, 255], 0], [1300, [255, 255, 255], 0], [1450, [255, 182, 134], 0.3], [1600, [108, 104, 172], 0.9], [1700, [74, 86, 156], 1], [2300, [74, 86, 156], 1], [2400, [92, 100, 168], 0.85]];
+function dnTint12(c) { for (let i = 0; i < DN_KEYS12.length - 1; i++) { const [c0, a, L0] = DN_KEYS12[i], [c1, b, L1] = DN_KEYS12[i + 1]; if (c >= c0 && c <= c1) { const t = (c - c0) / Math.max(1, c1 - c0); return [a.map((v, j) => Math.round(v + (b[j] - v) * t)), L0 + (L1 - L0) * t]; } } return [[255, 255, 255], 0]; }
+const DN_CV12 = { c: null };
+const EYES12 = {};
+function dnEyes12(sp) { // two glints where the eyes are (the brightest highlight pixels next to dark ones, in a level pair), or null
+  if (sp in EYES12) return EYES12[sp];
+  let out = null;
+  try { const b = typeof chibiBase === 'function' && chibiBase(sp), im = b && chibiImage(sp), M = b && BATTLE_PXC_META[b];
+    if (im && M) { const c = mkCanvas(M.w, M.h), g = c.getContext('2d'); g.drawImage(im, M.frames.idle[0] * M.w, 0, M.w, M.h, 0, 0, M.w, M.h); const d = g.getImageData(0, 0, M.w, M.h).data;
+      const L = (x, y) => { if (x < 0 || y < 0 || x >= M.w || y >= M.h) return -1; const i = (y * M.w + x) * 4; return d[i + 3] ? 0.3 * d[i] + 0.59 * d[i + 1] + 0.11 * d[i + 2] : -1; };
+      let top = M.h, bot = 0, l = M.w, r = 0; for (let y = 0; y < M.h; y++) for (let x = 0; x < M.w; x++) if (L(x, y) >= 0) { top = Math.min(top, y); bot = Math.max(bot, y); l = Math.min(l, x); r = Math.max(r, x); }
+      const cx = (l + r) / 2, hgt = bot - top, cand = [];
+      for (let y = top + Math.round(hgt * 0.08); y < top + Math.round(hgt * 0.7); y++) for (let x = l + 2; x < r - 1; x++) { const v = L(x, y); if (v < 200) continue; if ([[-2, 0], [2, 0], [0, 2], [0, -2], [-2, 2], [2, 2]].some(([a, bb]) => { const q = L(x + a, y + bb); return q >= 0 && q < 70; })) cand.push([x, y]); }
+      const cl = []; for (const [x, y] of cand) { const k = cl.find(q => Math.abs(q[0] - x) <= 4 && Math.abs(q[1] - y) <= 4); if (k) { k[0] = (k[0] * k[2] + x) / (k[2] + 1); k[1] = (k[1] * k[2] + y) / (k[2] + 1); k[2]++; } else cl.push([x, y, 1]); }
+      let best = null, bs = 1e9; for (let i = 0; i < cl.length; i++) for (let j = i + 1; j < cl.length; j++) { const A = cl[i], B = cl[j], dx = Math.abs(A[0] - B[0]), dy = Math.abs(A[1] - B[1]), mid = (A[0] + B[0]) / 2;
+        if (dy > 4 || dx < 6 || dx > Math.max(14, (r - l) * 0.6)) continue; const s = Math.abs(mid - cx) * 2 + dy + (A[1] + B[1]) / 2 * 0.05; if (Math.abs(mid - cx) <= Math.max(5, (r - l) * 0.14) && s < bs) { bs = s; best = [A, B]; } }
+      if (best) out = { pts: best.map(q => [q[0] / 2, q[1] / 2]), w: M.w / 2, h: M.h / 2 };
+    } } catch (e) { out = null; }
+  return EYES12[sp] = out;
+}
+function dnGhost12() { if (DN_CV12.ghost !== undefined) return DN_CV12.ghost; const im = roamImg12('fallenSoldier'); if (!im) return null;
+  const c = mkCanvas(im.c.width, im.c.height), g = c.getContext('2d'); g.drawImage(im.c, 0, 0); g.globalCompositeOperation = 'source-atop'; g.fillStyle = 'rgba(120,170,255,0.75)'; g.fillRect(0, 0, c.width, c.height); return DN_CV12.ghost = c; }
+{ const _wo = wxOverlay; wxOverlay = function (x, k, t, w, h) { const st = Game.st, ph = st && dnOut12(st.map) ? dnPhase12(st) : 'day';
+    if (ph === 'day' || !(Game.scene instanceof Overworld)) return _wo(x, k, t, w, h); x.save(); x.globalAlpha = ph === 'night' ? 0.4 : 0.7; try { _wo(x, k, t, w, h); } finally { x.restore(); } }; }
+const GLOW12 = { marshWisp: [124, 255, 160], battleWisp: [140, 190, 255], mistWisp: [200, 210, 255], lanternBog: [110, 255, 140], pumpkinLantern: [255, 170, 60], auroraSprite: [150, 255, 210], emberBat: [255, 110, 40], fireflySwarm: [220, 255, 120], moonFish: [210, 225, 255], thornMush: [210, 140, 255] };
