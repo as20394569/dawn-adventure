@@ -1245,7 +1245,7 @@ class TitleScene {
     x.drawImage(this.logo, Math.round(W / 2 - this.logo.width / 2), 6 + bob);
     Font.drawC(x, '～異世界冒險RPG～', W / 2, 52 + bob, '#ffe0a0', '#3a1428');
     if (this.stage === 'press' && Math.floor(this.t / 30) % 2 === 0) Font.drawC(x, '按 A 鍵開始', W / 2, 232, '#ffffff', '#1a1024');
-    Font.drawR(x, 'v14.31', W - 3, H - 13, '#b890b0', null);
+    Font.drawR(x, 'v14.32', W - 3, H - 13, '#b890b0', null);
   }
 }
 class IntroScene {
@@ -5364,3 +5364,9 @@ function* starFlow() {
 }
 { const _gi = gearInfoLines; gearInfoLines = function (g, w = 150) { const L = _gi(g, w), n = (Game.st && Game.st.refine || {})[g.b] || 0; if (g.s || n) L.splice(1, 0, ['★' + (g.s || 0) + '／' + STAR_MAX + '　精煉石' + n + '顆', '#ffd860', 10, 0]); return L; }; }
 { const _ng = newGameState; newGameState = function (...a) { const st = _ng.apply(this, a); if (st) { st.balV = 1; st.refine = {}; } return st; }; }
+function v71Migrate(st) {
+  if (!st || (st.balV || 0) >= 1) return false; st.balV = 1; let note = [];
+  if (st.attr) { for (const k in st.attr) st.attr[k] = Math.floor(st.attr[k] / 2); for (let g = 0; g < 200 && attrAvail(st) < 0; g++) { const k = Object.keys(st.attr).sort((a, b) => st.attr[b] - st.attr[a])[0]; if (!k || !st.attr[k]) break; st.attr[k]--; } note.push('屬性點改成每級1點，原本的分配減半了'); }
+  if (st.cls && tpSpent(st) > tpTotal(st)) { st.ct = {}; note.push('天賦點改成每2級1點，天賦已經全部退回'); }
+  st.v71note = note.join('；') || 1; return true;
+}

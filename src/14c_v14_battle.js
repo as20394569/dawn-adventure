@@ -199,14 +199,17 @@ BPK.handK = function (x) { this.detTop16 = null; this.detBot16 = null; const LB 
   // v14.25（玩家：「合理運用空間」→ 選了「選到的卡放大浮在手牌上」）：選到的卡放大成大卡（整句說明在卡上），從手牌的位置往上浮；旁邊一個框寫關鍵字和「再點一次出牌」
   if (this.sel >= 0 && this.hand[this.sel]) { const c = this.hand[this.sel], Q = KD.UI, K = KD.keyLines(c), P = this.handPos(this.sel, n), bw = 60, room = H - 3 - ((this.plateBot24 || LB.hudY - 4) + 3), pic = room >= 100, bh = pic ? Math.min(110, room) : Math.max(84, H - 3 - (LB.hudY - 2)), /* v14.27: never over the monsters' plates (玩家選「大卡不放圖」); v14.28: the monsters stand higher, so there is room again for the picture */ bx = Math.round(clamp(P.x + cw / 2 - bw / 2, 3, W - 3 - bw)), by = H - 3 - bh;
     x.fillStyle = 'rgba(6,6,12,0.55)'; x.fillRect(0, LB.hudY, W, H - LB.hudY); // the bar and the other cards step back
-    KD.drawCard(x, c, bx, by, bw, bh, { on: true, dim: !this.okK(c), noArt: !pic });
+    // v14.32（玩家：「想換牌不直覺 應該要可以左右平滑」）: the big card glides to the picked card's place, follows the finger while it swipes (14w), and slides in from the side it came from
+    this.popAX = this.popAX == null ? bx : this.popAX + (bx - this.popAX) * 0.35; if (Math.abs(this.popAX - bx) < 0.5) this.popAX = bx; this.popKick = Math.abs(this.popKick || 0) < 0.5 ? 0 : this.popKick * 0.72; this.pop28 = { x: bx, y: by, w: bw, h: bh };
+    const dX = Math.round(this.popAX + (this.popDrag || 0) + this.popKick); KD.drawCard(x, c, dX, by, bw, bh, { on: true, dim: !this.okK(c), noArt: !pic });
     // the side panel: what to do, then the key words (small, grey)
     const left = bx >= W - bx - bw, px = left ? 3 : bx + bw + 4, pw = left ? bx - 7 : W - 3 - px, hint = this.tgtMode ? '點魔物出牌' : '再點一次出牌';
-    if (pw >= 40) { const L = []; for (const t of K) L.push(...wrap15(t, pw - 8, Q.S)); const ln = L.slice(0, Math.floor((bh - 20) / 7)), ph = 15 + (ln.length ? ln.length * 7 + 4 : 0), py = H - 3 - ph;
+    if (pw >= 40) { const L = []; for (const t of K) L.push(...wrap15(t, pw - 8, Q.S)); if (n > 1) L.push(...wrap15('左右滑動換一張', pw - 8, Q.S)); const ln = L.slice(0, Math.floor((bh - 20) / 7)), ph = 15 + (ln.length ? ln.length * 7 + 4 : 0), py = H - 3 - ph;
       KD.pan(x, px, py, pw, ph); Font.w('700', () => KD.tc(x, hint, px + pw / 2, py + 7.5, '#a8e0ff', '#000', Q.M, pw - 6)); if (ln.length) { x.fillStyle = '#262935'; x.fillRect(px + 4, py + 14, pw - 8, 1); ln.forEach((t, k) => Font.draw(x, t, px + 4, py + 17 + k * 7 + 3.5 - 8, Q.mut, '#000', Q.S)); } }
     else { const w = Math.ceil(Font.width(hint, Q.M)) + 10; KD.pan(x, Math.round(bx + bw / 2 - w / 2), by - 13, w, 11); KD.tc(x, hint, bx + bw / 2, by - 7.5, '#a8e0ff', '#000', Q.M); }
     if (my) touchRegion(bx, by, bw, bh, () => { this.tapK = { k: 'card', i: this.sel }; }); }
-  else if (this.tgtMode && my) { const s = '點要打的那一隻魔物', w = Font.width(s, 7) + 12; KD.pan(x, Math.round((W - w) / 2), LB.tgtY, Math.round(w), 11); KD.tc(x, s, W / 2, LB.tgtY + 5.5, '#ffe8a0', '#000', 7); this.detBot16 = LB.tgtY - 15; /* v14.28: a message goes above this hint (both in the strip over the bar) */ }
+  else { this.popAX = null; this.pop28 = null; }
+  if (!(this.sel >= 0 && this.hand[this.sel]) && this.tgtMode && my) { const s = '點要打的那一隻魔物', w = Font.width(s, 7) + 12; KD.pan(x, Math.round((W - w) / 2), LB.tgtY, Math.round(w), 11); KD.tc(x, s, W / 2, LB.tgtY + 5.5, '#ffe8a0', '#000', 7); this.detBot16 = LB.tgtY - 15; /* v14.28: a message goes above this hint (both in the strip over the bar) */ }
   // choosing a target: yellow corners round each monster (thick on the one picked)
   if (this.tgtMode && my) for (const f2 of this.foes()) { if (f2.gone) continue; const C = this.center(f2), on = f2.id === this.tgtId, hw = 26, hh = Math.round((f2.bbh || 44) / 2) + 4, L = on ? 6 : 4, t = on ? 2 : 1;
     x.globalAlpha = on ? 1 : 0.6; x.fillStyle = '#ffe070'; for (const [sx, sy] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) { const X0 = C.x + sx * hw, Y0 = C.y + sy * hh; x.fillRect(sx < 0 ? X0 : X0 - L, sy < 0 ? Y0 : Y0 - t, L, t); x.fillRect(sx < 0 ? X0 : X0 - t, sy < 0 ? Y0 : Y0 - L, t, L); } x.globalAlpha = 1;

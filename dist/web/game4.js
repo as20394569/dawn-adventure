@@ -1,29 +1,3 @@
-function* cryMenu11() {
-  const st = Game.st;
-  if (!cryList11(st).length) { yield* say('還沒有晶石。\n打倒菁英魔物或頭目，有機率得到牠的晶石（破防越多越容易）。'); return; }
-  while (true) {
-    const r = yield* ask('晶石要怎麼處理？', ['鑲嵌', '取出', '升級', '合成', '返回']); if (r < 0 || r === 4) return;
-    if (r === 0) { const sp = yield* cryPicker11('鑲嵌：選晶石', () => cryList11(st)); if (!sp) continue;
-      const g = yield* gearPicker('鑲進哪一件？', () => gearSort().filter(q => cryFits11(sp, q) && crySlots11(q) > 0), (x, q, Y) => { const n = crySlots11(q), C = (q.cr11 || []).filter(s => cryOwn11()[s]).slice(0, n); Font.draw(x, '晶石孔 ' + C.length + '/' + n + (C.length ? '：' + C.map(cryName11).join('、') : ''), 12, Y, UIC.accent, UIC.textSh, 9); });
-      if (!g) continue; const n = crySlots11(g), cur = (g.cr11 || []).filter(s => cryOwn11()[s] && s !== sp).slice(0, n);
-      let out = null; if (cur.length >= n) { const r2 = yield* ask('孔已經滿了。要換下哪一顆？', cur.map(cryName11).concat(['取消'])); if (r2 < 0 || r2 >= cur.length) continue; out = cur[r2]; }
-      cryUnsocket11(sp, st); g.cr11 = cur.filter(s => s !== out).concat([sp]); Sound.sfx('item');
-      yield* say('把「' + cryName11(sp) + '」鑲進了「' + GEAR[g.b].n + '」！' + (out ? '\n（「' + cryName11(out) + '」取了下來。）' : '')); continue; }
-    if (r === 1) { const sp = yield* cryPicker11('取出：選晶石', () => cryList11(st).filter(s => cryHost11(s, st))); if (!sp) continue; const g = cryHost11(sp, st); cryUnsocket11(sp, st); Sound.sfx('select'); yield* say('從「' + GEAR[g.b].n + '」取下了「' + cryName11(sp) + '」。'); continue; }
-    if (r === 2) { const sp = yield* cryPicker11('升級：選晶石', () => cryList11(st).filter(s => cryOwn11(st)[s] < 3)); if (!sp) continue; const star = cryOwn11(st)[sp], c = cryCost11(sp, star);
-      const a = yield* ask('「' + cryName11(sp) + '」★' + star + '→★' + (star + 1) + '\n需要：' + cryCostText11(c), ['升級', '取消']); if (a !== 0) continue;
-      if (!cryCan11(c, st)) { Sound.sfx('bump'); yield* say('部位或金錢不夠喔。\n部位要再戰' + SPECIES[sp].n + '拿。'); continue; }
-      st.money -= c.gold; for (const k in c.mats) st.bag[k] -= c.mats[k]; cryOwn11(st)[sp] = star + 1; Sound.jingle('levelup'); yield* say('「' + cryName11(sp) + '」升到了 ★' + (star + 1) + '！\n' + cryText11(sp, star + 1)); continue; }
-    if (r === 3) { const O = cryOwn11(st), L = cryList11(st).filter(s => O[s] === 3 && cryNext11(s) && O[cryNext11(s)] && O[cryNext11(s)] < 2);
-      if (!L.length) { yield* say('合成：同一系列的上一顆練到 ★3，再加上已經拿到的下一顆，下一顆就能直接變成 ★2。\n現在沒有可以合成的晶石。'); continue; }
-      const sp = yield* cryPicker11('合成：選 ★3 的晶石', () => L); if (!sp) continue; const nx = cryNext11(sp);
-      const a = yield* ask('用掉「' + cryName11(sp) + '」★3，讓「' + cryName11(nx) + '」變成 ★2？', ['合成', '取消']); if (a !== 0) continue;
-      cryUnsocket11(sp, st); delete O[sp]; O[nx] = 2; Sound.jingle('levelup'); yield* say('「' + cryName11(nx) + '」變成了 ★2！'); continue; }
-  } }
-smithMenu = function* (f) {
-  while (true) { const r = yield* ask('要做什麼？', ['打造', '強化' + (f && f.smithDisc ? '（強化半價）' : ''), '晶石', '離開']);
-    if (r === 0) { const r2 = yield* ask('打造', ['打造裝備', '分解', '返回']); if (r2 === 0) yield* craftScreen(); else if (r2 === 1) yield* salvageFlow(); }
-    else if (r === 1) yield* smithUpgrade12(); else if (r === 2) yield* cryMenu11(); else break; } };
 const DIFF11 = [
   { n: '普通', hp: 1, pow: 1, exp: 1, parts: 1, rare: 1, brk: 0, gap: 0 },
   { n: '困難', hp: 1.5, pow: 1.15, exp: 1.5, parts: 1.5, rare: 1, brk: 0, gap: 0 },
@@ -6176,13 +6150,15 @@ BPK.handK = function (x) { this.detTop16 = null; this.detBot16 = null; const LB 
     if (my) touchRegion(P.x, Y, i === n - 1 || i === this.sel ? cw : Math.ceil(P.step), ch, () => { this.tapK = { k: 'card', i }; }); }
   if (this.sel >= 0 && this.hand[this.sel]) { const c = this.hand[this.sel], Q = KD.UI, K = KD.keyLines(c), P = this.handPos(this.sel, n), bw = 60, room = H - 3 - ((this.plateBot24 || LB.hudY - 4) + 3), pic = room >= 100, bh = pic ? Math.min(110, room) : Math.max(84, H - 3 - (LB.hudY - 2)), /* v14.27: never over the monsters' plates (玩家選「大卡不放圖」); v14.28: the monsters stand higher, so there is room again for the picture */ bx = Math.round(clamp(P.x + cw / 2 - bw / 2, 3, W - 3 - bw)), by = H - 3 - bh;
     x.fillStyle = 'rgba(6,6,12,0.55)'; x.fillRect(0, LB.hudY, W, H - LB.hudY); // the bar and the other cards step back
-    KD.drawCard(x, c, bx, by, bw, bh, { on: true, dim: !this.okK(c), noArt: !pic });
+    this.popAX = this.popAX == null ? bx : this.popAX + (bx - this.popAX) * 0.35; if (Math.abs(this.popAX - bx) < 0.5) this.popAX = bx; this.popKick = Math.abs(this.popKick || 0) < 0.5 ? 0 : this.popKick * 0.72; this.pop28 = { x: bx, y: by, w: bw, h: bh };
+    const dX = Math.round(this.popAX + (this.popDrag || 0) + this.popKick); KD.drawCard(x, c, dX, by, bw, bh, { on: true, dim: !this.okK(c), noArt: !pic });
     const left = bx >= W - bx - bw, px = left ? 3 : bx + bw + 4, pw = left ? bx - 7 : W - 3 - px, hint = this.tgtMode ? '點魔物出牌' : '再點一次出牌';
-    if (pw >= 40) { const L = []; for (const t of K) L.push(...wrap15(t, pw - 8, Q.S)); const ln = L.slice(0, Math.floor((bh - 20) / 7)), ph = 15 + (ln.length ? ln.length * 7 + 4 : 0), py = H - 3 - ph;
+    if (pw >= 40) { const L = []; for (const t of K) L.push(...wrap15(t, pw - 8, Q.S)); if (n > 1) L.push(...wrap15('左右滑動換一張', pw - 8, Q.S)); const ln = L.slice(0, Math.floor((bh - 20) / 7)), ph = 15 + (ln.length ? ln.length * 7 + 4 : 0), py = H - 3 - ph;
       KD.pan(x, px, py, pw, ph); Font.w('700', () => KD.tc(x, hint, px + pw / 2, py + 7.5, '#a8e0ff', '#000', Q.M, pw - 6)); if (ln.length) { x.fillStyle = '#262935'; x.fillRect(px + 4, py + 14, pw - 8, 1); ln.forEach((t, k) => Font.draw(x, t, px + 4, py + 17 + k * 7 + 3.5 - 8, Q.mut, '#000', Q.S)); } }
     else { const w = Math.ceil(Font.width(hint, Q.M)) + 10; KD.pan(x, Math.round(bx + bw / 2 - w / 2), by - 13, w, 11); KD.tc(x, hint, bx + bw / 2, by - 7.5, '#a8e0ff', '#000', Q.M); }
     if (my) touchRegion(bx, by, bw, bh, () => { this.tapK = { k: 'card', i: this.sel }; }); }
-  else if (this.tgtMode && my) { const s = '點要打的那一隻魔物', w = Font.width(s, 7) + 12; KD.pan(x, Math.round((W - w) / 2), LB.tgtY, Math.round(w), 11); KD.tc(x, s, W / 2, LB.tgtY + 5.5, '#ffe8a0', '#000', 7); this.detBot16 = LB.tgtY - 15; /* v14.28: a message goes above this hint (both in the strip over the bar) */ }
+  else { this.popAX = null; this.pop28 = null; }
+  if (!(this.sel >= 0 && this.hand[this.sel]) && this.tgtMode && my) { const s = '點要打的那一隻魔物', w = Font.width(s, 7) + 12; KD.pan(x, Math.round((W - w) / 2), LB.tgtY, Math.round(w), 11); KD.tc(x, s, W / 2, LB.tgtY + 5.5, '#ffe8a0', '#000', 7); this.detBot16 = LB.tgtY - 15; /* v14.28: a message goes above this hint (both in the strip over the bar) */ }
   if (this.tgtMode && my) for (const f2 of this.foes()) { if (f2.gone) continue; const C = this.center(f2), on = f2.id === this.tgtId, hw = 26, hh = Math.round((f2.bbh || 44) / 2) + 4, L = on ? 6 : 4, t = on ? 2 : 1;
     x.globalAlpha = on ? 1 : 0.6; x.fillStyle = '#ffe070'; for (const [sx, sy] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) { const X0 = C.x + sx * hw, Y0 = C.y + sy * hh; x.fillRect(sx < 0 ? X0 : X0 - L, sy < 0 ? Y0 : Y0 - t, L, t); x.fillRect(sx < 0 ? X0 : X0 - t, sy < 0 ? Y0 : Y0 - L, t, L); } x.globalAlpha = 1;
     touchRegion(C.x - 24, C.y - 30, 48, 60, () => { this.tapK = { k: 'tgt', id: f2.id }; }); } };
@@ -7589,7 +7565,7 @@ KD.Z28 = { name: 4, num: 6, lab: 4, chip: 4, cost: 4, nh: 7, r: 3, row: 9, chipH
 KD.drawCard = function (x, c, X, Y, w, h, o = {}) { const C = KD.CARDS[c.id]; if (!C) return; const T = KD.TYPE[C.type], P = KD.C3, v = KD.val(c), big = w >= 46, gold = C.rar === 'L', qst = C.rar === 'Q', gear = !!c.g16, CL = KD.CLASSES[C.cls];
   const kc = big ? 2 : 1, edge = o.on ? '#ffe070' : gold ? '#ffcf6a' : qst ? '#5ce0b8' : gear ? '#dfe4f0' : P.line, B = (s, z) => Font.w('700', () => Font.width(s, z));
   if (o.on) KD.rr3(x, X - 2, Y - 2, w + 4, h + 4, 'rgba(255,224,112,0.45)', kc);
-  KD.rr3(x, X - 1, Y - 1, w + 2, h + 2, o.on ? '#ffe070' : '#07060c', kc); KD.rr3(x, X, Y, w, h, edge, kc); KD.rr3(x, X + 1, Y + 1, w - 2, h - 2, P.body, kc);
+  if (o.on) KD.rr3(x, X - 1, Y - 1, w + 2, h + 2, '#ffe070', kc); KD.rr3(x, X, Y, w, h, edge, kc); /* v14.32（玩家：「小牌時黑色框會超出外框」）: no black line round the outside any more — the card's own frame is its edge */ KD.rr3(x, X + 1, Y + 1, w - 2, h - 2, P.body, kc);
   const ix = X + 1, iy = Y + 1, iw = w - 2, ih = h - 2, pd = big ? 3 : 2, vw = Math.min(w, o.vis || w), v0 = X + (o.visX0 || 0);
   const lx = Math.max(ix + pd, v0 + 2), rx = Math.min(ix + iw - pd, v0 + vw - 2), cx = (lx + rx) / 2, tw = Math.max(8, rx - lx);
   const L = KD.shortL(C, v), n0 = L.findIndex(s => KD.numOf(s)), ni = n0 >= 0 ? n0 : L.findIndex(s => KD.numOf28(s)), N = ni >= 0 ? KD.numOf28(L[ni]) : null, rest = L.filter((s, k) => k !== ni);
@@ -7630,3 +7606,25 @@ KD.drawCard = function (x, c, X, Y, w, h, o = {}) { const C = KD.CARDS[c.id]; if
       Font.w('700', () => KD.tc(x, T.n, (ce + se) / 2, fy + 5, gold ? P.dmg : P.pill[C.type], null, 5, se - ce - 2)); /* the type (攻擊・技能・能力) between the class and the stars, off the picture */
       const n = P.stars[C.rar] || 1, rc = KD.RAR[C.rar].c; for (let i = 0; i < 3; i++) KD.star3(x, ix + iw - pd - (3 - i) * 6 + 1, fy + 3, i < n ? rc : P.off); } }
   if (o.dim) KD.rr3(x, X, Y, w, h, 'rgba(0,0,0,0.38)', kc); };
+KD.SW = null;
+KD.swMy = b => b instanceof Battle && b.k14 && b.idle && b.core && b.core.need && b.core.need.unit && b.core.need.unit.hero && !UI.stack.length;
+KD.swZone = (b, gx, gy) => { if (!KD.swMy(b) || !b.hand.length) return null; const LB = KD.BL(), R = b.pop28;
+  if (R && gx >= R.x && gx < R.x + R.w && gy >= R.y && gy < R.y + R.h) return 'pop'; if (gy >= LB.handY - 2) return 'hand'; return null; };
+KD.swCardAt = (b, gx) => { const n = b.hand.length, cw = KD.BL().cw; for (let i = n - 1; i >= 0; i--) { const P = b.handPos(i, n); if (gx >= P.x && gx < P.x + cw) return i; } return gx < W / 2 ? 0 : n - 1; };
+KD.swPick = (b, i) => { if (i === b.sel || i < 0 || i >= b.hand.length) return false; b.sel = i; b.tgtMode = 0; Sound.sfx('cursor'); return true; };
+{ const _tt = touchTap; touchTap = function (gx, gy) { const b = Game.scene, z = KD.swZone(b, gx, gy); if (z) { Game.touchUI = true; KD.SW = { x0: gx, y0: gy, x: gx, y: gy, z, mode: null, b }; return; } return _tt(gx, gy); };
+  KD.swTap = _tt; }
+KD.swMove = s => { const b = s.b, dx = s.x - s.x0, dy = s.y - s.y0;
+  if (!s.mode) { if (Math.abs(dx) >= 4 && Math.abs(dx) >= Math.abs(dy)) s.mode = s.z === 'pop' && b.sel >= 0 ? 'swipe' : 'scrub'; else if (Math.abs(dy) >= 8) s.mode = 'none'; }
+  if (s.mode === 'scrub') KD.swPick(b, KD.swCardAt(b, s.x));
+  if (s.mode === 'swipe') b.popDrag = clamp(dx, -30, 30); };
+KD.swEnd = s => { const b = s.b, dx = s.x - s.x0; b.popDrag = 0;
+  if (!s.mode) { KD.swTap(s.x0, s.y0); return; } // it didn't move: a tap
+  if (s.mode === 'swipe') { const to = b.sel + (dx < 0 ? 1 : -1);
+    if (Math.abs(dx) >= 10 && KD.swPick(b, to)) { b.popAX = null; b.popKick = dx < 0 ? 26 : -26; } // the next card slides in from the side the finger came from
+    else b.popKick = dx * 0.6; } }; // not far enough, or the last card: it springs back
+{ const cvs = document.getElementById('screen'); if (cvs) { const P = e => { const r = cvs.getBoundingClientRect(); return [(e.clientX - r.left) / r.width * W, (e.clientY - r.top) / r.height * H]; };
+    cvs.addEventListener('pointerdown', e => { if (KD.SW) try { cvs.setPointerCapture(e.pointerId); } catch (_) { } });
+    cvs.addEventListener('pointermove', e => { const s = KD.SW; if (!s) return; e.preventDefault(); [s.x, s.y] = P(e); if (!KD.swMy(s.b) || Game.scene !== s.b) { KD.SW = null; s.b.popDrag = 0; return; } KD.swMove(s); });
+    const up = e => { const s = KD.SW; if (!s) return; KD.SW = null; if (e.type === 'pointerup') [s.x, s.y] = P(e); if (!KD.swMy(s.b) || Game.scene !== s.b) { s.b.popDrag = 0; return; } KD.swEnd(s); };
+    cvs.addEventListener('pointerup', up); cvs.addEventListener('pointercancel', up); } }

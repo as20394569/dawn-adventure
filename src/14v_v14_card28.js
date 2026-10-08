@@ -11,7 +11,7 @@ KD.drawCard = function (x, c, X, Y, w, h, o = {}) { const C = KD.CARDS[c.id]; if
   const kc = big ? 2 : 1, edge = o.on ? '#ffe070' : gold ? '#ffcf6a' : qst ? '#5ce0b8' : gear ? '#dfe4f0' : P.line, B = (s, z) => Font.w('700', () => Font.width(s, z));
   // the frame (the picked card keeps its glow; that is the only thing outside the frame)
   if (o.on) KD.rr3(x, X - 2, Y - 2, w + 4, h + 4, 'rgba(255,224,112,0.45)', kc);
-  KD.rr3(x, X - 1, Y - 1, w + 2, h + 2, o.on ? '#ffe070' : '#07060c', kc); KD.rr3(x, X, Y, w, h, edge, kc); KD.rr3(x, X + 1, Y + 1, w - 2, h - 2, P.body, kc);
+  if (o.on) KD.rr3(x, X - 1, Y - 1, w + 2, h + 2, '#ffe070', kc); KD.rr3(x, X, Y, w, h, edge, kc); /* v14.32（玩家：「小牌時黑色框會超出外框」）: no black line round the outside any more — the card's own frame is its edge */ KD.rr3(x, X + 1, Y + 1, w - 2, h - 2, P.body, kc);
   // the inside of the frame, and the part of it the text may use
   const ix = X + 1, iy = Y + 1, iw = w - 2, ih = h - 2, pd = big ? 3 : 2, vw = Math.min(w, o.vis || w), v0 = X + (o.visX0 || 0);
   const lx = Math.max(ix + pd, v0 + 2), rx = Math.min(ix + iw - pd, v0 + vw - 2), cx = (lx + rx) / 2, tw = Math.max(8, rx - lx);

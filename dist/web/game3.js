@@ -1,9 +1,3 @@
-function v71Migrate(st) {
-  if (!st || (st.balV || 0) >= 1) return false; st.balV = 1; let note = [];
-  if (st.attr) { for (const k in st.attr) st.attr[k] = Math.floor(st.attr[k] / 2); for (let g = 0; g < 200 && attrAvail(st) < 0; g++) { const k = Object.keys(st.attr).sort((a, b) => st.attr[b] - st.attr[a])[0]; if (!k || !st.attr[k]) break; st.attr[k]--; } note.push('屬性點改成每級1點，原本的分配減半了'); }
-  if (st.cls && tpSpent(st) > tpTotal(st)) { st.ct = {}; note.push('天賦點改成每2級1點，天賦已經全部退回'); }
-  st.v71note = note.join('；') || 1; return true;
-}
 { const _so = startOverworld; startOverworld = function (...a) {
     v71Migrate(Game.st); const ow = _so.apply(this, a), st = Game.st;
     if (st && st.v71note && st.cls && ow && ow.run) { const n = st.v71note; delete st.v71note; ow.run((function* () { yield* wait(40);
@@ -9271,3 +9265,29 @@ function* cryPicker11(title, getList) {
     if (Input.repeat('up') && idx > 0) { idx--; Sound.sfx('cursor'); } if (Input.repeat('down') && idx < L.length - 1) { idx++; Sound.sfx('cursor'); }
     if (Input.pressed('a') && L[idx]) { Input.consume('a'); Sound.sfx('select'); res = L[idx]; break; } if (Input.pressed('b')) { Input.consume('b'); Sound.sfx('cancel'); break; } yield; }
   UI.remove(scr); return res; }
+function* cryMenu11() {
+  const st = Game.st;
+  if (!cryList11(st).length) { yield* say('還沒有晶石。\n打倒菁英魔物或頭目，有機率得到牠的晶石（破防越多越容易）。'); return; }
+  while (true) {
+    const r = yield* ask('晶石要怎麼處理？', ['鑲嵌', '取出', '升級', '合成', '返回']); if (r < 0 || r === 4) return;
+    if (r === 0) { const sp = yield* cryPicker11('鑲嵌：選晶石', () => cryList11(st)); if (!sp) continue;
+      const g = yield* gearPicker('鑲進哪一件？', () => gearSort().filter(q => cryFits11(sp, q) && crySlots11(q) > 0), (x, q, Y) => { const n = crySlots11(q), C = (q.cr11 || []).filter(s => cryOwn11()[s]).slice(0, n); Font.draw(x, '晶石孔 ' + C.length + '/' + n + (C.length ? '：' + C.map(cryName11).join('、') : ''), 12, Y, UIC.accent, UIC.textSh, 9); });
+      if (!g) continue; const n = crySlots11(g), cur = (g.cr11 || []).filter(s => cryOwn11()[s] && s !== sp).slice(0, n);
+      let out = null; if (cur.length >= n) { const r2 = yield* ask('孔已經滿了。要換下哪一顆？', cur.map(cryName11).concat(['取消'])); if (r2 < 0 || r2 >= cur.length) continue; out = cur[r2]; }
+      cryUnsocket11(sp, st); g.cr11 = cur.filter(s => s !== out).concat([sp]); Sound.sfx('item');
+      yield* say('把「' + cryName11(sp) + '」鑲進了「' + GEAR[g.b].n + '」！' + (out ? '\n（「' + cryName11(out) + '」取了下來。）' : '')); continue; }
+    if (r === 1) { const sp = yield* cryPicker11('取出：選晶石', () => cryList11(st).filter(s => cryHost11(s, st))); if (!sp) continue; const g = cryHost11(sp, st); cryUnsocket11(sp, st); Sound.sfx('select'); yield* say('從「' + GEAR[g.b].n + '」取下了「' + cryName11(sp) + '」。'); continue; }
+    if (r === 2) { const sp = yield* cryPicker11('升級：選晶石', () => cryList11(st).filter(s => cryOwn11(st)[s] < 3)); if (!sp) continue; const star = cryOwn11(st)[sp], c = cryCost11(sp, star);
+      const a = yield* ask('「' + cryName11(sp) + '」★' + star + '→★' + (star + 1) + '\n需要：' + cryCostText11(c), ['升級', '取消']); if (a !== 0) continue;
+      if (!cryCan11(c, st)) { Sound.sfx('bump'); yield* say('部位或金錢不夠喔。\n部位要再戰' + SPECIES[sp].n + '拿。'); continue; }
+      st.money -= c.gold; for (const k in c.mats) st.bag[k] -= c.mats[k]; cryOwn11(st)[sp] = star + 1; Sound.jingle('levelup'); yield* say('「' + cryName11(sp) + '」升到了 ★' + (star + 1) + '！\n' + cryText11(sp, star + 1)); continue; }
+    if (r === 3) { const O = cryOwn11(st), L = cryList11(st).filter(s => O[s] === 3 && cryNext11(s) && O[cryNext11(s)] && O[cryNext11(s)] < 2);
+      if (!L.length) { yield* say('合成：同一系列的上一顆練到 ★3，再加上已經拿到的下一顆，下一顆就能直接變成 ★2。\n現在沒有可以合成的晶石。'); continue; }
+      const sp = yield* cryPicker11('合成：選 ★3 的晶石', () => L); if (!sp) continue; const nx = cryNext11(sp);
+      const a = yield* ask('用掉「' + cryName11(sp) + '」★3，讓「' + cryName11(nx) + '」變成 ★2？', ['合成', '取消']); if (a !== 0) continue;
+      cryUnsocket11(sp, st); delete O[sp]; O[nx] = 2; Sound.jingle('levelup'); yield* say('「' + cryName11(nx) + '」變成了 ★2！'); continue; }
+  } }
+smithMenu = function* (f) {
+  while (true) { const r = yield* ask('要做什麼？', ['打造', '強化' + (f && f.smithDisc ? '（強化半價）' : ''), '晶石', '離開']);
+    if (r === 0) { const r2 = yield* ask('打造', ['打造裝備', '分解', '返回']); if (r2 === 0) yield* craftScreen(); else if (r2 === 1) yield* salvageFlow(); }
+    else if (r === 1) yield* smithUpgrade12(); else if (r === 2) yield* cryMenu11(); else break; } };
