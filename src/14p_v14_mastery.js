@@ -1,7 +1,7 @@
 /* ===================== v14.13 熟練・覺醒 =====================
    ③ 卡牌熟練・覺醒：每張卡每打出 1 次熟練 +1（牌組裡的那一張自己算），滿了在打贏的戰鬥結束時覺醒：卡名加「★」，效果多一行。
    · 需要次數：基本 20、普通 15、稀有 12、史詩 10（傳說・任務 10／12）；升級（+）和覺醒分開，可以都有
-   · 這次先做法師 31 張卡的覺醒（玩家：「先做一個職業試玩」）；其他卡的熟練也會先記著，之後加覺醒時不用重來
+   · 法師 31 張（v14.13）；劍士・盜賊・狂戰士 82 張在 14t（v14.17）
    · 卡面：熟練條（下緣藍色細線，只在有覺醒的卡上）、覺醒後金色的角 */
 KD.AW_NEED = { B: 20, C: 15, U: 12, R: 10, L: 10, Q: 12 };
 KD.awNeed = id => { const C = KD.CARDS[id]; return (C && KD.AW_NEED[C.rar]) || 99; };
@@ -9,8 +9,7 @@ const kOnce = (core, k) => { const S = core.data.awOnce16 || (core.data.awOnce16
 const kZap = (cb, core, n) => { const t = kRand(core); if (t) KD.hit(core, cb.Hu(), t, n, { el: '雷', cat: '特', at: '雷' }); };
 // t: the line on the card; run: replaces the card's effect; after: runs after it; rx: when this card sets off a reaction; cost: its cost; copyEl: takes the last element card's element
 KD.AW = {
-  mg_bolt: { t: '變成你上一張元素卡的屬性', copyEl: 1 },
-  mg_shield: { t: '魔物身上每有 1 個印記，再 +2 格擋', after: (cb, core) => kBlk(cb, core, 2 * kFoes(core).filter(u => u.data && u.data.mk16).length) },
+  // (魔力彈・護盾術 come only with gear since v14.16 — gear cards don't gain 熟練, so they have no 覺醒)
   mg_fire: { t: '引發反應時，再燃燒 3', rx: (core, cb, t) => KD.add(core, cb.Hu(), t, 'burn14', 3) },
   mg_frost: { t: '引發反應時，抽 1 張', rx: (core, cb) => { if (kOnce(core, 'frost')) cb.drawN(1); } },
   mg_spark: { t: '引發反應時，能量 +1', rx: (core, cb) => { if (kOnce(core, 'spark')) cb.energy++; } },

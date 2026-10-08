@@ -1,4 +1,4 @@
-/* ===================== v14.16 劍士・盜賊・狂戰士的專屬玩法 =====================
+/* ===================== v14.17 劍士・盜賊・狂戰士的專屬玩法 =====================
    玩家：「之前只完成法師的風格 其他職業也要有專屬風格」→ 選了（全部推薦）：
    · 劍士「看破」換掉劍意：魔物的攻擊被格擋完全擋下 → 看破 +1（最多 3）。下一張攻擊卡用掉全部：每層 +4 傷害（每隻魔物算一次）、破防值 −1（14c・14n）
      架勢・調息・心眼・燕返・納刀・破曉千斬的「劍意」改成「看破」；看破的那一擊算會心（熔岩甲打得裂）
@@ -6,7 +6,7 @@
      牠這回合不能行動、破防值 −2，影清空（頭目只扣破防值）。同一隻魔物一回合最多影縛一次（多的影留著，最多 5）
    · 狂戰士「怒氣」換掉血怒：被魔物打掉 HP、或自己的卡扣血，怒氣 +1（最多 5）。
      滿 5 的下一回合開始「狂化」：這回合能量 +1、攻擊卡傷害 ×1.5，怒氣歸零。阿修羅：怒氣 4 就狂化 */
-KD.KP_DMG = 4; KD.KZ_MUL = 1.5; KD.SH_MAX = 5; KD.RAGE_MAX = 5; KD.KP_ANY = 0; KD.SH_CHIP = 2;
+KD.KP_DMG = 4; KD.KZ_MUL = 1.5; KD.SH_MAX = 5; KD.RAGE_MAX = 5; KD.SH_CHIP = 2;
 KD.SH_BOSS = 0; // 頭目被影縛只扣破防值（玩家選的：虛弱 2・易傷 2 讓頭目戰太簡單，模擬剩 HP 80%→66%）
 KD.rageNeed = cb => (stkK(cb.Hu(), 'pwAsuraA16') ? 3 : stkK(cb.Hu(), 'pwAsura14') ? 4 : KD.RAGE_MAX);
 KD.rageAdd16 = (cb, n) => { if (cb.cls !== 'bk') return; cb.rage16 = Math.min(KD.RAGE_MAX, (cb.rage16 || 0) + n); };
@@ -14,7 +14,7 @@ KD.rageAdd16 = (cb, n) => { if (cb.cls !== 'bk') return; cb.rage16 = Math.min(KD
 /* ---------- 看破・怒氣：看主角挨的每一下 ---------- */
 { const _dd = BattleCore.prototype.dealDamage; BattleCore.prototype.dealDamage = function (src, tgt, amount, info = {}) {
     const cb = KD.on(this) && this.data.cb14; if (!cb || !tgt || !tgt.hero) return _dd.apply(this, arguments);
-    const foeHit = info.kind === 'hit' && src && !src.hero, a = Math.max(0, Math.floor(amount)), full = foeHit && a > 0 && (KD.KP_ANY ? stkK(tgt, 'blk15') > 0 : stkK(tgt, 'blk15') >= a), hp0 = tgt.res.hp;
+    const foeHit = info.kind === 'hit' && src && !src.hero, a = Math.max(0, Math.floor(amount)), full = foeHit && a > 0 && stkK(tgt, 'blk15') >= a, hp0 = tgt.res.hp;
     const r = _dd.apply(this, arguments);
     if (full && cb.cls === 'sw' && (cb.si || 0) < 3) { cb.si = Math.min(3, (cb.si || 0) + 1 + (stkK(tgt, 'pwCtrA16') && stkK(tgt, 'pwCtr15') ? 1 : 0)); cb.kpFx16 = { t: 0 }; Sound.sfx('select'); }
     const lost = hp0 - tgt.res.hp, self = (info.tags || []).includes('self');
@@ -47,9 +47,9 @@ KD.bind16 = (core, cb, a, t) => { const d = t.data; d.sh16 = 0; d.shT16 = cb.tur
       Font.drawC(x, String(n), X, midY(Y - 7, 15, 8), '#f0e0ff', null, 8); } }; }
 
 /* ---------- 畫面：怒氣的格子、看破・狂化的光 ---------- */
-{ const _db = BPK.drawBoxH; BPK.drawBoxH = function (x) { _db.call(this, x); if (!this.k14 || this.boxF < -20) return; const LB = KD.BL(), Y = LB.hudY, bx = 41;
-    if (this.cls === 'bk') { const n = this.rage16 || 0, need = KD.rageNeed(this); for (let i = 0; i < need; i++) { x.fillStyle = i < n ? (n >= need ? '#ff5030' : '#e08a40') : '#3a3048'; x.fillRect(bx + 28 + i * 5, Y + 16, 3, 5); }
-      if (this.kz16) { const p = 0.5 + 0.5 * Math.sin((this.fK || 0) / 4); Font.draw(x, '狂化', bx + 28 + need * 5 + 2, Y + 14, p > 0.5 ? '#ff7050' : '#ffb090', '#000', 8); } }
+{ const _db = BPK.drawBoxH; BPK.drawBoxH = function (x) { _db.call(this, x); if (!this.k14 || this.boxF < -20) return; const LB = KD.BL(), Y = LB.hudY, bx = 41, px = this.pipX16();
+    if (this.cls === 'bk') { const n = this.rage16 || 0, need = KD.rageNeed(this); for (let i = 0; i < need; i++) { x.fillStyle = i < n ? (n >= need ? '#ff5030' : '#e08a40') : '#3a3048'; x.fillRect(px + i * 5, Y + 16, 3, 5); }
+      if (this.kz16) { const p = 0.5 + 0.5 * Math.sin((this.fK || 0) / 4); Font.draw(x, '狂化', px + need * 5 + 2, Y + 14, p > 0.5 ? '#ff7050' : '#ffb090', '#000', 8); } }
     const K = this.kpFx16; if (K && K.t++ < 16) { x.globalAlpha = 1 - K.t / 16; x.fillStyle = '#bfe6ff'; x.fillRect(bx - 2, Y, 74, 1); x.fillRect(bx - 2, Y + 12, 74, 1); Font.draw(x, '看破', bx + 22, Y - 14 - K.t * 0.4, '#bfe6ff', '#000', 8); x.globalAlpha = 1; }
     const Z = this.kzFx16; if (Z && Z.t++ < 30) { x.globalAlpha = 0.35 * (1 - Z.t / 30); x.fillStyle = '#ff3a20'; x.fillRect(0, Y - 2, W, 27); x.globalAlpha = 1; } }; }
 

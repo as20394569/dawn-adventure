@@ -72,13 +72,13 @@ KD.KIND_CLS = { 劍: 'sw', 雙劍: 'sw', 單手盾: 'sw', 雙盾: 'sw', 長槍: 
 KD.migrate = (st) => { if (!st || st.k14) return null; const kind = typeof mainKind11 === 'function' ? mainKind11(st) : null, K = KD.state(st); K.cls = KD.KIND_CLS[kind] || 'sw'; K.old = 1;
   for (const sp in KD.BOSS_CARD) if (st.dex && st.dex[sp] && st.dex[sp].won > 0) { K.boss[sp] = 1; K.hpPlus += 5; }
   const deck = KD.deck(st); KD.markSeen(K, deck);
-  let gold = 0; const keep = new Set(Object.values(st.equip || {})); st.gear = (st.gear || []).filter(g => { if (keep.has(g.u)) { g.k14c = 1; return true; } gold += KD.gearGold(g); return false; });
+  let gold = 0; const keep = new Set(Object.values(st.equip || {})); st.gear = (st.gear || []).filter(g => { if (keep.has(g.u) || (KD.gearOk16 && GEAR[g.b] && KD.gearOk16(g.b))) { g.k14c = 1; return true; } gold += KD.gearGold(g); return false; }); /* v14.16: weapons and armour that bring cards stay */
   for (const k in st.bag || {}) { const it = ITEMS[k]; if (it && ['mp', 'boost', 'tp', 'reset'].includes(it.use) && st.bag[k] > 0) { gold += Math.round((it.price || 100) * 0.5) * st.bag[k]; delete st.bag[k]; } }
   if (st.flags) { st.flags.tutMat12 = 1; const told = st.flags.zjTold12 || (st.flags.zjTold12 = {}); for (const q in KD.TEACH) if (st.flags[q]) told[q] = 1; }
   st.money = (st.money || 0) + gold; K.catchup = Math.min(10, 2 + KD.bossN(st)); st.hp = KD.maxHp(st); st.mp = 0; KD.dress(st); return gold; };
 KD.catchupScript = function* (gold) { const st = Game.st, K = KD.state(st), CL = KD.clsOf(st);
-  yield* say('（遊戲改版了！戰鬥變成卡牌，沒有等級和裝備，強度全看你的牌組。）');
-  yield* say('（你的職業是「' + CL.n + '」。' + (gold ? '身上的裝備和用不到的道具換成了 ' + gold + ' G。' : '') + '接下來依照目前的進度選 ' + K.catchup + ' 次卡。）');
+  yield* say('（遊戲改版了！戰鬥變成卡牌，沒有等級了，強度看你的牌組；身上的武器和防具會帶卡。）');
+  yield* say('（你的職業是「' + CL.n + '」。' + (gold ? '用不到的裝備和道具換成了 ' + gold + ' G。' : '') + '接下來依照目前的進度選 ' + K.catchup + ' 次卡。）');
   while (K.catchup > 0) { K.catchup--; yield* KD.pickFlow(KD.offer(KD.clsKey(st), 'catch'), '補卡：選一張（還有 ' + K.catchup + ' 次）', { sub: '加入「' + CL.n + '」的牌組' }); } };
 { const _so = startOverworld; startOverworld = function (...a) { const st = Game.st, g = !Game.noV14 && st && !st.k14 && (st.lv || 1) > 1 ? KD.migrate(st) : null; const r = _so.apply(this, a);
     if (!Game.noV14 && st && st.k14 && (st.k14.catchup || 0) > 0 && Game.ow && !Game.ow.script) Game.ow.run(KD.catchupScript(g)); return r; }; }

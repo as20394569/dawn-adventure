@@ -4,9 +4,9 @@
    稀有度：B 基本（起始牌組）、C 普通、U 稀有、R 史詩、L 傳說（頭目）、T 衍生（飛刀） */
 KD.CLASSES = {
   sw: { n: '劍士', hp: 80, wkind: '劍', c: '#e8b048', ab: '看破', abd: '格擋完全擋下攻擊時看破 +1（最多 3）；下一張攻擊卡每層傷害 +4、破防值 −1。', d: '格擋、反擊、易傷，最好上手。', start: [['sw_strike', 5], ['sw_defend', 4], ['sw_break', 1]] },
-  rg: { n: '盜賊', hp: 70, wkind: '短刀', c: '#70d070', ab: '連擊・暗影', abd: '每回合每打出 3 張卡得到「飛刀」；攻擊每一下讓魔物疊 1 層影，疊到 5 層「影縛」：不能行動、破防值 −2。', d: '毒、飛刀、0 費牌，一回合出很多張。', start: [['rg_stab', 5], ['rg_defend', 4], ['rg_venom', 1]] },
+  rg: { n: '盜賊', hp: 70, wkind: '短刀', c: '#70d070', ab: '連擊・暗影', abd: '每回合每打出 3 張卡得到「飛刀」；攻擊每一下讓魔物疊 1 層影，疊到 5 層「影縛」：不能行動、破防值 −2。', d: '毒、飛刀、多段攻擊疊影，讓魔物動不了。', start: [['rg_stab', 5], ['rg_defend', 4], ['rg_venom', 1]] },
   mg: { n: '法師', hp: 65, wkind: '法杖', c: '#78a8ff', ab: '元素反應', abd: '火・水・雷的卡會在魔物身上留下印記；換另一種元素的攻擊打中，引發反應。', d: '火・水・雷交替打出，引發元素反應。', start: [['mg_bolt', 1], ['mg_fire', 2], ['mg_frost', 2], ['mg_spark', 1], ['mg_shield', 4]] },
-  bk: { n: '狂戰士', hp: 85, wkind: '斧', c: '#e06048', ab: '怒氣', abd: '受到傷害或自己扣血時怒氣 +1；滿 5 的下一回合「狂化」：能量 +1、攻擊傷害 ×1.5。', d: '扣自己的 HP 換傷害，力量越疊越痛。', start: [['bk_chop', 5], ['bk_defend', 4], ['bk_split', 1]] },
+  bk: { n: '狂戰士', hp: 85, wkind: '斧', c: '#e06048', ab: '怒氣', abd: '受到傷害或自己扣血時怒氣 +1；滿 5 的下一回合「狂化」：能量 +1、攻擊傷害 ×1.5。', d: '挨打、扣血累積怒氣，狂化時一口氣打爆。', start: [['bk_chop', 5], ['bk_defend', 4], ['bk_split', 1]] },
 };
 KD.CLS_ORDER = ['sw', 'rg', 'mg', 'bk'];
 KD.RAR = { B: { n: '基本', c: '#9a9aaa' }, C: { n: '普通', c: '#d0d8e8' }, U: { n: '稀有', c: '#58b8ff' }, R: { n: '史詩', c: '#c878ff' }, L: { n: '傳說', c: '#ffb040' }, Q: { n: '任務', c: '#5ce0b8' }, T: { n: '衍生', c: '#9a9aaa' } };
@@ -22,8 +22,8 @@ const kRand = core => { const L = kFoes(core); return L.length ? (L.length > 1 ?
 function kAtk(cb, core, tg, d, n = 1, o = {}) { const H = cb.Hu(); let tot = 0; const single = tg.length === 1 && !o.all;
   for (let i = 0; i < n; i++) { let L = (o.all ? kFoes(core) : tg).filter(t => core.isUp(t)); if (!L.length && single) { const f = kFoes(core); L = f.length ? [f[0]] : []; } if (!L.length) break;
     for (const t of L) { const fb1 = cb.fb && cb.fbDone ? (cb.fbDone.has(t.id) ? 0 : (cb.fbDone.add(t.id), cb.fb)) : (i === 0 ? cb.fb || 0 : 0); // v14.10: 血怒・下一擊加成 once per target per card (random-hit cards used to add it on every hit)
-      const flat = fb1 + (o.flatF ? o.flatF(t) : 0), mul = (o.mul || 1) * (o.mulF ? o.mulF(t) : 1) * (core.data.si2 ? 2 : 1) * (core.data.kz16 ? KD.KZ_MUL : 1);
-      const got = KD.hit(core, H, t, d, { ...o, i, n, flat, mul, crit: core.data.si2 || core.data.kp16 > 0 }); tot += got; cb.dealt = (cb.dealt || 0) + got;
+      const flat = fb1 + (o.flatF ? o.flatF(t) : 0), mul = (o.mul || 1) * (o.mulF ? o.mulF(t) : 1) * (core.data.kz16 ? KD.KZ_MUL : 1); // 狂化 (14t)
+      const got = KD.hit(core, H, t, d, { ...o, i, n, flat, mul, crit: core.data.kp16 > 0 }); /* 看破的一擊算會心 (14t) */ tot += got; cb.dealt = (cb.dealt || 0) + got;
       if (got > 0 && stkK(H, 'pwEnv14') && core.isUp(t)) KD.add(core, H, t, 'pois14', stkK(H, 'pwEnv14')); } }
   return tot; }
 const kAll = (cb, core, d, n = 1, o = {}) => kAtk(cb, core, kFoes(core), d, n, { ...o, all: true });

@@ -46,7 +46,7 @@ if (Events.abyKeeper) { const _ak = Events.abyKeeper; Events.abyKeeper = functio
   const sb = ACHIEVEMENTS.find(a => a.id === 'spellblade'); if (sb) sb.d = '打贏流浪的魔劍士。';
   const legN = st => { const K = KD.state(st); let n = 0; for (const k in K.decks) n += K.decks[k].filter(c => KD.CARDS[c.id] && KD.CARDS[c.id].rar === 'L').length; return n; };
   ACHIEVEMENTS.push({ id: 'k14_deck30', cat: '收集', n: '大牌組', d: '牌組達到 30 張。', ok: st => !!st.k14 && KD.fullDeck(st).length >= 30 },
-    { id: 'k14_up10', cat: '成長', n: '千錘百鍊', d: '牌組裡升級過的卡達到 10 張。', ok: st => !!st.k14 && KD.deck(st).filter(c => c.up).length >= 10 },
+    { id: 'k14_up10', cat: '成長', n: '千錘百鍊', d: '升級過的職業卡達到 10 張。', ok: st => !!st.k14 && KD.deck(st).filter(c => c.up).length >= 10 },
     { id: 'k14_rem5', cat: '成長', n: '去蕪存菁', d: '刪卡 5 次。', ok: st => !!st.k14 && (st.k14.rem || 0) >= 5 },
     { id: 'k14_cls4', cat: '成長', n: '全能的旅人', d: '四個職業都用過。', ok: st => !!st.k14 && KD.CLS_ORDER.every(k => st.k14.decks[k]) },
     { id: 'k14_leg5', cat: '收集', n: '傳說收藏家', d: '擁有 5 張傳說卡。', ok: st => !!st.k14 && legN(st) >= 5 },

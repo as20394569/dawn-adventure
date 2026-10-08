@@ -60,9 +60,10 @@ const Font = (() => {
   }
   const FAMILY = '"Noto Sans TC","PingFang TC","Hiragino Sans","Microsoft JhengHei","Heiti TC","Noto Sans CJK TC",sans-serif';
   const SIZE = 12; const mctx = document.createElement('canvas').getContext('2d'); let wcache = new Map();
-  const fontStr = size => '500 ' + size + 'px ' + FAMILY;
+  let WT = '500'; const fontStr = size => WT + ' ' + size + 'px ' + FAMILY; // v14.18: Font.w('700', fn) draws bold (the card face's name and number)
+  function withW(w, fn) { const o = WT; WT = w; try { return fn(); } finally { WT = o; } }
   if (document.fonts) { const clear = () => { wcache = new Map(); }; document.fonts.addEventListener && document.fonts.addEventListener('loadingdone', clear); document.fonts.ready && document.fonts.ready.then(clear); }
-  function width(str, size = SIZE) { str = String(str); const k = size + '|' + str; let w = wcache.get(k); if (w === undefined) { mctx.font = fontStr(size); w = mctx.measureText(str).width; wcache.set(k, w); } return w; }
+  function width(str, size = SIZE) { str = String(str); const k = WT + '|' + size + '|' + str; let w = wcache.get(k); if (w === undefined) { mctx.font = fontStr(size); w = mctx.measureText(str).width; wcache.set(k, w); } return w; }
   function draw(ctx, str, x, y, col = '#404040', sh = null, size = SIZE) {
     str = String(str); if (!str) return x;
     const f = fontStr(size); if (ctx.font !== f) ctx.font = f; ctx.textBaseline = 'middle'; ctx.textAlign = 'left';
@@ -110,7 +111,7 @@ const Font = (() => {
     }
     return lines;
   }
-  return { width, draw, drawR, drawC, drawBig, wrap, glyph, widthPx, drawPx };
+  return { width, draw, drawR, drawC, drawBig, wrap, glyph, widthPx, drawPx, w: withW };
 })();
 const Input = {
   keys: ['up', 'down', 'left', 'right', 'a', 'b', 'start', 'select'],

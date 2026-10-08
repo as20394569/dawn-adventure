@@ -61,7 +61,7 @@ for (const id in MOVES) { const M = MOVES[id]; if (!M || !M.foe || typeof M.d !=
 /* ---------- 輸了以後的提示 ---------- */
 { const _c13 = craftHint13; craftHint13 = function (st = Game.st) { if (KD.v14on(st)) return null; return _c13.apply(this, arguments); }; }
 { const _c9 = craftHint9; craftHint9 = function (st = Game.st) { if (!KD.v14on(st)) return _c9.apply(this, arguments); const f = st.flags; f.k14LoseTip = (f.k14LoseTip || 0) + 1; if (f.k14LoseTip > 3) return null;
-    return '（打不贏的時候：到商店刪掉弱的卡、到鐵匠的卡牌工坊升級卡，或先去別的地方多拿幾張卡再來。）'; }; }
+    return '（打不贏的時候：看魔物的弱點換武器、到鐵匠打造裝備或升級卡、到商店刪掉弱的卡。）'; }; }
 
 /* ---------- 流浪魔劍士：卡牌版的職業只有四個 → 打贏後不問要不要轉職（試煉的卡由「流浪魔劍士」的試煉給） ---------- */
 if (Events.eliteWin_rogueBlade) { const _rb = Events.eliteWin_rogueBlade; Events.eliteWin_rogueBlade = function* (ow) { if (!KD.v14on()) return yield* _rb.call(this, ow); const st = Game.st; st.flags.rogueMet = 1;
@@ -72,7 +72,7 @@ if (Events.eliteWin_rogueBlade) { const _rb = Events.eliteWin_rogueBlade; Events
 
 /* ---------- 稱號「虹色傳說」：卡牌版拿不到虹色裝備 → 牌組裡升級過的卡 20 張 ---------- */
 if (typeof TITLES !== 'undefined') { const T = TITLES.find(t => t.id === 'rainbow'); if (T) { const d0 = T.d, ok0 = T.ok;
-    Object.defineProperty(T, 'd', { configurable: true, enumerable: true, get: () => (KD.v14on() ? '牌組裡升級過的卡達到 20 張。' : d0), set: () => {} });
+    Object.defineProperty(T, 'd', { configurable: true, enumerable: true, get: () => (KD.v14on() ? '升級過的職業卡達到 20 張。' : d0), set: () => {} });
     T.ok = st => (st && st.k14 && !Game.noV14 ? KD.deck(st).filter(c => c.up).length >= 20 : ok0(st)); } }
 if (typeof FAM_TRAIT_D14 !== 'undefined' && FAM_TRAIT_D14.beast) { const b0 = FAM_TRAIT_D14.beast; Object.defineProperty(FAM_TRAIT_D14, 'beast', { configurable: true, enumerable: true, get: () => (KD.v14on() ? '同伴倒下時，牠的攻擊變強（一場最多 2 次）' : b0), set: () => {} }); }
 { const _f = foeDropLines; foeDropLines = function (sp, key, kind) { const L = _f(sp, key, kind); return KD.v14on() ? L.filter(t => !/^部位（破防時打）/.test(t)) : L; }; } // 卡牌戰鬥選目標只能選魔物本體

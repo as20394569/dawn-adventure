@@ -7,6 +7,7 @@
    · 裝備卡不能刪、不能單獨升級，換裝備就換卡；裝備卡是銀色的框（玩家選的）
    · 職業的起始牌組只留職業卡；舊存檔拿掉基本攻擊・防禦卡（升級過的每張退 50 G），補上起始裝備
    · 鐵匠「打造」：沿用 RPG 版的打造表（素材點數＋金幣），背包裡的素材自動換成點數；最高階級看去過最遠的地區
+   · 寶箱・任務給的裝備照舊換成卡牌獎勵（獎勵的說明都寫「卡牌三選一」）；舊 RPG 存檔身上和背包裡能帶卡的武器・防具留著
    · 任何職業都能拿任何武器；元素反應是法師的能力（其他職業的火・水・雷卡照樣打弱點，但不留印記） */
 
 /* ---------- 裝備 → 卡 ---------- */
@@ -45,7 +46,7 @@ KD.remMsg = st => (KD.g16(st) ? '職業卡至少要留 1 張。' : '牌組太少
 /* ---------- 職業：起始牌組只留職業卡，起始裝備 ---------- */
 KD.START16 = { sw: [['sw_stance', 1], ['sw_breath', 1]], rg: [['rg_venom', 1], ['rg_prep', 1]], mg: [['mg_fire', 1], ['mg_frost', 1], ['mg_spark', 1]], bk: [['bk_roar', 1], ['bk_brace', 1]] };
 KD.GEAR0_16 = { sw: ['劍', '重甲'], rg: ['短刀', '輕裝'], mg: ['法杖', '法衣'], bk: ['斧', '重甲'] };
-{ const _sd = KD.startDeck; KD.startDeck = cls => { if (!KD.g16() || !KD.START16[cls]) return _sd(cls); const out = []; for (const [id, n] of KD.START16[cls]) for (let i = 0; i < n; i++) out.push({ id, up: 0 }); return out; }; }
+for (const k in KD.START16) KD.CLASSES[k].start = KD.START16[k]; // the class deck starts with class cards only (攻擊・防禦 come with the gear)
 KD.BASIC16 = new Set(['sw_strike', 'sw_defend', 'rg_stab', 'rg_defend', 'mg_bolt', 'mg_shield', 'bk_chop', 'bk_defend']);
 // make a piece and keep it (k14c: the old sweep turned loose gear into card picks)
 KD.mkGear16 = (b, q = 1) => { const hid = typeof HIDE_K13 !== 'undefined' ? HIDE_K13.indexOf('魔導書') : -1; if (hid >= 0) HIDE_K13.splice(hid, 1); // 魔導書 is back as a card weapon (its RPG look stays off)
@@ -58,7 +59,7 @@ KD.fillGear16 = (st, cls) => { const got = []; st.equip = st.equip || {};
   for (const [sl] of KD.SLOTS16) { if (KD.eqGear16(st, sl)) { gearBy(st.equip[sl], st).k14c = 1; continue; } const g = KD.mkGear16(KD.startGear16(cls, sl), 1); st.equip[sl] = g.u; got.push(GEAR[g.b].n); }
   return got; };
 // the look no longer follows the bosses: the hero wears what was picked
-{ const _d = KD.dress; KD.dress = (st = Game.st) => { if (KD.g16(st)) return; return _d(st); }; }
+{ const _d = KD.dress; KD.dress = (st = Game.st) => { if (KD.g16(st) || (st && st.k14 && st.k14.old)) return; return _d(st); }; } // an old RPG save keeps the weapon it had
 
 /* ---------- 新遊戲 ---------- */
 { const _ng = newGameState; newGameState = function (...a) { const st = _ng.apply(this, a); if (st && st.k14) st.k14.g16 = 1; return st; }; }
@@ -75,12 +76,8 @@ KD.mig16 = st => { const K = KD.state(st); if (K.g16) return null; K.g16 = 1; le
 { const _so = startOverworld; startOverworld = function (...a) { const r = _so.apply(this, a); const st = Game.st; if (!Game.noV14 && st && st.k14 && !st.k14.g16) KD.mig16(st); return r; }; }
 KD.mig16Script = function* (m) { yield* say('（改版：身上的裝備會變成戰鬥用的卡！\n武器 4 張、身體 2 張、頭和腳各 1 張。）');
   yield* say('（牌組裡的基本攻擊・防禦卡改由裝備提供' + (m.gold ? '，升級過的 ' + m.up + ' 張退了 ' + m.gold + ' G' : '') + '。\n選單「裝備」可以換裝、看帶的卡；鐵匠可以打造。）'); };
-// gear that turns up (chests, quests): the 7 weapons and 3 armour lines are kept as gear now; the rest still becomes a card pick
-{ const _sw = KD.sweep; KD.sweep = (st = Game.st) => { if (KD.g16(st)) for (const g of st.gear || []) if (!g.k14c && GEAR[g.b] && KD.gearOk16(g.b)) { g.k14c = 1; (st.k14.newG16 = st.k14.newG16 || []).push(g.u); } return _sw(st); }; }
 { const _u = Overworld.prototype.update; Overworld.prototype.update = function (...a) { const r = _u.apply(this, a), st = Game.st;
-    if (!Game.noV14 && Game.scene === this && !this.script && !UI.stack.length && st && st.k14) { const K = st.k14;
-      if (K.g16msg) { const m = K.g16msg; delete K.g16msg; this.run(KD.mig16Script(m)); }
-      else if (K.newG16 && K.newG16.length) { const L = K.newG16.map(u => gearBy(u, st)).filter(Boolean); delete K.newG16; if (L.length) this.run((function* () { for (const g of L) yield* say('（「' + GEAR[g.b].n + '」放進了裝備。選單「裝備」可以換上。）'); })()); } }
+    if (!Game.noV14 && Game.scene === this && !this.script && !UI.stack.length && st && st.k14 && st.k14.g16msg) { const m = st.k14.g16msg; delete st.k14.g16msg; this.run(KD.mig16Script(m)); }
     return r; }; }
 // a class picked for the first time brings its own T1 gear (in the bag; asked before wearing)
 { const _cs = KD.classScreen; KD.classScreen = function* () { const st = Game.st, K = KD.state(st), had = new Set(Object.keys(K.decks)); yield* _cs.call(this); const k = KD.clsKey(st); if (!KD.g16(st) || had.has(k) || !K.decks[k]) return;
@@ -181,7 +178,7 @@ KD.craft16 = function* () { const st = Game.st, top = KD.craftTop16(st);
       const sl = GEAR[g.b].slot; if (yield* yesNo('現在就換上嗎？')) { st.equip[sl] = g.u; Sound.sfx('item'); } } } };
 { const _sm = smithMenu; smithMenu = function* (...a) { const st = Game.st; if (!KD.g16(st)) return yield* _sm.apply(this, a);
     if (!st.flags.tutSmith16) { st.flags.tutSmith16 = 1; yield* say('這裡可以打造裝備，也可以升級卡。\n身上的裝備會變成戰鬥用的卡喔。'); }
-    while (true) { const r = yield* ask('要做什麼？', ['打造裝備', '升級卡', '離開']); if (r === 0) yield* KD.craft16(); else if (r === 1) yield* KD.workshop(); else return; } }; }
+    while (true) { const r = yield* ask('要做什麼？', ['打造裝備', '卡牌工坊（升級卡）', '離開']); if (r === 0) yield* KD.craft16(); else if (r === 1) yield* KD.workshop(); else return; } }; }
 if (typeof GROW12 !== 'undefined') GROW12.push(['裝備就是牌組', '身上的武器・頭・身體・腳會帶卡進牌組（武器 4 張、身體 2 張、頭和腳各 1 張）。武器決定攻擊屬性，打頭目前看弱點換裝備；鐵匠用素材和金幣打造新裝備。']);
 
 /* ---------- 牌組畫面：職業卡／裝備卡兩頁 ---------- */
@@ -191,4 +188,7 @@ if (typeof GROW12 !== 'undefined') GROW12.push(['裝備就是牌組', '身上的
     yield* KD.grid('牌組・' + KD.clsOf(st).n, A, { tabs: [{ n: '職業卡 ' + KD.deck(st).length, cards: A }, { n: '裝備卡 ' + KD.gearCards16(st).length, cards: B }], rows: 3, badge: c => (c.n > 1 ? '×' + c.n : '') }); }; }
 // the smith makes gear again
 KD.TXT.push([/我是鎮上的鐵匠，也幫冒險者打磨卡牌：帶金幣和素材來，我幫你把卡升級！/g, '我是鎮上的鐵匠。把魔物身上的素材帶來，我幫你打造裝備，也能把卡升級！'],
-  [/鐵匠那裡可以升級卡牌。/g, '鐵匠那裡可以打造裝備、升級卡牌。'], [/鐵匠的卡牌工坊升級卡要用！/g, '鐵匠打造裝備、升級卡都要用！']);
+  [/鐵匠那裡可以升級卡牌。/g, '鐵匠那裡可以打造裝備、升級卡牌。'], [/鐵匠的卡牌工坊升級卡要用！/g, '鐵匠打造裝備、升級卡都要用！'],
+  // v14.0 turned these into card talk; with 打造 back they are true again
+  [/鐵匠說，這是很珍貴的素材。/g, '鐵匠說，拿來打造武器最合適。'], [/不過你的卡，我照樣幫你升級。/g, '不過你的裝備，我照樣打得出來。'], [/以後帶素材來，我幫你把卡升級。/g, '以後帶素材來，我幫你打造裝備、升級卡。'],
+  [/是升級卡牌的好素材。/g, '是打造沙漠裝備的好材料。'], [/想變強的話，去鐵匠那裡把卡升級吧。/g, '想變強的話，去鐵匠那裡打造裝備、把卡升級吧。']);
