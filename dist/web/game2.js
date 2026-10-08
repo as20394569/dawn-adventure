@@ -1239,7 +1239,7 @@ class TitleScene {
     x.drawImage(this.logo, Math.round(W / 2 - this.logo.width / 2), 6 + bob);
     Font.drawC(x, '～異世界冒險RPG～', W / 2, 52 + bob, '#ffe0a0', '#3a1428');
     if (this.stage === 'press' && Math.floor(this.t / 30) % 2 === 0) Font.drawC(x, '按 A 鍵開始', W / 2, 232, '#ffffff', '#1a1024');
-    Font.drawR(x, 'v12.86', W - 3, H - 13, '#b890b0', null);
+    Font.drawR(x, 'v12.87', W - 3, H - 13, '#b890b0', null);
   }
 }
 class IntroScene {
@@ -10191,3 +10191,43 @@ function turretImg(k) { const A = UI_PX['turret_' + k]; if (A && A.ok) return A;
   const c = document.createElement('canvas'); c.width = 20; c.height = 16; const x = c.getContext('2d');
   TURRET_ROWS[k].forEach((r, y) => { for (let i = 0; i < 20; i++) { const ch = r[i]; if (ch && ch !== '.' && TURRET_PAL[ch]) { x.fillStyle = TURRET_PAL[ch]; x.fillRect(i, y, 1, 1); } } });
   return TURRET_IMG[k] = c; }
+Battle.prototype.turretPos = function () { return { x: this.center(this.H).x + 40 + Math.round(this.H.off.x), y: HERO_FOOT - 16 }; }; // a step behind the hero, clear of the gauges
+Battle.prototype.drawTurret = function (x) {
+  const n = this.H && this.H.st.turret; if (!(n > 0) && !(this._turGone > 0)) return; const P = this.turretPos();
+  let dy = 0; if (this._turDrop > 0) { const k = this._turDrop / 12; dy = -Math.round(k * k * 28); this._turDrop--; }
+  if (this._turGone > 0) { x.globalAlpha = this._turGone / 14; this._turGone--; }
+  const fr = this._turFire > 0 ? 'fire1' : Math.floor(this.t / 24) % 2 ? 'idle2' : 'idle1'; if (this._turFire > 0) this._turFire--;
+  const im = turretImg(fr), rec = this._turFire > 0 ? -1 : 0; if (!im || (im.complete === false)) { x.globalAlpha = 1; return; }
+  x.fillStyle = 'rgba(0,0,0,0.35)'; x.beginPath(); x.ellipse(P.x, P.y, 15, 3, 0, 0, 7); x.fill();
+  x.imageSmoothingEnabled = false; x.drawImage(im, P.x - 20 + rec, P.y - 32 + dy, 40, 32); x.globalAlpha = 1;
+};
+Battle.prototype.turretMuzzle = function () { const P = this.turretPos(); return { x: P.x + 15, y: P.y - 29 }; };
+Battle.prototype.drawBurstAura = function (x) {
+  if (!this.H || !this.H.st.elem_burst) return; const C = this.center(this.H), t = this.t;
+  const g = x.createRadialGradient(C.x, C.y, 4, C.x, C.y, 34); g.addColorStop(0, 'rgba(190,120,255,' + (0.16 + 0.08 * Math.sin(t / 8)).toFixed(3) + ')'); g.addColorStop(1, 'rgba(190,120,255,0)'); x.fillStyle = g; x.fillRect(C.x - 34, C.y - 34, 68, 68);
+  ['#ff7a30', '#3c9cf0', '#f8d030'].forEach((c, i) => { const a = t / 14 + i * Math.PI * 2 / 3, px = Math.round(C.x + Math.cos(a) * 24), py = Math.round(C.y + 6 + Math.sin(a) * 8);
+    x.fillStyle = '#10121e'; x.fillRect(px - 2, py - 2, 5, 5); x.fillStyle = c; x.fillRect(px - 1, py - 1, 3, 3); x.fillStyle = '#ffffff'; x.fillRect(px - 1, py - 1, 1, 1); });
+};
+{ const _do = Battle.prototype.drawOverlay; Battle.prototype.drawOverlay = function (x) { this.drawBurstAura(x); this.drawTurret(x); _do.call(this, x); }; }
+FX.gunShot = function* (U, T) { const M = this.turretMuzzle ? this.turretMuzzle() : { x: U.x + 8, y: U.y - 8 }; yield* turretShotFx(this, M, T); };
+function* turretShotFx(b, M, C) { b._turFire = 8; Sound.sfx('crit'); b.spawn({ k: 'glow', x: M.x, y: M.y, r: 10, c: '#fff0a0', life: 6 }); b.star(M.x, M.y, '#fff8d0', 6);
+  b.spawn({ k: 'line', x1: M.x, y1: M.y, x2: C.x, y2: C.y, c: '#ffe080', w: 2, grow: 2, life: 7 }); b.spawn({ k: 'line', x1: M.x, y1: M.y, x2: C.x, y2: C.y, c: '#ffffff', w: 1, grow: 2, life: 5 });
+  yield* wait(3); b.spawn({ k: 'ring', x: C.x, y: C.y, r0: 2, r1: 12, c: '#fff0a0', w: 2, life: 8 }); b.sparks(C.x, C.y, 7, ['#fff0a0', '#ffffff', '#e0a840'], 2.2, 12); }
+FX.sigilGather = function* (U) { const els = []; this.peek(q => { if (q.type === EVT.HIT && q.payload.skill === 'sig_mage' && q.payload.el) els.push(q.payload.el); if (q.type === EVT.ACTION_END) return true; });
+  Sound.sfx('charge'); (els.length ? els : ['一般']).forEach((el, i) => { const c = (FX_EL_COL[el] || ['#c890ff'])[0]; this.spawn({ k: 'maura', x: U.x + (i - (els.length - 1) / 2) * 12, y: U.y - 10, r0: 18, r1: 4, c, life: 14 }); });
+  yield* wait(12); };
+function* sigilBolt(b, U, C, el, i) { const [c, h, d] = FX_EL_COL[el] || ['#c890ff', '#f8f0ff', '#7040c0'], x0 = U.x + (i % 2 ? 8 : -6), y0 = U.y - 14;
+  if (el === '雷') { Sound.sfx('thunder'); const pts = []; let px = x0, py = y0; for (let k = 0; k <= 6; k++) { pts.push([Math.round(px), Math.round(py)]); px = lerp(x0, C.x, (k + 1) / 7) + rnd(-6, 6); py = lerp(y0, C.y, (k + 1) / 7); } b.spawn({ k: 'bolt', pts, life: 10 }); yield* wait(4); }
+  else { Sound.sfx(el === '火' ? 'fire' : el === '水' ? 'water' : el === '草' ? 'leaf' : 'buzz'); const F = 7, p = b.spawn({ k: 'glow', x: x0, y: y0, r: 9, c, life: F + 2 });
+    for (let k = 1; k <= F; k++) { p.x = lerp(x0, C.x, k / F); p.y = lerp(y0, C.y, k / F) - Math.sin(k / F * Math.PI) * 8; b.spawn({ k: 'dot', x: p.x + rnd(-3, 3), y: p.y + rnd(-3, 3), c: k % 2 ? c : h, s: 2, life: 10 }); yield; } }
+  b.spawn({ k: 'glow', x: C.x, y: C.y, r: 18, c, life: 10 }); b.spawn({ k: 'ring', x: C.x, y: C.y, r0: 3, r1: 18, c: h, w: 2, life: 10 }); fxBurst(b, C.x, C.y, 8, [c, h, d], 2.2, 14, 0.05); yield* wait(3); }
+if (DEF.skills.sig_mage) DEF.skills.sig_mage.fx = 'sigilGather';
+FX.runeSlashHit = function* (U, T, u, i) { Sound.sfx('slash'); const o = (i % 2 ? 1 : -1) * 6;
+  this.spawn({ k: 'line', x1: T.x - 18 * (i % 2 ? -1 : 1), y1: T.y - 18 + o, x2: T.x + 16 * (i % 2 ? -1 : 1), y2: T.y + 14 + o, c: '#b070ff', w: 5, grow: 3, life: 12 });
+  this.spawn({ k: 'line', x1: T.x - 18 * (i % 2 ? -1 : 1), y1: T.y - 18 + o, x2: T.x + 16 * (i % 2 ? -1 : 1), y2: T.y + 14 + o, c: '#f4e8ff', w: 2, grow: 3, life: 10 });
+  this.spawn({ k: 'hex', x: T.x, y: T.y + o, r0: 4, r1: 16, c: '#d8a8ff', life: 12 }); yield* wait(6); };
+if (DEF.skills.sig_spellblade) DEF.skills.sig_spellblade.hitFx = 'runeSlashHit';
+function* segSwing(b, s, C, i, kind) { yield* b.lunge(s, 6, 2);
+  if (kind === '拳套') { Sound.sfx('hit'); const ox = [-8, 8, 0][i % 3], oy = [-4, 4, -8][i % 3]; b.spawn({ k: 'ring', x: C.x + ox, y: C.y + oy, r0: 2, r1: 12, c: '#ffc040', w: 2, life: 8 }); b.star(C.x + ox, C.y + oy, '#ffffff', 8); }
+  else { Sound.sfx('slash'); const f = i % 2 ? -1 : 1; b.spawn({ k: 'line', x1: C.x - 16 * f, y1: C.y - 16, x2: C.x + 14 * f, y2: C.y + 14, c: '#e8f4ff', w: 3, grow: 3, life: 10 }); b.star(C.x, C.y, '#ffffff', 8); }
+  yield* wait(4); }

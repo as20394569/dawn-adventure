@@ -5,7 +5,7 @@
    技能一覽的職業被動改成放不下就換行（10p）；天賦頁的提示改成橫幅（10n）。對話頭像（HD）和兩套框照舊。 */
 const FONT_MIN12 = 8;
 { const _d = Font.draw, _w = Font.width;
-  const small = (str, size) => typeof size === 'number' && size < FONT_MIN12 && str !== '' && str != null;
+  const small = (str, size) => !Font.bz && typeof size === 'number' && size < FONT_MIN12 && str !== '' && str != null; // v12.87: not in a battle (Font.bz, 12l) — there the sizes are 7・9・14, drawn at their real size
   const squeeze = (ctx, str, x0, y, col, sh, size) => { const a = _w(str, size), b = _w(str, FONT_MIN12);
     if (!(b > a) || !(a > 0)) return _d(ctx, str, x0, y, col, sh, FONT_MIN12);
     ctx.save(); ctx.translate(x0, 0); ctx.scale(a / b, 1); _d(ctx, str, 0, y, col, sh, FONT_MIN12); ctx.restore(); return x0 + a; };

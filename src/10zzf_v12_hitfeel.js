@@ -18,8 +18,8 @@
     if (strong) this.spawn({ k: 'ring', x: C.x, y: C.y, r0: 6, r1: 40, c: f.weak ? '#ffd040' : '#ff9a50', w: 3, life: 12 });
     if (f.last) { this._lastHit12 = 1; this.hitstop = 8; this.slowmo = 24; this.spawn({ k: 'flash', c: '#ffffff', a: 0.5, life: 12 }); } }; }
 Battle.prototype.drawPops = function (x) {
-  for (const p of this.pops) { const life = p.big ? 60 : 44, a = p.t > life - 12 ? (life - p.t) / 12 : 1, rise = p.big ? Math.min(10, p.t * 0.6) : Math.min(16, p.t * 1.2), sz = (p.big ? 16 : p.small ? 10 : 13) + (p.strong ? 4 : 0);
+  for (const p of this.pops) { const life = p.big ? 60 : 44, a = p.t > life - 12 ? (life - p.t) / 12 : 1, rise = p.big ? Math.min(10, p.t * 0.6) : Math.min(16, p.t * 1.2), sz = p.small ? 9 : 14; /* v12.87: the damage numbers are 14 (small ones 9); was 13・16・+4 */
     const t = p.t, pop = t < 3 ? 0.6 + t * 0.3 : t < 9 ? 1.5 - (t - 3) / 12 : 1, hop = t < 6 ? Math.sin(t / 6 * Math.PI) * (p.strong ? 6 : 3) : 0, fz = Math.round(sz * pop);
     x.globalAlpha = clamp(a, 0, 1); const Y = p.y - rise - hop; for (const [dx, dy] of [[-1, 0], [1, 0], [0, -1], [0, 1], [1, 1]]) Font.drawC(x, p.s, p.x + dx, Y + dy, '#1a0a10', null, fz); Font.drawC(x, p.s, p.x, Y, p.c, null, fz);
-    if (p.tag) { const ts = p.strong ? 10 : 8; Font.drawC(x, p.tag, p.x, Math.min(Y - 11 - (p.strong ? 3 : 0), Math.round(Y + 8 - fz / 2 - ts / 2 - 9)), p.c, '#000000', ts); } /* v12.81: the tag stays above the number while it pops big */ x.globalAlpha = 1; }
+    if (p.tag) { const ts = p.strong ? 9 : 7; Font.drawC(x, p.tag, p.x, Math.min(Y - 11 - (p.strong ? 3 : 0), Math.round(Y + 8 - fz / 2 - ts / 2 - 9)), p.c, '#000000', ts); } /* v12.81: the tag stays above the number while it pops big */ x.globalAlpha = 1; }
 };

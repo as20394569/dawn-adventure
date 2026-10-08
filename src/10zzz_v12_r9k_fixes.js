@@ -32,7 +32,7 @@ const FLOOR9 = new Set(['s', 'P', ':', '=']);
 /* - 全部的字小一點（玩家 04:06「遊戲整體自行縮小0.5倍 字型」→ 選「要全部字小一點」）：每個字級 −0.5（12 → 11.5、10 → 9.5），
      最小還是 8（第五輪定的最小字級，8 以下照舊用 8 的高度畫）。畫字、量寬度、換行都用同一個字級，所以靠右、置中、換行都對得齊。 */
 const FONT_DOWN9 = 0.5;
-{ const adj = z => { const s = typeof z === 'number' ? z : 12; return s >= FONT_MIN12 + FONT_DOWN9 ? s - FONT_DOWN9 : s; };
+{ const adj = z => { const s = typeof z === 'number' ? z : 12; if (Font.bz) return Font.bz(s); /* v12.87: a battle maps every size to 7・9・14 (12l) */ return s >= FONT_MIN12 + FONT_DOWN9 ? s - FONT_DOWN9 : s; };
   const _d = Font.draw, _w = Font.width, _wr = Font.wrap;
   Font.draw = (ctx, str, x, y, col, sh, size) => _d(ctx, str, x, y, col, sh, adj(size));
   Font.width = (str, size) => _w(str, adj(size));

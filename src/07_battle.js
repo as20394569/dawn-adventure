@@ -1,7 +1,7 @@
 /* ===================== BATTLE ===================== */
 let HERO_POWER = 1.45, BOSS_HP = 2.1, ELITE_HP = 1.1;
 const STATUS_NAME = { psn: '中毒', par: '麻痺', slp: '睡眠', brn: '灼傷' }; // names of the major ailments (menus, item texts)
-const BB_Y = 218, BB_H = H - 218, BH = BB_Y, FOE_X = 56, HERO_X = 0, HERO_Y = 136, HBAR_Y = 205, HERO_FOOT = 200; // compact battle HUD: bigger stage, 2-line messages // facing the foe: foe far (upper right), hero's back near (lower left); panels on the opposite corners
+const BB_Y = 218, BB_H = H - 218, BH = BB_Y, FOE_X = 56, HERO_X = 0, HERO_Y = 130, HBAR_Y = 205, HERO_FOOT = 194; /* v12.87: the hero 6 higher (the status card is 196–217) */ // compact battle HUD: bigger stage, 2-line messages // facing the foe: foe far (upper right), hero's back near (lower left); panels on the opposite corners
  const battleImgCache = {};
 // battle sprites: rendered at a low native size, then scaled 3x (same chunky pixel look as the hero)
 const FOE_NATIVE = { golem: 28, mossGiant: 28, crystalGolem: 28, banditBoss: 28, boneKnight: 28, runeGolem: 28 }, FOE_SCALE = 3, FOE_FOOT = 134;

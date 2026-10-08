@@ -5046,7 +5046,7 @@ function drawTransition(x) {
 }
 let HERO_POWER = 1.45, BOSS_HP = 2.1, ELITE_HP = 1.1;
 const STATUS_NAME = { psn: '中毒', par: '麻痺', slp: '睡眠', brn: '灼傷' }; // names of the major ailments (menus, item texts)
-const BB_Y = 218, BB_H = H - 218, BH = BB_Y, FOE_X = 56, HERO_X = 0, HERO_Y = 136, HBAR_Y = 205, HERO_FOOT = 200; // compact battle HUD: bigger stage, 2-line messages // facing the foe: foe far (upper right), hero's back near (lower left); panels on the opposite corners
+const BB_Y = 218, BB_H = H - 218, BH = BB_Y, FOE_X = 56, HERO_X = 0, HERO_Y = 130, HBAR_Y = 205, HERO_FOOT = 194; /* v12.87: the hero 6 higher (the status card is 196–217) */ // compact battle HUD: bigger stage, 2-line messages // facing the foe: foe far (upper right), hero's back near (lower left); panels on the opposite corners
  const battleImgCache = {};
 const FOE_NATIVE = { golem: 28, mossGiant: 28, crystalGolem: 28, banditBoss: 28, boneKnight: 28, runeGolem: 28 }, FOE_SCALE = 3, FOE_FOOT = 134;
 function battleSprite(key) {
@@ -5471,7 +5471,7 @@ class Battle {
     while (true) {
       this.idle = true;
       const r = yield* choose(names.map(() => ({ t: '' })), { x: 4, y: BB_Y + 3, w: W - 8, h: BB_H - 5, cols: 5, colW: 34, rowH: BB_H - 6, ox: 0, oy: 0, buttons: true, noFrame: true, cancel: false, index: this.cmdIdx,
-        drawExtra: (x, m) => { names.forEach((n, k) => { const X = m.x + k * 34, on = k === m.i; if (!uiCmdIcon(x, k, X + 7, m.y + 1)) { if (on) { x.fillStyle = '#c8a050'; x.fillRect(X + 1, m.y, 29, 1); x.fillRect(X + 1, m.y + m.rowH - 3, 29, 1); } x.drawImage(CMD_ICONS[n], 0, 0, 12, 12, X + 9, m.y + 3, 12, 12); } Font.drawC(x, n, X + 15, m.y + (uiSkinOn() ? 13 : 16), on ? '#ffe8b0' : UIC.muted, UIC.textSh, 8); }); } });
+        drawExtra: (x, m) => { names.forEach((n, k) => { const X = m.x + k * 34, on = k === m.i; if (typeof KB12 !== 'undefined') return KB12.cmdBtn(x, k, n, X, m, on); /* v12.87: smooth buttons (12l) */ if (!uiCmdIcon(x, k, X + 7, m.y + 1)) { if (on) { x.fillStyle = '#c8a050'; x.fillRect(X + 1, m.y, 29, 1); x.fillRect(X + 1, m.y + m.rowH - 3, 29, 1); } x.drawImage(CMD_ICONS[n], 0, 0, 12, 12, X + 9, m.y + 3, 12, 12); } Font.drawC(x, n, X + 15, m.y + (uiSkinOn() ? 13 : 16), on ? '#ffe8b0' : UIC.muted, UIC.textSh, 8); }); } });
       this.idle = false; this.cmdIdx = r;
       if (r === 0) { const sk = hu.data.attackSkill, tg = yield* this.pickTarget(sk); if (tg) return { type: 'skill', skill: sk, targets: [tg] }; continue; }
       if (r === 1) { const sk = yield* this.chooseMove(); if (!sk) continue; if (DEF.skills[sk].target === 'enemy') { const tg = yield* this.pickTarget(sk); if (!tg) continue; return { type: 'skill', skill: sk, targets: [tg] }; } return { type: 'skill', skill: sk, targets: [] }; }

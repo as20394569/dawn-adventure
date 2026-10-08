@@ -282,7 +282,7 @@ class Battle {
     while (true) {
       this.idle = true;
       const r = yield* choose(names.map(() => ({ t: '' })), { x: 4, y: BB_Y + 3, w: W - 8, h: BB_H - 5, cols: 5, colW: 34, rowH: BB_H - 6, ox: 0, oy: 0, buttons: true, noFrame: true, cancel: false, index: this.cmdIdx,
-        drawExtra: (x, m) => { names.forEach((n, k) => { const X = m.x + k * 34, on = k === m.i; if (!uiCmdIcon(x, k, X + 7, m.y + 1)) { if (on) { x.fillStyle = '#c8a050'; x.fillRect(X + 1, m.y, 29, 1); x.fillRect(X + 1, m.y + m.rowH - 3, 29, 1); } x.drawImage(CMD_ICONS[n], 0, 0, 12, 12, X + 9, m.y + 3, 12, 12); } Font.drawC(x, n, X + 15, m.y + (uiSkinOn() ? 13 : 16), on ? '#ffe8b0' : UIC.muted, UIC.textSh, 8); }); } });
+        drawExtra: (x, m) => { names.forEach((n, k) => { const X = m.x + k * 34, on = k === m.i; if (typeof KB12 !== 'undefined') return KB12.cmdBtn(x, k, n, X, m, on); /* v12.87: smooth buttons (12l) */ if (!uiCmdIcon(x, k, X + 7, m.y + 1)) { if (on) { x.fillStyle = '#c8a050'; x.fillRect(X + 1, m.y, 29, 1); x.fillRect(X + 1, m.y + m.rowH - 3, 29, 1); } x.drawImage(CMD_ICONS[n], 0, 0, 12, 12, X + 9, m.y + 3, 12, 12); } Font.drawC(x, n, X + 15, m.y + (uiSkinOn() ? 13 : 16), on ? '#ffe8b0' : UIC.muted, UIC.textSh, 8); }); } });
       this.idle = false; this.cmdIdx = r;
       if (r === 0) { const sk = hu.data.attackSkill, tg = yield* this.pickTarget(sk); if (tg) return { type: 'skill', skill: sk, targets: [tg] }; continue; }
       if (r === 1) { const sk = yield* this.chooseMove(); if (!sk) continue; if (DEF.skills[sk].target === 'enemy') { const tg = yield* this.pickTarget(sk); if (!tg) continue; return { type: 'skill', skill: sk, targets: [tg] }; } return { type: 'skill', skill: sk, targets: [] }; }
