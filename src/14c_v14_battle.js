@@ -150,7 +150,10 @@ KD.keyLines = c => { const d = KD.desc(c), out = []; for (const [re, t] of KD.KE
     x.fillStyle = 'rgba(10,8,20,0.62)'; x.fillRect(0, Y - 2, W, 27); x.fillStyle = 'rgba(10,8,20,0.92)'; x.fillRect(0, LB.handY - 3, W, H - LB.handY + 3);
     { const CL0 = KD.CLASSES[this.cls] || {}, st = Game.st; x.fillStyle = '#0c0814'; x.fillRect(0, Y - 1, 27, 25); x.fillStyle = '#262038'; x.fillRect(1, Y, 25, 23); x.fillStyle = CL0.c || '#8a93b3'; x.fillRect(0, Y - 1, 27, 1); // v14.16: the hero's face (the paper doll: what is worn is what is in the deck)
       if (st) { try { x.drawImage(heroFramesFor(st).down[0], 3, 2, 12, 11, 2, Y + 1, 24, 22); } catch (e) { /* no doll yet */ } } }
-    const en = this.energy, ex = 29, ey = Y + 16; x.fillStyle = '#2a1c08'; x.beginPath(); x.arc(ex, ey, 10, 0, 7); x.fill(); x.fillStyle = en ? '#ffb030' : '#6a5030'; x.beginPath(); x.arc(ex, ey, 8.5, 0, 7); x.fill(); x.fillStyle = en ? 'rgba(255,240,180,0.55)' : 'rgba(0,0,0,0)'; x.fillRect(ex - 5, ey - 6, 4, 2); Font.drawC(x, String(en), ex, midY(ey - 10, 21, 12), '#1a0c00', null, 12); /* v14.16: the energy sits on the face's corner */
+    { const en = this.energy, ex = 29, ey = Y + 16, mx = KD.EN + stkK(U, 'pwMax14'); /* v14.16: the energy sits on the face's corner; v14.20: 方案 3's orb — gold, a white ring, 「3/3」 */
+      if (en) { x.fillStyle = 'rgba(240,160,48,0.4)'; x.beginPath(); x.arc(ex, ey, 11.5, 0, 7); x.fill(); } x.fillStyle = en ? '#ffffff' : '#8a8898'; x.beginPath(); x.arc(ex, ey, 10, 0, 7); x.fill();
+      const g = x.createRadialGradient(ex - 3, ey - 3, 1, ex, ey, 8.6); g.addColorStop(0, en ? '#ffd27a' : '#8a7a5a'); g.addColorStop(0.55, en ? '#f0a030' : '#6a5030'); g.addColorStop(1, en ? '#b0600c' : '#3a2c18'); x.fillStyle = g; x.beginPath(); x.arc(ex, ey, 8.6, 0, 7); x.fill();
+      Font.w('700', () => { const a = String(en), b = '/' + mx, wa = Font.width(a, 11), wb = Font.width(b, 8), k = Math.min(1, 16 / (wa + wb)), x0 = ex - (wa + wb) * k / 2; x.save(); x.translate(x0, 0); x.scale(k, 1); Font.draw(x, a, 0, midY(ey - 7, 15, 11), en ? '#2a1404' : '#1a1410', null, 11); Font.draw(x, b, wa, midY(ey - 7, 15, 11) + 2, en ? '#2a1404' : '#1a1410', null, 8); x.restore(); }); }
     const bx = 41, bw = 72, hp = Math.max(0, Math.round(Hv.hp)), mh = U.max.hp; /* v14.15: longer HP bar (was 23 / 70) */ x.fillStyle = '#301018'; x.fillRect(bx, Y + 1, bw, 11); x.fillStyle = hp <= mh / 2 ? '#e05030' : '#c83838'; x.fillRect(bx, Y + 1, Math.round(bw * Math.min(1, hp / Math.max(1, mh))), 11);
     // v14.17: 格擋 sits on the right end of the HP bar (under the bar the class name, its pips and 看破 / 狂化 need the room; it used to run into 「道具」)
     const b = (Hv.st && Hv.st.blk15) || 0; if (b) { const t = String(b), tw = Math.ceil(Font.width(t, 8)), bw2 = tw + 12, X2 = bx + bw - bw2; x.strokeStyle = '#7ec8ff'; x.lineWidth = 1; x.strokeRect(bx - 0.5, Y + 0.5, bw + 1, 12);
@@ -195,7 +198,7 @@ BPK.handK = function (x) { const LB = KD.BL(), n = this.hand.length, cw = LB.cw,
     if (K.length && pY - 2 - (K.length * 10 + 4) >= top) { const kh = K.length * 10 + 4; x.fillStyle = 'rgba(30,24,44,0.94)'; x.fillRect(6, pY - 2 - kh, W - 12, kh); K.forEach((t, k) => fontFit(x, t, 10, pY - 2 - kh + 1 + k * 10, W - 20, '#c8c0e0', '#000', 8)); }
     x.fillStyle = 'rgba(12,8,24,0.94)'; x.fillRect(6, pY, W - 12, ph); x.fillStyle = KD.RAR[C.rar].c; x.fillRect(6, pY, W - 12, 1);
     const hint = this.tgtMode ? '點魔物出牌' : '再點一次出牌', hw = Math.ceil(Font.width(hint, 8)) + 4; Font.drawR(x, hint, W - 9, pY + 2, '#a8e0ff', '#000', 8);
-    fontFit(x, KD.name(c) + '　' + KD.typeN(c) + '・' + KD.cost(c) + ' 能量', 10, pY + 1, W - 20 - hw, c.up ? '#a8ffa0' : '#fff0d0', '#000', 9);
+    { const tx = KD.atTag(x, c, 10, pY + 1); fontFit(x, KD.name(c) + '　' + KD.typeN(c) + '・' + KD.cost(c) + ' 能量', tx, pY + 1, W - 10 - hw - tx, c.up ? '#a8ffa0' : '#fff0d0', '#000', 9); } // v14.20: 斬突打／火水雷 here (not on the face)
     D.forEach((L, k) => Font.draw(x, L, 10, pY + 14 + k * lh, '#e8e4f4', '#000', fs)); }
   if (this.tgtMode && my) for (const f2 of this.foes()) { const C = this.center(f2); if (f2.id === this.tgtId) { x.strokeStyle = '#ffe070'; x.lineWidth = 1; x.strokeRect(C.x - 20, C.y - 22, 40, 44); } touchRegion(C.x - 24, C.y - 30, 48, 60, () => { this.tapK = { k: 'tgt', id: f2.id }; }); } };
 // a look at the draw pile (shuffled order hidden: sorted) or the discard pile
@@ -207,52 +210,65 @@ BPK.pileView = function* (w) { const L = (w === 'disc' ? this.disc : this.pile).
   UI.push(ui); while (!done) { yield; if (Input.pressed('b') || Input.pressed('a')) done = true; if (Input.pressed('down') && (scroll + Math.max(4, Math.floor((H - 40) / 58))) * 4 < L.length) scroll++; if (Input.pressed('up') && scroll > 0) scroll--; } UI.remove(ui); Input.consume('a', 'b'); };
 /* ---------- a card picture: cost, name, icon, the key numbers; the class colour along the bottom ---------- */
 KD.shortL = (C, v) => { const L = C.short(v).slice(); if (C.exhaust && !L.includes('消耗') && L.length < 3) L.push('消耗'); return L; }; // v14.10: every 消耗 card says so on its face
-/* v14.18 卡面＝方案 3「滿版插畫」（玩家選的：曙光冒險-卡面改版提案-方案3；換掉 v14.16 的「名字在最上面」）
-   v14.19 修正（提案文件最上面的「修正」一節）：插圖一律 1 倍——大卡整張不裁（左右空的地方填卡種暗色）、小卡高 18〜20 置中裁；
-   圖上只留左上角的費用圈：斬突打／火水雷方塊回到數字左邊（v14.16 的位置），卡名移到圖下面自己一行，大卡的卡種膠囊在卡名那行右邊；漸暗只剩圖的最下面 5px
-   · 由上到下：卡種色帶 → 插圖 → 卡名 → 大數字（傷害金色・格擋藍色）＋「傷害／格擋」→「・易傷 2」小字 → 大卡：職業（左）・稀有度星星（右）
-   · 傳說卡金框＋光、裝備卡銀框（2 px）、選到的卡黃框＋光 */
-KD.C3 = { body: '#1b1e28', line: '#3a3f52', dmg: '#ffd27a', blk: '#8ec8ff', lab: '#8a90a4', sub: '#a8aec0', txt: '#c4c9d6', top: '#e8ecf4', foot: '#7a8094', off: '#3a3e4c',
+/* v14.20 卡面＝玩家給的方案 3 圖（玩家：「這才是我要的ui」；換掉 v14.18 的放大 2 倍和 v14.19 的「卡名在圖下面」）
+   · 上半：插圖（大卡放大到高 36〜48、左右稍裁；小卡原尺寸置中裁），頂端一條卡種色；左上費用圈；卡名壓在圖的下緣（圖往下漸暗）；大卡右上卡種膠囊
+   · 下半：大數字（傷害金・格擋藍）＋「傷害／格擋」；大卡寫整句效果（傷害・格擋數字上色、易傷・力量等橘色，放不下的最後一行「…」），小卡寫「・抽 1」短句
+   · 大卡最下面：職業（左）・稀有度星星（右）；斬突打／火水雷不畫在卡面（玩家選的），寫在選到卡時的說明裡（KD.atTag）
+   · 傳說卡金框＋光＋斜光、裝備卡銀框（2 px）、選到黃框＋光、不能出整張變暗 */
+KD.C3 = { body: '#1b1e28', line: '#33374a', dmg: '#ffd27a', blk: '#8ec8ff', kw: '#ff9a6a', lab: '#8a90a4', sub: '#a8aec0', txt: '#c4c9d6', top: '#e8ecf4', foot: '#7a8094', off: '#3a3e4c',
   pill: { atk: '#f4907a', skl: '#9cc0f6', pow: '#f6d878' }, stars: { B: 1, T: 1, C: 1, U: 2, Q: 2, R: 3, L: 3 } };
 KD.numOf = s => { const m = /^(傷害|格擋)?\s*(\d+)( ?×\d+)?$/.exec(s || ''); return m && (m[1] || m[3]) ? { lab: m[1] || '傷害', s: m[2] + (m[3] ? m[3].trim() : '') } : null; };
-KD.rr3 = (x, X, Y, w, h, col) => { x.fillStyle = col; x.fillRect(X + 1, Y, w - 2, h); x.fillRect(X, Y + 1, w, h - 2); }; // a box with its corners clipped
-KD.coin3 = (x, cx, cy, r, n, dim) => { x.fillStyle = '#07060c'; x.beginPath(); x.arc(cx, cy, r + 1, 0, 7); x.fill(); x.fillStyle = dim ? '#6a5a40' : '#f0a030'; x.beginPath(); x.arc(cx, cy, r, 0, 7); x.fill();
-  x.fillStyle = '#10121a'; x.beginPath(); x.arc(cx, cy, r - 1.5, 0, 7); x.fill(); const z = r >= 6 ? 9 : 8; Font.w('700', () => Font.drawC(x, String(n), cx, midY(Math.round(cy - 6), 13, z), dim ? '#a09880' : '#ffffff', null, z)); };
+// a box with its corners clipped (k = 1 or 2 px), drawn in bands so a see-through colour isn't laid twice
+KD.rr3 = (x, X, Y, w, h, col, k = 1) => { x.fillStyle = col; for (let i = 0; i < k; i++) { x.fillRect(X + k - i, Y + i, w - 2 * (k - i), 1); x.fillRect(X + k - i, Y + h - 1 - i, w - 2 * (k - i), 1); } x.fillRect(X, Y + k, w, h - 2 * k); };
+KD.coin3 = (x, cx, cy, r, n, dim) => { x.fillStyle = dim ? '#6a5a40' : '#f0a030'; x.beginPath(); x.arc(cx, cy, r, 0, 7); x.fill(); x.fillStyle = 'rgba(12,14,20,0.9)'; x.beginPath(); x.arc(cx, cy, r - 1.25, 0, 7); x.fill();
+  const z = r >= 6 ? 9 : 8; Font.w('700', () => Font.drawC(x, String(n), cx, midY(Math.round(cy - 6), 13, z), dim ? '#a09880' : '#ffffff', null, z)); };
 KD.star3 = (x, X, Y, col) => { x.fillStyle = col; x.fillRect(X + 2, Y, 1, 1); x.fillRect(X, Y + 1, 5, 1); x.fillRect(X + 1, Y + 2, 3, 1); x.fillRect(X + 1, Y + 3, 1, 1); x.fillRect(X + 3, Y + 3, 1, 1); x.fillRect(X, Y + 4, 1, 1); x.fillRect(X + 4, Y + 4, 1, 1); };
+// the effect sentence with its numbers and key words in colour; up to n lines, the last one ends in 「…」 when there is more
+KD.KW3 = /易傷|虛弱|中毒|毒|燃燒|力量|消耗|看破|飛刀|蓄力|不能行動|定身|護盾|影縛|暗影|怒氣|狂化|連擊/g;
+KD.rich3 = (x, s, X, Y, w, n, P) => { const col = new Array(s.length).fill(null); let m; const re = /(\d+)(?=\s*(?:[火水雷]屬性)?(傷害|格擋))/g;
+  while ((m = re.exec(s))) for (let i = m.index; i < m.index + m[1].length; i++) col[i] = m[2] === '格擋' ? P.blk : P.dmg;
+  KD.KW3.lastIndex = 0; while ((m = KD.KW3.exec(s))) for (let i = m.index; i < m.index + m[0].length; i++) col[i] = col[i] || P.kw;
+  const tk = s.match(/(?:易傷|虛弱|力量|燃燒|看破|毒) ?[+\-−]?\d+|\d+ ?(?:傷害|格擋)|[0-9A-Za-z.%×+\-−~～\/]+|傷害|格擋|易傷|虛弱|力量|燃燒|消耗|看破|能量|回合|魔物|全體|頭目|屬性|./gu) || [], L = []; let cur = ''; // words and numbers aren't split across lines
+  for (const t of tk) { if (cur && (t === ' ' || /^[。，、！？）」』：；…]/.test(t))) { cur += t; continue; } if (cur && Font.width(cur + t, 8) > w) { L.push(cur); cur = t; } else cur += t; } if (cur) L.push(cur);
+  const k = Math.min(n, L.length); let off = 0;
+  for (let j = 0; j < k; j++) { let t = L[j]; const base = off; off += t.length; if (j === k - 1 && L.length > k) t = t.slice(0, -1) + '…'; let cx = X, i = 0;
+    while (i < t.length) { const c0 = t[i] === '…' ? null : col[base + i]; let e = i + 1; while (e < t.length && (t[e] === '…' ? null : col[base + e]) === c0) e++; const run = t.slice(i, e);
+      if (c0) Font.w('700', () => { Font.draw(x, run, cx, Y + j * 10 - 3, c0, '#000', 8); cx += Font.width(run, 8); }); else { Font.draw(x, run, cx, Y + j * 10 - 3, P.txt, '#000', 8); cx += Font.width(run, 8); } i = e; } }
+  return k; };
+// 斬・突・打／火・水・雷 in front of a card's name in the text under a picked card (it isn't on the face)
+KD.atTag = (x, c, X, y) => { const at = c && KD.atOf(c.id); if (!at) return X; KD.atBox(x, X + 1, y + 4, at); return X + 13; };
 KD.drawCard = function (x, c, X, Y, w, h, o = {}) { const C = KD.CARDS[c.id]; if (!C) return; const T = KD.TYPE[C.type], P = KD.C3, v = KD.val(c), big = w >= 46, gold = C.rar === 'L', qst = C.rar === 'Q', gear = !!c.g16, CL = KD.CLASSES[C.cls];
-  const vw = Math.min(w, o.vis || w), x0 = X + (o.visX0 || 0), xr = Math.min(X + w - 3, x0 + vw - 2), foot = big && h >= 74, edge = o.on ? '#ffe070' : gold ? '#ffcf6a' : qst ? '#5ce0b8' : gear ? '#dfe4f0' : P.line;
+  const vw = Math.min(w, o.vis || w), x0 = X + (o.visX0 || 0), pad = big ? 4 : 3, xr = Math.min(X + w - pad, x0 + vw - 2), foot = big && h >= 74, kc = big ? 2 : 1, edge = o.on ? '#ffe070' : gold ? '#ffcf6a' : qst ? '#5ce0b8' : gear ? '#dfe4f0' : P.line;
   // the frame: a glow for the picked card and the legends, rounded corners
-  if (o.on || gold) KD.rr3(x, X - 2, Y - 2, w + 4, h + 4, o.on ? 'rgba(255,224,112,0.45)' : 'rgba(255,176,64,0.4)');
-  KD.rr3(x, X - 1, Y - 1, w + 2, h + 2, o.on ? '#ffe070' : '#07060c'); KD.rr3(x, X, Y, w, h, edge); KD.rr3(x, X + 1, Y + 1, w - 2, h - 2, P.body);
-  // ① the type strip on top; under it the picture at its own size (1×): whole on a big card (the sides filled with the type's dark colour), centred and cropped on a small one
-  const L = KD.shortL(C, v), N = KD.numOf(L[0]), rest = N ? L.slice(1) : L, nz = big ? 13 : 10, nrow = big ? 15 : 11, sh = big ? 3 : 2, nh = big ? 12 : 10;
-  const ax = X + 1, aw = w - 2, ay = Y + 1 + sh, ah = big ? 32 : h >= 58 ? 20 : 18, art = KD.ART && KD.ART[c.id] && KD.ART[c.id].ok ? KD.ART[c.id] : null;
-  if (gold) { const s = x.createLinearGradient(ax, 0, ax + aw, 0); s.addColorStop(0, '#ffcf6a'); s.addColorStop(0.5, '#ff9a2a'); s.addColorStop(1, '#ffe08a'); x.fillStyle = s; } else x.fillStyle = T.c; x.fillRect(ax, Y + 1, aw, sh);
+  if (o.on || gold) KD.rr3(x, X - 2, Y - 2, w + 4, h + 4, o.on ? 'rgba(255,224,112,0.45)' : 'rgba(255,176,64,0.4)', kc);
+  KD.rr3(x, X - 1, Y - 1, w + 2, h + 2, o.on ? '#ffe070' : '#07060c', kc); KD.rr3(x, X, Y, w, h, edge, kc); KD.rr3(x, X + 1, Y + 1, w - 2, h - 2, P.body, kc);
+  // ① the picture on the top half (a big card: grown to 36〜48 high, its sides trimmed a little; a small one: its own size, centred), fading into the card at its foot
+  const ax = X + 1, ay = Y + 1, aw = w - 2, ah = big ? Math.min(48, Math.max(36, h - 72)) : Math.max(16, Math.min(32, h - 25)), sc = big ? ah / 32 : 1, art = KD.ART && KD.ART[c.id] && KD.ART[c.id].ok ? KD.ART[c.id] : null;
   x.fillStyle = T.bg; x.fillRect(ax, ay, aw, ah); x.save(); x.beginPath(); x.rect(ax, ay, aw, ah); x.clip(); x.imageSmoothingEnabled = false;
-  if (art) { const sw = Math.min(48, aw), sh2 = Math.min(32, ah); x.drawImage(art, Math.round((48 - sw) / 2), Math.round((32 - sh2) / 2), sw, sh2, Math.round(ax + (aw - sw) / 2), ay, sw, sh2); }
-  else { const ic = KD.ICON[KD.iconOf(c.id)], k = big ? 2 : 1; if (ic) x.drawImage(ic, Math.round(ax + aw / 2 - 6.5 * k), Math.round(ay + (ah - 13 * k) / 2), 13 * k, 13 * k); }
-  { const g = x.createLinearGradient(0, ay + ah - 5, 0, ay + ah); g.addColorStop(0, 'rgba(27,30,40,0)'); g.addColorStop(1, 'rgba(27,30,40,0.85)'); x.fillStyle = g; x.fillRect(ax, ay + ah - 5, aw, 5); } // only the last 5 px fade
+  if (art) x.drawImage(art, Math.round(ax + (aw - 48 * sc) / 2), Math.round(ay + (ah - 32 * sc) / 2), Math.round(48 * sc), Math.round(32 * sc));
+  else { const ic = KD.ICON[KD.iconOf(c.id)], k = big ? 2 : 1; if (ic) x.drawImage(ic, Math.round(ax + aw / 2 - 6.5 * k), Math.round(ay + (ah - 13 * k) / 2 - 3), 13 * k, 13 * k); }
+  const fh = Math.round(ah * 0.46), g = x.createLinearGradient(0, ay + ah - fh, 0, ay + ah); g.addColorStop(0, 'rgba(27,30,40,0)'); g.addColorStop(0.6, 'rgba(27,30,40,0.85)'); g.addColorStop(1, P.body); x.fillStyle = g; x.fillRect(ax, ay + ah - fh, aw, fh);
   if (gold) { const s = x.createLinearGradient(ax, ay, ax + aw, ay + ah); s.addColorStop(0.3, 'rgba(255,230,160,0)'); s.addColorStop(0.45, 'rgba(255,230,160,0.22)'); s.addColorStop(0.6, 'rgba(255,230,160,0)'); x.fillStyle = s; x.fillRect(ax, ay, aw, ah); }
-  x.restore(); x.fillStyle = edge; x.fillRect(ax, Y + 1, 1, 1); x.fillRect(ax + aw - 1, Y + 1, 1, 1); // the frame's rounded corners, over the strip
-  if (gear && !o.on) { x.fillStyle = '#8a94ae'; x.fillRect(X + 1, Y + 1, w - 2, 1); x.fillRect(X + 1, Y + h - 2, w - 2, 1); x.fillRect(X + 1, Y + 1, 1, h - 2); x.fillRect(X + w - 2, Y + 1, 1, h - 2); }
-  // ② the cost: the only thing on the picture (its top-left corner)
-  const r = big ? 6 : 5.5; KD.coin3(x, X + 2 + r, ay + 1 + r, r, KD.cost(c), o.dim);
-  // ③ the name under the picture, a line of its own (from the left: in the hand the left part is what shows); a big card's type on that line's right
-  const nm = KD.name(c), lx = Math.max(X + 3, x0 + 2), ny0 = ay + ah; let nr = xr;
-  if (big) { const s = T.n, pw = Math.ceil(Font.width(s, 8)) + 4, px = X + w - 3 - pw; KD.rr3(x, px, ny0 + 1, pw, 11, 'rgba(12,14,20,0.78)'); Font.drawC(x, s, px + pw / 2, midY(ny0 + 1, 11, 8), gold ? P.dmg : P.pill[C.type], null, 8); nr = Math.min(nr, px - 3); }
-  if (ny0 + nh <= Y + h) Font.w('700', () => { const z = big && Font.width(nm, 9) <= nr - lx + 1 ? 9 : 8; fontFit(x, nm, lx, midY(ny0 + (big ? 1 : 0), nh - (big ? 1 : 0), z), Math.max(6, nr - lx + 1), c.up ? '#a8ffa0' : '#ffffff', '#000', z); });
-  // ④ 斬・突・打／火・水・雷 left of the number (v14.16's place), the number and what it is; the other effects small
-  let ly = ny0 + nh; const lim = Y + h - (foot ? 13 : 1), at = KD.atOf(c.id), boxOn = at && vw >= 14;
-  if (N && ly + nrow <= Y + h - 1) { if (boxOn) KD.atBox(x, lx, ly + Math.round((nrow - 9) / 2), at); const nx = boxOn ? lx + 11 : lx, room = xr - nx + 1, col = N.lab === '格擋' ? P.blk : P.dmg, ny = midY(ly, nrow, nz);
-    const nw = Font.w('700', () => { const q = Font.width(N.s, nz); fontFit(x, N.s, nx, ny, room, col, '#000', nz); return Math.min(q, room); });
-    if (nw + 2 + Font.width(N.lab, 8) <= room) Font.draw(x, N.lab, nx + nw + 2, ny + (big ? 2 : 1), P.lab, null, 8); ly += nrow; }
-  rest.forEach((s, k) => { const first = !N && k === 0, box = first && boxOn, lh = box ? 11 : 9; if (ly + lh > lim) return; if (box) KD.atBox(x, lx, ly + 1, at);
-    const tx = box ? lx + 11 : lx, room = xr - tx + 1, t = N && Font.width('・' + s, 8) <= room ? '・' + s : s; fontFit(x, t, tx, midY(ly, lh, 8), room, first ? P.top : N ? P.sub : P.txt, '#000', 8); ly += lh; });
+  if (gold) { const s = x.createLinearGradient(ax, 0, ax + aw, 0); s.addColorStop(0, '#ffcf6a'); s.addColorStop(0.5, '#ff9a2a'); s.addColorStop(1, '#ffe08a'); x.fillStyle = s; } else x.fillStyle = T.c; x.fillRect(ax, ay, aw, 2); x.restore();
+  x.fillStyle = edge; x.fillRect(ax, ay, kc, 1); x.fillRect(ax + aw - kc, ay, kc, 1); if (kc > 1) { x.fillRect(ax, ay + 1, 1, 1); x.fillRect(ax + aw - 1, ay + 1, 1, 1); } // the rounded corners, over the picture
+  if (gear && !o.on) { x.fillStyle = '#8a94ae'; x.fillRect(X + 2, Y + 1, w - 4, 1); x.fillRect(X + 2, Y + h - 2, w - 4, 1); x.fillRect(X + 1, Y + 2, 1, h - 4); x.fillRect(X + w - 2, Y + 2, 1, h - 4); }
+  // ② the cost on the top-left; a big card's type on the top-right
+  const r = big ? 6.5 : 5; KD.coin3(x, X + (big ? 3 : 2) + r, Y + (big ? 4 : 3) + r, r, KD.cost(c), o.dim);
+  if (big) { const s = T.n, pw = Math.ceil(Font.width(s, 8)) + 6, px = X + w - 3 - pw; KD.rr3(x, px, Y + 4, pw, 11, 'rgba(12,14,20,0.75)'); Font.drawC(x, s, px + pw / 2, midY(Y + 4, 11, 8), gold ? P.dmg : P.pill[C.type], null, 8); }
+  // ③ the name on the picture's lower edge (from the left: in the hand the left part is what shows)
+  const nm = KD.name(c), lx = Math.max(X + pad, x0 + 2); Font.w('700', () => { const room = Math.max(6, xr - lx + 1), z = big ? (Font.width(nm, 10) <= room ? 10 : 9) : 8; fontFit(x, nm, lx, midY(ay + ah - (big ? 13 : 11), big ? 12 : 10, z), room, c.up ? '#a8ffa0' : '#ffffff', '#000', z); });
+  // ④ the big number and what it is; under it the effect: the whole sentence on a big card, short 「・抽 1」 lines on a small one
+  const L = KD.shortL(C, v), ni = big ? L.findIndex(s => KD.numOf(s)) : KD.numOf(L[0]) ? 0 : -1, N = ni >= 0 ? KD.numOf(L[ni]) : null, rest = L.filter((s, k) => k !== ni), room = xr - lx + 1, nz = big ? 15 : 10, nrow = big ? 18 : 12;
+  let ly = ay + ah + (big ? 1 : 0); const lim = Y + h - (foot ? 15 : 1);
+  if (N && ly + nrow <= Y + h - 1) { const col = N.lab === '格擋' ? P.blk : P.dmg, ny = midY(ly, nrow, nz); const nw = Font.w('700', () => { const q = Font.width(N.s, nz); fontFit(x, N.s, lx, ny, room, col, '#000', nz); return Math.min(q, room); });
+    if (nw + 3 + Font.width(N.lab, 8) <= room) Font.w('700', () => Font.draw(x, N.lab, lx + nw + 3, ny + (big ? 3 : 1), P.lab, null, 8)); ly += nrow; }
+  if (big) { const n = Math.floor((lim - ly) / 10); if (n > 0) { x.save(); x.beginPath(); x.rect(X + 1, ly, w - 2, n * 10 + 2); x.clip(); KD.rich3(x, KD.desc(c), lx, ly, w - 2 * pad - 2, n, P); /* −2: the coloured numbers are bold, a little wider */ x.restore(); } }
+  else rest.forEach((s, k) => { if (ly + 9 > lim) return; const first = !N && k === 0, t = N && Font.width('・' + s, 8) <= room ? '・' + s : s; Font.w('700', () => fontFit(x, t, lx, midY(ly, 9, 8), room, first ? P.top : N ? P.sub : P.txt, '#000', 8)); ly += 9; });
   // ⑤ a big card's foot: the class on the left, the rarity in stars on the right
-  if (foot) { const fy = Y + h - 12; x.fillStyle = '#2a2e3c'; x.fillRect(X + 3, fy, w - 6, 1);
-    Font.draw(x, gear ? '裝備' : C.cls === 'nt' ? (qst ? '任務' : '通用') : CL ? CL.n : '', X + 3, midY(fy + 1, 10, 8), gear ? '#c8d0e0' : P.foot, null, 8);
-    const n = P.stars[C.rar] || 1, rc = KD.RAR[C.rar].c; for (let i = 0; i < 3; i++) KD.star3(x, X + w - 3 - (3 - i) * 6 + 1, fy + 3, i < n ? rc : P.off); }
-  if (o.dim) KD.rr3(x, X, Y, w, h, 'rgba(0,0,0,0.38)'); };
+  if (foot) { const fy = Y + h - 13; x.fillStyle = '#262935'; x.fillRect(X + pad, fy, w - 2 * pad, 1);
+    Font.w('700', () => Font.draw(x, gear ? '裝備' : C.cls === 'nt' ? (qst ? '任務' : '通用') : CL ? CL.n : '', X + pad, midY(fy + 1, 11, 8), gear ? '#c8d0e0' : P.foot, null, 8));
+    const n = P.stars[C.rar] || 1, rc = KD.RAR[C.rar].c; for (let i = 0; i < 3; i++) KD.star3(x, X + w - pad - (3 - i) * 6 + 1, fy + 4, i < n ? rc : P.off); }
+  if (o.dim) KD.rr3(x, X, Y, w, h, 'rgba(0,0,0,0.38)', kc); };
 /* ---------- after a battle ---------- */
 // no levels any more: experience still counts quietly (area events and some old checks read it)
 BPK.gainExp = function* (amount) { const st = Game.st; if (!this.k14) return; st.exp = (st.exp || 0) + amount; while (st.lv < (typeof LV_MAX13 !== 'undefined' ? LV_MAX13 : 60) && st.exp >= expForLevel(st.lv + 1)) st.lv++; };

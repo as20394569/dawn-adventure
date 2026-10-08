@@ -9236,3 +9236,10 @@ const cryHost11 = (sp, st = Game.st) => (st.gear || []).find(g => (g.cr11 || [])
 const crySlots11 = g => { const B = g && GEAR[g.b]; if (!B || !B.slot) return 0; return [0, 0, 1, 1, 2, 2][clamp(g.q || 1, 1, 5)]; };
 const cryFits11 = (sp, g) => { const t = CRY11[sp][0], s = GEAR[g.b] && GEAR[g.b].slot; if (t === 'u') return true; return t === 'w' ? s === 'weapon' : t === 'c' ? s === 'acc' : ['head', 'body', 'feet', 'shield'].includes(s); };
 function cryGive11(sp, st = Game.st) { const O = cryOwn11(st); if (O[sp] || !CRY11[sp]) return false; O[sp] = 1; return true; }
+function cryUnsocket11(sp, st = Game.st) { const g = cryHost11(sp, st); if (g) g.cr11 = g.cr11.filter(x => x !== sp); }
+PV('cr.double', v => ({ triggers: [{ on: EVT.SKILL_SUCCESS, phase: 'POST', role: 'src', cond: { cat: '物', hasPower: 1 }, chance: v / 100, effects: [{ type: 'damage', target: 'cast_targets', ofEvent: 0.5, field: 'total', kind: 'double', tags: ['multi_hit'] }] }] }));
+PV('cr.thorns', v => ({ triggers: [{ on: EVT.DAMAGE, phase: 'POST', role: 'tgt', cond: { srcSide: 'enemy', hasPower: 1, hpLost: 1, srcAlive: 1 }, prio: 4, effects: [{ type: 'damage', target: 'source', ofEvent: v / 100, bossMul: 0.6, kind: 'thorns', tags: ['reflect'] }] }] }));
+PV('cr.regen', v => ({ triggers: [{ on: EVT.ROUND_END, phase: 'POST', cond: { ownerAlive: 1, foesHaveBoss: 0 }, effects: [{ type: 'heal', target: 'self', pct: v / 100, kind: 'regen', quiet: 1 }] },
+  { on: EVT.ROUND_END, phase: 'POST', cond: { ownerAlive: 1, foesHaveBoss: 1 }, effects: [{ type: 'heal', target: 'self', pct: v / 150, kind: 'regen', quiet: 1 }] }] }));
+PV('cr.defDown', v => ({ triggers: [{ on: EVT.DAMAGE, phase: 'POST', role: 'src', cond: { cat: '物', hasPower: 1 }, limit: { perAction: 1 }, chance: v / 100, effects: [{ type: 'break_chip', target: 'event_target', n: 1, why: 'breaker' }] }] }));
+PV('cr.pierce', v => ({ mods: [{ stage: 'attacker', who: 'attacker', defMul: 1 - v / 100, cond: { cat: '物' } }] }));
