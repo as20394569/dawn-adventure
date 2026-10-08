@@ -1245,7 +1245,7 @@ class TitleScene {
     x.drawImage(this.logo, Math.round(W / 2 - this.logo.width / 2), 6 + bob);
     Font.drawC(x, '～異世界冒險RPG～', W / 2, 52 + bob, '#ffe0a0', '#3a1428');
     if (this.stage === 'press' && Math.floor(this.t / 30) % 2 === 0) Font.drawC(x, '按 A 鍵開始', W / 2, 232, '#ffffff', '#1a1024');
-    Font.drawR(x, 'v14.23', W - 3, H - 13, '#b890b0', null);
+    Font.drawR(x, 'v14.24', W - 3, H - 13, '#b890b0', null);
   }
 }
 class IntroScene {
@@ -5308,3 +5308,29 @@ if (Events.priest) { const _pr = Events.priest; Events.priest = function* (ow) {
     try { return yield* _pr(ow); } finally { yesNo = _yn; }
   };
 }
+const QUEST_GEAR = {
+  qTravelCharm: ['旅人護符', 1, { hp: 6, def: 1 }, {}, ['guardHeal'], '寄信的謝禮。讓人想起回家的路。'],
+  qHerbPouch: ['藥師香囊', 2, { hp: 10, spd: 2 }, {}, ['regen'], '裝滿藥草的香囊，聞了就覺得傷口不痛了。'],
+  qHunterEye: ['獵人之眼', 3, { spe: 2 }, { crit: 6 }, ['first'], '老練獵人傳下來的琥珀墜飾。'],
+  qMinerLamp: ['礦工的提燈', 3, { def: 4 }, { hit: 6 }, ['pierce'], '照亮坑道每一道縫隙的提燈。'],
+  qScholarLens: ['學者的單片眼鏡', 4, { spa: 6, spd: 4 }, {}, ['freeCast'], '看得見魔力流動的古董眼鏡。'],
+  qGraveBell: ['鎮魂鈴', 4, { hp: 12, spd: 6 }, {}, ['endure'], '讓亡魂安息的小鈴鐺。'],
+  qLakeScale: ['湖神鱗片', 5, { hp: 18, def: 4 }, {}, ['thorns'], '銀月湖守護神脫落的鱗片。'],
+  qDesertRose: ['沙漠玫瑰', 5, { atk: 6, spe: 3 }, {}, ['double'], '只在沙漠深處綻放的石之花。'],
+  qGuildSeal: ['公會的印信', 6, { hp: 15, atk: 5, spa: 5 }, {}, ['fervor'], '冒險者公會認可的證明。'],
+  qSnowFang: ['雪狼之牙', 6, { atk: 8 }, { crit: 5 }, ['lastStand'], '雪原狼王的獠牙，握著就熱血沸騰。'],
+  qStarCompass: ['星之羅盤', 7, { spe: 6, spa: 6, spd: 5 }, {}, ['fortune'], '指針永遠指向星墜之地。'],
+  qHeroCrest: ['冒險王之證', 7, { hp: 25, atk: 6, spa: 6, def: 4, spd: 4 }, {}, ['deathWard'], '公會最高的榮譽。'],
+};
+for (const k in QUEST_GEAR) { const [n, t, s, sp, fx, d] = QUEST_GEAR[k]; GEAR[k] = { n, slot: 'acc', t, st: s, sp, fx, d: d + '（委託的獨家報酬）', kind: '飾品' }; BP_RARE.add(k);
+  const P = TIER_POOL[t], h = hashK(k); GEAR_RECIPE[k] = { mats: { [P[h % P.length]]: 2 + Math.floor(t / 2), [TIER_POOL[Math.max(1, t - 1)][(h >>> 4) % TIER_POOL[Math.max(1, t - 1)].length]]: 1 + Math.floor(t / 3) }, gold: Math.round(bpGold(t) * 0.9 / 10) * 10 }; }
+const COM_EX = {
+  c13: { bp: 'qTravelCharm' }, c1: { items: { vitFruit: 1 } }, c14: { bp: 'qHerbPouch' }, c15: { items: { agiFruit: 1 } }, c2: { items: { dexFruit: 1 } }, c3: { items: { vitFruit: 1 } },
+  c5: { items: { agiFruit: 1 } }, c6: { items: { wisdomFruit: 1 } }, c7: { bp: 'qHunterEye' }, c8: { items: { dexFruit: 1 } }, c9: { items: { powerFruit: 1 } }, c10: { bp: 'qMinerLamp' },
+  c11: { bp: 'qScholarLens' }, c12: { bp: 'qGraveBell' }, c16: { items: { vitFruit: 1 } }, c17: { bp: 'qLakeScale' }, c18: { items: { dexFruit: 1 } }, c19: { bp: 'qDesertRose' },
+  c20: { items: { agiFruit: 1 } }, c21: { items: { tpBook: 1 } }, c22: { items: { vitFruit: 1 } }, c23: { bp: 'qGuildSeal' }, c24: { items: { tpBook: 1 } }, c25: { items: { powerFruit: 1 } },
+  c26: { items: { agiFruit: 1 } }, c27: { items: { wisdomFruit: 1 } }, c28: { items: { dexFruit: 1 } }, c29: { bp: 'qSnowFang' }, c30: { items: { vitFruit: 1 } }, c31: { items: { luckClover: 1 } },
+  c32: { items: { tpBook: 1 } }, c33: { items: { powerFruit: 1 } }, c34: { bp: 'qStarCompass' }, c35: { bp: 'qHeroCrest' }, c4: { items: { luckClover: 1 } },
+};
+for (const k in COM_EX) { const c = COMMISSIONS[k]; if (!c) continue; const E = COM_EX[k]; c.reward = { ...c.reward, items: { ...(c.reward.items || {}), ...(E.items || {}) } }; if (E.bp) c.reward.bp = E.bp; c.reward.ex = 1; }
+{ const _rt = rewardText; rewardText = function (r) { const t = _rt(r); return r && r.bp ? (t ? t + '、' : '') + '【獨家】' + GEAR[r.bp].n + '的設計圖' : t; }; }

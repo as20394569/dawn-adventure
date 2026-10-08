@@ -1,29 +1,3 @@
-const QUEST_GEAR = {
-  qTravelCharm: ['旅人護符', 1, { hp: 6, def: 1 }, {}, ['guardHeal'], '寄信的謝禮。讓人想起回家的路。'],
-  qHerbPouch: ['藥師香囊', 2, { hp: 10, spd: 2 }, {}, ['regen'], '裝滿藥草的香囊，聞了就覺得傷口不痛了。'],
-  qHunterEye: ['獵人之眼', 3, { spe: 2 }, { crit: 6 }, ['first'], '老練獵人傳下來的琥珀墜飾。'],
-  qMinerLamp: ['礦工的提燈', 3, { def: 4 }, { hit: 6 }, ['pierce'], '照亮坑道每一道縫隙的提燈。'],
-  qScholarLens: ['學者的單片眼鏡', 4, { spa: 6, spd: 4 }, {}, ['freeCast'], '看得見魔力流動的古董眼鏡。'],
-  qGraveBell: ['鎮魂鈴', 4, { hp: 12, spd: 6 }, {}, ['endure'], '讓亡魂安息的小鈴鐺。'],
-  qLakeScale: ['湖神鱗片', 5, { hp: 18, def: 4 }, {}, ['thorns'], '銀月湖守護神脫落的鱗片。'],
-  qDesertRose: ['沙漠玫瑰', 5, { atk: 6, spe: 3 }, {}, ['double'], '只在沙漠深處綻放的石之花。'],
-  qGuildSeal: ['公會的印信', 6, { hp: 15, atk: 5, spa: 5 }, {}, ['fervor'], '冒險者公會認可的證明。'],
-  qSnowFang: ['雪狼之牙', 6, { atk: 8 }, { crit: 5 }, ['lastStand'], '雪原狼王的獠牙，握著就熱血沸騰。'],
-  qStarCompass: ['星之羅盤', 7, { spe: 6, spa: 6, spd: 5 }, {}, ['fortune'], '指針永遠指向星墜之地。'],
-  qHeroCrest: ['冒險王之證', 7, { hp: 25, atk: 6, spa: 6, def: 4, spd: 4 }, {}, ['deathWard'], '公會最高的榮譽。'],
-};
-for (const k in QUEST_GEAR) { const [n, t, s, sp, fx, d] = QUEST_GEAR[k]; GEAR[k] = { n, slot: 'acc', t, st: s, sp, fx, d: d + '（委託的獨家報酬）', kind: '飾品' }; BP_RARE.add(k);
-  const P = TIER_POOL[t], h = hashK(k); GEAR_RECIPE[k] = { mats: { [P[h % P.length]]: 2 + Math.floor(t / 2), [TIER_POOL[Math.max(1, t - 1)][(h >>> 4) % TIER_POOL[Math.max(1, t - 1)].length]]: 1 + Math.floor(t / 3) }, gold: Math.round(bpGold(t) * 0.9 / 10) * 10 }; }
-const COM_EX = {
-  c13: { bp: 'qTravelCharm' }, c1: { items: { vitFruit: 1 } }, c14: { bp: 'qHerbPouch' }, c15: { items: { agiFruit: 1 } }, c2: { items: { dexFruit: 1 } }, c3: { items: { vitFruit: 1 } },
-  c5: { items: { agiFruit: 1 } }, c6: { items: { wisdomFruit: 1 } }, c7: { bp: 'qHunterEye' }, c8: { items: { dexFruit: 1 } }, c9: { items: { powerFruit: 1 } }, c10: { bp: 'qMinerLamp' },
-  c11: { bp: 'qScholarLens' }, c12: { bp: 'qGraveBell' }, c16: { items: { vitFruit: 1 } }, c17: { bp: 'qLakeScale' }, c18: { items: { dexFruit: 1 } }, c19: { bp: 'qDesertRose' },
-  c20: { items: { agiFruit: 1 } }, c21: { items: { tpBook: 1 } }, c22: { items: { vitFruit: 1 } }, c23: { bp: 'qGuildSeal' }, c24: { items: { tpBook: 1 } }, c25: { items: { powerFruit: 1 } },
-  c26: { items: { agiFruit: 1 } }, c27: { items: { wisdomFruit: 1 } }, c28: { items: { dexFruit: 1 } }, c29: { bp: 'qSnowFang' }, c30: { items: { vitFruit: 1 } }, c31: { items: { luckClover: 1 } },
-  c32: { items: { tpBook: 1 } }, c33: { items: { powerFruit: 1 } }, c34: { bp: 'qStarCompass' }, c35: { bp: 'qHeroCrest' }, c4: { items: { luckClover: 1 } },
-};
-for (const k in COM_EX) { const c = COMMISSIONS[k]; if (!c) continue; const E = COM_EX[k]; c.reward = { ...c.reward, items: { ...(c.reward.items || {}), ...(E.items || {}) } }; if (E.bp) c.reward.bp = E.bp; c.reward.ex = 1; }
-{ const _rt = rewardText; rewardText = function (r) { const t = _rt(r); return r && r.bp ? (t ? t + '、' : '') + '【獨家】' + GEAR[r.bp].n + '的設計圖' : t; }; }
 { const _gr = giveReward; giveReward = function* (r) {
     const bp = r && r.bp; if (!bp) return yield* _gr(r);
     yield* _gr({ ...r, bp: undefined }); gainBP(bp, 1); Sound.jingle('item'); yield* itemGet('獲得了獨家報酬「' + GEAR[bp].n + '」的設計圖！');
@@ -5787,9 +5761,9 @@ const bTopOK12 = () => { const t = UI.stack[UI.stack.length - 1]; return !t || t
     if (Input.pressed('select') && bTopOK12()) { Input.consume('select'); bSpdToggle12(); }
     if (bFast12() && S.fast12 && S.script && !UI.stack.some(w => w instanceof Menu)) { for (const k of Input.keys) Input.p[k] = false; S.update(); } }; }
 Battle.prototype.drawSpd12 = function (x) {
-  if (this.boxF < -20 || !bTopOK12()) return; const on = bFast12(), X = W - 16, Y = 23, w = 14, h = 9; /* v14.21: 14×9, 6 size */ // under the name plates (three plates fill the top row); v12.0.9h: smaller (player: 「戰鬥速度x2 按鈕縮小」)
-  x.globalAlpha = 0.92; x.fillStyle = on ? '#c8a050' : '#5a5040'; x.fillRect(X, Y, w, h); x.fillStyle = on ? '#3a2a10' : '#14121c'; x.fillRect(X + 1, Y + 1, w - 2, h - 2); x.globalAlpha = 1;
-  KD.tc(x, '×2', X + w / 2, Y + h / 2, on ? '#ffe8b0' : UIC.muted, UIC.textSh, 6);
+  if (this.boxF < -20 || !bTopOK12()) return; const on = bFast12(), X = W - 17, Y = 22, w = 14, h = 9; /* v14.21: 14×9, 6 size */ // under the name plates (three plates fill the top row); v12.0.9h: smaller (player: 「戰鬥速度x2 按鈕縮小」)
+  if (KD.pan) KD.pan(x, X, Y, w, h, on ? '#f0a030' : null); else { x.fillStyle = '#14121c'; x.fillRect(X, Y, w, h); } // v14.24: the battle screen's panel
+  KD.tc(x, '×2', X + w / 2, Y + h / 2, on ? '#ffe8b0' : UIC.muted, UIC.textSh, 5);
   touchRegion(X - 5, Y - 4, w + 8, h + 8, bSpdToggle12); // the tap area stays a little bigger than the button
 };
 { const _bf = Battle.prototype.drawBoxF; Battle.prototype.drawBoxF = function (x) { _bf.call(this, x); this.drawSpd12(x); }; }
@@ -9243,3 +9217,56 @@ PV('cr.regen', v => ({ triggers: [{ on: EVT.ROUND_END, phase: 'POST', cond: { ow
   { on: EVT.ROUND_END, phase: 'POST', cond: { ownerAlive: 1, foesHaveBoss: 1 }, effects: [{ type: 'heal', target: 'self', pct: v / 150, kind: 'regen', quiet: 1 }] }] }));
 PV('cr.defDown', v => ({ triggers: [{ on: EVT.DAMAGE, phase: 'POST', role: 'src', cond: { cat: '物', hasPower: 1 }, limit: { perAction: 1 }, chance: v / 100, effects: [{ type: 'break_chip', target: 'event_target', n: 1, why: 'breaker' }] }] }));
 PV('cr.pierce', v => ({ mods: [{ stage: 'attacker', who: 'attacker', defMul: 1 - v / 100, cond: { cat: '物' } }] }));
+BR.FORMULA.crBack11 = (c, v) => 1 + v / 100 * (1 - c.src.res.hp / c.src.max.hp);
+PV('cr.back', v => ({ mods: [{ stage: 'equipment', who: 'attacker', mul: { f: 'crBack11', v }, cond: { hasPower: 1 } }] }));
+PV('cr.first', () => ({ mods: [{ stage: 'attacker', who: 'attacker', firstRoundPrio: 1 }] }));
+PV('cr.initiative', v => DEF.passives['fx.initiative'].make(v));
+PV('cr.firstEva', v => ({ mods: [{ stage: 'defender', who: 'defender', accAdd: -v, cond: { round: 1 } }] }));
+PV('cr.guardHeal', v => ({ triggers: [{ on: EVT.DEFEND, phase: 'POST', role: 'src', effects: [{ type: 'heal', target: 'self', pct: v / 100, kind: 'guardHeal', quiet: 1 }] }] }));
+PV('cr.endure', () => ENDURE12());
+PV('cr.deathWard', v => DEF.passives['fx.deathWard'].make(v));
+PV('cr.mpGuard', v => ({ triggers: [{ on: EVT.ROUND_END, phase: 'POST', cond: { guarding: 1, ownerAlive: 1 }, effects: [{ type: 'resource', target: 'self', res: 'mp', pct: v / 100, min: 1, why: 'mpGuard' }] }] }));
+PV('cr.siphon', v => ({ triggers: [{ on: EVT.DAMAGE, phase: 'POST', role: 'src', cond: { tag: 'basic' }, limit: { perAction: 1 }, effects: [{ type: 'resource', target: 'self', res: 'mp', amount: Math.round(v), why: 'siphon' }] }] }));
+PV('cr.freecast', v => FREECAST(v / 100));
+PV('cr.shadowStep', v => DEF.passives['fx.shadowStep'].make(v));
+PV('cr.fervor', v => ({ triggers: [{ on: EVT.SKILL_SUCCESS, phase: 'POST', role: 'src', cond: { hasPower: 1 }, limit: { perBattle: v }, effects: [{ type: 'stage', target: 'self', stats: { atk: 1 }, cond: { cat: '物' } }, { type: 'stage', target: 'self', stats: { spa: 1 }, cond: { cat: '特' } }] }] }));
+PV('cr.spellblade', v => ({ mods: [{ stage: 'equipment', who: 'attacker', mul: { f: 'spellblade', v: v / 100 }, cond: { hasPower: 1 } }] }));
+PV('cr.brokenDmg', v => ({ mods: [{ stage: 'equipment', who: 'attacker', mul: 1 + v / 100, cond: { hasPower: 1, tgtStatus: 'broken' } }] }));
+PV('cr.fireRes', v => ({ mods: [{ stage: 'defender', who: 'defender', mul: 1 - v / 100, cond: { element: '火' } }] }));
+COND.evStatus11 = (c, v) => !!(c.ev && c.ev.payload && c.ev.payload.status === v);
+PV('cr.psnRes', v => ({ triggers: [{ on: EVT.STATUS_APPLY, phase: 'PRE', role: 'tgt', cond: { evStatus11: 'psn' }, chance: Math.min(90, v) / 100, effects: [{ type: 'cancel', why: 'will' }, { type: 'message', key: 'status_resist', target: 'self' }] }] }));
+const CRY_PAS11 = new Set(['double', 'thorns', 'regen', 'defDown', 'pierce', 'back', 'first', 'initiative', 'firstEva', 'guardHeal', 'endure', 'deathWard', 'mpGuard', 'siphon', 'freecast', 'shadowStep', 'fervor', 'spellblade', 'brokenDmg', 'fireRes', 'psnRes']);
+function cryActive11(st = Game.st) { const O = st && st.cry11 || {}, out = []; if (!st) return out;
+  for (const g of equippedGear(st)) for (const sp of (g.cr11 || []).slice(0, crySlots11(g))) if (O[sp] && CRY11[sp] && cryFits11(sp, g)) out.push([sp, O[sp]]); return out; }
+{ const _hs = heroStats; heroStats = function (st = Game.st) { const s = _hs(st); if (!st || !st.cry11) return s; const P = [], add = {};
+    for (const [sp, star] of cryActive11(st)) for (const e of CRY11[sp][2]) { const v = cryVal11(e, star), k = e[0];
+      if (CRY_STAT11[k] || k === 'all') { const L = k === 'all' ? ['atk', 'def', 'spa', 'spd', 'spe', 'hp'] : [k]; for (const q of L) add[q] = (add[q] || 0) + v; }
+      else if (k === 'crit') s.crit = (s.crit ?? 6) + v; else if (k === 'eva') s.eva = (s.eva || 0) + v;
+      else if (k === 'typeUp') { const T = s.typeUp || (s.typeUp = {}); T[e[2]] = (T[e[2]] || 0) + v; }
+      else if (k === 'elemRes') s.elemRes = (s.elemRes || 0) + v;
+      else P.push([k, v]); }
+    for (const q in add) if (typeof s[q] === 'number') s[q] = Math.max(1, Math.round(s[q] * (1 + add[q] / 100)));
+    s.cr11P = P; return s; }; }
+{ const _hs = BB.heroSpec; BB.heroSpec = function (st, cfg) { const s = _hs.call(this, st, cfg), S = heroStats(st);
+    for (const [k, v] of S.cr11P || []) if (CRY_PAS11.has(k) && DEF.passives['cr.' + k]) s.passives.push({ key: 'cr.' + k, v, src: 'crystal' });
+    return s; }; }
+{ const _ld = lootDrops; lootDrops = function (b) { const r = _ld(b), F = b.F || {}; return (F.elite || F.boss) && PARTS11[F.sp] ? [] : r; }; }
+{ const _v = Battle.prototype.victory; Battle.prototype.victory = function* () {
+    const st = Game.st, F = this.mainView(), money0 = st.money, P = (heroStats(st).cr11P || []), gold = P.filter(p => p[0] === 'gold').reduce((a, p) => a + p[1], 0), matUp = P.filter(p => p[0] === 'matUp').reduce((a, p) => a + p[1], 0);
+    const r = yield* _v.call(this);
+    if (gold > 0) { const extra = Math.floor(Math.max(0, st.money - money0) * gold / 100); if (extra > 0) { st.money += extra; yield* this.msg('（晶石）多拿到了 ' + extra + ' G！', { hold: 20 }); } }
+    if (F && F.u && F.u.down && (F.elite || F.boss) && CRY11[F.sp] && !cryOwn11(st)[F.sp] && chance(cryChance12(F)) && cryGive11(F.sp, st)) { Sound.jingle('item'); this.focus = F;
+      yield* this.msg('得到了「' + cryName11(F.sp) + '」！', { wait: true });
+      if (!st.flags.tutCry11) { st.flags.tutCry11 = 1; yield* this.msg('（晶石可以在鐵匠那裡鑲進裝備：紫・紅色裝備有 1 個孔，金色以上有 2 個孔。再戰拿到的部位可以把晶石升級。）', { wait: true }); } }
+    return r; }; }
+{ const _u = Overworld.prototype.update; Overworld.prototype.update = function (...a) { const st = this.st;
+    if (st && !st.cry11v) { st.cry11v = 1; let n = 0; for (const sp in CRY11) if (((st.dex || {})[sp] || {}).won > 0 && cryGive11(sp, st)) n++; if (n) Game.cryMsg11 = n; }
+    if (Game.cryMsg11 && !this.script && Game.scene === this && !UI.stack.length) { const n = Game.cryMsg11; Game.cryMsg11 = 0;
+      this.run(sayAll(['（裝備系統改版：菁英・頭目改成掉「晶石」，招牌裝備的設計圖不再掉了。）', '（你之前打倒過的 ' + n + ' 隻菁英・頭目，牠們的晶石都送到你手上了。到鐵匠那裡就能鑲進裝備。）'])); }
+    return _u.apply(this, a); }; }
+{ const _lh = lootHint; lootHint = function (key, sp) { if (!PARTS11[sp] || !CRY11[sp]) return _lh(key, sp);
+    return !cryOwn11()[sp] ? '部位・機率掉「' + cryName11(sp) + '」' : '部位、經驗、金錢'; }; }
+function cryLines11(g) { const L = [], n = crySlots11(g); if (!n) return L; const O = cryOwn11();
+  const C = (g.cr11 || []).filter(sp => O[sp] && CRY11[sp]).slice(0, n);
+  for (const sp of C) L.push(['◆' + cryName11(sp) + '★' + O[sp] + '：' + cryText11(sp, O[sp]), '#9ad8ff']);
+  if (C.length < n) L.push(['◇ 空的晶石孔 ×' + (n - C.length), UIC.muted]); return L; }

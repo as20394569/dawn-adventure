@@ -5356,7 +5356,7 @@ class Battle {
     if (!HD_QUALITY.low) { x.save(); stg(); hd2dMotes(this, x, true); hd2dShafts(this, x); hd2dBloom(this, x); x.restore(); }
     this.drawOverlay(x); this.drawBoxF(x); this.drawBoxH(x); this.drawPops(x);
     x.restore();
-    const k = this.cfg && this.cfg.wx; if (k && typeof wxOverlay === 'function') { x.save(); x.beginPath(); x.rect(0, 0, W, BHd); x.clip(); wxOverlay(x, k, this.t, W, BHd); x.restore(); wxIcon(x, k, W - 13, 46); } // v12.68: under the ×2 button (it covered the third name plate)
+    const k = this.cfg && this.cfg.wx; if (k && typeof wxOverlay === 'function') { x.save(); x.beginPath(); x.rect(0, 0, W, this.k14 && typeof KD !== 'undefined' && KD.BL ? Math.min(BHd, KD.BL().hudY - 1) : BHd); x.clip(); /* v14.24: the rain stops at the card battle's bar (it fell over the HP bar) */ wxOverlay(x, k, this.t, W, BHd); x.restore(); wxIcon(x, k, W - 13, 46); } // v12.68: under the ×2 button (it covered the third name plate)
     x.fillStyle = '#0b0d18'; x.fillRect(0, BHd, W, H - BHd); x.fillStyle = PANEL.edge; x.fillRect(0, BHd, W, 1);
     if (this.cover > 0) { x.fillStyle = '#000'; const h = Math.round(this.cover * (H / 2 + 1)); x.fillRect(0, 0, W, h); x.fillRect(0, H - h, W, h); }
     hdQualityTick(performance.now() - tStart);

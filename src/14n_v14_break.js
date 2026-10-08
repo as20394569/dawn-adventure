@@ -75,12 +75,12 @@ KD.refill = (core, u) => { if (!u || !u.max || !u.max.brk) return; const inc = K
 
 /* ---------- 畫面：弱點的小方塊、破防值 ---------- */
 KD.atBox = (x, X, Y, at, dim, s = 9) => { const C = at ? KD.ATC[at] : ['#9a98b0', '#24222e']; x.fillStyle = '#000'; x.fillRect(X - 1, Y - 1, s + 2, s + 2); x.fillStyle = C[1]; x.fillRect(X, Y, s, s); // v14.21: a size (the plate and the card text use 7)
-  x.fillStyle = C[0]; x.globalAlpha *= 0.5; x.fillRect(X, Y + s - 1, s, 1); x.globalAlpha *= 2; KD.tc(x, at || '？', X + s / 2, Y + s / 2, at ? C[0] : '#b8b6c8', null, s >= 9 ? 8 : 6); };
+  x.fillStyle = C[0]; x.globalAlpha *= 0.5; x.fillRect(X, Y + s - 1, s, 1); x.globalAlpha *= 2; KD.tc(x, at || '？', X + s / 2, Y + s / 2, at ? C[0] : '#b8b6c8', null, s >= 9 ? 8 : 5); };
 KD.wkRow = (x, v, X, Y, s = 9) => { const u = v.u16 || v; const W = (u.data && u.data.wk16) || v.wk16 || []; const seen = KD.wkSeen(v.sp); let z = X;
   for (const at of W) { KD.atBox(x, z, Y, seen.includes(at) ? at : null, false, s); z += s + 2; } return z; };
 // the small shield: the gauge left (or ×)
 KD.brkMini = (x, X, Y, n, broken) => { x.fillStyle = '#000'; x.fillRect(X - 1, Y - 1, 8, 9); x.fillStyle = broken ? '#ff5a5a' : '#9ab8e8'; x.fillRect(X, Y, 6, 5); x.fillRect(X + 1, Y + 5, 4, 1); x.fillRect(X + 2, Y + 6, 2, 1); // v14.21: smaller (6×7, 6 size)
-  x.fillStyle = broken ? '#5a1018' : '#2a3a5a'; x.fillRect(X + 1, Y + 1, 4, 3); Font.draw(x, broken ? '破' : String(n), X + 8, Y + 3.5 - 8, broken ? '#ffb0a0' : '#d8ecff', '#000', 6); };
+  x.fillStyle = broken ? '#5a1018' : '#2a3a5a'; x.fillRect(X + 1, Y + 1, 4, 3); Font.draw(x, broken ? '破' : String(n), X + 8, Y + 3.5 - 8, broken ? '#ffb0a0' : '#d8ecff', '#000', 5); };
 { const B = Battle.prototype, _ps = B.drawPlateSmall; B.drawPlateSmall = function (x, v, a, i, n) { if (!this.k14) return _ps.call(this, x, v, a, i, n);
     const mx = v.max.brk, _bR = badgeRow, _dS = drawStageIcons; v.max.brk = 0; badgeRow = (x, L, X, Y, ...r) => _bR(x, L, X, Y + 12, ...r); drawStageIcons = (x, v, X, Y, ...r) => _dS(x, v, X, Y + 12, ...r);
     try { _ps.call(this, x, v, a, i, n); } finally { v.max.brk = mx; badgeRow = _bR; drawStageIcons = _dS; } if (a <= 0) return; // the old pips go: the shield and the weaknesses sit in a row under the plate

@@ -47,11 +47,11 @@ KD.bind16 = (core, cb, a, t) => { const d = t.data; d.sh16 = 0; d.shT16 = cb.tur
       Font.drawC(x, String(n), X, midY(Y - 7, 15, 8), '#f0e0ff', null, 8); } }; }
 
 /* ---------- 畫面：怒氣的格子、看破・狂化的光 ---------- */
-{ const _db = BPK.drawBoxH; BPK.drawBoxH = function (x) { _db.call(this, x); if (!this.k14 || this.boxF < -20) return; const LB = KD.BL(), Y = LB.hudY, bx = 30, px = this.pipX16(); /* v14.21: the smaller bar */
-    if (this.cls === 'bk') { const n = this.rage16 || 0, need = KD.rageNeed(this); for (let i = 0; i < need; i++) { x.fillStyle = i < n ? (n >= need ? '#ff5030' : '#e08a40') : '#3a3048'; x.fillRect(px + i * 4, Y + 14, 3, 4); }
-      if (this.kz16) { const p = 0.5 + 0.5 * Math.sin((this.fK || 0) / 4); Font.draw(x, '狂化', px + need * 4 + 2, Y + 15.5 - 8, p > 0.5 ? '#ff7050' : '#ffb090', '#000', 6); } }
-    const K = this.kpFx16; if (K && K.t++ < 16) { x.globalAlpha = 1 - K.t / 16; x.fillStyle = '#bfe6ff'; x.fillRect(bx - 1, Y, 92, 1); x.fillRect(bx - 1, Y + 10, 92, 1); Font.draw(x, '看破', bx + 36, Y - 14 - K.t * 0.4, '#bfe6ff', '#000', 7); x.globalAlpha = 1; }
-    const Z = this.kzFx16; if (Z && Z.t++ < 30) { x.globalAlpha = 0.35 * (1 - Z.t / 30); x.fillStyle = '#ff3a20'; x.fillRect(0, Y - 1, W, 22); x.globalAlpha = 1; } }; }
+{ const _db = BPK.drawBoxH; BPK.drawBoxH = function (x) { _db.call(this, x); if (!this.k14 || this.boxF < -20) return; const LB = KD.BL(), Y = LB.hudY, bx = 43, px = this.pipX16(); /* v14.24: the bar's HP starts at 43 */
+    if (this.cls === 'bk') { const n = this.rage16 || 0, need = KD.rageNeed(this); for (let i = 0; i < need; i++) { x.fillStyle = i < n ? (n >= need ? '#ff5030' : '#e08a40') : '#3a3048'; x.fillRect(px + i * 4, Y + 16, 3, 3); }
+      if (this.kz16) { const p = 0.5 + 0.5 * Math.sin((this.fK || 0) / 4); Font.draw(x, '狂化', px + need * 4 + 2, Y + 17.5 - 8, p > 0.5 ? '#ff7050' : '#ffb090', '#000', 5); } }
+    const K = this.kpFx16; if (K && K.t++ < 16) { x.globalAlpha = 1 - K.t / 16; x.fillStyle = '#bfe6ff'; x.fillRect(bx - 1, Y + 2, 79, 1); x.fillRect(bx - 1, Y + 12, 79, 1); Font.draw(x, '看破', bx + 36, Y - 14 - K.t * 0.4, '#bfe6ff', '#000', 7); x.globalAlpha = 1; }
+    const Z = this.kzFx16; if (Z && Z.t++ < 30) { x.globalAlpha = 0.35 * (1 - Z.t / 30); x.fillStyle = '#ff3a20'; x.fillRect(0, Y, W, 23); x.globalAlpha = 1; } }; }
 
 /* ---------- 說明 ---------- */
 KD.KEYS.push([/影縛|疊.*影/, '影：盜賊的攻擊每一下疊 1 層，5 層「影縛」：牠這回合不能行動、破防值 −2（頭目只扣破防值）。'], [/怒氣|狂化/, '怒氣：受到傷害或自己扣血 +1，滿了下一回合狂化：能量 +1、攻擊傷害 ×1.5。']);

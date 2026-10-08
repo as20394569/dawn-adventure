@@ -122,7 +122,7 @@ function intentOf14(core, u, cmd) {
     for (const v of this.foes()) { const u = core.byId[v.id]; if (!u || v.gone || v.alpha < 0.5 || v.st.charging) continue; const I = intentOf14(core, u, core.plan[v.id] || (core.hasStatus(u, 'rise14') ? {} : null)); if (!I) continue;
       const iw = 9; // v12.85: pixel icons; v14.21: drawn 9×9 (were 11), the words 7 size centred, the box 11 high (was 13)
       const img = INT_PX14[I.k] || INT_PX14.atk, col = INT_COL14[I.k], tw = I.t ? Math.ceil(Font.width(I.t, 7)) + 3 : 0, w = iw + 2 + tw, X = Math.round(clamp(v.x + v.off.x - w / 2, 17, W - w - 2)), Y = Math.round(v.foot - v.bbh - 15 + v.sink * (v.sink < 0 ? 1 : 0));
-      x.fillStyle = 'rgba(8,6,18,0.78)'; x.fillRect(X - 1, Y, w + 2, 11); x.fillStyle = I.k === 'heavy' ? '#ff9a40' : 'rgba(255,255,255,0.18)'; x.fillRect(X - 1, Y + 10, w + 2, 1);
+      if (KD.pan) KD.pan(x, X - 2, Y, w + 4, 11, I.k === 'heavy' ? '#ff9a40' : null); else { x.fillStyle = 'rgba(8,6,18,0.78)'; x.fillRect(X - 1, Y, w + 2, 11); } // v14.24: the panel style
       if (img) { x.imageSmoothingEnabled = false; x.drawImage(img, X, Y + 1, 9, 9); } if (I.t) Font.draw(x, I.t, X + iw + 2, Y + 5 - 8, col, UIC.textSh, 7); } }; }
 // 高飛 floats the monster up, 潛水 sinks it (the image is clipped at its feet) with a ripple
 { const _dr = Battle.prototype.draw; Battle.prototype.draw = function (x) { for (const v of this.foes()) { if (v.A && v.A.state === 'faint') continue; const want = v.st.fly14 ? -20 : v.st.dive14 ? Math.round((v.bbh || 48) * 0.7) : 0;

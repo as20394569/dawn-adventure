@@ -12,6 +12,7 @@ const fs = require('fs'), path = require('path');
         window.__shotReady = 1; return { k: 'hold' }; };
       const ow = G.Game.scene; ow.run(ow.battleScript({ sp: SP[0], lv: LV, kind: kind || 'wild', noCard: 1, extra: SP.slice(1).map(x => [x, LV]) })); }, [save, process.env.CLS || 'mg', SP, LV, PLAY, process.env.KIND, process.env.PRE || '']);
   for (let i = 0; i < 80; i++) { await p.waitForTimeout(250); if (await p.evaluate(() => window.__shotReady)) break; }
+  if (process.env.POST) await p.evaluate(src => { const b = __game.Game.scene; (new Function('b', 'core', src))(b, b.core); }, process.env.POST);
   if (process.env.SEL) await p.evaluate(n => { __game.Game.autoPlay = null; const b = __game.Game.scene; b.sel = n; b.idle = true; }, +process.env.SEL);
   const AT = (process.env.AT || '600').split(',').map(Number); let k = 0;
   for (const ms of AT) { await p.waitForTimeout(ms); const c = await p.evaluate(() => { const r = document.getElementById('screen').getBoundingClientRect(); return [r.x, r.y, r.width, r.height]; });
