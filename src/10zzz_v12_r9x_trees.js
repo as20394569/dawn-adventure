@@ -179,8 +179,8 @@ Object.assign(COND, { srcChiFull11: (c, v) => !!c.src && (c.src.max.chi || 0) > 
 Object.assign(BR.FORMULA, { ironLaw11: c => (c.src.stats.atk + c.src.stats.def) / Math.max(1, c.src.stats.atk), song12: c => 1 + 0.15 * ((c.src && c.src.statuses.filter(s => DEF.statuses[s.id] && DEF.statuses[s.id].group === 'stage' && s.stacks > 0).length) || 0) });
 const ZJ11 = {
   劍: [['4a', 'zjSky', '一刀天斷', 150, 0, 4, 14, 0, '搶先的一刀，必定會心。', { prio: 1, mods: [CRIT11] }],
-    ['4b', 'zjRune', '星紋魔劍', 95, 0, 4, 14, 0, '用物攻、魔攻較高的一邊計算；再追加 2 段魔法（各 40），回復傷害 10% 的 MP。', { unlock: 'spellbladeOk', catOf: MAXATK11,
-      after: [{ type: 'damage', target: 'cast_targets', power: 40, cat: '特', cond: { tgtAlive: 1 } }, { type: 'damage', target: 'cast_targets', power: 40, cat: '特', cond: { tgtAlive: 1 } }, { type: 'resource', target: 'self', res: 'mp', ofCast: 0.1, why: 'drain' }] }]],
+    // v12.93 玩家：「星紋魔劍刪除 不適合劍系技能樹 補充一個上去」→ 斷鋼一閃（接斷甲斬・破綻突「先破甲再收」；不用解鎖）
+    ['4b', 'zjSteel', '斷鋼一閃', 160, 0, 4, 14, 0, '對物防下降中的對手必定會心；對護盾傷害 ×2。', { mods: [{ ...CRIT11, cond: { tgtDefDown11: 1 } }] }]],
   雙劍: [['4a', 'zjSwallow', '迴燕雙斷', 130, 0, 4, 14, 0, '迴身的一斬，必定會心。', { mods: [CRIT11] }],
     ['4b', 'zjObsidian', '黑曜終劍', 160, 0, 5, 16, 0, '用物攻、魔攻較高的一邊計算的終結一劍。', { unlock: 'spellbladeOk', catOf: MAXATK11 }]],
   短刀: [['4a', 'zjMoonFang', '月影雙斬', 55, 2, 4, 12, 0, '2 段快斬；對 HP 一半以下的對手每段必定會心。', { mods: [{ ...CRIT11, cond: { tgtHpBelow: 0.5 } }] }]],
@@ -199,6 +199,9 @@ const ZJ11 = {
     ['4b', 'zjMeteor', '流星龍墜', 120, 0, 5, 16, 1, '跳到空中，下一次行動化成流星落下打全體。', { unlock: 'clsDragoon', charge: 1, airborne: 1 }]],
 };
 for (const k in ZJ11) TREE11[k].sk.push(...ZJ11[k]);
+// v12.93：舊存檔學過星紋魔劍 → 等級和技能欄都換成斷鋼一閃
+{ const _so = startOverworld; startOverworld = function (...a) { const st = Game.st, T = st && st.tr11; if (T && T.lv && T.lv.t_zjRune) { T.lv.t_zjSteel = Math.max(T.lv.t_zjSteel || 0, T.lv.t_zjRune); delete T.lv.t_zjRune; }
+    if (st && Array.isArray(st.slots)) st.slots = st.slots.map(id => id === 't_zjRune' ? 't_zjSteel' : id); return _so.apply(this, a); }; }
 // 共通樹：[id, 名字, 最高等級, 段, 說明, 效果]；效果 p＝百分比能力、f＝固定值、big／regen／mpRegen＝戰鬥被動、tal＝沿用原本天賦的效果
 const CM11 = {
   戰技: { cat: '物', nodes: [['cmAtk', '剛力', 5, 1, '物攻 +2%／級', { p: { atk: 2 } }], ['cmSpa', '靈力', 5, 1, '魔攻 +2%／級', { p: { spa: 2 } }], ['cmCrit', '銳眼', 5, 1, '會心率 +1%／級', { f: { crit: 1 } }],

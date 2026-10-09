@@ -7896,7 +7896,7 @@ class TitleScene {
     x.drawImage(this.logo, Math.round(W / 2 - this.logo.width / 2), 6 + bob);
     Font.drawC(x, '～異世界冒險RPG～', W / 2, 52 + bob, '#ffe0a0', '#3a1428');
     if (this.stage === 'press' && Math.floor(this.t / 30) % 2 === 0) Font.drawC(x, '按 A 鍵開始', W / 2, 232, '#ffffff', '#1a1024');
-    Font.drawR(x, 'v12.92', W - 3, H - 13, '#b890b0', null);
+    Font.drawR(x, 'v12.93', W - 3, H - 13, '#b890b0', null);
   }
 }
 class IntroScene {
@@ -21734,8 +21734,7 @@ Object.assign(COND, { srcChiFull11: (c, v) => !!c.src && (c.src.max.chi || 0) > 
 Object.assign(BR.FORMULA, { ironLaw11: c => (c.src.stats.atk + c.src.stats.def) / Math.max(1, c.src.stats.atk), song12: c => 1 + 0.15 * ((c.src && c.src.statuses.filter(s => DEF.statuses[s.id] && DEF.statuses[s.id].group === 'stage' && s.stacks > 0).length) || 0) });
 const ZJ11 = {
   劍: [['4a', 'zjSky', '一刀天斷', 150, 0, 4, 14, 0, '搶先的一刀，必定會心。', { prio: 1, mods: [CRIT11] }],
-    ['4b', 'zjRune', '星紋魔劍', 95, 0, 4, 14, 0, '用物攻、魔攻較高的一邊計算；再追加 2 段魔法（各 40），回復傷害 10% 的 MP。', { unlock: 'spellbladeOk', catOf: MAXATK11,
-      after: [{ type: 'damage', target: 'cast_targets', power: 40, cat: '特', cond: { tgtAlive: 1 } }, { type: 'damage', target: 'cast_targets', power: 40, cat: '特', cond: { tgtAlive: 1 } }, { type: 'resource', target: 'self', res: 'mp', ofCast: 0.1, why: 'drain' }] }]],
+    ['4b', 'zjSteel', '斷鋼一閃', 160, 0, 4, 14, 0, '對物防下降中的對手必定會心；對護盾傷害 ×2。', { mods: [{ ...CRIT11, cond: { tgtDefDown11: 1 } }] }]],
   雙劍: [['4a', 'zjSwallow', '迴燕雙斷', 130, 0, 4, 14, 0, '迴身的一斬，必定會心。', { mods: [CRIT11] }],
     ['4b', 'zjObsidian', '黑曜終劍', 160, 0, 5, 16, 0, '用物攻、魔攻較高的一邊計算的終結一劍。', { unlock: 'spellbladeOk', catOf: MAXATK11 }]],
   短刀: [['4a', 'zjMoonFang', '月影雙斬', 55, 2, 4, 12, 0, '2 段快斬；對 HP 一半以下的對手每段必定會心。', { mods: [{ ...CRIT11, cond: { tgtHpBelow: 0.5 } }] }]],
@@ -21754,6 +21753,8 @@ const ZJ11 = {
     ['4b', 'zjMeteor', '流星龍墜', 120, 0, 5, 16, 1, '跳到空中，下一次行動化成流星落下打全體。', { unlock: 'clsDragoon', charge: 1, airborne: 1 }]],
 };
 for (const k in ZJ11) TREE11[k].sk.push(...ZJ11[k]);
+{ const _so = startOverworld; startOverworld = function (...a) { const st = Game.st, T = st && st.tr11; if (T && T.lv && T.lv.t_zjRune) { T.lv.t_zjSteel = Math.max(T.lv.t_zjSteel || 0, T.lv.t_zjRune); delete T.lv.t_zjRune; }
+    if (st && Array.isArray(st.slots)) st.slots = st.slots.map(id => id === 't_zjRune' ? 't_zjSteel' : id); return _so.apply(this, a); }; }
 const CM11 = {
   戰技: { cat: '物', nodes: [['cmAtk', '剛力', 5, 1, '物攻 +2%／級', { p: { atk: 2 } }], ['cmSpa', '靈力', 5, 1, '魔攻 +2%／級', { p: { spa: 2 } }], ['cmCrit', '銳眼', 5, 1, '會心率 +1%／級', { f: { crit: 1 } }],
       ['cmWeak', '識破', 5, 2, '會心傷害 +5%／級', { f: { critDmg: 5 } }], ['cmBig', '屠巨', 5, 2, '對菁英・頭目的傷害 +3%／級', { big: 3 }], ['cmChase', '追斬', 1, 2, '會心命中後追加一擊（威力 20），每次行動 1 次', { tal: 'swordsman.0.1.0' }],
@@ -22328,10 +22329,9 @@ Object.assign(FX11, {
     *f(S, U, T, u) { this.spawn({ k: 'dark', a: 0.5, c: '#080818', life: 26 }); Sound.sfx('tick'); this.spawn({ k: 'line', x1: U.x + 6, y1: U.y - 4, x2: U.x + 20, y2: U.y - 4, c: S.col[1], w: 2, grow: 3, life: 10 }); yield* wait(8);
       yield* this.lunge(u, 26, 2); Sound.sfx('crit'); ln9(this, T.x - 50, T.y + 6, T.x + 50, T.y - 6, S.col[0], S.col[1], 4, 16); this.spawn({ k: 'flash', c: '#ffffff', a: 0.45, life: 5 }); yield* wait(4);
       for (let i = 0; i < 5; i++) this.spawn({ k: 'line', x1: T.x - 40 + i * 20, y1: T.y - 20, x2: T.x - 34 + i * 20, y2: T.y + 20, c: S.col[0], w: 1, grow: 2, life: 10 }); imp9(this, T, S, 1); this.shake = Math.max(this.shake, 8); yield* wait(10); } },
-  zjRune: { col: ['#b080ff', '#f8f0ff', '#402080'], pt: 'rune', cast: 'rune', fin: 'burst', snd: 'slash', // 星紋魔劍: a cut, then two rune bolts
-    *f(S, U, T, u) { yield* this.lunge(u, 14, 3); Sound.sfx('slash'); sl11(this, T, -0.7, 26, S, 6); this.spawn({ k: 'hex', x: T.x, y: T.y, r0: 6, r1: 22, c: S.col[0], life: 14 }); yield* wait(5);
-      for (let k = 0; k < 2; k++) { Sound.sfx('charge'); yield* bolt11(this, U, { x: T.x + (k ? 8 : -8), y: T.y }, S, 6, 3); this.spawn({ k: 'ring', x: T.x, y: T.y, r0: 4, r1: 20, c: S.col[1], w: 2, life: 10 }); this.star(T.x, T.y, S.col[0], 10); yield* wait(3); }
-      this.spawn({ k: 'glow', x: U.x, y: U.y, r: 16, c: '#80b0ff', life: 12 }); yield* wait(8); } },
+  zjSteel: { col: ['#c8d8f0', '#ffffff', '#283850'], pt: 'shard', cast: 'draw', fin: 'cut', snd: 'heavy', // 斷鋼一閃: one heavy cut, the armour splits
+    *f(S, U, T, u) { yield* this.lunge(u, 22, 2); Sound.sfx('heavy'); ln9(this, T.x + 40, T.y - 34, T.x - 40, T.y + 34, S.col[0], S.col[1], 4, 16); this.spawn({ k: 'flash', c: '#ffffff', a: 0.35, life: 5 }); yield* wait(4);
+      for (let i = 0; i < 8; i++) this.spawn({ k: 'dot', x: T.x, y: T.y, vx: rnd(-30, 30) / 10, vy: rnd(-30, 10) / 10, g: 0.15, c: pick(S.col), s: 2, life: 18 }); imp9(this, T, S, 1); this.shake = Math.max(this.shake, 8); yield* wait(10); } },
   zjSwallow: { col: ['#a0e0ff', '#ffffff', '#20608a'], pt: 'wind', cast: 'dash', fin: 'cut', snd: 'slash', // 迴燕雙斷: a swallow-turn — one sweep out, one back
     *f(S, U, T, u) { yield* this.lunge(u, 18, 2); Sound.sfx('slash'); this.spawn({ k: 'cres', x: T.x, y: T.y, r: 24, ang: 0.4, c: S.col[1], c2: S.col[0], w: 5, life: 12 }); yield* wait(4);
       Sound.sfx('crit'); this.spawn({ k: 'cres', x: T.x, y: T.y, r: 24, ang: 3.5, c: S.col[1], c2: S.col[0], w: 5, life: 12 }); for (let i = 0; i < 4; i++) this.spawn({ k: 'line', x1: T.x, y1: T.y, x2: T.x + Math.cos(i * 1.6) * 30, y2: T.y + Math.sin(i * 1.6) * 20, c: S.col[1], w: 1, grow: 2, life: 10 }); imp9(this, T, S, 1); yield* wait(10); } },
@@ -22534,7 +22534,7 @@ const NC_TXT12 = [
   [/覺醒成為了冒險者！/g, '覺醒了異界人之力！'],
   [/覺醒了隱藏職業「異界勇者」！（找村長轉職）/g, '解鎖了戰技樹的絕技「晨曦之刃」「雙相斬」！'],
   [/要繼承「魔劍士」的道路嗎？\n（隨時也能找村長轉職）/g, '要學流浪魔劍士的劍技嗎？'],
-  [/魔劍士的天賦能讓物攻與魔攻互相加成（魔劍共鳴）。試著配一把劍和一本魔導書吧。/g, '解鎖了絕技「星紋魔劍」（劍技能樹）和「黑曜終劍」（雙劍技能樹）！'],
+  [/魔劍士的天賦能讓物攻與魔攻互相加成（魔劍共鳴）。試著配一把劍和一本魔導書吧。/g, '解鎖了絕技「黑曜終劍」（雙劍技能樹）！'],
   [/職業的事也可以找我——王都有好幾個「上級職業」的導師，完成他們的試煉就能轉職。/g, '王都有好幾位導師，完成他們的試煉就能學到絕技。'],
   [/去公會轉職吧，我的學生。/g, '把那段旋律練熟吧，我的學生。'],
   [/你有資格走上這條路了。到冒險者公會找公會長轉職吧。/g, '你有資格學詩人公會的歌了。'],
@@ -22543,7 +22543,7 @@ const NC_TXT12 = [
   [/完成：成為(吟遊詩人|機工士|武僧|龍騎士)的資格。（到冒險者公會轉職）/g, '完成：學會了$1的絕技。'],
   [/上級職業「(吟遊詩人|機工士|武僧|龍騎士)」/g, '$1的絕技'],
   [/覺醒了隱藏職業/g, '解鎖了絕技'],
-  [/隱藏職業「異界勇者」/g, '絕技「晨曦之刃」「雙相斬」'], [/隱藏職業「魔劍士」/g, '絕技「星紋魔劍」「黑曜終劍」'], [/繼承了魔劍之道/g, '學到了魔劍士的劍技'],
+  [/隱藏職業「異界勇者」/g, '絕技「晨曦之刃」「雙相斬」'], [/隱藏職業「魔劍士」/g, '絕技「黑曜終劍」'], [/繼承了魔劍之道/g, '學到了魔劍士的劍技'],
   [/天賦之書|修練之書/g, '秘傳之書'],
   [/天賦選錯的話/g, '技能樹點錯的話'],
 ];
@@ -22555,10 +22555,10 @@ classTalk = function* () { const st = Game.st; if (!st.cls) { const k = yield* c
   if (st.lv < 14) return false; const r = yield* ask('要做什麼？', ['技能樹重置', '聊天']); if (r !== 0) return false; yield* treeReset11(); return true; };
 ch2ClassTalk = function* () { const st = Game.st, f = st.flags, n = ['clsBard', 'clsMachinist', 'clsMonk', 'clsDragoon'].filter(k => f[k]).length;
   yield* say('王都的導師們都有自己的絕活。完成他們的試煉，就能學到技能樹的「絕技」。' + (n ? '\n（已經解鎖 ' + n + '/4 位導師的絕技）' : '\n（詩人公會・鐘錶師・雪峰寺・龍騎士老人）')); };
-const ZJ_OF12 = { clsBard: ['迴響序曲', '終章頌歌', '樂器'], clsMachinist: ['齒輪砲台', '赤焰彈', '火槍'], clsMonk: ['千手寸勁', '沖天拳', '拳套'], clsDragoon: ['蒼龍躍', '流星龍墜', '長槍'], hiddenCls: ['晨曦之刃', '雙相斬', '戰技'], spellbladeOk: ['星紋魔劍', '黑曜終劍', '劍・雙劍'] };
+const ZJ_OF12 = { clsBard: ['迴響序曲', '終章頌歌', '樂器'], clsMachinist: ['齒輪砲台', '赤焰彈', '火槍'], clsMonk: ['千手寸勁', '沖天拳', '拳套'], clsDragoon: ['蒼龍躍', '流星龍墜', '長槍'], hiddenCls: ['晨曦之刃', '雙相斬', '戰技'], spellbladeOk: ['黑曜終劍', null, '雙劍'] };
 { const _u = Overworld.prototype.update; Overworld.prototype.update = function (...a) { const st = this.st, f = st && st.flags;
     if (f && !this.script && !UI.stack.length && !Game.trans) { const told = f.zjTold12 || (f.zjTold12 = {}); const k = Object.keys(ZJ_OF12).find(q => f[q] && !told[q]);
-      if (k) { told[k] = 1; const [x1, x2, tr] = ZJ_OF12[k]; this.run((function* () { yield* itemGet('解鎖了絕技「' + x1 + '」「' + x2 + '」！（' + tr + '技能樹，Lv35 開放）'); })()); return; } }
+      if (k) { told[k] = 1; const [x1, x2, tr] = ZJ_OF12[k]; this.run((function* () { yield* itemGet('解鎖了絕技「' + x1 + '」' + (x2 ? '「' + x2 + '」' : '') + '！（' + tr + '技能樹，Lv35 開放）'); })()); return; } }
     return _u.apply(this, a); }; }
 { const _eq = extraQuests; extraQuests = function (st, L) { _eq(st, L); for (const q of L) { q.t = ncTxt12(q.t); if (q.rw) q.rw = ncTxt12(q.rw); } }; }
 for (const k in QUEST_CATS) if (QUEST_CATS[k] === '職業') QUEST_CATS[k] = '絕技';
@@ -22876,7 +22876,7 @@ EFFECT_TYPES.hunt_hp = { exec(core, ef, ctx) { const e = ctx.pre, R = core.rel11
   e.payload.amount = Math.max(1, Math.floor(v)); (e.payload.notes || (e.payload.notes = [])).push('hunt11'); } };
 { const _ue = BD.unitForEnemy; BD.unitForEnemy = function (core, sp, lv, kind, side, idx, o = {}) { const s = _ue.call(this, core, sp, lv, kind, side, idx, o); if (!s) return s;
     s.data.wardMul12 = [1, 1, 1.25, 1.5][s.data.diff11 || 0] || 1; return s; }; }
-const WARDX12 = { t_axSplit: 2, t_axCrush: 3, t_sdGap: 2, t_spBreak: 2, t_fsStorm: 2, t_gnAp: 2, t_shRam: 2 };
+const WARDX12 = { t_zjSteel: 2, t_axSplit: 2, t_axCrush: 3, t_sdGap: 2, t_spBreak: 2, t_fsStorm: 2, t_gnAp: 2, t_shRam: 2 };
 for (const id in WARDX12) if (DEF.skills[id]) DEF.skills[id].wardX = WARDX12[id];
 for (const id of ['t_sdFlow', 't_dsStar']) if (DEF.skills[id]) DEF.skills[id].wardCritX = 1.5;
 const wEff12 = (id, ef) => effRegister('skill:' + id + '#w12', ef);
@@ -23795,13 +23795,6 @@ redo13('t_sdGap', 't11_sdGap', { col: C13.red,
     if (warded) { Sound.sfx('rock'); K13.ring(this, T, 10, 44, C13.ward, 4, 14); for (let i = 0; i < 12; i++) { const an = Math.random() * 6.3, sp = rnd(15, 35) / 10; this.spawn({ k: 'k13poly', x: T.x + Math.cos(an) * 14, y: T.y + Math.sin(an) * 14, vx: Math.cos(an) * sp, vy: Math.sin(an) * sp - 0.6, g: 0.1, vr: 0.2, shapes: SH13.hex(4, C13.ward[0]), life: 22, fade: 1 }); } }
     if (weak) { K13.flash(this, '#ff4020', 0.25, 6); K13.spike(this, T, 36, c, 10, 14); }
     K13.hit(this, T, c, weak || warded ? 1 : 0); yield* wait(10); } });
-redo13('t_zjRune', 't11_zjRune', { col: C13.star,
-  *f(S, U, T, u) { const c = S.col, el = EL13[((gearBy(Game.st.equip.weapon) || {}).el) || ''] || C13.arc, H = this.center(this.H), tip = { x: H.x + 18, y: H.y - 20 };
-    Sound.sfx('charge'); for (let i = 0; i < 6; i++) K13.spike(this, { x: tip.x + rnd(-12, 12), y: tip.y + rnd(-18, 8) }, 7, c, 4, 16, { inner: 0.3 }); K13.ring(this, tip, 26, 4, c, 2, 12); yield* wait(10);
-    yield* this.lunge(u, 18, 3); Sound.sfx('slash'); K13.cut(this, T, -0.9, 74, c, 10, 16, { bend: 8 }); K13.hit(this, T, c, 0); yield* wait(4);
-    const Sg = { x: T.x, y: T.y - 34 }; this.spawn({ k: 'glow', x: Sg.x, y: Sg.y, r: 26, c: c[2], life: 36 }); this.spawn({ k: 'rune', x: Sg.x, y: Sg.y, r: 18, c: c[0], c2: c[1], n: 10, poly: 5, sq: 1, life: 36 }); K13.ring(this, Sg, 4, 22, c, 3, 12); yield* wait(6);
-    for (let k = 0; k < 2; k++) { const P = { x: T.x + (k ? 9 : -9), y: T.y + 2 }; Sound.sfx('charge'); yield* K13.orb(this, Sg, P, el, 6, 5, 0, { trail: 6 }); Sound.sfx('hitSuper'); K13.hit(this, P, el, 0); yield* wait(5); }
-    Sound.sfx('heal'); K13.motes(this, T, H, C13.mp, 14, 18); yield* wait(14); } });
 redo13('t_axSpin', 't11_axSpin', { col: C13.axe,
   *f(S, U, T, u, t) { const c = S.col, L = K13.views(this, t).map(v => this.center(v)).sort((a, b) => a.x - b.x), G = T; Sound.sfx('wind');
     for (let i = 0; i < 4; i++) K13.ghost(this, Math.cos(i * 1.57) * 10, Math.sin(i * 1.57) * 4, '#ffb060', 8 + i * 3, 0.4); yield* this.lunge(u, 16, 3);
@@ -27159,14 +27152,13 @@ const HDFX15 = {
       HD15.flash(this, T, P, 70, { dur: 18 }); HD15.flare(this, T, P, 150, { rot, dur: 22, x8: 1 }); HD15.spikes(this, T, P, 12, 34, { rot });
       for (let i = -2; i <= 2; i++) HD15.sparks(this, { x: T.x + Math.cos(rot) * i * 22, y: T.y + Math.sin(rot) * i * 22 }, 4, P, { spd: 3, life: 18 });
       this.shake = Math.max(this.shake || 0, 10); yield* wait(18); } },
-  zjRune: { *f(U, T, u) { const P = HD15.P.violet, Hc = this.center(this.H), Hd = typeof PX13 !== 'undefined' && PX13.hand ? PX13.hand(this) : { x: Hc.x + 10, y: Hc.y - 10 }; Sound.sfx('charge');
-      HD15.gather(this, Hd, 16, P, 28, { span: 8, life: 12 }); HD15.flash(this, Hd, P, 22, { dur: 16, delay: 6 }); yield* wait(12);
-      yield* this.lunge(u, 18, 2); Sound.sfx('slash'); HD15.slash(this, T, { pal: P, r: 52, th: 11, ang: -0.67, span: 1.5, dur: 20, spark: 1 });
-      yield* wait(4); HD15.flash(this, T, P, 34, { dur: 12 }); HD15.ring(this, T, P, 3, 22, { w: 1.6, dur: 14 }); HD15.sparks(this, T, 10, P, { spd: 3, life: 16 });
-      const Sg = { x: T.x, y: T.y - 40 }; Sound.sfx('charge'); HD15.sigil(this, Sg, P, 22, { dur: 52 }); yield* wait(12);
-      for (let i = 0; i < 2; i++) { const D0 = { x: T.x + (i ? 8 : -8), y: T.y + 2 }; HD15.comet(this, { x: Sg.x + (i ? 6 : -6), y: Sg.y }, D0, HD15.P.star, 8, { w: 6 }); yield* wait(8); Sound.sfx('hitSuper');
-        HD15.flash(this, D0, P, 36, { dur: 12 }); HD15.ring(this, D0, P, 3, 20, { w: 1.6, dur: 12 }); HD15.spikes(this, D0, HD15.P.star, 8, 18); HD15.sparks(this, D0, 8, HD15.P.star, { spd: 3, life: 14 }); yield* wait(4); }
-      Sound.sfx('heal'); HD15.motes(this, T, { x: Hc.x, y: Hc.y - 6 }, 10, HD15.P.mp, { dur: 22 }); HD15.flash(this, Hc, HD15.P.mp, 30, { dur: 16, delay: 22 }); yield* wait(30); } },
+  zjSteel: { *f(U, T, u) { const P = HD15.P.steel, Hc = this.center(this.H), Hd = typeof PX13 !== 'undefined' && PX13.hand ? PX13.hand(this) : { x: Hc.x + 10, y: Hc.y - 10 }; Sound.sfx('charge');
+      HD15.dim(this, 0.4, 56); HD15.cut(this, { x: Hd.x + 4, y: Hd.y - 8 }, -1.05, 22, P, { dur: 14, w: 5, gap: 0.01 }); HD15.flare(this, { x: Hd.x + 9, y: Hd.y - 17 }, P, 40, { rot: 0, dur: 14, delay: 4 }); yield* wait(12);
+      yield* this.lunge(u, 22, 2); Sound.sfx('heavy'); const cut = { pal: P, r: 72, th: 15, ang: -2.6, dir: -1, span: 1.3, dur: 24, sw: 0.2, spark: 1 }, rot = HD15.tanAt(cut);
+      HD15.slash(this, T, cut); HD15.slash(this, { x: T.x + 3, y: T.y - 2 }, Object.assign({}, cut, { r: 66, th: 6, delay: 2, al: 0.5, spark: 0 }));
+      yield* wait(4); Sound.sfx('crit'); HD15.stop(this, 6); HD15.cut(this, T, rot, 110, P, { dur: 30, w: 9, gap: 7 }); HD15.flash(this, T, P, 54, { dur: 16 });
+      const nx = -Math.sin(rot), ny = Math.cos(rot); for (const sg of [-1, 1]) { HD15.shards(this, T, 7, { ang: Math.atan2(ny * sg, nx * sg), spread: 1.1, spd: 3.6, sz: 3.6, up: 1.2 }); HD15.sparks(this, T, 9, HD15.P.gold, { ang: Math.atan2(ny * sg, nx * sg), spread: 1.2, spd: 4.4, life: 18, g: 0.1 }); }
+      HD15.ring(this, T, P, 4, 30, { w: 2.2, dur: 16 }); HD15.spikes(this, T, P, 10, 30, { rot }); this.shake = Math.max(this.shake || 0, 9); yield* wait(20); } },
   ogSword: { *f(U, T, u) { const P = HD15.P.dawn, Hc = this.center(this.H), Hd = typeof PX13 !== 'undefined' && PX13.hand ? PX13.hand(this) : { x: Hc.x + 10, y: Hc.y - 10 }; Sound.sfx('charge');
       HD15.flare(this, Hd, P, 44, { rot: -0.7, spin: 0.8, dur: 14, x8: 1 }); yield* wait(6); yield* this.lunge(u, 18, 2);
       const A = [[-0.67, 1], [-2.41, -1], [-1.571, 1], [-2.37, 1], [-1.571, -1]];

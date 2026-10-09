@@ -1,133 +1,3 @@
-{ const FUR = '#c09a64', FUR2 = '#f0d8a8', AMBER = '#f0b040', TOOTH = '#f8f4e0', CROC = '#6a8a3a', CROC2 = '#c8d070', CREEK = '#4aa0c0', CREEK2 = '#8ad0d8',
-    BARK = '#8a6038', BARK2 = '#c8a070', SPROUT = '#8ac040', MUD = '#6a4a28', TUSK = '#f4efe0', DUST = '#a08a6a';
-  function* crocRoll(B, T, i) { Sound.sfx('water'); for (let k = 0; k < 3; k++) mSpawn(B, 'mgouge', { x: T.x, y: T.y + 4, ang: (i * 3 + k) * 1.05, len: 40, w: 6, c: k % 2 ? CREEK : CROC, c2: k % 2 ? CREEK2 : CROC2, bend: 12, grow: 5, life: 14 });
-    for (let k = 0; k < 6; k++) { const an = k / 6 * Math.PI * 2 + i; mSpawn(B, 'mdrop', { x: T.x, y: T.y, vx: Math.cos(an) * 2.2, vy: Math.sin(an) * 2 - 0.8, g: 0.16, r: 1.8, c: CREEK2, life: 18 }); }
-    B.shake = 6; yield* wait(12); }
-  FX.m12h_crocRoll = function* (U, T, u, i) { yield* crocRoll(this, T, i || 1); };
-  Object.assign(MFX, {
-    *m12_wolfNip(U, T, u) { Sound.sfx('wind'); for (let i = 0; i < 4; i++) mSpawn(this, 'mpuff', { x: lerp(U.x, T.x, i / 4), y: lerp(U.y, T.y, i / 4) + 10, r: 3, c: '#c8b08a', op: 0.6, life: 12 + i * 2 });
-      yield* this.lunge(u, 24, 2); Sound.sfx('hit'); mSpawn(this, 'mfang', { x: T.x, y: T.y, w: 22, c: TOOTH, gum: '#6a4a2a', life: 14 }); yield* wait(8); mSpawn(this, 'mglint', { x: T.x + 9, y: T.y - 9, c: AMBER, life: 10 }); yield* wait(8); },
-    *m12_wolfClaw(U, T, u) { yield* this.lunge(u, 16, 3); Sound.sfx('slash'); mClaw(this, T, FUR, 1, 3, 30, 5); yield* wait(6); mDebris(this, T.x, T.y, 4, '#9aa0ac', 'mshard', 1.8, 2.5);
-      for (let i = 0; i < 4; i++) mSpawn(this, 'mfeather', { x: T.x + rnd(-10, 10), y: T.y + rnd(-6, 6), vy: 0.5, vx: rnd(-5, 5) / 10, c: FUR2, life: 24 }); yield* wait(14); },
-    *m12_wolfCall(U) { Sound.cry(7, 0.9, 1.4); for (let i = 0; i < 3; i++) { mSpawn(this, 'mjag', { x: U.x, y: U.y - 14, r0: 6, r1: 40, c: '#e0b060', n: 12, life: 18, fl: 0.6, rot: i * 0.4 }); yield* wait(6); }
-      for (const [dx, dy] of [[-46, 8], [46, 4], [-32, -18], [36, -20]]) for (const e of [-3, 3]) mSpawn(this, 'mglint', { x: U.x + dx + e, y: U.y + dy, c: AMBER, life: 24 });
-      Sound.sfx('statUp'); mSpawn(this, 'maura', { x: U.x, y: U.y, r0: 16, r1: 40, c: '#d09040', life: 18 }); yield* wait(20); },
-    *m12_wolfHunt(U, T, u) { Sound.sfx('wind'); for (let i = 0; i < 8; i++) { const an = i / 8 * Math.PI * 2; mSpawn(this, 'mpuff', { x: T.x + Math.cos(an) * 30, y: T.y + 14 + Math.sin(an) * 10, r: 3, c: '#b8a080', op: 0.7, life: 16 }); if (i % 2) yield* wait(2); }
-      yield* this.lunge(u, 22, 3); Sound.sfx('slash'); for (const ang of [0.8, 2.34]) mSpawn(this, 'mgouge', { x: T.x, y: T.y, ang, len: 34, w: 6, c: FUR, c2: FUR2, life: 14 }); yield* wait(6);
-      Sound.sfx('hitSuper'); mSpawn(this, 'mfang', { x: T.x, y: T.y, w: 30, c: TOOTH, gum: '#6a4a2a', life: 16 }); this.shake = 8; yield* wait(14); },
-    *m12_crocSnap(U, T, u) { yield* this.lunge(u, 16, 3); Sound.sfx('hit'); mSpawn(this, 'mfang', { x: T.x, y: T.y, w: 34, c: TOOTH, gum: '#4a6a2a', life: 16 });
-      for (let i = 0; i < 5; i++) mSpawn(this, 'mdrop', { x: T.x + rnd(-14, 14), y: T.y - 4, vx: rnd(-12, 12) / 10, vy: -1.2 - Math.random(), g: 0.18, r: 1.8, c: CREEK2, life: 18 }); yield* wait(10); mImpact(this, T, CROC2, 14); yield* wait(8); },
-    *m12_crocSplash(U, T, u) { yield* this.lunge(u, 10, 3); Sound.sfx('water'); mProj(this, U, T, i => ({ k: 'mdrop', r: 2.4, c: i % 2 ? CREEK2 : CREEK, arc: 20 + i * 2 }), 7, 1, 14); yield* wait(16);
-      mSpawn(this, 'mgouge', { x: T.x, y: T.y + 6, ang: 0.1, len: 44, w: 7, c: CROC, c2: CROC2, bend: 8, life: 14 }); for (let i = 0; i < 3; i++) mSpawn(this, 'mbubble', { x: T.x + (i - 1) * 14, y: T.y + 22, r: 3 + i, c: CREEK, life: 22 }); yield* wait(16); },
-    *m12_crocShoal(U) { Sound.sfx('water'); for (let i = 0; i < 10; i++) { const an = i / 10 * Math.PI * 2; mSpawn(this, 'mdrop', { x: U.x + Math.cos(an) * 30, y: U.y + 20 + Math.sin(an) * 8, vy: -1.6 - Math.random(), g: 0.12, r: 2, c: CREEK2, life: 20 }); }
-      yield* wait(8); const p = mSpawn(this, 'mbubble', { x: U.x, y: U.y + 4, r: 8, c: CREEK, life: 26 }); p.upd = q => { q.r = 8 + Math.min(1, q.t / 10) * 20; }; Sound.sfx('statUp'); yield* wait(22); },
-    *m12_crocRoll(U, T, u) { yield* this.lunge(u, 18, 3); Sound.sfx('hitSuper'); mSpawn(this, 'mfang', { x: T.x, y: T.y, w: 36, c: TOOTH, gum: '#4a6a2a', life: 14 }); yield* wait(6); yield* crocRoll(this, T, 0); },
-    *m12_stumpBump(U, T, u) { yield* this.lunge(u, 18, 4); Sound.sfx('hit'); mSpawn(this, 'm12rings', { x: T.x, y: T.y, r0: 6, r1: 30, c: '#a07a4a', c2: '#e8c890', life: 16 }); mDebris(this, T.x, T.y, 4, BARK2, 'mshard', 1.8, 2.2); this.shake = 6; yield* wait(16); },
-    *m12_stumpRoot(U, T) { Sound.sfx('leaf'); mSpawn(this, 'mcrack', { x: T.x, y: T.y + 26, n: 3, c: '#4a3420', life: 26 });
-      for (let i = 0; i < 3; i++) { mSpawn(this, 'mthorn', { x1: T.x + (i - 1) * 16, y1: T.y + 28, x2: T.x - (i - 1) * 10, y2: T.y + 8, w: 3, c: '#7a5634', c2: '#b08a5a', grow: 8, life: 22 }); yield* wait(3); }
-      mRise(this, T.x, T.y + 22, 4, () => ({ k: 'mpuff', r: 3, c: DUST })); yield* wait(18); },
-    *m12_stumpSprout(U) { Sound.sfx('heal'); for (const o of [-6, 6]) mSpawn(this, 'mthorn', { x1: U.x, y1: U.y - 14, x2: U.x + o * 2, y2: U.y - 32, w: 2.5, c: '#4a8a2a', c2: SPROUT, grow: 10, life: 28 }); yield* wait(6);
-      for (let i = 0; i < 5; i++) mSpawn(this, 'mleaf', { x: U.x + rnd(-14, 14), y: U.y - 20, vy: -0.4, vx: rnd(-4, 4) / 10, c: SPROUT, life: 26 }); mRise(this, U.x, U.y + 10, 6, () => ({ k: 'mglob', r: 2, c: '#b8e070' })); yield* wait(22); },
-    *m12_stumpChips(U, T, u) { yield* this.lunge(u, 6, 2); Sound.sfx('rock'); mProj(this, U, T, i => ({ k: 'mshard', r: 2.5 + (i % 3), c: i % 2 ? BARK2 : BARK, vr: 0.6, seed: i + 1, wob: 4 }), 9, 1, 12); yield* wait(20);
-      Sound.sfx('hit'); mImpact(this, T, BARK2, 16); mDebris(this, T.x, T.y, 5, BARK2, 'mshard', 1.6, 2); yield* wait(10); },
-    *m12_pigTusk(U, T, u) { yield* this.lunge(u, 18, 3); Sound.sfx('hit'); for (const o of [-6, 6]) mSpawn(this, 'mgouge', { x: T.x + o, y: T.y + 6, ang: -1.57 + o / 30, len: 18, w: 4, c: TUSK, c2: '#ffffff', bend: o / 3, life: 12 }); mImpact(this, T, '#e8d8b8', 14); yield* wait(14); },
-    *m12_pigSnort(U, T, u) { Sound.cry(11, 0.7, 0.6); mSpawn(this, 'manger', { x: U.x + 12, y: U.y - 16, c: '#ff5040', life: 22 }); for (const o of [-4, 4]) mProj(this, { x: U.x + o, y: U.y + 4 }, T, () => ({ k: 'mpuff', r: 4, c: '#e8e0d0', op: 0.7 }), 2, 3, 14); yield* wait(18);
-      yield* this.lunge(u, 8, 2); Sound.sfx('hit'); mImpact(this, T, '#f0e0c0', 12); for (let i = 0; i < 3; i++) mSpawn(this, 'mdrop', { x: T.x + (i - 1) * 10, y: T.y - 16, vy: 1.2, r: 2, c: '#9aa0c0', life: 18 }); yield* wait(12); },
-    *m12_pigMud(U) { Sound.sfx('water'); for (let i = 0; i < 8; i++) { const an = -Math.PI / 2 + (i - 3.5) * 0.4; mSpawn(this, 'mglob', { x: U.x, y: U.y + 16, vx: Math.cos(an) * 2, vy: Math.sin(an) * 2.2, g: 0.2, r: 2.5, c: MUD, life: 22 }); } yield* wait(10);
-      for (let i = 0; i < 5; i++) mSpawn(this, 'mdrop', { x: U.x + rnd(-14, 14), y: U.y + rnd(-10, 6), vy: 0.6, r: 1.8, c: '#5a3a1e', life: 20 }); Sound.sfx('statUp'); mSpawn(this, 'mjag', { x: U.x, y: U.y, r0: 34, r1: 12, c: '#8a6a40', n: 16, life: 18 }); yield* wait(18); },
-    *m12_pigRush(U, T, u) { Sound.sfx('run'); for (let i = 0; i < 6; i++) mSpawn(this, 'mpuff', { x: U.x + rnd(-10, 10), y: U.y + 20, vx: rnd(-8, 8) / 10, vy: -0.3, r: 4, c: DUST, op: 0.75, life: 20 }); yield* wait(6);
-      yield* this.lunge(u, 34, 4); Sound.sfx('hitSuper'); this.shake = 14; mSpawn(this, 'mjag', { x: T.x, y: T.y, r0: 6, r1: 34, c: '#e8c890', n: 12, life: 14 }); mDebris(this, T.x, T.y + 20, 6, '#7a5a38', 'mrock', 2.2, 3);
-      for (let i = 0; i < 5; i++) mSpawn(this, 'mpuff', { x: T.x + rnd(-24, 24), y: T.y + 22, r: 5, c: '#9a8468', op: 0.7, life: 22 }); yield* wait(16); },
-  }); }
-ITEMS.wood = { n: '木材', mat: 1, price: 0, sell: 40, cat: '魔物素材', d: '樹樁怪身上掉下來的木頭。乾燥又結實，適合做木製的武器和樂器。' };
-const V12_MON = [
-  ['meadowWolf', '野狼', 'beast', 7, 'fast', ['m12_wolfNip', 'm12_wolfClaw', 'm12_wolfCall', 'm12_wolfHunt'], 'wolfPelt', ['wolf', 25, 0.55, 1.15], '晨霧道路上成群出沒的灰褐色野狼。狼王出現之後，牠們也變得大膽起來。'],
-  ['creekCroc', '溪谷小鱷', 'aquatic', 10, 'tank', ['m12_crocSnap', 'm12_crocSplash', 'm12_crocShoal', 'm12_crocRoll'], 'crocHide', ['croc', 40, 0.8, 1.15], '躲在碧溪谷淺灘的小鱷魚。個子不大，咬合力卻一點也不輸大人。'],
-  ['stumpling', '樹樁怪', 'plant', 4, 'tank', ['m12_stumpBump', 'm12_stumpRoot', 'm12_stumpSprout', 'm12_stumpChips'], 'wood', ['rotTreant', 35, 1.1, 1.25], '被砍倒的樹留下的樹樁，吸了瘴氣以後長出腳走了起來。'],
-  ['piglet', '小野豬', 'beast', 5, 'phys', ['m12_pigTusk', 'm12_pigSnort', 'm12_pigMud', 'm12_pigRush'], 'boarTusk', ['wildBoar', 15, 0.8, 1.2], '風車丘陵的小野豬。橫衝直撞的樣子跟長大的暴走野豬一模一樣。'],
-];
-for (const [k, n, fam, lv, role, moves, mat, look, dex] of V12_MON) {
-  const R = CH2_ROLE[role], ok = moves.filter(m => MOVES[m]); if (ok.length < moves.length) bvErr('v12', k + ' moves ' + moves.filter(m => !MOVES[m]).join(','));
-  SPECIES[k] = { n, fam, base: R.map(v => Math.round(v * 60)), exp: 45 + 3 * lv, gold: Math.round(lv * 1.6), learn: ok.map((m, i) => [i === 3 ? lv + 1 : 1, m]), dex, mat };
-  MON_PANEL[k] = ch1Panel(lv, role, 'wild');
-  const [b, dh, ks, kl] = look; PLACEHOLDER[k] = look; HD_RIG_OF_PENDING[k] = b; HD_RIG_OF[k] = b; if (ART[b]) ART[k] = artRecolor(ART[b], dh, ks, kl);
-  CH2_KEYS.add(k);
-  defPut('enemies', k, { tags: ['foe', 'fam:' + fam], skills: ok.filter(id => DEF.skills[id]), fam, trait: null, profile: typeof aiProfile === 'function' ? aiProfile({ sp: k }) : 'brute', script: null, metadata: { n } });
-}
-{ const put = (map, i, row) => { const z = MAPS[map] && MAPS[map].encounters && MAPS[map].encounters[i]; if (z && !z.table.some(t => t[0] === row[0])) z.table.push(row); };
-  put('route', 0, ['stumpling', 2, 4, 15]); put('route', 1, ['stumpling', 4, 6, 15]); put('route', 1, ['meadowWolf', 5, 6, 15]); put('route', 2, ['meadowWolf', 7, 9, 18]);
-  put('forest', 0, ['stumpling', 11, 13, 12]); put('forest', 1, ['stumpling', 11, 13, 12]);
-  put('windHills', 0, ['piglet', 6, 7, 25]); put('windHills', 1, ['piglet', 4, 5, 25]);
-  for (let i = 0; i < 3; i++) put('jadeCreek', i, ['creekCroc', i ? 8 : 10, i ? 9 : 11, 25]); }
-Object.assign(RECIPE_FIX12, {
-  fangDagger: ['wolfPelt'], wolfNecklace: ['wolfPelt'], fangWand: ['wolfPelt', 'stone'], wolfMantle: ['wolfPelt', 'hareFur'], hunterLeather: ['wolfPelt', 'frogSkin'], hunterOath: ['wolfPelt', 'feather'],
-  scaleArmor: ['crocHide', 'stone'], crocBoots: ['crocHide'],
-  woodSword: ['wood'], practiceWand: ['wood'], apprenticeStaff: ['wood', 'stone'], primerTome: ['wood', 'hareFur'], woodFlute: ['wood', 'feather'], corkGun: ['wood', 'stone'],
-  hatchet: ['stone', 'wood'], trainSpear: ['wood'], travelLute: ['wood', 'frogSkin'], oakStaff: ['wood', 'leaf'], boarAxe: ['boarTusk', 'stone'] });
-for (const k of ['fangDagger', 'wolfNecklace', 'fangWand', 'wolfMantle', 'hunterLeather', 'hunterOath', 'scaleArmor', 'crocBoots', 'woodSword', 'practiceWand', 'apprenticeStaff', 'primerTome', 'woodFlute', 'corkGun', 'hatchet', 'trainSpear', 'travelLute', 'oakStaff', 'boarAxe']) {
-  const R = GEAR_RECIPE[k]; if (!R) continue; const counts = Object.values(R.mats), keys = RECIPE_FIX12[k], m = {};
-  counts.forEach((n, i) => { const id = keys[Math.min(i, keys.length - 1)]; m[id] = (m[id] || 0) + n; }); R.mats = m; }
-function midY(Y, h, z = 12) { const C = { 6: 7.5, 7: 8, 8: 7.5, 9: 7, 10: 7.5, 11: 7, 12: 7.5, 13: 8 }; return Math.round(Y + (h - 1) / 2 - (C[z] ?? 7.5)); }
-const W12 = { // weapon: [name, archetype (ORB_A key), [extra effect codes], picture (when the archetype's doesn't fit the weapon)]
-  woodSword: ['木劍連打', 'swallowFlight', ['spec+1']], ironSword: ['鐵劍突進', 'galeCut', ['spe+1']], knightSword: ['騎士十字', 'crossJudge', ['def+1']],
-  foxBlade: ['狐火雙斬', 'swallowFlight', ['brn:30']], crystalBlade: ['水晶穿刺', 'cloudPierce', ['fspd-1']], dawnSword: ['晨曦一閃', 'dawnFlash', ['brn:30']],
-  masterBlade: ['名匠斬', 'steelCleaver', ['crit']], voltSword: ['雷角斬', 'thornBind', ['par:20']], boneSaber: ['骸骨斬', 'crossJudge', ['drain:20']],
-  kingsBlade: ['古王裁決', 'crossJudge', ['atk+1']], graveBlade: ['冥府斬', 'bloodMoon', ['fspd-1']], eclipseBlade: ['月蝕之刃', 'allOut', ['drain:20']],
-  voidBlade: ['虛空斬', 'steelCleaver', ['fdef-1']], moonBlade: ['月光斬', 'swallowFlight', ['crit']], riftSword: ['裂界一閃', 'cloudPierce', ['crit']],
-  sandSaber: ['流砂斬', 'swallowFlight', ['fspe-1']], toadBlade: ['蟾毒斬', 'bloodMoon', ['psn:30']], verdantBlade: ['翠葉斬', 'thornBind', ['drain:20']],
-  royalSword: ['王國劍閃', 'dawnFlash', ['def+1']], hornSpear: ['甲蟲角刺', 'cloudPierce', ['fdef-1']], brassSword: ['發條連斬', 'bladeRain', ['spec+1']],
-  frostBrand: ['霜刃', 'crossJudge', ['fspe-1']], flameBrand: ['炎斬', 'steelCleaver', ['brn:30']], duskSword: ['黯滅斬', 'allOut', ['fatk-1']],
-  starSword: ['星辰斬', 'crossJudge', ['mp:5']], harvestScythe: ['收穫迴斬', 'steamCannon', ['drain:20'], 'whirlRing'], chronoLance: ['時計突', 'dawnFlash', ['spe+1']],
-  duskBlade: ['黑騎士斬', 'steelCleaver', ['drain:20']], moldBlade: ['影將突斬', 'shadowRush', ['fdef-1']],
-  mistDagger: ['晨霧雙刃', 'twinFang', ['spe+1']], fangDagger: ['狼牙連咬', 'twinFang', ['crit']], emberKnife: ['燼火刺', 'galeCut', ['brn:30']],
-  banditKnife: ['盜賊襲擊', 'assassinMark', ['first']], wyrmFang: ['龍牙刺', 'shadowRush', ['wet']], moonDagger: ['月牙閃', 'assassinMark', ['crit']],
-  riftDagger: ['裂界刺', 'shadowRush', ['fspd-1']], huntKnife: ['獵刀切', 'twinFang', ['fspe-1']], stingerDagger: ['蠍尾連刺', 'bladeRain', ['psn:30']],
-  duneFang: ['沙海裂牙', 'shadowRush', ['hit+1']], hydraFang: ['多頭咬', 'twinFang', ['psn:30']], royalDagger: ['宮廷刺擊', 'galeCut', ['crit']],
-  wolfFang2: ['灰狼撕咬', 'bladeRain', ['fdef-1']], iceDagger: ['冰晶刺', 'shadowRush', ['fspe-1']], magmaDagger: ['熔岩刺', 'assassinMark', ['brn:30']],
-  shadowDagger: ['暗影突襲', 'shadowRush', ['first']], cometDagger: ['彗星亂刃', 'bladeRain', ['crit']],
-  grenAxe: ['鐵斧怒擊', 'lastWall', ['fdef-1']], hatchet: ['伐木劈', 'rockBreak', ['spec+1']], boarAxe: ['野豬衝撞', 'shieldRam', ['atk+1']],
-  rockAxe: ['岩角劈', 'rockBreak', ['def+1']], crescentAxe: ['新月迴斬', 'steamCannon', ['crit'], 'axeSpin'], glacierAxe: ['霜嶺劈', 'allOut', ['fspe-1']],
-  titanAxe: ['泰坦重擊', 'shieldRam', ['fdef-1']],
-  trainSpear: ['見習突刺', 'galeCut', ['hit+1']], ironSpear: ['鐵槍貫', 'cloudPierce', ['spe+1']], galeLance: ['疾風突', 'cloudPierce', ['first']],
-  scaleSpear: ['龍鱗突', 'drakeFang', ['def+1']], azureSpear: ['蒼龍突', 'drakeFang', ['wet']], frostSpear: ['霜牙突', 'cloudPierce', ['fspe-1']],
-  skySpear: ['天龍貫', 'drakeFang', ['crit']],
-  wrapFist: ['布纏連拳', 'chainPalm', ['spec+1']], ironKnuckle: ['鐵拳', 'chainPalm', ['fdef-1']], rockFist: ['岩碎拳', 'rockBreak', ['hit+1'], 'hakkei'],
-  chiFist: ['氣功波', 'arcaneShot', ['heal+15'], 'chiBlast'], tigerClaw: ['虎爪亂舞', 'bladeRain', ['atk+1'], 'lacerate'], magmaFist: ['熔岩重拳', 'chainPalm', ['brn:30']],
-  starFist: ['流星拳', 'drakeFang', ['spe+1'], 'heavenFist'],
-  woodFlute: ['催眠笛音', 'sonicBoom', ['slp:15']], travelLute: ['旅人之歌', 'sonicBoom', ['heal+15'], 'echoBlast'], forestHarp: ['森之和弦', 'verdantWind', ['tangle']],
-  moonLyre: ['月光小夜曲', 'songOfValor', ['heal+15']], windHorn: ['風之號令', 'songOfValor', ['spe+1'], 'battleSong'], iceHarp: ['冰弦', 'tidalRage', ['fspe-1']],
-  starLyre: ['星之詠唱', 'holyWard', ['mp:5'], 'healSong'],
-  corkGun: ['軟木塞連射', 'twinFang', ['fatk-1'], 'gunDraw'], brassPistol: ['三連射', 'twinFang', ['hit+1'], 'quickDraw'], steamRifle: ['蒸汽射擊', 'steamCannon', ['wet'], 'gunDraw'],
-  gearRepeater: ['齒輪連發', 'bladeRain', ['hit+1'], 'fullBurst'], boltCannon: ['雷管砲擊', 'thorHammer', ['fdef-1'], 'megaCannon'], frostMusket: ['霜火彈', 'steamCannon', ['fspe-1', 'brn:30'], 'gunDraw'],
-  starBlaster: ['星爆砲擊', 'starfall', ['crit'], 'megaCannon'],
-  apprenticeStaff: ['見習魔彈', 'arcaneShot', ['mp:2']], practiceWand: ['練習魔彈', 'arcaneShot', ['spec+1']], oakStaff: ['森林之息', 'verdantWind', ['mp:2']],
-  thornStaff: ['荊棘纏繞', 'thornBind', ['tangle']], ruinStaff: ['符文障壁', 'manaWall', ['def+1']], tideStaff: ['潮汐彈', 'aquaEdge', ['wet']],
-  stormStaff: ['雷鳴連鎖', 'chainLightning', ['spa+1']], emberRod: ['燼火彈', 'fireShot', ['spa+1']], voltRod: ['雷角閃', 'bolt', ['spe+1']],
-  quartzWand: ['礦晶彈', 'arcaneShot', ['fspd-1']], fangWand: ['狼嚎彈', 'arcaneShot', ['fatk-1']], magusStaff: ['宮廷治癒', 'mend', ['cure']],
-  foxfireStaff: ['狐火漩渦', 'flameVortex', ['spe+1']], crystalStaff: ['水晶怒濤', 'tidalRage', ['fspd-1']], dawnStaff: ['晨曦光炎', 'flameVortex', ['heal+15']],
-  masterStaff: ['名匠障壁', 'manaWall', ['spa+1']], wyrmStaff: ['潮龍怒濤', 'tidalRage', ['heal+15']], lakeStaff: ['湖霧之癒', 'mend', ['shield:1']],
-  riftStaff: ['裂界凝神', 'focusMind', ['mp:3']], harpyStaff: ['鷹羽之風', 'manaWall', ['spe+1']], bogStaff: ['沼霧', 'smokeVeil', ['heal+15']],
-  hydraStaff: ['蛇毒魔彈', 'arcaneShot', ['psn:30']], courtStaff: ['宮廷聖護', 'holyWard', ['cure']], windStaff: ['風鳴嵐', 'verdantWind', ['spe+1']],
-  gearStaff: ['齒輪結界', 'ironWall', ['spec+1']], glacierStaff: ['冰河怒濤', 'tidalRage', ['spa+1']], volcanoStaff: ['火山爆', 'combustion', ['brn:30']],
-  voidStaff: ['虛空聖域', 'holyWard', ['def+1']], starStaff: ['星見流星', 'starfall', ['heal+15']],
-  primerTome: ['入門魔法', 'arcaneShot', ['cheap']], herbalTome: ['森之刃', 'aquaEdge', ['drain:20']], ancientTome: ['古岩之守', 'ironWall', ['mp:3']],
-  stolenTome: ['靈光一現', 'focusMind', ['spa+1']], deathTome: ['亡者吸魂', 'arcaneShot', ['drain:20']], sageTome: ['賢者時停', 'chronoLock', ['mp:5']],
-  starTome: ['星典隕星', 'starfall', ['spa+1']], voidTome: ['虛空凍結', 'chronoLock', ['shield:1']], lakeTome: ['湖之刃', 'aquaEdge', ['heal+15']],
-  riftTome: ['裂界魔彈', 'arcaneShot', ['crit']], sandTome: ['沙暴', 'verdantWind', ['fspe-1']], witchTome: ['魔女毒霧', 'verdantWind', ['psn:30']],
-  royalTome: ['王立聖典', 'songOfValor', ['def+1']], lichTome: ['巫妖冰潮', 'tidalRage', ['drain:20']],
-};
-const W12_EL_FX = { 火: ['fireBolt', 'flameWave'], 水: ['aquaBlade', 'aquaBurst'], 雷: ['thunder', 'chainBolt'], 草: ['leaf', 'leafStorm'] };
-const W12_TP = { 1: 55, 2: 60, 3: 70, 4: 78, 5: 86, 6: 94, 7: 104 }; // total power by tier, for a support weapon that now attacks
-const W12_SAND = { 沙暴: '岩', 風鳴嵐: '一般', 魔女毒霧: '毒' };
-const W12_ARCH_D = { swallowFlight: '兩段斬擊', galeCut: '搶先突進，削減護盾', thornBind: '容易會心的斬擊', cloudPierce: '無視部分物防的突刺', crossJudge: '十字斬，容易會心',
-  steelCleaver: '對破防的對手威力大增', bloodMoon: '吸取對手生命的斬擊', allOut: '威力極大，但自己也會受到反傷', dawnFlash: '搶先的居合斬，容易會心', bladeRain: '連續斬擊',
-  steamCannon: '攻擊全體的衝擊', shadowRush: '從影子中突刺，容易會心', twinFang: '兩段快速攻擊', assassinMark: '對HP低的對手威力大增', lastWall: 'HP越低威力越大',
-  rockBreak: '砸碎盔甲，降低物防，削減護盾', shieldRam: '整個人撞過去，削減護盾，50%讓對手退縮', drakeFang: '兩段穿透突刺', chainPalm: '連續出拳，累積氣',
-  arcaneShot: '純粹的魔力彈', sonicBoom: '音波衝擊，20%讓對手退縮', verdantWind: '席捲全體的風暴', songOfValor: '物攻和魔攻各提升一級', tidalRage: '席捲全體的大浪',
-  holyWard: '回復HP並展開護盾', thorHammer: '從天而降的雷槌攻擊全體，30%麻痺', starfall: '召喚隕石攻擊全體，20%灼傷', manaWall: '展開魔法護盾，傷害減少',
-  aquaEdge: '魔法刃', chainLightning: '連鎖的魔法攻擊全體，20%麻痺', fireShot: '魔法彈，20%灼傷', bolt: '攻擊全體的魔法，10%麻痺', mend: '回復HP',
-  flameVortex: '捲起漩渦攻擊全體，20%灼傷', focusMind: '下一次攻擊必定會心', smokeVeil: '3次行動內迴避提升', ironWall: '物防、魔防各+2',
-  combustion: '攻擊全體，對灼傷的對手威力大增（會消耗灼傷）', chronoLock: '讓時間靜止，對手暫時無法行動' };
 { const old = weaponSkill12, seen = new Map(), names = new Set(Object.values(DEF.skills).map(D => D.name));
   const avgHits = D => D.hits ? (D.hits[0] + D.hits[1]) / 2 : 1;
   for (const k in W12) { const G = GEAR[k]; if (!G || G.slot !== 'weapon') { bvErr('v12', 'w12 ' + k + ' not a weapon'); continue; }
@@ -4735,8 +4605,7 @@ Object.assign(COND, { srcChiFull11: (c, v) => !!c.src && (c.src.max.chi || 0) > 
 Object.assign(BR.FORMULA, { ironLaw11: c => (c.src.stats.atk + c.src.stats.def) / Math.max(1, c.src.stats.atk), song12: c => 1 + 0.15 * ((c.src && c.src.statuses.filter(s => DEF.statuses[s.id] && DEF.statuses[s.id].group === 'stage' && s.stacks > 0).length) || 0) });
 const ZJ11 = {
   劍: [['4a', 'zjSky', '一刀天斷', 150, 0, 4, 14, 0, '搶先的一刀，必定會心。', { prio: 1, mods: [CRIT11] }],
-    ['4b', 'zjRune', '星紋魔劍', 95, 0, 4, 14, 0, '用物攻、魔攻較高的一邊計算；再追加 2 段魔法（各 40），回復傷害 10% 的 MP。', { unlock: 'spellbladeOk', catOf: MAXATK11,
-      after: [{ type: 'damage', target: 'cast_targets', power: 40, cat: '特', cond: { tgtAlive: 1 } }, { type: 'damage', target: 'cast_targets', power: 40, cat: '特', cond: { tgtAlive: 1 } }, { type: 'resource', target: 'self', res: 'mp', ofCast: 0.1, why: 'drain' }] }]],
+    ['4b', 'zjSteel', '斷鋼一閃', 160, 0, 4, 14, 0, '對物防下降中的對手必定會心；對護盾傷害 ×2。', { mods: [{ ...CRIT11, cond: { tgtDefDown11: 1 } }] }]],
   雙劍: [['4a', 'zjSwallow', '迴燕雙斷', 130, 0, 4, 14, 0, '迴身的一斬，必定會心。', { mods: [CRIT11] }],
     ['4b', 'zjObsidian', '黑曜終劍', 160, 0, 5, 16, 0, '用物攻、魔攻較高的一邊計算的終結一劍。', { unlock: 'spellbladeOk', catOf: MAXATK11 }]],
   短刀: [['4a', 'zjMoonFang', '月影雙斬', 55, 2, 4, 12, 0, '2 段快斬；對 HP 一半以下的對手每段必定會心。', { mods: [{ ...CRIT11, cond: { tgtHpBelow: 0.5 } }] }]],
@@ -4755,6 +4624,8 @@ const ZJ11 = {
     ['4b', 'zjMeteor', '流星龍墜', 120, 0, 5, 16, 1, '跳到空中，下一次行動化成流星落下打全體。', { unlock: 'clsDragoon', charge: 1, airborne: 1 }]],
 };
 for (const k in ZJ11) TREE11[k].sk.push(...ZJ11[k]);
+{ const _so = startOverworld; startOverworld = function (...a) { const st = Game.st, T = st && st.tr11; if (T && T.lv && T.lv.t_zjRune) { T.lv.t_zjSteel = Math.max(T.lv.t_zjSteel || 0, T.lv.t_zjRune); delete T.lv.t_zjRune; }
+    if (st && Array.isArray(st.slots)) st.slots = st.slots.map(id => id === 't_zjRune' ? 't_zjSteel' : id); return _so.apply(this, a); }; }
 const CM11 = {
   戰技: { cat: '物', nodes: [['cmAtk', '剛力', 5, 1, '物攻 +2%／級', { p: { atk: 2 } }], ['cmSpa', '靈力', 5, 1, '魔攻 +2%／級', { p: { spa: 2 } }], ['cmCrit', '銳眼', 5, 1, '會心率 +1%／級', { f: { crit: 1 } }],
       ['cmWeak', '識破', 5, 2, '會心傷害 +5%／級', { f: { critDmg: 5 } }], ['cmBig', '屠巨', 5, 2, '對菁英・頭目的傷害 +3%／級', { big: 3 }], ['cmChase', '追斬', 1, 2, '會心命中後追加一擊（威力 20），每次行動 1 次', { tal: 'swordsman.0.1.0' }],
@@ -5329,10 +5200,9 @@ Object.assign(FX11, {
     *f(S, U, T, u) { this.spawn({ k: 'dark', a: 0.5, c: '#080818', life: 26 }); Sound.sfx('tick'); this.spawn({ k: 'line', x1: U.x + 6, y1: U.y - 4, x2: U.x + 20, y2: U.y - 4, c: S.col[1], w: 2, grow: 3, life: 10 }); yield* wait(8);
       yield* this.lunge(u, 26, 2); Sound.sfx('crit'); ln9(this, T.x - 50, T.y + 6, T.x + 50, T.y - 6, S.col[0], S.col[1], 4, 16); this.spawn({ k: 'flash', c: '#ffffff', a: 0.45, life: 5 }); yield* wait(4);
       for (let i = 0; i < 5; i++) this.spawn({ k: 'line', x1: T.x - 40 + i * 20, y1: T.y - 20, x2: T.x - 34 + i * 20, y2: T.y + 20, c: S.col[0], w: 1, grow: 2, life: 10 }); imp9(this, T, S, 1); this.shake = Math.max(this.shake, 8); yield* wait(10); } },
-  zjRune: { col: ['#b080ff', '#f8f0ff', '#402080'], pt: 'rune', cast: 'rune', fin: 'burst', snd: 'slash', // 星紋魔劍: a cut, then two rune bolts
-    *f(S, U, T, u) { yield* this.lunge(u, 14, 3); Sound.sfx('slash'); sl11(this, T, -0.7, 26, S, 6); this.spawn({ k: 'hex', x: T.x, y: T.y, r0: 6, r1: 22, c: S.col[0], life: 14 }); yield* wait(5);
-      for (let k = 0; k < 2; k++) { Sound.sfx('charge'); yield* bolt11(this, U, { x: T.x + (k ? 8 : -8), y: T.y }, S, 6, 3); this.spawn({ k: 'ring', x: T.x, y: T.y, r0: 4, r1: 20, c: S.col[1], w: 2, life: 10 }); this.star(T.x, T.y, S.col[0], 10); yield* wait(3); }
-      this.spawn({ k: 'glow', x: U.x, y: U.y, r: 16, c: '#80b0ff', life: 12 }); yield* wait(8); } },
+  zjSteel: { col: ['#c8d8f0', '#ffffff', '#283850'], pt: 'shard', cast: 'draw', fin: 'cut', snd: 'heavy', // 斷鋼一閃: one heavy cut, the armour splits
+    *f(S, U, T, u) { yield* this.lunge(u, 22, 2); Sound.sfx('heavy'); ln9(this, T.x + 40, T.y - 34, T.x - 40, T.y + 34, S.col[0], S.col[1], 4, 16); this.spawn({ k: 'flash', c: '#ffffff', a: 0.35, life: 5 }); yield* wait(4);
+      for (let i = 0; i < 8; i++) this.spawn({ k: 'dot', x: T.x, y: T.y, vx: rnd(-30, 30) / 10, vy: rnd(-30, 10) / 10, g: 0.15, c: pick(S.col), s: 2, life: 18 }); imp9(this, T, S, 1); this.shake = Math.max(this.shake, 8); yield* wait(10); } },
   zjSwallow: { col: ['#a0e0ff', '#ffffff', '#20608a'], pt: 'wind', cast: 'dash', fin: 'cut', snd: 'slash', // 迴燕雙斷: a swallow-turn — one sweep out, one back
     *f(S, U, T, u) { yield* this.lunge(u, 18, 2); Sound.sfx('slash'); this.spawn({ k: 'cres', x: T.x, y: T.y, r: 24, ang: 0.4, c: S.col[1], c2: S.col[0], w: 5, life: 12 }); yield* wait(4);
       Sound.sfx('crit'); this.spawn({ k: 'cres', x: T.x, y: T.y, r: 24, ang: 3.5, c: S.col[1], c2: S.col[0], w: 5, life: 12 }); for (let i = 0; i < 4; i++) this.spawn({ k: 'line', x1: T.x, y1: T.y, x2: T.x + Math.cos(i * 1.6) * 30, y2: T.y + Math.sin(i * 1.6) * 20, c: S.col[1], w: 1, grow: 2, life: 10 }); imp9(this, T, S, 1); yield* wait(10); } },
@@ -5535,7 +5405,7 @@ const NC_TXT12 = [
   [/覺醒成為了冒險者！/g, '覺醒了異界人之力！'],
   [/覺醒了隱藏職業「異界勇者」！（找村長轉職）/g, '解鎖了戰技樹的絕技「晨曦之刃」「雙相斬」！'],
   [/要繼承「魔劍士」的道路嗎？\n（隨時也能找村長轉職）/g, '要學流浪魔劍士的劍技嗎？'],
-  [/魔劍士的天賦能讓物攻與魔攻互相加成（魔劍共鳴）。試著配一把劍和一本魔導書吧。/g, '解鎖了絕技「星紋魔劍」（劍技能樹）和「黑曜終劍」（雙劍技能樹）！'],
+  [/魔劍士的天賦能讓物攻與魔攻互相加成（魔劍共鳴）。試著配一把劍和一本魔導書吧。/g, '解鎖了絕技「黑曜終劍」（雙劍技能樹）！'],
   [/職業的事也可以找我——王都有好幾個「上級職業」的導師，完成他們的試煉就能轉職。/g, '王都有好幾位導師，完成他們的試煉就能學到絕技。'],
   [/去公會轉職吧，我的學生。/g, '把那段旋律練熟吧，我的學生。'],
   [/你有資格走上這條路了。到冒險者公會找公會長轉職吧。/g, '你有資格學詩人公會的歌了。'],
@@ -5544,7 +5414,7 @@ const NC_TXT12 = [
   [/完成：成為(吟遊詩人|機工士|武僧|龍騎士)的資格。（到冒險者公會轉職）/g, '完成：學會了$1的絕技。'],
   [/上級職業「(吟遊詩人|機工士|武僧|龍騎士)」/g, '$1的絕技'],
   [/覺醒了隱藏職業/g, '解鎖了絕技'],
-  [/隱藏職業「異界勇者」/g, '絕技「晨曦之刃」「雙相斬」'], [/隱藏職業「魔劍士」/g, '絕技「星紋魔劍」「黑曜終劍」'], [/繼承了魔劍之道/g, '學到了魔劍士的劍技'],
+  [/隱藏職業「異界勇者」/g, '絕技「晨曦之刃」「雙相斬」'], [/隱藏職業「魔劍士」/g, '絕技「黑曜終劍」'], [/繼承了魔劍之道/g, '學到了魔劍士的劍技'],
   [/天賦之書|修練之書/g, '秘傳之書'],
   [/天賦選錯的話/g, '技能樹點錯的話'],
 ];
@@ -5556,10 +5426,10 @@ classTalk = function* () { const st = Game.st; if (!st.cls) { const k = yield* c
   if (st.lv < 14) return false; const r = yield* ask('要做什麼？', ['技能樹重置', '聊天']); if (r !== 0) return false; yield* treeReset11(); return true; };
 ch2ClassTalk = function* () { const st = Game.st, f = st.flags, n = ['clsBard', 'clsMachinist', 'clsMonk', 'clsDragoon'].filter(k => f[k]).length;
   yield* say('王都的導師們都有自己的絕活。完成他們的試煉，就能學到技能樹的「絕技」。' + (n ? '\n（已經解鎖 ' + n + '/4 位導師的絕技）' : '\n（詩人公會・鐘錶師・雪峰寺・龍騎士老人）')); };
-const ZJ_OF12 = { clsBard: ['迴響序曲', '終章頌歌', '樂器'], clsMachinist: ['齒輪砲台', '赤焰彈', '火槍'], clsMonk: ['千手寸勁', '沖天拳', '拳套'], clsDragoon: ['蒼龍躍', '流星龍墜', '長槍'], hiddenCls: ['晨曦之刃', '雙相斬', '戰技'], spellbladeOk: ['星紋魔劍', '黑曜終劍', '劍・雙劍'] };
+const ZJ_OF12 = { clsBard: ['迴響序曲', '終章頌歌', '樂器'], clsMachinist: ['齒輪砲台', '赤焰彈', '火槍'], clsMonk: ['千手寸勁', '沖天拳', '拳套'], clsDragoon: ['蒼龍躍', '流星龍墜', '長槍'], hiddenCls: ['晨曦之刃', '雙相斬', '戰技'], spellbladeOk: ['黑曜終劍', null, '雙劍'] };
 { const _u = Overworld.prototype.update; Overworld.prototype.update = function (...a) { const st = this.st, f = st && st.flags;
     if (f && !this.script && !UI.stack.length && !Game.trans) { const told = f.zjTold12 || (f.zjTold12 = {}); const k = Object.keys(ZJ_OF12).find(q => f[q] && !told[q]);
-      if (k) { told[k] = 1; const [x1, x2, tr] = ZJ_OF12[k]; this.run((function* () { yield* itemGet('解鎖了絕技「' + x1 + '」「' + x2 + '」！（' + tr + '技能樹，Lv35 開放）'); })()); return; } }
+      if (k) { told[k] = 1; const [x1, x2, tr] = ZJ_OF12[k]; this.run((function* () { yield* itemGet('解鎖了絕技「' + x1 + '」' + (x2 ? '「' + x2 + '」' : '') + '！（' + tr + '技能樹，Lv35 開放）'); })()); return; } }
     return _u.apply(this, a); }; }
 { const _eq = extraQuests; extraQuests = function (st, L) { _eq(st, L); for (const q of L) { q.t = ncTxt12(q.t); if (q.rw) q.rw = ncTxt12(q.rw); } }; }
 for (const k in QUEST_CATS) if (QUEST_CATS[k] === '職業') QUEST_CATS[k] = '絕技';
@@ -5877,7 +5747,7 @@ EFFECT_TYPES.hunt_hp = { exec(core, ef, ctx) { const e = ctx.pre, R = core.rel11
   e.payload.amount = Math.max(1, Math.floor(v)); (e.payload.notes || (e.payload.notes = [])).push('hunt11'); } };
 { const _ue = BD.unitForEnemy; BD.unitForEnemy = function (core, sp, lv, kind, side, idx, o = {}) { const s = _ue.call(this, core, sp, lv, kind, side, idx, o); if (!s) return s;
     s.data.wardMul12 = [1, 1, 1.25, 1.5][s.data.diff11 || 0] || 1; return s; }; }
-const WARDX12 = { t_axSplit: 2, t_axCrush: 3, t_sdGap: 2, t_spBreak: 2, t_fsStorm: 2, t_gnAp: 2, t_shRam: 2 };
+const WARDX12 = { t_zjSteel: 2, t_axSplit: 2, t_axCrush: 3, t_sdGap: 2, t_spBreak: 2, t_fsStorm: 2, t_gnAp: 2, t_shRam: 2 };
 for (const id in WARDX12) if (DEF.skills[id]) DEF.skills[id].wardX = WARDX12[id];
 for (const id of ['t_sdFlow', 't_dsStar']) if (DEF.skills[id]) DEF.skills[id].wardCritX = 1.5;
 const wEff12 = (id, ef) => effRegister('skill:' + id + '#w12', ef);
@@ -6625,7 +6495,7 @@ function fxtSetup13(kind) { const st = Game.st, T = tr11(st), base = fxtBase13(k
 { const H = Battle.prototype.handlers, _m = H.MESSAGE; H.MESSAGE = function* (e, s, t, P) { if (FXT13.on && P && P.key === 'wait') return; return yield* _m.call(this, e, s, t, P); }; }
 { const _e = BR.escape; BR.escape = function (core, u, n) { return FXT13.on ? true : _e.call(this, core, u, n); }; }
 { const _c = Battle.prototype.command; Battle.prototype.command = function* () { if (!FXT13.on) return yield* _c.call(this);
-    const c = this.core, hu = c.byId.H; for (const r in hu.max || {}) if (r !== 'wc' && hu.max[r] > 0) hu.res[r] = hu.max[r]; // HP・MP・氣・守勢 全滿 hu.cd = {}; for (const k in c.data) if (/^skill\|H\|/.test(k)) c.data[k] = 0; if (this.sync) this.sync();
+    const c = this.core, hu = c.byId.H; for (const r in hu.max || {}) if (r !== 'wc' && hu.max[r] > 0) hu.res[r] = hu.max[r]; /* HP・MP・氣・守勢 全滿 */ hu.cd = {}; for (const k in c.data) if (/^skill\|H\|/.test(k)) c.data[k] = 0; if (this.sync) this.sync();
     const cmd = yield* _c.call(this);
     if (cmd && cmd.type === 'skill' && FXT13.sp[cmd.skill] != null) { const j = FXT13.sp[cmd.skill], k = FXT13.kind, foe = c.alive('B')[0];
       hu.data.wspSkill = cmd.skill; hu.data.wspName = TREE11[k].sp[j][0]; hu.data.wspFx = 'sp11_' + TREE_KINDS11.indexOf(k) + '_' + j; hu.res.wc = Math.max(0, ((hu.max && hu.max.wc) || 3) - 1);
@@ -6796,13 +6666,6 @@ redo13('t_sdGap', 't11_sdGap', { col: C13.red,
     if (warded) { Sound.sfx('rock'); K13.ring(this, T, 10, 44, C13.ward, 4, 14); for (let i = 0; i < 12; i++) { const an = Math.random() * 6.3, sp = rnd(15, 35) / 10; this.spawn({ k: 'k13poly', x: T.x + Math.cos(an) * 14, y: T.y + Math.sin(an) * 14, vx: Math.cos(an) * sp, vy: Math.sin(an) * sp - 0.6, g: 0.1, vr: 0.2, shapes: SH13.hex(4, C13.ward[0]), life: 22, fade: 1 }); } }
     if (weak) { K13.flash(this, '#ff4020', 0.25, 6); K13.spike(this, T, 36, c, 10, 14); }
     K13.hit(this, T, c, weak || warded ? 1 : 0); yield* wait(10); } });
-redo13('t_zjRune', 't11_zjRune', { col: C13.star,
-  *f(S, U, T, u) { const c = S.col, el = EL13[((gearBy(Game.st.equip.weapon) || {}).el) || ''] || C13.arc, H = this.center(this.H), tip = { x: H.x + 18, y: H.y - 20 };
-    Sound.sfx('charge'); for (let i = 0; i < 6; i++) K13.spike(this, { x: tip.x + rnd(-12, 12), y: tip.y + rnd(-18, 8) }, 7, c, 4, 16, { inner: 0.3 }); K13.ring(this, tip, 26, 4, c, 2, 12); yield* wait(10);
-    yield* this.lunge(u, 18, 3); Sound.sfx('slash'); K13.cut(this, T, -0.9, 74, c, 10, 16, { bend: 8 }); K13.hit(this, T, c, 0); yield* wait(4);
-    const Sg = { x: T.x, y: T.y - 34 }; this.spawn({ k: 'glow', x: Sg.x, y: Sg.y, r: 26, c: c[2], life: 36 }); this.spawn({ k: 'rune', x: Sg.x, y: Sg.y, r: 18, c: c[0], c2: c[1], n: 10, poly: 5, sq: 1, life: 36 }); K13.ring(this, Sg, 4, 22, c, 3, 12); yield* wait(6);
-    for (let k = 0; k < 2; k++) { const P = { x: T.x + (k ? 9 : -9), y: T.y + 2 }; Sound.sfx('charge'); yield* K13.orb(this, Sg, P, el, 6, 5, 0, { trail: 6 }); Sound.sfx('hitSuper'); K13.hit(this, P, el, 0); yield* wait(5); }
-    Sound.sfx('heal'); K13.motes(this, T, H, C13.mp, 14, 18); yield* wait(14); } });
 redo13('t_axSpin', 't11_axSpin', { col: C13.axe,
   *f(S, U, T, u, t) { const c = S.col, L = K13.views(this, t).map(v => this.center(v)).sort((a, b) => a.x - b.x), G = T; Sound.sfx('wind');
     for (let i = 0; i < 4; i++) K13.ghost(this, Math.cos(i * 1.57) * 10, Math.sin(i * 1.57) * 4, '#ffb060', 8 + i * 3, 0.4); yield* this.lunge(u, 16, 3);
@@ -9915,3 +9778,327 @@ if (MAPS.harbor13 && Array.isArray(MAPS.harbor13.rows)) { const R = MAPS.harbor1
 { const _eq = extraQuests; extraQuests = function (st, L) { _eq(st, L); if (!st.wb13) return; const B = wgToday13(st); if (!B.length) return;
     L.push({ n: '每日懸賞', t: B.map(b => wgName13(b) + '（' + (b.paid ? '已領' : b.got >= b.need ? '可以領' : b.got + '/' + b.need) + '）').join('、') + '。城鎮的告示板領獎，每天換新的。', done: false, rw: '金錢・素材・藥水' }); }; }
 { const _ow = startOverworld; startOverworld = function () { const r = _ow.apply(this, arguments); try { if (Game.st) wgToday13(Game.st); } catch (e) { console.error(e); } return r; }; }
+const HD15 = { on: false, ids: [], old: {}, T: new Map() };
+HD15.q = () => (typeof HD_QUALITY !== 'undefined' && HD_QUALITY.low) ? 0.5 : 1;
+HD15.cl = t => t < 0 ? 0 : t > 1 ? 1 : t;
+HD15.eo = t => 1 - Math.pow(1 - t, 3);
+HD15.ei = t => t * t;
+HD15.rgb = c => { const n = parseInt(c.slice(1), 16); return (n >> 16 & 255) + ',' + (n >> 8 & 255) + ',' + (n & 255); };
+HD15.rgba = (c, a) => 'rgba(' + HD15.rgb(c) + ',' + Math.max(0, Math.min(1, a)).toFixed(3) + ')';
+HD15.P = {
+  steel: { core: '#ffffff', mid: '#62c4ff', glow: '#2a63ff', edge: '#0e2a7a' },
+  blaze: { core: '#ffe27a', mid: '#ff6a1a', glow: '#ff2a0a', edge: '#7a0a00' },
+  star: { core: '#fffbe8', mid: '#ffc63a', glow: '#ff7a10', edge: '#8a3a00' },
+  wind: { core: '#f0fff8', mid: '#46e0a6', glow: '#0fae78', edge: '#06402e' },
+  gold: { core: '#fffbe6', mid: '#ffd24a', glow: '#ff9a1a', edge: '#6a3a00' },
+  azure: { core: '#ffffff', mid: '#4fb4ff', glow: '#1f5bff', edge: '#0a1f6a' },
+  crimson: { core: '#fff0f0', mid: '#ff4060', glow: '#d0103a', edge: '#4a0010' },
+  cyan: { core: '#ffffff', mid: '#5fe6ff', glow: '#1aa0ff', edge: '#063a5a' },
+  violet: { core: '#fff0ff', mid: '#c07bff', glow: '#7a2cff', edge: '#2a0a5a' },
+  pink: { core: '#fff2fa', mid: '#ff8ad0', glow: '#ff3a9a', edge: '#5a0a3a' },
+};
+HD15.cv = (w, h, fn) => { const c = document.createElement('canvas'); c.width = w; c.height = h; fn(c.getContext('2d'), w, h); return c; };
+HD15.tex = (k, col = '#ffffff') => { const key = k + col; let c = HD15.T.get(key); if (c) return c; const R = HD15.rgb(col);
+  if (k === 'glow') c = HD15.cv(128, 128, g => { const G = g.createRadialGradient(64, 64, 0, 64, 64, 64); G.addColorStop(0, `rgba(${R},1)`); G.addColorStop(0.2, `rgba(${R},0.72)`); G.addColorStop(0.5, `rgba(${R},0.2)`); G.addColorStop(1, `rgba(${R},0)`); g.fillStyle = G; g.fillRect(0, 0, 128, 128); });
+  else if (k === 'core') c = HD15.cv(64, 64, g => { const G = g.createRadialGradient(32, 32, 0, 32, 32, 32); G.addColorStop(0, 'rgba(255,255,255,1)'); G.addColorStop(0.3, `rgba(${R},0.9)`); G.addColorStop(1, `rgba(${R},0)`); g.fillStyle = G; g.fillRect(0, 0, 64, 64); });
+  else if (k === 'streak') c = HD15.cv(256, 32, g => { g.translate(128, 16); g.scale(1, 1 / 8); const G = g.createRadialGradient(0, 0, 0, 0, 0, 128); G.addColorStop(0, 'rgba(255,255,255,1)'); G.addColorStop(0.1, `rgba(${R},0.9)`); G.addColorStop(0.42, `rgba(${R},0.28)`); G.addColorStop(1, `rgba(${R},0)`); g.fillStyle = G; g.fillRect(-128, -128, 256, 256); });
+  else if (k === 'smoke') c = HD15.cv(96, 96, g => { for (let i = 0; i < 8; i++) { const x = 48 + (Math.random() - 0.5) * 30, y = 48 + (Math.random() - 0.5) * 22, r = 16 + Math.random() * 16, G = g.createRadialGradient(x, y, 0, x, y, r); G.addColorStop(0, `rgba(${R},0.45)`); G.addColorStop(1, `rgba(${R},0)`); g.fillStyle = G; g.fillRect(0, 0, 96, 96); } });
+  HD15.T.set(key, c); return c; };
+HD15.put = (x, img, cx, cy, w, h, rot, al, add = 1) => { if (!(al > 0.003) || !(w > 0) || !(h > 0)) return; x.globalCompositeOperation = add ? 'lighter' : 'source-over'; x.globalAlpha = Math.min(1, al); x.imageSmoothingEnabled = true;
+  if (rot) { x.save(); x.translate(cx, cy); x.rotate(rot); x.drawImage(img, -w / 2, -h / 2, w, h); x.restore(); } else x.drawImage(img, cx - w / 2, cy - h / 2, w, h); };
+HERO_PK.hd15 = (x, p) => { const t = p.t - (p.delay || 0); if (t < 0) return; p.draw(x, p, HD15.cl(t / Math.max(1, p.life - (p.delay || 0))), t); };
+HD15.add = (b, o) => { const u = o.upd; o.upd = p => { if (b.hs15 > 0 && !p.free) { p.t--; return; } if (u) u(p); else if (p.vx || p.vy || p.g) HD15.mv(p); }; return b.spawn(Object.assign({ k: 'hd15', delay: 0 }, o)); };
+HD15.mv = p => { if (p.t <= (p.delay || 0)) return; p.x += p.vx || 0; p.y += p.vy || 0; const d = p.drag ?? 1; p.vx = (p.vx || 0) * d; p.vy = (p.vy || 0) * d + (p.g || 0); if (p.spin) p.rot = (p.rot || 0) + p.spin; };
+HD15.stop = (b, n) => { b.hs15 = Math.max(b.hs15 || 0, n); b.spawn({ k: 'hd15', free: 1, life: n + 1, draw: () => {}, upd: () => { if (b.hs15 > 0) b.hs15--; } }); };
+HD15.dim = (b, a, dur, o = {}) => HD15.add(b, { x: 0, y: 0, free: 1, delay: o.delay || 0, life: (o.delay || 0) + dur, draw: (x, p, k) => { const f = k < 0.15 ? k / 0.15 : k > 0.7 ? 1 - (k - 0.7) / 0.3 : 1; x.globalCompositeOperation = 'source-over'; x.globalAlpha = a * f; x.fillStyle = o.col || '#05030c'; x.fillRect(0, 0, W, BH); } });
+HD15.SZ = o => ({ r: (o.r || 34) * 1.2, th: Math.max(2.2, (o.th || 9) * 0.5), span: Math.min(2.8, (o.span || 2.2) * 1.1) });
+HD15.slashStart = (T, o) => { const Z = HD15.SZ(o), r = Z.r, th = Z.th, span = Z.span, ang = o.ang ?? -0.6, dir = o.dir || 1, fl = o.fl || 1, k0 = o.center ? 0 : r - th * 0.45, O = { x: T.x - Math.cos(ang) * k0, y: T.y - Math.sin(ang) * k0 * fl }, a0 = ang - span / 2 * dir, rr = r - th * 0.4;
+  return { x: O.x + Math.cos(a0) * rr, y: O.y + Math.sin(a0) * rr * fl, tan: Math.atan2(dir * fl * Math.cos(a0), -dir * Math.sin(a0)) }; };
+HD15.slash = (b, T, o) => { const Z = HD15.SZ(o), r = Z.r, th = Z.th, span = Z.span, ang = o.ang ?? -0.6, dir = o.dir || 1, fl = o.fl || 1, P = o.pal, dur = o.dur || 20, al = o.al ?? 1, dl = o.delay || 0, N = 40;
+  const rv = Math.min(5, Math.max(3, dur * (o.sw || 0.3) * 0.6)) / dur, k0 = o.center ? 0 : r - th * 0.45, O = { x: T.x - Math.cos(ang) * k0, y: T.y - Math.sin(ang) * k0 * fl }, a0 = ang - span / 2 * dir;
+  const pt = (a, rr) => [O.x + Math.cos(a) * rr, O.y + Math.sin(a) * rr * fl], HD = k => HD15.eo(HD15.cl(k / rv)), ER = k => HD15.ei(HD15.cl((k - rv - 0.12) / (0.88 - rv)));
+  return HD15.add(b, { x: O.x, y: O.y, delay: dl, life: dl + dur,
+    upd: p => { const t = p.t - dl; if (t < 0 || !o.spark) return; const h = HD(t / dur); if (h >= 1 && t > rv * dur + 1) return; const a = a0 + span * dir * h, [hx, hy] = pt(a, r - th * 0.3);
+      HD15.sparks(b, { x: hx, y: hy }, 2, P, { ang: a + dir * Math.PI / 2, spread: 1, spd: 2.4, life: 14, g: 0.05 }); },
+    draw: (x, p, k) => { const hd = HD(k), er = ER(k); if (hd - er < 0.01) return; const f = (1 - HD15.ei(HD15.cl((k - 0.5) / 0.5))) * al, tf = 1 - 0.65 * HD15.ei(HD15.cl((k - rv) / (1 - rv)));
+      const U = i => er + (hd - er) * i / N, W = u => th * tf * Math.pow(Math.max(0, Math.sin(Math.PI * u)), 0.7), A = u => a0 + span * dir * u;
+      const band = (rOut, rIn) => { x.beginPath(); for (let i = 0; i <= N; i++) { const u = U(i), [px, py] = pt(A(u), rOut(u)); i ? x.lineTo(px, py) : x.moveTo(px, py); } for (let i = N; i >= 0; i--) { const u = U(i), [px, py] = pt(A(u), rIn(u)); x.lineTo(px, py); } x.closePath(); };
+      const [tx, ty] = pt(A(er), r), [hx, hy] = pt(A(hd), r), grad = (c, a) => { const G = x.createLinearGradient(tx, ty, hx, hy); G.addColorStop(0, HD15.rgba(c, a * 0.3)); G.addColorStop(0.45, HD15.rgba(c, a * 0.85)); G.addColorStop(1, HD15.rgba(c, a)); return G; };
+      x.lineJoin = 'round'; x.globalAlpha = f;
+      x.globalCompositeOperation = 'lighter'; band(u => r + 1.8 * W(u) / th + 0.6, u => r - W(u) - 2.2 * W(u) / th - 0.4); x.fillStyle = grad(P.glow, 0.5); x.fill();   // 外圈柔光
+      x.globalCompositeOperation = 'source-over'; band(u => r - W(u) * 0.55, u => r - W(u) - 0.5); x.fillStyle = grad(P.edge, 0.7); x.fill();                    // 內側的暗邊
+      band(() => r, u => r - W(u)); x.fillStyle = grad(P.mid, 0.95); x.fill();                                                                                      // 刀光本體（主色）
+      band(() => r - 0.1, u => r - W(u) * 0.36); x.fillStyle = grad(P.core, 1); x.fill();                                                                           // 最亮的刀鋒
+      if (k < rv * 1.6) { const [px, py] = pt(A(hd), r - th * 0.25), z = th * 1.1; HD15.put(x, HD15.tex('glow', P.mid), px, py, z * 4, z * 4, 0, 0.6 * f); HD15.put(x, HD15.tex('core', P.mid), px, py, z * 1.4, z * 1.4, 0, f); } } }); };
+HD15.tanAt = o => (o.ang ?? -0.6) + (o.dir || 1) * Math.PI / 2;
+HD15.cut = (b, T, rot, L, pal, o = {}) => { const dl = o.delay || 0; L *= 1.25; o = Object.assign({}, o, { w: (o.w || 7) * 0.55 }); return HD15.add(b, { x: T.x, y: T.y, delay: dl, life: dl + (o.dur || 18), draw: (x, p, k) => { const g = HD15.eo(HD15.cl(k * 5)), sp = HD15.eo(HD15.cl((k - 0.25) / 0.75)) * (o.gap || 4), f = 1 - HD15.ei(HD15.cl((k - 0.2) / 0.8)), nx = -Math.sin(rot), ny = Math.cos(rot), T2 = HD15.tex('streak', pal.mid);
+  for (const sg of sp > 0.2 ? [-1, 1] : [0]) HD15.put(x, T2, p.x + nx * sp * sg, p.y + ny * sp * sg, L * g, (o.w || 7) * (1 - 0.5 * k), rot, f); } }); };
+HD15.sparks = (b, P0, n, pal, o = {}) => { n = Math.max(1, Math.round(n * HD15.q())); for (let i = 0; i < n; i++) { const an = o.ang != null ? o.ang + (Math.random() - 0.5) * (o.spread ?? 1) : Math.random() * Math.PI * 2, v = (o.spd || 3) * (0.45 + Math.random() * 0.8), dl = o.delay || 0;
+  HD15.add(b, { x: P0.x + (o.r ? (Math.random() - 0.5) * o.r : 0), y: P0.y + (o.r ? (Math.random() - 0.5) * o.r * 0.4 : 0), vx: Math.cos(an) * v, vy: Math.sin(an) * v - (o.up || 0), g: o.g ?? 0.06, drag: o.drag ?? 0.9, delay: dl, life: dl + Math.round((o.life || 18) * (0.8 + Math.random() * 0.45)), upd: HD15.mv, w: (o.w || 1) * (0.7 + Math.random() * 0.6), col: Math.random() < 0.4 ? pal.core : pal.mid,
+    draw: (x, p, k) => { const L = o.len || 2.2, f = 1 - HD15.ei(k); HD15.put(x, HD15.tex('glow', pal.glow), p.x, p.y, 7, 7, 0, 0.5 * f); x.globalCompositeOperation = 'source-over'; x.globalAlpha = f; x.strokeStyle = p.col; x.lineCap = 'round'; x.lineWidth = p.w * (1 - k * 0.5);
+      x.beginPath(); x.moveTo(p.x - p.vx * L, p.y - p.vy * L); x.lineTo(p.x, p.y); x.stroke(); } }); } };
+HD15.flash = (b, P0, pal, S, o = {}) => { const dl = o.delay || 0; return HD15.add(b, { x: P0.x, y: P0.y, delay: dl, life: dl + (o.dur || 14), draw: (x, p, k) => { const g = HD15.eo(HD15.cl(k * 4)), f = 1 - HD15.eo(HD15.cl((k - 0.06) / 0.94)), s = 0.45 + 0.75 * g, fl = o.fl || 1;
+  HD15.put(x, HD15.tex('glow', pal.glow), p.x, p.y, S * s, S * s * fl, 0, 0.6 * f); HD15.put(x, HD15.tex('glow', pal.mid), p.x, p.y, S * s * 0.55, S * s * 0.55 * fl, 0, 0.6 * f); HD15.put(x, HD15.tex('core', pal.mid), p.x, p.y, S * 0.3 * s, S * 0.3 * s * fl, 0, f); } }); };
+HD15.flare = (b, P0, pal, L, o = {}) => { const dl = o.delay || 0; return HD15.add(b, { x: P0.x, y: P0.y, delay: dl, life: dl + (o.dur || 16), draw: (x, p, k) => { const g = HD15.eo(HD15.cl(k * 3)), f = 1 - HD15.ei(HD15.cl((k - 0.12) / 0.88)), rot = (o.rot || 0) + (o.spin || 0) * k, T = HD15.tex('streak', pal.mid);
+  HD15.put(x, T, p.x, p.y, L * g, L * 0.1 * (1.6 - k), rot, f); HD15.put(x, T, p.x, p.y, L * 0.6 * g, L * 0.08 * (1.6 - k), rot + Math.PI / 2, f * 0.9);
+  if (o.x8) { HD15.put(x, T, p.x, p.y, L * 0.42 * g, L * 0.05, rot + Math.PI / 4, f * 0.6); HD15.put(x, T, p.x, p.y, L * 0.42 * g, L * 0.05, rot - Math.PI / 4, f * 0.6); } } }); };
+HD15.ring = (b, P0, pal, r0, r1, o = {}) => { const dl = o.delay || 0; return HD15.add(b, { x: P0.x, y: P0.y, delay: dl, life: dl + (o.dur || 16), draw: (x, p, k) => { const r = r0 + (r1 - r0) * HD15.eo(k), f = 1 - HD15.ei(k), fl = o.fl || 1, w = (o.w || 3) * (1 - k * 0.75);
+  x.globalCompositeOperation = 'lighter'; x.beginPath(); x.ellipse(p.x, p.y, r, r * fl, o.rot || 0, 0, Math.PI * 2);
+  x.strokeStyle = pal.glow; x.globalAlpha = 0.35 * f; x.lineWidth = w * 3; x.stroke(); x.strokeStyle = pal.mid; x.globalAlpha = 0.85 * f; x.lineWidth = w; x.stroke(); x.strokeStyle = pal.core; x.globalAlpha = 0.75 * f; x.lineWidth = w * 0.35; x.stroke(); } }); };
+HD15.spikes = (b, P0, pal, n, L, o = {}) => { const S = [], dl = o.delay || 0; for (let i = 0; i < n; i++) S.push([(o.rot || 0) + i * Math.PI * 2 / n + (Math.random() - 0.5) * 0.35, L * (0.5 + Math.random() * 0.65), 1 + Math.random() * 1.3]);
+  return HD15.add(b, { x: P0.x, y: P0.y, delay: dl, life: dl + (o.dur || 12), draw: (x, p, k) => { const e = HD15.eo(HD15.cl(k * 2.2)), s = HD15.ei(HD15.cl((k - 0.25) / 0.75)), f = 1 - s, fl = o.fl || 1; x.globalCompositeOperation = 'lighter';
+    for (const [an, len, w] of S) { const ux = Math.cos(an), uy = Math.sin(an) * fl, r0 = 3 + len * s, r1 = 3 + len * e; if (r1 - r0 < 0.5) continue; const nx = -uy, ny = ux;
+      x.beginPath(); x.moveTo(p.x + ux * r0 + nx * w, p.y + uy * r0 + ny * w); x.lineTo(p.x + ux * r1, p.y + uy * r1); x.lineTo(p.x + ux * r0 - nx * w, p.y + uy * r0 - ny * w); x.closePath(); x.globalAlpha = 0.9 * f; x.fillStyle = pal.mid; x.fill();
+      const rm = r0 + (r1 - r0) * 0.75; x.beginPath(); x.moveTo(p.x + ux * r0 + nx * w * 0.35, p.y + uy * r0 + ny * w * 0.35); x.lineTo(p.x + ux * rm, p.y + uy * rm); x.lineTo(p.x + ux * r0 - nx * w * 0.35, p.y + uy * r0 - ny * w * 0.35); x.closePath(); x.globalAlpha = f; x.fillStyle = pal.core; x.fill(); } } }); };
+HD15.shards = (b, P0, n, o = {}) => { n = Math.max(1, Math.round(n * HD15.q())); const C = o.cols || ['#dfe8f6', '#8a98b2', '#3c4660']; for (let i = 0; i < n; i++) {
+  const an = o.ang != null ? o.ang + (Math.random() - 0.5) * (o.spread ?? 1.4) : Math.random() * Math.PI * 2, v = (o.spd || 3) * (0.5 + Math.random() * 0.7), sz = (o.sz || 3) * (0.6 + Math.random() * 0.8), dl = o.delay || 0;
+  const sh = [[-1, -0.6], [0.9, -0.9], [1.1, 0.5], [-0.4, 0.9]].map(([a, c]) => [a * sz * (0.7 + Math.random() * 0.6), c * sz * 0.6 * (0.7 + Math.random() * 0.6)]);
+  HD15.add(b, { x: P0.x, y: P0.y, vx: Math.cos(an) * v, vy: Math.sin(an) * v - (o.up ?? 1.5), g: o.g ?? 0.2, drag: 0.97, rot: Math.random() * 6, spin: (Math.random() - 0.5) * 0.5, delay: dl, life: dl + (o.life || 30) + Math.floor(Math.random() * 8), upd: HD15.mv,
+    draw: (x, p, k) => { const f = 1 - HD15.ei(HD15.cl((k - 0.55) / 0.45)), fy = Math.cos(p.rot * 1.7); x.globalCompositeOperation = 'source-over'; x.globalAlpha = f; x.save(); x.translate(p.x, p.y); x.rotate(p.rot); x.scale(1, 0.3 + 0.7 * Math.abs(fy));
+      x.beginPath(); sh.forEach(([a, c], j) => j ? x.lineTo(a, c) : x.moveTo(a, c)); x.closePath(); x.fillStyle = fy > 0 ? C[0] : C[1]; x.fill(); x.lineWidth = 0.45; x.strokeStyle = C[2]; x.stroke(); x.restore();
+      if (!o.dull && fy > 0.9) HD15.put(x, HD15.tex('core', '#ffffff'), p.x, p.y, 7, 7, 0, f); } }); } };
+HD15.smoke = (b, P0, n, o = {}) => { n = Math.max(1, Math.round(n * HD15.q())); const col = o.col || '#b8aa98'; for (let i = 0; i < n; i++) {
+  const an = o.ang != null ? o.ang + (Math.random() - 0.5) * (o.spread ?? 1) : Math.random() * Math.PI * 2, v = (o.spd || 1.2) * (0.4 + Math.random() * 0.8), S = (o.sz || 14) * (0.7 + Math.random() * 0.6), dl = (o.delay || 0) + (i % 3);
+  HD15.add(b, { x: P0.x + (Math.random() - 0.5) * (o.r || 0), y: P0.y, vx: Math.cos(an) * v, vy: Math.sin(an) * v * (o.fl ?? 0.4) - (o.up ?? 0.25), drag: 0.95, g: -0.004, rot: Math.random() * 6, spin: (Math.random() - 0.5) * 0.03, delay: dl, life: dl + (o.life || 40) + Math.floor(Math.random() * 12), upd: HD15.mv,
+    draw: (x, p, k) => { const g = 0.5 + 0.8 * HD15.eo(k), f = (k < 0.12 ? k / 0.12 : 1 - HD15.ei((k - 0.12) / 0.88)) * (o.al ?? 0.75); HD15.put(x, HD15.tex('smoke', col), p.x, p.y, S * g * 2, S * g * 1.5, p.rot, f, 0); } }); } };
+HD15.cracks = (b, G, n, pal, o = {}) => { const L = [], dl = o.delay || 0; for (let i = 0; i < n; i++) { const side = i % 2 ? 1 : -1, an = (side > 0 ? 0 : Math.PI) + (Math.random() - 0.5) * 0.8, len = (o.len || 34) * (0.55 + Math.random() * 0.6), pts = [[side * 7, 0]], m = 5;
+    for (let j = 1; j <= m; j++) pts.push([side * 7 + Math.cos(an) * len * j / m + (Math.random() - 0.5) * 4, Math.sin(an) * len * j / m * (o.fl || 0.3) + (Math.random() - 0.5) * 2]); L.push(pts); }
+  return HD15.add(b, { x: G.x, y: G.y, delay: dl, life: dl + (o.dur || 46), draw: (x, p, k) => { const grow = HD15.eo(HD15.cl(k * 5)), hot = 1 - HD15.cl(k / 0.4), f = 1 - HD15.ei(HD15.cl((k - 0.5) / 0.5));
+    for (const pts of L) { const m = Math.max(1, Math.round((pts.length - 1) * grow)); x.beginPath(); for (let j = 0; j <= m; j++) { const [a, c] = pts[j]; j ? x.lineTo(p.x + a, p.y + c) : x.moveTo(p.x + a, p.y + c); }
+      x.lineCap = 'round'; x.lineJoin = 'round'; x.globalCompositeOperation = 'source-over'; x.globalAlpha = 0.8 * f; x.strokeStyle = '#1a0f08'; x.lineWidth = 1.5; x.stroke();
+      if (hot > 0) { x.globalCompositeOperation = 'lighter'; x.globalAlpha = hot; x.strokeStyle = pal.glow; x.lineWidth = 2.6; x.stroke(); x.strokeStyle = pal.mid; x.lineWidth = 0.9; x.stroke(); } } } }); };
+HD15.pillar = (b, G, pal, Hh, o = {}) => { const dl = o.delay || 0; return HD15.add(b, { x: G.x, y: G.y, delay: dl, life: dl + (o.dur || 24), draw: (x, p, k) => { const e = HD15.eo(HD15.cl(k * 3)), f = 1 - HD15.ei(HD15.cl((k - 0.3) / 0.7)), w = (o.w || 22) * (1 - 0.6 * k), hh = Hh * e;
+  HD15.put(x, HD15.tex('streak', pal.glow), p.x, p.y - hh / 2, hh * 1.1, w, Math.PI / 2, 0.75 * f); HD15.put(x, HD15.tex('streak', pal.mid), p.x, p.y - hh / 2, hh, w * 0.32, Math.PI / 2, f); } }); };
+HD15.flames = (b, G, n, pal, o = {}) => { n = Math.max(2, Math.round(n * HD15.q())); for (let i = 0; i < n; i++) { const side = i % 2 ? 1 : -1, dx = o.gapX ? side * (o.gapX + Math.random() * ((o.w || 40) / 2 - o.gapX)) : (Math.random() - 0.5) * (o.w || 40), h = (o.h || 22) * (0.55 + Math.random() * 0.75), wd = (o.fw || 4) * (0.7 + Math.random() * 0.6), ph = Math.random() * 6, dl = (o.delay || 0) + Math.floor(i * (o.span || 20) / n);
+  HD15.add(b, { x: G.x + dx, y: G.y + (Math.random() - 0.5) * 3 - (o.lift || 0), vy: -(o.rise ?? 0.35), delay: dl, life: dl + (o.life || 22), upd: HD15.mv,
+    draw: (x, p, k, t) => { const e = HD15.eo(HD15.cl(k * 3)), f = 1 - HD15.ei(HD15.cl((k - 0.35) / 0.65)), hh = h * e * (0.85 + 0.15 * Math.sin(t * 0.6 + ph)), ww = wd * (1 - 0.4 * k), sw = Math.sin(t * 0.35 + ph) * 2.4 * (0.3 + k);
+      const shape = (s) => { x.beginPath(); x.moveTo(p.x - ww * s, p.y); x.quadraticCurveTo(p.x - ww * 0.9 * s, p.y - hh * 0.5, p.x + sw, p.y - hh * (0.6 + 0.4 * s)); x.quadraticCurveTo(p.x + ww * 0.9 * s, p.y - hh * 0.5, p.x + ww * s, p.y); x.quadraticCurveTo(p.x, p.y + ww * 0.6 * s, p.x - ww * s, p.y); };
+      HD15.put(x, HD15.tex('glow', pal.glow), p.x, p.y - hh * 0.3, ww * 5, hh * 1.2, 0, 0.35 * f);
+      const G2 = x.createLinearGradient(p.x, p.y, p.x, p.y - hh); G2.addColorStop(0, HD15.rgba(pal.mid, 0.95 * f)); G2.addColorStop(0.55, HD15.rgba(pal.glow, 0.75 * f)); G2.addColorStop(1, HD15.rgba(pal.edge, 0));
+      x.globalCompositeOperation = 'source-over'; x.globalAlpha = 1; x.fillStyle = G2; shape(1); x.fill();
+      const G3 = x.createLinearGradient(p.x, p.y, p.x, p.y - hh * 0.75); G3.addColorStop(0, HD15.rgba(pal.core, 0.95 * f)); G3.addColorStop(1, HD15.rgba(pal.mid, 0));
+      x.globalCompositeOperation = 'lighter'; x.fillStyle = G3; shape(0.45); x.fill(); } }); } };
+HD15.chev = (b, P0, pal, o = {}) => { const dl = o.delay || 0; return HD15.add(b, { x: P0.x, y: P0.y, vy: -(o.rise ?? 0.6), drag: 0.97, delay: dl, life: dl + (o.life || 28), upd: HD15.mv, draw: (x, p, k) => { const s = o.s || 5, f = k < 0.15 ? k / 0.15 : 1 - HD15.ei((k - 0.15) / 0.85); x.globalCompositeOperation = 'lighter'; x.lineCap = 'round'; x.lineJoin = 'round';
+  const v = o.down ? -1 : 1; for (let j = 0; j < 2; j++) { const yy = p.y + j * s * 0.8 * v, a = f * (1 - j * 0.35); x.beginPath(); x.moveTo(p.x - s, yy + s * 0.55 * v); x.lineTo(p.x, yy - s * 0.45 * v); x.lineTo(p.x + s, yy + s * 0.55 * v);
+    x.globalCompositeOperation = 'lighter'; x.globalAlpha = 0.5 * a; x.strokeStyle = pal.glow; x.lineWidth = s * 0.75; x.stroke(); x.globalCompositeOperation = 'source-over'; x.globalAlpha = a; x.strokeStyle = pal.edge; x.lineWidth = s * 0.42; x.stroke(); x.strokeStyle = pal.mid; x.lineWidth = s * 0.3; x.stroke(); x.strokeStyle = pal.core; x.lineWidth = s * 0.11; x.stroke(); } } }); };
+HD15.comet = (b, A, B, pal, dur, o = {}) => { const hist = [], dl = o.delay || 0, w0 = o.w || 9; return HD15.add(b, { x: A.x, y: A.y, delay: dl, life: dl + dur + 10,
+  upd: p => { const t = p.t - dl; if (t < 0) return; const k = HD15.cl(t / dur), e = o.ease === 'in' ? k * k : k * k * (0.35 + 0.65 * k); p.x = A.x + (B.x - A.x) * e; p.y = A.y + (B.y - A.y) * e; if (k < 1) { hist.push([p.x, p.y]); if (hist.length > 16) hist.shift(); if (t % 2 === 0) HD15.sparks(b, p, 2, pal, { ang: Math.atan2(A.y - B.y, A.x - B.x), spread: 0.9, spd: 1.5, life: 16, g: 0.03 }); } },
+  draw: (x, p, k, t) => { const done = t >= dur, f = done ? 1 - HD15.cl((t - dur) / 10) : 1, n = hist.length;
+    if (n > 2) { x.globalCompositeOperation = 'lighter'; x.lineJoin = 'round';
+      for (const [wd, col, al] of [[w0, pal.glow, 0.4], [w0 * 0.5, pal.mid, 0.85], [w0 * 0.18, pal.core, 1]]) { const Lp = [], Rp = []; for (let i = 0; i < n; i++) { const [px, py] = hist[i], [qx, qy] = hist[Math.min(n - 1, i + 1)], [sx, sy] = hist[Math.max(0, i - 1)], dx = qx - sx, dy = qy - sy, d = Math.hypot(dx, dy) || 1, w = wd * i / (n - 1) / 2; Lp.push([px - dy / d * w, py + dx / d * w]); Rp.push([px + dy / d * w, py - dx / d * w]); }
+        x.beginPath(); Lp.forEach(([a, c], i) => i ? x.lineTo(a, c) : x.moveTo(a, c)); for (let i = n - 1; i >= 0; i--) x.lineTo(Rp[i][0], Rp[i][1]); x.closePath(); x.globalAlpha = al * f; x.fillStyle = col; x.fill(); } }
+    if (!done) { HD15.put(x, HD15.tex('glow', pal.glow), p.x, p.y, 40, 40, 0, 0.9); HD15.put(x, HD15.tex('core', pal.mid), p.x, p.y, 15, 15, 0, 1); HD15.put(x, HD15.tex('streak', pal.mid), p.x, p.y, 36, 4, t * 0.25, 0.85); HD15.put(x, HD15.tex('streak', pal.mid), p.x, p.y, 36, 4, t * 0.25 + Math.PI / 2, 0.85); } } }); };
+HD15.gather = (b, C, n, pal, R, o = {}) => { n = Math.max(2, Math.round(n * HD15.q())); for (let i = 0; i < n; i++) { const an = Math.random() * Math.PI * 2, r = R * (0.7 + Math.random() * 0.5), dl = (o.delay || 0) + Math.floor(Math.random() * (o.span || 10));
+  HD15.add(b, { x: C.x + Math.cos(an) * r, y: C.y + Math.sin(an) * r * (o.fl || 0.8), vx: 0, vy: 0, delay: dl, life: dl + (o.life || 14), col: Math.random() < 0.4 ? pal.core : pal.mid,
+    upd: p => { if (p.t <= p.delay) return; p.vx = (C.x - p.x) * 0.2; p.vy = (C.y - p.y) * 0.2; p.x += p.vx; p.y += p.vy; },
+    draw: (x, p, k) => { const f = k < 0.2 ? k / 0.2 : 1 - HD15.ei((k - 0.2) / 0.8); HD15.put(x, HD15.tex('glow', pal.glow), p.x, p.y, 6, 6, 0, 0.6 * f); x.globalCompositeOperation = 'source-over'; x.globalAlpha = f; x.strokeStyle = p.col; x.lineCap = 'round'; x.lineWidth = 1.1;
+      x.beginPath(); x.moveTo(p.x - p.vx * 2.5, p.y - p.vy * 2.5); x.lineTo(p.x, p.y); x.stroke(); } }); } };
+HD15.statFx = function* (U, dir, pal) { const up = dir > 0, P = pal || (up ? HD15.P.blaze : HD15.P.down), y0 = U.y + (up ? 4 : -30);
+  HD15.ring(this, { x: U.x, y: U.y + 16 }, P, 4, 28, { fl: 0.3, w: 2.2, dur: 22 }); if (up) HD15.pillar(this, { x: U.x, y: U.y + 16 }, P, 70, { w: 26, dur: 30 });
+  for (let i = 0; i < 3; i++) HD15.chev(this, { x: U.x + (i - 1) * 17, y: y0 + Math.abs(i - 1) * 6 * (up ? 1 : -1) }, P, { delay: i === 1 ? 0 : 4, life: 40, s: i === 1 ? 9 : 7, rise: up ? 1.5 : -1.1, down: !up });
+  HD15.sparks(this, { x: U.x, y: U.y + (up ? 12 : -10) }, 14, P, up ? { ang: -Math.PI / 2, spread: 0.9, spd: 2.4, g: -0.03, drag: 0.96, life: 30, r: 34 } : { ang: Math.PI / 2, spread: 0.9, spd: 1.2, g: 0.06, drag: 0.95, life: 26, r: 34 });
+  yield* wait(28); };
+HD15.P.down = { core: '#e4ecff', mid: '#6f86ff', glow: '#3040c0', edge: '#141a50' };
+HD15.thrust = (b, A, T, pal, o = {}) => { const dl = o.delay || 0, dur = o.dur || 18, dx = T.x - A.x, dy = T.y - A.y, D = Math.hypot(dx, dy) || 1, ux = dx / D, uy = dy / D, nx = -uy, ny = ux, L = D + (o.ext || 40) * 1.2, W0 = (o.w || 7) * 0.6;
+  return HD15.add(b, { x: A.x, y: A.y, delay: dl, life: dl + dur, draw: (x, p, k) => { const tip = L * HD15.eo(HD15.cl(k / 0.22)), tail = L * 0.92 * HD15.ei(HD15.cl((k - 0.3) / 0.7)), f = 1 - HD15.ei(HD15.cl((k - 0.45) / 0.55)); if (tip - tail < 1) return;
+    const Pt = (d, sd) => [A.x + ux * d + nx * sd, A.y + uy * d + ny * sd], shape = (w, tl) => { const t1 = Math.max(tail, tip - tl); x.beginPath(); let q = Pt(tail, 0); x.moveTo(q[0], q[1]); q = Pt(t1, w); x.lineTo(q[0], q[1]); q = Pt(tip, 0); x.lineTo(q[0], q[1]); q = Pt(t1, -w); x.lineTo(q[0], q[1]); x.closePath(); };
+    const grad = (c, a) => { const [ax, ay] = Pt(tail, 0), [bx, by] = Pt(tip, 0), G = x.createLinearGradient(ax, ay, bx, by); G.addColorStop(0, HD15.rgba(c, 0)); G.addColorStop(0.65, HD15.rgba(c, a * 0.6)); G.addColorStop(1, HD15.rgba(c, a)); return G; };
+    const w = W0 * (0.55 + 0.45 * f); x.globalAlpha = f;
+    x.globalCompositeOperation = 'lighter'; shape(w * 2, 18); x.fillStyle = grad(pal.glow, 0.5); x.fill();
+    x.globalCompositeOperation = 'source-over'; shape(w, 15); x.fillStyle = grad(pal.edge, 0.75); x.fill(); shape(w * 0.78, 14); x.fillStyle = grad(pal.mid, 0.95); x.fill(); shape(w * 0.3, 12); x.fillStyle = grad(pal.core, 1); x.fill();
+    if (k < 0.35) { const [hx, hy] = Pt(tip, 0); HD15.put(x, HD15.tex('glow', pal.mid), hx, hy, 24, 24, 0, 0.75 * f); HD15.put(x, HD15.tex('core', pal.mid), hx, hy, 9, 9, 0, f); } } }); };
+HD15.windLines = (b, A, B, pal, n, o = {}) => { const an = Math.atan2(B.y - A.y, B.x - A.x), ux = Math.cos(an), uy = Math.sin(an); for (let i = 0; i < n; i++) { const off = (Math.random() - 0.5) * (o.spread || 40), L = (o.len || 40) * (0.6 + Math.random() * 0.7), sp = (o.spd || 9) * (0.7 + Math.random() * 0.5), dl = (o.delay || 0) + Math.floor(Math.random() * (o.span || 6));
+  HD15.add(b, { x: A.x - uy * off - ux * 10, y: A.y + ux * off - uy * 10, vx: ux * sp, vy: uy * sp, delay: dl, life: dl + (o.life || 12), draw: (x, p, k) => { const f = Math.sin(Math.PI * k); HD15.put(x, HD15.tex('streak', pal.mid), p.x, p.y, L, 3 + 2 * f, an, 0.8 * f); } }); } };
+HD15.lockon = (b, T, pal, o = {}) => { const dl = o.delay || 0, dur = o.dur || 32, r0 = o.r0 || 38, r1 = o.r1 || 13; return HD15.add(b, { x: T.x, y: T.y, delay: dl, life: dl + dur, draw: (x, p, k) => { const c = HD15.eo(HD15.cl(k / 0.55)), R = r0 + (r1 - r0) * c, rot = (1 - c) * 2.4, f = k < 0.1 ? k / 0.1 : 1 - HD15.ei(HD15.cl((k - 0.72) / 0.28));
+  const lay = (fn, w) => { x.lineCap = 'round'; for (const [col, lw, add, a] of [[pal.glow, w * 3.2, 1, 0.5], [pal.edge, w * 1.7, 0, 0.8], [pal.mid, w, 0, 1], [pal.core, w * 0.35, 0, 1]]) { x.globalCompositeOperation = add ? 'lighter' : 'source-over'; x.globalAlpha = a * f; x.strokeStyle = col; x.lineWidth = lw; fn(); x.stroke(); } };
+  lay(() => { x.beginPath(); for (let i = 0; i < 4; i++) { const a0 = rot + i * Math.PI / 2 + 0.3, a1 = a0 + Math.PI / 2 - 0.6; x.moveTo(p.x + Math.cos(a0) * R, p.y + Math.sin(a0) * R); x.arc(p.x, p.y, R, a0, a1); } }, 1.1);
+  lay(() => { x.beginPath(); for (let i = 0; i < 4; i++) { const a = rot + i * Math.PI / 2 + Math.PI / 4; x.moveTo(p.x + Math.cos(a) * (R + 8), p.y + Math.sin(a) * (R + 8)); x.lineTo(p.x + Math.cos(a) * (R - 2), p.y + Math.sin(a) * (R - 2)); } }, 1.4);
+  if (k > 0.5) { const g = HD15.cl((k - 0.5) / 0.15); lay(() => { x.beginPath(); x.arc(p.x, p.y, 2.5 + 3 * (1 - g), 0, Math.PI * 2); }, 1); } } }); };
+HD15.weak = (b, T, pal, o = {}) => { const dl = o.delay || 0, dur = o.dur || 26; return HD15.add(b, { x: T.x, y: T.y, delay: dl, life: dl + dur, draw: (x, p, k, t) => { const g = HD15.eo(HD15.cl(k * 4)), f = 1 - HD15.ei(HD15.cl((k - 0.7) / 0.3)), s = (o.s || 7) * (0.6 + 0.4 * g) * (1 + 0.12 * Math.sin(t * 0.7));
+  HD15.put(x, HD15.tex('glow', pal.glow), p.x, p.y, s * 5, s * 5, 0, 0.55 * f); x.lineJoin = 'miter'; const dia = q => { x.beginPath(); x.moveTo(p.x, p.y - q); x.lineTo(p.x + q * 0.7, p.y); x.lineTo(p.x, p.y + q); x.lineTo(p.x - q * 0.7, p.y); x.closePath(); };
+  x.globalCompositeOperation = 'source-over'; x.globalAlpha = f; dia(s); x.lineWidth = 2.2; x.strokeStyle = pal.edge; x.stroke(); x.lineWidth = 1.3; x.strokeStyle = pal.mid; x.stroke(); dia(s * 0.38); x.fillStyle = pal.core; x.fill(); } }); };
+HD15.whirl = (b, C, pal, o = {}) => { const dl = o.delay || 0, dur = o.dur || 26, R = o.r || 70, th = (o.th || 12) * 0.55, fl = o.fl || 0.34, turns = o.turns || 1.25, trail = o.trail || 3.6, a0 = o.a0 ?? Math.PI * 0.75, al = o.al ?? 1, HDk = k => HD15.eo(HD15.cl(k / 0.7));
+  return HD15.add(b, { x: C.x, y: C.y, delay: dl, life: dl + dur,
+    upd: p => { const t = p.t - dl; if (t < 0 || !o.spark || t % 2 || t > dur * 0.6) return; const h = a0 + turns * Math.PI * 2 * HDk(t / dur); HD15.sparks(b, { x: C.x + Math.cos(h) * (R - th * 0.4), y: C.y + Math.sin(h) * (R - th * 0.4) * fl }, 2, pal, { ang: h + Math.PI / 2, spread: 0.8, spd: 2.6, life: 14, g: 0.05 }); },
+    draw: (x, p, k) => { if (!x.createConicGradient) return; const head = a0 + turns * Math.PI * 2 * HDk(k), f = (1 - HD15.ei(HD15.cl((k - 0.6) / 0.4))) * al, tl = Math.min(Math.PI * 1.9, trail * (k < 0.15 ? 0.3 + 0.7 * k / 0.15 : 1)), sp = tl / (Math.PI * 2);
+      const G = (c, a) => { const g = x.createConicGradient(head - tl, 0, 0); g.addColorStop(0, HD15.rgba(c, 0)); g.addColorStop(sp * 0.55, HD15.rgba(c, a * 0.45)); g.addColorStop(sp * 0.97, HD15.rgba(c, a)); g.addColorStop(sp, HD15.rgba(c, a * 0.7)); g.addColorStop(Math.min(1, sp + 0.002), HD15.rgba(c, 0)); g.addColorStop(1, HD15.rgba(c, 0)); return g; };
+      const ann = (ro, ri) => { x.beginPath(); x.arc(0, 0, ro, 0, Math.PI * 2); x.arc(0, 0, Math.max(0.5, ri), Math.PI * 2, 0, true); };
+      for (const back of [1, 0]) { x.save(); x.translate(p.x, p.y); x.scale(1, fl); x.beginPath(); x.rect(-R - 20, back ? -R - 20 : 0, R * 2 + 40, R + 20); x.clip(); const m = back ? 0.45 : 1;
+        x.globalAlpha = f * m; x.globalCompositeOperation = 'lighter'; ann(R + 4, R - th - 5); x.fillStyle = G(pal.glow, 0.5); x.fill();
+        x.globalCompositeOperation = 'source-over'; ann(R - th * 0.55, R - th - 0.8); x.fillStyle = G(pal.edge, 0.7); x.fill(); ann(R, R - th); x.fillStyle = G(pal.mid, 0.95); x.fill(); ann(R - 0.2, R - th * 0.36); x.fillStyle = G(pal.core, 1); x.fill(); x.restore(); }
+      if (k < 0.7) { const hx = p.x + Math.cos(head) * (R - th * 0.4), hy = p.y + Math.sin(head) * (R - th * 0.4) * fl; HD15.put(x, HD15.tex('glow', pal.mid), hx, hy, th * 3.6, th * 3.6, 0, 0.7 * f); HD15.put(x, HD15.tex('core', pal.mid), hx, hy, th * 1.3, th * 1.3, 0, f); } } }); };
+HD15.blood = (b, P0, n, o = {}) => { for (let i = 0; i < n; i++) { const an = o.ang != null ? o.ang + (Math.random() - 0.5) * (o.spread ?? 1.6) : Math.random() * Math.PI * 2, v = (o.spd || 2.4) * (0.5 + Math.random() * 0.8), r = (o.sz || 1.6) * (0.6 + Math.random() * 0.8), dl = (o.delay || 0) + (i % 3);
+  HD15.add(b, { x: P0.x, y: P0.y, vx: Math.cos(an) * v, vy: Math.sin(an) * v - 1, g: 0.18, drag: 0.97, delay: dl, life: dl + 24 + Math.floor(Math.random() * 8), upd: HD15.mv,
+    draw: (x, p, k) => { const f = 1 - HD15.ei(HD15.cl((k - 0.6) / 0.4)), sp = Math.hypot(p.vx, p.vy), a = Math.atan2(p.vy, p.vx); x.globalCompositeOperation = 'source-over'; x.globalAlpha = f; x.save(); x.translate(p.x, p.y); x.rotate(a); x.beginPath(); x.ellipse(0, 0, r * (1 + sp * 0.35), r, 0, 0, Math.PI * 2); x.fillStyle = '#b0102a'; x.fill(); x.beginPath(); x.ellipse(r * 0.3, -r * 0.3, r * 0.45, r * 0.3, 0, 0, Math.PI * 2); x.fillStyle = '#ff7a8a'; x.fill(); x.restore(); } }); } };
+HD15.FLOW = [[-0.67, 1, 'cyan'], [-2.41, -1, 'violet'], [-1.571, 1, 'pink'], [-2.37, 1, 'gold']];
+HD15.flowCut = (b, T, i) => { const [ang, dir, pk] = HD15.FLOW[i % 4], P = HD15.P[pk]; HD15.slash(b, T, { pal: P, r: 46, th: 9, ang, dir, span: 1.5, dur: 22, sw: 0.22, spark: 1 });
+  HD15.slash(b, T, { pal: P, r: 40, th: 4, ang, dir, span: 1.3, dur: 18, sw: 0.22, delay: 2, al: 0.45 }); HD15.add(b, { x: T.x, y: T.y, delay: 3, life: 4, draw: () => {}, upd: p => { if (p.t === 3) { HD15.flash(b, T, P, 26, { dur: 10 }); HD15.spikes(b, T, P, 6, 16, { dur: 10 }); HD15.sparks(b, T, 7, P, { spd: 3, life: 14 }); } } }); };
+HD15.sigil = (b, C, pal, R, o = {}) => { const dl = o.delay || 0, dur = o.dur || 40; return HD15.add(b, { x: C.x, y: C.y, delay: dl, life: dl + dur, draw: (x, p, k, t) => { const g = HD15.eo(HD15.cl(k / 0.25)), f = 1 - HD15.ei(HD15.cl((k - 0.75) / 0.25)), rot = t * 0.05, fl = o.fl || 0.4, r = R * (0.6 + 0.4 * g);
+  x.save(); x.translate(p.x, p.y); x.scale(1, fl); x.lineCap = 'round';
+  const lay = fn => { for (const [col, lw, add, a] of [[pal.glow, 3, 1, 0.45], [pal.mid, 1.1, 0, 0.95], [pal.core, 0.4, 0, 1]]) { x.globalCompositeOperation = add ? 'lighter' : 'source-over'; x.globalAlpha = a * f * g; x.strokeStyle = col; x.lineWidth = lw / Math.sqrt(fl); fn(); x.stroke(); } };
+  lay(() => { x.beginPath(); x.arc(0, 0, r, 0, Math.PI * 2); x.moveTo(r * 0.78, 0); x.arc(0, 0, r * 0.78, 0, Math.PI * 2); });
+  lay(() => { x.beginPath(); for (let i = 0; i <= 5; i++) { const a = rot + i * Math.PI * 4 / 5 - Math.PI / 2; i ? x.lineTo(Math.cos(a) * r * 0.78, Math.sin(a) * r * 0.78) : x.moveTo(Math.cos(a) * r * 0.78, Math.sin(a) * r * 0.78); } });
+  lay(() => { x.beginPath(); for (let i = 0; i < 16; i++) { const a = -rot * 1.5 + i * Math.PI / 8; x.moveTo(Math.cos(a) * r, Math.sin(a) * r); x.lineTo(Math.cos(a) * (r + (i % 2 ? 3 : 5)), Math.sin(a) * (r + (i % 2 ? 3 : 5))); } });
+  x.restore(); HD15.put(x, HD15.tex('glow', pal.glow), p.x, p.y, R * 2.4, R * 2.4 * (o.fl || 0.4), 0, 0.35 * f * g); } }); };
+HD15.motes = (b, A, B, n, pal, o = {}) => { for (let i = 0; i < n; i++) { const dl = (o.delay || 0) + i * 2, ox = (Math.random() - 0.5) * 30, oy = (Math.random() - 0.5) * 20, d = o.dur || 22;
+  HD15.add(b, { x: A.x, y: A.y, delay: dl, life: dl + d, upd: p => { const t = p.t - dl; if (t < 0) return; const k = HD15.cl(t / d), e = HD15.ei(k); p.px = p.x; p.py = p.y; p.x = A.x + (B.x - A.x) * e + ox * Math.sin(Math.PI * k); p.y = A.y + (B.y - A.y) * e + oy * Math.sin(Math.PI * k) - 16 * Math.sin(Math.PI * k); },
+    draw: (x, p, k) => { const f = k < 0.15 ? k / 0.15 : 1; HD15.put(x, HD15.tex('glow', pal.glow), p.x, p.y, 9, 9, 0, 0.7 * f); HD15.put(x, HD15.tex('core', pal.mid), p.x, p.y, 4, 4, 0, f); } }); } };
+HD15.horizon = (b, C, pal, o = {}) => { const dl = o.delay || 0, dur = o.dur || 30; return HD15.add(b, { x: C.x, y: C.y, delay: dl, life: dl + dur, draw: (x, p, k) => { const e = HD15.eo(HD15.cl(k / 0.35)), f = 1 - HD15.ei(HD15.cl((k - 0.35) / 0.65));
+  HD15.put(x, HD15.tex('streak', pal.glow), p.x, p.y, 420 * e, 40, 0, 0.6 * f); HD15.put(x, HD15.tex('streak', pal.mid), p.x, p.y, 360 * e, 12, 0, 0.9 * f); HD15.put(x, HD15.tex('streak', pal.core), p.x, p.y, 260 * e, 3, 0, f); } }); };
+HD15.P.moon = { core: '#ffffff', mid: '#cfe6ff', glow: '#4a7dff', edge: '#0d1d52' };
+HD15.P.dawn = { core: '#fffaf0', mid: '#ffb86b', glow: '#ff6a3a', edge: '#6a1e10' };
+HD15.P.mp = { core: '#ffffff', mid: '#7fc8ff', glow: '#2a6cff', edge: '#0a2060' };
+const HDFX15 = {
+  sdBreak: { *f(U, T, u) { const P = HD15.P.steel; yield* this.lunge(u, 18, 3); Sound.sfx('slash');
+      HD15.slash(this, T, { pal: P, r: 62, th: 13, ang: -0.67, span: 1.5, dur: 22, spark: 1 });
+      HD15.slash(this, { x: T.x - 3, y: T.y + 3 }, { pal: P, r: 56, th: 6, ang: -0.67, span: 1.3, dur: 18, delay: 2, al: 0.5 });
+      yield* wait(4); Sound.sfx('heavy'); HD15.stop(this, 5);
+      HD15.cut(this, T, 0.9, 92, P, { dur: 20, w: 8 }); HD15.flash(this, T, P, 40); HD15.ring(this, T, P, 4, 28, { w: 2.2, dur: 16 });
+      HD15.spikes(this, T, P, 9, 24, { rot: 0.3 }); HD15.sparks(this, T, 18, P, { spd: 4, life: 20, g: 0.08 });
+      HD15.shards(this, T, 9, { ang: 0.6, spread: 1.8, spd: 3.6, sz: 3.4, up: 2 }); this.shake = Math.max(this.shake || 0, 7); yield* wait(20); } },
+  sdFrenzy: { *f(U, T, u) { const P = HD15.P.blaze, Hv = this.H, Hc = this.center(Hv), G = { x: Hc.x, y: HERO_FOOT - 2 }, C = { x: Hc.x, y: Hc.y + 4 }; Sound.sfx('charge');
+      HD15.dim(this, 0.3, 74); HD15.gather(this, C, 26, P, 46, { span: 10, life: 14 }); HD15.flash(this, C, P, 26, { dur: 16 });
+      HD15.add(this, { x: 0, y: 0, life: 70, draw: () => {}, upd: p => { const k = p.t / 70; Hv.tint = p.t < 68 ? { c: '#ff3a10', a: (p.t < 12 ? p.t / 12 : 1 - Math.max(0, k - 0.6) / 0.4) * (0.24 + 0.14 * Math.sin(p.t * 0.45)) } : null; } });
+      yield* wait(12); Sound.sfx('fire');
+      HD15.ring(this, G, P, 6, 40, { fl: 0.3, w: 2.8, dur: 24 }); HD15.ring(this, G, P, 4, 30, { fl: 0.3, w: 2, dur: 24, delay: 10 }); HD15.ring(this, C, P, 8, 44, { w: 2, dur: 18 });
+      HD15.flash(this, G, P, 76, { fl: 0.35, dur: 34 }); HD15.pillar(this, G, P, 120, { w: 48, dur: 40 });
+      HD15.flames(this, G, 34, P, { w: 54, gapX: 9, h: 36, fw: 4, span: 40, life: 26, rise: 0.45 });
+      HD15.flames(this, G, 10, P, { w: 26, h: 12, fw: 3, span: 34, life: 18, rise: 0.2 });
+      HD15.sparks(this, { x: G.x, y: G.y - 6 }, 30, P, { ang: -Math.PI / 2, spread: 1.0, spd: 2.4, g: -0.02, drag: 0.97, life: 40, r: 46, len: 1.6 });
+      yield* wait(16); Sound.sfx('slash'); const Hd = typeof PX13 !== 'undefined' && PX13.hand ? PX13.hand(this) : { x: Hc.x + 10, y: Hc.y - 10 };
+      HD15.flare(this, Hd, HD15.P.star, 60, { rot: -0.6, spin: 0.9, dur: 22, x8: 1 }); HD15.flash(this, Hd, HD15.P.star, 30, { dur: 18 }); HD15.sparks(this, Hd, 8, HD15.P.star, { spd: 2, life: 16 });
+      yield* wait(30); Hv.tint = null; } },
+  sdMeteor: { *f(U, T, u, t) { const P = HD15.P.star, gy = t && t.foot ? t.foot : T.y + 24, G = { x: T.x, y: gy }, n = 12, t0 = this.t; Sound.sfx('charge');
+      const cut = { pal: P, r: 150, th: 16, ang: -2.71, dir: -1, span: 0.5, dur: 26, spark: 1 }, S0 = HD15.slashStart(T, cut), L = Math.max(24, (S0.y - 12) / Math.max(0.3, Math.sin(S0.tan))), A = { x: S0.x - Math.cos(S0.tan) * L, y: S0.y - Math.sin(S0.tan) * L }, w0 = 12;
+      HD15.dim(this, 0.42, 80 + w0); HD15.gather(this, A, 14, P, 26, { span: 8, life: 12 }); HD15.flash(this, A, P, 34, { dur: w0 + 4 }); HD15.flare(this, A, P, 60, { rot: 0, spin: 0.6, dur: w0 + 4, x8: 1 });   // 天上先亮起一顆星
+      HD15.comet(this, A, S0, P, n, { w: 13, delay: w0, ease: 'in' });
+      HD15.slash(this, T, Object.assign({ delay: w0 + n }, cut)); HD15.slash(this, { x: T.x + 3, y: T.y }, { pal: P, r: 142, th: 7, ang: -2.71, dir: -1, span: 0.45, dur: 22, delay: w0 + n + 2, al: 0.5 });
+      yield* wait(w0 + n - 6);
+      yield* this.lunge(u, 14, 2); yield* wait(Math.max(0, w0 + n + 3 - (this.t - t0))); Sound.sfx('quake'); HD15.stop(this, 8); this.spawn({ k: 'flash', c: '#fff4c8', a: 0.45, life: 10 });
+      HD15.cut(this, T, HD15.tanAt(cut), 120, P, { dur: 26, w: 10, gap: 6 });
+      HD15.flash(this, T, P, 96, { dur: 22 }); HD15.flare(this, T, P, 170, { rot: 0, dur: 24, x8: 1 }); HD15.spikes(this, T, P, 16, 46, { dur: 16 });
+      HD15.ring(this, G, P, 10, 86, { fl: 0.3, w: 4, dur: 26 }); HD15.ring(this, T, P, 6, 50, { w: 2.5, dur: 18, delay: 2 }); HD15.pillar(this, G, P, 160, { w: 50, dur: 28 });
+      HD15.sparks(this, T, 34, P, { spd: 5.5, life: 28, g: 0.12 }); HD15.cracks(this, G, 6, P, { len: 46, fl: 0.25, dur: 64 });
+      HD15.shards(this, G, 14, { cols: ['#9a7650', '#644a32', '#2e2014'], ang: -Math.PI / 2, spread: 2.2, spd: 4.2, sz: 3.2, up: 1.5, g: 0.22, dull: 1 });
+      HD15.smoke(this, G, 14, { r: 34, spd: 1.8, sz: 15, life: 54, fl: 0.25, al: 0.85 });
+      this.shake = Math.max(this.shake || 0, 16); yield* wait(30); } },
+  sdTwin: { *f(U, T, u) { const P = HD15.P.wind; Sound.sfx('wind'); HD15.windLines(this, U, T, P, 10, { spread: 46, len: 46, spd: 10 }); yield* this.lunge(u, 24, 2); Sound.sfx('slash');
+      HD15.slash(this, T, { pal: P, r: 50, th: 10, ang: -2.41, dir: -1, span: 1.5, dur: 16, sw: 0.25, spark: 1 }); HD15.slash(this, { x: T.x + 3, y: T.y - 2 }, { pal: P, r: 44, th: 5, ang: -2.41, dir: -1, span: 1.3, dur: 14, sw: 0.25, delay: 2, al: 0.5 });
+      yield* wait(3); HD15.flash(this, T, P, 30, { dur: 12 }); HD15.ring(this, T, P, 3, 20, { w: 1.8, dur: 12 }); HD15.sparks(this, T, 10, P, { spd: 3.2, life: 16 }); HD15.windLines(this, T, { x: T.x - 30, y: T.y + 40 }, P, 5, { spread: 20, len: 30, spd: 6 }); yield* wait(7); },
+    *h(U, T, u, i) { const P = HD15.P.wind; Sound.sfx('slash');
+      HD15.slash(this, T, { pal: P, r: 50, th: 11, ang: -0.73, span: 1.5, dur: 16, sw: 0.25, spark: 1 }); HD15.slash(this, { x: T.x - 3, y: T.y - 2 }, { pal: P, r: 44, th: 5, ang: -0.73, span: 1.3, dur: 14, sw: 0.25, delay: 2, al: 0.5 });
+      yield* wait(3); HD15.stop(this, 3); HD15.cut(this, T, 0.84, 60, P, { dur: 14, w: 6 }); HD15.flash(this, T, P, 36, { dur: 14 }); HD15.ring(this, T, P, 3, 24, { w: 2, dur: 14 }); HD15.spikes(this, T, P, 7, 18);
+      HD15.sparks(this, T, 12, P, { spd: 3.6, life: 18 }); yield* wait(10); } },
+  sdEye: { *f(U, T, u) { const P = HD15.P.gold, Hc = this.center(this.H), L = this.foes ? this.foes().filter(v => !v.gone && v.hp > 0) : [], v = L.slice().sort((a, b) => Math.abs(this.center(a).x - 88) - Math.abs(this.center(b).x - 88))[0], Tt = v ? this.center(v) : T; Sound.sfx('charge');
+      HD15.dim(this, 0.35, 64); HD15.ring(this, Hc, P, 6, 42, { w: 1.6, dur: 28 }); HD15.ring(this, Hc, P, 6, 42, { w: 1.2, dur: 28, delay: 9 });
+      const eye = { x: Hc.x, y: Hc.y - 20 }; HD15.flash(this, eye, P, 24, { dur: 16, delay: 4 }); HD15.flare(this, eye, P, 46, { rot: 0, dur: 18, delay: 4, x8: 1 });
+      if (typeof K13 !== 'undefined' && K13.ghost) for (let i = 1; i <= 2; i++) K13.ghost(this, i % 2 ? -9 : 9, 0, '#ffe8a0', 16 + i * 4, 0.45);
+      HD15.gather(this, { x: Hc.x, y: Hc.y - 6 }, 14, P, 34, { span: 8, life: 14 });
+      yield* wait(8); HD15.lockon(this, Tt, P, { dur: 36, r0: 42, r1: 13 }); yield* wait(19); Sound.sfx('tick');
+      HD15.flash(this, Tt, P, 32, { dur: 14 }); HD15.flare(this, Tt, P, 54, { rot: Math.PI / 4, dur: 16, x8: 1 }); HD15.ring(this, Tt, P, 4, 26, { w: 1.6, dur: 16 }); yield* wait(20); } },
+  sdGap: { *f(U, T, u) { const P = HD15.P.azure, Hc = this.center(this.H), A = typeof PX13 !== 'undefined' && PX13.hand ? PX13.hand(this) : { x: Hc.x + 10, y: Hc.y - 10 }, an = Math.atan2(T.y - A.y, T.x - A.x), ux = Math.cos(an), uy = Math.sin(an);
+      Sound.sfx('tick'); HD15.weak(this, T, HD15.P.crimson, { dur: 24 }); yield* wait(10); yield* this.lunge(u, 22, 2); Sound.sfx('slash');
+      HD15.windLines(this, A, T, P, 6, { spread: 14, len: 50, spd: 12 }); HD15.thrust(this, A, T, P, { w: 7, ext: 48, dur: 20 });
+      yield* wait(4); Sound.sfx('crit'); HD15.stop(this, 4); HD15.flash(this, T, P, 42, { dur: 14 }); HD15.ring(this, T, P, 3, 22, { w: 2.2, dur: 14, fl: 0.45, rot: an + Math.PI / 2 });
+      HD15.ring(this, { x: T.x + ux * 10, y: T.y + uy * 10 }, P, 3, 16, { w: 1.6, dur: 14, fl: 0.45, rot: an + Math.PI / 2, delay: 3 });
+      HD15.sparks(this, T, 18, P, { ang: an, spread: 0.55, spd: 5, life: 18, g: 0.04 }); HD15.shards(this, { x: T.x + ux * 6, y: T.y + uy * 6 }, 7, { ang: an, spread: 0.7, spd: 3.6, up: 0.4, sz: 3 });
+      this.shake = Math.max(this.shake || 0, 6); yield* wait(16); } },
+  sdWhirl: { *f(U, T, u) { const P = HD15.P.cyan, L = this.foes ? this.foes().filter(v => !v.gone && v.hp > 0) : [], C = { x: T.x, y: T.y + 6 }; Sound.sfx('wind'); yield* this.lunge(u, 16, 2); Sound.sfx('slash');
+      HD15.whirl(this, C, P, { r: 76, th: 12, fl: 0.34, turns: 1.3, trail: 4, dur: 30, spark: 1 }); HD15.whirl(this, C, P, { r: 64, th: 5, fl: 0.34, turns: 1.2, trail: 2.8, dur: 28, delay: 3, al: 0.5 });
+      HD15.ring(this, C, P, 20, 90, { fl: 0.34, w: 2, dur: 22, delay: 4 }); yield* wait(9); Sound.sfx('heavy'); HD15.stop(this, 3);
+      L.forEach((v, i) => { const c = this.center(v); HD15.flash(this, c, P, 32, { dur: 12, delay: i * 2 }); HD15.spikes(this, c, P, 8, 20, { delay: i * 2 }); HD15.sparks(this, c, 10, P, { spd: 3.4, life: 16, delay: i * 2 }); });
+      this.shake = Math.max(this.shake || 0, 6); yield* wait(20); } },
+  sdFlow: { *f(U, T, u) { yield* this.lunge(u, 20, 2); Sound.sfx('slash'); HD15.flowCut(this, T, 0); yield* wait(5); },
+    *h(U, T, u, i) { Sound.sfx('slash'); if (i < 4) { HD15.flowCut(this, T, i); yield* wait(5); return; }
+      const P = HD15.P.star; HD15.slash(this, T, { pal: HD15.P.cyan, r: 60, th: 13, ang: -0.67, span: 1.5, dur: 22, sw: 0.25, spark: 1 }); HD15.slash(this, T, { pal: HD15.P.pink, r: 60, th: 13, ang: -2.41, dir: -1, span: 1.5, dur: 22, sw: 0.25, delay: 3, spark: 1 });
+      yield* wait(5); Sound.sfx('crit'); HD15.stop(this, 6); HD15.cut(this, T, 0.9, 90, HD15.P.cyan, { dur: 20, w: 7 }); HD15.cut(this, T, 2.3, 90, HD15.P.pink, { dur: 20, w: 7 });
+      HD15.flash(this, T, P, 60, { dur: 18 }); HD15.flare(this, T, P, 110, { rot: 0, dur: 20, x8: 1 }); HD15.ring(this, T, P, 4, 34, { w: 2.4, dur: 18 }); HD15.spikes(this, T, P, 12, 30);
+      for (const c of [HD15.P.cyan, HD15.P.violet, HD15.P.pink, HD15.P.gold]) HD15.sparks(this, T, 6, c, { spd: 4.2, life: 22, g: 0.06 });
+      this.shake = Math.max(this.shake || 0, 9); yield* wait(16); } },
+  zjSky: { *f(U, T, u) { const P = HD15.P.moon, Hc = this.center(this.H), Hd = typeof PX13 !== 'undefined' && PX13.hand ? PX13.hand(this) : { x: Hc.x + 10, y: Hc.y - 10 }; Sound.sfx('charge');
+      HD15.dim(this, 0.62, 66); HD15.flare(this, Hd, P, 40, { rot: -0.7, dur: 14, delay: 4 }); HD15.flash(this, Hd, P, 18, { dur: 12, delay: 4 }); yield* wait(16);
+      yield* this.lunge(u, 26, 1); Sound.sfx('slash'); const rot = -0.22;
+      HD15.cut(this, T, rot, 190, P, { dur: 34, w: 4, gap: 3 }); HD15.slash(this, T, { pal: P, r: 120, th: 6, ang: rot - Math.PI / 2, span: 0.9, dur: 16, sw: 0.18 });
+      yield* wait(10); Sound.sfx('crit'); HD15.stop(this, 6); this.spawn({ k: 'flash', c: '#eef4ff', a: 0.35, life: 8 });
+      HD15.flash(this, T, P, 70, { dur: 18 }); HD15.flare(this, T, P, 150, { rot, dur: 22, x8: 1 }); HD15.spikes(this, T, P, 12, 34, { rot });
+      for (let i = -2; i <= 2; i++) HD15.sparks(this, { x: T.x + Math.cos(rot) * i * 22, y: T.y + Math.sin(rot) * i * 22 }, 4, P, { spd: 3, life: 18 });
+      this.shake = Math.max(this.shake || 0, 10); yield* wait(18); } },
+  zjSteel: { *f(U, T, u) { const P = HD15.P.steel, Hc = this.center(this.H), Hd = typeof PX13 !== 'undefined' && PX13.hand ? PX13.hand(this) : { x: Hc.x + 10, y: Hc.y - 10 }; Sound.sfx('charge');
+      HD15.dim(this, 0.4, 56); HD15.cut(this, { x: Hd.x + 4, y: Hd.y - 8 }, -1.05, 22, P, { dur: 14, w: 5, gap: 0.01 }); HD15.flare(this, { x: Hd.x + 9, y: Hd.y - 17 }, P, 40, { rot: 0, dur: 14, delay: 4 }); yield* wait(12);
+      yield* this.lunge(u, 22, 2); Sound.sfx('heavy'); const cut = { pal: P, r: 72, th: 15, ang: -2.6, dir: -1, span: 1.3, dur: 24, sw: 0.2, spark: 1 }, rot = HD15.tanAt(cut);
+      HD15.slash(this, T, cut); HD15.slash(this, { x: T.x + 3, y: T.y - 2 }, Object.assign({}, cut, { r: 66, th: 6, delay: 2, al: 0.5, spark: 0 }));
+      yield* wait(4); Sound.sfx('crit'); HD15.stop(this, 6); HD15.cut(this, T, rot, 110, P, { dur: 30, w: 9, gap: 7 }); HD15.flash(this, T, P, 54, { dur: 16 });
+      const nx = -Math.sin(rot), ny = Math.cos(rot); for (const sg of [-1, 1]) { HD15.shards(this, T, 7, { ang: Math.atan2(ny * sg, nx * sg), spread: 1.1, spd: 3.6, sz: 3.6, up: 1.2 }); HD15.sparks(this, T, 9, HD15.P.gold, { ang: Math.atan2(ny * sg, nx * sg), spread: 1.2, spd: 4.4, life: 18, g: 0.1 }); }
+      HD15.ring(this, T, P, 4, 30, { w: 2.2, dur: 16 }); HD15.spikes(this, T, P, 10, 30, { rot }); this.shake = Math.max(this.shake || 0, 9); yield* wait(20); } },
+  ogSword: { *f(U, T, u) { const P = HD15.P.dawn, Hc = this.center(this.H), Hd = typeof PX13 !== 'undefined' && PX13.hand ? PX13.hand(this) : { x: Hc.x + 10, y: Hc.y - 10 }; Sound.sfx('charge');
+      HD15.flare(this, Hd, P, 44, { rot: -0.7, spin: 0.8, dur: 14, x8: 1 }); yield* wait(6); yield* this.lunge(u, 18, 2);
+      const A = [[-0.67, 1], [-2.41, -1], [-1.571, 1], [-2.37, 1], [-1.571, -1]];
+      for (let i = 0; i < 5; i++) { Sound.sfx('slash'); HD15.slash(this, T, { pal: P, r: 44, th: 8, ang: A[i][0], dir: A[i][1], span: 1.5, dur: 18, sw: 0.2, spark: 1 }); HD15.flash(this, T, P, 22, { dur: 8, delay: 2 }); HD15.sparks(this, T, 5, P, { spd: 3, life: 12, delay: 2 }); this.shake = Math.max(this.shake || 0, 2); yield* wait(i < 2 ? 4 : 3); }
+      yield* wait(4); this.spawn({ k: 'flash', c: '#fff2d8', a: 0.4, life: 8 }); Sound.sfx('crit');
+      HD15.slash(this, T, { pal: P, r: 110, th: 16, ang: -2.54, dir: -1, span: 0.9, dur: 26, sw: 0.22, spark: 1 }); HD15.horizon(this, { x: T.x, y: T.y + 4 }, P, { dur: 34, delay: 3 });
+      yield* wait(4); HD15.stop(this, 7); HD15.flash(this, T, P, 80, { dur: 20 }); HD15.flare(this, T, P, 140, { rot: 0, dur: 22, x8: 1 }); HD15.ring(this, T, P, 6, 46, { w: 2.4, dur: 20 }); HD15.spikes(this, T, P, 14, 38);
+      HD15.sparks(this, T, 24, P, { spd: 4.6, life: 24, g: 0.08 }); this.shake = Math.max(this.shake || 0, 10); yield* wait(18); } },
+};
+const HDSP15 = [
+  function* (U, T, u) { const P = HD15.P.cyan, Hc = this.center(this.H), Hd = typeof PX13 !== 'undefined' && PX13.hand ? PX13.hand(this) : { x: Hc.x + 10, y: Hc.y - 10 }; Sound.sfx('charge');
+    for (let i = 0; i < 3; i++) HD15.ring(this, Hd, P, 3, 30, { w: 1.2, dur: 18, delay: i * 4 }); HD15.flash(this, Hd, P, 20, { dur: 14 }); yield* wait(12);
+    yield* this.lunge(u, 18, 2); Sound.sfx('slash'); HD15.slash(this, T, { pal: P, r: 50, th: 10, ang: -2.41, dir: -1, span: 1.5, dur: 18, spark: 1 }); yield* wait(4);
+    Sound.sfx('heavy'); HD15.stop(this, 4); HD15.flash(this, T, P, 54, { dur: 16 }); HD15.ring(this, T, P, 4, 34, { w: 2.2, dur: 16 }); HD15.ring(this, T, P, 4, 24, { w: 1.4, dur: 14, delay: 4 }); HD15.spikes(this, T, P, 12, 28); HD15.sparks(this, T, 16, P, { spd: 4, life: 18 }); this.shake = Math.max(this.shake || 0, 6); yield* wait(16); },
+  function* (U, T, u) { const P = HD15.P.azure, G = HD15.P.gold, Hc = this.center(this.H), F = { x: Hc.x, y: HERO_FOOT - 2 }, Hd = typeof PX13 !== 'undefined' && PX13.hand ? PX13.hand(this) : { x: Hc.x + 10, y: Hc.y - 10 }; Sound.sfx('charge');
+    HD15.dim(this, 0.3, 56); HD15.ring(this, F, P, 6, 36, { fl: 0.3, w: 1.2, dur: 26 }); HD15.ring(this, F, P, 6, 36, { fl: 0.3, w: 1, dur: 26, delay: 7 }); HD15.ring(this, F, P, 6, 36, { fl: 0.3, w: 0.8, dur: 26, delay: 14 });
+    HD15.gather(this, { x: Hc.x, y: Hc.y - 4 }, 16, P, 36, { span: 12, life: 14 }); yield* wait(14); Sound.sfx('tick');
+    HD15.cut(this, { x: Hd.x + 4, y: Hd.y - 8 }, -1.05, 22, G, { dur: 16, w: 5, gap: 0.01 }); HD15.flare(this, { x: Hd.x + 9, y: Hd.y - 17 }, G, 46, { rot: 0, spin: 0.5, dur: 22, x8: 1, delay: 4 }); HD15.flash(this, { x: Hd.x + 9, y: Hd.y - 17 }, G, 20, { dur: 18, delay: 4 });
+    HD15.lockon(this, { x: Hc.x, y: Hc.y - 34 }, G, { dur: 34, r0: 16, r1: 7, delay: 8 }); yield* wait(32); },
+  function* (U, T, u) { const P = HD15.P.steel; yield* this.lunge(u, 20, 3); Sound.sfx('slash'); HD15.slash(this, T, { pal: P, r: 56, th: 13, ang: -2.41, dir: -1, span: 1.4, dur: 20, spark: 1 }); yield* wait(4);
+    Sound.sfx('heavy'); HD15.stop(this, 5); HD15.flash(this, T, P, 40, { dur: 14 }); HD15.cracks(this, T, 7, P, { len: 26, fl: 0.9, dur: 40 }); HD15.ring(this, T, P, 4, 26, { w: 2, dur: 14 });
+    HD15.shards(this, T, 12, { spd: 3.6, sz: 3.4, up: 1.6 }); this.shake = Math.max(this.shake || 0, 7); yield* wait(18); },
+];
+for (const k in HDFX15) { const id = 't_' + k, D = DEF.skills[id], F = HDFX15[k]; if (!D) { bvErr('v12.93', 'no skill ' + id); continue; } const key = 'hd15_' + k;
+  if (F.h) FX[key + 'h'] = function* (U, T, u, i, t) { if (!u) u = this.H; this.slashOn = 0; this.hd15cast = 1; yield* F.h.call(this, U, T, u, i, t); };
+  FX[key] = function* (U, T, u, t) { if (!T) { const L = this.foes ? this.foes().filter(v => !v.gone) : [], g = L.length > 1 ? this.groupOf(L.map(v => v.id)) : L[0]; T = g ? this.center(g) : { x: U.x, y: U.y - 80 }; if (!t) t = g; } if (!u) u = this.H; this.slashOn = 0; this.hd15cast = 1; yield* F.f.call(this, U, T, u, t); };
+  HD15.old[id] = { fx: D.fx, hitFx: D.hitFx, mv: MOVES[id] ? MOVES[id].fx : null, style: typeof SKILL_STYLE !== 'undefined' ? SKILL_STYLE[id] : null, redo: typeof REDO13 !== 'undefined' && REDO13.has(id) }; HD15.ids.push(id); }
+HD15.spKeys = []; { const kd = TREE_KINDS11.indexOf('劍'); HDSP15.forEach((F, j) => { const key = 'sp11_' + kd + '_' + j; if (!FX[key]) return; HD15.old[key] = FX[key];
+    HD15['sp' + j] = function* (U, T, u, t) { if (!T) T = { x: U.x, y: U.y - 80 }; if (!u) u = this.H; this.slashOn = 0; this.hd15cast = 1; yield* F.call(this, U, T, u, t); }; HD15.spKeys.push([key, j]); }); }
+HD15.use = on => { HD15.on = !!on; for (const [key, j] of HD15.spKeys) FX[key] = on ? HD15['sp' + j] : HD15.old[key]; for (const id of HD15.ids) { const D = DEF.skills[id], O = HD15.old[id], key = 'hd15_' + id.slice(2);
+    if (on) { D.fx = key; if (FX[key + 'h']) D.hitFx = key + 'h'; if (MOVES[id]) MOVES[id].fx = key; if (typeof SKILL_STYLE !== 'undefined') SKILL_STYLE[id] = ['draw', null, 'steel', null]; if (typeof REDO13 !== 'undefined') REDO13.add(id); }
+    else { D.fx = O.fx; D.hitFx = O.hitFx; if (MOVES[id]) MOVES[id].fx = O.mv; if (typeof SKILL_STYLE !== 'undefined') SKILL_STYLE[id] = O.style; if (typeof REDO13 !== 'undefined' && !O.redo) REDO13.delete(id); } } };
+{ const H = Battle.prototype.handlers, _dm = H.DAMAGE; H.DAMAGE = function* (e, s, t, P) { this.hd15hit = !!(HD15.on && this.hd15cast && s && s.hero && P && P.kind !== 'dot'); try { return yield* _dm.call(this, e, s, t, P); } finally { this.hd15hit = false; } };
+  const _im = Battle.prototype.impact; Battle.prototype.impact = function* (b, power) { if (!this.hd15hit) return yield* _im.call(this, b, power);
+    const v = b && b.id ? this.views[b.id] || b : b; if (!v) return; v.tint = { c: '#ffffff', a: 0.9 }; this.shake = Math.max(this.shake, [3, 6, 12][power] || 3); this.anim(v, 'hurt', 22); yield* wait(power > 1 ? 6 : 4); v.tint = null; v.blink = 24; }; }
+HD15.STATPAL = { atk: 'blaze', def: 'steel', spa: 'violet', spd: 'azure', spe: 'wind', acc: 'gold', eva: 'gold' };
+HD15.mine = b => !!(HD15.on && b && b.hd15cast);
+{ const _su = FX.statUpFx, _sd = FX.statDownFx;
+  FX.statUpFx = function* (U) { if (HD15.mine(this)) return yield* HD15.statFx.call(this, U, 1, HD15.P[HD15.STATPAL[this.hd15stat] || 'blaze']); return yield* _su.call(this, U); };
+  FX.statDownFx = function* (U) { if (HD15.mine(this) || this.hd15frz) { this.hd15frz = 0; return yield* HD15.statFx.call(this, U, -1); } return yield* _sd.call(this, U); };
+  const H = Battle.prototype.handlers, _ex = H.STATUS_EXPIRE, _rs = H.ROUND_START, _ap = H.STATUS_APPLY;
+  H.STATUS_APPLY = function* (e, s, t, P) { const id = P && P.status; this.hd15stat = id && id.startsWith('stage_') ? id.slice(6) : null;
+    if (id === 'bleed14' && t && !P.failed && !P.cleared && HD15.mine(this)) { t.st[id] = P.stacks ?? 1; const C = this.center(t); Sound.sfx('slash'); HD15.blood(this, C, 12, { spd: 2.6 }); HD15.slash(this, C, { pal: HD15.P.crimson, r: 22, th: 4, ang: -0.67, span: 1.4, dur: 14, sw: 0.25 }); yield* wait(6); yield* this.msg(t.n + '流血了！', { hold: 18 }); return; }
+    return yield* _ap.call(this, e, s, t, P); };
+  H.STATUS_EXPIRE = function* (e, s, t, P) { if (HD15.on && t && t.hero && P && P.status === 'frenzy11') this.hd15frz = 1; return yield* _ex.call(this, e, s, t, P); };
+  H.ROUND_START = function* (e, s, t, P) { this.hd15frz = 0; return yield* _rs.call(this, e, s, t, P); }; }
+{ const H = Battle.prototype.handlers, _as = H.ACTION_START, _hit = H.HIT, _et = H.EFFECT_TRIGGER, _dm2 = H.DAMAGE;
+  const _ae = H.ACTION_END; H.ACTION_START = function* (e, s, t, P) { this.hd15cast = 0; return yield* _as.call(this, e, s, t, P); };
+  H.ACTION_END = function* (e, s, t, P) { try { return yield* _ae.call(this, e, s, t, P); } finally { this.hd15cast = 0; } };
+  H.HIT = function* (e, s, t, P) { if (HD15.on && this.hd15cast && P && P.hitIndex > 0 && t) { const D = DEF.skills[P.skill]; if (!(D && ((D.hitFx && FX[D.hitFx]) || (D.tags || []).includes('basic')))) { Sound.sfx('hit'); yield* wait(3); return; } } return yield* _hit.call(this, e, s, t, P); };
+  if (typeof heroImpact === 'function') { const _hi = heroImpact; heroImpact = function* (...a) { if (HD15.on && this.hd15cast) return; yield* _hi.apply(this, a); }; }
+  if (typeof wThemeBurst === 'function') { const _wb = wThemeBurst; wThemeBurst = function (...a) { if (HD15.on && this && this.hd15cast) return; return _wb.apply(this, a); }; }
+  H.EFFECT_TRIGGER = function* (e, s, t, P) { this.hd15dot = P && P.status; return yield* _et.call(this, e, s, t, P); };
+  H.DAMAGE = function* (e, s, t, P) { const bl = HD15.on && P && P.kind === 'dot' && this.hd15dot === 'bleed14'; this.hd15bleed = bl; HD15.muteP = bl; try { return yield* _dm2.call(this, e, s, t, P); } finally { this.hd15bleed = false; HD15.muteP = false; if (P && P.kind === 'dot') this.hd15dot = null; } };
+  const _pf = FX.psnFx; FX.psnFx = function* (U, T) { if (this.hd15bleed) return yield* HD15.bleedTick.call(this, T || U); return yield* _pf.call(this, U, T); };
+  const _sf = Sound.sfx; Sound.sfx = function (n, ...a) { if (HD15.muteP && n === 'poison') n = 'slash'; return _sf.call(this, n, ...a); }; }
+HD15.mix = (a, b, t) => { const A = HD15.rgb(a).split(',').map(Number), B = HD15.rgb(b).split(',').map(Number); return '#' + A.map((v, i) => Math.round(v + (B[i] - v) * t).toString(16).padStart(2, '0')).join(''); };
+HD15.thPal = b => { const c = ((typeof WTH12 !== 'undefined' && (WTH12[b._thT] || WTH12.steel)) || ['#a8d8ff'])[0]; return { core: '#ffffff', mid: c, glow: HD15.mix(c, '#000000', 0.25), edge: HD15.mix(c, '#000000', 0.7) }; };
+{ const _wa = FX.wAtk; if (_wa) FX.wAtk = function* (U, T, u) { if (!(HD15.on && (this._thKind || '劍') === '劍')) return yield* _wa.call(this, U, T, u); this.hd15cast = 1; this.slashOn = 0; const P = HD15.thPal(this), n = this.hd15atk = ((this.hd15atk || 0) + 1) % 2;
+    yield* this.lunge(u, 8, 3); Sound.sfx('slash'); HD15.slash(this, T, { pal: P, r: 44, th: 9, ang: n ? -2.41 : -0.67, dir: n ? -1 : 1, span: 1.4, dur: 16, sw: 0.25, spark: 1 }); yield* wait(3); HD15.flash(this, T, P, 26, { dur: 10 }); HD15.sparks(this, T, 7, P, { spd: 3, life: 14 }); yield* wait(6); };
+  const _sg = segSwing; segSwing = function* (b, s, C, i, kind) { if (!(HD15.on && kind === '劍')) return yield* _sg(b, s, C, i, kind); b.hd15cast = 1; yield* b.lunge(s, 6, 2); Sound.sfx('slash'); const P = HD15.thPal(b);
+    HD15.slash(b, C, { pal: P, r: 40, th: 8, ang: [-2.41, -0.67, -1.571][i % 3], dir: i % 3 ? 1 : -1, span: 1.4, dur: 14, sw: 0.25 }); yield* wait(3); HD15.flash(b, C, P, 22, { dur: 9 }); HD15.sparks(b, C, 5, P, { spd: 2.6, life: 12 }); yield* wait(4); }; }
+HD15.bleedTick = function* (C) { const P = HD15.P.crimson; HD15.slash(this, C, { pal: P, r: 22, th: 4, ang: -0.67, span: 1.3, dur: 14, sw: 0.2 }); HD15.slash(this, { x: C.x + 4, y: C.y + 3 }, { pal: P, r: 20, th: 3, ang: -2.41, dir: -1, span: 1.2, dur: 14, sw: 0.2, delay: 3 });
+  HD15.flash(this, C, P, 26, { dur: 12, delay: 2 }); HD15.blood(this, C, 10, { spd: 2.4, delay: 2 }); HD15.blood(this, { x: C.x, y: C.y + 6 }, 4, { ang: Math.PI / 2, spread: 0.6, spd: 0.6, delay: 10 }); yield* wait(16); };
+HD15.use(typeof window !== 'undefined' && !!window.FXTEST); // 正式版還是舊的；特效測試版先用新的（選單可以切）
+if (typeof fxtest13 === 'function' && fxtest13()) { fxtMenu13 = function* () { const K = TREE_KINDS11.filter(k => !TREE11[k].common && (typeof kindOn13 !== 'function' || kindOn13(k))).concat(COMMON11.filter(k => (TREE11[k].sk || []).length).slice(0, 1)); let i = 0;
+  while (true) { const lab = k => (TREE11[k].common ? '共通' : k) + '（' + (TREE11[k].sk || []).length + (TREE11[k].common ? '' : '＋' + (TREE11[k].sp || []).length) + '）';
+    const items = K.map(k => ({ t: lab(k) })).concat([{ t: '劍的新特效：' + (HD15.on ? '開' : '關') }]);
+    const r = yield* choose(items, { x: 8, y: 30, w: W - 16, cols: 2, colW: (W - 24) / 2, cancel: true, index: i, title: '特效測試：選技能樹' });
+    if (r < 0) continue; i = r; if (r === K.length) { HD15.use(!HD15.on); continue; } const kind = K[r];
+    fxtSetup13(kind); FXT13.on = true; FXT13.kind = kind;
+    try { yield* Game.scene.battleScript({ sp: 'stumpling', lv: 30, kind: 'wild', extra: [['stumpling', 30], ['stumpling', 30]], fxtest: 1 }); } finally { FXT13.on = false; } } }; }

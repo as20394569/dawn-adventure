@@ -50,14 +50,7 @@ redo13('t_sdGap', 't11_sdGap', { col: C13.red,
     if (warded) { Sound.sfx('rock'); K13.ring(this, T, 10, 44, C13.ward, 4, 14); for (let i = 0; i < 12; i++) { const an = Math.random() * 6.3, sp = rnd(15, 35) / 10; this.spawn({ k: 'k13poly', x: T.x + Math.cos(an) * 14, y: T.y + Math.sin(an) * 14, vx: Math.cos(an) * sp, vy: Math.sin(an) * sp - 0.6, g: 0.1, vr: 0.2, shapes: SH13.hex(4, C13.ward[0]), life: 22, fade: 1 }); } }
     if (weak) { K13.flash(this, '#ff4020', 0.25, 6); K13.spike(this, T, 36, c, 10, 14); }
     K13.hit(this, T, c, weak || warded ? 1 : 0); yield* wait(10); } });
-// 星紋魔劍：物攻・魔攻較高的計算；再 2 段武器屬性的魔法；回 MP → 劍上聚星、斬擊、對手上方的星紋、2 顆屬性色的魔彈落下、藍光流回主角
-redo13('t_zjRune', 't11_zjRune', { col: C13.star,
-  *f(S, U, T, u) { const c = S.col, el = EL13[((gearBy(Game.st.equip.weapon) || {}).el) || ''] || C13.arc, H = this.center(this.H), tip = { x: H.x + 18, y: H.y - 20 };
-    Sound.sfx('charge'); for (let i = 0; i < 6; i++) K13.spike(this, { x: tip.x + rnd(-12, 12), y: tip.y + rnd(-18, 8) }, 7, c, 4, 16, { inner: 0.3 }); K13.ring(this, tip, 26, 4, c, 2, 12); yield* wait(10);
-    yield* this.lunge(u, 18, 3); Sound.sfx('slash'); K13.cut(this, T, -0.9, 74, c, 10, 16, { bend: 8 }); K13.hit(this, T, c, 0); yield* wait(4);
-    const Sg = { x: T.x, y: T.y - 34 }; this.spawn({ k: 'glow', x: Sg.x, y: Sg.y, r: 26, c: c[2], life: 36 }); this.spawn({ k: 'rune', x: Sg.x, y: Sg.y, r: 18, c: c[0], c2: c[1], n: 10, poly: 5, sq: 1, life: 36 }); K13.ring(this, Sg, 4, 22, c, 3, 12); yield* wait(6);
-    for (let k = 0; k < 2; k++) { const P = { x: T.x + (k ? 9 : -9), y: T.y + 2 }; Sound.sfx('charge'); yield* K13.orb(this, Sg, P, el, 6, 5, 0, { trail: 6 }); Sound.sfx('hitSuper'); K13.hit(this, P, el, 0); yield* wait(5); }
-    Sound.sfx('heal'); K13.motes(this, T, H, C13.mp, 14, 18); yield* wait(14); } });
+// 星紋魔劍：v12.93 從劍的技能樹拿掉了（換成斷鋼一閃）
 
 /* ---------------- 短刀 ---------------- */
 

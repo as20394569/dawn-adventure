@@ -311,15 +311,15 @@ const HDFX15 = {
       HD15.flash(this, T, P, 70, { dur: 18 }); HD15.flare(this, T, P, 150, { rot, dur: 22, x8: 1 }); HD15.spikes(this, T, P, 12, 34, { rot });
       for (let i = -2; i <= 2; i++) HD15.sparks(this, { x: T.x + Math.cos(rot) * i * 22, y: T.y + Math.sin(rot) * i * 22 }, 4, P, { spd: 3, life: 18 });
       this.shake = Math.max(this.shake || 0, 10); yield* wait(18); } },
-  // 星紋魔劍：刀身先亮起紫色的光（火花往刀上收）→ 一刀紫光斬 → 對手頭上轉出魔法陣 → 兩顆星從陣裡射下來打中 → 藍色光點從對手飛回主角（回復 MP）
-  zjRune: { *f(U, T, u) { const P = HD15.P.violet, Hc = this.center(this.H), Hd = typeof PX13 !== 'undefined' && PX13.hand ? PX13.hand(this) : { x: Hc.x + 10, y: Hc.y - 10 }; Sound.sfx('charge');
-      HD15.gather(this, Hd, 16, P, 28, { span: 8, life: 12 }); HD15.flash(this, Hd, P, 22, { dur: 16, delay: 6 }); yield* wait(12);
-      yield* this.lunge(u, 18, 2); Sound.sfx('slash'); HD15.slash(this, T, { pal: P, r: 52, th: 11, ang: -0.67, span: 1.5, dur: 20, spark: 1 });
-      yield* wait(4); HD15.flash(this, T, P, 34, { dur: 12 }); HD15.ring(this, T, P, 3, 22, { w: 1.6, dur: 14 }); HD15.sparks(this, T, 10, P, { spd: 3, life: 16 });
-      const Sg = { x: T.x, y: T.y - 40 }; Sound.sfx('charge'); HD15.sigil(this, Sg, P, 22, { dur: 52 }); yield* wait(12);
-      for (let i = 0; i < 2; i++) { const D0 = { x: T.x + (i ? 8 : -8), y: T.y + 2 }; HD15.comet(this, { x: Sg.x + (i ? 6 : -6), y: Sg.y }, D0, HD15.P.star, 8, { w: 6 }); yield* wait(8); Sound.sfx('hitSuper');
-        HD15.flash(this, D0, P, 36, { dur: 12 }); HD15.ring(this, D0, P, 3, 20, { w: 1.6, dur: 12 }); HD15.spikes(this, D0, HD15.P.star, 8, 18); HD15.sparks(this, D0, 8, HD15.P.star, { spd: 3, life: 14 }); yield* wait(4); }
-      Sound.sfx('heal'); HD15.motes(this, T, { x: Hc.x, y: Hc.y - 6 }, 10, HD15.P.mp, { dur: 22 }); HD15.flash(this, Hc, HD15.P.mp, 30, { dur: 16, delay: 22 }); yield* wait(30); } },
+  // 斷鋼一閃（v12.93 取代星紋魔劍）：舞台稍暗、刀身由下往上走過一道冷光 → 衝上去一記又長又重的斜斬（右上到左下）→ 停格，
+  //       斬痕發亮後往兩邊大大裂開（連鋼都斬斷），鋼片往斬痕兩側噴、金屬火花四濺
+  zjSteel: { *f(U, T, u) { const P = HD15.P.steel, Hc = this.center(this.H), Hd = typeof PX13 !== 'undefined' && PX13.hand ? PX13.hand(this) : { x: Hc.x + 10, y: Hc.y - 10 }; Sound.sfx('charge');
+      HD15.dim(this, 0.4, 56); HD15.cut(this, { x: Hd.x + 4, y: Hd.y - 8 }, -1.05, 22, P, { dur: 14, w: 5, gap: 0.01 }); HD15.flare(this, { x: Hd.x + 9, y: Hd.y - 17 }, P, 40, { rot: 0, dur: 14, delay: 4 }); yield* wait(12);
+      yield* this.lunge(u, 22, 2); Sound.sfx('heavy'); const cut = { pal: P, r: 72, th: 15, ang: -2.6, dir: -1, span: 1.3, dur: 24, sw: 0.2, spark: 1 }, rot = HD15.tanAt(cut);
+      HD15.slash(this, T, cut); HD15.slash(this, { x: T.x + 3, y: T.y - 2 }, Object.assign({}, cut, { r: 66, th: 6, delay: 2, al: 0.5, spark: 0 }));
+      yield* wait(4); Sound.sfx('crit'); HD15.stop(this, 6); HD15.cut(this, T, rot, 110, P, { dur: 30, w: 9, gap: 7 }); HD15.flash(this, T, P, 54, { dur: 16 });
+      const nx = -Math.sin(rot), ny = Math.cos(rot); for (const sg of [-1, 1]) { HD15.shards(this, T, 7, { ang: Math.atan2(ny * sg, nx * sg), spread: 1.1, spd: 3.6, sz: 3.6, up: 1.2 }); HD15.sparks(this, T, 9, HD15.P.gold, { ang: Math.atan2(ny * sg, nx * sg), spread: 1.2, spd: 4.4, life: 18, g: 0.1 }); }
+      HD15.ring(this, T, P, 4, 30, { w: 2.2, dur: 16 }); HD15.spikes(this, T, P, 10, 30, { rot }); this.shake = Math.max(this.shake || 0, 9); yield* wait(20); } },
   // 破曉千斬：刀尖一閃 → 五刀很快的細長金光斬（角度都不同）→ 一拍後畫面一亮，一記又長又大的收尾斬，同時一條地平線的光往兩邊展開（破曉），停格
   ogSword: { *f(U, T, u) { const P = HD15.P.dawn, Hc = this.center(this.H), Hd = typeof PX13 !== 'undefined' && PX13.hand ? PX13.hand(this) : { x: Hc.x + 10, y: Hc.y - 10 }; Sound.sfx('charge');
       HD15.flare(this, Hd, P, 44, { rot: -0.7, spin: 0.8, dur: 14, x8: 1 }); yield* wait(6); yield* this.lunge(u, 18, 2);

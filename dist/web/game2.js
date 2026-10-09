@@ -1238,7 +1238,7 @@ class TitleScene {
     x.drawImage(this.logo, Math.round(W / 2 - this.logo.width / 2), 6 + bob);
     Font.drawC(x, '～異世界冒險RPG～', W / 2, 52 + bob, '#ffe0a0', '#3a1428');
     if (this.stage === 'press' && Math.floor(this.t / 30) % 2 === 0) Font.drawC(x, '按 A 鍵開始', W / 2, 232, '#ffffff', '#1a1024');
-    Font.drawR(x, 'v12.92', W - 3, H - 13, '#b890b0', null);
+    Font.drawR(x, 'v12.93', W - 3, H - 13, '#b890b0', null);
   }
 }
 class IntroScene {
@@ -10339,3 +10339,133 @@ for (const [k, c] of [['m12_wolfNip', 'bite'], ['m12_wolfClaw', 'claw'], ['m12_w
   D.effects = D.effects.map((ef, i) => effRegister('skill:' + k + '#e' + i, ef)); D.after = D.after.map((ef, i) => effRegister('skill:' + k + '#a' + i, ef));
 }
 MON_PK.m12rings = (x, p, a) => { const R = lerp(p.r0 || 6, p.r1 || 30, Math.min(1, p.t / p.life * 1.6)); x.globalAlpha = a; for (let i = 3; i >= 1; i--) mCirc(x, p.x, p.y, R * i / 3, i % 2 ? (p.c || '#a07a4a') : (p.c2 || '#e8c890')); };
+{ const FUR = '#c09a64', FUR2 = '#f0d8a8', AMBER = '#f0b040', TOOTH = '#f8f4e0', CROC = '#6a8a3a', CROC2 = '#c8d070', CREEK = '#4aa0c0', CREEK2 = '#8ad0d8',
+    BARK = '#8a6038', BARK2 = '#c8a070', SPROUT = '#8ac040', MUD = '#6a4a28', TUSK = '#f4efe0', DUST = '#a08a6a';
+  function* crocRoll(B, T, i) { Sound.sfx('water'); for (let k = 0; k < 3; k++) mSpawn(B, 'mgouge', { x: T.x, y: T.y + 4, ang: (i * 3 + k) * 1.05, len: 40, w: 6, c: k % 2 ? CREEK : CROC, c2: k % 2 ? CREEK2 : CROC2, bend: 12, grow: 5, life: 14 });
+    for (let k = 0; k < 6; k++) { const an = k / 6 * Math.PI * 2 + i; mSpawn(B, 'mdrop', { x: T.x, y: T.y, vx: Math.cos(an) * 2.2, vy: Math.sin(an) * 2 - 0.8, g: 0.16, r: 1.8, c: CREEK2, life: 18 }); }
+    B.shake = 6; yield* wait(12); }
+  FX.m12h_crocRoll = function* (U, T, u, i) { yield* crocRoll(this, T, i || 1); };
+  Object.assign(MFX, {
+    *m12_wolfNip(U, T, u) { Sound.sfx('wind'); for (let i = 0; i < 4; i++) mSpawn(this, 'mpuff', { x: lerp(U.x, T.x, i / 4), y: lerp(U.y, T.y, i / 4) + 10, r: 3, c: '#c8b08a', op: 0.6, life: 12 + i * 2 });
+      yield* this.lunge(u, 24, 2); Sound.sfx('hit'); mSpawn(this, 'mfang', { x: T.x, y: T.y, w: 22, c: TOOTH, gum: '#6a4a2a', life: 14 }); yield* wait(8); mSpawn(this, 'mglint', { x: T.x + 9, y: T.y - 9, c: AMBER, life: 10 }); yield* wait(8); },
+    *m12_wolfClaw(U, T, u) { yield* this.lunge(u, 16, 3); Sound.sfx('slash'); mClaw(this, T, FUR, 1, 3, 30, 5); yield* wait(6); mDebris(this, T.x, T.y, 4, '#9aa0ac', 'mshard', 1.8, 2.5);
+      for (let i = 0; i < 4; i++) mSpawn(this, 'mfeather', { x: T.x + rnd(-10, 10), y: T.y + rnd(-6, 6), vy: 0.5, vx: rnd(-5, 5) / 10, c: FUR2, life: 24 }); yield* wait(14); },
+    *m12_wolfCall(U) { Sound.cry(7, 0.9, 1.4); for (let i = 0; i < 3; i++) { mSpawn(this, 'mjag', { x: U.x, y: U.y - 14, r0: 6, r1: 40, c: '#e0b060', n: 12, life: 18, fl: 0.6, rot: i * 0.4 }); yield* wait(6); }
+      for (const [dx, dy] of [[-46, 8], [46, 4], [-32, -18], [36, -20]]) for (const e of [-3, 3]) mSpawn(this, 'mglint', { x: U.x + dx + e, y: U.y + dy, c: AMBER, life: 24 });
+      Sound.sfx('statUp'); mSpawn(this, 'maura', { x: U.x, y: U.y, r0: 16, r1: 40, c: '#d09040', life: 18 }); yield* wait(20); },
+    *m12_wolfHunt(U, T, u) { Sound.sfx('wind'); for (let i = 0; i < 8; i++) { const an = i / 8 * Math.PI * 2; mSpawn(this, 'mpuff', { x: T.x + Math.cos(an) * 30, y: T.y + 14 + Math.sin(an) * 10, r: 3, c: '#b8a080', op: 0.7, life: 16 }); if (i % 2) yield* wait(2); }
+      yield* this.lunge(u, 22, 3); Sound.sfx('slash'); for (const ang of [0.8, 2.34]) mSpawn(this, 'mgouge', { x: T.x, y: T.y, ang, len: 34, w: 6, c: FUR, c2: FUR2, life: 14 }); yield* wait(6);
+      Sound.sfx('hitSuper'); mSpawn(this, 'mfang', { x: T.x, y: T.y, w: 30, c: TOOTH, gum: '#6a4a2a', life: 16 }); this.shake = 8; yield* wait(14); },
+    *m12_crocSnap(U, T, u) { yield* this.lunge(u, 16, 3); Sound.sfx('hit'); mSpawn(this, 'mfang', { x: T.x, y: T.y, w: 34, c: TOOTH, gum: '#4a6a2a', life: 16 });
+      for (let i = 0; i < 5; i++) mSpawn(this, 'mdrop', { x: T.x + rnd(-14, 14), y: T.y - 4, vx: rnd(-12, 12) / 10, vy: -1.2 - Math.random(), g: 0.18, r: 1.8, c: CREEK2, life: 18 }); yield* wait(10); mImpact(this, T, CROC2, 14); yield* wait(8); },
+    *m12_crocSplash(U, T, u) { yield* this.lunge(u, 10, 3); Sound.sfx('water'); mProj(this, U, T, i => ({ k: 'mdrop', r: 2.4, c: i % 2 ? CREEK2 : CREEK, arc: 20 + i * 2 }), 7, 1, 14); yield* wait(16);
+      mSpawn(this, 'mgouge', { x: T.x, y: T.y + 6, ang: 0.1, len: 44, w: 7, c: CROC, c2: CROC2, bend: 8, life: 14 }); for (let i = 0; i < 3; i++) mSpawn(this, 'mbubble', { x: T.x + (i - 1) * 14, y: T.y + 22, r: 3 + i, c: CREEK, life: 22 }); yield* wait(16); },
+    *m12_crocShoal(U) { Sound.sfx('water'); for (let i = 0; i < 10; i++) { const an = i / 10 * Math.PI * 2; mSpawn(this, 'mdrop', { x: U.x + Math.cos(an) * 30, y: U.y + 20 + Math.sin(an) * 8, vy: -1.6 - Math.random(), g: 0.12, r: 2, c: CREEK2, life: 20 }); }
+      yield* wait(8); const p = mSpawn(this, 'mbubble', { x: U.x, y: U.y + 4, r: 8, c: CREEK, life: 26 }); p.upd = q => { q.r = 8 + Math.min(1, q.t / 10) * 20; }; Sound.sfx('statUp'); yield* wait(22); },
+    *m12_crocRoll(U, T, u) { yield* this.lunge(u, 18, 3); Sound.sfx('hitSuper'); mSpawn(this, 'mfang', { x: T.x, y: T.y, w: 36, c: TOOTH, gum: '#4a6a2a', life: 14 }); yield* wait(6); yield* crocRoll(this, T, 0); },
+    *m12_stumpBump(U, T, u) { yield* this.lunge(u, 18, 4); Sound.sfx('hit'); mSpawn(this, 'm12rings', { x: T.x, y: T.y, r0: 6, r1: 30, c: '#a07a4a', c2: '#e8c890', life: 16 }); mDebris(this, T.x, T.y, 4, BARK2, 'mshard', 1.8, 2.2); this.shake = 6; yield* wait(16); },
+    *m12_stumpRoot(U, T) { Sound.sfx('leaf'); mSpawn(this, 'mcrack', { x: T.x, y: T.y + 26, n: 3, c: '#4a3420', life: 26 });
+      for (let i = 0; i < 3; i++) { mSpawn(this, 'mthorn', { x1: T.x + (i - 1) * 16, y1: T.y + 28, x2: T.x - (i - 1) * 10, y2: T.y + 8, w: 3, c: '#7a5634', c2: '#b08a5a', grow: 8, life: 22 }); yield* wait(3); }
+      mRise(this, T.x, T.y + 22, 4, () => ({ k: 'mpuff', r: 3, c: DUST })); yield* wait(18); },
+    *m12_stumpSprout(U) { Sound.sfx('heal'); for (const o of [-6, 6]) mSpawn(this, 'mthorn', { x1: U.x, y1: U.y - 14, x2: U.x + o * 2, y2: U.y - 32, w: 2.5, c: '#4a8a2a', c2: SPROUT, grow: 10, life: 28 }); yield* wait(6);
+      for (let i = 0; i < 5; i++) mSpawn(this, 'mleaf', { x: U.x + rnd(-14, 14), y: U.y - 20, vy: -0.4, vx: rnd(-4, 4) / 10, c: SPROUT, life: 26 }); mRise(this, U.x, U.y + 10, 6, () => ({ k: 'mglob', r: 2, c: '#b8e070' })); yield* wait(22); },
+    *m12_stumpChips(U, T, u) { yield* this.lunge(u, 6, 2); Sound.sfx('rock'); mProj(this, U, T, i => ({ k: 'mshard', r: 2.5 + (i % 3), c: i % 2 ? BARK2 : BARK, vr: 0.6, seed: i + 1, wob: 4 }), 9, 1, 12); yield* wait(20);
+      Sound.sfx('hit'); mImpact(this, T, BARK2, 16); mDebris(this, T.x, T.y, 5, BARK2, 'mshard', 1.6, 2); yield* wait(10); },
+    *m12_pigTusk(U, T, u) { yield* this.lunge(u, 18, 3); Sound.sfx('hit'); for (const o of [-6, 6]) mSpawn(this, 'mgouge', { x: T.x + o, y: T.y + 6, ang: -1.57 + o / 30, len: 18, w: 4, c: TUSK, c2: '#ffffff', bend: o / 3, life: 12 }); mImpact(this, T, '#e8d8b8', 14); yield* wait(14); },
+    *m12_pigSnort(U, T, u) { Sound.cry(11, 0.7, 0.6); mSpawn(this, 'manger', { x: U.x + 12, y: U.y - 16, c: '#ff5040', life: 22 }); for (const o of [-4, 4]) mProj(this, { x: U.x + o, y: U.y + 4 }, T, () => ({ k: 'mpuff', r: 4, c: '#e8e0d0', op: 0.7 }), 2, 3, 14); yield* wait(18);
+      yield* this.lunge(u, 8, 2); Sound.sfx('hit'); mImpact(this, T, '#f0e0c0', 12); for (let i = 0; i < 3; i++) mSpawn(this, 'mdrop', { x: T.x + (i - 1) * 10, y: T.y - 16, vy: 1.2, r: 2, c: '#9aa0c0', life: 18 }); yield* wait(12); },
+    *m12_pigMud(U) { Sound.sfx('water'); for (let i = 0; i < 8; i++) { const an = -Math.PI / 2 + (i - 3.5) * 0.4; mSpawn(this, 'mglob', { x: U.x, y: U.y + 16, vx: Math.cos(an) * 2, vy: Math.sin(an) * 2.2, g: 0.2, r: 2.5, c: MUD, life: 22 }); } yield* wait(10);
+      for (let i = 0; i < 5; i++) mSpawn(this, 'mdrop', { x: U.x + rnd(-14, 14), y: U.y + rnd(-10, 6), vy: 0.6, r: 1.8, c: '#5a3a1e', life: 20 }); Sound.sfx('statUp'); mSpawn(this, 'mjag', { x: U.x, y: U.y, r0: 34, r1: 12, c: '#8a6a40', n: 16, life: 18 }); yield* wait(18); },
+    *m12_pigRush(U, T, u) { Sound.sfx('run'); for (let i = 0; i < 6; i++) mSpawn(this, 'mpuff', { x: U.x + rnd(-10, 10), y: U.y + 20, vx: rnd(-8, 8) / 10, vy: -0.3, r: 4, c: DUST, op: 0.75, life: 20 }); yield* wait(6);
+      yield* this.lunge(u, 34, 4); Sound.sfx('hitSuper'); this.shake = 14; mSpawn(this, 'mjag', { x: T.x, y: T.y, r0: 6, r1: 34, c: '#e8c890', n: 12, life: 14 }); mDebris(this, T.x, T.y + 20, 6, '#7a5a38', 'mrock', 2.2, 3);
+      for (let i = 0; i < 5; i++) mSpawn(this, 'mpuff', { x: T.x + rnd(-24, 24), y: T.y + 22, r: 5, c: '#9a8468', op: 0.7, life: 22 }); yield* wait(16); },
+  }); }
+ITEMS.wood = { n: '木材', mat: 1, price: 0, sell: 40, cat: '魔物素材', d: '樹樁怪身上掉下來的木頭。乾燥又結實，適合做木製的武器和樂器。' };
+const V12_MON = [
+  ['meadowWolf', '野狼', 'beast', 7, 'fast', ['m12_wolfNip', 'm12_wolfClaw', 'm12_wolfCall', 'm12_wolfHunt'], 'wolfPelt', ['wolf', 25, 0.55, 1.15], '晨霧道路上成群出沒的灰褐色野狼。狼王出現之後，牠們也變得大膽起來。'],
+  ['creekCroc', '溪谷小鱷', 'aquatic', 10, 'tank', ['m12_crocSnap', 'm12_crocSplash', 'm12_crocShoal', 'm12_crocRoll'], 'crocHide', ['croc', 40, 0.8, 1.15], '躲在碧溪谷淺灘的小鱷魚。個子不大，咬合力卻一點也不輸大人。'],
+  ['stumpling', '樹樁怪', 'plant', 4, 'tank', ['m12_stumpBump', 'm12_stumpRoot', 'm12_stumpSprout', 'm12_stumpChips'], 'wood', ['rotTreant', 35, 1.1, 1.25], '被砍倒的樹留下的樹樁，吸了瘴氣以後長出腳走了起來。'],
+  ['piglet', '小野豬', 'beast', 5, 'phys', ['m12_pigTusk', 'm12_pigSnort', 'm12_pigMud', 'm12_pigRush'], 'boarTusk', ['wildBoar', 15, 0.8, 1.2], '風車丘陵的小野豬。橫衝直撞的樣子跟長大的暴走野豬一模一樣。'],
+];
+for (const [k, n, fam, lv, role, moves, mat, look, dex] of V12_MON) {
+  const R = CH2_ROLE[role], ok = moves.filter(m => MOVES[m]); if (ok.length < moves.length) bvErr('v12', k + ' moves ' + moves.filter(m => !MOVES[m]).join(','));
+  SPECIES[k] = { n, fam, base: R.map(v => Math.round(v * 60)), exp: 45 + 3 * lv, gold: Math.round(lv * 1.6), learn: ok.map((m, i) => [i === 3 ? lv + 1 : 1, m]), dex, mat };
+  MON_PANEL[k] = ch1Panel(lv, role, 'wild');
+  const [b, dh, ks, kl] = look; PLACEHOLDER[k] = look; HD_RIG_OF_PENDING[k] = b; HD_RIG_OF[k] = b; if (ART[b]) ART[k] = artRecolor(ART[b], dh, ks, kl);
+  CH2_KEYS.add(k);
+  defPut('enemies', k, { tags: ['foe', 'fam:' + fam], skills: ok.filter(id => DEF.skills[id]), fam, trait: null, profile: typeof aiProfile === 'function' ? aiProfile({ sp: k }) : 'brute', script: null, metadata: { n } });
+}
+{ const put = (map, i, row) => { const z = MAPS[map] && MAPS[map].encounters && MAPS[map].encounters[i]; if (z && !z.table.some(t => t[0] === row[0])) z.table.push(row); };
+  put('route', 0, ['stumpling', 2, 4, 15]); put('route', 1, ['stumpling', 4, 6, 15]); put('route', 1, ['meadowWolf', 5, 6, 15]); put('route', 2, ['meadowWolf', 7, 9, 18]);
+  put('forest', 0, ['stumpling', 11, 13, 12]); put('forest', 1, ['stumpling', 11, 13, 12]);
+  put('windHills', 0, ['piglet', 6, 7, 25]); put('windHills', 1, ['piglet', 4, 5, 25]);
+  for (let i = 0; i < 3; i++) put('jadeCreek', i, ['creekCroc', i ? 8 : 10, i ? 9 : 11, 25]); }
+Object.assign(RECIPE_FIX12, {
+  fangDagger: ['wolfPelt'], wolfNecklace: ['wolfPelt'], fangWand: ['wolfPelt', 'stone'], wolfMantle: ['wolfPelt', 'hareFur'], hunterLeather: ['wolfPelt', 'frogSkin'], hunterOath: ['wolfPelt', 'feather'],
+  scaleArmor: ['crocHide', 'stone'], crocBoots: ['crocHide'],
+  woodSword: ['wood'], practiceWand: ['wood'], apprenticeStaff: ['wood', 'stone'], primerTome: ['wood', 'hareFur'], woodFlute: ['wood', 'feather'], corkGun: ['wood', 'stone'],
+  hatchet: ['stone', 'wood'], trainSpear: ['wood'], travelLute: ['wood', 'frogSkin'], oakStaff: ['wood', 'leaf'], boarAxe: ['boarTusk', 'stone'] });
+for (const k of ['fangDagger', 'wolfNecklace', 'fangWand', 'wolfMantle', 'hunterLeather', 'hunterOath', 'scaleArmor', 'crocBoots', 'woodSword', 'practiceWand', 'apprenticeStaff', 'primerTome', 'woodFlute', 'corkGun', 'hatchet', 'trainSpear', 'travelLute', 'oakStaff', 'boarAxe']) {
+  const R = GEAR_RECIPE[k]; if (!R) continue; const counts = Object.values(R.mats), keys = RECIPE_FIX12[k], m = {};
+  counts.forEach((n, i) => { const id = keys[Math.min(i, keys.length - 1)]; m[id] = (m[id] || 0) + n; }); R.mats = m; }
+function midY(Y, h, z = 12) { const C = { 6: 7.5, 7: 8, 8: 7.5, 9: 7, 10: 7.5, 11: 7, 12: 7.5, 13: 8 }; return Math.round(Y + (h - 1) / 2 - (C[z] ?? 7.5)); }
+const W12 = { // weapon: [name, archetype (ORB_A key), [extra effect codes], picture (when the archetype's doesn't fit the weapon)]
+  woodSword: ['木劍連打', 'swallowFlight', ['spec+1']], ironSword: ['鐵劍突進', 'galeCut', ['spe+1']], knightSword: ['騎士十字', 'crossJudge', ['def+1']],
+  foxBlade: ['狐火雙斬', 'swallowFlight', ['brn:30']], crystalBlade: ['水晶穿刺', 'cloudPierce', ['fspd-1']], dawnSword: ['晨曦一閃', 'dawnFlash', ['brn:30']],
+  masterBlade: ['名匠斬', 'steelCleaver', ['crit']], voltSword: ['雷角斬', 'thornBind', ['par:20']], boneSaber: ['骸骨斬', 'crossJudge', ['drain:20']],
+  kingsBlade: ['古王裁決', 'crossJudge', ['atk+1']], graveBlade: ['冥府斬', 'bloodMoon', ['fspd-1']], eclipseBlade: ['月蝕之刃', 'allOut', ['drain:20']],
+  voidBlade: ['虛空斬', 'steelCleaver', ['fdef-1']], moonBlade: ['月光斬', 'swallowFlight', ['crit']], riftSword: ['裂界一閃', 'cloudPierce', ['crit']],
+  sandSaber: ['流砂斬', 'swallowFlight', ['fspe-1']], toadBlade: ['蟾毒斬', 'bloodMoon', ['psn:30']], verdantBlade: ['翠葉斬', 'thornBind', ['drain:20']],
+  royalSword: ['王國劍閃', 'dawnFlash', ['def+1']], hornSpear: ['甲蟲角刺', 'cloudPierce', ['fdef-1']], brassSword: ['發條連斬', 'bladeRain', ['spec+1']],
+  frostBrand: ['霜刃', 'crossJudge', ['fspe-1']], flameBrand: ['炎斬', 'steelCleaver', ['brn:30']], duskSword: ['黯滅斬', 'allOut', ['fatk-1']],
+  starSword: ['星辰斬', 'crossJudge', ['mp:5']], harvestScythe: ['收穫迴斬', 'steamCannon', ['drain:20'], 'whirlRing'], chronoLance: ['時計突', 'dawnFlash', ['spe+1']],
+  duskBlade: ['黑騎士斬', 'steelCleaver', ['drain:20']], moldBlade: ['影將突斬', 'shadowRush', ['fdef-1']],
+  mistDagger: ['晨霧雙刃', 'twinFang', ['spe+1']], fangDagger: ['狼牙連咬', 'twinFang', ['crit']], emberKnife: ['燼火刺', 'galeCut', ['brn:30']],
+  banditKnife: ['盜賊襲擊', 'assassinMark', ['first']], wyrmFang: ['龍牙刺', 'shadowRush', ['wet']], moonDagger: ['月牙閃', 'assassinMark', ['crit']],
+  riftDagger: ['裂界刺', 'shadowRush', ['fspd-1']], huntKnife: ['獵刀切', 'twinFang', ['fspe-1']], stingerDagger: ['蠍尾連刺', 'bladeRain', ['psn:30']],
+  duneFang: ['沙海裂牙', 'shadowRush', ['hit+1']], hydraFang: ['多頭咬', 'twinFang', ['psn:30']], royalDagger: ['宮廷刺擊', 'galeCut', ['crit']],
+  wolfFang2: ['灰狼撕咬', 'bladeRain', ['fdef-1']], iceDagger: ['冰晶刺', 'shadowRush', ['fspe-1']], magmaDagger: ['熔岩刺', 'assassinMark', ['brn:30']],
+  shadowDagger: ['暗影突襲', 'shadowRush', ['first']], cometDagger: ['彗星亂刃', 'bladeRain', ['crit']],
+  grenAxe: ['鐵斧怒擊', 'lastWall', ['fdef-1']], hatchet: ['伐木劈', 'rockBreak', ['spec+1']], boarAxe: ['野豬衝撞', 'shieldRam', ['atk+1']],
+  rockAxe: ['岩角劈', 'rockBreak', ['def+1']], crescentAxe: ['新月迴斬', 'steamCannon', ['crit'], 'axeSpin'], glacierAxe: ['霜嶺劈', 'allOut', ['fspe-1']],
+  titanAxe: ['泰坦重擊', 'shieldRam', ['fdef-1']],
+  trainSpear: ['見習突刺', 'galeCut', ['hit+1']], ironSpear: ['鐵槍貫', 'cloudPierce', ['spe+1']], galeLance: ['疾風突', 'cloudPierce', ['first']],
+  scaleSpear: ['龍鱗突', 'drakeFang', ['def+1']], azureSpear: ['蒼龍突', 'drakeFang', ['wet']], frostSpear: ['霜牙突', 'cloudPierce', ['fspe-1']],
+  skySpear: ['天龍貫', 'drakeFang', ['crit']],
+  wrapFist: ['布纏連拳', 'chainPalm', ['spec+1']], ironKnuckle: ['鐵拳', 'chainPalm', ['fdef-1']], rockFist: ['岩碎拳', 'rockBreak', ['hit+1'], 'hakkei'],
+  chiFist: ['氣功波', 'arcaneShot', ['heal+15'], 'chiBlast'], tigerClaw: ['虎爪亂舞', 'bladeRain', ['atk+1'], 'lacerate'], magmaFist: ['熔岩重拳', 'chainPalm', ['brn:30']],
+  starFist: ['流星拳', 'drakeFang', ['spe+1'], 'heavenFist'],
+  woodFlute: ['催眠笛音', 'sonicBoom', ['slp:15']], travelLute: ['旅人之歌', 'sonicBoom', ['heal+15'], 'echoBlast'], forestHarp: ['森之和弦', 'verdantWind', ['tangle']],
+  moonLyre: ['月光小夜曲', 'songOfValor', ['heal+15']], windHorn: ['風之號令', 'songOfValor', ['spe+1'], 'battleSong'], iceHarp: ['冰弦', 'tidalRage', ['fspe-1']],
+  starLyre: ['星之詠唱', 'holyWard', ['mp:5'], 'healSong'],
+  corkGun: ['軟木塞連射', 'twinFang', ['fatk-1'], 'gunDraw'], brassPistol: ['三連射', 'twinFang', ['hit+1'], 'quickDraw'], steamRifle: ['蒸汽射擊', 'steamCannon', ['wet'], 'gunDraw'],
+  gearRepeater: ['齒輪連發', 'bladeRain', ['hit+1'], 'fullBurst'], boltCannon: ['雷管砲擊', 'thorHammer', ['fdef-1'], 'megaCannon'], frostMusket: ['霜火彈', 'steamCannon', ['fspe-1', 'brn:30'], 'gunDraw'],
+  starBlaster: ['星爆砲擊', 'starfall', ['crit'], 'megaCannon'],
+  apprenticeStaff: ['見習魔彈', 'arcaneShot', ['mp:2']], practiceWand: ['練習魔彈', 'arcaneShot', ['spec+1']], oakStaff: ['森林之息', 'verdantWind', ['mp:2']],
+  thornStaff: ['荊棘纏繞', 'thornBind', ['tangle']], ruinStaff: ['符文障壁', 'manaWall', ['def+1']], tideStaff: ['潮汐彈', 'aquaEdge', ['wet']],
+  stormStaff: ['雷鳴連鎖', 'chainLightning', ['spa+1']], emberRod: ['燼火彈', 'fireShot', ['spa+1']], voltRod: ['雷角閃', 'bolt', ['spe+1']],
+  quartzWand: ['礦晶彈', 'arcaneShot', ['fspd-1']], fangWand: ['狼嚎彈', 'arcaneShot', ['fatk-1']], magusStaff: ['宮廷治癒', 'mend', ['cure']],
+  foxfireStaff: ['狐火漩渦', 'flameVortex', ['spe+1']], crystalStaff: ['水晶怒濤', 'tidalRage', ['fspd-1']], dawnStaff: ['晨曦光炎', 'flameVortex', ['heal+15']],
+  masterStaff: ['名匠障壁', 'manaWall', ['spa+1']], wyrmStaff: ['潮龍怒濤', 'tidalRage', ['heal+15']], lakeStaff: ['湖霧之癒', 'mend', ['shield:1']],
+  riftStaff: ['裂界凝神', 'focusMind', ['mp:3']], harpyStaff: ['鷹羽之風', 'manaWall', ['spe+1']], bogStaff: ['沼霧', 'smokeVeil', ['heal+15']],
+  hydraStaff: ['蛇毒魔彈', 'arcaneShot', ['psn:30']], courtStaff: ['宮廷聖護', 'holyWard', ['cure']], windStaff: ['風鳴嵐', 'verdantWind', ['spe+1']],
+  gearStaff: ['齒輪結界', 'ironWall', ['spec+1']], glacierStaff: ['冰河怒濤', 'tidalRage', ['spa+1']], volcanoStaff: ['火山爆', 'combustion', ['brn:30']],
+  voidStaff: ['虛空聖域', 'holyWard', ['def+1']], starStaff: ['星見流星', 'starfall', ['heal+15']],
+  primerTome: ['入門魔法', 'arcaneShot', ['cheap']], herbalTome: ['森之刃', 'aquaEdge', ['drain:20']], ancientTome: ['古岩之守', 'ironWall', ['mp:3']],
+  stolenTome: ['靈光一現', 'focusMind', ['spa+1']], deathTome: ['亡者吸魂', 'arcaneShot', ['drain:20']], sageTome: ['賢者時停', 'chronoLock', ['mp:5']],
+  starTome: ['星典隕星', 'starfall', ['spa+1']], voidTome: ['虛空凍結', 'chronoLock', ['shield:1']], lakeTome: ['湖之刃', 'aquaEdge', ['heal+15']],
+  riftTome: ['裂界魔彈', 'arcaneShot', ['crit']], sandTome: ['沙暴', 'verdantWind', ['fspe-1']], witchTome: ['魔女毒霧', 'verdantWind', ['psn:30']],
+  royalTome: ['王立聖典', 'songOfValor', ['def+1']], lichTome: ['巫妖冰潮', 'tidalRage', ['drain:20']],
+};
+const W12_EL_FX = { 火: ['fireBolt', 'flameWave'], 水: ['aquaBlade', 'aquaBurst'], 雷: ['thunder', 'chainBolt'], 草: ['leaf', 'leafStorm'] };
+const W12_TP = { 1: 55, 2: 60, 3: 70, 4: 78, 5: 86, 6: 94, 7: 104 }; // total power by tier, for a support weapon that now attacks
+const W12_SAND = { 沙暴: '岩', 風鳴嵐: '一般', 魔女毒霧: '毒' };
+const W12_ARCH_D = { swallowFlight: '兩段斬擊', galeCut: '搶先突進，削減護盾', thornBind: '容易會心的斬擊', cloudPierce: '無視部分物防的突刺', crossJudge: '十字斬，容易會心',
+  steelCleaver: '對破防的對手威力大增', bloodMoon: '吸取對手生命的斬擊', allOut: '威力極大，但自己也會受到反傷', dawnFlash: '搶先的居合斬，容易會心', bladeRain: '連續斬擊',
+  steamCannon: '攻擊全體的衝擊', shadowRush: '從影子中突刺，容易會心', twinFang: '兩段快速攻擊', assassinMark: '對HP低的對手威力大增', lastWall: 'HP越低威力越大',
+  rockBreak: '砸碎盔甲，降低物防，削減護盾', shieldRam: '整個人撞過去，削減護盾，50%讓對手退縮', drakeFang: '兩段穿透突刺', chainPalm: '連續出拳，累積氣',
+  arcaneShot: '純粹的魔力彈', sonicBoom: '音波衝擊，20%讓對手退縮', verdantWind: '席捲全體的風暴', songOfValor: '物攻和魔攻各提升一級', tidalRage: '席捲全體的大浪',
+  holyWard: '回復HP並展開護盾', thorHammer: '從天而降的雷槌攻擊全體，30%麻痺', starfall: '召喚隕石攻擊全體，20%灼傷', manaWall: '展開魔法護盾，傷害減少',
+  aquaEdge: '魔法刃', chainLightning: '連鎖的魔法攻擊全體，20%麻痺', fireShot: '魔法彈，20%灼傷', bolt: '攻擊全體的魔法，10%麻痺', mend: '回復HP',
+  flameVortex: '捲起漩渦攻擊全體，20%灼傷', focusMind: '下一次攻擊必定會心', smokeVeil: '3次行動內迴避提升', ironWall: '物防、魔防各+2',
+  combustion: '攻擊全體，對灼傷的對手威力大增（會消耗灼傷）', chronoLock: '讓時間靜止，對手暫時無法行動' };

@@ -120,7 +120,7 @@ EFFECT_TYPES.hunt_hp = { exec(core, ef, ctx) { const e = ctx.pre, R = core.rel11
     s.data.wardMul12 = [1, 1, 1.25, 1.5][s.data.diff11 || 0] || 1; return s; }; }
 
 /* ---------- 技能：破盾倍率、護盾招 ---------- */
-const WARDX12 = { t_axSplit: 2, t_axCrush: 3, t_sdGap: 2, t_spBreak: 2, t_fsStorm: 2, t_gnAp: 2, t_shRam: 2 };
+const WARDX12 = { t_zjSteel: 2, t_axSplit: 2, t_axCrush: 3, t_sdGap: 2, t_spBreak: 2, t_fsStorm: 2, t_gnAp: 2, t_shRam: 2 };
 for (const id in WARDX12) if (DEF.skills[id]) DEF.skills[id].wardX = WARDX12[id];
 for (const id of ['t_sdFlow', 't_dsStar']) if (DEF.skills[id]) DEF.skills[id].wardCritX = 1.5;
 const wEff12 = (id, ef) => effRegister('skill:' + id + '#w12', ef);
