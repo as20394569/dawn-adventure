@@ -55,7 +55,8 @@ HD15.dim = (b, a, dur, o = {}) => HD15.add(b, { x: 0, y: 0, free: 1, delay: o.de
 // 刀光：圓弧上掃過去的月牙。T＝刀光正中間經過的點；ang＝月牙鼓出去的方向；span 弧長；dir 揮的方向；fl 壓扁
 // 刀光的起點和起點的前進方向（崩星劍的流星要從這個方向接進刀光）
 // 刀光細長一點（玩家：「斬擊痕跡都偏粗 調整為細長」→「斬擊痕跡在細一點」）：半徑 ×1.2、弧長 ×1.1、粗細 ×0.32
-HD15.SZ = o => ({ r: (o.r || 34) * 1.2, th: Math.max(1.6, (o.th || 9) * 0.32), span: Math.min(2.8, (o.span || 2.2) * 1.1) });
+// 再改成「壓扁的菱形」（玩家：「斬擊改成偏向壓縮後的菱形」）：弧拉平（半徑 ×2.4、弧長 ×0.48，比原本短一點），寬度從中間往兩頭直直變尖
+HD15.SZ = o => ({ r: (o.r || 34) * 2.4, th: Math.max(2.2, (o.th || 9) * 0.5), span: Math.min(1.4, (o.span || 2.2) * 0.48) });   // 菱形只有中間最寬，所以中間寬度 ×0.5（平均比上一版還細）
 HD15.slashStart = (T, o) => { const Z = HD15.SZ(o), r = Z.r, th = Z.th, span = Z.span, ang = o.ang ?? -0.6, dir = o.dir || 1, fl = o.fl || 1, k0 = o.center ? 0 : r - th * 0.45, O = { x: T.x - Math.cos(ang) * k0, y: T.y - Math.sin(ang) * k0 * fl }, a0 = ang - span / 2 * dir, rr = r - th * 0.4;
   return { x: O.x + Math.cos(a0) * rr, y: O.y + Math.sin(a0) * rr * fl, tan: Math.atan2(dir * fl * Math.cos(a0), -dir * Math.sin(a0)) }; };
 // 刀光（玩家：「斬擊的方向出來的有點奇怪」→ 改成一般看到的月牙刀光）：整道弧在 3〜5 格內沿著揮的方向一口氣畫出來，
@@ -70,24 +71,29 @@ HD15.slash = (b, T, o) => { o = Object.assign({}, o, { pal: HD15.W(o.pal) }); co
       if (!o.spark || t % 2 || (h >= 1 && t > rv * dur + 1)) return; const a = a0 + span * dir * h, [hx, hy] = pt(a, r - th * 0.3);
       HD15.sparks(b, { x: hx, y: hy }, 2, P, { ang: a + dir * Math.PI / 2, spread: 1, spd: 2.4, life: 14, g: 0.05 }); },
     draw: (x, p, k) => { const hd = HD(k), er = ER(k); if (hd - er < 0.01) return; const f = (1 - HD15.ei(HD15.cl((k - 0.5) / 0.5))) * al, tf = 1 - 0.65 * HD15.ei(HD15.cl((k - rv) / (1 - rv)));
-      const U = i => er + (hd - er) * i / N, W = u => th * tf * Math.pow(Math.max(0, Math.sin(Math.PI * u)), 0.7), A = u => a0 + span * dir * u;
+      const U = i => er + (hd - er) * i / N, W = u => { const v = (u - er) / Math.max(1e-4, hd - er); return th * tf * Math.max(0, 1 - Math.abs(2 * v - 1)); }, A = u => a0 + span * dir * u;
       const band = (rOut, rIn) => { x.beginPath(); for (let i = 0; i <= N; i++) { const u = U(i), [px, py] = pt(A(u), rOut(u)); i ? x.lineTo(px, py) : x.moveTo(px, py); } for (let i = N; i >= 0; i--) { const u = U(i), [px, py] = pt(A(u), rIn(u)); x.lineTo(px, py); } x.closePath(); };
       const [tx, ty] = pt(A(er), r), [hx, hy] = pt(A(hd), r), grad = (c, a) => { const G = x.createLinearGradient(tx, ty, hx, hy); G.addColorStop(0, HD15.rgba(c, a * 0.3)); G.addColorStop(0.45, HD15.rgba(c, a * 0.85)); G.addColorStop(1, HD15.rgba(c, a)); return G; };
       x.lineJoin = 'round'; x.globalAlpha = f;
-      x.globalCompositeOperation = 'lighter'; band(u => r + 1.8 * W(u) / th + 0.6, u => r - W(u) - 2.2 * W(u) / th - 0.4); x.fillStyle = grad(P.glow, 0.5); x.fill();   // 外圈柔光
-      x.globalCompositeOperation = 'source-over'; band(u => r - W(u) * 0.55, u => r - W(u) - 0.5); x.fillStyle = grad(P.edge, 0.7); x.fill();                    // 內側的暗邊
-      band(() => r, u => r - W(u)); x.fillStyle = grad(P.mid, 0.95); x.fill();                                                                                      // 刀光本體（主色）
-      band(() => r - 0.1, u => r - W(u) * 0.36); x.fillStyle = grad(P.core, 1); x.fill();                                                                           // 最亮的刀鋒
+      x.lineJoin = 'miter';
+      x.globalCompositeOperation = 'lighter'; band(u => r + W(u) * 0.5 + 1.6 * W(u) / th, u => r - W(u) * 0.5 - 1.6 * W(u) / th); x.fillStyle = grad(P.glow, 0.5); x.fill();   // 外圈柔光
+      x.globalCompositeOperation = 'source-over'; band(u => r + W(u) * 0.5 + 0.45, u => r - W(u) * 0.5 - 0.45); x.fillStyle = grad(P.edge, 0.55); x.fill();         // 菱形的暗邊
+      band(u => r + W(u) * 0.5, u => r - W(u) * 0.5); x.fillStyle = grad(P.mid, 0.95); x.fill();                                                                     // 菱形本體
+      band(u => r + W(u) * 0.17, u => r - W(u) * 0.17); x.fillStyle = grad(P.core, 1); x.fill();                                                                     // 中間最亮的一條
       if (k < rv * 1.6) { const [px, py] = pt(A(hd), r - th * 0.25), z = th * 1.1; HD15.put(x, HD15.tex('glow', P.mid), px, py, z * 4, z * 4, 0, 0.6 * f); HD15.put(x, HD15.tex('core', P.mid), px, py, z * 1.4, z * 1.4, 0, f); } } }); };
 // 光粒：小小的白點，慢慢飄、閃一下、淡掉
 HD15.mote = (b, x0, y0, vx, vy, pal, o = {}) => HD15.add(b, { x: x0, y: y0, vx, vy, drag: 0.94, g: -0.008, life: (o.life || 22) + Math.floor(Math.random() * 10), upd: HD15.mv, s: (o.s || 1) * (0.7 + Math.random() * 0.7), ph: Math.random() * 6,
   draw: (x, p, k, t) => { const f = (k < 0.15 ? k / 0.15 : 1 - HD15.ei((k - 0.15) / 0.85)) * (0.75 + 0.25 * Math.sin(t * 0.5 + p.ph)); HD15.put(x, HD15.tex('glow', pal.glow), p.x, p.y, 6 * p.s, 6 * p.s, 0, 0.55 * f); HD15.put(x, HD15.tex('core', pal.mid), p.x, p.y, 2.4 * p.s, 2.4 * p.s, 0, f); } });
 // 刀光在 T 這一點前進的方向
 HD15.tanAt = o => (o.ang ?? -0.6) + (o.dir || 1) * Math.PI / 2;
+// 菱形的刀痕：柔光＋暗邊＋本體＋中線（直的斬痕用）
+HD15.dia = (x, cx, cy, L, Wd, rot, pal, al) => { if (!(al > 0.003) || L < 1) return; const ux = Math.cos(rot), uy = Math.sin(rot), nx = -uy, ny = ux, sh = (l, w) => { x.beginPath(); x.moveTo(cx - ux * l / 2, cy - uy * l / 2); x.lineTo(cx + nx * w / 2, cy + ny * w / 2); x.lineTo(cx + ux * l / 2, cy + uy * l / 2); x.lineTo(cx - nx * w / 2, cy - ny * w / 2); x.closePath(); };
+  x.lineJoin = 'miter'; x.globalAlpha = Math.min(1, al); x.globalCompositeOperation = 'lighter'; sh(L * 1.04, Wd * 2.4 + 1.2); x.fillStyle = HD15.rgba(pal.glow, 0.4); x.fill();
+  x.globalCompositeOperation = 'source-over'; sh(L, Wd + 0.9); x.fillStyle = HD15.rgba(pal.edge, 0.5); x.fill(); sh(L, Wd); x.fillStyle = pal.mid; x.fill(); sh(L * 0.92, Wd * 0.34); x.fillStyle = pal.core; x.fill(); };
 // 斬痕：一道直的白光劃過，接著往兩邊裂開、淡掉
 HD15.cut = (b, T, rot, L, pal, o = {}) => { pal = HD15.W(pal); const dl = o.delay || 0; L *= 1.25; o = Object.assign({}, o, { w: (o.w || 7) * 0.38 }); return HD15.add(b, { x: T.x, y: T.y, delay: dl, life: dl + (o.dur || 18), draw: (x, p, k) => { const g = HD15.eo(HD15.cl(k * 5)), sp = HD15.eo(HD15.cl((k - 0.25) / 0.75)) * (o.gap || 4), f = 1 - HD15.ei(HD15.cl((k - 0.2) / 0.8)), nx = -Math.sin(rot), ny = Math.cos(rot), T2 = HD15.tex('streak', pal.mid);
   if (k > 0.25 && k < 0.85 && Math.random() < 0.6) { const q = (Math.random() - 0.5) * L * g * 0.8; HD15.mote(b, p.x + Math.cos(rot) * q, p.y + Math.sin(rot) * q, nx * (Math.random() - 0.5) * 0.8, ny * (Math.random() - 0.5) * 0.8 - 0.2, pal); }
-  for (const sg of sp > 0.2 ? [-1, 1] : [0]) HD15.put(x, T2, p.x + nx * sp * sg, p.y + ny * sp * sg, L * g, (o.w || 7) * (1 - 0.5 * k), rot, f); } }); };
+  for (const sg of sp > 0.2 ? [-1, 1] : [0]) HD15.dia(x, p.x + nx * sp * sg, p.y + ny * sp * sg, L * g, (o.w || 7) * (1 - 0.5 * k), rot, pal, f); } }); };
 
 // 火花：會拖尾、會減速
 HD15.sparks = (b, P0, n, pal, o = {}) => { pal = HD15.W(pal); n = Math.max(1, Math.round(n * HD15.q())); for (let i = 0; i < n; i++) { const an = o.ang != null ? o.ang + (Math.random() - 0.5) * (o.spread ?? 1) : Math.random() * Math.PI * 2, v = (o.spd || 3) * (0.45 + Math.random() * 0.8), dl = o.delay || 0;
@@ -239,8 +245,8 @@ HD15.P.mp = { core: '#ffffff', mid: '#7fc8ff', glow: '#2a6cff', edge: '#0a2060' 
 HD15.mark = (b, C, rot, L, pal, o = {}) => { pal = HD15.W(pal); const dl = o.delay || 0, hold = Math.max(4, o.hold || 40), nx = -Math.sin(rot), ny = Math.cos(rot), w = o.w || 1.6; let burst = false;
   return HD15.add(b, { x: C.x, y: C.y, delay: dl, life: dl + hold + 20,
     upd: p => { const t = p.t - dl; if (t >= hold && !burst) { burst = true; for (let i = 0; i < 5; i++) { const q = (Math.random() - 0.5) * L; HD15.mote(b, p.x + Math.cos(rot) * q, p.y + Math.sin(rot) * q, nx * (Math.random() - 0.5) * 2, ny * (Math.random() - 0.5) * 2 - 0.4, pal); } } },
-    draw: (x, p, k, t) => { const T2 = HD15.tex('streak', pal.mid); if (t < hold) { const g = HD15.eo(HD15.cl(t / 3)), sh = 0.7 + 0.3 * Math.sin(t * 0.9 + rot * 7); HD15.put(x, T2, p.x, p.y, L * g, w * (t < 3 ? 2.2 : 1), rot, sh); }
-      else { const e = HD15.eo(HD15.cl((t - hold) / 20)), sp = e * 5, f = 1 - e; for (const sg of [-1, 1]) HD15.put(x, T2, p.x + nx * sp * sg, p.y + ny * sp * sg, L * (1 + 0.25 * e), w * (1 + 1.5 * e), rot, f); } } }); };
+    draw: (x, p, k, t) => { const T2 = HD15.tex('streak', pal.mid); if (t < hold) { const g = HD15.eo(HD15.cl(t / 3)), sh = 0.7 + 0.3 * Math.sin(t * 0.9 + rot * 7); HD15.dia(x, p.x, p.y, L * g, w * (t < 3 ? 2.2 : 1.3), rot, pal, sh); }
+      else { const e = HD15.eo(HD15.cl((t - hold) / 20)), sp = e * 5, f = 1 - e; for (const sg of [-1, 1]) HD15.dia(x, p.x + nx * sp * sg, p.y + ny * sp * sg, L * (1 + 0.25 * e), w * (1.3 + e), rot, pal, f); } } }); };
 // 晨光的光芒：從地平線往上張開的一把光束，慢慢轉、淡掉
 HD15.rays = (b, C, pal, n, L, o = {}) => { pal = HD15.W(pal); const dl = o.delay || 0, dur = o.dur || 50, A = []; for (let i = 0; i < n; i++) A.push([-Math.PI * (i + 0.5) / n + (Math.random() - 0.5) * 0.12, L * (0.7 + Math.random() * 0.5), 5 + Math.random() * 6]);
   return HD15.add(b, { x: C.x, y: C.y, delay: dl, life: dl + dur, draw: (x, p, k) => { const e = HD15.eo(HD15.cl(k / 0.3)), f = 1 - HD15.ei(HD15.cl((k - 0.35) / 0.65));
