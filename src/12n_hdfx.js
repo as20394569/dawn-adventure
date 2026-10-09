@@ -54,8 +54,8 @@ HD15.dim = (b, a, dur, o = {}) => HD15.add(b, { x: 0, y: 0, free: 1, delay: o.de
 /* ---------- 零件 ---------- */
 // 刀光：圓弧上掃過去的月牙。T＝刀光正中間經過的點；ang＝月牙鼓出去的方向；span 弧長；dir 揮的方向；fl 壓扁
 // 刀光的起點和起點的前進方向（崩星劍的流星要從這個方向接進刀光）
-// 刀光細長一點（玩家：「斬擊痕跡都偏粗 調整為細長」）：半徑 ×1.2、弧長 ×1.1、粗細 ×0.5
-HD15.SZ = o => ({ r: (o.r || 34) * 1.2, th: Math.max(2.2, (o.th || 9) * 0.5), span: Math.min(2.8, (o.span || 2.2) * 1.1) });
+// 刀光細長一點（玩家：「斬擊痕跡都偏粗 調整為細長」→「斬擊痕跡在細一點」）：半徑 ×1.2、弧長 ×1.1、粗細 ×0.32
+HD15.SZ = o => ({ r: (o.r || 34) * 1.2, th: Math.max(1.6, (o.th || 9) * 0.32), span: Math.min(2.8, (o.span || 2.2) * 1.1) });
 HD15.slashStart = (T, o) => { const Z = HD15.SZ(o), r = Z.r, th = Z.th, span = Z.span, ang = o.ang ?? -0.6, dir = o.dir || 1, fl = o.fl || 1, k0 = o.center ? 0 : r - th * 0.45, O = { x: T.x - Math.cos(ang) * k0, y: T.y - Math.sin(ang) * k0 * fl }, a0 = ang - span / 2 * dir, rr = r - th * 0.4;
   return { x: O.x + Math.cos(a0) * rr, y: O.y + Math.sin(a0) * rr * fl, tan: Math.atan2(dir * fl * Math.cos(a0), -dir * Math.sin(a0)) }; };
 // 刀光（玩家：「斬擊的方向出來的有點奇怪」→ 改成一般看到的月牙刀光）：整道弧在 3〜5 格內沿著揮的方向一口氣畫出來，
@@ -85,7 +85,7 @@ HD15.mote = (b, x0, y0, vx, vy, pal, o = {}) => HD15.add(b, { x: x0, y: y0, vx, 
 // 刀光在 T 這一點前進的方向
 HD15.tanAt = o => (o.ang ?? -0.6) + (o.dir || 1) * Math.PI / 2;
 // 斬痕：一道直的白光劃過，接著往兩邊裂開、淡掉
-HD15.cut = (b, T, rot, L, pal, o = {}) => { pal = HD15.W(pal); const dl = o.delay || 0; L *= 1.25; o = Object.assign({}, o, { w: (o.w || 7) * 0.55 }); return HD15.add(b, { x: T.x, y: T.y, delay: dl, life: dl + (o.dur || 18), draw: (x, p, k) => { const g = HD15.eo(HD15.cl(k * 5)), sp = HD15.eo(HD15.cl((k - 0.25) / 0.75)) * (o.gap || 4), f = 1 - HD15.ei(HD15.cl((k - 0.2) / 0.8)), nx = -Math.sin(rot), ny = Math.cos(rot), T2 = HD15.tex('streak', pal.mid);
+HD15.cut = (b, T, rot, L, pal, o = {}) => { pal = HD15.W(pal); const dl = o.delay || 0; L *= 1.25; o = Object.assign({}, o, { w: (o.w || 7) * 0.38 }); return HD15.add(b, { x: T.x, y: T.y, delay: dl, life: dl + (o.dur || 18), draw: (x, p, k) => { const g = HD15.eo(HD15.cl(k * 5)), sp = HD15.eo(HD15.cl((k - 0.25) / 0.75)) * (o.gap || 4), f = 1 - HD15.ei(HD15.cl((k - 0.2) / 0.8)), nx = -Math.sin(rot), ny = Math.cos(rot), T2 = HD15.tex('streak', pal.mid);
   if (k > 0.25 && k < 0.85 && Math.random() < 0.6) { const q = (Math.random() - 0.5) * L * g * 0.8; HD15.mote(b, p.x + Math.cos(rot) * q, p.y + Math.sin(rot) * q, nx * (Math.random() - 0.5) * 0.8, ny * (Math.random() - 0.5) * 0.8 - 0.2, pal); }
   for (const sg of sp > 0.2 ? [-1, 1] : [0]) HD15.put(x, T2, p.x + nx * sp * sg, p.y + ny * sp * sg, L * g, (o.w || 7) * (1 - 0.5 * k), rot, f); } }); };
 
@@ -196,7 +196,7 @@ HD15.weak = (b, T, pal, o = {}) => { pal = HD15.W(pal); const dl = o.delay || 0,
   HD15.put(x, HD15.tex('glow', pal.glow), p.x, p.y, s * 5, s * 5, 0, 0.55 * f); x.lineJoin = 'miter'; const dia = q => { x.beginPath(); x.moveTo(p.x, p.y - q); x.lineTo(p.x + q * 0.7, p.y); x.lineTo(p.x, p.y + q); x.lineTo(p.x - q * 0.7, p.y); x.closePath(); };
   x.globalCompositeOperation = 'source-over'; x.globalAlpha = f; dia(s); x.lineWidth = 2.2; x.strokeStyle = pal.edge; x.stroke(); x.lineWidth = 1.3; x.strokeStyle = pal.mid; x.stroke(); dia(s * 0.38); x.fillStyle = pal.core; x.fill(); } }); };
 // 迴旋的刀光：壓扁的一整圈，頭亮尾淡；後半圈（對手背後）畫淡一點
-HD15.whirl = (b, C, pal, o = {}) => { pal = HD15.W(pal); const dl = o.delay || 0, dur = o.dur || 26, R = o.r || 70, th = (o.th || 12) * 0.55, fl = o.fl || 0.34, turns = o.turns || 1.25, trail = o.trail || 3.6, a0 = o.a0 ?? Math.PI * 0.75, al = o.al ?? 1, HDk = k => HD15.eo(HD15.cl(k / 0.7));
+HD15.whirl = (b, C, pal, o = {}) => { pal = HD15.W(pal); const dl = o.delay || 0, dur = o.dur || 26, R = o.r || 70, th = (o.th || 12) * 0.38, fl = o.fl || 0.34, turns = o.turns || 1.25, trail = o.trail || 3.6, a0 = o.a0 ?? Math.PI * 0.75, al = o.al ?? 1, HDk = k => HD15.eo(HD15.cl(k / 0.7));
   return HD15.add(b, { x: C.x, y: C.y, delay: dl, life: dl + dur,
     upd: p => { const t = p.t - dl; if (t < 0 || !o.spark || t % 2 || t > dur * 0.6) return; const h = a0 + turns * Math.PI * 2 * HDk(t / dur); HD15.sparks(b, { x: C.x + Math.cos(h) * (R - th * 0.4), y: C.y + Math.sin(h) * (R - th * 0.4) * fl }, 2, pal, { ang: h + Math.PI / 2, spread: 0.8, spd: 2.6, life: 14, g: 0.05 }); },
     draw: (x, p, k) => { if (!x.createConicGradient) return; const head = a0 + turns * Math.PI * 2 * HDk(k), f = (1 - HD15.ei(HD15.cl((k - 0.6) / 0.4))) * al, tl = Math.min(Math.PI * 1.9, trail * (k < 0.15 ? 0.3 + 0.7 * k / 0.15 : 1)), sp = tl / (Math.PI * 2);
