@@ -27178,7 +27178,7 @@ const HDFX15 = {
       const nx = -Math.sin(rot), ny = Math.cos(rot); for (const sg of [-1, 1]) { HD15.shards(this, T, 7, { ang: Math.atan2(ny * sg, nx * sg), spread: 1.1, spd: 3.6, sz: 3.6, up: 1.2 }); HD15.sparks(this, T, 9, HD15.P.gold, { ang: Math.atan2(ny * sg, nx * sg), spread: 1.2, spd: 4.4, life: 18, g: 0.1 }); }
       HD15.ring(this, T, P, 4, 30, { w: 2.2, dur: 16 }); HD15.spikes(this, T, P, 10, 30, { rot }); this.shake = Math.max(this.shake || 0, 9); yield* wait(20); } },
   ogSword: { *f(U, T, u) { const P = HD15.P.white, Hc = this.center(this.H), Hd = typeof PX13 !== 'undefined' && PX13.hand ? PX13.hand(this) : { x: Hc.x + 10, y: Hc.y - 10 }, t0 = this.t, FIN = 92; Sound.sfx('charge');
-      HD15.dim(this, 0.74, 112, { col: '#03050d', inn: 0.08, out: 0.12 }); HD15.gather(this, Hd, 22, P, 40, { span: 14, life: 16 }); HD15.ring(this, { x: Hc.x, y: HERO_FOOT - 2 }, P, 6, 40, { fl: 0.3, w: 1, dur: 24 });
+      HD15.dim(this, 0.74, FIN + 26, { col: '#03050d', inn: 0.08, out: 0.2 }); HD15.gather(this, Hd, 22, P, 40, { span: 14, life: 16 }); HD15.ring(this, { x: Hc.x, y: HERO_FOOT - 2 }, P, 6, 40, { fl: 0.3, w: 1, dur: 24 });
       HD15.flare(this, { x: Hd.x + 9, y: Hd.y - 17 }, P, 60, { rot: 0, spin: 0.6, dur: 22, x8: 1, delay: 8 }); HD15.cut(this, { x: Hd.x + 4, y: Hd.y - 8 }, -1.05, 24, P, { dur: 16, w: 4, gap: 0.01, delay: 6 }); yield* wait(18);
       yield* this.lunge(u, 22, 2);
       for (let i = 0; i < 16; i++) { const tau = Math.random() * Math.PI * 2, a1 = tau - Math.PI / 2, a2 = tau + Math.PI / 2, up = Math.sin(a1) < 0, ang = up ? a1 : a2, dir = up ? 1 : -1, C = { x: T.x + (Math.random() - 0.5) * 22, y: T.y + (Math.random() - 0.5) * 18 }, now = this.t - t0;
@@ -27186,14 +27186,13 @@ const HDFX15 = {
         HD15.mark(this, C, tau, 44 + Math.random() * 28, P, { hold: FIN - now, w: 1.4 });
         if (i % 3 === 1) { const an = Math.random() * Math.PI * 2; HD15.windLines(this, { x: T.x - Math.cos(an) * 60, y: T.y - Math.sin(an) * 40 }, { x: T.x + Math.cos(an) * 60, y: T.y + Math.sin(an) * 40 }, P, 3, { spread: 16, len: 46, spd: 14, life: 8 }); }
         if (i % 4 === 3) HD15.flash(this, T, P, 22, { dur: 8 }); this.shake = Math.max(this.shake || 0, 2); yield* wait(i < 4 ? 4 : i < 10 ? 3 : 2); }
-      HD15.gather(this, T, 16, P, 50, { span: 8, life: 12 }); yield* wait(Math.max(4, FIN - 16 - (this.t - t0))); Sound.sfx('crit');
-      HD15.slash(this, T, { pal: P, r: 150, th: 26, ang: -2.6, dir: -1, span: 1.0, dur: 34, sw: 0.18, spark: 1 }); HD15.slash(this, T, { pal: P, r: 150, th: 26, ang: -0.55, dir: 1, span: 1.0, dur: 34, sw: 0.18, spark: 1, delay: 4 });
-      yield* wait(Math.max(2, FIN - (this.t - t0))); Sound.sfx('quake'); HD15.stop(this, 10); this.spawn({ k: 'flash', c: '#fffaf0', a: 0.8, life: 16 });
-      const G = { x: T.x, y: T.y + 12 }; HD15.raw(() => { HD15.horizon(this, G, HD15.P.sunrise, { dur: 80 }); HD15.rays(this, G, HD15.P.sunrise, 11, 170, { dur: 74, delay: 4 }); HD15.flash(this, G, HD15.P.sunrise, 150, { dur: 40, fl: 0.6 }); });
-      HD15.pillar(this, { x: T.x, y: T.y + 24 }, P, 190, { w: 60, dur: 44 }); HD15.flash(this, T, P, 110, { dur: 26 }); HD15.flare(this, T, P, 200, { rot: 0, dur: 30, x8: 1 });
-      HD15.ring(this, { x: T.x, y: T.y + 24 }, P, 10, 96, { fl: 0.3, w: 3, dur: 30 }); HD15.ring(this, T, P, 6, 56, { w: 2.4, dur: 24, delay: 3 }); HD15.spikes(this, T, P, 18, 52, { dur: 18 }); HD15.sparks(this, T, 40, P, { spd: 5.6, life: 30, g: 0.06 });
-      for (let i = 0; i < 46; i++) HD15.mote(this, 8 + Math.random() * 160, 40 + Math.random() * 150, (Math.random() - 0.5) * 0.3, -0.35 - Math.random() * 0.6, P, { life: 50, s: 1.2 });
-      this.shake = Math.max(this.shake || 0, 14); yield* wait(46); } },
+      HD15.gather(this, T, 16, P, 50, { span: 8, life: 12 }); yield* wait(Math.max(4, FIN - 12 - (this.t - t0)));
+      Sound.sfx('slash'); HD15.slash(this, T, { pal: P, r: 92, th: 22, ang: -0.67, dir: 1, span: 0.8, dur: 26, sw: 0.15, spark: 1 }); yield* wait(5);
+      Sound.sfx('slash'); HD15.slash(this, T, { pal: P, r: 92, th: 22, ang: -2.41, dir: -1, span: 0.8, dur: 26, sw: 0.15, spark: 1 });
+      yield* wait(Math.max(2, FIN - (this.t - t0))); Sound.sfx('crit'); HD15.stop(this, 8); this.spawn({ k: 'flash', c: '#ffffff', a: 0.4, life: 8 });
+      HD15.cut(this, T, 0.9, 96, P, { dur: 26, w: 6, gap: 5 }); HD15.cut(this, T, 2.3, 96, P, { dur: 26, w: 6, gap: 5 });
+      HD15.flash(this, T, P, 64, { dur: 18 }); HD15.ring(this, T, P, 4, 40, { w: 2, dur: 18 }); HD15.spikes(this, T, P, 12, 34); HD15.sparks(this, T, 26, P, { spd: 4.8, life: 24, g: 0.06 });
+      this.shake = Math.max(this.shake || 0, 10); yield* wait(22); } },
 };
 const HDSP15 = [
   function* (U, T, u) { const P = HD15.P.cyan, Hc = this.center(this.H), Hd = typeof PX13 !== 'undefined' && PX13.hand ? PX13.hand(this) : { x: Hc.x + 10, y: Hc.y - 10 }; Sound.sfx('charge');

@@ -346,10 +346,10 @@ const HDFX15 = {
       const nx = -Math.sin(rot), ny = Math.cos(rot); for (const sg of [-1, 1]) { HD15.shards(this, T, 7, { ang: Math.atan2(ny * sg, nx * sg), spread: 1.1, spd: 3.6, sz: 3.6, up: 1.2 }); HD15.sparks(this, T, 9, HD15.P.gold, { ang: Math.atan2(ny * sg, nx * sg), spread: 1.2, spd: 4.4, life: 18, g: 0.1 }); }
       HD15.ring(this, T, P, 4, 30, { w: 2.2, dur: 16 }); HD15.spikes(this, T, P, 10, 30, { rot }); this.shake = Math.max(this.shake || 0, 9); yield* wait(20); } },
   // 破曉千斬（奧義）：天色一下子暗成深夜，光點往刀上收、刀身亮起 → 主角化成一道道白光在對手四周來回穿梭，十幾道細長的斬擊從各個角度劃過，
-  //   每一刀都留下一條發亮的斬痕停在空中 → 一瞬間全部靜止 → 兩道巨大的十字斬劈下，停格；畫面一白，夜色退去：地平線亮起晨光、光芒往上張開、
-  //   光柱升起，留在空中的斬痕同時裂開散成光粒，白色光粒像清晨的微塵往上飄
+  //   每一刀都留下一條發亮的斬痕停在空中 → 一瞬間全部靜止 → 對手身上交叉兩斬（左上到右下、右上到左下），停格，十字斬痕和空中的斬痕一起裂開散成光粒 → 結束、跳傷害
+  //   （玩家：「最後兩斬有點怪 破曉也是 改成最後交叉兩斬後顯示傷害」→ 拿掉巨大十字斬和破曉的晨光、光芒、光柱）
   ogSword: { *f(U, T, u) { const P = HD15.P.white, Hc = this.center(this.H), Hd = typeof PX13 !== 'undefined' && PX13.hand ? PX13.hand(this) : { x: Hc.x + 10, y: Hc.y - 10 }, t0 = this.t, FIN = 92; Sound.sfx('charge');
-      HD15.dim(this, 0.74, 112, { col: '#03050d', inn: 0.08, out: 0.12 }); HD15.gather(this, Hd, 22, P, 40, { span: 14, life: 16 }); HD15.ring(this, { x: Hc.x, y: HERO_FOOT - 2 }, P, 6, 40, { fl: 0.3, w: 1, dur: 24 });
+      HD15.dim(this, 0.74, FIN + 26, { col: '#03050d', inn: 0.08, out: 0.2 }); HD15.gather(this, Hd, 22, P, 40, { span: 14, life: 16 }); HD15.ring(this, { x: Hc.x, y: HERO_FOOT - 2 }, P, 6, 40, { fl: 0.3, w: 1, dur: 24 });
       HD15.flare(this, { x: Hd.x + 9, y: Hd.y - 17 }, P, 60, { rot: 0, spin: 0.6, dur: 22, x8: 1, delay: 8 }); HD15.cut(this, { x: Hd.x + 4, y: Hd.y - 8 }, -1.05, 24, P, { dur: 16, w: 4, gap: 0.01, delay: 6 }); yield* wait(18);
       yield* this.lunge(u, 22, 2);
       // 千斬：16 刀，角度亂、月牙一律朝上鼓；每刀留一條斬痕到 FIN 那格
@@ -358,16 +358,14 @@ const HDFX15 = {
         HD15.mark(this, C, tau, 44 + Math.random() * 28, P, { hold: FIN - now, w: 1.4 });
         if (i % 3 === 1) { const an = Math.random() * Math.PI * 2; HD15.windLines(this, { x: T.x - Math.cos(an) * 60, y: T.y - Math.sin(an) * 40 }, { x: T.x + Math.cos(an) * 60, y: T.y + Math.sin(an) * 40 }, P, 3, { spread: 16, len: 46, spd: 14, life: 8 }); }
         if (i % 4 === 3) HD15.flash(this, T, P, 22, { dur: 8 }); this.shake = Math.max(this.shake || 0, 2); yield* wait(i < 4 ? 4 : i < 10 ? 3 : 2); }
-      // 一瞬間靜止 → 十字大斬
-      HD15.gather(this, T, 16, P, 50, { span: 8, life: 12 }); yield* wait(Math.max(4, FIN - 16 - (this.t - t0))); Sound.sfx('crit');
-      HD15.slash(this, T, { pal: P, r: 150, th: 26, ang: -2.6, dir: -1, span: 1.0, dur: 34, sw: 0.18, spark: 1 }); HD15.slash(this, T, { pal: P, r: 150, th: 26, ang: -0.55, dir: 1, span: 1.0, dur: 34, sw: 0.18, spark: 1, delay: 4 });
-      yield* wait(Math.max(2, FIN - (this.t - t0))); Sound.sfx('quake'); HD15.stop(this, 10); this.spawn({ k: 'flash', c: '#fffaf0', a: 0.8, life: 16 });
-      // 破曉：夜色退去，地平線亮起
-      const G = { x: T.x, y: T.y + 12 }; HD15.raw(() => { HD15.horizon(this, G, HD15.P.sunrise, { dur: 80 }); HD15.rays(this, G, HD15.P.sunrise, 11, 170, { dur: 74, delay: 4 }); HD15.flash(this, G, HD15.P.sunrise, 150, { dur: 40, fl: 0.6 }); });
-      HD15.pillar(this, { x: T.x, y: T.y + 24 }, P, 190, { w: 60, dur: 44 }); HD15.flash(this, T, P, 110, { dur: 26 }); HD15.flare(this, T, P, 200, { rot: 0, dur: 30, x8: 1 });
-      HD15.ring(this, { x: T.x, y: T.y + 24 }, P, 10, 96, { fl: 0.3, w: 3, dur: 30 }); HD15.ring(this, T, P, 6, 56, { w: 2.4, dur: 24, delay: 3 }); HD15.spikes(this, T, P, 18, 52, { dur: 18 }); HD15.sparks(this, T, 40, P, { spd: 5.6, life: 30, g: 0.06 });
-      for (let i = 0; i < 46; i++) HD15.mote(this, 8 + Math.random() * 160, 40 + Math.random() * 150, (Math.random() - 0.5) * 0.3, -0.35 - Math.random() * 0.6, P, { life: 50, s: 1.2 });
-      this.shake = Math.max(this.shake || 0, 14); yield* wait(46); } },
+      // 一瞬間靜止 → 交叉兩斬 → 停格、斬痕全部裂開 → 結束（接著跳傷害）
+      HD15.gather(this, T, 16, P, 50, { span: 8, life: 12 }); yield* wait(Math.max(4, FIN - 12 - (this.t - t0)));
+      Sound.sfx('slash'); HD15.slash(this, T, { pal: P, r: 92, th: 22, ang: -0.67, dir: 1, span: 0.8, dur: 26, sw: 0.15, spark: 1 }); yield* wait(5);
+      Sound.sfx('slash'); HD15.slash(this, T, { pal: P, r: 92, th: 22, ang: -2.41, dir: -1, span: 0.8, dur: 26, sw: 0.15, spark: 1 });
+      yield* wait(Math.max(2, FIN - (this.t - t0))); Sound.sfx('crit'); HD15.stop(this, 8); this.spawn({ k: 'flash', c: '#ffffff', a: 0.4, life: 8 });
+      HD15.cut(this, T, 0.9, 96, P, { dur: 26, w: 6, gap: 5 }); HD15.cut(this, T, 2.3, 96, P, { dur: 26, w: 6, gap: 5 });
+      HD15.flash(this, T, P, 64, { dur: 18 }); HD15.ring(this, T, P, 4, 40, { w: 2, dur: 18 }); HD15.spikes(this, T, P, 12, 34); HD15.sparks(this, T, 26, P, { spd: 4.8, life: 24, g: 0.06 });
+      this.shake = Math.max(this.shake || 0, 10); yield* wait(22); } },
 };
 // 劍的三個特技（普通攻擊累積後放出來的）：劍鳴、澄心、碎鋼
 const HDSP15 = [
