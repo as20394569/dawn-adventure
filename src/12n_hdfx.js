@@ -371,6 +371,7 @@ const HDFX15 = {
       yield* this.lunge(u, 22, 2);
       // 千斬：16 刀，角度亂、月牙一律朝上鼓；每刀留一條斬痕到 FIN 那格
       for (let i = 0; i < 16; i++) { const tau = Math.random() * Math.PI * 2, a1 = tau - Math.PI / 2, a2 = tau + Math.PI / 2, up = Math.sin(a1) < 0, ang = up ? a1 : a2, dir = up ? 1 : -1, C = { x: T.x + (Math.random() - 0.5) * 22, y: T.y + (Math.random() - 0.5) * 18 }, now = this.t - t0;
+        if (typeof HD18 !== 'undefined') HD18.flick(this, C);
         Sound.sfx('bladeQ'); HD15.slash(this, C, { pal: P, r: 46 + Math.random() * 22, th: 8, ang, dir, span: 1.4, dur: 14, sw: 0.2, spark: i % 3 === 0 });
         HD15.mark(this, C, tau, 44 + Math.random() * 28, P, { hold: FIN - now, w: 1.4 });
         if (i % 3 === 1) { const an = Math.random() * Math.PI * 2; HD15.windLines(this, { x: T.x - Math.cos(an) * 60, y: T.y - Math.sin(an) * 40 }, { x: T.x + Math.cos(an) * 60, y: T.y + Math.sin(an) * 40 }, P, 3, { spread: 16, len: 46, spd: 14, life: 8 }); }
