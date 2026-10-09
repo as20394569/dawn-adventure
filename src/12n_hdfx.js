@@ -360,10 +360,11 @@ const HDFX15 = {
         if (i % 4 === 3) HD15.flash(this, T, P, 22, { dur: 8 }); this.shake = Math.max(this.shake || 0, 2); yield* wait(i < 4 ? 4 : i < 10 ? 3 : 2); }
       // 一瞬間靜止 → 交叉兩斬 → 停格、斬痕全部裂開 → 結束（接著跳傷害）
       HD15.gather(this, T, 16, P, 50, { span: 8, life: 12 }); yield* wait(Math.max(4, FIN - 12 - (this.t - t0)));
-      Sound.sfx('slash'); HD15.slash(this, T, { pal: P, r: 92, th: 22, ang: -0.67, dir: 1, span: 0.8, dur: 26, sw: 0.15, spark: 1 }); yield* wait(5);
-      Sound.sfx('slash'); HD15.slash(this, T, { pal: P, r: 92, th: 22, ang: -2.41, dir: -1, span: 0.8, dur: 26, sw: 0.15, spark: 1 });
+      // 最後兩下畫成一個工整的 X（玩家：「最後兩下要呈現X」）：兩道幾乎是直線的長刀光，斜 45 度，正好在對手中心交叉；第一道留著，第二道劃過去就是 X
+      Sound.sfx('slash'); HD15.slash(this, T, { pal: P, r: 420, th: 24, ang: -Math.PI / 4, dir: 1, span: 0.22, dur: 34, sw: 0.12, spark: 1 }); yield* wait(6);
+      Sound.sfx('slash'); HD15.slash(this, T, { pal: P, r: 420, th: 24, ang: -Math.PI * 3 / 4, dir: -1, span: 0.22, dur: 30, sw: 0.12, spark: 1 });
       yield* wait(Math.max(2, FIN - (this.t - t0))); Sound.sfx('crit'); HD15.stop(this, 8); this.spawn({ k: 'flash', c: '#ffffff', a: 0.4, life: 8 });
-      HD15.cut(this, T, 0.9, 96, P, { dur: 26, w: 6, gap: 5 }); HD15.cut(this, T, 2.3, 96, P, { dur: 26, w: 6, gap: 5 });
+      HD15.cut(this, T, Math.PI / 4, 96, P, { dur: 26, w: 6, gap: 5 }); HD15.cut(this, T, Math.PI * 3 / 4, 96, P, { dur: 26, w: 6, gap: 5 });
       HD15.flash(this, T, P, 64, { dur: 18 }); HD15.ring(this, T, P, 4, 40, { w: 2, dur: 18 }); HD15.spikes(this, T, P, 12, 34); HD15.sparks(this, T, 26, P, { spd: 4.8, life: 24, g: 0.06 });
       this.shake = Math.max(this.shake || 0, 10); yield* wait(22); } },
 };
