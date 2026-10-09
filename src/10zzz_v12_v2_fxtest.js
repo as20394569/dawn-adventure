@@ -32,7 +32,7 @@ function fxtSetup13(kind) { const st = Game.st, T = tr11(st), base = fxtBase13(k
 { const _e = BR.escape; BR.escape = function (core, u, n) { return FXT13.on ? true : _e.call(this, core, u, n); }; }
 // every turn: HP・MP full, no cooldowns; a special is shown by the next normal attack
 { const _c = Battle.prototype.command; Battle.prototype.command = function* () { if (!FXT13.on) return yield* _c.call(this);
-    const c = this.core, hu = c.byId.H; for (const r in hu.max || {}) if (r !== 'wc' && hu.max[r] > 0) hu.res[r] = hu.max[r]; // HP・MP・氣・守勢 全滿 hu.cd = {}; for (const k in c.data) if (/^skill\|H\|/.test(k)) c.data[k] = 0; if (this.sync) this.sync();
+    const c = this.core, hu = c.byId.H; for (const r in hu.max || {}) if (r !== 'wc' && hu.max[r] > 0) hu.res[r] = hu.max[r]; /* HP・MP・氣・守勢 全滿 */ hu.cd = {}; for (const k in c.data) if (/^skill\|H\|/.test(k)) c.data[k] = 0; if (this.sync) this.sync();
     const cmd = yield* _c.call(this);
     if (cmd && cmd.type === 'skill' && FXT13.sp[cmd.skill] != null) { const j = FXT13.sp[cmd.skill], k = FXT13.kind, foe = c.alive('B')[0];
       hu.data.wspSkill = cmd.skill; hu.data.wspName = TREE11[k].sp[j][0]; hu.data.wspFx = 'sp11_' + TREE_KINDS11.indexOf(k) + '_' + j; hu.res.wc = Math.max(0, ((hu.max && hu.max.wc) || 3) - 1);
