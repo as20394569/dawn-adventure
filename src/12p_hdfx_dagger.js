@@ -161,21 +161,41 @@ const HDFX17 = {
       yield* this.lunge(u, 22, 1); Sound.sfx('blade'); HD15.slash(this, G, { pal: Pu, r: 70, th: 8, ang: -Math.PI / 2, dir: 1, span: 1.1, fl: 0.35, dur: 16, sw: 0.2, spark: 1 }); yield* wait(4);
       Sound.sfx('heavy'); HD15.thrust(this, { x: G.x, y: G.y - 46 }, { x: G.x, y: G.y - 2 }, Bk, { w: 6, ext: 2, dur: 30 }); HD15.stop(this, 4);
       HD15.ring(this, G, Pu, 4, 34, { fl: 0.3, w: 2, dur: 22 }); HD15.cracks(this, G, 6, Pu, { len: 30, fl: 0.25, dur: 50 });       if (v) { v.tint = { c: '#3a1060', a: 0.5 }; DG17.later(this, 34, () => { if (v.tint && v.tint.c === '#3a1060') v.tint = null; }); } this.shake = Math.max(this.shake || 0, 5); yield* wait(22); } },
-  // 毒牙封喉（絕技；v12.99 取代月影雙斬——玩家：「月影雙斬還是不行 移除招式 更換新的」→ 選「毒牙封喉」；對異常狀態中的對手威力 ×1.6）：
-  //   舞台變暗，主角化成黑影消失 → 黑影一閃出現在對手身前 → 一記由下往上的突刺直取咽喉（紫色、拖黑色殘影），咽喉上留下兩點發亮的綠色牙印
-  //   → 停格，綠色的毒像血管一樣從牙印往全身蔓延、一閃一閃，毒泡、毒液 → 毒一口氣炸開；對手身上已經有異常狀態時（威力 ×1.6），
-  //   那種異常的顏色跟著爆出來（黃色電光、橘色火光…），毒脈更大、再閃一次
-  zjVenomThroat: { *f(U, T, u, t) { const Pu = DG17.P()[0], V = HD15.P.venom, Hc = this.center(this.H), N = { x: T.x, y: T.y - 8 }, v = DG17.vAt(this, T), cu = v && this.core && this.core.byId[v.id], ail = !!(cu && this.core.majorOf && this.core.majorOf(cu));
-      Sound.sfx('charge'); HD15.dim(this, 0.6, 90, { col: '#04020a', inn: 0.1, out: 0.25 }); if (typeof HD18 !== 'undefined') HD18.vanish(this); yield* wait(12);
-      if (typeof HD18 !== 'undefined') { HD18.shadow(this, N.x - Hc.x - 4, N.y - Hc.y + 26, 10, 0.85); HD18.shadow(this, N.x - Hc.x + 10, N.y - Hc.y + 34, 7, 0.5); } Sound.sfx('wind'); yield* wait(5);
-      Sound.sfx('blade'); HD15.thrust(this, { x: N.x - 8, y: N.y + 46 }, N, Pu, { w: 9, ext: 14, dur: 22 }); HD15.thrust(this, { x: N.x - 4, y: N.y + 50 }, { x: N.x + 3, y: N.y + 3 }, HD15.P.black, { w: 5, ext: 10, dur: 20, delay: 2, al: 0.6 }); yield* wait(3);
-      Sound.sfx('bladeHitSuper'); HD15.stop(this, 8); for (const dx of [-4, 4]) { HD15.flash(this, { x: N.x + dx, y: N.y }, V, 14, { dur: 40 }); HD15.flare(this, { x: N.x + dx, y: N.y }, V, 16, { rot: Math.PI / 4, dur: 30, x8: 1 }); }
-      HD15.flash(this, N, Pu, 50, { dur: 14 }); HD15.spikes(this, N, Pu, 10, 26, { rot: -Math.PI / 2 }); DG17.dark(this, N, 6); this.shake = Math.max(this.shake || 0, 7); yield* wait(10);
-      Sound.sfx('poison'); DG17.veins(this, N, ail ? 12 : 8, V, { len: ail ? 34 : 24, dur: 48 }); DG17.bubbles(this, T, 10, { span: 18 }); DG17.drops(this, N, 6, V, { ang: Math.PI / 2, spread: 1.4, spd: 1.2 }); yield* wait(18);
-      Sound.sfx('crit'); HD15.stop(this, 6); HD15.flash(this, T, V, ail ? 80 : 56, { dur: 18 }); HD15.ring(this, T, V, 6, ail ? 56 : 40, { w: 2.4, dur: 18 }); HD15.sparks(this, T, 24, V, { spd: 4.6, life: 22, g: 0.05 }); DG17.mist(this, T, 4);
+  // 毒牙封喉（絕技；v12.99 取代月影雙斬；對異常狀態中的對手威力 ×1.6）——v12.100 加強（玩家：「感覺毒牙封喉特效不太足夠」）：
+  //   ① 蓄毒：舞台壓暗，綠色的毒滴往刀上聚、刀尖一亮、毒液滴下 → ② 主角消失，黑影左右蛇行三下逼到對手喉頭下
+  //   → ③ 封喉：一記粗大的突刺由下往上貫穿咽喉、刀尖從頭頂透出；全畫面閃白、長停格、大震 → ④ 喉頭留下兩個發亮的綠色牙印
+  //   → ⑤ 毒發：像心跳一樣脈動三下，每一下毒脈蔓延得更遠、畫面染得更綠、震得更大 → ⑥ 爆毒：毒從喉頭往上噴、衝擊波、八方光芒，牙印跟著炸開
+  //   對手身上已經有異常狀態時（威力 ×1.6）：毒脈更大，最後多炸一圈那種異常的顏色（黃色電光、橘色火光）
+  zjVenomThroat: { *f(U, T, u, t) { const Pu = DG17.P()[0], Bk = HD15.P.black, V = HD15.P.venom, H = DS16.hands(this), Hc = this.center(this.H), N = { x: T.x, y: T.y - 8 }, v = DG17.vAt(this, T), cu = v && this.core && this.core.byId[v.id], ail = !!(cu && this.core.majorOf && this.core.majorOf(cu)), B18 = typeof HD18 !== 'undefined';
+      // ① 蓄毒
+      Sound.sfx('charge'); HD15.dim(this, 0.74, 160, { col: '#030806', inn: 0.06, out: 0.18 }); HD15.gather(this, H.R, 16, V, 36, { span: 14, life: 16 }); yield* wait(15);
+      Sound.sfx('tick'); HD15.flare(this, H.R, V, 46, { rot: -0.6, dur: 16, x8: 1 }); HD15.flash(this, H.R, V, 24, { dur: 14 }); DG17.drops(this, H.R, 3, V, { ang: Math.PI / 2, spread: 0.5, spd: 0.6 }); yield* wait(8);
+      // ② 蛇行逼近
+      const Q = { x: N.x - 4, y: N.y + 30 }, dx = Q.x - Hc.x, dy = Q.y - Hc.y;
+      if (B18) { HD18.vanish(this); [[0.28, -18], [0.52, 16], [0.76, -11]].forEach(([f, s], i) => DG17.later(this, i * 3, () => HD18.shadow(this, dx * f + s, dy * f, 9, 0.72 - i * 0.1))); }
+      Sound.sfx('wind'); HD15.windLines(this, Hc, N, Pu, 5, { spread: 28, len: 40, spd: 12 }); yield* wait(9); if (B18) HD18.shadow(this, dx, dy, 14, 0.88);
+      // ③ 封喉
+      const A = { x: N.x - 10, y: N.y + 60 }, an = Math.atan2(N.y - A.y, N.x - A.x); Sound.sfx('bladeBig');
+      HD15.thrust(this, A, N, Pu, { w: 15, ext: 36, dur: 30 }); HD15.thrust(this, { x: A.x + 5, y: A.y + 4 }, N, Bk, { w: 8, ext: 26, dur: 26, delay: 2, al: 0.6 }); HD15.thrust(this, A, N, V, { w: 4, ext: 32, dur: 24, delay: 1 }); yield* wait(4);
+      Sound.sfx('bladeHitSuper'); Sound.sfx('heavy'); HD15.stop(this, 12); this.spawn({ k: 'flash', c: '#ffffff', a: 0.5, life: 10 });
+      HD15.flash(this, N, Pu, 80, { dur: 18 }); HD15.flare(this, N, Pu, 130, { rot: an, dur: 20 }); HD15.spikes(this, N, Pu, 12, 36, { rot: -Math.PI / 2 }); HD15.ring(this, N, Pu, 4, 44, { w: 2.6, dur: 18 });
+      HD15.sparks(this, N, 22, Pu, { ang: -Math.PI / 2 - 0.2, spread: 1.2, spd: 5.4, life: 22, g: 0.08 }); DG17.dark(this, N, 8); this.shake = Math.max(this.shake || 0, 12); yield* wait(12);
+      // ④ 牙印（留在喉頭上，最後跟著毒一起炸開）
+      Sound.sfx('bladeQ'); for (const [i, ox] of [[0, -5], [1, 5]]) { HD15.mark(this, { x: N.x + ox, y: N.y + 1 }, Math.PI / 2 + ox * 0.04, 12, V, { w: 2.2, hold: 46 - i * 2, delay: i * 2 }); HD15.flash(this, { x: N.x + ox, y: N.y }, V, 20, { dur: 12, delay: i * 2 }); }
+      DG17.drops(this, N, 4, V, { ang: Math.PI / 2, spread: 0.8, spd: 1 }); yield* wait(10);
+      // ⑤ 毒發：三下脈動
+      for (let i = 0; i < 3; i++) { Sound.sfx(i < 2 ? 'poison' : 'buzz'); this.spawn({ k: 'flash', c: V.mid, a: 0.1 + i * 0.06, life: 8 });
+        DG17.veins(this, N, (ail ? 7 : 5) + i * 2, V, { len: (ail ? 22 : 16) + i * 10, dur: 40 - i * 4 }); HD15.ring(this, T, V, 34 + i * 8, 6, { w: 1.8, dur: 12, fl: 0.6 }); HD15.flash(this, T, V, 26 + i * 12, { dur: 10 });
+        DG17.bubbles(this, T, 3 + i * 2, { span: 10 }); this.shake = Math.max(this.shake || 0, 3 + i * 2); yield* wait(i < 2 ? 12 : 10); }
+      // ⑥ 爆毒
+      Sound.sfx('crit'); Sound.sfx('quake'); HD15.stop(this, 10); this.spawn({ k: 'flash', c: V.mid, a: 0.42, life: 12 });
+      HD15.flash(this, T, V, ail ? 124 : 104, { dur: 22 }); HD15.ring(this, T, V, 8, ail ? 92 : 74, { w: 3.4, dur: 24 }); HD15.ring(this, T, V, 4, 46, { w: 2, dur: 18, delay: 4 });
+      HD15.flare(this, T, V, 200, { rot: 0, dur: 24, x8: 1 }); HD15.spikes(this, T, V, 16, 50); HD15.sparks(this, N, 34, V, { ang: -Math.PI / 2, spread: 1.4, spd: 6.4, life: 28, g: 0.12 }); HD15.sparks(this, T, 20, V, { spd: 5, life: 22, g: 0.05 });
+      DG17.bubbles(this, T, 14, { span: 20, w: 40 }); DG17.drops(this, N, 10, V, { ang: -Math.PI / 2, spread: 2.4, spd: 3 }); DG17.mist(this, T, 7); DG17.veins(this, N, ail ? 14 : 10, V, { len: ail ? 48 : 38, dur: 50 });
       if (ail && cu) { const st = cu.statuses ? cu.statuses.map(q => q.id) : [], E = st.includes('par') ? HD15.P.volt : st.includes('brn') ? HD15.P.ember : V;
-        DG17.later(this, 6, () => { this.spawn({ k: 'flash', c: E.mid, a: 0.35, life: 8 }); HD15.ring(this, T, E, 8, 78, { w: 3, dur: 22 }); HD15.flare(this, T, E, 150, { rot: 0, dur: 20, x8: 1 }); if (E === HD15.P.volt) DG17.zap(this, T, 4, { r: 30, dur: 18 }); if (E === HD15.P.ember) HD15.flames(this, { x: T.x, y: T.y + 16 }, 10, E, { w: 30, h: 18, span: 8, life: 18 }); }); }
-      this.shake = Math.max(this.shake || 0, ail ? 12 : 8); yield* wait(ail ? 24 : 16); } },
+        DG17.later(this, 8, () => { Sound.sfx(E === HD15.P.volt ? 'thunder' : E === HD15.P.ember ? 'fire' : 'poison'); this.spawn({ k: 'flash', c: E.mid, a: 0.4, life: 10 }); HD15.ring(this, T, E, 10, 104, { w: 3.4, dur: 24 }); HD15.flare(this, T, E, 180, { rot: Math.PI / 8, dur: 22, x8: 1 }); HD15.sparks(this, T, 26, E, { spd: 6, life: 24, g: 0.05 });
+          if (E === HD15.P.volt) DG17.zap(this, T, 5, { r: 34, dur: 20 }); if (E === HD15.P.ember) HD15.flames(this, { x: T.x, y: T.y + 16 }, 12, E, { w: 34, h: 22, span: 8, life: 20 }); }); }
+      this.shake = Math.max(this.shake || 0, ail ? 18 : 14); yield* wait(ail ? 32 : 24); } },
   // 影葬連刃（奧義，搶先；4 段起，對手有異常、能力下降時更多段）：舞台暗下來，主角沉進影子裡消失 → 影子從四面八方一刀一刀砍過去（紫的、黑的交錯，越來越快）
   //   → 最後一刀：對手腳下的影子裡竄出幾根黑色長刺往上刺穿，紫色的 X 斬痕裂開，停格
   ogDagger: { *f(U, T, u, t) { const H = DS16.hands(this), tu = DG17.tu(this, t), hu = this.core.byId.H; try { this.dg17n = tu && hu ? OG14.短刀[9].hitsOf(this.core, hu, { tg: [tu.id] }) : 4; } catch (e) { this.dg17n = 4; }
