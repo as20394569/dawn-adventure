@@ -141,14 +141,6 @@ redo13('t_zjSwallow', 't11_zjSwallow', { col: C13.swal,
   *f(S, U, T, u) { const c = S.col; Sound.sfx('wind'); for (let i = 0; i < 5; i++) K13.ghost(this, Math.cos(i * 1.26) * 12, Math.sin(i * 1.26) * 5, '#fff0a0', 6 + i * 3, 0.45); yield* wait(6); yield* this.lunge(u, 24, 2);
     Sound.sfx('slash'); K13.arc(this, { x: T.x - 18, y: T.y + 14 }, 36, Math.PI * 1.5, Math.PI * 2.0, c, 13, 16, { grow: 3 }); K13.arc(this, { x: T.x + 18, y: T.y + 14 }, 36, Math.PI * 1.5, Math.PI * 1.0, c, 13, 16, { grow: 3 }); yield* wait(3);
     Sound.sfx('crit'); K13.cut(this, T, 0, 70, c, 6, 12, { grow: 2 }); K13.spike(this, T, 34, c, 4, 16, { rot: 0.785, inner: 0.16 }); K13.hit(this, T, c, 1); yield* wait(12); } });
-// 黑曜終劍：物攻・魔攻較高的一邊計算的終結一劍 → 畫面轉黑、對手上方凝出一把黑曜石巨劍（紫色刃光）、直直斬下、紫色裂痕和大閃光
-redo13('t_zjObsidian', 't11_zjObsidian', { col: C13.obs,
-  *f(S, U, T, u) { const c = S.col; K13.dark(this, 0.65, 56, '#05020a'); Sound.sfx('charge');
-    const sw = K13.poly(this, { x: T.x, y: T.y - 60 }, SH13.blade(c[0], c[1]), { life: 40, s0: 0.2, s1: 1.1, grow: 10, o: '#c890ff' }); for (let i = 0; i < 10; i++) this.spawn({ k: 'mote', x: T.x + rnd(-40, 40), y: T.y - 60 + rnd(-30, 30), vy: 0, to: { x: T.x, y: T.y - 60 }, s: 2, c: c[1], life: 14 });
-    yield* wait(14); Sound.sfx('slash'); sw.upd = q => { const k = clamp((q.t - 14) / 4, 0, 1); q.y = lerp(T.y - 60, T.y + 14, k * k); }; yield* this.lunge(u, 14, 2); yield* wait(2);
-    Sound.sfx('quake'); this.shake = Math.max(this.shake, 14); K13.flash(this, '#d0a0ff', 0.5, 8); K13.cut(this, { x: T.x, y: T.y }, Math.PI / 2, 96, [c[1], '#ffffff', OL13], 6, 16, { grow: 2 });
-    for (let i = 0; i < 6; i++) K13.cut(this, { x: T.x + Math.cos(i * 1.05) * 14, y: T.y + Math.sin(i * 1.05) * 14 }, i * 1.05, 22, [c[1], '#ffffff', OL13], 3, 18); K13.hit(this, T, [c[1], '#ffffff', OL13], 1); yield* wait(14); } });
-
 /* ---------------- 雙盾 ---------------- */
 // 雙盾崩擊：蓄力後兩面盾一起砸下；對破防中的對手威力 ×1.5 → 兩面大盾從左右飛到對手頭上、一起砸下、地面震波；對手破防中時再加一圈金色衝擊
 redo13('t_shCrash', 't11_shCrash', { col: C13.shield,

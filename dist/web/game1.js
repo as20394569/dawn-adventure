@@ -368,6 +368,8 @@ const Sound = (() => {
     const g = ac.createGain(); g.gain.setValueAtTime(0.0001, T); g.gain.linearRampToValueAtTime(vol, T + att); g.gain.exponentialRampToValueAtTime(0.001, T + dur); s.connect(f); f.connect(g); g.connect(sfxG); s.loop = true; s.start(T, Math.random() * 0.4); s.stop(T + dur + 0.05); }
   function ring(f, dur, vol, t = 0) { if (!ac) return; const T = ac.currentTime + t;
     for (const [m, v, k] of [[1, 1, 'triangle'], [2.76, 0.5, 'sine'], [5.4, 0.3, 'sine']]) { const o = ac.createOscillator(); o.type = k; o.frequency.value = f * m; const g = ac.createGain(); g.gain.setValueAtTime(vol * v, T); g.gain.exponentialRampToValueAtTime(0.001, T + dur / m * 1.6); o.connect(g); g.connect(sfxG); o.start(T); o.stop(T + dur * 1.6 + 0.02); } }
+  function swish(dur, vol, f0, f1, q = 1.2, att = 0.03, t = 0, ft = 'bandpass') { if (!ac) return; const T = ac.currentTime + t, s = ac.createBufferSource(); s.buffer = noiseBuf; const f = ac.createBiquadFilter(); f.type = ft; f.Q.value = q; f.frequency.setValueAtTime(f0, T); f.frequency.exponentialRampToValueAtTime(f1, T + dur);
+    const g = ac.createGain(); g.gain.setValueAtTime(0, T); g.gain.linearRampToValueAtTime(vol, T + att); g.gain.exponentialRampToValueAtTime(0.001, T + dur); s.connect(f); f.connect(g); g.connect(sfxG); s.start(T, Math.random() * 0.4); s.stop(T + dur + 0.02); }
   function duck(depth, hold) { if (!ac || !Game.settings.music) return; const T = ac.currentTime, g = musG.gain; g.cancelScheduledValues(T); g.setValueAtTime(g.value, T); g.linearRampToValueAtTime(0.6 * depth, T + 0.02); g.setValueAtTime(0.6 * depth, T + hold); g.linearRampToValueAtTime(0.6, T + hold + 0.35); }
   let lastBump = 0;
   const SFX = {
@@ -402,6 +404,12 @@ const Sound = (() => {
     poison: () => { [0, 1, 2].forEach(i => sweep(300 + i * 60, 200, 0.08, 'p', .25, .12, i * 0.07)); },
     save: () => { [0, 1, 2].forEach(i => sweep(660 * Math.pow(1.335, i), 660 * Math.pow(1.335, i), 0.09, 'p', .5, .1, i * 0.09)); },
     slash: () => { noise(0.16, 0.38, 'bandpass', 700, 5200); snap(0.22, 0.1); ring(2600, 0.16, 0.05, 0.1); },
+    blade: () => { const k = 0.88 + Math.random() * 0.24; swish(0.14, 1.0, 1100 * k, 5600 * k, 0.9, 0.05); swish(0.09, 0.28, 5000 * k, 9000 * k, 0.8, 0.04, 0.03, 'highpass'); snap(0.2, 0.085); noise(0.08, 0.5, 'bandpass', 3400 * k, 900 * k, 0.085); },
+    bladeQ: () => { const k = 0.85 + Math.random() * 0.3; swish(0.09, 0.7, 1600 * k, 6400 * k, 1.0, 0.025); snap(0.14, 0.05); noise(0.06, 0.4, 'bandpass', 3800 * k, 1300 * k, 0.05); },
+    bladeBig: () => { swish(0.26, 1.1, 600, 4800, 0.8, 0.09); swish(0.2, 0.3, 4000, 9000, 1.0, 0.07, 0.03, 'highpass'); snap(0.32, 0.14); noise(0.2, 0.6, 'bandpass', 2800, 450, 0.14); thump(150, 45, 0.18, 0.45, 0.14); duck(0.5, 0.2); },
+    bladeHit: () => { snap(0.3); noise(0.09, 0.32, 'bandpass', 4200, 1300); noise(0.12, 0.26, 'lowpass', 2200, 320, 0.01, crunch); thump(170, 60, 0.12, 0.45); duck(0.6, 0.08); },
+    bladeHitSuper: () => { snap(0.4); noise(0.14, 0.4, 'bandpass', 5200, 1100); noise(0.26, 0.42, 'lowpass', 4200, 200, 0.01, crunch); thump(200, 34, 0.32, 0.8); duck(0.35, 0.2); },
+    bladeHitWeak: () => { noise(0.08, 0.22, 'bandpass', 3000, 1000); thump(110, 60, 0.08, 0.25); },
     fire: () => { noise(0.5, 0.35, 'bandpass', 300, 2200, 0, crunch); thump(95, 40, 0.35, 0.4); for (let i = 0; i < 6; i++) noise(0.02, 0.2, 'highpass', 4000, null, 0.05 + Math.random() * 0.4); },
     water: () => { [0, 1, 2, 3].forEach(i => sweep(500 + i * 90, 1200 + i * 90, 0.06, 'triangle', .5, .15, i * 0.06)); noise(0.2, .15, 'bandpass', 1200, 500, .1); },
     thunder: () => { noise(0.05, 0.42, 'highpass', 2200); noise(0.12, 0.3, 'bandpass', 1800, 600, 0.01); rumble(1.5, 0.42, 900, 70, 0.04, 0.05); rumble(1.1, 0.24, 420, 50, 0.4, 0.15); thump(62, 30, 0.7, 0.45, 0.03); duck(0.45, 0.4); },

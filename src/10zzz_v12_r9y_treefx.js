@@ -277,9 +277,9 @@ Object.assign(FX11, {
   zjSwallow: { col: ['#a0e0ff', '#ffffff', '#20608a'], pt: 'wind', cast: 'dash', fin: 'cut', snd: 'slash', // 迴燕雙斷: a swallow-turn — one sweep out, one back
     *f(S, U, T, u) { yield* this.lunge(u, 18, 2); Sound.sfx('slash'); this.spawn({ k: 'cres', x: T.x, y: T.y, r: 24, ang: 0.4, c: S.col[1], c2: S.col[0], w: 5, life: 12 }); yield* wait(4);
       Sound.sfx('crit'); this.spawn({ k: 'cres', x: T.x, y: T.y, r: 24, ang: 3.5, c: S.col[1], c2: S.col[0], w: 5, life: 12 }); for (let i = 0; i < 4; i++) this.spawn({ k: 'line', x1: T.x, y1: T.y, x2: T.x + Math.cos(i * 1.6) * 30, y2: T.y + Math.sin(i * 1.6) * 20, c: S.col[1], w: 1, grow: 2, life: 10 }); imp9(this, T, S, 1); yield* wait(10); } },
-  zjObsidian: { col: ['#6a4a8a', '#e0d0ff', '#100818'], pt: 'shadow', cast: 'void', fin: 'impact', snd: 'heavy', // 黑曜終劍: a black blade falls from the dark
-    *f(S, U, T, u) { this.spawn({ k: 'dark', a: 0.55, c: '#0a0410', life: 30 }); Sound.sfx('charge'); for (let i = 0; i < 6; i++) this.spawn({ k: 'glow', x: T.x + rnd(-30, 30), y: T.y - 40 + rnd(-10, 10), r: 10, c: S.col[0], life: 16 }); yield* wait(8);
-      yield* this.lunge(u, 16, 3); Sound.sfx('heavy'); ln9(this, T.x, T.y - 70, T.x, T.y + 16, S.col[0], S.col[1], 9, 16); this.spawn({ k: 'shock', x: T.x, y: T.y + 18, r0: 4, r1: 44, c: S.col[1], life: 14 }); this.shake = Math.max(this.shake, 10); imp9(this, T, S, 1); yield* wait(10); } },
+  zjSwordDance: { col: ['#ffe8f4', '#ffffff', '#6a3050'], pt: 'spark2', cast: 'dash', fin: 'xcut', snd: 'slash', // 劍舞亂刃: blades flash in from every side, eight times
+    *f(S, U, T, u) { yield* this.lunge(u, 14, 2); Sound.sfx('slash'); sl11(this, T, -0.7, 20, S, 3); yield* wait(2); },
+    *h(S, U, T, u, i) { Sound.sfx('slash'); sl11(this, T, [0.7, -1.2, 1.4, -0.3, 0.2, -0.9, 1.1][(i - 1) % 7], 20, S, 3); w12Particle(this, T.x, T.y, S, 2, 8); if (i >= 7) imp9(this, T, S, 1); yield* wait(i >= 7 ? 8 : 2); } },
   zjMoonFang: { col: ['#e0e8ff', '#ffffff', '#405080'], pt: 'crescent', cast: 'dash', fin: 'none', snd: 'slash', // 月影雙牙: two fangs of moonlight
     *f(S, U, T, u) { yield* this.lunge(u, 18, 2); Sound.sfx('slash'); this.spawn({ k: 'arc', x: T.x - 6, y: T.y, r: 16, a0: -0.6, c: S.col[0], life: 12 }); sl11(this, T, -1.1, 18, S, 3); yield* wait(5); },
     *h(S, U, T) { Sound.sfx('crit'); this.spawn({ k: 'arc', x: T.x + 6, y: T.y, r: 16, a0: 2.4, c: S.col[1], life: 12 }); sl11(this, T, 1.1, 18, S, 3); this.star(T.x, T.y, S.col[1], 10); yield* wait(6); } },

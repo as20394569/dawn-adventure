@@ -14,7 +14,8 @@ HD15.rgb = c => { const n = parseInt(c.slice(1), 16); return (n >> 16 & 255) + '
 HD15.rgba = (c, a) => 'rgba(' + HD15.rgb(c) + ',' + Math.max(0, Math.min(1, a)).toFixed(3) + ')';
 // 劍的攻擊一律白色（玩家：「劍目前的攻擊特效顏色 都換成白色粒子效果」）：攻擊招的畫面播放時 HD15.forceW 打開，零件拿到的顏色都換成白色；
 // 強化自己的招（心眼、狂刃、澄心）、能力升降的箭頭、流血照舊有顏色
-HD15.forceW = false; HD15.W = P => (HD15.forceW ? HD15.P.white : P);
+// 雙劍的副手是黑色刀光（玩家：「雙劍的斬擊痕跡為一黑一白」）：keep 的顏色不會被換成白色
+HD15.forceW = false; HD15.W = P => (HD15.forceW && !(P && P.keep) ? HD15.P.white : P);
 // 一組顏色：core 最亮的中心、mid 主色、glow 外圈柔光、edge 暗邊（讓亮的地方在明亮的背景上也看得出顏色）
 HD15.P = {
   white: { core: '#ffffff', mid: '#f3f6ff', glow: '#dfe6ff', edge: '#4c5468' },
@@ -28,6 +29,8 @@ HD15.P = {
   cyan: { core: '#ffffff', mid: '#5fe6ff', glow: '#1aa0ff', edge: '#063a5a' },
   violet: { core: '#fff0ff', mid: '#c07bff', glow: '#7a2cff', edge: '#2a0a5a' },
   pink: { core: '#fff2fa', mid: '#ff8ad0', glow: '#ff3a9a', edge: '#5a0a3a' },
+  // 黑色刀光：身體是黑的、外面一圈淡淡的亮邊和灰色柔光（暗的背景上也看得出來）；散掉時是黑色的光粒
+  black: { core: '#000000', mid: '#0e0c16', glow: '#5a5870', edge: '#c9ccd8', keep: 1, dark: 1 },
 };
 
 /* ---------- 柔光貼圖（第一次用時畫好，之後重複用） ---------- */
@@ -83,7 +86,9 @@ HD15.slash = (b, T, o) => { o = Object.assign({}, o, { pal: HD15.W(o.pal) }); co
       if (k < rv * 1.6) { const [px, py] = pt(A(hd), r - th * 0.25), z = th * 1.1; HD15.put(x, HD15.tex('glow', P.mid), px, py, z * 4, z * 4, 0, 0.6 * f); HD15.put(x, HD15.tex('core', P.mid), px, py, z * 1.4, z * 1.4, 0, f); } } }); };
 // 光粒：小小的白點，慢慢飄、閃一下、淡掉
 HD15.mote = (b, x0, y0, vx, vy, pal, o = {}) => HD15.add(b, { x: x0, y: y0, vx, vy, drag: 0.94, g: -0.008, life: (o.life || 22) + Math.floor(Math.random() * 10), upd: HD15.mv, s: (o.s || 1) * (0.7 + Math.random() * 0.7), ph: Math.random() * 6,
-  draw: (x, p, k, t) => { const f = (k < 0.15 ? k / 0.15 : 1 - HD15.ei((k - 0.15) / 0.85)) * (0.75 + 0.25 * Math.sin(t * 0.5 + p.ph)); HD15.put(x, HD15.tex('glow', pal.glow), p.x, p.y, 6 * p.s, 6 * p.s, 0, 0.55 * f); HD15.put(x, HD15.tex('core', pal.mid), p.x, p.y, 2.4 * p.s, 2.4 * p.s, 0, f); } });
+  draw: (x, p, k, t) => { const f = (k < 0.15 ? k / 0.15 : 1 - HD15.ei((k - 0.15) / 0.85)) * (0.75 + 0.25 * Math.sin(t * 0.5 + p.ph));
+    if (pal.dark) { HD15.put(x, HD15.tex('glow', '#05040a'), p.x, p.y, 5 * p.s, 5 * p.s, 0, 0.95 * f, 0); HD15.put(x, HD15.tex('glow', pal.glow), p.x, p.y, 7 * p.s, 7 * p.s, 0, 0.25 * f); return; }
+    HD15.put(x, HD15.tex('glow', pal.glow), p.x, p.y, 6 * p.s, 6 * p.s, 0, 0.55 * f); HD15.put(x, HD15.tex('core', pal.mid), p.x, p.y, 2.4 * p.s, 2.4 * p.s, 0, f); } });
 // 刀光在 T 這一點前進的方向
 HD15.tanAt = o => (o.ang ?? -0.6) + (o.dir || 1) * Math.PI / 2;
 // 菱形的刀痕：柔光＋暗邊＋本體＋中線（直的斬痕用）
@@ -439,7 +444,7 @@ HD15.mix = (a, b, t) => { const A = HD15.rgb(a).split(',').map(Number), B = HD15
 HD15.thPal = b => HD15.P.white; HD15.thPalOld = b => { const c = ((typeof WTH12 !== 'undefined' && (WTH12[b._thT] || WTH12.steel)) || ['#a8d8ff'])[0]; return { core: '#ffffff', mid: c, glow: HD15.mix(c, '#000000', 0.25), edge: HD15.mix(c, '#000000', 0.7) }; };
 { const _wa = FX.wAtk; if (_wa) FX.wAtk = function* (U, T, u) { if (!(HD15.on && (this._thKind || '劍') === '劍')) return yield* _wa.call(this, U, T, u); this.hd15cast = 1; this.slashOn = 0; const P = HD15.thPal(this), n = this.hd15atk = ((this.hd15atk || 0) + 1) % 2;
     yield* this.lunge(u, 8, 3); Sound.sfx('blade'); HD15.slash(this, T, { pal: P, r: 44, th: 9, ang: n ? -2.41 : -0.67, dir: n ? -1 : 1, span: 1.4, dur: 16, sw: 0.25, spark: 1 }); yield* wait(3); HD15.flash(this, T, P, 26, { dur: 10 }); HD15.sparks(this, T, 7, P, { spd: 3, life: 14 }); yield* wait(6); };
-  const _sg = segSwing; segSwing = function* (b, s, C, i, kind) { if (!(HD15.on && (kind === '劍' || kind === '雙劍'))) return yield* _sg(b, s, C, i, kind); b.hd15cast = 1; yield* b.lunge(s, 6, 2); Sound.sfx('blade'); const P = HD15.thPal(b);
+  const _sg = segSwing; segSwing = function* (b, s, C, i, kind) { if (!(HD15.on && kind === '劍')) return yield* _sg(b, s, C, i, kind); b.hd15cast = 1; yield* b.lunge(s, 6, 2); Sound.sfx('blade'); const P = HD15.thPal(b);
     HD15.slash(b, C, { pal: P, r: 40, th: 8, ang: [-2.41, -0.67, -1.571][i % 3], dir: i % 3 ? 1 : -1, span: 1.4, dur: 14, sw: 0.25 }); yield* wait(3); HD15.flash(b, C, P, 22, { dur: 9 }); HD15.sparks(b, C, 5, P, { spd: 2.6, life: 12 }); yield* wait(4); }; }
 HD15.bleedTick = function* (C) { const P = HD15.P.crimson; HD15.slash(this, C, { pal: P, r: 22, th: 4, ang: -0.67, span: 1.3, dur: 14, sw: 0.2 }); HD15.slash(this, { x: C.x + 4, y: C.y + 3 }, { pal: P, r: 20, th: 3, ang: -2.41, dir: -1, span: 1.2, dur: 14, sw: 0.2, delay: 3 });
   HD15.flash(this, C, P, 26, { dur: 12, delay: 2 }); HD15.blood(this, C, 10, { spd: 2.4, delay: 2 }); HD15.blood(this, { x: C.x, y: C.y + 6 }, 4, { ang: Math.PI / 2, spread: 0.6, spd: 0.6, delay: 10 }); yield* wait(16); };

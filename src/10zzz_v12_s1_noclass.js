@@ -43,7 +43,6 @@ const NC_TXT12 = [
   [/覺醒成為了冒險者！/g, '覺醒了異界人之力！'],
   [/覺醒了隱藏職業「異界勇者」！（找村長轉職）/g, '解鎖了戰技樹的絕技「晨曦之刃」「雙相斬」！'],
   [/要繼承「魔劍士」的道路嗎？\n（隨時也能找村長轉職）/g, '要學流浪魔劍士的劍技嗎？'],
-  [/魔劍士的天賦能讓物攻與魔攻互相加成（魔劍共鳴）。試著配一把劍和一本魔導書吧。/g, '解鎖了絕技「黑曜終劍」（雙劍技能樹）！'],
   [/職業的事也可以找我——王都有好幾個「上級職業」的導師，完成他們的試煉就能轉職。/g, '王都有好幾位導師，完成他們的試煉就能學到絕技。'],
   [/去公會轉職吧，我的學生。/g, '把那段旋律練熟吧，我的學生。'],
   [/你有資格走上這條路了。到冒險者公會找公會長轉職吧。/g, '你有資格學詩人公會的歌了。'],
@@ -52,7 +51,7 @@ const NC_TXT12 = [
   [/完成：成為(吟遊詩人|機工士|武僧|龍騎士)的資格。（到冒險者公會轉職）/g, '完成：學會了$1的絕技。'],
   [/上級職業「(吟遊詩人|機工士|武僧|龍騎士)」/g, '$1的絕技'],
   [/覺醒了隱藏職業/g, '解鎖了絕技'],
-  [/隱藏職業「異界勇者」/g, '絕技「晨曦之刃」「雙相斬」'], [/隱藏職業「魔劍士」/g, '絕技「黑曜終劍」'], [/繼承了魔劍之道/g, '學到了魔劍士的劍技'],
+  [/隱藏職業「異界勇者」/g, '絕技「晨曦之刃」「雙相斬」'], [/隱藏職業「魔劍士」/g, '成就「魔劍之道」'], [/打贏了魔劍士，繼承了魔劍之道/g, '打贏了流浪的魔劍士'], [/魔劍之道……你真的繼承了啊。那個劍士/g, '你打贏那個魔劍士了啊。他'],
   [/天賦之書|修練之書/g, '秘傳之書'],
   [/天賦選錯的話/g, '技能樹點錯的話'],
 ];
@@ -67,7 +66,12 @@ classTalk = function* () { const st = Game.st; if (!st.cls) { const k = yield* c
 ch2ClassTalk = function* () { const st = Game.st, f = st.flags, n = ['clsBard', 'clsMachinist', 'clsMonk', 'clsDragoon'].filter(k => f[k]).length;
   yield* say('王都的導師們都有自己的絕活。完成他們的試煉，就能學到技能樹的「絕技」。' + (n ? '\n（已經解鎖 ' + n + '/4 位導師的絕技）' : '\n（詩人公會・鐘錶師・雪峰寺・龍騎士老人）')); };
 // a teacher's flag turned on → say which 絕技 opened
-const ZJ_OF12 = { clsBard: ['迴響序曲', '終章頌歌', '樂器'], clsMachinist: ['齒輪砲台', '赤焰彈', '火槍'], clsMonk: ['千手寸勁', '沖天拳', '拳套'], clsDragoon: ['蒼龍躍', '流星龍墜', '長槍'], hiddenCls: ['晨曦之刃', '雙相斬', '戰技'], spellbladeOk: ['黑曜終劍', null, '雙劍'] };
+const ZJ_OF12 = { clsBard: ['迴響序曲', '終章頌歌', '樂器'], clsMachinist: ['齒輪砲台', '赤焰彈', '火槍'], clsMonk: ['千手寸勁', '沖天拳', '拳套'], clsDragoon: ['蒼龍躍', '流星龍墜', '長槍'], hiddenCls: ['晨曦之刃', '雙相斬', '戰技'] }; // v12.96：黑曜終劍拿掉了，打贏流浪的魔劍士不再解鎖絕技（只有成就）
+// 打贏流浪的魔劍士：不再問「要學他的劍技嗎」（沒有東西可學了），他說完話就結束
+Events.eliteWin_rogueBlade = function* (ow) { const st = Game.st; st.flags.rogueMet = 1;
+  yield* sayAll(['……好劍。', '你的劍裡，有魔力的流動。和我年輕的時候一樣。', '魔劍之道，就是讓劍與魔法合而為一。這三頁劍譜，就是它的全部。', '……能跟你這樣的劍士交手，我已經沒有遺憾了。']);
+  st.flags.spellbladeOk = 1; };
+{ const A = ACHIEVEMENTS.find(a => a.id === 'spellblade'); if (A) A.d = '打贏流浪的魔劍士。'; }
 { const _u = Overworld.prototype.update; Overworld.prototype.update = function (...a) { const st = this.st, f = st && st.flags;
     if (f && !this.script && !UI.stack.length && !Game.trans) { const told = f.zjTold12 || (f.zjTold12 = {}); const k = Object.keys(ZJ_OF12).find(q => f[q] && !told[q]);
       if (k) { told[k] = 1; const [x1, x2, tr] = ZJ_OF12[k]; this.run((function* () { yield* itemGet('解鎖了絕技「' + x1 + '」' + (x2 ? '「' + x2 + '」' : '') + '！（' + tr + '技能樹，Lv35 開放）'); })()); return; } }

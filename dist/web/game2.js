@@ -1238,7 +1238,7 @@ class TitleScene {
     x.drawImage(this.logo, Math.round(W / 2 - this.logo.width / 2), 6 + bob);
     Font.drawC(x, '～異世界冒險RPG～', W / 2, 52 + bob, '#ffe0a0', '#3a1428');
     if (this.stage === 'press' && Math.floor(this.t / 30) % 2 === 0) Font.drawC(x, '按 A 鍵開始', W / 2, 232, '#ffffff', '#1a1024');
-    Font.drawR(x, 'v12.93', W - 3, H - 13, '#b890b0', null);
+    Font.drawR(x, 'v12.96', W - 3, H - 13, '#b890b0', null);
   }
 }
 class IntroScene {
@@ -10469,3 +10469,80 @@ const W12_ARCH_D = { swallowFlight: '兩段斬擊', galeCut: '搶先突進，削
   aquaEdge: '魔法刃', chainLightning: '連鎖的魔法攻擊全體，20%麻痺', fireShot: '魔法彈，20%灼傷', bolt: '攻擊全體的魔法，10%麻痺', mend: '回復HP',
   flameVortex: '捲起漩渦攻擊全體，20%灼傷', focusMind: '下一次攻擊必定會心', smokeVeil: '3次行動內迴避提升', ironWall: '物防、魔防各+2',
   combustion: '攻擊全體，對灼傷的對手威力大增（會消耗灼傷）', chronoLock: '讓時間靜止，對手暫時無法行動' };
+{ const old = weaponSkill12, seen = new Map(), names = new Set(Object.values(DEF.skills).map(D => D.name));
+  const avgHits = D => D.hits ? (D.hits[0] + D.hits[1]) / 2 : 1;
+  for (const k in W12) { const G = GEAR[k]; if (!G || G.slot !== 'weapon') { bvErr('v12', 'w12 ' + k + ' not a weapon'); continue; }
+    const [n, arch, codes, fxOwn] = W12[k], base = MOVES['o_' + arch], AD = DEF.skills['o_' + arch], cur = DEF.skills[old(k)]; if (!base || !AD) { bvErr('v12', 'w12 arch ' + arch); continue; }
+    const combo = arch + '|' + codes.join(','); if (seen.has(combo)) bvErr('v12', 'w12 same skill ' + k + ' / ' + seen.get(combo)); seen.set(combo, k);
+    if (names.has(n)) bvErr('v12', 'w12 name taken ' + n); names.add(n);
+    const id = 'u_' + k, dmg = (AD.power || 0) > 0, curTotal = cur && cur.power ? cur.power * avgHits(cur) : 0, total = curTotal || W12_TP[G.t] || 80;
+    const pow = dmg ? Math.max(10, Math.round(total / avgHits(AD))) : 0, archMp = ORB_A[arch].mp || 5, archTotal = (AD.power || 1) * avgHits(AD);
+    const mp = dmg ? clamp(Math.round(archMp * total / archTotal), 2, 12) : archMp;
+    const magic = AD.cat === '特', aoe = AD.target === 'all_enemies', el = W12_SAND[n] || (dmg && G.elem ? G.elem : magic ? AD.el : '一般'); // a physical archetype keeps no element of its own
+    const fx = fxOwn && FX[fxOwn] ? fxOwn : magic && el !== AD.el && W12_EL_FX[el] ? W12_EL_FX[el][aoe ? 1 : 0] : AD.fx; if (fxOwn && !FX[fxOwn]) bvErr('v12', 'w12 fx ' + fxOwn);
+    const d = (dmg && el !== '一般' ? el + '屬性・' : '') + (W12_ARCH_D[arch] || (base.d || '').replace(/。$/, '')) + '；' + codes.map(evoText).join('、') + '。';
+    MOVES[id] = { ...base, n, d, t: el, pow, fx, uniq: k, ws: 1, ueff: codes.slice(), orb: undefined }; SKILL_MP[id] = mp;
+    const [cd, learn, prio] = SKILL12[arch] || [0, 6];
+    defPut('skills', id, { ...skillFromMove(id, MOVES[id], { kind: 'skill', tpl: ORB_A[arch].tpl, extraTags: ['weapon'], costs: dmg || archMp ? [{ res: 'mp', amount: mp }] : [], fallback: 'attack' }),
+      cooldown: cd, prio: prio || 0, metadata: { uniq: k, tpl: arch, learn, w12: 1 } });
+    const D = DEF.skills[id]; D.fx = fx; // registered after bvFinalize: give the effects their ids the same way (spec §4)
+    D.effects = D.effects.map((ef, i) => effRegister('skill:' + id + '#e' + i, ef)); D.after = D.after.map((ef, i) => effRegister('skill:' + id + '#a' + i, ef)); if (prio) D.tags = D.tags.filter(t => t !== 'priority').concat(['priority']); }
+  weaponSkill12 = function (k) { return W12[k] && DEF.skills['u_' + k] ? 'u_' + k : old(k); };
+}
+const W12FX_PAL = [ // [words in the name, colours [main, light, dark], particle]
+  [['霜火'], ['#80c8ff', '#ffe0c0', '#d04020'], 'ice'],   [['古王'], ['#ff7040', '#ffe0a0', '#a03018'], 'crest'], [['晨霧'], ['#d8e4f0', '#ffffff', '#7a8aa0'], 'mist'], [['獵刀', '獵'], ['#a0b070', '#f0f8d0', '#506030'], 'dust'],
+  [['灰狼'], ['#9098a8', '#f0f4ff', '#40485a'], 'claw'], [['影將'], ['#a04060', '#ffd0e0', '#301020'], 'shadow'], [['見習'], ['#d8c8a0', '#ffffff', '#8a7a60'], 'spark'],
+  [['鐵槍'], ['#a0a8b8', '#ffffff', '#505868'], 'spark'], [['蒼龍'], ['#40c0ff', '#e8fbff', '#1060a0'], 'wave'], [['天龍'], ['#ffe080', '#ffffff', '#5080ff'], 'star'],
+  [['龍鱗'], ['#60b080', '#e0fff0', '#205040'], 'shard'], [['練習'], ['#f0d090', '#fff8e0', '#9a7a40'], 'chip'], [['入門'], ['#a0c0ff', '#ffffff', '#4060a0'], 'spark'],
+  [['森林'], ['#40a050', '#d8ffd0', '#205028'], 'leaf'], [['冰河'], ['#6aa8ff', '#e8f4ff', '#2a5aa8'], 'ice'], [['隕星'], ['#ff9040', '#fff0c0', '#a04010'], 'ember'],
+  [['狐火'], ['#ff8a2a', '#ffe0a0', '#c84818'], 'flame'], [['晨曦', '曙'], ['#ffb070', '#fff4d0', '#e06a50'], 'ray'], [['水晶'], ['#7fe6ff', '#f0ffff', '#3aa0d0'], 'shard'],
+  [['雷'], ['#ffe040', '#fffbe0', '#c09010'], 'bolt'], [['骸骨', '骨'], ['#e8e0c8', '#ffffff', '#9a8f78'], 'bone'], [['冥', '亡者'], ['#9a6ad8', '#e8d8ff', '#4a2a78'], 'wisp'],
+  [['月蝕'], ['#c070ff', '#ffe0ff', '#40204a'], 'eclipse'], [['月'], ['#c8d8ff', '#ffffff', '#6a7ab8'], 'crescent'], [['星', '彗星', '流星'], ['#ffe68a', '#ffffff', '#c8a040'], 'star'],
+  [['砂', '沙'], ['#e0c080', '#fff0c8', '#a07840'], 'sand'], [['蠍', '毒', '蛇', '多頭'], ['#7ad050', '#e8ffc0', '#5a2a78'], 'bubble'], [['蟾'], ['#90b040', '#f0ffb0', '#506020'], 'bubble2'],
+  [['翠', '森', '荊棘', '橡'], ['#58d060', '#e8ffd0', '#2c9038'], 'leaf'], [['木', '伐木'], ['#c08a50', '#f0d8a8', '#7a5030'], 'chip'],
+  [['王國', '王立', '古王', '宮廷', '騎士'], ['#ffd860', '#fff8e0', '#3a5aa8'], 'crest'], [['甲蟲'], ['#d8a040', '#fff0b0', '#7a5020'], 'horn'],
+  [['發條', '齒輪', '黃銅', '時計'], ['#e0b664', '#fff0ae', '#8a6030'], 'gear'], [['霜', '冰'], ['#a8e8ff', '#ffffff', '#4a8ac8'], 'ice'],
+  [['炎', '熔岩', '火山', '燼', '霜火'], ['#ff5a30', '#fff0a0', '#a02010'], 'ember'], [['黯滅', '黑騎士', '暗影', '影將'], ['#7a5aa8', '#d8c8ff', '#201830'], 'shadow'],
+  [['虛空', '裂界'], ['#d060ff', '#ffe0ff', '#3a1060'], 'rift'], [['收穫'], ['#f0d060', '#fff8c0', '#a08020'], 'wheat'], [['龍'], ['#58a8ff', '#e0f4ff', '#2050a0'], 'dragon'],
+  [['狼'], ['#b0a090', '#f0e8e0', '#5a4a40'], 'claw'], [['盜賊'], ['#8a8a9a', '#e0e0ea', '#30303a'], 'smoke'], [['野豬'], ['#a07050', '#f0d0b0', '#5a3a28'], 'dust'],
+  [['岩'], ['#b09070', '#f0e0c8', '#6a5038'], 'rock'], [['新月'], ['#e0e8ff', '#ffffff', '#8090c0'], 'crescent2'], [['泰坦'], ['#a0a8b0', '#f0f4f8', '#505860'], 'quake'],
+  [['氣功'], ['#70f0d0', '#e8fff8', '#20a080'], 'chi'], [['虎'], ['#ffa030', '#fff0c0', '#302018'], 'claw2'], [['笛', '琴', '歌', '曲', '詠', '號'], ['#f0a0e0', '#fff0ff', '#a050a0'], 'note'],
+  [['軟木塞'], ['#d8b080', '#fff0d0', '#8a6040'], 'cork'], [['蒸汽'], ['#e8f0f8', '#ffffff', '#90a0b0'], 'steam'], [['潮', '湖'], ['#4aa0f0', '#e0f4ff', '#1a5aa8'], 'wave'],
+  [['風', '鷹', '疾風'], ['#b8f0c8', '#ffffff', '#58a070'], 'wind'], [['沼'], ['#7a9a60', '#d8e8c0', '#3a4a28'], 'mist'], [['賢者', '靈光', '名匠'], ['#fff0a0', '#ffffff', '#c0a040'], 'spark'],
+  [['魔女'], ['#a060c0', '#f0d0ff', '#407030'], 'hex'], [['巫妖'], ['#a8c8ff', '#f0f0ff', '#5a3a90'], 'ice2'], [['符文', '古岩'], ['#c0a070', '#f8e8c0', '#6a5a40'], 'rune'],
+  [['鐵', '練習', '見習', '入門'], ['#c8d0dc', '#ffffff', '#6a7080'], 'spark2'], [['礦晶'], ['#b0e0f0', '#ffffff', '#5a8090'], 'shard2'], [['旅人'], ['#e0c890', '#fff8e0', '#8a7040'], 'note2'],
+  [['布纏'], ['#e8dcc8', '#ffffff', '#9a8c78'], 'cloth'], [['三連', '射'], ['#ffd080', '#fffbe0', '#a07030'], 'muzzle'],
+];
+const W12FX_MOVE = { swallowFlight: 'slash2', galeCut: 'thrust', thornBind: 'slash', cloudPierce: 'thrust', crossJudge: 'cross', steelCleaver: 'heavy', bloodMoon: 'crescentCut',
+  allOut: 'slam', dawnFlash: 'iai', bladeRain: 'multi', steamCannon: 'wave', shadowRush: 'dash', twinFang: 'slash2', assassinMark: 'stab', lastWall: 'slam', rockBreak: 'slam',
+  shieldRam: 'dashSlam', drakeFang: 'thrust2', chainPalm: 'punch', arcaneShot: 'proj', sonicBoom: 'rings', verdantWind: 'storm', songOfValor: 'selfNotes', tidalRage: 'wave',
+  holyWard: 'selfShield', thorHammer: 'rain', starfall: 'rain', manaWall: 'selfShield', aquaEdge: 'bladeProj', chainLightning: 'chain', fireShot: 'proj', bolt: 'rain', mend: 'selfHeal',
+  flameVortex: 'vortex', focusMind: 'selfFocus', smokeVeil: 'selfSmoke', ironWall: 'selfWall', combustion: 'bursts', chronoLock: 'clock' };
+const W12FX_VERB = [[['拳'], 'punch'], [['纏'], 'bind'], [['弦'], 'rings'], [['十字'], 'cross'], [['迴斬', '收穫'], 'sweep'], [['連打'], 'slash2'], [['連刺'], 'stabs'], [['連發', '連射', '三連'], 'volley'], [['砲擊', '彈'], 'proj'], [['咬', '撕'], 'bite'], [['居合', '一閃', '劍閃'], 'iai'], [['突'], 'thrust']];
+const W12FX_THRUSTS = new Set(['thrust', 'thrust2', 'stab', 'dash', 'stabs']);
+function w12Spec(k) {
+  const [n, arch] = W12[k], len = P => Math.max(0, ...P[0].filter(w => n.includes(w)).map(w => w.length)); let P = null;
+  for (const Q of W12FX_PAL) if (len(Q) > (P ? len(P) : 0)) P = Q; P = P || [[], ['#c8d0dc', '#ffffff', '#6a7080'], 'spark2'];
+  let mv = W12FX_MOVE[arch] || 'slash'; const v = W12FX_VERB.find(([ws]) => ws.some(w => n.includes(w))); if (v && !/^self/.test(mv) && !(v[1] === 'thrust' && W12FX_THRUSTS.has(mv))) mv = v[1];
+  if (mv === 'slam' && /[斬刃劈]/.test(n)) mv = 'heavy'; // a blade or a cleave is a heavy cut, not a ground slam
+  if (mv === 'selfNotes' && GEAR[k] && GEAR[k].kind !== '樂器') mv = 'selfAura'; // notes only for instruments
+  if (k === 'duskSword') mv = 'crescentCut'; // 黯滅斬: a dark crescent, so it does not look like 黑騎士斬
+  return { mv, col: P[1], pt: P[2], seed: hashK(k) };
+}
+function w12Particle(b, X, Y, S, n = 8, spread = 16) { const [c, h, d] = S.col, r = q => (((S.seed >>> (q % 24)) & 15) / 15 - 0.5);
+  for (let i = 0; i < n; i++) { const x = X + rnd(-spread, spread), y = Y + rnd(-spread, spread), a = Math.random() * Math.PI * 2;
+    switch (S.pt) {
+      case 'flame': case 'ember': b.spawn({ k: 'flame', x, y, vy: -1 - Math.random(), s: rnd(2, 5), life: 14 + rnd(0, 6) }); break;
+      case 'bolt': b.spawn({ k: 'bolt', pts: [[x, y - 6], [x + rnd(-3, 3), y], [x + rnd(-3, 3), y + 6]], w: 2, life: 8 }); break;
+      case 'star': case 'spark': case 'spark2': b.star(x, y, i % 2 ? c : h, 8); break;
+      case 'bubble': case 'bubble2': b.spawn({ k: 'bub', x, y, r: rnd(2, 4), c: i % 2 ? c : d, vy: -0.6, life: 16 }); break;
+      case 'leaf': case 'wind': case 'feather': b.spawn({ k: 'line', x1: x, y1: y, x2: x + Math.cos(a) * 5, y2: y + Math.sin(a) * 5, c: i % 2 ? c : h, w: 2, grow: 2, life: 12 }); break;
+      case 'shard': case 'shard2': case 'ice': case 'ice2': b.spawn({ k: 'line', x1: x, y1: y, x2: x + Math.cos(a) * 7, y2: y + Math.sin(a) * 7, c: i % 2 ? h : c, w: 2, grow: 1, life: 12 }); break;
+      case 'crescent': case 'crescent2': case 'eclipse': b.spawn({ k: 'arc', x, y, r: rnd(4, 8), a0: a, c: i % 2 ? c : h, life: 12 }); break;
+      case 'gear': case 'chi': case 'note': case 'note2': case 'cork': b.spawn({ k: 'ring', x, y, r0: 1, r1: rnd(4, 7), c: i % 2 ? c : h, w: 2, life: 12 }); break;
+      case 'rift': case 'hex': case 'rune': case 'crest': b.spawn({ k: 'hex', x, y, r0: 2, r1: rnd(5, 9), c: i % 2 ? c : h, life: 12 }); break;
+      case 'shadow': case 'smoke': case 'mist': case 'steam': case 'wisp': b.spawn({ k: 'glow', x, y, r: rnd(5, 9), c: i % 2 ? c : d, life: 14 }); break;
+      default: b.spawn({ k: 'dot', x, y, vx: Math.cos(a) * 1.4, vy: Math.sin(a) * 1.4, c: i % 3 ? c : h, s: 2, life: 14 }); } } }
+function w12Line(b, x1, y1, x2, y2, S, w = 5) { const [c, h] = S.col; b.spawn({ k: 'line', x1, y1, x2, y2, c, w, grow: 3, life: 12 }); b.spawn({ k: 'line', x1, y1, x2, y2, c: h, w: Math.max(1, w - 3), grow: 3, life: 10 }); }
+function* w12Proj(b, U, T, S, F = 9) { const [c, h] = S.col, x0 = U.x + 6, y0 = U.y - 10, p = b.spawn({ k: 'glow', x: x0, y: y0, r: 9, c, life: F + 2 });
+  for (let i = 1; i <= F; i++) { p.x = lerp(x0, T.x, i / F); p.y = lerp(y0, T.y, i / F) - Math.sin(i / F * Math.PI) * 10; if (i % 2) w12Particle(b, p.x, p.y, S, 1, 3); yield; } }
