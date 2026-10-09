@@ -50,9 +50,11 @@ HD15.dim = (b, a, dur, o = {}) => HD15.add(b, { x: 0, y: 0, free: 1, delay: o.de
 /* ---------- 零件 ---------- */
 // 刀光：圓弧上掃過去的月牙。T＝刀光正中間經過的點；ang＝月牙鼓出去的方向；span 弧長；dir 揮的方向；fl 壓扁
 // 刀光的起點和起點的前進方向（崩星劍的流星要從這個方向接進刀光）
-HD15.slashStart = (T, o) => { const r = o.r || 34, th = o.th || 9, span = o.span || 2.2, ang = o.ang ?? -0.6, dir = o.dir || 1, fl = o.fl || 1, k0 = o.center ? 0 : r - th * 0.45, O = { x: T.x - Math.cos(ang) * k0, y: T.y - Math.sin(ang) * k0 * fl }, a0 = ang - span / 2 * dir, rr = r - th * 0.4;
+// 刀光細長一點（玩家：「斬擊痕跡都偏粗 調整為細長」）：半徑 ×1.2、弧長 ×1.1、粗細 ×0.5
+HD15.SZ = o => ({ r: (o.r || 34) * 1.2, th: Math.max(2.2, (o.th || 9) * 0.5), span: Math.min(2.8, (o.span || 2.2) * 1.1) });
+HD15.slashStart = (T, o) => { const Z = HD15.SZ(o), r = Z.r, th = Z.th, span = Z.span, ang = o.ang ?? -0.6, dir = o.dir || 1, fl = o.fl || 1, k0 = o.center ? 0 : r - th * 0.45, O = { x: T.x - Math.cos(ang) * k0, y: T.y - Math.sin(ang) * k0 * fl }, a0 = ang - span / 2 * dir, rr = r - th * 0.4;
   return { x: O.x + Math.cos(a0) * rr, y: O.y + Math.sin(a0) * rr * fl, tan: Math.atan2(dir * fl * Math.cos(a0), -dir * Math.sin(a0)) }; };
-HD15.slash = (b, T, o) => { const r = o.r || 34, th = o.th || 9, span = o.span || 2.2, ang = o.ang ?? -0.6, dir = o.dir || 1, fl = o.fl || 1, P = o.pal, dur = o.dur || 20, al = o.al ?? 1, dl = o.delay || 0, N = 36, sw = o.sw || 0.3;
+HD15.slash = (b, T, o) => { const Z = HD15.SZ(o), r = Z.r, th = Z.th, span = Z.span, ang = o.ang ?? -0.6, dir = o.dir || 1, fl = o.fl || 1, P = o.pal, dur = o.dur || 20, al = o.al ?? 1, dl = o.delay || 0, N = 36, sw = o.sw || 0.3;
   const k0 = o.center ? 0 : r - th * 0.45, O = { x: T.x - Math.cos(ang) * k0, y: T.y - Math.sin(ang) * k0 * fl }, a0 = ang - span / 2 * dir;
   const pt = (a, rr) => [O.x + Math.cos(a) * rr, O.y + Math.sin(a) * rr * fl], HD = k => HD15.eo(HD15.cl(k / sw)), TL = k => HD15.ei(HD15.cl((k - sw) / (1 - sw)));
   const band = (x, A, rOut, rIn) => { x.beginPath(); for (let i = 0; i <= N; i++) { const [px, py] = pt(A(i / N), rOut(i / N)); i ? x.lineTo(px, py) : x.moveTo(px, py); } for (let i = N; i >= 0; i--) { const [px, py] = pt(A(i / N), rIn(i / N)); x.lineTo(px, py); } x.closePath(); };
@@ -60,16 +62,16 @@ HD15.slash = (b, T, o) => { const r = o.r || 34, th = o.th || 9, span = o.span |
     upd: p => { const t = p.t - dl; if (t < 0 || !o.spark || t % 2) return; const h = HD(t / dur); if (h >= 1) return; const a = a0 + span * dir * h, [hx, hy] = pt(a, r - th * 0.3);
       HD15.sparks(b, { x: hx, y: hy }, 2, P, { ang: a + dir * Math.PI / 2, spread: 1, spd: 2.4, life: 14, g: 0.05 }); },
     draw: (x, p, k) => { const hd = HD(k), tl = TL(k); if (hd - tl < 0.004) return; const f = (1 - HD15.ei(HD15.cl((k - 0.5) / 0.5))) * al;
-      const A = s => a0 + span * dir * (tl + (hd - tl) * s), Wd = s => th * (s < 0.8 ? Math.pow(s / 0.8, 0.75) : (1 - s) / 0.2) * (0.6 + 0.4 * f);
+      const A = s => a0 + span * dir * (tl + (hd - tl) * s), Wd = s => th * (s < 0.86 ? Math.pow(s / 0.86, 1.25) : (1 - s) / 0.14) * (0.6 + 0.4 * f);
       const [tx, ty] = pt(A(0), r), [hx, hy] = pt(A(1), r), grad = (c, a, mid = 0.5) => { const G = x.createLinearGradient(tx, ty, hx, hy); G.addColorStop(0, HD15.rgba(c, 0)); G.addColorStop(mid, HD15.rgba(c, a * 0.55)); G.addColorStop(0.92, HD15.rgba(c, a)); G.addColorStop(1, HD15.rgba(c, a * 0.85)); return G; };
       x.lineJoin = 'round'; x.globalAlpha = f;
-      x.globalCompositeOperation = 'lighter'; band(x, A, () => r + 3, s => r - Wd(s) - 4); x.fillStyle = grad(P.glow, 0.5, 0.35); x.fill();          // 外圈柔光
+      x.globalCompositeOperation = 'lighter'; band(x, A, () => r + 2, s => r - Wd(s) - 2.5); x.fillStyle = grad(P.glow, 0.45, 0.35); x.fill();          // 外圈柔光
       x.globalCompositeOperation = 'source-over'; band(x, A, s => r - Wd(s) * 0.55, s => r - Wd(s) - 0.6); x.fillStyle = grad(P.edge, 0.75); x.fill(); // 內側的暗邊
       band(x, A, () => r, s => r - Wd(s)); x.fillStyle = grad(P.mid, 0.95); x.fill();                                                           // 刀光本體（主色）
       band(x, A, () => r - 0.15, s => r - Wd(s) * 0.38); x.fillStyle = grad(P.core, 1, 0.6); x.fill();                                          // 最亮的刀鋒
       if (k < sw * 1.4) { const [px, py] = pt(A(0.94), r - th * 0.3), z = th * (1.2 - k); HD15.put(x, HD15.tex('glow', P.mid), px, py, z * 4, z * 4, 0, 0.7 * f); HD15.put(x, HD15.tex('core', P.mid), px, py, z * 1.5, z * 1.5, 0, f); } } }); };
 // 斬痕：一道直的白光劃過，接著往兩邊裂開、淡掉
-HD15.cut = (b, T, rot, L, pal, o = {}) => { const dl = o.delay || 0; return HD15.add(b, { x: T.x, y: T.y, delay: dl, life: dl + (o.dur || 18), draw: (x, p, k) => { const g = HD15.eo(HD15.cl(k * 5)), sp = HD15.eo(HD15.cl((k - 0.25) / 0.75)) * (o.gap || 4), f = 1 - HD15.ei(HD15.cl((k - 0.2) / 0.8)), nx = -Math.sin(rot), ny = Math.cos(rot), T2 = HD15.tex('streak', pal.mid);
+HD15.cut = (b, T, rot, L, pal, o = {}) => { const dl = o.delay || 0; L *= 1.25; o = Object.assign({}, o, { w: (o.w || 7) * 0.55 }); return HD15.add(b, { x: T.x, y: T.y, delay: dl, life: dl + (o.dur || 18), draw: (x, p, k) => { const g = HD15.eo(HD15.cl(k * 5)), sp = HD15.eo(HD15.cl((k - 0.25) / 0.75)) * (o.gap || 4), f = 1 - HD15.ei(HD15.cl((k - 0.2) / 0.8)), nx = -Math.sin(rot), ny = Math.cos(rot), T2 = HD15.tex('streak', pal.mid);
   for (const sg of sp > 0.2 ? [-1, 1] : [0]) HD15.put(x, T2, p.x + nx * sp * sg, p.y + ny * sp * sg, L * g, (o.w || 7) * (1 - 0.5 * k), rot, f); } }); };
 
 // 火花：會拖尾、會減速
@@ -157,7 +159,7 @@ HD15.statFx = function* (U, dir, pal) { const up = dir > 0, P = pal || (up ? HD1
 HD15.P.down = { core: '#e4ecff', mid: '#6f86ff', glow: '#3040c0', edge: '#141a50' };
 
 // 突刺光：從 A 刺穿 T、再往後多刺一段；尾巴細、靠近尖端最粗、尖端是尖的
-HD15.thrust = (b, A, T, pal, o = {}) => { const dl = o.delay || 0, dur = o.dur || 18, dx = T.x - A.x, dy = T.y - A.y, D = Math.hypot(dx, dy) || 1, ux = dx / D, uy = dy / D, nx = -uy, ny = ux, L = D + (o.ext || 40), W0 = o.w || 7;
+HD15.thrust = (b, A, T, pal, o = {}) => { const dl = o.delay || 0, dur = o.dur || 18, dx = T.x - A.x, dy = T.y - A.y, D = Math.hypot(dx, dy) || 1, ux = dx / D, uy = dy / D, nx = -uy, ny = ux, L = D + (o.ext || 40) * 1.2, W0 = (o.w || 7) * 0.6;
   return HD15.add(b, { x: A.x, y: A.y, delay: dl, life: dl + dur, draw: (x, p, k) => { const tip = L * HD15.eo(HD15.cl(k / 0.22)), tail = L * 0.92 * HD15.ei(HD15.cl((k - 0.3) / 0.7)), f = 1 - HD15.ei(HD15.cl((k - 0.45) / 0.55)); if (tip - tail < 1) return;
     const Pt = (d, sd) => [A.x + ux * d + nx * sd, A.y + uy * d + ny * sd], shape = (w, tl) => { const t1 = Math.max(tail, tip - tl); x.beginPath(); let q = Pt(tail, 0); x.moveTo(q[0], q[1]); q = Pt(t1, w); x.lineTo(q[0], q[1]); q = Pt(tip, 0); x.lineTo(q[0], q[1]); q = Pt(t1, -w); x.lineTo(q[0], q[1]); x.closePath(); };
     const grad = (c, a) => { const [ax, ay] = Pt(tail, 0), [bx, by] = Pt(tip, 0), G = x.createLinearGradient(ax, ay, bx, by); G.addColorStop(0, HD15.rgba(c, 0)); G.addColorStop(0.65, HD15.rgba(c, a * 0.6)); G.addColorStop(1, HD15.rgba(c, a)); return G; };
@@ -179,7 +181,7 @@ HD15.weak = (b, T, pal, o = {}) => { const dl = o.delay || 0, dur = o.dur || 26;
   HD15.put(x, HD15.tex('glow', pal.glow), p.x, p.y, s * 5, s * 5, 0, 0.55 * f); x.lineJoin = 'miter'; const dia = q => { x.beginPath(); x.moveTo(p.x, p.y - q); x.lineTo(p.x + q * 0.7, p.y); x.lineTo(p.x, p.y + q); x.lineTo(p.x - q * 0.7, p.y); x.closePath(); };
   x.globalCompositeOperation = 'source-over'; x.globalAlpha = f; dia(s); x.lineWidth = 2.2; x.strokeStyle = pal.edge; x.stroke(); x.lineWidth = 1.3; x.strokeStyle = pal.mid; x.stroke(); dia(s * 0.38); x.fillStyle = pal.core; x.fill(); } }); };
 // 迴旋的刀光：壓扁的一整圈，頭亮尾淡；後半圈（對手背後）畫淡一點
-HD15.whirl = (b, C, pal, o = {}) => { const dl = o.delay || 0, dur = o.dur || 26, R = o.r || 70, th = o.th || 12, fl = o.fl || 0.34, turns = o.turns || 1.25, trail = o.trail || 3.6, a0 = o.a0 ?? Math.PI * 0.75, al = o.al ?? 1, HDk = k => HD15.eo(HD15.cl(k / 0.7));
+HD15.whirl = (b, C, pal, o = {}) => { const dl = o.delay || 0, dur = o.dur || 26, R = o.r || 70, th = (o.th || 12) * 0.55, fl = o.fl || 0.34, turns = o.turns || 1.25, trail = o.trail || 3.6, a0 = o.a0 ?? Math.PI * 0.75, al = o.al ?? 1, HDk = k => HD15.eo(HD15.cl(k / 0.7));
   return HD15.add(b, { x: C.x, y: C.y, delay: dl, life: dl + dur,
     upd: p => { const t = p.t - dl; if (t < 0 || !o.spark || t % 2 || t > dur * 0.6) return; const h = a0 + turns * Math.PI * 2 * HDk(t / dur); HD15.sparks(b, { x: C.x + Math.cos(h) * (R - th * 0.4), y: C.y + Math.sin(h) * (R - th * 0.4) * fl }, 2, pal, { ang: h + Math.PI / 2, spread: 0.8, spd: 2.6, life: 14, g: 0.05 }); },
     draw: (x, p, k) => { if (!x.createConicGradient) return; const head = a0 + turns * Math.PI * 2 * HDk(k), f = (1 - HD15.ei(HD15.cl((k - 0.6) / 0.4))) * al, tl = Math.min(Math.PI * 1.9, trail * (k < 0.15 ? 0.3 + 0.7 * k / 0.15 : 1)), sp = tl / (Math.PI * 2);
@@ -198,6 +200,25 @@ HD15.blood = (b, P0, n, o = {}) => { for (let i = 0; i < n; i++) { const an = o.
 HD15.FLOW = [[-0.67, 1, 'cyan'], [0.73, 1, 'violet'], [-1.571, 1, 'pink'], [-2.37, 1, 'gold']];
 HD15.flowCut = (b, T, i) => { const [ang, dir, pk] = HD15.FLOW[i % 4], P = HD15.P[pk]; HD15.slash(b, T, { pal: P, r: 46, th: 9, ang, dir, span: 1.5, dur: 22, sw: 0.22, spark: 1 });
   HD15.slash(b, T, { pal: P, r: 40, th: 4, ang, dir, span: 1.3, dur: 18, sw: 0.22, delay: 2, al: 0.45 }); HD15.add(b, { x: T.x, y: T.y, delay: 3, life: 4, draw: () => {}, upd: p => { if (p.t === 3) { HD15.flash(b, T, P, 26, { dur: 10 }); HD15.spikes(b, T, P, 6, 16, { dur: 10 }); HD15.sparks(b, T, 7, P, { spd: 3, life: 14 }); } } }); };
+
+// 魔法陣：兩圈＋星形＋刻度，一邊轉一邊亮起來
+HD15.sigil = (b, C, pal, R, o = {}) => { const dl = o.delay || 0, dur = o.dur || 40; return HD15.add(b, { x: C.x, y: C.y, delay: dl, life: dl + dur, draw: (x, p, k, t) => { const g = HD15.eo(HD15.cl(k / 0.25)), f = 1 - HD15.ei(HD15.cl((k - 0.75) / 0.25)), rot = t * 0.05, fl = o.fl || 0.4, r = R * (0.6 + 0.4 * g);
+  x.save(); x.translate(p.x, p.y); x.scale(1, fl); x.lineCap = 'round';
+  const lay = fn => { for (const [col, lw, add, a] of [[pal.glow, 3, 1, 0.45], [pal.mid, 1.1, 0, 0.95], [pal.core, 0.4, 0, 1]]) { x.globalCompositeOperation = add ? 'lighter' : 'source-over'; x.globalAlpha = a * f * g; x.strokeStyle = col; x.lineWidth = lw / Math.sqrt(fl); fn(); x.stroke(); } };
+  lay(() => { x.beginPath(); x.arc(0, 0, r, 0, Math.PI * 2); x.moveTo(r * 0.78, 0); x.arc(0, 0, r * 0.78, 0, Math.PI * 2); });
+  lay(() => { x.beginPath(); for (let i = 0; i <= 5; i++) { const a = rot + i * Math.PI * 4 / 5 - Math.PI / 2; i ? x.lineTo(Math.cos(a) * r * 0.78, Math.sin(a) * r * 0.78) : x.moveTo(Math.cos(a) * r * 0.78, Math.sin(a) * r * 0.78); } });
+  lay(() => { x.beginPath(); for (let i = 0; i < 16; i++) { const a = -rot * 1.5 + i * Math.PI / 8; x.moveTo(Math.cos(a) * r, Math.sin(a) * r); x.lineTo(Math.cos(a) * (r + (i % 2 ? 3 : 5)), Math.sin(a) * (r + (i % 2 ? 3 : 5))); } });
+  x.restore(); HD15.put(x, HD15.tex('glow', pal.glow), p.x, p.y, R * 2.4, R * 2.4 * (o.fl || 0.4), 0, 0.35 * f * g); } }); };
+// 光點從 A 飛到 B（魔力吸回來）
+HD15.motes = (b, A, B, n, pal, o = {}) => { for (let i = 0; i < n; i++) { const dl = (o.delay || 0) + i * 2, ox = (Math.random() - 0.5) * 30, oy = (Math.random() - 0.5) * 20, d = o.dur || 22;
+  HD15.add(b, { x: A.x, y: A.y, delay: dl, life: dl + d, upd: p => { const t = p.t - dl; if (t < 0) return; const k = HD15.cl(t / d), e = HD15.ei(k); p.px = p.x; p.py = p.y; p.x = A.x + (B.x - A.x) * e + ox * Math.sin(Math.PI * k); p.y = A.y + (B.y - A.y) * e + oy * Math.sin(Math.PI * k) - 16 * Math.sin(Math.PI * k); },
+    draw: (x, p, k) => { const f = k < 0.15 ? k / 0.15 : 1; HD15.put(x, HD15.tex('glow', pal.glow), p.x, p.y, 9, 9, 0, 0.7 * f); HD15.put(x, HD15.tex('core', pal.mid), p.x, p.y, 4, 4, 0, f); } }); } };
+// 地平線的光：橫向一大片光帶往兩邊展開（破曉）
+HD15.horizon = (b, C, pal, o = {}) => { const dl = o.delay || 0, dur = o.dur || 30; return HD15.add(b, { x: C.x, y: C.y, delay: dl, life: dl + dur, draw: (x, p, k) => { const e = HD15.eo(HD15.cl(k / 0.35)), f = 1 - HD15.ei(HD15.cl((k - 0.35) / 0.65));
+  HD15.put(x, HD15.tex('streak', pal.glow), p.x, p.y, 420 * e, 40, 0, 0.6 * f); HD15.put(x, HD15.tex('streak', pal.mid), p.x, p.y, 360 * e, 12, 0, 0.9 * f); HD15.put(x, HD15.tex('streak', pal.core), p.x, p.y, 260 * e, 3, 0, f); } }); };
+HD15.P.moon = { core: '#ffffff', mid: '#cfe6ff', glow: '#4a7dff', edge: '#0d1d52' };
+HD15.P.dawn = { core: '#fffaf0', mid: '#ffb86b', glow: '#ff6a3a', edge: '#6a1e10' };
+HD15.P.mp = { core: '#ffffff', mid: '#7fc8ff', glow: '#2a6cff', edge: '#0a2060' };
 
 /* ---------- 劍的 8 招 ---------- */
 const HDFX15 = {
@@ -277,22 +298,68 @@ const HDFX15 = {
       for (const c of [HD15.P.cyan, HD15.P.violet, HD15.P.pink, HD15.P.gold]) HD15.sparks(this, T, 6, c, { spd: 4.2, life: 22, g: 0.06 });
       this.shake = Math.max(this.shake || 0, 9); yield* wait(16); } },
 
+  // 一刀天斷：舞台一下子暗下來、刀身一閃（世界靜止）→ 一條很細很長的白線瞬間橫過整個畫面 → 停一拍，線往兩邊裂開，大閃光（必定會心）
+  zjSky: { *f(U, T, u) { const P = HD15.P.moon, Hc = this.center(this.H), Hd = typeof PX13 !== 'undefined' && PX13.hand ? PX13.hand(this) : { x: Hc.x + 10, y: Hc.y - 10 }; Sound.sfx('charge');
+      HD15.dim(this, 0.62, 66); HD15.flare(this, Hd, P, 40, { rot: -0.7, dur: 14, delay: 4 }); HD15.flash(this, Hd, P, 18, { dur: 12, delay: 4 }); yield* wait(16);
+      yield* this.lunge(u, 26, 1); Sound.sfx('slash'); const rot = -0.22;
+      HD15.cut(this, T, rot, 190, P, { dur: 34, w: 4, gap: 3 }); HD15.slash(this, T, { pal: P, r: 120, th: 6, ang: rot - Math.PI / 2, span: 0.9, dur: 16, sw: 0.18 });
+      yield* wait(10); Sound.sfx('crit'); HD15.stop(this, 6); this.spawn({ k: 'flash', c: '#eef4ff', a: 0.35, life: 8 });
+      HD15.flash(this, T, P, 70, { dur: 18 }); HD15.flare(this, T, P, 150, { rot, dur: 22, x8: 1 }); HD15.spikes(this, T, P, 12, 34, { rot });
+      for (let i = -2; i <= 2; i++) HD15.sparks(this, { x: T.x + Math.cos(rot) * i * 22, y: T.y + Math.sin(rot) * i * 22 }, 4, P, { spd: 3, life: 18 });
+      this.shake = Math.max(this.shake || 0, 10); yield* wait(18); } },
+  // 星紋魔劍：刀身先亮起紫色的光（火花往刀上收）→ 一刀紫光斬 → 對手頭上轉出魔法陣 → 兩顆星從陣裡射下來打中 → 藍色光點從對手飛回主角（回復 MP）
+  zjRune: { *f(U, T, u) { const P = HD15.P.violet, Hc = this.center(this.H), Hd = typeof PX13 !== 'undefined' && PX13.hand ? PX13.hand(this) : { x: Hc.x + 10, y: Hc.y - 10 }; Sound.sfx('charge');
+      HD15.gather(this, Hd, 16, P, 28, { span: 8, life: 12 }); HD15.flash(this, Hd, P, 22, { dur: 16, delay: 6 }); yield* wait(12);
+      yield* this.lunge(u, 18, 2); Sound.sfx('slash'); HD15.slash(this, T, { pal: P, r: 52, th: 11, ang: -0.67, span: 1.5, dur: 20, spark: 1 });
+      yield* wait(4); HD15.flash(this, T, P, 34, { dur: 12 }); HD15.ring(this, T, P, 3, 22, { w: 1.6, dur: 14 }); HD15.sparks(this, T, 10, P, { spd: 3, life: 16 });
+      const Sg = { x: T.x, y: T.y - 40 }; Sound.sfx('charge'); HD15.sigil(this, Sg, P, 22, { dur: 52 }); yield* wait(12);
+      for (let i = 0; i < 2; i++) { const D0 = { x: T.x + (i ? 8 : -8), y: T.y + 2 }; HD15.comet(this, { x: Sg.x + (i ? 6 : -6), y: Sg.y }, D0, HD15.P.star, 8, { w: 6 }); yield* wait(8); Sound.sfx('hitSuper');
+        HD15.flash(this, D0, P, 36, { dur: 12 }); HD15.ring(this, D0, P, 3, 20, { w: 1.6, dur: 12 }); HD15.spikes(this, D0, HD15.P.star, 8, 18); HD15.sparks(this, D0, 8, HD15.P.star, { spd: 3, life: 14 }); yield* wait(4); }
+      Sound.sfx('heal'); HD15.motes(this, T, { x: Hc.x, y: Hc.y - 6 }, 10, HD15.P.mp, { dur: 22 }); HD15.flash(this, Hc, HD15.P.mp, 30, { dur: 16, delay: 22 }); yield* wait(30); } },
+  // 破曉千斬：刀尖一閃 → 五刀很快的細長金光斬（角度都不同）→ 一拍後畫面一亮，一記又長又大的收尾斬，同時一條地平線的光往兩邊展開（破曉），停格
+  ogSword: { *f(U, T, u) { const P = HD15.P.dawn, Hc = this.center(this.H), Hd = typeof PX13 !== 'undefined' && PX13.hand ? PX13.hand(this) : { x: Hc.x + 10, y: Hc.y - 10 }; Sound.sfx('charge');
+      HD15.flare(this, Hd, P, 44, { rot: -0.7, spin: 0.8, dur: 14, x8: 1 }); yield* wait(6); yield* this.lunge(u, 18, 2);
+      const A = [[-0.67, 1], [0.73, 1], [-1.571, 1], [-2.37, 1], [0.1, 1]];
+      for (let i = 0; i < 5; i++) { Sound.sfx('slash'); HD15.slash(this, T, { pal: P, r: 44, th: 8, ang: A[i][0], dir: A[i][1], span: 1.5, dur: 18, sw: 0.2, spark: 1 }); HD15.flash(this, T, P, 22, { dur: 8, delay: 2 }); HD15.sparks(this, T, 5, P, { spd: 3, life: 12, delay: 2 }); this.shake = Math.max(this.shake || 0, 2); yield* wait(i < 2 ? 4 : 3); }
+      yield* wait(4); this.spawn({ k: 'flash', c: '#fff2d8', a: 0.4, life: 8 }); Sound.sfx('crit');
+      HD15.slash(this, T, { pal: P, r: 110, th: 16, ang: 0.6, span: 0.9, dur: 26, sw: 0.22, spark: 1 }); HD15.horizon(this, { x: T.x, y: T.y + 4 }, P, { dur: 34, delay: 3 });
+      yield* wait(4); HD15.stop(this, 7); HD15.flash(this, T, P, 80, { dur: 20 }); HD15.flare(this, T, P, 140, { rot: 0, dur: 22, x8: 1 }); HD15.ring(this, T, P, 6, 46, { w: 2.4, dur: 20 }); HD15.spikes(this, T, P, 14, 38);
+      HD15.sparks(this, T, 24, P, { spd: 4.6, life: 24, g: 0.08 }); this.shake = Math.max(this.shake || 0, 10); yield* wait(18); } },
 };
+// 劍的三個特技（普通攻擊累積後放出來的）：劍鳴、澄心、碎鋼
+const HDSP15 = [
+  // 劍鳴：刀身震動，一圈圈細的聲波從刀上擴散 → 一刀 → 對手身上爆開一團衝擊（額外傷害）
+  function* (U, T, u) { const P = HD15.P.cyan, Hc = this.center(this.H), Hd = typeof PX13 !== 'undefined' && PX13.hand ? PX13.hand(this) : { x: Hc.x + 10, y: Hc.y - 10 }; Sound.sfx('charge');
+    for (let i = 0; i < 3; i++) HD15.ring(this, Hd, P, 3, 30, { w: 1.2, dur: 18, delay: i * 4 }); HD15.flash(this, Hd, P, 20, { dur: 14 }); yield* wait(12);
+    yield* this.lunge(u, 18, 2); Sound.sfx('slash'); HD15.slash(this, T, { pal: P, r: 50, th: 10, ang: 0.73, span: 1.5, dur: 18, spark: 1 }); yield* wait(4);
+    Sound.sfx('heavy'); HD15.stop(this, 4); HD15.flash(this, T, P, 54, { dur: 16 }); HD15.ring(this, T, P, 4, 34, { w: 2.2, dur: 16 }); HD15.ring(this, T, P, 4, 24, { w: 1.4, dur: 14, delay: 4 }); HD15.spikes(this, T, P, 12, 28); HD15.sparks(this, T, 16, P, { spd: 4, life: 18 }); this.shake = Math.max(this.shake || 0, 6); yield* wait(16); },
+  // 澄心：舞台稍暗，主角腳下漾開一圈像水面的細光環 → 很準的一刀 → 會心的十字光
+  function* (U, T, u) { const P = HD15.P.azure, Hc = this.center(this.H); Sound.sfx('charge'); HD15.dim(this, 0.3, 40);
+    HD15.ring(this, { x: Hc.x, y: HERO_FOOT - 2 }, P, 6, 34, { fl: 0.3, w: 1.2, dur: 22 }); HD15.ring(this, { x: Hc.x, y: HERO_FOOT - 2 }, P, 6, 34, { fl: 0.3, w: 1, dur: 22, delay: 6 }); yield* wait(12);
+    yield* this.lunge(u, 22, 2); Sound.sfx('slash'); HD15.slash(this, T, { pal: P, r: 70, th: 8, ang: -0.67, span: 1.1, dur: 18, sw: 0.2 }); yield* wait(3);
+    Sound.sfx('crit'); HD15.stop(this, 4); HD15.flash(this, T, P, 46, { dur: 14 }); HD15.flare(this, T, P, 90, { rot: Math.PI / 4, dur: 18, x8: 1 }); HD15.sparks(this, T, 10, P, { spd: 3, life: 16 }); yield* wait(16); },
+  // 碎鋼：重重的一刀 → 對手身上出現放射狀的裂痕、鋼片碎掉往外噴（物防 −1 的藍色箭頭在下一步）
+  function* (U, T, u) { const P = HD15.P.steel; yield* this.lunge(u, 20, 3); Sound.sfx('slash'); HD15.slash(this, T, { pal: P, r: 56, th: 13, ang: 0.73, span: 1.4, dur: 20, spark: 1 }); yield* wait(4);
+    Sound.sfx('heavy'); HD15.stop(this, 5); HD15.flash(this, T, P, 40, { dur: 14 }); HD15.cracks(this, T, 7, P, { len: 26, fl: 0.9, dur: 40 }); HD15.ring(this, T, P, 4, 26, { w: 2, dur: 14 });
+    HD15.shards(this, T, 12, { spd: 3.6, sz: 3.4, up: 1.6 }); this.shake = Math.max(this.shake || 0, 7); yield* wait(18); },
+];
 // 跟舊特效放在一起；HD15.use() 切換
 for (const k in HDFX15) { const id = 't_' + k, D = DEF.skills[id], F = HDFX15[k]; if (!D) { bvErr('v12.93', 'no skill ' + id); continue; } const key = 'hd15_' + k;
-  if (F.h) FX[key + 'h'] = function* (U, T, u, i, t) { if (!u) u = this.H; this.slashOn = 0; yield* F.h.call(this, U, T, u, i, t); };
-  FX[key] = function* (U, T, u, t) { if (!T) { const L = this.foes ? this.foes().filter(v => !v.gone) : [], g = L.length > 1 ? this.groupOf(L.map(v => v.id)) : L[0]; T = g ? this.center(g) : { x: U.x, y: U.y - 80 }; if (!t) t = g; } if (!u) u = this.H; this.slashOn = 0; yield* F.f.call(this, U, T, u, t); };
+  if (F.h) FX[key + 'h'] = function* (U, T, u, i, t) { if (!u) u = this.H; this.slashOn = 0; this.hd15cast = 1; yield* F.h.call(this, U, T, u, i, t); };
+  FX[key] = function* (U, T, u, t) { if (!T) { const L = this.foes ? this.foes().filter(v => !v.gone) : [], g = L.length > 1 ? this.groupOf(L.map(v => v.id)) : L[0]; T = g ? this.center(g) : { x: U.x, y: U.y - 80 }; if (!t) t = g; } if (!u) u = this.H; this.slashOn = 0; this.hd15cast = 1; yield* F.f.call(this, U, T, u, t); };
   HD15.old[id] = { fx: D.fx, hitFx: D.hitFx, mv: MOVES[id] ? MOVES[id].fx : null, style: typeof SKILL_STYLE !== 'undefined' ? SKILL_STYLE[id] : null, redo: typeof REDO13 !== 'undefined' && REDO13.has(id) }; HD15.ids.push(id); }
-HD15.use = on => { HD15.on = !!on; for (const id of HD15.ids) { const D = DEF.skills[id], O = HD15.old[id], key = 'hd15_' + id.slice(2);
+HD15.spKeys = []; { const kd = TREE_KINDS11.indexOf('劍'); HDSP15.forEach((F, j) => { const key = 'sp11_' + kd + '_' + j; if (!FX[key]) return; HD15.old[key] = FX[key];
+    HD15['sp' + j] = function* (U, T, u, t) { if (!T) T = { x: U.x, y: U.y - 80 }; if (!u) u = this.H; this.slashOn = 0; this.hd15cast = 1; yield* F.call(this, U, T, u, t); }; HD15.spKeys.push([key, j]); }); }
+HD15.use = on => { HD15.on = !!on; for (const [key, j] of HD15.spKeys) FX[key] = on ? HD15['sp' + j] : HD15.old[key]; for (const id of HD15.ids) { const D = DEF.skills[id], O = HD15.old[id], key = 'hd15_' + id.slice(2);
     if (on) { D.fx = key; if (FX[key + 'h']) D.hitFx = key + 'h'; if (MOVES[id]) MOVES[id].fx = key; if (typeof SKILL_STYLE !== 'undefined') SKILL_STYLE[id] = ['draw', null, 'steel', null]; if (typeof REDO13 !== 'undefined') REDO13.add(id); }
     else { D.fx = O.fx; D.hitFx = O.hitFx; if (MOVES[id]) MOVES[id].fx = O.mv; if (typeof SKILL_STYLE !== 'undefined') SKILL_STYLE[id] = O.style; if (typeof REDO13 !== 'undefined' && !O.redo) REDO13.delete(id); } } };
 // 新特效自己畫打中的那一下：傷害時不再疊舊的白圈和方塊火花（閃白、震動、受擊動作照舊）
-{ const H = Battle.prototype.handlers, _dm = H.DAMAGE; H.DAMAGE = function* (e, s, t, P) { this.hd15hit = !!(HD15.on && s && s.hero && P && HD15.ids.includes(P.skill)); try { return yield* _dm.call(this, e, s, t, P); } finally { this.hd15hit = false; } };
+{ const H = Battle.prototype.handlers, _dm = H.DAMAGE; H.DAMAGE = function* (e, s, t, P) { this.hd15hit = !!(HD15.on && this.hd15cast && s && s.hero && P && P.kind !== 'dot'); try { return yield* _dm.call(this, e, s, t, P); } finally { this.hd15hit = false; } };
   const _im = Battle.prototype.impact; Battle.prototype.impact = function* (b, power) { if (!this.hd15hit) return yield* _im.call(this, b, power);
     const v = b && b.id ? this.views[b.id] || b : b; if (!v) return; v.tint = { c: '#ffffff', a: 0.9 }; this.shake = Math.max(this.shake, [3, 6, 12][power] || 3); this.anim(v, 'hurt', 22); yield* wait(power > 1 ? 6 : 4); v.tint = null; v.blink = 24; }; }
 // 新特效的招附帶的能力升降，不再放舊的金色箭頭，改用上面同一套畫法；狂刃結束時的「物防 −2」也一樣
 HD15.STATPAL = { atk: 'blaze', def: 'steel', spa: 'violet', spd: 'azure', spe: 'wind', acc: 'gold', eva: 'gold' };
-HD15.mine = b => !!(HD15.on && b && b.cast && b.cast.s && b.cast.s.hero && b.cast.D && HD15.ids.some(id => DEF.skills[id] === b.cast.D));
+HD15.mine = b => !!(HD15.on && b && b.hd15cast);
 { const _su = FX.statUpFx, _sd = FX.statDownFx;
   FX.statUpFx = function* (U) { if (HD15.mine(this)) return yield* HD15.statFx.call(this, U, 1, HD15.P[HD15.STATPAL[this.hd15stat] || 'blaze']); return yield* _su.call(this, U); };
   FX.statDownFx = function* (U) { if (HD15.mine(this) || this.hd15frz) { this.hd15frz = 0; return yield* HD15.statFx.call(this, U, -1); } return yield* _sd.call(this, U); };
@@ -303,6 +370,26 @@ HD15.mine = b => !!(HD15.on && b && b.cast && b.cast.s && b.cast.s.hero && b.cas
     return yield* _ap.call(this, e, s, t, P); };
   H.STATUS_EXPIRE = function* (e, s, t, P) { if (HD15.on && t && t.hero && P && P.status === 'frenzy11') this.hd15frz = 1; return yield* _ex.call(this, e, s, t, P); };
   H.ROUND_START = function* (e, s, t, P) { this.hd15frz = 0; return yield* _rs.call(this, e, s, t, P); }; }
+{ const H = Battle.prototype.handlers, _as = H.ACTION_START, _hit = H.HIT, _et = H.EFFECT_TRIGGER, _dm2 = H.DAMAGE;
+  const _ae = H.ACTION_END; H.ACTION_START = function* (e, s, t, P) { this.hd15cast = 0; return yield* _as.call(this, e, s, t, P); };
+  H.ACTION_END = function* (e, s, t, P) { try { return yield* _ae.call(this, e, s, t, P); } finally { this.hd15cast = 0; } };
+  H.HIT = function* (e, s, t, P) { if (HD15.on && this.hd15cast && P && P.hitIndex > 0 && t) { const D = DEF.skills[P.skill]; if (!(D && ((D.hitFx && FX[D.hitFx]) || (D.tags || []).includes('basic')))) { Sound.sfx('hit'); yield* wait(3); return; } } return yield* _hit.call(this, e, s, t, P); };
+  if (typeof heroImpact === 'function') { const _hi = heroImpact; heroImpact = function* (...a) { if (HD15.on && this.hd15cast) return; yield* _hi.apply(this, a); }; }
+  if (typeof wThemeBurst === 'function') { const _wb = wThemeBurst; wThemeBurst = function (...a) { if (HD15.on && this && this.hd15cast) return; return _wb.apply(this, a); }; }
+  // 流血每次扣血：不再借用中毒的畫面，改成自己的（傷口裂開、血珠噴出、往下滴）
+  H.EFFECT_TRIGGER = function* (e, s, t, P) { this.hd15dot = P && P.status; return yield* _et.call(this, e, s, t, P); };
+  H.DAMAGE = function* (e, s, t, P) { const bl = HD15.on && P && P.kind === 'dot' && this.hd15dot === 'bleed14'; this.hd15bleed = bl; HD15.muteP = bl; try { return yield* _dm2.call(this, e, s, t, P); } finally { this.hd15bleed = false; HD15.muteP = false; if (P && P.kind === 'dot') this.hd15dot = null; } };
+  const _pf = FX.psnFx; FX.psnFx = function* (U, T) { if (this.hd15bleed) return yield* HD15.bleedTick.call(this, T || U); return yield* _pf.call(this, U, T); };
+  const _sf = Sound.sfx; Sound.sfx = function (n, ...a) { if (HD15.muteP && n === 'poison') n = 'slash'; return _sf.call(this, n, ...a); }; }
+// 劍的普通攻擊也換成新的細長刀光（顏色跟著武器的屬性）
+HD15.mix = (a, b, t) => { const A = HD15.rgb(a).split(',').map(Number), B = HD15.rgb(b).split(',').map(Number); return '#' + A.map((v, i) => Math.round(v + (B[i] - v) * t).toString(16).padStart(2, '0')).join(''); };
+HD15.thPal = b => { const c = ((typeof WTH12 !== 'undefined' && (WTH12[b._thT] || WTH12.steel)) || ['#a8d8ff'])[0]; return { core: '#ffffff', mid: c, glow: HD15.mix(c, '#000000', 0.25), edge: HD15.mix(c, '#000000', 0.7) }; };
+{ const _wa = FX.wAtk; if (_wa) FX.wAtk = function* (U, T, u) { if (!(HD15.on && (this._thKind || '劍') === '劍')) return yield* _wa.call(this, U, T, u); this.hd15cast = 1; this.slashOn = 0; const P = HD15.thPal(this), n = this.hd15atk = ((this.hd15atk || 0) + 1) % 2;
+    yield* this.lunge(u, 8, 3); Sound.sfx('slash'); HD15.slash(this, T, { pal: P, r: 44, th: 9, ang: n ? 0.73 : -0.67, span: 1.4, dur: 16, sw: 0.25, spark: 1 }); yield* wait(3); HD15.flash(this, T, P, 26, { dur: 10 }); HD15.sparks(this, T, 7, P, { spd: 3, life: 14 }); yield* wait(6); };
+  const _sg = segSwing; segSwing = function* (b, s, C, i, kind) { if (!(HD15.on && kind === '劍')) return yield* _sg(b, s, C, i, kind); b.hd15cast = 1; yield* b.lunge(s, 6, 2); Sound.sfx('slash'); const P = HD15.thPal(b);
+    HD15.slash(b, C, { pal: P, r: 40, th: 8, ang: [0.73, -0.67, -1.571][i % 3], span: 1.4, dur: 14, sw: 0.25 }); yield* wait(3); HD15.flash(b, C, P, 22, { dur: 9 }); HD15.sparks(b, C, 5, P, { spd: 2.6, life: 12 }); yield* wait(4); }; }
+HD15.bleedTick = function* (C) { const P = HD15.P.crimson; HD15.slash(this, C, { pal: P, r: 22, th: 4, ang: -0.67, span: 1.3, dur: 14, sw: 0.2 }); HD15.slash(this, { x: C.x + 4, y: C.y + 3 }, { pal: P, r: 20, th: 3, ang: 0.73, span: 1.2, dur: 14, sw: 0.2, delay: 3 });
+  HD15.flash(this, C, P, 26, { dur: 12, delay: 2 }); HD15.blood(this, C, 10, { spd: 2.4, delay: 2 }); HD15.blood(this, { x: C.x, y: C.y + 6 }, 4, { ang: Math.PI / 2, spread: 0.6, spd: 0.6, delay: 10 }); yield* wait(16); };
 HD15.use(typeof window !== 'undefined' && !!window.FXTEST); // 正式版還是舊的；特效測試版先用新的（選單可以切）
 // 特效測試版：選技能樹的清單多一行「劍的新特效：開／關」
 if (typeof fxtest13 === 'function' && fxtest13()) { fxtMenu13 = function* () { const K = TREE_KINDS11.filter(k => !TREE11[k].common && (typeof kindOn13 !== 'function' || kindOn13(k))).concat(COMMON11.filter(k => (TREE11[k].sk || []).length).slice(0, 1)); let i = 0;
