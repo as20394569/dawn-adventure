@@ -4,7 +4,7 @@
      刀光＝有粗細變化、頭亮尾淡的月牙，外圈柔光、裡面一條白熱的刀鋒；打中＝白熱閃光、十字光芒、放射光刺、衝擊波、會拖尾的火花；
      再加上碎片（有重力、會翻面反光）、煙塵、地裂、光柱、火焰、往上的箭頭。每一格都重新算位置和亮度（60 格／秒），不是幾張圖輪流。
    先做 斷甲斬（一般斬擊）、狂刃（自身強化）、崩星劍（大招）三招。HD15.use(true/false) 切換新舊；
-   正式版預設關，特效測試版（window.FXTEST）預設開，選技能樹的清單最後一行「劍的新特效：開／關」。 */
+   v12.101 起正式版、特效測試版都預設開；特效測試版選技能樹的清單最後一行「新特效：開／關」可以切回舊的比較。 */
 const HD15 = { on: false, ids: [], old: {}, T: new Map() };
 HD15.q = () => (typeof HD_QUALITY !== 'undefined' && HD_QUALITY.low) ? 0.5 : 1;
 HD15.cl = t => t < 0 ? 0 : t > 1 ? 1 : t;
@@ -455,7 +455,7 @@ HD15.thPal = b => HD15.P.white; HD15.thPalOld = b => { const c = ((typeof WTH12 
     HD15.slash(b, C, { pal: P, r: 40, th: 8, ang: [-2.41, -0.67, -1.571][i % 3], dir: i % 3 ? 1 : -1, span: 1.4, dur: 14, sw: 0.25 }); yield* wait(3); HD15.flash(b, C, P, 22, { dur: 9 }); HD15.sparks(b, C, 5, P, { spd: 2.6, life: 12 }); yield* wait(4); }; }
 HD15.bleedTick = function* (C) { const P = HD15.P.crimson; HD15.slash(this, C, { pal: P, r: 22, th: 4, ang: -0.67, span: 1.3, dur: 14, sw: 0.2 }); HD15.slash(this, { x: C.x + 4, y: C.y + 3 }, { pal: P, r: 20, th: 3, ang: -2.41, dir: -1, span: 1.2, dur: 14, sw: 0.2, delay: 3 });
   HD15.flash(this, C, P, 26, { dur: 12, delay: 2 }); HD15.blood(this, C, 10, { spd: 2.4, delay: 2 }); HD15.blood(this, { x: C.x, y: C.y + 6 }, 4, { ang: Math.PI / 2, spread: 0.6, spd: 0.6, delay: 10 }); yield* wait(16); };
-HD15.use(typeof window !== 'undefined' && !!window.FXTEST); // 正式版還是舊的；特效測試版先用新的（選單可以切）
+HD15.use(true); // v12.101 起正式版也用新特效（玩家：「前面的重製都可以放入正式版了」）；特效測試版的選單還是可以切回舊的比較
 // 特效測試版：選技能樹的清單多一行「新特效：開／關」（劍・雙劍・短刀・雙刀一起切）
 if (typeof fxtest13 === 'function' && fxtest13()) { fxtMenu13 = function* () { const K = TREE_KINDS11.filter(k => !TREE11[k].common && (typeof kindOn13 !== 'function' || kindOn13(k))).concat(COMMON11.filter(k => (TREE11[k].sk || []).length).slice(0, 1)); let i = 0;
   while (true) { const lab = k => (TREE11[k].common ? '共通' : k) + '（' + (TREE11[k].sk || []).length + (TREE11[k].common ? '' : '＋' + (TREE11[k].sp || []).length) + '）';

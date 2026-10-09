@@ -1,66 +1,3 @@
-{ const n = (MAPS.ruins.npcs || []).find(q => q.id === 'warden'); if (n) n.show = st => !!st.flags.golem && (st.bag.riftToken || 0) > 0; } // stays only while badges are left to trade
-{ const _w = Events.warden; Events.warden = function* (ow) { yield* _w.call(this, ow); }; /* v12.0.3: the warden's own line now says the door is closed */ }
-{ const _eq = extraQuests; extraQuests = function (st, L) { _eq(st, L); for (let i = L.length - 1; i >= 0; i--) if (L[i].n === '異界迴廊') L.splice(i, 1); }; }
-const STAR_MAP12 = Object.keys(MAPS).find(m => (MAPS[m].npcs || []).some(n => n.id === 'starGate'));
-if (STAR_MAP12) { const n = MAPS[STAR_MAP12].npcs.find(q => q.id === 'starGate'); n.show = () => false; }
-{ const _ql = questList; questList = function (st = Game.st) { const L = _ql(st);
-    for (let i = L.length - 1; i >= 0; i--) if (L[i].n === '星見神殿') L.splice(i, 1);
-    const M = L.find(q => q.main); if (M && M.done && /星之門/.test(M.t || '')) M.t = '完成：曙光鐘再次響起了。（第三章製作中）';
-    return L; }; }
-{ const _ld = Overworld.prototype.load; Overworld.prototype.load = function (id, x, y, dir, silent) {
-    if (id === 'rift') return _ld.call(this, 'ruins', 7, 2, 'down', silent);
-    if (id === 'starShrine' && STAR_MAP12) { const g = MAPS[STAR_MAP12].npcs.find(q => q.id === 'starGate'); return _ld.call(this, STAR_MAP12, g.x, g.y + 1, 'down', silent); }
-    return _ld.call(this, id, x, y, dir, silent); }; }
-const RETIRED12 = ['breaker', 'riftwalker', 'gatebreaker', 'again', 'starSeer', 'rift10', 'riftClear', 'break30', 'ng', 'starGuardian'];
-for (const L of [TITLES, ACHIEVEMENTS]) for (let i = L.length - 1; i >= 0; i--) if (RETIRED12.includes(L[i].id) && !(L === ACHIEVEMENTS && L[i].id === 'golem')) L.splice(i, 1);
-{ const _u = Overworld.prototype.update; Overworld.prototype.update = function (...a) { const st = this.st; if (st && st.title && RETIRED12.includes(st.title)) st.title = null; return _u.apply(this, a); }; }
-DEF.resources.brk.appliesTo = () => false; // no shield gauge on any monster
-DEF.mechanics.breakGauge.triggers = [];
-COND.tgtBroken = (c, v) => !!c.tgt && (BR.stage(c.core, c.tgt, 'def') < 0) === !!v; // 「對破防的對手」→「對物防下降的對手」
-EFFECT_TYPES.break_chip.exec = function (core, ef, ctx, tg) {
-  for (const t of tg) { if (!t || !core.isUp(t) || t.side === (ctx.owner && ctx.owner.side)) continue; const own = ef.why === 'breaker' || ef.why === 'shieldChip';
-    if (ef.why === 'smash' || (ef.why === 'shieldHit' && skLowersDef(ctx.skill)) || (!own && !core.rng.chance(0.3))) continue; core.applyStatus(ctx.owner, t, 'stage_def', { delta: -1, dur: 3, secondary: true }); } };
-const BRK_TXT = [
-  [/【破盾】額外削減\d點護盾/g, '30% 讓對手物防−1'], [/每一下都能削減護盾/g, '每一下都有 30% 機率讓對手物防−1'], [/（會心也能削減護盾）/g, ''],
-  [/連斬能削減護盾/g, '連斬有機率降低物防'], [/削減護盾的砲擊/g, '有機率降低物防的砲擊'], [/額外削減(對手)?1點護盾/g, '讓對手物防−1'],
-  [/對有護盾的魔物多削 1 格破防盾/g, '30% 讓對手物防 −1'], [/多削 1 格破防盾/g, '讓對手物防 −1'], [/、破防盾 −1/g, ''], [/削減護盾/g, '30% 讓對手物防−1'],
-  [/對破防中的魔物/g, '對物防下降的魔物'], [/對破防的對手/g, '對物防下降的對手'], [/攻擊破防中的魔物/g, '攻擊物防下降的魔物'], [/破防中的(魔物|對手)/g, '物防下降的$1'],
-  [/防禦，或趁現在破防！/g, '快防禦！'], [/，或用弱點、會心打破護盾來打斷蓄力/g, ''], [/趁牠破防時一口氣打倒牠吧/g, '準備好回復，一口氣打倒牠吧'], [/、護盾\+1/g, ''],
-];
-const brkDedupe = s => { if (!s.includes('30% 讓對手物防−1')) return s; const rest = s.replace('30% 讓對手物防−1', '');
-  if (/降低(對手的)?物防|對手物防[−-]1/.test(rest)) s = s.replace(/[，、；]?30% 讓對手物防−1(?=[，、；。])/, '').replace(/30% 讓對手物防−1[，、；]?/, '').replace('：，', '：').replace('，，', '，'); return s; };
-const brkFix = s => { if (typeof s !== 'string' || !/護盾|破防|破盾/.test(s)) return s; for (const [a, b] of BRK_TXT) s = s.replace(a, b); return brkDedupe(s); };
-const skLowersDef = sk => { if (!sk) return false; if (sk._lowDef12 !== undefined) return sk._lowDef12; const effs = [...(sk.effects || []), ...(sk.after || [])].map(e => typeof e === 'string' ? DEF.effects[e] : e).filter(Boolean);
-  return (sk._lowDef12 = effs.some(e => (e.type === 'stage' && e.stats && e.stats.def < 0 && e.target !== 'self') || (e.type === 'status' && e.status === 'stage_def' && e.target !== 'self'))); };
-const brkFixObj = (o, keys) => { for (const k of keys) if (typeof o[k] === 'string') o[k] = brkFix(o[k]); };
-const brkFixDeep = (o, d = 0, seen = new Set()) => { if (!o || typeof o !== 'object' || d > 3 || seen.has(o)) return; seen.add(o); for (const k in o) { const v = o[k]; if (typeof v === 'string') o[k] = brkFix(v); else if (v && typeof v === 'object') brkFixDeep(v, d + 1, seen); } };
-for (const T of [DEF.skills, DEF.mechanics, DEF.talents || {}, typeof SPECIALS !== 'undefined' ? SPECIALS : {}, typeof ACC_TRAIT !== 'undefined' ? ACC_TRAIT : {}]) brkFixDeep(T);
-for (const id in DEF.skills) brkFixObj(DEF.skills[id], ['desc']);
-for (const id in MOVES) brkFixObj(MOVES[id], ['d']);
-for (const id in DEF.talents || {}) brkFixObj(DEF.talents[id], ['desc', 'd', 'name']);
-for (const id in DEF.passives || {}) if (DEF.passives[id].metadata) brkFixObj(DEF.passives[id].metadata, ['desc', 'd']);
-for (const T of [ITEMS, GEAR]) for (const id in T) brkFixObj(T[id], ['d']);
-for (const T of [typeof SPECIALS !== 'undefined' ? SPECIALS : {}, typeof ORB_A !== 'undefined' ? ORB_A : {}, typeof ORB_P !== 'undefined' ? ORB_P : {}, typeof WKIND12 !== 'undefined' ? WKIND12 : {}, typeof CLS12 !== 'undefined' ? CLS12 : {}])
-  for (const id in T) brkFixObj(T[id], ['d', 'rule', 'limit', 'n']);
-if (typeof DIFFS !== 'undefined') for (const D of DIFFS) brkFixObj(D, ['d']);
-if (typeof BATTLE_HELP !== 'undefined') for (const P of BATTLE_HELP) P[1] = P[1].filter(t => !/^破防：/.test(t)).map(brkFix);
-if (typeof HEAVY_TIP !== 'undefined') for (const k in HEAVY_TIP) HEAVY_TIP[k] = brkFix(HEAVY_TIP[k]);
-for (const id in MOVES) for (const k of ['warn', 'chargeMsg']) if (typeof MOVES[id][k] === 'string') MOVES[id][k] = brkFix(MOVES[id][k]);
-const OTW_SPOTS = ['town', 'forest', 'windHills'];
-const otwMarks = (st = Game.st) => OTW_SPOTS.filter(m => ((st.flags.otwMark || {})[m])).length;
-for (const m of OTW_SPOTS) { const d = MAPS[m], E = EXT_AREA[m]; if (!d || !E) continue; const R = d.rows, H = R.length, Wd = R[0].length;
-  const busy = new Set([...(d.npcs || []), ...(d.items || []), ...(d.gathers || [])].map(e => e.x + ',' + e.y)); for (const k in d.signs || {}) busy.add(k);
-  const inExt = (x, y) => E.side === 'right' ? x >= E.from : y >= E.from, ok = (x, y) => y > 0 && x > 0 && y < H - 1 && x < Wd - 1 && !SOLID.has(R[y][x]) && R[y][x] !== ':' && !busy.has(x + ',' + y);
-  let best = null, bs = -1; const cx = E.side === 'right' ? (E.from + Wd) / 2 : Wd / 2, cy = E.side === 'right' ? H / 2 : (E.from + H) / 2;
-  for (let y = 1; y < H - 1; y++) for (let x = 1; x < Wd - 1; x++) { if (!inExt(x, y) || !ok(x, y)) continue; const nb = [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [-1, -1], [1, -1], [-1, 1]].filter(([a, b]) => ok(x + a, y + b)).length;
-    if (nb < 8) continue; const sc = 100 - Math.hypot(x - cx, y - cy); if (sc > bs) { bs = sc; best = [x, y]; } }
-  if (best) { d.npcs.push({ id: 'otwMark_' + m, x: best[0], y: best[1], dir: 'down', look: 'loreStone', name: '曙光的印記', show: st => st.flags.otwQ === 1 && !(st.flags.otwMark || {})[m] }); NPC_ROLES.任務.push('otwMark_' + m);
-    Events['otwMark_' + m] = function* (ow) { const st = Game.st, f = st.flags; (f.otwMark || (f.otwMark = {}))[m] = 1; Sound.sfx('charge'); Game.flashColor = '#fff2c0'; yield* tween(12, t => Game.flash = t * 0.6); yield* tween(16, t => Game.flash = 0.6 * (1 - t));
-      yield* sayAll(['石頭上刻著和你手上一樣的太陽紋章……', '曙光之印發出了光。印記回應了你！（曙光的印記 ' + otwMarks(st) + '/3）']);
-      if (otwMarks(st) >= 3) { f.otwQ = 2; yield* sayAll(['三個印記同時亮了起來。', '……遠處，萌芽鎮的方向，好像有什麼東西在呼喚你。', '（目標：到萌芽鎮的井邊看看。）']); }
-      ow.load(ow.map.id, ow.p.x, ow.p.y, ow.p.dir, true); }; }
-  else console.warn('otw: no spot in', m);
-  if (typeof mapCache !== 'undefined') delete mapCache[m]; }
 { const _se = STORY_MARKS.elder; const otwReady = st => st.flags.license && st.flags.golem && !st.flags.otwQ && !st.flags.hiddenCls;
   STORY_MARKS.elder = st => { const o = _se ? _se(st) : null; return o || (otwReady(st) ? '!' : null); };
   const _el = Events.elder; Events.elder = function* (ow) { const st = Game.st, f = st.flags;
@@ -9659,7 +9596,7 @@ HD15.thPal = b => HD15.P.white; HD15.thPalOld = b => { const c = ((typeof WTH12 
     HD15.slash(b, C, { pal: P, r: 40, th: 8, ang: [-2.41, -0.67, -1.571][i % 3], dir: i % 3 ? 1 : -1, span: 1.4, dur: 14, sw: 0.25 }); yield* wait(3); HD15.flash(b, C, P, 22, { dur: 9 }); HD15.sparks(b, C, 5, P, { spd: 2.6, life: 12 }); yield* wait(4); }; }
 HD15.bleedTick = function* (C) { const P = HD15.P.crimson; HD15.slash(this, C, { pal: P, r: 22, th: 4, ang: -0.67, span: 1.3, dur: 14, sw: 0.2 }); HD15.slash(this, { x: C.x + 4, y: C.y + 3 }, { pal: P, r: 20, th: 3, ang: -2.41, dir: -1, span: 1.2, dur: 14, sw: 0.2, delay: 3 });
   HD15.flash(this, C, P, 26, { dur: 12, delay: 2 }); HD15.blood(this, C, 10, { spd: 2.4, delay: 2 }); HD15.blood(this, { x: C.x, y: C.y + 6 }, 4, { ang: Math.PI / 2, spread: 0.6, spd: 0.6, delay: 10 }); yield* wait(16); };
-HD15.use(typeof window !== 'undefined' && !!window.FXTEST); // 正式版還是舊的；特效測試版先用新的（選單可以切）
+HD15.use(true); // v12.101 起正式版也用新特效（玩家：「前面的重製都可以放入正式版了」）；特效測試版的選單還是可以切回舊的比較
 if (typeof fxtest13 === 'function' && fxtest13()) { fxtMenu13 = function* () { const K = TREE_KINDS11.filter(k => !TREE11[k].common && (typeof kindOn13 !== 'function' || kindOn13(k))).concat(COMMON11.filter(k => (TREE11[k].sk || []).length).slice(0, 1)); let i = 0;
   while (true) { const lab = k => (TREE11[k].common ? '共通' : k) + '（' + (TREE11[k].sk || []).length + (TREE11[k].common ? '' : '＋' + (TREE11[k].sp || []).length) + '）';
     const items = K.map(k => ({ t: lab(k) })).concat([{ t: '新特效：' + (HD15.on ? '開' : '關') }]);
@@ -9932,17 +9869,30 @@ const HDFX17 = {
       yield* this.lunge(u, 22, 1); Sound.sfx('blade'); HD15.slash(this, G, { pal: Pu, r: 70, th: 8, ang: -Math.PI / 2, dir: 1, span: 1.1, fl: 0.35, dur: 16, sw: 0.2, spark: 1 }); yield* wait(4);
       Sound.sfx('heavy'); HD15.thrust(this, { x: G.x, y: G.y - 46 }, { x: G.x, y: G.y - 2 }, Bk, { w: 6, ext: 2, dur: 30 }); HD15.stop(this, 4);
       HD15.ring(this, G, Pu, 4, 34, { fl: 0.3, w: 2, dur: 22 }); HD15.cracks(this, G, 6, Pu, { len: 30, fl: 0.25, dur: 50 });       if (v) { v.tint = { c: '#3a1060', a: 0.5 }; DG17.later(this, 34, () => { if (v.tint && v.tint.c === '#3a1060') v.tint = null; }); } this.shake = Math.max(this.shake || 0, 5); yield* wait(22); } },
-  zjVenomThroat: { *f(U, T, u, t) { const Pu = DG17.P()[0], V = HD15.P.venom, Hc = this.center(this.H), N = { x: T.x, y: T.y - 8 }, v = DG17.vAt(this, T), cu = v && this.core && this.core.byId[v.id], ail = !!(cu && this.core.majorOf && this.core.majorOf(cu));
-      Sound.sfx('charge'); HD15.dim(this, 0.6, 90, { col: '#04020a', inn: 0.1, out: 0.25 }); if (typeof HD18 !== 'undefined') HD18.vanish(this); yield* wait(12);
-      if (typeof HD18 !== 'undefined') { HD18.shadow(this, N.x - Hc.x - 4, N.y - Hc.y + 26, 10, 0.85); HD18.shadow(this, N.x - Hc.x + 10, N.y - Hc.y + 34, 7, 0.5); } Sound.sfx('wind'); yield* wait(5);
-      Sound.sfx('blade'); HD15.thrust(this, { x: N.x - 8, y: N.y + 46 }, N, Pu, { w: 9, ext: 14, dur: 22 }); HD15.thrust(this, { x: N.x - 4, y: N.y + 50 }, { x: N.x + 3, y: N.y + 3 }, HD15.P.black, { w: 5, ext: 10, dur: 20, delay: 2, al: 0.6 }); yield* wait(3);
-      Sound.sfx('bladeHitSuper'); HD15.stop(this, 8); for (const dx of [-4, 4]) { HD15.flash(this, { x: N.x + dx, y: N.y }, V, 14, { dur: 40 }); HD15.flare(this, { x: N.x + dx, y: N.y }, V, 16, { rot: Math.PI / 4, dur: 30, x8: 1 }); }
-      HD15.flash(this, N, Pu, 50, { dur: 14 }); HD15.spikes(this, N, Pu, 10, 26, { rot: -Math.PI / 2 }); DG17.dark(this, N, 6); this.shake = Math.max(this.shake || 0, 7); yield* wait(10);
-      Sound.sfx('poison'); DG17.veins(this, N, ail ? 12 : 8, V, { len: ail ? 34 : 24, dur: 48 }); DG17.bubbles(this, T, 10, { span: 18 }); DG17.drops(this, N, 6, V, { ang: Math.PI / 2, spread: 1.4, spd: 1.2 }); yield* wait(18);
-      Sound.sfx('crit'); HD15.stop(this, 6); HD15.flash(this, T, V, ail ? 80 : 56, { dur: 18 }); HD15.ring(this, T, V, 6, ail ? 56 : 40, { w: 2.4, dur: 18 }); HD15.sparks(this, T, 24, V, { spd: 4.6, life: 22, g: 0.05 }); DG17.mist(this, T, 4);
+  zjVenomThroat: { *f(U, T, u, t) { const Pu = DG17.P()[0], Bk = HD15.P.black, V = HD15.P.venom, H = DS16.hands(this), Hc = this.center(this.H), N = { x: T.x, y: T.y - 8 }, v = DG17.vAt(this, T), cu = v && this.core && this.core.byId[v.id], ail = !!(cu && this.core.majorOf && this.core.majorOf(cu)), B18 = typeof HD18 !== 'undefined';
+      Sound.sfx('charge'); HD15.dim(this, 0.74, 160, { col: '#030806', inn: 0.06, out: 0.18 }); HD15.gather(this, H.R, 16, V, 36, { span: 14, life: 16 }); yield* wait(15);
+      Sound.sfx('tick'); HD15.flare(this, H.R, V, 46, { rot: -0.6, dur: 16, x8: 1 }); HD15.flash(this, H.R, V, 24, { dur: 14 }); DG17.drops(this, H.R, 3, V, { ang: Math.PI / 2, spread: 0.5, spd: 0.6 }); yield* wait(8);
+      const Q = { x: N.x - 4, y: N.y + 30 }, dx = Q.x - Hc.x, dy = Q.y - Hc.y;
+      if (B18) { HD18.vanish(this); [[0.28, -18], [0.52, 16], [0.76, -11]].forEach(([f, s], i) => DG17.later(this, i * 3, () => HD18.shadow(this, dx * f + s, dy * f, 9, 0.72 - i * 0.1))); }
+      Sound.sfx('wind'); HD15.windLines(this, Hc, N, Pu, 5, { spread: 28, len: 40, spd: 12 }); yield* wait(9); if (B18) HD18.shadow(this, dx, dy, 14, 0.88);
+      const A = { x: N.x - 10, y: N.y + 60 }, an = Math.atan2(N.y - A.y, N.x - A.x); Sound.sfx('bladeBig');
+      HD15.thrust(this, A, N, Pu, { w: 15, ext: 36, dur: 30 }); HD15.thrust(this, { x: A.x + 5, y: A.y + 4 }, N, Bk, { w: 8, ext: 26, dur: 26, delay: 2, al: 0.6 }); HD15.thrust(this, A, N, V, { w: 4, ext: 32, dur: 24, delay: 1 }); yield* wait(4);
+      Sound.sfx('bladeHitSuper'); Sound.sfx('heavy'); HD15.stop(this, 12); this.spawn({ k: 'flash', c: '#ffffff', a: 0.5, life: 10 });
+      HD15.flash(this, N, Pu, 80, { dur: 18 }); HD15.flare(this, N, Pu, 130, { rot: an, dur: 20 }); HD15.spikes(this, N, Pu, 12, 36, { rot: -Math.PI / 2 }); HD15.ring(this, N, Pu, 4, 44, { w: 2.6, dur: 18 });
+      HD15.sparks(this, N, 22, Pu, { ang: -Math.PI / 2 - 0.2, spread: 1.2, spd: 5.4, life: 22, g: 0.08 }); DG17.dark(this, N, 8); this.shake = Math.max(this.shake || 0, 12); yield* wait(12);
+      Sound.sfx('bladeQ'); for (const [i, ox] of [[0, -5], [1, 5]]) { HD15.mark(this, { x: N.x + ox, y: N.y + 1 }, Math.PI / 2 + ox * 0.04, 12, V, { w: 2.2, hold: 46 - i * 2, delay: i * 2 }); HD15.flash(this, { x: N.x + ox, y: N.y }, V, 20, { dur: 12, delay: i * 2 }); }
+      DG17.drops(this, N, 4, V, { ang: Math.PI / 2, spread: 0.8, spd: 1 }); yield* wait(10);
+      for (let i = 0; i < 3; i++) { Sound.sfx(i < 2 ? 'poison' : 'buzz'); this.spawn({ k: 'flash', c: V.mid, a: 0.1 + i * 0.06, life: 8 });
+        DG17.veins(this, N, (ail ? 7 : 5) + i * 2, V, { len: (ail ? 22 : 16) + i * 10, dur: 40 - i * 4 }); HD15.ring(this, T, V, 34 + i * 8, 6, { w: 1.8, dur: 12, fl: 0.6 }); HD15.flash(this, T, V, 26 + i * 12, { dur: 10 });
+        DG17.bubbles(this, T, 3 + i * 2, { span: 10 }); this.shake = Math.max(this.shake || 0, 3 + i * 2); yield* wait(i < 2 ? 12 : 10); }
+      Sound.sfx('crit'); Sound.sfx('quake'); HD15.stop(this, 10); this.spawn({ k: 'flash', c: V.mid, a: 0.42, life: 12 });
+      HD15.flash(this, T, V, ail ? 124 : 104, { dur: 22 }); HD15.ring(this, T, V, 8, ail ? 92 : 74, { w: 3.4, dur: 24 }); HD15.ring(this, T, V, 4, 46, { w: 2, dur: 18, delay: 4 });
+      HD15.flare(this, T, V, 200, { rot: 0, dur: 24, x8: 1 }); HD15.spikes(this, T, V, 16, 50); HD15.sparks(this, N, 34, V, { ang: -Math.PI / 2, spread: 1.4, spd: 6.4, life: 28, g: 0.12 }); HD15.sparks(this, T, 20, V, { spd: 5, life: 22, g: 0.05 });
+      DG17.bubbles(this, T, 14, { span: 20, w: 40 }); DG17.drops(this, N, 10, V, { ang: -Math.PI / 2, spread: 2.4, spd: 3 }); DG17.mist(this, T, 7); DG17.veins(this, N, ail ? 14 : 10, V, { len: ail ? 48 : 38, dur: 50 });
       if (ail && cu) { const st = cu.statuses ? cu.statuses.map(q => q.id) : [], E = st.includes('par') ? HD15.P.volt : st.includes('brn') ? HD15.P.ember : V;
-        DG17.later(this, 6, () => { this.spawn({ k: 'flash', c: E.mid, a: 0.35, life: 8 }); HD15.ring(this, T, E, 8, 78, { w: 3, dur: 22 }); HD15.flare(this, T, E, 150, { rot: 0, dur: 20, x8: 1 }); if (E === HD15.P.volt) DG17.zap(this, T, 4, { r: 30, dur: 18 }); if (E === HD15.P.ember) HD15.flames(this, { x: T.x, y: T.y + 16 }, 10, E, { w: 30, h: 18, span: 8, life: 18 }); }); }
-      this.shake = Math.max(this.shake || 0, ail ? 12 : 8); yield* wait(ail ? 24 : 16); } },
+        DG17.later(this, 8, () => { Sound.sfx(E === HD15.P.volt ? 'thunder' : E === HD15.P.ember ? 'fire' : 'poison'); this.spawn({ k: 'flash', c: E.mid, a: 0.4, life: 10 }); HD15.ring(this, T, E, 10, 104, { w: 3.4, dur: 24 }); HD15.flare(this, T, E, 180, { rot: Math.PI / 8, dur: 22, x8: 1 }); HD15.sparks(this, T, 26, E, { spd: 6, life: 24, g: 0.05 });
+          if (E === HD15.P.volt) DG17.zap(this, T, 5, { r: 34, dur: 20 }); if (E === HD15.P.ember) HD15.flames(this, { x: T.x, y: T.y + 16 }, 12, E, { w: 34, h: 22, span: 8, life: 20 }); }); }
+      this.shake = Math.max(this.shake || 0, ail ? 18 : 14); yield* wait(ail ? 32 : 24); } },
   ogDagger: { *f(U, T, u, t) { const H = DS16.hands(this), tu = DG17.tu(this, t), hu = this.core.byId.H; try { this.dg17n = tu && hu ? OG14.短刀[9].hitsOf(this.core, hu, { tg: [tu.id] }) : 4; } catch (e) { this.dg17n = 4; }
       Sound.sfx('charge'); HD15.dim(this, 0.7, 70 + this.dg17n * 10, { col: '#04020a', inn: 0.08, out: 0.2 });       if (typeof K13 !== 'undefined' && K13.ghost) K13.ghost(this, 0, 0, '#2a1838', 18, 0.6); yield* wait(16); Sound.sfx('wind');
       DG17.dash(this, { x: T.x - 70, y: T.y + 30 }, { x: T.x + 70, y: T.y - 30 }, 1, { dur: 8 }); yield* this.lunge(u, 18, 2); Sound.sfx('bladeQ'); DG17.cut(this, T, 'ur', { r: 42, th: 9 }); yield* wait(3); },
@@ -10077,3 +10027,158 @@ for (const k in HD18.SK) { const key = 'hd15_' + k, F = FX[key], Fh = FX[key + '
 { const _l = Battle.prototype.lunge; Battle.prototype.lunge = function* (...a) { yield* _l.apply(this, a); if (this.hd18pend) { this.hd18pend = 0; HD18.vanish(this); } }; }
 { const H = Battle.prototype.handlers, _ae = H.ACTION_END; H.ACTION_END = function* (e, s, t, P) { if (this.hd18hid) { HD18.appear(this); yield* wait(8); } this.hd18pend = 0; return yield* _ae.call(this, e, s, t, P); };
   const _u = Battle.prototype.update; Battle.prototype.update = function (...a) { if (this.hd18hid && this.t - (this.hd18t || 0) > 900) HD18.appear(this); return _u.apply(this, a); }; }
+const SP20 = {};
+HD15.P.lance = { core: '#ffffff', mid: '#9ad4ff', glow: '#2f86ff', edge: '#0c2f78', keep: 1 };
+SP20.P = () => HD15.P.lance;
+SP20.DIRT = ['#d8c8a8', '#a08868', '#5a4a38'];
+SP20.hand = b => DS16.hands(b).R;
+SP20.dir = (A, T) => { const an = Math.atan2(T.y - A.y, T.x - A.x); return { an, ux: Math.cos(an), uy: Math.sin(an) }; };
+SP20.live = typeof fxtest13 === 'function' && fxtest13();
+SP20.on = () => SP20.live && DG17.kind() === '長槍';
+SP20.lance = (b, T, o = {}) => { const A = o.from || SP20.hand(b), P = o.pal || SP20.P(), w = o.w || 7, dl = o.delay || 0, ext = o.ext ?? 30, dur = o.dur || 18;
+  HD15.thrust(b, A, T, P, { w, ext, dur, delay: dl, al: o.al }); HD15.thrust(b, A, T, HD15.P.white, { w: w * 0.36, ext: ext * 0.9, dur: Math.max(8, dur - 2), delay: dl + 1, al: o.al });
+  if (o.wind !== 0) HD15.windLines(b, A, T, P, o.wind || 3, { spread: w * 2, len: 40, spd: 12, delay: dl }); return SP20.dir(A, T); };
+SP20.hit = (b, T, d, s = 1, o = {}) => { const P = SP20.P(), dl = o.delay || 0; HD15.flash(b, T, P, 34 * s, { dur: 12, delay: dl }); HD15.sparks(b, T, Math.round(10 * s), P, { ang: d.an, spread: 0.6, spd: 4.4 * Math.min(s, 1.5), life: 16, g: 0.04, delay: dl });
+  HD15.ring(b, T, P, 3, 22 * s, { w: 2, dur: 14, fl: 0.45, rot: d.an + Math.PI / 2, delay: dl }); if (s >= 1) HD15.spikes(b, T, HD15.P.white, Math.round(6 * s), 18 * s, { rot: d.an, delay: dl }); };
+SP20.through = (b, T, d, L = 40, o = {}) => { const P = SP20.P(), dl = o.delay || 0, E = { x: T.x + d.ux * L, y: T.y + d.uy * L }; HD15.thrust(b, T, E, P, { w: o.w || 5, ext: 10, dur: 16, delay: dl });
+  HD15.flare(b, E, P, o.fl || 40, { rot: d.an, dur: 14, delay: dl + 2 }); HD15.sparks(b, E, 8, P, { ang: d.an, spread: 0.4, spd: 5, life: 14, delay: dl + 2 }); return E; };
+SP20.helix = (b, A, B, pal, o = {}) => { const dl = o.delay || 0, dur = o.dur || 22, dx = B.x - A.x, dy = B.y - A.y, D = Math.hypot(dx, dy) || 1, ux = dx / D, uy = dy / D, nx = -uy, ny = ux, R = o.r || 8, turns = o.turns || 3, spin = o.spin || 0.5;
+  return HD15.add(b, { x: A.x, y: A.y, delay: dl, life: dl + dur, draw: (x, p, k, t) => { const g = HD15.eo(HD15.cl(k / 0.3)), f = 1 - HD15.ei(HD15.cl((k - 0.5) / 0.5)); x.globalCompositeOperation = 'lighter'; x.lineCap = 'round'; x.lineJoin = 'round';
+    for (const ph of [0, Math.PI]) { x.beginPath(); const N = 48; for (let i = 0; i <= N; i++) { const q = i / N * g, d = q * D, a = q * turns * Math.PI * 2 - t * spin + ph, r = R * (1 - 0.55 * q) * Math.sin(a), X = A.x + ux * d + nx * r, Y = A.y + uy * d + ny * r; i ? x.lineTo(X, Y) : x.moveTo(X, Y); }
+      x.globalAlpha = 0.45 * f; x.strokeStyle = pal.glow; x.lineWidth = 3.4; x.stroke(); x.globalAlpha = f; x.strokeStyle = pal.mid; x.lineWidth = 1.2; x.stroke(); } } }); };
+SP20.hex = (b, C, R, pal, o = {}) => { const dl = o.delay || 0, hold = o.hold || 12, fl = o.fl || 0.75; return HD15.add(b, { x: C.x, y: C.y, delay: dl, life: dl + hold + 20, draw: (x, p, k, t) => { const g = HD15.eo(HD15.cl(t / 6)), br = HD15.cl((t - hold) / 20), f = 1 - HD15.ei(br);
+    x.globalCompositeOperation = 'lighter'; x.lineCap = 'round';
+    for (let i = 0; i < 6; i++) { const a1 = i * Math.PI / 3 + Math.PI / 6, a2 = a1 + Math.PI / 3, am = (a1 + a2) / 2, off = HD15.eo(br) * 26, ox = Math.cos(am) * off, oy = Math.sin(am) * off * fl, sp = br * (i % 2 ? 0.5 : -0.5);
+      const X1 = p.x + Math.cos(a1 + sp) * R * g + ox, Y1 = p.y + Math.sin(a1 + sp) * R * g * fl + oy, X2 = p.x + Math.cos(a2 + sp) * R * g + ox, Y2 = p.y + Math.sin(a2 + sp) * R * g * fl + oy;
+      x.beginPath(); x.moveTo(X1, Y1); x.lineTo(X2, Y2); x.globalAlpha = 0.5 * f; x.strokeStyle = pal.glow; x.lineWidth = 4.5; x.stroke(); x.globalAlpha = f; x.strokeStyle = pal.mid; x.lineWidth = 1.6; x.stroke(); x.strokeStyle = pal.core; x.lineWidth = 0.6; x.stroke(); }
+    if (br === 0) HD15.put(x, HD15.tex('glow', pal.glow), p.x, p.y, R * 2.4, R * 2.4 * fl, 0, 0.25 * g); } }); };
+SP20.hide = b => { const v = b.H; if (!v || !v.off || b.sp20hid) return; b.sp20hid = 1; b.sp20t = b.t; v.off.y = 400; };
+SP20.show = b => { if (!b.sp20hid) return; b.sp20hid = 0; const v = b.H; if (v && v.off) v.off.y = 0; const H = DS16.hands(b); HD15.flash(b, H.Hc, HD15.P.white, 40, { dur: 12 }); HD15.ring(b, { x: H.Hc.x, y: HERO_FOOT - 2 }, SP20.P(), 6, 34, { fl: 0.3, w: 1.6, dur: 16 }); };
+{ const H = Battle.prototype.handlers, _ae = H.ACTION_END; H.ACTION_END = function* (e, s, t, P) { if (this.sp20hid) { SP20.show(this); yield* wait(8); } return yield* _ae.call(this, e, s, t, P); };
+  const _u = Battle.prototype.update; Battle.prototype.update = function (...a) { if (this.sp20hid && this.t - (this.sp20t || 0) > 900) SP20.show(this); return _u.apply(this, a); }; }
+SP20.tri = function* (b, T, i) { const C = { x: T.x + [2, -2, 0][i % 3], y: T.y + [-14, 0, 12][Math.min(i, 2)] }; Sound.sfx('blade'); const d = SP20.lance(b, C, { w: 6 + i, ext: 26, dur: 14, wind: 2 }); yield* wait(3); Sound.sfx('bladeHit');
+  if (i < 2) { SP20.hit(b, C, d, 0.8); yield* wait(4); return; } HD15.stop(b, 4); SP20.hit(b, C, d, 1.2); SP20.through(b, C, d, 36); b.shake = Math.max(b.shake || 0, 5); yield* wait(10); };
+SP20.flurry = function* (b, T, i, n) { const A = SP20.hand(b), rn = s => (Math.random() - 0.5) * s;
+  if (i < n - 1) { Sound.sfx('bladeQ'); const C = { x: T.x + rn(18), y: T.y + rn(20) }, d = SP20.lance(b, C, { from: { x: A.x + rn(18), y: A.y }, w: 5, ext: 22, dur: 12, wind: 0 });
+    for (let q = 0; q < 2; q++) SP20.lance(b, { x: C.x + rn(26), y: C.y + rn(22) }, { from: { x: A.x + rn(30), y: A.y + 6 }, w: 3, ext: 16, dur: 10, al: 0.45, delay: q + 1, wind: 0 });
+    yield* wait(2); SP20.hit(b, C, d, 0.6); yield* wait(i < 3 ? 2 : 1); return; }
+  Sound.sfx('blade'); for (let q = 0; q < 9; q++) SP20.lance(b, { x: T.x + (q - 4) * 7, y: T.y + rn(16) }, { from: { x: A.x + (q - 4) * 4, y: A.y }, w: 3, ext: 26, dur: 12, al: 0.6, delay: q % 3, wind: 0 }); yield* wait(4);
+  const d = SP20.lance(b, T, { w: 11, ext: 40, dur: 20, wind: 5 }); yield* wait(3); Sound.sfx('crit'); HD15.stop(b, 6); b.spawn({ k: 'flash', c: '#e6f4ff', a: 0.3, life: 8 }); SP20.hit(b, T, d, 1.5); SP20.through(b, T, d, 52, { w: 7, fl: 64 });
+  b.shake = Math.max(b.shake || 0, 8); yield* wait(12); };
+SP20.leap = function* (b) { const v = b.H; if (!v || !v.off) return; const H = DS16.hands(b), G = { x: H.Hc.x, y: HERO_FOOT - 2 }, P = SP20.P(); Sound.sfx('charge');
+  HD15.gather(b, H.R, 10, P, 30, { span: 8 }); yield* tween(8, q => { v.off.y = 5 * Math.sin(q * Math.PI / 2); });
+  Sound.sfx('jump'); HD15.ring(b, G, P, 6, 50, { fl: 0.3, w: 2.6, dur: 18 }); HD15.ring(b, G, HD15.P.white, 4, 30, { fl: 0.3, w: 1.4, dur: 14, delay: 2 }); HD15.shards(b, G, 7, { up: 2.4, spd: 2, sz: 2.4, cols: SP20.DIRT });
+  HD15.windLines(b, { x: G.x, y: G.y - 10 }, { x: G.x, y: G.y - 140 }, P, 8, { spread: 34, len: 50, spd: 14 });
+  v.air13 = 1; v.airT13 = 0; v.drop13 = 1; yield* tween(8, q => { v.off.y = 5 - 175 * q * q; }); v.drop13 = 0;
+  for (let i = 0; i < 3; i++) HD15.thrust(b, { x: G.x + (i - 1) * 7, y: G.y - 24 }, { x: G.x + (i - 1) * 4, y: -30 }, P, { w: 5 - i, ext: 10, dur: 14, delay: i });
+  yield* wait(10); };
+SP20.fall = function* (b, T, o = {}) { const P = SP20.P(), A = o.from || { x: T.x + 34, y: -50 }; Sound.sfx('wind'); HD15.flare(b, { x: A.x - 6, y: 8 }, HD15.P.white, 54, { rot: Math.atan2(T.y - A.y, T.x - A.x), dur: 10 }); HD15.flash(b, { x: A.x - 6, y: 8 }, P, 24, { dur: 10 }); yield* wait(6);
+  const dr = typeof dropAnim13 === 'function' ? dropAnim13(b, o.drop || 8) : null; HD15.thrust(b, A, T, P, { w: o.w || 14, ext: 20, dur: 26 }); HD15.thrust(b, A, T, HD15.P.white, { w: (o.w || 14) * 0.36, ext: 18, dur: 22, delay: 1 });
+  HD15.windLines(b, A, T, P, 8, { spread: 30, len: 60, spd: 16 }); yield* wait(6); return { dr, d: SP20.dir(A, T) }; };
+SP20.parry = (b, C) => { const P = SP20.P(); HD15.whirl(b, C, P, { r: 22, th: 6, fl: 0.95, turns: 1.4, trail: 4, dur: 16 }); HD15.flash(b, C, P, 30, { dur: 10 }); HD15.flare(b, C, HD15.P.white, 42, { rot: 0, dur: 12, x8: 1 }); HD15.sparks(b, C, 14, HD15.P.gold, { spd: 3.2, life: 16, g: 0.1 }); };
+const HDFX20 = {
+  spPierce: { *f(U, T, u) { yield* this.lunge(u, 18, 2); Sound.sfx('blade'); const d = SP20.lance(this, T, { w: 8, ext: 34 }); yield* wait(4);
+      Sound.sfx('bladeHitSuper'); HD15.stop(this, 4); SP20.hit(this, T, d, 1.1); HD15.shards(this, T, 9, { ang: d.an, spread: 0.9, spd: 3.6, up: 0.6, sz: 3 }); SP20.through(this, T, d, 46); this.shake = Math.max(this.shake || 0, 5); yield* wait(14); } },
+  spDash: { *f(U, T, u) { const P = SP20.P(), v = DG17.vAt(this, T), foot = v && v.foot ? v.foot : T.y + 24; Sound.sfx('wind'); HD15.windLines(this, SP20.hand(this), T, P, 8, { spread: 40, len: 50, spd: 14 }); yield* this.lunge(u, 26, 1);
+      Sound.sfx('blade'); const d = SP20.lance(this, T, { w: 7, ext: 44, dur: 16, wind: 6 }); yield* wait(3); Sound.sfx('bladeHit'); HD15.stop(this, 3); SP20.hit(this, T, d, 1);
+      for (let i = 0; i < 3; i++) HD15.ring(this, { x: T.x, y: foot }, P, 32 - i * 6, 6, { fl: 0.3, w: 1.6, dur: 14, delay: 2 + i * 4 }); yield* wait(16); } },
+  spSweep: { *f(U, T, u) { const P = SP20.P(), L = DG17.foes(this).sort((a, c) => this.center(a).x - this.center(c).x), C = { x: T.x, y: T.y + 16 }; yield* this.lunge(u, 10, 2); Sound.sfx('wind');
+      HD15.whirl(this, C, P, { r: 104, th: 12, fl: 0.2, turns: 0.5, trail: 2.6, dur: 22, a0: 0, rev: 1, spark: 1 }); HD15.whirl(this, C, HD15.P.white, { r: 100, th: 4, fl: 0.2, turns: 0.5, trail: 2, dur: 20, a0: 0, rev: 1, delay: 1 });
+      L.forEach((v, j) => { const P0 = this.center(v), ft = v.foot || P0.y + 24; DG17.later(this, 4 + j * 3, () => { Sound.sfx('bladeHit'); SP20.hit(this, { x: P0.x, y: P0.y + 10 }, { an: 0, ux: 1, uy: 0 }, 0.8); HD15.shards(this, { x: P0.x, y: ft - 2 }, 5, { up: 1.8, spd: 2.4, sz: 2.6, cols: SP20.DIRT }); }); });
+      yield* wait(12 + L.length * 3); this.shake = Math.max(this.shake || 0, 4); yield* wait(8); } },
+  spTriple: { *f(U, T, u) { yield* this.lunge(u, 16, 2); yield* SP20.tri(this, T, 0); }, *h(U, T, u, i) { yield* SP20.tri(this, T, i); } },
+  spBreak: { *f(U, T, u) { const P = SP20.P(), A = SP20.hand(this), v = DG17.vAt(this, T), cu = v && this.core && this.core.byId[v.id], chg = !!(cu && this.core.statusOf && this.core.statusOf(cu, 'charging')), foot = v && v.foot ? v.foot : T.y + 24;
+      Sound.sfx('charge'); HD15.gather(this, A, 12, P, 34, { span: 10 }); SP20.hex(this, { x: T.x, y: T.y + 4 }, 30, P, { hold: 22 }); yield* wait(12);
+      yield* this.lunge(u, 22, 2); Sound.sfx('blade'); const d = SP20.lance(this, T, { w: 11, ext: 32, dur: 22, wind: 4 }); yield* wait(4);
+      Sound.sfx('bladeHitSuper'); Sound.sfx('heavy'); HD15.stop(this, 7); SP20.hit(this, T, d, 1.5); HD15.shards(this, T, 12, { spd: 4, up: 1, sz: 3.2, cols: ['#ffffff', '#9ad4ff', '#2f6ab8'] });
+      HD15.cracks(this, { x: T.x, y: foot }, 6, P, { len: 34, fl: 0.3, dur: 44 }); HD15.ring(this, T, P, 6, 56, { w: 2.6, dur: 20 });
+      if (chg) { this.spawn({ k: 'flash', c: '#ffffff', a: 0.35, life: 8 }); HD15.flare(this, T, HD15.P.white, 150, { rot: 0, dur: 18, x8: 1 }); HD15.ring(this, T, HD15.P.white, 8, 76, { w: 3, dur: 22, delay: 2 }); }
+      this.shake = Math.max(this.shake || 0, chg ? 12 : 8); yield* wait(16); } },
+  spGuard: { *f(U, T, u) { const P = SP20.P(), H = DS16.hands(this), C = { x: H.Hc.x, y: H.Hc.y - 16 }; Sound.sfx('wind');
+      HD15.whirl(this, C, P, { r: 34, th: 8, fl: 0.92, turns: 2.2, trail: 4.4, dur: 34, spark: 1 }); HD15.whirl(this, C, HD15.P.white, { r: 30, th: 3, fl: 0.92, turns: 2.2, trail: 3.6, dur: 32, delay: 1 }); yield* wait(16);
+      Sound.sfx('shield'); HD15.ring(this, C, P, 10, 48, { w: 2.4, dur: 18 }); HD15.ring(this, { x: H.Hc.x, y: HERO_FOOT - 2 }, P, 6, 40, { fl: 0.3, w: 1.6, dur: 20 }); HD15.flare(this, C, HD15.P.white, 60, { rot: 0, dur: 16, x8: 1 }); yield* wait(18); } },
+  spThousand: { *f(U, T, u) { HD15.dim(this, 0.3, 80, { col: '#020818', inn: 0.1, out: 0.3 }); yield* this.lunge(u, 16, 2); yield* SP20.flurry(this, T, 0, this.sp20n || 6); },
+    *h(U, T, u, i) { yield* SP20.flurry(this, T, i, 6); } },
+  spSpiral: { *f(U, T, u) { const P = SP20.P(), A = SP20.hand(this), v = DG17.vAt(this, T), cu = v && this.core && this.core.byId[v.id], brk = !!(cu && this.core.statusOf && this.core.statusOf(cu, 'broken'));
+      Sound.sfx('charge'); SP20.helix(this, { x: A.x, y: A.y + 12 }, { x: A.x + (T.x - A.x) * 0.25, y: A.y + (T.y - A.y) * 0.25 }, P, { r: 9, turns: 2, dur: 20, spin: 0.6 }); HD15.gather(this, A, 10, P, 30, { span: 10 }); yield* wait(14);
+      yield* this.lunge(u, 22, 2); Sound.sfx('blade'); const B = SP20.hand(this), d = SP20.lance(this, T, { w: 10, ext: 36, dur: 24, wind: 4 }); SP20.helix(this, B, T, P, { r: 12, turns: 4, dur: 26, spin: 0.8 }); SP20.helix(this, B, T, HD15.P.white, { r: 7, turns: 4, dur: 24, spin: 0.8, delay: 1 }); yield* wait(4);
+      Sound.sfx('bladeHitSuper'); HD15.stop(this, 6); for (let q = 0; q < 4; q++) HD15.ring(this, T, P, 28 - q * 3, 4, { w: 2, fl: 0.5, rot: d.an + Math.PI / 2, dur: 10, delay: q * 3 }); HD15.sparks(this, T, 18, P, { spd: 4.4, life: 18, g: 0.03 }); SP20.hit(this, T, d, 1.3); yield* wait(10);
+      Sound.sfx('crit'); const E = SP20.through(this, T, d, 60, { w: 8, fl: 70 }); SP20.helix(this, T, E, P, { r: 14, turns: 3, dur: 22, spin: 1 }); HD15.ring(this, E, P, 4, 30, { w: 2, fl: 0.5, rot: d.an + Math.PI / 2, dur: 16 });
+      if (brk) { this.spawn({ k: 'flash', c: '#e6f4ff', a: 0.35, life: 8 }); HD15.ring(this, T, HD15.P.white, 8, 70, { w: 3, dur: 20 }); HD15.flare(this, T, P, 140, { rot: d.an, dur: 18 }); }
+      this.shake = Math.max(this.shake || 0, brk ? 10 : 7); yield* wait(16); } },
+  zjAzure: { *f(U, T, u) { const P = SP20.P(), v = DG17.vAt(this, T), foot = v && v.foot ? v.foot : T.y + 24; HD15.dim(this, 0.45, 70, { col: '#020818', inn: 0.1, out: 0.4 });
+      const { dr, d } = yield* SP20.fall(this, T, { w: 15 }); Sound.sfx('bladeHitSuper'); Sound.sfx('quake'); HD15.stop(this, 8); this.spawn({ k: 'flash', c: '#e6f4ff', a: 0.5, life: 10 });
+      SP20.hit(this, T, d, 1.6); HD15.ring(this, { x: T.x, y: foot }, P, 8, 72, { fl: 0.3, w: 3, dur: 22 }); HD15.ring(this, { x: T.x, y: foot }, HD15.P.white, 4, 46, { fl: 0.3, w: 1.6, dur: 16, delay: 3 });
+      HD15.cracks(this, { x: T.x, y: foot }, 8, P, { len: 42, fl: 0.3, dur: 50 }); HD15.shards(this, { x: T.x, y: foot - 2 }, 12, { up: 2.6, spd: 3, sz: 3, cols: SP20.DIRT }); HD15.flare(this, T, P, 160, { rot: d.an, dur: 20 }); HD15.spikes(this, T, P, 14, 44);
+      this.shake = Math.max(this.shake || 0, 14); yield* wait(16); if (dr) dr(); yield* wait(4); } },
+  zjMeteor: { *f(U, T, u) { const P = SP20.P(), L = DG17.foes(this); Sound.sfx('charge'); HD15.dim(this, 0.6, 120, { col: '#020818', inn: 0.08, out: 0.3 });
+      L.forEach((v, j) => { const C = this.center(v), ft = v.foot || C.y + 24, A = { x: C.x - 46 + (Math.random() - 0.5) * 10, y: -30 }; HD15.comet(this, A, C, P, 9, { w: 10, delay: j * 6, ease: 'in' });
+        DG17.later(this, j * 6 + 9, () => { Sound.sfx('rock'); SP20.hit(this, C, SP20.dir(A, C), 1); HD15.ring(this, { x: C.x, y: ft }, P, 4, 34, { fl: 0.3, w: 2, dur: 16 }); HD15.shards(this, { x: C.x, y: ft - 2 }, 5, { up: 2, spd: 2.4, sz: 2.6, cols: SP20.DIRT }); this.shake = Math.max(this.shake || 0, 5); }); });
+      yield* wait(L.length * 6 + 14); const { dr } = yield* SP20.fall(this, T, { from: { x: T.x - 34, y: -50 }, w: 18, drop: 9 });
+      Sound.sfx('bladeHitSuper'); Sound.sfx('quake'); HD15.stop(this, 10); this.spawn({ k: 'flash', c: '#e6f4ff', a: 0.55, life: 12 }); const G = { x: T.x, y: T.y + 26 };
+      HD15.flash(this, T, P, 120, { dur: 22 }); HD15.ring(this, G, P, 10, 124, { fl: 0.3, w: 3.4, dur: 26 }); HD15.ring(this, G, HD15.P.white, 6, 82, { fl: 0.3, w: 1.8, dur: 20, delay: 4 }); HD15.cracks(this, G, 12, P, { len: 72, fl: 0.3, dur: 60 });
+      HD15.flare(this, T, P, 240, { rot: 0, dur: 24, x8: 1 }); HD15.shards(this, G, 16, { up: 3, spd: 3.6, sz: 3.2, cols: SP20.DIRT }); for (const v of L) SP20.hit(this, this.center(v), { an: -Math.PI / 2, ux: 0, uy: -1 }, 1.1, { delay: 2 });
+      this.shake = Math.max(this.shake || 0, 18); yield* wait(20); if (dr) dr(); yield* wait(4); } },
+  ogSpear: { *f(U, T, u) { const P = SP20.P(), Wh = HD15.P.white, A = SP20.hand(this), L = DG17.foes(this).sort((a, c) => this.center(a).x - this.center(c).x), Cs = L.map(v => this.center(v));
+      const Y = Cs.length ? Cs.reduce((s, c) => s + c.y, 0) / Cs.length : T.y, x0 = Cs.length ? Math.min(...Cs.map(c => c.x)) - 52 : T.x - 70, x1 = Cs.length ? Math.max(...Cs.map(c => c.x)) + 52 : T.x + 70, S = { x: x0, y: Y + 10 }, E = { x: x1, y: Y - 6 }, Sun = { x: (x0 + x1) / 2, y: 10 };
+      Sound.sfx('charge'); HD15.dim(this, 0.76, 190, { col: '#020818', inn: 0.06, out: 0.2 }); HD15.gather(this, A, 22, P, 54, { span: 18, life: 20 }); HD15.flash(this, A, Wh, 36, { dur: 30 }); HD15.flare(this, A, P, 70, { rot: 0, spin: 1.2, dur: 30, x8: 1 }); yield* wait(24);
+      Sound.sfx('wind'); HD15.flash(this, DS16.hands(this).Hc, Wh, 60, { dur: 12 }); SP20.hide(this); HD15.comet(this, A, S, P, 8, { w: 16 }); yield* wait(8);
+      Sound.sfx('blade'); HD15.comet(this, S, E, P, 12, { w: 18, ease: 'in' }); Cs.forEach((C, j) => { const q = (C.x - x0) / Math.max(1, x1 - x0); DG17.later(this, Math.round(q * 12), () => { Sound.sfx('bladeHit'); HD15.flash(this, C, Wh, 40, { dur: 10 }); SP20.through(this, C, { an: 0, ux: 1, uy: 0 }, 30, { w: 4, fl: 36 }); }); }); yield* wait(12);
+      HD15.thrust(this, S, E, P, { w: 12, ext: 12, dur: 46 }); HD15.thrust(this, S, E, Wh, { w: 4, ext: 10, dur: 42, delay: 1 });
+      Sound.sfx('bladeHitSuper'); Sound.sfx('heavy'); HD15.stop(this, 10); this.spawn({ k: 'flash', c: '#ffffff', a: 0.5, life: 10 }); for (const C of Cs) SP20.hit(this, C, { an: 0, ux: 1, uy: 0 }, 1.4); this.shake = Math.max(this.shake || 0, 12); yield* wait(12);
+      Sound.sfx('wind'); HD15.comet(this, E, Sun, P, 10, { w: 14 }); yield* wait(10);
+      Sound.sfx('crit'); Sound.sfx('quake'); HD15.stop(this, 8); this.spawn({ k: 'flash', c: '#ffffff', a: 0.6, life: 12 }); HD15.flash(this, Sun, Wh, 150, { dur: 26 }); HD15.flash(this, Sun, P, 110, { dur: 30 }); HD15.flare(this, Sun, Wh, 280, { rot: 0, dur: 28, x8: 1 });
+      HD15.ring(this, Sun, P, 10, 120, { w: 3.4, dur: 26 }); HD15.ring(this, Sun, Wh, 6, 80, { w: 2, dur: 22, delay: 4 }); yield* wait(6);
+      Cs.forEach((C, j) => { HD15.thrust(this, { x: Sun.x + (C.x - Sun.x) * 0.15, y: Sun.y + 10 }, C, P, { w: 10, ext: 16, dur: 22, delay: j * 2 }); HD15.thrust(this, { x: Sun.x + (C.x - Sun.x) * 0.15, y: Sun.y + 10 }, C, Wh, { w: 3.6, ext: 14, dur: 20, delay: j * 2 + 1 });
+        DG17.later(this, j * 2 + 5, () => { HD15.flash(this, C, P, 80, { dur: 20 }); HD15.ring(this, C, P, 6, 52, { w: 2.8, dur: 20 }); HD15.flare(this, C, Wh, 120, { rot: Math.PI / 2, dur: 20 }); HD15.sparks(this, C, 20, P, { spd: 5, life: 22, g: 0.05 }); HD15.spikes(this, C, Wh, 12, 40); }); });
+      yield* wait(6 + Cs.length * 2); Sound.sfx('bladeHitSuper'); this.spawn({ k: 'flash', c: '#e6f4ff', a: 0.4, life: 10 }); this.shake = Math.max(this.shake || 0, 16); yield* wait(22); SP20.show(this); yield* wait(8); } },
+};
+const HDSP20 = [
+  { *f(U, T, u) { yield* this.lunge(u, 16, 2); Sound.sfx('blade'); const d = SP20.lance(this, T, { w: 8, ext: 30, dur: 16 }); yield* wait(3); Sound.sfx('crit'); HD15.stop(this, 5);
+      SP20.hit(this, T, d, 1.2); SP20.through(this, T, d, 58, { w: 7, fl: 72 }); HD15.ring(this, T, HD15.P.white, 4, 26, { w: 2, fl: 0.45, rot: d.an + Math.PI / 2, dur: 14 }); yield* wait(12); } },
+  { *f(U, T, u) { const P = SP20.P(), L = DG17.foes(this), C = { x: T.x, y: T.y + 6 }; Sound.sfx('wind'); yield* this.lunge(u, 12, 2); Sound.sfx('blade');
+      HD15.whirl(this, C, P, { r: 82, th: 10, fl: 0.32, turns: 1.3, trail: 3.6, dur: 28, spark: 1 }); HD15.whirl(this, C, HD15.P.white, { r: 78, th: 3.5, fl: 0.32, turns: 1.3, trail: 3, dur: 26, delay: 1 }); yield* wait(6);
+      L.forEach((v, j) => { const P0 = this.center(v); DG17.later(this, j * 3, () => { Sound.sfx('bladeHit'); SP20.hit(this, P0, { an: j % 2 ? Math.PI : 0, ux: j % 2 ? -1 : 1, uy: 0 }, 0.8); }); });
+      yield* wait(14 + L.length * 3); this.shake = Math.max(this.shake || 0, 4); yield* wait(6); } },
+  { *f(U, T, u) { const P = SP20.P(), H = DS16.hands(this), G = { x: H.Hc.x, y: HERO_FOOT - 2 }; HD15.dim(this, 0.3, 50, { col: '#020818', inn: 0.2, out: 0.3 }); Sound.sfx('charge');
+      HD15.gather(this, H.R, 14, P, 40, { span: 16, life: 20 }); HD15.ring(this, G, P, 30, 8, { fl: 0.3, w: 1.4, dur: 24 }); yield* wait(22);
+      Sound.sfx('tick'); HD15.flash(this, H.R, HD15.P.white, 26, { dur: 14 }); HD15.flare(this, H.R, HD15.P.white, 56, { rot: Math.PI / 4, dur: 18, x8: 1 }); HD15.ring(this, G, P, 6, 36, { fl: 0.3, w: 1.4, dur: 18 }); yield* wait(20); } },
+];
+if (SP20.live) for (const k in HDFX20) { const id = 't_' + k, D = DEF.skills[id], F = HDFX20[k]; if (!D) { bvErr('v12.101', 'no skill ' + id); continue; } const key = 'hd15_' + k;
+  if (F.h) FX[key + 'h'] = function* (U, T, u, i, t) { if (!u) u = this.H; this.slashOn = 0; this.hd15cast = 1; HD15.forceW = false; yield* F.h.call(this, U, T, u, i, t); };
+  FX[key] = function* (U, T, u, t) { if (!T) { const L = this.foes ? this.foes().filter(v => !v.gone) : [], g = L.length > 1 ? this.groupOf(L.map(v => v.id)) : L[0]; T = g ? this.center(g) : { x: U.x, y: U.y - 80 }; if (!t) t = g; } if (!u) u = this.H; this.slashOn = 0; this.hd15cast = 1; HD15.forceW = false; yield* F.f.call(this, U, T, u, t); };
+  HD15.old[id] = { fx: D.fx, hitFx: D.hitFx, mv: MOVES[id] ? MOVES[id].fx : null, style: typeof SKILL_STYLE !== 'undefined' ? SKILL_STYLE[id] : null, redo: typeof REDO13 !== 'undefined' && REDO13.has(id) }; HD15.ids.push(id); }
+if (SP20.live) { const kd = TREE_KINDS11.indexOf('長槍'), wrap = F => function* (U, T, u, t) { if (!T) T = { x: U.x, y: U.y - 80 }; if (!u) u = this.H; this.slashOn = 0; this.hd15cast = 1; HD15.forceW = false; yield* F.call(this, U, T, u, t); };
+  HDSP20.forEach((F, j) => { const key = 'sp11_' + kd + '_' + j; if (!FX[key]) { bvErr('v12.101', 'no special fx ' + key); return; } HD15.old[key] = FX[key]; HD15.spKeys.push([key, wrap(F.f)]); }); }
+{ const _fc = FX.charge; FX.charge = function* (U, ...a) { if (this.leap13 && HD15.on && SP20.on()) { this.leap13 = false; this.hd15cast = 1; yield* SP20.leap(this); return; } yield* _fc.call(this, U, ...a); }; }
+{ const _wa = FX.wAtk; if (_wa) FX.wAtk = function* (U, T, u) { if (!(HD15.on && SP20.live && this._thKind === '長槍')) return yield* _wa.call(this, U, T, u); this.hd15cast = 1; this.slashOn = 0;
+    yield* this.lunge(u, 10, 2); Sound.sfx('blade'); const d = SP20.lance(this, T, { w: 6, ext: 26, dur: 14, wind: 2 }); yield* wait(3); SP20.hit(this, T, d, 0.8); yield* wait(7); };
+  const _sg = segSwing; segSwing = function* (b, s, C, i, kind) { if (!(HD15.on && SP20.live && kind === '長槍')) return yield* _sg(b, s, C, i, kind); b.hd15cast = 1; yield* b.lunge(s, 6, 2); Sound.sfx('blade');
+    const A = SP20.hand(b), F = { x: A.x + [-10, 10, 0][i % 3], y: A.y }, d = SP20.lance(b, C, { from: F, w: 5, ext: 22, dur: 12, wind: 0 }); yield* wait(3); SP20.hit(b, C, d, 0.7); yield* wait(4); }; }
+{ const H = Battle.prototype.handlers, _re = H.REACTION; H.REACTION = function* (e, s, t, P) {
+    if (!(HD15.on && s && s.hero && SP20.on() && typeof ctrInfo12 === 'function' && ctrInfo12(s, P && P.why).kind === 'parry')) return yield* _re.call(this, e, s, t, P);
+    const g = _re.call(this, e, s, t, P); let r; DS16.mute = 1; try { r = g.next(); } finally { DS16.mute = 0; }
+    const C = this.center(s), A = this.center(t || this.F), d = ctrDir12(C, A); SP20.parry(this, { x: C.x + d.x * 16, y: C.y + d.y * 16 });
+    while (!r.done) { const v = yield r.value; r = g.next(v); } return r.value; }; }
+{ const _c = FX.ctr12; FX.ctr12 = function* (U, T, u) { const K = this.ctrNow12 || {}, v = u && u.id ? this.views[u.id] || u : u, o = v && v.off;
+    if (!(HD15.on && u && u.hero && SP20.on() && K.kind !== 'block' && o)) return yield* _c.call(this, U, T, u);
+    this.slashOn = 0; this.hd15cast = 1; const d0 = ctrDir12(U, T), x0 = o.x, y0 = o.y, H = DS16.hands(this);
+    this.anim(v, 'cast', CTR12.BACK + 2, true); Sound.sfx('charge'); yield* tween(CTR12.BACK, q => { const e = Math.sin(q * Math.PI / 2); o.x = x0 - d0.x * 8 * e; o.y = y0 - d0.y * 8 * e; });
+    HD15.flare(this, H.R, SP20.P(), 28, { rot: -0.8, dur: 10 }); this.anim(v, 'attack', CTR12.STEP + 26); const far = 22;
+    for (let i = 1; i <= CTR12.STEP; i++) { const q = i / CTR12.STEP, e = q * q * (3 - 2 * q); o.x = x0 + d0.x * (-8 + (far + 8) * e); o.y = y0 + d0.y * (-8 + (far + 8) * e); yield; }
+    Sound.sfx('blade'); const d = SP20.lance(this, T, { w: 8, ext: 32, dur: 16, wind: 3 }); yield* wait(3); HD15.stop(this, 3); SP20.hit(this, T, d, 1.1); SP20.through(this, T, d, 36); this.shake = Math.max(this.shake || 0, 5);
+    yield* wait(6); this.ctrRet12 = { v, x: o.x, y: o.y, x0: 0, y0: 0, at: this.t + CTR12.HOLD, dur: CTR12.RET }; }; }
+HD15.use(HD15.on);
+const HDL19 = {};
+HDL19.reset = b => { HD15.forceW = false; HD15.forceP = null; HD15.bladeHit = false; HD15.muteP = false; if (typeof DG17 !== 'undefined') { DG17.blue = false; DG17.mute = 0; } if (b && b.hd18hid && typeof HD18 !== 'undefined') HD18.appear(b); };
+HDL19.guard = (key, F, oldOf) => { if (!F || F.hdl19) return F; const G = function* (U, T, u, ...a) {
+    if (u && u !== this.H && !u.hero) { const O = oldOf(); if (O && O !== G) return yield* O.call(this, U, T, u, ...a); return; }
+    try { return yield* F.call(this, U, T, u, ...a); } catch (e) { bvErr('v12.101', key + ': ' + (e && e.message)); HDL19.reset(this); } };
+  G.hdl19 = 1; return G; };
+for (const id of HD15.ids) { const k = id.slice(2), key = 'hd15_' + k, O = HD15.old[id] || {};
+  if (FX[key]) FX[key] = HDL19.guard(key, FX[key], () => FX[O.fx] || FX.hit);
+  if (FX[key + 'h']) FX[key + 'h'] = HDL19.guard(key + 'h', FX[key + 'h'], () => O.hitFx ? FX[O.hitFx] : null); }
+for (const e of HD15.spKeys) e[1] = HDL19.guard(e[0], e[1], () => HD15.old[e[0]]);
+{ const _wa = FX.wAtk; if (_wa) FX.wAtk = function* (...a) { try { return yield* _wa.apply(this, a); } catch (e) { bvErr('v12.101', 'wAtk: ' + (e && e.message)); HDL19.reset(this); } };
+  const _sg = segSwing; segSwing = function* (b, ...a) { try { return yield* _sg(b, ...a); } catch (e) { bvErr('v12.101', 'segSwing: ' + (e && e.message)); HDL19.reset(b); } }; }
+HD15.use(HD15.on);
