@@ -184,7 +184,8 @@ const ZJ11 = {
   雙劍: [['4a', 'zjSwallow', '迴燕雙斷', 130, 0, 4, 14, 0, '迴身的一斬，必定會心。', { mods: [CRIT11] }],
     // v12.96（玩家：「黑曜終劍移除 替補新招」→ 選「劍舞亂刃」、「不用解鎖」）
     ['4b', 'zjSwordDance', '劍舞亂刃', 22, 8, 5, 16, 0, '8 段亂斬，每段會心率 +10%。', { mods: [{ stage: 'skill', who: 'attacker', critAdd: 10 }] }]],
-  短刀: [['4a', 'zjMoonFang', '月影雙斬', 55, 2, 4, 12, 0, '2 段快斬；對 HP 一半以下的對手每段必定會心。', { mods: [{ ...CRIT11, cond: { tgtHpBelow: 0.5 } }] }]],
+  // v12.99（玩家：「月影雙斬還是不行 移除招式 更換新的」→ 選「毒牙封喉」）
+  短刀: [['4a', 'zjVenomThroat', '毒牙封喉', 120, 0, 4, 12, 0, '一擊；對中毒、麻痺等異常狀態中的對手威力 ×1.6。', { mods: [MUL11(1.6, { tgtAnyAilment: 1 })] }]],
   雙刀: [['4a', 'zjBloom', '旋花飛刃', 50, 2, 4, 14, 1, '飛刃像花瓣一樣旋轉，打全體 2 段。', {}]],
   斧: [['4a', 'zjIronLaw', '鐵律重斧', 110, 0, 4, 14, 0, '攻擊力用「物攻＋物防」計算，50% 讓對手物防 −1。', { cls: 'strike', mods: [{ stage: 'skill', who: 'attacker', atkMul: { f: 'ironLaw11' } }], effects: DMG11(SG11({ def: -1 }, 0.5)) }]],
   雙盾: [['4a', 'zjHolyWall', '聖壁衝鋒', 50, 0, 3, 10, 0, '消耗全部守勢（至少 2），每點威力 +15；之後展開護盾（守勢 4 以上 3 格，否則 2 格）。', { cls: 'strike', costs: [{ res: 'stance', all: 1, min: 2 }, { res: 'mp', amount: 10 }], powerOf: 'guardStrike', after: [{ type: 'status', target: 'self', status: 'barrier', dur: { f: 'shieldDur' } }] }]],
@@ -201,8 +202,8 @@ const ZJ11 = {
 };
 for (const k in ZJ11) TREE11[k].sk.push(...ZJ11[k]);
 // v12.93：舊存檔學過星紋魔劍 → 等級和技能欄都換成斷鋼一閃
-// 換掉的絕技：舊存檔的等級和技能欄跟著換（星紋魔劍 → 斷鋼一閃、黑曜終劍 → 劍舞亂刃）
-const ZJ_SWAP12 = { t_zjRune: 't_zjSteel', t_zjObsidian: 't_zjSwordDance' };
+// 換掉的絕技：舊存檔的等級和技能欄跟著換（星紋魔劍 → 斷鋼一閃、黑曜終劍 → 劍舞亂刃、月影雙斬 → 毒牙封喉）
+const ZJ_SWAP12 = { t_zjRune: 't_zjSteel', t_zjObsidian: 't_zjSwordDance', t_zjMoonFang: 't_zjVenomThroat' };
 { const _so = startOverworld; startOverworld = function (...a) { const st = Game.st, T = st && st.tr11; for (const o in ZJ_SWAP12) { const n = ZJ_SWAP12[o]; if (T && T.lv && T.lv[o]) { T.lv[n] = Math.max(T.lv[n] || 0, T.lv[o]); delete T.lv[o]; } }
     if (st && Array.isArray(st.slots)) st.slots = st.slots.map(id => ZJ_SWAP12[id] || id); return _so.apply(this, a); }; }
 // 共通樹：[id, 名字, 最高等級, 段, 說明, 效果]；效果 p＝百分比能力、f＝固定值、big／regen／mpRegen＝戰鬥被動、tal＝沿用原本天賦的效果

@@ -76,13 +76,6 @@ redo13('t_dgStitch', 't11_dgStitch', { col: SHADE13,
     Sound.sfx('slash'); cSlash13(this, { x: T.x, y: foot - 8 }, 34, Math.PI * 0.95, Math.PI * 0.05, c, { fl: 0.32, w: 6, frames: 3, life: 18 }); yield* wait(4); Sound.sfx('statDown');
     for (let i = 0; i < 2; i++) { const x0 = T.x - 8 + i * 16; PX13.line(this, { x: x0 - 3, y: foot - 3 }, { x: x0 + 3, y: foot + 2 }, ['#d0b0ff'], 1, 30, { thin: 1, grow: 2, keep: 1 }); PX13.line(this, { x: x0 + 3, y: foot - 3 }, { x: x0 - 3, y: foot + 2 }, ['#d0b0ff'], 1, 30, { thin: 1, grow: 2, keep: 1, delay: 2 }); }
     K13.tint(v, '#2a1844', 0.6, 36); yield* wait(20); } });
-// 月影雙斬：2 段快斬；對 HP 一半以下的對手每段必定會心 → 夜色暗下、角落一彎小新月，兩道月牙色的刀光一左一右斬過身體；HP 一半以下時每一段都閃出金色的會心星光
-const fang13px = (b, T, side, low) => { Sound.sfx('slash'); xSlash13(b, T, side, PXC.moon, { r: 28, w: 7, frames: 2, life: 16 });
-  if (low) { Sound.sfx('crit'); PX13.spr(b, PXI.glint, { x: T.x - side * 6, y: T.y - 8 }, { sc: 2, life: 14, delay: 2 }); PX13.burst(b, T, 16, PXC.gold, 12, { s: 3, delay: 2 }); } else PX13.burst(b, T, 10, PXC.moon, 10, { delay: 2 }); b.shake = Math.max(b.shake, low ? 6 : 3); };
-redo13('t_zjMoonFang', 't11_zjMoonFang', { col: PXC.moon,
-  *f(S, U, T, u, t) { const v = tgt13(this, t), low = K13.low(v, 0.5); K13.dark(this, 0.5, 44, '#04061a'); Sound.sfx('charge'); PX13.spr(this, PXI.moon, { x: T.x + 30, y: T.y - 38 }, { life: 44 }); yield* wait(7);
-    yield* this.lunge(u, 22, 2); fang13px(this, T, 1, low); yield* wait(8); },
-  *h(S, U, T) { fang13px(this, T, -1, K13.low(this.tgtV, 0.5)); yield* wait(14); } });
 // 特技・蛇牙斬：追擊，60% 中毒 → 上下兩道綠色的快斬像蛇的上下顎一樣合起來，滴下兩三滴毒液
 redoSp13('短刀', 0, { col: PXC.venom,
   *f(S, U, T, u) { yield* this.lunge(u, 16, 2); Sound.sfx('slash');

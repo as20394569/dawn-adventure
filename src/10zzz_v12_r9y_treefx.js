@@ -280,9 +280,9 @@ Object.assign(FX11, {
   zjSwordDance: { col: ['#ffe8f4', '#ffffff', '#6a3050'], pt: 'spark2', cast: 'dash', fin: 'xcut', snd: 'slash', // 劍舞亂刃: blades flash in from every side, eight times
     *f(S, U, T, u) { yield* this.lunge(u, 14, 2); Sound.sfx('slash'); sl11(this, T, -0.7, 20, S, 3); yield* wait(2); },
     *h(S, U, T, u, i) { Sound.sfx('slash'); sl11(this, T, [0.7, -1.2, 1.4, -0.3, 0.2, -0.9, 1.1][(i - 1) % 7], 20, S, 3); w12Particle(this, T.x, T.y, S, 2, 8); if (i >= 7) imp9(this, T, S, 1); yield* wait(i >= 7 ? 8 : 2); } },
-  zjMoonFang: { col: ['#e0e8ff', '#ffffff', '#405080'], pt: 'crescent', cast: 'dash', fin: 'none', snd: 'slash', // 月影雙牙: two fangs of moonlight
-    *f(S, U, T, u) { yield* this.lunge(u, 18, 2); Sound.sfx('slash'); this.spawn({ k: 'arc', x: T.x - 6, y: T.y, r: 16, a0: -0.6, c: S.col[0], life: 12 }); sl11(this, T, -1.1, 18, S, 3); yield* wait(5); },
-    *h(S, U, T) { Sound.sfx('crit'); this.spawn({ k: 'arc', x: T.x + 6, y: T.y, r: 16, a0: 2.4, c: S.col[1], life: 12 }); sl11(this, T, 1.1, 18, S, 3); this.star(T.x, T.y, S.col[1], 10); yield* wait(6); } },
+  zjVenomThroat: { col: ['#9ae060', '#f0ffe0', '#2a5010'], pt: 'spark2', cast: 'dash', fin: 'cut', snd: 'slash', // 毒牙封喉: one stab to the throat, venom spreads
+    *f(S, U, T, u) { yield* this.lunge(u, 20, 2); Sound.sfx('slash'); ln9(this, T.x - 4, T.y + 22, T.x + 2, T.y - 14, S.col[0], S.col[1], 4, 12); yield* wait(3); Sound.sfx('poison');
+      for (let i = 0; i < 8; i++) this.spawn({ k: 'bub', x: T.x + rnd(-14, 14), y: T.y + rnd(-6, 14), vy: -0.7, r: rnd(2, 3), c: S.col[0], life: 22 }); imp9(this, T, S, 1); this.shake = Math.max(this.shake, 6); yield* wait(12); } },
   zjBloom: { col: ['#ff9ac8', '#fff0f8', '#802050'], pt: 'leaf', cast: 'dash', fin: 'none', snd: 'wind', // 旋花飛刃: blades spin like petals over them all
     *f(S, U, T, u, t) { Sound.sfx('wind'); for (let w = 0; w < 3; w++) { for (const C of grp9(this, T, t)) { for (let i = 0; i < 6; i++) { const a = i * 1.05 + w * 0.5; this.spawn({ k: 'line', x1: C.x + Math.cos(a) * 26, y1: C.y + Math.sin(a) * 16, x2: C.x + Math.cos(a + 0.7) * 26, y2: C.y + Math.sin(a + 0.7) * 16, c: i % 2 ? S.col[0] : S.col[1], w: 3, grow: 2, life: 12 }); }
         this.spawn({ k: 'dot', x: C.x + rnd(-20, 20), y: C.y + rnd(-14, 14), vx: rnd(-10, 10) / 10, vy: rnd(-10, 4) / 10, s: 3, c: S.col[0], life: 20 }); } yield* wait(4); } yield* wait(4); },

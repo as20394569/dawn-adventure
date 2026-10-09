@@ -9,13 +9,14 @@ HD18.silOf = hi => { let c = HD18.sil.get(hi); if (c) return c; c = document.cre
 // 主角的黑色剪影，放在 (dx, dy)（相對主角原本的位置），慢慢淡掉
 HD18.shadow = (b, dx, dy, life = 14, al = 0.8) => { const Hv = b.H, hi = Hv && Hv.img; if (!hi) return; const ds = hi.ds || 1, hx0 = b.heroX + HD_HERO_OX;
   return b.spawn({ k: 'k13ghost', img: HD18.silOf(hi), x: (hi.px ? hx0 + 28 - hi.bb.cx : hx0) + dx, y: (hi.px ? HERO_FOOT - hi.bb.bot : HERO_Y) + dy, w: hi.width * ds, h: hi.height * ds, al, life }); };
-HD18.puff = b => HD15.smoke(b, { x: b.center(b.H).x, y: HERO_FOOT - 4 }, 5, { col: '#120a1a', r: 26, spd: 1, sz: 9, life: 26, fl: 0.4, al: 0.75, up: 0.4 });
-// 消失：原地留下黑影、往前拖三道淡淡的黑影、腳下一團黑煙；主角移到畫面外
+// v12.99 腳下不再冒黑煙（看起來像一顆黑球）：改成地上一圈淡淡的波紋
+HD18.puff = b => HD15.ring(b, { x: b.center(b.H).x, y: HERO_FOOT - 2 }, HD15.P.white, 6, 26, { fl: 0.3, w: 1, dur: 14 });
+// 消失：原地留下黑影、往前拖三道淡淡的黑影、腳下一圈波紋；主角移到畫面外
 HD18.vanish = b => { const v = b.H; if (!v || !v.off || b.hd18hid) return; HD18.shadow(b, 0, 0, 26, 0.85); for (let i = 1; i <= 3; i++) HD18.shadow(b, (Math.random() - 0.5) * 6, -i * 15, 12 - i * 2, 0.62 - i * 0.12);
   HD18.puff(b); Sound.sfx('wind'); b.hd18hid = 1; b.hd18t = b.t; v.off.y = 400; };
 // 每一刀：黑影在前面（往對手那邊）和後面各閃一下
 HD18.flick = b => { if (!b.hd18hid) return; HD18.shadow(b, (Math.random() - 0.5) * 34, -(16 + Math.random() * 40), 10, 0.75); HD18.shadow(b, (Math.random() - 0.5) * 30, 3 + Math.random() * 6, 8, 0.5); };
-// 出現：從前面退回來的兩道黑影，主角回到原地，腳下一團黑煙
+// 出現：從前面退回來的兩道黑影，主角回到原地，腳下一圈波紋
 HD18.appear = b => { if (!b.hd18hid) return; b.hd18hid = 0; const v = b.H; if (v && v.off) v.off.y = 0; HD18.shadow(b, 0, -24, 10, 0.55); HD18.shadow(b, 0, -11, 8, 0.4); HD18.puff(b); };
 for (const k in HD18.SK) { const key = 'hd15_' + k, F = FX[key], Fh = FX[key + 'h'], pre = HD18.SK[k]; if (!F) { bvErr('v12.98', 'no hd fx ' + key); continue; }
   FX[key] = function* (...a) { if (pre) HD18.vanish(this); else this.hd18pend = 1; try { yield* F.apply(this, a); } finally { if (this.hd18pend) { this.hd18pend = 0; HD18.vanish(this); } } };
