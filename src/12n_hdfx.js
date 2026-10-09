@@ -15,7 +15,8 @@ HD15.rgba = (c, a) => 'rgba(' + HD15.rgb(c) + ',' + Math.max(0, Math.min(1, a)).
 // 劍的攻擊一律白色（玩家：「劍目前的攻擊特效顏色 都換成白色粒子效果」）：攻擊招的畫面播放時 HD15.forceW 打開，零件拿到的顏色都換成白色；
 // 強化自己的招（心眼、狂刃、澄心）、能力升降的箭頭、流血照舊有顏色
 // 雙劍的副手是黑色刀光（玩家：「雙劍的斬擊痕跡為一黑一白」）：keep 的顏色不會被換成白色
-HD15.forceW = false; HD15.W = P => (HD15.forceW && !(P && P.keep) ? HD15.P.white : P);
+// 短刀・雙刀的攻擊一律換成紫色（玩家選「刺客風的紫黑」）：播放時 HD15.forceP＝紫色
+HD15.forceW = false; HD15.forceP = null; HD15.W = P => (HD15.forceW && !(P && P.keep) ? (HD15.forceP || HD15.P.white) : P);
 // 一組顏色：core 最亮的中心、mid 主色、glow 外圈柔光、edge 暗邊（讓亮的地方在明亮的背景上也看得出顏色）
 HD15.P = {
   white: { core: '#ffffff', mid: '#f3f6ff', glow: '#dfe6ff', edge: '#4c5468' },
@@ -31,6 +32,11 @@ HD15.P = {
   pink: { core: '#fff2fa', mid: '#ff8ad0', glow: '#ff3a9a', edge: '#5a0a3a' },
   // 黑色刀光：身體是黑的、外面一圈淡淡的亮邊和灰色柔光（暗的背景上也看得出來）；散掉時是黑色的光粒
   black: { core: '#000000', mid: '#0e0c16', glow: '#5a5870', edge: '#c9ccd8', keep: 1, dark: 1 },
+  // 短刀・雙刀的暗紫刀光；中毒（綠）、麻痺（黃）、灼傷（橘）是異常狀態自己的顏色，不會被換掉
+  shade: { core: '#f6ecff', mid: '#a066ff', glow: '#5b1fc4', edge: '#12051f' },
+  venom: { core: '#f4ffe0', mid: '#8ee04a', glow: '#3a9a1a', edge: '#123a06', keep: 1 },
+  volt: { core: '#ffffff', mid: '#ffe14a', glow: '#ffb000', edge: '#5a3a00', keep: 1 },
+  ember: { core: '#ffe27a', mid: '#ff6a1a', glow: '#ff2a0a', edge: '#7a0a00', keep: 1 },
 };
 
 /* ---------- 柔光貼圖（第一次用時畫好，之後重複用） ---------- */
@@ -189,7 +195,7 @@ HD15.thrust = (b, A, T, pal, o = {}) => { pal = HD15.W(pal); const dl = o.delay 
   return HD15.add(b, { x: A.x, y: A.y, delay: dl, life: dl + dur, draw: (x, p, k) => { const tip = L * HD15.eo(HD15.cl(k / 0.22)), tail = L * 0.92 * HD15.ei(HD15.cl((k - 0.3) / 0.7)), f = 1 - HD15.ei(HD15.cl((k - 0.45) / 0.55)); if (tip - tail < 1) return;
     const Pt = (d, sd) => [A.x + ux * d + nx * sd, A.y + uy * d + ny * sd], shape = (w, tl) => { const t1 = Math.max(tail, tip - tl); x.beginPath(); let q = Pt(tail, 0); x.moveTo(q[0], q[1]); q = Pt(t1, w); x.lineTo(q[0], q[1]); q = Pt(tip, 0); x.lineTo(q[0], q[1]); q = Pt(t1, -w); x.lineTo(q[0], q[1]); x.closePath(); };
     const grad = (c, a) => { const [ax, ay] = Pt(tail, 0), [bx, by] = Pt(tip, 0), G = x.createLinearGradient(ax, ay, bx, by); G.addColorStop(0, HD15.rgba(c, 0)); G.addColorStop(0.65, HD15.rgba(c, a * 0.6)); G.addColorStop(1, HD15.rgba(c, a)); return G; };
-    const w = W0 * (0.55 + 0.45 * f); x.globalAlpha = f; if (k > 0.3 && k < 0.9 && Math.random() < 0.8) { const d = tail + Math.random() * (tip - tail) * 0.6; HD15.mote(b, A.x + ux * d + nx * (Math.random() - 0.5) * w, A.y + uy * d + ny * (Math.random() - 0.5) * w, (Math.random() - 0.5) * 0.5, -0.2 - Math.random() * 0.3, pal); }
+    const w = W0 * (0.55 + 0.45 * f); x.globalAlpha = f * (o.al ?? 1); if (k > 0.3 && k < 0.9 && Math.random() < 0.8) { const d = tail + Math.random() * (tip - tail) * 0.6; HD15.mote(b, A.x + ux * d + nx * (Math.random() - 0.5) * w, A.y + uy * d + ny * (Math.random() - 0.5) * w, (Math.random() - 0.5) * 0.5, -0.2 - Math.random() * 0.3, pal); }
     x.globalCompositeOperation = 'lighter'; shape(w * 2, 18); x.fillStyle = grad(pal.glow, 0.5); x.fill();
     x.globalCompositeOperation = 'source-over'; shape(w, 15); x.fillStyle = grad(pal.edge, 0.75); x.fill(); shape(w * 0.78, 14); x.fillStyle = grad(pal.mid, 0.95); x.fill(); shape(w * 0.3, 12); x.fillStyle = grad(pal.core, 1); x.fill();
     if (k < 0.35) { const [hx, hy] = Pt(tip, 0); HD15.put(x, HD15.tex('glow', pal.mid), hx, hy, 24, 24, 0, 0.75 * f); HD15.put(x, HD15.tex('core', pal.mid), hx, hy, 9, 9, 0, f); } } }); };
@@ -449,10 +455,10 @@ HD15.thPal = b => HD15.P.white; HD15.thPalOld = b => { const c = ((typeof WTH12 
 HD15.bleedTick = function* (C) { const P = HD15.P.crimson; HD15.slash(this, C, { pal: P, r: 22, th: 4, ang: -0.67, span: 1.3, dur: 14, sw: 0.2 }); HD15.slash(this, { x: C.x + 4, y: C.y + 3 }, { pal: P, r: 20, th: 3, ang: -2.41, dir: -1, span: 1.2, dur: 14, sw: 0.2, delay: 3 });
   HD15.flash(this, C, P, 26, { dur: 12, delay: 2 }); HD15.blood(this, C, 10, { spd: 2.4, delay: 2 }); HD15.blood(this, { x: C.x, y: C.y + 6 }, 4, { ang: Math.PI / 2, spread: 0.6, spd: 0.6, delay: 10 }); yield* wait(16); };
 HD15.use(typeof window !== 'undefined' && !!window.FXTEST); // 正式版還是舊的；特效測試版先用新的（選單可以切）
-// 特效測試版：選技能樹的清單多一行「劍系新特效：開／關」（劍和雙劍）
+// 特效測試版：選技能樹的清單多一行「新特效：開／關」（劍・雙劍・短刀・雙刀一起切）
 if (typeof fxtest13 === 'function' && fxtest13()) { fxtMenu13 = function* () { const K = TREE_KINDS11.filter(k => !TREE11[k].common && (typeof kindOn13 !== 'function' || kindOn13(k))).concat(COMMON11.filter(k => (TREE11[k].sk || []).length).slice(0, 1)); let i = 0;
   while (true) { const lab = k => (TREE11[k].common ? '共通' : k) + '（' + (TREE11[k].sk || []).length + (TREE11[k].common ? '' : '＋' + (TREE11[k].sp || []).length) + '）';
-    const items = K.map(k => ({ t: lab(k) })).concat([{ t: '劍系新特效：' + (HD15.on ? '開' : '關') }]);
+    const items = K.map(k => ({ t: lab(k) })).concat([{ t: '新特效：' + (HD15.on ? '開' : '關') }]);
     const r = yield* choose(items, { x: 8, y: 30, w: W - 16, cols: 2, colW: (W - 24) / 2, cancel: true, index: i, title: '特效測試：選技能樹' });
     if (r < 0) continue; i = r; if (r === K.length) { HD15.use(!HD15.on); continue; } const kind = K[r];
     fxtSetup13(kind); FXT13.on = true; FXT13.kind = kind;
