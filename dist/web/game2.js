@@ -1237,7 +1237,7 @@ class TitleScene {
     x.drawImage(this.logo, Math.round(W / 2 - this.logo.width / 2), 6 + bob);
     Font.drawC(x, '～異世界冒險RPG～', W / 2, 52 + bob, '#ffe0a0', '#3a1428');
     if (this.stage === 'press' && Math.floor(this.t / 30) % 2 === 0) Font.drawC(x, '按 A 鍵開始', W / 2, 232, '#ffffff', '#1a1024');
-    Font.drawR(x, 'v12.104', W - 3, H - 13, '#b890b0', null);
+    Font.drawR(x, 'v12.109', W - 3, H - 13, '#b890b0', null);
   }
 }
 class IntroScene {
@@ -11215,3 +11215,195 @@ B12_SCRIPT.shadowGeneral = function (core, u) { const d = u.data;
   return b12Pick(core, u, ['m_shadowSlash', 'm_darkPulse', 'm_shadowSlash']); };
 const evoSkill12 = o => o && (DEF.skills['o_' + o.k] ? 'o_' + o.k : DEF.skills[o.k] ? o.k : null);
 evoAt = (o, s = orbStage(o)) => { const id = evoSkill12(o); return id ? BB.learnN(id) + (s >= 1 ? 30 : 6) : ORB_EVO[s]; };
+function masteryOf12(st, id) { const e = BB.skillObj(st, id); if (!e || !DEF.skills[id] || DEF.skills[id].tags.includes('sig')) return null; const N = BB.learnN(id), M = [N, N + 6, N + 30];
+  const lvl = !e.learned ? 0 : 1 + Math.min(2, orbStage(e)); return { e, x: e.x || 0, M, lvl, next: lvl === 0 ? M[0] : lvl < 3 ? M[lvl] : null, pending: orbPending(e) }; }
+function drawMastery12(x, X, Y, w, m) { if (!m) return; const max = m.M[2], f = Math.min(1, m.x / max);
+  x.fillStyle = '#10121e'; x.fillRect(X, Y, w, 4); x.fillStyle = m.lvl >= 3 ? '#ffd860' : m.pending ? '#ffb070' : m.lvl >= 1 ? '#7ad0ff' : '#9aa0b8'; x.fillRect(X, Y, Math.max(1, Math.round(w * f)), 4);
+  for (let k = 0; k < 3; k++) { const tx = Math.min(X + w - 2, X + Math.round(w * m.M[k] / max) - 1); x.fillStyle = m.lvl > k ? '#fff4c8' : '#5a5f78'; x.fillRect(tx, Y - 1, 2, 6); } }
+const masteryText12 = (st, id) => { const m = masteryOf12(st, id); if (!m) return ''; const src = BB.sourceOf(st, id), s = src && src !== '已學會' ? '・' + src : '';
+  if (m.lvl === 0) return '【練度 ' + m.x + '/' + m.next + '：再用 ' + Math.max(0, m.next - m.x) + ' 次永久學會' + s + '】';
+  if (m.lvl >= 3) return '【練度已滿（極）' + s + '】';
+  return '【已學會' + s + '・練度 ' + m.x + '/' + m.next + (m.pending ? '：可以進化「' + (m.lvl === 1 ? '改' : '極') + '」！' : '：滿了可以進化「' + (m.lvl === 1 ? '改' : '極') + '」') + '】'; };
+{ const _si = BB.skillInfo; BB.skillInfo = function (st, id) { const t = _si.call(this, st, id), m = masteryOf12(st, id); if (!m) return t;
+    return t.replace(/　【(?:已學會[^】]*|[^】]*再用\d+次永久學會)】/, '　' + masteryText12(st, id)); }; }
+Object.assign(ITEMS.trainBook, { d: '選一個已學會的技能，練度 +12。' });
+if (typeof BATTLE_HELP !== 'undefined') { const P = BATTLE_HELP.find(q => q[0] === '技能與冷卻');
+  if (P) P[1] = P[1].map(t => /用滿 6／10／14 次永久學會/.test(t) ? '技能來自職業（等級到了學會）和武器（裝備就能用）。每用一次練度 +1：滿第一格學會，再用 6 次可以進化「改」，再用 24 次進化「極」。' : t); }
+function* smithOnGear12(g, flow) { // run an existing one-gear flow (it opens gearPicker) on a gear already chosen
+  const _gp = gearPicker; let used = false;
+  gearPicker = function* (title, getList) { if (used) return null; used = true; if (getList().includes(g)) return g; yield* say('這件裝備不能這樣做。'); return null; };
+  try { yield* flow(); } finally { gearPicker = _gp; } }
+function* smithEnhance12(g) { const st = Game.st, c = enhanceCost(g), ok = st.money >= c.gold && Object.entries(c.mats).every(([k, n]) => (st.bag[k] || 0) >= n);
+  if ((g.e || 0) >= 10) { yield* say('已經強化到 +10 了。'); return; } if (!ok) { yield* say('素材或金錢不夠喔。'); return; }
+  if (!(yield* yesNo('要強化' + gearShort(g) + '嗎？' + (c.rate < 1 ? '\n（失敗的話素材和金錢會消失）' : '')))) return;
+  st.money -= c.gold; for (const k in c.mats) st.bag[k] -= c.mats[k]; Sound.sfx('rock'); yield* say('鏘！鏘！鏘！');
+  if (Math.random() < c.rate) { g.e = (g.e || 0) + 1; clampHP(); Sound.jingle('item'); yield* say('強化成功！' + gearName(g) + '！'); } else { Sound.sfx('bump'); yield* say('……可惜，這次失敗了。'); } }
+function* smithStar12(g) { const st = Game.st, R = st.refine || (st.refine = {}), s = g.s || 0, need = starStones(s), c = starGold(g, s);
+  if (s >= STAR_MAX) { yield* say('已經是最高的★' + STAR_MAX + '了。'); return; }
+  if ((R[g.b] || 0) < need || st.money < c) { yield* say('精煉石或金錢不夠喔。（再打倒掉落這件裝備的魔物，就能拿到精煉石）'); return; }
+  if (!(yield* yesNo('要讓' + gearShort(g) + '升星嗎？\n（精煉石×' + need + '、' + c + ' G，一定成功）'))) return;
+  R[g.b] -= need; st.money -= c; g.s = s + 1; clampHP(); Sound.sfx('rock'); yield* say('鏘！鏘！鏘！'); Sound.jingle('levelup'); yield* say('升星成功！' + gearName(g) + '！'); }
+function* smithUpgrade12() { const st = Game.st, R = () => st.refine || {};
+  while (true) {
+    const fit = (x, t, Y, col) => { let z = 10; while (z > 8 && Font.width(t, z) > 152) z--; Font.draw(x, t, 12, Y + (10 - z) / 2, col, UIC.textSh, z); }; // v12.0.5: long lines used to run past the window
+    const g = yield* gearPicker('強化', () => gearSort(), (x, g, Y) => { const c = enhanceCost(g), s = g.s || 0;
+      fit(x, (g.e || 0) < 10 ? '強化 +' + (g.e || 0) + '→+' + ((g.e || 0) + 1) + '　' + c.gold + ' G・成功率' + Math.round(c.rate * 100) + '%' : '強化：已經 +10', Y, UIC.accent);
+      fit(x, s < STAR_MAX ? '升星 ★' + s + '→★' + (s + 1) + '　精煉石 ' + (R()[g.b] || 0) + '/' + starStones(s) + '・' + starGold(g, s) + ' G' : '升星：已經 ★' + STAR_MAX, Y + 13, '#ffd860');
+      fit(x, g.q >= 2 ? '重鑄：詞綴 ' + reforgeCost(g).gold + ' G／品質' : '重鑄：品質（藍色沒有詞綴）', Y + 26, '#c8b8ff'); });
+    if (!g) return;
+    while (true) { const c = enhanceCost(g), s = g.s || 0;
+      const opts = ['強化 +' + (g.e || 0) + '→+' + ((g.e || 0) + 1) + '（' + c.gold + ' G）', '升星 ★' + s + '→★' + (s + 1) + '（精煉石 ' + (R()[g.b] || 0) + '/' + starStones(s) + '）', '重鑄（詞綴／品質）', '換一件'];
+      const r = yield* ask(gearName(g), opts); if (r === 0) yield* smithEnhance12(g); else if (r === 1) yield* smithStar12(g); else if (r === 2) yield* smithOnGear12(g, reforgeFlow); else break; } } }
+smithMenu = function* (f) {
+  while (true) { const r = yield* ask('要做什麼？', ['打造', '強化' + (f && f.smithDisc ? '（強化半價）' : ''), '離開']);
+    if (r === 0) { const r2 = yield* ask('打造', ['打造裝備', '分解', '返回']); if (r2 === 0) yield* craftScreen(); else if (r2 === 1) yield* salvageFlow(); }
+    else if (r === 1) yield* smithUpgrade12(); else break; } };
+const GROW12 = [
+  ['等級與屬性', '打倒魔物得到經驗值。升級時能力會提升，還會拿到屬性點，在選單的「屬性」自由分配。'],
+  ['職業', '村長那裡可以轉職。Lv14 找村長「天賦覺醒」後，劍士、魔導士、守護者、遊俠會進階成劍聖、大魔導士、聖騎士、神射手。'],
+  ['天賦與職業招式', '升級和天賦之書會給天賦點。在選單的「天賦」，每一層二選一。'],
+  ['技能練度', '每用一次技能練度 +1：滿第一格學會（武器技能），再用 6 次可以進化「改」，再用 24 次進化「極」。修練之書：練度 +12。'],
+  ['裝備', '鐵匠「打造」：用設計圖和素材做裝備。鐵匠「強化」：強化到 +10、用精煉石升星、重鑄詞綴或品質。'],
+  ['果實', '六種果實會永久提升能力。果實買越多越貴（六種一起算）。'],
+];
+function* handbookScreen12() {
+  while (true) { const r = yield* ask('冒險手冊', ['任務', '圖鑑', '紀錄', '變強的方法', '返回']);
+    if (r === 0) yield* questScreen(); else if (r === 1) yield* dexScreen(); else if (r === 2) yield* recordScreen();
+    else if (r === 3) { while (true) { const k = yield* ask('變強的方法', GROW12.map(q => q[0]).concat('返回')); if (k < 0 || k >= GROW12.length) break; yield* say(GROW12[k][1]); } }
+    else break; } }
+const EN12 = Object.keys(ITEMS).filter(k => ITEMS[k].use === 'enchant'), EN12_DEF = Object.fromEntries(EN12.map(k => [k, ITEMS[k]]));
+for (const k of EN12) delete ITEMS[k];
+{ const _v = v12Convert; v12Convert = function (st) { for (const k of EN12) ITEMS[k] = EN12_DEF[k];
+    try { return _v(st); } finally { for (const k of EN12) { delete ITEMS[k]; if (st && st.bag) delete st.bag[k]; } } }; }
+const MAT_USE12 = (() => { const U = {}, add = (k, name) => { (U[k] = U[k] || { gear: 0, items: [] }); if (name) { if (!U[k].items.includes(name)) U[k].items.push(name); } else U[k].gear++; };
+  for (const k in GEAR_RECIPE) for (const m in GEAR_RECIPE[k].mats || {}) add(m);
+  for (const R of [RECIPES, typeof RECIPES_V20 !== 'undefined' ? RECIPES_V20 : [], typeof RECIPES_CH2 !== 'undefined' ? RECIPES_CH2 : []]) for (const r of R) if (r.mats && ITEMS[r.out]) for (const m in r.mats) add(m, ITEMS[r.out].n);
+  return U; })();
+for (const k in ITEMS) { const I = ITEMS[k]; if (!['魔物素材', '採集素材'].includes(I.cat)) continue; let base = I.d || '';
+  Object.defineProperty(I, 'd', { configurable: true, enumerable: true, get() { const U = MAT_USE12[k], use = U ? [U.gear ? U.gear + ' 件裝備' : '', ...U.items.slice(0, 2)].filter(Boolean).join('、') : '';
+    return base + '\n來源：' + matSource(k) + (use ? '\n用途：' + use : ''); }, set(v) { base = v; } }); }
+const BOSS_HP12 = { lavaGiant: 0.75, golem: 1.1, hydra: 1.1, harvestGolem: 1.1, clockColossus: 1.1 };
+{ const _ue = BD.unitForEnemy; BD.unitForEnemy = function (core, sp, lv, kind, side, idx, o = {}) { const s = _ue.call(this, core, sp, lv, kind, side, idx, o);
+    if (s && kind === 'boss' && BOSS_HP12[sp]) { s.stats.hp = Math.max(1, Math.round(s.stats.hp * BOSS_HP12[sp])); s.hp = s.stats.hp; } return s; }; }
+MOVES.m_eruption.pow = 140; DEF.skills.m_eruption.power = 140; if (DEF.skills.m_eruption.ai) DEF.skills.m_eruption.ai.pow = 140;
+defPut('mechanics', 'mage_power12', { layer: 'class', mods: [{ stage: 'attacker', who: 'attacker', mul: 1.3, cond: { cat: '特', hasPower: 1 } }] });
+{ const _hs = BB.heroSpec; BB.heroSpec = function (st, cfg) { const s = _hs.call(this, st, cfg); if (clsV7(st.cls) === 'mage') s.data.mechanics.push('mage_power12'); return s; }; }
+{ const _m = BR.FORMULA.mpSpring; BR.FORMULA.mpSpring = (c, v) => _m(c, v) + 0.05; }
+CLS12.mage.passive[1] = '魔法傷害 +30%，回合結束回復 8% MP'; DEF.classes.mage.passive.d = CLS12.mage.passive[1];
+SIG12.monk.power = 35; SIG12.monk.d = SIG12.monk.d.replace('各 30', '各 35'); DEF.skills.sig_monk.power = 35; DEF.skills.sig_monk.desc = (DEF.skills.sig_monk.desc || '').replace('各 30', '各 35'); if (MOVES.sig_monk) MOVES.sig_monk.d = (MOVES.sig_monk.d || '').replace('各 30', '各 35');
+{ const M = DEF.mechanics.cls_guardian, mk = M.make; M.make = u => { const r = mk(u); for (const m of r.mods || []) if (m.mul === 0.7 && m.cond && m.cond.guarding) m.mul = 0.8; return r; }; }
+CLS12.guardian.passive[1] = CLS12.guardian.passive[1].replace('再減傷 30%', '再減傷 20%'); DEF.classes.guardian.passive.d = CLS12.guardian.passive[1];
+if (typeof BATTLE_HELP !== 'undefined') for (const P of BATTLE_HELP) P[1] = P[1].map(t => t.replace('「守護之盾」再減30%', '「守護之盾」再減20%'));
+const PW12 = { swordsman: 1.2, monk: 1.3, spellblade: 1.3 };
+for (const c in PW12) { defPut('mechanics', 'pw12_' + c, { layer: 'class', mods: [{ stage: 'attacker', who: 'attacker', mul: PW12[c], cond: { hasPower: 1, tgtSide: 'enemy' } }] });
+  CLS12[c].passive[1] += '；造成的傷害 +' + Math.round((PW12[c] - 1) * 100) + '%'; DEF.classes[c].passive.d = CLS12[c].passive[1]; }
+{ const _hs = BB.heroSpec; BB.heroSpec = function (st, cfg) { const s = _hs.call(this, st, cfg), c = clsV7(st.cls); if (PW12[c]) s.data.mechanics.push('pw12_' + c); return s; }; }
+BOSS_HP12.hydra = 1.3;
+{ const E = DEF.skills.m_venomSpray.effects.map(x => DEF.effects[x]).find(x => x && x.type === 'status' && x.status === 'psn'); if (E) E.chance = 0.6; MOVES.m_venomSpray.eff = { ...MOVES.m_venomSpray.eff, p: 60 };
+  if (MOVES.m_venomSpray.d && !/中毒/.test(MOVES.m_venomSpray.d)) MOVES.m_venomSpray.d += '常常讓對手中毒。'; } // only the hydra uses it
+let __lp12 = false, __lpT12 = 0, __lpF12 = -1;
+{ const cvs = document.getElementById('screen');
+  if (cvs) { cvs.addEventListener('pointerdown', () => { __lp12 = true; }); for (const ev of ['pointerup', 'pointercancel', 'pointerleave']) cvs.addEventListener(ev, () => { __lp12 = false; }); }
+  window.addEventListener('pointerup', () => { __lp12 = false; }); window.addEventListener('blur', () => { __lp12 = false; }); }
+const longPress12 = () => { if (__lpF12 !== Game.frame) { __lpF12 = Game.frame; __lpT12 = __lp12 ? __lpT12 + 1 : 0; } return __lpT12 > 18; };
+{ const _ff = dlgFF; dlgFF = function () { const v = _ff(); return v || longPress12() || !!Game.autoIntro; }; }
+{ const _u = IntroScene.prototype.update; IntroScene.prototype.update = function () { const n = dlgFF() ? 4 : 1; for (let i = 0; i < n; i++) { _u.call(this); if (!this.script || Game.scene !== this) break; } }; }
+{ const _cs = classSelectScreen; classSelectScreen = function* (...a) { Game.autoIntro = false; return yield* _cs.apply(this, a); }; }
+{ const _ts = TitleScene.prototype.enter; TitleScene.prototype.enter = function (...a) { Game.autoIntro = false; return _ts ? _ts.apply(this, a) : undefined; }; }
+{ const _d = TextBox.prototype.draw; TextBox.prototype.draw = function (x) { _d.call(this, x);
+    const S = Game.settings; if (S.ffHint12 || Game.autoIntro || this.keep || UI.stack[UI.stack.length - 1] !== this || !(this.style === 'ow' || this.style === 'dark') || this.y < 60) return;
+    { const t = '長按畫面（或按住B）可以快轉', tw = Math.ceil(Font.width(t, 8)) + 8, R = this.x + this.w - 2; // v268: 自己的底色，不壓框線
+      x.fillStyle = 'rgba(10,14,28,0.78)'; x.fillRect(R - tw, this.y - 13, tw, 11); Font.drawR(x, t, R - 4, this.y - 14, '#c9cfe4', UIC.textSh, 8); }
+    if ((S.ffHintT12 = (S.ffHintT12 || 0) + 1) > 600) { S.ffHint12 = 1; delete S.ffHintT12; saveSettings(); } }; }
+{ const _bp = gainBP; gainBP = function (k, q, st = Game.st, ...a) { const r = _bp.call(this, k, q, st, ...a); if (st && st.flags && st.flags.license && !st.flags.h12bp) st.flags.h12bp = 1; return r; }; }
+{ const H = Battle.prototype.handlers, _d = H.DAMAGE; H.DAMAGE = function* (e, s, t, P) {
+    if (s && s.hero && t && !t.hero && P && P.kind === 'hit' && P.mult > 1) { const f = Game.st && Game.st.flags; if (f && !f.h12weak) f.h12weak = 1; }
+    yield* _d.call(this, e, s, t, P); }; }
+{ const _ng = newGameState; newGameState = function (...a) { const st = _ng.apply(this, a); if (st && st.flags) st.flags.r3new = 1; return st; }; }
+const HINT12 = [
+  ['h12tal', st => st.lv >= 2, ['（得到了「天賦點」！打開選單的「天賦」，就能點' + '{cls}' + '的三個流派。之後每升 2 級還會再拿到。）']],
+  ['h12bp2', st => st.flags.h12bp === 1, ['（得到了設計圖！把設計圖和素材拿去萌芽鎮的鐵匠，就能打造新的裝備。）']],
+  ['h12deep', st => st.lv >= 13 && !st.flags.deep, ['（再升一級到 Lv14，就可以找村長進行「天賦覺醒」：解開第 3 層天賦和核心天賦。）']],
+  ['h12weak2', st => st.flags.h12weak === 1, ['（剛才打中了弱點！魔物分成好幾個種族，各有害怕的屬性。善用屬性技能，戰鬥會輕鬆很多。）']],
+];
+{ const _u = Overworld.prototype.update; Overworld.prototype.update = function (...a) {
+    const st = this.st;
+    if (st && st.flags && st.flags.license && st.flags.orbStart && !this.script && !UI.stack.length && !Game.trans) {
+      const h = st.flags.r3new && HINT12.find(([k, ok]) => !st.flags[k] && ok(st));
+      if (h) { st.flags[h[0]] = 1; const cls = (CLASSES[st.cls] || {}).n || ''; this.run(sayAll(h[2].map(s => s.replace('{cls}', cls)))); return; }
+      if ((st.flags.ch2 || 0) >= 10 && !st.flags.todo12) { st.flags.todo12 = 1; this.run(todoScreen12(true)); return; }
+    }
+    return _u.apply(this, a); }; }
+{ const _mf = makeFoe; makeFoe = function (sp, lv, kind) { const f = _mf(sp, lv, kind); if (sp === 'millGolem' && f && f.moves) { const k = f.moves.filter(m => m.id !== 'm_sunder'); if (k.length >= 3) f.moves = k; } return f; }; }
+if (DEF.skills.m_millStorm) Object.assign(DEF.skills.m_millStorm, { warn: '（⚠ 下一回合選「防禦」，傷害會減半！逆轉大風車每 3 回合一次。）' });
+BAI.SCRIPT.b12_millGolem = function (core, u) { const d = u.data; d.cd = (d.cd ?? 2) - 1;
+  if (d.cd <= 0 && DEF.skills.m_millStorm) { d.cd = 2; return b12Charge(core, u, 'm_millStorm'); }
+  return b12Pick(core, u, BR.stage(core, u, 'def') < 1 && core.rng.chance(0.3) ? ['m_scaleGuard'] : ['m_millGrind', 'm_blackGust', 'm_millGrind']); };
+{ const _ue = BD.unitForEnemy; BD.unitForEnemy = function (core, sp, lv, kind, side, idx, o = {}) { const s = _ue.call(this, core, sp, lv, kind, side, idx, o);
+    if (s && sp === 'millGolem') s.data.script = 'b12_millGolem'; return s; }; }
+const STORY_ELITES12 = ['rogueBlade', 'duskCaptain', 'wraithGeneral'];
+{ const _ld = Overworld.prototype.load; Overworld.prototype.load = function (...a) { _ld.apply(this, a);
+    if (this.elites) this.elites = this.elites.filter(e => !(e.rematch && STORY_ELITES12.includes(e.id))); }; }
+function todoLines12(st = Game.st) {
+  const L = [], P = (t, c) => L.push([t, c, 10, t.startsWith('・') || t.startsWith('　') ? 6 : 0]), Q = questList(st), side = Q.filter(q => !q.main && !q.done && !/^委託/.test(q.n) && !['委託告示板', '區域事件'].includes(q.n));
+  const com = Object.keys(COMMISSIONS).filter(k => { const s = comState(k, st); return !(s && s.s === 'done') && (!COMMISSIONS[k].open || COMMISSIONS[k].open(st)); });
+  const dex = st.dex || {}, seen = Object.keys(SPECIES).filter(k => dex[k]).length;
+  const foes = FOE_SPOTS.filter(e => (dex[e.sp] || {}).won > 0).length;
+  const ach = ACHIEVEMENTS.filter(a => { try { return a.ok(st); } catch (e) { return false; } }).length;
+  P('支線任務：還有 ' + side.length + ' 條', UIC.warm); for (const q of side.slice(0, 5)) P('・' + q.n, UIC.text); if (side.length > 5) P('　……還有 ' + (side.length - 5) + ' 條', UIC.muted);
+  P('委託：還有 ' + com.length + ' 件', UIC.warm); for (const k of com.slice(0, 3)) P('・' + COMMISSIONS[k].n + '（' + COMMISSIONS[k].from + '）', UIC.text); if (com.length > 3) P('　……還有 ' + (com.length - 3) + ' 件', UIC.muted);
+  P('魔物圖鑑：' + seen + '／' + Object.keys(SPECIES).length, UIC.warm); P('頭目・菁英：打倒 ' + foes + '／' + FOE_SPOTS.length, UIC.warm);
+  P('世界的記載：' + loreCount(st) + '／' + loreTotal(), UIC.warm); P('成就：' + ach + '／' + ACHIEVEMENTS.length, UIC.warm);
+  return L;
+}
+function* todoScreen12(first) {
+  if (first) yield* sayAll(['曙光鐘的聲音，傳遍了整個王國。', '（第一季到這裡結束。第三章製作中——在那之前，世界還有很多地方等著你。）']);
+  const L = todoLines12(), per = 16; let top = 0;
+  const scr = { touchBack: true, draw(x) { screenBG(x); headerBar(x, '還能做什麼'); drawWin(x, 4, 22, 168, 230, 'menu'); const end = drawInfoLines(x, L, 10, 28, 236, top); scr.more = end < L.length;
+    if (top > 0) x.drawImage(UPARROW, 86, 23); if (scr.more) x.drawImage(DOWNARROW, 86, 237); Font.drawR(x, 'A／B 關閉', 166, 240, UIC.muted, UIC.textSh, 9); } };
+  UI.push(scr); Input.clearAll();
+  while (true) { if (Input.repeat('up') && top > 0) { top--; Sound.sfx('cursor'); } if (Input.repeat('down') && scr.more) { top++; Sound.sfx('cursor'); }
+    if (Input.pressed('a') || Input.pressed('b')) { Input.consume('a', 'b'); Sound.sfx('cancel'); break; } yield; }
+  UI.remove(scr);
+}
+{ const _hb = handbookScreen12; handbookScreen12 = function* () {
+    if ((Game.st.flags.ch2 || 0) < 10) return yield* _hb();
+    while (true) { const r = yield* ask('冒險手冊', ['任務', '圖鑑', '紀錄', '變強的方法', '還能做什麼', '返回']);
+      if (r === 0) yield* questScreen(); else if (r === 1) yield* dexScreen(); else if (r === 2) yield* recordScreen();
+      else if (r === 3) { while (true) { const k = yield* ask('變強的方法', GROW12.map(q => q[0]).concat('返回')); if (k < 0 || k >= GROW12.length) break; yield* say(GROW12[k][1]); } }
+      else if (r === 4) yield* todoScreen12(false); else break; } }; }
+{ const _h = Events.hans; Events.hans = function* (...a) { const st = Game.st, f = st.flags, i = LORE.findIndex(l => l[0] === 'oldField');
+    if (f.creekQ === 3 && !f.hansName && i >= 0 && (st.lore || {})[i]) { f.hansName = 1; yield* say('漢斯：「古戰場的石碑上，有個叫漢斯的磨坊學徒？……這個名字，是我們磨坊代代傳下來的。」'); }
+    yield* _h.apply(this, a); }; }
+Events.eliteWin_croc = function* () { const f = Game.st.flags;
+  yield* sayAll(['沼澤鱷翻了個身，慢慢沉回了河裡。'].concat((f.creekQ || 0) >= 3 ? ['河水清清的。牠大概是被碧溪谷的黑水，從上游趕下來的吧。'] : [], ['橋頭的路，終於通了。', '（橋的另一邊，是古岩遺跡和落日峽谷。）'])); };
+Events.eliteWin_mossGiant = function* () { const f = Game.st.flags;
+  yield* sayAll(['苔石巨人的身體慢慢散開，變回了一堆長滿青苔的石頭。', '石頭堆的中間，有一枚刻著樹葉紋路的古印，發著淡淡的光。'].concat(f.q2res === 'stay' ? ['提姆：「……打、打贏了！我們打贏了！」'] : [], ['一陣風吹過森林，空氣好像變輕了。'])); };
+skillUpdateNote = function* (st) { delete st.skillNote; };
+pointUpdateNote = function* (st) { delete st.pointNote; };
+if (COMMISSIONS.c34) COMMISSIONS.c34.open = st => !!comState('c34', st); // 星塵只在星見神殿：神殿打開時再開放（已經接下的照舊）
+{ const A = ACHIEVEMENTS.find(a => a.id === 'com'); if (A) A.ok = st => Object.keys(COMMISSIONS).every(k => k === 'c34' || (comState(k, st) || {}).s === 'done'); }
+for (let i = FOE_SPOTS.length - 1; i >= 0; i--) if (['rift', 'starShrine'].includes(FOE_SPOTS[i].map)) FOE_SPOTS.splice(i, 1);
+{ const _ql = questList; questList = function (st = Game.st) { return _ql(st).filter(q => q.n !== '井底更深處'); }; } // 初代勇者的試煉 replaced the rope route
+const RARE12 = { windHills: 'goldSlime', jadeCreek: 'moonFox', maplePass: 'moonFox', oldField: 'goldSkeleton', capSewer: 'gemSlime', lavaTunnel: 'gemSlime',
+  clockTower1: 'crystalBat', iceCave: 'crystalBat', duskFort1: 'paleWraith', northRoad: 'moonFox', goldPlains: 'goldSlime', emberPass: 'gemSlime' };
+const encRange12 = m => { let lo = 99, hi = 0; for (const e of MAPS[m].encounters || []) for (const r of e.table || []) { lo = Math.min(lo, r[1]); hi = Math.max(hi, r[2] ?? r[1]); } return hi ? [lo, hi] : null; };
+for (const m in RARE12) { const d = MAPS[m], sp = RARE12[m]; if (!d || !SPECIES[sp] || !MON_PANEL[sp]) continue; const L = encRange12(m); if (!L) continue; d.rare = [sp, L[0], L[1]]; }
+const PERM12 = { northRoad: 'agiFruit', capSewer: 'trainBook', clockTower1: 'dexFruit', frostField: 'vitFruit', iceCave: 'trainBook', lavaTunnel: 'powerFruit', duskFort1: 'tpBook' };
+const chestCons12 = it => !it.gold && !it.q && !it.show && ITEMS[it.item] && /傷藥|魔力|萬靈藥|活力茶/.test(ITEMS[it.item].n);
+function mapEntries12(d) { const E = [], h = d.rows.length, w = d.rows[0].length;
+  if (d.exit && typeof d.exit.x === 'number') E.push([d.exit.x, d.exit.y]);
+  for (const e of d.edgeWarps || []) { const [a, b] = e.at || [0, 0]; for (let k = a; k <= b; k++) E.push(e.dir === 'up' ? [k, 0] : e.dir === 'down' ? [k, h - 1] : e.dir === 'left' ? [0, k] : [w - 1, k]); }
+  if (!E.length) E.push([Math.floor(w / 2), h - 1]); return E; }
+for (const m in PERM12) { const d = MAPS[m]; if (!d || !d.items || !ITEMS[PERM12[m]]) continue; const E = mapEntries12(d);
+  const far = d.items.filter(chestCons12).map(it => [it, Math.min(...E.map(([x, y]) => Math.abs(x - it.x) + Math.abs(y - it.y)))]).sort((a, b) => b[1] - a[1])[0];
+  if (far) { far[0].item = PERM12[m]; delete far[0].n; far[0].perm12 = 1; } }
+for (const m in MAPS) { const d = MAPS[m], L = d.items && mapLevel(m); if (!L || L[0] < 17) continue; for (const it of d.items) if (it.item === 'superPotion' && ITEMS.megaPotion) it.item = 'megaPotion'; }
+function mapProgress12(id, st = Game.st) { const d = MAPS[id] || {}, f = st.flags || {}, mark = ok => ok ? '✓' : '—';
+  const items = (d.items || []).filter(it => f[it.id] || !it.show || it.show(st)), got = items.filter(it => f[it.id]).length;
+  const L = LORE.map((l, i) => [l, i]).filter(([l]) => l[0] === id), read = L.filter(([, i]) => (st.lore || {})[i]).length;
+  const a = ['寶箱 ' + got + '／' + items.length].concat(L.length ? ['記載之石 ' + read + '／' + L.length] : []);
+  const ws = (d.npcs || []).some(n => n.id === 'wshrine_' + id), ext = typeof EXT_OPEN !== 'undefined' && EXT_OPEN[id], rr = d.rare;
+  const b = [ws ? '天氣祠 ' + mark((st.wsh || {})[id] !== undefined) : '', ext ? '祕境 ' + mark(extSeen(id, st)) : '', rr ? '稀有魔物 ' + mark(((st.dex || {})[rr[0]] || {}).won > 0) : ''].filter(Boolean);
+  return [a.join('　'), b.join('　')]; }
+const FONT_MIN12 = 8;

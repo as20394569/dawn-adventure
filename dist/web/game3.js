@@ -1,195 +1,3 @@
-function masteryOf12(st, id) { const e = BB.skillObj(st, id); if (!e || !DEF.skills[id] || DEF.skills[id].tags.includes('sig')) return null; const N = BB.learnN(id), M = [N, N + 6, N + 30];
-  const lvl = !e.learned ? 0 : 1 + Math.min(2, orbStage(e)); return { e, x: e.x || 0, M, lvl, next: lvl === 0 ? M[0] : lvl < 3 ? M[lvl] : null, pending: orbPending(e) }; }
-function drawMastery12(x, X, Y, w, m) { if (!m) return; const max = m.M[2], f = Math.min(1, m.x / max);
-  x.fillStyle = '#10121e'; x.fillRect(X, Y, w, 4); x.fillStyle = m.lvl >= 3 ? '#ffd860' : m.pending ? '#ffb070' : m.lvl >= 1 ? '#7ad0ff' : '#9aa0b8'; x.fillRect(X, Y, Math.max(1, Math.round(w * f)), 4);
-  for (let k = 0; k < 3; k++) { const tx = Math.min(X + w - 2, X + Math.round(w * m.M[k] / max) - 1); x.fillStyle = m.lvl > k ? '#fff4c8' : '#5a5f78'; x.fillRect(tx, Y - 1, 2, 6); } }
-const masteryText12 = (st, id) => { const m = masteryOf12(st, id); if (!m) return ''; const src = BB.sourceOf(st, id), s = src && src !== '已學會' ? '・' + src : '';
-  if (m.lvl === 0) return '【練度 ' + m.x + '/' + m.next + '：再用 ' + Math.max(0, m.next - m.x) + ' 次永久學會' + s + '】';
-  if (m.lvl >= 3) return '【練度已滿（極）' + s + '】';
-  return '【已學會' + s + '・練度 ' + m.x + '/' + m.next + (m.pending ? '：可以進化「' + (m.lvl === 1 ? '改' : '極') + '」！' : '：滿了可以進化「' + (m.lvl === 1 ? '改' : '極') + '」') + '】'; };
-{ const _si = BB.skillInfo; BB.skillInfo = function (st, id) { const t = _si.call(this, st, id), m = masteryOf12(st, id); if (!m) return t;
-    return t.replace(/　【(?:已學會[^】]*|[^】]*再用\d+次永久學會)】/, '　' + masteryText12(st, id)); }; }
-Object.assign(ITEMS.trainBook, { d: '選一個已學會的技能，練度 +12。' });
-if (typeof BATTLE_HELP !== 'undefined') { const P = BATTLE_HELP.find(q => q[0] === '技能與冷卻');
-  if (P) P[1] = P[1].map(t => /用滿 6／10／14 次永久學會/.test(t) ? '技能來自職業（等級到了學會）和武器（裝備就能用）。每用一次練度 +1：滿第一格學會，再用 6 次可以進化「改」，再用 24 次進化「極」。' : t); }
-function* smithOnGear12(g, flow) { // run an existing one-gear flow (it opens gearPicker) on a gear already chosen
-  const _gp = gearPicker; let used = false;
-  gearPicker = function* (title, getList) { if (used) return null; used = true; if (getList().includes(g)) return g; yield* say('這件裝備不能這樣做。'); return null; };
-  try { yield* flow(); } finally { gearPicker = _gp; } }
-function* smithEnhance12(g) { const st = Game.st, c = enhanceCost(g), ok = st.money >= c.gold && Object.entries(c.mats).every(([k, n]) => (st.bag[k] || 0) >= n);
-  if ((g.e || 0) >= 10) { yield* say('已經強化到 +10 了。'); return; } if (!ok) { yield* say('素材或金錢不夠喔。'); return; }
-  if (!(yield* yesNo('要強化' + gearShort(g) + '嗎？' + (c.rate < 1 ? '\n（失敗的話素材和金錢會消失）' : '')))) return;
-  st.money -= c.gold; for (const k in c.mats) st.bag[k] -= c.mats[k]; Sound.sfx('rock'); yield* say('鏘！鏘！鏘！');
-  if (Math.random() < c.rate) { g.e = (g.e || 0) + 1; clampHP(); Sound.jingle('item'); yield* say('強化成功！' + gearName(g) + '！'); } else { Sound.sfx('bump'); yield* say('……可惜，這次失敗了。'); } }
-function* smithStar12(g) { const st = Game.st, R = st.refine || (st.refine = {}), s = g.s || 0, need = starStones(s), c = starGold(g, s);
-  if (s >= STAR_MAX) { yield* say('已經是最高的★' + STAR_MAX + '了。'); return; }
-  if ((R[g.b] || 0) < need || st.money < c) { yield* say('精煉石或金錢不夠喔。（再打倒掉落這件裝備的魔物，就能拿到精煉石）'); return; }
-  if (!(yield* yesNo('要讓' + gearShort(g) + '升星嗎？\n（精煉石×' + need + '、' + c + ' G，一定成功）'))) return;
-  R[g.b] -= need; st.money -= c; g.s = s + 1; clampHP(); Sound.sfx('rock'); yield* say('鏘！鏘！鏘！'); Sound.jingle('levelup'); yield* say('升星成功！' + gearName(g) + '！'); }
-function* smithUpgrade12() { const st = Game.st, R = () => st.refine || {};
-  while (true) {
-    const fit = (x, t, Y, col) => { let z = 10; while (z > 8 && Font.width(t, z) > 152) z--; Font.draw(x, t, 12, Y + (10 - z) / 2, col, UIC.textSh, z); }; // v12.0.5: long lines used to run past the window
-    const g = yield* gearPicker('強化', () => gearSort(), (x, g, Y) => { const c = enhanceCost(g), s = g.s || 0;
-      fit(x, (g.e || 0) < 10 ? '強化 +' + (g.e || 0) + '→+' + ((g.e || 0) + 1) + '　' + c.gold + ' G・成功率' + Math.round(c.rate * 100) + '%' : '強化：已經 +10', Y, UIC.accent);
-      fit(x, s < STAR_MAX ? '升星 ★' + s + '→★' + (s + 1) + '　精煉石 ' + (R()[g.b] || 0) + '/' + starStones(s) + '・' + starGold(g, s) + ' G' : '升星：已經 ★' + STAR_MAX, Y + 13, '#ffd860');
-      fit(x, g.q >= 2 ? '重鑄：詞綴 ' + reforgeCost(g).gold + ' G／品質' : '重鑄：品質（藍色沒有詞綴）', Y + 26, '#c8b8ff'); });
-    if (!g) return;
-    while (true) { const c = enhanceCost(g), s = g.s || 0;
-      const opts = ['強化 +' + (g.e || 0) + '→+' + ((g.e || 0) + 1) + '（' + c.gold + ' G）', '升星 ★' + s + '→★' + (s + 1) + '（精煉石 ' + (R()[g.b] || 0) + '/' + starStones(s) + '）', '重鑄（詞綴／品質）', '換一件'];
-      const r = yield* ask(gearName(g), opts); if (r === 0) yield* smithEnhance12(g); else if (r === 1) yield* smithStar12(g); else if (r === 2) yield* smithOnGear12(g, reforgeFlow); else break; } } }
-smithMenu = function* (f) {
-  while (true) { const r = yield* ask('要做什麼？', ['打造', '強化' + (f && f.smithDisc ? '（強化半價）' : ''), '離開']);
-    if (r === 0) { const r2 = yield* ask('打造', ['打造裝備', '分解', '返回']); if (r2 === 0) yield* craftScreen(); else if (r2 === 1) yield* salvageFlow(); }
-    else if (r === 1) yield* smithUpgrade12(); else break; } };
-const GROW12 = [
-  ['等級與屬性', '打倒魔物得到經驗值。升級時能力會提升，還會拿到屬性點，在選單的「屬性」自由分配。'],
-  ['職業', '村長那裡可以轉職。Lv14 找村長「天賦覺醒」後，劍士、魔導士、守護者、遊俠會進階成劍聖、大魔導士、聖騎士、神射手。'],
-  ['天賦與職業招式', '升級和天賦之書會給天賦點。在選單的「天賦」，每一層二選一。'],
-  ['技能練度', '每用一次技能練度 +1：滿第一格學會（武器技能），再用 6 次可以進化「改」，再用 24 次進化「極」。修練之書：練度 +12。'],
-  ['裝備', '鐵匠「打造」：用設計圖和素材做裝備。鐵匠「強化」：強化到 +10、用精煉石升星、重鑄詞綴或品質。'],
-  ['果實', '六種果實會永久提升能力。果實買越多越貴（六種一起算）。'],
-];
-function* handbookScreen12() {
-  while (true) { const r = yield* ask('冒險手冊', ['任務', '圖鑑', '紀錄', '變強的方法', '返回']);
-    if (r === 0) yield* questScreen(); else if (r === 1) yield* dexScreen(); else if (r === 2) yield* recordScreen();
-    else if (r === 3) { while (true) { const k = yield* ask('變強的方法', GROW12.map(q => q[0]).concat('返回')); if (k < 0 || k >= GROW12.length) break; yield* say(GROW12[k][1]); } }
-    else break; } }
-const EN12 = Object.keys(ITEMS).filter(k => ITEMS[k].use === 'enchant'), EN12_DEF = Object.fromEntries(EN12.map(k => [k, ITEMS[k]]));
-for (const k of EN12) delete ITEMS[k];
-{ const _v = v12Convert; v12Convert = function (st) { for (const k of EN12) ITEMS[k] = EN12_DEF[k];
-    try { return _v(st); } finally { for (const k of EN12) { delete ITEMS[k]; if (st && st.bag) delete st.bag[k]; } } }; }
-const MAT_USE12 = (() => { const U = {}, add = (k, name) => { (U[k] = U[k] || { gear: 0, items: [] }); if (name) { if (!U[k].items.includes(name)) U[k].items.push(name); } else U[k].gear++; };
-  for (const k in GEAR_RECIPE) for (const m in GEAR_RECIPE[k].mats || {}) add(m);
-  for (const R of [RECIPES, typeof RECIPES_V20 !== 'undefined' ? RECIPES_V20 : [], typeof RECIPES_CH2 !== 'undefined' ? RECIPES_CH2 : []]) for (const r of R) if (r.mats && ITEMS[r.out]) for (const m in r.mats) add(m, ITEMS[r.out].n);
-  return U; })();
-for (const k in ITEMS) { const I = ITEMS[k]; if (!['魔物素材', '採集素材'].includes(I.cat)) continue; let base = I.d || '';
-  Object.defineProperty(I, 'd', { configurable: true, enumerable: true, get() { const U = MAT_USE12[k], use = U ? [U.gear ? U.gear + ' 件裝備' : '', ...U.items.slice(0, 2)].filter(Boolean).join('、') : '';
-    return base + '\n來源：' + matSource(k) + (use ? '\n用途：' + use : ''); }, set(v) { base = v; } }); }
-const BOSS_HP12 = { lavaGiant: 0.75, golem: 1.1, hydra: 1.1, harvestGolem: 1.1, clockColossus: 1.1 };
-{ const _ue = BD.unitForEnemy; BD.unitForEnemy = function (core, sp, lv, kind, side, idx, o = {}) { const s = _ue.call(this, core, sp, lv, kind, side, idx, o);
-    if (s && kind === 'boss' && BOSS_HP12[sp]) { s.stats.hp = Math.max(1, Math.round(s.stats.hp * BOSS_HP12[sp])); s.hp = s.stats.hp; } return s; }; }
-MOVES.m_eruption.pow = 140; DEF.skills.m_eruption.power = 140; if (DEF.skills.m_eruption.ai) DEF.skills.m_eruption.ai.pow = 140;
-defPut('mechanics', 'mage_power12', { layer: 'class', mods: [{ stage: 'attacker', who: 'attacker', mul: 1.3, cond: { cat: '特', hasPower: 1 } }] });
-{ const _hs = BB.heroSpec; BB.heroSpec = function (st, cfg) { const s = _hs.call(this, st, cfg); if (clsV7(st.cls) === 'mage') s.data.mechanics.push('mage_power12'); return s; }; }
-{ const _m = BR.FORMULA.mpSpring; BR.FORMULA.mpSpring = (c, v) => _m(c, v) + 0.05; }
-CLS12.mage.passive[1] = '魔法傷害 +30%，回合結束回復 8% MP'; DEF.classes.mage.passive.d = CLS12.mage.passive[1];
-SIG12.monk.power = 35; SIG12.monk.d = SIG12.monk.d.replace('各 30', '各 35'); DEF.skills.sig_monk.power = 35; DEF.skills.sig_monk.desc = (DEF.skills.sig_monk.desc || '').replace('各 30', '各 35'); if (MOVES.sig_monk) MOVES.sig_monk.d = (MOVES.sig_monk.d || '').replace('各 30', '各 35');
-{ const M = DEF.mechanics.cls_guardian, mk = M.make; M.make = u => { const r = mk(u); for (const m of r.mods || []) if (m.mul === 0.7 && m.cond && m.cond.guarding) m.mul = 0.8; return r; }; }
-CLS12.guardian.passive[1] = CLS12.guardian.passive[1].replace('再減傷 30%', '再減傷 20%'); DEF.classes.guardian.passive.d = CLS12.guardian.passive[1];
-if (typeof BATTLE_HELP !== 'undefined') for (const P of BATTLE_HELP) P[1] = P[1].map(t => t.replace('「守護之盾」再減30%', '「守護之盾」再減20%'));
-const PW12 = { swordsman: 1.2, monk: 1.3, spellblade: 1.3 };
-for (const c in PW12) { defPut('mechanics', 'pw12_' + c, { layer: 'class', mods: [{ stage: 'attacker', who: 'attacker', mul: PW12[c], cond: { hasPower: 1, tgtSide: 'enemy' } }] });
-  CLS12[c].passive[1] += '；造成的傷害 +' + Math.round((PW12[c] - 1) * 100) + '%'; DEF.classes[c].passive.d = CLS12[c].passive[1]; }
-{ const _hs = BB.heroSpec; BB.heroSpec = function (st, cfg) { const s = _hs.call(this, st, cfg), c = clsV7(st.cls); if (PW12[c]) s.data.mechanics.push('pw12_' + c); return s; }; }
-BOSS_HP12.hydra = 1.3;
-{ const E = DEF.skills.m_venomSpray.effects.map(x => DEF.effects[x]).find(x => x && x.type === 'status' && x.status === 'psn'); if (E) E.chance = 0.6; MOVES.m_venomSpray.eff = { ...MOVES.m_venomSpray.eff, p: 60 };
-  if (MOVES.m_venomSpray.d && !/中毒/.test(MOVES.m_venomSpray.d)) MOVES.m_venomSpray.d += '常常讓對手中毒。'; } // only the hydra uses it
-let __lp12 = false, __lpT12 = 0, __lpF12 = -1;
-{ const cvs = document.getElementById('screen');
-  if (cvs) { cvs.addEventListener('pointerdown', () => { __lp12 = true; }); for (const ev of ['pointerup', 'pointercancel', 'pointerleave']) cvs.addEventListener(ev, () => { __lp12 = false; }); }
-  window.addEventListener('pointerup', () => { __lp12 = false; }); window.addEventListener('blur', () => { __lp12 = false; }); }
-const longPress12 = () => { if (__lpF12 !== Game.frame) { __lpF12 = Game.frame; __lpT12 = __lp12 ? __lpT12 + 1 : 0; } return __lpT12 > 18; };
-{ const _ff = dlgFF; dlgFF = function () { const v = _ff(); return v || longPress12() || !!Game.autoIntro; }; }
-{ const _u = IntroScene.prototype.update; IntroScene.prototype.update = function () { const n = dlgFF() ? 4 : 1; for (let i = 0; i < n; i++) { _u.call(this); if (!this.script || Game.scene !== this) break; } }; }
-{ const _cs = classSelectScreen; classSelectScreen = function* (...a) { Game.autoIntro = false; return yield* _cs.apply(this, a); }; }
-{ const _ts = TitleScene.prototype.enter; TitleScene.prototype.enter = function (...a) { Game.autoIntro = false; return _ts ? _ts.apply(this, a) : undefined; }; }
-{ const _d = TextBox.prototype.draw; TextBox.prototype.draw = function (x) { _d.call(this, x);
-    const S = Game.settings; if (S.ffHint12 || Game.autoIntro || this.keep || UI.stack[UI.stack.length - 1] !== this || !(this.style === 'ow' || this.style === 'dark') || this.y < 60) return;
-    { const t = '長按畫面（或按住B）可以快轉', tw = Math.ceil(Font.width(t, 8)) + 8, R = this.x + this.w - 2; // v268: 自己的底色，不壓框線
-      x.fillStyle = 'rgba(10,14,28,0.78)'; x.fillRect(R - tw, this.y - 13, tw, 11); Font.drawR(x, t, R - 4, this.y - 14, '#c9cfe4', UIC.textSh, 8); }
-    if ((S.ffHintT12 = (S.ffHintT12 || 0) + 1) > 600) { S.ffHint12 = 1; delete S.ffHintT12; saveSettings(); } }; }
-{ const _bp = gainBP; gainBP = function (k, q, st = Game.st, ...a) { const r = _bp.call(this, k, q, st, ...a); if (st && st.flags && st.flags.license && !st.flags.h12bp) st.flags.h12bp = 1; return r; }; }
-{ const H = Battle.prototype.handlers, _d = H.DAMAGE; H.DAMAGE = function* (e, s, t, P) {
-    if (s && s.hero && t && !t.hero && P && P.kind === 'hit' && P.mult > 1) { const f = Game.st && Game.st.flags; if (f && !f.h12weak) f.h12weak = 1; }
-    yield* _d.call(this, e, s, t, P); }; }
-{ const _ng = newGameState; newGameState = function (...a) { const st = _ng.apply(this, a); if (st && st.flags) st.flags.r3new = 1; return st; }; }
-const HINT12 = [
-  ['h12tal', st => st.lv >= 2, ['（得到了「天賦點」！打開選單的「天賦」，就能點' + '{cls}' + '的三個流派。之後每升 2 級還會再拿到。）']],
-  ['h12bp2', st => st.flags.h12bp === 1, ['（得到了設計圖！把設計圖和素材拿去萌芽鎮的鐵匠，就能打造新的裝備。）']],
-  ['h12deep', st => st.lv >= 13 && !st.flags.deep, ['（再升一級到 Lv14，就可以找村長進行「天賦覺醒」：解開第 3 層天賦和核心天賦。）']],
-  ['h12weak2', st => st.flags.h12weak === 1, ['（剛才打中了弱點！魔物分成好幾個種族，各有害怕的屬性。善用屬性技能，戰鬥會輕鬆很多。）']],
-];
-{ const _u = Overworld.prototype.update; Overworld.prototype.update = function (...a) {
-    const st = this.st;
-    if (st && st.flags && st.flags.license && st.flags.orbStart && !this.script && !UI.stack.length && !Game.trans) {
-      const h = st.flags.r3new && HINT12.find(([k, ok]) => !st.flags[k] && ok(st));
-      if (h) { st.flags[h[0]] = 1; const cls = (CLASSES[st.cls] || {}).n || ''; this.run(sayAll(h[2].map(s => s.replace('{cls}', cls)))); return; }
-      if ((st.flags.ch2 || 0) >= 10 && !st.flags.todo12) { st.flags.todo12 = 1; this.run(todoScreen12(true)); return; }
-    }
-    return _u.apply(this, a); }; }
-{ const _mf = makeFoe; makeFoe = function (sp, lv, kind) { const f = _mf(sp, lv, kind); if (sp === 'millGolem' && f && f.moves) { const k = f.moves.filter(m => m.id !== 'm_sunder'); if (k.length >= 3) f.moves = k; } return f; }; }
-if (DEF.skills.m_millStorm) Object.assign(DEF.skills.m_millStorm, { warn: '（⚠ 下一回合選「防禦」，傷害會減半！逆轉大風車每 3 回合一次。）' });
-BAI.SCRIPT.b12_millGolem = function (core, u) { const d = u.data; d.cd = (d.cd ?? 2) - 1;
-  if (d.cd <= 0 && DEF.skills.m_millStorm) { d.cd = 2; return b12Charge(core, u, 'm_millStorm'); }
-  return b12Pick(core, u, BR.stage(core, u, 'def') < 1 && core.rng.chance(0.3) ? ['m_scaleGuard'] : ['m_millGrind', 'm_blackGust', 'm_millGrind']); };
-{ const _ue = BD.unitForEnemy; BD.unitForEnemy = function (core, sp, lv, kind, side, idx, o = {}) { const s = _ue.call(this, core, sp, lv, kind, side, idx, o);
-    if (s && sp === 'millGolem') s.data.script = 'b12_millGolem'; return s; }; }
-const STORY_ELITES12 = ['rogueBlade', 'duskCaptain', 'wraithGeneral'];
-{ const _ld = Overworld.prototype.load; Overworld.prototype.load = function (...a) { _ld.apply(this, a);
-    if (this.elites) this.elites = this.elites.filter(e => !(e.rematch && STORY_ELITES12.includes(e.id))); }; }
-function todoLines12(st = Game.st) {
-  const L = [], P = (t, c) => L.push([t, c, 10, t.startsWith('・') || t.startsWith('　') ? 6 : 0]), Q = questList(st), side = Q.filter(q => !q.main && !q.done && !/^委託/.test(q.n) && !['委託告示板', '區域事件'].includes(q.n));
-  const com = Object.keys(COMMISSIONS).filter(k => { const s = comState(k, st); return !(s && s.s === 'done') && (!COMMISSIONS[k].open || COMMISSIONS[k].open(st)); });
-  const dex = st.dex || {}, seen = Object.keys(SPECIES).filter(k => dex[k]).length;
-  const foes = FOE_SPOTS.filter(e => (dex[e.sp] || {}).won > 0).length;
-  const ach = ACHIEVEMENTS.filter(a => { try { return a.ok(st); } catch (e) { return false; } }).length;
-  P('支線任務：還有 ' + side.length + ' 條', UIC.warm); for (const q of side.slice(0, 5)) P('・' + q.n, UIC.text); if (side.length > 5) P('　……還有 ' + (side.length - 5) + ' 條', UIC.muted);
-  P('委託：還有 ' + com.length + ' 件', UIC.warm); for (const k of com.slice(0, 3)) P('・' + COMMISSIONS[k].n + '（' + COMMISSIONS[k].from + '）', UIC.text); if (com.length > 3) P('　……還有 ' + (com.length - 3) + ' 件', UIC.muted);
-  P('魔物圖鑑：' + seen + '／' + Object.keys(SPECIES).length, UIC.warm); P('頭目・菁英：打倒 ' + foes + '／' + FOE_SPOTS.length, UIC.warm);
-  P('世界的記載：' + loreCount(st) + '／' + loreTotal(), UIC.warm); P('成就：' + ach + '／' + ACHIEVEMENTS.length, UIC.warm);
-  return L;
-}
-function* todoScreen12(first) {
-  if (first) yield* sayAll(['曙光鐘的聲音，傳遍了整個王國。', '（第一季到這裡結束。第三章製作中——在那之前，世界還有很多地方等著你。）']);
-  const L = todoLines12(), per = 16; let top = 0;
-  const scr = { touchBack: true, draw(x) { screenBG(x); headerBar(x, '還能做什麼'); drawWin(x, 4, 22, 168, 230, 'menu'); const end = drawInfoLines(x, L, 10, 28, 236, top); scr.more = end < L.length;
-    if (top > 0) x.drawImage(UPARROW, 86, 23); if (scr.more) x.drawImage(DOWNARROW, 86, 237); Font.drawR(x, 'A／B 關閉', 166, 240, UIC.muted, UIC.textSh, 9); } };
-  UI.push(scr); Input.clearAll();
-  while (true) { if (Input.repeat('up') && top > 0) { top--; Sound.sfx('cursor'); } if (Input.repeat('down') && scr.more) { top++; Sound.sfx('cursor'); }
-    if (Input.pressed('a') || Input.pressed('b')) { Input.consume('a', 'b'); Sound.sfx('cancel'); break; } yield; }
-  UI.remove(scr);
-}
-{ const _hb = handbookScreen12; handbookScreen12 = function* () {
-    if ((Game.st.flags.ch2 || 0) < 10) return yield* _hb();
-    while (true) { const r = yield* ask('冒險手冊', ['任務', '圖鑑', '紀錄', '變強的方法', '還能做什麼', '返回']);
-      if (r === 0) yield* questScreen(); else if (r === 1) yield* dexScreen(); else if (r === 2) yield* recordScreen();
-      else if (r === 3) { while (true) { const k = yield* ask('變強的方法', GROW12.map(q => q[0]).concat('返回')); if (k < 0 || k >= GROW12.length) break; yield* say(GROW12[k][1]); } }
-      else if (r === 4) yield* todoScreen12(false); else break; } }; }
-{ const _h = Events.hans; Events.hans = function* (...a) { const st = Game.st, f = st.flags, i = LORE.findIndex(l => l[0] === 'oldField');
-    if (f.creekQ === 3 && !f.hansName && i >= 0 && (st.lore || {})[i]) { f.hansName = 1; yield* say('漢斯：「古戰場的石碑上，有個叫漢斯的磨坊學徒？……這個名字，是我們磨坊代代傳下來的。」'); }
-    yield* _h.apply(this, a); }; }
-Events.eliteWin_croc = function* () { const f = Game.st.flags;
-  yield* sayAll(['沼澤鱷翻了個身，慢慢沉回了河裡。'].concat((f.creekQ || 0) >= 3 ? ['河水清清的。牠大概是被碧溪谷的黑水，從上游趕下來的吧。'] : [], ['橋頭的路，終於通了。', '（橋的另一邊，是古岩遺跡和落日峽谷。）'])); };
-Events.eliteWin_mossGiant = function* () { const f = Game.st.flags;
-  yield* sayAll(['苔石巨人的身體慢慢散開，變回了一堆長滿青苔的石頭。', '石頭堆的中間，有一枚刻著樹葉紋路的古印，發著淡淡的光。'].concat(f.q2res === 'stay' ? ['提姆：「……打、打贏了！我們打贏了！」'] : [], ['一陣風吹過森林，空氣好像變輕了。'])); };
-skillUpdateNote = function* (st) { delete st.skillNote; };
-pointUpdateNote = function* (st) { delete st.pointNote; };
-if (COMMISSIONS.c34) COMMISSIONS.c34.open = st => !!comState('c34', st); // 星塵只在星見神殿：神殿打開時再開放（已經接下的照舊）
-{ const A = ACHIEVEMENTS.find(a => a.id === 'com'); if (A) A.ok = st => Object.keys(COMMISSIONS).every(k => k === 'c34' || (comState(k, st) || {}).s === 'done'); }
-for (let i = FOE_SPOTS.length - 1; i >= 0; i--) if (['rift', 'starShrine'].includes(FOE_SPOTS[i].map)) FOE_SPOTS.splice(i, 1);
-{ const _ql = questList; questList = function (st = Game.st) { return _ql(st).filter(q => q.n !== '井底更深處'); }; } // 初代勇者的試煉 replaced the rope route
-const RARE12 = { windHills: 'goldSlime', jadeCreek: 'moonFox', maplePass: 'moonFox', oldField: 'goldSkeleton', capSewer: 'gemSlime', lavaTunnel: 'gemSlime',
-  clockTower1: 'crystalBat', iceCave: 'crystalBat', duskFort1: 'paleWraith', northRoad: 'moonFox', goldPlains: 'goldSlime', emberPass: 'gemSlime' };
-const encRange12 = m => { let lo = 99, hi = 0; for (const e of MAPS[m].encounters || []) for (const r of e.table || []) { lo = Math.min(lo, r[1]); hi = Math.max(hi, r[2] ?? r[1]); } return hi ? [lo, hi] : null; };
-for (const m in RARE12) { const d = MAPS[m], sp = RARE12[m]; if (!d || !SPECIES[sp] || !MON_PANEL[sp]) continue; const L = encRange12(m); if (!L) continue; d.rare = [sp, L[0], L[1]]; }
-const PERM12 = { northRoad: 'agiFruit', capSewer: 'trainBook', clockTower1: 'dexFruit', frostField: 'vitFruit', iceCave: 'trainBook', lavaTunnel: 'powerFruit', duskFort1: 'tpBook' };
-const chestCons12 = it => !it.gold && !it.q && !it.show && ITEMS[it.item] && /傷藥|魔力|萬靈藥|活力茶/.test(ITEMS[it.item].n);
-function mapEntries12(d) { const E = [], h = d.rows.length, w = d.rows[0].length;
-  if (d.exit && typeof d.exit.x === 'number') E.push([d.exit.x, d.exit.y]);
-  for (const e of d.edgeWarps || []) { const [a, b] = e.at || [0, 0]; for (let k = a; k <= b; k++) E.push(e.dir === 'up' ? [k, 0] : e.dir === 'down' ? [k, h - 1] : e.dir === 'left' ? [0, k] : [w - 1, k]); }
-  if (!E.length) E.push([Math.floor(w / 2), h - 1]); return E; }
-for (const m in PERM12) { const d = MAPS[m]; if (!d || !d.items || !ITEMS[PERM12[m]]) continue; const E = mapEntries12(d);
-  const far = d.items.filter(chestCons12).map(it => [it, Math.min(...E.map(([x, y]) => Math.abs(x - it.x) + Math.abs(y - it.y)))]).sort((a, b) => b[1] - a[1])[0];
-  if (far) { far[0].item = PERM12[m]; delete far[0].n; far[0].perm12 = 1; } }
-for (const m in MAPS) { const d = MAPS[m], L = d.items && mapLevel(m); if (!L || L[0] < 17) continue; for (const it of d.items) if (it.item === 'superPotion' && ITEMS.megaPotion) it.item = 'megaPotion'; }
-function mapProgress12(id, st = Game.st) { const d = MAPS[id] || {}, f = st.flags || {}, mark = ok => ok ? '✓' : '—';
-  const items = (d.items || []).filter(it => f[it.id] || !it.show || it.show(st)), got = items.filter(it => f[it.id]).length;
-  const L = LORE.map((l, i) => [l, i]).filter(([l]) => l[0] === id), read = L.filter(([, i]) => (st.lore || {})[i]).length;
-  const a = ['寶箱 ' + got + '／' + items.length].concat(L.length ? ['記載之石 ' + read + '／' + L.length] : []);
-  const ws = (d.npcs || []).some(n => n.id === 'wshrine_' + id), ext = typeof EXT_OPEN !== 'undefined' && EXT_OPEN[id], rr = d.rare;
-  const b = [ws ? '天氣祠 ' + mark((st.wsh || {})[id] !== undefined) : '', ext ? '祕境 ' + mark(extSeen(id, st)) : '', rr ? '稀有魔物 ' + mark(((st.dex || {})[rr[0]] || {}).won > 0) : ''].filter(Boolean);
-  return [a.join('　'), b.join('　')]; }
-const FONT_MIN12 = 8;
 { const _d = Font.draw, _w = Font.width;
   const small = (str, size) => !Font.bz && typeof size === 'number' && size < FONT_MIN12 && str !== '' && str != null; // v12.87: not in a battle (Font.bz, 12l) — there the sizes are 7・9・14, drawn at their real size
   const squeeze = (ctx, str, x0, y, col, sh, size) => { const a = _w(str, size), b = _w(str, FONT_MIN12);
@@ -10437,3 +10245,464 @@ for (const e of HD15.spKeys) e[1] = HDL19.guard(e[0], e[1], () => HD15.old[e[0]]
 { const _wa = FX.wAtk; if (_wa) FX.wAtk = function* (...a) { try { return yield* _wa.apply(this, a); } catch (e) { bvErr('v12.101', 'wAtk: ' + (e && e.message)); HDL19.reset(this); } };
   const _sg = segSwing; segSwing = function* (b, ...a) { try { return yield* _sg(b, ...a); } catch (e) { bvErr('v12.101', 'segSwing: ' + (e && e.message)); HDL19.reset(b); } }; }
 HD15.use(HD15.on);
+const REBAL15 = { hp: 1.5, def: 1.15, spd: 1.15, atk: 0.75, spa: 0.75 };
+{ const _ue = BD.unitForEnemy; BD.unitForEnemy = function (core, sp, lv, kind, side, idx, o = {}) { const s = _ue.call(this, core, sp, lv, kind, side, idx, o);
+    if (!s || (kind !== 'elite' && kind !== 'boss')) return s;
+    for (const k in REBAL15) if (s.stats[k] != null) s.stats[k] = Math.max(1, Math.round(s.stats[k] * REBAL15[k]));
+    s.hp = s.stats.hp; return s; }; }
+const MAP3_15 = {
+  route: [2, 4, ['slime', 'mush', 'bee']],
+  windHills: [5, 7, ['hornHare', 'strawCrow', 'curlySheep']],
+  jadeCreek: [8, 10, ['mossTurtle', 'streamSnake', 'creekCroc']],
+  forest: [11, 13, ['fireflySwarm', 'vineSnake', 'thornMush']],
+  canyon: [12, 14, ['harpy', 'sandScorpion', 'canyonLizard']],
+  mine: [13, 15, ['mineBat', 'caveSpider', 'bandit']],
+  ruins: [15, 17, ['skeleton', 'ghostLamp', 'crystalPebble']],
+  sewer: [16, 18, ['drownedSoul', 'caveBat', 'mudSlime']],
+  lake: [16, 18, ['reedCrab', 'lakeClam', 'lizardman']],
+  maplePass: [17, 19, ['barkBeetle', 'crimsonStag', 'mapleSprite']],
+  swamp: [19, 21, ['bogToad', 'marshWisp', 'rotTreant']],
+  catacomb: [20, 22, ['wraith', 'boneHound', 'runeGolem']],
+  oldField: [20, 22, ['fallenSoldier', 'carrionVulture', 'ghoul']],
+  northRoad: [22, 24, ['roadBandit', 'greyWolf', 'forestMarten']],
+  heroTomb: [23, 25, ['battleWisp', 'bladeGhost', 'rustSoldier']],
+  capSewer: [24, 26, ['sewerRat', 'sludge', 'sewerCroc']],
+  goldPlains: [25, 27, ['scarecrow', 'wildBoar', 'fieldMice']],
+  clockTower1: [27, 29, ['clockSoldier', 'gearSprite', 'hollowArmor']],
+  frostField: [29, 31, ['snowWolf', 'yeti', 'snowHare']],
+  iceCave: [31, 33, ['iceBat', 'iceGolem', 'frostWraith']],
+  emberPass: [32, 34, ['fireSalamander', 'obsidianTurtle', 'volcanoHawk']],
+  lavaTunnel: [34, 36, ['magmaGolem', 'flameSkeleton', 'hellHound']],
+  duskFort1: [36, 38, ['duskKnight', 'shadowMage', 'voidHound']],
+  coralCoast13: [45, 47, ['tideShrimp13', 'coralTurtle13', 'surfCrab13']],
+  wreckCove13: [47, 49, ['drownSailor13', 'mistWraith13', 'deepEel13']],
+  mistcapeCoast14: [50, 52, ['pufferFish14', 'surgeGull14', 'coralSnake14']],
+  sunkenReef14: [53, 55, ['fishman14', 'coralGolem14', 'inkOctopus14']],
+  abyssTemple14a: [55, 57, ['drownKnight14', 'tideSpirit14', 'anglerfish14']],
+  abyssTemple14b: [55, 57, ['drownKnight14', 'tideSpirit14', 'anglerfish14']],
+  moonTemple13: [20, 22, ['reedHeron', 'nightBird', 'mosquitoSwarm']],
+  mirrorCave13: [30, 32, ['frostSprite', 'iceOwl', 'frostMoth']],
+  warpRuin13: [14, 16, ['cactling', 'emberSpirit', 'thunderBeetle']],
+  cave6_route: [12, 14, ['mossBat', 'pebble', 'dewSprite']],
+  cave6_windHills: [10, 12, ['moleDigger', 'piglet', 'gustSprite']],
+  cave6_jadeCreek: [14, 16, ['caveNewt', 'creekShrimp', 'waterStrider']],
+  cave6_forest: [16, 18, ['rootGrub', 'leafFox', 'stumpling']],
+  cave6_canyon: [17, 19, ['sandstoneImp', 'spineArmadillo', 'dustDevil']],
+  cave6_lake: [21, 23, ['moonMoss', 'moonSprite', 'duskMoth']],
+  cave6_swamp: [24, 26, ['rotRoot', 'mudSlug', 'bogLeech']],
+  cave6_maplePass: [23, 25, ['wallGecko', 'mountainApe', 'mapleButterfly']],
+  cave6_oldField: [26, 28, ['rustSoldier', 'oreSlime', 'rustSpider']],
+  cave6_northRoad: [28, 30, ['featherThug', 'ironHedgehog', 'hornBeetle']],
+  cave6_goldPlains: [30, 32, ['barnSpider', 'fieldBee', 'barnOwl']],
+  cave6_frostField: [36, 38, ['icicleSprite', 'frostSlime', 'towerBat']],
+  cave6_emberPass: [39, 41, ['obsidianChunk', 'ashMoth', 'lavaCrab']],
+};
+const MAP3_W15 = [40, 35, 25];
+function map3Apply15() {
+  for (const id in MAP3_15) { const d = MAPS[id]; if (!d || !d.encounters || !d.encounters.length) continue; const [lo, hi, L] = MAP3_15[id];
+    const ok = L.filter(sp => SPECIES[sp] && MON_PANEL[sp]); if (ok.length < L.length) bvErr('map3', id + ' 缺 ' + L.filter(sp => !ok.includes(sp)).join(','));
+    const rate = d.encounters.reduce((a, e) => a + (e.rate || 0), 0) / d.encounters.length;
+    const table = ok.map((sp, i) => [sp, lo, hi, MAP3_W15[i] || 30]);
+    const night = typeof M7_OF_MAP !== 'undefined' && M7_OF_MAP[id]; if (night) { const r = [night, lo, hi, 0]; r.night12 = 1; table.push(r); }
+    d.encounters = [{ y0: 0, y1: 999, rate: +rate.toFixed(4), table }]; d.map3_15 = 1; }
+  if (typeof Game !== 'undefined') Game.dnTablesFor = null; // 白天／晚上的權重重算一次
+}
+map3Apply15();
+const HYB15 = { t_sdFlow: '流光連斬', t_dgNeedle: '雷痺斬', t_axQuake: '震地擊', t_spSpiral: '螺旋貫', t_fsQi: '氣勁彈', t_ddGale: '疾風百刃', t_dsStar: '雙星十字' };
+BR.FORMULA.magAtk15 = c => { const S = c.src.stats; return Math.max(S.atk, S.spa) / Math.max(1, S.spa); };
+COND.magHi15 = (c, v) => !!c.src && (c.src.stats.spa > c.src.stats.atk) === !!v;
+for (const id in HYB15) { const D = DEF.skills[id]; if (!D) { bvErr('hyb15', id); continue; }
+  delete D.catOf; D.cat = '特'; D.tags = D.tags.map(t => t === 'phys' ? 'magic' : t); if (MOVES[id]) MOVES[id].cat = '特';
+  const add = '魔法傷害（打對手的魔防），用物攻和魔攻較高的一項計算。', fix = t => t.replace(/用物攻和魔攻較高的一項計算。?/, '').replace(/。?$/, '。') + add;
+  if (!D.desc.includes('打對手的魔防')) D.desc = fix(D.desc); if (MOVES[id] && !MOVES[id].d.includes('打對手的魔防')) MOVES[id].d = fix(MOVES[id].d);
+  D.mods.push({ stage: 'skill', who: 'attacker', atkMul: { f: 'magAtk15' }, cond: { srcIsHero: 1 } });
+  const i = D.mods.findIndex(m => m.mul && m.mul.f === 'attrScale'); if (i >= 0) { const m = D.mods[i];
+    D.mods.splice(i, 1, { ...m, cond: { ...m.cond, magHi15: 0 } }, { ...m, mul: { f: 'attrScale', v: ['int', 1] }, cond: { ...m.cond, magHi15: 1 } }); } }
+{ const _f = famText; famText = function (sp) { const t = _f(sp), P = MON_PANEL[(SPECIES[sp] || {}).iro15 || sp]; if (!P || !P.def || !P.spd) return t; const r = P.spd / P.def, lean = r <= 0.87 ? '魔防較低' : r >= 1.15 ? '物防較低' : '';
+    return lean ? (t ? t + '　' : '') + lean : t; }; }
+const IRO_LOOK15 = { // base: [palette, the base picture's main hue]
+  slime: ['金', 219], mush: ['蒼', 61], bee: ['紫', 50], hornHare: ['翠', 30], strawCrow: ['櫻', 300], curlySheep: ['蒼', 36], mossTurtle: ['紫', 63],
+  streamSnake: ['緋', 140], creekCroc: ['蒼', 55], fireflySwarm: ['櫻', 79], vineSnake: ['紫', 75], thornMush: ['金', 220], harpy: ['翠', 29],
+  sandScorpion: ['蒼', 27], canyonLizard: ['紫', 29], mineBat: ['翠', 8], caveSpider: ['蒼', 329], bandit: ['金', 356], skeleton: ['翠', 43],
+  ghostLamp: ['緋', 180], crystalPebble: ['蒼', 16], drownedSoul: ['緋', 184], caveBat: ['金', 285], mudSlime: ['翠', 24], reedCrab: ['紫', 40],
+  lakeClam: ['櫻', 215], lizardman: ['緋', 140], barkBeetle: ['翠', 26], crimsonStag: ['蒼', 6], mapleSprite: ['銀', 16], bogToad: ['紫', 26],
+  marshWisp: ['櫻', 155], rotTreant: ['翠', 23], wraith: ['金', 274], boneHound: ['翠', 292], runeGolem: ['櫻', 0], fallenSoldier: ['蒼', 30],
+  carrionVulture: ['翠', 15], ghoul: ['紫', 22], roadBandit: ['金', 220], greyWolf: ['緋', 0], forestMarten: ['蒼', 25], battleWisp: ['金', 202],
+  bladeGhost: ['緋', 215], rustSoldier: ['紫', 19], sewerRat: ['翠', 346], sludge: ['金', 264], sewerCroc: ['櫻', 130], scarecrow: ['蒼', 26],
+  wildBoar: ['翠', 15], fieldMice: ['紫', 28], clockSoldier: ['蒼', 26], gearSprite: ['紫', 35], hollowArmor: ['櫻', 146], snowWolf: ['緋', 72],
+  yeti: ['金', 215], snowHare: ['櫻', 228], iceBat: ['緋', 251], iceGolem: ['翠', 318], frostWraith: ['櫻', 70], fireSalamander: ['蒼', 21],
+  obsidianTurtle: ['翠', 3], volcanoHawk: ['紫', 14], magmaGolem: ['金', 278], flameSkeleton: ['緋', 244], hellHound: ['櫻', 176], duskKnight: ['緋', 152],
+  shadowMage: ['金', 287], voidHound: ['銀', 243], tideShrimp13: ['蒼', 17], coralTurtle13: ['櫻', 131], surfCrab13: ['金', 204], drownSailor13: ['紫', 138],
+  mistWraith13: ['緋', 229], deepEel13: ['金', 209], pufferFish14: ['紫', 36], surgeGull14: ['櫻', 131], coralSnake14: ['蒼', 15], fishman14: ['緋', 73],
+  coralGolem14: ['紫', 19], inkOctopus14: ['金', 267], drownKnight14: ['翠', 31], tideSpirit14: ['緋', 197], anglerfish14: ['金', 267],
+};// [目標色相（null＝不換色相）, 飽和度 ×, 灰色的地方加多少飽和度, 亮度 ×]
+const IRO_PAL15 = { 金: [48, 1.25, 0.35, 1.12], 蒼: [205, 1.15, 0.3, 1.05], 紫: [278, 1.1, 0.3, 1.02], 緋: [352, 1.25, 0.35, 1.0], 翠: [145, 1.15, 0.3, 1.02], 櫻: [328, 0.9, 0.25, 1.16], 銀: [null, 0.12, 0, 1.22], 墨: [null, 0.75, 0, 0.62] };
+const IRO_MUL15 = { hp: 3.2, atk: 1.3, spa: 1.3, def: 1.25, spd: 1.25, spe: 1.1 };
+const IRO15 = {}, IRO_OF_MAP15 = {}, IRO_MAPS15 = Object.keys(MAP3_15).filter(m => !/^cave6_|^moonTemple13$|^mirrorCave13$|^warpRuin13$/.test(m));
+const iroPx15 = (L, r, g, b) => { const P = IRO_PAL15[L[0]], [h, s, l] = rgb2hsl(r, g, b); if (P[0] === null) return hex2rgb(hsl2hex(h, Math.min(1, s * P[1]), Math.min(1, l * P[3])));
+  if (l < 0.13) return [r, g, b]; // 輪廓線不動
+  const gray = s < 0.12, h2 = gray ? P[0] : h + (P[0] - L[1]), s2 = gray ? Math.min(1, s + P[2] * (l > 0.88 ? 0.7 : 1)) : Math.min(1, s * P[1] + P[2] * 0.3); return hex2rgb(hsl2hex(h2, s2, Math.min(gray && l > 0.88 ? 0.86 : 1, l * P[3]))); };
+function iroCry15(b, lv) { const T = clamp(Math.ceil(lv / 8), 1, 7), P = MON_PANEL[b], fam = SPECIES[b].fam;
+  const st = ['atk', 'spa', 'def', 'spd'].sort((x, y) => P[y] - P[x])[0], main = P.spe > Math.max(P.atk, P.spa, P.def, P.spd) * 1.4 ? 'spe' : st;
+  const mage = P.spa > P.atk * 1.15;
+  const F = { beast: ['double', 8 + 3 * T], bird: ['eva', 1 + Math.round(T * 0.6)], insect: ['defDown', 12 + 4 * T], plant: ['regen', Math.round((1 + 0.4 * T) * 10) / 10], ooze: ['siphon', 1 + Math.ceil(T / 2)],
+    aquatic: ['mpGuard', 4 + T], spirit: ['freecast', 4 + 2 * T], undead: ['spellblade', 6 + 3 * T], construct: ['thorns', 8 + 3 * T], human: ['fervor', T >= 5 ? 3 : 2] };
+  let pas = F[fam] || ['back', 10 + 4 * T]; if (mage && !['spirit', 'undead', 'ooze'].includes(fam)) pas = ['freecast', 4 + 2 * T];
+  return [[main, 2 + T], pas]; }
+const IRO_ACC15 = {
+  route: ['虹露墜飾', ['spa', 'spd'], 'meditate', '晨霧道路的異色魔物身上凝出的露珠，裡面映著七種顏色。'],
+  windHills: ['虹羽風鈴', ['spe', 'atk'], 'swift', '異色魔物掉下來的羽毛綁成的風鈴，沒有風也會自己響。'],
+  jadeCreek: ['碧溪虹鱗', ['spd', 'def'], 'will', '碧溪谷的異色魔物脫下的鱗片，泡在水裡會發出虹光。'],
+  forest: ['霧林虹螢', ['spa', 'spe'], 'arcaneSurge', '關在玻璃珠裡的一點虹色螢光，靠近魔力會變亮。'],
+  canyon: ['夕砂虹晶', ['atk', 'spe'], 'hunter', '落日峽谷的砂裡長出來的虹色結晶，像凝住的夕陽。'],
+  mine: ['礦脈虹石', ['atk', 'def'], 'breaker', '廢棄礦坑深處才挖得到的虹色礦石，敲起來很硬。'],
+  ruins: ['古岩虹符', ['spa', 'spd'], 'elemGuard', '古岩遺跡的異色魔物守著的護符，上面的古文字會換顏色。'],
+  sewer: ['水道虹環', ['spa', 'spd'], 'manaSiphon', '在地下水道的水流裡轉了很久、磨成圓環的虹色石頭。'],
+  lake: ['銀月虹貝', ['spa', 'spe'], 'thrift', '月夜的湖底撈起的虹色貝殼，貼在耳邊聽得到水聲。'],
+  maplePass: ['楓紅虹葉', ['atk', 'spe'], 'double', '一年到頭都不會掉色的虹色楓葉，摸起來像金屬。'],
+  swamp: ['幽沼虹燈', ['atk', 'spe'], 'poisonEdge', '沼澤的異色鬼火留下的小燈，火焰帶著毒。'],
+  catacomb: ['骸骨虹戒', ['atk', 'def'], 'lastStand', '地下墓穴的異色亡者戴著的戒指，越危險越亮。'],
+  oldField: ['戰場虹旗', ['atk', 'spa'], 'fervor', '古戰場上找到的小旗，旗面的顏色每天都不一樣。'],
+  northRoad: ['街道虹羽', ['spe', 'atk'], 'initiative', '北方街道的異色魔物身上的羽毛，插在帽子上跑得特別快。'],
+  heroTomb: ['勇者虹印', ['def', 'spd'], 'endure', '初代勇者之墓的異色亡魂守著的印記，摸起來有點溫暖。'],
+  capSewer: ['王都虹鈴', ['spa', 'spe'], 'timeSand', '王都地下水道撿到的小鈴鐺，搖一下時間好像慢了一點。'],
+  goldPlains: ['金穗虹結', ['def', 'spd'], 'fortune', '用虹色的麥穗編成的結，農夫說會帶來好收成。'],
+  clockTower1: ['鐘塔虹輪', ['spa', 'spe'], 'thrift', '曙光鐘塔的異色機關魔物身上的小齒輪，自己會轉。'],
+  frostField: ['霜語虹晶', ['spd', 'spa'], 'elemGuard', '雪原的異色魔物身上結出的冰晶，放在太陽下也不會融化。'],
+  iceCave: ['冰晶虹冠', ['spa', 'spd'], 'arcaneSurge', '冰晶洞窟深處結成的小冠，透著七種顏色的冷光。'],
+  emberPass: ['赤焰虹鱗', ['atk', 'spe'], 'pierce', '赤焰山道的異色魔物身上的鱗片，邊緣像刀一樣利。'],
+  lavaTunnel: ['熔岩虹核', ['atk', 'spa'], 'double', '熔岩坑道的異色魔物體內的核心，一直在跳動。'],
+  duskFort1: ['黯滅虹刃', ['atk', 'spa'], 'hunter', '黯滅要塞的異色魔物掉下來的刀片，在黑暗裡會發虹光。'],
+  coralCoast13: ['珊瑚虹貝', ['def', 'spd'], 'regen', '珊瑚海岸的異色魔物藏著的貝殼，裡面的珍珠是虹色的。'],
+  wreckCove13: ['沉船虹錨', ['def', 'atk'], 'thorns', '沉船灣海底撈起的小錨，上面長滿了虹色的藤壺。'],
+  mistcapeCoast14: ['霧角虹螺', ['spa', 'spd'], 'manaSiphon', '霧角海岸的異色魔物住的海螺，吹起來是魔力的聲音。'],
+  sunkenReef14: ['沉月虹星', ['spa', 'spe'], 'arcaneSurge', '沉月礁的砂裡撿到的虹色海星，晚上會一閃一閃。'],
+  abyssTemple14a: ['海淵虹珠', ['atk', 'spa'], 'shadowStep', '海淵神殿的異色魔物守著的珠子，看久了會覺得自己在水底。'],
+};
+const iroAccT15 = lo => lo < 5 ? 1 : lo < 10 ? 2 : lo < 16 ? 3 : lo < 23 ? 4 : lo < 30 ? 5 : lo < 40 ? 6 : 7;
+const IRO_ACCB15 = [0, 6, 10, 14, 19, 25, 31, 38];
+for (const m in IRO_ACC15) { const [n, [a, b], tr, d] = IRO_ACC15[m], t = iroAccT15(MAP3_15[m][0]), B = IRO_ACCB15[t], k = 'iroAcc_' + m;
+  GEAR[k] = { n, slot: 'acc', t, st: { hp: Math.round(B * 0.8), [a]: Math.round(B * 0.3), [b]: Math.round(B * 0.22) }, sp: {}, fx: [tr], trait: tr, kind: '飾品', d: d + '（' + (MAPS[m].name || m).replace(/・.*$/, '') + '的異色魔物掉落）', look: (GEAR.qHeroCrest || {}).look, iro15: m };
+  if (ACC_TRAIT[tr] && ACC_TRAIT[tr][2] && !ACC_TRAIT[tr][2].includes(n)) ACC_TRAIT[tr][2].push(n); if (typeof BP_RARE !== 'undefined') BP_RARE.add(k); }
+const IRO_ACC_ALIAS15 = { abyssTemple14b: 'abyssTemple14a' }, iroAccOf15 = m => { m = IRO_ACC_ALIAS15[m] || m; return GEAR['iroAcc_' + m] ? 'iroAcc_' + m : null; };
+function iroMake15(k, b, m, lo) { const B = SPECIES[b]; if (!B || !MON_PANEL[b] || !DEF.enemies[b]) { bvErr('iro15', b); return false; }
+  const n = '異色' + B.n; const { night12, ...rest } = B;
+  SPECIES[k] = { ...rest, n, rare: 1, iro15: b, elite: 0, boss: 0, drop: null, exp: Math.round((B.exp || 20) * 6), gold: Math.round((B.gold || 10) * 6),
+    dex: '身體的顏色跟一般的' + B.n + '不一樣的稀有個體，比一般的強很多。只在' + (MAPS[m].name || m).replace(/・.*$/, '') + '偶爾看得到。打倒有機率掉「' + n + '晶石」和這張地圖的異色飾品。' };
+  MON_PANEL[k] = { ...MON_PANEL[b] };
+  const rig = BATTLE_PXC[b] ? b : (HD_RIG_OF[b] || b); HD_RIG_OF[k] = rig;
+  const L = IRO_LOOK15[b] || ['金', 0], P = IRO_PAL15[L[0]], A = ART[b] || ART[rig];
+  if (A) ART[k] = P[0] === null ? artRecolor(A, 0, P[1], P[3]) : artRecolor(A, P[0] - L[1], Math.max(1, P[1]), P[3]);
+  defPut('enemies', k, { ...DEF.enemies[b], tags: (DEF.enemies[b].tags || []).slice(), skills: (DEF.enemies[b].skills || []).slice(), script: null, metadata: { n } });
+  IRO15[k] = { b, m, lo };
+  ITEMS['pt_' + k] = { n: B.n + '的虹鱗', mat: 1, price: 0, sell: 40 + lo * 8, cat: '魔物素材', part11: k, d: n + '身上取下的虹色鱗片。把牠的晶石升級要用（鐵匠→晶石）。' };
+  ITEMS['pr_' + k] = { n: B.n + '的虹心', mat: 1, price: 0, sell: 120 + lo * 24, cat: '魔物素材', part11: k, rare11: 1, d: n + '身上很少拿到的虹色結晶。把牠的晶石升到 ★3 要用。' };
+  PART_OF11['pt_' + k] = { sp: k, rare: 0 }; PART_OF11['pr_' + k] = { sp: k, rare: 1 }; PART_LV11[k] = lo;
+  CRY11[k] = ['u', '異色', iroCry15(b, lo)];
+  return true; }
+for (const m of IRO_MAPS15) { const d = MAPS[m]; if (!d || !d.encounters) continue; const [lo, hi, L] = MAP3_15[m], keys = [];
+  for (const b of L) { const k = 'iro_' + b; if (IRO15[k] || iroMake15(k, b, m, lo)) keys.push(k); }
+  IRO_OF_MAP15[m] = keys; d.rares15 = keys.map(k => [k, lo, hi]); d.rare = d.rares15[0] || null; }
+{ const _ci = chibiImage; chibiImage = function (k) { const I = IRO15[k]; if (!I || chibiOwn(k)) return _ci(k); if (CHIBI_VAR[k]) return CHIBI_VAR[k];
+    const src = _ci(I.b); if (!src || src.ok === false || src.complete === false) return src; const L = IRO_LOOK15[I.b] || ['金', 0];
+    const c = mkCanvas(src.width, src.height), x = c.getContext('2d'); x.drawImage(src, 0, 0); const id = x.getImageData(0, 0, c.width, c.height), d = id.data;
+    for (let i = 0; i < d.length; i += 4) { if (!d[i + 3]) continue; const [r, g, bb] = iroPx15(L, d[i], d[i + 1], d[i + 2]); d[i] = r; d[i + 1] = g; d[i + 2] = bb; }
+    x.putImageData(id, 0, 0); c.ok = true; return CHIBI_VAR[k] = c; }; }
+{ const _ue = BD.unitForEnemy; BD.unitForEnemy = function (core, sp, lv, kind, side, idx, o = {}) { const I = IRO15[sp]; if (!I) return _ue.call(this, core, sp, lv, kind, side, idx, o);
+    const s = _ue.call(this, core, sp, lv, kind, side, idx, o); if (!s) return s; const base = BD.unitForEnemy(core, I.b, lv, 'wild', side, idx, {});
+    if (base) { for (const q in IRO_MUL15) if (base.stats[q] != null) s.stats[q] = Math.max(1, Math.round(base.stats[q] * IRO_MUL15[q])); s.hp = s.stats.hp; if (base.skills && base.skills.length) s.skills = base.skills.slice(); }
+    s.data.iro15 = 1; return s; }; }
+{ const _d = BAI.decide; BAI.decide = function (core, u, o) { if (u && u.rare && IRO15[u.sp]) { u.rare = 0; try { return _d.call(this, core, u, o); } finally { u.rare = 1; } } return _d.call(this, core, u, o); }; }
+{ const _sp = Overworld.prototype.roamSpawn12; Overworld.prototype.roamSpawn12 = function () { const L = _sp.call(this), d = this.map.d;
+    if (d.rares15 && d.rares15.length) for (const e of L) if (e.rare) { const r = pick(d.rares15), img = roamImg12(r[0]); if (!img) continue; e.sp = r[0]; e.lv = rnd(r[1], r[2]); e.img = img; e.aggro = false; }
+    return L; }; }
+{ const _bs = Overworld.prototype.battleScript; Overworld.prototype.battleScript = function (cfg, nr) { const d = this.map && this.map.d;
+    if (cfg && !cfg.roam12 && d && d.rares15 && d.rares15.length && cfg.sp === d.rares15[0][0]) { const r = pick(d.rares15); cfg = { ...cfg, sp: r[0], lv: rnd(r[1], r[2]) }; }
+    return _bs.call(this, cfg, nr); }; }
+{ const _v = Battle.prototype.victory; Battle.prototype.victory = function* () { const L = this.defeated().filter(v => IRO15[v.sp]); const r = yield* _v.call(this);
+    const st = Game.st, map = Game.ow && Game.ow.map && Game.ow.map.id;
+    for (const v of L) { const k = v.sp, I = IRO15[k]; this.focus = v; const got = {}, add = (q, n) => { if (n > 0 && ITEMS[q]) { got[q] = (got[q] || 0) + n; st.bag[q] = (st.bag[q] || 0) + n; } };
+      add('pt_' + k, 1 + (chance(0.35) ? 1 : 0)); add('pr_' + k, chance(0.12) ? 1 : 0); Sound.sfx('item'); yield* this.msg(v.n + '留下了：' + matsText(got) + '！', { hold: 30 });
+      if (!cryOwn11(st)[k] && chance(0.3) && cryGive11(k, st)) { Sound.jingle('item'); yield* this.msg('得到了特殊晶石「' + cryName11(k) + '」！', { wait: true });
+        if (!st.flags.tutIro15) { st.flags.tutIro15 = 1; yield* this.msg('（異色晶石哪個部位的裝備都能鑲。用牠的虹鱗・虹心可以在鐵匠那裡升級。）', { wait: true }); } }
+      const ak = iroAccOf15(I.m); if (ak && chance(0.25)) { const q = chance(0.05) ? 5 : chance(0.3) ? 4 : 3; yield* this.lootShow(makeGear(ak, q), v.n + '掉落了異色飾品！'); } }
+    return r; }; }
+{ const _lh = lootHint; lootHint = function (key, sp) { const I = IRO15[sp]; if (!I) return _lh(key, sp); const ak = iroAccOf15(I.m);
+    return (!cryOwn11()[sp] ? '機率掉「' + cryName11(sp) + '」・' : '') + '虹鱗' + (ak ? '・異色飾品「' + GEAR[ak].n + '」' : ''); }; }
+{ const _mp = mapProgress12; mapProgress12 = function (id, st = Game.st) { const r = _mp(id, st), d = MAPS[id] || {}; if (!d.rares15 || !d.rares15.length) return r;
+    const n = d.rares15.filter(([k]) => (((st.dex || {})[k] || {}).won || 0) > 0).length; r[1] = r[1].replace(/稀有魔物 [✓—]/, '異色 ' + n + '／' + d.rares15.length); if (!/異色/.test(r[1])) r[1] = (r[1] ? r[1] + '　' : '') + '異色 ' + n + '／' + d.rares15.length; return r; }; }
+const THAL15 = 'thalassa14', AEG15 = 'tideCaptain15', MORA15 = 'seaWitchQ15';
+const DEEP15 = { // key: [name, bases, look, role, fam, moves, material, dex]
+  tideLancer14: ['潮騎兵', ['fishman14', 'lizardman'], [0, 1, 1], 'phys', 'aquatic', ['m_spearRush', 'm_spearThrust', 'm_tidalCrush', 'm_scaleGuard'], 'tideScaleM14', '騎著大海馬的魚人騎士。深潮城的巡邏兵，一看到陌生人就挺著長槍衝過來。'],
+  seaWitch14: ['海妖巫女', ['bogWitch', 'inkOctopus14'], [0, 1, 1], 'mage', 'spirit', ['m_hex', 'm_waterBomb', 'm_whirlpool', 'm_chillMist'], 'deepPearl14', '戴著水母頭巾的海妖。手上的黑珍珠一亮，四周的海水就會聽她的話。'],
+  deepShark14: ['深潮巨鯊', ['anglerfish14', 'sewerCroc'], [0, 1, 1], 'tank', 'aquatic', ['m_bite', 'm_frostFang', 'm_tidalCrush', 'm_rend'], 'tideScaleM14', '用尾巴站著走路的大鯊魚，脖子上套著鐵刺項圈。潮將的看門巨獸。'],
+};
+for (const k in DEEP15) { const [n, bases, look, role, fam, moves, mat, dex] = DEEP15[k], b = pickBase14(bases), B = SPECIES[b] || {};
+  islePut14(k, n, b, look, fam, moves, mat, dex, { exp: Math.round((B.exp || 100) * 1.6), gold: Math.max(20, B.gold || 20) }); if (SPECIES[k]) MON_PANEL[k] = LATE_PANEL13(role, SEA_MUL13 * 1.06); }
+if (typeof CHIBI_FLOAT !== 'undefined') CHIBI_FLOAT.add('seaWitch14');
+Object.assign(MOVES, {
+  m15_lanceCharge: { n: '怒濤衝鋒', t: '水', cat: '物', pow: 150, acc: 100, pp: 5, foe: 1, cls: 'charge', charge: 1, chargeMsg: '海馬往後一退，長槍對準了你！', warn: '（要衝過來了！防禦！）', d: '蓄力一回合，連人帶海馬衝撞過來。' },
+  m15_blackTide: { n: '黑潮詠唱', t: '水', cat: '特', pow: 140, acc: 100, pp: 5, foe: 1, cls: 'charge', charge: 1, chargeMsg: '黑珍珠發出了暗光，四周的海水變成了黑色！', warn: '（黑色的潮水要湧過來了！防禦！）', d: '蓄力一回合，召來黑色的潮水。' },
+  m15_trident: { n: '潮將之戟', t: '水', cat: '物', pow: 100, acc: 100, pp: 10, foe: 1, cls: 'pierce', d: '金色三叉戟的一刺，戟尖捲著海流。' },
+  m15_tidalWave: { n: '怒海', t: '水', cat: '特', pow: 90, acc: 100, pp: 10, foe: 1, cls: 'area', d: '舉起三叉戟，捲起整片海浪壓下來。' },
+  m15_pearlShield: { n: '珍珠之壁', t: '水', cat: '變', pow: 0, acc: null, pp: 5, foe: 1, cls: 'guard', d: '珍珠的光在身邊凝成一層水壁，物防・魔防提升。' },
+  m15_maelstrom: { n: '大漩渦', t: '水', cat: '特', pow: 175, acc: 100, pp: 5, foe: 1, cls: 'charge', charge: 1, chargeMsg: '塔拉薩把三叉戟插進地板，整座王座之間的海水開始旋轉！', warn: '（大漩渦要把你捲進去了！防禦！）', d: '蓄力一回合，召來吞沒一切的大漩渦。' },
+  m15_callLancer: { n: '召集潮騎兵', t: '一般', cat: '變', pow: 0, acc: null, pp: 5, foe: 1, cls: 'buff', d: '吹響海螺，叫一隻潮騎兵過來。' },
+  m15_wrath: { n: '潮將之怒', t: '水', cat: '變', pow: 0, acc: null, pp: 1, foe: 1, cls: 'buff', d: '頭髮化成白色的浪花，物攻・魔攻・速度提升。' },
+});
+EFFECT_TYPES.callLancer15 = { exec(core, ef, ctx) { const u = ctx.owner; EFFECT_TYPES.summon.exec(core, { sp: 'tideLancer14', count: 1, kind: 'minion', maxSide: 3, lv: Math.max(40, (u.lv || 62) - 4) }, ctx); } };
+{ const PIC = { m15_lanceCharge: ['m_spearRush', 'm_tidalSpear'], m15_blackTide: ['m_tidalWave'], m15_trident: ['m_tidalSpear'], m15_tidalWave: ['m_tidalWave'], m15_pearlShield: ['m_iceMirror'],
+    m15_maelstrom: ['m_whirlpool', 'm_moonTide'], m15_callLancer: ['m9_call12'], m15_wrath: ['m_roar', 'm9_call12'] };
+  for (const id in PIC) { const src = PIC[id].find(s => MFX[s]); if (src) { MFX[id] = MFX[src]; MOVES[id].fx = id; } else bvErr('ch5', 'fx ' + id);
+    const d = skillFromMove(id, MOVES[id], { kind: 'skill', extraTags: ['monster_skill'] });
+    if (id === 'm15_callLancer') { d.target = 'self'; d.noHitRoll = true; d.effects = [{ type: 'callLancer15', target: 'self' }]; }
+    if (id === 'm15_pearlShield') { d.target = 'self'; d.noHitRoll = true; d.effects = [{ type: 'stage', target: 'self', stats: { def: 1, spd: 1 }, dur: 3 }]; }
+    if (id === 'm15_wrath') { d.target = 'self'; d.noHitRoll = true; d.effects = [{ type: 'stage', target: 'self', stats: { atk: 1, spa: 1, spe: 1 }, dur: 99 }]; }
+    d.cooldown = 0; d.effects = d.effects.map((ef, i) => effRegister('skill:' + id + '#e' + i, ef)); d.after = d.after.map((ef, i) => effRegister('skill:' + id + '#a' + i, ef)); defPut('skills', id, { ...d, override: true });
+    if (MON_CLASS[MOVES[id].cls] && !MON_CLASS[MOVES[id].cls].includes(id)) MON_CLASS[MOVES[id].cls].push(id); } }
+islePut14(AEG15, '潮騎兵長「艾格」', 'tideLancer14', [-150, 1.1, 1.08], 'aquatic', ['m15_lanceCharge', 'm_spearRush', 'm_spearThrust', 'm_tidalCrush', 'm_scaleGuard'], 'tideScaleM14',
+  '深潮城城門的守衛隊長。騎著一匹老海馬，五百年來沒有讓任何人走進城門。', { elite: 1, exp: 900, gold: 0 });
+islePut14(MORA15, '海妖大巫女「莫菈」', 'seaWitch14', [150, 1.15, 0.85], 'spirit', ['m15_blackTide', 'm_hex', 'm_waterBomb', 'm_whirlpool', 'm6_regen'], 'deepPearl14',
+  '服侍潮將的大巫女。深潮城會從海底浮上來，就是她的歌。', { elite: 1, exp: 950, gold: 0 });
+{ const base = MON_PANEL.fallenStar || ch2Panel(44, 'phys', 'elite'), mk = mul => { const P = { ...base }; for (const s in mul) if (P[s]) P[s] = Math.round(P[s] * mul[s]); return P; };
+  MON_PANEL[AEG15] = mk({ hp: 2.3, atk: 1.5, def: 1.2, spa: 1.0, spe: 1.1 }); MON_PANEL[MORA15] = mk({ hp: 2.0, atk: 0.9, def: 0.9, spa: 1.75, spd: 1.3 }); }
+ELITE_TEXT[AEG15] = ['（城門前，一匹老海馬甩了甩鬃毛……）', '潮騎兵長艾格：「曙光的人。這道門，五百年來沒有開過。」'];
+ELITE_TEXT[MORA15] = ['（往王座的階梯前，有人在唱歌……）', '海妖大巫女莫菈：「塔拉薩大人在上面等你。……可惜，你上不去。」'];
+if (typeof STORY_ELITES12 !== 'undefined') STORY_ELITES12.push(AEG15, MORA15);
+if (typeof CHIBI_FLOAT !== 'undefined') CHIBI_FLOAT.add(MORA15);
+BAI.SCRIPT.b15_aeg = function (core, u) { const d = u.data; d.cd = (d.cd ?? 2) - 1;
+  if (d.cd <= 0) { d.cd = 3; return b12Charge(core, u, 'm15_lanceCharge'); }
+  if (!d.guard15 && u.res.hp <= u.max.hp * 0.5) { d.guard15 = 1; const r = b12Pick(core, u, ['m_scaleGuard']); if (r) return r; }
+  return b12Pick(core, u, ['m_spearRush', 'm_spearThrust', 'm_tidalCrush']); };
+BAI.SCRIPT.b15_mora = function (core, u) { const d = u.data; d.cd = (d.cd ?? 2) - 1;
+  if (d.cd <= 0) { d.cd = 3; return b12Charge(core, u, 'm15_blackTide'); }
+  if (!d.heal15 && u.res.hp <= u.max.hp * 0.45) { d.heal15 = 1; const r = b12Pick(core, u, ['m6_regen']); if (r) return r; }
+  return b12Pick(core, u, ['m_hex', 'm_waterBomb', 'm_whirlpool']); };
+{ const _ue = BD.unitForEnemy; BD.unitForEnemy = function (core, sp, lv, kind, side, idx, o = {}) { const s = _ue.call(this, core, sp, lv, kind, side, idx, o);
+    if (s && sp === AEG15) s.data.script = 'b15_aeg'; if (s && sp === MORA15) s.data.script = 'b15_mora'; return s; }; }
+{ const B = SPECIES.otto14 || SPECIES.shadowGeneral;
+  SPECIES[THAL15] = { ...B, n: '潮將 塔拉薩', fam: 'aquatic', boss: 1, elite: 0, exp: 4800, gold: 0, drop: null, ch3: 1, mat: 'tideScaleM14',
+    learn: ['m15_trident', 'm15_tidalWave', 'm15_pearlShield', 'm15_maelstrom', 'm15_callLancer', 'm15_wrath'].map(m => [1, m]),
+    dex: '魔王四將之一，統領東方之海的人魚女王。五百年前和曙光軍一戰後沉進海底，奪走潮汐之珠，讓海一直停在滿潮。' };
+  const P = MON_PANEL.otto14 || ch2Panel(44, 'phys', 'boss'); MON_PANEL[THAL15] = { ...P, lv: P.lv, hp: Math.round(P.hp * 1.15), atk: Math.round(P.atk * 1.05), spa: Math.round(P.spa * 1.05), spd: Math.round(P.spd * 1.1) };
+  HD_RIG_OF[THAL15] = BATTLE_PXC[THAL15] ? THAL15 : (HD_RIG_OF.otto14 || 'shadowGeneral'); if (ART.otto14 || ART.shadowGeneral) ART[THAL15] = ART[THAL15] || artRecolor(ART.otto14 || ART.shadowGeneral, 20, 1.1, 1.05); }
+defPut('enemies', THAL15, { tags: ['foe', 'fam:aquatic'], skills: ['m15_trident', 'm15_tidalWave', 'm15_pearlShield', 'm15_maelstrom', 'm15_callLancer', 'm15_wrath'], fam: 'aquatic', trait: null, profile: 'brute', script: null, metadata: { n: '潮將 塔拉薩' } });
+B12_SCRIPT[THAL15] = function (core, u) { const d = u.data, hp = u.res.hp / u.max.hp, minions = core.alive(u.side).filter(q => q !== u && q.minion).length, t = b12Hero(core);
+  if (hp <= 0.3 && !d.wrath15) { d.wrath15 = 1; if (Game.scene && Game.scene.core === core) Game.scene.rage15 = 1; return { type: 'skill', skill: 'm15_wrath', targets: [u.id] }; }
+  if (core.round >= 3 && core.round - (d.lastCharge || 0) >= (d.wrath15 ? 3 : 4)) return b12Charge(core, u, 'm15_maelstrom');
+  if (minions < 1 && hp <= 0.7 && (d.calls15 || 0) < 2 && core.round >= 2) { d.calls15 = (d.calls15 || 0) + 1; return { type: 'skill', skill: 'm15_callLancer', targets: [u.id] }; }
+  if (hp <= 0.55 && !d.shield15) { d.shield15 = 1; return { type: 'skill', skill: 'm15_pearlShield', targets: [u.id] }; }
+  return b12Pick(core, u, d.wrath15 ? ['m15_trident', 'm15_tidalWave', 'm15_tidalWave'] : ['m15_trident', 'm15_trident', 'm15_tidalWave']) || { type: 'skill', skill: 'm15_trident', targets: t ? [t.id] : [] }; };
+defPut('mechanics', 'b12_' + THAL15, { make: u => ({ triggers: [{ on: EVT.SUMMON, phase: 'POST', cond: { ownerAlive: 1 }, limit: { perBattle: 1 }, effects: [{ type: 'message', target: 'self', text: '（海螺聲響起，潮騎兵從水裡衝了出來！）' }] }] }) });
+{ const _pr = pxRender; pxRender = function (A, S, T, tint) { if (S && S.sp === THAL15 && S.meta && S.meta.frames.rage && A.state === 'idle' && Game.scene && Game.scene.rage15) {
+    const S2 = S.rage15 || (S.rage15 = { ...S, meta: { ...S.meta, frames: { ...S.meta.frames, idle: S.meta.frames.rage } } }); return _pr(A, S2, T, tint); } return _pr(A, S, T, tint); }; }
+if (typeof BOSS_MAT !== 'undefined') { BOSS_MAT[AEG15] = 'tideScaleM14'; BOSS_MAT[MORA15] = 'deepPearl14'; BOSS_MAT[THAL15] = 'tideScaleM14'; }
+const DEEP_CRY15 = { [AEG15]: ['w', '單顆', [['double', 30], ['atk', 8]], ['海馬鬃', '艾格的騎槍尖']], [MORA15]: ['c', '單顆', [['spa', 10], ['freecast', 15]], ['巫女的水母紗', '莫菈的黑珍珠']],
+  [THAL15]: ['u', '單顆', [['all', 4], ['regen', 3]], ['潮將的鱗片', '潮將的珍珠']] };
+for (const sp in DEEP_CRY15) { const [t, ser, eff, [a, b]] = DEEP_CRY15[sp], lv = sp === THAL15 ? 62 : 59; CRY11[sp] = [t, ser, eff]; PARTS11[sp] = [a, b]; PART_LV11[sp] = lv; if (sp === THAL15) PART_BOSS11[sp] = 1;
+  ITEMS['pt_' + sp] = { n: a, mat: 1, price: 0, sell: 20 + lv * 6, cat: '魔物素材', part11: sp, d: SPECIES[sp].n + '身上取下的部位素材。把牠的晶石升級要用（鐵匠→晶石）。' };
+  ITEMS['pr_' + sp] = { n: b, mat: 1, price: 0, sell: 60 + lv * 20, cat: '魔物素材', part11: sp, rare11: 1, d: SPECIES[sp].n + '身上很少拿到的稀有部位。把牠的晶石升到 ★3 要用。' };
+  PART_OF11['pt_' + sp] = { sp, rare: 0 }; PART_OF11['pr_' + sp] = { sp, rare: 1 }; }
+PV('fx.tideCrown15', () => ({ triggers: [
+  { on: EVT.ROUND_END, phase: 'POST', cond: { ownerAlive: 1, foesHaveBoss: 0 }, effects: [{ type: 'heal', target: 'self', pct: 0.04, kind: 'regen', quiet: 1 }, { type: 'resource', target: 'self', res: 'mp', pct: 0.03, min: 1, why: 'tideCrown15' }] },
+  { on: EVT.ROUND_END, phase: 'POST', cond: { ownerAlive: 1, foesHaveBoss: 1 }, effects: [{ type: 'heal', target: 'self', pct: 0.02, kind: 'regen', quiet: 1 }, { type: 'resource', target: 'self', res: 'mp', pct: 0.02, min: 1, why: 'tideCrown15' }] }] }), { n: '潮將之冠' });
+PV('fx.charge15', () => ({ triggers: [{ on: EVT.BATTLE_START, phase: 'POST', effects: [{ type: 'stage', target: 'self', stats: { atk: 1, spa: 1 }, dur: 3 }] }] }), { n: '衝鋒' });
+PV('fx.blackPearl15', () => ({ mods: [{ stage: 'equipment', who: 'attacker', mul: 1.12, cond: { cat: '特', hasPower: 1 } }] }), { n: '黑珍珠' });
+const ACC15 = {
+  tideCrown15: ['潮將的珍珠冠', { hp: 40, atk: 6, spa: 8, def: 6, spd: 8 }, 'tideCrown15', '潮將之冠', '回合結束回復 4% HP・3% MP（打頭目時各 2%）', '塔拉薩戴了五百年的冠。珍珠裡封著東方之海的潮聲。'],
+  seahorseBadge15: ['海馬騎士徽章', { hp: 30, atk: 10, spe: 6, def: 4 }, 'charge15', '衝鋒', '戰鬥開始時物攻・魔攻 +1 階（3 回合）', '潮騎兵長艾格別在胸前的徽章。刻著一匹昂首的海馬。'],
+  blackPearl15: ['黑珍珠護符', { hp: 26, spa: 11, spd: 7, spe: 3 }, 'blackPearl15', '黑珍珠', '魔法傷害 +12%', '海妖大巫女莫菈的護符。黑珍珠裡，好像有什麼在游動。'],
+};
+for (const k in ACC15) { const [n, st, tr, tn, td, d] = ACC15[k];
+  GEAR[k] = { n, slot: 'acc', t: 8, st, sp: {}, fx: [tr], trait: tr, kind: '飾品', d, look: (GEAR.qHeroCrest || {}).look };
+  ACC_TRAIT[tr] = [tn, td, [n]]; if (typeof SPECIALS !== 'undefined') SPECIALS[tr] = { n: tn, d: td + '。', cat: tr === 'blackPearl15' ? '攻擊' : tr === 'charge15' ? '攻擊' : '回復' }; if (typeof BP_RARE !== 'undefined') BP_RARE.add(k); }
+Object.assign(ITEMS, { tidePearl15: { n: '潮汐之珠', key: 1, price: 0, sell: 0, cat: '重要物品', d: '兩半合在一起的潮汐之珠。握在手裡，聽得到整片海的潮聲。' } });
+const DEEP_ROWS15 = {
+  deepCastle15a: ['RRRRRRRRRRRRRRRRRR', 'RRRRRRRsssRRRRRRRR', 'RRRRRRRsssRRRRRRRR', 'RRRRRRRRsRRRRRRRRR', 'RRRsssssssssssRRRR', 'RRRsWsssssssWsRRRR', 'RRRsssssssssssRRRR', 'RRRRRRRRsRRRRRRRRR',
+    'RRRRRRRRsRRRRRRRRR', 'RRsssssssssssssRRR', 'RRsWWsssssssWWsRRR', 'RRsWWsssssssWWsRRR', 'RRsssssssssssssRRR', 'RRRRssRRRRRssRRRRR', 'RRRRssRRRRRssRRRRR', 'RRsssssssssssssRRR',
+    'RRsssssssssssssRRR', 'RRRRRRRsssRRRRRRRR', 'WWWWWWWsssWWWWWWWW', 'WWWWWWWsssWWWWWWWW', 'WWWWWsssssssWWWWWW', 'WWWWWsssssssWWWWWW', 'WWWWWWWWWWWWWWWWWW'],
+  deepCastle15b: ['RRRRRRRRRRRRRRRRRR', 'RRRRRsssssssRRRRRR', 'RRRRRsssssssRRRRRR', 'RRRRRsWsssWsRRRRRR', 'RRRRRsssssssRRRRRR', 'RRRRRRRRsRRRRRRRRR', 'RRRsssssssssssRRRR', 'RRRsWWsssssWWsRRRR',
+    'RRRsssssssssssRRRR', 'RRRRRRRRsRRRRRRRRR', 'RRRRRRRRsRRRRRRRRR', 'RRsssssssssssssRRR', 'RRsRRRRRsRRRRRsRRR', 'RRsRRRRRsRRRRRsRRR', 'RRsssRRRsRRRsssRRR', 'RRRRRRRRsRRRRRRRRR',
+    'RRRRRRsssssRRRRRRR', 'RRRRRRsssssRRRRRRR', 'RRRRRRRRRRRRRRRRRR'],
+};
+for (const id in DEEP_ROWS15) { const R = DEEP_ROWS15[id]; if (R.some(r => r.length !== R[0].length)) bvErr('ch5', 'rows ' + id); }
+const DEEP_ENC15 = [{ y0: 0, y1: 999, rate: 0.06, table: [['tideLancer14', 57, 59, 40], ['seaWitch14', 57, 59, 35], ['deepShark14', 57, 59, 25]] }];
+MAPS.deepCastle15a = { name: '深潮城・外城', music: 'ruins', border: 'R', battleBg: 'seacave13', encAll: 1, popup: 1, theme: 'seacave13', rows: DEEP_ROWS15.deepCastle15a, type: '迷宮',
+  elites: [{ id: AEG15, sp: AEG15, lv: 59, x: 8, y: 8, dir: 'down', sight: 3 }, { id: MORA15, sp: MORA15, lv: 59, x: 8, y: 3, dir: 'down', sight: 3 }],
+  npcs: [{ id: 'captainD15', x: 10, y: 21, dir: 'up', look: 'captain14', name: '船長葛雷' }, { id: 'stairsD15', x: 8, y: 1, dir: 'down', look: 'caveDoor', name: '往王座的階梯' }],
+  items: [{ id: 'dc1', x: 4, y: 4, item: 'megaPotion', n: 3 }, { id: 'dc2', x: 13, y: 4, item: 'starShard', n: 1 }, { id: 'dc3', x: 2, y: 16, gold: 15000 }, { id: 'dc4', x: 14, y: 16, item: 'megaEther', n: 2 },
+    { id: 'dc5', x: 2, y: 9, item: 'riftShard', n: 2 }, { id: 'dc6', x: 14, y: 12, item: 'vitFruit', n: 1 }],
+  gathers: [{ id: 'gdc1', x: 4, y: 13, kind: 'coral14', mat: 'coralBranch14' }, { id: 'gdc2', x: 12, y: 14, kind: 'star', mat: 'starDust' }],
+  encounters: DEEP_ENC15 };
+MAPS.deepCastle15b = { name: '深潮城・王座', music: 'ruins', border: 'R', battleBg: 'seacave13', encAll: 1, popup: 1, theme: 'seacave13', rows: DEEP_ROWS15.deepCastle15b, type: '迷宮',
+  boss: { sp: THAL15, lv: 62, x: 8, y: 2, flag: THAL15, ev: 'thalassaBoss15' },
+  npcs: [{ id: 'stairsE15', x: 8, y: 17, dir: 'up', look: 'caveDoor', name: '往下的階梯' }],
+  items: [{ id: 'dt1', x: 2, y: 14, item: 'elixir', n: 2 }, { id: 'dt2', x: 14, y: 14, item: 'starShard', n: 2 }, { id: 'dt3', x: 4, y: 6, item: 'tpBook', n: 1 }, { id: 'dt4', x: 13, y: 8, gold: 20000 }],
+  encounters: DEEP_ENC15 };
+if (!ITEMS.vitFruit) MAPS.deepCastle15a.items[5].item = 'powerFruit';
+MAPS.deepCastle15a.gearPool = LATE_GEAR13(); MAPS.deepCastle15b.gearPool = LATE_GEAR13();
+if (typeof MAP_TYPES !== 'undefined') Object.assign(MAP_TYPES, { deepCastle15a: '迷宮', deepCastle15b: '迷宮' });
+Object.assign(EXPLORE, { deepCastle15a: '深潮城', deepCastle15b: '深潮城・王座' });
+if (typeof BATTLE2_MAPS !== 'undefined') for (const k of ['deepCastle15a', 'deepCastle15b']) BATTLE2_MAPS.add(k);
+if (typeof FOE_SPOTS !== 'undefined') { FOE_SPOTS.push({ sp: AEG15, lv: 59, map: 'deepCastle15a', kind: 'elite', key: AEG15 }, { sp: MORA15, lv: 59, map: 'deepCastle15a', kind: 'elite', key: MORA15 }, { sp: THAL15, lv: 62, map: 'deepCastle15b', kind: 'boss', key: THAL15 }); FOE_SPOTS.sort((a, b) => a.lv - b.lv); }
+{ const _mg = mapGraph; let done15 = null; mapGraph = function () { const G = _mg(); if (G === done15) return G; done15 = G;
+    (G.shellVillage14 = G.shellVillage14 || {}).deepCastle15a = { x: 10, y: 16, npc: 'captainV14', ship: 1 }; (G.deepCastle15a = G.deepCastle15a || {}).shellVillage14 = { x: 10, y: 21, npc: 'captainD15', ship: 1 };
+    (G.deepCastle15a = G.deepCastle15a || {}).deepCastle15b = { x: 8, y: 1, npc: 'stairsD15' }; (G.deepCastle15b = G.deepCastle15b || {}).deepCastle15a = { x: 8, y: 17, npc: 'stairsE15' }; return G; }; }
+if (typeof MAP_G !== 'undefined') MAP_G = null;
+if (typeof SPK_INDEX !== 'undefined') SPK_INDEX = null;
+Object.assign(IRO_LOOK15, { tideLancer14: ['蒼', 25], seaWitch14: ['翠', 300], deepShark14: ['金', 210] });
+MAP3_15.deepCastle15a = [57, 59, ['tideLancer14', 'seaWitch14', 'deepShark14']]; MAP3_15.deepCastle15b = MAP3_15.deepCastle15a;
+for (const m of ['deepCastle15a', 'deepCastle15b']) { const [lo, hi, L] = MAP3_15[m], keys = [];
+  for (const b of L) { const k = 'iro_' + b; if (IRO15[k] || iroMake15(k, b, 'deepCastle15a', lo)) keys.push(k); } IRO_OF_MAP15[m] = keys; MAPS[m].rares15 = keys.map(k => [k, lo, hi]); MAPS[m].rare = MAPS[m].rares15[0] || null; }
+GEAR.iroAcc_deepCastle15a = { n: '深潮虹鱗', slot: 'acc', t: 7, st: { hp: 30, atk: 11, spa: 8 }, sp: {}, fx: ['abyCrown13'], trait: 'abyCrown13', kind: '飾品', d: '深潮城的異色魔物身上的虹色鱗片，在暗處會映出整片海的顏色。（深潮城的異色魔物掉落）', look: (GEAR.qHeroCrest || {}).look, iro15: 'deepCastle15a' };
+IRO_ACC_ALIAS15.deepCastle15b = 'deepCastle15a';
+if (typeof BP_RARE !== 'undefined') BP_RARE.add('iroAcc_deepCastle15a');
+function* card15(lines) { Sound.stop(); UI.clear(); const box = { draw(x) { x.fillStyle = '#000'; x.fillRect(0, 0, W, H); } }; yield* fadeOut(30); UI.push(box); Game.fade = 0;
+  for (const s of lines) yield* say(s, { style: 'dark', y: 98 }); UI.remove(box); const ow = Game.ow; if (ow && ow.map) ow.load(ow.map.id, ow.p.x, ow.p.y, ow.p.dir, true); yield* fadeIn(30); }
+function* ferry15(ow, dest) { Sound.sfx('run'); yield* fadeOut(20);
+  if (dest === 'deepCastle15a') ow.load('deepCastle15a', 8, 20, 'up'); else ow.load('shellVillage14', 10, 15, 'up');
+  yield* wait(10); yield* fadeIn(20); yield* say('海鷗號抵達了' + MAPS[dest].name.replace(/・.*$/, '') + '。');
+  if (dest === 'deepCastle15a' && ch3m() < 12) { setCh3m(12);
+    yield* sayAll(['浮出海面的城，全身掛著海草和珊瑚。城門前的石階，一階一階沉在水裡。', '船長葛雷：「我把船停在這裡等你們。……一定要回來啊。」', '莉婭：「潮將就在城的最上面。……走吧！」', '（深潮城・外城：城門前有守衛。往王座的階梯走吧）']); saveGame(); } }
+{ const _cv = Events.captainV14; Events.captainV14 = function* (ow) { if (ch3m() < 11) return yield* _cv.call(this, ow);
+    const r = yield* ask('船長葛雷：「要去哪裡？」', ['潮鳴港', '深潮城', '不用了']); if (r === 0) yield* ferry14(ow, 'harbor13'); else if (r === 1) yield* ferry15(ow, 'deepCastle15a'); }; }
+Object.assign(Events, {
+  *captainD15(ow) { const r = yield* ask('船長葛雷：「要先回貝殼村嗎？」', ['回貝殼村', '不用了']); if (r === 0) yield* ferry15(ow, 'shellVillage14'); },
+  *stairsD15(ow) { const f = Game.st.flags; if (!f[MORA15]) { const e = (ow.elites || []).find(q => q.id === MORA15); if (e) { yield* ow.eliteTalk(e); return; } }
+    if (yield* yesNo('往王座的階梯。上面傳來很大的潮聲。\n要上去嗎？')) yield* ow.warp('deepCastle15b', 8, 16, 'up'); },
+  *stairsE15(ow) { if (yield* yesNo('往下的階梯。要回外城嗎？')) yield* ow.warp('deepCastle15a', 8, 2, 'down'); },
+  *eliteWin_tideCaptain15(ow) { if (ch3m() < 13) setCh3m(13);
+    yield* sayAll(['潮騎兵長艾格：「……好。五百年了，第一次有人讓這匹老傢伙跪下。」', '艾格：「進去吧。塔拉薩大人不是壞人……她只是不肯再相信陸地上的人了。」', '艾格把胸前的徽章丟了過來。「拿著。給打開這道門的人。」']);
+    makeGear('seahorseBadge15', 4); yield* itemGet('得到了「海馬騎士徽章」！'); yield* say('（往城的最裡面、王座的階梯走吧）'); saveGame(); },
+  *eliteWin_seaWitchQ15(ow) { if (ch3m() < 14) setCh3m(14);
+    yield* sayAll(['海妖大巫女莫菈：「……我的歌，第一次停下來了呢。」', '莫菈：「深潮城浮上來，是塔拉薩大人要讓你們看見。五百年前沉下去的，不只是這座城。」', '莫菈：「去吧。她在上面等你。」', '莫菈留下一顆黑色的珍珠，沉進了水裡。']);
+    makeGear('blackPearl15', 4); yield* itemGet('得到了「黑珍珠護符」！'); yield* say('（登上階梯，前往深潮城・王座）'); saveGame(); },
+  *thalassaBoss15(ow) { const st = Game.st, f = st.flags; if (f[THAL15]) return;
+    yield* sayAll(['王座之間的地板是一整片海水。王座上，坐著一位長著藍黑色魚尾的女王。', '潮將 塔拉薩：「你們來了。拿著半顆珠子，帶著曙光的劍。」', '塔拉薩：「五百年前，你們的勇者也站在這裡。他說，海和陸地可以一起活下去。」', '塔拉薩：「然後，陸地上的人把海填成了港口，把我的子民趕到了深海。」', '塔拉薩：「這次，我不會再相信了。——讓我看看，你的光能不能擋住整片海！」']);
+    const res = yield* ow.battleScript({ sp: THAL15, lv: MAPS.deepCastle15b.boss.lv, kind: 'boss', id: THAL15 });
+    if (res !== 'win') return;
+    f[THAL15] = 1; ow.boss = null; setCh3m(15); delete st.bag.tidePearlHalf14; st.bag.tidePearl15 = 1;
+    yield* sayAll(['塔拉薩：「……我輸了。」', '塔拉薩：「你的光……跟那個人一樣，是暖的。」', '塔拉薩：「拿去吧，另一半的珠子。海會退回原本的地方。」', '塔拉薩：「可是，勇者。記住——魔王四將，還剩兩個。」', '塔拉薩：「南方的沙漠已經醒了。天空之上的那一位……連我都沒見過他的樣子。」', '女王把珍珠冠放在王座上，化成浪花，消失在海裡。']);
+    Sound.jingle('item'); yield* itemGet(st.name + '得到了「潮汐之珠」！'); makeGear('tideCrown15', 5); yield* itemGet('在王座上找到了「潮將的珍珠冠」！');
+    yield* sayAll(['城開始搖晃，海水從四面八方湧進王座之間——', '船長葛雷的聲音：「快上船！城要沉下去了！」', '……海鷗號載著你們，衝出了正在沉沒的深潮城。']);
+    yield* fadeOut(20); ow.load('shellVillage14', 10, 15, 'up'); yield* wait(10); yield* fadeIn(20); yield* say('（回村長家，把潮汐之珠交給珂拉村長吧）'); saveGame(); },
+});
+{ const _ck = Events.chief14; Events.chief14 = function* (ow) { const st = Game.st, n = ch3m(st);
+    if (n === 10) { setCh3m(11);
+      yield* sayAll(['珂拉村長：「勇者大人，你看海上——那座城，昨天晚上整個浮出了海面。」', '珂拉：「那就是深潮城。潮將塔拉薩就在城的最上面。」', '珂拉：「葛雷船長說，海鷗號開得過去。去碼頭找他吧。」', '莉婭：「另一半的潮汐之珠……一定要拿回來。」']);
+      yield* card15(['第五章「深潮城」', '五百年前沉進海底的城，浮上了海面。\n城的最上面，潮將塔拉薩在等著。', '（到貝殼村的碼頭找船長葛雷，搭海鷗號出發）']); saveGame(); return; }
+    if (n >= 11 && n <= 14) { yield* say('珂拉村長：「深潮城……潮將就在那裡。一定要平安回來。」\n（貝殼村的碼頭，船長葛雷會載你去）'); return; }
+    if (n === 15) { setCh3m(16); delete st.bag.tidePearl15; const g = 50000;
+      yield* sayAll(['珂拉村長：「這是……完整的潮汐之珠！」', '村長把珠子放回村子的祭壇。藍色的光一閃——', '海水嘩啦嘩啦地往後退，泡在水裡的石階、房子、晾漁網的木架，一個一個露了出來。', '村民們：「海退了！海退了！」', '珂拉：「勇者大人……貝殼村，會把你們的故事一直說下去。」']);
+      st.money += g; st.bag.starShard = (st.bag.starShard || 0) + 3; st.bag.tpBook = (st.bag.tpBook || 0) + 1; Sound.jingle('item');
+      yield* itemGet('得到了謝禮 ' + g + ' G、星之碎片×3、天賦之書！');
+      yield* card15(['第五章「深潮城」\n—— 完 ——', '潮水回到了原本的地方。\n東方的海，又聽得到海鷗的叫聲了。', '「魔王四將，還剩兩個。」\n「南方的沙漠已經醒了。」', '（下一章：南方的沙漠　製作中）']); saveGame(); return; }
+    if (n >= 16) { yield* say('珂拉村長：「海退了以後，孩子們每天都在沙灘上撿貝殼。……謝謝你，勇者大人。」'); return; }
+    yield* _ck.call(this, ow); }; }
+{ const _eq = extraQuests; extraQuests = function (st, L) { _eq(st, L); const n = ch3m(st); if (n < 11) return; const q = L.find(x => x.n === '第三章「東方的海」'); if (!q) return;
+    const T = { 11: '【推薦Lv57〜】到貝殼村的碼頭找船長葛雷，搭海鷗號前往深潮城。', 12: '攻入深潮城・外城。城門前有潮騎兵長艾格把守。', 13: '往深潮城・外城最裡面、往王座的階梯走。', 14: '登上深潮城・王座，打倒潮將塔拉薩。（建議Lv60）',
+      15: '拿回了潮汐之珠。回貝殼村，把它交給珂拉村長。', 16: '完成：潮水回到了原本的地方。（下一章：南方的沙漠）' };
+    Object.assign(q, { n: '第五章「深潮城」', t: T[Math.min(16, n)], done: n >= 16, rw: n >= 15 ? '50000 G・星之碎片×3・天賦之書' : '' }); }; }
+ACHIEVEMENTS.push({ id: 'ch5_aeg', n: '開啟的城門', d: '打倒潮騎兵長艾格。', cat: '戰鬥', ok: st => !!(st.flags || {})[AEG15] },
+  { id: 'ch5_thalassa', n: '潮將退去', d: '打倒潮將塔拉薩，讓東方的海恢復潮汐。', cat: '戰鬥', ok: st => !!(st.flags || {})[THAL15] });
+if (typeof NPC_WHERE !== 'undefined') Object.assign(NPC_WHERE, { captainD15: '深潮城・外城' });
+NPC_ROLES.任務.push('captainD15'); (NPC_ROLES.事件 || NPC_ROLES.情報).push('stairsD15', 'stairsE15');
+const NEW_ROWS15 = {
+  meadow15: ["TTTTTTTTTTTTTTTTTTTTTT", "T....###......###....T", "T...#####....#####...T", "T...#####.o..#####...T", "T....###......###....T", "T..........::........T", "TT...o.....::.....o..T", "T##........::......##T", "T###...TT..::..TT..##T", "T##....TT..::..TT...#T", "T..........::........T", "T....####..::..####..T", "T...######.::.######.T", "T....####..::..####..T", "T..........::........T", "TT.........::.......TT", "T....##....::...##...T", "T...####...::..####..T", "TTTTTTTTTTT::TTTTTTTTT", "TTTTTTTTTTTTTTTTTTTTTT"],
+  marsh15: ["TTTTTTTTTTTTTTTTTTTTTT", "T..WW....###....WWW..T", "T..WW...#####...WWW..T", "T.......#####........T", "T..###...###....###..T", "T.#####.......######.T", "T..###..WWWW...####..T", "T.......WWWW.........T", "TT...:::::::::::::..TT", "T....:...WWW.....:...T", "T.##.:...WWW..##.:.#.T", "T####:........##.:###T", "T.##.:..###......:.#.T", "T....:.#####.....:...T", "TWW..:..###...WW.:...T", "TWW..:........WW.:...T", "T....::::::::::::::..T", "T..........::........T", "TTTTTTTTTTT::TTTTTTTTT", "TTTTTTTTTTTTTTTTTTTTTT"],
+  highland15: ["TTTTTTTTTTTTTTTTTTTTTTTT", "T..o....####....o......T", "T......######.......o..T", "T.###...####....####...T", "T#####.........######..T", "T.###....::::.....##...T", "T........:..:..........T", "TT..o....:..:....o...TTT", "T...###..:..:..###.....T", "T..#####.:..:.#####....T", "T...###..:..:..###..o..T", "T........:..:..........T", "TTT......:..:.......###T", "T...####.:..:......####T", "T..######::::.......##.T", "T...####...:...........T", "T..........:....o......T", "TTTTTTTTTTT:TTTTTTTTTTTT", "TTTTTTTTTTTTTTTTTTTTTTTT"],
+  emberRuin15: ["TTTTTTTTTTTTTTTTTTTTTTTT", "TRRRRRRRR......RRRRRRRRT", "TR......R..##..R......RT", "TR.####.R.####.R.####.RT", "TR.####...####...####.RT", "TR......R..##..R......RT", "TRRRR.RRR......RRR.RRRRT", "T.....................#T", "T.###....RR..RR....###.T", "T#####...R....R...#####T", "T.###....RR..RR....###.T", "T......................T", "TRRR.RRRRR.::.RRRRR.RRRT", "T..........::..........T", "T..####....::....####..T", "T.######...::...######.T", "T..####....::....####..T", "T..........::..........T", "TTTTTTTTTTT::TTTTTTTTTTT", "TTTTTTTTTTTTTTTTTTTTTTTT"],
+};
+const NEW15 = {
+  meadow15: ['風鈴牧草地', [4, 6], ['bird', 'meadowWolf', 'fluffSeed'], null, ['plains', 'plains', 'meadow'], ['windHills', 35, 34, 35, 35], [11, 18], [11, 17]],
+  marsh15: ['霧沼小徑', [8, 10], ['mistSnail', 'frog', 'mireFly'], null, [undefined, 'lake', 'lake'], ['jadeCreek', 23, 8, 23, 9], [11, 18], [11, 17]],
+  highland15: ['風之高原', [23, 25], ['plainsHawk', 'windSprite', 'fox'], null, ['autumn', 'route', 'meadow'], ['northRoad', 31, 25, 31, 26], [11, 17], [11, 16]],
+  emberRuin15: ['餘燼古城', [35, 37], ['magmaSlime', 'blazeSpirit', 'sentinel'], 'nightmare', ['volcano', 'volcano', 'volcano'], ['emberPass', 31, 32, 31, 33], [11, 18], [11, 17]],
+};
+const TRAIL15_IMG = pxArt14(16, 22, (put, rect) => { rect(7, 8, 8, 21, '#5a3a22'); rect(8, 8, 8, 21, '#7a5232'); rect(2, 4, 13, 9, '#3a2414'); rect(3, 5, 12, 8, '#b08050'); rect(3, 5, 12, 5, '#d0a070');
+  rect(5, 6, 10, 7, '#3a2414'); put(11, 5, '#3a2414'); put(11, 8, '#3a2414'); put(12, 6, '#3a2414'); put(12, 7, '#3a2414'); rect(6, 20, 9, 21, '#2a1a10'); });
+{ const _nf = npcFrames; npcFrames = function (look) { if (look === 'trail15') return propFrames(TRAIL15_IMG, 6); return _nf(look); }; }
+const EXPLORE_ACC15 = {
+  windChime15: ['風鈴耳飾', 1, { hp: 7, spe: 3, spa: 1 }, 'swift', '牧草地的風一吹就會響的小耳飾。戴上之後腳步也輕了起來。'],
+  mistCharm15: ['霧沼護符', 2, { hp: 10, spd: 3, spa: 2 }, 'will', '沼澤小屋的老婆婆掛在門口的護符。霧再大也不會迷路。'],
+  hawkFeather15: ['高原鷹羽', 4, { hp: 15, atk: 4, spe: 5 }, 'initiative', '高原上最高的那塊岩石上撿到的鷹羽，摸起來還有風的溫度。'],
+  emberCrown15: ['餘燼王冠', 6, { hp: 26, atk: 6, spa: 6, def: 4 }, 'fervor', '餘燼古城最後一位城主的小王冠。上面的寶石裡，火還沒有熄。'],
+};
+for (const k in EXPLORE_ACC15) { const [n, t, st, tr, d] = EXPLORE_ACC15[k];
+  GEAR[k] = { n, slot: 'acc', t, st, sp: {}, fx: [tr], trait: tr, kind: '飾品', d, look: (GEAR.qHeroCrest || {}).look };
+  if (ACC_TRAIT[tr] && ACC_TRAIT[tr][2] && !ACC_TRAIT[tr][2].includes(n)) ACC_TRAIT[tr][2].push(n); if (typeof BP_RARE !== 'undefined') BP_RARE.add(k); }
+const NEW_ITEMS15 = {
+  meadow15: [['superPotion', 2], ['ether', 2], [null, 800], ['luckClover', 1], ['windChime15', 3]],
+  marsh15: [['superPotion', 3], ['hiEther', 1], [null, 1500], ['agiFruit', 1], ['mistCharm15', 3]],
+  highland15: [['megaPotion', 2], ['megaEther', 1], [null, 6000], ['dexFruit', 1], ['hawkFeather15', 4]],
+  emberRuin15: [['megaPotion', 3], ['elixir', 1], [null, 12000], ['powerFruit', 1], ['emberCrown15', 4]],
+};
+const NEW_ITEMXY15 = { meadow15: [[2, 1], [19, 1], [1, 10], [20, 14], [20, 9]], marsh15: [[1, 3], [20, 3], [1, 13], [20, 15], [10, 1]],
+  highland15: [[1, 1], [22, 2], [22, 14], [1, 16], [22, 11]], emberRuin15: [[2, 2], [21, 2], [11, 9], [1, 17], [22, 7]] };
+const NEW_NPC15 = { meadow15: ['shepherd15', 5, 5, 'kid', '牧羊少年', 'c51'], marsh15: ['herbGran15', 12, 7, 'old', '採藥的婆婆', 'c52'], highland15: ['painter15', 13, 6, 'traveler', '旅行畫家', 'c53'], emberRuin15: ['scholar15', 10, 13, 'man', '考古學者', 'c54'] };
+Object.assign(COMMISSIONS, {
+  c51: { n: '牧草地的野狼', from: '牧羊少年', d: '野狼一直來偷羊。接下委託後，擊敗野狼×5。', kill: ['meadowWolf', 5], reward: { gold: 800, items: { agiFruit: 1 } }, open: st => st.vis && st.vis.meadow15 },
+  c52: { n: '沼澤的毒蛙', from: '採藥的婆婆', d: '紫斑蛙把藥草都弄髒了。接下委託後，擊敗紫斑蛙×5。', kill: ['frog', 5], reward: { gold: 1500, items: { wisdomFruit: 1 } }, open: st => st.vis && st.vis.marsh15 },
+  c53: { n: '高原的老鷹', from: '旅行畫家', d: '草原鷹老是來搶畫具。接下委託後，擊敗草原鷹×5。', kill: ['plainsHawk', 5], reward: { gold: 5000, items: { tpBook: 1 } }, open: st => st.vis && st.vis.highland15 },
+  c54: { n: '古城的哨兵', from: '考古學者', d: '魔像哨兵擋在遺跡的入口。接下委託後，擊敗魔像哨兵×4。', kill: ['sentinel', 4], reward: { gold: 10000, items: { powerFruit: 1, tpBook: 1 } }, open: st => st.vis && st.vis.emberRuin15 },
+});
+Object.assign(COM_GIVER, { c51: 'shepherd15', c52: 'herbGran15', c53: 'painter15', c54: 'scholar15' });
+Object.assign(COM_TALK, {
+  c51: ['牧羊少年：「最近野狼一直跑來，羊都不敢出來吃草了……」', '「你看起來很厲害！可以幫我趕走牠們嗎？」'],
+  c52: ['採藥的婆婆：「霧沼的藥草，是碧溪谷的人治病要用的。」', '「可是紫斑蛙在上面爬來爬去，藥草都沾上毒了。」'],
+  c53: ['旅行畫家：「這片高原的風景，我畫了三年還畫不完。」', '「可是草原鷹老是來叼我的畫筆……幫幫我吧。」'],
+  c54: ['考古學者：「這座城叫做餘燼古城。五百年前，火山爆發的那一夜就被燒成這樣了。」', '「城裡面還有東西在動……是當年的魔像哨兵。不打倒牠們，我沒辦法調查。」'],
+});
+Object.assign(COM_THANKS, { c51: '羊都敢出來吃草了！謝謝你！', c52: '這下藥草能採了。碧溪谷的人會很高興的。', c53: '這下終於能專心畫畫了。畫好了送你一張！', c54: '太好了！……這座城的城主，聽說戴著一頂火紅的小王冠。' });
+for (const id in NEW15) { const [name, [lo, hi], L, night, [theme, music, bg], [pm, px, py, ax, ay], [tx, ty], [rx, ry]] = NEW15[id];
+  const table = L.map((sp, i) => [sp, lo, hi, [40, 35, 25][i]]); if (night) { const r = [night, lo, hi, 0]; r.night12 = 1; table.push(r); }
+  const [nid, nx, ny, nlook, nname] = NEW_NPC15[id];
+  MAPS[id] = { name, music, outdoor: 1, border: 'T', battleBg: bg, popup: 1, ...(theme ? { theme } : {}), rows: NEW_ROWS15[id], type: '野外',
+    signs: {}, npcs: [{ id: 'trailBack_' + id, x: tx, y: ty, dir: 'up', look: 'trail15', name: '往' + MAPS[pm].name + '的小路' }, { id: nid, x: nx, y: ny, dir: 'down', look: nlook, name: nname }],
+    items: NEW_ITEMS15[id].map(([k, n], i) => { const [x, y] = NEW_ITEMXY15[id][i], o = { id: id + '_i' + i, x, y }; if (!k) o.gold = n; else if (GEAR[k]) { o.item = k; o.q = n; } else { o.item = k; o.n = n; } return o; }),
+    gathers: [], encounters: [{ y0: 0, y1: 999, rate: 0.08, table }] };
+  MAPS[id].gearPool = (MAPS[pm].gearPool || []).slice();
+  MAPS[pm].npcs.push({ id: 'trail_' + id, x: px, y: py, dir: 'down', look: 'trail15', name: '往' + name + '的小路' }); if (typeof mapCache !== 'undefined') delete mapCache[pm];
+  Events['trail_' + id] = function* (ow) { if (yield* yesNo('往「' + name + '」的小路。（魔物 Lv' + lo + '〜' + hi + '）\n要過去嗎？')) yield* ow.warp(id, rx, ry, 'up'); };
+  Events['trailBack_' + id] = function* (ow) { if (yield* yesNo('往' + MAPS[pm].name + '的小路。要回去嗎？')) yield* ow.warp(pm, ax, ay, 'down'); };
+  if (typeof MAP_TYPES !== 'undefined') MAP_TYPES[id] = '野外'; EXPLORE[id] = name;
+  if (typeof NPC_WHERE !== 'undefined') { NPC_WHERE[nid] = name; NPC_WHERE['trail_' + id] = MAPS[pm].name; }
+  (NPC_ROLES.任務 || []).push(nid); (NPC_ROLES.事件 || NPC_ROLES.情報 || []).push('trail_' + id, 'trailBack_' + id);
+  MAP3_15[id] = [lo, hi, L.slice()]; }
+{ const _mg = mapGraph; let done = null; mapGraph = function () { const G = _mg(); if (G === done) return G; done = G;
+    for (const id in NEW15) { const [, , , , , [pm, px, py, ax, ay], [tx, ty]] = NEW15[id];
+      (G[pm] = G[pm] || {})[id] = { x: px, y: py, npc: 'trail_' + id }; (G[id] = G[id] || {})[pm] = { x: tx, y: ty, npc: 'trailBack_' + id }; } return G; }; }
+if (typeof MAP_G !== 'undefined') MAP_G = null;
+if (typeof SPK_INDEX !== 'undefined') SPK_INDEX = null;
+Object.assign(IRO_LOOK15, { bird: ['金', 274], meadowWolf: ['蒼', 33], fluffSeed: ['紫', 36], mistSnail: ['翠', 311], frog: ['金', 310], mireFly: ['緋', 189],
+  plainsHawk: ['蒼', 15], windSprite: ['櫻', 130], fox: ['紫', 23], magmaSlime: ['蒼', 68], blazeSpirit: ['翠', 1], sentinel: ['金', 315] });
+const NEW_IROACC15 = { meadow15: ['牧草虹鈴', ['spe', 'spa'], 'meditate'], marsh15: ['霧沼虹珠', ['spa', 'spd'], 'manaSiphon'], highland15: ['高原虹羽', ['atk', 'spe'], 'hunter'], emberRuin15: ['古城虹焰', ['atk', 'spa'], 'lastStand'] };
+for (const m in NEW15) { const [lo, hi, L] = MAP3_15[m], keys = [];
+  for (const b of L) { const k = 'iro_' + b; if (IRO15[k] || iroMake15(k, b, m, lo)) keys.push(k); } IRO_OF_MAP15[m] = keys; MAPS[m].rares15 = keys.map(k => [k, lo, hi]); MAPS[m].rare = MAPS[m].rares15[0] || null;
+  const [n, [a, b], tr] = NEW_IROACC15[m], t = iroAccT15(lo), B = IRO_ACCB15[t], k = 'iroAcc_' + m;
+  GEAR[k] = { n, slot: 'acc', t, st: { hp: Math.round(B * 0.8), [a]: Math.round(B * 0.3), [b]: Math.round(B * 0.22) }, sp: {}, fx: [tr], trait: tr, kind: '飾品', d: MAPS[m].name + '的異色魔物身上的虹色小東西。（' + MAPS[m].name + '的異色魔物掉落）', look: (GEAR.qHeroCrest || {}).look, iro15: m };
+  if (ACC_TRAIT[tr] && ACC_TRAIT[tr][2] && !ACC_TRAIT[tr][2].includes(n)) ACC_TRAIT[tr][2].push(n); if (typeof BP_RARE !== 'undefined') BP_RARE.add(k); }
+ACHIEVEMENTS.push({ id: 'trail15', n: '小路的盡頭', d: '走過風鈴牧草地、霧沼小徑、風之高原、餘燼古城四張地圖。', cat: '探索', ok: st => !!(st.vis && ['meadow15', 'marsh15', 'highland15', 'emberRuin15'].every(m => st.vis[m])) },
+  { id: 'trail15b', n: '藏起來的寶物', d: '找到四張小路地圖裡藏起來的飾品。', cat: '探索', ok: st => ['meadow15_i4', 'marsh15_i4', 'highland15_i4', 'emberRuin15_i4'].every(k => (st.flags || {})[k]) });
+function lean15(sp) { const S = SPECIES[sp], P = MON_PANEL[sp]; if (!S || !P) return 0; const n = S.n || '', f = S.fam;
+  if (f === 'spirit' || /魂|靈|鬼|怨|幽|巫|魔女|法師/.test(n)) return -1;
+  if (['construct', 'insect', 'ooze'].includes(f) || /甲|殼|鎧|騎士|兵|岩|石|鐵|龜|蟹|貝|骷髏|骸骨|魔像|哨兵/.test(n)) return 1;
+  if (P.spa > P.atk * 1.15) return -1;
+  return 0; }
+const SPLIT15 = 1.22; // √(物防/魔防)：1.22² ≈ 1.49
+for (const sp in MON_PANEL) { const P = MON_PANEL[sp], L = lean15(sp); if (!L || !P.def || !P.spd || SPECIES[sp] && SPECIES[sp].iro15) continue;
+  const lv = P.lv || 1, k = lv < 12 ? 0 : lv < 30 ? 0.5 : 1; if (!k) continue;
+  const want = Math.pow(SPLIT15, 2 * k), cur = L > 0 ? P.def / P.spd : P.spd / P.def; if (cur >= want) continue;
+  const m = Math.sqrt(P.def * P.spd), r = Math.sqrt(want); if (L > 0) { P.def = Math.round(m * r); P.spd = Math.max(1, Math.round(m / r)); } else { P.spd = Math.round(m * r); P.def = Math.max(1, Math.round(m / r)); } }
+ST11('pguard15', '硬殼', { mods: [{ stage: 'final', who: 'defender', mul: 0.6, cond: { cat: '物', hasPower: 1 } }] });
+ST11('mguard15', '魔障', { mods: [{ stage: 'final', who: 'defender', mul: 0.6, cond: { cat: '特', hasPower: 1 } }] });
+Object.assign(BUFF12, { pguard15: { n: '硬殼', k: 'def', tip: '受到的物理傷害 −40%（改用魔法招）' }, mguard15: { n: '魔障', k: 'def', tip: '受到的魔法傷害 −40%（改用物理招）' } });
+COND.stanceDue15 = (c, v) => { const r = c.core.round; if (r < 3 || (r - 3) % 4) return false; const i = (r - 3) / 4; return v === 'a1' ? i % 2 === 0 : v === 'a2' ? i % 2 === 1 : true; };
+const STANCE_TXT15 = { pguard15: '（身體變得像岩石一樣硬——物理傷害 −40%，換魔法招打吧！）', mguard15: '（四周張開了魔力的屏障——魔法傷害 −40%，換物理招打吧！）' };
+const stanceTr15 = (st, when) => ({ on: EVT.ROUND_START, phase: 'POST', cond: { ownerAlive: 1, stanceDue15: when }, effects: [{ type: 'status', target: 'self', status: st, dur: 2 }, { type: 'message', target: 'self', text: STANCE_TXT15[st] }] });
+defPut('mechanics', 'stanceP15', { make: () => ({ triggers: [stanceTr15('pguard15', 'all')] }) });
+defPut('mechanics', 'stanceM15', { make: () => ({ triggers: [stanceTr15('mguard15', 'all')] }) });
+defPut('mechanics', 'stanceA15', { make: () => ({ triggers: [stanceTr15('pguard15', 'a1'), stanceTr15('mguard15', 'a2')] }) });
+{ const _ue = BD.unitForEnemy; BD.unitForEnemy = function (core, sp, lv, kind, side, idx, o = {}) { const s = _ue.call(this, core, sp, lv, kind, side, idx, o);
+    if (!s || (kind !== 'elite' && kind !== 'boss') || (lv || 0) < 30) return s; const r = s.stats.def / Math.max(1, s.stats.spd);
+    (s.data.mechanics || (s.data.mechanics = [])).push(r >= 1.15 ? 'stanceM15' : r <= 0.87 ? 'stanceP15' : 'stanceA15'); return s; }; }

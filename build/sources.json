@@ -18,6 +18,7 @@
    "jadeCreek掉落池",
    "cave6_route掉落池",
    "cave6_jadeCreek掉落池",
+   "marsh15掉落池",
    "重戰掉落:creekBandit",
    "重戰掉落:glowToad",
    "重戰掉落:crystalCrayfish"
@@ -27,6 +28,7 @@
    "windHills掉落池",
    "cave6_route掉落池",
    "cave6_windHills掉落池",
+   "meadow15掉落池",
    "道具店",
    "重戰掉落:glowToad",
    "重戰掉落:rockPangolin",
@@ -38,6 +40,7 @@
    "cave6_route掉落池",
    "cave6_windHills精英掉落",
    "cave6_windHills掉落池",
+   "meadow15掉落池",
    "道具店",
    "重戰掉落:rockPangolin"
   ],
@@ -50,6 +53,7 @@
    "windHills掉落池",
    "cave6_route掉落池",
    "cave6_windHills掉落池",
+   "meadow15掉落池",
    "道具店",
    "重戰掉落:rockPangolin"
   ],
@@ -58,6 +62,7 @@
    "windHills掉落池",
    "cave6_route掉落池",
    "cave6_windHills掉落池",
+   "meadow15掉落池",
    "重戰掉落:blackCatfish"
   ],
   "swiftFeather": [
@@ -65,6 +70,7 @@
    "windHills掉落池",
    "cave6_route掉落池",
    "cave6_windHills掉落池",
+   "meadow15掉落池",
    "道具店",
    "重戰掉落:millGolem",
    "重戰掉落:rockPangolin"
@@ -74,6 +80,7 @@
    "windHills掉落池",
    "cave6_route掉落池",
    "cave6_windHills掉落池",
+   "meadow15掉落池",
    "重戰掉落:wolf",
    "重戰掉落:millGolem"
   ],
@@ -82,6 +89,7 @@
    "jadeCreek掉落池",
    "cave6_jadeCreek掉落池",
    "cave6_forest掉落池",
+   "marsh15掉落池",
    "重戰掉落:crystalCrayfish",
    "重戰掉落:rootSpider"
   ],
@@ -90,6 +98,7 @@
    "jadeCreek掉落池",
    "cave6_jadeCreek掉落池",
    "cave6_forest掉落池",
+   "marsh15掉落池",
    "重戰掉落:rootSpider"
   ],
   "hunterCap": [
@@ -98,6 +107,7 @@
    "windHills寶箱",
    "cave6_windHills掉落池",
    "cave6_forest掉落池",
+   "meadow15掉落池",
    "重戰掉落:millGolem",
    "重戰掉落:rootSpider"
   ],
@@ -109,6 +119,7 @@
    "cave6_jadeCreek掉落池",
    "cave6_forest精英掉落",
    "cave6_forest掉落池",
+   "marsh15掉落池",
    "重戰掉落:mossGiant",
    "重戰掉落:crystalCrayfish",
    "重戰掉落:rootSpider"
@@ -122,6 +133,7 @@
    "jadeCreek掉落池",
    "cave6_jadeCreek掉落池",
    "cave6_forest掉落池",
+   "marsh15掉落池",
    "重戰掉落:millGolem",
    "鐵匠配方",
    "磨石魔像掉落"
@@ -211,6 +223,7 @@
    "mine掉落池",
    "jadeCreek掉落池",
    "cave6_jadeCreek掉落池",
+   "marsh15掉落池",
    "重戰掉落:croc",
    "重戰掉落:blackCatfish",
    "重戰掉落:crystalCrayfish",
@@ -418,6 +431,7 @@
    "oldField掉落池",
    "cave6_oldField掉落池",
    "cave6_northRoad掉落池",
+   "highland15掉落池",
    "重戰掉落:blackFeather",
    "重戰掉落:ramGhost",
    "重戰掉落:hideoutBear"
@@ -428,6 +442,7 @@
    "cave6_northRoad精英掉落",
    "cave6_northRoad掉落池",
    "cave6_goldPlains掉落池",
+   "highland15掉落池",
    "重戰掉落:boarKing",
    "重戰掉落:hideoutBear",
    "重戰掉落:termiteQueen"
@@ -442,6 +457,7 @@
    "cave6_maplePass掉落池",
    "cave6_northRoad掉落池",
    "cave6_goldPlains掉落池",
+   "highland15掉落池",
    "重戰掉落:blackFeather",
    "重戰掉落:stagLord",
    "重戰掉落:rockBeetle",
@@ -454,6 +470,7 @@
    "oldField掉落池",
    "cave6_oldField掉落池",
    "cave6_northRoad掉落池",
+   "highland15掉落池",
    "重戰掉落:ratKing",
    "重戰掉落:harvestGolem",
    "重戰掉落:wraithGeneral",
@@ -466,6 +483,7 @@
    "goldPlains掉落池",
    "cave6_northRoad掉落池",
    "cave6_goldPlains掉落池",
+   "highland15掉落池",
    "重戰掉落:ratKing",
    "重戰掉落:boarKing",
    "重戰掉落:termiteQueen"
@@ -478,6 +496,7 @@
    "cave6_northRoad掉落池",
    "cave6_goldPlains精英掉落",
    "cave6_goldPlains掉落池",
+   "highland15掉落池",
    "重戰掉落:blackFeather",
    "重戰掉落:boarKing",
    "重戰掉落:termiteQueen"
@@ -491,6 +510,7 @@
    "cave6_oldField掉落池",
    "cave6_northRoad掉落池",
    "cave6_goldPlains掉落池",
+   "highland15掉落池",
    "重戰掉落:harvestGolem",
    "重戰掉落:termiteQueen",
    "northRoad掉落池(魔導士)",
@@ -498,6 +518,7 @@
    "cave6_northRoad精英掉落(魔導士)",
    "cave6_northRoad掉落池(魔導士)",
    "cave6_goldPlains掉落池(魔導士)",
+   "highland15掉落池(魔導士)",
    "重戰掉落:boarKing(魔導士)",
    "重戰掉落:hideoutBear(魔導士)",
    "重戰掉落:termiteQueen(魔導士)"
@@ -557,6 +578,8 @@
    "sunkenReef14掉落池",
    "abyssTemple14a掉落池",
    "abyssTemple14b掉落池",
+   "deepCastle15a掉落池",
+   "deepCastle15b掉落池",
    "重戰掉落:frostQueen",
    "重戰掉落:iceMammoth"
   ],
@@ -571,6 +594,8 @@
    "sunkenReef14掉落池",
    "abyssTemple14a掉落池",
    "abyssTemple14b掉落池",
+   "deepCastle15a掉落池",
+   "deepCastle15b掉落池",
    "重戰掉落:iceMammoth"
   ],
   "glacierStaff": [
@@ -583,6 +608,8 @@
    "sunkenReef14掉落池",
    "abyssTemple14a掉落池",
    "abyssTemple14b掉落池",
+   "deepCastle15a掉落池",
+   "deepCastle15b掉落池",
    "重戰掉落:frostLich",
    "重戰掉落:frostQueen",
    "重戰掉落:iceMammoth",
@@ -595,6 +622,8 @@
    "sunkenReef14掉落池(魔導士)",
    "abyssTemple14a掉落池(魔導士)",
    "abyssTemple14b掉落池(魔導士)",
+   "deepCastle15a掉落池(魔導士)",
+   "deepCastle15b掉落池(魔導士)",
    "重戰掉落:frostQueen(魔導士)",
    "重戰掉落:iceMammoth(魔導士)"
   ],
@@ -610,6 +639,8 @@
    "sunkenReef14掉落池",
    "abyssTemple14a掉落池",
    "abyssTemple14b掉落池",
+   "deepCastle15a掉落池",
+   "deepCastle15b掉落池",
    "重戰掉落:snowBear",
    "重戰掉落:frostLich",
    "重戰掉落:iceMammoth"
@@ -624,6 +655,8 @@
    "sunkenReef14掉落池",
    "abyssTemple14a掉落池",
    "abyssTemple14b掉落池",
+   "deepCastle15a掉落池",
+   "deepCastle15b掉落池",
    "重戰掉落:frostQueen"
   ],
   "snowBoots": [
@@ -637,6 +670,8 @@
    "sunkenReef14掉落池",
    "abyssTemple14a掉落池",
    "abyssTemple14b掉落池",
+   "deepCastle15a掉落池",
+   "deepCastle15b掉落池",
    "重戰掉落:snowBear"
   ],
   "iceCharm": [
@@ -650,6 +685,8 @@
    "sunkenReef14掉落池",
    "abyssTemple14a掉落池",
    "abyssTemple14b掉落池",
+   "deepCastle15a掉落池",
+   "deepCastle15b掉落池",
    "重戰掉落:snowBear",
    "重戰掉落:frostLich"
   ],
@@ -663,6 +700,9 @@
    "sunkenReef14掉落池",
    "abyssTemple14a掉落池",
    "abyssTemple14b掉落池",
+   "deepCastle15a掉落池",
+   "deepCastle15b掉落池",
+   "emberRuin15掉落池",
    "重戰掉落:youngDragon",
    "重戰掉落:magmaNewt"
   ],
@@ -677,6 +717,9 @@
    "sunkenReef14掉落池",
    "abyssTemple14a掉落池",
    "abyssTemple14b掉落池",
+   "deepCastle15a掉落池",
+   "deepCastle15b掉落池",
+   "emberRuin15掉落池",
    "重戰掉落:magmaNewt"
   ],
   "volcanoStaff": [
@@ -689,6 +732,9 @@
    "sunkenReef14掉落池",
    "abyssTemple14a掉落池",
    "abyssTemple14b掉落池",
+   "deepCastle15a掉落池",
+   "deepCastle15b掉落池",
+   "emberRuin15掉落池",
    "重戰掉落:lavaGiant",
    "重戰掉落:magmaNewt",
    "emberPass掉落池(魔導士)",
@@ -700,6 +746,9 @@
    "sunkenReef14掉落池(魔導士)",
    "abyssTemple14a掉落池(魔導士)",
    "abyssTemple14b掉落池(魔導士)",
+   "deepCastle15a掉落池(魔導士)",
+   "deepCastle15b掉落池(魔導士)",
+   "emberRuin15掉落池(魔導士)",
    "重戰掉落:youngDragon(魔導士)",
    "重戰掉落:magmaNewt(魔導士)",
    "emberPass掉落池(魔導士)",
@@ -712,6 +761,9 @@
    "sunkenReef14掉落池(魔導士)",
    "abyssTemple14a掉落池(魔導士)",
    "abyssTemple14b掉落池(魔導士)",
+   "deepCastle15a掉落池(魔導士)",
+   "deepCastle15b掉落池(魔導士)",
+   "emberRuin15掉落池(魔導士)",
    "重戰掉落:magmaNewt(魔導士)"
   ],
   "salamanderHelm": [
@@ -725,6 +777,9 @@
    "sunkenReef14掉落池",
    "abyssTemple14a掉落池",
    "abyssTemple14b掉落池",
+   "deepCastle15a掉落池",
+   "deepCastle15b掉落池",
+   "emberRuin15掉落池",
    "重戰掉落:youngDragon",
    "重戰掉落:magmaNewt"
   ],
@@ -738,6 +793,9 @@
    "sunkenReef14掉落池",
    "abyssTemple14a掉落池",
    "abyssTemple14b掉落池",
+   "deepCastle15a掉落池",
+   "deepCastle15b掉落池",
+   "emberRuin15掉落池",
    "重戰掉落:lavaGiant"
   ],
   "lavaBoots": [
@@ -752,6 +810,9 @@
    "sunkenReef14掉落池",
    "abyssTemple14a掉落池",
    "abyssTemple14b掉落池",
+   "deepCastle15a掉落池",
+   "deepCastle15b掉落池",
+   "emberRuin15掉落池",
    "重戰掉落:lavaGiant"
   ],
   "emberCharm": [
@@ -765,6 +826,9 @@
    "sunkenReef14掉落池",
    "abyssTemple14a掉落池",
    "abyssTemple14b掉落池",
+   "deepCastle15a掉落池",
+   "deepCastle15b掉落池",
+   "emberRuin15掉落池",
    "重戰掉落:youngDragon"
   ],
   "duskSword": [
@@ -774,7 +838,9 @@
    "mistcapeCoast14掉落池",
    "sunkenReef14掉落池",
    "abyssTemple14a掉落池",
-   "abyssTemple14b掉落池"
+   "abyssTemple14b掉落池",
+   "deepCastle15a掉落池",
+   "deepCastle15b掉落池"
   ],
   "shadowDagger": [
    "duskFort1掉落池",
@@ -783,7 +849,9 @@
    "mistcapeCoast14掉落池",
    "sunkenReef14掉落池",
    "abyssTemple14a掉落池",
-   "abyssTemple14b掉落池"
+   "abyssTemple14b掉落池",
+   "deepCastle15a掉落池",
+   "deepCastle15b掉落池"
   ],
   "voidStaff": [
    "duskFort1掉落池",
@@ -793,6 +861,8 @@
    "sunkenReef14掉落池",
    "abyssTemple14a掉落池",
    "abyssTemple14b掉落池",
+   "deepCastle15a掉落池",
+   "deepCastle15b掉落池",
    "重戰掉落:shadowGeneral",
    "duskFort1掉落池(魔導士)",
    "coralCoast13掉落池(魔導士)",
@@ -801,6 +871,8 @@
    "sunkenReef14掉落池(魔導士)",
    "abyssTemple14a掉落池(魔導士)",
    "abyssTemple14b掉落池(魔導士)",
+   "deepCastle15a掉落池(魔導士)",
+   "deepCastle15b掉落池(魔導士)",
    "重戰掉落:shadowGeneral(魔導士)",
    "影將莫爾德掉落(魔導士)"
   ],
@@ -813,6 +885,8 @@
    "sunkenReef14掉落池",
    "abyssTemple14a掉落池",
    "abyssTemple14b掉落池",
+   "deepCastle15a掉落池",
+   "deepCastle15b掉落池",
    "重戰掉落:duskCaptain"
   ],
   "duskPlate": [
@@ -823,6 +897,8 @@
    "sunkenReef14掉落池",
    "abyssTemple14a掉落池",
    "abyssTemple14b掉落池",
+   "deepCastle15a掉落池",
+   "deepCastle15b掉落池",
    "重戰掉落:duskCaptain",
    "重戰掉落:shadowGeneral"
   ],
@@ -834,6 +910,8 @@
    "sunkenReef14掉落池",
    "abyssTemple14a掉落池",
    "abyssTemple14b掉落池",
+   "deepCastle15a掉落池",
+   "deepCastle15b掉落池",
    "重戰掉落:victorDemon"
   ],
   "voidBoots": [
@@ -845,6 +923,8 @@
    "sunkenReef14掉落池",
    "abyssTemple14a掉落池",
    "abyssTemple14b掉落池",
+   "deepCastle15a掉落池",
+   "deepCastle15b掉落池",
    "重戰掉落:duskCaptain"
   ],
   "voidRing": [
@@ -855,6 +935,8 @@
    "sunkenReef14掉落池",
    "abyssTemple14a掉落池",
    "abyssTemple14b掉落池",
+   "deepCastle15a掉落池",
+   "deepCastle15b掉落池",
    "重戰掉落:victorDemon",
    "重戰掉落:shadowGeneral"
   ],
@@ -887,6 +969,7 @@
   "voltSword": [
    "jadeCreek掉落池",
    "cave6_jadeCreek掉落池",
+   "marsh15掉落池",
    "重戰掉落:blackCatfish",
    "鐵匠配方"
   ],
@@ -924,6 +1007,18 @@
   ],
   "warpPendant13": [
    "warpRuin13寶箱"
+  ],
+  "windChime15": [
+   "meadow15寶箱"
+  ],
+  "mistCharm15": [
+   "marsh15寶箱"
+  ],
+  "hawkFeather15": [
+   "highland15寶箱"
+  ],
+  "emberCrown15": [
+   "emberRuin15寶箱"
   ],
   "primerTome": [
    "道具店"
@@ -1069,6 +1164,8 @@
    "sunkenReef14掉落池(魔導士)",
    "abyssTemple14a掉落池(魔導士)",
    "abyssTemple14b掉落池(魔導士)",
+   "deepCastle15a掉落池(魔導士)",
+   "deepCastle15b掉落池(魔導士)",
    "重戰掉落:duskCaptain(魔導士)",
    "黯滅騎士長掉落(魔導士)"
   ],
@@ -1149,6 +1246,8 @@
    "sunkenReef14掉落池(魔導士)",
    "abyssTemple14a掉落池(魔導士)",
    "abyssTemple14b掉落池(魔導士)",
+   "deepCastle15a掉落池(魔導士)",
+   "deepCastle15b掉落池(魔導士)",
    "重戰掉落:iceMammoth(魔導士)"
   ],
   "frostTiara": [
@@ -1289,6 +1388,15 @@
   "mirrorCharm13": [
    "劇情/任務"
   ],
+  "tideCrown15": [
+   "劇情/任務"
+  ],
+  "seahorseBadge15": [
+   "劇情/任務"
+  ],
+  "blackPearl15": [
+   "劇情/任務"
+  ],
   "dawnStaff": [
    "forest寶箱(魔導士)"
   ],
@@ -1301,6 +1409,7 @@
    "oldField掉落池(魔導士)",
    "cave6_oldField掉落池(魔導士)",
    "cave6_northRoad掉落池(魔導士)",
+   "highland15掉落池(魔導士)",
    "重戰掉落:blackFeather(魔導士)",
    "重戰掉落:ramGhost(魔導士)",
    "重戰掉落:hideoutBear(魔導士)"
@@ -1311,6 +1420,7 @@
    "town寶箱",
    "forest寶箱",
    "cave6_route寶箱",
+   "meadow15寶箱",
    "行商",
    "迴廊兌換",
    "委託獎勵",
@@ -1381,6 +1491,8 @@
    "cave6_swamp寶箱",
    "cave6_maplePass寶箱",
    "cave6_oldField寶箱",
+   "meadow15寶箱",
+   "marsh15寶箱",
    "道具店",
    "行商",
    "鐵匠配方",
@@ -1402,8 +1514,10 @@
    "sluice13寶箱",
    "mistcapeCoast14寶箱",
    "abyssTemple14b寶箱",
+   "emberRuin15寶箱",
    "行商",
    "迴廊兌換",
+   "委託獎勵",
    "委託獎勵",
    "委託獎勵",
    "委託獎勵"
@@ -1426,6 +1540,7 @@
    "mine寶箱",
    "catacomb寶箱",
    "windHills寶箱",
+   "meadow15寶箱",
    "道具店",
    "行商",
    "委託獎勵",
@@ -1485,7 +1600,8 @@
   "hareFur": [
    "route寶箱",
    "windHills寶箱",
-   "魔物:角兔"
+   "魔物:角兔",
+   "魔物:異色角兔"
   ],
   "vitFruit": [
    "route寶箱",
@@ -1495,6 +1611,7 @@
    "windHills寶箱",
    "oldField寶箱",
    "oldField寶箱",
+   "deepCastle15a寶箱",
    "行商",
    "迴廊兌換",
    "委託獎勵",
@@ -1531,6 +1648,7 @@
    "行商",
    "迴廊兌換",
    "委託獎勵",
+   "委託獎勵",
    "委託獎勵"
   ],
   "pocketWatch": [
@@ -1545,6 +1663,9 @@
    "魔物:楓葉精",
    "魔物:蒲絨精",
    "魔物:藤蔓蛇",
+   "魔物:異色藤蔓蛇",
+   "魔物:異色楓葉精",
+   "魔物:異色蒲絨精",
    "分解"
   ],
   "spore": [
@@ -1557,6 +1678,7 @@
    "cave6_swamp採集",
    "魔物:毒孢菇",
    "魔物:毒孢菇王",
+   "魔物:異色毒孢菇",
    "分解"
   ],
   "crystal": [
@@ -1570,7 +1692,8 @@
    "魔物:晶石丸",
    "魔物:水晶魔像",
    "魔物:水幕洞之主",
-   "魔物:冰鏡魔像"
+   "魔物:冰鏡魔像",
+   "魔物:異色晶石丸"
   ],
   "gel": [
    "sewer採集",
@@ -1583,6 +1706,10 @@
    "魔物:瘴氣大鯰",
    "魔物:霧角蝸牛",
    "魔物:巨大汙泥姆",
+   "魔物:異色泡泡姆",
+   "魔物:異色泥沼姆",
+   "魔物:異色汙泥姆",
+   "魔物:異色霧角蝸牛",
    "分解",
    "分解",
    "分解",
@@ -1629,6 +1756,7 @@
    "魔物:遺跡守衛",
    "魔物:地鼴",
    "魔物:鼴鼠穴之主",
+   "魔物:異色符文石像",
    "分解",
    "分解",
    "分解",
@@ -1650,6 +1778,12 @@
    "魔物:流沙骸骨",
    "魔物:亡國將軍",
    "魔物:溺亡水手",
+   "魔物:異色骷髏兵",
+   "魔物:異色骨犬",
+   "魔物:異色亡國兵",
+   "魔物:異色戰場食屍鬼",
+   "魔物:異色焰骨兵",
+   "魔物:異色溺亡水手",
    "分解"
   ],
   "elixir": [
@@ -1673,6 +1807,8 @@
    "mistcapeCoast14寶箱",
    "sunkenReef14寶箱",
    "abyssTemple14a寶箱",
+   "deepCastle15b寶箱",
+   "emberRuin15寶箱",
    "行商",
    "道具店(魔像後)",
    "迴廊兌換",
@@ -1708,6 +1844,9 @@
    "wreckCove13寶箱",
    "mistcapeCoast14寶箱",
    "abyssTemple14b寶箱",
+   "deepCastle15a寶箱",
+   "highland15寶箱",
+   "emberRuin15寶箱",
    "委託獎勵",
    "委託獎勵",
    "委託獎勵",
@@ -1727,7 +1866,13 @@
    "魔物:怨靈之母",
    "魔物:深淵亡魂",
    "魔物:無頭騎士長",
-   "魔物:霧之怨靈"
+   "魔物:霧之怨靈",
+   "魔物:異色幽靈燈",
+   "魔物:異色溺魂",
+   "魔物:異色怨靈",
+   "魔物:異色斷劍幽魂",
+   "魔物:異色霜之魂",
+   "魔物:異色霧之怨靈"
   ],
   "hiEther": [
    "lake寶箱",
@@ -1738,6 +1883,7 @@
    "maplePass寶箱",
    "oldField寶箱",
    "cave6_jadeCreek寶箱",
+   "marsh15寶箱",
    "行商",
    "迴廊兌換",
    "鐵匠配方",
@@ -1764,7 +1910,8 @@
    "魔物:湖貝怪",
    "魔物:月光洞之主",
    "魔物:月鱗魚",
-   "魔物:月光精靈王"
+   "魔物:月光精靈王",
+   "魔物:異色湖貝怪"
   ],
   "bellShard": [
    "canyon寶箱"
@@ -1774,8 +1921,10 @@
    "northRoad寶箱",
    "northRoad寶箱",
    "jadeCreek寶箱",
+   "marsh15寶箱",
    "行商",
    "迴廊兌換",
+   "委託獎勵",
    "委託獎勵",
    "委託獎勵",
    "委託獎勵",
@@ -1807,7 +1956,9 @@
    "魔物:沼底洞之主",
    "魔物:裂界軟泥",
    "魔物:深海鰻",
-   "魔物:霧笛魔女「賽蓮」"
+   "魔物:霧笛魔女「賽蓮」",
+   "魔物:異色腐沼蟾",
+   "魔物:異色深海鰻"
   ],
   "banditCloth": [
    "northRoad寶箱",
@@ -1817,7 +1968,9 @@
    "魔物:街道盜賊",
    "魔物:盜賊頭目「黑羽」",
    "魔物:黑羽打手",
-   "魔物:黑羽的藏身洞之主"
+   "魔物:黑羽的藏身洞之主",
+   "魔物:異色盜賊",
+   "魔物:異色街道盜賊"
   ],
   "lostScore": [
    "capSewer寶箱"
@@ -1827,6 +1980,7 @@
    "clockTower1寶箱",
    "jadeCreek寶箱",
    "maplePass寶箱",
+   "highland15寶箱",
    "行商",
    "迴廊兌換",
    "委託獎勵",
@@ -1845,7 +1999,9 @@
    "魔物:田鼠群",
    "魔物:舊穀倉地窖之主",
    "魔物:南瓜燈怪",
-   "魔物:南瓜燈大王"
+   "魔物:南瓜燈大王",
+   "魔物:異色稻草人",
+   "魔物:異色田鼠群"
   ],
   "megaEther": [
    "frostField寶箱",
@@ -1860,6 +2016,8 @@
    "mistcapeCoast14寶箱",
    "sunkenReef14寶箱",
    "abyssTemple14b寶箱",
+   "deepCastle15a寶箱",
+   "highland15寶箱",
    "委託獎勵",
    "委託獎勵",
    "委託獎勵",
@@ -1873,7 +2031,10 @@
    "魔物:白絨兔",
    "魔物:雪洞之主",
    "魔物:白牙雪狼",
-   "魔物:雪山巨人"
+   "魔物:雪山巨人",
+   "魔物:異色雪狼",
+   "魔物:異色雪人",
+   "魔物:異色白絨兔"
   ],
   "iceCrystal": [
    "frostField採集",
@@ -1891,7 +2052,9 @@
    "魔物:霜翅蛾",
    "魔物:冰柱精",
    "魔物:極光精",
-   "魔物:霜月蛾后"
+   "魔物:霜月蛾后",
+   "魔物:異色冰晶蝠",
+   "魔物:異色冰晶石怪"
   ],
   "magmaStone": [
    "emberPass寶箱",
@@ -1908,15 +2071,22 @@
    "魔物:黑曜石塊",
    "魔物:黑曜石洞之主",
    "魔物:裂界石像",
-   "魔物:黑曜熔核"
+   "魔物:黑曜熔核",
+   "魔物:異色黑曜龜",
+   "魔物:異色熔岩石怪",
+   "魔物:異色熔岩姆",
+   "魔物:異色爆炎精"
   ],
   "tpBook": [
    "duskFort1寶箱",
    "starShrine寶箱",
    "mirrorCave13寶箱",
+   "deepCastle15b寶箱",
    "行商",
    "道具店(魔像後)",
    "迴廊兌換",
+   "委託獎勵",
+   "委託獎勵",
    "委託獎勵",
    "委託獎勵",
    "委託獎勵",
@@ -1934,6 +2104,7 @@
    "mistcapeCoast14採集",
    "sunkenReef14採集",
    "sunkenReef14採集",
+   "deepCastle15a採集",
    "魔物:星靈",
    "魔物:天使石像"
   ],
@@ -1947,12 +2118,15 @@
    "魔物:紫斑蛙",
    "魔物:溪蛇",
    "魔物:洞穴蠑螈",
+   "魔物:異色溪蛇",
+   "魔物:異色紫斑蛙",
    "分解"
   ],
   "stagHorn": [
    "maplePass寶箱",
    "魔物:赤角鹿",
-   "魔物:楓林鹿王"
+   "魔物:楓林鹿王",
+   "魔物:異色赤角鹿"
   ],
   "rotWood": [
    "cave6_forest寶箱",
@@ -1961,7 +2135,8 @@
    "魔物:腐根怪",
    "魔物:樹根洞之主",
    "魔物:夜遊樹精",
-   "魔物:千年樹妖"
+   "魔物:千年樹妖",
+   "魔物:異色枯木樹妖"
   ],
   "beetleHorn": [
    "cave6_maplePass寶箱",
@@ -1973,7 +2148,9 @@
    "魔物:鐵鏽蛛",
    "魔物:空洞鎧甲",
    "魔物:鏽甲兵",
-   "魔物:鐵刺蝟"
+   "魔物:鐵刺蝟",
+   "魔物:異色鏽甲兵",
+   "魔物:異色空洞鎧甲"
   ],
   "attrReset": [
    "coralCoast13寶箱",
@@ -1986,6 +2163,7 @@
   "riftShard": [
    "mistcapeCoast14寶箱",
    "sunkenReef14寶箱",
+   "deepCastle15a寶箱",
    "迴廊兌換",
    "魔物:虛空之眼",
    "魔物:裂界騎士",
@@ -1997,11 +2175,15 @@
    "mistcapeCoast14採集",
    "sunkenReef14採集",
    "sunkenReef14採集",
+   "deepCastle15a採集",
    "魔物:刺海葵",
-   "魔物:珊瑚魔像"
+   "魔物:珊瑚魔像",
+   "魔物:異色珊瑚魔像"
   ],
   "starShard": [
    "abyssTemple14a寶箱",
+   "deepCastle15a寶箱",
+   "deepCastle15b寶箱",
    "魔物:彗星鳥",
    "魔物:星之守護者"
   ],
@@ -2026,7 +2208,8 @@
   ],
   "shroomCap": [
    "魔物:嘟嘟菇",
-   "魔物:晨霧洞之主"
+   "魔物:晨霧洞之主",
+   "魔物:異色嘟嘟菇"
   ],
   "feather": [
    "魔物:啾啾鳥",
@@ -2040,11 +2223,17 @@
    "魔物:穀倉鴞",
    "魔物:夜盜鴉",
    "魔物:海霧鴞",
+   "魔物:異色稻草鴉",
+   "魔物:異色腐鴉禿鷹",
+   "魔物:異色火山鷹",
+   "魔物:異色啾啾鳥",
+   "魔物:異色草原鷹",
    "分解",
    "分解"
   ],
   "foxfire": [
-   "魔物:焰狐"
+   "魔物:焰狐",
+   "魔物:異色焰狐"
   ],
   "stinger": [
    "魔物:電電蜂",
@@ -2052,20 +2241,26 @@
    "魔物:水黽",
    "魔物:毒蚊群",
    "魔物:夜啼蟋蟀",
-   "魔物:蜂王電電蜂"
+   "魔物:蜂王電電蜂",
+   "魔物:異色電電蜂",
+   "魔物:異色毒刺蜻蜓"
   ],
   "wolfPelt": [
    "魔物:狂牙狼",
    "魔物:灰鬃狼",
    "魔物:瘴氣狼王",
    "魔物:野狼",
-   "魔物:虛影狼"
+   "魔物:虛影狼",
+   "魔物:異色灰鬃狼",
+   "魔物:異色野狼"
   ],
   "crocHide": [
    "魔物:沼澤鱷",
    "魔物:水道鱷",
    "魔物:晶甲巨鱷",
-   "魔物:溪谷小鱷"
+   "魔物:溪谷小鱷",
+   "魔物:異色溪谷小鱷",
+   "魔物:異色水道鱷"
   ],
   "batWing": [
    "魔物:洞窟飛影",
@@ -2073,7 +2268,9 @@
    "魔物:鐘樓蝠",
    "魔物:苔蝙蝠",
    "魔物:餘燼蝙蝠",
-   "魔物:蝕星蝠"
+   "魔物:蝕星蝠",
+   "魔物:異色坑道蝠",
+   "魔物:異色洞窟飛影"
   ],
   "beetleShell": [
    "魔物:雷角甲蟲",
@@ -2084,23 +2281,32 @@
    "魔物:刺背犰狳",
    "魔物:潮汐蝦兵",
    "魔物:珊瑚甲龜",
-   "魔物:浪花蟹"
+   "魔物:浪花蟹",
+   "魔物:異色苔甲龜",
+   "魔物:異色蘆葦鉗蟹",
+   "魔物:異色樹皮甲蟲",
+   "魔物:異色潮汐蝦兵",
+   "魔物:異色珊瑚甲龜",
+   "魔物:異色浪花蟹"
   ],
   "emberCore": [
    "魔物:火燼精",
    "魔物:地獄犬",
-   "魔物:火山灰蛾"
+   "魔物:火山灰蛾",
+   "魔物:異色地獄犬"
   ],
   "silk": [
    "魔物:礦坑毒蛛",
    "魔物:根蛀蟲",
    "魔物:穀倉蜘蛛",
+   "魔物:異色礦坑毒蛛",
    "分解"
   ],
   "mothDust": [
    "魔物:暮光蛾",
    "魔物:螢火蟲群",
-   "魔物:楓葉蝶"
+   "魔物:楓葉蝶",
+   "魔物:異色螢火蟲群"
   ],
   "lizardScale": [
    "魔物:湖蜥戰士",
@@ -2108,22 +2314,29 @@
    "魔物:峽谷蜥蜴",
    "魔物:岩壁守宮",
    "魔物:斷尾湖蜥",
-   "魔物:虛空蜥人"
+   "魔物:虛空蜥人",
+   "魔物:異色峽谷蜥蜴",
+   "魔物:異色湖蜥戰士"
   ],
   "scorpTail": [
    "魔物:砂鉗蠍",
-   "魔物:黑鉗毒蠍王"
+   "魔物:黑鉗毒蠍王",
+   "魔物:異色砂鉗蠍"
   ],
   "harpyFeather": [
-   "魔物:峽谷鷹妖"
+   "魔物:峽谷鷹妖",
+   "魔物:異色峽谷鷹妖"
   ],
   "wispFlame": [
    "魔物:沼地鬼火",
-   "魔物:戰場鬼火"
+   "魔物:戰場鬼火",
+   "魔物:異色沼地鬼火",
+   "魔物:異色戰場鬼火"
   ],
   "ratTail": [
    "魔物:溝鼠",
-   "魔物:溝鼠王"
+   "魔物:溝鼠王",
+   "魔物:異色溝鼠"
   ],
   "honey": [
    "魔物:麥田蜂"
@@ -2131,22 +2344,27 @@
   "boarTusk": [
    "魔物:暴走野豬",
    "魔物:暴走野豬王",
-   "魔物:小野豬"
+   "魔物:小野豬",
+   "魔物:異色暴走野豬"
   ],
   "windStone": [
-   "魔物:風精"
+   "魔物:風精",
+   "魔物:異色風精"
   ],
   "spring": [
    "魔物:發條兵",
-   "魔物:發條騎士"
+   "魔物:發條騎士",
+   "魔物:異色發條兵"
   ],
   "brassGear": [
    "魔物:齒輪精",
-   "魔物:時計巨像"
+   "魔物:時計巨像",
+   "魔物:異色齒輪精"
   ],
   "salamanderScale": [
    "魔物:火蜥蜴",
-   "魔物:熔岩火蜥"
+   "魔物:熔岩火蜥",
+   "魔物:異色火蜥蜴"
   ],
   "dragonScale": [
    "魔物:火龍幼體"
@@ -2156,13 +2374,17 @@
    "魔物:暗影法師",
    "魔物:夢魘",
    "魔物:黯滅騎士長",
-   "魔物:影將莫爾德"
+   "魔物:影將莫爾德",
+   "魔物:異色黯滅騎士",
+   "魔物:異色暗影法師"
   ],
   "voidShard": [
    "魔物:魔像哨兵",
    "魔物:虛空獵犬",
    "魔物:魔人維克托",
-   "魔物:深淵之眼"
+   "魔物:深淵之眼",
+   "魔物:異色虛空獵犬",
+   "魔物:異色魔像哨兵"
   ],
   "wood": [
    "魔物:樹樁怪"
@@ -2174,7 +2396,9 @@
    "魔物:夜影貓",
    "魔物:夜遊水獺",
    "魔物:楓林狸",
-   "魔物:山猿大王"
+   "魔物:山猿大王",
+   "魔物:異色捲毛羊",
+   "魔物:異色林道貂"
   ],
   "deepPearl14": [
    "魔物:鼓浪河豚",
@@ -2183,7 +2407,14 @@
    "魔物:月砂海星",
    "魔物:墨影章魚",
    "魔物:潮靈",
-   "魔物:幽靈船長"
+   "魔物:幽靈船長",
+   "魔物:異色鼓浪河豚",
+   "魔物:異色怒濤海鷗",
+   "魔物:異色墨影章魚",
+   "魔物:異色潮靈",
+   "魔物:海妖巫女",
+   "魔物:海妖大巫女「莫菈」",
+   "魔物:異色海妖巫女"
   ],
   "tideScaleM14": [
    "魔物:珊瑚蛇",
@@ -2191,7 +2422,17 @@
    "魔物:魚人戰士",
    "魔物:溺甲騎士",
    "魔物:深淵鮟鱇",
-   "魔物:深海騎士 歐托"
+   "魔物:深海騎士 歐托",
+   "魔物:異色珊瑚蛇",
+   "魔物:異色魚人戰士",
+   "魔物:異色溺甲騎士",
+   "魔物:異色深淵鮟鱇",
+   "魔物:潮騎兵",
+   "魔物:深潮巨鯊",
+   "魔物:潮騎兵長「艾格」",
+   "魔物:潮將 塔拉薩",
+   "魔物:異色潮騎兵",
+   "魔物:異色深潮巨鯊"
   ],
   "license": [
    "劇情/任務"
@@ -2287,6 +2528,9 @@
    "劇情/任務"
   ],
   "tidePearlHalf14": [
+   "劇情/任務"
+  ],
+  "tidePearl15": [
    "劇情/任務"
   ]
  },

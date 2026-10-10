@@ -130,3 +130,5 @@ for (const m of IRO_MAPS15) { const d = MAPS[m]; if (!d || !d.encounters) contin
     return (!cryOwn11()[sp] ? '機率掉「' + cryName11(sp) + '」・' : '') + '虹鱗' + (ak ? '・異色飾品「' + GEAR[ak].n + '」' : ''); }; }
 { const _mp = mapProgress12; mapProgress12 = function (id, st = Game.st) { const r = _mp(id, st), d = MAPS[id] || {}; if (!d.rares15 || !d.rares15.length) return r;
     const n = d.rares15.filter(([k]) => (((st.dex || {})[k] || {}).won || 0) > 0).length; r[1] = r[1].replace(/稀有魔物 [✓—]/, '異色 ' + n + '／' + d.rares15.length); if (!/異色/.test(r[1])) r[1] = (r[1] ? r[1] + '　' : '') + '異色 ' + n + '／' + d.rares15.length; return r; }; }
+// 晶石說明：普攻回 MP 實際是取整數（PV 用 Math.round），說明也照整數寫
+{ const _ce = cryEffText11; cryEffText11 = function (e, v) { return _ce(e, e[0] === 'siphon' ? Math.round(v) : v); }; }
