@@ -7934,7 +7934,7 @@ class TitleScene {
     x.drawImage(this.logo, Math.round(W / 2 - this.logo.width / 2), 6 + bob);
     Font.drawC(x, '～異世界冒險RPG～', W / 2, 52 + bob, '#ffe0a0', '#3a1428');
     if (this.stage === 'press' && Math.floor(this.t / 30) % 2 === 0) Font.drawC(x, '按 A 鍵開始', W / 2, 232, '#ffffff', '#1a1024');
-    Font.drawR(x, 'v12.118', W - 3, H - 13, '#b890b0', null);
+    Font.drawR(x, 'v12.119', W - 3, H - 13, '#b890b0', null);
   }
 }
 class IntroScene {
@@ -29331,21 +29331,13 @@ if (typeof EX16 !== 'undefined' && EX16.live) for (const k in EXFX16) { const id
     if (!u) u = this.H; this.slashOn = 0; this.hd15cast = 1; HD15.forceW = false; yield* F.f.call(this, U, T, u, t); };
   HD15.old[id] = { fx: D.fx, hitFx: D.hitFx, mv: MOVES[id] ? MOVES[id].fx : null, style: typeof SKILL_STYLE !== 'undefined' ? SKILL_STYLE[id] : null, redo: false }; HD15.ids.push(id);
   if (HD15.on) { D.fx = key; D.hitFx = null; if (MOVES[id]) MOVES[id].fx = key; if (typeof SKILL_STYLE !== 'undefined') SKILL_STYLE[id] = ['draw', null, 'steel', null]; if (typeof REDO13 !== 'undefined') REDO13.add(id); } }
-{ const P = BattleCore.prototype;
-  const heroSide = core => { const h = core.units.find(u => u.hero); return h ? h.side : null; };
-  P.buildOrder = function () {
-    const roll = {}, ups = this.units.filter(u => this.isUp(u)); for (const u of ups) roll[u.id] = this.rng.next();
-    const front = u => this.planPrio(u) + (this.hasStatus(u, 'first_next') ? 10 : 0) + (this.round === 1 && u.mods.some(m => m.firstRoundPrio) ? 5 : 0) - (this.hasStatus(u, 'delay') ? 10 : 0);
-    const sp = {}; for (const u of ups) sp[u.id] = BR.speed(this, u); const hs = heroSide(this), mine = u => (u.side === hs ? 1 : 0);
-    ups.sort((a, b) => mine(b) - mine(a) || front(b) - front(a) || sp[b.id] - sp[a.id] || roll[a.id] - roll[b.id] || (a.id < b.id ? -1 : 1));
-    const order = ups.map(u => ({ id: u.id }));
-    for (const u of ups) for (const s of u.statuses) { const D = DEF.statuses[s.id]; if (D.extraEvery && this.round % D.extraEvery === 0) order.push({ id: u.id, extra: s.id }); }
-    this.order = order; this.orderPos = {}; order.forEach((e, i) => { if (this.orderPos[e.id] == null) this.orderPos[e.id] = i; });
-    this.emit(EVT.TURN_ORDER, { payload: { round: this.round, order: order.map(e => e.id), extra: order.filter(e => e.extra).map(e => e.id) } });
-    for (const u of ups) for (const k of ['first_next', 'delay', 'prio_used']) if (this.hasStatus(u, k)) this.removeStatus(u, k, 'used'); };
-  P.previewOrder = function () { const ups = this.units.filter(u => this.isUp(u)), sp = {}; for (const u of ups) sp[u.id] = BR.speed(this, u); const hs = heroSide(this), mine = u => (u.side === hs ? 1 : 0);
-    const front = u => this.planPrio(u) + (this.hasStatus(u, 'first_next') ? 10 : 0) + ((this.round || 1) === 1 && u.mods.some(m => m.firstRoundPrio) ? 5 : 0) - (this.hasStatus(u, 'delay') ? 10 : 0);
-    return ups.sort((a, b) => mine(b) - mine(a) || front(b) - front(a) || sp[b.id] - sp[a.id] || (a.hero ? -1 : b.hero ? 1 : a.id < b.id ? -1 : 1)).map(u => u.id); };
+{ const P = BattleCore.prototype, _as = P.applyStatus, _pr = P.prepare, _ea = P.endAction;
+  P.flush16 = function () { const q = this.defer16 || []; this.defer16 = []; for (const [s, t, id, o] of q) if (this.isUp(t)) _as.call(this, s, t, id, o); };
+  P.applyStatus = function (src, tgt, id, o = {}) { const A = this.act16;
+    if (A && tgt && src && tgt.side !== A.side && src.side === tgt.side && this.isUp(tgt) && !o.now16) { (this.defer16 || (this.defer16 = [])).push([src, tgt, id, o]); return null; }
+    return _as.call(this, src, tgt, id, o); };
+  P.prepare = function (cmd) { if (!cmd.reaction) { this.act16 = null; this.flush16(); this.act16 = this.byId[cmd.actor] || null; } const ok = _pr.call(this, cmd); if (!ok && !cmd.reaction) { this.act16 = null; this.flush16(); } return ok; };
+  P.endAction = function (cmd, executed) { const r = _ea.call(this, cmd, executed); if (!cmd.reaction) { this.act16 = null; this.flush16(); } return r; };
 }
 const TUT16 = { isTut: s => typeof s === 'string' && /^（[\s\S]{10,}）$/.test(s.trim()) && s.trim().indexOf('）') === s.trim().length - 1,
   key: s => s.replace(/\d+/g, '#').replace(/\s/g, '').slice(0, 40) };
