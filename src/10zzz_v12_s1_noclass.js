@@ -66,7 +66,7 @@ classTalk = function* () { const st = Game.st; if (!st.cls) { const k = yield* c
 ch2ClassTalk = function* () { const st = Game.st, f = st.flags, n = ['clsBard', 'clsMachinist', 'clsMonk', 'clsDragoon'].filter(k => f[k]).length;
   yield* say('王都的導師們都有自己的絕活。完成他們的試煉，就能學到技能樹的「絕技」。' + (n ? '\n（已經解鎖 ' + n + '/4 位導師的絕技）' : '\n（詩人公會・鐘錶師・雪峰寺・龍騎士老人）')); };
 // a teacher's flag turned on → say which 絕技 opened
-const ZJ_OF12 = { clsBard: ['迴響序曲', '終章頌歌', '樂器'], clsMachinist: ['齒輪砲台', '赤焰彈', '火槍'], clsMonk: ['千手寸勁', '沖天拳', '拳套'], clsDragoon: ['蒼龍躍', '流星龍墜', '長槍'], hiddenCls: ['晨曦之刃', '雙相斬', '戰技'] }; // v12.96：黑曜終劍拿掉了，打贏流浪的魔劍士不再解鎖絕技（只有成就）
+const ZJ_OF12 = { clsBard: ['迴響序曲', '終章頌歌', '樂器'], clsMachinist: ['齒輪砲台', '赤焰彈', '火槍'], clsMonk: ['沖天拳', null, '拳套'], clsDragoon: ['蒼龍躍', '流星龍墜', '長槍'], hiddenCls: ['晨曦之刃', '雙相斬', '戰技'] }; // v12.96：黑曜終劍拿掉了，打贏流浪的魔劍士不再解鎖絕技（只有成就）
 // 打贏流浪的魔劍士：不再問「要學他的劍技嗎」（沒有東西可學了），他說完話就結束
 Events.eliteWin_rogueBlade = function* (ow) { const st = Game.st; st.flags.rogueMet = 1;
   yield* sayAll(['……好劍。', '你的劍裡，有魔力的流動。和我年輕的時候一樣。', '魔劍之道，就是讓劍與魔法合而為一。這三頁劍譜，就是它的全部。', '……能跟你這樣的劍士交手，我已經沒有遺憾了。']);
@@ -120,7 +120,7 @@ if (typeof BATTLE_HELP !== 'undefined') { for (let i = BATTLE_HELP.length - 1; i
     .replace(/技能來自職業（等級到了學會，只在那個職業能用）和武器技能樹（用技能點學，只能用身上武器那棵樹的招）。職業技能每用一次練度 \+1：.*$/, '技能來自技能樹：身上武器那棵樹（用技能點學）和戰技・護身・輔佐三棵共通樹。')
     .replace(/選單→技能編排：職業招式固定一格，再放 4 個技能。/, '選單→技能→技能編排：最多放 4 個技能。').replace(/戰鬥中能用：職業招式＋最多4個技能槽。/, '戰鬥中能用：最多 4 個技能槽。')
     .replace(/技能點＝等級＋主線頭目各 1 點/g, '技能點＝等級×2＋主線頭目各 1 點').replace(/選單→技能→武器技能樹/g, '選單→技能樹'));
-  BATTLE_HELP.push(['武器的資源', ['拳套學會特性後有「氣」：打中累積，滿 5 點時下一擊必定會心；千手寸勁會用掉全部的氣。', '雙盾學會特性後有「守勢」：被攻擊時累積，聖壁衝鋒會用掉。', '火槍學會特性後，齒輪砲台設下的砲台每回合結束自動射擊。']]); }
+  BATTLE_HELP.push(['武器的資源', ['拳套學會特性後有「氣」：打中累積，滿 5 點時下一擊必定會心；氣爆掌會用掉全部的氣。', '雙盾學會特性後有「守勢」：被攻擊時累積，聖壁衝鋒會用掉。', '火槍學會特性後，齒輪砲台設下的砲台每回合結束自動射擊。']]); }
 
 /* ---------- 舊存檔 ---------- */
 { const _so = startOverworld; startOverworld = function (...a) { const st = Game.st; let L = null;

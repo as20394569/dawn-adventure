@@ -13,7 +13,7 @@ const BUFF12 = {
   regen11: { n: '再生', k: 'reg', tip: '每回合回 5% HP' }, shadowCounter11: { n: '殘影', k: 'ctr', tip: '迴避↑・閃過就反擊' }, parry11: { n: '架劍', k: 'ctr', tip: '物理 −60%・反擊' },
   swordDance11: { n: '雙劍舞陣', k: 'spd', tip: '每次攻擊追加一斬' }, shieldStance11: { n: '雙盾架勢', k: 'def', tip: '受傷 −50%・被打得盾勢' }, fortCounter11: { n: '不落要塞', k: 'ctr', tip: '被打就反擊' },
   smoke: { n: '迴避↑', k: 'spd', tip: '迴避 +30%' }, critNext: { n: '心眼', k: 'atk', tip: '下一擊必定會心' }, mirror: { n: '反射壁', k: 'def', tip: '魔法傷害反彈' },
-  crack11: { n: '裂甲', k: 'deb', tip: '物防↓・每回合受傷' }, bulk11: { n: '盾勢', k: 'def', tip: '盾突每層 +25%', stacks: 1 },
+  crack11: { n: '裂甲', k: 'deb', tip: '物防↓・每回合受傷' }, qiBomb12: { n: '氣爆', k: 'deb', tip: '下回合開始時體內的氣爆開' }, bulk11: { n: '盾勢', k: 'def', tip: '盾突每層 +25%', stacks: 1 },
 };
 const BUFF_COL12 = { atk: ['#ff9050', 'rgba(90,30,10,0.92)'], def: ['#9ec8ff', 'rgba(20,40,80,0.92)'], spd: ['#7ef0c8', 'rgba(10,60,50,0.92)'], reg: ['#90f090', 'rgba(20,70,20,0.92)'], ctr: ['#ffe070', 'rgba(80,60,10,0.92)'], deb: ['#d0a0ff', 'rgba(50,20,80,0.92)'], up: ['#ffc070', 'rgba(80,45,10,0.92)'], down: ['#a0c0ff', 'rgba(20,30,80,0.92)'] };
 const STAGE_N12 = { atk: '物攻', def: '物防', spa: '魔攻', spd: '魔防', spe: '速度', acc: '命中', eva: '迴避', crit: '會心' };

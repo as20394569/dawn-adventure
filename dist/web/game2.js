@@ -1237,7 +1237,7 @@ class TitleScene {
     x.drawImage(this.logo, Math.round(W / 2 - this.logo.width / 2), 6 + bob);
     Font.drawC(x, '～異世界冒險RPG～', W / 2, 52 + bob, '#ffe0a0', '#3a1428');
     if (this.stage === 'press' && Math.floor(this.t / 30) % 2 === 0) Font.drawC(x, '按 A 鍵開始', W / 2, 232, '#ffffff', '#1a1024');
-    Font.drawR(x, 'v12.101', W - 3, H - 13, '#b890b0', null);
+    Font.drawR(x, 'v12.103', W - 3, H - 13, '#b890b0', null);
   }
 }
 class IntroScene {
@@ -10997,3 +10997,214 @@ for (const m of OTW_SPOTS) { const d = MAPS[m], E = EXT_AREA[m]; if (!d || !E) c
       ow.load(ow.map.id, ow.p.x, ow.p.y, ow.p.dir, true); }; }
   else console.warn('otw: no spot in', m);
   if (typeof mapCache !== 'undefined') delete mapCache[m]; }
+{ const _se = STORY_MARKS.elder; const otwReady = st => st.flags.license && st.flags.golem && !st.flags.otwQ && !st.flags.hiddenCls;
+  STORY_MARKS.elder = st => { const o = _se ? _se(st) : null; return o || (otwReady(st) ? '!' : null); };
+  const _el = Events.elder; Events.elder = function* (ow) { const st = Game.st, f = st.flags;
+    if (otwReady(st) && !(_se && _se(st))) { f.otwQ = 1;
+      yield* sayAll(['……你手上的曙光之印，最近是不是越來越亮了？', '五百年前的初代勇者，也是從異界來的人。', '他在這一帶留下了三個「曙光的印記」。傳說找齊印記的人，才能接受他留下的試煉。',
+        '印記好像都藏在地圖邊緣新開的小路後面——鎮外的花田、迷霧森林的深處、風車丘陵的山頂。']);
+      yield* say('（任務「初代勇者的試煉」開始了。找到三個曙光的印記。推薦Lv14〜18）'); return; }
+    yield* _el.call(this, ow); }; }
+{ const _w = Events.well; Events.well = function* (ow) { const st = Game.st, f = st.flags;
+    if (f.otwQ === 2 && !f.crystalBoss) { yield* say('井壁上浮現出一階一階發光的踏階，一直通到井底深處……');
+      if (yield* yesNo('要沿著踏階下去嗎？')) { Sound.sfx('door'); yield* ow.warp('sewer', 7, 12, 'up'); } return; }
+    yield* _w.call(this, ow); }; }
+{ const _ld = Overworld.prototype.load; Overworld.prototype.load = function (id, x, y, dir, silent) { _ld.call(this, id, x, y, dir, silent);
+    const f = this.st.flags; if (id === 'sewer' && !f.crystalBoss && (f.otwQ || 0) < 2) this.boss = null; }; }
+{ const _hb = Events.hiddenBoss; Events.hiddenBoss = function (ow) { const g = _hb.call(this, ow); if (!g) return g; return (function* () { yield* g; if (Game.st.flags.crystalBoss) Game.st.flags.otwQ = 3; })(); }; }
+for (const m of OTW_SPOTS) STORY_MARKS['otwMark_' + m] = st => st.flags.otwQ === 1 && !(st.flags.otwMark || {})[m] ? '!' : null;
+STORY_MARKS.well = st => st.flags.otwQ === 2 && !st.flags.crystalBoss ? '!' : null;
+const swordPages = (st = Game.st) => st.bag.swordPage || 0;
+{ const E = (MAPS.lake.elites || []).find(e => e.id === 'rogueBlade');
+  MAPS.lake.npcs.push({ id: 'rogueNpc', x: E ? E.x : 20, y: E ? E.y : 9, dir: 'left', look: 'traveler', name: '流浪的魔劍士', show: st => !st.flags.spellbladeOk && !st.flags.rogueMet && swordPages(st) < 3 });
+  NPC_ROLES.任務.push('rogueNpc'); if (typeof NPC_WHERE !== 'undefined') NPC_WHERE.rogueNpc = '銀月湖畔・東岸'; delete mapCache.lake; }
+function* wyrmPage12() { const st = Game.st, f = st.flags; if (!f.wyrm || f.pageWyrm || f.pageRift) return; f.pageWyrm = 1; st.bag.swordPage = swordPages(st) + 1;
+  yield* itemGet('湖之主留下的鱗片之間，夾著一張舊紙……是「失落的劍譜」！'); }
+{ const _u = Overworld.prototype.update; Overworld.prototype.update = function (...a) { const st = this.st, f = st && st.flags;
+    if (f && this.map && this.map.id === 'lake' && !this.script && !UI.stack.length && !Game.trans && f.wyrm && !f.pageWyrm && !f.pageRift && !f.spellbladeOk) { const ow = this; this.run((function* () { yield* wyrmPage12(); ow.load('lake', ow.p.x, ow.p.y, ow.p.dir, true); })()); return; }
+    return _u.apply(this, a); }; }
+{ const _wb = Events.wyrmBoss; Events.wyrmBoss = function* (ow) { yield* _wb.call(this, ow); yield* wyrmPage12(); }; }
+Events.rogueNpc = function* () { const st = Game.st, f = st.flags; yield* wyrmPage12();
+  if (!f.rogueTalk) { f.rogueTalk = 1; f.q5 = 1;
+    yield* sayAll(['……你的劍裡，有魔力的流動。', '我是個流浪的劍士。在找三頁失傳的「魔劍之道」劍譜。', '一頁被湖心小島的寶箱收著，一頁被蜥人隊長搶走了，還有一頁……沉進了湖底，被湖之主吞進了肚子裡。',
+      '我已經老了，打不贏牠們了。如果你找齊三頁，就帶來給我吧。到時候……讓我看看你的劍。']);
+    yield* say('（任務「失落的劍譜」開始了。收集三頁劍譜。）'); return; }
+  yield* say(swordPages(st) >= 3 ? '……三頁都找齊了？' : '劍譜找到 ' + swordPages(st) + ' 頁了。湖心小島、蜥人隊長、湖之主……慢慢來吧。'); };
+STORY_MARKS.rogueNpc = st => !st.flags.rogueTalk ? '!' : null;
+{ const _h = Events.hermit; Events.hermit = function* (ow) { const st = Game.st, f = st.flags; yield* wyrmPage12();
+    if (f.q5 && !f.spellbladeOk && swordPages(st) < 3) { yield* say('劍譜找到' + swordPages(st) + '頁了。湖心小島、蜥人隊長、湖之主……那個劍士在湖的東岸等你。'); if (!f.wyrm) yield* say('對了，喚醒湖之主要在祭壇供上月露×3。湖邊發光的「月露草」採得到。'); return; }
+    yield* _h.call(this, ow); }; }
+Object.assign(QUEST_CATS, { '初代勇者的試煉': '隱藏', '失落的劍譜': '隱藏' });
+{ const _eq = extraQuests; extraQuests = function (st, L) { _eq(st, L); const f = st.flags;
+    for (let i = L.length - 1; i >= 0; i--) if (L[i].n === '流浪的魔劍士') L.splice(i, 1);
+    if (f.otwQ || f.hiddenCls) L.push({ n: '初代勇者的試煉', t: f.hiddenCls ? '完成：通過了初代勇者的試煉，覺醒了「異界勇者」。' : f.otwQ >= 2 ? '三個印記都找到了。從萌芽鎮的井往下，到地下水道深處接受試煉。（推薦Lv16〜18）'
+      : '找到三個「曙光的印記」（' + otwMarks(st) + '/3）：萌芽鎮郊外花田（萌芽鎮的南邊）、森之深處（迷霧森林的南邊）、風之丘頂（風車丘陵的東邊）。', done: !!f.hiddenCls, rw: '隱藏職業「異界勇者」' });
+    if (f.q5 || f.rogueTalk || f.spellbladeOk) L.push({ n: '失落的劍譜', t: f.spellbladeOk ? '完成：打贏了魔劍士，繼承了魔劍之道。' : swordPages(st) >= 3 ? '三頁劍譜都找齊了。到銀月湖畔的東岸，和流浪的魔劍士決鬥。'
+      : '收集三頁「失落的劍譜」（' + swordPages(st) + '/3）：銀月湖畔的湖心小島、蜥人隊長、湖之主（銀鱗水龍）。', done: !!f.spellbladeOk, rw: '隱藏職業「魔劍士」' });
+  }; }
+const EXT_OPEN = {};
+for (const m in EXT_AREA) { if (m === 'starShrine') continue; const E = EXT_AREA[m], d = MAPS[m], R = d.rows.map(r => r.split('')); let o = null;
+  if (E.side === 'right') { for (let y = 1; y < R.length - 1; y++) if (R[y][E.from - 1] === ':') { o = [E.from - 1, y]; break; } }
+  else { for (let x = 1; x < R[0].length - 1; x++) if (R[E.from - 1][x] === ':') { o = [x, E.from - 1]; break; } }
+  if (!o) { console.warn('ext: no opening', m); continue; } EXT_OPEN[m] = o;
+  const sg = E.side === 'right' ? [o[0], o[1] - 1] : [o[0] - 1, o[1]];
+  if (R[sg[1]] && SOLID.has(R[sg[1]][sg[0]]) && R[sg[1]][sg[0]] !== 'S') { R[sg[1]][sg[0]] = 'S'; d.rows = R.map(r => r.join('')); d.signs = d.signs || {};
+    d.signs[sg[0] + ',' + sg[1]] = (E.side === 'right' ? '→ 往東：' : '↓ 往南：') + '祕境「' + E.name + '」\n地圖邊緣新開的小路。裡面有寶箱、採集點和天氣祠。'; }
+  if (typeof mapCache !== 'undefined') delete mapCache[m]; }
+const extSeen = (m, st = Game.st) => !!((st.extSeen || {})[m]);
+{ const A = ACHIEVEMENTS.find(a => a.id === 'extAll'); if (A) { const n = Object.keys(EXT_OPEN).length; A.d = '走遍' + n + '處祕境（地圖邊緣新開的區域）。'; A.ok = st => Object.keys(EXT_OPEN).every(m => extSeen(m, st)); } }
+{ const _dm = drawMiniMap; drawMiniMap = function (x, id, X0, Y0, maxW, maxH, st) { _dm(x, id, X0, Y0, maxW, maxH, st); const o = EXT_OPEN[id]; if (!o || extSeen(id, st)) return;
+    const m = getMap(id), sc = Math.max(1, Math.floor(Math.min(maxW / m.w, maxH / m.h))), ox = X0 + Math.floor((maxW - m.w * sc) / 2), oy = Y0 + Math.floor((maxH - m.h * sc) / 2);
+    if (Math.floor(Game.frame / 16) % 2) Font.drawC(x, '?', ox + o[0] * sc + sc / 2, oy + o[1] * sc + sc / 2 - 7, '#8af0ff', UIC.textSh, 10); }; }
+Object.assign(QUEST_CATS, { '祕境探索': '支線' });
+{ const _eq = extraQuests; extraQuests = function (st, L) { _eq(st, L); if (!st.flags.license) return;
+    const K = Object.keys(EXT_OPEN), seen = K.filter(m => extSeen(m, st)), near = K.filter(m => !extSeen(m, st) && st.vis && st.vis[m]);
+    const name = m => EXT_AREA[m].name + '（' + MAPS[m].name + (EXT_AREA[m].side === 'right' ? '東邊' : '南邊') + '）';
+    L.push({ n: '祕境探索', t: seen.length >= K.length ? '完成：走遍了所有的祕境。' : near.length ? '路口立著告示牌的小路。還沒去過：' + near.slice(0, 2).map(name).join('、') + '。（' + seen.length + '/' + K.length + '）'
+      : '其他地圖的邊緣也有祕境。去新的地方看看吧。（' + seen.length + '/' + K.length + '）', done: seen.length >= K.length, rw: '每處：寶箱、採集點、天氣祠' }); }; }
+const bFast12 = () => Game.settings.bspd === 2;
+function bSpdToggle12() { Game.settings.bspd = bFast12() ? 1 : 2; Sound.sfx('cursor'); if (typeof saveSettings === 'function') saveSettings(); }
+{ const _p = Battle.prototype.play, _i = Battle.prototype.intro;
+  Battle.prototype.play = function* (...a) { this.fast12 = true; try { return yield* _p.apply(this, a); } finally { this.fast12 = false; } };
+  Battle.prototype.intro = function* (...a) { this.fast12 = true; try { return yield* _i.apply(this, a); } finally { this.fast12 = false; } }; }
+const bTopOK12 = () => { const t = UI.stack[UI.stack.length - 1]; return !t || t instanceof TextBox || (t instanceof Menu && t.cols === 5 && !!t.buttons); };
+{ const _t = tick; tick = function () { _t(); const S = Game.scene; if (!(S instanceof Battle)) return;
+    if (Input.pressed('select') && bTopOK12()) { Input.consume('select'); bSpdToggle12(); }
+    if (bFast12() && S.fast12 && S.script && !UI.stack.some(w => w instanceof Menu)) { for (const k of Input.keys) Input.p[k] = false; S.update(); } }; }
+Battle.prototype.drawSpd12 = function (x) {
+  if (this.boxF < -20 || !bTopOK12()) return; const on = bFast12(), X = W - 19, Y = 28, w = 16, h = 10; // under the name plates (three plates fill the top row); v12.0.9h: smaller (player: 「戰鬥速度x2 按鈕縮小」)
+  x.globalAlpha = 0.92; x.fillStyle = on ? '#c8a050' : '#5a5040'; x.fillRect(X, Y, w, h); x.fillStyle = on ? '#3a2a10' : '#14121c'; x.fillRect(X + 1, Y + 1, w - 2, h - 2); x.globalAlpha = 1;
+  Font.drawC(x, '×2', X + w / 2, midY(Y, h, 8), on ? '#ffe8b0' : UIC.muted, UIC.textSh, 8);
+  touchRegion(X - 5, Y - 4, w + 8, h + 8, bSpdToggle12); // the tap area stays a little bigger than the button
+};
+{ const _bf = Battle.prototype.drawBoxF; Battle.prototype.drawBoxF = function (x) { _bf.call(this, x); this.drawSpd12(x); }; }
+if (typeof BATTLE_HELP !== 'undefined') { const i = BATTLE_HELP.findIndex(q => q[0] === '技能與冷卻');
+  BATTLE_HELP.splice(i < 0 ? BATTLE_HELP.length : i + 1, 0, ['戰鬥速度', ['點戰鬥畫面右上角的「×2」，戰鬥動畫會加快一倍；再點一次恢復普通。', '選指令、選技能時不受影響。設定裡的「戰鬥速度」也可以切換，鍵盤是 Select 鍵。']]); }
+{ const CLOSED = ['rift', 'starShrine'], mapN = m => (MAPS[m] && MAPS[m].name || m).replace(/ \d+F$/, '');
+  for (const k in MAT_SRC) delete MAT_SRC[k];
+  const add = (k, t) => { (MAT_SRC[k] = MAT_SRC[k] || []).includes(t) || MAT_SRC[k].push(t); }, spOf = s => SPECIES[s] && SPECIES[s].mat ? SPECIES[s] : null;
+  for (const m in MAPS) { if (CLOSED.includes(m)) continue; const d = MAPS[m];
+    for (const e of d.encounters || []) for (const r of e.table || []) { const sp = spOf(r[0]); if (sp) add(sp.mat, sp.n + '・' + mapN(m)); }
+    for (const e of d.elites || []) { const sp = spOf(e.sp); if (sp) add(sp.mat, sp.n + '・' + mapN(m)); }
+    if (d.boss) { const sp = spOf(d.boss.sp); if (sp) add(sp.mat, sp.n + '・' + mapN(m)); }
+    for (const g of d.gathers || []) if (g.mat) add(g.mat, '採集・' + mapN(m)); } }
+{ const _u = Battle.prototype.update; Battle.prototype.update = function (...a) {
+    if (this.hitstop > 0) { this.hitstop--; return; }
+    if (this.slowmo > 0) { this.slowmo--; if (this.slowmo % 2) return; }
+    return _u.apply(this, a); }; }
+{ const H = Battle.prototype.handlers, _d = H.DAMAGE; H.DAMAGE = function* (e, s, t, P) {
+    const hit = !!(t && !t.hero && P.kind === 'hit' && P.amount > 0);
+    if (hit) this._hf12 = { t, weak: P.mult > 1, crit: !!P.crit, last: (P.hpAfter ?? 1) <= 0 && !this._lastHit12 && this.foes().every(v => v === t || v.hp <= 0) };
+    try { yield* _d.call(this, e, s, t, P); } finally { if (hit) this._hf12 = null; } }; }
+{ const _pn = Battle.prototype.popNum; Battle.prototype.popNum = function (v, s, c, tag, o = {}) {
+    _pn.call(this, v, s, c, tag, o); const f = this._hf12; if (!f || v !== f.t) return; const strong = f.weak || f.crit, p = this.pops[this.pops.length - 1]; if (p) p.strong = strong;
+    this.hitstop = strong ? 4 : 2; const C = this.center(v);
+    if (strong) this.spawn({ k: 'ring', x: C.x, y: C.y, r0: 6, r1: 40, c: f.weak ? '#ffd040' : '#ff9a50', w: 3, life: 12 });
+    if (f.last) { this._lastHit12 = 1; this.hitstop = 8; this.slowmo = 24; this.spawn({ k: 'flash', c: '#ffffff', a: 0.5, life: 12 }); } }; }
+Battle.prototype.drawPops = function (x) {
+  for (const p of this.pops) { const life = p.big ? 60 : 44, a = p.t > life - 12 ? (life - p.t) / 12 : 1, rise = p.big ? Math.min(10, p.t * 0.6) : Math.min(16, p.t * 1.2), sz = p.small ? 9 : 14; /* v12.87: the damage numbers are 14 (small ones 9); was 13・16・+4 */
+    const t = p.t, pop = t < 3 ? 0.6 + t * 0.3 : t < 9 ? 1.5 - (t - 3) / 12 : 1, hop = t < 6 ? Math.sin(t / 6 * Math.PI) * (p.strong ? 6 : 3) : 0, fz = Math.round(sz * pop);
+    x.globalAlpha = clamp(a, 0, 1); const Y = p.y - rise - hop; for (const [dx, dy] of [[-1, 0], [1, 0], [0, -1], [0, 1], [1, 1]]) Font.drawC(x, p.s, p.x + dx, Y + dy, '#1a0a10', null, fz); Font.drawC(x, p.s, p.x, Y, p.c, null, fz);
+    if (p.tag) { const ts = p.strong ? 9 : 7; Font.drawC(x, p.tag, p.x, Math.min(Y - 11 - (p.strong ? 3 : 0), Math.round(Y + 8 - fz / 2 - ts / 2 - 9)), p.c, '#000000', ts); } /* v12.81: the tag stays above the number while it pops big */ x.globalAlpha = 1; }
+};
+const B12_FAM = new Set(Object.values(FAM_TECH).flat().concat(['m_dominate']));
+const B12_DROP = { crystalGolem: ['m_rumble'] }; // a boss's move that now belongs to another boss
+{ const _mf = makeFoe; makeFoe = function (sp, lv, kind) { const f = _mf(sp, lv, kind); if (kind !== 'boss' || !f || !f.moves) return f;
+    const d = SPECIES[sp], own = new Set((d && d.learn || []).map(L => Array.isArray(L) ? L[1] : L)), drop = B12_DROP[sp] || [];
+    const keep = f.moves.filter(m => !drop.includes(m.id) && !(B12_FAM.has(m.id) && (!own.has(m.id) || m.id === 'm_dominate')));
+    if (keep.length >= 3) f.moves = keep; return f; }; }
+function b12Skill(id, patch) { const M = MOVES[id]; if (!M) { bvErr('b12', 'no move ' + id); return null; } Object.assign(M, patch);
+  const old = DEF.skills[id], D = defPut('skills', id, { ...skillFromMove(id, M, { kind: 'skill', extraTags: ['monster_skill'] }), override: true });
+  D.cooldown = old && old.cooldown != null ? old.cooldown : 0; D.effects = D.effects.map((ef, i) => effRegister('skill:' + id + '#e' + i, ef)); D.after = D.after.map((ef, i) => effRegister('skill:' + id + '#a' + i, ef)); return D; }
+const b12Say = (core, u, text) => core.emit(EVT.MESSAGE, { src: u, tgts: [u], payload: { key: null, text } });
+const b12Hero = core => core.units.find(q => q.hero && !q.down);
+const b12Pick = (core, u, ids) => { const L = ids.filter(id => DEF.skills[id] && !core.onCooldown(u, id)); if (!L.length) return null; const id = core.rng.pick(L), t = b12Hero(core);
+  return { type: 'skill', skill: id, targets: DEF.skills[id].target === 'self' ? [u.id] : t ? [t.id] : [] }; };
+const b12Charge = (core, u, id) => { const t = b12Hero(core); u.data.lastCharge = core.round; return { type: 'skill', skill: id, targets: t ? [t.id] : [] }; };
+COND.roundMod12 = (c, v) => c.core.round % v[0] === v[1];
+const B12_SCRIPT = {};
+{ const _ue = BD.unitForEnemy; BD.unitForEnemy = function (core, sp, lv, kind, side, idx, o = {}) { const s = _ue.call(this, core, sp, lv, kind, side, idx, o); if (!s || kind !== 'boss') return s;
+    if (DEF.mechanics['b12_' + sp]) s.data.mechanics.push('b12_' + sp); if (B12_SCRIPT[sp]) { s.data.script = 'b12_' + sp; BAI.SCRIPT['b12_' + sp] = B12_SCRIPT[sp]; } return s; }; }
+PHASE_TXT.frenzy = n => [n + '陷入了狂怒！'].concat(Game.st.flags.tutFrenzy ? [] : (Game.st.flags.tutFrenzy = 1, ['（狂怒：每兩回合會行動兩次！準備好回復，一口氣打倒牠吧。）']));
+Object.assign(DEF.skills.m_axeSpin, { chargeMsg: '把斧頭高高舉起，開始轉動！', warn: '（旋風斧要砍下來了……選擇「防禦」！每 3 回合一次。）' });
+BAI.SCRIPT.banditBoss = function (core, u) { const d = u.data; d.cd = (d.cd ?? 2) - 1;
+  if (d.cd <= 0 && DEF.skills.m_axeSpin) { d.cd = 2; return b12Charge(core, u, 'm_axeSpin'); }
+  if (core.data.gold && core.data.gold() > 0 && (d.steals || 0) < 2 && core.rng.chance(0.25)) { d.steals = (d.steals || 0) + 1; return { type: 'skill', skill: 'm_steal', targets: [] }; }
+  return b12Pick(core, u, ['m_gutSlash', 'm_knife', 'm_dirtyKick', BR.stage(core, u, 'atk') < 2 ? 'm_warCry' : 'm_gutSlash']); };
+Object.assign(DEF.skills.m_devour, { airborne: true, chargeMsg: '鑽進了沙裡！沙底下傳來轟隆聲……', warn: '（牠鑽在沙裡，單體攻擊打不到！趁現在回復或強化，下一回合選擇「防禦」。）' });
+{ const H = Battle.prototype.handlers, _m = H.MISS; H.MISS = function* (e, s, t, P) { if (P && P.air && t && t.sp === 'duneWorm') { yield* this.msg(t.n + '鑽在沙裡，打不到！', { hold: 24 }); return; } yield* _m.call(this, e, s, t, P); }; }
+b12Skill('m_rumble', { pow: 95, cat: '特', t: '岩', acc: 100, charge: 1, stat: undefined, eff: { stat: { atk: -1, spa: -1 }, p: 100 }, chargeMsg: '全身發出低沉的轟鳴……遺跡在震動！',
+  warn: '（下一擊非常危險……選擇「防禦」！）', d: '蓄力後放出遠古的轟鳴，並讓對手的物攻和魔攻下降。' });
+{ const E = DEF.skills.m_stoneWall.effects.map(x => DEF.effects[x]).find(x => x && x.type === 'stage'); if (E) E.dur = 2; MOVES.m_stoneWall.d = '用石壁護住全身，物防大幅提升 2 回合。'; }
+{ const P = DEF.effects['mech:golem#t0e0']; if (P && P.setSkills) for (const k of ['m_rumble', 'm_stoneWall']) if (!P.setSkills.includes(k)) P.setSkills.push(k); }
+{ const _g = BAI.SCRIPT.golem; BAI.SCRIPT.golem = function (core, u, tgt, o) { const r = _g(core, u, tgt, o); if (r) return r;
+    if (core.round % 4 === 2 && BR.stage(core, u, 'def') < 2) return { type: 'skill', skill: 'm_stoneWall', targets: [u.id] };
+    if (core.round - (u.data.lastCharge ?? -9) >= 4 && core.rng.chance(0.5)) return b12Charge(core, u, 'm_rumble');
+    return b12Pick(core, u, (u.data.phase || 0) >= 1 ? ['m_rockfall', 'm_quake', 'm_boulder'] : ['m_boulder', 'm_quake', 'm_boulder']); }; }
+defPut('mechanics', 'b12_golem', { make: u => ({ triggers: [
+  { on: EVT.SKILL_SUCCESS, phase: 'POST', role: 'src', cond: { skillIs: 'm_stoneWall', dataNot: ['wallTold', 1] }, prio: 4, effects: [{ type: 'set_data', onUnit: 1, key: 'wallTold', value: 1 }, { type: 'message', target: 'self', text: '（石壁擋住了物理攻擊……改用魔法，或先降低牠的物防！）' }] }] }) });
+b12Skill('m_prismRay', { pow: 120, charge: 1, chargeMsg: '身上開始聚集光芒……', warn: '（稜光射線要射出來了，會打中全部……選擇「防禦」！）', d: '蓄力後射出貫穿一切的稜光，打中所有對手。' });
+BAI.SCRIPT.crystalGolem = function (core, u) {
+  if (core.round % 4 === 0 && !core.hasStatus(u, 'mirror')) return { type: 'skill', skill: 'm_mirror', targets: [u.id] };
+  if (core.round % 4 === 2 && core.round - (u.data.lastCharge ?? -9) >= 3) return b12Charge(core, u, 'm_prismRay');
+  return b12Pick(core, u, (u.data.phase || 0) >= 2 ? ['m_crystalSpark', 'm_crystalShard', 'm_quake'] : ['m_crystalShard', 'm_quake']); };
+defPut('mechanics', 'b12_crystalGolem', { make: u => ({ triggers: [
+  { on: EVT.ROUND_END, phase: 'POST', cond: { ownerAlive: 1, roundMod12: [4, 3] }, prio: 2, effects: [{ type: 'message', target: 'self', text: '（水晶表面開始發亮……下一回合會張開鏡面，魔法會被反彈！改用物理攻擊。）' }] }] }) });
+defPut('mechanics', 'b12_silverWyrm', { make: u => ({ triggers: [
+  { on: EVT.ACTION_END, phase: 'POST', cond: { ownerHpBelow: 0.5, ownerAlive: 1, dataNot: ['scale12', 1] }, prio: 5, effects: [{ type: 'set_data', onUnit: 1, key: 'scale12', value: 1 }, { type: 'message', target: 'self', text: '銀鱗水龍的鱗片全都倒豎了起來！（逆鱗：被物理攻擊會反擊。改用魔法、強化或回復！）' }] },
+  { on: EVT.DAMAGE, phase: 'POST', role: 'tgt', reaction: 1, cond: { dataIs: ['scale12', 1], srcSide: 'enemy', cat: '物', hasPower: 1, ownerAlive: 1 }, limit: { perAction: 1 }, effects: [{ type: 'counter', skill: 'counter_strike', why: 'scale12', mul: 0.9 }] }] }) });
+DEF.skills.m_hydraFlood.mods = (DEF.skills.m_hydraFlood.mods || []).concat([{ stage: 'skill', who: 'attacker', mul: 2, cond: { tgtStatus: 'psn' } }]);
+Object.assign(DEF.skills.m_hydraFlood, { warn: '（沼澤的水位在下降……中毒時這一擊傷害加倍！先解毒，再選擇「防禦」。）' }); MOVES.m_hydraFlood.d = (MOVES.m_hydraFlood.d || '') + '對中毒的對手傷害加倍。';
+EFFECT_TYPES.devour12 = { exec(core, ef, ctx) { const u = ctx.owner; let n = 0;
+  for (const r of core.alive(u.side).filter(q => q !== u && q.minion)) { n++; r.res.hp = 0; core.knockDown(r, u, null); }
+  u.data.eaten12 = n; if (n) core.emit(EVT.MESSAGE, { src: u, tgts: [u], payload: { key: null, text: u.name + '一口吞下了' + n + '隻小老鼠！力量變強了！' } }); } };
+BR.FORMULA.feast12 = c => 1 + 0.2 * ((c.src && c.src.data.eaten12) || 0);
+Object.assign(MOVES.m_ratSwarm, { pow: 0, cat: '變', eff: undefined });
+defPut('skills', 'm_ratSwarm', { ...skillFromMove('m_ratSwarm', { n: '鼠群', t: '一般', cat: '變', fx: 'mbuff', foe: 1 }, { kind: 'skill', extraTags: ['monster_skill'] }), override: true, target: 'self', noHitRoll: true, cooldown: 0,
+  effects: [effRegister('skill:m_ratSwarm#e0', { type: 'summon', sp: 'sewerRat', count: 1, kind: 'minion', maxSide: 3, lv: 22 })], after: [] });
+MOVES.m_ratSwarm.d = '吹響口哨，叫來一隻小老鼠。';
+{ const D = DEF.skills.m_kingsFeast; D.effects = [effRegister('skill:m_kingsFeast#e9', { type: 'devour12', target: 'self' })].concat(D.effects); D.mods = (D.mods || []).concat([{ stage: 'skill', who: 'attacker', mul: { f: 'feast12' } }]);
+  Object.assign(D, { warn: '（鼠王盯著小老鼠流口水……每吃一隻威力就更高，先清掉老鼠！再選擇「防禦」。）' }); MOVES.m_kingsFeast.d = '吃掉身邊的小老鼠（每隻威力 +20%），再撲上來大咬一口。'; }
+B12_SCRIPT.ratKing = function (core, u) { const rats = core.alive(u.side).filter(q => q !== u && q.minion).length;
+  if (rats < 2 && core.round >= 2 && core.round - (u.data.called ?? -9) >= 3) { u.data.called = core.round; return { type: 'skill', skill: 'm_ratSwarm', targets: [u.id] }; }
+  if (rats && core.round - (u.data.lastCharge ?? -9) >= 4 && core.rng.chance(0.5)) return b12Charge(core, u, 'm_kingsFeast');
+  return b12Pick(core, u, ['m_crownBash', 'm_plagueBite', 'm_crownBash']); };
+{ const D = DEF.skills.m_harvest; D.acc = D.acc || 100;
+  D.mods = (D.mods || []).concat([{ stage: 'final', who: 'attacker', mul: 2, cond: { tgtStatus: 'guard' } }, { stage: 'skill', who: 'attacker', accAdd: -300, cond: { tgtStatus: 'smoke' } }, { stage: 'skill', who: 'attacker', accAdd: -300, cond: { tgtStatus: 'evade_up' } }]);
+  Object.assign(D, { warn: '（豐收之刻會無視「防禦」！用煙霧彈或提高閃避的技能躲開。）' }); MOVES.m_harvest.d = '揮動巨鐮收割一切。無視防禦，但打不中閃避中的對手。'; }
+EFFECT_TYPES.clock12 = { exec(core, ef, ctx) { const u = ctx.owner; u.data.clock12 = (u.data.clock12 || 9) >= 12 ? 9 : (u.data.clock12 || 9) + 1;
+  core.emit(EVT.MESSAGE, { src: u, tgts: [u], payload: { key: null, text: u.data.clock12 === 12 ? '（鐘塔的指針指向 12 點！審判的鐘聲響起……）' : '（鐘塔的指針指向 ' + u.data.clock12 + ' 點。' + (u.data.clock12 === 11 ? '下一回合就是 12 點！）' : '）') } }); } };
+defPut('mechanics', 'b12_clockColossus', { make: u => ({ triggers: [{ on: EVT.ROUND_END, phase: 'POST', cond: { ownerAlive: 1 }, prio: 1, effects: [{ type: 'clock12', target: 'self' }] }] }) });
+b12Skill('m_timeWarp', { pow: 0, stat: undefined, st: undefined, d: '扭曲時間，讓對手下一回合最後才行動（搶先技能不受影響）。' });
+{ const D = DEF.skills.m_timeWarp; D.target = 'enemy'; D.noHitRoll = true; D.effects = [effRegister('skill:m_timeWarp#e0', { type: 'status', status: 'delay', target: 'target' }), effRegister('skill:m_timeWarp#e1', { type: 'message', target: 'target', text: '時間被扭曲了！下一回合會最後才行動……' })]; }
+Object.assign(DEF.skills.m_twelveStrike, { chargeMsg: '舉起了巨大的指針……', warn: '（12 點的審判！選擇「防禦」！）' });
+B12_SCRIPT.clockColossus = function (core, u) { const h = u.data.clock12 || 9;
+  if (h === 11) return b12Charge(core, u, 'm_twelveStrike');
+  if (h === 10 && core.rng.chance(0.6)) { const t = b12Hero(core); return { type: 'skill', skill: 'm_timeWarp', targets: t ? [t.id] : [] }; }
+  return b12Pick(core, u, ['m_gearCrush', 'm_steamBurst', 'm_gearCrush']); };
+EFFECT_TYPES.frost12 = { exec(core, ef, ctx, tg) { for (const t of tg) { if (!t || !t.hero || !core.isUp(t)) continue;
+  if (ef.clear) { if (t.data.frost12) { t.data.frost12 = 0; core.emit(EVT.MESSAGE, { src: t, tgts: [t], payload: { key: null, text: ef.why === 'crit' ? '會心一擊震碎了身上的冰霜！' : '防禦架勢抖落了身上的冰霜！' } }); } continue; }
+  t.data.frost12 = (t.data.frost12 || 0) + 1;
+  if (t.data.frost12 >= 3) { t.data.frost12 = 0; core.applyStatus(ctx.owner, t, 'frozen', {}); core.emit(EVT.MESSAGE, { src: t, tgts: [t], payload: { key: null, text: '冰霜累積到 3 層，' + t.name + '被凍住了！' } }); }
+  else core.emit(EVT.MESSAGE, { src: t, tgts: [t], payload: { key: null, text: '冰霜累積了（' + t.data.frost12 + '／3）。防禦或打出會心可以清掉。' } }); } } };
+defPut('mechanics', 'b12_frostQueen', { make: u => ({ triggers: [
+  { on: EVT.DAMAGE, phase: 'POST', role: 'src', cond: { element: '水', hasPower: 1, tgtAlive: 1, tgtSide: 'enemy' }, limit: { perAction: 1 }, prio: 3, effects: [{ type: 'frost12', target: 'event_target' }] },
+  { on: EVT.DEFEND, phase: 'POST', role: 'enemy_src', prio: 3, effects: [{ type: 'frost12', clear: 1, why: 'guard', target: 'all_enemies' }] },
+  { on: EVT.DAMAGE, phase: 'POST', role: 'tgt', cond: { srcSide: 'enemy', crit: 1, hasPower: 1 }, limit: { perAction: 1 }, prio: 3, effects: [{ type: 'frost12', clear: 1, why: 'crit', target: 'all_enemies' }] }] }) });
+defPut('statuses', 'cooled12', { tags: ['debuff'], duration: 'owner_actions', durDefault: 3, tick: 'owner_action_end', stack: 'refresh', metadata: { n: '冷卻' } });
+defPut('mechanics', 'b12_lavaGiant', { make: u => ({ mods: [{ stage: 'final', who: 'defender', mul: 0.85, cond: { cat: '物', hasPower: 1, ownerLacksStatus: 'cooled12' } }], triggers: [
+  { on: EVT.ROUND_START, phase: 'POST', cond: { round: 1, ownerAlive: 1 }, prio: 2, effects: [{ type: 'message', target: 'self', text: '熔岩巨人全身覆蓋著熔岩甲！（物理攻擊的效果會變差……打出會心就能讓熔岩甲裂開！）' }] },
+  { on: EVT.DAMAGE, phase: 'POST', role: 'tgt', cond: { srcSide: 'enemy', crit: 1, hasPower: 1, ownerAlive: 1 }, limit: { perAction: 1 }, prio: 3, effects: [{ type: 'status', status: 'cooled12', target: 'self', dur: 3 }, { type: 'message', target: 'self', text: '會心一擊打裂了熔岩甲！物理攻擊現在有效！' }] }] }) });
+defPut('mechanics', 'b12_victorDemon', { make: u => ({ mods: [{ stage: 'skill', costMul: 0 }, { stage: 'skill', who: 'attacker', mul: 0.8, cond: { notTag: 'monster_skill' } }] }) });
+B12_SCRIPT.victorDemon = function (core, u) { const id = core.data.lastHeroAct, D = id && DEF.skills[id], t = b12Hero(core);
+  if (D && t && D.power && /^[ou]_/.test(id) && !D.tags.includes('basic') && !core.onCooldown(u, id) && core.rng.chance(0.85)) {
+    b12Say(core, u, '魔人維克托冷笑著，擺出了跟你一樣的架勢……（他要模仿「' + D.name + '」！）');
+    return { type: 'skill', skill: id, targets: D.target === 'self' ? [u.id] : [t.id] }; }
+  return null; };
+COND.stance12 = (c, v) => !!c.owner && ((c.owner.data.stance12 || -1) >= c.core.round) === !!v;
+EFFECT_TYPES.stance12 = { exec(core, ef, ctx) { ctx.owner.data.stance12 = core.round + 1; } };
+defPut('mechanics', 'b12_shadowGeneral', { make: u => ({ triggers: [
+  { on: EVT.ACTION_END, phase: 'POST', cond: { ownerHpBelow: 0.75, ownerAlive: 1, dataNot: ['sg75', 1] }, prio: 5, effects: [{ type: 'set_data', onUnit: 1, key: 'sg75', value: 1 }, { type: 'stance12', target: 'self' }, { type: 'message', target: 'self', text: '影將莫爾德擺出了反擊架勢！（這兩回合被物理攻擊會反擊）' }] },
+  { on: EVT.ACTION_END, phase: 'POST', cond: { ownerHpBelow: 0.5, ownerAlive: 1, dataNot: ['sg50', 1] }, prio: 5, effects: [{ type: 'set_data', onUnit: 1, key: 'sg50', value: 1 }, { type: 'set_data', onUnit: 1, key: 'double12', value: 2 }, { type: 'message', target: 'self', text: '影將莫爾德的劍上纏繞著黑影……（接下來會連續蓄力兩次！）' }] },
+  { on: EVT.ACTION_END, phase: 'POST', cond: { ownerHpBelow: 0.25, ownerAlive: 1, dataNot: ['sg25', 1] }, prio: 5, effects: [{ type: 'set_data', onUnit: 1, key: 'sg25', value: 1 }, { type: 'message', target: 'self', text: '影將莫爾德燃起了黑色的火焰！（每 3 次行動就會放出一次蝕日之劍）' }] },
+  { on: EVT.DAMAGE, phase: 'POST', role: 'tgt', reaction: 1, cond: { stance12: 1, srcSide: 'enemy', cat: '物', hasPower: 1, ownerAlive: 1 }, limit: { perAction: 1 }, effects: [{ type: 'counter', skill: 'counter_strike', why: 'stance12', mul: 0.9 }] }] }) });

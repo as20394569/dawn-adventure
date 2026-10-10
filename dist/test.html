@@ -21633,6 +21633,11 @@ ST11('roar11', '狂吼', { mods: [{ stage: 'final', who: 'defender', mul: 0.9, c
 ST11('blood11', '狂戰之血', { mods: [{ stage: 'final', who: 'defender', mul: 1.15, cond: { hasPower: 1 } }], triggers: [{ on: EVT.DAMAGE, phase: 'POST', role: 'src', cond: { hasPower: 1, tgtSide: 'enemy' }, effects: [{ type: 'heal', target: 'self', ofEvent: 0.15, kind: 'drain', quiet: 1 }] }] });
 ST11('spearGuard11', '迴槍架勢', { triggers: [{ on: EVT.DAMAGE, phase: 'POST', role: 'tgt', cond: { srcSide: 'enemy', hasPower: 1, ownerAlive: 1 }, limit: { perAction: 1 }, effects: [{ type: 'counter', mul: { f: 'cnt11', v: 50 }, why: 'spear11' }] }] });
 ST11('crack11', '裂甲', { tags: ['debuff'], triggers: [{ on: EVT.ROUND_END, effects: [{ type: 'damage', target: 'self', pctMax: 0.03, bossMul: 1 / 3, kind: 'dot', tags: ['dot'] }] }] });
+ST11('qiBomb12', '氣爆', { dur: 'until_used', tags: ['debuff'], triggers: [{ on: EVT.ROUND_START, phase: 'POST', cond: { ownerAlive: 1 }, effects: [{ type: 'qiBlast12', target: 'self' }, { type: 'remove_status', target: 'self', status: 'qiBomb12', why: 'used' }] }] });
+EFFECT_TYPES.qiPlant12 = { exec(core, ef, ctx, tg) { const a = ctx.owner; for (const t of tg) { if (!t || !core.isUp(t)) continue; core.applyStatus(a, t, 'qiBomb12', { data: { n: ctx.spent || 0 } }); } } };
+EFFECT_TYPES.qiBlast12 = { exec(core, ef, ctx) { const t = ctx.owner, inst = ctx.status || core.statusOf(t, 'qiBomb12'), a = inst && core.byId[inst.src], sk = DEF.skills.t_zjQiBurst; if (!t || !core.isUp(t) || !a || !sk) return;
+    const n = (inst.data && inst.data.n) || 0, r = BR.damage(core, a, t, sk, { power: 40 + 30 * n, spent: n, cat: sk.cat });
+    core.dealDamage(a, t, r.amount, { ...r, el: sk.el, cat: sk.cat, skill: sk.id, tags: sk.tags.concat(['qi12']), kind: 'qi12' }); } };
 ST11('mwall11', '法力屏障', { mods: [{ stage: 'final', who: 'defender', mul: 0.6, cond: { cat: '特', hasPower: 1 } }, { stage: 'final', who: 'defender', mul: 0.8, cond: { cat: '物', hasPower: 1 } }] });
 ST11('maxim11', '魔導極限', { mods: [{ stage: 'base', costMul: 1.5, res: 'mp' }] });
 ST11('pageGuard11', '守護之頁', { mods: [{ stage: 'final', who: 'defender', mul: 0.7, cond: { hasPower: 1 } }] });
@@ -21785,13 +21790,13 @@ const ZJ11 = {
     ['4b', 'zjFinale', '終章頌歌', 90, 0, 4, 14, 1, '打全體（魔法）；自己每有 1 種能力提升，威力 +15%。', { unlock: 'clsBard', mods: [{ stage: 'skill', who: 'attacker', powMul: { f: 'song12' } }] }]],
   火槍: [['4a', 'zjGearGun', '齒輪砲台', 90, 0, 4, 14, 0, '砲擊並設置砲台（3 發）；砲台每回合結束自動射擊一隻魔物（威力 40）。', { unlock: 'clsMachinist', after: [{ type: 'turret_set' }] }],
     ['4b', 'zjRedShell', '赤焰彈', 85, 0, 3, 10, 0, '燃燒彈，50% 灼傷。', { unlock: 'clsMachinist', effects: DMG11(STA11('brn', 0.5)) }]],
-  拳套: [['4a', 'zjThousand', '千手寸勁', 35, 3, 3, 10, 0, '3 段；每有 1 點氣多 1 段，用掉全部的氣。', { unlock: 'clsMonk', cls: 'strike', costs: [{ res: 'chi', all: 1, min: 0 }, { res: 'mp', amount: 10 }], hitsOf: (core, u, cmd) => 3 + (cmd.spent || 0) }],
+  拳套: [['4a', 'zjQiBurst', '氣爆掌', 80, 0, 3, 10, 0, '一掌把氣打進對手體內，用掉全部的氣；下一回合開始時，體內的氣爆開（威力 40，每點氣 +30）。', { cls: 'strike', costs: [{ res: 'chi', all: 1, min: 0 }, { res: 'mp', amount: 10 }], effects: DMG11({ type: 'qiPlant12', cond: { tgtAlive: 1 } }) }],
     ['4b', 'zjQuake', '沖天拳', 170, 0, 4, 14, 0, '一記上勾拳把對手打上半空，必定會心；氣滿時威力再 +50%。', { unlock: 'clsMonk', cls: 'strike', mods: [CRIT11, MUL11(1.5, { srcChiFull11: 1 })] }]],
   長槍: [['4a', 'zjAzure', '蒼龍躍', 185, 0, 4, 14, 0, '跳到空中（大部分攻擊打不到），下一次行動落下。', { unlock: 'clsDragoon', cls: 'pierce', charge: 1, airborne: 1 }],
     ['4b', 'zjMeteor', '流星龍墜', 120, 0, 5, 16, 1, '跳到空中，下一次行動化成流星落下打全體。', { unlock: 'clsDragoon', charge: 1, airborne: 1 }]],
 };
 for (const k in ZJ11) TREE11[k].sk.push(...ZJ11[k]);
-const ZJ_SWAP12 = { t_zjRune: 't_zjSteel', t_zjObsidian: 't_zjSwordDance', t_zjMoonFang: 't_zjVenomThroat' };
+const ZJ_SWAP12 = { t_zjRune: 't_zjSteel', t_zjObsidian: 't_zjSwordDance', t_zjMoonFang: 't_zjVenomThroat', t_zjThousand: 't_zjQiBurst' };
 { const _so = startOverworld; startOverworld = function (...a) { const st = Game.st, T = st && st.tr11; for (const o in ZJ_SWAP12) { const n = ZJ_SWAP12[o]; if (T && T.lv && T.lv[o]) { T.lv[n] = Math.max(T.lv[n] || 0, T.lv[o]); delete T.lv[o]; } }
     if (st && Array.isArray(st.slots)) st.slots = st.slots.map(id => ZJ_SWAP12[id] || id); return _so.apply(this, a); }; }
 const CM11 = {
@@ -22411,10 +22416,9 @@ Object.assign(FX11, {
   zjRedShell: { col: ['#ff5020', '#ffd0a0', '#701808'], pt: 'flame', cast: 'still', fin: 'burst', snd: 'fire', // 赤焰彈: a red shell bursts into flame
     *f(S, U, T) { Sound.sfx('crit'); ln9(this, U.x + 16, U.y - 10, T.x, T.y, S.col[0], S.col[1], 3, 8); yield* wait(3); Sound.sfx('fire'); this.spawn({ k: 'glow', x: T.x, y: T.y, r: 28, c: S.col[0], life: 14 });
       for (let i = 0; i < 10; i++) this.spawn({ k: 'flame', x: T.x + rnd(-14, 14), y: T.y + rnd(-6, 12), vy: -1.4, s: 4, life: 18 }); this.spawn({ k: 'ring', x: T.x, y: T.y, r0: 4, r1: 30, c: S.col[1], w: 3, life: 12 }); yield* wait(10); } },
-  zjThousand: { col: ['#ffc060', '#fff8e0', '#a05010'], pt: 'chi', cast: 'aura', fin: 'none', snd: 'heavy', // 千手寸勁: palm after palm, the chi spent with each
+  zjQiBurst: { col: ['#ffc060', '#fff8e0', '#a05010'], pt: 'chi', cast: 'aura', fin: 'none', snd: 'heavy', // 氣爆掌（v12.103 取代千手寸勁）: a palm drives the chi into the foe; it bursts next round
     *f(S, U, T, u) { Sound.sfx('charge'); aura11(this, U, S, 8); yield* wait(5); yield* this.lunge(u, 18, 2); Sound.sfx('heavy');
-      for (let i = 0; i < 6; i++) { const ox = [-8, 10, -14, 6, 14, -4][i], oy = [0, -10, 8, 10, -4, -14][i]; this.spawn({ k: 'ring', x: T.x + ox, y: T.y + oy, r0: 2, r1: 16, c: S.col[i % 2], w: 3, life: 9 }); this.star(T.x + ox, T.y + oy, S.col[1], 9); this.shake = Math.max(this.shake, 2); yield* wait(2); } yield* wait(2); },
-    *h(S, U, T, u, i) { Sound.sfx('heavy'); const ox = [8, -6, 4, -10, 10][i % 5], oy = [-6, 6, -10, 2, 8][i % 5]; this.spawn({ k: 'ring', x: T.x + ox, y: T.y + oy, r0: 2, r1: 14, c: S.col[0], w: 3, life: 8 }); this.star(T.x + ox, T.y + oy, S.col[1], 8); this.shake = Math.max(this.shake, 2); yield* wait(3); } },
+      this.spawn({ k: 'ring', x: T.x, y: T.y, r0: 2, r1: 20, c: S.col[0], w: 3, life: 10 }); this.star(T.x, T.y, S.col[1], 12); for (let i = 0; i < 6; i++) this.spawn({ k: 'ring', x: T.x, y: T.y, r0: 22 - i * 3, r1: 2, c: S.col[i % 2], w: 1, life: 8 + i }); this.shake = Math.max(this.shake, 4); yield* wait(10); } },
   zjQuake: { col: ['#ffb040', '#ffffff', '#804010'], pt: 'chi', cast: 'aura', fin: 'impact', snd: 'quake', // 裂地神掌: one palm that cracks the ground open
     *f(S, U, T, u) { Sound.sfx('charge'); aura11(this, U, S, 12); this.spawn({ k: 'glow', x: U.x + 12, y: U.y - 8, r: 18, c: S.col[0], life: 16 }); yield* wait(8); yield* this.lunge(u, 22, 3);
       Sound.sfx('quake'); this.spawn({ k: 'glow', x: T.x, y: T.y, r: 34, c: S.col[0], life: 12 }); for (let i = 0; i < 4; i++) zig9(this, T.x, T.y + 10, T.x + (i - 1.5) * 26, T.y + 30, S.col[2], 3, 4, 16); this.spawn({ k: 'shock', x: T.x, y: T.y + 20, r0: 6, r1: 56, c: S.col[0], life: 16 });
@@ -22593,7 +22597,7 @@ classTalk = function* () { const st = Game.st; if (!st.cls) { const k = yield* c
   if (st.lv < 14) return false; const r = yield* ask('要做什麼？', ['技能樹重置', '聊天']); if (r !== 0) return false; yield* treeReset11(); return true; };
 ch2ClassTalk = function* () { const st = Game.st, f = st.flags, n = ['clsBard', 'clsMachinist', 'clsMonk', 'clsDragoon'].filter(k => f[k]).length;
   yield* say('王都的導師們都有自己的絕活。完成他們的試煉，就能學到技能樹的「絕技」。' + (n ? '\n（已經解鎖 ' + n + '/4 位導師的絕技）' : '\n（詩人公會・鐘錶師・雪峰寺・龍騎士老人）')); };
-const ZJ_OF12 = { clsBard: ['迴響序曲', '終章頌歌', '樂器'], clsMachinist: ['齒輪砲台', '赤焰彈', '火槍'], clsMonk: ['千手寸勁', '沖天拳', '拳套'], clsDragoon: ['蒼龍躍', '流星龍墜', '長槍'], hiddenCls: ['晨曦之刃', '雙相斬', '戰技'] }; // v12.96：黑曜終劍拿掉了，打贏流浪的魔劍士不再解鎖絕技（只有成就）
+const ZJ_OF12 = { clsBard: ['迴響序曲', '終章頌歌', '樂器'], clsMachinist: ['齒輪砲台', '赤焰彈', '火槍'], clsMonk: ['沖天拳', null, '拳套'], clsDragoon: ['蒼龍躍', '流星龍墜', '長槍'], hiddenCls: ['晨曦之刃', '雙相斬', '戰技'] }; // v12.96：黑曜終劍拿掉了，打贏流浪的魔劍士不再解鎖絕技（只有成就）
 Events.eliteWin_rogueBlade = function* (ow) { const st = Game.st; st.flags.rogueMet = 1;
   yield* sayAll(['……好劍。', '你的劍裡，有魔力的流動。和我年輕的時候一樣。', '魔劍之道，就是讓劍與魔法合而為一。這三頁劍譜，就是它的全部。', '……能跟你這樣的劍士交手，我已經沒有遺憾了。']);
   st.flags.spellbladeOk = 1; };
@@ -22639,7 +22643,7 @@ if (typeof BATTLE_HELP !== 'undefined') { for (let i = BATTLE_HELP.length - 1; i
     .replace(/技能來自職業（等級到了學會，只在那個職業能用）和武器技能樹（用技能點學，只能用身上武器那棵樹的招）。職業技能每用一次練度 \+1：.*$/, '技能來自技能樹：身上武器那棵樹（用技能點學）和戰技・護身・輔佐三棵共通樹。')
     .replace(/選單→技能編排：職業招式固定一格，再放 4 個技能。/, '選單→技能→技能編排：最多放 4 個技能。').replace(/戰鬥中能用：職業招式＋最多4個技能槽。/, '戰鬥中能用：最多 4 個技能槽。')
     .replace(/技能點＝等級＋主線頭目各 1 點/g, '技能點＝等級×2＋主線頭目各 1 點').replace(/選單→技能→武器技能樹/g, '選單→技能樹'));
-  BATTLE_HELP.push(['武器的資源', ['拳套學會特性後有「氣」：打中累積，滿 5 點時下一擊必定會心；千手寸勁會用掉全部的氣。', '雙盾學會特性後有「守勢」：被攻擊時累積，聖壁衝鋒會用掉。', '火槍學會特性後，齒輪砲台設下的砲台每回合結束自動射擊。']]); }
+  BATTLE_HELP.push(['武器的資源', ['拳套學會特性後有「氣」：打中累積，滿 5 點時下一擊必定會心；氣爆掌會用掉全部的氣。', '雙盾學會特性後有「守勢」：被攻擊時累積，聖壁衝鋒會用掉。', '火槍學會特性後，齒輪砲台設下的砲台每回合結束自動射擊。']]); }
 { const _so = startOverworld; startOverworld = function (...a) { const st = Game.st; let L = null;
     if (st && st.cls && st.cls !== NC12 && !st.ncv12) { st.ncv12 = 1; const was = (CLASSES[st.cls] || {}).n || '';
       let n = 0, n1 = 0; for (const k in st.skillLib || {}) { const e = st.skillLib[k]; if (!e || !e.learned) continue; if (k.startsWith('u_') || (ORB_A[k] && !SK9_CLS[k])) n1++; else n++; }
@@ -23341,7 +23345,7 @@ const BUFF12 = {
   regen11: { n: '再生', k: 'reg', tip: '每回合回 5% HP' }, shadowCounter11: { n: '殘影', k: 'ctr', tip: '迴避↑・閃過就反擊' }, parry11: { n: '架劍', k: 'ctr', tip: '物理 −60%・反擊' },
   swordDance11: { n: '雙劍舞陣', k: 'spd', tip: '每次攻擊追加一斬' }, shieldStance11: { n: '雙盾架勢', k: 'def', tip: '受傷 −50%・被打得盾勢' }, fortCounter11: { n: '不落要塞', k: 'ctr', tip: '被打就反擊' },
   smoke: { n: '迴避↑', k: 'spd', tip: '迴避 +30%' }, critNext: { n: '心眼', k: 'atk', tip: '下一擊必定會心' }, mirror: { n: '反射壁', k: 'def', tip: '魔法傷害反彈' },
-  crack11: { n: '裂甲', k: 'deb', tip: '物防↓・每回合受傷' }, bulk11: { n: '盾勢', k: 'def', tip: '盾突每層 +25%', stacks: 1 },
+  crack11: { n: '裂甲', k: 'deb', tip: '物防↓・每回合受傷' }, qiBomb12: { n: '氣爆', k: 'deb', tip: '下回合開始時體內的氣爆開' }, bulk11: { n: '盾勢', k: 'def', tip: '盾突每層 +25%', stacks: 1 },
 };
 const BUFF_COL12 = { atk: ['#ff9050', 'rgba(90,30,10,0.92)'], def: ['#9ec8ff', 'rgba(20,40,80,0.92)'], spd: ['#7ef0c8', 'rgba(10,60,50,0.92)'], reg: ['#90f090', 'rgba(20,70,20,0.92)'], ctr: ['#ffe070', 'rgba(80,60,10,0.92)'], deb: ['#d0a0ff', 'rgba(50,20,80,0.92)'], up: ['#ffc070', 'rgba(80,45,10,0.92)'], down: ['#a0c0ff', 'rgba(20,30,80,0.92)'] };
 const STAGE_N12 = { atk: '物攻', def: '物防', spa: '魔攻', spd: '魔防', spe: '速度', acc: '命中', eva: '迴避', crit: '會心' };
@@ -28018,9 +28022,11 @@ const HDFX22 = {
       Sound.sfx('dashStep'); HD15.windLines(this, H.Hc, T, P, 8, { spread: 30, len: 50, spd: 14 }); yield* this.lunge(u, 22, 3); const d = AF22.fist(this, { x: T.x, y: T.y + 6 }, 1.8); yield* wait(2);
       Sound.sfx('fsHitSuper'); Sound.sfx('quake'); HD15.stop(this, 9); this.spawn({ k: 'flash', c: '#fff6d8', a: 0.4, life: 8 }); AF22.wave(this, T, d, 1.8); HD15.ring(this, T, P, 8, 60, { w: 3, dur: 20 });
       HD15.cracks(this, { x: T.x, y: ft }, 8, P, { len: 36, fl: 0.3, dur: 46 }); HD15.shards(this, { x: T.x, y: ft - 2 }, 8, { up: 2.4, spd: 2.6, sz: 2.8, cols: AX21.ROCK }); this.shake = Math.max(this.shake || 0, 13); yield* wait(18); } },
-  zjThousand: { *f(U, T, u, t) { const P = AF22.P(); const n = 3 + (this.af22spent || 0); this.af22n = n;
-      HD15.dim(this, 0.55, 60 + n * 10, { col: '#140c00', inn: 0.08, out: 0.3 }); Sound.sfx('charge'); for (let i = 0; i < 8; i++) { const a = i / 8 * Math.PI * 2; AF22.palm(this, { x: T.x + Math.cos(a) * 28, y: T.y + Math.sin(a) * 20 }, a + Math.PI, { delay: i, hold: 30 + n * 8 }); }
-      yield* wait(14); yield* AF22.inch(this, T, 0, n); }, *h(U, T, u, i) { yield* AF22.inch(this, T, i, this.af22n || 3); } },
+  zjQiBurst: { *f(U, T, u, t) { const P = AF22.P(), n = this.af22spent || 0, H = DS16.hands(this); Sound.sfx('charge'); HD15.gather(this, H.R, 10 + n * 3, P, 30 + n * 4, { span: 10 + n * 2 }); HD15.flash(this, H.R, P, 24 + n * 4, { dur: 16 + n * 2, delay: 6 });
+      for (let i = 0; i < n; i++) DG17.later(this, i * 3, () => HD15.ring(this, H.R, P, 24, 4, { w: 1.6, dur: 10 })); yield* wait(12 + n * 2);
+      Sound.sfx('fsSwing'); yield* this.lunge(u, 12, 2); AF22.palm(this, T, -Math.PI / 2, { hold: 10 }); const d = AF22.fist(this, T, 1.3); yield* wait(2);
+      Sound.sfx('fsHitSuper'); HD15.stop(this, 6); HD15.flash(this, T, P, 50, { dur: 14 }); for (let i = 0; i < 3; i++) HD15.ring(this, T, P, 40 - i * 8, 4, { w: 2.2, dur: 12, delay: i * 3 });
+      HD15.gather(this, T, 14 + n * 3, P, 44, { span: 12 }); this.shake = Math.max(this.shake || 0, 6); yield* wait(18); } },
   zjQuake: { *f(U, T, u, t) { const P = AF22.P(), v = DG17.vAt(this, T), ft = v && v.foot ? v.foot : T.y + 24, H = DS16.hands(this); Sound.sfx('charge'); HD15.gather(this, H.R, 14, P, 34, { span: 10 }); HD15.flash(this, H.R, P, 30, { dur: 16, delay: 8 }); yield* wait(14);
       Sound.sfx('fsSwing'); yield* this.lunge(u, 14, 2); AF22.fist(this, { x: T.x, y: T.y + 14 }, 1.6, { d: { an: -Math.PI / 2, ux: 0, uy: -1 } }); yield* wait(2);
       Sound.sfx('fsHitSuper'); Sound.sfx('crit'); HD15.stop(this, 8); this.spawn({ k: 'flash', c: '#fff6d8', a: 0.45, life: 8 }); HD15.pillar(this, { x: T.x, y: ft }, P, 160, { w: 26, dur: 30 }); HD15.flare(this, T, HD15.P.white, 160, { rot: Math.PI / 2, dur: 22 });
@@ -28042,9 +28048,6 @@ AF22.spin = function* (b, T, i) { const P = AF22.P(), C = { x: T.x, y: T.y + 10 
 AF22.barrage = function* (b, T, i, n) { const rn = s => (Math.random() - 0.5) * s, last = i >= n - 1;
   if (!last) { Sound.sfx('fsSwing'); const C = { x: T.x + rn(20), y: T.y + rn(18) }; AF22.fist(b, C, 0.7 + i * 0.03); AF22.fist(b, { x: C.x + rn(14), y: C.y + rn(12) }, 0.5, { delay: 1 }); yield* wait(2); Sound.sfx('fsHit'); yield* wait(i < 4 ? 2 : 1); return; }
   Sound.sfx('fsSwing'); const d = AF22.fist(b, T, 1.7); yield* wait(2); Sound.sfx('fsHitSuper'); HD15.stop(b, 7); b.spawn({ k: 'flash', c: '#fff6d8', a: 0.35, life: 8 }); AF22.wave(b, T, d, 1.4); AX21.chip(b, T, 1); b.shake = Math.max(b.shake || 0, 9); yield* wait(14); };
-AF22.inch = function* (b, T, i, n) { const P = AF22.P(), last = i >= n - 1, a = i / Math.max(1, n) * Math.PI * 2, C = { x: T.x + Math.cos(a) * 10, y: T.y + Math.sin(a) * 8 }; Sound.sfx('fsHit');
-  HD15.flash(b, C, P, last ? 70 : 34, { dur: 12 }); HD15.ring(b, C, P, 2, last ? 56 : 22, { w: 2.2, dur: 14 }); HD15.spikes(b, C, HD15.P.white, last ? 14 : 6, last ? 40 : 16); HD15.stop(b, last ? 8 : 2);
-  if (last) { Sound.sfx('fsHitSuper'); b.spawn({ k: 'flash', c: '#fff6d8', a: 0.45, life: 10 }); HD15.ring(b, T, HD15.P.white, 6, 80, { w: 3, dur: 22 }); HD15.sparks(b, T, 26, P, { spd: 5, life: 22, g: 0.05 }); b.shake = Math.max(b.shake || 0, 12); yield* wait(16); } else { b.shake = Math.max(b.shake || 0, 3); yield* wait(6); } };
 AF22.hundred = function* (b, T, i, n) { const rn = s => (Math.random() - 0.5) * s, last = i >= n - 1, P = AF22.P();
   if (!last) { Sound.sfx('fsSwing'); const C = { x: T.x + rn(24), y: T.y + rn(22) }; AF22.fist(b, C, 0.8); for (let q = 0; q < 2; q++) AF22.fist(b, { x: C.x + rn(26), y: C.y + rn(24) }, 0.5, { delay: q + 1 }); yield* wait(2); Sound.sfx('fsHit'); yield* wait(i < 5 ? 2 : 1); return; }
   Sound.sfx('fsSwing'); const d = AF22.fist(b, T, 2); yield* wait(3); Sound.sfx('fsHitSuper'); Sound.sfx('quake'); HD15.stop(b, 12); b.spawn({ k: 'flash', c: '#ffffff', a: 0.55, life: 12 });
@@ -28064,6 +28067,17 @@ if (AF22.live) for (const k in HDFX22) { const id = 't_' + k, D = DEF.skills[id]
   HD15.old[id] = { fx: D.fx, hitFx: D.hitFx, mv: MOVES[id] ? MOVES[id].fx : null, style: typeof SKILL_STYLE !== 'undefined' ? SKILL_STYLE[id] : null, redo: typeof REDO13 !== 'undefined' && REDO13.has(id) }; HD15.ids.push(id); }
 if (AF22.live) { const kd = TREE_KINDS11.indexOf('拳套'), wrap = F => function* (U, T, u, t) { if (!T) T = { x: U.x, y: U.y - 80 }; if (!u) u = this.H; this.slashOn = 0; this.hd15cast = 1; HD15.forceW = false; yield* F.call(this, U, T, u, t); };
   HDSP22.forEach((F, j) => { const key = 'sp11_' + kd + '_' + j; if (!FX[key]) { bvErr('v12.102', 'no special fx ' + key); return; } HD15.old[key] = FX[key]; HD15.spKeys.push([key, wrap(F.f)]); if (F.h && FX[key + 'h']) { HD15.old[key + 'h'] = FX[key + 'h']; HD15.spKeys.push([key + 'h', wrap(F.h)]); } }); }
+AF22.qiN = {};
+{ const H = Battle.prototype.handlers, _ap = H.STATUS_APPLY, _dm = H.DAMAGE;
+  H.STATUS_APPLY = function* (e, s, t, P) { if (t && P && P.status === 'qiBomb12' && !P.failed) { AF22.qiN[t.id] = (P.data && P.data.n) || 0; t.qi22 = 1; } return yield* _ap.call(this, e, s, t, P); };
+  H.DAMAGE = function* (e, s, t, P) { if (t && P && P.kind === 'qi12') { const C = this.center(t), n = AF22.qiN[t.id] || 0, k = 1 + n * 0.15; t.qi22 = 0; yield* this.msg(t.n + '體內的氣爆開了！', { hold: 14 });
+      if (HD15.on && AF22.live) { const Pk = AF22.P(); Sound.sfx('charge'); HD15.cracks(this, C, 8 + n, Pk, { len: 18 * k, fl: 1, dur: 40 }); HD15.flash(this, C, Pk, 30, { dur: 16 }); yield* wait(12);
+        Sound.sfx('fsHitSuper'); Sound.sfx('quake'); HD15.stop(this, 6); this.spawn({ k: 'flash', c: '#fff6d8', a: 0.3 + n * 0.04, life: 10 }); HD15.flash(this, C, Pk, 70 * k, { dur: 20 }); HD15.ring(this, C, Pk, 6, 56 * k, { w: 3, dur: 20 });
+        HD15.ring(this, C, HD15.P.white, 4, 34 * k, { w: 1.8, dur: 16, delay: 3 }); HD15.flare(this, C, HD15.P.white, 120 * k, { rot: 0, dur: 20, x8: 1 }); HD15.spikes(this, C, Pk, 12 + n, 36 * k); HD15.sparks(this, C, 20 + n * 4, Pk, { spd: 4.6, life: 22, g: 0.05 });
+        this.shake = Math.max(this.shake || 0, 8 + n); yield* wait(6); }
+      else { Sound.sfx('heavy'); this.spawn({ k: 'ring', x: C.x, y: C.y, r0: 4, r1: 30, c: '#ffc060', w: 3, life: 12 }); this.star(C.x, C.y, '#fff8e0', 16); this.shake = Math.max(this.shake, 6); yield* wait(8); } }
+    return yield* _dm.call(this, e, s, t, P); };
+  const _u = Battle.prototype.update; Battle.prototype.update = function (...a) { const r = _u.apply(this, a); if (HD15.on && AF22.live && this.t % 18 === 0 && this.foes) for (const v of this.foes()) if (v.qi22 && !v.gone && v.hp > 0) { const C = this.center(v); HD15.flash(this, C, AF22.P(), 16, { dur: 14 }); HD15.ring(this, C, AF22.P(), 14, 3, { w: 1.2, dur: 12 }); } return r; }; }
 { const H = Battle.prototype.handlers, _su = H.SKILL_USE; H.SKILL_USE = function* (e, s, t, P) { this.af22spent = P && P.spent || 0; return yield* _su.call(this, e, s, t, P); }; }
 { const _wa = FX.wAtk; if (_wa) FX.wAtk = function* (U, T, u) { if (!(HD15.on && AF22.live && this._thKind === '拳套')) return yield* _wa.call(this, U, T, u); this.hd15cast = 1; this.slashOn = 0; const n = this.af22atk = ((this.af22atk || 0) + 1) % 2;
     yield* this.lunge(u, 10, 2); Sound.sfx('fsSwing'); AF22.fist(this, T, 0.9, { off: n ? 6 : -6 }); yield* wait(3); Sound.sfx('fsHit'); yield* wait(6); };
@@ -28249,29 +28263,16 @@ if (SH24.live) { const kd = TREE_KINDS11.indexOf('雙盾'), wrap = F => function
   const _sg = segSwing; segSwing = function* (b, s, C, i, kind) { if (!(HD15.on && SH24.live && SH24.isK(kind))) return yield* _sg(b, s, C, i, kind); b.hd15cast = 1; yield* b.lunge(s, 6, 2); yield* SH24.bash(b, C, 0.8, { ox: [-6, 6, 0][i % 3] }); yield* wait(4); }; }
 HD15.use(HD15.on);
 const GD25 = { live: typeof fxtest13 === 'function' && fxtest13() };
-GD25.kind = () => { const k = DG17.kind(); if (k !== '雙盾' && typeof SH24 !== 'undefined' && SH24.hasShield() && !['雙劍', '雙刀'].includes(k)) return '單手盾'; return k; };
+HD15.P.guard = { core: '#ffffff', mid: '#cfe6ff', glow: '#6aa8ff', edge: '#1a3060', keep: 1 };
 GD25.foesC = b => { const L = DG17.foes(b); if (!L.length) return null; const C = L.map(v => b.center(v)); return { x: C.reduce((a, c) => a + c.x, 0) / C.length, y: C.reduce((a, c) => a + c.y, 0) / C.length }; };
 GD25.front = b => { const H = DS16.hands(b).Hc, F = GD25.foesC(b), d = F ? Math.atan2(F.y - H.y, F.x - H.x) : -Math.PI / 2; return { x: H.x + Math.cos(d) * 14, y: H.y - 12 + Math.sin(d) * 6, d }; };
-GD25.pal = k => ({ 劍: HD15.P.white, 雙劍: HD15.P.white, 短刀: HD15.P.shade, 雙刀: HD15.P.dblue, 長槍: HD15.P.lance, 斧: HD15.P.lava, 拳套: HD15.P.ki, 法杖: HD15.P.arcane, 雙盾: HD15.P.holy, 單手盾: HD15.P.silver })[k] || HD15.P.white;
-GD25.pose = (b, k, C, s = 1, hit = 0) => { const P = GD25.pal(k), du = hit ? 14 : 30;
-  switch (k) {
-    case '劍': HD15.cut(b, C, Math.PI / 2, 30 * s, P, { dur: du, w: 6, gap: 0.01 }); HD15.flare(b, { x: C.x, y: C.y - 14 * s }, P, 40 * s, { rot: 0, dur: du * 0.6, x8: 1 }); break;
-    case '雙劍': HD15.cut(b, C, Math.PI / 4, 30 * s, HD15.P.white, { dur: du, w: 6, gap: 0.01 }); HD15.cut(b, C, -Math.PI / 4, 30 * s, HD15.P.black, { dur: du, w: 6, gap: 0.01 }); HD15.flare(b, C, HD15.P.white, 40 * s, { rot: 0, dur: du * 0.6, x8: 1 }); break;
-    case '短刀': case '雙刀': { const [Pu, Bk] = [P, HD15.P.black]; HD15.cut(b, C, Math.PI / 3, 22 * s, Pu, { dur: du, w: 5, gap: 0.01 }); if (k === '雙刀') HD15.cut(b, C, -Math.PI / 3, 22 * s, Bk, { dur: du, w: 5, gap: 0.01 });
-      if (!hit && typeof K13 !== 'undefined' && K13.ghost) { const gc = k === '雙刀' ? ['#7fb0ff', '#1a2440'] : ['#b080ff', '#2a1838']; K13.ghost(b, -10, 0, gc[0], 16, 0.45); K13.ghost(b, 10, 0, gc[1], 16, 0.45); } break; }
-    case '長槍': HD15.whirl(b, C, P, { r: 22 * s, th: 6, fl: 0.95, turns: hit ? 0.8 : 1.6, trail: 4, dur: du, spark: 1 }); HD15.whirl(b, C, HD15.P.white, { r: 19 * s, th: 2.4, fl: 0.95, turns: hit ? 0.8 : 1.6, trail: 3.4, dur: du - 2, delay: 1 }); break;
-    case '斧': AX21.cleave(b, C, 'h', { r: 18 * s, th: 10, dur: du, sw: 4 }); HD15.sparks(b, C, 8, P, { spd: 2, life: 18, g: 0.12 }); break;
-    case '拳套': for (const sg of [-1, 1]) HD15.thrust(b, { x: C.x + sg * 16 * s, y: C.y + 14 * s }, { x: C.x - sg * 12 * s, y: C.y - 12 * s }, P, { w: 7, ext: 2, dur: du }); HD15.flash(b, C, P, 26 * s, { dur: du * 0.6 }); break;
-    case '法杖': ST23.circle(b, C, 20 * s, P, { fl: 1, hold: hit ? 8 : 24, spin: 0.08 }); break;
-    case '雙盾': case '單手盾': SH24.plate(b, C, P, { s: 1.3 * s, dur: du + 6, hold: 0.7, shine: !hit }); break;
-    default: HD15.cut(b, C, Math.PI / 2, 26 * s, P, { dur: du, w: 5, gap: 0.01 }); } };
-GD25.guard = function* (b) { const k = GD25.kind(), P = GD25.pal(k), H = DS16.hands(b), C = GD25.front(b), G = { x: H.Hc.x, y: HDW_FOOT() - 2 };
-  Sound.sfx('shGuard'); b.hd15cast = 1; HD15.ring(b, G, P, 6, 38, { fl: 0.3, w: 1.8, dur: 22 }); GD25.pose(b, k, C, 1); yield* wait(6);
-  if (typeof SP20 !== 'undefined') SP20.hex(b, C, 30, P, { hold: 18, fl: 1, fade: 1 }); HD15.flash(b, C, P, 34, { dur: 14 }); yield* wait(22); };
+GD25.guard = function* (b) { const P = HD15.P.guard, H = DS16.hands(b), C = GD25.front(b), G = { x: H.Hc.x, y: HDW_FOOT() - 2 };
+  Sound.sfx('shGuard'); b.hd15cast = 1; HD15.ring(b, G, P, 6, 38, { fl: 0.3, w: 1.8, dur: 22 }); SH24.plate(b, C, P, { s: 1.3, dur: 36, hold: 0.7, shine: 1, from: { x: 0, y: 8 }, mv: 5 }); yield* wait(6);
+  SP20.hex(b, C, 30, P, { hold: 18, fl: 1, fade: 1 }); HD15.flash(b, C, P, 34, { dur: 14 }); yield* wait(22); };
 { const _g = FX.guard; FX.guard = function* (U, ...a) { if (!(GD25.live && HD15.on && this.H && U && Math.abs(U.x - this.center(this.H).x) < 4 && Math.abs(U.y - this.center(this.H).y) < 4)) return yield* _g.call(this, U, ...a); yield* GD25.guard(this); }; }
 { const H = Battle.prototype.handlers, _dm = H.DAMAGE; H.DAMAGE = function* (e, s, t, P) {
-    if (GD25.live && HD15.on && t && t.hero && t.st && t.st.guard && s && !s.hero && P && P.kind !== 'dot' && (P.amount || 0) > 0) { const k = GD25.kind(), Pl = GD25.pal(k), C = GD25.front(this);
-      GD25.pose(this, k, C, 1.1, 1); if (typeof SP20 !== 'undefined') SP20.hex(this, C, 26, Pl, { hold: 6, fl: 1, fade: 1 }); HD15.sparks(this, C, 10, k === '法杖' ? Pl : HD15.P.gold, { spd: 3, life: 16, g: 0.1 }); Sound.sfx('shGuard'); }
+    if (GD25.live && HD15.on && t && t.hero && t.st && t.st.guard && s && !s.hero && P && P.kind !== 'dot' && (P.amount || 0) > 0) { const Pl = HD15.P.guard, C = GD25.front(this);
+      SH24.plate(this, C, Pl, { s: 1.4, dur: 18, hold: 0.5 }); SP20.hex(this, C, 26, Pl, { hold: 6, fl: 1, fade: 1 }); HD15.sparks(this, C, 10, HD15.P.white, { spd: 3, life: 16, g: 0.1 }); Sound.sfx('shGuard'); }
     return yield* _dm.call(this, e, s, t, P); }; }
 const HDW = { live: typeof fxtest13 === 'function' && fxtest13(), sk: null };
 HDW.ST = { 劍: { m: 'dash', gap: 56 }, 雙劍: { m: 'dash', gap: 56 }, 短刀: { m: 'blink', gap: 50 }, 雙刀: { m: 'blink', gap: 50 }, 長槍: { m: 'step', d: 28 },

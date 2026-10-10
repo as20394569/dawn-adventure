@@ -29,6 +29,12 @@ ST11('roar11', '狂吼', { mods: [{ stage: 'final', who: 'defender', mul: 0.9, c
 ST11('blood11', '狂戰之血', { mods: [{ stage: 'final', who: 'defender', mul: 1.15, cond: { hasPower: 1 } }], triggers: [{ on: EVT.DAMAGE, phase: 'POST', role: 'src', cond: { hasPower: 1, tgtSide: 'enemy' }, effects: [{ type: 'heal', target: 'self', ofEvent: 0.15, kind: 'drain', quiet: 1 }] }] });
 ST11('spearGuard11', '迴槍架勢', { triggers: [{ on: EVT.DAMAGE, phase: 'POST', role: 'tgt', cond: { srcSide: 'enemy', hasPower: 1, ownerAlive: 1 }, limit: { perAction: 1 }, effects: [{ type: 'counter', mul: { f: 'cnt11', v: 50 }, why: 'spear11' }] }] });
 ST11('crack11', '裂甲', { tags: ['debuff'], triggers: [{ on: EVT.ROUND_END, effects: [{ type: 'damage', target: 'self', pctMax: 0.03, bossMul: 1 / 3, kind: 'dot', tags: ['dot'] }] }] });
+// v12.103 氣爆掌：打中時把氣種進對手體內（記住用掉幾點氣），下一回合開始時爆開（用出招者的攻擊力算，威力 40＋每點氣 30），爆完就消失
+ST11('qiBomb12', '氣爆', { dur: 'until_used', tags: ['debuff'], triggers: [{ on: EVT.ROUND_START, phase: 'POST', cond: { ownerAlive: 1 }, effects: [{ type: 'qiBlast12', target: 'self' }, { type: 'remove_status', target: 'self', status: 'qiBomb12', why: 'used' }] }] });
+EFFECT_TYPES.qiPlant12 = { exec(core, ef, ctx, tg) { const a = ctx.owner; for (const t of tg) { if (!t || !core.isUp(t)) continue; core.applyStatus(a, t, 'qiBomb12', { data: { n: ctx.spent || 0 } }); } } };
+EFFECT_TYPES.qiBlast12 = { exec(core, ef, ctx) { const t = ctx.owner, inst = ctx.status || core.statusOf(t, 'qiBomb12'), a = inst && core.byId[inst.src], sk = DEF.skills.t_zjQiBurst; if (!t || !core.isUp(t) || !a || !sk) return;
+    const n = (inst.data && inst.data.n) || 0, r = BR.damage(core, a, t, sk, { power: 40 + 30 * n, spent: n, cat: sk.cat });
+    core.dealDamage(a, t, r.amount, { ...r, el: sk.el, cat: sk.cat, skill: sk.id, tags: sk.tags.concat(['qi12']), kind: 'qi12' }); } };
 ST11('mwall11', '法力屏障', { mods: [{ stage: 'final', who: 'defender', mul: 0.6, cond: { cat: '特', hasPower: 1 } }, { stage: 'final', who: 'defender', mul: 0.8, cond: { cat: '物', hasPower: 1 } }] });
 ST11('maxim11', '魔導極限', { mods: [{ stage: 'base', costMul: 1.5, res: 'mp' }] });
 ST11('pageGuard11', '守護之頁', { mods: [{ stage: 'final', who: 'defender', mul: 0.7, cond: { hasPower: 1 } }] });
@@ -195,7 +201,8 @@ const ZJ11 = {
     ['4b', 'zjFinale', '終章頌歌', 90, 0, 4, 14, 1, '打全體（魔法）；自己每有 1 種能力提升，威力 +15%。', { unlock: 'clsBard', mods: [{ stage: 'skill', who: 'attacker', powMul: { f: 'song12' } }] }]],
   火槍: [['4a', 'zjGearGun', '齒輪砲台', 90, 0, 4, 14, 0, '砲擊並設置砲台（3 發）；砲台每回合結束自動射擊一隻魔物（威力 40）。', { unlock: 'clsMachinist', after: [{ type: 'turret_set' }] }],
     ['4b', 'zjRedShell', '赤焰彈', 85, 0, 3, 10, 0, '燃燒彈，50% 灼傷。', { unlock: 'clsMachinist', effects: DMG11(STA11('brn', 0.5)) }]],
-  拳套: [['4a', 'zjThousand', '千手寸勁', 35, 3, 3, 10, 0, '3 段；每有 1 點氣多 1 段，用掉全部的氣。', { unlock: 'clsMonk', cls: 'strike', costs: [{ res: 'chi', all: 1, min: 0 }, { res: 'mp', amount: 10 }], hitsOf: (core, u, cmd) => 3 + (cmd.spent || 0) }],
+  // v12.103 千手寸勁 → 氣爆掌（玩家：「千手寸勁 不太好 換一個」→ 選「氣爆掌」，不用解鎖；舊存檔學過的自動換成這招）
+  拳套: [['4a', 'zjQiBurst', '氣爆掌', 80, 0, 3, 10, 0, '一掌把氣打進對手體內，用掉全部的氣；下一回合開始時，體內的氣爆開（威力 40，每點氣 +30）。', { cls: 'strike', costs: [{ res: 'chi', all: 1, min: 0 }, { res: 'mp', amount: 10 }], effects: DMG11({ type: 'qiPlant12', cond: { tgtAlive: 1 } }) }],
     ['4b', 'zjQuake', '沖天拳', 170, 0, 4, 14, 0, '一記上勾拳把對手打上半空，必定會心；氣滿時威力再 +50%。', { unlock: 'clsMonk', cls: 'strike', mods: [CRIT11, MUL11(1.5, { srcChiFull11: 1 })] }]],
   長槍: [['4a', 'zjAzure', '蒼龍躍', 185, 0, 4, 14, 0, '跳到空中（大部分攻擊打不到），下一次行動落下。', { unlock: 'clsDragoon', cls: 'pierce', charge: 1, airborne: 1 }],
     ['4b', 'zjMeteor', '流星龍墜', 120, 0, 5, 16, 1, '跳到空中，下一次行動化成流星落下打全體。', { unlock: 'clsDragoon', charge: 1, airborne: 1 }]],
@@ -203,7 +210,7 @@ const ZJ11 = {
 for (const k in ZJ11) TREE11[k].sk.push(...ZJ11[k]);
 // v12.93：舊存檔學過星紋魔劍 → 等級和技能欄都換成斷鋼一閃
 // 換掉的絕技：舊存檔的等級和技能欄跟著換（星紋魔劍 → 斷鋼一閃、黑曜終劍 → 劍舞亂刃、月影雙斬 → 毒牙封喉）
-const ZJ_SWAP12 = { t_zjRune: 't_zjSteel', t_zjObsidian: 't_zjSwordDance', t_zjMoonFang: 't_zjVenomThroat' };
+const ZJ_SWAP12 = { t_zjRune: 't_zjSteel', t_zjObsidian: 't_zjSwordDance', t_zjMoonFang: 't_zjVenomThroat', t_zjThousand: 't_zjQiBurst' };
 { const _so = startOverworld; startOverworld = function (...a) { const st = Game.st, T = st && st.tr11; for (const o in ZJ_SWAP12) { const n = ZJ_SWAP12[o]; if (T && T.lv && T.lv[o]) { T.lv[n] = Math.max(T.lv[n] || 0, T.lv[o]); delete T.lv[o]; } }
     if (st && Array.isArray(st.slots)) st.slots = st.slots.map(id => ZJ_SWAP12[id] || id); return _so.apply(this, a); }; }
 // 共通樹：[id, 名字, 最高等級, 段, 說明, 效果]；效果 p＝百分比能力、f＝固定值、big／regen／mpRegen＝戰鬥被動、tal＝沿用原本天賦的效果

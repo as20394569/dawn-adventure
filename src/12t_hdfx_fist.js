@@ -52,10 +52,13 @@ const HDFX22 = {
       Sound.sfx('dashStep'); HD15.windLines(this, H.Hc, T, P, 8, { spread: 30, len: 50, spd: 14 }); yield* this.lunge(u, 22, 3); const d = AF22.fist(this, { x: T.x, y: T.y + 6 }, 1.8); yield* wait(2);
       Sound.sfx('fsHitSuper'); Sound.sfx('quake'); HD15.stop(this, 9); this.spawn({ k: 'flash', c: '#fff6d8', a: 0.4, life: 8 }); AF22.wave(this, T, d, 1.8); HD15.ring(this, T, P, 8, 60, { w: 3, dur: 20 });
       HD15.cracks(this, { x: T.x, y: ft }, 8, P, { len: 36, fl: 0.3, dur: 46 }); HD15.shards(this, { x: T.x, y: ft - 2 }, 8, { up: 2.4, spd: 2.6, sz: 2.8, cols: AX21.ROCK }); this.shake = Math.max(this.shake || 0, 13); yield* wait(18); } },
-  // 千手寸勁（3 段＋氣）：舞台暗下來，對手身邊同時浮出一圈金色的掌影 → 每一段一個掌影貼上去，寸勁一震（貼身的小爆）；最後一段全部一起炸開
-  zjThousand: { *f(U, T, u, t) { const P = AF22.P(); const n = 3 + (this.af22spent || 0); this.af22n = n;
-      HD15.dim(this, 0.55, 60 + n * 10, { col: '#140c00', inn: 0.08, out: 0.3 }); Sound.sfx('charge'); for (let i = 0; i < 8; i++) { const a = i / 8 * Math.PI * 2; AF22.palm(this, { x: T.x + Math.cos(a) * 28, y: T.y + Math.sin(a) * 20 }, a + Math.PI, { delay: i, hold: 30 + n * 8 }); }
-      yield* wait(14); yield* AF22.inch(this, T, 0, n); }, *h(U, T, u, i) { yield* AF22.inch(this, T, i, this.af22n || 3); } },
+  // 氣爆掌（v12.103 取代千手寸勁；用掉全部的氣，下一回合開始時體內的氣爆開）：氣往掌心聚（氣越多聚得越久、光越大）→ 一掌拍進去，停格，
+  //   金色的氣從四周一口氣灌進對手體內（光往內收），對手胸口留下一顆一閃一閃的金色氣核（到爆開前一直在）
+  zjQiBurst: { *f(U, T, u, t) { const P = AF22.P(), n = this.af22spent || 0, H = DS16.hands(this); Sound.sfx('charge'); HD15.gather(this, H.R, 10 + n * 3, P, 30 + n * 4, { span: 10 + n * 2 }); HD15.flash(this, H.R, P, 24 + n * 4, { dur: 16 + n * 2, delay: 6 });
+      for (let i = 0; i < n; i++) DG17.later(this, i * 3, () => HD15.ring(this, H.R, P, 24, 4, { w: 1.6, dur: 10 })); yield* wait(12 + n * 2);
+      Sound.sfx('fsSwing'); yield* this.lunge(u, 12, 2); AF22.palm(this, T, -Math.PI / 2, { hold: 10 }); const d = AF22.fist(this, T, 1.3); yield* wait(2);
+      Sound.sfx('fsHitSuper'); HD15.stop(this, 6); HD15.flash(this, T, P, 50, { dur: 14 }); for (let i = 0; i < 3; i++) HD15.ring(this, T, P, 40 - i * 8, 4, { w: 2.2, dur: 12, delay: i * 3 });
+      HD15.gather(this, T, 14 + n * 3, P, 44, { span: 12 }); this.shake = Math.max(this.shake || 0, 6); yield* wait(18); } },
   // 沖天拳（必定會心；氣滿時 +50%）：主角蹲低、氣往拳頭聚 → 一記上勾拳，一道金色的光柱從對手腳下往天上沖，對手整個被打上半空，停格 → 掉下來
   zjQuake: { *f(U, T, u, t) { const P = AF22.P(), v = DG17.vAt(this, T), ft = v && v.foot ? v.foot : T.y + 24, H = DS16.hands(this); Sound.sfx('charge'); HD15.gather(this, H.R, 14, P, 34, { span: 10 }); HD15.flash(this, H.R, P, 30, { dur: 16, delay: 8 }); yield* wait(14);
       Sound.sfx('fsSwing'); yield* this.lunge(u, 14, 2); AF22.fist(this, { x: T.x, y: T.y + 14 }, 1.6, { d: { an: -Math.PI / 2, ux: 0, uy: -1 } }); yield* wait(2);
@@ -67,7 +70,7 @@ const HDFX22 = {
   ogFist: { *f(U, T, u) { HD15.dim(this, 0.6, 140, { col: '#140c00', inn: 0.06, out: 0.25 }); Sound.sfx('charge'); const P = AF22.P(); HD15.gather(this, DS16.hands(this).R, 16, P, 40, { span: 12 }); yield* wait(12); yield* this.lunge(u, 10, 2); yield* AF22.hundred(this, T, 0, 10); },
     *h(U, T, u, i) { yield* AF22.hundred(this, T, i, 10); } },
 };
-// 一個掌影（千手寸勁）：金色的掌（中間一團、前面五道短指光），浮著不動，hold 以後淡掉
+// 一個掌影：金色的掌（中間一團、前面五道短指光），浮著不動，hold 以後淡掉
 AF22.palm = (b, C, rot, o = {}) => { const P = AF22.P(), dl = o.delay || 0, hold = o.hold || 30; return HD15.add(b, { x: C.x, y: C.y, delay: dl, life: dl + hold + 10, draw: (x, p, k, t) => { const g = HD15.eo(HD15.cl(t / 6)), f = 1 - HD15.cl((t - hold) / 10);
     x.save(); x.translate(p.x, p.y); x.rotate(rot); x.globalCompositeOperation = 'lighter'; x.globalAlpha = 0.75 * f * g; HD15.put(x, HD15.tex('glow', P.glow), 0, 0, 16, 16, 0, 0.8);
     x.fillStyle = P.mid; x.beginPath(); x.ellipse(0, 0, 4.2, 5, 0, 0, Math.PI * 2); x.fill(); x.strokeStyle = P.core; x.lineWidth = 1.4; x.lineCap = 'round';
@@ -81,9 +84,6 @@ AF22.spin = function* (b, T, i) { const P = AF22.P(), C = { x: T.x, y: T.y + 10 
 AF22.barrage = function* (b, T, i, n) { const rn = s => (Math.random() - 0.5) * s, last = i >= n - 1;
   if (!last) { Sound.sfx('fsSwing'); const C = { x: T.x + rn(20), y: T.y + rn(18) }; AF22.fist(b, C, 0.7 + i * 0.03); AF22.fist(b, { x: C.x + rn(14), y: C.y + rn(12) }, 0.5, { delay: 1 }); yield* wait(2); Sound.sfx('fsHit'); yield* wait(i < 4 ? 2 : 1); return; }
   Sound.sfx('fsSwing'); const d = AF22.fist(b, T, 1.7); yield* wait(2); Sound.sfx('fsHitSuper'); HD15.stop(b, 7); b.spawn({ k: 'flash', c: '#fff6d8', a: 0.35, life: 8 }); AF22.wave(b, T, d, 1.4); AX21.chip(b, T, 1); b.shake = Math.max(b.shake || 0, 9); yield* wait(14); };
-AF22.inch = function* (b, T, i, n) { const P = AF22.P(), last = i >= n - 1, a = i / Math.max(1, n) * Math.PI * 2, C = { x: T.x + Math.cos(a) * 10, y: T.y + Math.sin(a) * 8 }; Sound.sfx('fsHit');
-  HD15.flash(b, C, P, last ? 70 : 34, { dur: 12 }); HD15.ring(b, C, P, 2, last ? 56 : 22, { w: 2.2, dur: 14 }); HD15.spikes(b, C, HD15.P.white, last ? 14 : 6, last ? 40 : 16); HD15.stop(b, last ? 8 : 2);
-  if (last) { Sound.sfx('fsHitSuper'); b.spawn({ k: 'flash', c: '#fff6d8', a: 0.45, life: 10 }); HD15.ring(b, T, HD15.P.white, 6, 80, { w: 3, dur: 22 }); HD15.sparks(b, T, 26, P, { spd: 5, life: 22, g: 0.05 }); b.shake = Math.max(b.shake || 0, 12); yield* wait(16); } else { b.shake = Math.max(b.shake || 0, 3); yield* wait(6); } };
 AF22.hundred = function* (b, T, i, n) { const rn = s => (Math.random() - 0.5) * s, last = i >= n - 1, P = AF22.P();
   if (!last) { Sound.sfx('fsSwing'); const C = { x: T.x + rn(24), y: T.y + rn(22) }; AF22.fist(b, C, 0.8); for (let q = 0; q < 2; q++) AF22.fist(b, { x: C.x + rn(26), y: C.y + rn(24) }, 0.5, { delay: q + 1 }); yield* wait(2); Sound.sfx('fsHit'); yield* wait(i < 5 ? 2 : 1); return; }
   Sound.sfx('fsSwing'); const d = AF22.fist(b, T, 2); yield* wait(3); Sound.sfx('fsHitSuper'); Sound.sfx('quake'); HD15.stop(b, 12); b.spawn({ k: 'flash', c: '#ffffff', a: 0.55, life: 12 });
@@ -107,7 +107,19 @@ if (AF22.live) for (const k in HDFX22) { const id = 't_' + k, D = DEF.skills[id]
   HD15.old[id] = { fx: D.fx, hitFx: D.hitFx, mv: MOVES[id] ? MOVES[id].fx : null, style: typeof SKILL_STYLE !== 'undefined' ? SKILL_STYLE[id] : null, redo: typeof REDO13 !== 'undefined' && REDO13.has(id) }; HD15.ids.push(id); }
 if (AF22.live) { const kd = TREE_KINDS11.indexOf('拳套'), wrap = F => function* (U, T, u, t) { if (!T) T = { x: U.x, y: U.y - 80 }; if (!u) u = this.H; this.slashOn = 0; this.hd15cast = 1; HD15.forceW = false; yield* F.call(this, U, T, u, t); };
   HDSP22.forEach((F, j) => { const key = 'sp11_' + kd + '_' + j; if (!FX[key]) { bvErr('v12.102', 'no special fx ' + key); return; } HD15.old[key] = FX[key]; HD15.spKeys.push([key, wrap(F.f)]); if (F.h && FX[key + 'h']) { HD15.old[key + 'h'] = FX[key + 'h']; HD15.spKeys.push([key + 'h', wrap(F.h)]); } }); }
-// 千手寸勁的段數＝3＋用掉的氣（出招時記下來）
+// 氣爆掌用掉幾點氣（出招時記下來）
+// 體內的氣核：氣爆掌打中後，對手身上一顆金色的氣核一閃一閃（到爆開前一直在）；下一回合開始爆開：裂紋從裡面透出金光 → 一口氣炸開（氣越多越大）
+AF22.qiN = {};
+{ const H = Battle.prototype.handlers, _ap = H.STATUS_APPLY, _dm = H.DAMAGE;
+  H.STATUS_APPLY = function* (e, s, t, P) { if (t && P && P.status === 'qiBomb12' && !P.failed) { AF22.qiN[t.id] = (P.data && P.data.n) || 0; t.qi22 = 1; } return yield* _ap.call(this, e, s, t, P); };
+  H.DAMAGE = function* (e, s, t, P) { if (t && P && P.kind === 'qi12') { const C = this.center(t), n = AF22.qiN[t.id] || 0, k = 1 + n * 0.15; t.qi22 = 0; yield* this.msg(t.n + '體內的氣爆開了！', { hold: 14 });
+      if (HD15.on && AF22.live) { const Pk = AF22.P(); Sound.sfx('charge'); HD15.cracks(this, C, 8 + n, Pk, { len: 18 * k, fl: 1, dur: 40 }); HD15.flash(this, C, Pk, 30, { dur: 16 }); yield* wait(12);
+        Sound.sfx('fsHitSuper'); Sound.sfx('quake'); HD15.stop(this, 6); this.spawn({ k: 'flash', c: '#fff6d8', a: 0.3 + n * 0.04, life: 10 }); HD15.flash(this, C, Pk, 70 * k, { dur: 20 }); HD15.ring(this, C, Pk, 6, 56 * k, { w: 3, dur: 20 });
+        HD15.ring(this, C, HD15.P.white, 4, 34 * k, { w: 1.8, dur: 16, delay: 3 }); HD15.flare(this, C, HD15.P.white, 120 * k, { rot: 0, dur: 20, x8: 1 }); HD15.spikes(this, C, Pk, 12 + n, 36 * k); HD15.sparks(this, C, 20 + n * 4, Pk, { spd: 4.6, life: 22, g: 0.05 });
+        this.shake = Math.max(this.shake || 0, 8 + n); yield* wait(6); }
+      else { Sound.sfx('heavy'); this.spawn({ k: 'ring', x: C.x, y: C.y, r0: 4, r1: 30, c: '#ffc060', w: 3, life: 12 }); this.star(C.x, C.y, '#fff8e0', 16); this.shake = Math.max(this.shake, 6); yield* wait(8); } }
+    return yield* _dm.call(this, e, s, t, P); };
+  const _u = Battle.prototype.update; Battle.prototype.update = function (...a) { const r = _u.apply(this, a); if (HD15.on && AF22.live && this.t % 18 === 0 && this.foes) for (const v of this.foes()) if (v.qi22 && !v.gone && v.hp > 0) { const C = this.center(v); HD15.flash(this, C, AF22.P(), 16, { dur: 14 }); HD15.ring(this, C, AF22.P(), 14, 3, { w: 1.2, dur: 12 }); } return r; }; }
 { const H = Battle.prototype.handlers, _su = H.SKILL_USE; H.SKILL_USE = function* (e, s, t, P) { this.af22spent = P && P.spent || 0; return yield* _su.call(this, e, s, t, P); }; }
 // 普通攻擊（拳套打兩下）：左一拳、右一拳；分段的第二、三下也是拳
 { const _wa = FX.wAtk; if (_wa) FX.wAtk = function* (U, T, u) { if (!(HD15.on && AF22.live && this._thKind === '拳套')) return yield* _wa.call(this, U, T, u); this.hd15cast = 1; this.slashOn = 0; const n = this.af22atk = ((this.af22atk || 0) + 1) % 2;
