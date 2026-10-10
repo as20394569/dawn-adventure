@@ -13,20 +13,22 @@ AX21.ROCK = ['#c8b090', '#8a7058', '#3e3024'];
 AX21.on = () => AX21.live && DG17.kind() === '斧';
 AX21.hand = b => DS16.hands(b).R;
 AX21.foot = (b, v, T) => v && v.foot ? v.foot : T.y + 24;
-// 重斧的弧：沿著圓弧一口氣劈過去（重的東西先慢後快），頭最粗最亮、尾巴拖著暗紅的餘熱；ang＝弧鼓出去的方向、dir＝揮的方向（跟 DS16.D 一樣）
-AX21.cleave = (b, T, d, o = {}) => { const [ang, dir] = DS16.D[d] || DS16.D.v, P = o.pal || AX21.P(), r = (o.r || 46) * 1.15, th = (o.th || 14) * 1.15, span = o.span || 1.9, fl = o.fl || 1, dur = o.dur || 22, dl = o.delay || 0, sw = o.sw || 6, N = 36;
-  const O = { x: T.x - Math.cos(ang) * r, y: T.y - Math.sin(ang) * r * fl }, a0 = ang - span / 2 * dir, pt = (a, rr) => [O.x + Math.cos(a) * rr, O.y + Math.sin(a) * rr * fl];
-  return HD15.add(b, { x: O.x, y: O.y, delay: dl, life: dl + dur,
-    upd: p => { const t = p.t - dl; if (t < 1 || t > sw + 1 || t % 1) return; const h = Math.pow(HD15.cl(t / sw), 1.5), a = a0 + span * dir * h, [hx, hy] = pt(a, r);
-      HD15.sparks(b, { x: hx, y: hy }, 3, P, { ang: a + dir * Math.PI / 2, spread: 1.2, spd: 2.6, life: 18, g: 0.14 }); },
+// 重斧的一劈（v12.103 玩家：「斧的特效不錯 可是角度不對 我們是面向怪物」——鏡頭在主角背後、面向怪物，
+//   往下劈的弧在畫面上是「由上往下砸」的一道（弧所在的面朝著鏡頭的深度方向，看起來幾乎是直的、只往上微微鼓），不是側面看的月牙）：
+//   d＝劈的方向：v 從正上方砸下、dl 從右上往左下、dr 從左上往右下、ul／ur 由下往上撩、h 橫掃；斧頭先慢後快、頭最粗最亮，尾巴拖著暗紅的餘熱，火星順著劈的方向噴
+AX21.PATH = { v: [[3, -66], [0, 16], 5], dl: [[42, -54], [-30, 20], 9], dr: [[-42, -54], [30, 20], -9], ul: [[30, 22], [-42, -50], -9], ur: [[-30, 22], [42, -50], 9], h: [[-62, -4], [62, 6], -7] };
+AX21.cleave = (b, T, d, o = {}) => { const [A0, B0, bulge] = AX21.PATH[d] || AX21.PATH.v, sc = (o.r || 46) / 46, P = o.pal || AX21.P(), th = (o.th || 14) * 1.15, dur = o.dur || 22, dl = o.delay || 0, sw = o.sw || 6, N = 30;
+  const A = { x: T.x + A0[0] * sc, y: T.y + A0[1] * sc }, B = { x: T.x + B0[0] * sc, y: T.y + B0[1] * sc }, dx = B.x - A.x, dy = B.y - A.y, L = Math.hypot(dx, dy) || 1, ux = dx / L, uy = dy / L, nx = -uy, ny = ux, bg = bulge * sc;
+  const C = u => [A.x + dx * u + nx * bg * Math.sin(Math.PI * u), A.y + dy * u + ny * bg * Math.sin(Math.PI * u)], an = Math.atan2(dy, dx);
+  return HD15.add(b, { x: A.x, y: A.y, delay: dl, life: dl + dur,
+    upd: p => { const t = p.t - dl; if (t < 1 || t > sw + 1) return; const [hx, hy] = C(Math.pow(HD15.cl(t / sw), 1.5)); HD15.sparks(b, { x: hx, y: hy }, 3, P, { ang: an, spread: 1.1, spd: 2.8, life: 18, g: 0.14 }); },
     draw: (x, p, k, t) => { const hd = Math.pow(HD15.cl(t / sw), 1.5), er = HD15.ei(HD15.cl((t - sw - 2) / (dur - sw - 2))) * hd, f = 1 - HD15.ei(HD15.cl((t - sw) / (dur - sw))); if (hd - er < 0.01) return;
-      const U = i => er + (hd - er) * i / N, A = u => a0 + span * dir * u, W = (u, w) => { const v = (u - er) / Math.max(1e-4, hd - er); return w * (0.18 + 0.82 * Math.pow(v, 0.7)) * (v > 0.94 ? (1 - v) / 0.06 * 0.6 + 0.4 : 1); };
-      const band = (w, off = 0) => { x.beginPath(); for (let i = 0; i <= N; i++) { const u = U(i), [px, py] = pt(A(u), r + off + W(u, w) / 2); i ? x.lineTo(px, py) : x.moveTo(px, py); } for (let i = N; i >= 0; i--) { const u = U(i), [px, py] = pt(A(u), r + off - W(u, w) / 2); x.lineTo(px, py); } x.closePath(); };
-      const [tx, ty] = pt(A(er), r), [hx, hy] = pt(A(hd), r), grad = (c, a, a0 = 0.15) => { const G = x.createLinearGradient(tx, ty, hx, hy); G.addColorStop(0, HD15.rgba(c, a * a0)); G.addColorStop(0.6, HD15.rgba(c, a * 0.8)); G.addColorStop(1, HD15.rgba(c, a)); return G; };
+      const U = i => er + (hd - er) * i / N, W = (u, w) => { const v = (u - er) / Math.max(1e-4, hd - er); return w * (0.16 + 0.84 * Math.pow(v, 0.7)) * (v > 0.93 ? (1 - v) / 0.07 * 0.55 + 0.45 : 1); };
+      const band = w => { x.beginPath(); for (let i = 0; i <= N; i++) { const u = U(i), [px, py] = C(u), h = W(u, w) / 2; i ? x.lineTo(px + nx * h, py + ny * h) : x.moveTo(px + nx * h, py + ny * h); } for (let i = N; i >= 0; i--) { const u = U(i), [px, py] = C(u), h = W(u, w) / 2; x.lineTo(px - nx * h, py - ny * h); } x.closePath(); };
+      const [tx, ty] = C(er), [hx, hy] = C(hd), grad = (c, a, a0 = 0.15) => { const G = x.createLinearGradient(tx, ty, hx, hy); G.addColorStop(0, HD15.rgba(c, a * a0)); G.addColorStop(0.6, HD15.rgba(c, a * 0.8)); G.addColorStop(1, HD15.rgba(c, a)); return G; };
       x.lineJoin = 'round'; x.globalAlpha = f;
-      x.globalCompositeOperation = 'lighter'; band(th * 2.1); x.fillStyle = grad(P.glow, 0.55); x.fill();
-      x.globalCompositeOperation = 'source-over'; band(th * 1.08, -th * 0.08); x.fillStyle = grad(P.edge, 0.8, 0.4); x.fill(); band(th * 0.86); x.fillStyle = grad(P.mid, 0.95); x.fill();
-      band(th * 0.34, th * 0.14); x.fillStyle = grad(P.core, 1, 0.05); x.fill();
+      x.globalCompositeOperation = 'lighter'; band(th * 2.2); x.fillStyle = grad(P.glow, 0.55); x.fill();
+      x.globalCompositeOperation = 'source-over'; band(th * 1.08); x.fillStyle = grad(P.edge, 0.8, 0.4); x.fill(); band(th * 0.86); x.fillStyle = grad(P.mid, 0.95); x.fill(); band(th * 0.32); x.fillStyle = grad(P.core, 1, 0.05); x.fill();
       if (t <= sw + 2) { HD15.put(x, HD15.tex('glow', P.mid), hx, hy, th * 4, th * 4, 0, 0.8 * f); HD15.put(x, HD15.tex('core', P.mid), hx, hy, th * 1.4, th * 1.4, 0, f); } } }); };
 // 砍中：停格、熔岩閃光、白熱光芒、火星（會掉下來）、一圈衝擊波；s 越大越重
 AX21.impact = (b, T, s = 1, o = {}) => { const P = AX21.P(), dl = o.delay || 0; HD15.flash(b, T, P, 40 * s, { dur: 14, delay: dl }); HD15.flare(b, T, HD15.P.white, 50 * s, { rot: o.rot ?? Math.PI / 4, dur: 14, x8: s >= 1.2 ? 1 : 0, delay: dl });

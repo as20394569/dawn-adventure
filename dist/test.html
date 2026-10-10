@@ -7934,7 +7934,7 @@ class TitleScene {
     x.drawImage(this.logo, Math.round(W / 2 - this.logo.width / 2), 6 + bob);
     Font.drawC(x, '～異世界冒險RPG～', W / 2, 52 + bob, '#ffe0a0', '#3a1428');
     if (this.stage === 'press' && Math.floor(this.t / 30) % 2 === 0) Font.drawC(x, '按 A 鍵開始', W / 2, 232, '#ffffff', '#1a1024');
-    Font.drawR(x, 'v12.102', W - 3, H - 13, '#b890b0', null);
+    Font.drawR(x, 'v12.103', W - 3, H - 13, '#b890b0', null);
   }
 }
 class IntroScene {
@@ -27751,9 +27751,9 @@ SP20.sweep = (b, C, pal, o = {}) => { const rx = o.rx || 100, ry = o.ry || 22, w
       for (let i = 0; i < N; i++) { const q0 = i / N, q1 = (i + 1) / N, A0 = head + sg * tl * q0, A1 = head + sg * tl * q1, h0 = ww * (1 - q0 * 0.85) / 2, h1 = ww * (1 - q1 * 0.85) / 2; x.globalAlpha = al * f * (1 - q0);
         x.beginPath(); let q = pt(A0, h0); x.moveTo(q[0], q[1]); q = pt(A1, h1); x.lineTo(q[0], q[1]); q = pt(A1, -h1); x.lineTo(q[0], q[1]); q = pt(A0, -h0); x.lineTo(q[0], q[1]); x.closePath(); x.fill(); } }
     if (k < 0.65) { const [hx, hy] = pt(head, 0); HD15.put(x, HD15.tex('glow', pal.mid), hx, hy, w * 4, w * 4, 0, 0.7 * f); HD15.put(x, HD15.tex('core', pal.mid), hx, hy, w * 1.4, w * 1.4, 0, f); } } }); };
-SP20.hex = (b, C, R, pal, o = {}) => { const dl = o.delay || 0, hold = o.hold || 12, fl = o.fl || 0.75; return HD15.add(b, { x: C.x, y: C.y, delay: dl, life: dl + hold + 20, draw: (x, p, k, t) => { const g = HD15.eo(HD15.cl(t / 6)), br = HD15.cl((t - hold) / 20), f = 1 - HD15.ei(br);
+SP20.hex = (b, C, R, pal, o = {}) => { const dl = o.delay || 0, hold = o.hold || 12, fl = o.fl || 0.75; return HD15.add(b, { x: C.x, y: C.y, delay: dl, life: dl + hold + 20, draw: (x, p, k, t) => { const g = HD15.eo(HD15.cl(t / 6)), br = HD15.cl((t - hold) / 20), f = 1 - HD15.ei(br), bk = o.fade ? 0 : 1;   // fade：不碎開，原地淡掉
     x.globalCompositeOperation = 'lighter'; x.lineCap = 'round';
-    for (let i = 0; i < 6; i++) { const a1 = i * Math.PI / 3 + Math.PI / 6, a2 = a1 + Math.PI / 3, am = (a1 + a2) / 2, off = HD15.eo(br) * 26, ox = Math.cos(am) * off, oy = Math.sin(am) * off * fl, sp = br * (i % 2 ? 0.5 : -0.5);
+    for (let i = 0; i < 6; i++) { const a1 = i * Math.PI / 3 + Math.PI / 6, a2 = a1 + Math.PI / 3, am = (a1 + a2) / 2, off = HD15.eo(br) * 26 * bk, ox = Math.cos(am) * off, oy = Math.sin(am) * off * fl, sp = br * (i % 2 ? 0.5 : -0.5) * bk;
       const X1 = p.x + Math.cos(a1 + sp) * R * g + ox, Y1 = p.y + Math.sin(a1 + sp) * R * g * fl + oy, X2 = p.x + Math.cos(a2 + sp) * R * g + ox, Y2 = p.y + Math.sin(a2 + sp) * R * g * fl + oy;
       x.beginPath(); x.moveTo(X1, Y1); x.lineTo(X2, Y2); x.globalAlpha = 0.5 * f; x.strokeStyle = pal.glow; x.lineWidth = 4.5; x.stroke(); x.globalAlpha = f; x.strokeStyle = pal.mid; x.lineWidth = 1.6; x.stroke(); x.strokeStyle = pal.core; x.lineWidth = 0.6; x.stroke(); }
     if (br === 0) HD15.put(x, HD15.tex('glow', pal.glow), p.x, p.y, R * 2.4, R * 2.4 * fl, 0, 0.25 * g); } }); };
@@ -27883,19 +27883,19 @@ AX21.ROCK = ['#c8b090', '#8a7058', '#3e3024'];
 AX21.on = () => AX21.live && DG17.kind() === '斧';
 AX21.hand = b => DS16.hands(b).R;
 AX21.foot = (b, v, T) => v && v.foot ? v.foot : T.y + 24;
-AX21.cleave = (b, T, d, o = {}) => { const [ang, dir] = DS16.D[d] || DS16.D.v, P = o.pal || AX21.P(), r = (o.r || 46) * 1.15, th = (o.th || 14) * 1.15, span = o.span || 1.9, fl = o.fl || 1, dur = o.dur || 22, dl = o.delay || 0, sw = o.sw || 6, N = 36;
-  const O = { x: T.x - Math.cos(ang) * r, y: T.y - Math.sin(ang) * r * fl }, a0 = ang - span / 2 * dir, pt = (a, rr) => [O.x + Math.cos(a) * rr, O.y + Math.sin(a) * rr * fl];
-  return HD15.add(b, { x: O.x, y: O.y, delay: dl, life: dl + dur,
-    upd: p => { const t = p.t - dl; if (t < 1 || t > sw + 1 || t % 1) return; const h = Math.pow(HD15.cl(t / sw), 1.5), a = a0 + span * dir * h, [hx, hy] = pt(a, r);
-      HD15.sparks(b, { x: hx, y: hy }, 3, P, { ang: a + dir * Math.PI / 2, spread: 1.2, spd: 2.6, life: 18, g: 0.14 }); },
+AX21.PATH = { v: [[3, -66], [0, 16], 5], dl: [[42, -54], [-30, 20], 9], dr: [[-42, -54], [30, 20], -9], ul: [[30, 22], [-42, -50], -9], ur: [[-30, 22], [42, -50], 9], h: [[-62, -4], [62, 6], -7] };
+AX21.cleave = (b, T, d, o = {}) => { const [A0, B0, bulge] = AX21.PATH[d] || AX21.PATH.v, sc = (o.r || 46) / 46, P = o.pal || AX21.P(), th = (o.th || 14) * 1.15, dur = o.dur || 22, dl = o.delay || 0, sw = o.sw || 6, N = 30;
+  const A = { x: T.x + A0[0] * sc, y: T.y + A0[1] * sc }, B = { x: T.x + B0[0] * sc, y: T.y + B0[1] * sc }, dx = B.x - A.x, dy = B.y - A.y, L = Math.hypot(dx, dy) || 1, ux = dx / L, uy = dy / L, nx = -uy, ny = ux, bg = bulge * sc;
+  const C = u => [A.x + dx * u + nx * bg * Math.sin(Math.PI * u), A.y + dy * u + ny * bg * Math.sin(Math.PI * u)], an = Math.atan2(dy, dx);
+  return HD15.add(b, { x: A.x, y: A.y, delay: dl, life: dl + dur,
+    upd: p => { const t = p.t - dl; if (t < 1 || t > sw + 1) return; const [hx, hy] = C(Math.pow(HD15.cl(t / sw), 1.5)); HD15.sparks(b, { x: hx, y: hy }, 3, P, { ang: an, spread: 1.1, spd: 2.8, life: 18, g: 0.14 }); },
     draw: (x, p, k, t) => { const hd = Math.pow(HD15.cl(t / sw), 1.5), er = HD15.ei(HD15.cl((t - sw - 2) / (dur - sw - 2))) * hd, f = 1 - HD15.ei(HD15.cl((t - sw) / (dur - sw))); if (hd - er < 0.01) return;
-      const U = i => er + (hd - er) * i / N, A = u => a0 + span * dir * u, W = (u, w) => { const v = (u - er) / Math.max(1e-4, hd - er); return w * (0.18 + 0.82 * Math.pow(v, 0.7)) * (v > 0.94 ? (1 - v) / 0.06 * 0.6 + 0.4 : 1); };
-      const band = (w, off = 0) => { x.beginPath(); for (let i = 0; i <= N; i++) { const u = U(i), [px, py] = pt(A(u), r + off + W(u, w) / 2); i ? x.lineTo(px, py) : x.moveTo(px, py); } for (let i = N; i >= 0; i--) { const u = U(i), [px, py] = pt(A(u), r + off - W(u, w) / 2); x.lineTo(px, py); } x.closePath(); };
-      const [tx, ty] = pt(A(er), r), [hx, hy] = pt(A(hd), r), grad = (c, a, a0 = 0.15) => { const G = x.createLinearGradient(tx, ty, hx, hy); G.addColorStop(0, HD15.rgba(c, a * a0)); G.addColorStop(0.6, HD15.rgba(c, a * 0.8)); G.addColorStop(1, HD15.rgba(c, a)); return G; };
+      const U = i => er + (hd - er) * i / N, W = (u, w) => { const v = (u - er) / Math.max(1e-4, hd - er); return w * (0.16 + 0.84 * Math.pow(v, 0.7)) * (v > 0.93 ? (1 - v) / 0.07 * 0.55 + 0.45 : 1); };
+      const band = w => { x.beginPath(); for (let i = 0; i <= N; i++) { const u = U(i), [px, py] = C(u), h = W(u, w) / 2; i ? x.lineTo(px + nx * h, py + ny * h) : x.moveTo(px + nx * h, py + ny * h); } for (let i = N; i >= 0; i--) { const u = U(i), [px, py] = C(u), h = W(u, w) / 2; x.lineTo(px - nx * h, py - ny * h); } x.closePath(); };
+      const [tx, ty] = C(er), [hx, hy] = C(hd), grad = (c, a, a0 = 0.15) => { const G = x.createLinearGradient(tx, ty, hx, hy); G.addColorStop(0, HD15.rgba(c, a * a0)); G.addColorStop(0.6, HD15.rgba(c, a * 0.8)); G.addColorStop(1, HD15.rgba(c, a)); return G; };
       x.lineJoin = 'round'; x.globalAlpha = f;
-      x.globalCompositeOperation = 'lighter'; band(th * 2.1); x.fillStyle = grad(P.glow, 0.55); x.fill();
-      x.globalCompositeOperation = 'source-over'; band(th * 1.08, -th * 0.08); x.fillStyle = grad(P.edge, 0.8, 0.4); x.fill(); band(th * 0.86); x.fillStyle = grad(P.mid, 0.95); x.fill();
-      band(th * 0.34, th * 0.14); x.fillStyle = grad(P.core, 1, 0.05); x.fill();
+      x.globalCompositeOperation = 'lighter'; band(th * 2.2); x.fillStyle = grad(P.glow, 0.55); x.fill();
+      x.globalCompositeOperation = 'source-over'; band(th * 1.08); x.fillStyle = grad(P.edge, 0.8, 0.4); x.fill(); band(th * 0.86); x.fillStyle = grad(P.mid, 0.95); x.fill(); band(th * 0.32); x.fillStyle = grad(P.core, 1, 0.05); x.fill();
       if (t <= sw + 2) { HD15.put(x, HD15.tex('glow', P.mid), hx, hy, th * 4, th * 4, 0, 0.8 * f); HD15.put(x, HD15.tex('core', P.mid), hx, hy, th * 1.4, th * 1.4, 0, f); } } }); };
 AX21.impact = (b, T, s = 1, o = {}) => { const P = AX21.P(), dl = o.delay || 0; HD15.flash(b, T, P, 40 * s, { dur: 14, delay: dl }); HD15.flare(b, T, HD15.P.white, 50 * s, { rot: o.rot ?? Math.PI / 4, dur: 14, x8: s >= 1.2 ? 1 : 0, delay: dl });
   HD15.sparks(b, T, Math.round(14 * s), P, { spd: 3.6 * Math.min(1.6, s), life: 22, g: 0.14, delay: dl }); HD15.ring(b, T, P, 4, 30 * s, { w: 2.6, dur: 16, delay: dl }); if (s >= 1) HD15.spikes(b, T, P, Math.round(8 * s), 22 * s, { delay: dl }); };
@@ -28248,6 +28248,31 @@ if (SH24.live) { const kd = TREE_KINDS11.indexOf('雙盾'), wrap = F => function
     yield* this.lunge(u, 10, 3); yield* SH24.bash(this, T, 0.9); yield* wait(8); };
   const _sg = segSwing; segSwing = function* (b, s, C, i, kind) { if (!(HD15.on && SH24.live && SH24.isK(kind))) return yield* _sg(b, s, C, i, kind); b.hd15cast = 1; yield* b.lunge(s, 6, 2); yield* SH24.bash(b, C, 0.8, { ox: [-6, 6, 0][i % 3] }); yield* wait(4); }; }
 HD15.use(HD15.on);
+const GD25 = { live: typeof fxtest13 === 'function' && fxtest13() };
+GD25.kind = () => { const k = DG17.kind(); if (k !== '雙盾' && typeof SH24 !== 'undefined' && SH24.hasShield() && !['雙劍', '雙刀'].includes(k)) return '單手盾'; return k; };
+GD25.foesC = b => { const L = DG17.foes(b); if (!L.length) return null; const C = L.map(v => b.center(v)); return { x: C.reduce((a, c) => a + c.x, 0) / C.length, y: C.reduce((a, c) => a + c.y, 0) / C.length }; };
+GD25.front = b => { const H = DS16.hands(b).Hc, F = GD25.foesC(b), d = F ? Math.atan2(F.y - H.y, F.x - H.x) : -Math.PI / 2; return { x: H.x + Math.cos(d) * 14, y: H.y - 12 + Math.sin(d) * 6, d }; };
+GD25.pal = k => ({ 劍: HD15.P.white, 雙劍: HD15.P.white, 短刀: HD15.P.shade, 雙刀: HD15.P.dblue, 長槍: HD15.P.lance, 斧: HD15.P.lava, 拳套: HD15.P.ki, 法杖: HD15.P.arcane, 雙盾: HD15.P.holy, 單手盾: HD15.P.silver })[k] || HD15.P.white;
+GD25.pose = (b, k, C, s = 1, hit = 0) => { const P = GD25.pal(k), du = hit ? 14 : 30;
+  switch (k) {
+    case '劍': HD15.cut(b, C, Math.PI / 2, 30 * s, P, { dur: du, w: 6, gap: 0.01 }); HD15.flare(b, { x: C.x, y: C.y - 14 * s }, P, 40 * s, { rot: 0, dur: du * 0.6, x8: 1 }); break;
+    case '雙劍': HD15.cut(b, C, Math.PI / 4, 30 * s, HD15.P.white, { dur: du, w: 6, gap: 0.01 }); HD15.cut(b, C, -Math.PI / 4, 30 * s, HD15.P.black, { dur: du, w: 6, gap: 0.01 }); HD15.flare(b, C, HD15.P.white, 40 * s, { rot: 0, dur: du * 0.6, x8: 1 }); break;
+    case '短刀': case '雙刀': { const [Pu, Bk] = [P, HD15.P.black]; HD15.cut(b, C, Math.PI / 3, 22 * s, Pu, { dur: du, w: 5, gap: 0.01 }); if (k === '雙刀') HD15.cut(b, C, -Math.PI / 3, 22 * s, Bk, { dur: du, w: 5, gap: 0.01 });
+      if (!hit && typeof K13 !== 'undefined' && K13.ghost) { const gc = k === '雙刀' ? ['#7fb0ff', '#1a2440'] : ['#b080ff', '#2a1838']; K13.ghost(b, -10, 0, gc[0], 16, 0.45); K13.ghost(b, 10, 0, gc[1], 16, 0.45); } break; }
+    case '長槍': HD15.whirl(b, C, P, { r: 22 * s, th: 6, fl: 0.95, turns: hit ? 0.8 : 1.6, trail: 4, dur: du, spark: 1 }); HD15.whirl(b, C, HD15.P.white, { r: 19 * s, th: 2.4, fl: 0.95, turns: hit ? 0.8 : 1.6, trail: 3.4, dur: du - 2, delay: 1 }); break;
+    case '斧': AX21.cleave(b, C, 'h', { r: 18 * s, th: 10, dur: du, sw: 4 }); HD15.sparks(b, C, 8, P, { spd: 2, life: 18, g: 0.12 }); break;
+    case '拳套': for (const sg of [-1, 1]) HD15.thrust(b, { x: C.x + sg * 16 * s, y: C.y + 14 * s }, { x: C.x - sg * 12 * s, y: C.y - 12 * s }, P, { w: 7, ext: 2, dur: du }); HD15.flash(b, C, P, 26 * s, { dur: du * 0.6 }); break;
+    case '法杖': ST23.circle(b, C, 20 * s, P, { fl: 1, hold: hit ? 8 : 24, spin: 0.08 }); break;
+    case '雙盾': case '單手盾': SH24.plate(b, C, P, { s: 1.3 * s, dur: du + 6, hold: 0.7, shine: !hit }); break;
+    default: HD15.cut(b, C, Math.PI / 2, 26 * s, P, { dur: du, w: 5, gap: 0.01 }); } };
+GD25.guard = function* (b) { const k = GD25.kind(), P = GD25.pal(k), H = DS16.hands(b), C = GD25.front(b), G = { x: H.Hc.x, y: HDW_FOOT() - 2 };
+  Sound.sfx('shGuard'); b.hd15cast = 1; HD15.ring(b, G, P, 6, 38, { fl: 0.3, w: 1.8, dur: 22 }); GD25.pose(b, k, C, 1); yield* wait(6);
+  if (typeof SP20 !== 'undefined') SP20.hex(b, C, 30, P, { hold: 18, fl: 1, fade: 1 }); HD15.flash(b, C, P, 34, { dur: 14 }); yield* wait(22); };
+{ const _g = FX.guard; FX.guard = function* (U, ...a) { if (!(GD25.live && HD15.on && this.H && U && Math.abs(U.x - this.center(this.H).x) < 4 && Math.abs(U.y - this.center(this.H).y) < 4)) return yield* _g.call(this, U, ...a); yield* GD25.guard(this); }; }
+{ const H = Battle.prototype.handlers, _dm = H.DAMAGE; H.DAMAGE = function* (e, s, t, P) {
+    if (GD25.live && HD15.on && t && t.hero && t.st && t.st.guard && s && !s.hero && P && P.kind !== 'dot' && (P.amount || 0) > 0) { const k = GD25.kind(), Pl = GD25.pal(k), C = GD25.front(this);
+      GD25.pose(this, k, C, 1.1, 1); if (typeof SP20 !== 'undefined') SP20.hex(this, C, 26, Pl, { hold: 6, fl: 1, fade: 1 }); HD15.sparks(this, C, 10, k === '法杖' ? Pl : HD15.P.gold, { spd: 3, life: 16, g: 0.1 }); Sound.sfx('shGuard'); }
+    return yield* _dm.call(this, e, s, t, P); }; }
 const HDW = { live: typeof fxtest13 === 'function' && fxtest13(), sk: null };
 HDW.ST = { 劍: { m: 'dash', gap: 56 }, 雙劍: { m: 'dash', gap: 56 }, 短刀: { m: 'blink', gap: 50 }, 雙刀: { m: 'blink', gap: 50 }, 長槍: { m: 'step', d: 28 },
   斧: { m: 'leap', gap: 58 }, 拳套: { m: 'dash', gap: 48 }, 法杖: { m: 'stay' }, 雙盾: { m: 'push', d: 36 }, 單手盾: { m: 'push', d: 36 } };

@@ -41,9 +41,9 @@ SP20.sweep = (b, C, pal, o = {}) => { const rx = o.rx || 100, ry = o.ry || 22, w
         x.beginPath(); let q = pt(A0, h0); x.moveTo(q[0], q[1]); q = pt(A1, h1); x.lineTo(q[0], q[1]); q = pt(A1, -h1); x.lineTo(q[0], q[1]); q = pt(A0, -h0); x.lineTo(q[0], q[1]); x.closePath(); x.fill(); } }
     if (k < 0.65) { const [hx, hy] = pt(head, 0); HD15.put(x, HD15.tex('glow', pal.mid), hx, hy, w * 4, w * 4, 0, 0.7 * f); HD15.put(x, HD15.tex('core', pal.mid), hx, hy, w * 1.4, w * 1.4, 0, f); } } }); };
 // 六角光陣（破陣槍）：對手身前張開一面六角形的光陣，被刺中時六條邊往外碎開
-SP20.hex = (b, C, R, pal, o = {}) => { const dl = o.delay || 0, hold = o.hold || 12, fl = o.fl || 0.75; return HD15.add(b, { x: C.x, y: C.y, delay: dl, life: dl + hold + 20, draw: (x, p, k, t) => { const g = HD15.eo(HD15.cl(t / 6)), br = HD15.cl((t - hold) / 20), f = 1 - HD15.ei(br);
+SP20.hex = (b, C, R, pal, o = {}) => { const dl = o.delay || 0, hold = o.hold || 12, fl = o.fl || 0.75; return HD15.add(b, { x: C.x, y: C.y, delay: dl, life: dl + hold + 20, draw: (x, p, k, t) => { const g = HD15.eo(HD15.cl(t / 6)), br = HD15.cl((t - hold) / 20), f = 1 - HD15.ei(br), bk = o.fade ? 0 : 1;   // fade：不碎開，原地淡掉
     x.globalCompositeOperation = 'lighter'; x.lineCap = 'round';
-    for (let i = 0; i < 6; i++) { const a1 = i * Math.PI / 3 + Math.PI / 6, a2 = a1 + Math.PI / 3, am = (a1 + a2) / 2, off = HD15.eo(br) * 26, ox = Math.cos(am) * off, oy = Math.sin(am) * off * fl, sp = br * (i % 2 ? 0.5 : -0.5);
+    for (let i = 0; i < 6; i++) { const a1 = i * Math.PI / 3 + Math.PI / 6, a2 = a1 + Math.PI / 3, am = (a1 + a2) / 2, off = HD15.eo(br) * 26 * bk, ox = Math.cos(am) * off, oy = Math.sin(am) * off * fl, sp = br * (i % 2 ? 0.5 : -0.5) * bk;
       const X1 = p.x + Math.cos(a1 + sp) * R * g + ox, Y1 = p.y + Math.sin(a1 + sp) * R * g * fl + oy, X2 = p.x + Math.cos(a2 + sp) * R * g + ox, Y2 = p.y + Math.sin(a2 + sp) * R * g * fl + oy;
       x.beginPath(); x.moveTo(X1, Y1); x.lineTo(X2, Y2); x.globalAlpha = 0.5 * f; x.strokeStyle = pal.glow; x.lineWidth = 4.5; x.stroke(); x.globalAlpha = f; x.strokeStyle = pal.mid; x.lineWidth = 1.6; x.stroke(); x.strokeStyle = pal.core; x.lineWidth = 0.6; x.stroke(); }
     if (br === 0) HD15.put(x, HD15.tex('glow', pal.glow), p.x, p.y, R * 2.4, R * 2.4 * fl, 0, 0.25 * g); } }); };
