@@ -1,64 +1,75 @@
 /* ===================== v12.110 近戰武器的第一段魔法招（特效測試版） =====================
    玩家 2026-10-10：「是不是要新增一些打魔法傷害的技能」→「多新招」「（雙盾・單手盾）要」。
    9 棵近戰樹的第一段多一格（1d，Lv1 就能學）：便宜的魔法招，打魔防，攻擊力用物攻和魔攻較高的一項（跟 v12.107 的魔法招一樣）。
-   特效照各武器的主色，但都是「魔力」的樣子：手邊先聚光（小魔法陣），再把武器的力量化成光打出去，站在原地放（不衝上去）。
+   特效：v12.112 玩家「表示方式過於魔法」→ 不再聚光・畫魔法陣・射光彈，改成那把武器本來的動作（衝上去砍・刺・劈・掌・撞），
+   只有武器出手前閃一下、刀光帶著光／影／熔岩的顏色，看得出是「帶魔力的武器招」。
    先只在特效測試版（window.FXTEST）；玩家看過說好才放進正式版（MAG15.live）。 */
 const MAG15 = { live: typeof fxtest13 === 'function' && fxtest13() };
 const MAGT15 = '魔法傷害（打對手的魔防），用物攻和魔攻較高的一項計算。';
 const MAG_SK15 = { // kind: [key, name, power, hits, cd, mp, desc]
-  劍: ['sdLight', '光刃', 50, 0, 1, 3, '揮劍放出一道光的劍氣。'],
-  短刀: ['dgShadeNeedle', '影針', 26, 2, 1, 3, '射出兩根暗影之針。'],
-  斧: ['axRune', '符文劈', 55, 0, 1, 3, '斧刃上的符文發光，劈出一道熔岩色的魔力，在對手身上炸開。'],
-  長槍: ['spGleam', '蒼光刺', 50, 0, 1, 3, '槍尖凝出蒼藍的光，一刺射出去。'],
-  拳套: ['fsPalm', '氣掌', 50, 0, 1, 3, '把氣凝在掌心，一掌推出一團氣。'],
-  雙刀: ['ddTwinShade', '雙影刃', 26, 2, 1, 3, '雙手各甩出一道暗影刃，在對手身上交叉。'],
-  雙劍: ['dsCrossLight', '交叉光刃', 26, 2, 1, 3, '兩把劍各放出一道劍氣（一白一黑），在對手身上交叉。'],
-  雙盾: ['shHoly', '聖光盾擊', 50, 0, 1, 3, '在對手頭上召出一面聖光之盾，重重壓下。'],
-  單手盾: ['osLight', '光盾衝', 50, 0, 1, 3, '盾面的光化成一道光盾射出去。'],
+  劍: ['sdLight', '光刃', 50, 0, 1, 3, '劍刃帶著光，衝上去一刀斬下。'],
+  短刀: ['dgShadeNeedle', '影針', 26, 2, 1, 3, '短刀帶著暗影，快刺兩下。'],
+  斧: ['axRune', '符文劈', 55, 0, 1, 3, '斧刃上的符文一亮，一斧劈下去，劈中的地方迸出熔岩色的光。'],
+  長槍: ['spGleam', '蒼光刺', 50, 0, 1, 3, '槍尖帶著蒼藍的光，一刺貫穿。'],
+  拳套: ['fsPalm', '氣掌', 50, 0, 1, 3, '把氣凝在掌心，一掌打在對手身上，氣從背後透出去。'],
+  雙刀: ['ddTwinShade', '雙影刃', 26, 2, 1, 3, '雙刀帶著暗影，一左一右交叉斬下。'],
+  雙劍: ['dsCrossLight', '交叉光刃', 26, 2, 1, 3, '兩把劍（一白一黑）帶著光，交叉斬下。'],
+  雙盾: ['shHoly', '聖光盾擊', 50, 0, 1, 3, '雙盾帶著聖光，從兩側重重夾擊。'],
+  單手盾: ['osLight', '光盾衝', 50, 0, 1, 3, '盾面發光，往前一撞。'],
 };
+const MAGCLS15 = { 劍: 'slash', 短刀: 'pierce', 斧: 'strike', 長槍: 'pierce', 拳套: 'strike', 雙刀: 'slash', 雙劍: 'slash', 雙盾: 'strike', 單手盾: 'strike' }; // v12.112 武器的動作（原本是 bolt＝施法）
 BR.FORMULA.magAtk15 = BR.FORMULA.magAtk15 || (c => { const S = c.src.stats; return Math.max(S.atk, S.spa) / Math.max(1, S.spa); });
 function magicize15(id) { const D = DEF.skills[id]; if (!D) return; delete D.catOf; D.cat = '特'; D.tags = D.tags.map(t => t === 'phys' ? 'magic' : t); if (MOVES[id]) MOVES[id].cat = '特';
   D.mods.push({ stage: 'skill', who: 'attacker', atkMul: { f: 'magAtk15' }, cond: { srcIsHero: 1 } });
   const i = D.mods.findIndex(m => m.mul && m.mul.f === 'attrScale'); if (i >= 0) { const m = D.mods[i];
     D.mods.splice(i, 1, { ...m, cond: { ...m.cond, magHi15: 0 } }, { ...m, mul: { f: 'attrScale', v: ['int', 1] }, cond: { ...m.cond, magHi15: 1 } }); } }
 if (MAG15.live) for (const kind in MAG_SK15) { const T = TREE11[kind]; if (!T) { bvErr('mag15', kind); continue; } const [k, n, pow, hits, cd, mp, d] = MAG_SK15[kind];
-  const row = ['1d', k, n, pow, hits, cd, mp, 0, d + MAGT15, { cls: 'bolt' }], old = T.sk; T.sk = [row];
+  const row = ['1d', k, n, pow, hits, cd, mp, 0, d + MAGT15, { cls: MAGCLS15[kind] || 'slash' }], old = T.sk; T.sk = [row];
   try { sk11Build(kind); } finally { const i = old.reduce((a, s, j) => s[0][0] === '1' ? j : a, -1); T.sk = old.slice(0, i + 1).concat([row], old.slice(i + 1)); }
   magicize15('t_' + k); }
 
 /* ---------- 特效 ---------- */
+const glint15 = (b, P, R) => { const H = R || DS16.hands(b).R; HD15.flash(b, { x: H.x + 2, y: H.y - 10 }, P, 18, { dur: 8 }); HD15.sparks(b, { x: H.x + 2, y: H.y - 10 }, 4, P, { spd: 1.6, life: 10 }); };
 const MAGFX15 = {
-  sdLight: { *f(U, T, u) { const P = HD15.P.white, H = DS16.hands(this).R; Sound.sfx('stCast'); HD15.gather(this, H, 12, HD15.P.steel, 26, { span: 10 }); ST23.circle(this, H, 12, HD15.P.steel, { fl: 1, hold: 16, spin: 0.1 }); yield* wait(12);
-      Sound.sfx('blade'); HD15.slash(this, { x: H.x + 10, y: H.y - 14 }, { pal: P, r: 34, th: 9, ang: -0.7, span: 1.4, dur: 14 }); HD15.comet(this, H, T, P, 12, { w: 11 }); HD15.comet(this, H, T, HD15.P.steel, 12, { w: 5, delay: 1 }); yield* wait(12);
-      Sound.sfx('stHit'); HD15.stop(this, 3); HD15.cut(this, T, -0.7, 70, P, { dur: 18, w: 7 }); HD15.flash(this, T, HD15.P.steel, 30); HD15.ring(this, T, P, 4, 26, { w: 2, dur: 14 }); HD15.sparks(this, T, 14, P, { spd: 3.4, life: 18, g: 0.06 }); yield* wait(16); } },
-  dgShadeNeedle: { *f(U, T, u) { const P = HD15.P.shade || HD15.P.arcane, B = HD15.P.black, H = DS16.hands(this).R; Sound.sfx('stCast'); HD15.gather(this, H, 10, P, 22, { span: 8 }); yield* wait(10);
-      for (let i = 0; i < 2; i++) { const o = i ? 7 : -7; Sound.sfx('dgHit'); HD15.comet(this, { x: H.x, y: H.y + o }, { x: T.x + o, y: T.y - o }, P, 9, { w: 7 }); HD15.comet(this, { x: H.x, y: H.y + o }, { x: T.x + o, y: T.y - o }, B, 9, { w: 3, delay: 1 }); yield* wait(9);
-        HD15.flash(this, { x: T.x + o, y: T.y - o }, P, 26, { dur: 12 }); HD15.flare(this, { x: T.x + o, y: T.y - o }, P, 30, { rot: 0.6, dur: 12 }); HD15.sparks(this, { x: T.x + o, y: T.y - o }, 7, P, { spd: 2.6, life: 14 }); yield* wait(4); }
-      yield* wait(10); } },
-  axRune: { *f(U, T, u) { const P = HD15.P.lava, H = DS16.hands(this).R; Sound.sfx('stCast'); ST23.circle(this, H, 13, P, { fl: 1, hold: 18, spin: 0.08 }); HD15.gather(this, H, 12, P, 26, { span: 10 }); yield* wait(12);
-      Sound.sfx('axSwing'); HD15.comet(this, H, T, P, 12, { w: 13 }); yield* wait(10); ST23.circle(this, T, 22, P, { fl: 1, hold: 14, spin: 0.12 }); yield* wait(8);
-      Sound.sfx('axHit'); HD15.stop(this, 4); HD15.flare(this, T, P, 50, { rot: Math.PI / 4, dur: 16 }); HD15.ring(this, T, P, 6, 34, { w: 2.4, dur: 16 }); HD15.spikes(this, T, P, 8, 22, { rot: 0.2 }); HD15.sparks(this, T, 16, P, { spd: 3.8, life: 20, g: 0.1 }); this.shake = Math.max(this.shake || 0, 5); yield* wait(16); } },
-  spGleam: { *f(U, T, u) { const P = HD15.P.lance, H = DS16.hands(this).R, d = SP20.dir(H, T); Sound.sfx('stCast'); ST23.circle(this, H, 12, P, { fl: 1, hold: 16, spin: 0.1 }); HD15.gather(this, H, 10, P, 24, { span: 10 }); yield* wait(12);
-      Sound.sfx('spThrust'); HD15.thrust(this, H, T, P, { w: 10, ext: 26, dur: 18 }); HD15.thrust(this, H, T, HD15.P.white, { w: 3, ext: 22, dur: 16, delay: 1 }); yield* wait(6);
-      Sound.sfx('spHit'); HD15.stop(this, 3); HD15.flash(this, T, P, 30); SP20.through(this, T, d, 30, { w: 5 }); HD15.ring(this, T, P, 4, 26, { w: 2, dur: 14 }); yield* wait(16); } },
-  fsPalm: { *f(U, T, u) { const P = HD15.P.ki, H = DS16.hands(this).R, d = SP20.dir(H, T); Sound.sfx('fsQi'); AF22.palm(this, H, Math.atan2(d.uy, d.ux), { hold: 14 }); HD15.gather(this, H, 12, P, 24, { span: 10 }); yield* wait(12);
-      Sound.sfx('fsSwing'); HD15.comet(this, H, T, P, 12, { w: 15 }); yield* wait(11);
-      Sound.sfx('fsHit'); HD15.stop(this, 3); AF22.orb(this, T, P, 18, 16); AF22.wave(this, T, d, 1); HD15.ring(this, T, P, 6, 30, { w: 2.2, dur: 16 }); HD15.sparks(this, T, 12, P, { spd: 3.2, life: 18 }); yield* wait(16); } },
-  ddTwinShade: { *f(U, T, u) { const P = HD15.P.shade || HD15.P.arcane, B = HD15.P.black, H = DS16.hands(this); Sound.sfx('stCast'); HD15.gather(this, H.R, 8, P, 20, { span: 8 }); HD15.gather(this, H.L, 8, P, 20, { span: 8 }); yield* wait(10);
-      Sound.sfx('dgHit'); HD15.comet(this, H.R, T, P, 11, { w: 6 }); HD15.comet(this, H.L, T, B, 11, { w: 5, delay: 3 }); yield* wait(12);
-      Sound.sfx('dgHitSuper'); HD15.stop(this, 3); HD15.cut(this, T, 0.8, 64, P, { dur: 16, w: 6 }); HD15.cut(this, T, -0.8, 64, P, { dur: 16, w: 6, delay: 2 }); HD15.flash(this, T, P, 24); HD15.sparks(this, T, 12, P, { spd: 3, life: 16 }); yield* wait(16); } },
-  dsCrossLight: { *f(U, T, u) { const W = HD15.P.white, B = HD15.P.black, H = DS16.hands(this); Sound.sfx('stCast'); HD15.gather(this, H.R, 8, W, 20, { span: 8 }); HD15.gather(this, H.L, 8, HD15.P.steel, 20, { span: 8 }); yield* wait(10);
-      Sound.sfx('blade'); HD15.comet(this, H.R, T, W, 11, { w: 8 }); HD15.comet(this, H.L, T, B, 11, { w: 7, delay: 3 }); yield* wait(12);
-      Sound.sfx('stHit'); HD15.stop(this, 3); HD15.cut(this, T, 0.8, 70, W, { dur: 18, w: 7 }); HD15.cut(this, T, -0.8, 70, B, { dur: 18, w: 7, delay: 2 }); HD15.flash(this, T, W, 28); HD15.ring(this, T, W, 4, 24, { w: 2, dur: 14 }); yield* wait(16); } },
-  shHoly: { *f(U, T, u) { const P = HD15.P.holy, H = DS16.hands(this).Hc; Sound.sfx('stCast'); HD15.gather(this, { x: H.x, y: H.y - 12 }, 12, P, 26, { span: 10 }); yield* wait(10);
-      Sound.sfx('shSwing'); SH24.plate(this, { x: T.x, y: T.y - 30 }, P, { s: 1.5, dur: 20, hold: 0.5, shine: 1, from: { x: 0, y: -26 }, mv: 26 }); yield* wait(12);
-      Sound.sfx('shHitSuper'); HD15.stop(this, 4); HD15.flash(this, T, P, 34); HD15.ring(this, T, P, 6, 34, { w: 2.4, dur: 16 }); HD15.spikes(this, T, P, 8, 24, { rot: 0.4 }); HD15.sparks(this, T, 14, P, { spd: 3.4, life: 18 }); this.shake = Math.max(this.shake || 0, 5); yield* wait(16); } },
-  osLight: { *f(U, T, u) { const P = HD15.P.silver, H = DS16.hands(this).Hc, F = { x: H.x + 8, y: H.y - 16 }; Sound.sfx('stCast'); SH24.plate(this, F, P, { s: 1.1, dur: 18, hold: 0.6, shine: 1 }); HD15.gather(this, F, 10, P, 22, { span: 8 }); yield* wait(12);
-      Sound.sfx('shSwing'); HD15.comet(this, F, T, P, 11, { w: 12 }); yield* wait(10); SH24.plate(this, T, P, { s: 1.2, dur: 14, hold: 0.4 });
-      Sound.sfx('shHit'); HD15.stop(this, 3); HD15.flash(this, T, P, 28); HD15.ring(this, T, P, 4, 26, { w: 2, dur: 14 }); HD15.sparks(this, T, 12, HD15.P.white, { spd: 3, life: 16 }); yield* wait(16); } },
+  // 光刃：劍身一亮 → 衝上去斜斬（金白的刀光＋一道淡淡的殘光）→ 停格、小閃光
+  sdLight: { *f(U, T, u) { const P = HD15.P.holy; glint15(this, P); Sound.sfx('blade'); yield* this.lunge(u, 18, 3);
+      HD15.slash(this, T, { pal: P, r: 60, th: 12, ang: -0.67, span: 1.5, dur: 22, spark: 1 }); HD15.slash(this, { x: T.x - 3, y: T.y + 3 }, { pal: HD15.P.white, r: 54, th: 5, ang: -0.67, span: 1.3, dur: 18, delay: 2, al: 0.6 });
+      yield* wait(4); Sound.sfx('stHit'); HD15.stop(this, 4); HD15.flash(this, T, P, 26, { dur: 10 }); HD15.sparks(this, T, 10, P, { spd: 3, life: 16 }); yield* wait(12); } },
+  // 影針：刀身一暗 → 帶著殘影衝上去，快刺兩下（紫黑的刺擊）
+  dgShadeNeedle: { *f(U, T, u) { const P = HD15.P.shade; glint15(this, P); Sound.sfx('wind'); if (typeof K13 !== 'undefined' && K13.ghost) for (let i = 1; i <= 2; i++) K13.ghost(this, 0, -i * 12, '#b080ff', 6 + i * 3, 0.45);
+      yield* this.lunge(u, 22, 1);
+      for (let i = 0; i < 2; i++) { Sound.sfx('bladeQ'); DG17.stab(this, T, { k: i, ang: i ? -1.89 : -1.25, L: 32, w: 5 }); yield* wait(3); HD15.stop(this, 2); DG17.pop(this, { x: T.x + (i ? 5 : -5), y: T.y + (i ? -4 : 4) }, 0.8); yield* wait(5); }
+      yield* wait(8); } },
+  // 符文劈：舉斧、斧刃一亮 → 一斧直劈（熔岩色的刀光）→ 停格、劈中的地方迸出熔岩色的光、地面震
+  axRune: { *f(U, T, u) { const P = HD15.P.lava, v = DG17.vAt(this, T), ft = AX21.foot(this, v, T); AX21.raise(this, 8); glint15(this, P); Sound.sfx('axSwing'); yield* AX21.heave.call(this, this, 8, 6);
+      AX21.cleave(this, T, 'v', { r: 50, th: 15, span: 1.8, dur: 24, pal: P }); yield* wait(5); Sound.sfx('axHitSuper'); HD15.stop(this, 5);
+      HD15.flash(this, T, P, 40, { dur: 14 }); HD15.spikes(this, T, P, 6, 20, { rot: 0.2 }); HD15.sparks(this, T, 12, P, { spd: 3.4, life: 18, g: 0.1 }); AX21.ground(this, { x: T.x, y: ft }, 0.8); this.shake = Math.max(this.shake || 0, 7); yield* wait(16); } },
+  // 蒼光刺：槍尖一亮 → 衝上去一刺（蒼藍的槍光）→ 光從背後穿出去
+  spGleam: { *f(U, T, u) { const P = HD15.P.lance; glint15(this, P); yield* this.lunge(u, 18, 2); Sound.sfx('spThrust'); const d = SP20.lance(this, T, { w: 8, ext: 34, pal: P }); yield* wait(4);
+      Sound.sfx('spHit'); HD15.stop(this, 4); HD15.flash(this, T, P, 30, { dur: 12 }); HD15.sparks(this, T, 9, P, { ang: d.an, spread: 0.6, spd: 4, life: 16 }); SP20.through(this, T, d, 40); this.shake = Math.max(this.shake || 0, 4); yield* wait(14); } },
+  // 氣掌：掌心一亮 → 衝上去一掌（金色的掌印打在身上）→ 氣從背後透出去
+  fsPalm: { *f(U, T, u) { const P = HD15.P.ki, d = AF22.dir(this, T); glint15(this, P); Sound.sfx('fsSwing'); yield* this.lunge(u, 12, 2);
+      AF22.palm(this, { x: T.x - d.ux * 8, y: T.y - d.uy * 8 }, Math.atan2(d.uy, d.ux), { hold: 12 }); yield* wait(2); Sound.sfx('fsHitSuper'); HD15.stop(this, 5);
+      AF22.wave(this, T, d, 1.1); HD15.flash(this, T, P, 28, { dur: 12 }); HD15.sparks(this, T, 10, P, { spd: 3, life: 16 }); this.shake = Math.max(this.shake || 0, 5); yield* wait(14); } },
+  // 雙影刃：雙刀一暗 → 衝上去，左右各一刀交叉（紫・黑）
+  ddTwinShade: { *f(U, T, u) { const P = HD15.P.shade, H = DS16.hands(this); glint15(this, P, H.R); glint15(this, HD15.P.black, H.L); Sound.sfx('wind'); yield* this.lunge(u, 18, 2);
+      Sound.sfx('bladeQ'); HD15.cut(this, T, 0.8, 62, P, { dur: 16, w: 6 }); yield* wait(4); HD15.stop(this, 2); Sound.sfx('bladeQ'); HD15.cut(this, T, -0.8, 62, HD15.P.black, { dur: 16, w: 6 }); yield* wait(3);
+      HD15.stop(this, 3); DG17.pop(this, T, 1); yield* wait(12); } },
+  // 交叉光刃：兩把劍一亮 → 衝上去，白的一刀、黑的一刀交叉
+  dsCrossLight: { *f(U, T, u) { const H = DS16.hands(this); glint15(this, HD15.P.white, H.R); glint15(this, HD15.P.violet, H.L); yield* this.lunge(u, 16, 2); Sound.sfx('blade');
+      DS16.cut(this, T, 'dr', { r: 52, th: 11, span: 1.7, dur: 20 }); yield* wait(4); Sound.sfx('blade'); DS16.cut(this, T, 'dl', { k: 1, r: 52, th: 11, span: 1.7, dur: 20 }); yield* wait(3);
+      Sound.sfx('stHit'); HD15.stop(this, 3); HD15.flash(this, T, HD15.P.white, 28, { dur: 10 }); HD15.sparks(this, T, 9, HD15.P.white, { spd: 3, life: 14 }); yield* wait(12); } },
+  // 聖光盾擊：兩面盾帶著金光衝上去，從兩側夾擊
+  shHoly: { *f(U, T, u) { const P = HD15.P.holy; glint15(this, P, DS16.hands(this).Hc); Sound.sfx('shSwing'); yield* this.lunge(u, 10, 3);
+      SH24.plate(this, { x: T.x - 10, y: T.y }, P, { s: 1.1, from: { x: -30, y: 6 }, mv: 6, dur: 20, rot: 0.25, shine: 1 }); SH24.plate(this, { x: T.x + 10, y: T.y }, P, { s: 1.1, from: { x: 30, y: 6 }, mv: 6, dur: 20, rot: -0.25, shine: 1 }); yield* wait(6);
+      Sound.sfx('shHitSuper'); HD15.stop(this, 4); SH24.slam(this, T, 1.1, { pal: P, d: { an: -Math.PI / 2, ux: 0, uy: -1 } }); this.shake = Math.max(this.shake || 0, 6); yield* wait(14); } },
+  // 光盾衝：盾面一亮 → 衝上去用盾一撞（銀白的光）
+  osLight: { *f(U, T, u) { const P = HD15.P.silver; glint15(this, P, DS16.hands(this).Hc); yield* this.lunge(u, 14, 3);
+      const d = SH24.dir(this, T), H = DS16.hands(this).Hc; Sound.sfx('shSwing'); SH24.plate(this, { x: T.x - d.ux * 8, y: T.y - d.uy * 8 }, P, { s: 1.2, from: { x: H.x + d.ux * 18 - T.x, y: H.y + d.uy * 18 - T.y }, mv: 6, dur: 22, shine: 1 }); yield* wait(6);
+      Sound.sfx('shHit'); HD15.stop(this, 3); SH24.slam(this, T, 1.1, { pal: P, d }); this.shake = Math.max(this.shake || 0, 4); yield* wait(14); } },
 };
 if (MAG15.live) for (const k in MAGFX15) { const id = 't_' + k, D = DEF.skills[id], F = MAGFX15[k]; if (!D) continue; const key = 'hd15_' + k;
   FX[key] = function* (U, T, u, t) { if (!T) { const L = this.foes ? this.foes().filter(v => !v.gone) : [], g = L.length > 1 ? this.groupOf(L.map(v => v.id)) : L[0]; T = g ? this.center(g) : { x: U.x, y: U.y - 80 }; if (!t) t = g; }
     if (!u) u = this.H; this.slashOn = 0; this.hd15cast = 1; HD15.forceW = false; yield* F.f.call(this, U, T, u, t); };
   HD15.old[id] = { fx: D.fx, hitFx: D.hitFx, mv: MOVES[id] ? MOVES[id].fx : null, style: typeof SKILL_STYLE !== 'undefined' ? SKILL_STYLE[id] : null, redo: false }; HD15.ids.push(id);
-  if (HD15.on) { D.fx = key; if (MOVES[id]) MOVES[id].fx = key; if (typeof SKILL_STYLE !== 'undefined') SKILL_STYLE[id] = ['draw', null, 'steel', null]; if (typeof REDO13 !== 'undefined') REDO13.add(id); } }
+  if (HD15.on) { D.fx = key; D.hitFx = null; if (MOVES[id]) MOVES[id].fx = key; if (typeof SKILL_STYLE !== 'undefined') SKILL_STYLE[id] = ['draw', null, 'steel', null]; if (typeof REDO13 !== 'undefined') REDO13.add(id); } }
