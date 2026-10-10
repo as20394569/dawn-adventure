@@ -127,7 +127,7 @@ const HDFX17 = {
       yield* this.lunge(u, 22, 1); Sound.sfx('blade'); DG17.cut(this, T, 'h', { r: 62, span: 1.2, th: 8, dur: 14 }); HD15.windLines(this, { x: T.x - 50, y: T.y }, { x: T.x + 60, y: T.y }, HD15.P.shade, 7, { spread: 18, len: 46, spd: 14, life: 10 });
       yield* wait(3); HD15.stop(this, 2); DG17.pop(this, T, 1, { rot: 0 }); HD15.sparks(this, T, 8, HD15.P.shade, { ang: 0, spread: 0.6, spd: 4, life: 14 }); yield* wait(8); } },
   // 殘影步（2 回合迴避 +30%、下一擊威力 +30%）：舞台稍暗，主角左右留下紫黑的殘影，紫色光粒往上飄；最後刀身一亮（下一擊）
-  dgShade: { keep: 1, *f(U, T, u) { const P = HD15.P.shade, H = DS16.hands(this), G = { x: H.Hc.x, y: HERO_FOOT - 2 }; Sound.sfx('wind'); HD15.dim(this, 0.3, 56);
+  dgShade: { keep: 1, *f(U, T, u) { const P = HD15.P.shade, H = DS16.hands(this), G = { x: H.Hc.x, y: HDW_FOOT() - 2 }; Sound.sfx('wind'); HD15.dim(this, 0.3, 56);
       if (typeof K13 !== 'undefined' && K13.ghost) for (let i = 1; i <= 4; i++) K13.ghost(this, (i % 2 ? -1 : 1) * (6 + i * 4), 0, i % 2 ? '#b080ff' : '#2a1838', 14 + i * 4, 0.5);
       HD15.ring(this, G, P, 6, 34, { fl: 0.3, w: 1.4, dur: 24 });
       for (let i = 0; i < 12; i++) DG17.later(this, i * 2, () => HD15.mote(this, G.x + (Math.random() - 0.5) * 40, G.y - Math.random() * 20, (Math.random() - 0.5) * 0.4, -0.5 - Math.random() * 0.5, P, { life: 30 }));
@@ -226,7 +226,7 @@ const HDFX17 = {
       Sound.sfx('blade'); DG17.cut(this, { x: T.x - 3, y: T.y }, 'dr', { r: 46, th: 10 }); DG17.cut(this, { x: T.x + 3, y: T.y }, 'dl', { k: 1, r: 46, th: 10, delay: 2 }); yield* wait(5);
       Sound.sfx('crit'); HD15.stop(this, 4); DG17.xcut(this, T, 60); DG17.pop(this, T, 1.2, { rot: Math.PI / 4 }); this.shake = Math.max(this.shake || 0, 6); yield* wait(10); } },
   // 殘影反擊（2 回合迴避 +40%、閃過就反擊）：舞台稍暗，主角四周留下一圈紫黑的殘影，兩把刀一亮（紫、黑）
-  ddAfter: { keep: 1, *f(U, T, u) { const [Pu, Bk] = DG17.P(), H = DS16.hands(this), G = { x: H.Hc.x, y: HERO_FOOT - 2 }; Sound.sfx('wind'); HD15.dim(this, 0.3, 56);
+  ddAfter: { keep: 1, *f(U, T, u) { const [Pu, Bk] = DG17.P(), H = DS16.hands(this), G = { x: H.Hc.x, y: HDW_FOOT() - 2 }; Sound.sfx('wind'); HD15.dim(this, 0.3, 56);
       if (typeof K13 !== 'undefined' && K13.ghost) for (let i = 0; i < 5; i++) K13.ghost(this, Math.cos(i * 1.26) * 14, Math.sin(i * 1.26) * 5, DG17.gc()[i % 2 ? 1 : 0], 14 + i * 3, 0.5);
       HD15.ring(this, G, Pu, 6, 36, { fl: 0.3, w: 1.4, dur: 24 });
       yield* wait(18); Sound.sfx('tick'); HD15.flare(this, H.R, Pu, 32, { rot: -0.8, dur: 14 }); HD15.cut(this, H.L, 0.8, 16, Bk, { dur: 14, w: 4, gap: 0.01 }); yield* wait(18); } },
@@ -292,7 +292,7 @@ const HDSP17a = [
   { *f(U, T, u) { if (typeof K13 !== 'undefined' && K13.ghost) K13.ghost(this, 0, 0, '#2a1838', 14, 0.6); Sound.sfx('wind'); yield* this.lunge(u, 24, 1); Sound.sfx('blade');
       DG17.cut(this, T, 'dl', { r: 70, th: 10, span: 1.3, dur: 18, sw: 0.18 }); yield* wait(4); Sound.sfx('crit'); HD15.stop(this, 5); HD15.cut(this, T, 2.3, 70, HD15.P.shade, { dur: 18, w: 6, gap: 5 }); DG17.pop(this, T, 1.2, { rot: 2.3 }); yield* wait(12); } },
   // 疾風步（強化自己）：腳下捲起紫色的風、主角留下兩道殘影，藍色的魔力光點飛回身上（回 MP）；速度提升的箭頭在下一步
-  { *f(U, T, u) { const P = HD15.P.shade, H = DS16.hands(this), G = { x: H.Hc.x, y: HERO_FOOT - 2 }; Sound.sfx('wind'); HD15.ring(this, G, P, 6, 36, { fl: 0.3, w: 1.6, dur: 22 });
+  { *f(U, T, u) { const P = HD15.P.shade, H = DS16.hands(this), G = { x: H.Hc.x, y: HDW_FOOT() - 2 }; Sound.sfx('wind'); HD15.ring(this, G, P, 6, 36, { fl: 0.3, w: 1.6, dur: 22 });
       HD15.windLines(this, { x: G.x - 40, y: G.y - 10 }, { x: G.x + 40, y: G.y - 30 }, P, 8, { spread: 24, len: 34, spd: 6, life: 16 }); if (typeof K13 !== 'undefined' && K13.ghost) for (let i = 1; i <= 2; i++) K13.ghost(this, (i % 2 ? -1 : 1) * 10, 0, '#b080ff', 14, 0.45);
       HD15.motes(this, { x: G.x, y: G.y - 70 }, { x: H.Hc.x, y: H.Hc.y }, 8, HD15.P.mp, { dur: 18 }); yield* wait(28); } },
 ];

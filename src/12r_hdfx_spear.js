@@ -48,8 +48,9 @@ SP20.hex = (b, C, R, pal, o = {}) => { const dl = o.delay || 0, hold = o.hold ||
       x.beginPath(); x.moveTo(X1, Y1); x.lineTo(X2, Y2); x.globalAlpha = 0.5 * f; x.strokeStyle = pal.glow; x.lineWidth = 4.5; x.stroke(); x.globalAlpha = f; x.strokeStyle = pal.mid; x.lineWidth = 1.6; x.stroke(); x.strokeStyle = pal.core; x.lineWidth = 0.6; x.stroke(); }
     if (br === 0) HD15.put(x, HD15.tex('glow', pal.glow), p.x, p.y, R * 2.4, R * 2.4 * fl, 0, 0.25 * g); } }); };
 // 主角化成光消失（貫日神槍）；整招結束才出現
+// （v12.102 出招時往前站到位置上——各武器的佔位都在 12y_hdfx_stance.js；長槍是往前踏一小步）
 SP20.hide = b => { const v = b.H; if (!v || !v.off || b.sp20hid) return; b.sp20hid = 1; b.sp20t = b.t; v.off.y = 400; };
-SP20.show = b => { if (!b.sp20hid) return; b.sp20hid = 0; const v = b.H; if (v && v.off) v.off.y = 0; const H = DS16.hands(b); HD15.flash(b, H.Hc, HD15.P.white, 40, { dur: 12 }); HD15.ring(b, { x: H.Hc.x, y: HERO_FOOT - 2 }, SP20.P(), 6, 34, { fl: 0.3, w: 1.6, dur: 16 }); };
+SP20.show = b => { if (!b.sp20hid) return; b.sp20hid = 0; const v = b.H; if (v && v.off) v.off.y = b.hdwBase ? b.hdwBase.y : 0; const H = DS16.hands(b); HD15.flash(b, H.Hc, HD15.P.white, 40, { dur: 12 }); HD15.ring(b, { x: H.Hc.x, y: HDW_FOOT() - 2 + (b.hdwBase ? b.hdwBase.y : 0) }, SP20.P(), 6, 34, { fl: 0.3, w: 1.6, dur: 16 }); };
 { const H = Battle.prototype.handlers, _ae = H.ACTION_END; H.ACTION_END = function* (e, s, t, P) { if (this.sp20hid) { SP20.show(this); yield* wait(8); } return yield* _ae.call(this, e, s, t, P); };
   const _u = Battle.prototype.update; Battle.prototype.update = function (...a) { if (this.sp20hid && this.t - (this.sp20t || 0) > 900) SP20.show(this); return _u.apply(this, a); }; }
 // 三段突、千重突的每一下
@@ -63,15 +64,15 @@ SP20.flurry = function* (b, T, i, n) { const rn = s => (Math.random() - 0.5) * s
   const d = SP20.lance(b, T, { w: 11, ext: 40, dur: 20, wind: 5 }); yield* wait(3); Sound.sfx('crit'); HD15.stop(b, 6); b.spawn({ k: 'flash', c: '#e6f4ff', a: 0.3, life: 8 }); SP20.hit(b, T, d, 1.5); SP20.through(b, T, d, 52, { w: 7, fl: 64 });
   b.shake = Math.max(b.shake || 0, 8); yield* wait(12); };
 // 跳起來（蒼龍躍・流星龍墜蓄力的那一回合）：蹲一下 → 腳下炸開一圈風、碎石 → 主角真的跳出畫面上方，留下往上的槍光殘痕
-SP20.leap = function* (b) { const v = b.H; if (!v || !v.off) return; const H = DS16.hands(b), G = { x: H.Hc.x, y: HERO_FOOT - 2 }, P = SP20.P(); Sound.sfx('charge');
+SP20.leap = function* (b) { const v = b.H; if (!v || !v.off) return; const H = DS16.hands(b), G = { x: H.Hc.x, y: HDW_FOOT() - 2 }, P = SP20.P(); Sound.sfx('charge');
   HD15.gather(b, H.R, 10, P, 30, { span: 8 }); yield* tween(8, q => { v.off.y = 5 * Math.sin(q * Math.PI / 2); });
   Sound.sfx('jump'); HD15.ring(b, G, P, 6, 50, { fl: 0.3, w: 2.6, dur: 18 }); HD15.ring(b, G, HD15.P.white, 4, 30, { fl: 0.3, w: 1.4, dur: 14, delay: 2 }); HD15.shards(b, G, 7, { up: 2.4, spd: 2, sz: 2.4, cols: SP20.DIRT });
   HD15.windLines(b, { x: G.x, y: G.y - 10 }, { x: G.x, y: G.y - 140 }, P, 8, { spread: 34, len: 50, spd: 14 });
   v.air13 = 1; v.airT13 = 0; v.drop13 = 1; yield* tween(8, q => { v.off.y = 5 - 175 * q * q; }); v.drop13 = 0;
   for (let i = 0; i < 3; i++) HD15.thrust(b, { x: G.x + (i - 1) * 7, y: G.y - 24 }, { x: G.x + (i - 1) * 4, y: -30 }, P, { w: 5 - i, ext: 10, dur: 14, delay: i });
   yield* wait(10); };
-// 落下（蒼龍躍、流星龍墜）：天上一點寒光 → 一道粗大的槍光從天上斜斜刺下來，主角跟著落下
-SP20.fall = function* (b, T, o = {}) { const P = SP20.P(), A = o.from || { x: T.x + 34, y: -50 }; Sound.sfx('wind'); HD15.flare(b, { x: A.x - 6, y: 8 }, HD15.P.white, 54, { rot: Math.atan2(T.y - A.y, T.x - A.x), dur: 10 }); HD15.flash(b, { x: A.x - 6, y: 8 }, P, 24, { dur: 10 }); yield* wait(6);
+// 落下（蒼龍躍、流星龍墜）：對手正上方一點寒光 → 一道粗大的槍光從正上方垂直刺下來，主角跟著落下（v12.102 玩家：「墜落地點改垂直」，原本是斜的）
+SP20.fall = function* (b, T, o = {}) { const P = SP20.P(), A = o.from || { x: T.x, y: -50 }; Sound.sfx('wind'); HD15.flare(b, { x: A.x, y: 8 }, HD15.P.white, 54, { rot: Math.atan2(T.y - A.y, T.x - A.x), dur: 10 }); HD15.flash(b, { x: A.x, y: 8 }, P, 24, { dur: 10 }); yield* wait(6);
   const dr = typeof dropAnim13 === 'function' ? dropAnim13(b, o.drop || 8) : null; HD15.thrust(b, A, T, P, { w: o.w || 14, ext: 20, dur: 26 }); HD15.thrust(b, A, T, HD15.P.white, { w: (o.w || 14) * 0.36, ext: 18, dur: 22, delay: 1 });
   HD15.windLines(b, A, T, P, 8, { spread: 30, len: 60, spd: 16 }); yield* wait(6); return { dr, d: SP20.dir(A, T) }; };
 // 迴槍架勢架開攻擊的那一下：槍在身前轉一圈擋住（白的、蒼藍的輪子），火花往外迸
@@ -105,7 +106,7 @@ const HDFX20 = {
   // 迴槍架勢（物防 +2、被打就反擊）：槍在身前轉成一個輪子（蒼藍外圈、白芯）→ 停住，一圈光、腳下一圈波紋
   spGuard: { *f(U, T, u) { const P = SP20.P(), H = DS16.hands(this), C = { x: H.Hc.x, y: H.Hc.y - 16 }; Sound.sfx('wind');
       HD15.whirl(this, C, P, { r: 34, th: 8, fl: 0.92, turns: 2.2, trail: 4.4, dur: 34, spark: 1 }); HD15.whirl(this, C, HD15.P.white, { r: 30, th: 3, fl: 0.92, turns: 2.2, trail: 3.6, dur: 32, delay: 1 }); yield* wait(16);
-      Sound.sfx('shield'); HD15.ring(this, C, P, 10, 48, { w: 2.4, dur: 18 }); HD15.ring(this, { x: H.Hc.x, y: HERO_FOOT - 2 }, P, 6, 40, { fl: 0.3, w: 1.6, dur: 20 }); HD15.flare(this, C, HD15.P.white, 60, { rot: 0, dur: 16, x8: 1 }); yield* wait(18); } },
+      Sound.sfx('shield'); HD15.ring(this, C, P, 10, 48, { w: 2.4, dur: 18 }); HD15.ring(this, { x: H.Hc.x, y: HDW_FOOT() - 2 }, P, 6, 40, { fl: 0.3, w: 1.6, dur: 20 }); HD15.flare(this, C, HD15.P.white, 60, { rot: 0, dur: 16, x8: 1 }); yield* wait(18); } },
   // 千重突（6 段）：一下接一下，每一下旁邊都有兩三道淡淡的槍尖殘影（數不清的槍尖）→ 最後一排槍尖一起刺出、一記最粗的刺穿過去
   spThousand: { *f(U, T, u) { HD15.dim(this, 0.3, 80, { col: '#020818', inn: 0.1, out: 0.3 }); yield* this.lunge(u, 16, 2); yield* SP20.flurry(this, T, 0, this.sp20n || 6); },
     *h(U, T, u, i) { yield* SP20.flurry(this, T, i, 6); } },
@@ -118,19 +119,19 @@ const HDFX20 = {
       Sound.sfx('crit'); const E = SP20.through(this, T, d, 60, { w: 8, fl: 70 }); SP20.helix(this, T, E, P, { r: 14, turns: 3, dur: 22, spin: 1 }); HD15.ring(this, E, P, 4, 30, { w: 2, fl: 0.5, rot: d.an + Math.PI / 2, dur: 16 });
       if (brk) { this.spawn({ k: 'flash', c: '#e6f4ff', a: 0.35, life: 8 }); HD15.ring(this, T, HD15.P.white, 8, 70, { w: 3, dur: 20 }); HD15.flare(this, T, P, 140, { rot: d.an, dur: 18 }); }
       this.shake = Math.max(this.shake || 0, brk ? 10 : 7); yield* wait(16); } },
-  // 蒼龍躍（落下）：天上一點寒光 → 一道粗大的蒼藍槍光從天上斜斜刺下來扎進對手，主角跟著落下 → 停格、畫面一白，
+  // 蒼龍躍（落下）：對手正上方一點寒光 → 一道粗大的蒼藍槍光從正上方垂直刺下來扎進對手，主角跟著落下 → 停格、畫面一白，
   //   落點的地面炸開兩圈衝擊波、地裂、碎石往上噴，槍光往上一道長光芒
-  zjAzure: { *f(U, T, u) { const P = SP20.P(), v = DG17.vAt(this, T), foot = v && v.foot ? v.foot : T.y + 24; HD15.dim(this, 0.45, 70, { col: '#020818', inn: 0.1, out: 0.4 });
+  zjAzure: { noStep: 1, *f(U, T, u) { const P = SP20.P(), v = DG17.vAt(this, T), foot = v && v.foot ? v.foot : T.y + 24; HD15.dim(this, 0.45, 70, { col: '#020818', inn: 0.1, out: 0.4 });
       const { dr, d } = yield* SP20.fall(this, T, { w: 15 }); Sound.sfx('bladeHitSuper'); Sound.sfx('quake'); HD15.stop(this, 8); this.spawn({ k: 'flash', c: '#e6f4ff', a: 0.5, life: 10 });
       SP20.hit(this, T, d, 1.6); HD15.ring(this, { x: T.x, y: foot }, P, 8, 72, { fl: 0.3, w: 3, dur: 22 }); HD15.ring(this, { x: T.x, y: foot }, HD15.P.white, 4, 46, { fl: 0.3, w: 1.6, dur: 16, delay: 3 });
       HD15.cracks(this, { x: T.x, y: foot }, 8, P, { len: 42, fl: 0.3, dur: 50 }); HD15.shards(this, { x: T.x, y: foot - 2 }, 12, { up: 2.6, spd: 3, sz: 3, cols: SP20.DIRT }); HD15.flare(this, T, P, 160, { rot: d.an, dur: 20 }); HD15.spikes(this, T, P, 14, 44);
       this.shake = Math.max(this.shake || 0, 14); yield* wait(16); if (dr) dr(); yield* wait(4); } },
   // 流星龍墜（落下，打全體）：天上落下好幾道蒼藍的流星槍光，一隻一隻砸下去 → 主角化成最粗的一道槍光砸在正中間，
   //   停格、畫面一白，一大圈衝擊波掃過全部、地面大片裂開、碎石，每一隻身上一起炸開
-  zjMeteor: { *f(U, T, u) { const P = SP20.P(), L = DG17.foes(this); Sound.sfx('charge'); HD15.dim(this, 0.6, 120, { col: '#020818', inn: 0.08, out: 0.3 });
-      L.forEach((v, j) => { const C = this.center(v), ft = v.foot || C.y + 24, A = { x: C.x - 46 + (Math.random() - 0.5) * 10, y: -30 }; HD15.comet(this, A, C, P, 9, { w: 10, delay: j * 6, ease: 'in' });
+  zjMeteor: { noStep: 1, *f(U, T, u) { const P = SP20.P(), L = DG17.foes(this); Sound.sfx('charge'); HD15.dim(this, 0.6, 120, { col: '#020818', inn: 0.08, out: 0.3 });
+      L.forEach((v, j) => { const C = this.center(v), ft = v.foot || C.y + 24, A = { x: C.x, y: -30 }; HD15.comet(this, A, C, P, 9, { w: 10, delay: j * 6, ease: 'in' });
         DG17.later(this, j * 6 + 9, () => { Sound.sfx('rock'); SP20.hit(this, C, SP20.dir(A, C), 1); HD15.ring(this, { x: C.x, y: ft }, P, 4, 34, { fl: 0.3, w: 2, dur: 16 }); HD15.shards(this, { x: C.x, y: ft - 2 }, 5, { up: 2, spd: 2.4, sz: 2.6, cols: SP20.DIRT }); this.shake = Math.max(this.shake || 0, 5); }); });
-      yield* wait(L.length * 6 + 14); const { dr } = yield* SP20.fall(this, T, { from: { x: T.x - 34, y: -50 }, w: 18, drop: 9 });
+      yield* wait(L.length * 6 + 14); const { dr } = yield* SP20.fall(this, T, { w: 18, drop: 9 });
       Sound.sfx('bladeHitSuper'); Sound.sfx('quake'); HD15.stop(this, 10); this.spawn({ k: 'flash', c: '#e6f4ff', a: 0.55, life: 12 }); const G = { x: T.x, y: T.y + 26 };
       HD15.flash(this, T, P, 120, { dur: 22 }); HD15.ring(this, G, P, 10, 124, { fl: 0.3, w: 3.4, dur: 26 }); HD15.ring(this, G, HD15.P.white, 6, 82, { fl: 0.3, w: 1.8, dur: 20, delay: 4 }); HD15.cracks(this, G, 12, P, { len: 72, fl: 0.3, dur: 60 });
       HD15.flare(this, T, P, 240, { rot: 0, dur: 24, x8: 1 }); HD15.shards(this, G, 16, { up: 3, spd: 3.6, sz: 3.2, cols: SP20.DIRT }); for (const v of L) SP20.hit(this, this.center(v), { an: -Math.PI / 2, ux: 0, uy: -1 }, 1.1, { delay: 2 });
@@ -163,7 +164,7 @@ const HDSP20 = [
       L.forEach((v, j) => { const P0 = this.center(v); DG17.later(this, j * 3, () => { Sound.sfx('bladeHit'); SP20.hit(this, P0, { an: j % 2 ? Math.PI : 0, ux: j % 2 ? -1 : 1, uy: 0 }, 0.8, { rot: 0 }); }); });
       yield* wait(14 + L.length * 3); this.shake = Math.max(this.shake || 0, 4); yield* wait(6); } },
   // 凝息：屏住呼吸——舞台稍暗，蒼藍的光點慢慢往槍尖收，槍尖一點寒光（十字光芒）一閃，腳下一圈靜靜的波紋
-  { *f(U, T, u) { const P = SP20.P(), H = DS16.hands(this), G = { x: H.Hc.x, y: HERO_FOOT - 2 }; HD15.dim(this, 0.3, 50, { col: '#020818', inn: 0.2, out: 0.3 }); Sound.sfx('charge');
+  { *f(U, T, u) { const P = SP20.P(), H = DS16.hands(this), G = { x: H.Hc.x, y: HDW_FOOT() - 2 }; HD15.dim(this, 0.3, 50, { col: '#020818', inn: 0.2, out: 0.3 }); Sound.sfx('charge');
       HD15.gather(this, H.R, 14, P, 40, { span: 16, life: 20 }); HD15.ring(this, G, P, 30, 8, { fl: 0.3, w: 1.4, dur: 24 }); yield* wait(22);
       Sound.sfx('tick'); HD15.flash(this, H.R, HD15.P.white, 26, { dur: 14 }); HD15.flare(this, H.R, HD15.P.white, 56, { rot: Math.PI / 4, dur: 18, x8: 1 }); HD15.ring(this, G, P, 6, 36, { fl: 0.3, w: 1.4, dur: 18 }); yield* wait(20); } },
 ];

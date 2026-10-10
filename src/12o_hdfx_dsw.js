@@ -49,7 +49,7 @@ const HDFX16 = {
       HD15.flare(this, H.R, Wt, 26, { rot: -0.8, dur: 10 }); HD15.cut(this, H.L, 0.8, 14, Bk, { dur: 10, w: 4, gap: 0.01 }); yield* wait(4); Sound.sfx('tick');
       HD15.mark(this, X, Math.PI / 4, 56, Wt, { hold: 26, w: 2 }); HD15.mark(this, X, -Math.PI / 4, 56, Bk, { hold: 26, w: 2 });
       HD15.flash(this, X, P, 30, { dur: 14 }); HD15.flare(this, X, P, 44, { rot: 0, dur: 16, x8: 1 }); HD15.sparks(this, X, 10, HD15.P.gold, { spd: 2.6, life: 14, g: 0.08 });
-      HD15.ring(this, X, P, 8, 34, { fl: 0.4, w: 2, dur: 20, delay: 2 }); HD15.ring(this, { x: H.Hc.x, y: HERO_FOOT - 2 }, P, 6, 30, { fl: 0.3, w: 1.2, dur: 22 }); yield* wait(26); } },
+      HD15.ring(this, X, P, 8, 34, { fl: 0.4, w: 2, dur: 20, delay: 2 }); HD15.ring(this, { x: H.Hc.x, y: HDW_FOOT() - 2 }, P, 6, 30, { fl: 0.3, w: 1.2, dur: 22 }); yield* wait(26); } },
   // 迴旋雙刃（全體 2 段）：第一段主手的白色刀光繞著全體轉一圈（順時針），第二段副手的黑色刀光反方向再轉一圈；每隻身上各閃一下
   dsWhirl: { *f(U, T, u) { const P = HD15.P.white, C = { x: T.x, y: T.y + 6 }; Sound.sfx('wind'); yield* this.lunge(u, 16, 2); Sound.sfx('blade');
       HD15.whirl(this, C, P, { r: 78, th: 11, fl: 0.34, turns: 1.2, trail: 3.6, dur: 28, spark: 1 }); HD15.whirl(this, C, P, { r: 66, th: 4, fl: 0.34, turns: 1.1, trail: 2.6, dur: 26, delay: 3, al: 0.45 });
@@ -76,7 +76,7 @@ const HDFX16 = {
       for (let k = 0; k < 8; k++) { const a = k * Math.PI / 4; HD15.sparks(this, { x: T.x + Math.cos(a) * 20, y: T.y + Math.sin(a) * 20 }, 2, Wt, { ang: a, spread: 0.4, spd: 3.6, life: 18 }); }
       this.shake = Math.max(this.shake || 0, 8); yield* wait(16); } },
   // 雙劍舞陣（3 回合每次攻擊後副手追加一斬、速度 +1）：舞台稍暗，兩把劍（一白一黑）的刀光繞著主角轉兩圈（差半圈），粉紅花瓣一樣的光粒往上飄，最後兩把劍一起亮（速度提升的箭頭在下一步）
-  dsDance: { keep: 1, *f(U, T, u) { const P = HD15.P.pink, [Wt, Bk] = DS16.BW(), H = DS16.hands(this), C = { x: H.Hc.x, y: H.Hc.y + 4 }, G = { x: H.Hc.x, y: HERO_FOOT - 2 }; Sound.sfx('wind');
+  dsDance: { keep: 1, *f(U, T, u) { const P = HD15.P.pink, [Wt, Bk] = DS16.BW(), H = DS16.hands(this), C = { x: H.Hc.x, y: H.Hc.y + 4 }, G = { x: H.Hc.x, y: HDW_FOOT() - 2 }; Sound.sfx('wind');
       HD15.dim(this, 0.25, 62); HD15.ring(this, G, P, 6, 38, { fl: 0.3, w: 1.4, dur: 26 });
       HD15.whirl(this, C, Wt, { r: 36, th: 9, fl: 0.42, turns: 2, trail: 2.2, dur: 40, spark: 1 }); HD15.whirl(this, C, Bk, { r: 36, th: 9, fl: 0.42, turns: 2, trail: 2.2, dur: 40, a0: Math.PI * 1.75 });
       for (let i = 0; i < 18; i++) DS16.later(this, i * 2, () => HD15.mote(this, G.x + (Math.random() - 0.5) * 50, G.y - Math.random() * 10, (Math.random() - 0.5) * 0.6, -0.5 - Math.random() * 0.6, P, { life: 34, s: 1.3 }));

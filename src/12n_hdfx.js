@@ -6,6 +6,8 @@
    先做 斷甲斬（一般斬擊）、狂刃（自身強化）、崩星劍（大招）三招。HD15.use(true/false) 切換新舊；
    v12.101 起正式版、特效測試版都預設開；特效測試版選技能樹的清單最後一行「新特效：開／關」可以切回舊的比較。 */
 const HD15 = { on: false, ids: [], old: {}, T: new Map() };
+// v12.102 出招時主角會照武器站到別的位置（12y_hdfx_stance.js 的 hdwBase）：新特效裡「主角腳下」的位置跟著移過去
+const HDW_FOOT = () => HERO_FOOT + ((typeof Game !== 'undefined' && Game.scene && Game.scene.hdwBase) ? Game.scene.hdwBase.y : 0);
 HD15.q = () => (typeof HD_QUALITY !== 'undefined' && HD_QUALITY.low) ? 0.5 : 1;
 HD15.cl = t => t < 0 ? 0 : t > 1 ? 1 : t;
 HD15.eo = t => 1 - Math.pow(1 - t, 3);
@@ -278,7 +280,7 @@ const HDFX15 = {
       HD15.shards(this, T, 9, { ang: 0.6, spread: 1.8, spd: 3.6, sz: 3.4, up: 2 }); this.shake = Math.max(this.shake || 0, 7); yield* wait(20); } },
   // 狂刃：火花從四周往主角身上收（集氣）→ 爆開：腳下兩圈紅光、往外的衝擊波、紅色光柱、火焰沿著身體兩側往上竄、主角全身泛紅光
   //       → 刀身一閃（會心提升）→ 火焰慢慢變小、火星往上飄。物攻提升的箭頭在下一步「物攻大幅提升」時才出現（同一套畫法）
-  sdFrenzy: { *f(U, T, u) { const P = HD15.P.blaze, Hv = this.H, Hc = this.center(Hv), G = { x: Hc.x, y: HERO_FOOT - 2 }, C = { x: Hc.x, y: Hc.y + 4 }; Sound.sfx('charge');
+  sdFrenzy: { *f(U, T, u) { const P = HD15.P.blaze, Hv = this.H, Hc = this.center(Hv), G = { x: Hc.x, y: HDW_FOOT() - 2 }, C = { x: Hc.x, y: Hc.y + 4 }; Sound.sfx('charge');
       HD15.dim(this, 0.3, 74); HD15.gather(this, C, 26, P, 46, { span: 10, life: 14 }); HD15.flash(this, C, P, 26, { dur: 16 });
       HD15.add(this, { x: 0, y: 0, life: 70, draw: () => {}, upd: p => { const k = p.t / 70; Hv.tint = p.t < 68 ? { c: '#ff3a10', a: (p.t < 12 ? p.t / 12 : 1 - Math.max(0, k - 0.6) / 0.4) * (0.24 + 0.14 * Math.sin(p.t * 0.45)) } : null; } });
       yield* wait(12); Sound.sfx('fire');
@@ -366,7 +368,7 @@ const HDFX15 = {
   //   每一刀都留下一條發亮的斬痕停在空中 → 一瞬間全部靜止 → 對手身上交叉兩斬（左上到右下、右上到左下），停格，十字斬痕和空中的斬痕一起裂開散成光粒 → 結束、跳傷害
   //   （玩家：「最後兩斬有點怪 破曉也是 改成最後交叉兩斬後顯示傷害」→ 拿掉巨大十字斬和破曉的晨光、光芒、光柱）
   ogSword: { *f(U, T, u) { const P = HD15.P.white, Hc = this.center(this.H), Hd = typeof PX13 !== 'undefined' && PX13.hand ? PX13.hand(this) : { x: Hc.x + 10, y: Hc.y - 10 }, t0 = this.t, FIN = 92; Sound.sfx('charge');
-      HD15.dim(this, 0.74, FIN + 26, { col: '#03050d', inn: 0.08, out: 0.2 }); HD15.gather(this, Hd, 22, P, 40, { span: 14, life: 16 }); HD15.ring(this, { x: Hc.x, y: HERO_FOOT - 2 }, P, 6, 40, { fl: 0.3, w: 1, dur: 24 });
+      HD15.dim(this, 0.74, FIN + 26, { col: '#03050d', inn: 0.08, out: 0.2 }); HD15.gather(this, Hd, 22, P, 40, { span: 14, life: 16 }); HD15.ring(this, { x: Hc.x, y: HDW_FOOT() - 2 }, P, 6, 40, { fl: 0.3, w: 1, dur: 24 });
       HD15.flare(this, { x: Hd.x + 9, y: Hd.y - 17 }, P, 60, { rot: 0, spin: 0.6, dur: 22, x8: 1, delay: 8 }); HD15.cut(this, { x: Hd.x + 4, y: Hd.y - 8 }, -1.05, 24, P, { dur: 16, w: 4, gap: 0.01, delay: 6 }); yield* wait(18);
       yield* this.lunge(u, 22, 2);
       // 千斬：16 刀，角度亂、月牙一律朝上鼓；每刀留一條斬痕到 FIN 那格
@@ -396,7 +398,7 @@ const HDSP15 = [
     Sound.sfx('heavy'); HD15.stop(this, 4); HD15.flash(this, T, P, 54, { dur: 16 }); HD15.ring(this, T, P, 4, 34, { w: 2.2, dur: 16 }); HD15.ring(this, T, P, 4, 24, { w: 1.4, dur: 14, delay: 4 }); HD15.spikes(this, T, P, 12, 28); HD15.sparks(this, T, 16, P, { spd: 4, life: 18 }); this.shake = Math.max(this.shake || 0, 6); yield* wait(16); },
   // 澄心（下一擊必定會心＝強化自己，不揮刀）：舞台稍暗，腳下漾開像水面的細光環，光點往主角身上收；刀身由下往上走過一道金光，
   //       刀尖亮起一顆十字星，頭上浮出一個小小的準星記號（下一擊會心）
-  function* (U, T, u) { const P = HD15.P.azure, G = HD15.P.gold, Hc = this.center(this.H), F = { x: Hc.x, y: HERO_FOOT - 2 }, Hd = typeof PX13 !== 'undefined' && PX13.hand ? PX13.hand(this) : { x: Hc.x + 10, y: Hc.y - 10 }; Sound.sfx('charge');
+  function* (U, T, u) { const P = HD15.P.azure, G = HD15.P.gold, Hc = this.center(this.H), F = { x: Hc.x, y: HDW_FOOT() - 2 }, Hd = typeof PX13 !== 'undefined' && PX13.hand ? PX13.hand(this) : { x: Hc.x + 10, y: Hc.y - 10 }; Sound.sfx('charge');
     HD15.dim(this, 0.3, 56); HD15.ring(this, F, P, 6, 36, { fl: 0.3, w: 1.2, dur: 26 }); HD15.ring(this, F, P, 6, 36, { fl: 0.3, w: 1, dur: 26, delay: 7 }); HD15.ring(this, F, P, 6, 36, { fl: 0.3, w: 0.8, dur: 26, delay: 14 });
     HD15.gather(this, { x: Hc.x, y: Hc.y - 4 }, 16, P, 36, { span: 12, life: 14 }); yield* wait(14); Sound.sfx('tick');
     HD15.cut(this, { x: Hd.x + 4, y: Hd.y - 8 }, -1.05, 22, G, { dur: 16, w: 5, gap: 0.01 }); HD15.flare(this, { x: Hd.x + 9, y: Hd.y - 17 }, G, 46, { rot: 0, spin: 0.5, dur: 22, x8: 1, delay: 4 }); HD15.flash(this, { x: Hd.x + 9, y: Hd.y - 17 }, G, 20, { dur: 18, delay: 4 });
