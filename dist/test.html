@@ -7934,7 +7934,7 @@ class TitleScene {
     x.drawImage(this.logo, Math.round(W / 2 - this.logo.width / 2), 6 + bob);
     Font.drawC(x, '～異世界冒險RPG～', W / 2, 52 + bob, '#ffe0a0', '#3a1428');
     if (this.stage === 'press' && Math.floor(this.t / 30) % 2 === 0) Font.drawC(x, '按 A 鍵開始', W / 2, 232, '#ffffff', '#1a1024');
-    Font.drawR(x, 'v12.112', W - 3, H - 13, '#b890b0', null);
+    Font.drawR(x, 'v12.113', W - 3, H - 13, '#b890b0', null);
   }
 }
 class IntroScene {
@@ -28951,6 +28951,30 @@ if (BFX15.live) {
   { const _c = Battle.prototype.command; Battle.prototype.command = function* () { const cmd = yield* _c.call(this);   // 用藥水時先扣到一半，才看得到回復
       if (FXT13.on && cmd && cmd.type === 'item') { const hu = this.core.byId.H; hu.res.hp = Math.max(1, Math.floor(hu.max.hp * 0.5)); if (hu.max.mp) hu.res.mp = Math.floor(hu.max.mp * 0.5); if (this.sync) this.sync(); } return cmd; }; }
   defPut('mechanics', 'openShield15', { make: () => ({ triggers: [{ on: EVT.BATTLE_START, phase: 'POST', effects: [{ type: 'status', target: 'self', status: 'barrier', dur: 2 }] }] }) });
+}
+BFX15.smokeOn = function* (b, t, smk) { const C = b.center(t), G = BFX15.foot(b, C); Sound.sfx('wind');
+  if (smk) { HD15.smoke(b, G, 14, { col: '#c8c8d0', r: 30, sz: 16, spd: 1, up: 0.35, life: 36 }); HD15.smoke(b, C, 8, { col: '#e4e4ea', r: 20, sz: 12, spd: 0.8, life: 30, delay: 4 }); yield* wait(18); return; }
+  if (t.hero && typeof K13 !== 'undefined' && K13.ghost) for (let i = 1; i <= 3; i++) K13.ghost(b, (i % 2 ? -1 : 1) * i * 6, 0, '#9ad0ff', 8 + i * 3, 0.4);
+  HD15.windLines(b, { x: C.x - 40, y: C.y }, { x: C.x + 40, y: C.y }, HD15.P.wind, 6, { spread: 30, len: 30, spd: 8, life: 12 }); yield* wait(16); };
+BFX15.focus = function* (b, t) { const C = b.center(t), A = { x: C.x, y: C.y - 14 }, P = HD15.P.gold; Sound.sfx('charge'); HD15.gather(b, A, 10, P, 28, { span: 8 }); yield* wait(10);
+  HD15.flash(b, A, P, 26, { dur: 12 }); HD15.lockon(b, A, P, { dur: 24, r0: 22, r1: 8 }); yield* wait(14); };
+BFX15.frozen = function* (b, t) { const C = b.center(t), P = HD15.P.moon; HD15.ring(b, C, P, 40, 8, { w: 2, dur: 18 }); SP20.hex(b, C, 28, P, { hold: 16, fl: 0.8, fade: 1, delay: 6 }); HD15.sparks(b, C, 8, P, { spd: 1.2, life: 24, delay: 6 });
+  t.tint = { c: '#c8e0ff', a: 0.5 }; yield* wait(18); t.tint = null; };
+BFX15.mirror = (b, t) => { const C = b.center(t), P = HD15.P.silver; HD15.flash(b, C, P, 34, { dur: 14 }); SP20.hex(b, C, 30, P, { hold: 14, fl: 1, fade: 1 }); HD15.sparks(b, C, 8, HD15.P.white, { spd: 2, life: 18 }); };
+if (BFX15.live) {
+  const H = Battle.prototype.handlers, _ap = H.STATUS_APPLY;
+  H.STATUS_APPLY = function* (e, s, t, P) { if (HD15.on && t && P && !P.failed && !P.cleared && !P.quiet && !HD15.mine(this)) { const id = P.status;
+      if (id === 'smoke') { const sk = this.cast && this.cast.D; yield* BFX15.smokeOn(this, t, this.itemCtx || !sk || /煙|霧/.test((sk.name || '') + (sk.desc || ''))); }
+      else if (id === 'critNext') yield* BFX15.focus(this, t);
+      else if (id === 'frozen') yield* BFX15.frozen(this, t);
+      else if (id === 'mirror') BFX15.mirror(this, t); }
+    return yield* _ap.call(this, e, s, t, P); };
+  { const _su = FX.statUpFx, _sd = FX.statDownFx;   // 能力升降（魔物、道具、天賦）：跟主角新招一樣的光柱，舊的金色箭頭不用了
+    FX.statUpFx = function* (U) { if (!HD15.on || HD15.mine(this)) return yield* _su.call(this, U); return yield* HD15.statFx.call(this, U, 1, HD15.P[HD15.STATPAL[this.hd15stat] || 'blaze']); };
+    FX.statDownFx = function* (U) { if (!HD15.on || HD15.mine(this)) return yield* _sd.call(this, U); return yield* HD15.statFx.call(this, U, -1); }; }
+  { const _sm = FX.smoke; FX.smoke = function* (...a) { if (!HD15.on) return yield* _sm.apply(this, a); Sound.sfx('wind'); const C = this.center(this.H);
+      HD15.smoke(this, { x: C.x, y: C.y + 10 }, 22, { col: '#d0d0d8', r: 60, sz: 22, spd: 1.6, up: 0.4, life: 44 }); HD15.smoke(this, { x: W / 2, y: BH * 0.45 }, 16, { col: '#e8e8ee', r: 90, sz: 20, spd: 1.2, life: 44, delay: 6 }); yield* wait(40); }; }
+  { const _s = fxtSetup13; fxtSetup13 = function (kind) { _s(kind); Game.st.bag.smoke = 99; }; }
 }
 </script>
 </body></html>
