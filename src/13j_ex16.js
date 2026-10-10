@@ -23,7 +23,7 @@ const EXDEF16 = [
 ST11('xVow16', '守誓之光', { mods: [{ stage: 'final', who: 'defender', mul: 0.75, cond: { hasPower: 1 } }], triggers: [{ on: EVT.ROUND_END, phase: 'POST', cond: { ownerAlive: 1 }, effects: [{ type: 'heal', target: 'self', pct: 0.05, kind: 'regen', quiet: 1 }] }] });
 ST11('xOath16', '不滅誓約', { triggers: [{ on: EVT.DOWN, phase: 'PRE', role: 'tgt', layer: 'prevent', whenDown: 1, onceGroup: 'endure', cond: {}, effects: [{ type: 'prevent_down', hp: 1, key: 'endure', why: 'oath16' }, { type: 'remove_status', target: 'self', status: 'xOath16' }] }] });
 ST11('xVeil16', '朧月殘像', { mods: [{ stage: 'defender', who: 'defender', accAdd: -50 }], triggers: [{ on: EVT.MISS, phase: 'POST', role: 'tgt', cond: { srcSide: 'enemy', ownerAlive: 1 }, limit: { perAction: 1 }, effects: [{ type: 'counter', mul: { f: 'cnt11', v: 60 }, why: 'veil16' }] }] });
-ST11('xTurret16', '自走砲台', { triggers: [{ on: EVT.ROUND_END, phase: 'POST', cond: { ownerAlive: 1 }, effects: [{ type: 'damage', target: 'random_enemy', power: 40, kind: 'follow', tags: ['follow'] }] }] });
+ST11('xTurret16', '自走砲台', { triggers: [{ on: EVT.ROUND_END, phase: 'POST', cond: { ownerAlive: 1 }, effects: [{ type: 'damage', target: 'random_enemy', power: 40, kind: 'follow', tags: ['follow', 'xturret16'] }] }] });
 ST11('xBoiler16', '鍋爐全開', {});
 ST11('xIce16', '冰晶護身', { triggers: [{ on: EVT.DAMAGE, phase: 'POST', role: 'tgt', cond: { srcSide: 'enemy', hasPower: 1, ownerAlive: 1 }, chance: 0.3, limit: { perAction: 1 }, effects: [{ type: 'stage', target: 'source', stats: { spe: -1 }, dur: 3 }] }] });
 ST11('xScale16', '蒼鱗之護', { mods: [{ stage: 'final', who: 'defender', mul: 0.8, cond: { cat: '特', hasPower: 1 } }] });
