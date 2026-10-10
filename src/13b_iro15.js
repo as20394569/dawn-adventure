@@ -71,7 +71,7 @@ const IRO_ACCB15 = [0, 6, 10, 14, 19, 25, 31, 38];
 for (const m in IRO_ACC15) { const [n, [a, b], tr, d] = IRO_ACC15[m], t = iroAccT15(MAP3_15[m][0]), B = IRO_ACCB15[t], k = 'iroAcc_' + m;
   GEAR[k] = { n, slot: 'acc', t, st: { hp: Math.round(B * 0.8), [a]: Math.round(B * 0.3), [b]: Math.round(B * 0.22) }, sp: {}, fx: [tr], trait: tr, kind: '飾品', d: d + '（' + (MAPS[m].name || m).replace(/・.*$/, '') + '的異色魔物掉落）', look: (GEAR.qHeroCrest || {}).look, iro15: m };
   if (ACC_TRAIT[tr] && ACC_TRAIT[tr][2] && !ACC_TRAIT[tr][2].includes(n)) ACC_TRAIT[tr][2].push(n); if (typeof BP_RARE !== 'undefined') BP_RARE.add(k); }
-IRO_ACC15.abyssTemple14b = IRO_ACC15.abyssTemple14a; const iroAccOf15 = m => GEAR['iroAcc_' + m] ? 'iroAcc_' + m : m === 'abyssTemple14b' ? 'iroAcc_abyssTemple14a' : null;
+const IRO_ACC_ALIAS15 = { abyssTemple14b: 'abyssTemple14a' }, iroAccOf15 = m => { m = IRO_ACC_ALIAS15[m] || m; return GEAR['iroAcc_' + m] ? 'iroAcc_' + m : null; };
 
 // 異色魔物本身
 function iroMake15(k, b, m, lo) { const B = SPECIES[b]; if (!B || !MON_PANEL[b] || !DEF.enemies[b]) { bvErr('iro15', b); return false; }
