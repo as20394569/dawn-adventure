@@ -30,7 +30,7 @@ if (MAG15.live) for (const kind in MAG_SK15) { const T = TREE11[kind]; if (!T) {
   magicize15('t_' + k); }
 
 /* ---------- 特效 ---------- */
-const glint15 = (b, P, R) => { const H = R || DS16.hands(b).R; HD15.flash(b, { x: H.x + 2, y: H.y - 10 }, P, 18, { dur: 8 }); HD15.sparks(b, { x: H.x + 2, y: H.y - 10 }, 4, P, { spd: 1.6, life: 10 }); };
+const glint15 = (b, P, R) => { const H = R || DS16.hands(b).R; HD15.flash(b, { x: H.x + 2, y: H.y - 10 }, P, 18, { dur: 8 }); for (let i = 0; i < 4; i++) HD15.mote(b, H.x + 2, H.y - 10, (Math.random() - 0.5) * 1.2, -0.3 - Math.random() * 0.6, P, { life: 12 }); };
 // 劍氣：新月形的光往前飛（凸的那邊朝前），越飛越大，留一點殘影
 HD15.wave = (b, A, B, pal, o = {}) => { pal = HD15.W(pal); const dl = o.delay || 0, dur = o.dur || 12, an = Math.atan2(B.y - A.y, B.x - A.x), hist = [];
   return HD15.add(b, { x: A.x, y: A.y, delay: dl, life: dl + dur + 6,
