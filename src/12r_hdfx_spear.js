@@ -13,7 +13,7 @@ SP20.DIRT = ['#d8c8a8', '#a08868', '#5a4a38'];
 SP20.hand = b => DS16.hands(b).R;
 SP20.dir = (A, T) => { const an = Math.atan2(T.y - A.y, T.x - A.x); return { an, ux: Math.cos(an), uy: Math.sin(an) }; };
 // 還沒給玩家看過，先只在特效測試版開（玩家說好才放進正式版：把 live 改成 true）
-SP20.live = typeof fxtest13 === 'function' && fxtest13();
+SP20.live = true;   // v12.104 玩家：「都放入正式版」
 SP20.origin = (b, T, L, off = 0) => { const H = SP20.hand(b), d = SP20.dir(H, T), D = Math.min(L, Math.hypot(T.x - H.x, T.y - H.y)); return { x: T.x - d.ux * D - d.uy * off, y: T.y - d.uy * D + d.ux * off }; };
 SP20.on = () => SP20.live && DG17.kind() === '長槍';
 // 一槍：順著主角手→對手的方向，從對手前面一槍長的地方（o.reach，預設 64）往對手刺出一道槍光——蒼藍的外光、白色的芯，旁邊幾道疾風線；

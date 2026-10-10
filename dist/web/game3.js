@@ -1,10 +1,3 @@
-B12_SCRIPT.shadowGeneral = function (core, u) { const d = u.data;
-  if ((d.double12 || 0) > 0) { d.double12--; return b12Charge(core, u, 'm_eclipseBlade'); }
-  if (d.sg25) { d.n25 = (d.n25 || 0) + 1; if (d.n25 % 3 === 0) return b12Charge(core, u, 'm_eclipseBlade'); }
-  else if (core.round - (d.lastCharge ?? -9) >= 4 && core.rng.chance(0.4)) return b12Charge(core, u, 'm_eclipseBlade');
-  return b12Pick(core, u, ['m_shadowSlash', 'm_darkPulse', 'm_shadowSlash']); };
-const evoSkill12 = o => o && (DEF.skills['o_' + o.k] ? 'o_' + o.k : DEF.skills[o.k] ? o.k : null);
-evoAt = (o, s = orbStage(o)) => { const id = evoSkill12(o); return id ? BB.learnN(id) + (s >= 1 ? 30 : 6) : ORB_EVO[s]; };
 function masteryOf12(st, id) { const e = BB.skillObj(st, id); if (!e || !DEF.skills[id] || DEF.skills[id].tags.includes('sig')) return null; const N = BB.learnN(id), M = [N, N + 6, N + 30];
   const lvl = !e.learned ? 0 : 1 + Math.min(2, orbStage(e)); return { e, x: e.x || 0, M, lvl, next: lvl === 0 ? M[0] : lvl < 3 ? M[lvl] : null, pending: orbPending(e) }; }
 function drawMastery12(x, X, Y, w, m) { if (!m) return; const max = m.M[2], f = Math.min(1, m.x / max);
@@ -9827,7 +9820,7 @@ SP20.P = () => HD15.P.lance;
 SP20.DIRT = ['#d8c8a8', '#a08868', '#5a4a38'];
 SP20.hand = b => DS16.hands(b).R;
 SP20.dir = (A, T) => { const an = Math.atan2(T.y - A.y, T.x - A.x); return { an, ux: Math.cos(an), uy: Math.sin(an) }; };
-SP20.live = typeof fxtest13 === 'function' && fxtest13();
+SP20.live = true;   // v12.104 玩家：「都放入正式版」
 SP20.origin = (b, T, L, off = 0) => { const H = SP20.hand(b), d = SP20.dir(H, T), D = Math.min(L, Math.hypot(T.x - H.x, T.y - H.y)); return { x: T.x - d.ux * D - d.uy * off, y: T.y - d.uy * D + d.ux * off }; };
 SP20.on = () => SP20.live && DG17.kind() === '長槍';
 SP20.lance = (b, T, o = {}) => { const A = o.from || SP20.origin(b, T, o.reach || 64, o.off || 0), P = o.pal || SP20.P(), w = o.w || 7, dl = o.delay || 0, ext = o.ext ?? 30, dur = o.dur || 18;
@@ -9972,7 +9965,7 @@ if (SP20.live) { const kd = TREE_KINDS11.indexOf('長槍'), wrap = F => function
     Sound.sfx('blade'); const d = SP20.lance(this, T, { w: 8, ext: 32, dur: 16, wind: 3 }); yield* wait(3); HD15.stop(this, 3); SP20.hit(this, T, d, 1.1); SP20.through(this, T, d, 36); this.shake = Math.max(this.shake || 0, 5);
     yield* wait(6); this.ctrRet12 = { v, x: o.x, y: o.y, x0: 0, y0: 0, at: this.t + CTR12.HOLD, dur: CTR12.RET }; }; }
 HD15.use(HD15.on);
-const AX21 = { live: typeof fxtest13 === 'function' && fxtest13() };
+const AX21 = { live: true };   // v12.104 正式版也開（玩家：「都放入正式版」）
 HD15.P.lava = { core: '#fff2c8', mid: '#ff7a1e', glow: '#ff3a08', edge: '#4a1002', keep: 1 };
 HD15.P.shield = { core: '#ffffff', mid: '#bfe4ff', glow: '#5aa8ff', edge: '#1a3a6a', keep: 1 };
 AX21.P = () => HD15.P.lava;
@@ -10080,7 +10073,7 @@ if (AX21.live) { const kd = TREE_KINDS11.indexOf('斧'), wrap = F => function* (
   const _sg = segSwing; segSwing = function* (b, s, C, i, kind) { if (!(HD15.on && AX21.live && kind === '斧')) return yield* _sg(b, s, C, i, kind); b.hd15cast = 1; yield* b.lunge(s, 8, 3); Sound.sfx('axSwing');
     AX21.cleave(b, C, ['v', 'dl', 'dr'][i % 3], { r: 38, th: 11, dur: 16 }); yield* wait(4); AX21.impact(b, C, 0.7); b.shake = Math.max(b.shake || 0, 3); yield* wait(5); }; }
 HD15.use(HD15.on);
-const AF22 = { live: typeof fxtest13 === 'function' && fxtest13() };
+const AF22 = { live: true };   // v12.104 正式版也開
 HD15.P.ki = { core: '#fffbe8', mid: '#ffd040', glow: '#ff9a10', edge: '#5a3000', keep: 1 };
 AF22.P = () => HD15.P.ki;
 AF22.on = () => AF22.live && DG17.kind() === '拳套';
@@ -10128,6 +10121,12 @@ const HDFX22 = {
   ogFist: { *f(U, T, u) { HD15.dim(this, 0.6, 140, { col: '#140c00', inn: 0.06, out: 0.25 }); Sound.sfx('charge'); const P = AF22.P(); HD15.gather(this, DS16.hands(this).R, 16, P, 40, { span: 12 }); yield* wait(12); yield* this.lunge(u, 10, 2); yield* AF22.hundred(this, T, 0, 10); },
     *h(U, T, u, i) { yield* AF22.hundred(this, T, i, 10); } },
 };
+AF22.core = (b, C, P, R, dur) => HD15.add(b, { x: C.x, y: C.y, life: dur + 4, draw: (x, p, k, t) => { const g = HD15.ei(HD15.cl(t / dur)), r = R * (0.25 + 0.75 * g) * (1 + 0.08 * Math.sin(t * 1.4));
+  x.globalCompositeOperation = 'lighter'; HD15.put(x, HD15.tex('glow', P.glow), p.x, p.y, r * 3.2, r * 3.2, 0, 0.55); HD15.put(x, HD15.tex('glow', P.mid), p.x, p.y, r * 1.6, r * 1.6, 0, 0.8); HD15.put(x, HD15.tex('core', P.mid), p.x, p.y, r * 0.6, r * 0.6, 0, 1); } });
+AF22.orb = (b, C, P, R, dur) => HD15.add(b, { x: C.x, y: C.y, life: dur, draw: (x, p, k) => { const e = HD15.eo(HD15.cl(k / 0.35)), f = 1 - HD15.ei(HD15.cl((k - 0.25) / 0.75)), r = Math.max(1, R * (0.3 + 0.7 * e));
+  const G = x.createRadialGradient(p.x, p.y, 0, p.x, p.y, r); G.addColorStop(0, HD15.rgba(P.core, 0.95 * f)); G.addColorStop(0.45, HD15.rgba(P.mid, 0.7 * f)); G.addColorStop(0.85, HD15.rgba(P.glow, 0.35 * f)); G.addColorStop(1, HD15.rgba(P.glow, 0));
+  x.globalCompositeOperation = 'lighter'; x.globalAlpha = 1; x.fillStyle = G; x.beginPath(); x.arc(p.x, p.y, r, 0, Math.PI * 2); x.fill();
+  x.globalAlpha = 0.8 * f; x.strokeStyle = P.mid; x.lineWidth = 1.6; x.beginPath(); x.arc(p.x, p.y, r * 0.96, 0, Math.PI * 2); x.stroke(); } });
 AF22.palm = (b, C, rot, o = {}) => { const P = AF22.P(), dl = o.delay || 0, hold = o.hold || 30; return HD15.add(b, { x: C.x, y: C.y, delay: dl, life: dl + hold + 10, draw: (x, p, k, t) => { const g = HD15.eo(HD15.cl(t / 6)), f = 1 - HD15.cl((t - hold) / 10);
     x.save(); x.translate(p.x, p.y); x.rotate(rot); x.globalCompositeOperation = 'lighter'; x.globalAlpha = 0.75 * f * g; HD15.put(x, HD15.tex('glow', P.glow), 0, 0, 16, 16, 0, 0.8);
     x.fillStyle = P.mid; x.beginPath(); x.ellipse(0, 0, 4.2, 5, 0, 0, Math.PI * 2); x.fill(); x.strokeStyle = P.core; x.lineWidth = 1.4; x.lineCap = 'round';
@@ -10164,10 +10163,14 @@ AF22.qiN = {};
 { const H = Battle.prototype.handlers, _ap = H.STATUS_APPLY, _dm = H.DAMAGE;
   H.STATUS_APPLY = function* (e, s, t, P) { if (t && P && P.status === 'qiBomb12' && !P.failed) { AF22.qiN[t.id] = (P.data && P.data.n) || 0; t.qi22 = 1; } return yield* _ap.call(this, e, s, t, P); };
   H.DAMAGE = function* (e, s, t, P) { if (t && P && P.kind === 'qi12') { const C = this.center(t), n = AF22.qiN[t.id] || 0, k = 1 + n * 0.15; t.qi22 = 0; yield* this.msg(t.n + '體內的氣爆開了！', { hold: 14 });
-      if (HD15.on && AF22.live) { const Pk = AF22.P(); Sound.sfx('charge'); HD15.cracks(this, C, 8 + n, Pk, { len: 18 * k, fl: 1, dur: 40 }); HD15.flash(this, C, Pk, 30, { dur: 16 }); yield* wait(12);
-        Sound.sfx('fsHitSuper'); Sound.sfx('quake'); HD15.stop(this, 6); this.spawn({ k: 'flash', c: '#fff6d8', a: 0.3 + n * 0.04, life: 10 }); HD15.flash(this, C, Pk, 70 * k, { dur: 20 }); HD15.ring(this, C, Pk, 6, 56 * k, { w: 3, dur: 20 });
-        HD15.ring(this, C, HD15.P.white, 4, 34 * k, { w: 1.8, dur: 16, delay: 3 }); HD15.flare(this, C, HD15.P.white, 120 * k, { rot: 0, dur: 20, x8: 1 }); HD15.spikes(this, C, Pk, 12 + n, 36 * k); HD15.sparks(this, C, 20 + n * 4, Pk, { spd: 4.6, life: 22, g: 0.05 });
-        this.shake = Math.max(this.shake || 0, 8 + n); yield* wait(6); }
+      if (HD15.on && AF22.live) { const Pk = AF22.P(); Sound.sfx('charge');
+        for (let i = 0; i < 7; i++) { const a = i / 7 * Math.PI * 2 + 0.3, L = 10 + 3 * k; HD15.thrust(this, C, { x: C.x + Math.cos(a) * L, y: C.y + Math.sin(a) * L }, Pk, { w: 2.4, ext: 2, dur: 16, delay: i, al: 0.75 }); }
+        AF22.core(this, C, Pk, 12 * k, 14); for (let i = 0; i < 8; i++) DG17.later(this, i, () => HD15.mote(this, C.x + (Math.random() - 0.5) * 20, C.y + (Math.random() - 0.5) * 16, (Math.random() - 0.5) * 0.4, -0.6 - Math.random() * 0.5, Pk, { life: 20 }));
+        yield* this.shakeB(t, 14, 1.5);
+        Sound.sfx('fsHitSuper'); Sound.sfx('quake'); HD15.stop(this, 6); this.spawn({ k: 'flash', c: '#ffcf60', a: 0.16 + n * 0.02, life: 8 }); AF22.orb(this, C, Pk, 26 * k, 18);
+        HD15.ring(this, C, Pk, 8, 50 * k, { w: 2.6, dur: 18 }); for (let i = 0; i < 14; i++) { const a = i / 14 * Math.PI * 2 + Math.random() * 0.2, L = (22 + Math.random() * 12) * k; HD15.thrust(this, { x: C.x + Math.cos(a) * 6, y: C.y + Math.sin(a) * 6 }, { x: C.x + Math.cos(a) * L, y: C.y + Math.sin(a) * L }, Pk, { w: 4.5, ext: 6, dur: 14, delay: 1 }); }
+        for (let i = 0; i < 12 + n * 2; i++) { const a = Math.random() * Math.PI * 2, v = 0.8 + Math.random() * 1.8; DG17.later(this, 3, () => HD15.mote(this, C.x, C.y, Math.cos(a) * v, Math.sin(a) * v - 0.3, Pk, { life: 26 })); }
+        this.shake = Math.max(this.shake || 0, 6 + n); yield* wait(6); }
       else { Sound.sfx('heavy'); this.spawn({ k: 'ring', x: C.x, y: C.y, r0: 4, r1: 30, c: '#ffc060', w: 3, life: 12 }); this.star(C.x, C.y, '#fff8e0', 16); this.shake = Math.max(this.shake, 6); yield* wait(8); } }
     return yield* _dm.call(this, e, s, t, P); };
   const _u = Battle.prototype.update; Battle.prototype.update = function (...a) { const r = _u.apply(this, a); if (HD15.on && AF22.live && this.t % 18 === 0 && this.foes) for (const v of this.foes()) if (v.qi22 && !v.gone && v.hp > 0) { const C = this.center(v); HD15.flash(this, C, AF22.P(), 16, { dur: 14 }); HD15.ring(this, C, AF22.P(), 14, 3, { w: 1.2, dur: 12 }); } return r; }; }
@@ -10177,7 +10180,7 @@ AF22.qiN = {};
   const _sg = segSwing; segSwing = function* (b, s, C, i, kind) { if (!(HD15.on && AF22.live && kind === '拳套')) return yield* _sg(b, s, C, i, kind); b.hd15cast = 1; yield* b.lunge(s, 6, 2); Sound.sfx('fsSwing');
     AF22.fist(b, C, 0.8, { off: [-6, 6, 0][i % 3] }); yield* wait(3); yield* wait(4); }; }
 HD15.use(HD15.on);
-const ST23 = { live: typeof fxtest13 === 'function' && fxtest13() };
+const ST23 = { live: true };   // v12.104 正式版也開
 HD15.P.arcane = { core: '#ffffff', mid: '#a88cff', glow: '#5a4cff', edge: '#1a0e5a', keep: 1 };
 ST23.P = () => HD15.P.arcane;
 ST23.on = () => ST23.live && DG17.kind() === '法杖';
@@ -10257,7 +10260,7 @@ if (ST23.live) { const kd = TREE_KINDS11.indexOf('法杖'), wrap = F => function
   const _sg = segSwing; segSwing = function* (b, s, C, i, kind) { if (!(HD15.on && ST23.live && kind === '法杖')) return yield* _sg(b, s, C, i, kind); b.hd15cast = 1; const A = ST23.tip(b);
     Sound.sfx('stBolt'); ST23.bolt(b, { x: A.x + [-6, 6, 0][i % 3], y: A.y }, C, { w: 7, dur: 8 }); yield* wait(8); ST23.pop(b, C, 0.7); yield* wait(5); }; }
 HD15.use(HD15.on);
-const SH24 = { live: typeof fxtest13 === 'function' && fxtest13() };
+const SH24 = { live: true };   // v12.104 正式版也開
 HD15.P.holy = { core: '#ffffff', mid: '#fff0b0', glow: '#ffc240', edge: '#6a4a10', keep: 1 };
 HD15.P.silver = { core: '#ffffff', mid: '#dbe6f4', glow: '#7f9cc8', edge: '#26324a', keep: 1 };
 SH24.K = () => DG17.kind();
@@ -10355,7 +10358,7 @@ if (SH24.live) { const kd = TREE_KINDS11.indexOf('雙盾'), wrap = F => function
     yield* this.lunge(u, 10, 3); yield* SH24.bash(this, T, 0.9); yield* wait(8); };
   const _sg = segSwing; segSwing = function* (b, s, C, i, kind) { if (!(HD15.on && SH24.live && SH24.isK(kind))) return yield* _sg(b, s, C, i, kind); b.hd15cast = 1; yield* b.lunge(s, 6, 2); yield* SH24.bash(b, C, 0.8, { ox: [-6, 6, 0][i % 3] }); yield* wait(4); }; }
 HD15.use(HD15.on);
-const GD25 = { live: typeof fxtest13 === 'function' && fxtest13() };
+const GD25 = { live: true };   // v12.104 正式版也開
 HD15.P.guard = { core: '#ffffff', mid: '#cfe6ff', glow: '#6aa8ff', edge: '#1a3060', keep: 1 };
 GD25.foesC = b => { const L = DG17.foes(b); if (!L.length) return null; const C = L.map(v => b.center(v)); return { x: C.reduce((a, c) => a + c.x, 0) / C.length, y: C.reduce((a, c) => a + c.y, 0) / C.length }; };
 GD25.front = b => { const H = DS16.hands(b).Hc, F = GD25.foesC(b), d = F ? Math.atan2(F.y - H.y, F.x - H.x) : -Math.PI / 2; return { x: H.x + Math.cos(d) * 14, y: H.y - 12 + Math.sin(d) * 6, d }; };
@@ -10367,7 +10370,7 @@ GD25.guard = function* (b) { const P = HD15.P.guard, H = DS16.hands(b), C = GD25
     if (GD25.live && HD15.on && t && t.hero && t.st && t.st.guard && s && !s.hero && P && P.kind !== 'dot' && (P.amount || 0) > 0) { const Pl = HD15.P.guard, C = GD25.front(this);
       SH24.plate(this, C, Pl, { s: 1.4, dur: 18, hold: 0.5 }); SP20.hex(this, C, 26, Pl, { hold: 6, fl: 1, fade: 1 }); HD15.sparks(this, C, 10, HD15.P.white, { spd: 3, life: 16, g: 0.1 }); Sound.sfx('shGuard'); }
     return yield* _dm.call(this, e, s, t, P); }; }
-const HDW = { live: typeof fxtest13 === 'function' && fxtest13(), sk: null };
+const HDW = { live: true, sk: null };   // v12.104 正式版也開（佔位、武器聲音）
 HDW.ST = { 劍: { m: 'dash', gap: 56 }, 雙劍: { m: 'dash', gap: 56 }, 短刀: { m: 'blink', gap: 50 }, 雙刀: { m: 'blink', gap: 50 }, 長槍: { m: 'step', d: 28 },
   斧: { m: 'leap', gap: 58 }, 拳套: { m: 'dash', gap: 48 }, 法杖: { m: 'stay' }, 雙盾: { m: 'push', d: 36 }, 單手盾: { m: 'push', d: 36 } };
 HDW.MAX = 84;

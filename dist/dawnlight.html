@@ -7934,7 +7934,7 @@ class TitleScene {
     x.drawImage(this.logo, Math.round(W / 2 - this.logo.width / 2), 6 + bob);
     Font.drawC(x, '～異世界冒險RPG～', W / 2, 52 + bob, '#ffe0a0', '#3a1428');
     if (this.stage === 'press' && Math.floor(this.t / 30) % 2 === 0) Font.drawC(x, '按 A 鍵開始', W / 2, 232, '#ffffff', '#1a1024');
-    Font.drawR(x, 'v12.103', W - 3, H - 13, '#b890b0', null);
+    Font.drawR(x, 'v12.104', W - 3, H - 13, '#b890b0', null);
   }
 }
 class IntroScene {
@@ -27734,7 +27734,7 @@ SP20.P = () => HD15.P.lance;
 SP20.DIRT = ['#d8c8a8', '#a08868', '#5a4a38'];
 SP20.hand = b => DS16.hands(b).R;
 SP20.dir = (A, T) => { const an = Math.atan2(T.y - A.y, T.x - A.x); return { an, ux: Math.cos(an), uy: Math.sin(an) }; };
-SP20.live = typeof fxtest13 === 'function' && fxtest13();
+SP20.live = true;   // v12.104 玩家：「都放入正式版」
 SP20.origin = (b, T, L, off = 0) => { const H = SP20.hand(b), d = SP20.dir(H, T), D = Math.min(L, Math.hypot(T.x - H.x, T.y - H.y)); return { x: T.x - d.ux * D - d.uy * off, y: T.y - d.uy * D + d.ux * off }; };
 SP20.on = () => SP20.live && DG17.kind() === '長槍';
 SP20.lance = (b, T, o = {}) => { const A = o.from || SP20.origin(b, T, o.reach || 64, o.off || 0), P = o.pal || SP20.P(), w = o.w || 7, dl = o.delay || 0, ext = o.ext ?? 30, dur = o.dur || 18;
@@ -27879,7 +27879,7 @@ if (SP20.live) { const kd = TREE_KINDS11.indexOf('長槍'), wrap = F => function
     Sound.sfx('blade'); const d = SP20.lance(this, T, { w: 8, ext: 32, dur: 16, wind: 3 }); yield* wait(3); HD15.stop(this, 3); SP20.hit(this, T, d, 1.1); SP20.through(this, T, d, 36); this.shake = Math.max(this.shake || 0, 5);
     yield* wait(6); this.ctrRet12 = { v, x: o.x, y: o.y, x0: 0, y0: 0, at: this.t + CTR12.HOLD, dur: CTR12.RET }; }; }
 HD15.use(HD15.on);
-const AX21 = { live: typeof fxtest13 === 'function' && fxtest13() };
+const AX21 = { live: true };   // v12.104 正式版也開（玩家：「都放入正式版」）
 HD15.P.lava = { core: '#fff2c8', mid: '#ff7a1e', glow: '#ff3a08', edge: '#4a1002', keep: 1 };
 HD15.P.shield = { core: '#ffffff', mid: '#bfe4ff', glow: '#5aa8ff', edge: '#1a3a6a', keep: 1 };
 AX21.P = () => HD15.P.lava;
@@ -27987,7 +27987,7 @@ if (AX21.live) { const kd = TREE_KINDS11.indexOf('斧'), wrap = F => function* (
   const _sg = segSwing; segSwing = function* (b, s, C, i, kind) { if (!(HD15.on && AX21.live && kind === '斧')) return yield* _sg(b, s, C, i, kind); b.hd15cast = 1; yield* b.lunge(s, 8, 3); Sound.sfx('axSwing');
     AX21.cleave(b, C, ['v', 'dl', 'dr'][i % 3], { r: 38, th: 11, dur: 16 }); yield* wait(4); AX21.impact(b, C, 0.7); b.shake = Math.max(b.shake || 0, 3); yield* wait(5); }; }
 HD15.use(HD15.on);
-const AF22 = { live: typeof fxtest13 === 'function' && fxtest13() };
+const AF22 = { live: true };   // v12.104 正式版也開
 HD15.P.ki = { core: '#fffbe8', mid: '#ffd040', glow: '#ff9a10', edge: '#5a3000', keep: 1 };
 AF22.P = () => HD15.P.ki;
 AF22.on = () => AF22.live && DG17.kind() === '拳套';
@@ -28094,7 +28094,7 @@ AF22.qiN = {};
   const _sg = segSwing; segSwing = function* (b, s, C, i, kind) { if (!(HD15.on && AF22.live && kind === '拳套')) return yield* _sg(b, s, C, i, kind); b.hd15cast = 1; yield* b.lunge(s, 6, 2); Sound.sfx('fsSwing');
     AF22.fist(b, C, 0.8, { off: [-6, 6, 0][i % 3] }); yield* wait(3); yield* wait(4); }; }
 HD15.use(HD15.on);
-const ST23 = { live: typeof fxtest13 === 'function' && fxtest13() };
+const ST23 = { live: true };   // v12.104 正式版也開
 HD15.P.arcane = { core: '#ffffff', mid: '#a88cff', glow: '#5a4cff', edge: '#1a0e5a', keep: 1 };
 ST23.P = () => HD15.P.arcane;
 ST23.on = () => ST23.live && DG17.kind() === '法杖';
@@ -28174,7 +28174,7 @@ if (ST23.live) { const kd = TREE_KINDS11.indexOf('法杖'), wrap = F => function
   const _sg = segSwing; segSwing = function* (b, s, C, i, kind) { if (!(HD15.on && ST23.live && kind === '法杖')) return yield* _sg(b, s, C, i, kind); b.hd15cast = 1; const A = ST23.tip(b);
     Sound.sfx('stBolt'); ST23.bolt(b, { x: A.x + [-6, 6, 0][i % 3], y: A.y }, C, { w: 7, dur: 8 }); yield* wait(8); ST23.pop(b, C, 0.7); yield* wait(5); }; }
 HD15.use(HD15.on);
-const SH24 = { live: typeof fxtest13 === 'function' && fxtest13() };
+const SH24 = { live: true };   // v12.104 正式版也開
 HD15.P.holy = { core: '#ffffff', mid: '#fff0b0', glow: '#ffc240', edge: '#6a4a10', keep: 1 };
 HD15.P.silver = { core: '#ffffff', mid: '#dbe6f4', glow: '#7f9cc8', edge: '#26324a', keep: 1 };
 SH24.K = () => DG17.kind();
@@ -28272,7 +28272,7 @@ if (SH24.live) { const kd = TREE_KINDS11.indexOf('雙盾'), wrap = F => function
     yield* this.lunge(u, 10, 3); yield* SH24.bash(this, T, 0.9); yield* wait(8); };
   const _sg = segSwing; segSwing = function* (b, s, C, i, kind) { if (!(HD15.on && SH24.live && SH24.isK(kind))) return yield* _sg(b, s, C, i, kind); b.hd15cast = 1; yield* b.lunge(s, 6, 2); yield* SH24.bash(b, C, 0.8, { ox: [-6, 6, 0][i % 3] }); yield* wait(4); }; }
 HD15.use(HD15.on);
-const GD25 = { live: typeof fxtest13 === 'function' && fxtest13() };
+const GD25 = { live: true };   // v12.104 正式版也開
 HD15.P.guard = { core: '#ffffff', mid: '#cfe6ff', glow: '#6aa8ff', edge: '#1a3060', keep: 1 };
 GD25.foesC = b => { const L = DG17.foes(b); if (!L.length) return null; const C = L.map(v => b.center(v)); return { x: C.reduce((a, c) => a + c.x, 0) / C.length, y: C.reduce((a, c) => a + c.y, 0) / C.length }; };
 GD25.front = b => { const H = DS16.hands(b).Hc, F = GD25.foesC(b), d = F ? Math.atan2(F.y - H.y, F.x - H.x) : -Math.PI / 2; return { x: H.x + Math.cos(d) * 14, y: H.y - 12 + Math.sin(d) * 6, d }; };
@@ -28284,7 +28284,7 @@ GD25.guard = function* (b) { const P = HD15.P.guard, H = DS16.hands(b), C = GD25
     if (GD25.live && HD15.on && t && t.hero && t.st && t.st.guard && s && !s.hero && P && P.kind !== 'dot' && (P.amount || 0) > 0) { const Pl = HD15.P.guard, C = GD25.front(this);
       SH24.plate(this, C, Pl, { s: 1.4, dur: 18, hold: 0.5 }); SP20.hex(this, C, 26, Pl, { hold: 6, fl: 1, fade: 1 }); HD15.sparks(this, C, 10, HD15.P.white, { spd: 3, life: 16, g: 0.1 }); Sound.sfx('shGuard'); }
     return yield* _dm.call(this, e, s, t, P); }; }
-const HDW = { live: typeof fxtest13 === 'function' && fxtest13(), sk: null };
+const HDW = { live: true, sk: null };   // v12.104 正式版也開（佔位、武器聲音）
 HDW.ST = { 劍: { m: 'dash', gap: 56 }, 雙劍: { m: 'dash', gap: 56 }, 短刀: { m: 'blink', gap: 50 }, 雙刀: { m: 'blink', gap: 50 }, 長槍: { m: 'step', d: 28 },
   斧: { m: 'leap', gap: 58 }, 拳套: { m: 'dash', gap: 48 }, 法杖: { m: 'stay' }, 雙盾: { m: 'push', d: 36 }, 單手盾: { m: 'push', d: 36 } };
 HDW.MAX = 84;

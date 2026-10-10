@@ -4,7 +4,7 @@
    壓扁的衝擊環、金屬火花（金色、有重力）、盾面一亮；守的招是盾面、六角護壁一層層張開。不是刀光。
    聲音：揮盾「呼」、撞到金屬的「鏘咚」、舉盾一聲短短的金屬響（shSwing、shHit、shGuard…）。
    先只在特效測試版（SH24.live）；玩家看過說好才放進正式版。 */
-const SH24 = { live: typeof fxtest13 === 'function' && fxtest13() };
+const SH24 = { live: true };   // v12.104 正式版也開
 HD15.P.holy = { core: '#ffffff', mid: '#fff0b0', glow: '#ffc240', edge: '#6a4a10', keep: 1 };
 HD15.P.silver = { core: '#ffffff', mid: '#dbe6f4', glow: '#7f9cc8', edge: '#26324a', keep: 1 };
 SH24.K = () => DG17.kind();

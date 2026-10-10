@@ -1237,7 +1237,7 @@ class TitleScene {
     x.drawImage(this.logo, Math.round(W / 2 - this.logo.width / 2), 6 + bob);
     Font.drawC(x, '～異世界冒險RPG～', W / 2, 52 + bob, '#ffe0a0', '#3a1428');
     if (this.stage === 'press' && Math.floor(this.t / 30) % 2 === 0) Font.drawC(x, '按 A 鍵開始', W / 2, 232, '#ffffff', '#1a1024');
-    Font.drawR(x, 'v12.103', W - 3, H - 13, '#b890b0', null);
+    Font.drawR(x, 'v12.104', W - 3, H - 13, '#b890b0', null);
   }
 }
 class IntroScene {
@@ -11208,3 +11208,10 @@ defPut('mechanics', 'b12_shadowGeneral', { make: u => ({ triggers: [
   { on: EVT.ACTION_END, phase: 'POST', cond: { ownerHpBelow: 0.5, ownerAlive: 1, dataNot: ['sg50', 1] }, prio: 5, effects: [{ type: 'set_data', onUnit: 1, key: 'sg50', value: 1 }, { type: 'set_data', onUnit: 1, key: 'double12', value: 2 }, { type: 'message', target: 'self', text: '影將莫爾德的劍上纏繞著黑影……（接下來會連續蓄力兩次！）' }] },
   { on: EVT.ACTION_END, phase: 'POST', cond: { ownerHpBelow: 0.25, ownerAlive: 1, dataNot: ['sg25', 1] }, prio: 5, effects: [{ type: 'set_data', onUnit: 1, key: 'sg25', value: 1 }, { type: 'message', target: 'self', text: '影將莫爾德燃起了黑色的火焰！（每 3 次行動就會放出一次蝕日之劍）' }] },
   { on: EVT.DAMAGE, phase: 'POST', role: 'tgt', reaction: 1, cond: { stance12: 1, srcSide: 'enemy', cat: '物', hasPower: 1, ownerAlive: 1 }, limit: { perAction: 1 }, effects: [{ type: 'counter', skill: 'counter_strike', why: 'stance12', mul: 0.9 }] }] }) });
+B12_SCRIPT.shadowGeneral = function (core, u) { const d = u.data;
+  if ((d.double12 || 0) > 0) { d.double12--; return b12Charge(core, u, 'm_eclipseBlade'); }
+  if (d.sg25) { d.n25 = (d.n25 || 0) + 1; if (d.n25 % 3 === 0) return b12Charge(core, u, 'm_eclipseBlade'); }
+  else if (core.round - (d.lastCharge ?? -9) >= 4 && core.rng.chance(0.4)) return b12Charge(core, u, 'm_eclipseBlade');
+  return b12Pick(core, u, ['m_shadowSlash', 'm_darkPulse', 'm_shadowSlash']); };
+const evoSkill12 = o => o && (DEF.skills['o_' + o.k] ? 'o_' + o.k : DEF.skills[o.k] ? o.k : null);
+evoAt = (o, s = orbStage(o)) => { const id = evoSkill12(o); return id ? BB.learnN(id) + (s >= 1 ? 30 : 6) : ORB_EVO[s]; };

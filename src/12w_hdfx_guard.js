@@ -4,7 +4,7 @@
      主角腳下一圈淡藍的波紋 → 身前浮出一面淡藍白的光盾（亮光掃過盾面）→ 一層六角護壁張開、原地淡掉，一聲短短的金屬響。
    防禦中被打到時，身前的光盾再亮一下、六角一閃、火花往外迸（傷害減半的那一下）。
    先只在特效測試版（GD25.live）；玩家看過說好才放進正式版。 */
-const GD25 = { live: typeof fxtest13 === 'function' && fxtest13() };
+const GD25 = { live: true };   // v12.104 正式版也開
 HD15.P.guard = { core: '#ffffff', mid: '#cfe6ff', glow: '#6aa8ff', edge: '#1a3060', keep: 1 };
 GD25.foesC = b => { const L = DG17.foes(b); if (!L.length) return null; const C = L.map(v => b.center(v)); return { x: C.reduce((a, c) => a + c.x, 0) / C.length, y: C.reduce((a, c) => a + c.y, 0) / C.length }; };
 GD25.front = b => { const H = DS16.hands(b).Hc, F = GD25.foesC(b), d = F ? Math.atan2(F.y - H.y, F.x - H.x) : -Math.PI / 2; return { x: H.x + Math.cos(d) * 14, y: H.y - 12 + Math.sin(d) * 6, d }; };

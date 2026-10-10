@@ -7,7 +7,7 @@
    站上去以後，招裡的「往前撲」改成從站的位置再往前撲一下；主角的中心、手、腳下（HDW_FOOT）都跟著移過去，光效從新位置發出。
    聲音：主角出招時，照武器把 揮動／打中 的聲音換掉（02_audio.js 的 spThrust、axHit、fsHit、stHit、shHit…）；劍維持刀的聲音。
    先只在特效測試版（HDW.live）；玩家看過說好才放進正式版。 */
-const HDW = { live: typeof fxtest13 === 'function' && fxtest13(), sk: null };
+const HDW = { live: true, sk: null };   // v12.104 正式版也開（佔位、武器聲音）
 // gap＝站好以後主角中心離對手中心還有多遠（主角是背影，太近會整個蓋住對手）
 HDW.ST = { 劍: { m: 'dash', gap: 56 }, 雙劍: { m: 'dash', gap: 56 }, 短刀: { m: 'blink', gap: 50 }, 雙刀: { m: 'blink', gap: 50 }, 長槍: { m: 'step', d: 28 },
   斧: { m: 'leap', gap: 58 }, 拳套: { m: 'dash', gap: 48 }, 法杖: { m: 'stay' }, 雙盾: { m: 'push', d: 36 }, 單手盾: { m: 'push', d: 36 } };

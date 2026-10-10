@@ -4,7 +4,7 @@
    踢是又快又短的金色弧（借斧的 AX21.cleave，揮得更快、更細）；連打一拳接一拳越來越快，最後一拳最重。
    沖天拳把對手整個打上半空、再掉下來（對手的位置真的往上移）。聲音：短的「咻」＋紮實的「啪碰」（fsSwing、fsHit…）。
    先只在特效測試版（AF22.live）；玩家看過說好才放進正式版。 */
-const AF22 = { live: typeof fxtest13 === 'function' && fxtest13() };
+const AF22 = { live: true };   // v12.104 正式版也開
 HD15.P.ki = { core: '#fffbe8', mid: '#ffd040', glow: '#ff9a10', edge: '#5a3000', keep: 1 };
 AF22.P = () => HD15.P.ki;
 AF22.on = () => AF22.live && DG17.kind() === '拳套';

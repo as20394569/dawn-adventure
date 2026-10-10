@@ -5,7 +5,7 @@
    砍下去一定有停格和震動、地面裂開發出熔岩的光、碎石往上噴、火星（有重力，會掉下來）。不冒煙（之前黑煙被說像黑球）。
    聲音：揮動「呼——」又低又重、打中「轟咔」（02_audio.js 的 axSwing、axHit…）。蓄力的招（崩城擊、天崩地裂）蓄力那一回合把斧頭舉高、熔岩的光往斧頭聚。
    先只在特效測試版（AX21.live）；玩家看過說好才放進正式版。 */
-const AX21 = { live: typeof fxtest13 === 'function' && fxtest13() };
+const AX21 = { live: true };   // v12.104 正式版也開（玩家：「都放入正式版」）
 HD15.P.lava = { core: '#fff2c8', mid: '#ff7a1e', glow: '#ff3a08', edge: '#4a1002', keep: 1 };
 HD15.P.shield = { core: '#ffffff', mid: '#bfe4ff', glow: '#5aa8ff', edge: '#1a3a6a', keep: 1 };
 AX21.P = () => HD15.P.lava;

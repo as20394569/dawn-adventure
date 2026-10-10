@@ -4,7 +4,7 @@
    魔力從杖尖飛出去（光彈、光束、魔力槍），打中是「嗡——啵」的魔力爆開（環、光芒、魔力光粒），不是刀光也不是火花。
    聲音：施法的一串晶瑩音、光彈的「咻嗚」、魔力爆開（stCast、stBolt、stHit…）。
    先只在特效測試版（ST23.live）；玩家看過說好才放進正式版。 */
-const ST23 = { live: typeof fxtest13 === 'function' && fxtest13() };
+const ST23 = { live: true };   // v12.104 正式版也開
 HD15.P.arcane = { core: '#ffffff', mid: '#a88cff', glow: '#5a4cff', edge: '#1a0e5a', keep: 1 };
 ST23.P = () => HD15.P.arcane;
 ST23.on = () => ST23.live && DG17.kind() === '法杖';
