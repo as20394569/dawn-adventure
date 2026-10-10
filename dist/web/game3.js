@@ -1,66 +1,3 @@
-{ const _d = Font.draw, _w = Font.width;
-  const small = (str, size) => !Font.bz && typeof size === 'number' && size < FONT_MIN12 && str !== '' && str != null; // v12.87: not in a battle (Font.bz, 12l) — there the sizes are 7・9・14, drawn at their real size
-  const squeeze = (ctx, str, x0, y, col, sh, size) => { const a = _w(str, size), b = _w(str, FONT_MIN12);
-    if (!(b > a) || !(a > 0)) return _d(ctx, str, x0, y, col, sh, FONT_MIN12);
-    ctx.save(); ctx.translate(x0, 0); ctx.scale(a / b, 1); _d(ctx, str, 0, y, col, sh, FONT_MIN12); ctx.restore(); return x0 + a; };
-  Font.draw = (ctx, str, x, y, col, sh, size) => small(str, size) ? squeeze(ctx, String(str), x, y, col, sh, size) : _d(ctx, str, x, y, col, sh, size);
-  Font.drawR = (ctx, str, xr, y, col, sh, size) => Font.draw(ctx, str, xr - _w(String(str), size), y, col, sh, size);
-  Font.drawC = (ctx, str, xc, y, col, sh, size) => Font.draw(ctx, str, xc - _w(String(str), size) / 2, y, col, sh, size); }
-const ROAM12 = { DEN: 1.5, MIN: 3, MAX: 18, R: 3, SEE: 3, CALM: 30 };
-const roamOn12 = d => !!(d && d.encounters && d.encounters.length && (d.roam12 || (!d.encAll && d.rows && d.rows.some(r => r.includes('#')))));
-const ROAM_IMG12 = {};
-function roamImg12(sp) {
-  if (ROAM_IMG12[sp]) return ROAM_IMG12[sp];
-  let c = null;
-  if (typeof chibiBase === 'function' && chibiBase(sp)) { const im = chibiImage(sp), M = BATTLE_PXC_META[chibiBase(sp)];
-    if (im && im.ok !== false && (im.complete !== false) && M) { const w = Math.ceil(M.w / 2), h = Math.ceil(M.h / 2); c = mkCanvas(w, h); const x = c.getContext('2d'); x.imageSmoothingEnabled = false;
-      x.drawImage(im, M.frames.idle[0] * M.w, 0, M.w, M.h, 0, 0, w, h); } }
-  if (!c && ART[sp]) return monsterMini(sp, 24);
-  if (!c) return null;
-  return ROAM_IMG12[sp] = { c, flip: flipCanvas(c), big: 1 };
-}
-const roamWalk12 = ch => ch === '#' || ch === ',' || ch === '.' || ch === 'f' || ch === 'y' || ch === ':' || ch === 's';
-Overworld.prototype.roamFree12 = function (x, y, e) {
-  const m = this.map; if (x < 1 || y < 1 || x >= m.w - 1 || y >= m.h - 1) return false;
-  if (!roamWalk12(this.tileAt(x, y)) || this.solidAt(x, y) || this.entityAt(x, y, e) || m.doors[x + ',' + y]) return false;
-  if ((m.d.triggers || []).some(t => t.x === x && t.y === y)) return false;
-  if (m.d.exit && m.d.exit.x === x && m.d.exit.y === y) return false; return true;
-};
-Overworld.prototype.roamSpawn12 = function () {
-  const d = this.map.d, st = this.st, out = [], p = this.p, wx = typeof wxNow === 'function' ? wxNow(st) : null;
-  let grass = []; d.rows.forEach((r, y) => [...r].forEach((c, x) => { if (c === '#') grass.push([x, y]); }));
-  if (!grass.length) { d.rows.forEach((r, y) => [...r].forEach((c, x) => { if (c === 's') grass.push([x, y]); })); grass = grass.filter(() => chance(0.5)); } // caves: the floor
-  const zone12 = (x, y) => d.encounters.find(e => y >= e.y0 && y <= e.y1 && (e.x0 === undefined || (x >= e.x0 && x <= e.x1)));
-  const rate = d.encounters.reduce((a, e) => a + e.rate, 0) / d.encounters.length;
-  const n = Math.max(ROAM12.MIN, Math.min(ROAM12.MAX, Math.round(grass.length * rate / ROAM12.DEN * (d.roamMul12 || 1))));
-  const pool = grass.filter(([x, y]) => zone12(x, y) && Math.abs(x - p.x) + Math.abs(y - p.y) > 5);
-  for (let i = 0; i < n && pool.length; i++) {
-    const k = rnd(0, pool.length - 1), [x, y] = pool.splice(k, 1)[0]; if (!this.roamFree12(x, y)) { i--; continue; }
-    const enc = zone12(x, y), row = rollEnc(enc); let sp = row[0], lv = rnd(row[1], row[2]), rare = 0, pack = 0, wxm = 0;
-    if (d.rare && chance(0.03)) { sp = d.rare[0]; lv = rnd(d.rare[1], d.rare[2]); rare = 1; }
-    else if (wx && typeof WX_MON !== 'undefined' && WX_MON[wx] && chance(0.25)) { sp = WX_MON[wx][0]; wxm = 1; }
-    else if (st.lv >= 8 && chance(0.12)) pack = rnd(2, 3);
-    const img = roamImg12(sp); if (!img) { i--; continue; }
-    const e = new Entity({ roam: 1, sp, lv, enc, rare, pack, wxm, x, y, dir: pick(['down', 'left', 'right', 'up']), img, aggro: !rare && chance(0.5) && lv >= (st.lv || 1) - 2 });
-    e.home = [x, y, e.dir]; e.timer = rnd(20, 120); out.push(e); }
-  return out;
-};
-{ const _ld = Overworld.prototype.load; Overworld.prototype.load = function (id, x, y, dir, silent) {
-    _ld.call(this, id, x, y, dir, silent);
-    if (!roamOn12(this.map.d)) { this.roam12 = null; return; }
-    if (!this.roam12 || this.roam12.map !== id) this.roam12 = { map: id, list: this.roamSpawn12() };
-    for (const e of this.roam12.list) if (!this.elites.includes(e)) { if (e.x === this.p.x && e.y === this.p.y) continue; e.moving = false; e.px = e.x * 16; e.py = e.y * 16; this.elites.push(e); }
-  };
-}
-Overworld.prototype.roamDrop12 = function (e) { this.elites = this.elites.filter(q => q !== e); if (this.roam12) this.roam12.list = this.roam12.list.filter(q => q !== e); };
-{ const _os = Overworld.prototype.onStep; Overworld.prototype.onStep = function () {
-    const on = roamOn12(this.map.d), was = Game.noEnc; if (on) Game.noEnc = true;
-    try { _os.call(this); } finally { if (on) Game.noEnc = was; }
-    if (!on || this.script || this.p.moving) return; this.roamTouch12();
-  };
-}
-Overworld.prototype.roamTouch12 = function () { // a chasing monster next to you attacks
-  const p = this.p; for (const e of this.elites) if (e.roam && e.chase && !e.moving && Math.abs(e.x - p.x) + Math.abs(e.y - p.y) === 1) { this.run(this.roamFight12(e, true)); return true; } return false; };
 { const _tm = Overworld.prototype.tryMove; Overworld.prototype.tryMove = function (d, run) {
     const [dx, dy] = DIRS[d], e = this.elites.find(q => q.roam && q.x === this.p.x + dx && q.y === this.p.y + dy);
     if (e && !this.script) { this.p.dir = d; this.st.dir = d; this.run(this.roamFight12(e)); return; }
@@ -3969,7 +3906,7 @@ function* treeScreen11(start) { const st = Game.st, kinds = () => TREE_KINDS11.f
     screenBG(x); headerBar(x, TREE11[kind].common ? kind + '樹（共通）' : kind + '樹' + (curKinds11(st).includes(kind) ? '（使用中）' : '')); Font.drawR(x, '剩 ' + trLeft11(st) + ' 點　←→', W - 6, 3, trLeft11(st) ? UIC.warm : UIC.muted, UIC.textSh, 9);
     drawWin(x, 4, 22, 168, VIS * 14 + 8, 'menu');
     R.slice(top, top + VIS).forEach((N, k) => { const Y = 26 + k * 14, lv = N.t === 'reset' ? 0 : trLv11(N.key, st), s = N.t === 'reset' ? { ok: true } : nodeState11(kind, N, st); if (top + k === i) selBar(x, 6, Y - 1, 164, 13);
-      const tag = N.t === 'sk' ? (N.pos[0] === '4' ? '絕技' : N.pos[0] === '5' ? '奧義' : N.pos[0] + '段' + '①②③'['abc'.indexOf(N.pos[1])]) : N.t === 'sp' ? '特技' : N.t === 'reset' ? '' : N.t === 'cp' ? N.tier + '段' : '被動';
+      const tag = N.t === 'sk' ? (N.pos[0] === '4' ? '絕技' : N.pos[0] === '5' ? '奧義' : N.pos[0] + '段' + '①②③④'['abcd'.indexOf(N.pos[1])]) : N.t === 'sp' ? '特技' : N.t === 'reset' ? '' : N.t === 'cp' ? N.tier + '段' : '被動';
       Font.draw(x, tag, 10, Y, UIC.muted, UIC.textSh, 8); const col = N.t === 'reset' ? UIC.warm : lv ? (N.t === 'sp' && tr11(st).eq[kind] === N.j ? '#ffd860' : '#c8f0ff') : s.ok ? UIC.text : UIC.dis;
       Font.draw(x, N.n, 40, Y - 1, col, UIC.textSh, 10); if (N.t !== 'reset') Font.drawR(x, lv ? 'Lv' + lv + (N.max > 1 ? '/' + N.max : '') : s.ok ? '可學' : (s.why || '').replace(/^要先把.*/, '前置').replace(/^要先完成.*/, '未解鎖').slice(0, 8), 166, Y, lv ? UIC.accent : UIC.muted, UIC.textSh, 8);
       if (typeof touchRegion === 'function') touchRegion(6, Y - 1, 164, 13, () => { if (sel === top + k) tapKey('a'); else { sel = top + k; Sound.sfx('cursor'); } }); });
@@ -5080,7 +5017,7 @@ function* treeScreen11Tabs(start) { const st = Game.st, kinds = () => { const K 
     drawWin(x, 4, LY, 168, VIS * 14 + 8, 'menu');
     if (dualTip) { drawDualTip12(x, LY, VIS * 14 + 8, LY + VIS * 14 + 12); return; }
     R.slice(top, top + VIS).forEach((N, k) => { const Y = LY + 4 + k * 14, lv = N.t === 'reset' ? 0 : trLv11(N.key, st), s = N.t === 'reset' ? { ok: true } : nodeState11(kind, N, st); if (top + k === i && !onTabs) selBar(x, 6, Y - 1, 164, 13);
-      const tag = N.t === 'sk' ? (N.pos[0] === '4' ? '絕技' : N.pos[0] === '5' ? '奧義' : N.pos[0] + '段' + '①②③'['abc'.indexOf(N.pos[1])]) : N.t === 'sp' ? '特技' : N.t === 'reset' ? '' : N.t === 'cp' ? N.tier + '段' : '被動';
+      const tag = N.t === 'sk' ? (N.pos[0] === '4' ? '絕技' : N.pos[0] === '5' ? '奧義' : N.pos[0] + '段' + '①②③④'['abcd'.indexOf(N.pos[1])]) : N.t === 'sp' ? '特技' : N.t === 'reset' ? '' : N.t === 'cp' ? N.tier + '段' : '被動';
       Font.draw(x, tag, 10, Y, UIC.muted, UIC.textSh, 8); const col = N.t === 'reset' ? UIC.warm : lv ? (N.t === 'sp' && tr11(st).eq[kind] === N.j ? '#ffd860' : '#c8f0ff') : s.ok ? UIC.text : UIC.dis;
       Font.draw(x, N.n, 40, Y - 1, col, UIC.textSh, 10); if (N.t !== 'reset') Font.drawR(x, lv ? 'Lv' + lv + (N.max > 1 ? '/' + N.max : '') : s.ok ? '可學' : (s.why || '').replace(/^要先把.*/, '前置').replace(/^要先完成.*/, '未解鎖').slice(0, 8), 166, Y, lv ? UIC.accent : UIC.muted, UIC.textSh, 8);
       if (typeof touchRegion === 'function') touchRegion(6, Y - 1, 164, 13, () => { if (onTabs) { onTabs = false; selBy[kind] = top + k; Sound.sfx('cursor'); return; } if (selOf(kind) === top + k) tapKey('a'); else { selBy[kind] = top + k; Sound.sfx('cursor'); } }); });
@@ -10431,6 +10368,7 @@ for (const m of IRO_MAPS15) { const d = MAPS[m]; if (!d || !d.encounters) contin
     return (!cryOwn11()[sp] ? '機率掉「' + cryName11(sp) + '」・' : '') + '虹鱗' + (ak ? '・異色飾品「' + GEAR[ak].n + '」' : ''); }; }
 { const _mp = mapProgress12; mapProgress12 = function (id, st = Game.st) { const r = _mp(id, st), d = MAPS[id] || {}; if (!d.rares15 || !d.rares15.length) return r;
     const n = d.rares15.filter(([k]) => (((st.dex || {})[k] || {}).won || 0) > 0).length; r[1] = r[1].replace(/稀有魔物 [✓—]/, '異色 ' + n + '／' + d.rares15.length); if (!/異色/.test(r[1])) r[1] = (r[1] ? r[1] + '　' : '') + '異色 ' + n + '／' + d.rares15.length; return r; }; }
+{ const _ce = cryEffText11; cryEffText11 = function (e, v) { return _ce(e, e[0] === 'siphon' ? Math.round(v) : v); }; }
 const THAL15 = 'thalassa14', AEG15 = 'tideCaptain15', MORA15 = 'seaWitchQ15';
 const DEEP15 = { // key: [name, bases, look, role, fam, moves, material, dex]
   tideLancer14: ['潮騎兵', ['fishman14', 'lizardman'], [0, 1, 1], 'phys', 'aquatic', ['m_spearRush', 'm_spearThrust', 'm_tidalCrush', 'm_scaleGuard'], 'tideScaleM14', '騎著大海馬的魚人騎士。深潮城的巡邏兵，一看到陌生人就挺著長槍衝過來。'],
@@ -10706,3 +10644,82 @@ defPut('mechanics', 'stanceA15', { make: () => ({ triggers: [stanceTr15('pguard1
 { const _ue = BD.unitForEnemy; BD.unitForEnemy = function (core, sp, lv, kind, side, idx, o = {}) { const s = _ue.call(this, core, sp, lv, kind, side, idx, o);
     if (!s || (kind !== 'elite' && kind !== 'boss') || (lv || 0) < 30) return s; const r = s.stats.def / Math.max(1, s.stats.spd);
     (s.data.mechanics || (s.data.mechanics = [])).push(r >= 1.15 ? 'stanceM15' : r <= 0.87 ? 'stanceP15' : 'stanceA15'); return s; }; }
+const MAG15 = { live: typeof fxtest13 === 'function' && fxtest13() };
+const MAGT15 = '魔法傷害（打對手的魔防），用物攻和魔攻較高的一項計算。';
+const MAG_SK15 = { // kind: [key, name, power, hits, cd, mp, desc]
+  劍: ['sdLight', '光刃', 50, 0, 1, 3, '揮劍放出一道光的劍氣。'],
+  短刀: ['dgShadeNeedle', '影針', 26, 2, 1, 3, '射出兩根暗影之針。'],
+  斧: ['axRune', '符文劈', 55, 0, 1, 3, '斧刃上的符文發光，劈出一道熔岩色的魔力，在對手身上炸開。'],
+  長槍: ['spGleam', '蒼光刺', 50, 0, 1, 3, '槍尖凝出蒼藍的光，一刺射出去。'],
+  拳套: ['fsPalm', '氣掌', 50, 0, 1, 3, '把氣凝在掌心，一掌推出一團氣。'],
+  雙刀: ['ddTwinShade', '雙影刃', 26, 2, 1, 3, '雙手各甩出一道暗影刃，在對手身上交叉。'],
+  雙劍: ['dsCrossLight', '交叉光刃', 26, 2, 1, 3, '兩把劍各放出一道劍氣（一白一黑），在對手身上交叉。'],
+  雙盾: ['shHoly', '聖光盾擊', 50, 0, 1, 3, '在對手頭上召出一面聖光之盾，重重壓下。'],
+  單手盾: ['osLight', '光盾衝', 50, 0, 1, 3, '盾面的光化成一道光盾射出去。'],
+};
+BR.FORMULA.magAtk15 = BR.FORMULA.magAtk15 || (c => { const S = c.src.stats; return Math.max(S.atk, S.spa) / Math.max(1, S.spa); });
+function magicize15(id) { const D = DEF.skills[id]; if (!D) return; delete D.catOf; D.cat = '特'; D.tags = D.tags.map(t => t === 'phys' ? 'magic' : t); if (MOVES[id]) MOVES[id].cat = '特';
+  D.mods.push({ stage: 'skill', who: 'attacker', atkMul: { f: 'magAtk15' }, cond: { srcIsHero: 1 } });
+  const i = D.mods.findIndex(m => m.mul && m.mul.f === 'attrScale'); if (i >= 0) { const m = D.mods[i];
+    D.mods.splice(i, 1, { ...m, cond: { ...m.cond, magHi15: 0 } }, { ...m, mul: { f: 'attrScale', v: ['int', 1] }, cond: { ...m.cond, magHi15: 1 } }); } }
+if (MAG15.live) for (const kind in MAG_SK15) { const T = TREE11[kind]; if (!T) { bvErr('mag15', kind); continue; } const [k, n, pow, hits, cd, mp, d] = MAG_SK15[kind];
+  const row = ['1d', k, n, pow, hits, cd, mp, 0, d + MAGT15, { cls: 'bolt' }], old = T.sk; T.sk = [row];
+  try { sk11Build(kind); } finally { const i = old.reduce((a, s, j) => s[0][0] === '1' ? j : a, -1); T.sk = old.slice(0, i + 1).concat([row], old.slice(i + 1)); }
+  magicize15('t_' + k); }
+const MAGFX15 = {
+  sdLight: { *f(U, T, u) { const P = HD15.P.white, H = DS16.hands(this).R; Sound.sfx('stCast'); HD15.gather(this, H, 12, HD15.P.steel, 26, { span: 10 }); ST23.circle(this, H, 12, HD15.P.steel, { fl: 1, hold: 16, spin: 0.1 }); yield* wait(12);
+      Sound.sfx('blade'); HD15.slash(this, { x: H.x + 10, y: H.y - 14 }, { pal: P, r: 34, th: 9, ang: -0.7, span: 1.4, dur: 14 }); HD15.comet(this, H, T, P, 12, { w: 11 }); HD15.comet(this, H, T, HD15.P.steel, 12, { w: 5, delay: 1 }); yield* wait(12);
+      Sound.sfx('stHit'); HD15.stop(this, 3); HD15.cut(this, T, -0.7, 70, P, { dur: 18, w: 7 }); HD15.flash(this, T, HD15.P.steel, 30); HD15.ring(this, T, P, 4, 26, { w: 2, dur: 14 }); HD15.sparks(this, T, 14, P, { spd: 3.4, life: 18, g: 0.06 }); yield* wait(16); } },
+  dgShadeNeedle: { *f(U, T, u) { const P = HD15.P.shade || HD15.P.arcane, B = HD15.P.black, H = DS16.hands(this).R; Sound.sfx('stCast'); HD15.gather(this, H, 10, P, 22, { span: 8 }); yield* wait(10);
+      for (let i = 0; i < 2; i++) { const o = i ? 7 : -7; Sound.sfx('dgHit'); HD15.comet(this, { x: H.x, y: H.y + o }, { x: T.x + o, y: T.y - o }, P, 9, { w: 7 }); HD15.comet(this, { x: H.x, y: H.y + o }, { x: T.x + o, y: T.y - o }, B, 9, { w: 3, delay: 1 }); yield* wait(9);
+        HD15.flash(this, { x: T.x + o, y: T.y - o }, P, 26, { dur: 12 }); HD15.flare(this, { x: T.x + o, y: T.y - o }, P, 30, { rot: 0.6, dur: 12 }); HD15.sparks(this, { x: T.x + o, y: T.y - o }, 7, P, { spd: 2.6, life: 14 }); yield* wait(4); }
+      yield* wait(10); } },
+  axRune: { *f(U, T, u) { const P = HD15.P.lava, H = DS16.hands(this).R; Sound.sfx('stCast'); ST23.circle(this, H, 13, P, { fl: 1, hold: 18, spin: 0.08 }); HD15.gather(this, H, 12, P, 26, { span: 10 }); yield* wait(12);
+      Sound.sfx('axSwing'); HD15.comet(this, H, T, P, 12, { w: 13 }); yield* wait(10); ST23.circle(this, T, 22, P, { fl: 1, hold: 14, spin: 0.12 }); yield* wait(8);
+      Sound.sfx('axHit'); HD15.stop(this, 4); HD15.flare(this, T, P, 50, { rot: Math.PI / 4, dur: 16 }); HD15.ring(this, T, P, 6, 34, { w: 2.4, dur: 16 }); HD15.spikes(this, T, P, 8, 22, { rot: 0.2 }); HD15.sparks(this, T, 16, P, { spd: 3.8, life: 20, g: 0.1 }); this.shake = Math.max(this.shake || 0, 5); yield* wait(16); } },
+  spGleam: { *f(U, T, u) { const P = HD15.P.lance, H = DS16.hands(this).R, d = SP20.dir(H, T); Sound.sfx('stCast'); ST23.circle(this, H, 12, P, { fl: 1, hold: 16, spin: 0.1 }); HD15.gather(this, H, 10, P, 24, { span: 10 }); yield* wait(12);
+      Sound.sfx('spThrust'); HD15.thrust(this, H, T, P, { w: 10, ext: 26, dur: 18 }); HD15.thrust(this, H, T, HD15.P.white, { w: 3, ext: 22, dur: 16, delay: 1 }); yield* wait(6);
+      Sound.sfx('spHit'); HD15.stop(this, 3); HD15.flash(this, T, P, 30); SP20.through(this, T, d, 30, { w: 5 }); HD15.ring(this, T, P, 4, 26, { w: 2, dur: 14 }); yield* wait(16); } },
+  fsPalm: { *f(U, T, u) { const P = HD15.P.ki, H = DS16.hands(this).R, d = SP20.dir(H, T); Sound.sfx('fsQi'); AF22.palm(this, H, Math.atan2(d.uy, d.ux), { hold: 14 }); HD15.gather(this, H, 12, P, 24, { span: 10 }); yield* wait(12);
+      Sound.sfx('fsSwing'); HD15.comet(this, H, T, P, 12, { w: 15 }); yield* wait(11);
+      Sound.sfx('fsHit'); HD15.stop(this, 3); AF22.orb(this, T, P, 18, 16); AF22.wave(this, T, d, 1); HD15.ring(this, T, P, 6, 30, { w: 2.2, dur: 16 }); HD15.sparks(this, T, 12, P, { spd: 3.2, life: 18 }); yield* wait(16); } },
+  ddTwinShade: { *f(U, T, u) { const P = HD15.P.shade || HD15.P.arcane, B = HD15.P.black, H = DS16.hands(this); Sound.sfx('stCast'); HD15.gather(this, H.R, 8, P, 20, { span: 8 }); HD15.gather(this, H.L, 8, P, 20, { span: 8 }); yield* wait(10);
+      Sound.sfx('dgHit'); HD15.comet(this, H.R, T, P, 11, { w: 6 }); HD15.comet(this, H.L, T, B, 11, { w: 5, delay: 3 }); yield* wait(12);
+      Sound.sfx('dgHitSuper'); HD15.stop(this, 3); HD15.cut(this, T, 0.8, 64, P, { dur: 16, w: 6 }); HD15.cut(this, T, -0.8, 64, P, { dur: 16, w: 6, delay: 2 }); HD15.flash(this, T, P, 24); HD15.sparks(this, T, 12, P, { spd: 3, life: 16 }); yield* wait(16); } },
+  dsCrossLight: { *f(U, T, u) { const W = HD15.P.white, B = HD15.P.black, H = DS16.hands(this); Sound.sfx('stCast'); HD15.gather(this, H.R, 8, W, 20, { span: 8 }); HD15.gather(this, H.L, 8, HD15.P.steel, 20, { span: 8 }); yield* wait(10);
+      Sound.sfx('blade'); HD15.comet(this, H.R, T, W, 11, { w: 8 }); HD15.comet(this, H.L, T, B, 11, { w: 7, delay: 3 }); yield* wait(12);
+      Sound.sfx('stHit'); HD15.stop(this, 3); HD15.cut(this, T, 0.8, 70, W, { dur: 18, w: 7 }); HD15.cut(this, T, -0.8, 70, B, { dur: 18, w: 7, delay: 2 }); HD15.flash(this, T, W, 28); HD15.ring(this, T, W, 4, 24, { w: 2, dur: 14 }); yield* wait(16); } },
+  shHoly: { *f(U, T, u) { const P = HD15.P.holy, H = DS16.hands(this).Hc; Sound.sfx('stCast'); HD15.gather(this, { x: H.x, y: H.y - 12 }, 12, P, 26, { span: 10 }); yield* wait(10);
+      Sound.sfx('shSwing'); SH24.plate(this, { x: T.x, y: T.y - 30 }, P, { s: 1.5, dur: 20, hold: 0.5, shine: 1, from: { x: 0, y: -26 }, mv: 26 }); yield* wait(12);
+      Sound.sfx('shHitSuper'); HD15.stop(this, 4); HD15.flash(this, T, P, 34); HD15.ring(this, T, P, 6, 34, { w: 2.4, dur: 16 }); HD15.spikes(this, T, P, 8, 24, { rot: 0.4 }); HD15.sparks(this, T, 14, P, { spd: 3.4, life: 18 }); this.shake = Math.max(this.shake || 0, 5); yield* wait(16); } },
+  osLight: { *f(U, T, u) { const P = HD15.P.silver, H = DS16.hands(this).Hc, F = { x: H.x + 8, y: H.y - 16 }; Sound.sfx('stCast'); SH24.plate(this, F, P, { s: 1.1, dur: 18, hold: 0.6, shine: 1 }); HD15.gather(this, F, 10, P, 22, { span: 8 }); yield* wait(12);
+      Sound.sfx('shSwing'); HD15.comet(this, F, T, P, 11, { w: 12 }); yield* wait(10); SH24.plate(this, T, P, { s: 1.2, dur: 14, hold: 0.4 });
+      Sound.sfx('shHit'); HD15.stop(this, 3); HD15.flash(this, T, P, 28); HD15.ring(this, T, P, 4, 26, { w: 2, dur: 14 }); HD15.sparks(this, T, 12, HD15.P.white, { spd: 3, life: 16 }); yield* wait(16); } },
+};
+if (MAG15.live) for (const k in MAGFX15) { const id = 't_' + k, D = DEF.skills[id], F = MAGFX15[k]; if (!D) continue; const key = 'hd15_' + k;
+  FX[key] = function* (U, T, u, t) { if (!T) { const L = this.foes ? this.foes().filter(v => !v.gone) : [], g = L.length > 1 ? this.groupOf(L.map(v => v.id)) : L[0]; T = g ? this.center(g) : { x: U.x, y: U.y - 80 }; if (!t) t = g; }
+    if (!u) u = this.H; this.slashOn = 0; this.hd15cast = 1; HD15.forceW = false; yield* F.f.call(this, U, T, u, t); };
+  HD15.old[id] = { fx: D.fx, hitFx: D.hitFx, mv: MOVES[id] ? MOVES[id].fx : null, style: typeof SKILL_STYLE !== 'undefined' ? SKILL_STYLE[id] : null, redo: false }; HD15.ids.push(id);
+  if (HD15.on) { D.fx = key; if (MOVES[id]) MOVES[id].fx = key; if (typeof SKILL_STYLE !== 'undefined') SKILL_STYLE[id] = ['draw', null, 'steel', null]; if (typeof REDO13 !== 'undefined') REDO13.add(id); } }
+const RICH15 = S => !!(S && S.chibi && S.meta && S.meta.frames.idle && S.meta.frames.idle.length >= 4);
+{ const _pr = pxRender; pxRender = function (A, S, T, tint) {
+    if (!RICH15(S)) return _pr(A, S, T, tint);
+    if (!A.pcv || A.pcv.width !== S.cw) { A.pcv = mkCanvas(S.cw, S.ch); A.pcvT = mkCanvas(S.cw, S.ch); }
+    const cv = tint ? A.pcvT : A.pcv, x = cv.getContext('2d'), fr = S.meta.frames, [st, p] = hdPhase(A, T), tt = T + (A.phase || 0);
+    const loop = (a, per) => a[Math.floor(tt / per) % a.length];
+    let f = fr.idle[0], ox = 0;
+    if (A.state === 'faint') f = (fr.down || fr.hurt || fr.idle)[0];
+    else if (st === 'attack' && fr.attack) { const a = fr.attack, n = a.length; f = a[n >= 4 ? (p < 0.2 ? 0 : p < 0.4 ? 1 : p < 0.6 ? 2 : 3) : Math.min(n - 1, p < 0.3 ? 0 : p < 0.65 ? 1 : 2)]; }
+    else if (st === 'cast' && fr.cast) { const c = fr.cast; f = c.length < 2 || A.t < 8 ? c[0] : c[1 + Math.floor((A.t - 8) / 6) % (c.length - 1)]; }
+    else if (st === 'hurt' && fr.hurt) { const h = fr.hurt; f = h[p < 0.5 || h.length < 2 ? 0 : 1]; ox = p < 0.7 ? 3 : 0; }
+    else if (st === 'defend' && fr.defend) f = fr.defend[0];
+    else { const rage = fr.rage && fr.rage.length >= 4 && (A.hpr15 !== undefined && A.hpr15 <= 0.4 || S.sp === (typeof THAL15 !== 'undefined' ? THAL15 : '') && Game.scene && Game.scene.rage15);
+      const set = rage ? fr.rage : fr.idle; f = loop(set, rage ? 8 : 10);
+      if (!rage && fr.blink && set.indexOf(f) === 0 && (tt % 230) < 7) f = fr.blink[0]; }
+    x.setTransform(1, 0, 0, 1, 0, 0); x.globalCompositeOperation = 'source-over'; x.clearRect(0, 0, cv.width, cv.height); x.imageSmoothingEnabled = false;
+    x.drawImage(S.im, f * S.w, 0, S.w, S.h, PX_PAD + ox, PX_PAD, S.w, S.h);
+    if (tint) { x.globalCompositeOperation = 'source-in'; x.fillStyle = tint; x.fillRect(0, 0, cv.width, cv.height); x.globalCompositeOperation = 'source-over'; }
+    cv.ds = 1; cv.bb = S.bb; cv.px = true; return cv;
+  };
+}
+{ const _rf = Battle.prototype.renderFoe; Battle.prototype.renderFoe = function (v, tint) { if (v && v.A) v.A.hpr15 = v.boss ? clamp(v.hp / Math.max(1, v.maxhp), 0, 1) : undefined; return _rf.call(this, v, tint); }; }
