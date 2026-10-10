@@ -28035,6 +28035,12 @@ const HDFX22 = {
   ogFist: { *f(U, T, u) { HD15.dim(this, 0.6, 140, { col: '#140c00', inn: 0.06, out: 0.25 }); Sound.sfx('charge'); const P = AF22.P(); HD15.gather(this, DS16.hands(this).R, 16, P, 40, { span: 12 }); yield* wait(12); yield* this.lunge(u, 10, 2); yield* AF22.hundred(this, T, 0, 10); },
     *h(U, T, u, i) { yield* AF22.hundred(this, T, i, 10); } },
 };
+AF22.core = (b, C, P, R, dur) => HD15.add(b, { x: C.x, y: C.y, life: dur + 4, draw: (x, p, k, t) => { const g = HD15.ei(HD15.cl(t / dur)), r = R * (0.25 + 0.75 * g) * (1 + 0.08 * Math.sin(t * 1.4));
+  x.globalCompositeOperation = 'lighter'; HD15.put(x, HD15.tex('glow', P.glow), p.x, p.y, r * 3.2, r * 3.2, 0, 0.55); HD15.put(x, HD15.tex('glow', P.mid), p.x, p.y, r * 1.6, r * 1.6, 0, 0.8); HD15.put(x, HD15.tex('core', P.mid), p.x, p.y, r * 0.6, r * 0.6, 0, 1); } });
+AF22.orb = (b, C, P, R, dur) => HD15.add(b, { x: C.x, y: C.y, life: dur, draw: (x, p, k) => { const e = HD15.eo(HD15.cl(k / 0.35)), f = 1 - HD15.ei(HD15.cl((k - 0.25) / 0.75)), r = Math.max(1, R * (0.3 + 0.7 * e));
+  const G = x.createRadialGradient(p.x, p.y, 0, p.x, p.y, r); G.addColorStop(0, HD15.rgba(P.core, 0.95 * f)); G.addColorStop(0.45, HD15.rgba(P.mid, 0.7 * f)); G.addColorStop(0.85, HD15.rgba(P.glow, 0.35 * f)); G.addColorStop(1, HD15.rgba(P.glow, 0));
+  x.globalCompositeOperation = 'lighter'; x.globalAlpha = 1; x.fillStyle = G; x.beginPath(); x.arc(p.x, p.y, r, 0, Math.PI * 2); x.fill();
+  x.globalAlpha = 0.8 * f; x.strokeStyle = P.mid; x.lineWidth = 1.6; x.beginPath(); x.arc(p.x, p.y, r * 0.96, 0, Math.PI * 2); x.stroke(); } });
 AF22.palm = (b, C, rot, o = {}) => { const P = AF22.P(), dl = o.delay || 0, hold = o.hold || 30; return HD15.add(b, { x: C.x, y: C.y, delay: dl, life: dl + hold + 10, draw: (x, p, k, t) => { const g = HD15.eo(HD15.cl(t / 6)), f = 1 - HD15.cl((t - hold) / 10);
     x.save(); x.translate(p.x, p.y); x.rotate(rot); x.globalCompositeOperation = 'lighter'; x.globalAlpha = 0.75 * f * g; HD15.put(x, HD15.tex('glow', P.glow), 0, 0, 16, 16, 0, 0.8);
     x.fillStyle = P.mid; x.beginPath(); x.ellipse(0, 0, 4.2, 5, 0, 0, Math.PI * 2); x.fill(); x.strokeStyle = P.core; x.lineWidth = 1.4; x.lineCap = 'round';
@@ -28071,10 +28077,14 @@ AF22.qiN = {};
 { const H = Battle.prototype.handlers, _ap = H.STATUS_APPLY, _dm = H.DAMAGE;
   H.STATUS_APPLY = function* (e, s, t, P) { if (t && P && P.status === 'qiBomb12' && !P.failed) { AF22.qiN[t.id] = (P.data && P.data.n) || 0; t.qi22 = 1; } return yield* _ap.call(this, e, s, t, P); };
   H.DAMAGE = function* (e, s, t, P) { if (t && P && P.kind === 'qi12') { const C = this.center(t), n = AF22.qiN[t.id] || 0, k = 1 + n * 0.15; t.qi22 = 0; yield* this.msg(t.n + '體內的氣爆開了！', { hold: 14 });
-      if (HD15.on && AF22.live) { const Pk = AF22.P(); Sound.sfx('charge'); HD15.cracks(this, C, 8 + n, Pk, { len: 18 * k, fl: 1, dur: 40 }); HD15.flash(this, C, Pk, 30, { dur: 16 }); yield* wait(12);
-        Sound.sfx('fsHitSuper'); Sound.sfx('quake'); HD15.stop(this, 6); this.spawn({ k: 'flash', c: '#fff6d8', a: 0.3 + n * 0.04, life: 10 }); HD15.flash(this, C, Pk, 70 * k, { dur: 20 }); HD15.ring(this, C, Pk, 6, 56 * k, { w: 3, dur: 20 });
-        HD15.ring(this, C, HD15.P.white, 4, 34 * k, { w: 1.8, dur: 16, delay: 3 }); HD15.flare(this, C, HD15.P.white, 120 * k, { rot: 0, dur: 20, x8: 1 }); HD15.spikes(this, C, Pk, 12 + n, 36 * k); HD15.sparks(this, C, 20 + n * 4, Pk, { spd: 4.6, life: 22, g: 0.05 });
-        this.shake = Math.max(this.shake || 0, 8 + n); yield* wait(6); }
+      if (HD15.on && AF22.live) { const Pk = AF22.P(); Sound.sfx('charge');
+        for (let i = 0; i < 7; i++) { const a = i / 7 * Math.PI * 2 + 0.3, L = 10 + 3 * k; HD15.thrust(this, C, { x: C.x + Math.cos(a) * L, y: C.y + Math.sin(a) * L }, Pk, { w: 2.4, ext: 2, dur: 16, delay: i, al: 0.75 }); }
+        AF22.core(this, C, Pk, 12 * k, 14); for (let i = 0; i < 8; i++) DG17.later(this, i, () => HD15.mote(this, C.x + (Math.random() - 0.5) * 20, C.y + (Math.random() - 0.5) * 16, (Math.random() - 0.5) * 0.4, -0.6 - Math.random() * 0.5, Pk, { life: 20 }));
+        yield* this.shakeB(t, 14, 1.5);
+        Sound.sfx('fsHitSuper'); Sound.sfx('quake'); HD15.stop(this, 6); this.spawn({ k: 'flash', c: '#ffcf60', a: 0.16 + n * 0.02, life: 8 }); AF22.orb(this, C, Pk, 26 * k, 18);
+        HD15.ring(this, C, Pk, 8, 50 * k, { w: 2.6, dur: 18 }); for (let i = 0; i < 14; i++) { const a = i / 14 * Math.PI * 2 + Math.random() * 0.2, L = (22 + Math.random() * 12) * k; HD15.thrust(this, { x: C.x + Math.cos(a) * 6, y: C.y + Math.sin(a) * 6 }, { x: C.x + Math.cos(a) * L, y: C.y + Math.sin(a) * L }, Pk, { w: 4.5, ext: 6, dur: 14, delay: 1 }); }
+        for (let i = 0; i < 12 + n * 2; i++) { const a = Math.random() * Math.PI * 2, v = 0.8 + Math.random() * 1.8; DG17.later(this, 3, () => HD15.mote(this, C.x, C.y, Math.cos(a) * v, Math.sin(a) * v - 0.3, Pk, { life: 26 })); }
+        this.shake = Math.max(this.shake || 0, 6 + n); yield* wait(6); }
       else { Sound.sfx('heavy'); this.spawn({ k: 'ring', x: C.x, y: C.y, r0: 4, r1: 30, c: '#ffc060', w: 3, life: 12 }); this.star(C.x, C.y, '#fff8e0', 16); this.shake = Math.max(this.shake, 6); yield* wait(8); } }
     return yield* _dm.call(this, e, s, t, P); };
   const _u = Battle.prototype.update; Battle.prototype.update = function (...a) { const r = _u.apply(this, a); if (HD15.on && AF22.live && this.t % 18 === 0 && this.foes) for (const v of this.foes()) if (v.qi22 && !v.gone && v.hp > 0) { const C = this.center(v); HD15.flash(this, C, AF22.P(), 16, { dur: 14 }); HD15.ring(this, C, AF22.P(), 14, 3, { w: 1.2, dur: 12 }); } return r; }; }
