@@ -100,3 +100,7 @@ if (BFX15.live) {
       HD15.smoke(this, { x: C.x, y: C.y + 10 }, 22, { col: '#d0d0d8', r: 60, sz: 22, spd: 1.6, up: 0.4, life: 44 }); HD15.smoke(this, { x: W / 2, y: BH * 0.45 }, 16, { col: '#e8e8ee', r: 90, sz: 20, spd: 1.2, life: 44, delay: 6 }); yield* wait(40); }; }
   { const _s = fxtSetup13; fxtSetup13 = function (kind) { _s(kind); Game.st.bag.smoke = 99; }; }
 }
+/* ---------- v12.115 玩家「技能擊中時有時會有兩條線一起出現」 ----------
+   原因：新特效的「斬痕」（HD15.cut）劃過以後會往兩邊裂開，變成兩條平行的線（斧的劈山、雙劍・雙刀的交叉、很多招打中時都有）。
+   → 改成一條線劃過、直接淡掉，不再裂成兩條。正式版也一起（下次放進正式版時）。 */
+{ const _c = HD15.cut; HD15.cut = (b, T, rot, L, pal, o = {}) => _c(b, T, rot, L, pal, { ...o, gap: 0.0001 }); }

@@ -8,7 +8,7 @@
 const MAG15 = { live: typeof fxtest13 === 'function' && fxtest13() };
 const MAGT15 = '魔法傷害（打對手的魔防），用物攻和魔攻較高的一項計算。';
 const MAG_SK15 = { // kind: [key, name, power, hits, cd, mp, desc]
-  劍: ['sdLight', '光刃', 50, 0, 1, 6, '劍刃帶著光，衝上去一刀斬下。'],
+  劍: ['sdLight', '光刃', 50, 0, 1, 6, '揮劍斬出一道光的劍氣，飛過去砍中對手。'],
   短刀: ['dgShadeNeedle', '影針', 26, 2, 1, 6, '短刀帶著暗影，快刺兩下。'],
   斧: ['axRune', '符文劈', 55, 0, 1, 6, '斧刃上的符文一亮，一斧劈下去，劈中的地方迸出熔岩色的光。'],
   長槍: ['spGleam', '蒼光刺', 50, 0, 1, 6, '槍尖帶著蒼藍的光，一刺貫穿。'],
@@ -31,11 +31,22 @@ if (MAG15.live) for (const kind in MAG_SK15) { const T = TREE11[kind]; if (!T) {
 
 /* ---------- 特效 ---------- */
 const glint15 = (b, P, R) => { const H = R || DS16.hands(b).R; HD15.flash(b, { x: H.x + 2, y: H.y - 10 }, P, 18, { dur: 8 }); HD15.sparks(b, { x: H.x + 2, y: H.y - 10 }, 4, P, { spd: 1.6, life: 10 }); };
+// 劍氣：新月形的光往前飛（凸的那邊朝前），越飛越大，留一點殘影
+HD15.wave = (b, A, B, pal, o = {}) => { pal = HD15.W(pal); const dl = o.delay || 0, dur = o.dur || 12, an = Math.atan2(B.y - A.y, B.x - A.x), hist = [];
+  return HD15.add(b, { x: A.x, y: A.y, delay: dl, life: dl + dur + 6,
+    upd: p => { const t = p.t - dl; if (t < 0) return; const k = HD15.cl(t / dur), e = k * (0.4 + 0.6 * k); p.x = A.x + (B.x - A.x) * e; p.y = A.y + (B.y - A.y) * e; if (k < 1) { hist.push([p.x, p.y, k]); if (hist.length > 3) hist.shift(); } },
+    draw: (x, p, k, t) => { if (t < 0) return; const f = t >= dur ? 1 - HD15.cl((t - dur) / 6) : 1, arc = (cx, cy, kk, al) => { const R = (o.r0 || 10) + ((o.r1 || 20) - (o.r0 || 10)) * kk, C = { x: cx - Math.cos(an) * R * 0.55, y: cy - Math.sin(an) * R * 0.55 };
+        for (const [w, c, a, op] of [[R * 0.5, pal.glow, 0.35, 'lighter'], [R * 0.3, pal.edge, 0.5, 'source-over'], [R * 0.22, pal.mid, 1, 'source-over'], [R * 0.08, pal.core, 1, 'source-over']]) {
+          x.globalCompositeOperation = op; x.globalAlpha = al * a * f; x.lineCap = 'round'; x.lineWidth = Math.max(1, w); x.strokeStyle = c; x.beginPath(); x.arc(C.x, C.y, R, an - 1.05, an + 1.05); x.stroke(); }
+        x.globalCompositeOperation = 'source-over'; x.globalAlpha = 1; };
+      hist.forEach(([hx, hy, hk], i) => arc(hx, hy, hk, 0.25 + i * 0.15)); arc(p.x, p.y, HD15.cl(t / dur), 1); } }); };
 const MAGFX15 = {
   // 光刃：劍身一亮 → 衝上去斜斬（金白的刀光＋一道淡淡的殘光）→ 停格、小閃光
-  sdLight: { *f(U, T, u) { const P = HD15.P.holy; glint15(this, P); Sound.sfx('blade'); yield* this.lunge(u, 18, 3);
-      HD15.slash(this, T, { pal: P, r: 60, th: 12, ang: -0.67, span: 1.5, dur: 22, spark: 1 }); HD15.slash(this, { x: T.x - 3, y: T.y + 3 }, { pal: HD15.P.white, r: 54, th: 5, ang: -0.67, span: 1.3, dur: 18, delay: 2, al: 0.6 });
-      yield* wait(4); Sound.sfx('stHit'); HD15.stop(this, 4); HD15.flash(this, T, P, 26, { dur: 10 }); HD15.sparks(this, T, 10, P, { spd: 3, life: 16 }); yield* wait(12); } },
+  // 光刃（v12.115 玩家「光刃幫我改成劍氣」）：劍身一亮 → 原地揮劍 → 一道新月形的光劍氣飛過去 → 砍中、停格、小閃光
+  sdLight: { *f(U, T, u) { const P = HD15.P.holy, H = DS16.hands(this).R; glint15(this, P); this.anim(u, 'attack', 20); yield* wait(4);
+      Sound.sfx('blade'); HD15.slash(this, { x: H.x + 8, y: H.y - 12 }, { pal: P, r: 26, th: 7, ang: -0.67, span: 1.4, dur: 14 });
+      HD15.wave(this, { x: H.x + 4, y: H.y - 14 }, T, P, { dur: 11, r0: 10, r1: 20 }); yield* wait(11);
+      Sound.sfx('stHit'); HD15.stop(this, 4); HD15.slash(this, T, { pal: P, r: 52, th: 10, ang: -0.67, span: 1.4, dur: 18, spark: 1 }); HD15.flash(this, T, P, 26, { dur: 10 }); HD15.sparks(this, T, 10, P, { spd: 3, life: 16 }); yield* wait(14); } },
   // 影針：刀身一暗 → 帶著殘影衝上去，快刺兩下（紫黑的刺擊）
   dgShadeNeedle: { *f(U, T, u) { const P = HD15.P.shade; glint15(this, P); Sound.sfx('wind'); if (typeof K13 !== 'undefined' && K13.ghost) for (let i = 1; i <= 2; i++) K13.ghost(this, 0, -i * 12, '#b080ff', 6 + i * 3, 0.45);
       yield* this.lunge(u, 22, 1);
