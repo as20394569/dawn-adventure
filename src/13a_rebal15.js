@@ -5,8 +5,8 @@
    1. 菁英・頭目（所有章節、重打、石碑、懸賞都算）：HP ×1.5、物防・魔防 ×1.15、物攻・魔攻 ×0.75。
    2. 每張地圖的一般魔物只留 3 種、整張地圖同一個等級區間；多出來的搬到旁邊的洞窟、支線迷宮。
       （夜晚限定、天氣限定的魔物不算在 3 種裡，照舊只在那個時段出現。）
-   3. 魔法：除了法杖，劍・短刀・長槍・雙刀・雙劍各有一招改成「用物攻和魔攻較高的一項計算」（跟拳套的氣勁彈一樣），
-      魔攻較高時算魔法傷害、吃智力加成。 */
+   3. 魔法：玩家打出的幾乎都是物理傷害，魔物的魔防等於沒用到。劍・短刀・斧・長槍・拳套・雙刀・雙劍各有一招改成魔法招
+      （打魔防、攻擊力用物攻和魔攻較高的一項），拿近戰武器也能挑魔防低的魔物用魔法打。 */
 
 // 1. 菁英・頭目
 const REBAL15 = { hp: 1.5, def: 1.15, spd: 1.15, atk: 0.75, spa: 0.75 };
@@ -77,16 +77,18 @@ function map3Apply15() {
 }
 map3Apply15();
 
-// 3. 物理武器也有能打魔法的招：用物攻和魔攻較高的一項計算；魔法時吃智力加成
-const HYB15 = { t_sdFlow: '流光連斬', t_dgNeedle: '雷痺斬', t_spSpiral: '螺旋貫', t_ddGale: '疾風百刃', t_dsStar: '雙星十字' };
-const hyb15 = (core, u) => (u.stats.spa > u.stats.atk ? '特' : '物');
+// 3. 物理武器也有魔法招（玩家：「魔法我是指玩家比較少打出魔法傷害 畢竟怪物有物防魔防」）
+//    這幾招一律是魔法傷害（打對手的魔防），攻擊力用物攻和魔攻較高的一項；屬性加成：物攻較高吃原本的屬性，魔攻較高吃智力。
+const HYB15 = { t_sdFlow: '流光連斬', t_dgNeedle: '雷痺斬', t_axQuake: '震地擊', t_spSpiral: '螺旋貫', t_fsQi: '氣勁彈', t_ddGale: '疾風百刃', t_dsStar: '雙星十字' };
+BR.FORMULA.magAtk15 = c => { const S = c.src.stats; return Math.max(S.atk, S.spa) / Math.max(1, S.spa); };
+COND.magHi15 = (c, v) => !!c.src && (c.src.stats.spa > c.src.stats.atk) === !!v;
 for (const id in HYB15) { const D = DEF.skills[id]; if (!D) { bvErr('hyb15', id); continue; }
-  D.catOf = hyb15; const add = '用物攻和魔攻較高的一項計算（魔攻較高時是魔法傷害、吃智力加成）。';
-  if (!D.desc.includes('較高的一項')) D.desc = D.desc + add; if (MOVES[id] && !MOVES[id].d.includes('較高的一項')) MOVES[id].d = MOVES[id].d + add;
+  delete D.catOf; D.cat = '特'; D.tags = D.tags.map(t => t === 'phys' ? 'magic' : t); if (MOVES[id]) MOVES[id].cat = '特';
+  const add = '魔法傷害（打對手的魔防），用物攻和魔攻較高的一項計算。', fix = t => t.replace(/用物攻和魔攻較高的一項計算。?/, '').replace(/。?$/, '。') + add;
+  if (!D.desc.includes('打對手的魔防')) D.desc = fix(D.desc); if (MOVES[id] && !MOVES[id].d.includes('打對手的魔防')) MOVES[id].d = fix(MOVES[id].d);
+  D.mods.push({ stage: 'skill', who: 'attacker', atkMul: { f: 'magAtk15' }, cond: { srcIsHero: 1 } });
   const i = D.mods.findIndex(m => m.mul && m.mul.f === 'attrScale'); if (i >= 0) { const m = D.mods[i];
-    D.mods.splice(i, 1, { ...m, cond: { ...m.cond, cat: '物' } }, { ...m, mul: { f: 'attrScale', v: ['int', 1] }, cond: { ...m.cond, cat: '特' } }); } }
-// 氣勁彈也一樣吃智力
-{ const D = DEF.skills.t_fsQi; if (D) { const i = D.mods.findIndex(m => m.mul && m.mul.f === 'attrScale'); if (i >= 0) { const m = D.mods[i];
-    D.mods.splice(i, 1, { ...m, cond: { ...m.cond, cat: '物' } }, { ...m, mul: { f: 'attrScale', v: ['int', 1] }, cond: { ...m.cond, cat: '特' } }); } } }
-// 技能說明的「物理／魔法」
-{ const _t = treeSkillText11; treeSkillText11 = function (id, st) { const s = _t.call(this, id, st), D = DEF.skills[id]; return D && D.catOf && D.power ? s.replace(/^(物理|魔法)/, '物理／魔法') : s; }; }
+    D.mods.splice(i, 1, { ...m, cond: { ...m.cond, magHi15: 0 } }, { ...m, mul: { f: 'attrScale', v: ['int', 1] }, cond: { ...m.cond, magHi15: 1 } }); } }
+// 遭遇卡・圖鑑：物防和魔防差比較多的魔物，標出哪一邊低（選物理招還是魔法招）
+{ const _f = famText; famText = function (sp) { const t = _f(sp), P = MON_PANEL[sp]; if (!P || !P.def || !P.spd) return t; const r = P.spd / P.def, lean = r <= 0.87 ? '魔防較低' : r >= 1.15 ? '物防較低' : '';
+    return lean ? (t ? t + '　' : '') + lean : t; }; }

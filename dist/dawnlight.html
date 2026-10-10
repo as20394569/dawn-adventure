@@ -7934,7 +7934,7 @@ class TitleScene {
     x.drawImage(this.logo, Math.round(W / 2 - this.logo.width / 2), 6 + bob);
     Font.drawC(x, '～異世界冒險RPG～', W / 2, 52 + bob, '#ffe0a0', '#3a1428');
     if (this.stage === 'press' && Math.floor(this.t / 30) % 2 === 0) Font.drawC(x, '按 A 鍵開始', W / 2, 232, '#ffffff', '#1a1024');
-    Font.drawR(x, 'v12.106', W - 3, H - 13, '#b890b0', null);
+    Font.drawR(x, 'v12.107', W - 3, H - 13, '#b890b0', null);
   }
 }
 class IntroScene {
@@ -28414,16 +28414,18 @@ function map3Apply15() {
   if (typeof Game !== 'undefined') Game.dnTablesFor = null; // 白天／晚上的權重重算一次
 }
 map3Apply15();
-const HYB15 = { t_sdFlow: '流光連斬', t_dgNeedle: '雷痺斬', t_spSpiral: '螺旋貫', t_ddGale: '疾風百刃', t_dsStar: '雙星十字' };
-const hyb15 = (core, u) => (u.stats.spa > u.stats.atk ? '特' : '物');
+const HYB15 = { t_sdFlow: '流光連斬', t_dgNeedle: '雷痺斬', t_axQuake: '震地擊', t_spSpiral: '螺旋貫', t_fsQi: '氣勁彈', t_ddGale: '疾風百刃', t_dsStar: '雙星十字' };
+BR.FORMULA.magAtk15 = c => { const S = c.src.stats; return Math.max(S.atk, S.spa) / Math.max(1, S.spa); };
+COND.magHi15 = (c, v) => !!c.src && (c.src.stats.spa > c.src.stats.atk) === !!v;
 for (const id in HYB15) { const D = DEF.skills[id]; if (!D) { bvErr('hyb15', id); continue; }
-  D.catOf = hyb15; const add = '用物攻和魔攻較高的一項計算（魔攻較高時是魔法傷害、吃智力加成）。';
-  if (!D.desc.includes('較高的一項')) D.desc = D.desc + add; if (MOVES[id] && !MOVES[id].d.includes('較高的一項')) MOVES[id].d = MOVES[id].d + add;
+  delete D.catOf; D.cat = '特'; D.tags = D.tags.map(t => t === 'phys' ? 'magic' : t); if (MOVES[id]) MOVES[id].cat = '特';
+  const add = '魔法傷害（打對手的魔防），用物攻和魔攻較高的一項計算。', fix = t => t.replace(/用物攻和魔攻較高的一項計算。?/, '').replace(/。?$/, '。') + add;
+  if (!D.desc.includes('打對手的魔防')) D.desc = fix(D.desc); if (MOVES[id] && !MOVES[id].d.includes('打對手的魔防')) MOVES[id].d = fix(MOVES[id].d);
+  D.mods.push({ stage: 'skill', who: 'attacker', atkMul: { f: 'magAtk15' }, cond: { srcIsHero: 1 } });
   const i = D.mods.findIndex(m => m.mul && m.mul.f === 'attrScale'); if (i >= 0) { const m = D.mods[i];
-    D.mods.splice(i, 1, { ...m, cond: { ...m.cond, cat: '物' } }, { ...m, mul: { f: 'attrScale', v: ['int', 1] }, cond: { ...m.cond, cat: '特' } }); } }
-{ const D = DEF.skills.t_fsQi; if (D) { const i = D.mods.findIndex(m => m.mul && m.mul.f === 'attrScale'); if (i >= 0) { const m = D.mods[i];
-    D.mods.splice(i, 1, { ...m, cond: { ...m.cond, cat: '物' } }, { ...m, mul: { f: 'attrScale', v: ['int', 1] }, cond: { ...m.cond, cat: '特' } }); } } }
-{ const _t = treeSkillText11; treeSkillText11 = function (id, st) { const s = _t.call(this, id, st), D = DEF.skills[id]; return D && D.catOf && D.power ? s.replace(/^(物理|魔法)/, '物理／魔法') : s; }; }
+    D.mods.splice(i, 1, { ...m, cond: { ...m.cond, magHi15: 0 } }, { ...m, mul: { f: 'attrScale', v: ['int', 1] }, cond: { ...m.cond, magHi15: 1 } }); } }
+{ const _f = famText; famText = function (sp) { const t = _f(sp), P = MON_PANEL[sp]; if (!P || !P.def || !P.spd) return t; const r = P.spd / P.def, lean = r <= 0.87 ? '魔防較低' : r >= 1.15 ? '物防較低' : '';
+    return lean ? (t ? t + '　' : '') + lean : t; }; }
 const IRO_LOOK15 = { // base: [palette, the base picture's main hue]
   slime: ['金', 219], mush: ['蒼', 61], bee: ['紫', 50], hornHare: ['翠', 30], strawCrow: ['櫻', 300], curlySheep: ['蒼', 36], mossTurtle: ['紫', 63],
   streamSnake: ['緋', 140], creekCroc: ['蒼', 55], fireflySwarm: ['櫻', 79], vineSnake: ['紫', 75], thornMush: ['金', 220], harpy: ['翠', 29],
