@@ -8,14 +8,17 @@
    聲音：主角出招時，照武器把 揮動／打中 的聲音換掉（02_audio.js 的 spThrust、axHit、fsHit、stHit、shHit…）；劍維持刀的聲音。
    先只在特效測試版（HDW.live）；玩家看過說好才放進正式版。 */
 const HDW = { live: typeof fxtest13 === 'function' && fxtest13(), sk: null };
-HDW.ST = { 劍: { m: 'dash', gap: 46 }, 雙劍: { m: 'dash', gap: 46 }, 短刀: { m: 'blink', gap: 34 }, 雙刀: { m: 'blink', gap: 34 }, 長槍: { m: 'step', d: 28 },
-  斧: { m: 'leap', gap: 50 }, 拳套: { m: 'dash', gap: 30 }, 法杖: { m: 'stay' }, 雙盾: { m: 'push', d: 36 }, 單手盾: { m: 'push', d: 36 } };
+// gap＝站好以後主角中心離對手中心還有多遠（主角是背影，太近會整個蓋住對手）
+HDW.ST = { 劍: { m: 'dash', gap: 56 }, 雙劍: { m: 'dash', gap: 56 }, 短刀: { m: 'blink', gap: 50 }, 雙刀: { m: 'blink', gap: 50 }, 長槍: { m: 'step', d: 28 },
+  斧: { m: 'leap', gap: 58 }, 拳套: { m: 'dash', gap: 48 }, 法杖: { m: 'stay' }, 雙盾: { m: 'push', d: 36 }, 單手盾: { m: 'push', d: 36 } };
 HDW.MAX = 84;
-HDW.NOSTEP = new Set(['zjAzure', 'zjMeteor']);   // 跳躍的落下（主角從天上掉回原位）
+// 單手盾的招（主手是別的武器，但這些招是用盾出的）：照盾的佔位、盾的聲音
+HDW.KOF = { osBash: '單手盾', osHold: '單手盾', osCounter: '單手盾', ogShield: '單手盾' };
+HDW.NOSTEP = new Set(['zjAzure', 'zjMeteor', 'fsQi']);   // 跳躍的落下（主角從天上掉回原位）、遠距的氣勁彈
 HDW.ease = q => q * q * (3 - 2 * q);
 HDW.kind = () => typeof DG17 !== 'undefined' ? DG17.kind() : null;
 // 移過去
-HDW.go = function* (b, T, t) { const v = b.H; if (!HDW.live || !HD15.on || !v || !v.off || b.hdwBase || !T || v.air13) return; const S = HDW.ST[HDW.kind()]; if (!S || S.m === 'stay') return;
+HDW.go = function* (b, T, t, kd) { const v = b.H; if (!HDW.live || !HD15.on || !v || !v.off || b.hdwBase || !T || v.air13) return; const S = HDW.ST[kd || HDW.kind()]; if (!S || S.m === 'stay') return;
   const H0 = b.center(v), D = Math.hypot(T.x - H0.x, T.y - H0.y); if (D < 24) return;
   const ux = (T.x - H0.x) / D, uy = (T.y - H0.y) / D, all = !!(t && t.group), d = Math.min(HDW.MAX, S.d != null ? S.d : Math.max(0, D - S.gap - (all ? 16 : 0))); if (d < 4) return;
   const x1 = ux * d, y1 = uy * d, o = v.off, x0 = o.x, y0 = o.y, gh = typeof K13 !== 'undefined' && K13.ghost;
@@ -45,11 +48,11 @@ if (typeof K13 !== 'undefined' && K13.ghost) { const _g = K13.ghost; K13.ghost =
     if (this.hd18pend && typeof HD18 !== 'undefined') { this.hd18pend = 0; HD18.vanish(this); } }; }
 // 出招前移過去：新特效的招（跳躍的落下除外）和特技
 for (const id of HD15.ids) { const k = id.slice(2), key = 'hd15_' + k, F = FX[key]; if (!F || HDW.NOSTEP.has(k)) continue;
-  FX[key] = function* (U, T, u, t) { if (!u || u === this.H || u.hero) yield* HDW.go(this, T, t); return yield* F.call(this, U, T, u, t); }; }
+  FX[key] = function* (U, T, u, t) { if (!u || u === this.H || u.hero) yield* HDW.go(this, T, t, HDW.KOF[k]); return yield* F.call(this, U, T, u, t); }; }
 for (const e of HD15.spKeys) { if (/h$/.test(e[0])) continue; const F = e[1]; e[1] = function* (U, T, u, t) { if (!u || u === this.H || u.hero) yield* HDW.go(this, T, t); return yield* F.call(this, U, T, u, t); }; }
 // 整招結束：先讓消失的主角在站的位置出現，再走回原位；聲音的武器也在這裡清掉
 { const H = Battle.prototype.handlers, _as = H.ACTION_START, _ae = H.ACTION_END;
-  H.ACTION_START = function* (e, s, t, P) { HDW.sk = HDW.live && HD15.on && s && s.hero ? HDW.kind() : null; return yield* _as.call(this, e, s, t, P); };
+  H.ACTION_START = function* (e, s, t, P) { HDW.sk = HDW.live && HD15.on && s && s.hero ? (P && P.skill && HDW.KOF[String(P.skill).slice(2)]) || HDW.kind() : null; return yield* _as.call(this, e, s, t, P); };
   H.ACTION_END = function* (e, s, t, P) { try { if (this.hdwBase) { if (this.hd18hid && typeof HD18 !== 'undefined') { HD18.appear(this); yield* wait(8); }
         if (this.sp20hid && typeof SP20 !== 'undefined') { SP20.show(this); yield* wait(8); } yield* HDW.back(this); }
       return yield* _ae.call(this, e, s, t, P); } finally { HDW.sk = null; } };
@@ -65,3 +68,6 @@ HDW.SND = {
 };
 HDW.SND.雙刀 = HDW.SND.短刀; HDW.SND.單手盾 = HDW.SND.雙盾;
 { const _sf = Sound.sfx; Sound.sfx = function (n, ...a) { const M = HDW.sk && HDW.SND[HDW.sk]; if (M && M[n]) n = M[n]; return _sf.call(this, n, ...a); }; }
+// 主角站上去時會跟對手腳下的名牌疊在一起（主角是背影，畫在名牌下面）：站上去的這段時間名牌淡出，走回來再淡入
+{ const _p = KB12.plates; KB12.plates = function (x, a0) { const f = this.hdwFade || 0; if (f >= 0.98) return; return _p.call(this, x, a0 * (1 - f)); };
+  const _u = Battle.prototype.update; Battle.prototype.update = function (...a) { const B = this.hdwBase, on = !!(B && (B.y < -8 || Math.abs(B.x) > 30)); this.hdwFade = Math.max(0, Math.min(1, (this.hdwFade || 0) + (on ? 0.15 : -0.1))); return _u.apply(this, a); }; }
