@@ -7934,7 +7934,7 @@ class TitleScene {
     x.drawImage(this.logo, Math.round(W / 2 - this.logo.width / 2), 6 + bob);
     Font.drawC(x, '～異世界冒險RPG～', W / 2, 52 + bob, '#ffe0a0', '#3a1428');
     if (this.stage === 'press' && Math.floor(this.t / 30) % 2 === 0) Font.drawC(x, '按 A 鍵開始', W / 2, 232, '#ffffff', '#1a1024');
-    Font.drawR(x, 'v12.113', W - 3, H - 13, '#b890b0', null);
+    Font.drawR(x, 'v12.114', W - 3, H - 13, '#b890b0', null);
   }
 }
 class IntroScene {
@@ -28816,15 +28816,15 @@ defPut('mechanics', 'stanceA15', { make: () => ({ triggers: [stanceTr15('pguard1
 const MAG15 = { live: typeof fxtest13 === 'function' && fxtest13() };
 const MAGT15 = '魔法傷害（打對手的魔防），用物攻和魔攻較高的一項計算。';
 const MAG_SK15 = { // kind: [key, name, power, hits, cd, mp, desc]
-  劍: ['sdLight', '光刃', 50, 0, 1, 3, '劍刃帶著光，衝上去一刀斬下。'],
-  短刀: ['dgShadeNeedle', '影針', 26, 2, 1, 3, '短刀帶著暗影，快刺兩下。'],
-  斧: ['axRune', '符文劈', 55, 0, 1, 3, '斧刃上的符文一亮，一斧劈下去，劈中的地方迸出熔岩色的光。'],
-  長槍: ['spGleam', '蒼光刺', 50, 0, 1, 3, '槍尖帶著蒼藍的光，一刺貫穿。'],
-  拳套: ['fsPalm', '氣掌', 50, 0, 1, 3, '把氣凝在掌心，一掌打在對手身上，氣從背後透出去。'],
-  雙刀: ['ddTwinShade', '雙影刃', 26, 2, 1, 3, '雙刀帶著暗影，一左一右交叉斬下。'],
-  雙劍: ['dsCrossLight', '交叉光刃', 26, 2, 1, 3, '兩把劍（一白一黑）帶著光，交叉斬下。'],
-  雙盾: ['shHoly', '聖光盾擊', 50, 0, 1, 3, '雙盾帶著聖光，從兩側重重夾擊。'],
-  單手盾: ['osLight', '光盾衝', 50, 0, 1, 3, '盾面發光，往前一撞。'],
+  劍: ['sdLight', '光刃', 50, 0, 1, 6, '劍刃帶著光，衝上去一刀斬下。'],
+  短刀: ['dgShadeNeedle', '影針', 26, 2, 1, 6, '短刀帶著暗影，快刺兩下。'],
+  斧: ['axRune', '符文劈', 55, 0, 1, 6, '斧刃上的符文一亮，一斧劈下去，劈中的地方迸出熔岩色的光。'],
+  長槍: ['spGleam', '蒼光刺', 50, 0, 1, 6, '槍尖帶著蒼藍的光，一刺貫穿。'],
+  拳套: ['fsPalm', '氣掌', 50, 0, 1, 6, '把氣凝在掌心，一掌打在對手身上，氣從背後透出去。'],
+  雙刀: ['ddTwinShade', '雙影刃', 26, 2, 1, 6, '雙刀帶著暗影，一左一右交叉斬下。'],
+  雙劍: ['dsCrossLight', '交叉光刃', 26, 2, 1, 6, '兩把劍（一白一黑）帶著光，交叉斬下。'],
+  雙盾: ['shHoly', '聖光盾擊', 50, 0, 1, 6, '雙盾帶著聖光，從兩側重重夾擊。'],
+  單手盾: ['osLight', '光盾衝', 50, 0, 1, 6, '盾面發光，往前一撞。'],
 };
 const MAGCLS15 = { 劍: 'slash', 短刀: 'pierce', 斧: 'strike', 長槍: 'pierce', 拳套: 'strike', 雙刀: 'slash', 雙劍: 'slash', 雙盾: 'strike', 單手盾: 'strike' }; // v12.112 武器的動作（原本是 bolt＝施法）
 BR.FORMULA.magAtk15 = BR.FORMULA.magAtk15 || (c => { const S = c.src.stats; return Math.max(S.atk, S.spa) / Math.max(1, S.spa); });
@@ -28976,5 +28976,56 @@ if (BFX15.live) {
       HD15.smoke(this, { x: C.x, y: C.y + 10 }, 22, { col: '#d0d0d8', r: 60, sz: 22, spd: 1.6, up: 0.4, life: 44 }); HD15.smoke(this, { x: W / 2, y: BH * 0.45 }, 16, { col: '#e8e8ee', r: 90, sz: 20, spd: 1.2, life: 44, delay: 6 }); yield* wait(40); }; }
   { const _s = fxtSetup13; fxtSetup13 = function (kind) { _s(kind); Game.st.bag.smoke = 99; }; }
 }
+const TREE16 = { live: typeof fxtest13 === 'function' && fxtest13() };
+const T16 = {
+  row(id) { for (const k of Object.keys(TREE11)) for (const r of TREE11[k].sk || []) if ('t_' + r[1] === id) return r; return null; },
+  desc(id, d) { const D = DEF.skills[id]; if (D) D.desc = d; if (MOVES[id]) MOVES[id].d = d; const r = T16.row(id); if (r) r[8] = d; },
+  pow(id, p) { const D = DEF.skills[id]; if (D) D.power = p; if (MOVES[id]) MOVES[id].pow = p; const r = T16.row(id); if (r) r[3] = p; },
+  eff(id, ef, tag) { const D = DEF.skills[id]; D.effects = (D.effects || []).concat([effRegister('skill:' + id + '#' + tag, ef)]); },
+  add(kind, row) { const T = TREE11[kind]; if (!T) { bvErr('tree16', kind); return; } const old = T.sk; T.sk = [row];
+    try { sk11Build(kind); } finally { const i = old.reduce((a, s, j) => s[0] <= row[0] ? j : a, -1); T.sk = old.slice(0, i + 1).concat([row], old.slice(i + 1)); } },
+};
+BR.FORMULA.physAtk16 = c => { const S = c.src.stats; return Math.max(S.atk, S.spa) / Math.max(1, S.atk); };
+const PHYT16 = '物理傷害（打對手的物防），用物攻和魔攻較高的一項計算。';
+function physicalize16(id) { const D = DEF.skills[id]; if (!D) return; delete D.catOf; D.cat = '物'; D.tags = D.tags.map(t => t === 'magic' ? 'phys' : t); if (MOVES[id]) MOVES[id].cat = '物';
+  D.mods.push({ stage: 'skill', who: 'attacker', atkMul: { f: 'physAtk16' }, cond: { srcIsHero: 1 } }); }
+if (TREE16.live) {
+  T16.add('法杖', ['1d', 'stBash', '杖擊', 55, 0, 1, 6, 0, '用法杖重重敲下去。' + PHYT16, { cls: 'strike' }]); physicalize16('t_stBash');
+  T16.add('單手盾', ['3a', 'osRecoil', '盾面反震', 90, 0, 3, 20, 0, '舉盾撞上去把對手震開（攻擊力加上物防的 70%），50% 讓對手物攻 −1。', { cls: 'strike', mods: [{ stage: 'skill', who: 'attacker', atkMul: { f: 'osBash13' } }], effects: DMG11(SG11({ atk: -1 }, 0.5)) }]);
+  T16.add('單手盾', ['4a', 'osAegis', '守護之盾', 0, 0, 5, 20, 0, '張開護盾 2 回合（最大 HP 25%、吸收 75%），下一次攻擊威力 +30%。', { effects: [{ type: 'ward12', target: 'self', pct: 0.25, abs: 0.75, turns: 2, why: 'aegis16' }, { type: 'status', target: 'self', status: 'nextPow11' }] }]);
+  T16.add('短刀', ['2d', 'dgFan', '飛刀四散', 35, 2, 2, 16, 1, '向全部魔物擲出飛刀，打全體 2 段，每段 20% 中毒。', { cls: 'area', effects: DMG11(STA11('psn', 0.2)) }]);
+  T16.pow('t_ogFist', 26); T16.desc('t_ogFist', '十段連打（各 26），無視 30% 物防，每段 10% 退縮。');
+  T16.pow('t_ogDual', 40); T16.desc('t_ogDual', '殘影在魔物之間穿梭，打全體 4 段（各 40），每段 15% 中毒。');
+  for (const id of ['t_zjSky', 't_zjVenomThroat', 't_ogAxe', 't_ogSpear', 't_zjQiBurst', 't_zjBloom', 't_zjSwordDance', 't_zjHolyWall']) { const D = DEF.skills[id]; if (!D) { bvErr('tree16', id); continue; }
+    magicize15(id); T16.desc(id, D.desc.replace(/魔法傷害（打對手的魔防）.*$/, '') + MAGT15); }
+  { const D = DEF.skills.t_sdMeteor; D.charge = false; D.tags = D.tags.filter(t => t !== 'charge'); D.mods = D.mods.filter(m => !(m.mul === 1.5 && m.cond && m.cond.tgtStatus === 'broken'));
+    D.mods.push({ stage: 'skill', who: 'attacker', critAdd: 40 }, { ...CRIT11, cond: { tgtStatus: 'broken' } }); T16.pow('t_sdMeteor', 140); const r = T16.row('t_sdMeteor'); if (r && r[9]) r[9] = { ...r[9], charge: 0 };
+    T16.desc('t_sdMeteor', '全力劈下（不用蓄力），會心率 +40%；對破防中的對手必定會心。'); }
+  for (const id of ['t_sdGap', 't_zjSteel', 't_fsStorm', 't_ogTwin']) delete DEF.skills[id].wardX;
+  T16.desc('t_sdGap', '突刺；對手物防下降時威力 ×1.5。'); T16.desc('t_zjSteel', '對物防下降中的對手必定會心。');
+  T16.eff('t_fsStorm', FL11(0.1), 't16'); T16.desc('t_fsStorm', '八段連打，每段 10% 退縮。');
+  T16.desc('t_ogTwin', '兩道巨大的十字斬（各 110），會心率 +30%。');
+  DEF.skills.t_axSplit.wardX = 2.5; T16.desc('t_axSplit', '重劈，對護盾傷害 ×2.5。');
+}
+const TFX16 = {
+  stBash: { *f(U, T, u) { const P = HD15.P.arcane; glint15(this, P); Sound.sfx('fsSwing'); yield* this.lunge(u, 14, 2);
+      HD15.slash(this, T, { pal: HD15.P.steel, r: 40, th: 9, ang: -2.41, dir: -1, span: 1.2, dur: 16 }); yield* wait(3);
+      Sound.sfx('heavy'); HD15.stop(this, 4); HD15.flash(this, T, P, 26, { dur: 10 }); HD15.ring(this, T, P, 4, 22, { w: 2, dur: 12 }); HD15.sparks(this, T, 8, P, { spd: 2.6, life: 14 }); this.shake = Math.max(this.shake || 0, 4); yield* wait(12); } },
+  dgFan: { *f(U, T, u) { const H = DS16.hands(this), L = DG17.foes(this), P = HD15.P.shade; glint15(this, P, H.R); Sound.sfx('wind');
+      for (let r = 0; r < 2; r++) { for (const v of L) { const C = this.center(v); HD15.comet(this, { x: H.R.x, y: H.R.y - 6 }, { x: C.x + (r ? 5 : -5), y: C.y + (r ? -4 : 4) }, P, 8, { w: 4 }); }
+        yield* wait(8); Sound.sfx('bladeQ'); for (const v of L) DG17.pop(this, this.center(v), 0.7); yield* wait(4); }
+      HD15.stop(this, 3); yield* wait(10); } },
+  osRecoil: { *f(U, T, u) { const P = HD15.P.silver; yield* this.lunge(u, 14, 3); const d = SH24.dir(this, T), H = DS16.hands(this).Hc; Sound.sfx('shSwing');
+      SH24.plate(this, { x: T.x - d.ux * 8, y: T.y - d.uy * 8 }, P, { s: 1.3, from: { x: H.x + d.ux * 18 - T.x, y: H.y + d.uy * 18 - T.y }, mv: 6, dur: 22, shine: 1 }); yield* wait(6);
+      Sound.sfx('shHitSuper'); HD15.stop(this, 5); SH24.slam(this, T, 1.2, { pal: P, d }); HD15.ring(this, T, P, 6, 36, { w: 2.4, dur: 16 }); HD15.shards(this, T, 10, { spd: 3, sz: 3, up: 1 }); this.shake = Math.max(this.shake || 0, 6); yield* wait(14); } },
+  osAegis: { *f(U, T, u) { const P = HD15.P.silver, C = GD25.front(this), G = { x: DS16.hands(this).Hc.x, y: HDW_FOOT() - 2 }; Sound.sfx('shGuard');
+      HD15.ring(this, G, HD15.P.holy, 6, 36, { fl: 0.3, w: 1.8, dur: 20 }); SH24.plate(this, C, P, { s: 1.4, dur: 30, hold: 0.7, shine: 1, from: { x: 0, y: 8 }, mv: 5 }); yield* wait(10);
+      HD15.flash(this, C, HD15.P.holy, 30, { dur: 12 }); yield* wait(10); } },
+};
+if (TREE16.live) for (const k in TFX16) { const id = 't_' + k, D = DEF.skills[id], F = TFX16[k]; if (!D) continue; const key = 'hd15_' + k;
+  FX[key] = function* (U, T, u, t) { if (!T) { const L = this.foes ? this.foes().filter(v => !v.gone) : [], g = L.length > 1 ? this.groupOf(L.map(v => v.id)) : L[0]; T = g ? this.center(g) : { x: U.x, y: U.y - 80 }; if (!t) t = g; }
+    if (!u) u = this.H; this.slashOn = 0; this.hd15cast = 1; HD15.forceW = false; yield* F.f.call(this, U, T, u, t); };
+  HD15.old[id] = { fx: D.fx, hitFx: D.hitFx, mv: MOVES[id] ? MOVES[id].fx : null, style: typeof SKILL_STYLE !== 'undefined' ? SKILL_STYLE[id] : null, redo: false }; HD15.ids.push(id);
+  if (HD15.on) { D.fx = key; D.hitFx = null; if (MOVES[id]) MOVES[id].fx = key; if (typeof SKILL_STYLE !== 'undefined') SKILL_STYLE[id] = ['draw', null, 'steel', null]; if (typeof REDO13 !== 'undefined') REDO13.add(id); } }
 </script>
 </body></html>
