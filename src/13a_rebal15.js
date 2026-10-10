@@ -90,5 +90,5 @@ for (const id in HYB15) { const D = DEF.skills[id]; if (!D) { bvErr('hyb15', id)
   const i = D.mods.findIndex(m => m.mul && m.mul.f === 'attrScale'); if (i >= 0) { const m = D.mods[i];
     D.mods.splice(i, 1, { ...m, cond: { ...m.cond, magHi15: 0 } }, { ...m, mul: { f: 'attrScale', v: ['int', 1] }, cond: { ...m.cond, magHi15: 1 } }); } }
 // 遭遇卡・圖鑑：物防和魔防差比較多的魔物，標出哪一邊低（選物理招還是魔法招）
-{ const _f = famText; famText = function (sp) { const t = _f(sp), P = MON_PANEL[sp]; if (!P || !P.def || !P.spd) return t; const r = P.spd / P.def, lean = r <= 0.87 ? '魔防較低' : r >= 1.15 ? '物防較低' : '';
+{ const _f = famText; famText = function (sp) { const t = _f(sp), P = MON_PANEL[(SPECIES[sp] || {}).iro15 || sp]; if (!P || !P.def || !P.spd) return t; const r = P.spd / P.def, lean = r <= 0.87 ? '魔防較低' : r >= 1.15 ? '物防較低' : '';
     return lean ? (t ? t + '　' : '') + lean : t; }; }

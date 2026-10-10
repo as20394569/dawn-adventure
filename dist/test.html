@@ -7934,7 +7934,7 @@ class TitleScene {
     x.drawImage(this.logo, Math.round(W / 2 - this.logo.width / 2), 6 + bob);
     Font.drawC(x, '～異世界冒險RPG～', W / 2, 52 + bob, '#ffe0a0', '#3a1428');
     if (this.stage === 'press' && Math.floor(this.t / 30) % 2 === 0) Font.drawC(x, '按 A 鍵開始', W / 2, 232, '#ffffff', '#1a1024');
-    Font.drawR(x, 'v12.108', W - 3, H - 13, '#b890b0', null);
+    Font.drawR(x, 'v12.109', W - 3, H - 13, '#b890b0', null);
   }
 }
 class IntroScene {
@@ -28424,7 +28424,7 @@ for (const id in HYB15) { const D = DEF.skills[id]; if (!D) { bvErr('hyb15', id)
   D.mods.push({ stage: 'skill', who: 'attacker', atkMul: { f: 'magAtk15' }, cond: { srcIsHero: 1 } });
   const i = D.mods.findIndex(m => m.mul && m.mul.f === 'attrScale'); if (i >= 0) { const m = D.mods[i];
     D.mods.splice(i, 1, { ...m, cond: { ...m.cond, magHi15: 0 } }, { ...m, mul: { f: 'attrScale', v: ['int', 1] }, cond: { ...m.cond, magHi15: 1 } }); } }
-{ const _f = famText; famText = function (sp) { const t = _f(sp), P = MON_PANEL[sp]; if (!P || !P.def || !P.spd) return t; const r = P.spd / P.def, lean = r <= 0.87 ? '魔防較低' : r >= 1.15 ? '物防較低' : '';
+{ const _f = famText; famText = function (sp) { const t = _f(sp), P = MON_PANEL[(SPECIES[sp] || {}).iro15 || sp]; if (!P || !P.def || !P.spd) return t; const r = P.spd / P.def, lean = r <= 0.87 ? '魔防較低' : r >= 1.15 ? '物防較低' : '';
     return lean ? (t ? t + '　' : '') + lean : t; }; }
 const IRO_LOOK15 = { // base: [palette, the base picture's main hue]
   slime: ['金', 219], mush: ['蒼', 61], bee: ['紫', 50], hornHare: ['翠', 30], strawCrow: ['櫻', 300], curlySheep: ['蒼', 36], mossTurtle: ['紫', 63],
@@ -28790,5 +28790,27 @@ for (const m in NEW15) { const [lo, hi, L] = MAP3_15[m], keys = [];
   if (ACC_TRAIT[tr] && ACC_TRAIT[tr][2] && !ACC_TRAIT[tr][2].includes(n)) ACC_TRAIT[tr][2].push(n); if (typeof BP_RARE !== 'undefined') BP_RARE.add(k); }
 ACHIEVEMENTS.push({ id: 'trail15', n: '小路的盡頭', d: '走過風鈴牧草地、霧沼小徑、風之高原、餘燼古城四張地圖。', cat: '探索', ok: st => !!(st.vis && ['meadow15', 'marsh15', 'highland15', 'emberRuin15'].every(m => st.vis[m])) },
   { id: 'trail15b', n: '藏起來的寶物', d: '找到四張小路地圖裡藏起來的飾品。', cat: '探索', ok: st => ['meadow15_i4', 'marsh15_i4', 'highland15_i4', 'emberRuin15_i4'].every(k => (st.flags || {})[k]) });
+function lean15(sp) { const S = SPECIES[sp], P = MON_PANEL[sp]; if (!S || !P) return 0; const n = S.n || '', f = S.fam;
+  if (f === 'spirit' || /魂|靈|鬼|怨|幽|巫|魔女|法師/.test(n)) return -1;
+  if (['construct', 'insect', 'ooze'].includes(f) || /甲|殼|鎧|騎士|兵|岩|石|鐵|龜|蟹|貝|骷髏|骸骨|魔像|哨兵/.test(n)) return 1;
+  if (P.spa > P.atk * 1.15) return -1;
+  return 0; }
+const SPLIT15 = 1.22; // √(物防/魔防)：1.22² ≈ 1.49
+for (const sp in MON_PANEL) { const P = MON_PANEL[sp], L = lean15(sp); if (!L || !P.def || !P.spd || SPECIES[sp] && SPECIES[sp].iro15) continue;
+  const lv = P.lv || 1, k = lv < 12 ? 0 : lv < 30 ? 0.5 : 1; if (!k) continue;
+  const want = Math.pow(SPLIT15, 2 * k), cur = L > 0 ? P.def / P.spd : P.spd / P.def; if (cur >= want) continue;
+  const m = Math.sqrt(P.def * P.spd), r = Math.sqrt(want); if (L > 0) { P.def = Math.round(m * r); P.spd = Math.max(1, Math.round(m / r)); } else { P.spd = Math.round(m * r); P.def = Math.max(1, Math.round(m / r)); } }
+ST11('pguard15', '硬殼', { mods: [{ stage: 'final', who: 'defender', mul: 0.6, cond: { cat: '物', hasPower: 1 } }] });
+ST11('mguard15', '魔障', { mods: [{ stage: 'final', who: 'defender', mul: 0.6, cond: { cat: '特', hasPower: 1 } }] });
+Object.assign(BUFF12, { pguard15: { n: '硬殼', k: 'def', tip: '受到的物理傷害 −40%（改用魔法招）' }, mguard15: { n: '魔障', k: 'def', tip: '受到的魔法傷害 −40%（改用物理招）' } });
+COND.stanceDue15 = (c, v) => { const r = c.core.round; if (r < 3 || (r - 3) % 4) return false; const i = (r - 3) / 4; return v === 'a1' ? i % 2 === 0 : v === 'a2' ? i % 2 === 1 : true; };
+const STANCE_TXT15 = { pguard15: '（身體變得像岩石一樣硬——物理傷害 −40%，換魔法招打吧！）', mguard15: '（四周張開了魔力的屏障——魔法傷害 −40%，換物理招打吧！）' };
+const stanceTr15 = (st, when) => ({ on: EVT.ROUND_START, phase: 'POST', cond: { ownerAlive: 1, stanceDue15: when }, effects: [{ type: 'status', target: 'self', status: st, dur: 2 }, { type: 'message', target: 'self', text: STANCE_TXT15[st] }] });
+defPut('mechanics', 'stanceP15', { make: () => ({ triggers: [stanceTr15('pguard15', 'all')] }) });
+defPut('mechanics', 'stanceM15', { make: () => ({ triggers: [stanceTr15('mguard15', 'all')] }) });
+defPut('mechanics', 'stanceA15', { make: () => ({ triggers: [stanceTr15('pguard15', 'a1'), stanceTr15('mguard15', 'a2')] }) });
+{ const _ue = BD.unitForEnemy; BD.unitForEnemy = function (core, sp, lv, kind, side, idx, o = {}) { const s = _ue.call(this, core, sp, lv, kind, side, idx, o);
+    if (!s || (kind !== 'elite' && kind !== 'boss') || (lv || 0) < 30) return s; const r = s.stats.def / Math.max(1, s.stats.spd);
+    (s.data.mechanics || (s.data.mechanics = [])).push(r >= 1.15 ? 'stanceM15' : r <= 0.87 ? 'stanceP15' : 'stanceA15'); return s; }; }
 </script>
 </body></html>
