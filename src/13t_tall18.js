@@ -16,9 +16,9 @@ const TALL18 = { hud: [] };
 /* v12.130 玩家「戰鬥畫面拉長後上方變得很奇怪」「背景圖片可以根據拉長後的戰鬥畫面調整」：
    不再把最上緣兩列往上拉（會變成一條條直線），改成背景整張配合拉長後的高度畫（見 07a_bscene 的舞台）；
    戰鬥裡蓋滿整個畫面的東西（壓暗・閃光・夜晚・色調）和天氣的範圍也跟著往上延伸。 */
-{ const _dr = Battle.prototype.draw; Battle.prototype.draw = function (x) { const E = TALL_EXT; if (!(E > 0)) return _dr.call(this, x);
+{ const _dr = Battle.prototype.draw; Battle.prototype.draw = function (x) { this.tallFoes18(); const E = TALL_EXT; if (!(E > 0)) return _dr.call(this, x);
     const fr = x.fillRect, rc = x.rect; x.fillRect = function (a, b, c, d) { return a === 0 && b === 0 && c === W && (d === BH || d === H) ? fr.call(this, 0, -E, W, d + E) : fr.call(this, a, b, c, d); };
-    x.rect = function (a, b, c, d) { return a === 0 && b === 0 && c === W && d === BH ? rc.call(this, 0, -E, W, BH + E) : rc.call(this, a, b, c, d); };
+    x.rect = function (a, b, c, d) { return a === 0 && b === 0 && c === W && d > 0 ? rc.call(this, 0, -E, W, d + E) : rc.call(this, a, b, c, d); }; // 整個寬度、從最上面開始的範圍（含魔物的裁切）都往上延伸
     try { return _dr.call(this, x); } finally { delete x.fillRect; delete x.rect; } };
   if (typeof wxOverlay === 'function') { const _wo = wxOverlay; wxOverlay = function (x, k, t, w, h) { if (TALL_EXT > 0 && Game.scene instanceof Battle && h === BH) { x.save(); x.translate(0, -TALL_EXT); try { return _wo(x, k, t, w, h + TALL_EXT); } finally { x.restore(); } } return _wo(x, k, t, w, h); }; } }
 
@@ -29,3 +29,13 @@ const TALL18 = { hud: [] };
   if (typeof KB12 !== 'undefined' && KB12.plates) { const _pl = KB12.plates; KB12.plates = function (x, a0) {
       if (this.fxHold18 > 0 && !(this.fx18 > 0)) this.fxHold18--; const want = this.fx18 > 0 || this.fxHold18 > 0 ? 0.25 : 1, cur = this.pl18 ?? 1;
       this.pl18 = cur + (want - cur) * (want < cur ? 0.35 : 0.18); return _pl.call(this, x, a0 * this.pl18); }; } }
+
+/* ---------- v12.133 魔物跟主角的距離跟著拉長（玩家：「拉長後怪物跟玩家距離沒拉長，比例奇怪」） ----------
+   背景整張照拉長後的高度畫，魔物卻還站在原本的格子 → 沒有站在背景裡原本那塊地上，跟主角也一樣近。
+   現在魔物的腳照背景同樣的比例往上移：原本在第 y 列的地方，拉長後在 y − 多出來的列數 ×（1 − y ÷ 舞台高）。
+   主角在最下面、本來就幾乎不動，維持原位（下面的狀態卡、各種特效都以主角的位置為準）。
+   畫面高度在戰鬥中改變（轉向・視窗大小）時也會重新排。 */
+const tallY18 = y => { const E = TALL_EXT; return E > 0 ? Math.round(y - E * (1 - y / BH)) : y; };
+{ const B = Battle.prototype, _ly = B.layout;
+  B.layout = function (snap) { _ly.call(this, snap); for (const v of this.foes(true)) { v.foot0 = v.foot; v.foot = tallY18(v.foot); } this.tallE18 = TALL_EXT; };
+  B.tallFoes18 = function () { if (this.tallE18 === TALL_EXT) return; this.tallE18 = TALL_EXT; for (const v of this.foes(true)) if (v.foot0 != null) v.foot = tallY18(v.foot0); }; }

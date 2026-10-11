@@ -81,7 +81,7 @@ KB12.plates = function (x, a0) { const all = this.foes(), F = all.filter(v => !v
 KB12.intents = function (x) { const core = this.core; if (!core || !core.plan || (typeof FXT13 !== 'undefined' && FXT13.on) || typeof intentOf14 !== 'function') return;
   for (const v of this.foes()) { const u = core.byId[v.id]; if (!u || v.gone || v.alpha < 0.5 || v.st.charging) continue; const I = intentOf14(core, u, core.plan[v.id] || (core.hasStatus(u, 'rise14') ? {} : null)); if (!I) continue;
     const img = typeof INT_PX14 !== 'undefined' ? (INT_PX14[I.k] || INT_PX14.atk) : null, col = (typeof INT_COL14 !== 'undefined' && INT_COL14[I.k]) || KB12.txt, tw = I.t ? Math.ceil(Font.width(I.t, KB12.M)) + 3 : 0, w = 11 + 4 + tw + 2, h = 13;
-    const X = Math.round(clamp(v.x + v.off.x - w / 2, 2, W - 2 - w)), Y = Math.max(15, Math.round(v.foot - v.bbh - 17 + v.sink * (v.sink < 0 ? 1 : 0)));
+    const X = Math.round(clamp(v.x + v.off.x - w / 2, 2, W - 2 - w)), Y = Math.max(15 - (TALL_EXT || 0), Math.round(v.foot - v.bbh - 17 + v.sink * (v.sink < 0 ? 1 : 0)));
     KB12.panel(x, X, Y, w, h, { r: 6.5, rim: I.k === 'heavy' ? '#ff9a40' : 'rgba(255,255,255,0.2)', lw: I.k === 'heavy' ? 1 : 0.6 });
     if (img) { x.imageSmoothingEnabled = false; x.drawImage(img, X + 3, Y + 1); } if (I.t) KB12.tl(x, I.t, X + 15, Y + h / 2, col, KB12.M); } };
 Battle.prototype.drawBoxF = function (x) { if (this.boxF < -20) return; const a0 = clamp((this.boxF + 30) / 34, 0, 1); KB12.plates.call(this, x, a0); KB12.intents.call(this, x); KB12.topRow.call(this, x); this.drawSpd12(x); };
