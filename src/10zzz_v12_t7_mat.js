@@ -34,7 +34,7 @@ smithMenu = function* (f) { const st = Game.st;
 // people handing over materials: 「得到了藥草×3！」→「得到了藥草×3（藥材 +3）！」
 { const NM = Object.keys(MATCAT11).filter(k => ITEMS[k]).sort((a, b) => ITEMS[b].n.length - ITEMS[a].n.length), BY = {}; for (const k of NM) BY[ITEMS[k].n] = k;
   const RX = new RegExp('((?:撿到|得到|拿到|收到|採到)了?(?:素材)?[：]?)(「)?(' + NM.map(k => ITEMS[k].n.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|') + ')(」)?(?:×(\\d+))?(?!（)', 'g');
-  const deco = s => typeof s !== 'string' || /（(金屬|布料|獸材|木料|藥材|魔素) \+/.test(s) ? s : s.replace(RX, (m, a, o, n, cl, c) => { const k = BY[n], q = +(c || 1); return a + (o || '') + n + (cl || '') + (c ? '×' + c : '') + '（' + MATCAT11[k] + ' +' + q * matVal12(k) + '）'; });
+  const deco = s => typeof s !== 'string' || /（(金屬|布料|獸材|木料|藥材|魔素) \+|（可換/.test(s) ? /* v12.124：matLine12 已經寫了「（可換…點）」就不要再加 */ s : s.replace(RX, (m, a, o, n, cl, c) => { const k = BY[n], q = +(c || 1); return a + (o || '') + n + (cl || '') + (c ? '×' + c : '') + '（' + MATCAT11[k] + ' +' + q * matVal12(k) + '）'; });
   const _ig = itemGet; itemGet = function* (text, ...a) { yield* _ig(deco(text), ...a); }; }
 // the bag: parts get their own page, and say which crystal they are for
 ITEM_CATS.splice(ITEM_CATS.indexOf('採集素材') + 1, 0, '部位素材'); ITEM_CAT_COL['部位素材'] = '#e8a0c8';
