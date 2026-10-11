@@ -73,7 +73,7 @@ const BASE11 = { weapon: {}, armor: { 重甲: { head: [], body: [], feet: [] }, 
 { const byN = {}; for (const k in GEAR) { const G = GEAR[k]; if (G.slot && G.slot !== 'acc' && !byN[G.n]) byN[G.n] = k; }
   const mk = (n, slot) => { n = n.replace('★', ''); if (byN[n]) return byN[n]; const X = NEW11[n]; if (!X) { bvErr('r9w', 'base ' + n + ' missing'); return null; }
     const [key, sl, from, d] = X, src = byN[from], S = GEAR[src] || {}; GEAR[key] = { n, slot: sl, t: 1, st: {}, d, kind: S.kind, look: S.look, spr: S.spr };
-    if (typeof WEAPON_PX !== 'undefined' && WEAPON_PX[src]) WEAPON_PX[key] = WEAPON_PX[src];
+    if (typeof WEAPON_PX !== 'undefined' && WEAPON_PX[src] && !WEAPON_PX[key]) WEAPON_PX[key] = WEAPON_PX[src]; // v12.134 已經有自己的圖（Codex AS・AT）就不借
     if (typeof ARMOR_PX !== 'undefined') for (const k in ARMOR_PX) if (k.startsWith(src + '_')) ARMOR_PX[key + k.slice(src.length)] = ARMOR_PX[k];
     byN[n] = key; return key; };
   const scale = (tbl, t) => { const o = {}; for (const s in tbl) { const v = tbl[s][t - 1]; if (v) o[s] = Math.max(1, Math.round(v * BASEMUL11)); } return o; };

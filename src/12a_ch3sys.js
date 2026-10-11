@@ -9,6 +9,6 @@ const T8W13 = ['tideSword13', 'waveDagger13', 'surgeAxe13', 'tridentSpear13', 'c
 function seaTint13(im) { const c = mkCanvas(im.width, im.height), x = c.getContext('2d'); x.drawImage(im, 0, 0); const id = x.getImageData(0, 0, c.width, c.height), d = id.data;
   for (let i = 0; i < d.length; i += 4) { if (!d[i + 3]) continue; const [h, s, l] = rgb2hsl(d[i], d[i + 1], d[i + 2]); if (s < 0.12) continue; const [r, g, b] = hex2rgb(hsl2hex(185 + (h % 40) - 20, Math.min(1, s * 1.1), l)); d[i] = r; d[i + 1] = g; d[i + 2] = b; }
   x.putImageData(id, 0, 0); c.ok = true; return c; }
-if (typeof WEAPON_PX !== 'undefined') for (const k of T8W13) { const src = WEAPON_PX[k]; if (!src) continue;
+if (typeof WEAPON_PX !== 'undefined') for (const k of T8W13) { const src = WEAPON_PX[k]; if (!src || (typeof WEAPON_PX_SRC !== 'undefined' && WEAPON_PX_SRC[k])) continue; /* v12.134 Codex 畫了自己的圖的不再染色 */
   const done = () => { try { WEAPON_PX[k] = seaTint13(src); } catch (e) { } };
   if (src.ok || (src.complete && src.naturalWidth) || src.getContext) done(); else src.addEventListener('load', () => setTimeout(done, 0)); }
