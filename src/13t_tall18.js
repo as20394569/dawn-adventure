@@ -9,7 +9,7 @@ const TALL18 = { hud: [] };
   const later = f => function (x, ...a) { if (!(TALL_EXT > 0) || TALL18.now) return f.call(this, x, ...a); const self = this; TALL18.hud.push(() => f.call(self, x, ...a)); };
   if (typeof KB12 !== 'undefined' && KB12.topRow) KB12.topRow = later(KB12.topRow);
   if (B.drawSpd12) B.drawSpd12 = later(B.drawSpd12);
-  if (typeof wxIcon === 'function') { const _wi = wxIcon; wxIcon = function (x, k, X, Y) { if (TALL_EXT > 0 && !TALL18.now && Game.scene instanceof Battle && Y <= 4) { TALL18.hud.push(() => _wi(x, k, X, Y)); return; } return _wi(x, k, X, Y); }; }
+  if (typeof wxIcon === 'function') { const _wi = wxIcon; wxIcon = function (x, k, X, Y) { if (TALL_EXT > 0 && !TALL18.now && Game.scene instanceof Battle && (Y <= 4 || (X === W - 13 && Y === 46))) { /* v12.139 天氣圖示原本叫在 (W-13,46)、之後才被搬到 ×2 左邊，也要一起畫到最上緣 */ TALL18.hud.push(() => _wi(x, k, X, Y)); return; } return _wi(x, k, X, Y); }; }
   const _r = render; render = function () { TALL18.hud = []; _r(); const E = TALL_EXT; if (!(E > 0) || !(Game.scene instanceof Battle) || Game.fade > 0.5 || !TALL18.hud.length) return;
     ctx.save(); ctx.setTransform(SCALE, 0, 0, SCALE, 0, 0); ctx.imageSmoothingEnabled = false; const _tr = touchRegion; touchRegion = (X, Y, w, h, fn) => _tr(X, Y - E, w, h, fn); TALL18.now = 1;
     try { for (const f of TALL18.hud) f(); } finally { TALL18.now = 0; touchRegion = _tr; ctx.restore(); } }; }
