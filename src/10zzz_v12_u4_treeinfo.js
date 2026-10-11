@@ -5,6 +5,9 @@
    2. 中間：效果說明（白字，放不下才縮小字）。
    3. 最下面一行：左邊等級和狀態（Lv1/5・還沒學），右邊要按什麼（A：學習（1 點））；前置條件不夠時寫在這行上面（橘字）。
    另外：換行時數字・英數不再被拆開（全遊戲的文字都適用）。 */
+// v12.123 玩家「省力的技能說明」：「4%／級」看不出現在到底多少 → 寫出現在的數字，括號裡寫每級加多少、下一級（或最高）多少
+function perLv12(d, lv, max = 5) { const m = d.match(/(\d+)(%?)／級/); if (!m) return d + '。'; const per = +m[1], u = m[2], k = Math.max(1, lv), after = d.slice(m.index + m[0].length);
+  return d.replace(m[0], per * k + u + (after && !/^[，。、）]/.test(after) ? ' ' : '')) + '。（每級 +' + per + u + (lv >= max ? '，已滿級）' : lv ? '，下一級 ' + per * (lv + 1) + u + '）' : '，最高 ' + per * max + u + '）'); }
 function treeInfoParts12(kind, N, st = Game.st) { const T = TREE11[kind], lv = N.t === 'reset' ? 0 : trLv11(N.key, st), s = N.t === 'reset' ? null : nodeState11(kind, N, st), P = { tags: [], text: '', lv: '', act: '', need: '' };
   if (N.t === 'reset') { P.tags = ['重置']; P.text = treeInfo11(kind, N, st); P.act = 'A：重置'; return P; }
   if (N.t === 'sk') { const D = DEF.skills[N.key], lvx = Math.max(1, lv), mp = (D.costs || []).find(c => c.res === 'mp');
@@ -16,8 +19,8 @@ function treeInfoParts12(kind, N, st = Game.st) { const T = TREE11[kind], lv = N
   else if (N.t === 'sp') { const [n, k] = T.sp[N.j]; P.tags = ['特技', '普攻累積後自動發動']; P.text = '「' + n + '」' + SP_TXT11[k] + '。威力跟著武器的階級。';
     if (lv) { const on = tr11(st).eq[kind] === N.j; P.lv = on ? '裝備中' : '已學會'; P.act = on ? 'A：卸下' : 'A：裝上'; } }
   else if (N.t === 'trait') { P.tags = ['特性', '用' + kind + '時有效']; P.text = T.trait + '。'; }
-  else if (N.t === 'mast') { P.tags = ['精通']; P.text = (T.dual ? T.mastD : '用' + kind + '時傷害 +3%／級') + '。'; }
-  else if (N.t === 'third') { P.tags = ['被動', '用' + kind + '時有效']; P.text = T.third[0] + '：' + T.third[1] + '。'; }
+  else if (N.t === 'mast') { P.tags = ['精通']; P.text = perLv12(T.dual ? T.mastD : '用' + kind + '時傷害 +3%／級', lv); }
+  else if (N.t === 'third') { P.tags = ['被動', '用' + kind + '時有效']; P.text = T.third[0] + '：' + perLv12(T.third[1], lv); }
   else if (N.t === 'cp') { P.tags = ['共通', '用什麼武器都有效']; P.text = N.n + '：' + N.d + '。'; }
   if (!P.lv) P.lv = N.max > 1 ? 'Lv' + lv + '/' + N.max + (lv ? '' : '・還沒學') : lv ? '已學會' : '還沒學';
   if (!P.act && s) { if (s.ok) P.act = 'A：' + (lv ? '升級' : '學習') + '（1 點）'; else if (!s.full) P.need = s.why; }

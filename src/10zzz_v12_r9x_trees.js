@@ -505,13 +505,18 @@ const HAND11 = { L: { idle1: [11.5, 38.5], idle2: [11.5, 39.5], attack1: [10.5, 
 
 /* ---------- 選單→技能：技能編排／武器技能樹 ---------- */
 function treeRows11(kind, st = Game.st) { return treeNodes11(kind).concat([{ t: 'reset', key: 'reset', n: '重置技能點' }]); }
+// v12.123 玩家「省力的技能說明」：「4%／級」這種寫法看不出現在到底多少 → 直接寫出現在的數字、每級加多少、下一級／滿級多少
+function thirdText11(T, kind, lv) { const [n, d] = T.third, m = d.match(/(\d+)(%?)／級/), on = '（用' + kind + '時有效）';
+  if (!m) return n + '：' + d + on + '。現在 Lv' + lv + '/5。'; const per = +m[1], u = m[2], v = k => d.replace(m[0], (per * k) + u);
+  return lv ? n + '：' + v(lv) + on + '。\n現在 Lv' + lv + '/5' + (lv < 5 ? '，每升一級 +' + per + u + '，下一級：' + (per * (lv + 1)) + u + '。' : '（滿級）。')
+    : n + '：' + v(1) + on + '。\n每升一級 +' + per + u + '，最高 Lv5：' + (per * 5) + u + '。'; }
 function treeInfo11(kind, N, st = Game.st) { const T = TREE11[kind], lv = trLv11(N.key, st), s = N.t === 'reset' ? null : nodeState11(kind, N, st);
   if (N.t === 'reset') return '把全部技能點收回來重新分配（所有樹）。第一次免費，之後要用「遺忘之書」（有 ' + ((st.bag || {}).talentReset || 0) + ' 個；沒有的話用重生之水）。';
   let t = '';
   if (N.t === 'cp') t = N.n + '：' + N.d + '。' + (N.max > 1 ? '現在 Lv' + lv + '/' + N.max + '。' : lv ? '（已學會）' : '') + '（共通：用什麼武器都有效）';
   else if (N.t === 'trait') t = '特性：' + T.trait + '。（用' + kind + '時有效）';
   else if (N.t === 'mast') t = N.n + '：' + (T.dual ? T.mastD : '用' + kind + '時傷害 +3%／級') + '。現在 Lv' + lv + '/5。';
-  else if (N.t === 'third') t = T.third[0] + '：' + T.third[1] + '（用' + kind + '時有效）。現在 Lv' + lv + '/5。';
+  else if (N.t === 'third') t = thirdText11(T, kind, lv);
   else if (N.t === 'sk') t = treeSkillText11(N.key, st) + (lv ? '' : '（還沒學）');
   else if (N.t === 'sp') { const [n, k] = T.sp[N.j]; t = '特技「' + n + '」：普通攻擊累積層數後自動發動：' + SP_TXT11[k] + '。威力跟著武器的階級。' + (lv ? (tr11(st).eq[kind] === N.j ? '【裝備中】' : '　A：裝上') : ''); }
   if (s && !s.ok && !s.full) t += '\n（' + s.why + '）'; else if (s && s.ok) t += '\nA：' + (lv ? '升級' : '學習') + '（1 點）';
