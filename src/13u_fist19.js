@@ -11,4 +11,7 @@
     const rows = ['..aaa..', '..abca.', '.aacca.', '.adada.', '.aededa', '.aeeeea', '..aceea', '...aca.', '....a..'], pal = { a: '#2a2238', b: '#e76c63', c: '#78303e', d: '#ffab86', e: '#b5454e' };
     const R = spriteFrom(rows, pal), Lf = flipCanvas(R), pair = mkCanvas(R.width * 2 + 2, R.height), x = pair.getContext('2d');
     x.drawImage(Lf, 0, 0); x.drawImage(R, R.width + 2, 0); pair.ok = true; pair.glove = { R, L: Lf }; GLOVE_PX.coralFist13 = pair; }
-  if (typeof GLOVE_PX !== 'undefined') for (const k in GLOVE_PX) if (SRC[k]) { const im = new Image(); im.onload = () => { im.ok = true; }; im.src = SRC[k]; WEAPON_PX[k] = im; } }
+  if (typeof GLOVE_PX !== 'undefined') for (const k in GLOVE_PX) {
+    if (SRC[k]) { const im = new Image(); im.onload = () => { im.ok = true; }; im.src = SRC[k]; WEAPON_PX[k] = im; }
+    else if (typeof WEAPON_PX_ROWS !== 'undefined' && WEAPON_PX_ROWS[k]) { const [cols, rows] = WEAPON_PX_ROWS[k], pal = {}; // 頭目掉落的雷鳴拳套：它自己的圖（Codex T）
+      cols.forEach((h, i) => pal['abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'[i]] = h); const c = spriteFrom(rows, pal); c.ok = true; WEAPON_PX[k] = c; } } }
