@@ -266,7 +266,7 @@ class Overworld {
   }
   /* ---------- draw ---------- */
   draw(x) {
-    const p = this.p; let camX = Math.round(p.px) - CAM_X, camY = Math.round(p.py) - CAM_Y + Math.round(this.camDY || 0);
+    const p = this.p; let camX = Math.round(p.px) - CAM_X + Math.round(this.camDX || 0), camY = Math.round(p.py) - CAM_Y + Math.round(this.camDY || 0);
     if (!this.map.d.outdoor && this.map.w * 16 <= W) camX = Math.round((this.map.w * 16 - W) / 2);
     if (!this.map.d.outdoor && this.map.h * 16 <= H - TB_H) camY = Math.round((this.map.h * 16 - (H - TB_H)) / 2) - 8;
     this.camX = camX; this.camY = camY;

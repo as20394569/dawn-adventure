@@ -271,8 +271,10 @@ Object.assign(Events, {
     const st = Game.st, f = st.flags; if (f.creekTop || f.blackCatfish) return null;
     return (function* () {
       f.creekTop = 1; yield* wait(10);
+      yield* owPanTo(ow, 12, 4, 30); // v12.125 鏡頭移到潭中央的大鯰身上
       yield* sayAll(['源頭的水潭黑得像墨汁一樣。水神祠的石燈籠全都熄了。', '潭水中央，一個巨大的影子慢慢繞著圈子……']);
       ow.shake = 14; Sound.sfx('water'); yield* wait(20); yield* say('一條大得嚇人的鯰魚從潭底探出了頭！牠的鬍鬚上纏著一塊黑色的結晶……');
+      yield* wait(10); yield* owPanBack(ow, 24);
     })();
   },
   *eliteWin_blackCatfish(ow) {

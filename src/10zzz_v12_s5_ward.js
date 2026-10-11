@@ -208,7 +208,8 @@ delete BADGE_OF.barrier;
   const _sg = H.statusGone; H.statusGone = function* (e, s, t, P, expire) { if (!t || P.status !== 'barrier') return yield* _sg.call(this, e, s, t, P, expire);
     delete t.st.barrier; delete t.st.ward; if (P.why === 'down') return; const C = this.center(t);
     if (P.why === 'broken') { Sound.sfx('rock'); if (this.sparks) this.sparks(C.x, C.y, 12, ['#c8e0ff', '#80a8e0'], 2.8); yield* this.msg(t.n + '的護盾被打破了！', { hold: 20 }); }
-    else yield* this.msg(t.n + '的護盾消失了。' + (!t.hero && t.charging ? '（沒能打破，蓄力繼續）' : ''), { hold: 18 }); };
+    else { /* v12.125 玩家：放大招那一下卻寫「蓄力繼續」→ 看引擎：蓄力還在才寫繼續，已經放出來就寫大招來了（引擎跑在畫面前面，這時候它停在下一回合開頭） */ const cu = this.core && this.core.byId[t.id], cont = cu && this.core.hasStatus(cu, 'charging');
+      yield* this.msg(t.n + '的護盾消失了。' + (!t.hero && t.charging ? (cont ? '（沒能打破，蓄力繼續）' : '（沒能打破——大招要來了！）') : ''), { hold: 18 }); } };
   const _dm = H.DAMAGE; H.DAMAGE = function* (e, s, t, P) {
     if (t && P.ward > 0) { t.st.ward = P.wardLeft || 0; Sound.sfx('shield'); const C = this.center(t); this.spawn({ k: 'hex', x: C.x, y: C.y, r0: 22, r1: 10, c: '#a8d8ff', life: 10 });
       this.popNum(t, '盾 −' + P.ward, '#a8e0ff', P.wardMul > 1 ? '×' + P.wardMul : null, { small: true, dy: P.amount > 0 ? -14 : 0 }); }
