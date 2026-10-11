@@ -117,7 +117,7 @@ class Battle {
     if (!this.hd2d) hd2dInit(this); const LK = this.hd2d.L;
     const redraw = (A, im) => !im || A.state !== 'idle' || (this.t & 1) === 0 || A.cvD !== hdD();
     const sx = this.shake > 0 ? rnd(-3, 3) : 0, sy = this.shake > 0 ? rnd(-2, 2) : 0;
-    x.save(); x.translate(sx, sy); x.imageSmoothingEnabled = true; x.drawImage(hd2dStageFor(this), 0, 0, W, BH); x.imageSmoothingEnabled = false; hd2dMotes(this, x, false);
+    x.save(); x.translate(sx, sy); x.imageSmoothingEnabled = true; x.drawImage(hd2dStageFor(this), 0, -TALL_EXT, W, BH + TALL_EXT); /* v12.130 戰鬥畫面拉長：背景整張配合拉長後的高度 */ x.imageSmoothingEnabled = false; hd2dMotes(this, x, false);
     // monsters, far ones first
     const foes = this.foes(true).filter(v => v.alpha > 0).sort((a, b) => a.foot - b.foot);
     for (const v of foes) {
