@@ -29821,4 +29821,19 @@ EBX.T = { // id: '動作 顏色 選項…'（選項：big small n=3 x2 kind=rock
       if (s && !s.hero && MFX[o]) { yield* MFX.tell.call(this, U, T, s); return yield* MFX[o].call(this, U, T, s, t); }
       return yield* (FX[o] || FX.hit).call(this, U, T, u, t); };
     if (EBX18.live) D.fx = key; } }
+const EBXF18 = { on: false, q: [], all: [] };
+if (EBX18.live && typeof fxtMenu13 === 'function') {
+  { const _d = BAI.decide; BAI.decide = function (core, u) { if (!EBXF18.on || u.hero) return _d.call(this, core, u); if (!EBXF18.q.length) EBXF18.q = EBXF18.all.slice(); const id = EBXF18.q.shift(), D = DEF.skills[id]; if (!D) return _d.call(this, core, u);
+      if (!u.skills.includes(id)) u.skills.push(id); return { actor: u.id, type: 'skill', skill: id, targets: D.target === 'self' ? [u.id] : [core.byId.H.id] }; }; }
+  { const P = BattleCore.prototype, _pr = P.planRound, _run = P.doRun;
+    P.planRound = function () { if (EBXF18.on) for (const k in this.byId) { const v = this.byId[k]; if (this.isUp(v)) v.res.hp = v.max.hp; } return _pr.apply(this, arguments); };
+    P.doRun = function (u) { if (!EBXF18.on) return _run.call(this, u); this.escTries++; this.emit(EVT.ESCAPE, { src: u, tgts: [u], payload: { who: 'hero', ok: true, boss: false } }, () => { this.escaped = true; }); }; }
+  const ebxList18 = () => { const L = []; for (const sp in SPECIES) { const S = SPECIES[sp]; if (!S.elite && !S.boss) continue; let f; try { f = makeFoe(sp, (MON_PANEL[sp] || {}).lv || 20, S.boss ? 'boss' : 'elite'); } catch (e) { continue; }
+      const mv = (f.moves || []).map(x => x.id).filter(id => EBX.T[id]); if (mv.length) L.push({ sp, n: S.n, boss: !!S.boss, mv }); } return L; };
+  function* ebxMenu18() { const L = ebxList18(); let i = 0;
+    while (true) { const r = yield* choose(L.map(q => ({ t: (q.boss ? '頭目　' : '菁英　') + q.n + '（' + q.mv.length + '招）' })), { x: 8, y: 26, w: W - 16, cancel: true, index: i, title: '選一隻菁英・頭目' });
+      if (r < 0) return; i = r; const q = L[r], st = Game.st; st.lv = Math.max(st.lv || 1, 40); EBXF18.on = true; EBXF18.all = q.mv.slice(); EBXF18.q = q.mv.slice();
+      try { yield* Game.scene.battleScript({ sp: q.sp, lv: (MON_PANEL[q.sp] || {}).lv || 30, kind: q.boss ? 'boss' : 'elite', id: 'ebxTest_' + q.sp }); } finally { EBXF18.on = false; } } }
+  const _m = fxtMenu13; fxtMenu13 = function* () { while (true) { const r = yield* choose(['主角的技能特效', '菁英・頭目的招式特效'], { x: 10, y: 80, w: W - 20, cancel: true, title: '特效測試' }); if (r === 0) return yield* _m(); if (r === 1) yield* ebxMenu18(); } };
+}
 </script>
