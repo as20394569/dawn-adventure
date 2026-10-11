@@ -29598,7 +29598,7 @@ const EBX = { P: {}, S: {}, T: {} };
     rock: K({ core: '#fff4e0', mid: '#d8b07a', glow: '#8a5a2a', edge: '#2a1806' }), sand: K({ core: '#fffbe8', mid: '#f0d080', glow: '#b08a30', edge: '#3a2a08' }),
     mud: K({ core: '#f0e0c0', mid: '#9a7a4a', glow: '#5a3a14', edge: '#1a0e04' }), poison: P0.venom, toxic: K({ core: '#f8e8ff', mid: '#b86ae0', glow: '#5a8a1a', edge: '#1a0a24' }),
     dark: K({ core: '#f0e0ff', mid: '#9a4ae0', glow: '#4a0a8a', edge: '#0a0014' }), black: P0.black, ghost: K({ core: '#f0fff8', mid: '#7affd0', glow: '#1aa08a', edge: '#04302a' }),
-    holy: K(P0.holy), star: K(P0.star16 || P0.star), moon: K(P0.moon16 || P0.cyan), volt: P0.volt, wind: K(P0.wind), crystal: K({ core: '#ffffff', mid: '#b8f0ff', glow: '#4ab0e0', edge: '#0a3a5a' }),
+    holy: K(P0.holy), star: K(P0.star16 || P0.star), moon: K({ core: '#ffffff', mid: '#e4eeff', glow: '#8aa8ff', edge: '#1a2a5a' }), volt: P0.volt, wind: K(P0.wind), crystal: K({ core: '#ffffff', mid: '#b8f0ff', glow: '#4ab0e0', edge: '#0a3a5a' }),
     brass: K(P0.brass16 || P0.gold), steam: K(P0.steam16 || P0.white), arcane: K(P0.arcane || P0.violet), pink: K(P0.pink), gold: K(P0.gold), maple: K({ core: '#fff0d8', mid: '#ff8a3a', glow: '#d0301a', edge: '#4a0a04' }),
     life: K(P0.life || P0.wind), gate: K({ core: '#ffffff', mid: '#ffe0a0', glow: '#b060ff', edge: '#2a0a4a' }), pearl: K({ core: '#ffffff', mid: '#fff4fa', glow: '#e0b0d0', edge: '#4a3a4a' }),
     feather: K({ core: '#e8e8f0', mid: '#5a5a6a', glow: '#2a2a3a', edge: '#08080e' }), silk: K({ core: '#ffffff', mid: '#f4f4f8', glow: '#b8b8c8', edge: '#3a3a4a' }),
@@ -29634,11 +29634,12 @@ const EBX = { P: {}, S: {}, T: {} };
     x.restore(); E.gl(x, X, Y, r * 1.8, pal.glow, al * 0.35); };
   E.lob = (b, A, B, pal, o = {}) => { const dl = o.delay || 0, dur = o.dur || 16, h = o.h ?? 30, r = o.r || 5, kind = o.kind || 'orb', spin = o.spin ?? 0.4, an = Math.atan2(B.y - A.y, B.x - A.x);
     return HD15.add(b, { x: A.x, y: A.y, delay: dl, life: dl + dur, draw: (x, p, k, t) => { const s = cl(t / dur), X = A.x + (B.x - A.x) * s, Y = A.y + (B.y - A.y) * s - Math.sin(s * Math.PI) * h;
+      if (o.streak) { const s0 = Math.max(0, s - 0.25); E.stroke(x, [[A.x + (B.x - A.x) * s0, A.y + (B.y - A.y) * s0], [X, Y]], pal, Math.max(1, r * 0.35), 0.5); }
       for (let j = 1; j <= 3; j++) { const s2 = Math.max(0, s - j * 0.06); E.gl(x, A.x + (B.x - A.x) * s2, A.y + (B.y - A.y) * s2 - Math.sin(s2 * Math.PI) * h, r * (1.6 - j * 0.3), pal.glow, 0.25); }
       E.obj(x, kind, X, Y, r, kind === 'spike' || kind === 'knife' ? an : t * spin, pal, 1); } }); };
   E.fall = (b, T, pal, n, o = {}) => { const sp = o.spread ?? 34, gap = o.gap ?? 2, r = o.r || 4, kind = o.kind || 'spike', dur = o.dur || 12;
     for (let i = 0; i < n; i++) { const dl = (o.delay || 0) + i * gap, X = T.x + R(-sp, sp), Y = T.y + R(-10, 16), A = { x: X + (o.slant ?? -14), y: -14 };
-      E.lob(b, A, { x: X, y: Y }, pal, { delay: dl, dur, h: 0, r: r * R(0.8, 1.25), kind, spin: kind === 'spike' ? 0 : 0.3 });
+      E.lob(b, A, { x: X, y: Y }, pal, { delay: dl, dur, h: 0, r: r * R(0.8, 1.25), kind, spin: kind === 'spike' ? 0 : 0.3, streak: 1 });
       HD15.flash(b, { x: X, y: Y }, pal, 16 + r * 2, { dur: 8, delay: dl + dur - 1 }); if (i % 2 === 0) HD15.sparks(b, { x: X, y: Y }, 3, pal, { spd: 2, life: 10, g: 0.1, delay: dl + dur }); } };
   E.gring = (b, G, pal, r0, r1, o = {}) => { const dl = o.delay || 0, dur = o.dur || 18; return HD15.add(b, { x: G.x, y: G.y, delay: dl, life: dl + dur, draw: (x, p, k) => { const r = r0 + (r1 - r0) * eo(k), f = 1 - ei(k);
     x.globalCompositeOperation = 'lighter'; x.globalAlpha = f; x.strokeStyle = pal.mid; x.lineWidth = (o.w || 2.5) * (1 - 0.5 * k); x.beginPath(); x.ellipse(G.x, G.y, r, r * 0.32, 0, 0, 7); x.stroke(); x.globalAlpha = 0.4 * f; x.strokeStyle = pal.glow; x.lineWidth = 6; x.stroke(); } }); };
@@ -29709,12 +29710,12 @@ const EBX = { P: {}, S: {}, T: {} };
       yield* wait((o.dur || 16) + (n - 1) * 4); Sound.sfx(o.snd || 'hitSuper'); HD15.flash(this, T, V, 40 * s, { dur: 12 }); HD15.sparks(this, T, 10, V, { spd: 2.6, life: 18, g: 0.16 });
       if (o.smoke) HD15.smoke(this, T, 6, { col: o.smoke, r: 24 * s, sz: 12, spd: 0.8, up: 0.3, life: 28 }); E.hit(this, T, V, s); yield* wait(10); },
     *beam(U, T, u, P, o) { const s = sz(o); HD15.dim(this, o.big ? 0.45 : 0.25, 44); yield* E.tell(this, U, P, 12); Sound.sfx(o.snd || 'mana');
-      if (o.prism) { const C = [E.pal('crystal'), E.pal('pink'), E.pal('gold')]; C.forEach((c, i) => E.beam(this, { x: U.x + (i - 1) * 8, y: U.y }, { x: T.x + (i - 1) * 6, y: T.y }, c, { w: 6 * s, dur: 24, delay: i * 2 })); }
+      if (o.prism) { const C = [E.pal('crystal'), E.pal('pink'), E.pal('gold')]; C.forEach((c, i) => E.beam(this, { x: U.x + (i - 1) * 16, y: U.y }, { x: T.x + (i - 1) * 4, y: T.y }, c, { w: 5 * s, dur: 24, delay: i * 2 })); }
       else E.beam(this, U, T, P, { w: 10 * s, dur: 24 }); yield* wait(10); HD15.flare(this, T, P, 50 * s, { rot: 0, dur: 16 }); E.hit(this, T, P, s); yield* wait(14); },
     *breath(U, T, u, P, o) { const s = sz(o); if (o.big) HD15.dim(this, 0.4, 50); yield* E.tell(this, U, P, 8); Sound.sfx(o.snd || 'fire'); E.cone(this, { x: U.x, y: U.y + 8 }, T, P, Math.round(26 * s), { kind: o.kind || 'flame', span: 20, sz: 10 * s });
       yield* wait(18); if (o.kind !== 'bubble' && o.kind !== 'cloud') HD15.flames(this, E.ground(T), 7, P, { w: 60 * s, h: 22 * s }); E.hit(this, T, P, s); yield* wait(12); },
     *rain(U, T, u, P, o) { const s = sz(o), n = Math.round((o.n || 12) * s); if (o.big) HD15.dim(this, 0.4, 50); yield* E.tell(this, U, P, 6); Sound.sfx(o.snd || 'wind');
-      E.fall(this, T, P, n, { kind: o.kind || 'spike', r: (o.r || 4) * s, spread: 34 * s, gap: 2 }); yield* wait(12 + n * 2); Sound.sfx(o.big ? 'quake' : 'hitSuper'); if (o.quake) { HD15.cracks(this, E.ground(T), 6, P, { len: 40 }); this.shake = 12; } E.hit(this, T, P, s * 1.1); yield* wait(12); },
+      E.fall(this, T, P, n, { kind: o.kind || 'spike', r: (o.r || 6) * s, spread: 34 * s, gap: 2 }); yield* wait(12 + n * 2); Sound.sfx(o.big ? 'quake' : 'hitSuper'); if (o.quake) { HD15.cracks(this, E.ground(T), 6, P, { len: 40 }); this.shake = 12; } E.hit(this, T, P, s * 1.1); yield* wait(12); },
     *quake(U, T, u, P, o) { const s = sz(o), G = E.ground(T); Sound.sfx('quake'); this.shake = Math.round(14 * s); HD15.cracks(this, G, 8, P, { len: 44 * s }); E.gring(this, G, P, 6, 70 * s, { dur: 22 }); E.gring(this, G, P, 6, 50 * s, { dur: 18, delay: 6 });
       if (o.spikes) HD17.spikes(this, G, P, { n: 5, spread: 0.4 }); if (o.roots) for (let i = 0; i < 4; i++) E.curve(this, { x: G.x + (i - 1.5) * 18, y: G.y + 6 }, { x: G.x + (i - 1.5) * 10, y: T.y - 24 }, P, { bend: (i % 2 ? 1 : -1) * 10, w: 4, dur: 8, hold: 12, thorns: 1, delay: 3 + i * 2 });
       if (o.ring) for (let i = 0; i < 3; i++) HD15.ring(this, U, P, 10, 90, { w: 2, dur: 18, delay: i * 5 }); HD15.smoke(this, G, 8, { col: o.dust || '#c8b8a0', r: 44 * s, sz: 12, spd: 1.2, up: 0.3, life: 28 }); yield* wait(14); E.hit(this, T, P, s); yield* wait(12); },
@@ -29775,14 +29776,14 @@ EBX.T = { // id: '動作 顏色 選項…'（選項：big small n=3 x2 kind=rock
   m_witchBolt: 'bolt toxic', m_cauldron: 'cauldron poison', m_tripleBite: 'bite fang n=3', m_venomSpray: 'breath poison kind=cloud snd=poison', m_mudBomb: 'lob mud kind=orb r=8 smoke=#7a5a2a',
   m_hydraFlood: 'tide toxic big', m_throwDagger: 'lob silk kind=knife n=3 h=0 quick=1 dur=10', m_featherStorm: 'vortex feather kind=feather r=4 big blades=1', m_crownBash: 'smash gold', m_ratSwarm: 'summon mud',
   m_plagueBite: 'bite fang p2=poison', m_kingsFeast: 'devour poison big', m_tuskCharge: 'charge feral', m_boarRush: 'charge feral big', m_scytheSweep: 'sweep wither big',
-  m_seedBomb: 'lob leaf kind=seed n=3 r=4', m_harden: 'guard rock', m_harvest: 'eclipse gold blade=1', m_windUp: 'roar brass gear=1 snd=tick', m_gearShot: 'lob brass kind=gear r=6 h=10',
+  m_seedBomb: 'lob leaf kind=seed n=3 r=4', m_harden: 'guard rock', m_harvest: 'sweep gold big + rain gold kind=seed n=12 r=4', m_windUp: 'roar brass gear=1 snd=tick', m_gearShot: 'lob brass kind=gear r=6 h=10',
   m_chronoLance: 'thrust brass big', m_sunder: 'smash feral', m_gearCrush: 'smash brass big gear=1', m_steamBurst: 'burst steam smoke=#f0f0f4', m_timeWarp: 'clock brass',
   m_twelveStrike: 'twelve brass', m_iceFist: 'smash ice dust=#e8f4ff', m_bearHug: 'hug feral', m_frostCurse: 'curse ice dmg=1', m_iceShard: 'lob ice kind=spike h=0 r=6 dur=12',
   m_hex: 'curse arcane', m_blizzard: 'vortex ice kind=orb r=2 fall=spike big snd=wind', m_frozenGaze: 'gaze ice flakes=1', m_iceMirror: 'guard ice kind=mirror', m_absoluteZero: 'freeze ice',
   m_flameBreath: 'breath fire', m_heatHaze: 'haze fire', m_infernoBreath: 'breath fire big', m_dragonRoar: 'roar fire foe=1 snd=wind', m_magmaFist: 'smash lava big dust=#5a3a2a',
   m_eruption: 'rain lava kind=rock r=6 big quake=1 snd=fire', m_riftCharge: 'charge dark big ghost=1', m_shadowBolt: 'bolt dark', m_demonClaw: 'claw dark big x2', m_tyranny: 'pillar dark crown=1',
   m_shadowSlash: 'slash black big', m_darkPulse: 'nova dark', m_eclipseBlade: 'eclipse black blade=1', m_holyRay: 'beam holy', m_starfall: 'rain star kind=star r=5',
-  m_cometLance: 'pillar star', m_millGrind: 'smash rock', m_blackGust: 'vortex feather kind=feather r=3', m_millStorm: 'vortex wind blades=1 big', m_whiskerLash: 'whip water w=3 wig=3',
+  m_cometLance: 'rain star kind=star n=1 r=12 + thrust star big', m_millGrind: 'smash rock', m_blackGust: 'vortex feather kind=feather r=3', m_millStorm: 'vortex wind blades=1 big', m_whiskerLash: 'whip water w=3 wig=3',
   m_blackTide: 'tide abyss', m_mapleStorm: 'vortex maple kind=feather r=4', m_crystalHorn: 'charge crystal', m_legionCharge: 'charge ghost ghost=1', m_crabHammer: 'smash water big',
   m_goo: 'lob mud kind=orb r=7 smoke=#6a8a5a', m_golemFist: 'smash rock big', m_axeSpin: 'spin feral', m_soulSip: 'drain ghost', m6_sporeMist: 'cloud leaf',
   m_tongue: 'whip pink w=5 small', m_croak: 'screech leaf snd=water', m6_scaleRoll: 'charge rock big', m_roll: 'charge rock small', m_claw: 'claw feral',
@@ -29796,7 +29797,7 @@ EBX.T = { // id: '動作 顏色 選項…'（選項：big small n=3 x2 kind=rock
   m_toxicSludge: 'tide toxic', m_engulf: 'devour mud small', m_blazeTail: 'sweep fire fire=1', m_flare: 'burst fire snd=fire', m_riftCall13: 'summon dark',
   m_pebbleToss: 'lob rock kind=rock r=5', m_taunt: 'roar feral foe=1 snd=wind', m13_apeQuake: 'rain rock kind=rock r=7 quake=1 snd=quake', m7_deathCharge: 'charge ghost big ghost=1', m13_hellLance: 'thrust dark big',
   m7_pumpkinFire: 'bolt fire snd=fire', m_emberSpit: 'bolt fire small snd=fire', m13_pumpkinBomb: 'lob fire kind=pumpkin r=7 smoke=#5a3a2a', m_pincerSnap: 'pincer sand', m_venomTail: 'sting feral',
-  m_deathStinger: 'sting dark big', m13_doomSting: 'sting dark p2=toxic', m6_icePowder: 'cloud ice flakes=1 dmg=1', m_moonDust: 'cloud moon dmg=1', m13_moonPowder: 'cloud ice flakes=1 dmg=1',
+  m_deathStinger: 'sting dark big', m13_doomSting: 'sting dark p2=toxic', m6_icePowder: 'cloud ice flakes=1 dmg=1', m_moonDust: 'cloud arcane dmg=1', m13_moonPowder: 'cloud ice flakes=1 dmg=1',
   m_avalanche: 'rain ice kind=rock r=7 big quake=1 snd=quake', m13_bigAvalanche: 'rain ice kind=rock r=8 big n=18 quake=1 snd=quake', m6_shardBurst: 'lob rock kind=shard n=4 h=0 quick=1 dur=10', m_overheat: 'burst fire big snd=fire', m13_coreBurst: 'burst lava big shards=1 snd=fire',
   m_boneClub: 'smash bone', m13_warOrder: 'roar dark snd=wind', m_frostNova: 'nova ice flakes=1', m13_songWave: 'tide water notes=1', m13_mistSong: 'song moon mist=1',
   m13_drownCall: 'summon abyss water=1', m13_denseFog: 'guard ice kind=fog', m13_maelstrom: 'vortex abyss big kind=orb r=3', m13_moonRain: 'rain moon kind=orb r=3 n=16', m_lullaby: 'song moon',
@@ -29808,8 +29809,9 @@ EBX.T = { // id: '動作 顏色 選項…'（選項：big small n=3 x2 kind=rock
 };
 { const E = EBX, parse = s => { const [shape, pal, ...rest] = s.split(' '), o = { shape, pal }; for (const r of rest) { const [k, v] = r.split('='); o[k] = v == null ? 1 : isNaN(+v) ? v : +v; } return o; };
   E.isEB = s => !!(s && !s.hero && (s.elite || s.boss));
-  E.play = function* (id, U, T, u, t) { const o = parse(EBX.T[id]), P = E.pal(o.pal), f = E.S[o.shape]; if (!f) return; const F0 = HD15.forceW; HD15.forceW = false;
-    try { if (!T) T = { x: U.x, y: U.y + 70 }; yield* f.call(this, U, T, u, P, o); } finally { HD15.forceW = F0; } };
+  E.play = function* (id, U, T, u, t) { const F0 = HD15.forceW; HD15.forceW = false;
+    try { if (!T) T = { x: U.x, y: U.y + 70 }; this.ebx0 = this.t; this.ebxN = (this.ebxN || 0) + 1; this.ebxId = id;
+      for (const seg of EBX.T[id].split(' + ')) { const o = parse(seg), f = E.S[o.shape]; if (f) yield* f.call(this, U, T, u, E.pal(o.pal), o); } } finally { HD15.forceW = F0; } };
   E.ok = () => EBX18.live && typeof HD15 !== 'undefined' && HD15.on;
   for (const id0 in EBX.T) for (const id of [id0, 'hc_' + id0]) { const D = DEF.skills[id]; if (!D) { if (id === id0) bvErr('ebfx18', id); continue; } const old = D.fx, key = 'ebx_' + id0;
     if (old === key) continue; EBX.old = EBX.old || {}; EBX.old[id] = old;
