@@ -7,7 +7,7 @@
     if (!L || !(L.owpn || L.mshd)) return _hb(frame, L);
     const key = frame + lookKey(L); if (cache[key]) return cache[key];
     let c;
-    if (L.owpn) { const L0 = { ...L, owpn: undefined, skey: undefined, mshd: undefined }, base = _hb(frame, L0), bare = _hb(frame, { ...L0, weapon: null });
+    if (L.owpn) { const L0 = { ...L, owpn: undefined, skey: undefined, mshd: undefined }, base = _hb(frame, L0), bare = _hb(frame, { ...L0, weapon: null, wkey: undefined }); /* v12.138 沒拿武器的那張也要拿掉武器圖（wkey），不然兩張一樣、副手什麼都挖不出來 */
       // the right-hand weapon alone: what differs between the doll with and without it
       const w = base.width, h = base.height, wo = mkCanvas(w, h), wx = wo.getContext('2d'), A = base.getContext('2d').getImageData(0, 0, w, h), B = bare.getContext('2d').getImageData(0, 0, w, h), O = wx.createImageData(w, h);
       for (let i = 0; i < A.data.length; i += 4) { const same = A.data[i] === B.data[i] && A.data[i + 1] === B.data[i + 1] && A.data[i + 2] === B.data[i + 2] && A.data[i + 3] === B.data[i + 3]; if (!same && A.data[i + 3]) for (let k = 0; k < 4; k++) O.data[i + k] = A.data[i + k]; }
