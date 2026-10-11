@@ -9,7 +9,7 @@
    7. 去掉重複：劍不再蓄力（崩星劍改成會心路線）；「對護盾傷害加倍」集中到斧（劈山 ×2.5、碎盾擊 ×3）、雙盾的盾突、長槍的破陣槍，
       劍的破綻突・斷鋼一閃、拳套的狂嵐拳、雙劍的雙龍十字拿掉（狂嵐拳改成每段 10% 退縮）。
    先只在特效測試版（TREE16.live）；玩家看過說好才放進正式版。 */
-const TREE16 = { live: typeof fxtest13 === 'function' && fxtest13() };
+const TREE16 = { live: true }; // v12.122 放上正式版
 const T16 = {
   row(id) { for (const k of Object.keys(TREE11)) for (const r of TREE11[k].sk || []) if ('t_' + r[1] === id) return r; return null; },
   desc(id, d) { const D = DEF.skills[id]; if (D) D.desc = d; if (MOVES[id]) MOVES[id].d = d; const r = T16.row(id); if (r) r[8] = d; },

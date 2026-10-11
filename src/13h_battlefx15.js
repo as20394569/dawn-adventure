@@ -7,7 +7,7 @@
       架勢擋下傷害的那一下，標「硬殼／魔障」並閃一下，看得出是被擋掉了。（魔物的特效照魔物那一套：有黑邊、比較陰沉的樣子）
    4. 共通戰技兩招（晨曦之刃・雙相斬）還是舊特效 → 換成新的刀光。
    先只在特效測試版（BFX15.live）；玩家看過說好才放進正式版。特效測試版裡：道具欄有煙霧彈（逃跑的煙霧）、道具欄有藥水、開場有 2 回合護盾、第一隻樹樁會輪流張硬殼／魔障。 */
-const BFX15 = { live: typeof fxtest13 === 'function' && fxtest13() };
+const BFX15 = { live: true }; // v12.122 放上正式版（測試用的道具・護盾・假人架勢只在特效測試選單裡）
 HD15.P.ward = { core: '#ffffff', mid: '#d8f6ff', glow: '#48c8f0', edge: '#0c3a58', keep: 1 };
 HD15.P.life = { core: '#ffffff', mid: '#c8ffd8', glow: '#3cd070', edge: '#0c4a24', keep: 1 };
 BFX15.foot = (b, C) => { const v = b.views && Object.values(b.views).find(q => { const c = b.center(q); return Math.abs(c.x - C.x) < 4 && Math.abs(c.y - C.y) < 4; });

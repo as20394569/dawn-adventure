@@ -4,7 +4,7 @@
    這裡把每一種零件換成新特效的畫法：不再描粗黑框，改成「外發光（相加）→ 暗邊 → 主色 → 亮芯」四層，顏色從原本零件的顏色推出來
    （亮芯偏白、外發光更飽和），所以每一招還是原本的顏色和動作，只是看起來跟主角的新招同一套。
    先只在特效測試版（MFX16.live）；玩家看過說好才放進正式版。 */
-const MFX16 = { live: typeof fxtest13 === 'function' && fxtest13(), pal: {} };
+const MFX16 = { live: true, pal: {} }; // v12.122 放上正式版
 MFX16.palOf = c => { if (!c || typeof c !== 'string' || c[0] !== '#') c = '#c8c8d0'; if (MFX16.pal[c]) return MFX16.pal[c];
   const [h, s, l] = rgb2hsl(...hex2rgb(c));
   return MFX16.pal[c] = { core: hsl2hex(h, s * 0.5, Math.min(0.97, l + (1 - l) * 0.75)), mid: hsl2hex(h, Math.min(1, s * 1.05), Math.min(0.85, Math.max(0.3, l))), glow: hsl2hex(h, Math.min(1, s * 1.25 + 0.1), Math.min(0.62, Math.max(0.42, l))), edge: hsl2hex(h, s, Math.max(0.06, l * 0.3)) }; };

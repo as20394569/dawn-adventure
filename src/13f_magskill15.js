@@ -5,7 +5,7 @@
    只有武器出手前閃一下、刀光帶著光／影／熔岩的顏色，看得出是「帶魔力的武器招」。
    v12.114 玩家同意「新的魔法招太省 MP」→ MP 3 改 6（還是第一段最便宜的，但不會壓過普攻換 MP 的打法）。
    先只在特效測試版（window.FXTEST）；玩家看過說好才放進正式版（MAG15.live）。 */
-const MAG15 = { live: typeof fxtest13 === 'function' && fxtest13() };
+const MAG15 = { live: true }; // v12.122 玩家「特效測試全部放上正式版」
 const MAGT15 = '魔法傷害（打對手的魔防），用物攻和魔攻較高的一項計算。';
 const MAG_SK15 = { // kind: [key, name, power, hits, cd, mp, desc]
   劍: ['sdLight', '光刃', 50, 0, 1, 6, '揮劍斬出一道光的劍氣，飛過去砍中對手。'],
