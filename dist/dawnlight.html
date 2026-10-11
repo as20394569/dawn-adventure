@@ -4460,24 +4460,29 @@ function* equipGearFlow(g) { // put an instance on; accessories pick a free/olde
 }
 function* bagScreen(mode = 'field') { // returns item id used (battle) or null
   let bagTapSel = -1;
-  let tab = 0, idx = 0; const tabs = mode === 'battle' ? ['道具'] : ['道具', '裝備', '素材', '重要']; // v12: 寶珠・寶石 tabs removed (orbs and enchant cancelled)
+  let tab = 0, idx = 0; const tabs = mode === 'battle' ? ['道具'] : ['道具', '裝備', '素材', '晶石', '重要']; // v12.129 玩家「晶石在背包看不到」→ 多一頁晶石（只看；鑲嵌・升級在鐵匠） // v12: 寶珠・寶石 tabs removed (orbs and enchant cancelled)
   const orbsSorted = () => typeof orbList === 'function' ? orbList(Game.st).slice().sort((a, b) => (!!orbHost(b) - !!orbHost(a)) || (isActiveOrb(b) - isActiveOrb(a)) || orbDef(a).n.localeCompare(orbDef(b).n)) : [];
-  const listFor = t => tabs[t] === '裝備' ? gearSort() : tabs[t] === '寶珠' ? orbsSorted() : bagList(it => tabs[t] === '道具' ? (!it.key && !it.mat && it.use !== 'enchant' && (mode !== 'battle' || !['boost', 'tp', 'reset', 'food13'].includes(it.use))) : tabs[t] === '寶石' ? it.use === 'enchant' : tabs[t] === '素材' ? !!it.mat : !!it.key);
+  const CT = { w: 0, a: 1, c: 2, u: 3 }, cryList = () => typeof cryOwn11 === 'function' ? Object.keys(cryOwn11(Game.st)).filter(sp => CRY11[sp] && SPECIES[sp]).sort((a, b) => (!!cryHost11(b) - !!cryHost11(a)) || (CT[CRY11[a][0]] - CT[CRY11[b][0]]) || cryName11(a).localeCompare(cryName11(b))) : [];
+  const listFor = t => tabs[t] === '晶石' ? cryList() : tabs[t] === '裝備' ? gearSort() : tabs[t] === '寶珠' ? orbsSorted() : bagList(it => tabs[t] === '道具' ? (!it.key && !it.mat && it.use !== 'enchant' && (mode !== 'battle' || !['boost', 'tp', 'reset', 'food13'].includes(it.use))) : tabs[t] === '寶石' ? it.use === 'enchant' : tabs[t] === '素材' ? !!it.mat : !!it.key);
   const VIS = 7;
   const scr = { touchBack: true, draw(x) {
     screenBG(x); headerBar(x, '背包'); if (mode === 'battle' && Game.scene && Game.scene.core && Game.scene.core.byId.H) { const u = Game.scene.core.byId.H; Font.drawR(x, 'HP ' + u.res.hp + '/' + u.max.hp + '　MP ' + (u.res.mp ?? 0) + '/' + (u.max.mp ?? 0), W - 6, 4, UIC.text, UIC.textSh, 9); } else Font.drawR(x, Game.st.money + ' G', W - 6, 2, UIC.warm, UIC.textSh); // v12.68: in battle, HP/MP instead of money
     const tw = Math.floor(171 / tabs.length); tabs.forEach((t, i) => { const X = 4 + i * tw; drawBtn(x, X, 23, tw - 3, 15, i === tab); Font.drawC(x, t, X + (tw - 3) / 2, midY(23, 15, 11), i === tab ? UIC.text : UIC.muted, UIC.textSh, 11); });
-    const list = listFor(tab), gear = tabs[tab] === '裝備', orbT = tabs[tab] === '寶珠'; drawWin(x, 4, 40, 168, VIS * 18 + 10, 'menu');
+    const list = listFor(tab), gear = tabs[tab] === '裝備', orbT = tabs[tab] === '寶珠', cryT = tabs[tab] === '晶石'; drawWin(x, 4, 40, 168, VIS * 18 + 10, 'menu');
     if (!list.length) Font.draw(x, '（空空如也）', 20, 46, UIC.muted, UIC.textSh);
     const top = Math.max(0, Math.min(idx - 3, list.length - VIS));
     list.slice(top, top + VIS).forEach((k, i) => { const Y = 44 + i * 18; if (top + i === idx) selBar(x, 6, Y - 1, 164, 17);
       if (gear) { const e = Font.draw(x, GEAR[k.b].n, 14, Y, gCol(k), UIC.textSh); if (isEquipped(k)) Font.draw(x, 'E', e + 2, Y, UIC.accent, UIC.textSh); Font.drawR(x, EQUIP_SLOTS[GEAR[k.b].slot === 'acc' ? 'acc1' : GEAR[k.b].slot], 164, Y, UIC.muted, UIC.textSh, 11); return; }
+      if (cryT) { const h = cryHost11(k), st = cryOwn11(Game.st)[k] || 1; const e = Font.draw(x, cryName11(k), 14, Y, UIC.text, UIC.textSh); Font.draw(x, '★' + st, e + 3, Y, '#ffd860', UIC.textSh, 10); Font.drawR(x, h ? '鑲嵌中' : '未鑲嵌', 164, Y + 1, h ? UIC.accent : UIC.muted, UIC.textSh, 10); return; }
       if (orbT) { const h = orbHost(k); drawOrbLine(x, k, 13, Y + 1, isActiveOrb(k) ? UIC.text : '#c8e8ff'); Font.drawR(x, h ? '鑲嵌中' : '未鑲嵌', 164, Y + 1, h ? UIC.accent : UIC.muted, UIC.textSh, 10); return; }
       const ic = typeof ITEM_ICON !== 'undefined' && ITEM_ICON[k]; if (ic) { x.drawImage(ic, 12, Y + 2); Font.draw(x, ITEMS[k].n, 27, Y, UIC.text, UIC.textSh); } else Font.draw(x, ITEMS[k].n, 14, Y, UIC.text, UIC.textSh); if (!ITEMS[k].key) Font.drawR(x, '×' + Game.st.bag[k], 164, Y, UIC.muted, UIC.textSh); });
     if (top > 0) x.drawImage(UPARROW, 85, 41); if (top + VIS < list.length) x.drawImage(DOWNARROW, 85, 40 + VIS * 18 + 4);
     if (typeof touchRegion === 'function') { list.slice(top, top + VIS).forEach((k, i) => touchRegion(6, 43 + i * 18, 164, 17, () => { if (mode === 'battle' && bagTapSel !== top + i) { bagTapSel = idx = top + i; Sound.sfx('cursor'); return; } idx = top + i; tapKey('a'); })); /* v24.6 battle: 1st tap shows the item, 2nd tap uses it */ tabs.forEach((t, i) => touchRegion(4 + i * tw, 23, tw - 3, 15, () => { tab = i; idx = 0; })); }
     drawWin(x, 4, 180, 168, 72, 'menu');
     if (UI.stack.some(w => w instanceof TextBox)) { /* v12.0.1: a message box sits over this panel (its window is see-through), so the details step aside instead of showing through the text */ }
+    else if (list[idx] && cryT) { const sp = list[idx], h = cryHost11(sp), C = CRY11[sp], star = cryOwn11(Game.st)[sp] || 1; Font.draw(x, '【' + CRY_T11[C[0]] + '晶石' + (C[1] && C[1] !== '單顆' ? '・' + C[1] : '') + '】', 10, 182, '#c8a0ff', UIC.textSh, 10);
+      Font.drawR(x, '★' + star, 166, 182, '#ffd860', UIC.textSh, 10); const L = Font.wrap(cryText11(sp, star), 154, 10).slice(0, 3); L.forEach((l, i) => Font.draw(x, l, 10, 197 + i * 13, UIC.text, UIC.textSh, 10));
+      Font.draw(x, h ? '鑲在：' + GEAR[h.b].n : '還沒鑲上・到鐵匠「晶石」鑲嵌', 10, 197 + L.length * 13, h ? UIC.accent : UIC.muted, UIC.textSh, 10); }
     else if (list[idx] && orbT) { const o = list[idx], h = orbHost(o); Font.draw(x, '【' + (isActiveOrb(o) ? '主動寶珠' : '被動寶珠') + '】', 10, 182, isActiveOrb(o) ? UIC.warm : '#8ad0ff', UIC.textSh, 10);
       Font.drawR(x, h ? '鑲在：' + GEAR[h.b].n : '到鐵匠舖鑲嵌', 166, 182, h ? UIC.accent : UIC.muted, UIC.textSh, 10); Font.wrap(orbInfo(o), 154, 10).slice(0, 4).forEach((l, i) => Font.draw(x, l, 10, 197 + i * 13, UIC.text, UIC.textSh, 10)); }
     else if (list[idx]) { if (gear) drawGearDetail(x, list[idx], 182, 68); else { const k0 = list[idx], it = ITEMS[k0]; Font.draw(x, '【' + (it.use === 'enchant' ? '附魔寶石・到鐵匠舖使用' : it.cat) + '】', 10, 182, it.use === 'enchant' ? UIC.warm : ITEM_CAT_COL[it.cat] || UIC.muted, UIC.textSh, 10); if (it.mat && typeof GATHER_KINDS !== 'undefined' && Object.values(GATHER_KINDS).some(G => G && (G[1] === k0 || (G[3] || []).some(([m]) => m === k0)))) Font.drawR(x, '採集熟練度 Lv' + gatherLv(), 166, 182, UIC.accent, UIC.textSh, 10); const src = it.mat && !/來源：/.test(it.d || '') ? matSourceText(k0) : ''; /* v12.66: the description already lists 來源; 採集熟練度 only on things you can gather */ drawFitText(x, it.d, 12, 197, 152, src ? 36 : 52, 11); /* v12.0.1: long descriptions shrink instead of being cut */ if (src) Font.draw(x, Font.wrap('取得：' + src, 156, 10)[0], 10, 234, UIC.warm, UIC.textSh, 10); } }
@@ -4493,6 +4498,7 @@ function* bagScreen(mode = 'field') { // returns item id used (battle) or null
       Input.consume('a'); Sound.sfx('select');
       if (tabs[tab] === '裝備') { const g = list[idx], eq = isEquipped(g), opts = eq ? ['查看詳情', '取消'] : ['裝備', '查看詳情', '取消']; const r = yield* ask(GEAR[g.b].n + (eq ? '（裝備中）' : ''), opts); const pick = opts[r]; if (pick === '查看詳情') { UI.remove(scr); yield* gearInfoScreen(g); UI.push(scr); } else if (pick === '裝備' && (yield* equipGearFlow(g))) yield* say(Game.st.name + '裝備了' + GEAR[g.b].n + '！'); continue; }
       if (tabs[tab] === '寶珠') continue; // look only: socket / fuse orbs at the smith
+      if (tabs[tab] === '晶石') { const sp = list[idx], h = cryHost11(sp), star = cryOwn11(Game.st)[sp] || 1; yield* say(cryName11(sp) + ' ★' + star + '（' + CRY_T11[CRY11[sp][0]] + '）\n' + cryText11(sp, star) + '\n' + (h ? '鑲在「' + GEAR[h.b].n + '」上。' : '還沒鑲上。到鐵匠選「晶石」就能鑲嵌、升級。')); continue; }
       const k = list[idx], it = ITEMS[k];
       if (it.key || it.mat || it.use === 'enchant') { yield* say(it.use === 'phone' ? phoneText() : it.d); continue; }
       if (it.use === 'trainBook' && mode !== 'battle') { UI.remove(scr); yield* trainBookFlow(k); UI.push(scr); continue; }
@@ -7937,7 +7943,7 @@ class TitleScene {
     x.drawImage(this.logo, Math.round(W / 2 - this.logo.width / 2), 6 + bob);
     Font.drawC(x, '～異世界冒險RPG～', W / 2, 52 + bob, '#ffe0a0', '#3a1428');
     if (this.stage === 'press' && Math.floor(this.t / 30) % 2 === 0) Font.drawC(x, '按 A 鍵開始', W / 2, 232, '#ffffff', '#1a1024');
-    Font.drawR(x, 'v12.128', W - 3, H - 13, '#b890b0', null);
+    Font.drawR(x, 'v12.129', W - 3, H - 13, '#b890b0', null);
   }
 }
 class IntroScene {
