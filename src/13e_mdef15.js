@@ -29,5 +29,5 @@ defPut('mechanics', 'stanceP15', { make: () => ({ triggers: [stanceTr15('pguard1
 defPut('mechanics', 'stanceM15', { make: () => ({ triggers: [stanceTr15('mguard15', 'all')] }) });
 defPut('mechanics', 'stanceA15', { make: () => ({ triggers: [stanceTr15('pguard15', 'a1'), stanceTr15('mguard15', 'a2')] }) });
 { const _ue = BD.unitForEnemy; BD.unitForEnemy = function (core, sp, lv, kind, side, idx, o = {}) { const s = _ue.call(this, core, sp, lv, kind, side, idx, o);
-    if (!s || (kind !== 'elite' && kind !== 'boss') || (lv || 0) < 15) return s; // v12.122 Lv30 → Lv15 起 const r = s.stats.def / Math.max(1, s.stats.spd);
+    if (!s || (kind !== 'elite' && kind !== 'boss') || (lv || 0) < 15) return s; /* v12.122 Lv30 → Lv15 起 */ const r = s.stats.def / Math.max(1, s.stats.spd);
     (s.data.mechanics || (s.data.mechanics = [])).push(r >= 1.15 ? 'stanceM15' : r <= 0.87 ? 'stanceP15' : 'stanceA15'); return s; }; }
