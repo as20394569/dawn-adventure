@@ -167,5 +167,10 @@ print('shields', len(sd))
 ss = {os.path.basename(f)[:-4]: pal_rows(f) for f in sorted(glob.glob(os.path.join(root, 'art', 'battle', 'shields_side', '*.png'))) if 'preview' not in f}
 js += 'const SHIELD_SIDE_ROWS = ' + json.dumps(ss, separators=(',', ':')) + ';\n'
 print('side shields', len(ss))
+# v12.137 (Codex task AY): crystals — frame_<kind>_back/front (32×40), icon_<kind> (12×14) and heads/<species> (20×20, key h_<species>), palette rows
+cy = {os.path.basename(f)[:-4]: pal_rows(f) for f in sorted(glob.glob(os.path.join(root, 'art', 'battle', 'crystals', '*.png'))) if 'preview' not in f and 'sheet' not in f}
+cy.update({'h_' + os.path.basename(f)[:-4]: pal_rows(f) for f in sorted(glob.glob(os.path.join(root, 'art', 'battle', 'crystals', 'heads', '*.png')))})
+js += 'const CRYSTAL_PX_ROWS = ' + json.dumps(cy, separators=(',', ':')) + ';\n'
+print('crystals', len(cy))
 open(os.path.join(root, 'src', '07id_sprites.js'), 'w').write(js)
 print('embedded', len(d), 'sprites', sum(len(v) for v in d.values()) // 1024, 'KB')
