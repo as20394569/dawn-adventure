@@ -13,9 +13,11 @@ def nn(im, n=32):
     return Image.fromarray(a[ys][:, xs], 'RGBA')
 done = []
 for k in sys.argv[1:]:
-    p1, p2 = os.path.join(ROOT, 'chibi', k + '_idle1.png'), os.path.join(ROOT, 'chibi', k + '_idle2.png')
+    p1 = os.path.join(ROOT, 'chibi', k + '_idle1.png')
     if not os.path.exists(p1): continue
-    f1 = nn(Image.open(p1)); f2 = nn(Image.open(p2)) if os.path.exists(p2) else f1
+    f1 = nn(Image.open(p1))
+    # v12.131 玩家「頭跟身體連接不合」：idle2 是上半身往上 1 格、腳不動，縮小後頭和身體會錯開 → 第二格改成整隻往上 1 格（頭身一起動）
+    f2 = Image.new('RGBA', f1.size); f2.alpha_composite(f1.crop((0, 1, f1.width, f1.height)), (0, 0))
     for d in ['down', 'up', 'left', 'right']:
         f1.save(os.path.join(ROOT, 'field', f'{k}_{d}1.png')); f2.save(os.path.join(ROOT, 'field', f'{k}_{d}2.png'))
     done.append(k)
