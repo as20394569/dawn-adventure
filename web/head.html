@@ -78,8 +78,8 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
   #ab{grid-column:1;grid-row:1;justify-self:center;align-self:end}
   #mid{grid-column:1;grid-row:2;flex-direction:row;justify-self:center;align-self:start;padding:0}
 }
-body.battle #pad,body.battle #dpad,body.battle #ab,body.battle #mid{display:none}
-body.battle #shell{--padh:0px}
+/* v12.123 玩家「進入戰鬥時畫面長度跟一般遊玩不一樣」：戰鬥時手把照樣隱藏（戰鬥用觸控），但位置保留，畫面大小跟走路時一樣 */
+body.battle #pad,body.battle #dpad,body.battle #ab,body.battle #mid{visibility:hidden;pointer-events:none}
 @media (prefers-reduced-motion:reduce){ #ab .round.on,#mid button.on{transform:none} }
 /* v27c phones held upright: thinner frame and a slightly smaller pad, so the game screen gets the room (playtest: S25+, "about 1 cm bigger") */
 @media (pointer:coarse) and (orientation:portrait){

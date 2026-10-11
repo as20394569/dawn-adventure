@@ -27,7 +27,7 @@ function touchTap(gx, gy) {
   cvs.addEventListener('pointerdown', e => { const r = cvs.getBoundingClientRect(); if (!r.width) return; e.preventDefault(); Sound.init && Sound.init(); touchTap((e.clientX - r.left) / r.width * W, (e.clientY - r.top) / r.height * H); }); }
 // regions are rebuilt every frame
 { const _r = render; render = function () { TouchR = []; _r(); syncPadVisibility(); }; }
-// hide the controller while fighting (the screen grows into the freed space)
+// hide the controller while fighting (v12.123: its space is kept, so the screen stays the same size as on the field)
 function syncPadVisibility() {
   const inB = Game.scene instanceof Battle, on = document.body.classList.contains('battle');
   if (inB !== on) { document.body.classList.toggle('battle', inB); requestAnimationFrame(() => { fitScreen(); setTimeout(fitScreen, 60); }); }
