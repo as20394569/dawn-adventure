@@ -80,6 +80,9 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 }
 /* v12.123 玩家「進入戰鬥時畫面長度跟一般遊玩不一樣」：戰鬥時手把照樣隱藏（戰鬥用觸控），但位置保留，畫面大小跟走路時一樣 */
 body.battle #pad,body.battle #dpad,body.battle #ab,body.battle #mid{visibility:hidden;pointer-events:none}
+/* v12.128 玩家「現在戰鬥畫面可以拉長了」：直拿時戰鬥畫面往下延伸到手把的位置（寬度不變） */
+body.battle.tall #pad{display:none}
+body.battle.tall #screenWrap{aspect-ratio:auto;height:var(--tallH)}
 @media (prefers-reduced-motion:reduce){ #ab .round.on,#mid button.on{transform:none} }
 /* v27c phones held upright: thinner frame and a slightly smaller pad, so the game screen gets the room (playtest: S25+, "about 1 cm bigger") */
 @media (pointer:coarse) and (orientation:portrait){
@@ -7934,7 +7937,7 @@ class TitleScene {
     x.drawImage(this.logo, Math.round(W / 2 - this.logo.width / 2), 6 + bob);
     Font.drawC(x, '～異世界冒險RPG～', W / 2, 52 + bob, '#ffe0a0', '#3a1428');
     if (this.stage === 'press' && Math.floor(this.t / 30) % 2 === 0) Font.drawC(x, '按 A 鍵開始', W / 2, 232, '#ffffff', '#1a1024');
-    Font.drawR(x, 'v12.127', W - 3, H - 13, '#b890b0', null);
+    Font.drawR(x, 'v12.128', W - 3, H - 13, '#b890b0', null);
   }
 }
 class IntroScene {
@@ -8007,14 +8010,15 @@ class EndingScene {
   }
 }
 const cv = document.getElementById('screen'); const ctx = cv.getContext('2d'); let SCALE = 0;
-function setScale(S) { S = clamp(S | 0, 1, 6); if (S === SCALE) return; SCALE = S; cv.width = W * S; cv.height = H * S; }
+let TALL_EXT = 0;
+function setScale(S) { S = clamp(S | 0, 1, 6); if (S === SCALE) return; SCALE = S; cv.width = W * S; cv.height = (H + TALL_EXT) * S; }
 setScale(3);
 function render() {
-  ctx.setTransform(SCALE, 0, 0, SCALE, 0, 0); ctx.imageSmoothingEnabled = false; ctx.save();
+  ctx.setTransform(SCALE, 0, 0, SCALE, 0, TALL_EXT * SCALE); ctx.imageSmoothingEnabled = false; ctx.save();
   if (Game.shake > 0) { ctx.translate(rnd(-2, 2), rnd(-2, 2)); Game.shake--; }
   Game.scene.draw(ctx); UI.draw(ctx); drawTransition(ctx); drawToast(ctx); ctx.restore();
-  if (Game.flash > 0) { ctx.globalAlpha = clamp(Game.flash, 0, 1); ctx.fillStyle = Game.flashColor; ctx.fillRect(0, 0, W, H); ctx.globalAlpha = 1; if (!Game.flashTween) Game.flash = Math.max(0, Game.flash - 0.04); }
-  if (Game.fade > 0) { ctx.globalAlpha = clamp(Game.fade, 0, 1); ctx.fillStyle = Game.fadeColor; ctx.fillRect(0, 0, W, H); ctx.globalAlpha = 1; }
+  if (Game.flash > 0) { ctx.globalAlpha = clamp(Game.flash, 0, 1); ctx.fillStyle = Game.flashColor; ctx.fillRect(0, -TALL_EXT, W, H + TALL_EXT); ctx.globalAlpha = 1; if (!Game.flashTween) Game.flash = Math.max(0, Game.flash - 0.04); }
+  if (Game.fade > 0) { ctx.globalAlpha = clamp(Game.fade, 0, 1); ctx.fillStyle = Game.fadeColor; ctx.fillRect(0, -TALL_EXT, W, H + TALL_EXT); ctx.globalAlpha = 1; }
 }
 function tick() { Input.frame(); Game.frame++; if (Input.anyTapFrame) Sound.init(); if (Game.sys.length) Game.sys = Game.sys.filter(g => !g.next().done); Game.scene.update(); }
 let lastT = performance.now(), accT = 0;
@@ -8042,8 +8046,10 @@ function bindButtons() {
 }
 function fitScreen() {
   const wrap = document.getElementById('screenWrap'); if (!wrap) return; const r = wrap.getBoundingClientRect();
-  const s = Math.min(r.width / W, r.height / H);
-  cv.style.width = Math.floor(W * s) + 'px'; cv.style.height = Math.floor(H * s) + 'px';
+  let s = Math.min(r.width / W, r.height / H), ext = 0;
+  if (document.body.classList.contains('tall') && r.width > 0) { s = r.width / W; ext = Math.max(0, Math.min(140, Math.floor(r.height / s) - H)); } // 戰鬥拉長：寬度照舊，多出來的高度變成畫面上方的列
+  if (ext !== TALL_EXT) { const S0 = SCALE || 3; TALL_EXT = ext; SCALE = 0; if (Game.fixedScale) setScale(S0); }
+  cv.style.width = Math.floor(W * s) + 'px'; cv.style.height = Math.floor((H + ext) * s) + 'px';
   if (!Game.fixedScale) setScale(Math.ceil(s * (window.devicePixelRatio || 1)));
   cv.style.imageRendering = cv.width < W * s * (window.devicePixelRatio || 1) - 0.5 ? 'pixelated' : 'auto'; // v27f: upscaling (phones) → hard pixel edges; downscaling keeps smooth
 }
@@ -8199,11 +8205,15 @@ function touchTap(gx, gy) {
   else if (top) tapKey('a');
 }
 { const cvs = document.getElementById('screen');
-  cvs.addEventListener('pointerdown', e => { const r = cvs.getBoundingClientRect(); if (!r.width) return; e.preventDefault(); Sound.init && Sound.init(); touchTap((e.clientX - r.left) / r.width * W, (e.clientY - r.top) / r.height * H); }); }
+  cvs.addEventListener('pointerdown', e => { const r = cvs.getBoundingClientRect(); if (!r.width) return; e.preventDefault(); Sound.init && Sound.init(); touchTap((e.clientX - r.left) / r.width * W, (e.clientY - r.top) / r.height * (H + TALL_EXT) - TALL_EXT); }); }
 { const _r = render; render = function () { TouchR = []; _r(); syncPadVisibility(); }; }
 function syncPadVisibility() {
   const inB = Game.scene instanceof Battle, on = document.body.classList.contains('battle');
-  if (inB !== on) { document.body.classList.toggle('battle', inB); requestAnimationFrame(() => { fitScreen(); setTimeout(fitScreen, 60); }); }
+  if (inB !== on) { // v12.128：直拿（手把在畫面下方）時，戰鬥畫面往下延伸到手把的位置（寬度不變，只變長）
+    const B = document.body, wrap = document.getElementById('screenWrap'), pad = document.getElementById('pad');
+    if (inB && wrap && pad && getComputedStyle(pad).display === 'grid' && !(Game.settings && Game.settings.tallBattle === false)) { const h0 = wrap.getBoundingClientRect().height, ph = pad.getBoundingClientRect().height, gap = parseFloat(getComputedStyle(pad.parentElement).rowGap) || 6;
+      B.style.setProperty('--tallH', Math.floor(h0 + ph + gap) + 'px'); B.classList.add('tall'); } else if (!inB) B.classList.remove('tall');
+    B.classList.toggle('battle', inB); requestAnimationFrame(() => { fitScreen(); setTimeout(fitScreen, 60); }); }
 }
 const BATTLE_FIELD = {};
 for (const k in (typeof BATTLE_FIELD_SRC !== 'undefined' ? BATTLE_FIELD_SRC : {})) { const im = new Image(); im.onload = () => { im.ok = true; }; im.src = BATTLE_FIELD_SRC[k]; BATTLE_FIELD[k] = im; }
@@ -29840,4 +29850,21 @@ if (EBX18.live && typeof fxtMenu13 === 'function') {
       try { yield* Game.scene.battleScript({ sp: q.sp, lv: (MON_PANEL[q.sp] || {}).lv || 30, kind: q.boss ? 'boss' : 'elite', id: 'ebxTest_' + q.sp }); } finally { EBXF18.on = false; } } }
   const _m = fxtMenu13; fxtMenu13 = function* () { while (true) { const r = yield* choose(['主角的技能特效', '菁英・頭目的招式特效'], { x: 10, y: 80, w: W - 20, cancel: true, title: '特效測試' }); if (r === 0) return yield* _m(); if (r === 1) yield* ebxMenu18(); } };
 }
+const TALL18 = { hud: [] };
+{ const B = Battle.prototype;
+  const later = f => function (x, ...a) { if (!(TALL_EXT > 0) || TALL18.now) return f.call(this, x, ...a); const self = this; TALL18.hud.push(() => f.call(self, x, ...a)); };
+  if (typeof KB12 !== 'undefined' && KB12.topRow) KB12.topRow = later(KB12.topRow);
+  if (B.drawSpd12) B.drawSpd12 = later(B.drawSpd12);
+  if (typeof wxIcon === 'function') { const _wi = wxIcon; wxIcon = function (x, k, X, Y) { if (TALL_EXT > 0 && !TALL18.now && Game.scene instanceof Battle && Y <= 4) { TALL18.hud.push(() => _wi(x, k, X, Y)); return; } return _wi(x, k, X, Y); }; }
+  const _r = render; render = function () { TALL18.hud = []; _r(); const E = TALL_EXT; if (!(E > 0) || !(Game.scene instanceof Battle)) return; const S = SCALE;
+    ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.imageSmoothingEnabled = true; ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
+    ctx.drawImage(cv, 0, E * S, cv.width, 2 * S, 0, 0, cv.width, E * S); // 最上緣兩列往上拉
+    ctx.setTransform(S, 0, 0, S, 0, 0); const g = ctx.createLinearGradient(0, 0, 0, E); g.addColorStop(0, 'rgba(5,6,14,0.55)'); g.addColorStop(0.75, 'rgba(5,6,14,0.12)'); g.addColorStop(1, 'rgba(5,6,14,0)'); ctx.fillStyle = g; ctx.fillRect(0, 0, W, E);
+    if (!(Game.fade > 0.5) && TALL18.hud.length) { const _tr = touchRegion; touchRegion = (X, Y, w, h, fn) => _tr(X, Y - E, w, h, fn); TALL18.now = 1; ctx.imageSmoothingEnabled = false;
+      try { for (const f of TALL18.hud) f(); } finally { TALL18.now = 0; touchRegion = _tr; } }
+    ctx.restore(); }; }
+{ const B = Battle.prototype, _pf = B.playFx; B.playFx = function* (...a) { this.fx18 = (this.fx18 || 0) + 1; try { return yield* _pf.apply(this, a); } finally { this.fx18--; this.fxHold18 = 12; } };
+  if (typeof KB12 !== 'undefined' && KB12.plates) { const _pl = KB12.plates; KB12.plates = function (x, a0) {
+      if (this.fxHold18 > 0 && !(this.fx18 > 0)) this.fxHold18--; const want = this.fx18 > 0 || this.fxHold18 > 0 ? 0.25 : 1, cur = this.pl18 ?? 1;
+      this.pl18 = cur + (want - cur) * (want < cur ? 0.35 : 0.18); return _pl.call(this, x, a0 * this.pl18); }; } }
 </script>

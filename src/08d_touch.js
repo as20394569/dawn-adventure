@@ -24,11 +24,15 @@ function touchTap(gx, gy) {
   else if (top) tapKey('a');
 }
 { const cvs = document.getElementById('screen');
-  cvs.addEventListener('pointerdown', e => { const r = cvs.getBoundingClientRect(); if (!r.width) return; e.preventDefault(); Sound.init && Sound.init(); touchTap((e.clientX - r.left) / r.width * W, (e.clientY - r.top) / r.height * H); }); }
+  cvs.addEventListener('pointerdown', e => { const r = cvs.getBoundingClientRect(); if (!r.width) return; e.preventDefault(); Sound.init && Sound.init(); touchTap((e.clientX - r.left) / r.width * W, (e.clientY - r.top) / r.height * (H + TALL_EXT) - TALL_EXT); }); }
 // regions are rebuilt every frame
 { const _r = render; render = function () { TouchR = []; _r(); syncPadVisibility(); }; }
 // hide the controller while fighting (v12.123: its space is kept, so the screen stays the same size as on the field)
 function syncPadVisibility() {
   const inB = Game.scene instanceof Battle, on = document.body.classList.contains('battle');
-  if (inB !== on) { document.body.classList.toggle('battle', inB); requestAnimationFrame(() => { fitScreen(); setTimeout(fitScreen, 60); }); }
+  if (inB !== on) { // v12.128：直拿（手把在畫面下方）時，戰鬥畫面往下延伸到手把的位置（寬度不變，只變長）
+    const B = document.body, wrap = document.getElementById('screenWrap'), pad = document.getElementById('pad');
+    if (inB && wrap && pad && getComputedStyle(pad).display === 'grid' && !(Game.settings && Game.settings.tallBattle === false)) { const h0 = wrap.getBoundingClientRect().height, ph = pad.getBoundingClientRect().height, gap = parseFloat(getComputedStyle(pad.parentElement).rowGap) || 6;
+      B.style.setProperty('--tallH', Math.floor(h0 + ph + gap) + 'px'); B.classList.add('tall'); } else if (!inB) B.classList.remove('tall');
+    B.classList.toggle('battle', inB); requestAnimationFrame(() => { fitScreen(); setTimeout(fitScreen, 60); }); }
 }

@@ -80,6 +80,9 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 }
 /* v12.123 玩家「進入戰鬥時畫面長度跟一般遊玩不一樣」：戰鬥時手把照樣隱藏（戰鬥用觸控），但位置保留，畫面大小跟走路時一樣 */
 body.battle #pad,body.battle #dpad,body.battle #ab,body.battle #mid{visibility:hidden;pointer-events:none}
+/* v12.128 玩家「現在戰鬥畫面可以拉長了」：直拿時戰鬥畫面往下延伸到手把的位置（寬度不變） */
+body.battle.tall #pad{display:none}
+body.battle.tall #screenWrap{aspect-ratio:auto;height:var(--tallH)}
 @media (prefers-reduced-motion:reduce){ #ab .round.on,#mid button.on{transform:none} }
 /* v27c phones held upright: thinner frame and a slightly smaller pad, so the game screen gets the room (playtest: S25+, "about 1 cm bigger") */
 @media (pointer:coarse) and (orientation:portrait){

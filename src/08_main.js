@@ -328,7 +328,7 @@ class TitleScene {
     x.drawImage(this.logo, Math.round(W / 2 - this.logo.width / 2), 6 + bob);
     Font.drawC(x, '～異世界冒險RPG～', W / 2, 52 + bob, '#ffe0a0', '#3a1428');
     if (this.stage === 'press' && Math.floor(this.t / 30) % 2 === 0) Font.drawC(x, '按 A 鍵開始', W / 2, 232, '#ffffff', '#1a1024');
-    Font.drawR(x, 'v12.127', W - 3, H - 13, '#b890b0', null);
+    Font.drawR(x, 'v12.128', W - 3, H - 13, '#b890b0', null);
   }
 }
 
@@ -407,15 +407,17 @@ class EndingScene {
 
 /* ===================== BOOT & LOOP ===================== */
 const cv = document.getElementById('screen'); const ctx = cv.getContext('2d'); let SCALE = 0;
+// v12.128 戰鬥畫面拉長：直拿手機時，戰鬥中畫面往上多出 TALL_EXT 列（手把原本的空間），整個畫面往下移、上面補背景
+let TALL_EXT = 0;
 // backing store = logical 176×256 × integer SCALE; pixel art is scaled with nearest-neighbour, text is drawn at full resolution
-function setScale(S) { S = clamp(S | 0, 1, 6); if (S === SCALE) return; SCALE = S; cv.width = W * S; cv.height = H * S; }
+function setScale(S) { S = clamp(S | 0, 1, 6); if (S === SCALE) return; SCALE = S; cv.width = W * S; cv.height = (H + TALL_EXT) * S; }
 setScale(3);
 function render() {
-  ctx.setTransform(SCALE, 0, 0, SCALE, 0, 0); ctx.imageSmoothingEnabled = false; ctx.save();
+  ctx.setTransform(SCALE, 0, 0, SCALE, 0, TALL_EXT * SCALE); ctx.imageSmoothingEnabled = false; ctx.save();
   if (Game.shake > 0) { ctx.translate(rnd(-2, 2), rnd(-2, 2)); Game.shake--; }
   Game.scene.draw(ctx); UI.draw(ctx); drawTransition(ctx); drawToast(ctx); ctx.restore();
-  if (Game.flash > 0) { ctx.globalAlpha = clamp(Game.flash, 0, 1); ctx.fillStyle = Game.flashColor; ctx.fillRect(0, 0, W, H); ctx.globalAlpha = 1; if (!Game.flashTween) Game.flash = Math.max(0, Game.flash - 0.04); }
-  if (Game.fade > 0) { ctx.globalAlpha = clamp(Game.fade, 0, 1); ctx.fillStyle = Game.fadeColor; ctx.fillRect(0, 0, W, H); ctx.globalAlpha = 1; }
+  if (Game.flash > 0) { ctx.globalAlpha = clamp(Game.flash, 0, 1); ctx.fillStyle = Game.flashColor; ctx.fillRect(0, -TALL_EXT, W, H + TALL_EXT); ctx.globalAlpha = 1; if (!Game.flashTween) Game.flash = Math.max(0, Game.flash - 0.04); }
+  if (Game.fade > 0) { ctx.globalAlpha = clamp(Game.fade, 0, 1); ctx.fillStyle = Game.fadeColor; ctx.fillRect(0, -TALL_EXT, W, H + TALL_EXT); ctx.globalAlpha = 1; }
 }
 function tick() { Input.frame(); Game.frame++; if (Input.anyTapFrame) Sound.init(); if (Game.sys.length) Game.sys = Game.sys.filter(g => !g.next().done); Game.scene.update(); }
 let lastT = performance.now(), accT = 0;
@@ -445,8 +447,10 @@ function bindButtons() {
 }
 function fitScreen() {
   const wrap = document.getElementById('screenWrap'); if (!wrap) return; const r = wrap.getBoundingClientRect();
-  const s = Math.min(r.width / W, r.height / H);
-  cv.style.width = Math.floor(W * s) + 'px'; cv.style.height = Math.floor(H * s) + 'px';
+  let s = Math.min(r.width / W, r.height / H), ext = 0;
+  if (document.body.classList.contains('tall') && r.width > 0) { s = r.width / W; ext = Math.max(0, Math.min(140, Math.floor(r.height / s) - H)); } // 戰鬥拉長：寬度照舊，多出來的高度變成畫面上方的列
+  if (ext !== TALL_EXT) { const S0 = SCALE || 3; TALL_EXT = ext; SCALE = 0; if (Game.fixedScale) setScale(S0); }
+  cv.style.width = Math.floor(W * s) + 'px'; cv.style.height = Math.floor((H + ext) * s) + 'px';
   if (!Game.fixedScale) setScale(Math.ceil(s * (window.devicePixelRatio || 1)));
   cv.style.imageRendering = cv.width < W * s * (window.devicePixelRatio || 1) - 0.5 ? 'pixelated' : 'auto'; // v27f: upscaling (phones) → hard pixel edges; downscaling keeps smooth
 }
