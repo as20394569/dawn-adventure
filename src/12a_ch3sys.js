@@ -4,6 +4,8 @@
    - 外觀先借 T7；武器的圖換成海的顏色（藍綠）。 */
 // the T8 shield's drawn look (the Codex shield art has no T8 picture yet)
 if (typeof SHIELDS !== 'undefined') SHIELDS.tideShield13 = ['潮紋大盾', 8, {}, 17, {}, null, ['#123a5a', '#2f78a8', '#a8f0ff'], ''];
+// v12.146：盾的圖示是在 09zz 依 SHIELDS 掛上去的，這面盾加得比較晚 → 圖示要自己掛（不然掉落卡、背包顯示成通用的菱形）
+if (typeof ARMOR_PX !== 'undefined' && typeof shieldSprite === 'function' && !Object.getOwnPropertyDescriptor(ARMOR_PX, 'tideShield13_icon')) Object.defineProperty(ARMOR_PX, 'tideShield13_icon', { configurable: true, enumerable: true, get: () => shieldSprite('tideShield13') });
 // sea-coloured T8 weapons: the T7 picture with the hue turned toward blue-green
 const T8W13 = ['tideSword13', 'waveDagger13', 'surgeAxe13', 'tridentSpear13', 'coralFist13', 'deepStaff13', 'tideTome13', 'merHarp13', 'vortexGun13'];
 function seaTint13(im) { const c = mkCanvas(im.width, im.height), x = c.getContext('2d'); x.drawImage(im, 0, 0); const id = x.getImageData(0, 0, c.width, c.height), d = id.data;

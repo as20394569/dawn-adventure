@@ -442,7 +442,8 @@ function* equipPick11(sl, fit) {
       touchRegion(6, Y - 1, 164, 17, () => { if (hi === i) tapKey('a'); else hi = i; }); });
     if (top > 0) x.drawImage(UPARROW, 86, 23); if (top + VIS < opts.length) x.drawImage(DOWNARROW, 86, 22 + VIS * 18 + 3);
     const o = opts[hi], Y0 = 22 + VIS * 18 + 12; drawWin(x, 4, Y0, 168, H - Y0 - 4, 'menu');
-    { const wim = o.g && GEAR[o.g.b].slot === 'weapon' && typeof weaponPx === 'function' ? weaponPx(o.g.gl || o.g.b) || weaponPx(o.g.b) : null; if (wim) drawWeaponIcon(x, wim, 154, Y0 + 26, 2); }
+    { const wim = o.g && GEAR[o.g.b].slot === 'weapon' && typeof weaponPx === 'function' ? weaponPx(o.g.gl || o.g.b) || weaponPx(o.g.b) : null; if (wim) drawWeaponIcon(x, wim, 154, Y0 + 26, 2);
+      const sim = !wim && o.g && GEAR[o.g.b].slot === 'shield' && typeof shieldSprite === 'function' ? shieldSprite(o.g.gl || o.g.b) || shieldSprite(o.g.b) : null; if (sim) drawWeaponIcon(x, sim, 154, Y0 + 26, 2); } // v12.146 副手選盾也看得到盾的樣子
     const before = heroStats(), sv = st.equip[sl]; st.equip[sl] = o.g ? o.g.u : null; const after = heroStats(), m = dualMode11(st); st.equip[sl] = sv;
     const d = ['hp', 'mp', 'atk', 'def', 'spa', 'spd', 'spe', 'crit'].map(k => [k, Math.round((after[k] - before[k]) * 10) / 10]).filter(([, v]) => v);
     Font.draw(x, '裝上後的變化' + (m ? '（' + m + '）' : ''), 10, Y0 + 3, UIC.accent, UIC.textSh, 10);
