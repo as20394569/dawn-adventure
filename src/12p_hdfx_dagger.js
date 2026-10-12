@@ -318,8 +318,9 @@ for (const [kind, SP, selfJ] of [['短刀', HDSP17a, 2], ['雙刀', HDSP17b, -1]
     if (F.h && FX[key + 'h']) { HD15.old[key + 'h'] = FX[key + 'h']; HD15.spKeys.push([key + 'h', wrap(F.h, true)]); } }); }
 // 普通攻擊：短刀一刺；雙刀主手（紫）、副手（黑）各一刺，從左右兩邊交叉刺進去；分段的第二、三下也是刺
 { const _wa = FX.wAtk; if (_wa) FX.wAtk = function* (U, T, u) { const kd = this._thKind; if (!(HD15.on && DG17.isK(kd))) return yield* _wa.call(this, U, T, u); this.hd15cast = 1; this.slashOn = 0; DG17.blue = kd === '雙刀'; DG17.force(true);
-    try { yield* this.lunge(u, 12, 2); Sound.sfx('bladeQ'); DG17.stab(this, T, kd === '雙刀' ? { ang: -1.25 } : {}); yield* wait(3);
-      if (kd === '雙刀') { Sound.sfx('bladeQ'); DG17.stab(this, T, { k: 1, ang: -1.89 }); yield* wait(3); }
+    try { yield* this.lunge(u, 12, 2); Sound.sfx('bladeQ'); DG17.stab(this, T, kd === '雙刀' ? { ang: -1.25, dur: 9 } : {}); yield* wait(kd === '雙刀' ? 10 : 3);
+      // v12.149 玩家：「雙刀的普通攻擊交叉要有快慢，不要同時出現」→ 主手先快快一刺（短），停一拍，副手再重重補一刺（長・粗），兩刀前後分開
+      if (kd === '雙刀') { Sound.sfx('bladeQ'); DG17.stab(this, T, { k: 1, ang: -1.89, dur: 16, w: 6, ext: 26 }); yield* wait(5); }
       DG17.pop(this, T, 0.8); yield* wait(6); } finally { DG17.force(false); DG17.blue = false; } };
   const _sg = segSwing; segSwing = function* (b, s, C, i, kind) { if (!(HD15.on && DG17.isK(kind))) return yield* _sg(b, s, C, i, kind); b.hd15cast = 1; yield* b.lunge(s, 6, 2); Sound.sfx('bladeQ'); DG17.blue = kind === '雙刀'; DG17.force(true);
     try { DG17.stab(b, C, { k: kind === '雙刀' ? i % 2 : 0, ang: [-1.25, -1.89, -1.57][i % 3] }); yield* wait(3); DG17.pop(b, C, 0.7); } finally { DG17.force(false); DG17.blue = false; } yield* wait(4); }; }
