@@ -23,7 +23,7 @@ def put(path, data): files[path] = data
 for name, pre in (('BATTLE_PXA_SRC', 'a_'), ('BATTLE_PXC_SRC', 'c_')):
     m, T = table(name); new = {}
     for k, uri in T.items():
-        p = 'px/' + pre + k + '.png'; put(p, base64.b64decode(uri.split(',', 1)[1])); new[k] = p
+        p = 'px/' + pre + k + '.png'; d = base64.b64decode(uri.split(',', 1)[1]); put(p, d); new[k] = p + '?v=' + hashlib.sha256(d).hexdigest()[:8]  # v12.140: ?v= so a phone never keeps an old picture from its cache
     js = js[:m.start(1)] + json.dumps(new, ensure_ascii=False, separators=(',', ':')) + js[m.end(1):]
 # 2) 288px portraits → hd/<k>.webp, loaded in the background (the small portrait shows until it arrives)
 m, P = table('PORTRAIT_HD_ROWS')
@@ -37,11 +37,12 @@ for k, (w, h, cols, rows) in P.items():
             if ch != '.': A[y, X:X + L] = RGB[CH.index(ch)]
             X += L
     b = io.BytesIO(); Image.fromarray(A, 'RGBA').save(b, 'WEBP', lossless=True, quality=80, method=2); put('hd/' + k + '.webp', b.getvalue())
-js = js[:m.start()] + 'const PORTRAIT_HD_KEYS = new Set(' + json.dumps(sorted(P), ensure_ascii=False) + '); // v27g: the 288px portraits are separate files (hd/<key>.webp)\n' + js[m.end():]
+HDV = {k: hashlib.sha256(json.dumps(P[k], separators=(',', ':')).encode()).hexdigest()[:8] for k in P}  # v12.140: version from the pixels (the webp bytes can differ between encoders)
+js = js[:m.start()] + 'const PORTRAIT_HD_KEYS = new Set(' + json.dumps(sorted(P), ensure_ascii=False) + '); // v27g: the 288px portraits are separate files (hd/<key>.webp)\nconst PORTRAIT_HD_V = ' + json.dumps(HDV, ensure_ascii=False, separators=(',', ':')) + ';\n' + js[m.end():]
 old_fn = re.search(r'function portraitHD\(k\) \{.*?\n\}\n', js, re.S)
 js = js[:old_fn.start()] + """function portraitHD(k) { // loads in the background; until it arrives the small portrait is shown
   if (k in PORTRAIT_HD) return PORTRAIT_HD[k]; PORTRAIT_HD[k] = null; if (!PORTRAIT_HD_KEYS.has(k)) return null;
-  try { const im = new Image(); im.onload = () => { const c = mkCanvas(im.naturalWidth, im.naturalHeight); c.getContext('2d').drawImage(im, 0, 0); c.hd = 1; PORTRAIT_HD[k] = c; }; im.src = 'hd/' + k + '.webp'; } catch (e) { }
+  try { const im = new Image(); im.onload = () => { const c = mkCanvas(im.naturalWidth, im.naturalHeight); c.getContext('2d').drawImage(im, 0, 0); c.hd = 1; PORTRAIT_HD[k] = c; }; im.src = 'hd/' + k + '.webp?v=' + (PORTRAIT_HD_V[k] || ''); } catch (e) { }
   return null;
 }
 setTimeout(() => { const L = [...PORTRAIT_HD_KEYS]; let i = 0; const next = () => { if (i < L.length) { portraitHD(L[i++]); setTimeout(next, 80); } }; next(); }, 2500); // warm them all up after boot
@@ -62,12 +63,18 @@ page = html[:i0] + ('<!-- The game\'s code is in the separate files game1.js, ga
     '     passed 5,000,000 bytes. tools/split_publish.py makes the pieces; ?v= changes with each piece. -->\n' + tags) + html[i1 + len('</script>'):]
 if 'charset' not in page[:1024]: page = '<meta charset="utf-8">\n' + page  # the pieces are read as UTF-8 on any host
 open(os.path.join(OUT, 'index.html'), 'w', encoding='utf8').write(page)
-mf = os.path.join(ROOT, 'build', 'publish_manifest.json'); old = json.load(open(mf)) if os.path.exists(mf) else None
+import sys
+mf = os.path.join(ROOT, 'build', 'publish_manifest.json')
+# v12.140: the art files that differ from what was last *uploaded* (build/published_manifest.json). Before, the list compared with
+# the last split, so a changed picture that was not sent in that publish was forgotten (夜影貓・提燈沼怪・苔甲龜 stayed old online
+# from v251 to v12.139). Run with --mark-published after the files in UPLOAD are on the artifact.
+pmf = os.path.join(ROOT, 'build', 'published_manifest.json'); old = json.load(open(pmf)) if os.path.exists(pmf) else None
 cur = {}; changed = []
 for p, data in files.items():
     fp = os.path.join(OUT, p); os.makedirs(os.path.dirname(fp), exist_ok=True); open(fp, 'wb').write(data)
     cur[p] = hashlib.sha256(data).hexdigest()
     if old is not None and old.get(p) != cur[p]: changed.append(p)
 json.dump(cur, open(mf, 'w'), indent=0)
+if '--mark-published' in sys.argv: json.dump(cur, open(pmf, 'w'), indent=0); old = cur; changed = []
 print('index.html', len(page.encode('utf8')), 'game', len(game), 'pieces', ' '.join(q['file'] + '=' + str(q['bytes']) for q in pieces), 'art files', len(files))
-print('CHANGED', json.dumps(changed) if old is not None else '(no manifest yet: all ' + str(len(files)) + ')')
+print('UPLOAD', json.dumps(changed) if old is not None else '(no published manifest yet: all ' + str(len(files)) + ')')
