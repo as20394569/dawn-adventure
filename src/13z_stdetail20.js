@@ -34,14 +34,14 @@ function stLines20(b, v) { const L = [], st = v.st || {}, D = v.bdur12 || {}, u 
 // 按到的是誰：主角（下面的資料卡或身體附近）或最近的魔物（名牌或身體）
 Battle.prototype.pickUnit20 = function (x, y) { const H0 = this.H; let best = null, bd = 1e9;
   if (H0 && !H0.gone && (y >= Math.round(this.boxH || HBAR_Y) - 24 || Math.hypot(x - this.center(H0).x, y - this.center(H0).y) < 30)) return H0;
-  for (const v of this.foes()) { if (v.gone || !(v.alpha > 0.3)) continue; const C = this.center(v), onPlate = Math.abs(x - (v.x + (v.off ? v.off.x : 0))) < 52 && y >= v.foot - 4 && y <= v.foot + 34;
+  for (const v of this.foes()) { if (v.gone || !(v.alpha > 0.3)) continue; const C = this.center(v), LY = this.lay22 ? this.lay22(v) : null, py = LY ? LY.plateY : v.foot + 3, onPlate = Math.abs(x - (v.x + (v.off ? v.off.x : 0))) < 52 && y >= py - 7 && y <= py + 31; // v12.147 名牌可能在頭上
     const d = onPlate ? 0 : Math.hypot(x - C.x, y - C.y); if (d < Math.max(30, (v.bbh || 40) * 0.6) && d < bd) { bd = d; best = v; } }
   return best; };
 Battle.prototype.drawStDetail20 = function (x) { const v = STD20.v; if (!v) return; const FS = 9, w = 166, X = (W - w) / 2;
   // 每個狀態兩行：名字（左）・剩幾回合（右）／效果（縮排、太長就換行）
   const items = stLines20(this, v).map(([n, e, c, d]) => ({ n, c, d: d > 0 ? '剩 ' + d + ' 回合' : '', e: e ? Font.wrap(e, w - 20, FS) : [] }));
   let h = 21; for (const it of items) h += 11 + it.e.length * 11 + 3; if (!items.length) h += 14; h += 2;
-  const C = this.center(v), bh = Math.round(this.boxH || HBAR_Y); let Y = v.hero ? bh - 28 - h : Math.round(v.foot + 34);
+  const C = this.center(v), bh = Math.round(this.boxH || HBAR_Y); let Y = v.hero ? bh - 28 - h : Math.round(v.foot + (this.lay22 && this.lay22(v) ? 4 : 34)); // 名牌在頭上時，框放在腳下
   if (!v.hero && Y + h > bh - 16) Y = Math.max(4 - (TALL_EXT || 0), Math.round(C.y - (v.bbh || 40) / 2) - h - 4);
   x.save(); x.fillStyle = 'rgba(8,10,22,0.94)'; x.fillRect(X, Y, w, h); x.strokeStyle = 'rgba(200,214,255,0.55)'; x.lineWidth = 1; x.strokeRect(X + 0.5, Y + 0.5, w - 1, h - 1);
   Font.drawC(x, (v.n || '') + '的狀態', W / 2, Y + 2, UIC.warm, UIC.textSh, 10); x.fillStyle = 'rgba(200,214,255,0.3)'; x.fillRect(X + 6, Y + 17, w - 12, 1);
