@@ -3,7 +3,7 @@ const { chromium } = require('/home/claude/.npm-global/lib/node_modules/playwrig
 const path = require('path');
 (async () => {
   const scen = require(path.resolve(process.argv[2]));
-  const b = await chromium.launch(); const p = await b.newPage({ viewport: { width: 760, height: 560 } });
+  const b = await chromium.launch(); const VW = (process.env.VIEW || '760x560').split('x').map(Number), p = await b.newPage({ viewport: { width: VW[0], height: VW[1] } });
   const errs = []; p.on('pageerror', e => errs.push('PAGEERROR ' + e.message + '\n' + e.stack)); p.on('console', m => { if (m.type() === 'error' && !m.text().includes('ERR_TUNNEL')) errs.push(m.text()); });
   await p.goto(/^https?:/.test(process.env.PAGE || '') ? process.env.PAGE : 'file://' + path.resolve(process.env.PAGE || 'dist/test.html')); await p.waitForFunction(() => typeof __game !== 'undefined', null, { timeout: 60000 }); await p.waitForTimeout(300);
   await p.evaluate(nv => { __game.Game.paused = true; __game.setScale(2); if (nv) __game.Game.noV14 = true; }, !!process.env.NOV14);

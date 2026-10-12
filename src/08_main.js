@@ -328,7 +328,7 @@ class TitleScene {
     x.drawImage(this.logo, Math.round(W / 2 - this.logo.width / 2), 6 + bob);
     Font.drawC(x, '～異世界冒險RPG～', W / 2, 52 + bob, '#ffe0a0', '#3a1428');
     if (this.stage === 'press' && Math.floor(this.t / 30) % 2 === 0) Font.drawC(x, '按 A 鍵開始', W / 2, 232, '#ffffff', '#1a1024');
-    Font.drawR(x, 'v12.152', W - 3, H - 13, '#b890b0', null);
+    Font.drawR(x, 'v12.153', W - 3, H - 13, '#b890b0', null);
   }
 }
 
@@ -448,7 +448,9 @@ function bindButtons() {
 function fitScreen() {
   const wrap = document.getElementById('screenWrap'); if (!wrap) return; const r = wrap.getBoundingClientRect();
   let s = Math.min(r.width / W, r.height / H), ext = 0;
-  if (document.body.classList.contains('tall') && r.width > 0) { s = r.width / W; ext = Math.max(0, Math.min(140, Math.floor(r.height / s) - H)); } // 戰鬥拉長：寬度照舊，多出來的高度變成畫面上方的列
+  if (document.body.classList.contains('tall') && r.width > 0) { s = r.width / W; ext = Math.max(0, Math.min(140, Math.floor(r.height / s) - H)); // 戰鬥拉長：寬度照舊，多出來的高度變成畫面上方的列
+    // v12.153 電腦（Edge 視窗開很大時只多 38 列）：頭上放不下名牌・行動預告・小牌子 → 戰鬥畫面稍微變窄，保證至少多 80 列（手機至少 56 列）
+    const minE = window.matchMedia && matchMedia('(pointer: fine)').matches ? 80 : 56; if (ext < minE) { s = Math.min(s, r.height / (H + minE + 0.5)); ext = Math.max(0, Math.min(140, Math.floor(r.height / s) - H)); } }
   if (ext !== TALL_EXT) { const S0 = SCALE || 3; TALL_EXT = ext; SCALE = 0; if (Game.fixedScale) setScale(S0); }
   cv.style.width = Math.floor(W * s) + 'px'; cv.style.height = Math.floor((H + ext) * s) + 'px';
   if (!Game.fixedScale) setScale(Math.ceil(s * (window.devicePixelRatio || 1)));
