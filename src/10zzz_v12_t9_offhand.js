@@ -1,15 +1,15 @@
 /* ===================== v12.20 戰鬥中看得到副手（玩家 2026-10-05：「雙持武器或盾牌 戰鬥中也要顯示」） =====================
    戰鬥用的是紙娃娃（背面）：原本只畫右手的武器和左手的盾，雙刀・雙劍的左手、雙盾的右手那面都沒畫。
-   · 雙刀・雙劍：把右手武器的那幾點左右翻過來，拿在左手（畫在身體後面一點）。
+   · 雙刀・雙劍：把右手武器的那幾點左右翻過來，拿在左手（畫在身體後面一點）。v12.152：左手畫的是副手自己那把（不是主手那把翻過來）。
    · 雙盾：右手也拿一面盾（側面圖翻過來）。 */
 { const _hb = heroBattleImgLook, cache = {}, PAD = 12 * 3;
   heroBattleImgLook = function (frame, L) {
     if (!L || !(L.owpn || L.mshd)) return _hb(frame, L);
     const key = frame + lookKey(L); if (cache[key]) return cache[key];
     let c;
-    if (L.owpn) { const L0 = { ...L, owpn: undefined, skey: undefined, mshd: undefined }, base = _hb(frame, L0), bare = _hb(frame, { ...L0, weapon: null, wkey: undefined }); /* v12.138 沒拿武器的那張也要拿掉武器圖（wkey），不然兩張一樣、副手什麼都挖不出來 */
+    if (L.owpn) { const L0 = { ...L, owpn: undefined, skey: undefined, mshd: undefined }, base = _hb(frame, L0), bare = _hb(frame, { ...L0, weapon: null, wkey: undefined }), /* v12.152 副手拿的是它自己那把（原本是把主手那把翻過來，兩把不一樣時左手畫錯） */ held = L.wkey2 && typeof weaponPx === 'function' && weaponPx(L.wkey2) ? _hb(frame, { ...L0, weapon: L.owpn || L0.weapon, wkey: L.wkey2 }) : base; /* v12.138 沒拿武器的那張也要拿掉武器圖（wkey），不然兩張一樣、副手什麼都挖不出來 */
       // the right-hand weapon alone: what differs between the doll with and without it
-      const w = base.width, h = base.height, wo = mkCanvas(w, h), wx = wo.getContext('2d'), A = base.getContext('2d').getImageData(0, 0, w, h), B = bare.getContext('2d').getImageData(0, 0, w, h), O = wx.createImageData(w, h);
+      const w = base.width, h = base.height, wo = mkCanvas(w, h), wx = wo.getContext('2d'), A = held.getContext('2d').getImageData(0, 0, w, h), B = bare.getContext('2d').getImageData(0, 0, w, h), O = wx.createImageData(w, h);
       for (let i = 0; i < A.data.length; i += 4) { const same = A.data[i] === B.data[i] && A.data[i + 1] === B.data[i + 1] && A.data[i + 2] === B.data[i + 2] && A.data[i + 3] === B.data[i + 3]; if (!same && A.data[i + 3]) for (let k = 0; k < 4; k++) O.data[i + k] = A.data[i + k]; }
       wx.putImageData(O, 0, 0);
       c = mkCanvas(w + PAD, h); const x = c.getContext('2d'); x.imageSmoothingEnabled = false;
