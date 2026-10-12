@@ -111,13 +111,15 @@ class Battle {
   // the middle of several targets (area skills play their effect once over the whole group)
   groupOf(ids) { const vs = ids.map(id => this.views[id]).filter(Boolean); if (vs.length < 2) return vs[0]; const C = vs.map(v => this.center(v)); return { cx: Math.round(C.reduce((a, c) => a + c.x, 0) / C.length), cy: Math.round(C.reduce((a, c) => a + c.y, 0) / C.length), hero: false, group: vs }; }
   /* ---------- drawing ---------- */
+  // the stage (v12.130: stretched over the tall screen; v12.145 13zz_sky21: native size, the extra rows on top become the sky)
+  drawStage(x) { x.drawImage(hd2dStageFor(this), 0, -TALL_EXT, W, BH + TALL_EXT); }
   renderFoe(v, tint) { if (v.spx) return pxRender(v.A, v.spx, this.t, tint); if (v.spec) return hdRenderFoe(v.A, v.spec, this.t, tint); const im = battleSprite(v.sp); im.ds = im.ds || 1; return tint ? tinted(im, tint) : im; }
   draw(x) {
     const tStart = performance.now(), blit = (im, X, Y, w, h) => { const ds = im.ds || 1; x.imageSmoothingEnabled = !im.px && !HD_PIXEL; x.drawImage(im, X, Y, w ?? im.width * ds, h ?? im.height * ds); x.imageSmoothingEnabled = false; };
     if (!this.hd2d) hd2dInit(this); const LK = this.hd2d.L;
     const redraw = (A, im) => !im || A.state !== 'idle' || (this.t & 1) === 0 || A.cvD !== hdD();
     const sx = this.shake > 0 ? rnd(-3, 3) : 0, sy = this.shake > 0 ? rnd(-2, 2) : 0;
-    x.save(); x.translate(sx, sy); x.imageSmoothingEnabled = true; x.drawImage(hd2dStageFor(this), 0, -TALL_EXT, W, BH + TALL_EXT); /* v12.130 戰鬥畫面拉長：背景整張配合拉長後的高度 */ x.imageSmoothingEnabled = false; hd2dMotes(this, x, false);
+    x.save(); x.translate(sx, sy); x.imageSmoothingEnabled = true; this.drawStage(x); x.imageSmoothingEnabled = false; hd2dMotes(this, x, false);
     // monsters, far ones first
     const foes = this.foes(true).filter(v => v.alpha > 0).sort((a, b) => a.foot - b.foot);
     for (const v of foes) {

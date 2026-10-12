@@ -11,6 +11,6 @@ const GROUND_PAL = {
   for (let i = 0; i < 80; i++) { const py = y0 + 4 + Math.floor(r() * (BH - y0 - 6)), px = Math.floor(r() * W), s = 1 + Math.floor((py - y0) / 40); x.fillStyle = r() < 0.6 ? P.tuft : P.dot; x.fillRect(px, py, s + 1, 1); if (k !== 'ruins') x.fillRect(px + 1, py - 1, 1, 1); }
   x.fillStyle = 'rgba(0,0,0,0.12)'; x.fillRect(0, y0, W, 2);
   // soft vignette instead of battle platforms
-  const g = x.createRadialGradient(W / 2, 110, 40, W / 2, 110, 150); g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(1, 'rgba(6,4,14,0.55)'); x.fillStyle = g; x.fillRect(0, 0, W, BH);
+  const g = x.createRadialGradient(W / 2, 110, 40, W / 2, 110, 150); g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(1, 'rgba(6,4,14,0.55)'); x.fillStyle = g; if (SKY21.cut) x.globalCompositeOperation = 'source-atop'; x.fillRect(0, 0, W, BH); x.globalCompositeOperation = 'source-over'; // v12.145：天空透明時別把暗角塗進天空
   return c;
 }; }

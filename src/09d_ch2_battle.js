@@ -101,12 +101,12 @@ Object.assign(BG_VARIANTS, { northRoad: ['meadow', 'dusk', 'field'], goldPlains:
     const floorLines = (y0, col, fan) => { for (let k = 0, y = y0; y < BH; k++, y += 6 + k * 2) { x.fillStyle = col; x.fillRect(0, y, W, 1); } for (let i = -6; i <= 6; i++) pxLine(x, 88 + i * 12, y0, 88 + i * fan, BH, col); };
     const bricks = (y0, y1, a, b, line, bw = 16, bh = 8) => { for (let y = y0, row = 0; y < y1; y += bh, row++) for (let i = (row % 2) * (bw / 2) - bw; i < W; i += bw) { x.fillStyle = r() < 0.5 ? a : b; x.fillRect(i + 1, y + 1, bw - 2, bh - 2); x.fillStyle = line; x.fillRect(i, y, bw, 1); x.fillRect(i, y, 1, bh); } };
     if (kind === 'plainsGold') {
-      grad(0, 74, [[0, '#7ab8e8'], [0.7, '#cfe6f0'], [1, '#fff4d8']]); glow(36, 18, 34, '255,248,210', 0.7); pxEllipse(x, 36, 18, 7, 7, '#fffbe8');
+      if (!SKY21.cut) { grad(0, 74, [[0, '#7ab8e8'], [0.7, '#cfe6f0'], [1, '#fff4d8']]); glow(36, 18, 34, '255,248,210', 0.7); pxEllipse(x, 36, 18, 7, 7, '#fffbe8'); }
       pxPoly(x, [[0, 74], [0, 56], [36, 50], [70, 56], [110, 46], [150, 52], [176, 48], [176, 74]], '#c8b060');
       x.fillStyle = '#e8e0d0'; x.fillRect(130, 30, 7, 18); pxPoly(x, [[129, 30], [133, 24], [137, 30]], '#a05040'); for (let k = 0; k < 4; k++) { const a = k * Math.PI / 2 + 0.5; pxLine(x, 133, 28, Math.round(133 + Math.cos(a) * 12), Math.round(28 + Math.sin(a) * 12), '#6a5a4a'); }
       ground(74, '#e8c860', '#9a7a2a'); for (let i = 0; i < 260; i++) { const py = 76 + Math.floor(Math.pow(r(), 0.7) * (BH - 78)), px = Math.floor(r() * W), h = py > 150 ? 4 : 2; x.fillStyle = r() < 0.5 ? '#f8e088' : '#c8a040'; x.fillRect(px, py - h, 1, h); }
     } else if (kind === 'snow' || kind === 'snowPeak') {
-      const peak = kind === 'snowPeak'; grad(0, 82, peak ? [[0, '#5a6a9a'], [0.6, '#a8b8d8'], [1, '#e8f0fa']] : [[0, '#9ab8d8'], [0.7, '#d8e8f4'], [1, '#f4f8fc']]);
+      const peak = kind === 'snowPeak'; if (!SKY21.cut) grad(0, 82, peak ? [[0, '#5a6a9a'], [0.6, '#a8b8d8'], [1, '#e8f0fa']] : [[0, '#9ab8d8'], [0.7, '#d8e8f4'], [1, '#f4f8fc']]);
       pxPoly(x, [[0, 82], [0, 50], [26, 30], [46, 44], [76, 18], [104, 42], [130, 26], [160, 46], [176, 38], [176, 82]], peak ? '#7a8aa8' : '#b0c0d8');
       for (const [X, Y] of [[26, 30], [76, 18], [130, 26]]) pxPoly(x, [[X - 8, Y + 8], [X, Y], [X + 8, Y + 8]], '#ffffff');
       pxPoly(x, [[0, 84], [0, 66], [40, 60], [90, 68], [130, 58], [176, 64], [176, 84]], '#dce8f4');

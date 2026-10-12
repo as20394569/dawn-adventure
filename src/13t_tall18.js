@@ -35,7 +35,8 @@ const TALL18 = { hud: [] };
    現在魔物的腳照背景同樣的比例往上移：原本在第 y 列的地方，拉長後在 y − 多出來的列數 ×（1 − y ÷ 舞台高）。
    主角在最下面、本來就幾乎不動，維持原位（下面的狀態卡、各種特效都以主角的位置為準）。
    畫面高度在戰鬥中改變（轉向・視窗大小）時也會重新排。 */
-const tallY18 = y => { const E = TALL_EXT; return E > 0 ? Math.round(y - E * (1 - y / BH)) : y; };
+// v12.145：背景不再拉長（照原本大小畫，上面多出來的列畫成天空，見 13zz_sky21），魔物也站回原本的位置
+const tallY18 = y => y;
 { const B = Battle.prototype, _ly = B.layout;
   B.layout = function (snap) { _ly.call(this, snap); for (const v of this.foes(true)) { v.foot0 = v.foot; v.foot = tallY18(v.foot); } this.tallE18 = TALL_EXT; };
   B.tallFoes18 = function () { if (this.tallE18 === TALL_EXT) return; this.tallE18 = TALL_EXT; for (const v of this.foes(true)) if (v.foot0 != null) v.foot = tallY18(v.foot0); }; }

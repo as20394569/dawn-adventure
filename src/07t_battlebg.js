@@ -23,8 +23,8 @@ function battleBgFor(ow, cfg) {
     const tufts = (y0, cols, n) => { for (let i = 0; i < n; i++) { const py = y0 + 3 + Math.floor(r() * (BH - y0 - 4)), px = Math.floor(r() * W), s = 1 + Math.floor((py - y0) / 45); x.fillStyle = cols[i % cols.length]; x.fillRect(px, py, s + 1, 1); x.fillRect(px + 1, py - s, 1, s); } };
     const bricks = (y0, y1, a, b, line, bw = 16, bh = 8) => { for (let y = y0, row = 0; y < y1; y += bh, row++) for (let i = (row % 2) * (bw / 2) - bw; i < W; i += bw) { x.fillStyle = r() < 0.5 ? a : b; x.fillRect(i + 1, y + 1, bw - 2, bh - 2); x.fillStyle = line; x.fillRect(i + 1, y + 1, bw - 2, 1); } };
     if (kind === 'meadow') { // flower meadow, bright morning, a windmill on the hill
-      grad(0, 72, [[0, '#8ccaf0'], [0.7, '#cfe9f4'], [1, '#f2f6e8']]); glow(140, 16, 40, '255,250,220', 0.7); pxEllipse(x, 140, 16, 7, 7, '#fffbe8');
-      x.fillStyle = '#ffffff'; for (const [a1, b1, w] of [[8, 18, 26], [70, 10, 34], [118, 34, 22]]) { x.fillRect(a1, b1, w, 3); x.fillRect(a1 + 5, b1 - 2, w - 12, 2); }
+      if (!SKY21.cut) { grad(0, 72, [[0, '#8ccaf0'], [0.7, '#cfe9f4'], [1, '#f2f6e8']]); glow(140, 16, 40, '255,250,220', 0.7); pxEllipse(x, 140, 16, 7, 7, '#fffbe8'); }
+      if (!SKY21.cut) { x.fillStyle = '#ffffff'; for (const [a1, b1, w] of [[8, 18, 26], [70, 10, 34], [118, 34, 22]]) { x.fillRect(a1, b1, w, 3); x.fillRect(a1 + 5, b1 - 2, w - 12, 2); } }
       pxPoly(x, [[0, 72], [0, 54], [30, 46], [58, 52], [90, 42], [120, 50], [150, 44], [176, 50], [176, 72]], '#a6cf8e');
       pxPoly(x, [[0, 74], [0, 62], [40, 58], [80, 64], [118, 56], [176, 62], [176, 74]], '#88bd72');
       x.fillStyle = '#e8e0d0'; x.fillRect(96, 30, 6, 14); x.fillStyle = '#b05a40'; pxPoly(x, [[95, 30], [99, 25], [103, 30]], '#b05a40');
@@ -33,18 +33,18 @@ function battleBgFor(ow, cfg) {
       const FL = ['#ff8ab0', '#ffe060', '#ffffff', '#c8a0ff', '#ff7050'];
       for (let i = 0; i < 150; i++) { const py = 74 + Math.floor(Math.pow(r(), 0.8) * (BH - 76)), px = Math.floor(r() * W), s = py > 150 ? 2 : 1, col = FL[i % FL.length]; x.fillStyle = col; x.fillRect(px, py, s, s); if (s > 1) { x.fillStyle = '#fff6c0'; x.fillRect(px, py, 1, 1); x.fillStyle = '#3e7a38'; x.fillRect(px, py + 2, 1, 2); } }
     } else if (kind === 'dusk') { // sunset over rolling hills, a dirt road and a fence
-      grad(0, 76, [[0, '#2c2452'], [0.45, '#8a3c68'], [0.8, '#e0704e'], [1, '#f6b060']]); glow(60, 70, 60, '255,190,110', 0.55); pxEllipse(x, 60, 72, 16, 16, '#ffd890'); pxEllipse(x, 60, 72, 12, 12, '#fff0c0');
-      x.fillStyle = 'rgba(80,40,90,0.6)'; for (const [a1, b1, w] of [[0, 30, 60], [90, 22, 70], [40, 48, 50], [120, 44, 56]]) x.fillRect(a1, b1, w, 2);
-      pxPoly(x, [[0, 78], [0, 62], [26, 58], [52, 66], [84, 56], [112, 64], [140, 54], [176, 60], [176, 78]], '#4a2e4c');
-      for (const [X, h] of [[20, 14], [128, 18], [150, 12]]) { x.fillStyle = '#2e1c30'; x.fillRect(X, 62 - h, 2, h); pxEllipse(x, X + 1, 62 - h, 5, 5, '#2e1c30'); }
-      ground(76, '#7a6a3e', '#2a2a20'); tufts(76, ['#9a8a50', '#4a4028'], 60);
+      if (!SKY21.cut) { grad(0, 76, [[0, '#2c2452'], [0.45, '#8a3c68'], [0.8, '#e0704e'], [1, '#f6b060']]); glow(60, 70, 60, '255,190,110', 0.55); pxEllipse(x, 60, 72, 16, 16, '#ffd890'); pxEllipse(x, 60, 72, 12, 12, '#fff0c0');
+      x.fillStyle = 'rgba(80,40,90,0.6)'; for (const [a1, b1, w] of [[0, 30, 60], [90, 22, 70], [40, 48, 50], [120, 44, 56]]) x.fillRect(a1, b1, w, 2); }
+      pxPoly(x, [[0, 78], [0, 62], [26, 58], [52, 66], [84, 56], [112, 64], [140, 54], [176, 60], [176, 78]], SKY21.cut ? '#4e6a48' : '#4a2e4c'); // （天空交給 13zz 時，山丘用白天的顏色，光線另外打）
+      for (const [X, h] of [[20, 14], [128, 18], [150, 12]]) { x.fillStyle = SKY21.cut ? '#2c3a26' : '#2e1c30'; x.fillRect(X, 62 - h, 2, h); pxEllipse(x, X + 1, 62 - h, 5, 5, '#2e1c30'); }
+      ground(76, SKY21.cut ? '#86a050' : '#7a6a3e', SKY21.cut ? '#34441f' : '#2a2a20'); tufts(76, ['#9a8a50', '#4a4028'], 60);
       pxPoly(x, [[80, 76], [96, 76], [150, BH], [30, BH]], '#a07650'); x.fillStyle = '#c09060'; for (let y = 80; y < BH; y += 5) { const t = (y - 76) / (BH - 76), l = lerp(80, 30, t), rr = lerp(96, 150, t); x.fillRect(Math.round(l + 2), y, 1, 1); x.fillRect(Math.round(rr - 3), y + 2, 1, 1); }
       for (let k = 0; k < 7; k++) { const t = k / 6, X = Math.round(lerp(70, 0, t)), Y = Math.round(lerp(80, 206, t * t * 0.3 + t * 0.7)), h = Math.round(4 + t * 14); x.fillStyle = '#3a2418'; x.fillRect(X, Y - h, 1 + Math.round(t * 2), h); if (k) { const pX = Math.round(lerp(70, 0, (k - 1) / 6)), pY = Math.round(lerp(80, 206, ((k - 1) / 6) ** 2 * 0.3 + (k - 1) / 6 * 0.7)); pxLine(x, pX, pY - Math.round(4 + (k - 1) / 6 * 14) + 2, X, Y - h + 2, '#4a3020'); } }
     } else if (kind === 'glade') { // sunlit forest clearing
       grad(0, 80, [[0, '#16301e'], [1, '#2c5234']]);
       for (let i = -4; i < W; i += 13) { const w = 4 + Math.floor(r() * 5); x.fillStyle = r() < 0.5 ? '#2a1f16' : '#35281c'; x.fillRect(i, 10, w, 72); x.fillStyle = '#4a3a2a'; x.fillRect(i, 10, 1, 72); }
       for (let i = -10; i < W; i += 12) pxEllipse(x, i + 5, 8 + Math.floor(r() * 10), 11, 8, r() < 0.5 ? '#1c3a22' : '#23462a');
-      x.save(); x.globalCompositeOperation = 'lighter'; for (const [x0, w] of [[40, 14], [72, 22], [110, 12]]) { const g = x.createLinearGradient(0, 0, 0, 150); g.addColorStop(0, 'rgba(255,240,170,0.28)'); g.addColorStop(1, 'rgba(255,240,170,0)'); x.fillStyle = g; x.beginPath(); x.moveTo(x0, 0); x.lineTo(x0 + w, 0); x.lineTo(x0 + w + 30, 150); x.lineTo(x0 + 20, 150); x.closePath(); x.fill(); } x.restore();
+      // v12.145：原本畫死在背景裡的三道光束拿掉（晚上、下雨也照著，方向又跟另一組光束不一樣）；光束改由 13zz 依太陽的位置畫
       ground(80, '#5a8a44', '#23401e'); const cg = x.createRadialGradient(92, 140, 10, 92, 140, 90); cg.addColorStop(0, 'rgba(190,230,120,0.55)'); cg.addColorStop(1, 'rgba(190,230,120,0)'); x.fillStyle = cg; x.fillRect(0, 80, W, BH - 80);
       tufts(80, ['#8ac060', '#3a6a30'], 70);
       for (const [X, Y, s] of [[8, 120, 1], [164, 110, 1], [4, 190, 2], [170, 196, 2]]) { x.fillStyle = '#2e6a2e'; for (let k = -3; k <= 3; k++) pxLine(x, X, Y, X + k * 3 * s, Y - (8 - Math.abs(k)) * s * 1.4, k % 2 ? '#3e8a3a' : '#2e6a2e'); }
@@ -58,9 +58,9 @@ function battleBgFor(ow, cfg) {
       ground(90, '#23483a', '#0e1e16'); tufts(90, ['#3a7a5a', '#1a3a2a'], 60);
       for (let i = 0; i < 16; i++) { const X = Math.floor(r() * W), Y = 100 + Math.floor(r() * 110), c2 = r() < 0.5 ? '#8af0ff' : '#d8a8ff'; glow(X, Y - 2, 6, c2 === '#8af0ff' ? '120,230,255' : '200,150,255', 0.3); x.fillStyle = '#c8c0b0'; x.fillRect(X, Y - 2, 1, 3); x.fillStyle = c2; x.fillRect(X - 1, Y - 3, 3, 1); }
     } else if (kind === 'ruinsOut') { // broken colonnade under a storm sky
-      grad(0, 92, [[0, '#262a3e'], [0.6, '#4a5470'], [1, '#8a92a8']]);
+      if (!SKY21.cut) { grad(0, 92, [[0, '#262a3e'], [0.6, '#4a5470'], [1, '#8a92a8']]);
       x.fillStyle = 'rgba(20,20,34,0.55)'; for (const [a1, b1, w] of [[0, 14, 90], [60, 28, 116], [0, 40, 70]]) { x.fillRect(a1, b1, w, 6); x.fillRect(a1 + 8, b1 - 3, w - 20, 3); }
-      pxLine(x, 128, 0, 122, 18, '#e8f0ff'); pxLine(x, 122, 18, 130, 30, '#e8f0ff'); glow(126, 16, 26, '200,220,255', 0.25);
+      pxLine(x, 128, 0, 122, 18, '#e8f0ff'); pxLine(x, 122, 18, 130, 30, '#e8f0ff'); glow(126, 16, 26, '200,220,255', 0.25); }
       pxPoly(x, [[0, 92], [0, 76], [40, 70], [80, 78], [130, 68], [176, 74], [176, 92]], '#3e4458');
       const col = (X, top, w) => { x.fillStyle = '#8a8a9a'; x.fillRect(X, top, w, 100 - top); x.fillStyle = '#a6a6b6'; x.fillRect(X + 1, top, 2, 100 - top); x.fillStyle = '#6a6a7a'; x.fillRect(X + w - 2, top, 2, 100 - top); x.fillStyle = '#9a9aaa'; x.fillRect(X - 2, 96, w + 4, 4); pxPoly(x, [[X, top], [X + w * 0.4, top - 4], [X + w * 0.7, top + 1], [X + w, top - 2], [X + w, top + 3], [X, top + 3]], '#8a8a9a'); x.fillStyle = '#5a8a44'; x.fillRect(X + 1, top + 6, 1, 14); x.fillRect(X + 2, top + 12, 1, 8); };
       col(10, 34, 12); col(46, 58, 10); col(120, 26, 14); col(156, 50, 12);

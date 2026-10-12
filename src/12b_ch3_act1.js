@@ -118,14 +118,14 @@ if (typeof PORTRAIT_PROPS !== 'undefined') for (const k in BIGPROP14) PORTRAIT_P
 { const _bb = buildBattleBG; buildBattleBG = function (kind) { if (kind !== 'deck14') return _bb(kind);
     const c = mkCanvas(W, BH), x = c.getContext('2d'), r = srand(4471);
     const grad = (y0, y1, stops) => { const g = x.createLinearGradient(0, y0, 0, y1); stops.forEach(([t, col]) => g.addColorStop(t, col)); x.fillStyle = g; x.fillRect(0, y0, W, y1 - y0); };
-    grad(0, 52, [[0, '#4a9ee0'], [1, '#cdeefa']]); x.fillStyle = '#ffffff'; for (const [a, b, w] of [[20, 14, 26], [110, 26, 20]]) { x.fillRect(a, b, w, 2); x.fillRect(a + 4, b - 1, w - 10, 1); }
+    if (!SKY21.cut) { grad(0, 52, [[0, '#4a9ee0'], [1, '#cdeefa']]); x.fillStyle = '#ffffff'; for (const [a, b, w] of [[20, 14, 26], [110, 26, 20]]) { x.fillRect(a, b, w, 2); x.fillRect(a + 4, b - 1, w - 10, 1); } }
     grad(52, 84, [[0, '#2a7ab0'], [1, '#3a9ac8']]); for (let i = 0; i < 36; i++) { x.fillStyle = r() < 0.5 ? '#cfeefa' : '#ffffff'; x.fillRect(Math.floor(r() * W), 54 + Math.floor(r() * 28), 2 + Math.floor(r() * 4), 1); }
     x.fillStyle = '#5a3418'; x.fillRect(0, 84, W, 12); x.fillStyle = '#c89058'; x.fillRect(0, 84, W, 3); x.fillStyle = '#3a2210'; for (let X = 8; X < W; X += 24) x.fillRect(X, 87, 3, 9);
     for (let y = 96; y < BH; y++) { const k = Math.floor((y - 96) / 9); x.fillStyle = k % 2 ? '#a06c38' : '#b47c44'; x.fillRect(0, y, W, 1); if ((y - 96) % 9 === 8) { x.fillStyle = '#7a4c24'; x.fillRect(0, y, W, 1); } }
     for (let y = 96, k = 0; y < BH; y += 9, k++) { x.fillStyle = '#7a4c24'; x.fillRect((k * 37) % W, y, 1, 8); x.fillRect((k * 37 + 88) % W, y, 1, 8); }
     x.fillStyle = '#4a2c14'; x.fillRect(156, 0, 7, 96); x.fillStyle = '#7a4a24'; x.fillRect(156, 0, 2, 96);
     x.strokeStyle = '#8a6a40'; x.lineWidth = 1; x.beginPath(); x.moveTo(0, 6); x.lineTo(60, 84); x.moveTo(159, 10); x.lineTo(110, 84); x.stroke();
-    x.fillStyle = 'rgba(255,240,200,0.08)'; x.fillRect(0, 0, W, BH); return c; }; }
+    x.fillStyle = 'rgba(255,240,200,0.08)'; if (SKY21.cut) x.globalCompositeOperation = 'source-atop'; x.fillRect(0, 0, W, BH); x.globalCompositeOperation = 'source-over'; return c; }; }
 
 /* ---------- people ---------- */
 Object.assign(LOOKS, {

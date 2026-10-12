@@ -352,5 +352,13 @@ const Sound = (() => {
   function expStep(t) { if (expOsc) expOsc.o.frequency.setValueAtTime(500 + t * 1200, ac.currentTime); }
   function expStop() { if (expOsc) { try { expOsc.o.stop(); } catch (e) { } expOsc = null; } }
   function setPaused(h) { if (!ac) return; try { if (h) ac.suspend(); else ac.resume(); } catch (e) { } }
-  return { init, setPaused, play, stop, jingle, sfx, cry, applySettings, expStart, expStep, expStop, get ready() { return !!ac; }, get current() { return curName; } };
+  // v12.145 雨聲：一直播的濾過噪音，0 停・1 小雨・2 大雨・3 暴雨（音量和音色慢慢變過去；跟著音效開關）
+  let ambS = null, ambG = null, ambF = null, ambLv = 0;
+  function amb(lv) { lv = lv | 0; if (!ac || !noiseBuf) { ambLv = lv; return; } if (lv === ambLv && (!!ambS === !!lv)) return; ambLv = lv; const T = ac.currentTime;
+    if (!ambS && lv) { ambS = ac.createBufferSource(); ambS.buffer = noiseBuf; ambS.loop = true; ambF = ac.createBiquadFilter(); ambF.type = 'bandpass'; ambF.Q.value = 0.5; ambF.frequency.value = 2400;
+      ambG = ac.createGain(); ambG.gain.value = 0; ambS.connect(ambF); ambF.connect(ambG); ambG.connect(sfxG); ambS.start(); }
+    if (!ambS) return; const vol = [0, 0.045, 0.09, 0.14][lv] || 0, fq = [2400, 3200, 2200, 1500][lv] || 2400;
+    ambG.gain.cancelScheduledValues(T); ambG.gain.setValueAtTime(ambG.gain.value, T); ambG.gain.linearRampToValueAtTime(vol, T + 1.6); ambF.frequency.setTargetAtTime(fq, T, 0.6);
+    if (!lv) { const s0 = ambS; ambS = null; setTimeout(() => { try { s0.stop(); } catch (e) { } }, 1800); } }
+  return { init, setPaused, play, stop, jingle, sfx, cry, applySettings, expStart, expStep, expStop, amb, get ready() { return !!ac; }, get current() { return curName; } };
 })();

@@ -27,13 +27,14 @@ Object.assign(MFX, {
     if (kind !== 'lake' && kind !== 'rift') return _bb(kind);
     const c = mkCanvas(W, BH), x = c.getContext('2d'), r = srand(kind === 'lake' ? 17 : 23);
     if (kind === 'lake') {
-      const sky = x.createLinearGradient(0, 0, 0, 70); sky.addColorStop(0, '#0e1430'); sky.addColorStop(1, '#2a3a6a'); x.fillStyle = sky; x.fillRect(0, 0, W, 70);
-      for (let i = 0; i < 40; i++) { x.fillStyle = r() < 0.3 ? '#fff8d0' : '#a8b8e8'; x.fillRect(Math.floor(r() * W), Math.floor(r() * 56), 1, 1); }
-      pxEllipse(x, 132, 22, 10, 10, '#fff4d0'); pxEllipse(x, 135, 20, 9, 9, '#fffbe8');
-      for (let i = -6; i < W; i += 7) { const h = 8 + Math.floor(r() * 12); x.fillStyle = '#16203a'; x.fillRect(i, 70 - h, 6, h); pxEllipse(x, i + 3, 70 - h, 5, 5, '#16203a'); }
-      const lk = x.createLinearGradient(0, 68, 0, 112); lk.addColorStop(0, '#2a4a7a'); lk.addColorStop(1, '#1a3050'); x.fillStyle = lk; x.fillRect(0, 68, W, 44);
-      for (let y = 72; y < 110; y += 3) for (let i = (y * 7) % 23; i < W; i += 23) { x.fillStyle = y % 2 ? '#4a70a8' : '#3a5a90'; x.fillRect(i, y, 6 + (y % 5), 1); }
-      for (let y = 72; y < 110; y += 2) { const w = 10 - (y - 72) / 5; x.fillStyle = '#e8e8c0'; x.fillRect(Math.round(133 - w / 2 + Math.sin(y) * 2), y, Math.max(1, Math.round(w)), 1); }
+      const cut = SKY21.cut; // v12.145：天空交給 13zz 時，湖用白天的顏色（晚上由光線壓暗），月亮・星星・月光倒影不畫
+      if (!cut) { const sky = x.createLinearGradient(0, 0, 0, 70); sky.addColorStop(0, '#0e1430'); sky.addColorStop(1, '#2a3a6a'); x.fillStyle = sky; x.fillRect(0, 0, W, 70); }
+      for (let i = 0; i < 40; i++) { const c0 = r() < 0.3 ? '#fff8d0' : '#a8b8e8', X = Math.floor(r() * W), Y = Math.floor(r() * 56); if (!cut) { x.fillStyle = c0; x.fillRect(X, Y, 1, 1); } }
+      if (!cut) { pxEllipse(x, 132, 22, 10, 10, '#fff4d0'); pxEllipse(x, 135, 20, 9, 9, '#fffbe8'); }
+      for (let i = -6; i < W; i += 7) { const h = 8 + Math.floor(r() * 12); x.fillStyle = cut ? '#2a4434' : '#16203a'; x.fillRect(i, 70 - h, 6, h); pxEllipse(x, i + 3, 70 - h, 5, 5, cut ? '#2a4434' : '#16203a'); }
+      const lk = x.createLinearGradient(0, 68, 0, 112); lk.addColorStop(0, cut ? '#5a8ec4' : '#2a4a7a'); lk.addColorStop(1, cut ? '#3a6a9a' : '#1a3050'); x.fillStyle = lk; x.fillRect(0, 68, W, 44);
+      for (let y = 72; y < 110; y += 3) for (let i = (y * 7) % 23; i < W; i += 23) { x.fillStyle = cut ? (y % 2 ? '#8ab8e0' : '#6a9ccc') : (y % 2 ? '#4a70a8' : '#3a5a90'); x.fillRect(i, y, 6 + (y % 5), 1); }
+      if (!cut) for (let y = 72; y < 110; y += 2) { const w = 10 - (y - 72) / 5; x.fillStyle = '#e8e8c0'; x.fillRect(Math.round(133 - w / 2 + Math.sin(y) * 2), y, Math.max(1, Math.round(w)), 1); }
       ['#2e4a3a', '#2a4436', '#274032', '#243c2f', '#21382c', '#1f3429', '#1c3026', '#1a2c24', '#182a22', '#172820'].forEach((col, i) => { x.fillStyle = col; x.fillRect(0, 110 + i * 11, W, 11); });
       x.fillStyle = '#3e6048'; for (let y = 114; y < BH; y += 6) for (let i = (y * 13) % 29; i < W; i += 29) x.fillRect(i, y, 4, 1);
       for (let i = 0; i < 12; i++) { const X = Math.floor(r() * W), Y = 104 + Math.floor(r() * 10); x.fillStyle = '#4a6a3a'; x.fillRect(X, Y - 8, 1, 9); x.fillRect(X + 2, Y - 6, 1, 7); x.fillStyle = '#8a6a3a'; x.fillRect(X, Y - 9, 1, 2); }

@@ -23,6 +23,8 @@ function makeFoe(sp, lv, kind) {
   const known = d.learn.filter(([l]) => l <= lv).map(([, m]) => m); const moves = [...new Set(known)].slice(-4).map(id => ({ id }));
   return { sp, n: d.n, fam: d.fam, rare: d.rare, lv, stats: s, hp: s.hp, maxhp: s.hp, status: null, moves, stages: { atk: 0, def: 0, spa: 0, spd: 0, spe: 0 }, wet: 0, trait: d.trait, kind, boss: kind === 'boss', elite: kind === 'elite', sleepT: 0 };
 }
+// v12.145：戶外的戰鬥背景，天空（漸層・太陽・月亮・星星・雲）改由 13zz_sky21 依時間和天氣畫；cut=1 時這些不畫，留透明
+const SKY21 = { cut: 0 };
 function buildBattleBG(kind) {
   const c = mkCanvas(W, BH), x = c.getContext('2d'), r = srand(kind === 'ruins' ? 9 : 5);
   const poly = (col, pts) => pxPoly(x, pts, col);
@@ -47,8 +49,8 @@ function buildBattleBG(kind) {
     x.fillStyle = '#3a3444'; for (let i = -6; i <= 6; i++) pxLine(x, 88 + i * 10, 96, 88 + i * 34, BH, '#3a3444');
     x.fillStyle = '#6aa048'; for (const [a1, b1] of [[18, 150], [150, 128], [70, 184]]) { x.fillRect(a1, b1, 6, 2); x.fillRect(a1 + 2, b1 - 1, 2, 1); }
   } else { // meadow with a distant castle
-    ['#86bde8', '#94c6ec', '#a3cfef', '#b3d8f1', '#c3e0f3', '#d3e8f5'].forEach((col, i) => { x.fillStyle = col; x.fillRect(0, i * 11, W, 11); });
-    x.fillStyle = '#f2f8fc'; for (const [a1, b1, w] of [[10, 12, 30], [98, 22, 40], [150, 8, 22]]) { x.fillRect(a1, b1, w, 4); x.fillRect(a1 + 4, b1 - 2, w - 8, 2); }
+    if (!SKY21.cut) ['#86bde8', '#94c6ec', '#a3cfef', '#b3d8f1', '#c3e0f3', '#d3e8f5'].forEach((col, i) => { x.fillStyle = col; x.fillRect(0, i * 11, W, 11); });
+    if (!SKY21.cut) { x.fillStyle = '#f2f8fc'; for (const [a1, b1, w] of [[10, 12, 30], [98, 22, 40], [150, 8, 22]]) { x.fillRect(a1, b1, w, 4); x.fillRect(a1 + 4, b1 - 2, w - 8, 2); } }
     poly('#a9bdd2', [[0, 64], [0, 44], [22, 36], [40, 46], [62, 32], [84, 48], [110, 40], [130, 50], [176, 38], [176, 64]]);
     poly('#8fa9a8', [[104, 66], [118, 56], [148, 52], [176, 56], [176, 66]]);
     // castle on the hill
@@ -69,7 +71,7 @@ function buildBattleBG(kind) {
     for (const [X, Y, w] of [[4, 88, 30], [10, 84, 18]]) { x.fillStyle = '#6c665b'; x.fillRect(X, Y, w, 6); for (let i = X; i < X + w; i += 5) { x.fillStyle = '#9a9384'; x.fillRect(i, Y, 4, 2); x.fillStyle = '#b4ad9c'; x.fillRect(i, Y, 4, 1); } }
   }
   const g = x.createLinearGradient(0, 120, 0, BH); g.addColorStop(0, 'rgba(8,10,20,0)'); g.addColorStop(1, 'rgba(8,10,20,0.55)'); x.fillStyle = g; x.fillRect(0, 120, W, BH - 120);
-  const g2 = x.createLinearGradient(0, 0, 0, 34); g2.addColorStop(0, 'rgba(8,10,20,0.35)'); g2.addColorStop(1, 'rgba(8,10,20,0)'); x.fillStyle = g2; x.fillRect(0, 0, W, 34);
+  const g2 = x.createLinearGradient(0, 0, 0, 34); g2.addColorStop(0, 'rgba(8,10,20,0.35)'); g2.addColorStop(1, 'rgba(8,10,20,0)'); x.fillStyle = g2; if (SKY21.cut) x.globalCompositeOperation = 'source-atop'; x.fillRect(0, 0, W, 34); x.globalCompositeOperation = 'source-over';
   return c;
 }
 function buildShadow(rx, ry) { const c = mkCanvas(rx * 2 + 2, ry * 2 + 2), x = c.getContext('2d'); pxEllipse(x, rx + 1, ry + 1, rx, ry, '#000000'); return c; }

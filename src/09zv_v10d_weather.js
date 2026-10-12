@@ -48,6 +48,7 @@ const WX_BOLT14 = {}; // the bolt of the current cycle
 function wxBlob14(x, X, Y, w, h, rgb, a) { const rows = Math.max(3, Math.round(h / 4)); for (let r = 0; r < rows; r++) { const u = (r + 0.5) / rows * 2 - 1, k = Math.sqrt(Math.max(0, 1 - u * u)), rw = Math.round(w * (0.35 + 0.65 * k));
     x.fillStyle = 'rgba(' + rgb + ',' + (a * (0.55 + 0.45 * k)).toFixed(3) + ')'; x.fillRect(Math.round(X + (w - rw) / 2), Math.round(Y + r * 4), rw, 4); } }
 function wxOverlay(x, k, t, w, h) {
+  if ((k === 'rain' || k === 'storm') && typeof rainOverlay21 === 'function') return rainOverlay21(x, k, t, w, h); // v12.145：小雨・大雨・暴雨、各地不同的雨
   if (k === 'rain' || k === 'storm') { const storm = k === 'storm', n = storm ? 80 : 55;
     x.fillStyle = storm ? 'rgba(12,18,44,0.28)' : 'rgba(20,30,60,0.18)'; x.fillRect(0, 0, w, h);
     for (let i = 0; i < n; i++) { const sp = 8 + (i % 3) * 2, len = 6 + (i % 3) * 3, px = Math.round((i * 47 + t * (storm ? 3 : 2)) % (w + 30)) - 15, py = Math.round((i * 83 + t * sp) % (h + 24)) - 12;
@@ -76,16 +77,16 @@ function wxOverlay(x, k, t, w, h) {
 }
 { const _d = Overworld.prototype.draw; Overworld.prototype.draw = function (x) {
     _d.call(this, x); const st = this.st, k = wxNow(st); if (!k) return; wxOverlay(x, k, this.t, W, H);
-    if (!this.popup && !UI.stack.length) { const s = WEATHER[k].n + (st.rainbowUntil > (st.steps || 0) ? '・彩虹' : '') + (typeof dnHudTag === 'function' ? dnHudTag(st) : ''), w = Math.ceil(Font.width(s, 9)) + 20; x.fillStyle = 'rgba(10,14,28,0.7)'; x.fillRect(3, 3, w, 14); wxIcon(x, k, 5, 4); Font.draw(x, s, 17, 1, WEATHER[k].col, UIC.textSh, 9); }
-    const B = Game.wxBanner; if (B && !UI.stack.length && !this.popup && !(Game.toastQ && Game.toastQ.length)) { /* v12.0.1: waits until an achievement toast has gone, they used to overlap */ B.t++; if (B.t > 150) Game.wxBanner = null; else { const a = B.t < 10 ? B.t / 10 : B.t > 130 ? (150 - B.t) / 20 : 1, s1 = B.rainbow ? '雨停了，天空出現了彩虹！' : '天氣：' + WEATHER[B.k].n, s2 = B.rainbow ? '接下來100步，戰鬥經驗值+20%' : WEATHER[B.k].d, w = Math.max(Font.width(s1, 10), Font.width(s2, 9)) + 20;
+    if (!this.popup && !UI.stack.length) { const s = (typeof wxName21 === 'function' ? wxName21(st, k) : WEATHER[k].n) + (st.rainbowUntil > (st.steps || 0) ? '・彩虹' : '') + (typeof dnHudTag === 'function' ? dnHudTag(st) : ''), w = Math.ceil(Font.width(s, 9)) + 20; x.fillStyle = 'rgba(10,14,28,0.7)'; x.fillRect(3, 3, w, 14); wxIcon(x, k, 5, 4); Font.draw(x, s, 17, 1, WEATHER[k].col, UIC.textSh, 9); }
+    const B = Game.wxBanner; if (B && !UI.stack.length && !this.popup && !(Game.toastQ && Game.toastQ.length)) { /* v12.0.1: waits until an achievement toast has gone, they used to overlap */ B.t++; if (B.t > 150) Game.wxBanner = null; else { const a = B.t < 10 ? B.t / 10 : B.t > 130 ? (150 - B.t) / 20 : 1, s1 = B.s1 || (B.rainbow ? '雨停了，天空出現了彩虹！' : '天氣：' + WEATHER[B.k].n), s2 = B.s2 || (B.rainbow ? '接下來100步，戰鬥經驗值+20%' : WEATHER[B.k].d), w = Math.max(Font.width(s1, 10), Font.width(s2, 9)) + 20;
       x.globalAlpha = a; drawPanel(x, (W - w) / 2, 28, w, 30, null); Font.drawC(x, s1, W / 2, 29, B.rainbow ? '#ffb0e0' : WEATHER[B.k].col, UIC.textSh, 10); Font.drawC(x, s2, W / 2, 42, UIC.text, UIC.textSh, 9); x.globalAlpha = 1; } }
   }; }
 
 /* ---------- battles ---------- */
 { const _bs = Overworld.prototype.battleScript; Overworld.prototype.battleScript = function* (cfg, ...a) {
     const st = this.st, k = wxNow(st); if (!cfg) return yield* _bs.call(this, cfg, ...a);
-    let c = { ...cfg, wx: k }; if (st.rainbowUntil > (st.steps || 0) && cfg.kind === 'wild') c.aevExp = (c.aevExp || 1) * 1.2;
-    if (k && cfg.kind === 'wild' && !cfg.roam12 && WX_MON[k] && chance(0.25)) c = { ...c, sp: WX_MON[k][0], wxMon: 1 };
+    let c = { ...cfg, wx: k, rainLv21: typeof rainLv21 === 'function' ? rainLv21(st) : 0 }; if (st.rainbowUntil > (st.steps || 0) && cfg.kind === 'wild') c.aevExp = (c.aevExp || 1) * 1.2;
+    if (k && cfg.kind === 'wild' && !cfg.roam12 && WX_MON[k] && !(k === 'rain' && c.rainLv21 === 1) && chance(0.25)) /* v12.145：小雨不會有雨蛙精 */ c = { ...c, sp: WX_MON[k][0], wxMon: 1 };
     return yield* _bs.call(this, c, ...a);
   }; }
 

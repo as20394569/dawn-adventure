@@ -56,8 +56,8 @@ const MAST13_IMG = spriteFrom(['.......kk.......', '...kkkkTtkkk....', '..kSSSST
     const grad = (y0, y1, stops) => { const g = x.createLinearGradient(0, y0, 0, y1); stops.forEach(([t, col]) => g.addColorStop(t, col)); x.fillStyle = g; x.fillRect(0, y0, W, y1 - y0); };
     const glow = (X, Y, R, rgb, a) => { const g = x.createRadialGradient(X, Y, 0, X, Y, R); g.addColorStop(0, `rgba(${rgb},${a})`); g.addColorStop(1, `rgba(${rgb},0)`); x.fillStyle = g; x.fillRect(X - R, Y - R, R * 2, R * 2); };
     if (kind === 'beach13') {
-      grad(0, 58, [[0, '#5aaee8'], [0.75, '#bfe4f6'], [1, '#e8f6fa']]); glow(130, 18, 34, '255,250,220', 0.8); pxEllipse(x, 130, 18, 6, 6, '#fffbe8');
-      x.fillStyle = '#ffffff'; for (const [a, b, w] of [[10, 12, 28], [70, 24, 22], [150, 34, 18]]) { x.fillRect(a, b, w, 2); x.fillRect(a + 4, b - 1, w - 10, 1); }
+      if (!SKY21.cut) { grad(0, 58, [[0, '#5aaee8'], [0.75, '#bfe4f6'], [1, '#e8f6fa']]); glow(130, 18, 34, '255,250,220', 0.8); pxEllipse(x, 130, 18, 6, 6, '#fffbe8');
+      x.fillStyle = '#ffffff'; for (const [a, b, w] of [[10, 12, 28], [70, 24, 22], [150, 34, 18]]) { x.fillRect(a, b, w, 2); x.fillRect(a + 4, b - 1, w - 10, 1); } }
       grad(58, 86, [[0, '#2f8ac0'], [1, '#4ab8d0']]); // the sea
       for (let i = 0; i < 40; i++) { const px = Math.floor(r() * W), py = 60 + Math.floor(r() * 24); x.fillStyle = r() < 0.5 ? '#bfeaf6' : '#ffffff'; x.fillRect(px, py, 2 + Math.floor(r() * 4), 1); }
       x.fillStyle = 'rgba(255,255,255,0.65)'; for (let X = 0; X < W; X++) { const y = 86 + Math.round(Math.sin(X / 9) * 1.5); x.fillRect(X, y, 1, 2); } // surf line

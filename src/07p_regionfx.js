@@ -25,8 +25,8 @@ Object.assign(MFX, {
     if (kind !== 'canyon' && kind !== 'swamp') return _bb(kind);
     const c = mkCanvas(W, BH), x = c.getContext('2d'), r = srand(kind === 'canyon' ? 31 : 37);
     if (kind === 'canyon') {
-      const sky = x.createLinearGradient(0, 0, 0, 78); sky.addColorStop(0, '#4a2a5a'); sky.addColorStop(0.45, '#d86a4a'); sky.addColorStop(1, '#f8c070'); x.fillStyle = sky; x.fillRect(0, 0, W, 78);
-      pxEllipse(x, 42, 62, 14, 14, '#fff0b0'); pxEllipse(x, 42, 62, 11, 11, '#fff8d8');
+      if (!SKY21.cut) { const sky = x.createLinearGradient(0, 0, 0, 78); sky.addColorStop(0, '#4a2a5a'); sky.addColorStop(0.45, '#d86a4a'); sky.addColorStop(1, '#f8c070'); x.fillStyle = sky; x.fillRect(0, 0, W, 78);
+      pxEllipse(x, 42, 62, 14, 14, '#fff0b0'); pxEllipse(x, 42, 62, 11, 11, '#fff8d8'); }
       const mesa = (x0, w, top, col) => { x.fillStyle = col; x.fillRect(x0, top, w, 80 - top); x.fillRect(x0 - 3, top + 4, w + 6, 2); };
       mesa(-4, 34, 36, '#8a3a3a'); mesa(58, 22, 48, '#9a4a3a'); mesa(118, 40, 30, '#7a3434'); mesa(150, 30, 44, '#8a4038');
       x.fillStyle = '#6a2a2e'; for (let i = 0; i < W; i += 3) x.fillRect(i, 70 + Math.floor(r() * 4), 3, 10);
@@ -34,7 +34,7 @@ Object.assign(MFX, {
       x.fillStyle = '#e8b878'; for (let y = 82; y < BH; y += 7) for (let i = (y * 11) % 31; i < W; i += 31) x.fillRect(i, y, 5, 1);
       for (let i = 0; i < 5; i++) { const X = Math.floor(r() * W), Y = 90 + Math.floor(r() * 16); x.fillStyle = '#3a6a3a'; x.fillRect(X, Y - 10, 3, 11); x.fillRect(X - 3, Y - 7, 3, 2); x.fillRect(X - 3, Y - 9, 1, 3); x.fillRect(X + 3, Y - 5, 3, 2); x.fillRect(X + 5, Y - 8, 1, 4); }
     } else {
-      const sky = x.createLinearGradient(0, 0, 0, 90); sky.addColorStop(0, '#0e1410'); sky.addColorStop(1, '#2a3a2a'); x.fillStyle = sky; x.fillRect(0, 0, W, 90);
+      if (!SKY21.cut) { const sky = x.createLinearGradient(0, 0, 0, 90); sky.addColorStop(0, '#0e1410'); sky.addColorStop(1, '#2a3a2a'); x.fillStyle = sky; x.fillRect(0, 0, W, 90); }
       for (let i = 0; i < 9; i++) { const X = Math.floor(r() * W), h = 30 + Math.floor(r() * 30); x.fillStyle = '#141c14'; x.fillRect(X, 90 - h, 3, h); x.fillRect(X - 6, 90 - h + 8, 6, 2); x.fillRect(X + 3, 90 - h + 14, 7, 2); x.fillRect(X - 4, 90 - h + 20, 4, 1); }
       x.fillStyle = 'rgba(150,120,190,0.18)'; for (let i = 0; i < 4; i++) x.fillRect(0, 50 + i * 12, W, 6);
       ['#2e3a28', '#2b3726', '#283424', '#253122', '#222e20', '#1f2b1e', '#1c281c', '#1a261a', '#182418', '#172216', '#162014', '#151e13', '#141c12'].forEach((col, i) => { x.fillStyle = col; x.fillRect(0, 88 + i * 10, W, 10); });
