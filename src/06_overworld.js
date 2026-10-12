@@ -351,7 +351,7 @@ class Overworld {
     if (!Input.dir() && e === this.p) e.bumpT = 0;
     const sx = Math.round(e.px) - camX, sy = Math.round(e.py) - camY - 6 - Math.round(e.hop || 0);
     if (e.jump) { x.fillStyle = 'rgba(0,0,0,0.3)'; x.beginPath(); x.ellipse(Math.round(e.px) - camX + 8, Math.round(e.py) - camY + 14, 6, 2.5, 0, 0, 7); x.fill(); }
-    x.drawImage(set[fi], sx, sy);
+    const im = set[fi], B = im && im.ow23; if (B) x.drawImage(B, sx - B.o23, sy - B.o23); else x.drawImage(im, sx, sy); // v12.150 野外武器可以超出 16×22 小框
   }
   drawMon(x, e, camX, camY) {
     const sx = Math.round(e.px) - camX - 4, sy = Math.round(e.py) - camY - 10 + Math.round(e.bob || 0);
