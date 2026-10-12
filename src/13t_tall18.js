@@ -27,7 +27,7 @@ const TALL18 = { hud: [] };
    特效播放的時候（再多留一下）名牌淡到 25%，播完慢慢回來；HP 條扣血時已經回到看得清楚。 */
 { const B = Battle.prototype, _pf = B.playFx; B.playFx = function* (...a) { this.fx18 = (this.fx18 || 0) + 1; try { return yield* _pf.apply(this, a); } finally { this.fx18--; this.fxHold18 = 12; } };
   if (typeof KB12 !== 'undefined' && KB12.plates) { const _pl = KB12.plates; KB12.plates = function (x, a0) {
-      if (this.fxHold18 > 0 && !(this.fx18 > 0)) this.fxHold18--; const want = this.fx18 > 0 || this.fxHold18 > 0 ? 0.25 : 1, cur = this.pl18 ?? 1;
+      if (this.fxHold18 > 0 && !(this.fx18 > 0)) this.fxHold18--; const want = (this.fx18 > 0 || this.fxHold18 > 0) && !(typeof plateRow25 === 'function' && plateRow25()) ? 0.25 : 1 /* v12.154 名牌排到上方那一排後就不用變淡 */, cur = this.pl18 ?? 1;
       this.pl18 = cur + (want - cur) * (want < cur ? 0.35 : 0.18); return _pl.call(this, x, a0 * this.pl18); }; } }
 
 /* ---------- v12.133 魔物跟主角的距離跟著拉長（玩家：「拉長後怪物跟玩家距離沒拉長，比例奇怪」） ----------

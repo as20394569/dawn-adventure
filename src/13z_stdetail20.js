@@ -35,7 +35,7 @@ function stLines20(b, v) { const L = [], st = v.st || {}, D = v.bdur12 || {}, u 
 Battle.prototype.pickUnit20 = function (x, y) { const H0 = this.H; let best = null, bd = 1e9;
   if (H0 && !H0.gone && (y >= Math.round(this.boxH || HBAR_Y) - 24 || Math.hypot(x - this.center(H0).x, y - this.center(H0).y) < 30)) return H0;
   for (const v of this.foes()) { if (v.gone || !(v.alpha > 0.3)) continue; const C = this.center(v), LY = this.lay22 ? this.lay22(v) : null, py = LY ? LY.plateY : v.foot + 3, onPlate = Math.abs(x - (v.x + (v.off ? v.off.x : 0))) < 52 && y >= py - 7 && y <= py + 31; // v12.147 名牌可能在頭上
-    const d = onPlate ? 0 : Math.hypot(x - C.x, y - C.y); if (d < Math.max(30, (v.bbh || 40) * 0.6) && d < bd) { bd = d; best = v; } }
+    const d = onPlate ? Math.abs(x - (v.x + (v.off ? v.off.x : 0))) / 100 : Math.hypot(x - C.x, y - C.y); // v12.154 名牌排成一排：按到兩塊名牌中間時選比較近的那隻 if (d < Math.max(30, (v.bbh || 40) * 0.6) && d < bd) { bd = d; best = v; } }
   return best; };
 Battle.prototype.drawStDetail20 = function (x) { const v = STD20.v; if (!v) return; const FS = 9, w = 166, X = (W - w) / 2;
   // 每個狀態兩行：名字（左）・剩幾回合（右）／效果（縮排、太長就換行）
