@@ -19,7 +19,7 @@ function* skillTreeScreen() {
   const scr = { draw(x) {
     screenBG(x); headerBar(x, '武器技能'); Font.drawR(x, 'MP ' + st.mp + '/' + heroStats(st).mp, W - 6, 2, UIC.blue, UIC.textSh, 10);
     const g = mainWeapon(st), B = g && GEAR[g.b]; drawWin(x, 4, 22, 168, 38, 'menu');
-    if (g) { const im = typeof weaponPx === 'function' && weaponPx(g.b); if (im) drawWeaponIcon(x, im, 24, 41, 1); Font.draw(x, gearShort(g), 42, 24, gCol(g), UIC.textSh, 11); Font.draw(x, '主武器・' + (B.kind || '') + '・T' + B.t + (B.elem ? '・' + B.elem + '屬性' : ''), 42, 40, UIC.muted, UIC.textSh, 9); }
+    if (g) { const im = typeof weaponPx === 'function' && weaponPx(gLook(g)); if (im) drawWeaponIcon(x, im, 24, 41, 1); Font.draw(x, gearShort(g), 42, 24, gCol(g), UIC.textSh, 11); Font.draw(x, '主武器・' + (B.kind || '') + '・T' + B.t + (B.elem ? '・' + B.elem + '屬性' : ''), 42, 40, UIC.muted, UIC.textSh, 9); }
     else Font.draw(x, '沒有裝備武器（選單→裝備）', 14, 32, UIC.muted, UIC.textSh, 10);
     const R = rowsOf(); if (row >= R.length) row = R.length - 1;
     drawWin(x, 4, 62, 168, R.length * 17 + 8, 'menu');

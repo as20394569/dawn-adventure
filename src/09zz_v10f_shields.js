@@ -102,7 +102,7 @@ const HOLY_SHIELD = spriteFrom(['...oooooo...', '..oggggggo..', '.oggwwwwggo.', 
   { o: '#3a2a10', g: '#e8b840', w: '#e8f4ff', c: '#ffd860' });
 function scaled2(c) { const o = mkCanvas(c.width * 2, c.height * 2), x = o.getContext('2d'); x.imageSmoothingEnabled = false; x.drawImage(c, 0, 0, o.width, o.height); return o; }
 FX.shieldCharge = function* (U, T, u, t) {
-  const g = shieldOn(Game.st), big = scaled2(g ? shieldSprite(g.b) : HOLY_SHIELD), F = 7;
+  const g = shieldOn(Game.st), big = scaled2(g ? shieldSprite(gLook(g)) : HOLY_SHIELD), F = 7;
   Sound.sfx('shield'); this.spawn({ k: 'glow', x: U.x, y: U.y - 6, r: 18, c: '#ffe8a0', life: 10 }); yield* wait(5);
   this.spawn({ k: 'img', img: big, x: U.x + 4, y: U.y - 8, life: F + 5, upd: p => { const k = Math.min(1, p.t / F); p.x = lerp(U.x + 4, T.x - 6, k); p.y = lerp(U.y - 8, T.y + 4, k); if (p.t % 2 === 0) this.spawn({ k: 'dot', x: p.x + rnd(-8, 8), y: p.y + rnd(-8, 8), c: '#fff4c0', s: 2, life: 8 }); } });
   for (let i = 0; i < 3; i++) this.spawn({ k: 'line', x1: U.x - 8 + i * 8, y1: U.y + 2 - i * 3, x2: T.x - 12 + i * 8, y2: T.y + 8 - i * 3, c: 'rgba(255,240,200,0.55)', w: 1, grow: 4, life: 9 });

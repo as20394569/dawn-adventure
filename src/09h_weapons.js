@@ -28,7 +28,7 @@ const wpnSmall19 = im => { if (im.small19) return im.small19; const k = 0.75, W0
   };
 }
 // loot showcase: a weapon with its own sprite is shown by itself (2×), centred on its pixels
-{ const _li = lootIcon; lootIcon = function (g) { const im = GEAR[g.b] && GEAR[g.b].slot === 'weapon' ? weaponPx(g.b) : null; return im ? { wpn: im } : _li(g); }; }
+{ const _li = lootIcon; lootIcon = function (g) { const im = GEAR[g.b] && GEAR[g.b].slot === 'weapon' ? weaponPx(gLook(g)) : null; return im ? { wpn: im } : _li(g); }; }
 function drawWeaponIcon(x, im, cx, cy, sc = 2) {
   if (!im.bb) { const c = mkCanvas(im.width, im.height), cx2 = c.getContext('2d'); cx2.drawImage(im, 0, 0); const d = cx2.getImageData(0, 0, im.width, im.height).data; let x0 = 99, y0 = 99, x1 = -1, y1 = -1;
     for (let y = 0; y < im.height; y++) for (let xx = 0; xx < im.width; xx++) if (d[(y * im.width + xx) * 4 + 3]) { x0 = Math.min(x0, xx); x1 = Math.max(x1, xx); y0 = Math.min(y0, y); y1 = Math.max(y1, y); }

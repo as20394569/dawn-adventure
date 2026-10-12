@@ -35,4 +35,4 @@ const ARMOR_BASE = { head: null, body: 'uniform', feet: 'school' };
   };
 }
 // loot showcase: armour / accessories with an icon are shown by themselves at 2× (same as weapons)
-{ const _li = lootIcon; lootIcon = function (g) { const B = GEAR[g.b]; const im = B && B.slot !== 'weapon' ? armorIcon(g.b) : null; return im ? { wpn: im } : _li(g); }; }
+{ const _li = lootIcon; lootIcon = function (g) { const B = GEAR[g.b]; const im = B && B.slot !== 'weapon' ? armorIcon(gLook(g)) : null; return im ? { wpn: im } : _li(g); }; }
