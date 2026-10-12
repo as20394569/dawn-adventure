@@ -33,7 +33,7 @@ KB12.chipRow = (x, L, X, Y, maxW, right) => { let used = 0; const out = []; for 
 KB12.BADGE = { wet: ['濕', '#8ad0ff'], tangle: ['纏繞', '#a8e080'], barrier: ['屏障', '#a8d8ff'], smoke: ['煙幕', '#c8c8d8'], critNext: ['集中', '#ffd860'], frozen: ['凍結', '#bfe8ff'] };
 KB12.signs = function (v, short) { const L = [], st = v.st || {};
   if (v.broken) L.push(['破防中', '#ffd040', 'rgba(70,50,8,0.92)']); else if (v.charging || st.charging) L.push(['蓄力中', '#ff8a7a', 'rgba(70,14,14,0.92)']);
-  const ak = typeof ailOf12 === 'function' ? ailOf12(v) : null; if (ak && AIL12[ak]) { const A = AIL12[ak], d = v.ailDur12; L.push([A.n + (d > 0 ? ' ' + d : ''), A.c, 'rgba(24,20,40,0.92)']); }
+  const ak = typeof ailOf12 === 'function' ? ailOf12(v) : null; if (ak && AIL12[ak]) { const A = AIL12[ak]; L.push([A.n, A.c, 'rgba(24,20,40,0.92)']); }
   if (st.ward > 0) L.push(['護盾 ' + st.ward, '#a8e0ff', 'rgba(16,36,70,0.92)']);
   for (const k in KB12.BADGE) if (st[k] && !(ak && k === ak)) L.push([KB12.BADGE[k][0], KB12.BADGE[k][1], 'rgba(24,28,44,0.92)']);
   if (typeof buffPills12 === 'function') for (const [s, k, t] of buffPills12(this, v)) { const C = (typeof BUFF_COL12 !== 'undefined' && BUFF_COL12[k]) || ['#c8d0e0']; L.push([s + (t && !short ? ' ' + t : ''), C[0], 'rgba(24,28,44,0.92)']); }

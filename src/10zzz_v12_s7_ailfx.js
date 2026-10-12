@@ -25,7 +25,7 @@ const ailOf12 = v => v && v.st ? Object.keys(AIL12).find(k => v.st[k]) || null :
 
 /* ---------- 2. 標籤＋剩幾回合 ---------- */
 { const _b = Battle.prototype.badges; Battle.prototype.badges = function (v) { return _b.call(this, v).filter(k => !AIL12[k]); }; }
-function ailTag12(x, X, Y, v, right) { const k = ailOf12(v); if (!k) return 0; const A = AIL12[k], d = v.ailDur12, s = A.n + (d > 0 ? ' ' + d : ''), w = Math.ceil(Font.width(s, 9)) + 10;
+function ailTag12(x, X, Y, v, right) { const k = ailOf12(v); if (!k) return 0; const A = AIL12[k], s = A.n, w = Math.ceil(Font.width(s, 9)) + 10;
   if (right) X -= w; x.fillStyle = A.bg; x.fillRect(X, Y, w, 12); x.fillStyle = A.c; x.fillRect(X, Y, w, 1); x.fillRect(X, Y + 11, w, 1); x.fillRect(X, Y, 1, 12); x.fillRect(X + w - 1, Y, 1, 12);
   Font.draw(x, s, X + 5, Y - 2, A.c, '#000000', 9); return w; }
 { const _pb = Battle.prototype.drawPlateBig; Battle.prototype.drawPlateBig = function (x, F, a0) { _pb.call(this, x, F, a0); const a = a0 * (F && F.plateA != null ? F.plateA : 1); if (!F || a <= 0 || !ailOf12(F)) return;

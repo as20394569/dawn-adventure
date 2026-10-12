@@ -1,7 +1,8 @@
 /* ===================== v12.143 狀態標籤不寫回合・長按看詳情 =====================
    玩家 2026-10-12：「像速度-1這種狀態就不用寫回合了，改成長按顯示具體數值與剩餘3回合」
    · 能力變化（物攻＋1、速度−1…）和增益・減益（狂刃、裂甲…）的標籤只寫名字和階數，不再寫「3回」。
-     中毒・灼傷這類異常的「中毒 3」照舊（v270 玩家要的）。戰鬥訊息「速度降低了！（3回合）」照舊。
+     戰鬥訊息「速度降低了！（3回合）」照舊。
+   · v12.144（玩家同意）：中毒・灼傷・麻痺・睡眠的標籤也拿掉數字（原本「中毒 3」→「中毒」），剩幾回合一樣長按看。
    · 長按主角或魔物（約 0.4 秒、手指不移動）：旁邊跳出一個小框，列出牠身上每個狀態的具體數值和剩餘回合，放開就收起來。
      能力每一階 ×1.25（下降一階 ×0.8，兩階 ×0.67，三階 ×0.57）；中毒・灼傷每回合結束扣最大 HP 的 1/8（頭目 1/16）；
      麻痺 25% 不能行動・速度 ×0.25；睡眠不能行動。 */
@@ -53,5 +54,5 @@ Battle.prototype.drawStDetail20 = function (x) { const v = STD20.v; if (!v) retu
     ctx.save(); ctx.setTransform(SCALE, 0, 0, SCALE, 0, (TALL_EXT || 0) * SCALE); ctx.imageSmoothingEnabled = false; try { b.drawStDetail20(ctx); } finally { ctx.restore(); } }; }
 // 第一次身上有能力變化時提示一次；戰鬥說明也寫進去
 { const H = Battle.prototype.handlers, _ap = H.STATUS_APPLY; H.STATUS_APPLY = function* (e, s, t, P) { yield* _ap.call(this, e, s, t, P); const st = Game.st;
-    if (st && t && P && !P.failed && /^stage_/.test(P.status || '') && !st.flags.tutStd20) { st.flags.tutStd20 = 1; yield* this.msg('（長按主角或魔物，可以看能力變化的數值和剩餘回合。）', { hold: 40 }); } }; }
+    if (st && t && P && !P.failed && (/^stage_/.test(P.status || '') || AIL12[P.status]) && !st.flags.tutStd20) { st.flags.tutStd20 = 1; yield* this.msg('（長按主角或魔物，可以看身上狀態的數值和剩餘回合。）', { hold: 40 }); } }; }
 if (typeof BATTLE_HELP !== 'undefined') BATTLE_HELP.push(['看狀態', ['長按主角或魔物（約半秒，手指不要移動），會列出牠身上每個狀態的數值和剩餘回合，放開就收起來。', '能力每一階 ×1.25（下降一階 ×0.8）；中毒・灼傷每回合結束扣最大 HP 的 1/8（頭目 1/16）；麻痺 25% 不能行動、速度 ×0.25。']]);
