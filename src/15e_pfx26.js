@@ -99,3 +99,25 @@ Object.assign(FX, {
       pfxAt26(this, d, () => Sound.sfx('arcane')); pfxSpawn26(this, pfxM26('burst'), { x: C.x + rnd(-6, 6), y: C.y + 18 + rnd(-6, 6) }, { k: 0.6, pre: 0.18, delay: d, seed: 20 + i }); pfxAt26(this, d + 4, () => pfxLand26(this, i)); });
     yield* pfxWait26(this, 0); },
 });
+
+/* ---------- 護盾（玩家：「有護盾類型的特效嗎」「你來套用吧」） ----------
+   1. 張開護盾（所有會給「護盾」的招：法杖魔力護盾、聖域、各種護盾武器、護盾機、魔物的護盾…都走 FX.barrier）
+      → pixelfx「金色光球」換成藍色（跟畫面上護盾的數字、血條同色），把整隻包起來，亮一下後慢慢淡掉。
+   2. 打在護盾上（傷害被護盾吸收的那一下）→ pixelfx「半圓盾」：擋在被打的那一側，格子閃一下、起波紋、火花彈開。 */
+const PFX26_BLUE = ['#151a3d', '#212f6b', '#2c58aa', '#3a8bd8', '#62c8f4', '#a6ecff', '#dcfbff', '#ffffff'];
+const pfxViewAt26 = (b, U) => { let best = null, bd = 9; for (const v of Object.values(b.views || {})) { if (!v || v.gone) continue; const C = b.center(v), d = Math.abs(C.x - U.x) + Math.abs(C.y - U.y); if (d < bd) { bd = d; best = v; } } return best; };
+// 身體的位置：主角在 GBA 構圖裡畫在左下（view 的 x／foot 是舊版位置，不能用），用 center 和 HERO_FOOT 算
+const pfxBody26 = (b, v) => { const C = b.center(v); if (v.hero) { const f = typeof HERO_FOOT === 'number' ? HERO_FOOT : C.y + 22; return { x: C.x, foot: f, h: Math.max(30, (f - C.y) * 2), C }; }
+  return { x: Math.round(v.x + v.off.x), foot: v.foot + v.off.y, h: v.bbh || 48, C }; };
+const pfxSize26 = (h, base) => clamp((h || 48) / base, 0.8, 1.9);
+{ const _br = FX.barrier; FX.barrier = function* (U, ...a) { const v = PFX26.on && window.PFXLIB26 && pfxViewAt26(this, U); if (!v) return yield* _br.call(this, U, ...a);
+    const tag = 'bubble:' + v.id; if (!(this.pfx26 || []).some(e => e.tag === tag && e.t < 24)) { // 同一招裡連叫兩次（出招特效＋上狀態）只畫一個
+      const B = pfxBody26(this, v), e = pfxSpawn26(this, pfxM26('bubble'), { x: B.x, y: B.foot }, { k: pfxSize26(B.h, 40), palette: PFX26_BLUE, radius: 29, noRim: true, life: 70, glow: 0.5 }); if (e) e.tag = tag; }
+    Sound.sfx('shield'); yield* wait(30); }; }
+{ const HD = Battle.prototype.handlers, _dm = HD.DAMAGE; HD.DAMAGE = function* (e, s, t, P) {
+    if (PFX26.on && window.PFXLIB26 && t && P && P.ward > 0) { const a = s || this.vw(e.src), B = pfxBody26(this, t), C = B.C, A = a && a !== t ? this.center(a) : { x: t.hero ? W : 0, y: C.y }, fl = !t.hero && A.x < C.x; // 主角：魔物都在前方（右上），盾一律擋在右邊
+      const dx = t.hero ? 14 : Math.min(26, ((t.img && t.img.bb && (t.img.bb.vw || t.img.bb.w)) || 40) * 0.32);
+      pfxSpawn26(this, pfxM26('block'), { x: Math.round(B.x + (fl ? -dx : dx)), y: B.foot }, { k: pfxSize26(B.h, 40), flip: fl, seed: 12 + (this.t % 7), glow: 0.5 }); }
+    return yield* _dm.call(this, e, s, t, P); }; }
+// 打在護盾上原本的六角一閃（13h）在開 pixelfx 時不畫，改由上面的半圓盾
+if (typeof BFX15 !== 'undefined' && BFX15.barrierHit) { const _bh = BFX15.barrierHit; BFX15.barrierHit = function (b, C) { if (PFX26.on && window.PFXLIB26) return; return _bh.call(this, b, C); }; }
