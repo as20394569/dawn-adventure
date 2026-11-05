@@ -1,6 +1,8 @@
 import glob, os, subprocess, sys
-subprocess.run([sys.executable, os.path.join(os.path.dirname(os.path.abspath(__file__)), 'embed_sprites.py')], check=True)
-root='/home/claude/dawn'
+# NO_EMBED=1 skips re-embedding art into src/07id_sprites.js (a different Pillow version re-encodes the PNGs to different bytes)
+if os.environ.get('NO_EMBED') != '1':
+    subprocess.run([sys.executable, os.path.join(os.path.dirname(os.path.abspath(__file__)), 'embed_sprites.py')], check=True)
+root=os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
 head=open(root+'/web/head.html').read()
 js=''.join(open(f).read()+'\n' for f in sorted(glob.glob(root+'/src/*.js')))
 # v9.2.1: strip whole-line comments (the published page must stay small — see docs_design_log v9.2.2).

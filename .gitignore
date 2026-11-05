@@ -1,1 +1,9 @@
-build/pngcache/
+# 建置產出（用 tools/build.py 重新產生，不進版本控制）
+dist/
+build/*
+!build/cubic
+!build/publish_manifest.json
+!build/published_manifest.json
+# 快取
+tools/__pycache__/
+node_modules/

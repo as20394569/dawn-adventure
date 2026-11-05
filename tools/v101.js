@@ -1,1 +1,0 @@
-module.exports = async (g) => g.log(await g.ev(() => Object.entries(COMMISSIONS).map(([k, c]) => k + ' ' + c.n + ' | ' + JSON.stringify(c.reward) + ' | ' + (c.kill ? 'kill ' + c.kill.join(':') : c.need ? 'need' : c.deliver ? 'deliver' : '?')).join('\n')));

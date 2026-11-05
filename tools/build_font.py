@@ -1,8 +1,10 @@
+import os
+ROOT=os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
 # Rasterize Cubic 11 (OFL) into a compact 1-bit glyph atlas for the game.
 import base64, struct
 from PIL import Image, ImageFont, ImageDraw
 from fontTools.ttLib import TTFont
-FONT='/home/claude/dawn/build/cubic/fonts/ttf/Cubic_11.ttf'
+FONT=ROOT+'/build/cubic/fonts/ttf/Cubic_11.ttf'
 tt=TTFont(FONT); cmap=tt.getBestCmap(); hm=tt['hmtx']
 pf=ImageFont.truetype(FONT,12)
 def want(cp):
@@ -39,7 +41,7 @@ for cp in cps:
     out+=buf
 blob=struct.pack('<II',len(cps),len(idx))+bytes(idx)+bytes(out)
 b64=base64.b64encode(blob).decode()
-open('/home/claude/dawn/src/00_font.js','w').write(
+open(ROOT+'/src/00_font.js','w').write(
  '/* Glyphs rasterized from Cubic 11 / 俐方體11號 (c) ACh-K, SIL Open Font License 1.1; derived from M+ BITMAP FONTS. */\n'
  'const FONT_B64="'+b64+'";\n')
 print(len(cps),'glyphs',len(blob),'bytes',len(b64),'b64')

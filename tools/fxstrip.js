@@ -5,7 +5,7 @@ const OUT = path.join(process.env.OUT || '/tmp/fxstrip', process.env.TAG || 'cur
 (async () => {
   const b = await chromium.launch(), p = await b.newPage({ viewport: { width: 760, height: 560 } }); const errs = [];
   p.on('pageerror', e => errs.push('PAGEERROR ' + e.message + ' ' + (e.stack || '').split('\n')[1])); await p.addInitScript(() => { window.FXTEST = 1; });
-  await p.goto('file:///home/claude/dawn/dist/test.html'); await p.waitForTimeout(300); await p.evaluate(() => { __game.Game.paused = true; __game.setScale(2); });
+  await p.goto('file://' + require('path').resolve(__dirname, '../dist/test.html')); await p.waitForTimeout(300); await p.evaluate(() => { __game.Game.paused = true; __game.setScale(2); });
   const ev = (f, a) => p.evaluate(f, a), step = n => ev(n => __game.step(n), n), press = (k, a = 6) => ev(([k, a]) => __game.press(k, 2, a), [k, a]);
   const menuWith = re => ev(re => { const m = __game.UI.stack.find(w => w.items && (new RegExp(re)).test((w.title || '') + w.items.map(i => i.t).join('/'))); return m ? m.items.map(i => i.t) : null; }, re);
   const pick = (re, i) => ev(([re, i]) => { const m = __game.UI.stack.find(w => w.items && (new RegExp(re)).test((w.title || '') + w.items.map(i => i.t).join('/'))); m.i = i; __game.press('a', 2, 6); }, [re, i]);
