@@ -273,7 +273,7 @@ class Battle {
     else s = main.rare ? '稀有的' + main.n + '出現了！' : main.boss ? main.n + '擋住了去路！' : main.elite ? '菁英魔物' + main.n + '發動了攻擊！' : main.n + '出現了！';
     yield* this.msg(s, { hold: 44 });
     if (L.length > 1 && !st.flags.tutMulti) { st.flags.tutMulti = 1; yield* this.msg('（一次出現好幾隻魔物！每隻都比較弱。攻擊前可以用左右選擇目標，範圍技能會打中全部。）', { wait: true }); }
-    const k = this.cfg.wx; if (k && typeof WEATHER !== 'undefined' && WEATHER[k] && st.wx) { const w = st.wx[typeof wxKey === 'function' ? wxKey(st.map) : st.map] || {}; if (st.wxTold !== k + w.until) { st.wxTold = k + w.until; yield* this.msg('【' + WEATHER[k].n + '】' + WEATHER[k].d, { hold: 30 }); } }
+    const k = this.cfg.wx; if (k && typeof WEATHER !== 'undefined' && WEATHER[k] && st.wx) { const w = st.wx[typeof wxKey === 'function' ? wxKey(st.map) : st.map] || {}; const seen = st.wxSeenB || (st.wxSeenB = {}); if (!seen[k]) { seen[k] = 1; /* v12.155 每種天氣只說一次（原本每換一次天氣就說一次） */ yield* this.msg('【' + WEATHER[k].n + '】' + WEATHER[k].d, { hold: 30 }); } }
     if (this.core.data.bless) yield* this.msg('（天氣祠的祝福）物攻和魔攻提升了！', { hold: 16 });
   }
   // the player's command: 攻擊・技能・道具・防禦・逃跑 (attacks on a group ask for a target)

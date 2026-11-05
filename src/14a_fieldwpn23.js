@@ -37,7 +37,7 @@ const FW23_SC = { 劍: 0.8, 斧: 0.68, 長槍: 0.9, 法杖: 0.85, 短刀: 0.5, �
 { const _hl = heroLookOf; heroLookOf = function (st = Game.st, over = {}) { const L = _hl(st, over), eq = { ...(st && st.equip || {}), ...over }, o = st && gearBy(eq.shield, st);
     if (o && GEAR[o.b] && GEAR[o.b].slot === 'weapon' && WEAPON_PX[o.gl && GEAR[o.gl] ? o.gl : o.b]) L.wkey2 = o.gl && GEAR[o.gl] ? o.gl : o.b; return L; }; }
 // 一個方向、一格畫面：回傳 [{S, X, Y, front}]（X,Y = 武器圖外框左上角，用主角 16×22 的座標）
-function fwParts23(kind, S1, S2, dir, off) { const out = [], bw = S => S.bb23[2] - S.bb23[0] + 1, bh = S => S.bb23[3] - S.bb23[1] + 1;
+function fwParts23(kind, S1, S2, dir, off, fi = 0) { const out = [], bw = S => S.bb23[2] - S.bb23[0] + 1, bh = S => S.bb23[3] - S.bb23[1] + 1;
   if (FW23_BACK.has(kind)) { // 武器圖本來就是「握把在左下、尖端在右上」
     const at = (S, cx, cy) => [cx - Math.round(0.42 * bw(S)), cy - Math.round(0.58 * bh(S))]; // 讓武器在 (cx,cy) 這點從身體後面穿出來
     if (dir === 'down') { const [X, Y] = at(S1, 15, 12 + off); out.push({ S: S1, X, Y });
@@ -55,7 +55,7 @@ function fwParts23(kind, S1, S2, dir, off) { const out = [], bw = S => S.bb23[2]
   if (kind === '拳套') { // 拳套圖縮小直接蓋在兩隻手上
     const glove = (S, hx, hy, fx) => { const T = wpnFlip23(S, fx, 0); out.push({ S: T, X: hx - (bw(T) >> 1), Y: hy + 1 - (bh(T) >> 1), front: 1 }); };
     if (dir === 'down' || dir === 'up') { glove(S1, 13, 16 + off, 0); glove(S2 || S1, 2, 16 + off, 1); }
-    if (dir === 'left') glove(S1, 4, 15 + off, 1);
+    if (dir === 'left') glove(S1, 7 + [0, -1, 0, 1][fi % 4], 16 + off, 1); // v12.155 側面：拳套戴在身體側邊垂下來的那隻手上（原本浮在胸前），走路時跟著前後擺（玩家：「側面身體拳套沒跟手貼合」）
     return out; }
   return out; }
 { const _fl = heroFramesLook; heroFramesLook = function (L) { const k = L && L.wkey, G = k && GEAR[k], kind = G && G.kind, im = k && weaponPx(k);
@@ -63,7 +63,7 @@ function fwParts23(kind, S1, S2, dir, off) { const out = [], bw = S => S.bb23[2]
     const key = lookKey(L); if (FW23.cache[key]) return FW23.cache[key];
     const sc = FW23_SC[kind], S1 = wpnShrink23(im, sc), im2 = L.wkey2 && weaponPx(L.wkey2), S2 = im2 ? wpnShrink23(im2, sc) : null;
     const base = _fl({ ...L, weapon: null }), out = {}, P = FW23.P;
-    for (const d of ['down', 'up', 'left']) out[d] = base[d].map((fr, i) => { const off = i % 2 ? -1 : 0, parts = fwParts23(kind, S1, S2, d, off), neck = 12 + off;
+    for (const d of ['down', 'up', 'left']) out[d] = base[d].map((fr, i) => { const off = i % 2 ? -1 : 0, parts = fwParts23(kind, S1, S2, d, off, i), neck = 12 + off;
       const big = mkCanvas(16 + 2 * P, 22 + P + 2), g = big.getContext('2d'); g.imageSmoothingEnabled = false;
       const put = (p, y0, y1) => { const [bx, by] = p.S.bb23, X = p.X + P, Y = p.Y + P; // 只畫主角座標 y0〜y1 那幾列
         const a = Math.max(0, y0 + P - Y + by), b = Math.min(p.S.height, y1 + P - Y + by); if (b > a) g.drawImage(p.S, 0, a, p.S.width, b - a, X - bx, Y - by + a, p.S.width, b - a); };

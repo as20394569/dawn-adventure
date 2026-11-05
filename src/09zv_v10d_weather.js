@@ -78,7 +78,7 @@ function wxOverlay(x, k, t, w, h) {
 { const _d = Overworld.prototype.draw; Overworld.prototype.draw = function (x) {
     _d.call(this, x); const st = this.st, k = wxNow(st); if (!k) return; wxOverlay(x, k, this.t, W, H);
     if (!this.popup && !UI.stack.length) { const s = (typeof wxName21 === 'function' ? wxName21(st, k) : WEATHER[k].n) + (st.rainbowUntil > (st.steps || 0) ? '・彩虹' : '') + (typeof dnHudTag === 'function' ? dnHudTag(st) : ''), w = Math.ceil(Font.width(s, 9)) + 20; x.fillStyle = 'rgba(10,14,28,0.7)'; x.fillRect(3, 3, w, 14); wxIcon(x, k, 5, 4); Font.draw(x, s, 17, 1, WEATHER[k].col, UIC.textSh, 9); }
-    const B = Game.wxBanner; if (B && !UI.stack.length && !this.popup && !(Game.toastQ && Game.toastQ.length)) { /* v12.0.1: waits until an achievement toast has gone, they used to overlap */ B.t++; if (B.t > 150) Game.wxBanner = null; else { const a = B.t < 10 ? B.t / 10 : B.t > 130 ? (150 - B.t) / 20 : 1, s1 = B.s1 || (B.rainbow ? '雨停了，天空出現了彩虹！' : '天氣：' + WEATHER[B.k].n), s2 = B.s2 || (B.rainbow ? '接下來100步，戰鬥經驗值+20%' : WEATHER[B.k].d), w = Math.max(Font.width(s1, 10), Font.width(s2, 9)) + 20;
+    const B = Game.wxBanner; if (B && !UI.stack.length && !this.popup && !(Game.toastQ && Game.toastQ.length)) { /* v12.0.1: waits until an achievement toast has gone, they used to overlap */ B.t++; if (B.t > 150) Game.wxBanner = null; else { const a = B.t < 10 ? B.t / 10 : B.t > 130 ? (150 - B.t) / 20 : 1, s1 = B.s1 || (B.rainbow ? '雨停了，天空出現了彩虹！' : '天氣：' + WEATHER[B.k].n), s2 = B.s2 || (B.rainbow ? '接下來100步，戰鬥經驗值+20%' : wxTip26(B)), w = Math.max(Font.width(s1, 10), Font.width(s2, 9)) + 20;
       x.globalAlpha = a; drawPanel(x, (W - w) / 2, 28, w, 30, null); Font.drawC(x, s1, W / 2, 29, B.rainbow ? '#ffb0e0' : WEATHER[B.k].col, UIC.textSh, 10); Font.drawC(x, s2, W / 2, 42, UIC.text, UIC.textSh, 9); x.globalAlpha = 1; } }
   }; }
 
@@ -121,3 +121,8 @@ function* wshrineEvent(ow, ent) {
 }
 for (const id in EXT_AREA) Events['wshrine_' + id] = wshrineEvent;
 // the clear-weather blessing: +1 attack stages at the start of the next battles
+
+// v12.155 玩家：「陽炎狐文字不斷出現」——天氣每 120〜260 步換一次，每次都跳「晴天才會出現『陽炎狐』」。
+// 「才會出現『某某』」每種天氣只說第一次；之後換天氣只顯示「天氣：晴天」和一句天氣的效果。
+function wxTip26(B) { if (B.tip26 != null) return B.tip26; const st = Game.st, seen = st && (st.wxSeen || (st.wxSeen = {}));
+  if (seen && !seen[B.k]) { seen[B.k] = 1; return (B.tip26 = WEATHER[B.k].d); } return (B.tip26 = ({ clear: '陽光普照', rain: '雨聲淅瀝', storm: '雷聲隆隆', fog: '霧氣瀰漫', snow: '雪花紛飛', sand: '風沙漫天' })[B.k] || ' '); }
