@@ -56,7 +56,7 @@ Battle.prototype.drawSpd12 = function (x) { if (this.boxF < -20 || (typeof bTopO
 KB12.plates = function (x, a0) { const all = this.foes(), F = all.filter(v => !v.gone && v.alpha > 0.3); if (!F.length) return; const n = all.length, M = KB12.M, S = KB12.S;
   const bw = n === 1 ? 100 : n === 2 ? 72 : 54, G = 3, srt = F.slice().sort((a, b) => a.x - b.x), PX = new Map(); let r = 0;
   for (const v of srt) { const X = Math.max(r + G, Math.round(v.x + v.off.x - bw / 2)); PX.set(v, X); r = X + bw; }
-  let over = r - (W - G); for (let k = srt.length - 1; k >= 0 && over > 0; k--) { const v = srt[k], nx = Math.max(k ? PX.get(srt[k - 1]) + bw + G : G, PX.get(v) - over); PX.set(v, nx); over = PX.get(srt[srt.length - 1]) + bw - (W - G); }
+  if (r > W - G) { let r2 = W - G; for (let k = srt.length - 1; k >= 0; k--) { const v = srt[k], nx = Math.min(PX.get(v), r2 - bw); PX.set(v, nx); r2 = nx - G; } } // v12.155 超出右邊：從右往左整排推回來（原本只推最右邊一個，推不動時會超出畫面）
   for (const v of F) { const X = PX.get(v), Y = Math.round(v.foot + 3), a = a0 * (v.plateA ?? 1); if (a <= 0) continue; const on = this.pickV === v;
     const L = KB12.signs.call(this, v, true), u = v.u;
     if (u && (u.elite || u.boss)) { const I = (u.data && u.data.in11) || {}; for (const [nm, k] of [['普', 'b'], ['物', 'p'], ['魔', 'm']]) { const q = Math.round(I[k] ?? 100); if (q !== 100) L.push([nm + ' ' + q + '%', q > 100 ? '#8af08a' : '#ff8a7a', 'rgba(24,28,44,0.92)']); } } // the boss's 普・物・魔 (only the ones off 100)
