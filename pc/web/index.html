@@ -1,0 +1,168 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<meta charset="utf-8">
+<title>曙光冒險 PC 試玩版</title>
+<meta name="description" content="電腦橫向遊玩的像素風異世界冒險 RPG。">
+<meta name="theme-color" content="#0b0d16">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@500;700&family=Silkscreen:wght@400;700&display=swap" rel="stylesheet">
+<style>
+/* PC 版：整個視窗放一個 16:9 的遊戲畫面（不再有手機外殼和觸控按鍵） */
+:root{ color-scheme: dark; --bg:#07080d; --ink:#eef1f8; --muted:#7c84a3; }
+html{height:100%;box-sizing:border-box;background:var(--bg)}
+*,*::before,*::after{box-sizing:inherit}
+body{height:100%;margin:0;background:var(--bg);color:var(--ink);overflow:hidden;font-family:"Noto Sans TC","Microsoft JhengHei",sans-serif;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0;-webkit-user-select:none;user-select:none}
+#app{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px}
+#shell,#bezel{display:contents}
+#bezelTop,#pad{display:none !important}
+#screenWrap{position:relative;width:100%;flex:1;min-height:0;display:flex;align-items:center;justify-content:center}
+#screen{display:block;background:#000;image-rendering:auto;box-shadow:0 0 0 1px #1a1e2e,0 18px 50px rgba(0,0,0,.55)}
+#keys{margin:0 0 6px;font-size:12px;color:var(--muted);letter-spacing:.04em;text-align:center}
+#keys b{color:#c9cfe6;font-weight:700}
+#nameBox{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.6)}
+#nameBox[hidden]{display:none}
+#nameForm{background:#141828;border:1px solid #3a4266;border-radius:6px;padding:20px 24px;display:flex;flex-direction:column;gap:12px;align-items:center;min-width:300px}
+#nameForm label{font-size:15px}
+#nameField{font:inherit;font-size:20px;text-align:center;padding:6px 10px;width:220px;background:#0a0c16;color:#fff;border:1px solid #4a5280;border-radius:4px}
+#nameForm .row{display:flex;gap:10px}
+#nameForm button{font:inherit;font-size:15px;padding:6px 18px;background:#232a46;color:#fff;border:1px solid #4a5280;border-radius:4px;cursor:pointer}
+[hidden]{display:none !important}
+</style>
+<main id="app">
+  <div id="shell">
+    <div id="bezel">
+      <div id="bezelTop"><span class="led"></span><span>BATTERY</span><span class="brand">DAWNLIGHT</span></div>
+      <div id="screenWrap"><canvas id="screen" width="480" height="270" aria-label="遊戲畫面"></canvas></div>
+    </div>
+    <div id="pad">
+      <div id="dpad" role="group" aria-label="方向鍵"><span class="zone"></span><span class="hub"></span><span class="arr u"></span><span class="arr d"></span><span class="arr l"></span><span class="arr r"></span></div>
+      <div id="mid"><button type="button" data-k="select" aria-label="SELECT">SELECT</button><button type="button" data-k="start" aria-label="START 選單">START</button></div>
+      <div id="ab"><button type="button" class="round" data-k="b" aria-label="B 取消／跑步">B</button><button type="button" class="round" data-k="a" aria-label="A 確認">A</button></div>
+    </div>
+  </div>
+  <p id="keys"><b>WASD</b>／<b>方向鍵</b> 移動　<b>Shift</b> 跑步　<b>空白鍵</b>／<b>Z</b> 調查・決定　<b>Esc</b>／<b>X</b> 取消　<b>Enter</b> 選單</p>
+  <div id="nameBox" hidden><form id="nameForm" autocomplete="off"><label for="nameField">輸入你的名字（最多 6 個字）</label><input id="nameField" maxlength="6" enterkeyhint="done"><div class="row"><button type="button" id="nameCancel">返回</button><button type="submit">決定</button></div></form></div>
+</main>
+
+<!-- Font: Cubic 11 (俐方體11號) by ACh-K, used under the SIL Open Font License 1.1 (text follows).
+[Cubic 11]
+These fonts are free software.
+Unlimited permission is granted to use, copy, and distribute them, with or without modification, either commercially or noncommercially.
+THESE FONTS ARE PROVIDED "AS IS" WITHOUT WARRANTY.
+此字型是免費的。
+無論您是否進行對本字型進行商業或非商業性修改，均可無限制地使用，複製和分發它們。
+本字型的衍生品之授權必須與此字型相同，且不作任何擔保。
+[JF Dot M+H 12]
+Copyright(c) 2005 M+ FONTS PROJECT
+[M+ BITMAP FONTS]
+Copyright (C) 2002-2004 COZ
+These fonts are free software.
+Unlimited permission is granted to use, copy, and distribute it, with or without modification, either commercially and noncommercially.
+THESE FONTS ARE PROVIDED "AS IS" WITHOUT WARRANTY.
+これらのフォントはフリー（自由な）ソフトウエアです。
+あらゆる改変の有無に関わらず、また商業的な利用であっても、自由にご利用、複製、再配布することができますが、全て無保証とさせていただきます。
+
+This Font Software is licensed under the SIL Open Font License, Version 1.1.
+This license is copied below, and is also available with a FAQ at:
+https://scripts.sil.org/OFL
+
+
+- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
+SIL OPEN FONT LICENSE Version 1.1 - 26 February 2007
+- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
+
+PREAMBLE
+The goals of the Open Font License (OFL) are to stimulate worldwide
+development of collaborative font projects, to support the font creation
+efforts of academic and linguistic communities, and to provide a free and
+open framework in which fonts may be shared and improved in partnership
+with others.
+
+The OFL allows the licensed fonts to be used, studied, modified and
+redistributed freely as long as they are not sold by themselves. The
+fonts, including any derivative works, can be bundled, embedded, 
+redistributed and/or sold with any software provided that any reserved
+names are not used by derivative works. The fonts and derivatives,
+however, cannot be released under any other type of license. The
+requirement for fonts to remain under this license does not apply
+to any document created using the fonts or their derivatives.
+
+DEFINITIONS
+"Font Software" refers to the set of files released by the Copyright
+Holder(s) under this license and clearly marked as such. This may
+include source files, build scripts and documentation.
+
+"Reserved Font Name" refers to any names specified as such after the
+copyright statement(s).
+
+"Original Version" refers to the collection of Font Software components as
+distributed by the Copyright Holder(s).
+
+"Modified Version" refers to any derivative made by adding to, deleting,
+or substituting - - in part or in whole - - any of the components of the
+Original Version, by changing formats or by porting the Font Software to a
+new environment.
+
+"Author" refers to any designer, engineer, programmer, technical
+writer or other person who contributed to the Font Software.
+
+PERMISSION & CONDITIONS
+Permission is hereby granted, free of charge, to any person obtaining
+a copy of the Font Software, to use, study, copy, merge, embed, modify,
+redistribute, and sell modified and unmodified copies of the Font
+Software, subject to the following conditions:
+
+1) Neither the Font Software nor any of its individual components,
+in Original or Modified Versions, may be sold by itself.
+
+2) Original or Modified Versions of the Font Software may be bundled,
+redistributed and/or sold with any software, provided that each copy
+contains the above copyright notice and this license. These can be
+included either as stand-alone text files, human-readable headers or
+in the appropriate machine-readable metadata fields within text or
+binary files as long as those fields can be easily viewed by the user.
+
+3) No Modified Version of the Font Software may use the Reserved Font
+Name(s) unless explicit written permission is granted by the corresponding
+Copyright Holder. This restriction only applies to the primary font name as
+presented to the users.
+
+4) The name(s) of the Copyright Holder(s) or the Author(s) of the Font
+Software shall not be used to promote, endorse or advertise any
+Modified Version, except to acknowledge the contribution(s) of the
+Copyright Holder(s) and the Author(s) or with their explicit written
+permission.
+
+5) The Font Software, modified or unmodified, in part or in whole,
+must be distributed entirely under this license, and must not be
+distributed under any other license. The requirement for fonts to
+remain under this license does not apply to any document created
+using the Font Software.
+
+TERMINATION
+This license becomes null and void if any of the above conditions are
+not met.
+
+DISCLAIMER
+THE FONT SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO ANY WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT
+OF COPYRIGHT, PATENT, TRADEMARK, OR OTHER RIGHT. IN NO EVENT SHALL THE
+COPYRIGHT HOLDER BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+INCLUDING ANY GENERAL, SPECIAL, INDIRECT, INCIDENTAL, OR CONSEQUENTIAL
+DAMAGES, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+FROM, OUT OF THE USE OR INABILITY TO USE THE FONT SOFTWARE OR FROM
+OTHER DEALINGS IN THE FONT SOFTWARE.
+
+-->
+<!-- The game's code is in the separate files game1.js, game2.js, ... (published next to this page, run in order),
+     with art in hd/ and px/. Keep this page small and every piece under 2,000,000 bytes: the shared-link viewer
+     (people not logged in) fails on pages over ~3.2MB and showed "Couldn't load this Artifact" once one game.js
+     passed 5,000,000 bytes. tools/split_publish.py makes the pieces; ?v= changes with each piece. -->
+<script src="game1.js?v=0236083b6c" onerror="if(!window.__gf){window.__gf=1;document.body.insertAdjacentHTML('beforeend','<p style=&quot;position:fixed;inset:auto 0 40% 0;text-align:center;color:#eef1f8;font:16px sans-serif&quot;>遊戲檔載入失敗，請重新整理頁面。</p>')}"></script>
+<script src="game2.js?v=58d85bbb8c" onerror="if(!window.__gf){window.__gf=1;document.body.insertAdjacentHTML('beforeend','<p style=&quot;position:fixed;inset:auto 0 40% 0;text-align:center;color:#eef1f8;font:16px sans-serif&quot;>遊戲檔載入失敗，請重新整理頁面。</p>')}"></script>
+<script src="game3.js?v=fa91cd8666" onerror="if(!window.__gf){window.__gf=1;document.body.insertAdjacentHTML('beforeend','<p style=&quot;position:fixed;inset:auto 0 40% 0;text-align:center;color:#eef1f8;font:16px sans-serif&quot;>遊戲檔載入失敗，請重新整理頁面。</p>')}"></script>
+<script src="game4.js?v=c5d269f7c5" onerror="if(!window.__gf){window.__gf=1;document.body.insertAdjacentHTML('beforeend','<p style=&quot;position:fixed;inset:auto 0 40% 0;text-align:center;color:#eef1f8;font:16px sans-serif&quot;>遊戲檔載入失敗，請重新整理頁面。</p>')}"></script>
+
+
+</body></html>
