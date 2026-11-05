@@ -1,7 +1,9 @@
 /* ===================== v12.156 試做：法杖技能改用 pixelfx 的像素特效 =====================
    玩家：「像素圖不行 那技能特效呢？」「可以先試試但盡量找可修改 可自定義」
    pixelfx（MIT）每個特效都是一段程式：顏色（palette）、角度、左右翻轉、亂數種子都能從外面改，程式本身也能改
-   （例：魔力箭原本 5 支，照「三支魔力箭」改成 3 支；魔力長槍用冰槍的形狀換成紫色魔力的顏色）。
+   （例：魔力箭的支數改成可設定、每支打中會通知遊戲；魔力長槍用冰槍的形狀換成紫色魔力的顏色）。
+   打幾下就出幾發（玩家：「重要的數量呢？有些 hit 數不一樣怎麼辦」）：出招時先從戰鬥紀錄讀出這一招真正打了幾下、各打誰（含沒打中的），
+   每一下各出一份特效；每一下的傷害數字要等「那一發」真的打到才跳（最多等 100 幀，免得卡住）。
    畫法：每個特效開一張剛好包住（旋轉後）範圍的小畫布；每一幀 pixelfx 畫進去，再貼到戰鬥畫面（鏡頭裡、一般特效粒子之後）。
    法杖六招：魔力箭、魔力長槍、衝擊、風暴（全體）、四重光束、奧義魔法陣。其他技能不變。 */
 const PFX26 = {
@@ -26,7 +28,8 @@ function pfxAim26(b, mod, H, Tg, from, to, o = {}) {
   const P = { x: to.x - k * (Tg[0] * cs - Tg[1] * sn), y: to.y - k * (Tg[0] * sn + Tg[1] * cs) }; const { jit, ...rest } = o;
   return pfxSpawn26(b, mod, P, { ...rest, angle: a, k });
 }
-function pfxStep26(b) { const list = b.pfx26; if (!list || !list.length) return;
+function pfxStep26(b) { const q = b.pfxQ26; if (q && q.timers.length) for (let i = q.timers.length - 1; i >= 0; i--) { const m = q.timers[i]; if (--m.f <= 0) { q.timers.splice(i, 1); m.fn(); } }
+  const list = b.pfx26; if (!list || !list.length) return;
   for (let i = list.length - 1; i >= 0; i--) { const e = list[i];
     if (e.delay > 0) { e.delay--; continue; }
     e.fx.update(1 / 60); e.t++;
@@ -42,31 +45,60 @@ function pfxDraw26(b, x) { const L = window.PFXLIB26, list = b.pfx26; if (!L || 
 { const B = Battle.prototype;
   const _u = B.update; B.update = function (...a) { const r = _u.apply(this, a); if (!(this.hitstop > 0)) pfxStep26(this); return r; };
   const _ov = B.drawOverlay; B.drawOverlay = function (x) { pfxDraw26(this, x); return _ov.call(this, x); };
-  const _pf = B.playFx; B.playFx = function* (name, u, t) { const k = PFX26.on && window.PFXLIB26 && u && u.hero && PFX26.map[name]; return yield* _pf.call(this, k && FX[k] ? k : name, u, t); }; }
+  const _pf = B.playFx; B.playFx = function* (name, u, t) { const k = PFX26.on && window.PFXLIB26 && u && u.hero && PFX26.map[name]; if (k && FX[k]) pfxPlan26(this); return yield* _pf.call(this, k && FX[k] ? k : name, u, t); };
+  // 每一下的傷害（或沒打中）等那一發打到才跳
+  const HD = B.handlers;
+  for (const ty of ['DAMAGE', 'MISS']) { const _h = HD[ty]; HD[ty] = function* (e, s, t, P) { const q = this.pfxQ26;
+      if (q && e.cast === q.cast && t && !t.hero) { const i = q.i++; for (let n = 0; i < q.ready.length && !q.ready[i] && n < 100; n++) yield* wait(1); }
+      return yield* _h.call(this, e, s, t, P); }; }
+  const _ae = HD.ACTION_END; HD.ACTION_END = function* (...a) { this.pfxQ26 = null; return yield* _ae.apply(this, a); }; }
+// 這一招真正打了幾下、各打誰：從現在往後讀戰鬥紀錄，到這次行動結束為止（同一個 cast 的傷害／沒打中，對象是魔物）
+function pfxPlan26(b) { const id = b.cast && b.cast.id, L = b.core.log, hits = [];
+  for (let i = b.cur + 1; i < L.length; i++) { const q = L[i]; if (q.type === EVT.ACTION_END) break;
+    if (q.cast === id && (q.type === EVT.DAMAGE || q.type === EVT.MISS)) { const v = b.vw(q.tgts[0]); if (v && !v.hero) hits.push({ v, miss: q.type === EVT.MISS }); } }
+  return (b.pfxQ26 = { cast: id, hits, ready: hits.map(() => false), i: 0, timers: [] }); }
+const pfxAt26 = (b, f, fn) => { const q = b.pfxQ26; if (!q || f <= 0) fn(); else q.timers.push({ f, fn }); };       // f 幀之後做 fn
+const pfxLand26 = (b, i) => { const q = b.pfxQ26; if (q && i < q.ready.length) q.ready[i] = true; };               // 第 i 下打到了
+function* pfxWait26(b, i) { const q = b.pfxQ26; for (let n = 0; q && i < q.ready.length && !q.ready[i] && n < 100; n++) yield* wait(1); }
+// 每一下打誰（沒有紀錄時就當成打 T 一下）
+const pfxHits26 = (b, t) => { const q = b.pfxQ26; return q && q.hits.length ? q.hits : [{ v: t && t.group ? t.group[0] : t, miss: false }]; };
+
 const pfxM26 = n => window.PFXLIB26 && window.PFXLIB26.M[n];
 const pfxPal26 = n => window.PFXLIB26 && window.PFXLIB26.PAL[n];
-const pfxFoes26 = (b, t) => (t && t.group ? t.group : t ? [t] : []).filter(v => v && !v.hero);
 const pfxFoot26 = (b, v) => { const C = b.center(v); return { x: C.x, y: typeof v.foot === 'number' ? v.foot : C.y + 18 }; };
 const pfxHand26 = U => ({ x: U.x + 8, y: U.y - 6 });
 Object.assign(FX, {
-  // 魔力箭：三支紫色魔力彈從手邊扇形飛出、繞著飛，一支接一支打中
-  *pfx26_arrows(U, T) { Sound.sfx('stCast'); pfxAim26(this, pfxM26('missiles3'), [15, -24], [152, -22], pfxHand26(U), T);
-    yield* wait(30); for (let i = 0; i < 3; i++) { Sound.sfx('stBolt'); yield* wait(i < 2 ? 8 : 6); } },
-  // 魔力長槍：冰槍的形狀換成紫色魔力，直直飛過去，刺中後碎成魔力碎片
-  *pfx26_lance(U, T) { const pal = pfxPal26('arcane'), A = pfxHand26(U), a = Math.atan2(T.y - A.y, T.x - A.x), self = this;
-    Sound.sfx('stBolt'); const e = pfxSpawn26(this, pfxM26('lance'), A, { angle: a, palette: pal });
-    if (e) e.move = { a: A, b: { x: T.x, y: T.y }, d: 16, end: () => { pfxSpawn26(self, pfxM26('shatter'), { x: T.x - Math.cos(a) * 8, y: T.y - Math.sin(a) * 8 }, { angle: a, palette: pal, k: 0.8 }); } };
-    yield* wait(17); Sound.sfx('arcane'); },
-  // 衝擊：魔力往一點聚起來，然後白光一閃炸開，符文四散
-  *pfx26_impact(U, T) { Sound.sfx('mana'); pfxSpawn26(this, pfxM26('burst'), { x: T.x, y: T.y + 28 }, { k: 0.85 }); yield* wait(14); Sound.sfx('arcane'); },
-  // 風暴（全體）：星光拖著長尾巴落在每一隻魔物身上
-  *pfx26_storm(U, T, u, t) { Sound.sfx('stCast'); pfxFoes26(this, t).forEach((v, i) => pfxSpawn26(this, pfxM26('starfall'), pfxFoot26(this, v), { k: 0.7, delay: i * 5, seed: 4 + i }));
-    yield* wait(26); Sound.sfx('arcane'); },
-  // 四重光束：四道魔力光束接連打出（角度稍微錯開）
-  *pfx26_four(U, T) { const A = pfxHand26(U); for (let i = 0; i < 4; i++) { Sound.sfx('stBolt'); pfxAim26(this, pfxM26('beam'), [15, -24], [183, -24], A, T, { jit: [-0.06, 0.05, -0.02, 0.07][i], seed: 10 + i, life: 34 }); yield* wait(i < 3 ? 9 : 6); } },
-  // 奧義：每隻魔物腳下畫出魔法陣，符文亮起、光柱衝上去，再連爆四次
-  *pfx26_circle(U, T, u, t) { const vs = pfxFoes26(this, t); if (!vs.length) return; Sound.sfx('stCast');
+  // 魔力箭：打幾下就飛幾支（最多 8 支，多的併在最後一支），每支打中才跳那一下的傷害
+  *pfx26_arrows(U, T, u, t) { const H = pfxHits26(this, t), n = Math.min(8, H.length), self = this;
+    Sound.sfx('stCast');
+    pfxAim26(this, pfxM26('missiles'), [15, -24], [152, -22], pfxHand26(U), this.center(H[0].v), { count: n, gap: n > 5 ? 0.1 : 0.18,
+      onHit: i => { Sound.sfx('stBolt'); if (i < n - 1) pfxLand26(self, i); else H.forEach((_, j) => j >= i && pfxLand26(self, j)); } });
+    yield* pfxWait26(this, 0); },
+  // 魔力長槍：每一下一支紫色魔力槍（冰槍的形狀換顏色），刺中後碎成魔力碎片
+  *pfx26_lance(U, T, u, t) { const pal = pfxPal26('arcane'), A = pfxHand26(U), self = this;
+    pfxHits26(this, t).forEach((h, i) => { const C = this.center(h.v), a = Math.atan2(C.y - A.y, C.x - A.x);
+      pfxAt26(this, i * 10, () => Sound.sfx('stBolt'));
+      const e = pfxSpawn26(this, pfxM26('lance'), A, { angle: a, palette: pal, delay: i * 10 });
+      if (e) e.move = { a: A, b: C, d: 16, end: () => { if (!h.miss) pfxSpawn26(self, pfxM26('shatter'), { x: C.x - Math.cos(a) * 8, y: C.y - Math.sin(a) * 8 }, { angle: a, palette: pal, k: 0.8 }); pfxLand26(self, i); } }; });
+    yield* pfxWait26(this, 0); },
+  // 魔力衝擊：每一下在對手身上聚起魔力、白光一閃炸開
+  *pfx26_impact(U, T, u, t) { pfxHits26(this, t).forEach((h, i) => { const C = this.center(h.v), d = i * 12;
+      pfxAt26(this, d, () => Sound.sfx('mana')); pfxSpawn26(this, pfxM26('burst'), { x: C.x, y: C.y + 24 }, { k: 0.85, delay: d, seed: 9 + i }); pfxAt26(this, d + 14, () => pfxLand26(this, i)); });
+    yield* pfxWait26(this, 0); },
+  // 魔力風暴（全體）：每一下，星光落在那一下打的魔物身上
+  *pfx26_storm(U, T, u, t) { Sound.sfx('stCast'); pfxHits26(this, t).forEach((h, i) => { const d = i * 5;
+      pfxSpawn26(this, pfxM26('starfall'), pfxFoot26(this, h.v), { k: 0.7, delay: d, seed: 4 + i }); pfxAt26(this, d + 26, () => { Sound.sfx('arcane'); pfxLand26(this, i); }); });
+    yield* pfxWait26(this, 0); },
+  // 魔力奔流：每一下一道魔力光束（角度稍微錯開）
+  *pfx26_four(U, T, u, t) { const A = pfxHand26(U); pfxHits26(this, t).forEach((h, i) => { const d = i * 9;
+      pfxAt26(this, d, () => Sound.sfx('stBolt'));
+      pfxAim26(this, pfxM26('beam'), [15, -24], [183, -24], A, this.center(h.v), { jit: [-0.06, 0.05, -0.02, 0.07][i % 4], seed: 10 + i, life: 34, delay: d }); pfxAt26(this, d + 6, () => pfxLand26(this, i)); });
+    yield* pfxWait26(this, 0); },
+  // 天穹魔陣：被打的每隻魔物腳下各畫一個魔法陣、光柱衝上去；接著每一下在那一下打的魔物身上爆一次
+  *pfx26_circle(U, T, u, t) { const H = pfxHits26(this, t), vs = [...new Set(H.map(h => h.v))].filter(Boolean); if (!vs.length) return; Sound.sfx('stCast');
     vs.forEach((v, i) => pfxSpawn26(this, pfxM26('circle'), pfxFoot26(this, v), { k: 0.8, pre: 0.5, seed: 6 + i }));
-    yield* wait(40); Sound.sfx('charge'); yield* wait(21);
-    for (let i = 0; i < 4; i++) { const v = vs[i % vs.length], C = this.center(v); Sound.sfx('arcane'); pfxSpawn26(this, pfxM26('burst'), { x: C.x + rnd(-6, 6), y: C.y + 22 + rnd(-6, 6) }, { k: 0.6, pre: 0.18, seed: 20 + i }); yield* wait(8); } },
+    pfxAt26(this, 40, () => Sound.sfx('charge'));
+    H.forEach((h, i) => { const C = this.center(h.v), d = 61 + i * 6;
+      pfxAt26(this, d, () => Sound.sfx('arcane')); pfxSpawn26(this, pfxM26('burst'), { x: C.x + rnd(-6, 6), y: C.y + 18 + rnd(-6, 6) }, { k: 0.6, pre: 0.18, delay: d, seed: 20 + i }); pfxAt26(this, d + 4, () => pfxLand26(this, i)); });
+    yield* pfxWait26(this, 0); },
 });
