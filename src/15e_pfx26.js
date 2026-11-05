@@ -12,13 +12,13 @@ const PFX26 = {
 };
 function pfxSpawn26(b, mod, P, o = {}) {
   const L = window.PFXLIB26; if (!L || !b || !mod) return null;
-  const { k = 1, delay = 0, pre = 0, life = 0, ...opt } = o, [w, h] = mod.meta.size, [ox, oy] = mod.meta.origin, a = opt.angle || 0, fl = opt.flip ? -1 : 1, cs = Math.cos(a), sn = Math.sin(a);
+  const { k = 1, delay = 0, pre = 0, life = 0, glow = 0.55, ...opt } = o, [w, h] = mod.meta.size, [ox, oy] = mod.meta.origin, a = opt.angle || 0, fl = opt.flip ? -1 : 1, cs = Math.cos(a), sn = Math.sin(a);
   let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9;
   for (const [cx, cy] of [[-ox, -oy], [w - ox, -oy], [-ox, h - oy], [w - ox, h - oy]]) { const X = cx * fl * cs - cy * sn, Y = cx * fl * sn + cy * cs; x0 = Math.min(x0, X); x1 = Math.max(x1, X); y0 = Math.min(y0, Y); y1 = Math.max(y1, Y); }
   x0 = Math.floor(x0) - 1; y0 = Math.floor(y0) - 1; const fw = Math.ceil(x1) + 2 - x0, fh = Math.ceil(y1) + 2 - y0;
   const fx = L.createFx(mod, { ...opt, x: 0, y: 0 }); if (pre > 0) fx.update(pre);
   const cv = document.createElement('canvas'); cv.width = fw; cv.height = fh;
-  const e = { fx, fr: L.createFrame(fw, fh, x0, y0), cv, c2: cv.getContext('2d'), img: new ImageData(fw, fh), P: { x: P.x, y: P.y }, x0, y0, fw, fh, k, delay, t: 0, move: null, life: life || (mod.meta.loop ? 60 : 0) };
+  const e = { fx, fr: L.createFrame(fw, fh, x0, y0), cv, c2: cv.getContext('2d'), img: new ImageData(fw, fh), lim: new ImageData(fw, fh), glow, P: { x: P.x, y: P.y }, x0, y0, fw, fh, k, delay, t: 0, move: null, life: life || (mod.meta.loop ? 60 : 0) };
   (b.pfx26 || (b.pfx26 = [])).push(e); return e;
 }
 // 從 from 打到 to：把特效裡「手」的點對上 from、「打中」的點對上 to（自動算角度和大小）
@@ -36,11 +36,15 @@ function pfxStep26(b) { const q = b.pfxQ26; if (q && q.timers.length) for (let i
     if (e.move) { const m = e.move, q = clamp(e.t / m.d, 0, 1); e.P.x = lerp(m.a.x, m.b.x, q); e.P.y = lerp(m.a.y, m.b.y, q); if (q >= 1 && !m.done) { m.done = 1; e.fx.stop(); if (m.end) m.end(); } }
     if (e.life && !e.move && e.t === e.life) e.fx.stop();
     if (e.fx.done() || e.t > 900) list.splice(i, 1); } }
+// 顏色層照一般貼；光暈層用「相加」貼（pixelfx 的光原本是加在暗背景上的，直接混成不透明會變成一團白，白天的場景特別明顯）
 function pfxDraw26(b, x) { const L = window.PFXLIB26, list = b.pfx26; if (!L || !list || !list.length) return;
-  const sm = x.imageSmoothingEnabled; x.imageSmoothingEnabled = false;
+  const sm = x.imageSmoothingEnabled, op = x.globalCompositeOperation; x.imageSmoothingEnabled = false;
   for (const e of list) { if (e.delay > 0) continue;
-    L.clearFrame(e.fr); e.fx.draw(e.fr); L.composite(e.fr, e.img.data, null); e.c2.putImageData(e.img, 0, 0);
-    x.drawImage(e.cv, e.P.x + e.x0 * e.k, e.P.y + e.y0 * e.k, e.fw * e.k, e.fh * e.k); }
+    L.clearFrame(e.fr); e.fx.draw(e.fr); L.composite(e.fr, e.img.data, null, 0); e.c2.putImageData(e.img, 0, 0);
+    const X = e.P.x + e.x0 * e.k, Y = e.P.y + e.y0 * e.k, w = e.fw * e.k, h = e.fh * e.k; x.drawImage(e.cv, X, Y, w, h);
+    const Lt = e.fr.light, d = e.lim.data, g = e.glow; let any = 0;
+    for (let i = 0, j = 0; i < Lt.length; i++, j += 4) { const l = Lt[i]; if (l & 0xffffff) { any = 1; d[j] = (l & 255) * g; d[j + 1] = ((l >>> 8) & 255) * g; d[j + 2] = ((l >>> 16) & 255) * g; } else d[j] = d[j + 1] = d[j + 2] = 0; d[j + 3] = 255; }
+    if (any) { e.c2.putImageData(e.lim, 0, 0); x.globalCompositeOperation = 'lighter'; x.drawImage(e.cv, X, Y, w, h); x.globalCompositeOperation = op; } }
   x.imageSmoothingEnabled = sm; }
 { const B = Battle.prototype;
   const _u = B.update; B.update = function (...a) { const r = _u.apply(this, a); if (!(this.hitstop > 0)) pfxStep26(this); return r; };
@@ -74,12 +78,12 @@ Object.assign(FX, {
     pfxAim26(this, pfxM26('missiles'), [15, -24], [152, -22], pfxHand26(U), this.center(H[0].v), { count: n, gap: n > 5 ? 0.1 : 0.18,
       onHit: i => { Sound.sfx('stBolt'); if (i < n - 1) pfxLand26(self, i); else H.forEach((_, j) => j >= i && pfxLand26(self, j)); } });
     yield* pfxWait26(this, 0); },
-  // 魔力長槍：每一下一支紫色魔力槍（冰槍的形狀換顏色），刺中後碎成魔力碎片
+  // 魔力長槍：每一下一支紫色魔力槍（冰槍的形狀換顏色），刺中時小小爆一下（原本接冰碎片，斜著飛出去像一把斧頭，拿掉）
   *pfx26_lance(U, T, u, t) { const pal = pfxPal26('arcane'), A = pfxHand26(U), self = this;
     pfxHits26(this, t).forEach((h, i) => { const C = this.center(h.v), a = Math.atan2(C.y - A.y, C.x - A.x);
       pfxAt26(this, i * 10, () => Sound.sfx('stBolt'));
       const e = pfxSpawn26(this, pfxM26('lance'), A, { angle: a, palette: pal, delay: i * 10 });
-      if (e) e.move = { a: A, b: C, d: 16, end: () => { if (!h.miss) pfxSpawn26(self, pfxM26('shatter'), { x: C.x - Math.cos(a) * 8, y: C.y - Math.sin(a) * 8 }, { angle: a, palette: pal, k: 0.8 }); pfxLand26(self, i); } }; });
+      if (e) e.move = { a: A, b: C, d: 16, end: () => { if (!h.miss) pfxSpawn26(self, pfxM26('burst'), { x: C.x, y: C.y + 14 }, { k: 0.5, pre: 0.2, seed: 30 + i }); pfxLand26(self, i); } }; });
     yield* pfxWait26(this, 0); },
   // 魔力衝擊：每一下在對手身上聚起魔力、白光一閃炸開
   *pfx26_impact(U, T, u, t) { pfxHits26(this, t).forEach((h, i) => { const C = this.center(h.v), d = i * 12;
@@ -96,7 +100,7 @@ Object.assign(FX, {
     yield* pfxWait26(this, 0); },
   // 天穹魔陣：被打的每隻魔物腳下各畫一個魔法陣、光柱衝上去；接著每一下在那一下打的魔物身上爆一次
   *pfx26_circle(U, T, u, t) { const H = pfxHits26(this, t), vs = [...new Set(H.map(h => h.v))].filter(Boolean); if (!vs.length) return; Sound.sfx('stCast');
-    vs.forEach((v, i) => pfxSpawn26(this, pfxM26('circle'), pfxFoot26(this, v), { k: 0.8, pre: 0.5, seed: 6 + i }));
+    vs.forEach((v, i) => pfxSpawn26(this, pfxM26('circle'), pfxFoot26(this, v), { k: 0.7, pre: 0.5, seed: 6 + i, glow: 0.35 }));
     pfxAt26(this, 40, () => Sound.sfx('charge'));
     H.forEach((h, i) => { const C = this.center(h.v), d = 61 + i * 6;
       pfxAt26(this, d, () => Sound.sfx('arcane')); pfxSpawn26(this, pfxM26('burst'), { x: C.x + rnd(-6, 6), y: C.y + 18 + rnd(-6, 6) }, { k: 0.6, pre: 0.18, delay: d, seed: 20 + i }); pfxAt26(this, d + 4, () => pfxLand26(this, i)); });
