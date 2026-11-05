@@ -1,14 +1,14 @@
 /* ===================== v12.156 試做：法杖技能改用 pixelfx 的像素特效 =====================
    玩家：「像素圖不行 那技能特效呢？」「可以先試試但盡量找可修改 可自定義」
    pixelfx（MIT）每個特效都是一段程式：顏色（palette）、角度、左右翻轉、亂數種子都能從外面改，程式本身也能改
-   （例：魔力箭的支數改成可設定、每支打中會通知遊戲；魔力長槍用冰槍的形狀換成紫色魔力的顏色）。
+   （例：魔力箭的支數改成可設定、每支打中會通知遊戲、可以關掉跟在後面飛的小光點）。
    打幾下就出幾發（玩家：「重要的數量呢？有些 hit 數不一樣怎麼辦」）：出招時先從戰鬥紀錄讀出這一招真正打了幾下、各打誰（含沒打中的），
    每一下各出一份特效；每一下的傷害數字要等「那一發」真的打到才跳（最多等 100 幀，免得卡住）。
    畫法：每個特效開一張剛好包住（旋轉後）範圍的小畫布；每一幀 pixelfx 畫進去，再貼到戰鬥畫面（鏡頭裡、一般特效粒子之後）。
-   法杖六招：魔力箭、魔力長槍、衝擊、風暴（全體）、四重光束、奧義魔法陣。其他技能不變。 */
+   法杖五招：魔力箭、衝擊、風暴（全體）、四重光束、奧義魔法陣。魔力長槍試過冰槍換紫色，玩家說「太奇怪」，維持原本的特效。其他技能不變。 */
 const PFX26 = {
   on: true,
-  map: { hd15_stArrows: 'pfx26_arrows', hd15_stLance: 'pfx26_lance', hd15_stImpact: 'pfx26_impact', hd15_stStorm: 'pfx26_storm', hd15_zjFourFold: 'pfx26_four', hd15_ogStaff: 'pfx26_circle' },
+  map: { hd15_stArrows: 'pfx26_arrows', hd15_stImpact: 'pfx26_impact', hd15_stStorm: 'pfx26_storm', hd15_zjFourFold: 'pfx26_four', hd15_ogStaff: 'pfx26_circle' },
 };
 function pfxSpawn26(b, mod, P, o = {}) {
   const L = window.PFXLIB26; if (!L || !b || !mod) return null;
@@ -72,18 +72,11 @@ const pfxPal26 = n => window.PFXLIB26 && window.PFXLIB26.PAL[n];
 const pfxFoot26 = (b, v) => { const C = b.center(v); return { x: C.x, y: typeof v.foot === 'number' ? v.foot : C.y + 18 }; };
 const pfxHand26 = U => ({ x: U.x + 8, y: U.y - 6 });
 Object.assign(FX, {
-  // 魔力箭：打幾下就飛幾支（最多 8 支，多的併在最後一支），每支打中才跳那一下的傷害
-  *pfx26_arrows(U, T, u, t) { const H = pfxHits26(this, t), n = Math.min(8, H.length), self = this;
-    Sound.sfx('stCast');
-    pfxAim26(this, pfxM26('missiles'), [15, -24], [152, -22], pfxHand26(U), this.center(H[0].v), { count: n, gap: n > 5 ? 0.1 : 0.18,
-      onHit: i => { Sound.sfx('stBolt'); if (i < n - 1) pfxLand26(self, i); else H.forEach((_, j) => j >= i && pfxLand26(self, j)); } });
-    yield* pfxWait26(this, 0); },
-  // 魔力長槍：每一下一支紫色魔力槍（冰槍的形狀換顏色），刺中時小小爆一下（原本接冰碎片，斜著飛出去像一把斧頭，拿掉）
-  *pfx26_lance(U, T, u, t) { const pal = pfxPal26('arcane'), A = pfxHand26(U), self = this;
-    pfxHits26(this, t).forEach((h, i) => { const C = this.center(h.v), a = Math.atan2(C.y - A.y, C.x - A.x);
-      pfxAt26(this, i * 10, () => Sound.sfx('stBolt'));
-      const e = pfxSpawn26(this, pfxM26('lance'), A, { angle: a, palette: pal, delay: i * 10 });
-      if (e) e.move = { a: A, b: C, d: 16, end: () => { if (!h.miss) pfxSpawn26(self, pfxM26('burst'), { x: C.x, y: C.y + 14 }, { k: 0.5, pre: 0.2, seed: 30 + i }); pfxLand26(self, i); } }; });
+  // 魔力箭：打幾下就飛幾支；每一支各自飛向「那一下」打的魔物（三支可能打到不同隻），打中才跳那一下的傷害
+  *pfx26_arrows(U, T, u, t) { const H = pfxHits26(this, t), A = pfxHand26(U); Sound.sfx('stCast');
+    H.forEach((h, i) => { const d = i * (H.length > 5 ? 6 : 11);
+      pfxAim26(this, pfxM26('missiles'), [15, -24], [152, -22], A, this.center(h.v), { count: 1, fanAt: i % 8, clean: true, delay: d, seed: 3 + i,
+        onHit: () => { Sound.sfx('stBolt'); pfxLand26(this, i); } }); });
     yield* pfxWait26(this, 0); },
   // 魔力衝擊：每一下在對手身上聚起魔力、白光一閃炸開
   *pfx26_impact(U, T, u, t) { pfxHits26(this, t).forEach((h, i) => { const C = this.center(h.v), d = i * 12;
