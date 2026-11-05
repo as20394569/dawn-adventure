@@ -360,5 +360,5 @@ const Sound = (() => {
     if (!ambS) return; const vol = [0, 0.045, 0.09, 0.14][lv] || 0, fq = [2400, 3200, 2200, 1500][lv] || 2400;
     ambG.gain.cancelScheduledValues(T); ambG.gain.setValueAtTime(ambG.gain.value, T); ambG.gain.linearRampToValueAtTime(vol, T + 1.6); ambF.frequency.setTargetAtTime(fq, T, 0.6);
     if (!lv) { const s0 = ambS; ambS = null; setTimeout(() => { try { s0.stop(); } catch (e) { } }, 1800); } }
-  return { init, setPaused, play, stop, jingle, sfx, cry, applySettings, expStart, expStep, expStop, amb, get ready() { return !!ac; }, get current() { return curName; } };
+  return { init, setPaused, play, stop, jingle, sfx, cry, applySettings, expStart, expStep, expStop, amb, duck, get ready() { return !!ac; }, get current() { return curName; }, get ac() { return ac; }, get sfxBus() { return sfxG; } };
 })();
