@@ -37,7 +37,8 @@
   - `archive/fp-maze-proto`
   - `archive/pc-remake`
   - `archive/rpg-v12.85`
-  - 舊分支 `rpg-archive`、`archive-card-v14.33` 改成上面的名字。
+  - 舊分支 `rpg-archive`、`archive-card-v14.33` 還在，跟 `archive/rpg-v12.85`、`archive/card-v14.33` 是同一版，可以在 GitHub 上刪掉。
+- GitHub 倉庫已改名為 `as20394569/dawn-adventure`（原本的 `as20394569/-` 會自動轉過去）。
 - 企劃：移到專案的「曙光冒險-廢案」資料夾。
 - 總整理：〈曙光冒險-廢案總整理〉，repo 裡是 `docs/廢案/README.md`。
 
