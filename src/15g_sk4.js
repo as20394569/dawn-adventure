@@ -125,6 +125,7 @@ function* sk4Screen(kind) { const st = Game.st; let i = 0;
 
 /* ---------- 特效測試：4 招 × 7 種型態，分 8 組（每組最多 4 個） ----------
    玩家：「把測試時說明都拿掉」→ 選單只寫招式名稱、不顯示技能說明欄；戰鬥中的訊息和狀態說明也不跳 */
+SK4.FOCUS = ['cut']; // 玩家：「先不要一次做完 先從第一個技能開始」→ 特效測試先只放斬擊，確定了再一招一招加
 const sk4Quiet = () => typeof FXT13 !== 'undefined' && FXT13.on; // 只有特效測試的戰鬥會開
 const sk4GroupName = ns => { const all = ns.join('・'); if (all.length <= 13) return all;                // 太長才縮：把每個名字都有的字抽出來放前面
   for (let L = ns[0].length; L >= 2; L--) for (let i = 0; i + L <= ns[0].length; i++) { const sub = ns[0].slice(i, i + L), rest = ns.map(n => n.replace(sub, ''));
@@ -132,7 +133,7 @@ const sk4GroupName = ns => { const all = ns.join('・'); if (all.length <= 13) r
   return all; };
 { const _cm = Battle.prototype.chooseMove; Battle.prototype.chooseMove = function* () { const kind = typeof FXT13 !== 'undefined' && FXT13.on && FXT13.kind; if (!kind || !SK4.W[kind] || !SK4.on) return yield* _cm.call(this);
     const hu = this.core.byId.H, all = hu.skills.slice(), atk = hu.data.attackSkill, G = [];
-    for (const sk of SK4.W[kind]) for (const ps of [['', 'A', 'B'], ['A1', 'A2', 'B1', 'B2']]) G.push([sk4GroupName(ps.map(p => sk.forms[p][0])), ps.map(p => sk4Id(sk.k, p))]);
+    for (const sk of SK4.W[kind].filter(q => !SK4.FOCUS || SK4.FOCUS.includes(q.k))) for (const ps of [['', 'A', 'B'], ['A1', 'A2', 'B1', 'B2']]) G.push([sk4GroupName(ps.map(p => sk.forms[p][0])), ps.map(p => sk4Id(sk.k, p))]);
     while (true) { const r = yield* choose(G.map(g => ({ t: g[0] })), { x: 8, y: 30, w: W - 16, fs: 9, cancel: true, index: this.sk4Page || 0 }); if (r < 0) return null; this.sk4Page = r;
       hu.skills = [atk].concat(G[r][1]); let out; FXT13.on = false; this.noInfo26 = true; try { out = yield* _cm.call(this); } finally { FXT13.on = true; this.noInfo26 = false; hu.skills = all; } if (out) return out; } }; }
 // 戰鬥訊息（使用了…、HP 已經全滿了…）和狀態說明（心眼！下一擊必定會心…）在特效測試裡都不跳
