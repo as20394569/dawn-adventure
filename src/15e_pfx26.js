@@ -7,14 +7,14 @@
 const PFX26 = { on: true };
 function pfxSpawn26(b, mod, P, o = {}) {
   const L = window.PFXLIB26; if (!L || !b || !mod) return null;
-  const { k = 1, delay = 0, pre = 0, life = 0, glow = 0.55, ...opt } = o, [w, h] = mod.meta.size, [ox, oy] = mod.meta.origin, a = opt.angle || 0, fl = opt.flip ? -1 : 1, cs = Math.cos(a), sn = Math.sin(a);
+  const { k = 1, delay = 0, pre = 0, life = 0, glow = 0.55, cut = 0, ...opt } = o, [w, h] = mod.meta.size, [ox, oy] = mod.meta.origin, a = opt.angle || 0, fl = opt.flip ? -1 : 1, cs = Math.cos(a), sn = Math.sin(a);
   let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9;
   for (const [cx, cy] of [[-ox, -oy], [w - ox, -oy], [-ox, h - oy], [w - ox, h - oy]]) { const X = cx * fl * cs - cy * sn, Y = cx * fl * sn + cy * cs; x0 = Math.min(x0, X); x1 = Math.max(x1, X); y0 = Math.min(y0, Y); y1 = Math.max(y1, Y); }
   x0 = Math.floor(x0) - 1; y0 = Math.floor(y0) - 1; const fw = Math.ceil(x1) + 2 - x0, fh = Math.ceil(y1) + 2 - y0;
   for (const key in opt) if (opt[key] === undefined) delete opt[key]; // 沒給的選項（例如 palette）用特效自己的預設
-  const fx = L.createFx(mod, { ...opt, x: 0, y: 0 }); if (pre > 0) fx.update(pre);
+  const fx = L.createFx(mod, { ...opt, x: 0, y: 0 }); if (pre > 0) for (let s = 0; s < pre - 1e-6; s += 1 / 60) fx.update(1 / 60); // 先跳過前奏（一幀一幀跑，粒子才正常）
   const cv = document.createElement('canvas'); cv.width = fw; cv.height = fh;
-  const e = { fx, fr: L.createFrame(fw, fh, x0, y0), cv, c2: cv.getContext('2d'), img: new ImageData(fw, fh), lim: new ImageData(fw, fh), glow, P: { x: P.x, y: P.y }, x0, y0, fw, fh, k, delay, t: 0, move: null, life: life || (mod.meta.loop ? 60 : 0) };
+  const e = { fx, fr: L.createFrame(fw, fh, x0, y0), cv, c2: cv.getContext('2d'), img: new ImageData(fw, fh), lim: new ImageData(fw, fh), glow, P: { x: P.x, y: P.y }, x0, y0, fw, fh, k, delay, t: 0, move: null, life: life || (mod.meta.loop ? 60 : 0), cut };
   (b.pfx26 || (b.pfx26 = [])).push(e); return e;
 }
 // 從 from 打到 to：把特效裡「手」的點對上 from、「打中」的點對上 to（自動算角度和大小）
@@ -31,17 +31,18 @@ function pfxStep26(b) { const q = b.pfxQ26; if (q && q.timers.length) for (let i
     e.fx.update(1 / 60); e.t++;
     if (e.move) { const m = e.move, q = clamp(e.t / m.d, 0, 1); e.P.x = lerp(m.a.x, m.b.x, q); e.P.y = lerp(m.a.y, m.b.y, q); if (q >= 1 && !m.done) { m.done = 1; e.fx.stop(); if (m.end) m.end(); } }
     if (e.life && !e.move && e.t === e.life) e.fx.stop();
-    if (e.fx.done() || e.t > 900) list.splice(i, 1); } }
+    if (e.fx.done() || e.t > 900 || (e.cut && e.t > e.cut + 12)) list.splice(i, 1); } }
 // 顏色層照一般貼；光暈層用「相加」貼（pixelfx 的光原本是加在暗背景上的，直接混成不透明會變成一團白，白天的場景特別明顯）
 function pfxDraw26(b, x) { const L = window.PFXLIB26, list = b.pfx26; if (!L || !list || !list.length) return;
   const sm = x.imageSmoothingEnabled, op = x.globalCompositeOperation; x.imageSmoothingEnabled = false;
-  for (const e of list) { if (e.delay > 0) continue;
+  const ga = x.globalAlpha;
+  for (const e of list) { if (e.delay > 0) continue; x.globalAlpha = ga * (e.cut && e.t > e.cut ? clamp(1 - (e.t - e.cut) / 12, 0, 1) : 1); // cut：很長的特效在第 cut 幀後 12 幀淡出
     L.clearFrame(e.fr); e.fx.draw(e.fr); L.composite(e.fr, e.img.data, null, 0); e.c2.putImageData(e.img, 0, 0);
     const X = e.P.x + e.x0 * e.k, Y = e.P.y + e.y0 * e.k, w = e.fw * e.k, h = e.fh * e.k; x.drawImage(e.cv, X, Y, w, h);
     const Lt = e.fr.light, d = e.lim.data, g = e.glow; let any = 0;
     for (let i = 0, j = 0; i < Lt.length; i++, j += 4) { const l = Lt[i]; if (l & 0xffffff) { any = 1; d[j] = (l & 255) * g; d[j + 1] = ((l >>> 8) & 255) * g; d[j + 2] = ((l >>> 16) & 255) * g; } else d[j] = d[j + 1] = d[j + 2] = 0; d[j + 3] = 255; }
     if (any) { e.c2.putImageData(e.lim, 0, 0); x.globalCompositeOperation = 'lighter'; x.drawImage(e.cv, X, Y, w, h); x.globalCompositeOperation = op; } }
-  x.imageSmoothingEnabled = sm; }
+  x.globalAlpha = ga; x.imageSmoothingEnabled = sm; }
 { const B = Battle.prototype;
   const _u = B.update; B.update = function (...a) { const r = _u.apply(this, a); if (!(this.hitstop > 0)) pfxStep26(this); return r; };
   const _ov = B.drawOverlay; B.drawOverlay = function (x) { pfxDraw26(this, x); return _ov.call(this, x); };
