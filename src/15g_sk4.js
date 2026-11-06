@@ -1,56 +1,60 @@
-/* ===================== v13.0 試做：技能精簡——每種武器 4 招、Lv1〜8、Lv3・Lv6 兩次分化（先做劍） =====================
+/* ===================== v13.0 試做：技能精簡——每種武器 4 招、Lv1〜8、Lv3・Lv6 兩次分化（先做劍；名稱和效果都重做） =====================
    玩家：「現在的技能數量確實太多了。RPG 的精髓就是用技能打倒敵人，我打算用少量但可升級的技能當作這遊戲的精髓。」
          「改成 4 招好了，走分化路線。」「先從劍開始，配合新安裝的特效包（pixelfx）。」
    · 每種武器 4 招，全部帶上場（不用技能槽）；只留武器特性（拿掉精通、第三被動、特技、共通樹、裝備附帶的招、招牌技）。
    · 技能點：每種武器各自一池＝(等級 − 1)＋主線頭目第一次打倒各 1 點；招式解鎖時就是 Lv1，之後每升一級 1 點，最高 Lv8；威力每級 +8%。
    · Lv3 第一次分化（A／B），Lv6 第二次分化（A1／A2 或 B1／B2）：名字、效果、特效都換；在城鎮可以重選分化。
-   · Lv8 覺醒：特效變金色、變大。
+   · Lv8 覺醒：特效變大（沒有特定顏色的招變金色）。
    · 舊存檔第一次用到這套時：那把武器原本技能樹的點數全部退回（招式重新從 Lv1 開始）。
    企劃：docs/技能精簡企劃.md */
 const SK4 = { on: true, MAX: 8, B1: 3, B2: 6, FORMS: ['', 'A', 'B', 'A1', 'A2', 'B1', 'B2'], W: {} };
 const sk4Id = (k, p) => 't_s4' + k + (p || '');
 const sk4FormLv = p => !p ? 2 : p.length === 1 ? 5 : 8; // 特效測試：每種型態用它最常見的等級
-ST11('shura4', '修羅', { mods: [{ stage: 'attacker', who: 'attacker', critAdd: 20 }] });
-if (typeof BUFF12 !== 'undefined') BUFF12.shura4 = { n: '修羅', k: 'atk', tip: '會心率 +20%' };
+// 新的狀態：鐵壁（受到的傷害 −50%）、反擊架勢（被打就反擊，威力 80）、狂暴（會心率 +20%）
+ST11('guard4', '鐵壁', { mods: [{ stage: 'final', who: 'defender', mul: 0.5, cond: { hasPower: 1 } }] });
+ST11('ctr4', '反擊架勢', { triggers: [{ on: EVT.DAMAGE, phase: 'POST', role: 'tgt', cond: { srcSide: 'enemy', hasPower: 1, ownerAlive: 1 }, limit: { perAction: 1 }, effects: [{ type: 'counter', mul: { f: 'cnt11', v: 80 }, why: 'ctr4' }] }] });
+ST11('rage4', '狂暴', { mods: [{ stage: 'attacker', who: 'attacker', critAdd: 20 }] });
+if (typeof BUFF12 !== 'undefined') Object.assign(BUFF12, { guard4: { n: '鐵壁', k: 'def', tip: '受到的傷害 −50%' }, ctr4: { n: '反擊架勢', k: 'def', tip: '被打就反擊' }, rage4: { n: '狂暴', k: 'atk', tip: '會心率 +20%' } });
 
-/* ---------- 劍 ---------- */
-const OG4 = (n, fin, x = {}) => [{ type: 'damage', ...(x.rnd ? { target: 'random_enemy' } : {}) }].concat(Array.from({ length: n - 1 }, () => ({ type: 'damage', cond: { tgtAlive: 1 }, ...(x.rnd ? { target: 'random_enemy' } : {}) })),
-  [{ type: 'damage', power: fin, cond: { tgtAlive: 1 }, ...(x.finX ? { critX: x.finX } : {}) }]);
-const DRAIN4 = { type: 'heal', target: 'self', ofCast: 0.2, kind: 'drain', quiet: 1 };
+/* ---------- 劍（玩家：「連名稱一起重做」「簡單好懂」——不沿用舊招，名字一看就知道在做什麼） ----------
+   [名稱, 威力, 段數, 冷卻, MP, 全體, 說明, 其他]；分化：基本 → A／B（Lv3）→ A1・A2／B1・B2（Lv6） */
+const OG4 = (n, each, fin, x = {}) => [{ type: 'damage', power: each, ...(x.rnd ? { target: 'random_enemy' } : {}) }].concat(Array.from({ length: n - 1 }, () => ({ type: 'damage', power: each, cond: { tgtAlive: 1 }, ...(x.rnd ? { target: 'random_enemy' } : {}) })),
+  [{ type: 'damage', power: fin, cond: { tgtAlive: 1 } }]);
+const DRAIN4 = r => ({ type: 'heal', target: 'self', ofCast: r, kind: 'drain', quiet: 1 });
+const CRITN4 = { type: 'status', target: 'self', status: 'critNext' };
 SK4.W['劍'] = [
-  { k: 'cut', unlock: 1, forms: {
-    '': ['斷甲斬', 60, 0, 0, 6, 0, '斬擊，50% 讓對手物防 −1。', { effects: DMG11(SG11({ def: -1 }, 0.5)) }],
-    A: ['斷鋼一閃', 85, 0, 0, 9, 0, '一記交叉斬，50% 讓對手物防 −1；對物防下降的對手必定會心。', { mods: [{ stage: 'skill', who: 'attacker', crit: true, cond: { tgtDefDown11: 1 } }], effects: DMG11(SG11({ def: -1 }, 0.5)) }],
-    A1: ['一刀天斷', 120, 0, 1, 12, 0, '一定搶先出手，衝過去一刀必定會心。', { prio: 1, mods: [CRIT11] }],
-    A2: ['崩星劍', 140, 0, 1, 14, 0, '全力劈下，會心率 +40%，破防中的對手必定會心；再對全部魔物一記震波（威力 40）。',
-      { mods: [{ stage: 'skill', who: 'attacker', critAdd: 40 }, { stage: 'skill', who: 'attacker', crit: true, cond: { tgtStatus: 'broken' } }], effects: [{ type: 'damage' }, { type: 'damage', target: 'all_enemies', power: 40, cond: { tgtAlive: 1 } }] }],
-    B: ['疾風連斬', 30, 3, 0, 9, 0, '三段快斬，每段 30% 流血。', { effects: DMG11(STA11('bleed14', 0.3)) }],
-    B1: ['流光連斬', 26, 5, 1, 12, 0, '五段快斬，會心率 +20%。', { mods: [{ stage: 'skill', who: 'attacker', critAdd: 20 }] }],
-    B2: ['旋刃', 70, 0, 1, 12, 1, '迴旋斬打全部魔物，會心率 +20%。', { mods: [{ stage: 'skill', who: 'attacker', critAdd: 20 }] }] } },
-  { k: 'light', unlock: 1, magic: 1, forms: {
-    '': ['光刃', 55, 0, 0, 7, 0, '揮劍斬出一道光的劍氣，飛過去砍中對手。', {}],
-    A: ['貫光', 50, 0, 1, 10, 1, '劍氣穿過去，打全部魔物。', {}],
-    A1: ['光雨', 42, 0, 1, 12, 0, '三道劍氣，每道隨機打一隻魔物。', { effects: [0, 1, 2].map(i => ({ type: 'damage', target: 'random_enemy', ...(i ? { cond: { tgtAlive: 1 } } : {}) })) }],
-    A2: ['光輪', 60, 0, 1, 13, 1, '光輪掃過全部魔物，40% 讓魔防 −1。', { effects: DMG11(SG11({ spd: -1 }, 0.4)) }],
-    B: ['聚光', 80, 0, 0, 10, 0, '劍氣聚成一道，只打一隻。', {}],
-    B1: ['破曉光', 115, 0, 1, 14, 0, '又大又亮的劍氣，必定會心。', { mods: [CRIT11] }],
-    B2: ['晨曦之刃', 105, 0, 1, 14, 0, '金色的劍氣，會心率加倍，吸取傷害 20% 的 HP。', { critX: 2, after: [DRAIN4] }] } },
-  { k: 'eye', unlock: 10, forms: {
-    '': ['心眼', 0, 0, 3, 6, 0, '下一擊必定會心，這回合迴避提高。', { effects: [{ type: 'status', target: 'self', status: 'critNext' }, { type: 'status', target: 'self', status: 'smoke', dur: 1 }] }],
-    A: ['明鏡', 0, 0, 3, 8, 0, '下一擊必定會心，2 回合迴避提高。', { effects: [{ type: 'status', target: 'self', status: 'critNext' }, { type: 'status', target: 'self', status: 'smoke', dur: 2 }] }],
-    A1: ['止水', 0, 0, 3, 10, 0, '下一擊必定會心，2 回合迴避提高，3 回合物攻 +1。', { effects: [{ type: 'status', target: 'self', status: 'critNext' }, { type: 'status', target: 'self', status: 'smoke', dur: 2 }, SELF11({ atk: 1 })] }],
-    A2: ['見切', 0, 0, 3, 10, 0, '下一擊必定會心，這回合迴避提高，被打就反擊。', { effects: [{ type: 'status', target: 'self', status: 'critNext' }, { type: 'status', target: 'self', status: 'smoke', dur: 1 }, { type: 'status', target: 'self', status: 'spearGuard11', dur: 1 }] }],
-    B: ['狂刃', 0, 0, 4, 8, 0, '3 回合物攻 +2 階、會心率 +20%；結束時物防 −2 階。', { src: 't_sdFrenzy' }],
-    B1: ['修羅', 0, 0, 4, 10, 0, '3 回合物攻 +3 階、會心率 +20%（結束不扣物防）。', { effects: [SELF11({ atk: 3 }), { type: 'status', target: 'self', status: 'shura4', dur: 3 }] }],
-    B2: ['殺意', 0, 0, 4, 10, 0, '下一擊必定會心；5 回合物攻 +1、速度 +1。', { effects: [{ type: 'status', target: 'self', status: 'critNext' }, SELF11({ atk: 1, spe: 1 }, 5)] }] } },
-  { k: 'og', unlock: 20, forms: {
-    '': ['破曉千斬', 40, 0, 5, 22, 0, '三段快斬（各 40），再一記收尾斬（威力 130）；會心率 +30%。', { mods: [{ stage: 'skill', who: 'attacker', critAdd: 30 }], effects: OG4(3, 130) }],
-    A: ['千斬', 40, 0, 5, 24, 0, '五段快斬（各 40），再一記收尾斬（威力 130）；會心率 +30%。', { mods: [{ stage: 'skill', who: 'attacker', critAdd: 30 }], effects: OG4(5, 130) }],
-    A1: ['萬斬', 40, 0, 5, 28, 0, '七段快斬（各 40），再一記收尾斬（威力 140）；會心率 +30%。', { mods: [{ stage: 'skill', who: 'attacker', critAdd: 30 }], effects: OG4(7, 140) }],
-    A2: ['亂舞', 45, 0, 5, 28, 0, '五段快斬（各 45），每段隨機打一隻魔物，再對主目標收尾斬（威力 130）。', { mods: [{ stage: 'skill', who: 'attacker', critAdd: 30 }], effects: OG4(5, 130, { rnd: 1 }) }],
-    B: ['曉光', 40, 0, 5, 24, 0, '三段快斬（各 40），收尾斬（威力 150）會心率 ×3，吸取傷害 20% 的 HP。', { effects: OG4(3, 150, { finX: 3 }), after: [DRAIN4] }],
-    B1: ['天光', 40, 0, 5, 28, 0, '三段快斬（各 40），收尾斬威力 260、會心率 ×3，吸取傷害 20% 的 HP。', { effects: OG4(3, 260, { finX: 3 }), after: [DRAIN4] }],
-    B2: ['歸元', 40, 0, 5, 26, 0, '三段快斬（各 40），收尾斬（威力 150）會心率 ×3，吸取 20% HP，打完回 30% MP。', { effects: OG4(3, 150, { finX: 3 }), after: [DRAIN4, { type: 'resource', res: 'mp', pct: 0.3, target: 'self' }] }] } },
+  { k: 'cut', unlock: 1, forms: {               // 斬擊系：主力的近身攻擊
+    '': ['斬擊', 60, 0, 0, 6, 0, '往前一刀。', {}],
+    A: ['重斬', 90, 0, 0, 9, 0, '用力砍下去，50% 讓對手物防 −1。', { effects: DMG11(SG11({ def: -1 }, 0.5)) }],
+    A1: ['破甲斬', 110, 0, 1, 12, 0, '交叉兩刀砍開護甲，對手物防 −2。', { effects: DMG11(SG11({ def: -2 })) }],
+    A2: ['全力斬', 150, 0, 2, 14, 0, '全力劈下去，會心率 +30%。', { mods: [{ stage: 'skill', who: 'attacker', critAdd: 30 }] }],
+    B: ['連斬', 28, 3, 0, 9, 0, '快速砍 3 下。', {}],
+    B1: ['五連斬', 26, 5, 1, 12, 0, '快速砍 5 下。', {}],
+    B2: ['流血連斬', 30, 3, 1, 12, 0, '快速砍 3 下，每下 40% 讓對手流血。', { effects: DMG11(STA11('bleed14', 0.4)) }] } },
+  { k: 'wave', unlock: 1, magic: 1, forms: {    // 劍氣系：遠距離的魔法傷害
+    '': ['劍氣', 55, 0, 0, 7, 0, '揮劍放出一道劍氣，飛過去打中對手。', {}],
+    A: ['大劍氣', 50, 0, 1, 10, 1, '一道大劍氣穿過去，打全部魔物。', {}],
+    A1: ['劍氣風暴', 35, 2, 1, 13, 1, '劍氣連發兩輪，打全部魔物 2 次。', {}],
+    A2: ['破魔劍氣', 55, 0, 1, 13, 1, '打全部魔物，50% 讓魔防 −1。', { effects: DMG11(SG11({ spd: -1 }, 0.5)) }],
+    B: ['穿透劍氣', 80, 0, 0, 10, 0, '細長的劍氣，無視對手 40% 的防禦。', { pierceDef: 0.4 }],
+    B1: ['雷光劍氣', 95, 0, 1, 13, 0, '帶電的劍氣（雷屬性），30% 讓對手麻痺。', { el: '雷', effects: DMG11(STA11('par', 0.3)) }],
+    B2: ['吸血劍氣', 95, 0, 1, 13, 0, '紅色的劍氣，吸取傷害 25% 的 HP。', { after: [DRAIN4(0.25)] }] } },
+  { k: 'stance', unlock: 10, forms: {           // 架勢系：強化自己
+    '': ['集中', 0, 0, 3, 6, 0, '集中精神，下一擊必定會心。', { effects: [CRITN4] }],
+    A: ['防守架勢', 0, 0, 3, 8, 0, '這回合受到的傷害 −50%，下一擊必定會心。', { effects: [CRITN4, { type: 'status', target: 'self', status: 'guard4', dur: 1 }] }],
+    A1: ['鐵壁架勢', 0, 0, 3, 10, 0, '2 回合受到的傷害 −50%，下一擊必定會心。', { effects: [CRITN4, { type: 'status', target: 'self', status: 'guard4', dur: 2 }] }],
+    A2: ['反擊架勢', 0, 0, 3, 10, 0, '這回合受到的傷害 −50%，被打就反擊（威力 80）。', { effects: [{ type: 'status', target: 'self', status: 'guard4', dur: 1 }, { type: 'status', target: 'self', status: 'ctr4', dur: 1 }] }],
+    B: ['攻擊架勢', 0, 0, 4, 8, 0, '3 回合物攻 +2 階。', { effects: [SELF11({ atk: 2 })] }],
+    B1: ['狂暴架勢', 0, 0, 4, 10, 0, '3 回合物攻 +3 階、會心率 +20%，但物防 −1 階。', { effects: [SELF11({ atk: 3 }), { type: 'status', target: 'self', status: 'rage4', dur: 3 }, SELF11({ def: -1 })] }],
+    B2: ['疾風架勢', 0, 0, 4, 10, 0, '5 回合物攻 +1 階、速度 +2 階。', { effects: [SELF11({ atk: 1, spe: 2 }, 5)] }] } },
+  { k: 'ult', unlock: 20, forms: {              // 必殺系：大招
+    '': ['必殺劍', 40, 0, 5, 22, 0, '連砍 3 下（各 40），最後一記收尾（威力 130）。', { effects: OG4(3, 40, 130) }],
+    A: ['必殺連劍', 40, 0, 5, 24, 0, '連砍 5 下（各 40），最後一記收尾（威力 130）。', { effects: OG4(5, 40, 130) }],
+    A1: ['必殺七連劍', 40, 0, 5, 28, 0, '連砍 7 下（各 40），最後一記收尾（威力 150）。', { effects: OG4(7, 40, 150) }],
+    A2: ['必殺亂劍', 45, 0, 5, 28, 0, '亂砍 5 下（各 45，每下隨機打一隻魔物），再對目標收尾（威力 130）。', { effects: OG4(5, 45, 130, { rnd: 1 }) }],
+    B: ['必殺重劍', 220, 0, 5, 24, 0, '只砍一刀，但威力 220，會心率加倍。', { critX: 2 }],
+    B1: ['必殺一刀', 300, 0, 5, 28, 0, '衝過去一刀，威力 300，必定會心。', { mods: [CRIT11] }],
+    B2: ['必殺吸血劍', 220, 0, 5, 28, 0, '一刀威力 220、會心率加倍，吸取傷害 30% 的 HP。', { critX: 2, after: [DRAIN4(0.3)] }] } },
 ];
 
 /* ---------- build the skills (same builder as the trees; ids t_s4<招><型態>) ---------- */
@@ -132,7 +136,7 @@ const sk4Pal = n => n ? pfxPal26(n) : undefined;
       const id = sk4Id(k, p), L = (this.core.byId.H && this.core.byId.H.data && this.core.byId.H.data.sk4Lv) || {}; const lv = L[id] || 1; this.sk4Cur = { k, p, lv, aw: lv >= SK4.MAX }; }
     return yield* _pf.call(this, name, u, t); }; }
 const sk4K = (b, v, base = 40) => pfxSize26(v && (v.hero ? pfxBody26(b, v).h : v.bbh), base) * (b.sk4Cur && b.sk4Cur.aw ? 1.2 : 1);
-const sk4Col = (b, def) => (b.sk4Cur && b.sk4Cur.aw ? pfxPal26('gold') : def ? pfxPal26(def) : undefined);
+const sk4Col = (b, def) => (def ? pfxPal26(def) : b.sk4Cur && b.sk4Cur.aw ? pfxPal26('gold') : undefined); // 有自己顏色的招（血紅、雷黃…）覺醒後照樣用自己的顏色，只變大
 // 把特效裡「打中的那一點」(lx, ly) 放到 C
 function sk4At(b, mod, C, lx, ly, o = {}) { const k = o.k || 1, fl = o.flip ? -1 : 1; return pfxSpawn26(b, pfxM26(mod), { x: Math.round(C.x - k * lx * fl), y: Math.round(C.y - k * ly) }, o); }
 const SK4HIT = { slash: [31, -33, 3], cross: [35, -27, 10], spin: [0, -28, 13], cleave: [30, -21, 22], dash: [165, -36, 16], crit: [0, -32, 0], spark: [0, -20, 0] };
@@ -155,69 +159,62 @@ function sk4Self(b, u, mods) { const v = u && b.views[u.id] || b.H, B = pfxBody2
   for (const [mod, o] of mods) pfxSpawn26(b, pfxM26(mod), { x: B.x, y: B.foot }, { k, life: o.life || 60, palette: o.pal ? pfxPal26(o.pal) : (b.sk4Cur && b.sk4Cur.aw ? pfxPal26('gold') : undefined), glow: 0.6, seed: 5 }); }
 // 近身招：先走到魔物前面（跟原本的劍招一樣），再往前撲一下
 const sk4Lunge = function* (b, u, n = 18, T, t) { if (typeof HDW !== 'undefined' && HDW.go && T && (!u || u.hero || u === b.H)) yield* HDW.go(b, T, t); if (b.lunge) yield* b.lunge(u, n, 2); };
+// 劍氣穿過全部魔物（經過哪隻，哪隻就跳傷害）
+function sk4Pass(b, U, pal, round = 0) { const H = pfxHits26(b, null), A = pfxHand26(U), seen = new Set();
+  const P = H.map(h => b.center(h.v)), far = P.reduce((a, p) => (p.x > a.x ? p : a), P[0]), a = Math.atan2(far.y - A.y, far.x - A.x);
+  const end = { x: far.x + Math.cos(a) * 40, y: far.y + Math.sin(a) * 40 }, L = Math.hypot(end.x - A.x, end.y - A.y), d = 18, t0 = round * 22;
+  const kk = 1.2 * (b.sk4Cur && b.sk4Cur.aw ? 1.2 : 1), ox = kk * (31 * Math.cos(a) + 33 * Math.sin(a)), oy = kk * (31 * Math.sin(a) - 33 * Math.cos(a));
+  pfxAt26(b, t0, () => Sound.sfx('stBolt')); const e = pfxSpawn26(b, pfxM26('slash'), { x: A.x - ox, y: A.y - oy }, { angle: a, k: kk, delay: t0, palette: sk4Col(b, pal), seed: 21 + round, glow: 0.5 });
+  if (e) e.move = { a: { x: A.x - ox, y: A.y - oy }, b: { x: end.x - ox, y: end.y - oy }, d };
+  H.forEach((h, i) => { const n = H.slice(0, i).filter(x => x.v === h.v).length; if (n !== round) return; const f = clamp(((P[i].x - A.x) * Math.cos(a) + (P[i].y - A.y) * Math.sin(a)) / L, 0, 1);
+    pfxAt26(b, t0 + Math.round(d * f), () => { pfxLand26(b, i); sk4At(b, 'spark', P[i], 0, -20, { k: 0.8, palette: sk4Col(b, pal), seed: 30 + i }); }); }); }
+// 一圈光環掃過全部魔物
+function sk4Ring(b, pal) { const H = pfxHits26(b, null), P = H.map(h => b.center(h.v)), x0 = Math.min(...P.map(p => p.x)), x1 = Math.max(...P.map(p => p.x));
+  const C = { x: (x0 + x1) / 2, y: P.reduce((a, p) => a + p.y, 0) / P.length }, k = Math.max(1, (x1 - x0 + 60) / 150) * (b.sk4Cur && b.sk4Cur.aw ? 1.1 : 1);
+  Sound.sfx('mana'); sk4At(b, 'spin', C, 0, -28, { k, palette: sk4Col(b, pal), seed: 8, glow: 0.6 }); H.forEach((h, i) => pfxAt26(b, 11 + Math.round((P[i].x - x0) / 30), () => pfxLand26(b, i))); }
 Object.assign(FX, {
-  // 斷甲斬：藍白色的月牙一刀
-  *sk4_cut(U, T, u, t) { yield* sk4Lunge(this, u, 18, T, t); sk4Melee(this, 'slash', i => i * 8, { spark: 1 }); yield* pfxWait26(this, 0); },
-  // 斷鋼一閃：交叉兩刀，交點炸開
-  *sk4_cutA(U, T, u, t) { yield* sk4Lunge(this, u, 18, T, t); sk4Melee(this, 'cross', i => i * 10, { pal: 'ice' }); yield* pfxWait26(this, 0); },
-  // 一刀天斷：殘影一閃衝過去，一刀會心
-  *sk4_cutA1(U, T, u, t) { Sound.sfx('dashStep'); sk4Melee(this, 'dash', i => i * 12, { k: 0.75, snd: 'bladeBig', glow: 0.3 }); yield* pfxWait26(this, 0); Sound.sfx('crit'); },
-  // 崩星劍：頭上一閃、粗重的弧劈進地面；主目標會心爆擊，震波打到其他魔物
-  *sk4_cutA2(U, T, u, t) { yield* sk4Lunge(this, u, 14, T, t); const H = pfxHits26(this, null), main = H[0], C = this.center(main.v), k = sk4K(this, main.v) * 1.1;
-    Sound.sfx('charge'); sk4At(this, 'cleave', C, 30, -21, { k, palette: sk4Col(this), seed: 4, stone: '#a89880' }); // 地上的碎石・煙塵用淡沙色（原本紫灰色，在草地上像黑雲）
-    H.forEach((h, i) => { if (i === 0) pfxAt26(this, 22, () => { Sound.sfx('heavy'); pfxLand26(this, 0); sk4At(this, 'crit', C, 0, -32, { k: k * 0.9, palette: sk4Col(this), seed: 6, glow: 0.4 }); this.shake = Math.max(this.shake || 0, 8); });
-      else { const D = this.center(h.v); pfxAt26(this, 26 + i * 2, () => { pfxLand26(this, i); sk4At(this, 'spark', D, 0, -20, { k: 0.9, palette: pfxPal26('dust'), seed: 12 + i }); }); } });
+  // 斬擊系
+  *sk4_cut(U, T, u, t) { yield* sk4Lunge(this, u, 18, T, t); sk4Melee(this, 'slash', i => i * 8, { spark: 1 }); yield* pfxWait26(this, 0); },                                    // 藍白色的月牙一刀
+  *sk4_cutA(U, T, u, t) { yield* sk4Lunge(this, u, 14, T, t); sk4Melee(this, 'slash', i => i * 8, { k: 1.35, spark: 1, snd: 'bladeBig' }); yield* pfxWait26(this, 0); },       // 又大又重的一刀
+  *sk4_cutA1(U, T, u, t) { yield* sk4Lunge(this, u, 14, T, t); sk4Melee(this, 'cross', i => i * 10, { pal: 'ice', spark: 1 }); yield* pfxWait26(this, 0); },                   // 交叉兩刀，交點炸開
+  *sk4_cutA2(U, T, u, t) { yield* sk4Lunge(this, u, 12, T, t); const H = pfxHits26(this, null), C = this.center(H[0].v), k = sk4K(this, H[0].v) * 1.1;                       // 頭上一閃，粗重的弧劈進地面＋會心爆擊
+    Sound.sfx('charge'); sk4At(this, 'cleave', C, 30, -21, { k, palette: sk4Col(this), seed: 4, stone: '#a89880' });
+    pfxAt26(this, 22, () => { Sound.sfx('heavy'); H.forEach((h, i) => pfxLand26(this, i)); sk4At(this, 'crit', C, 0, -32, { k: k * 0.9, palette: sk4Col(this), seed: 6, glow: 0.4 }); this.shake = Math.max(this.shake || 0, 8); });
     yield* pfxWait26(this, 0); },
-  // 疾風連斬：快速的月牙一刀接一刀（左右交替）
-  *sk4_cutB(U, T, u, t) { yield* sk4Lunge(this, u, 18, T, t); sk4Melee(this, 'slash', i => i * 6, { flips: 1, snd: 'bladeQ', k: 0.9 }); yield* pfxWait26(this, 0); },
-  // 流光連斬：五道淡藍的流光
+  *sk4_cutB(U, T, u, t) { yield* sk4Lunge(this, u, 18, T, t); sk4Melee(this, 'slash', i => i * 6, { flips: 1, snd: 'bladeQ', k: 0.9 }); yield* pfxWait26(this, 0); },       // 月牙左右交替快砍
   *sk4_cutB1(U, T, u, t) { yield* sk4Lunge(this, u, 18, T, t); sk4Melee(this, 'slash', i => i * 5, { flips: 1, snd: 'bladeQ', pal: 'ice', k: 0.95 }); yield* pfxWait26(this, 0); },
-  // 旋刃：一圈迴旋斬掃過全部魔物
-  *sk4_cutB2(U, T, u, t) { yield* sk4Lunge(this, u, 10, T, t); const H = pfxHits26(this, null), P = H.map(h => this.center(h.v)), x0 = Math.min(...P.map(p => p.x)), x1 = Math.max(...P.map(p => p.x));
-    const C = { x: (x0 + x1) / 2, y: P.reduce((a, p) => a + p.y, 0) / P.length }, k = Math.max(1, (x1 - x0 + 60) / 150) * (this.sk4Cur && this.sk4Cur.aw ? 1.1 : 1);
-    Sound.sfx('bladeBig'); sk4At(this, 'spin', C, 0, -28, { k, palette: sk4Col(this), seed: 7 }); H.forEach((h, i) => pfxAt26(this, 11 + Math.round((P[i].x - x0) / 30), () => pfxLand26(this, i))); yield* pfxWait26(this, 0); },
-  // 光刃：一道白金色的劍氣飛過去
-  *sk4_light(U, T, u, t) { pfxHits26(this, null).forEach((h, i) => sk4Wave(this, U, i, this.center(h.v), { t0: i * 8 })); yield* pfxWait26(this, 0); },
-  // 貫光：一道劍氣穿過全部魔物（經過哪隻，哪隻就跳傷害）
-  *sk4_lightA(U, T, u, t) { const H = pfxHits26(this, null), A = pfxHand26(U), P = H.map(h => this.center(h.v)), far = P.reduce((a, p) => (p.x > a.x ? p : a), P[0]);
-    const a = Math.atan2(far.y - A.y, far.x - A.x), end = { x: far.x + Math.cos(a) * 40, y: far.y + Math.sin(a) * 40 }, L = Math.hypot(end.x - A.x, end.y - A.y), d = 18;
-    const kk = 1.2, ox = kk * (31 * Math.cos(a) + 33 * Math.sin(a)), oy = kk * (31 * Math.sin(a) - 33 * Math.cos(a));
-    Sound.sfx('stBolt'); const e = pfxSpawn26(this, pfxM26('slash'), { x: A.x - ox, y: A.y - oy }, { angle: a, k: kk, palette: sk4Col(this, 'holy'), seed: 21, glow: 0.5 }); if (e) e.move = { a: { x: A.x - ox, y: A.y - oy }, b: { x: end.x - ox, y: end.y - oy }, d };
-    H.forEach((h, i) => { const f = clamp(((P[i].x - A.x) * Math.cos(a) + (P[i].y - A.y) * Math.sin(a)) / L, 0, 1); pfxAt26(this, Math.round(d * f), () => { pfxLand26(this, i); sk4At(this, 'spark', P[i], 0, -20, { k: 0.8, palette: sk4Col(this, 'holy'), seed: 30 + i }); }); });
-    yield* pfxWait26(this, 0); },
-  // 光雨：三道劍氣，各飛向那一下打的魔物
-  *sk4_lightA1(U, T, u, t) { pfxHits26(this, null).forEach((h, i) => sk4Wave(this, U, i, this.center(h.v), { t0: i * 7, k: 0.9 })); yield* pfxWait26(this, 0); },
-  // 光輪：金白色的光輪掃過全部魔物
-  *sk4_lightA2(U, T, u, t) { const H = pfxHits26(this, null), P = H.map(h => this.center(h.v)), x0 = Math.min(...P.map(p => p.x)), x1 = Math.max(...P.map(p => p.x));
-    const C = { x: (x0 + x1) / 2, y: P.reduce((a, p) => a + p.y, 0) / P.length }, k = Math.max(1, (x1 - x0 + 60) / 150);
-    Sound.sfx('mana'); sk4At(this, 'spin', C, 0, -28, { k, palette: sk4Col(this, 'holy'), seed: 8, glow: 0.8 }); H.forEach((h, i) => pfxAt26(this, 11 + Math.round((P[i].x - x0) / 30), () => pfxLand26(this, i))); yield* pfxWait26(this, 0); },
-  // 聚光：一道又大又亮的劍氣
-  *sk4_lightB(U, T, u, t) { pfxHits26(this, null).forEach((h, i) => sk4Wave(this, U, i, this.center(h.v), { t0: i * 8, k: 1.4, d: 14 })); yield* pfxWait26(this, 0); },
-  // 破曉光：巨大的劍氣，打中時會心爆擊
-  *sk4_lightB1(U, T, u, t) { pfxHits26(this, null).forEach((h, i) => sk4Wave(this, U, i, this.center(h.v), { t0: i * 8, k: 1.6, d: 15, boom: 'crit', boomK: 0.9, snd: 'bladeBig' })); yield* pfxWait26(this, 0); },
-  // 晨曦之刃：金色劍氣，打中後一圈金光
-  *sk4_lightB2(U, T, u, t) { pfxHits26(this, null).forEach((h, i) => sk4Wave(this, U, i, this.center(h.v), { t0: i * 8, k: 1.4, d: 14, pal: 'gold', boom: 'cross', boomK: 0.8 })); yield* pfxWait26(this, 0); },
-  // 心眼系：頭上一圈光環（藍＝明鏡、金＝覺醒）；狂刃系：紅色的氣燒起來
-  *sk4_eye(U, T, u, t) { Sound.sfx('statUp'); sk4Self(this, u, [['halo', { life: 50 }]]); yield* wait(24); },
-  *sk4_eyeA(U, T, u, t) { Sound.sfx('statUp'); sk4Self(this, u, [['halo', { life: 60, pal: 'ice' }], ['haste', { life: 50, pal: 'ice' }]]); yield* wait(26); },
-  *sk4_eyeA1(U, T, u, t) { Sound.sfx('statUp'); sk4Self(this, u, [['halo', { life: 70, pal: 'ice' }], ['haste', { life: 60, pal: 'ice' }]]); yield* wait(28); },
-  *sk4_eyeA2(U, T, u, t) { Sound.sfx('shGuard'); sk4Self(this, u, [['halo', { life: 60 }], ['rage', { life: 50, pal: 'ice' }]]); yield* wait(26); },
-  *sk4_eyeB(U, T, u, t) { Sound.sfx('charge'); sk4Self(this, u, [['rage', { life: 60 }]]); yield* wait(26); },
-  *sk4_eyeB1(U, T, u, t) { Sound.sfx('charge'); sk4Self(this, u, [['rage', { life: 70, pal: 'blood' }]]); yield* wait(28); },
-  *sk4_eyeB2(U, T, u, t) { Sound.sfx('charge'); sk4Self(this, u, [['rage', { life: 60 }], ['haste', { life: 60 }]]); yield* wait(28); },
+  *sk4_cutB2(U, T, u, t) { yield* sk4Lunge(this, u, 18, T, t); sk4Melee(this, 'slash', i => i * 6, { flips: 1, snd: 'bladeQ', pal: 'blood', k: 0.95 }); yield* pfxWait26(this, 0); }, // 紅色的月牙
+  // 劍氣系
+  *sk4_wave(U, T, u, t) { pfxHits26(this, null).forEach((h, i) => sk4Wave(this, U, i, this.center(h.v), { t0: i * 8 })); yield* pfxWait26(this, 0); },                    // 白金色劍氣飛過去
+  *sk4_waveA(U, T, u, t) { sk4Pass(this, U, 'holy'); yield* pfxWait26(this, 0); },                                                                                       // 大劍氣穿過全部
+  *sk4_waveA1(U, T, u, t) { sk4Pass(this, U, 'holy', 0); sk4Pass(this, U, 'holy', 1); yield* pfxWait26(this, 0); },                                                         // 兩輪
+  *sk4_waveA2(U, T, u, t) { sk4Ring(this, 'arcane'); yield* pfxWait26(this, 0); },                                                                                       // 紫色光環掃過
+  *sk4_waveB(U, T, u, t) { pfxHits26(this, null).forEach((h, i) => sk4Wave(this, U, i, this.center(h.v), { t0: i * 8, k: 1.3, d: 10, pal: 'ice' })); yield* pfxWait26(this, 0); }, // 細長快速的藍色劍氣
+  *sk4_waveB1(U, T, u, t) { pfxHits26(this, null).forEach((h, i) => sk4Wave(this, U, i, this.center(h.v), { t0: i * 8, k: 1.4, d: 12, pal: 'volt', boom: 'spark', boomK: 1.1, snd: 'thunder' })); yield* pfxWait26(this, 0); },
+  *sk4_waveB2(U, T, u, t) { pfxHits26(this, null).forEach((h, i) => sk4Wave(this, U, i, this.center(h.v), { t0: i * 8, k: 1.4, d: 14, pal: 'blood', boom: 'cross', boomK: 0.8 })); yield* pfxWait26(this, 0); },
+  // 架勢系：頭上光環＝集中；藍色的氣＝防守；紅色的氣＝攻擊；風＝疾風
+  *sk4_stance(U, T, u, t) { Sound.sfx('statUp'); sk4Self(this, u, [['halo', { life: 50 }]]); yield* wait(24); },
+  *sk4_stanceA(U, T, u, t) { Sound.sfx('shGuard'); sk4Self(this, u, [['halo', { life: 50 }], ['rage', { life: 50, pal: 'ice' }]]); yield* wait(26); },
+  *sk4_stanceA1(U, T, u, t) { Sound.sfx('shGuard'); sk4Self(this, u, [['halo', { life: 60 }], ['rage', { life: 70, pal: 'metal' }]]); yield* wait(28); },
+  *sk4_stanceA2(U, T, u, t) { Sound.sfx('shGuard'); sk4Self(this, u, [['rage', { life: 60, pal: 'ice' }], ['haste', { life: 50, pal: 'ice' }]]); yield* wait(26); },
+  *sk4_stanceB(U, T, u, t) { Sound.sfx('charge'); sk4Self(this, u, [['rage', { life: 60 }]]); yield* wait(26); },
+  *sk4_stanceB1(U, T, u, t) { Sound.sfx('charge'); sk4Self(this, u, [['rage', { life: 70, pal: 'blood' }]]); yield* wait(28); },
+  *sk4_stanceB2(U, T, u, t) { Sound.sfx('wind'); sk4Self(this, u, [['haste', { life: 70 }]]); yield* wait(28); },
 });
-// 奧義：金色的月牙一刀接一刀（角度一直換，越來越快），最後一記收尾（重劈＋會心爆擊；天光是衝刺斬）
+
 function* sk4Og(b, U, T, u, t, o = {}) { yield* sk4Lunge(b, u, 18, T, t); Sound.sfx('charge'); const H = pfxHits26(b, null), n = H.length; let tm = 4;
   H.forEach((h, i) => { const C = b.center(h.v), k = sk4K(b, h.v), last = i === n - 1;
     if (!last) { const tt = tm; pfxAt26(b, tt, () => Sound.sfx('bladeQ')); sk4At(b, 'slash', C, 31, -33, { k: k * 0.9, delay: tt, flip: i % 2 === 1, palette: sk4Col(b, o.pal || 'gold'), seed: 3 + i, glow: 0.6 });
       pfxAt26(b, tt + 3, () => pfxLand26(b, i)); tm += Math.max(3, 6 - (i >> 1)); }
     else { const tt = tm + 6, fin = o.fin || 'cleave', [lx, ly, hit] = SK4HIT[fin]; pfxAt26(b, tt, () => Sound.sfx('bladeBig'));
-      sk4At(b, fin, C, lx, ly, { k: k * (fin === 'dash' ? 0.9 : 1.15), delay: tt, palette: sk4Col(b, o.pal || 'gold'), seed: 11, glow: 0.6, ...(fin === 'cleave' ? { stone: '#a89880' } : {}) });
+      sk4At(b, fin, C, lx, ly, { k: k * (fin === 'dash' ? 0.8 : 1.15), delay: tt, palette: sk4Col(b, o.pal || 'gold'), seed: 11, glow: fin === 'dash' ? 0.3 : 0.6, ...(fin === 'cleave' ? { stone: '#a89880' } : {}) });
       pfxAt26(b, tt + hit, () => { Sound.sfx('crit'); pfxLand26(b, i); sk4At(b, 'crit', C, 0, -32, { k: k * 0.9, palette: sk4Col(b, o.pal || 'gold'), seed: 13, glow: 0.4 }); b.shake = Math.max(b.shake || 0, 8); }); } });
   yield* pfxWait26(b, 0); if (o.after) o.after(); }
 Object.assign(FX, {
-  *sk4_og(U, T, u, t) { yield* sk4Og(this, U, T, u, t); }, *sk4_ogA(U, T, u, t) { yield* sk4Og(this, U, T, u, t); }, *sk4_ogA1(U, T, u, t) { yield* sk4Og(this, U, T, u, t); },
-  *sk4_ogA2(U, T, u, t) { yield* sk4Og(this, U, T, u, t); }, *sk4_ogB(U, T, u, t) { yield* sk4Og(this, U, T, u, t, { pal: 'holy' }); },
-  *sk4_ogB1(U, T, u, t) { yield* sk4Og(this, U, T, u, t, { pal: 'holy', fin: 'dash' }); },
-  *sk4_ogB2(U, T, u, t) { const self = this; yield* sk4Og(this, U, T, u, t, { pal: 'holy', after: () => sk4Self(self, u, [['halo', { life: 50, pal: 'water' }]]) }); },
+  // 必殺系：金色的月牙一刀接一刀（越來越快），最後一記收尾（重劈＋會心爆擊）；重劍系只有收尾
+  *sk4_ult(U, T, u, t) { yield* sk4Og(this, U, T, u, t); }, *sk4_ultA(U, T, u, t) { yield* sk4Og(this, U, T, u, t); }, *sk4_ultA1(U, T, u, t) { yield* sk4Og(this, U, T, u, t); },
+  *sk4_ultA2(U, T, u, t) { yield* sk4Og(this, U, T, u, t); },
+  *sk4_ultB(U, T, u, t) { yield* sk4Og(this, U, T, u, t, { pal: 'holy' }); },
+  *sk4_ultB1(U, T, u, t) { yield* sk4Og(this, U, T, u, t, { pal: 'holy', fin: 'dash' }); },
+  *sk4_ultB2(U, T, u, t) { const self = this; yield* sk4Og(this, U, T, u, t, { pal: 'blood', after: () => sk4Self(self, u, [['halo', { life: 50, pal: 'blood' }]]) }); },
 });
