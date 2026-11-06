@@ -135,10 +135,12 @@ const sk4Pal = n => n ? pfxPal26(n) : undefined;
 { const B = Battle.prototype, _pf = B.playFx; B.playFx = function* (name, u, t) { if (/^sk4_/.test(name)) { const m = name.slice(4).match(/^([a-z]+)([AB][12]?)?$/), k = m && m[1], p = (m && m[2]) || '';
       const id = sk4Id(k, p), L = (this.core.byId.H && this.core.byId.H.data && this.core.byId.H.data.sk4Lv) || {}; const lv = L[id] || 1; this.sk4Cur = { k, p, lv, aw: lv >= SK4.MAX }; }
     return yield* _pf.call(this, name, u, t); }; }
-const sk4K = (b, v, base = 40) => pfxSize26(v && (v.hero ? pfxBody26(b, v).h : v.bbh), base) * (b.sk4Cur && b.sk4Cur.aw ? 1.2 : 1);
+// 大小：玩家「特效太大 反而看得很奇怪」→ 全部乘上 SK4.SZ（打在魔物身上的特效大約跟魔物一樣大）；覺醒只大 10%
+SK4.SZ = 0.55; SK4.SZS = 0.8; SK4.AW = 1.1; SK4.SELFK = { rage: 0.72, haste: 0.85 }; // 氣場比光環寬，再縮一點才跟角色一樣大
+const sk4K = (b, v, base = 40) => pfxSize26(v && (v.hero ? pfxBody26(b, v).h : v.bbh), base) * (b.sk4Cur && b.sk4Cur.aw ? SK4.AW : 1);
 const sk4Col = (b, def) => (def ? pfxPal26(def) : b.sk4Cur && b.sk4Cur.aw ? pfxPal26('gold') : undefined); // 有自己顏色的招（血紅、雷黃…）覺醒後照樣用自己的顏色，只變大
 // 把特效裡「打中的那一點」(lx, ly) 放到 C
-function sk4At(b, mod, C, lx, ly, o = {}) { const k = o.k || 1, fl = o.flip ? -1 : 1; return pfxSpawn26(b, pfxM26(mod), { x: Math.round(C.x - k * lx * fl), y: Math.round(C.y - k * ly) }, o); }
+function sk4At(b, mod, C, lx, ly, o = {}) { const k = (o.k || 1) * (o.raw ? 1 : SK4.SZ), fl = o.flip ? -1 : 1; const { raw, ...op } = o; return pfxSpawn26(b, pfxM26(mod), { x: Math.round(C.x - k * lx * fl), y: Math.round(C.y - k * ly) }, { ...op, k }); }
 const SK4HIT = { slash: [31, -33, 3], cross: [35, -27, 10], spin: [0, -28, 13], cleave: [30, -21, 22], dash: [165, -36, 16], crit: [0, -32, 0], spark: [0, -20, 0] };
 // 近身：每一下在被打的魔物身上出一份 mod；第 i 下在 d(i) 幀後出手
 function sk4Melee(b, mod, d, o = {}) { const H = pfxHits26(b, null), [lx, ly, hit] = SK4HIT[mod];
@@ -148,34 +150,34 @@ function sk4Melee(b, mod, d, o = {}) { const H = pfxHits26(b, null), [lx, ly, hi
     pfxAt26(b, t + hit, () => { pfxLand26(b, i); if (o.spark) sk4At(b, 'spark', C, 0, -20, { k: k * 0.8, seed: 9 + i }); }); });
   return H; }
 // 劍氣：從手邊飛到第 i 下打的魔物（sword-slash 的月牙跟著移動）
-function sk4Wave(b, U, i, C, o = {}) { const A = pfxHand26(U), a = Math.atan2(C.y - A.y, C.x - A.x), k = (o.k || 1) * (b.sk4Cur && b.sk4Cur.aw ? 1.25 : 1), d = o.d || 12, t0 = o.t0 || 0;
+function sk4Wave(b, U, i, C, o = {}) { const A = pfxHand26(U), a = Math.atan2(C.y - A.y, C.x - A.x), k = (o.k || 1) * SK4.SZ * (b.sk4Cur && b.sk4Cur.aw ? SK4.AW : 1), d = o.d || 12, t0 = o.t0 || 0;
   pfxAt26(b, t0, () => Sound.sfx(o.snd || 'stBolt'));
   const ox = k * (31 * Math.cos(a) + 33 * Math.sin(a)), oy = k * (31 * Math.sin(a) - 33 * Math.cos(a)); // 月牙的中心（特效裡的 31,−33）沿著路線飛
   const A0 = { x: A.x - ox, y: A.y - oy }, e = pfxSpawn26(b, pfxM26('slash'), A0, { angle: a, k, delay: t0, palette: sk4Col(b, o.pal || 'holy'), seed: 20 + i, glow: 0.5 });
-  if (e) e.move = { a: A0, b: { x: C.x - ox - Math.cos(a) * 6 * k, y: C.y - oy - Math.sin(a) * 6 * k }, d, end: () => { if (o.land !== false) pfxLand26(b, i); if (o.boom) sk4At(b, o.boom, C, ...SK4HIT[o.boom].slice(0, 2), { k: o.boomK || 0.8, palette: sk4Col(b, o.pal || 'holy'), seed: 30 + i, glow: 0.4 }); else sk4At(b, 'spark', C, 0, -20, { k: 0.7, palette: sk4Col(b, o.pal || 'holy'), seed: 30 + i }); } };
+  if (e) e.move = { a: A0, b: { x: C.x - ox - Math.cos(a) * 6 * k, y: C.y - oy - Math.sin(a) * 6 * k }, d, end: () => { if (o.land !== false) pfxLand26(b, i); if (o.boom) sk4At(b, o.boom, C, ...SK4HIT[o.boom].slice(0, 2), { k: o.boomK || 1.2, palette: sk4Col(b, o.pal || 'holy'), seed: 30 + i, glow: 0.4 }); else sk4At(b, 'spark', C, 0, -20, { k: 1.0, palette: sk4Col(b, o.pal || 'holy'), seed: 30 + i }); } };
   return e; }
 // 自己身上：光環（頭上）、氣場（身體）
-function sk4Self(b, u, mods) { const v = u && b.views[u.id] || b.H, B = pfxBody26(b, v), k = clamp(B.h / 46, 0.9, 1.8) * (b.sk4Cur && b.sk4Cur.aw ? 1.15 : 1);
-  for (const [mod, o] of mods) pfxSpawn26(b, pfxM26(mod), { x: B.x, y: B.foot }, { k, life: o.life || 60, palette: o.pal ? pfxPal26(o.pal) : (b.sk4Cur && b.sk4Cur.aw ? pfxPal26('gold') : undefined), glow: 0.6, seed: 5 }); }
+function sk4Self(b, u, mods) { const v = u && b.views[u.id] || b.H, B = pfxBody26(b, v), k = clamp(B.h / 46, 0.9, 1.8) * SK4.SZS * (b.sk4Cur && b.sk4Cur.aw ? SK4.AW : 1);
+  for (const [mod, o] of mods) pfxSpawn26(b, pfxM26(mod), { x: B.x, y: B.foot }, { k: k * (SK4.SELFK[mod] || 1), life: o.life || 60, palette: o.pal ? pfxPal26(o.pal) : (b.sk4Cur && b.sk4Cur.aw ? pfxPal26('gold') : undefined), glow: 0.6, seed: 5 }); }
 // 近身招：先走到魔物前面（跟原本的劍招一樣），再往前撲一下
 const sk4Lunge = function* (b, u, n = 18, T, t) { if (typeof HDW !== 'undefined' && HDW.go && T && (!u || u.hero || u === b.H)) yield* HDW.go(b, T, t); if (b.lunge) yield* b.lunge(u, n, 2); };
 // 劍氣穿過全部魔物（經過哪隻，哪隻就跳傷害）
 function sk4Pass(b, U, pal, round = 0) { const H = pfxHits26(b, null), A = pfxHand26(U), seen = new Set();
   const P = H.map(h => b.center(h.v)), far = P.reduce((a, p) => (p.x > a.x ? p : a), P[0]), a = Math.atan2(far.y - A.y, far.x - A.x);
   const end = { x: far.x + Math.cos(a) * 40, y: far.y + Math.sin(a) * 40 }, L = Math.hypot(end.x - A.x, end.y - A.y), d = 18, t0 = round * 22;
-  const kk = 1.2 * (b.sk4Cur && b.sk4Cur.aw ? 1.2 : 1), ox = kk * (31 * Math.cos(a) + 33 * Math.sin(a)), oy = kk * (31 * Math.sin(a) - 33 * Math.cos(a));
+  const kk = 1.1 * SK4.SZ * (b.sk4Cur && b.sk4Cur.aw ? SK4.AW : 1), ox = kk * (31 * Math.cos(a) + 33 * Math.sin(a)), oy = kk * (31 * Math.sin(a) - 33 * Math.cos(a));
   pfxAt26(b, t0, () => Sound.sfx('stBolt')); const e = pfxSpawn26(b, pfxM26('slash'), { x: A.x - ox, y: A.y - oy }, { angle: a, k: kk, delay: t0, palette: sk4Col(b, pal), seed: 21 + round, glow: 0.5 });
   if (e) e.move = { a: { x: A.x - ox, y: A.y - oy }, b: { x: end.x - ox, y: end.y - oy }, d };
   H.forEach((h, i) => { const n = H.slice(0, i).filter(x => x.v === h.v).length; if (n !== round) return; const f = clamp(((P[i].x - A.x) * Math.cos(a) + (P[i].y - A.y) * Math.sin(a)) / L, 0, 1);
-    pfxAt26(b, t0 + Math.round(d * f), () => { pfxLand26(b, i); sk4At(b, 'spark', P[i], 0, -20, { k: 0.8, palette: sk4Col(b, pal), seed: 30 + i }); }); }); }
+    pfxAt26(b, t0 + Math.round(d * f), () => { pfxLand26(b, i); sk4At(b, 'spark', P[i], 0, -20, { k: 1.1, palette: sk4Col(b, pal), seed: 30 + i }); }); }); }
 // 一圈光環掃過全部魔物
 function sk4Ring(b, pal) { const H = pfxHits26(b, null), P = H.map(h => b.center(h.v)), x0 = Math.min(...P.map(p => p.x)), x1 = Math.max(...P.map(p => p.x));
-  const C = { x: (x0 + x1) / 2, y: P.reduce((a, p) => a + p.y, 0) / P.length }, k = Math.max(1, (x1 - x0 + 60) / 150) * (b.sk4Cur && b.sk4Cur.aw ? 1.1 : 1);
-  Sound.sfx('mana'); sk4At(b, 'spin', C, 0, -28, { k, palette: sk4Col(b, pal), seed: 8, glow: 0.6 }); H.forEach((h, i) => pfxAt26(b, 11 + Math.round((P[i].x - x0) / 30), () => pfxLand26(b, i))); }
+  const C = { x: (x0 + x1) / 2, y: P.reduce((a, p) => a + p.y, 0) / P.length }, k = Math.max(0.6, (x1 - x0 + 20) / 170) * (b.sk4Cur && b.sk4Cur.aw ? SK4.AW : 1); // 全體：剛好掃過三隻
+  Sound.sfx('mana'); sk4At(b, 'spin', C, 0, -28, { k, raw: 1, palette: sk4Col(b, pal), seed: 8, glow: 0.5 }); H.forEach((h, i) => pfxAt26(b, 11 + Math.round((P[i].x - x0) / 30), () => pfxLand26(b, i))); }
 Object.assign(FX, {
   // 斬擊系
   *sk4_cut(U, T, u, t) { yield* sk4Lunge(this, u, 18, T, t); sk4Melee(this, 'slash', i => i * 8, { spark: 1 }); yield* pfxWait26(this, 0); },                                    // 藍白色的月牙一刀
-  *sk4_cutA(U, T, u, t) { yield* sk4Lunge(this, u, 14, T, t); sk4Melee(this, 'slash', i => i * 8, { k: 1.35, spark: 1, snd: 'bladeBig' }); yield* pfxWait26(this, 0); },       // 又大又重的一刀
+  *sk4_cutA(U, T, u, t) { yield* sk4Lunge(this, u, 14, T, t); sk4Melee(this, 'slash', i => i * 8, { k: 1.25, spark: 1, snd: 'bladeBig' }); yield* pfxWait26(this, 0); },       // 又大又重的一刀
   *sk4_cutA1(U, T, u, t) { yield* sk4Lunge(this, u, 14, T, t); sk4Melee(this, 'cross', i => i * 10, { pal: 'ice', spark: 1 }); yield* pfxWait26(this, 0); },                   // 交叉兩刀，交點炸開
   *sk4_cutA2(U, T, u, t) { yield* sk4Lunge(this, u, 12, T, t); const H = pfxHits26(this, null), C = this.center(H[0].v), k = sk4K(this, H[0].v) * 1.1;                       // 頭上一閃，粗重的弧劈進地面＋會心爆擊
     Sound.sfx('charge'); sk4At(this, 'cleave', C, 30, -21, { k, palette: sk4Col(this), seed: 4, stone: '#a89880' });
@@ -189,9 +191,9 @@ Object.assign(FX, {
   *sk4_waveA(U, T, u, t) { sk4Pass(this, U, 'holy'); yield* pfxWait26(this, 0); },                                                                                       // 大劍氣穿過全部
   *sk4_waveA1(U, T, u, t) { sk4Pass(this, U, 'holy', 0); sk4Pass(this, U, 'holy', 1); yield* pfxWait26(this, 0); },                                                         // 兩輪
   *sk4_waveA2(U, T, u, t) { sk4Ring(this, 'arcane'); yield* pfxWait26(this, 0); },                                                                                       // 紫色光環掃過
-  *sk4_waveB(U, T, u, t) { pfxHits26(this, null).forEach((h, i) => sk4Wave(this, U, i, this.center(h.v), { t0: i * 8, k: 1.3, d: 10, pal: 'ice' })); yield* pfxWait26(this, 0); }, // 細長快速的藍色劍氣
-  *sk4_waveB1(U, T, u, t) { pfxHits26(this, null).forEach((h, i) => sk4Wave(this, U, i, this.center(h.v), { t0: i * 8, k: 1.4, d: 12, pal: 'volt', boom: 'spark', boomK: 1.1, snd: 'thunder' })); yield* pfxWait26(this, 0); },
-  *sk4_waveB2(U, T, u, t) { pfxHits26(this, null).forEach((h, i) => sk4Wave(this, U, i, this.center(h.v), { t0: i * 8, k: 1.4, d: 14, pal: 'blood', boom: 'cross', boomK: 0.8 })); yield* pfxWait26(this, 0); },
+  *sk4_waveB(U, T, u, t) { pfxHits26(this, null).forEach((h, i) => sk4Wave(this, U, i, this.center(h.v), { t0: i * 8, k: 1.1, d: 10, pal: 'ice' })); yield* pfxWait26(this, 0); }, // 細長快速的藍色劍氣
+  *sk4_waveB1(U, T, u, t) { pfxHits26(this, null).forEach((h, i) => sk4Wave(this, U, i, this.center(h.v), { t0: i * 8, k: 1.15, d: 12, pal: 'volt', boom: 'spark', boomK: 1.4, snd: 'thunder' })); yield* pfxWait26(this, 0); },
+  *sk4_waveB2(U, T, u, t) { pfxHits26(this, null).forEach((h, i) => sk4Wave(this, U, i, this.center(h.v), { t0: i * 8, k: 1.15, d: 14, pal: 'blood', boom: 'cross', boomK: 1.2 })); yield* pfxWait26(this, 0); },
   // 架勢系：頭上光環＝集中；藍色的氣＝防守；紅色的氣＝攻擊；風＝疾風
   *sk4_stance(U, T, u, t) { Sound.sfx('statUp'); sk4Self(this, u, [['halo', { life: 50 }]]); yield* wait(24); },
   *sk4_stanceA(U, T, u, t) { Sound.sfx('shGuard'); sk4Self(this, u, [['halo', { life: 50 }], ['rage', { life: 50, pal: 'ice' }]]); yield* wait(26); },
