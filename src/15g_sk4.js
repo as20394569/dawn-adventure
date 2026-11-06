@@ -123,12 +123,23 @@ function* sk4Screen(kind) { const st = Game.st; let i = 0;
 { const _ts = skillTreeScreen; skillTreeScreen = function* () { const kind = sk4Kind(Game.st); if (kind) return yield* sk4Screen(kind); return yield* _ts.call(this); }; }
 { const _up = Overworld.prototype.update; Overworld.prototype.update = function (...a) { const r = _up.apply(this, a); const st = this.st || Game.st, kind = st && sk4Kind(st); if (kind && (Game.frame || 0) % 30 === 0) st.skp = sk4Left(st, kind); return r; }; }
 
-/* ---------- 特效測試：4 招 × 7 種型態，分 8 組（每組最多 4 個） ---------- */
+/* ---------- 特效測試：4 招 × 7 種型態，分 8 組（每組最多 4 個） ----------
+   玩家：「把測試時說明都拿掉」→ 選單只寫招式名稱、不顯示技能說明欄；戰鬥中的訊息和狀態說明也不跳 */
+const sk4Quiet = () => typeof FXT13 !== 'undefined' && FXT13.on; // 只有特效測試的戰鬥會開
+const sk4GroupName = ns => { const all = ns.join('・'); if (all.length <= 13) return all;                // 太長才縮：把每個名字都有的字抽出來放前面
+  for (let L = ns[0].length; L >= 2; L--) for (let i = 0; i + L <= ns[0].length; i++) { const sub = ns[0].slice(i, i + L), rest = ns.map(n => n.replace(sub, ''));
+    if (ns.every(n => n.includes(sub)) && rest.every(Boolean)) return sub + '：' + rest.join('・'); }                      // 鐵壁架勢・反擊架勢… → 架勢：鐵壁・反擊…
+  return all; };
 { const _cm = Battle.prototype.chooseMove; Battle.prototype.chooseMove = function* () { const kind = typeof FXT13 !== 'undefined' && FXT13.on && FXT13.kind; if (!kind || !SK4.W[kind] || !SK4.on) return yield* _cm.call(this);
     const hu = this.core.byId.H, all = hu.skills.slice(), atk = hu.data.attackSkill, G = [];
-    for (const sk of SK4.W[kind]) { G.push([sk.forms[''][0] + '：基本・A・B', ['', 'A', 'B'].map(p => sk4Id(sk.k, p))]); G.push([sk.forms[''][0] + '：A1・A2・B1・B2', ['A1', 'A2', 'B1', 'B2'].map(p => sk4Id(sk.k, p))]); }
-    while (true) { const r = yield* choose(G.map(g => ({ t: g[0] })), { x: 8, y: 30, w: W - 16, cancel: true, index: this.sk4Page || 0, title: '哪一招？（基本 Lv2／A・B Lv5／最終 Lv8 覺醒）' }); if (r < 0) return null; this.sk4Page = r;
-      hu.skills = [atk].concat(G[r][1]); let out; FXT13.on = false; try { out = yield* _cm.call(this); } finally { FXT13.on = true; hu.skills = all; } if (out) return out; } }; }
+    for (const sk of SK4.W[kind]) for (const ps of [['', 'A', 'B'], ['A1', 'A2', 'B1', 'B2']]) G.push([sk4GroupName(ps.map(p => sk.forms[p][0])), ps.map(p => sk4Id(sk.k, p))]);
+    while (true) { const r = yield* choose(G.map(g => ({ t: g[0] })), { x: 8, y: 30, w: W - 16, fs: 9, cancel: true, index: this.sk4Page || 0 }); if (r < 0) return null; this.sk4Page = r;
+      hu.skills = [atk].concat(G[r][1]); let out; FXT13.on = false; this.noInfo26 = true; try { out = yield* _cm.call(this); } finally { FXT13.on = true; this.noInfo26 = false; hu.skills = all; } if (out) return out; } }; }
+// 戰鬥訊息（使用了…、HP 已經全滿了…）和狀態說明（心眼！下一擊必定會心…）在特效測試裡都不跳
+{ const B = Battle.prototype, _m = B.msg, _a = B.announce; B.msg = function* (...a) { if (sk4Quiet()) { this.dropAnn(); return; } return yield* _m.apply(this, a); };
+  B.announce = function* (...a) { if (sk4Quiet()) { this.dropAnn(); return; } return yield* _a.apply(this, a); };
+  if (typeof BFX15 !== 'undefined' && BFX15.stanceHit) { const _sh = BFX15.stanceHit; BFX15.stanceHit = (b, t, id) => { if (!sk4Quiet()) return _sh(b, t, id); const P = b.popNum; b.popNum = () => {}; try { return _sh(b, t, id); } finally { b.popNum = P; } }; } // 硬殼 −40% 的字
+  const H = B.handlers, _ap = H.STATUS_APPLY; H.STATUS_APPLY = function* (e, s, t, P) { if (!sk4Quiet() || !P) return yield* _ap.call(this, e, s, t, P); const q = P.quiet; P.quiet = 1; try { return yield* _ap.call(this, e, s, t, P); } finally { P.quiet = q; } }; }
 
 /* ---------- 特效（pixelfx） ---------- */
 const SK4P = { blade: null, holy: 'holy', gold: 'gold', dawn: 'gold' };

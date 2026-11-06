@@ -362,7 +362,7 @@ class Battle {
       drawFitText(x, m.formula && D.power && mv && typeof powFormula === 'function' ? powFormula(id) : ((mv && mv.d) || D.desc || '') + extra, L, y, w - 16, DY + DH - 5 - y, 9, m.formula ? '#ffe8b0' : UIC.text);
     };
     while (true) {
-      const r = yield* choose(list.map(id => ({ t: (DEF.skills[id].tags.includes('sig') ? '★' : '') + this.skillName(id, 'H'), r: this.costText(id), col: this.canUse(id).ok ? undefined : UIC.dis })), { x: X, y: Y, w, h, rowH, fs: 10, ox: 12, oy: 17, visible: VIS, title: '技能', index: cur, onMove: i => cur = i, drawExtra: info, twoTap: true, onSel: mm => { mm.formula = !mm.formula; Sound.sfx('cursor'); } });
+      const r = yield* choose(list.map(id => ({ t: (DEF.skills[id].tags.includes('sig') ? '★' : '') + this.skillName(id, 'H'), r: this.costText(id), col: this.canUse(id).ok ? undefined : UIC.dis })), { x: X, y: Y, w, h, rowH, fs: 10, ox: 12, oy: 17, visible: VIS, title: '技能', index: cur, onMove: i => cur = i, drawExtra: this.noInfo26 ? undefined : info, twoTap: true, onSel: mm => { mm.formula = !mm.formula; Sound.sfx('cursor'); } });
       if (r < 0) { this.idle = false; return null; }
       const can = this.canUse(list[r]); if (!can.ok) { yield* this.msg(can.why); continue; }
       this.idle = false; this.moveIdx = r; return list[r];
